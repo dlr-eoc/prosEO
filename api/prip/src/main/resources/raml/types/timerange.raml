@@ -1,0 +1,12 @@
+#%RAML 1.0 DataType
+#  CscChecksum:
+    type: object
+    properties:
+      Start:
+        type: string
+        description: Sensing start time in UTC
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{3}Z$
+      End:
+        type: string
+        description: Sensing end time in UTC
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{3}Z$

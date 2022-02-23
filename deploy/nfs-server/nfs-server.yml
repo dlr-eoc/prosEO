@@ -1,0 +1,25 @@
+---
+# Configure prosEO NFS Server ("nfs-server")
+
+- hosts: nfsserver
+  become: true
+  vars:
+  
+  
+  roles:
+  - prepare_network
+  - configure_nfs
+  - install_docker
+  - prepare_proseo
+  
+# Mount transfer directory on bastion host
+- hosts: bastion_control
+  remote_user: proseoadmin
+
+  tasks:
+  - name: Mount transfer directory on bastion host
+    mount:
+      path: /mnt
+      src: "{{ groups['nfsserver'][0] }}:/exports"
+      fstype: nfs
+      state: mounted

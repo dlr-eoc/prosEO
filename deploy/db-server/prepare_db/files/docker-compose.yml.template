@@ -1,0 +1,23 @@
+version: '3'
+services:
+  proseo-db:
+    image: ${REGISTRY_URL}/postgres:11-proseo
+    environment:
+      - POSTGRES_DB=proseo
+      - POSTGRES_PASSWORD=********
+    volumes:
+      - /opt/prosEO/pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.177.57.0/24

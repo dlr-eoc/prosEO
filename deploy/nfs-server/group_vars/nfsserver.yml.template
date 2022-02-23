@@ -1,0 +1,19 @@
+---
+# Parameters for setup of NFS server
+
+# IP address of NAT Gateway
+nat_gateway_ip: 10.8.212.240
+
+# NFS disks
+nfs_disk:
+  list:
+  - /dev/vdb
+  - /dev/vdc
+  - /dev/vdd
+  devices: /dev/vdb1,/dev/vdc1,/dev/vdd1
+  size: 2000G
+  total_size: 6000G
+  
+# Subnet for NFS clients
+subnet: 10.8.212.0/24
+  

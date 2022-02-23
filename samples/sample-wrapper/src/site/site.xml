@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="${project.name}"
+    xmlns="http://maven.apache.org/DECORATION/1.6.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/DECORATION/1.6.0 http://maven.apache.org/xsd/decoration-1.6.0.xsd">
+    <bannerLeft>
+        <name>${project.name}</name>
+        <title>${project.name}</title>
+        <src>/images/icon_prosEO.svg</src>
+        <height>128px</height>
+        <href>${project.url}</href>
+    </bannerLeft>
+    <version position="right"/>
+    <publishDate position="right"/>
+    <body>
+        <menu name="Project Reports">
+            <item name="Javadocs" href="apidocs/index.html" />
+        </menu>
+        <menu ref="parent" />
+    </body>
+</project>

@@ -1,0 +1,147 @@
+---
+# Update server parameters for prosEO
+- hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+
+    # --- Hosts ---
+  
+  - name: Update bastion hosts
+    server:
+      datacenter: "{{ datacenter.name }}"
+      instance_ids:
+      - bastion-control
+      - bastion-prip
+      cores: "{{ bastion.cores }}"
+      ram: "{{ bastion.ram }}"
+      state: update
+    register: bastionhosts
+    
+  - name: Show bastion hosts
+    debug:
+      msg: "{{ bastionhosts }}"
+  
+  - name: Update brain host
+    server:
+      datacenter: "{{ datacenter.name }}"
+      instance_ids:
+      - brain
+      cores: "{{ brain.cores }}"
+      ram: "{{ brain.ram }}"
+      state: update
+    register: brainhost
+  
+  - name: Show brain host
+    debug:
+      msg: "{{ brainhost }}"
+  
+  - name: Update database server
+    server:
+      datacenter: "{{ datacenter.name }}"
+      instance_ids:
+      - brain
+      cores: "{{ dbhost.cores }}"
+      ram: "{{ dbhost.ram }}"
+      state: update
+    register: dbhost
+  
+  - name: Show brain host
+    debug:
+      msg: "{{ dbhost }}"
+  
+  - name: Update NFS host
+    server:
+      datacenter: "{{ datacenter.name }}"
+      instance_ids:
+      - nfs-server
+      cores: "{{ nfs.cores }}"
+      ram: "{{ nfs.ram }}"
+      state: update
+    register: nfshost
+    
+  - name: Show NFS host
+    debug:
+      msg: "{{ nfshost }}"
+  
+  - name: Update loghost
+    server:
+      datacenter: "{{ datacenter.name }}"
+      instance_ids:
+      - loghost
+      cores: "{{ log.cores }}"
+      ram: "{{ log.ram }}"
+      state: update
+    register: loghost
+  
+  - name: Show loghost
+    debug:
+      msg: "{{ loghost }}"
+  
+  - name: Update Kubernetes master
+    server:
+      datacenter: "{{ datacenter.name }}"
+      instance_ids:
+      - master
+      cores: "{{ master.cores }}"
+      ram: "{{ master.ram }}"
+      state: update
+    register: kube_master
+  
+  - name: Show Kubernetes master
+    debug:
+      msg: "{{ kube_master }}"
+  
+  - name: Update Kubernetes workers
+    server:
+      datacenter: "{{ datacenter.name }}"
+      instance_ids:
+      - worker01
+      - worker02
+      - worker03
+      - worker04
+      - worker05
+      - worker06
+      - worker07
+      - worker08
+      - worker09
+      - worker10
+      - worker11
+      - worker12
+      - worker13
+      - worker14
+      - worker15
+      - worker16
+      - worker17
+      - worker18
+      - worker19
+      - worker20
+      - worker21
+      - worker22
+      - worker23
+      - worker24
+      - worker25
+      - worker26
+      - worker27
+      - worker28
+      - worker29
+      - worker30
+      - worker31
+      - worker32
+      - worker33
+      - worker34
+      - worker35
+      - worker36
+      - worker37
+      - worker38
+      - worker39
+      cores: "{{ worker.cores }}"
+      ram: "{{ worker.ram }}"
+      state: update
+    register: workers
+  
+  - name: Show Kubernetes workers
+    debug:
+      msg: "{{ workers }}"
+  

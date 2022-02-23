@@ -1,0 +1,77 @@
+{
+    "id": 12345,
+    "version": 3,
+    "missionCode": "S5P",
+    "identifier": "RPRO Orbits 4567-5678",
+    "uuid": "3fcab4f3-457a-4424-9287-269286e5c03c",
+    "orderState": "INITIAL",
+    "startTime": "2018-05-17T00:00:00.123456",
+    "stopTime": "2019-07-31T12:00:00",
+    "slicingType": "ORBIT",
+    "sliceOverlap": 0,
+    "inputFilters": [
+        {
+            "productClass": "L1B",
+            "filterConditions": [
+                {
+                    "key": "copernicusCollection",
+                    "parameterType": "STRING",
+                    "parameterValue": "01"
+                },
+                {
+                    "key": "revision",
+                    "parameterType": "INTEGER",
+                    "parameterValue": "13"
+                },
+                {
+                    "key": "fileClass",
+                    "parameterType": "STRING",
+                    "parameterValue": "OFFL"
+                }
+            ]
+        }
+    ],
+    "classOutputParameters": [
+        {
+            "productClass": "CLOUD",
+            "outputParameters": [
+                {
+                    "key": "copernicusCollection",
+                    "parameterType": "STRING",
+                    "parameterValue": "99"
+                },
+                {
+                    "key": "revision",
+                    "parameterType": "INTEGER",
+                    "parameterValue": "01"
+                }
+            ]
+        }
+    ],
+    "outputParameters": [
+        {
+            "key": "copernicusCollection",
+            "parameterType": "STRING",
+            "parameterValue": "99"
+        },
+        {
+            "key": "revision",
+            "parameterType": "INTEGER",
+            "parameterValue": "14"
+        }
+    ],
+    "configuredProcessors": [ "KNMI L2 01.03.02 2019-07-03", "DLR L2 01.01.05 2019-07-03" ],
+    "orbits": [
+        { "spacecraftCode": "S5P", "orbitNumberFrom": 4567, "orbitNumberTo": 5330 },
+        { "spacecraftCode": "S5P", "orbitNumberFrom": 5421, "orbitNumberTo": 5678 }
+    ],
+    "requestedProductClasses": [ "O3", "CLOUD", "FRESCO", "AAI" ],
+    "inputProductClasses": [ "L1B" ],
+    "outputFileClass": "RPRO",
+    "processingMode": "OFFL",
+    "hasFailedJobSteps": false,
+    "jobStepStates": [ "INITIAL", "READY" ],
+    "percentCompleted": 80,
+    "percentFailed": 10,
+    "percentRunning": 5
+}

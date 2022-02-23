@@ -1,0 +1,15 @@
+---
+nginx_users:
+- proseoadmin: put_password_here
+
+rkhunter_email: <rkhunter alert email address>
+
+inner_nodes:
+    - { name: brain, ip: "{{ groups['brain'][0] }}" }
+    - { name: dbhost, ip: "{{ groups['dbhost'][0] }}" }
+    - { name: loghost, ip: "{{ groups['loghost'][0] }}" }
+    - { name: nfsserver, ip: "{{ groups['nfsserver'][0] }}" }
+    - { name: master, ip: "{{ groups['master'][0] }}" }
+    - { name: worker1, ip: "{{ groups['workers'][0] }}" }
+    - { name: worker2, ip: "{{ groups['workers'][1] }}" }
+    # etc. for all worker nodes

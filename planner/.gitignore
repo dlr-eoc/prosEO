@@ -1,0 +1,4 @@
+/target/
+**/*.java~
+/application.yml
+/kube_config

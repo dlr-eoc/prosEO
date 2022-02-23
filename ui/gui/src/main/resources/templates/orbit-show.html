@@ -1,0 +1,351 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+  <head>
+    <meta charset="utf-8" />
+      <meta name="viewport"
+  content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <title th:text="#{orbit} + ' | ' + #{proseo}">proseo</title>
+        <!-- Bootstrap core CSS -->
+        <link rel="stylesheet"
+  href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+  integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
+          crossorigin="anonymous" />
+
+          <!-- Custom styles for prosEO -->
+          <link href="../static/fragments/proseo.css" th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css" />
+  </head>
+
+<body>
+  
+    <div style="display:none;" class="loading">
+      <div class="loader"></div>
+    </div>
+  <nav id="proseo-nav"
+    class="navbar bg-light fixed-top flex-md-nowrap p-0 shadow navbar-expand-md">
+    <div class="container-fluid pl-0 pr-0">
+      <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
+        href="/"><img src="proseo_logo.png" class="rounded" width="50"
+        height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
+      <button class="navbar-toggler position-absolute d-md-none collapsed"
+        type="button" data-toggle="collapse" data-target="#sidebarMenu"
+        aria-controls="sidebarMenu" aria-expanded="false"
+        aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <ul class="navbar-nav mr-auto navbar-left">
+        <li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
+            th:text="${missioncode}">mission</span></a></li>
+        <li class="p-breadcrumb-item" aria-current="page"><span
+          th:text="#{orbit}">orbit</span></li>
+      </ul>
+      <div th:replace="fragments/navbar.html :: navbarRight"></div>
+    </div>
+  </nav>
+
+
+  <div class="container-fluid">
+    <div class="row">
+      <div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
+      <div class="proseo-top-div"></div>
+
+      <main th:unless="${hasrolemissionreader}" role="main"
+        class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+        <h5 class="FAILED">
+          <br> <span th:text="#{noroleright}"></span> (MISSION_READER) <br>&nbsp;
+        </h5>
+      </main>
+      <main th:if="${hasrolemissionreader}" role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+        <div th:if="${errormsg != null}" id="errormsg" name="errormsg" class="FAILED">
+          <h5>
+            <br> <span th:text="${errormsg}"></span></h5>
+        </div>
+
+      <form class="needs-validation" name="orbit-shw" id="orbit-shw" action="javascript:submit();" >
+        <div class="row py-lg-1">
+            <div class="col-2">
+              <button id="orbitselect" type="submit"
+                    onclick="submit();"
+                    class="btn btn-sm btn-outline-secondary">
+                    <span th:text="#{orbit-show}"></span>
+              </button>
+            </div>
+            
+            <div class="col-1 pr-lg-0">
+              <p class="input-group-text word-wrap"
+                th:text="#{numberfrom}"></p>
+            </div>
+            <div class="col-1 pl-lg-0">
+                    <input type="number" min="1" class="form-control" autocomplete="on"
+                      name="numberFrom" id="numberFrom">
+            </div>
+            <div class="col-1 pr-lg-0">
+              <p class="input-group-text word-wrap"
+                th:text="#{until}"></p>
+            </div>
+            <div class="col-1 pl-lg-0">
+                    <input type="number" min="1" class="form-control" autocomplete="on"
+                      name="numberTo" id="numberTo">
+            </div>
+            <div class="col-1 pr-lg-0">
+              <p class="input-group-text word-wrap"
+                th:text="#{starttimefrom}"></p>
+            </div>
+            <div class="col-2 pl-lg-0">
+                    <input type="text" class="form-control" autocomplete="on"
+                      pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
+                      title="yyyy-mm-dd[Thh:mm:ss[.ssssss]]" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
+                      name="startTimeFrom" id="startTimeFrom" data-type="TIME">
+                    <div class="invalid-feedback" th:text="#{invaliddate}"></div>
+            </div>
+            <div class="col-1 pr-lg-0">
+              <p class="input-group-text word-wrap"
+                th:text="#{until}"></p>
+            </div>
+            <div class="col-2 pl-lg-0">
+                    <input type="text" class="form-control" autocomplete="on" 
+                      pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
+                      title="yyyy-mm-dd[Thh:mm:ss[.ssssss]]" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
+                      name="startTimeTo" id="startTimeTo" data-type="TIME">
+                    <div class="invalid-feedback" th:text="#{invaliddate}"></div>
+            </div>
+          </div>
+        </form>    
+            
+        <div id="orbitcontent" name="orbitcontent">
+          <table class="table" id="orbitTable" name="orbitTable">
+            <thead class="thead-proseo" id="proseo-thead">
+              <tr>
+                    <th><span th:text="#{id}">id</span></th>
+                    <th><span th:text="#{mission}">mission</span></th>
+                    <th><span th:text="#{spacecraft}">spacecraft</span></th>
+                    <th><span th:text="#{number}">number</span></th>
+                    <th><span th:text="#{starttime}">starttime</span></th>
+                    <th><span th:text="#{stoptime}">stoptime</span></th>
+              </tr>
+            </thead>
+            <tbody th:unless="${orbits} == null">
+              <div th:each="orbit : ${orbits}">
+              <tr>
+                <td th:id="${orbit?.id}" class="first-row" th:text="${orbit?.id}"></td>
+                <td class="first-row"> <a th:href="'/mission-show?m=' + ${orbit?.missionCode}" th:text="${orbit?.missionCode}"></a></td>
+                <td class="first-row" th:text="${orbit?.spacecraftCode}"></td>
+                <td class="first-row" th:text="${orbit?.orbitNumber}"></td>
+                <td class="first-row" th:text="${orbit?.startTime}"></td>
+                <td class="first-row" th:text="${orbit?.stopTime}"></td>
+              </tr>
+              </div>
+            </tbody>
+          </table>
+        <div th:replace="fragments/navbar.html :: pagenav"></div>
+        </div>
+      <div th:insert="fragments/footer.html :: footer"></div>
+      </main>
+    </div>
+  </div>
+</body>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.5.1.js"
+    integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+    crossorigin="anonymous"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script
+    src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+    integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+    crossorigin="anonymous"></script>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
+  <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
+  <script src="../static/fragments/proseo-date.js" th:src="@{/fragments/proseo-date.js}" type="text/javascript"></script>    
+
+<script type="text/javascript" th:inline="javascript">
+
+function getDate(val, up) {
+	  var start = new ProseoDate(val, 'TIME');
+	  if (start == null || !start.isValid()) {
+	    start = new ProseoDate(val, 'DAYHOURS');
+	  }
+	  if (start == null || !start.isValid()) {
+	    start = new ProseoDate(val, 'DAY');
+	    if (up && start.isValid()) {
+	      start.norm(-1);
+	    }
+	  }
+	  return start;
+	}
+
+	function getDateString(val, up) {
+	  var date = getDate(val, up);
+	  if (date != null && date.isValid()) {
+	    return (date.toString())
+	  } else {
+	    return null;
+	  }
+	}
+
+	function checkTime(elem) {
+	    var startElem = null;
+	    if (elem != null && $(elem).is('input')) {
+	        startElem = $(elem);
+	    } else {
+	        startElem = $(this);
+	    }
+	    var type = startElem.attr('data-type');
+	    if (type == null) return;
+	    var start = null;
+	    if (startElem.val() != '' && startElem[0].checkValidity()) {
+	      start = getDate(startElem.val());
+	    }
+	    if (startElem.val() == '' || (start != null && start.isValid())) {
+	      startElem[0].setCustomValidity('');
+	    } else {
+	      startElem[0].setCustomValidity([[#{invaliddate}]]);
+	    }
+	    startElem[0].form.classList.add('was-validated')
+	}
+	
+	function submit() {
+	  if (!$('#orbit-shw')[0].checkValidity()) {
+	    event.preventDefault();
+	    event.stopPropagation();
+	    $('#orbit-shw')[0].classList.add('was-validated');
+	  } else {
+	    $('#orbit-shw')[0].classList.add('was-validated');
+	    retrieveDataPage(0, 25);
+	  }
+	}
+	
+	function setSelected() {
+	    // $('#sp').val(getURLParam('sp'));
+	    $('#startTimeFrom').val(getURLParam('startTimeFrom'));
+	    $('#startTimeTo').val(getURLParam('startTimeTo'));
+	    $('#numberFrom').val(getURLParam('numberFrom'));
+	    $('#numberTo').val(getURLParam('numberTo'));
+	}
+
+	function setParams() {
+	    var loc = location.search.slice(0);
+	    var search = location.search.slice(1);
+	    var paramString = search;
+	    // search = removeURLKeyPrim('sp', search);
+	    search = removeURLKeyPrim('startTimeFrom', search);
+	    search = removeURLKeyPrim('startTimeTo', search);
+	    search = removeURLKeyPrim('numberFrom', search);
+	    search = removeURLKeyPrim('numberTo', search);
+	    // searchTmp = addURLParamValuePrim('sp', $('#sp').val(), search);
+	    // if (searchTmp != null) {search = searchTmp};
+	      var searchTmp = addURLParamValuePrim('startTimeFrom', getDateString($('#startTimeFrom').val(), false), search);
+	      if (searchTmp != null) {search = searchTmp};
+	      searchTmp = addURLParamValuePrim('startTimeTo', getDateString($('#startTimeTo').val(), true), search);
+	      if (searchTmp != null) {search = searchTmp};
+	      searchTmp = addURLParamValuePrim('numberFrom', $('#numberFrom').val(), search);
+	      if (searchTmp != null) {search = searchTmp};
+	      searchTmp = addURLParamValuePrim('numberTo', $('#numberTo').val(), search);
+	      if (searchTmp != null) {search = searchTmp};
+	    if (search != loc) {
+	        if (search == '') {
+	          search = '?';
+	        }
+	        history.pushState({}, null, search);
+	    }
+	}
+
+function retrieveDataPage(from, to) {
+    setParams();
+    var spacecraft = getURLParam('sp');
+    var startTimeFrom = getURLParam('startTimeFrom');
+    var startTimeTo = getURLParam('startTimeTo');
+    var numberFrom = getURLParam('numberFrom');
+    var numberTo = getURLParam('numberTo');
+    retrieveData(spacecraft, startTimeFrom, startTimeTo, numberFrom, numberTo, from, to);
+}
+
+function addEventHandler() {
+    $("input[name='startTimeFrom']").change(checkTime);
+    $("input[name='startTimeTo']").change(checkTime);   
+};
+
+
+function retrieveData(sp, startTimeFrom, startTimeTo, numberFrom, numberTo, from, to) {
+    if ([[${hasrolemissionreader}]]) {
+        showLoader();
+        var tableRows = $("orbitTable").rows;
+        if(tableRows > 1 && tableRows != null) {
+            $("orbitTable > tbody").empty();
+        }
+        var url = "/orbits/get";      
+        var divider = "?";
+        
+        if (sp != null) {
+            url = url + divider + "spacecraft=" + sp.toString().trim();
+            divider = "&";
+        }
+        if (startTimeFrom != null) {
+            url = url + divider + "startTimeFrom=" + startTimeFrom;
+            divider = "&";
+        }
+        if (startTimeTo != null) {
+            url = url + divider + "startTimeTo=" + startTimeTo;
+            divider = "&";
+        }
+        if (numberFrom != null) {
+            url = url + divider + "numberFrom=" + numberFrom;
+            divider = "&";
+        }
+        if (numberTo != null) {
+            url = url + divider + "numberTo=" + numberTo;
+            divider = "&";
+        }
+        if (from != null) {
+            url = url + divider + "recordFrom=" + from;
+            divider = "&";
+        }
+        if (to != null) {
+            url = url + divider + "recordTo=" + to;
+            divider = "&";
+        }
+        
+        $.ajax({
+            url: url,
+            method: "GET",
+            success: function (res) {
+                $("#orbitcontent").html(res);
+                feather.replace();
+                setSelected();
+                scrollToHash();
+                hideLoader();
+                addEventHandler();
+            },
+            fail: function (err) {
+                hideLoader();
+                console.log(err);
+                prop.innerHTML = "Fehler!" + err;
+            }
+
+        });
+    }
+};
+</script>
+<script>
+    window.onload = function () {
+     // $('.collapse').collapse();
+     var elem = document.getElementById('sb-orbit');
+     $(elem).addClass('active');
+     retrieveDataPage(0, 25);
+     feather.replace();
+     
+     // correct scroll due to "sticky" elements
+     var handler = function ( ) {
+        var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+                + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+        window.scrollBy(0, h);
+      };
+      window.addEventListener('hashchange', handler);
+     
+    }
+</script>
+
+</html>

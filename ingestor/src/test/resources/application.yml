@@ -1,0 +1,34 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+        open-in-view: false
+        properties.hibernate.jdbc.time_zone: UTC
+    datasource:
+        url: jdbc:postgresql://localhost:5432/proseo
+        username: postgres
+        password: sequel09Master
+logging:
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE
+proseo:
+    productionPlanner:
+        url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/5SS2aW/planner
+        # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
+        filecheckwaittime: 1000
+        filecheckmaxcycles: 50
+        
+# Test configuration
+    storageManager:
+        url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/VYrwNF/storage-mgr
+        secret: MyVeryLongSecretMustBeAtLeast32Bytes
+        validity: 60000
+    testuser:
+        name: testuser
+        password: testpassword
+    testinput:
+        directory: src/test/resources/IDA_test
+        files:
+            - /L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__CLOUD__20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc
+            - /L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__FRESCO_20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc

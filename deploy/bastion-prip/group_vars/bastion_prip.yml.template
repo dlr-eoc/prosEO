@@ -1,0 +1,5 @@
+---
+nginx_users:
+- proseoadmin: put_password_here
+
+rkhunter_email: <rkhunter alert email address>

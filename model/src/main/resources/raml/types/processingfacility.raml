@@ -1,0 +1,48 @@
+#%RAML 1.0 DataType
+#  RestProcessingFacility:
+    type: object
+    properties:
+      id?:
+        type: integer
+        format: long
+        description: The persistent id of this object
+      version?:
+        type: integer
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      name:
+        type: string
+        description: The facility name (unique key)
+      facilityState:
+        type: string
+        description: The run state the facility currently is in
+      description?:
+        type: string
+        description: A short description of the processing facility
+      processingEngineUrl?:
+        type: string
+        description: The URL to access this facility's processing engine (Kubernetes instance)
+      processingEngineToken?:
+        type: string
+        description: Authentication token for connecting to this facility's processing engine (Kubernetes instance)
+      maxJobsPerNode?:
+        type: integer
+        description: Maximum number of jobs schedulable per worker node (default 1)
+      storageManagerUrl:
+        type: string
+        description: The URL to access this facility's storage manager from the control instance
+      externalStorageManagerUrl:
+        type: string
+        description: The URL to access this facility's storage manager from an external client (via PRIP API)
+      localStorageManagerUrl?:
+        type: string
+        description: URL of the locally accessible Storage Manager
+      storageManagerUser:
+        type: string
+        description: User name for connecting to the Storage Manager (locally and from external services)
+      storageManagerPassword:
+        type: string
+        description: Password for connecting to the Storage Manager (locally and from external services)
+      defaultStorageType:
+        type: string
+        description: The type of the storage
+        pattern: ^(S3|ALLUXIO|POSIX|OTHER)$

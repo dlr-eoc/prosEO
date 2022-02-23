@@ -1,0 +1,104 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>de.dlr.proseo</groupId>
+		<artifactId>proseo</artifactId>
+		<version>0.8.2</version>
+	</parent>
+
+	<artifactId>proseo-interfaces</artifactId>
+	<name>prosEO REST Interface Classes</name>
+	<description>Convenience classes for the use of the prosEO REST API</description>
+
+
+	<url>https://github.com/dlr-eoc/prosEO/interfaces</url>
+	<organization>
+		<name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
+		<url>http://www.dlr.de</url>
+	</organization>
+
+	<properties>
+        <module.version>0.8.2</module.version>
+		<main.basedir>${basedir}/../..</main.basedir>
+		<raml-path>src/test/resources/raml/interface-test.raml</raml-path>
+		<raml-base-package>de.dlr.proseo.interfaces</raml-base-package>
+	</properties>
+
+	<dependencies>
+	    <!-- Only for (unnecessary, but unavoidable) javadoc of generated DummyController -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.phoenixnap.oss</groupId>
+            <artifactId>springmvc-raml-plugin</artifactId>
+            <version>${raml-plugin-version}</version>
+            <type>maven-plugin</type>
+        </dependency>
+        <!-- Implicit dependencies for classes generated from RAML spec -->
+        <!-- https://mvnrepository.com/artifact/commons-lang/commons-lang -->
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
+        </dependency>
+	</dependencies>
+
+	<build>
+		<finalName>proseo-interfaces</finalName>
+		<plugins>
+			<!-- Add generated sources to Maven source directories -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>add-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<!-- where to find the generated sources -->
+								<source>${raml-output-path}</source>
+							</sources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Generate convenience parameter classes for REST interfaces from RAML files -->
+			<plugin>
+				<groupId>com.phoenixnap.oss</groupId>
+				<artifactId>springmvc-raml-plugin</artifactId>
+				<configuration>
+					<basePackage>${raml-base-package}.rest</basePackage>
+					<rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerStubRule</rule>
+				</configuration>
+				<executions>
+					<execution>
+						<id>generate-springmvc-endpoints</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate-springmvc-endpoints</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<!-- Exclude generated dummy client from compilation -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<excludes>
+					   <exclude>**/Dummy*</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>

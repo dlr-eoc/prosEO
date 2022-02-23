@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<restMockResponse>
+    <body>{&#13;
+  "productId": "123",&#13;
+  "sourceStorageType": "S3",&#13;
+  "sourceFilePaths": [&#13;
+    "s3://proseo-s5p-main/integration-test/testdata/PTM_L0_20191104090000_20191104094500_20191104120000.RAW"&#13;
+  ],&#13;
+  "targetStorageId": "proseo-data-001",&#13;
+  "targetStorageType": "S3",&#13;
+  "registeredFilePath": "s3://proseo-data-001/123/1574197047/",&#13;
+  "registered": true,&#13;
+  "registeredFilesCount": 1,&#13;
+  "registeredFilesList": [&#13;
+    " s3://proseo-data-001/123/1574197047/integration-test/testdata/S5P_OFFL_L2__CLOUD__20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc"&#13;
+  ],&#13;
+  "deleted": false,&#13;
+  "message": "registration executed on node storage-mgr-pqlz8"&#13;
+}</body>
+    <contentEncodings/>
+    <headerQueries/>
+    <httpHeaders/>
+    <httpStatusCode>201</httpStatusCode>
+    <id>tsjWgy</id>
+    <jsonPathExpressions/>
+    <methodId>m1UidH</methodId>
+    <name>Product stored</name>
+    <parameterQueries/>
+    <status>ENABLED</status>
+    <usingExpressions>true</usingExpressions>
+    <xpathExpressions/>
+</restMockResponse>

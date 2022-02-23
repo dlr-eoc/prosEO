@@ -1,0 +1,27 @@
+---
+# Configure bastion host for prosEO PRIP and Storage Manager access
+- hosts: bastion_prip
+  become: true
+  vars:
+    kubectl_users:
+    - proseoadmin
+    - root
+    sudoers:
+    - proseoadmin
+    firewall_services:
+    - http
+    - https
+    kubectl_proxy_port: 8001
+  roles:
+  - configure_users
+  - configure_sshd
+  - hardening
+  - configure_firewall
+  - configure_nginx_proxy
+  
+  tasks:
+  
+  - name: Set hostname
+    hostname:
+      name: bastion-prip
+  

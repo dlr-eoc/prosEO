@@ -1,0 +1,31 @@
+version: '3'
+services:
+  grafana:
+    hostname: grafana
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    volumes:
+      - /opt/proseo/log/grafana:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=proseoadmin
+      - GF_SECURITY_ADMIN_PASSWORD=VVRVOzcXe1PsvpWnFpqbPWoB
+      - GF_SERVER_ROOT_URL=/proseo/grafana/
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+
+  monitor:
+    hostname: monitor
+    image: proseo-registry.eoc.dlr.de/proseo-monitor:0.8.2-proseo
+    ports:
+      - 8080:8080
+    volumes:
+      - /opt/proseo/log/monitor:/proseo/log
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped

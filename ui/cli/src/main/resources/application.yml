@@ -1,0 +1,34 @@
+spring:
+    main:
+        web-application-type: NONE
+logging:
+    level:
+        root: INFO
+        org.apache.http: INFO
+        de.dlr.proseo: TRACE
+    file: proseo-ui-cli.log
+proseo:
+    cli:
+        syntaxfile: ui-cli-syntax.yml
+    
+    # Configuration for local deployment
+    userManager:
+        url: http://localhost:8086/proseo/user-mgr/v0.1
+    ingestor:
+        url: http://localhost:8081/proseo/ingestor/v0.1
+    orderManager:
+        url: http://localhost:8082/proseo/order-mgr/v0.1
+    productionPlanner:
+        url: http://localhost:8083/proseo/planner/v0.1
+        # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
+        filecheckwaittime: 1000
+        filecheckmaxcycles: 50
+    processorManager:
+        url: http://localhost:8084/proseo/processor-mgr/v0.1
+    productClassManager:
+        url: http://localhost:8085/proseo/productclass-mgr/v0.1
+    facilityManager:
+        url: http://localhost:8087/proseo/facility-mgr/v0.1
+        
+    # Connection timeout in ms
+    http.timeout: 10000

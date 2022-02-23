@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+  <!--/mnt/sw/TLE/bin/jo2xml.pl V1.0.2 @ 2019-04-25T16:05:32: Converted '/mnt/data1/storage_offl_l2/cache_offl_l2/WORKING-609521565/JobOrder.609521551.yml' to 'JobOrder.609521551.xml'-->
+<Ipf_Job_Order>
+  <Ipf_Conf>
+    <Processor_Name>CO____</Processor_Name>
+    <Version>01.03.01</Version>
+    <Stdout_Log_Level>INFO</Stdout_Log_Level>
+    <Stderr_Log_Level>WARNING</Stderr_Log_Level>
+    <Test>false</Test>
+    <Breakpoint_Enable>true</Breakpoint_Enable>
+    <Processing_Station>PDGS-OP</Processing_Station>
+    <Acquisition_Station>PDGS-GSN</Acquisition_Station>
+    <Sensing_Time>
+      <Start>20180105_075307000000</Start>
+      <Stop>20180105_093437000000</Stop>
+    </Sensing_Time>
+    <Config_Files/>
+    <Dynamic_Processing_Parameters>
+      <Processing_Parameter>
+        <Name>logging.root</Name>
+        <Value>notice</Value>
+      </Processing_Parameter>
+      <Processing_Parameter>
+        <Name>logging.dumplog</Name>
+        <Value>null</Value>
+      </Processing_Parameter>
+      <Processing_Parameter>
+        <Name>Threads</Name>
+        <Value>9</Value>
+      </Processing_Parameter>
+      <Processing_Parameter>
+        <Name>orbit number</Name>
+        <Value>01191</Value>
+      </Processing_Parameter>
+      <Processing_Parameter>
+        <Name>Processing_Mode</Name>
+        <Value>OFFL</Value>
+      </Processing_Parameter>
+      <Processing_Parameter>
+        <Name>Deadline_Time</Name>
+        <Value>20190425_163530000000</Value>
+      </Processing_Parameter>
+    </Dynamic_Processing_Parameters>
+  </Ipf_Conf>
+  <List_of_Ipf_Procs count="1">
+    <Ipf_Proc>
+      <Task_Name>TROPNLL2DP</Task_Name>
+      <Task_Version>01.03.01</Task_Version>
+      <List_of_Inputs count="18">
+        <Input>
+          <File_Type>CFG_CO____</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="ALLUXIO">/tiles/33/J/YJ/2019/6/23/0/R10m/B02.jp2</File_Name>
+          </List_of_File_Names>
+        </Input>
+        <Input>
+          <File_Type>CFG_CO___F</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="ALLUXIO">/tiles/33/J/YJ/2019/6/23/0/R10m/B03.jp2</File_Name>
+          </List_of_File_Names>
+        </Input>
+        <Input>
+          <File_Type>REF_SOLAR_</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="S3">s3://data/file03.txt</File_Name>
+          </List_of_File_Names>
+        </Input>
+        <Input>
+          <File_Type>REF_XS__CO</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="S3">s3://data/file04.txt</File_Name>
+          </List_of_File_Names>
+        </Input>
+        <Input>
+          <File_Type>AUX_ISRF__</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="S3">s3://data/file05.txt</File_Name>
+          </List_of_File_Names>
+        </Input>
+        <Input>
+          <File_Type>AUX_CTMCH4</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="3">
+            <File_Name FS_TYPE="S3">s3://data/file06.txt</File_Name>
+            <File_Name FS_TYPE="ALLUXIO">/tiles/33/J/YJ/2019/6/23/0/R10m/B04.jp2</File_Name>
+            <File_Name FS_TYPE="ALLUXIO">/tiles/33/J/YJ/2019/6/23/0/R10m/B08.jp2</File_Name>
+          </List_of_File_Names>
+        </Input>
+        <Input>
+          <File_Type>L1B_IR_SIR</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="S3">s3://data/file07.txt</File_Name>
+          </List_of_File_Names>
+        </Input>
+        <Input>
+          <File_Type>L1B_RA_BD1</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="S3">s3://data/file08.txt</File_Name>
+          </List_of_File_Names>
+        </Input>
+        <Input>
+          <File_Type>L1B_RA_BD2</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="S3">s3://data/file09.txt</File_Name>
+          </List_of_File_Names>
+        </Input>
+        <Input>
+          <File_Type>L1B_RA_BD3</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="S3">s3://data/file10.txt</File_Name>
+          </List_of_File_Names>
+        </Input>
+        <Input>
+          <File_Type>L1B_RA_BD4</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="S3">s3://data/file11.txt</File_Name>
+          </List_of_File_Names>
+        </Input>
+        <Input>
+          <File_Type>L1B_RA_BD5</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="S3">s3://data/file12.txt</File_Name>
+          </List_of_File_Names>
+        </Input>
+        <Input>
+          <File_Type>L1B_RA_BD6</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="S3">s3://data/file13.txt</File_Name>
+          </List_of_File_Names>
+        </Input>
+        <Input>
+          <File_Type>L1B_RA_BD7</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="S3">s3://data/file14.txt</File_Name>
+          </List_of_File_Names>
+        </Input>
+        <Input>
+          <File_Type>L1B_RA_BD8</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="S3">s3://data/file15.txt</File_Name>
+          </List_of_File_Names>
+        </Input>
+        <Input>
+          <File_Type>AUX_MET_TP</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="S3">s3://data/file16.txt</File_Name>
+          </List_of_File_Names>
+        </Input>
+        <Input>
+          <File_Type>AUX_MET_2D</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="S3">s3://data/file17.txt</File_Name>
+          </List_of_File_Names>
+        </Input>
+        <Input>
+          <File_Type>AUX_MET_QP</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="S3">s3://data/file18.txt</File_Name>
+          </List_of_File_Names>
+        </Input>
+      </List_of_Inputs>
+      <List_of_Outputs count="3">
+        <Output Product_ID="7397129831">
+          <File_Type>L2__CO____</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="ALLUXIO">results_A/result01.txt</File_Name>
+          </List_of_File_Names>
+        </Output>
+        <Output Product_ID="7397129832">
+          <File_Type>L2__CO____</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="ALLUXIO">alluxio://results_B/result02.txt</File_Name>
+          </List_of_File_Names>
+        </Output>
+        <Output Product_ID="7397129833">
+          <File_Type>L2__CO____</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="S3">s3://results_C/result03.txt</File_Name>
+          </List_of_File_Names>
+        </Output>
+      </List_of_Outputs>
+    </Ipf_Proc>
+  </List_of_Ipf_Procs>
+</Ipf_Job_Order>

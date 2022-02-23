@@ -1,0 +1,41 @@
+#%RAML 1.0 DataType
+#  RestConfiguration:
+    type: object
+    properties:
+      id?:
+        type: integer
+        format: long
+        description: The persistent id of this object
+      version?:
+        type: integer
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      missionCode:
+        type: string
+        description: The mission code (e. g. S5P)
+      processorName:
+        type: string
+        description: The processor class this configuration version belongs to
+      configurationVersion:
+        type: string
+        description: Version identification of the configuration environment
+      mode?:
+        type: string
+        description: The processing mode, for which this configuration is valid; optional, if set, must match mission processing modes
+      dynProcParameters:
+        type: RestParameter[]
+        description: Dynamic processing parameters, the values denoting default values, which may be changed by the Job Order File generator
+      productQuality?:
+        type: string
+        description: Indicates the suitability for general use of products generated with this configuration (NOMINAL, EXPERIMENTAL, TEST; default NOMINAL)
+      configurationFiles:
+        type: RestConfigurationFile[]
+        description: The configuration files for this configuration
+      staticInputFiles:
+        type: RestConfigurationInputFile[]
+        description: Static input files for inclusion in generated Job Order Files
+      configuredProcessors:
+        type: string[]
+        description: The names for the processor configurations this processor version is valid for
+      dockerRunParameters:
+        type: RestStringParameter[]
+        description: Specific parameter for "docker run" valid for this configuration

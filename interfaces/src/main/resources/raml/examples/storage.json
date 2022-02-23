@@ -1,0 +1,5 @@
+{
+    "id": "proseo-l1bstorage-v001",
+    "storageType" : "S3",
+    "description": "prosEO-FS for L1B products"
+}

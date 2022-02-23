@@ -1,0 +1,23 @@
+[
+    {
+        "id": 3367251,
+        "version": 4,
+        "identifier": "KNMI L2 01.03.02 2019-03-30",
+        "uuid": "3fcab4f3-457a-4424-9287-269286e5c03c",
+        "missionCode": "S5P",
+        "processorName": "KNMI L2",
+        "processorVersion": "01.03.02",
+        "configurationVersion": "2019-03-30"
+    },
+    {
+        "id": 3367252,
+        "version": 2,
+        "identifier": "KNMI L2 01.03.02 2019-04-27",
+        "uuid": "2bfd2856-aec7-4d45-bcc0-6418857c448c",
+        "missionCode": "S5P",
+        "processorName": "KNMI L2",
+        "processorVersion": "01.03.02",
+        "configurationVersion": "2019-04-27",
+        "enabled": false
+    }
+]

@@ -1,0 +1,411 @@
+#%RAML 1.0
+title: prosEO Production Planner REST Services API
+version: v0.1
+protocols: [ HTTP, HTTPS ] 
+baseUri: /proseo/planner/{version}
+mediaType: application/json
+
+types:
+  RestInputFilter: !include ../../../../../model/src/main/resources/raml/types/inputfilter.raml
+  RestClassOutputParameter: !include ../../../../../model/src/main/resources/raml/types/classoutputparameter.raml
+  RestJob: !include ../../../../../model/src/main/resources/raml/types/job.raml
+  RestJobStep: !include ../../../../../model/src/main/resources/raml/types/jobstep.raml
+  RestOrbit: !include ../../../../../model/src/main/resources/raml/types/orbit.raml
+  RestOrder: !include ../../../../../model/src/main/resources/raml/types/order.raml
+  RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
+  RestOrbitQuery: !include ../../../../../model/src/main/resources/raml/types/orbitquery.raml
+  RestProcessingFacility: !include ../../../../../model/src/main/resources/raml/types/processingfacility.raml
+  PlannerPod: !include ../../../../../interfaces/src/main/resources/raml/types/planner-pod.raml
+  RestJobGraph: !include ../../../../../interfaces/src/main/resources/raml/types/jobgraph.raml
+  RestJobStepGraph: !include ../../../../../interfaces/src/main/resources/raml/types/jobstepgraph.raml
+  RestId: !include ../../../../../interfaces/src/main/resources/raml/types/id.raml
+
+resourceTypes:
+  standard:
+    get?:
+      responses:
+        400:
+          description: |
+            The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
+        404:
+          description: |
+            The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
+    put?:
+      responses:          
+        404:
+          description: |
+            The requested resource on which the modification is being attempted was not found              
+          headers:
+            Warning: !include types/error.raml
+    delete?:
+      responses:          
+        404:
+          description: | 
+            The requested resource to delete was not found 
+          headers:
+            Warning: !include types/error.raml
+/orders:
+  type: standard
+  get:
+    description: Get all processing orders
+    displayName: getOrders
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestOrder[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/order-list.json
+  /{id}:
+    get:
+      description: Get processing order of id 
+      displayName: getOrder
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestOrder
+              example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+    delete:
+      description: Delete processing order of id 
+      displayName: deleteOrder
+      responses:
+        204:
+  /approve:
+    /{id}:
+      patch:
+        description: Approve processing order of id 
+        displayName: approveOrder
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestOrder
+                example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+  /plan:
+    /{id}:
+      put:
+        description: Plan processing order of id on processing facility
+        displayName: planOrder
+        queryParameters:
+          facility: string
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestOrder
+                example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+  /release:
+    /{id}:
+      patch:
+        description: Release processing order of id 
+        displayName: releaseOrder
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestOrder
+                example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+  /resume:
+    /{id}:
+      patch:
+        description: Resume processing order of id 
+        displayName: resumeOrder
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestOrder
+                example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+  /reset:
+    /{id}:
+      patch:
+        description: Reset processing order of id 
+        displayName: resetOrder
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestOrder
+                example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+  /cancel:
+    /{id}:
+      patch:
+        description: Cancel processing order of id 
+        displayName: cancelOrder
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestOrder
+                example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+  /retry:
+    /{id}:
+      patch:
+        description: Retry processing order of id 
+        displayName: retryOrder
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestOrder
+                example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+  /close:
+    /{id}:
+      patch:
+        description: Close processing order of id 
+        displayName: closeOrder
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestOrder
+                example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+  /suspend:
+    /{id}:
+      patch:
+        description: Suspend processing order of id 
+        displayName: suspendOrder
+        queryParameters:
+          force?: boolean
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestOrder
+                example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+    
+/jobs:
+  type: standard
+  get:
+    description: Get production planner jobs by state
+    displayName: getJobs
+    queryParameters:
+      state?: string
+      orderid?: 
+        type: integer
+        format: long
+        description: The persistent id of the processing order
+      recordFrom?: integer
+      recordTo?: integer
+      logs?: boolean
+      orderBy?:
+        type: string[]
+        description: an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestJob[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/job-list.json  
+  /count:
+    type: standard
+    get:
+      description: Get number of jobs, possibly filtered by state and processing order 
+      displayName: countJobs
+      queryParameters:
+        state?: string
+        orderid?: 
+          type: integer
+          format: long
+          description: The persistent id of the processing order
+      responses:
+        200:
+          body:
+            text/plain:
+
+  /{name}:
+    get:
+      description: Get production planner job
+      displayName: getJob
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestJob
+              example: !include ../../../../../model/src/main/resources/raml/examples/job.json
+  /resume:
+    /{id}:
+      patch:
+        description: Resume job of id 
+        displayName: resumeJob
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestJob
+                example: !include ../../../../../model/src/main/resources/raml/examples/job.json
+  /cancel:
+    /{id}:
+      patch:
+        description: Cancel job of id 
+        displayName: cancelJob
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestJob
+                example: !include ../../../../../model/src/main/resources/raml/examples/job.json
+  /suspend:
+    /{id}:
+      patch:
+        description: Suspend job of id 
+        displayName: suspendJob
+        queryParameters:
+          force?: boolean
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestJob
+                example: !include ../../../../../model/src/main/resources/raml/examples/job.json
+
+  /retry:
+    /{id}:
+      patch:
+        description: Retry job of id 
+        displayName: retryJob
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestJob
+                example: !include ../../../../../model/src/main/resources/raml/examples/job.json
+  /graph:
+    /{id}:
+      get:
+        description: Dependencies of all job steps of job
+        displayName: graphJobSteps
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestJobGraph
+                example: !include ../../../../../interfaces/src/main/resources/raml/examples/jobgraph.json
+/jobsteps:
+  type: standard
+  get:
+    description: Get production planner jobsteps
+    displayName: getJobSteps
+    queryParameters:
+      status?:
+        type: string
+        enum: [ INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED, NONE ]
+      mission?: string
+      last?: integer
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestJobStep[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/jobstep-list.json
+  /{name}:
+    get:
+      description: Get production planner jobstep
+      displayName: getJobStep
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestJobStep
+              example: !include ../../../../../model/src/main/resources/raml/examples/jobstep.json
+  /resume:
+    /{id}:
+      patch:
+        description: Resume job step of id 
+        displayName: resumeJobStep
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestJobStep
+                example: !include ../../../../../model/src/main/resources/raml/examples/jobstep.json
+  /cancel:
+    /{id}:
+      patch:
+        description: Cancel job step of id 
+        displayName: cancelJobStep
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestJobStep
+                example: !include ../../../../../model/src/main/resources/raml/examples/jobstep.json
+  /suspend:
+    /{id}:
+      patch:
+        description: Suspend job step of id 
+        displayName: suspendJobStep
+        queryParameters:
+          force?: boolean
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestJobStep
+                example: !include ../../../../../model/src/main/resources/raml/examples/jobstep.json
+  /retry:
+    /{id}:
+      patch:
+        description: Retry job step of id 
+        displayName: retryJobStep
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestJobStep
+                example: !include ../../../../../model/src/main/resources/raml/examples/jobstep.json
+
+/processingfacilities:
+  type: standard
+  get:
+    description: Update and get running and connected processing facilities
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestProcessingFacility[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility-list.json
+  /{name}:
+    get:
+      description: Get production planner processingfacilitiy by name 
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestProcessingFacility
+              example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
+    /finish:
+      /{podname}:
+        post:
+          description: Pod of name has finished with state
+          displayName: finishKubeJob
+          queryParameters:
+            status: string
+          responses:
+            200:
+              body:
+                application/json:
+                  type: PlannerPod
+  /synchronize:
+    /{name}:
+      get:
+        description: Update and get running and connected processing facilities
+        displayName: synchronizeFacility
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestProcessingFacility
+                example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
+/product:
+  /{productid}:
+    get:
+      description: Product created and available, sent by prosEO Ingestor
+      responses:
+        200:
+        
+                

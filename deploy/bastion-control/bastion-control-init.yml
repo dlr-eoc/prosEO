@@ -1,0 +1,24 @@
+---
+# Configure bastion host for prosEO Control Instance
+- hosts: bastion_control
+  become: true
+  vars:
+    kubectl_users:
+    - proseoadmin
+    - root
+    sudoers:
+    - proseoadmin
+    firewall_services:
+    - http
+    - https
+    kubectl_proxy_port: 8001
+
+  roles:
+  - configure_users
+  - configure_sshd
+  - hardening
+
+  tasks:
+  - name: Set hostname
+    hostname:
+      name: bastion-control

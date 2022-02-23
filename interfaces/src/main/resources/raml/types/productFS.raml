@@ -1,0 +1,32 @@
+#%RAML 1.0 DataType
+# RestProductFS:
+    type: object
+    properties:
+      #the product id of the final registered file/dir (used for request/response)
+      productId: string
+      #the storage type of the source file/dir (used for request/response)
+      sourceStorageType:
+        type: string
+        description: The type of the storage
+        pattern: ^(S3|ALLUXIO|POSIX|OTHER)$
+      #the path/URI of the source file/dir (used for request/response)
+      sourceFilePaths: string[]
+      #the prosEO-storageID of the target file/dir (used for response)
+      targetStorageId?: string
+      #the storage type of the target file/dir (used for request/response)
+      targetStorageType:
+        type: string
+        description: The type of the storage
+        pattern: ^(S3|ALLUXIO|POSIX|OTHER)$
+      #the final registerd path within prosEO storage (used for response)
+      registeredFilePath?: string
+      #Register success/failure (used for response)
+      registered?: boolean
+      #Number of registered files (used for response)
+      registeredFilesCount?: integer
+      #registered fileList (used for response)
+      registeredFilesList?: string[]
+      #Deleted success/failure (used for response)
+      deleted?: boolean
+      #message property in case of errors (used for response)
+      message?: string

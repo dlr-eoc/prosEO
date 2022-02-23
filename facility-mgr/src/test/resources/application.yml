@@ -1,0 +1,16 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+        open-in-view: false
+        properties.hibernate.jdbc.time_zone: UTC
+    datasource:
+        url: jdbc:postgresql://localhost:5432/proseo
+        username: postgres
+        password: sequel09Master
+    packagesToScan: de.dlr.proseo.model
+logging:
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE
+

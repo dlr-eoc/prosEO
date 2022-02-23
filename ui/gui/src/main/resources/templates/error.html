@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+  <head>
+    <meta charset="utf-8">
+      <meta name="viewport"
+        content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title th:text="#{error}">Error!</title>
+        <!-- Bootstrap core CSS -->
+        <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+          integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
+          crossorigin="anonymous" />
+
+          <!-- Custom styles for prosEO -->
+          <link href="../static/fragments/proseo.css" th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css" />
+          <link rel="stylesheet" href="../static/fragments/bootstrap-multiselect.css" th:href="@{/fragments/bootstrap-multiselect.css}" type="text/css"/>
+  </head>
+
+<body>
+
+    <h1>Ooops! Something went wrong</h1>
+    <div class = "container">
+    <table>
+        <tr>
+            <td>Date</td>
+            <td th:text="${#dates.format(#execInfo.now, 'yyyy-MM-dd HH:mm:ss')}"></td>
+        </tr>
+        <tr>
+            <td>Error</td>
+            <td th:text="${error}"></td>
+        </tr>
+        <tr>
+            <td>Status</td>
+            <td th:text="${status}"></td>
+        </tr>
+        <tr>
+            <td>Message</td>
+            <td th:text="${message}"></td>
+        </tr>
+        <tr>
+            <td>Exception</td>
+            <td th:text="${exception}"></td>
+        </tr>
+        <tr>
+            <td>Trace</td>
+            <td>
+                <pre th:text="${trace}"><</pre>
+            </td>
+        </tr>
+    </table>
+    </div>
+</body>
+</html>

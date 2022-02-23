@@ -1,0 +1,64 @@
+logging:
+    file: /proseo/log/proseo-storage-mgr.log
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE
+proseo:
+    global:
+      storageIdPrefix: proseo
+
+    s3:
+      s3AccessKey: XXXX
+      s3SecretAccessKey: XXXX
+      s3EndPoint: https://my.cloud.provider.com 
+      s3Region: eu-de
+      s3MaxNumberOfBuckets: 50
+      s3DefaultBucket: proseo-backend
+
+    alluxio:
+      alluxioUnderFsS3Bucket: proseo-backend-alluxio
+      alluxioUnderFsS3BucketPrefix: underfs
+
+      # Alluxio configuration values currently not in use       
+#      alluxioUnderFsDefaultPrefix: proseo-alluxio-cache
+#      alluxioUnderFsS3BucketEndPoint: https://my.cloud.provider.com
+#      alluxioUnderFsMaxPrefixes: 500
+
+    posix:
+      # Mount point for backend storage (must be different from cachePath)
+      backendPath: /proseo/data/backend
+      # Mount point for file cache
+      cachePath: /proseo/data/cache
+      
+    joborder:
+      bucket: otc-proseo01-internal
+      prefix: joborders
+      
+    storageManager:
+      # Default type for backend storage
+      defaultStorageType: POSIX
+      
+      # Control checks on input files
+      filecheck:
+        # Wait time between checks
+        waittime: 500
+        # Maximum number of checks
+        maxcycles: 600
+      
+      # Shared secret for download token
+      secret: MyVeryLongSecretMustBeAtLeast32Bytes
+       
+      # File cache control
+      cache:
+        # Recommended minimum cache usage for efficient operation (percentage of file system size)
+        expectedUsage: 75
+        # Maximum cache usage (percentage of file system size)
+        maximumUsage: 85
+
+    # Alluxio configuration values currently not in use       
+#    mountpoints:
+#     #ALLUXIO-properties are only used for answering GET-requests on endpoint /info
+#      alluxio:
+#        k8sNode:
+#          alluxioCache: /mnt/alluxio
+#          alluxioFuse: /alluxio-fuse

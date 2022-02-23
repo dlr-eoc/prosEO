@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>de.dlr.proseo</groupId>
+        <artifactId>proseo</artifactId>
+        <version>0.8.2</version>
+    </parent>
+
+	<artifactId>proseo-base-wrapper</artifactId>
+	<name>prosEO Base Processor Wrapper</name>
+	<description>prosEO Base Processor Wrapper for externally developed, ESA-IPF-conformant processors providing procedures to execute before the start and after the end of the processor</description>
+
+	<url>https://github.com/dlr-eoc/prosEO/base-wrapper</url>
+	<organization>
+		<name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
+		<url>http://www.dlr.de</url>
+	</organization>
+
+	<properties>
+		<module.version>0.8.2</module.version>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/commons-logging/commons-logging -->
+		<dependency>
+		    <groupId>commons-logging</groupId>
+		    <artifactId>commons-logging</artifactId>
+		    <version>1.2</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/junit/junit -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>3.0.2.Final</version>
+        </dependency>
+		<dependency>
+			<groupId>javax.ws.rs</groupId>
+			<artifactId>javax.ws.rs-api</artifactId>
+			<version>2.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>de.dlr.proseo</groupId>
+			<artifactId>proseo-common</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>de.dlr.proseo</groupId>
+			<artifactId>proseo-interfaces</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<finalName>proseo-base-wrapper</finalName>
+		<pluginManagement>
+		    <plugins>
+	            <plugin>
+	                <artifactId>maven-site-plugin</artifactId>
+	                <version>${maven-site-plugin.version}</version>
+	            </plugin>
+		    </plugins>
+		</pluginManagement>
+		<plugins>
+			<!-- Build self-contained JAR -->
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<archive>
+						<manifest>
+							<addClasspath>true</addClasspath>
+							<mainClass>de.dlr.proseo.basewrap.BaseWrapper</mainClass>
+						</manifest>
+					</archive>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>

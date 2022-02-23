@@ -1,0 +1,11 @@
+/target/
+.project
+.classpath
+.settings/
+.metadata
+.factorypath
+bin/
+.vscode
+**/*~
+**/.DS_Store
+/integration-tests

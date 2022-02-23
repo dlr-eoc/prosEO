@@ -1,0 +1,67 @@
+#%RAML 1.0 DataType
+#  PlannerJobstep:
+    type: object
+    properties:
+      id?:
+        type: integer
+        format: long
+        description: The persistent id of this object
+      version?:
+        type: integer
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      name?:
+        type: string
+        description: Job step name generated from the job step id (not part of data model)
+      jobId:
+        type: integer
+        format: long
+        description: The persistend id of the job this job step belongs to
+      jobStepState:
+        enum: [ INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED ]
+        description: The currenet status of the job step
+      outputParameters:
+        type: RestParameter[]
+        description: A set of parameters to set for the generated products.
+      processingMode:
+        type: string
+        description: The processing mode to run the processor(s) in
+      inputProductClasses:
+        type: string[]
+        description: The input product types required for processing
+      outputProductClass:
+        type: string
+        description: The product type of the output product of this job step
+      outputProduct?:
+        type: integer
+        description: The id of the output product of this job step
+      configuredProcessor?:
+        type: string
+        description: The configured processor used to create the output product
+      processingStartTime?:
+        type: datetime-only
+        description: The start time of the processing job
+      processingCompletionTime?:
+        type: datetime-only
+        description: The completion time of the processing job
+      stdoutLogLevel?:
+        enum: [ DEBUG, INFO, PROGRESS, WARNING, ERROR ]
+        description: The log level of stdout 
+      stderrLogLevel?:
+        enum: [ DEBUG, INFO, PROGRESS, WARNING, ERROR ]
+        description: The log level of stderr 
+      processingStdOut?:
+        type: string
+        description: The standard output of the processing job
+      processingStdErr?:
+        type: string
+        description: The standard error output of the processing job
+      jobOrderFilename?:
+        type: string
+        description: The filename of the Job Order file in the associated processing facility
+      orderId?:
+        type: integer
+        format: long
+        description: The id of the order
+      orderIdentifier?:
+        type: string
+        description: The identifier of the order

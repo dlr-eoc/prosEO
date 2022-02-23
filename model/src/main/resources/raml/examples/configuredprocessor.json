@@ -1,0 +1,10 @@
+{
+    "id": 3367251,
+    "version": 4,
+    "identifier": "KNMI L2 01.03.02 2019-03-30",
+    "uuid": "3fcab4f3-457a-4424-9287-269286e5c03c",
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "processorVersion": "01.03.02",
+    "configurationVersion": "2019-03-30"
+}

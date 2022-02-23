@@ -1,0 +1,47 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>DLR Mission Welcome</title>
+    <!-- Bootstrap core CSS -->
+    <!-- Bootstrap core CSS -->
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+    </style>
+    <!-- Custom styles for this template -->
+    <link href="signin.css" rel="stylesheet">
+  </head>
+<body>
+<div th:fragment="header">
+<div class="container-fluid">
+<div class="alert alert-primary" role="alert">
+<p><span th:text="#{mission}"></span> <span th:text="#{guiversion}"></span>		<span th:text="#{username}" sec:authentication="name"></span> <span th:text="#{roles}" sec:authentication="principal.authorities"></span> Timezone=<span th:text="#{timezone}"></span></p>			
+	
+	
+</div>
+</div>
+	
+	
+	
+</div>
+</body>
+</html>

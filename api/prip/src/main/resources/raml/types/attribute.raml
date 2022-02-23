@@ -1,0 +1,25 @@
+#%RAML 1.0 DataType
+#  CscAttribute:
+    type: object
+    properties:
+      Id:
+        type: string
+        description: String identifier of the attribute
+      ContentType:
+        type: string
+        description: The MIME type of the attribute
+      ContentLength:
+        type: integer
+        format: long
+        description: Actual size in bytes of the attribute
+      StringValue?:
+        type: string
+        description: The attribute value, if it is a string attribute
+      DateValue?:
+        type: string
+        description: The attribute value in UTC, if it is a string attribute
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{3}Z$
+      IntegerValue?:
+        type: integer
+        format: long
+        description: The attribute value, if it is an integer attribute

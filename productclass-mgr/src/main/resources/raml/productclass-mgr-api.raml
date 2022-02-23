@@ -1,0 +1,225 @@
+#%RAML 1.0
+title: prosEO Product Class Manager REST Services API
+version: v0.1
+protocols: [ HTTPS ] 
+baseUri: /proseo/productclass-mgr/{version}
+mediaType: application/json
+
+securitySchemes:
+  basicAuth:
+    description: Each request must contain the headers necessary for
+                 basic authentication
+    type: Basic Authentication
+    describedBy:
+      headers:
+        Authorization:
+          description: Used to send the Base64-encoded "username:password"
+                       credentials
+          type: string
+      responses:
+        401:
+          description: |
+            Unauthorized. Either the provided username and password
+            combination is invalid, or the user is not allowed to access
+            the content provided by the requested URL.
+
+types:
+  RestProductClass: !include ../../../../../model/src/main/resources/raml/types/productclass.raml
+  RestSimplePolicy: !include ../../../../../model/src/main/resources/raml/types/simplepolicy.raml
+  RestSimpleSelectionRule: !include ../../../../../model/src/main/resources/raml/types/simpleselectionrule.raml
+  RestSelectionRule: RestSimpleSelectionRule[]
+  RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
+  SelectionRuleString: !include ../../../../../interfaces/src/main/resources/raml/types/selectionrulestring.raml
+
+resourceTypes:
+  standard:
+    get?:
+      responses:          
+        400:
+          description: |
+            The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
+        404:
+          description: |
+            The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
+    put?:
+      responses:          
+        404:
+          description: |
+            The requested resource on which the modification is being attempted was not found              
+          headers:
+            Warning: !include types/error.raml
+    delete?:
+      responses:          
+        404:
+          description: | 
+            The requested resource to delete was not found 
+          headers:
+            Warning: !include types/error.raml
+              
+/productclasses:
+  type: standard
+  get:
+    description: Get product classes, optionally filtered by mission, product type, processor class, processing level or visibility
+    displayName: getRestProductClass
+    queryParameters:
+      mission?: string
+      productType?: string[]
+      processorClass?: string[]
+      level?: string
+      visibility?: string
+      recordFrom?: integer
+      recordTo?: integer
+      orderBy?:
+        type: string[]
+        description: an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestProductClass[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/productclass-list.json
+  post:
+    description: Create a new product class
+    body:
+      application/json:
+        type: RestProductClass
+        example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: RestProductClass
+            example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
+  /count:
+    get:
+      description: Number of product classes available
+      displayName: countProductClasses
+      queryParameters:
+        mission?: string
+        productType?: string[]
+        processorClass?: string[]
+        level?: string
+        visibility?: string
+      responses:
+        200:
+          body:
+            text/plain:
+  /names:
+    get:
+      description: List of product class names
+      displayName: getProductClassNames
+      queryParameters:
+        mission?: string
+        productType?: string
+      responses:
+        200:
+          body:
+            application/json:
+              type: string[]
+  /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
+    get:
+      description: Get a product class by ID
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestProductClass
+              example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
+    patch:
+      description: Update a product class by ID (does not update its selection rules)
+      body:
+        application/json:
+          type: RestProductClass
+          example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestProductClass
+              example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
+    delete:
+      description: Delete a product class by ID (with all its selection rules)
+      responses:
+        204:
+    /selectionrules:
+      get:
+        description: Get the simple selection rules as formatted string, optionally selected by source class
+        queryParameters:
+          sourceClass?: string
+        responses:
+          200:
+            body:
+              application/json:
+                type: SelectionRuleString[]
+                example: !include examples/selectionrule.json
+      post:
+        description: Create a selection rule using Rule Language
+        body:
+          application/json:
+            type: SelectionRuleString[]
+            example: !include examples/selectionrule.json
+        responses:
+          201:
+            body:
+              application/json:
+                type: RestProductClass
+                description: The product class with the added, converted selection rules
+      /{ruleid}:
+        uriParameters:
+          ruleid:
+            type: integer
+            format: long
+            description: Database id of the selection rule
+        get:
+          description: Get a selection rule by ID
+          responses:
+            200:
+              body:
+                 application/json:
+                   type: SelectionRuleString
+        patch:
+          description: Update a selection rule using Rule Language
+          body:
+            application/json:
+              type: SelectionRuleString
+          responses:
+            200:
+              body:
+                application/json:
+                  type: SelectionRuleString
+        delete:
+          description: Delete a selection rule
+          responses:
+            204:
+        /{configuredProcessor}:
+          uriParameters:
+            configuredProcessor:
+              type: string
+              description: The configured processor, for which the selection rule is valid
+          put:
+            description: Add the configured processor to the selection rule (if it is not already part of the selection rule)
+            displayName: addProcessorToRule
+            responses:
+              200:
+                body:
+                  application/json:
+                    type: SelectionRuleString
+                    description: The modified selection rule
+          delete:
+            description: Remove the configured processor from the selection rule
+                         (the selection rule will be disconnected from the configured processor)
+            displayName: removeProcessorFromRule
+            responses:
+              200:
+                body:
+                  application/json:
+                    type: SelectionRuleString
+                    description: The modified selection rule

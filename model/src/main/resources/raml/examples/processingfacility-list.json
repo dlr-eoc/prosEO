@@ -1,0 +1,29 @@
+[
+    {
+        "name": "PF1",
+        "description": "Processing Facility 1",
+        "facilityState": "RUNNING",
+        "processingEngineUrl": "https://procfac1.proseo-domain.de/kubernetes",
+        "processingEngineToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6IlBpM…jjzckxFyH9d8ggu-EYFJWLFY5g",
+        "maxJobsPerNode": 4,
+        "storageManagerUrl": "http://procfac1.proseo-domain.de/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v0.1",
+        "externalStorageManagerUrl": "http://prip1.proseo-domain.de/proseo/storage-mgr/v0.1",
+        "localStorageManagerUrl": "https://%NODE_IP%:30001/proseo/storage-mgr/v0.1",
+        "storageManagerUser": "smuser1",
+        "storageManagerPassword": "smpwd1-but-that-would-be-way-too-short",
+        "defaultStorageType": "S3"
+    },
+    {
+        "name": "PF2",
+        "description": "Processing Facility 2",
+        "facilityState": "DISABLED",
+        "processingEngineUrl": "https://procfac2.proseo-domain.de/kubernetes",
+        "processingEngineToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6IlBpM…y0-xUBMA7kJqHrdXRWtaUyFN7w",
+        "storageManagerUrl": "http://procfac2.proseo-domain.de/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1.1",
+        "externalStorageManagerUrl": "http://prip2.proseo-domain.de/proseo/storage-mgr/v0.1",
+        "localStorageManagerUrl": "https://%NODE_IP%:30001/proseo/storage-mgr/v1.1",
+        "storageManagerUser": "smuser2",
+        "storageManagerPassword": "smpwd2-but-that-would-be-way-too-short",
+        "defaultStorageType": "S3"
+    }
+]

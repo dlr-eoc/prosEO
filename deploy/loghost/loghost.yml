@@ -1,0 +1,10 @@
+---
+# Configure prosEO Logging Host ("loghost")
+
+- hosts: loghost
+  become: true
+  roles:
+  - prepare_network
+  - install_docker
+  - prepare_monitoring
+  

@@ -1,0 +1,17 @@
+---
+# Install files for running prosEO
+- name: Prepare prosEO directory
+  file:
+    path: /opt/prosEO/log
+    mode: 0755
+    state: directory
+    
+- name: Install prosEO scripts
+  copy:
+    src: "{{ item }}"
+    dest: /opt/prosEO/
+    mode: 0755
+  loop:
+  - docker-compose.yml
+  - run_storage_mgr.sh
+  - stop_storage_mgr.sh

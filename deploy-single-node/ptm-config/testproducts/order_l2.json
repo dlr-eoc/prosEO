@@ -1,0 +1,76 @@
+{
+    "missionCode": "PTM",
+    "identifier": "L2_orbits_3000-3002",
+    "orderState": "INITIAL",
+    "slicingType": "ORBIT",
+    "sliceOverlap": 0,
+    "inputFilters": [
+    	{
+    		"productClass": "L0________",
+		    "filterConditions": [
+		        {
+		            "key": "revision",
+		            "parameterType": "INTEGER",
+		            "parameterValue": "1"
+		        },
+		        {
+		            "key": "fileClass",
+		            "parameterType": "STRING",
+		            "parameterValue": "OPER"
+		        }
+		    ]
+	    },
+    	{
+    		"productClass": "L1B_PART1",
+		    "filterConditions": [
+		        {
+		            "key": "revision",
+		            "parameterType": "INTEGER",
+		            "parameterValue": "2"
+		        },
+		        {
+		            "key": "fileClass",
+		            "parameterType": "STRING",
+		            "parameterValue": "TEST"
+		        }
+		    ]
+	    }
+    ],
+    "classOutputParameters": [
+    	{
+    		"productClass": "L1B_PART1",
+    		"outputParameters": [
+    			{
+    				"key": "revision",
+    				"parameterType": "INTEGER",
+    				"parameterValue": "2"
+    			},
+		        {
+		            "key": "copernicusCollection",
+		            "parameterType": "INTEGER",
+		            "parameterValue": "77"
+		        }
+    		]
+    	}
+    ],
+    "outputParameters": [
+        {
+            "key": "revision",
+            "parameterType": "INTEGER",
+            "parameterValue": "99"
+        },
+        {
+            "key": "copernicusCollection",
+            "parameterType": "INTEGER",
+            "parameterValue": "77"
+        }
+    ],
+    "configuredProcessors": [ "PTML2_0.1.0_OPER_2020-03-25" ],
+    "orbits": [
+        { "spacecraftCode": "PTS", "orbitNumberFrom": 3000, "orbitNumberTo": 3002 }
+    ],
+    "requestedProductClasses": [ "PTM_L2A", "PTM_L2B" ],
+    "inputProductClasses": [],
+    "outputFileClass": "TEST",
+    "processingMode": "OPER"
+}

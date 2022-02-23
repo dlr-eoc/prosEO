@@ -1,0 +1,21 @@
+#%RAML 1.0 DataType
+# RestInfo:
+type: object
+properties:
+  s3:
+    type: object
+    properties:
+      s3EndPoint: string
+      s3Region: string
+      s3MaxNumberOfBuckets: integer
+      s3DefaultBucket: string
+  posix:
+    type: object
+    properties:
+      backendPath: string
+      cachePath: string
+  joborder:
+    type: object
+    properties:
+      bucket: string
+      prefix: string

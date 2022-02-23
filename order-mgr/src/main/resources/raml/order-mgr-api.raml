@@ -1,0 +1,331 @@
+#%RAML 1.0
+title: prosEO Order Manager REST Services API
+version: v0.1
+protocols: [ HTTPS ] 
+baseUri: /proseo/order-mgr/{version}
+mediaType: application/json
+
+securitySchemes:
+  basicAuth:
+    description: Each request must contain the headers necessary for
+                 basic authentication
+    type: Basic Authentication
+    describedBy:
+      headers:
+        Authorization:
+          description: Used to send the Base64-encoded "username:password"
+                       credentials
+          type: string
+      responses:
+        401:
+          description: |
+            Unauthorized. Either the provided username and password
+            combination is invalid, or the user is not allowed to access
+            the content provided by the requested URL.
+
+types:
+  RestClassOutputParameter: !include ../../../../../model/src/main/resources/raml/types/classoutputparameter.raml
+  RestInputFilter: !include ../../../../../model/src/main/resources/raml/types/inputfilter.raml
+  RestOrder: !include ../../../../../model/src/main/resources/raml/types/order.raml
+  RestOrbitQuery: !include ../../../../../model/src/main/resources/raml/types/orbitquery.raml
+  RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
+  RestMission: !include ../../../../../model/src/main/resources/raml/types/mission.raml
+  RestSpacecraft: !include ../../../../../model/src/main/resources/raml/types/spacecraft.raml
+  RestPayload: !include ../../../../../model/src/main/resources/raml/types/payload.raml
+  RestOrbit: !include ../../../../../model/src/main/resources/raml/types/orbit.raml
+
+
+resourceTypes:
+  standard:
+    get?:
+      responses:          
+        400:
+          description: |
+            The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
+        404:
+          description: |
+            The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
+    put?:
+      responses:          
+        404:
+          description: |
+            The requested resource on which the modification is being attempted was not found              
+          headers:
+            Warning: !include types/error.raml
+    delete?:
+      responses:          
+        404:
+          description: | 
+            The requested resource to delete was not found 
+          headers:
+            Warning: !include types/error.raml
+              
+/orders:
+  type: standard
+  get:
+    description: Get orders by mission, user-defined identifier, requested product classes or execution start time range
+    displayName: getOrders
+    queryParameters:
+      mission?: string
+      identifier?: string
+      productClasses?: string[]
+      startTimeFrom?: datetime-only
+      startTimeTo?: datetime-only
+      executionTimeFrom?: datetime-only
+      executionTimeTo?: datetime-only
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestOrder[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/order-list.json
+  post:
+    description: Create a new order
+    displayName: createOrder
+    body:
+      application/json:
+        type: RestOrder
+        example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: RestOrder
+            example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+  /count:
+    type: standard
+    get:
+      description: Get number of orders, filtered by mission, user-defined identifier and id not equal nid
+      displayName: countOrders
+      queryParameters:
+        mission?: string
+        identifier?: string
+        nid?: integer
+      responses:
+        200:
+          body:
+            text/plain:
+  /countselect:
+    get:
+      description: Get all processing orders selected by parameters
+      displayName: countSelectOrders
+      queryParameters:
+        mission?: string
+        identifier?: string
+        state?: string[]
+        productClass?: string[]
+        startTime?: string
+        stopTime?: string
+        recordFrom?: integer
+        recordTo?: integer
+        orderBy?: string[]
+      responses:
+        200:
+          body:
+            text/plain:
+  /select:
+    get:
+      description: Get all processing orders selected by parameters
+      displayName: getAndSelectOrders
+      queryParameters:
+        mission?: string
+        identifier?: string
+        state?: string[]
+        productClass?: string[]
+        startTime?: string
+        stopTime?: string
+        recordFrom?: integer
+        recordTo?: integer
+        orderBy?: string[]
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestOrder[]
+              example: !include ../../../../../model/src/main/resources/raml/examples/order-list.json
+  /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
+    get:
+      description: Get a processing order by ID
+      displayName: getOrderById
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestOrder
+              example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+    patch:
+      description: Update a processing order by ID
+      displayName: modifyOrder
+      body:
+        application/json:
+          type: RestOrder
+          example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestOrder
+              example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+    delete:
+      description: Delete a processing order by ID
+      displayName: deleteOrderById
+      responses:
+        204:
+/missions:
+  type: standard
+  get:
+    description: Get all missions
+    displayName: getMissions
+    queryParameters:
+      mission?: string
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestMission[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/mission-list.json
+  post:
+    description: Create a new mission
+    displayName: createMission
+    body:
+      application/json:
+        type: RestMission
+        example: !include ../../../../../model/src/main/resources/raml/examples/mission.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: RestMission
+            example: !include ../../../../../model/src/main/resources/raml/examples/mission.json
+  /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
+    get:
+      description: Get a mission by ID
+      displayName: getMissionById
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestMission
+              example: !include ../../../../../model/src/main/resources/raml/examples/mission.json
+    patch:
+      description: Update a mission by ID (including changes to the spacecraft list)
+      displayName: modifyMission
+      body:
+        application/json:
+          type: RestMission
+          example: !include ../../../../../model/src/main/resources/raml/examples/mission.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestMission
+              example: !include ../../../../../model/src/main/resources/raml/examples/mission.json
+    delete:
+      description: Delete a mission by ID
+      displayName: deleteMissionById
+      queryParameters:
+        force?:
+          type: boolean
+          default: false
+          description: Also delete all configured items for this mission, but no products
+        delete-products?:
+          type: boolean
+          default: false
+          description: Also delete all products for this mission (requires "force")
+      responses:
+        204:
+/orbits:
+  type: standard
+  get:
+    description: Get orbits for a specific mission and spacecraft;
+        if both an orbit number range and a time frame are set, the orbit range takes precedence
+    displayName: getOrbits
+    queryParameters:
+      spacecraftCode: string
+      orbitNumberFrom?: integer
+      orbitNumberTo?: integer
+      startTimeFrom?: string
+      startTimeTo?: string
+      recordFrom?: integer
+      recordTo?: integer
+      orderBy?:
+        type: string[]
+        description: an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestOrbit[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/orbit-list.json
+  post:
+    description: Create new orbits
+    displayName: createOrbits
+    body:
+      application/json:
+        type: RestOrbit[]
+        example: !include ../../../../../model/src/main/resources/raml/examples/orbit-list.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: RestOrbit[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/orbit-list.json
+  /count:
+    type: standard
+    get:
+      description: Get number of orbits, possibly filtered by spaceraft, orbit number and time range
+      displayName: countOrbits
+      queryParameters:
+        spacecraftCode: string
+        orbitNumberFrom?: integer
+        orbitNumberTo?: integer
+        starttimefrom?: string
+        starttimeto?: string
+      responses:
+        200:
+          body:
+            text/plain:
+  /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
+    get:
+      description: Get an orbit by ID
+      displayName: getOrbitById
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestOrbit
+              example: !include ../../../../../model/src/main/resources/raml/examples/orbit.json
+    patch:
+      description: Update an orbit by ID
+      displayName: modifyOrbit
+      body:
+        application/json:
+          type: RestOrbit
+          example: !include ../../../../../model/src/main/resources/raml/examples/orbit.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestOrbit
+              example: !include ../../../../../model/src/main/resources/raml/examples/orbit.json
+    delete:
+      description: Delete an orbit by ID
+      displayName: deleteOrbitById
+      responses:
+        204:

@@ -1,0 +1,12 @@
+#%RAML 1.0 DataType
+#  RestParameter:
+    type: object
+    properties:
+      key: string
+      parameterType:
+        type: string
+        description: The type of the parameter for deserialization (one of { "STRING", "INTEGER", "BOOLEAN", "DOUBLE" } )
+      parameterValue:
+        type: string
+        description: All parameter values are serialized to their string representations. For deserialization refer
+                     to the parameterType.

@@ -1,0 +1,43 @@
+#%RAML 1.0 DataType
+#  RestSimplePolicy:
+    type: object
+    properties:
+      id?:
+        type: integer
+        format: long
+        description: The persistent id of this object
+      version?:
+        type: integer
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      policyType:
+        type: string
+        description: The policy type to use; for acceptable values see ESA's Generic IPF Interface Specifications
+      deltaTimeT0:
+        type: object
+        description: The delta time to apply to the start of the selection period. Delta times must not be negative 
+                     (i. e. reduce the interval). Default is zero days
+        properties:
+          duration:
+            type: integer
+            format: long
+            default: 0
+            description: The duration of the time period in time units
+          unit:
+            type: string
+            default: DAYS
+            description: The time unit applicable for this time period (one of { "DAYS", "HOURS", "MINUTES", "SECONDS" })
+      deltaTimeT1:
+        type: object
+        description: The delta time to apply to the end of the selection period. Delta times must not be negative
+                     (i. e. reduce the interval). Default is zero days
+        properties:
+          duration:
+            type: integer
+            format: long
+            default: 0
+            description: The duration of the time period in time units
+          unit:
+            type: string
+            default: DAYS
+            description: The time unit applicable for this time period (one of { "DAYS", "HOURS", "MINUTES", "SECONDS" })
+        

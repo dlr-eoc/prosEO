@@ -1,0 +1,15 @@
+#%RAML 1.0 DataType
+#  RestQuota:
+    type: object
+    properties:
+      assigned:
+        type: integer
+        format: long
+        description: Monthly data volume allowance in Bytes
+      used:
+        type: integer
+        format: long
+        description: Data volume in Bytes used in the last recorded calendar month
+      lastAccessDate:
+        type: date-only
+        description: Date of last recorded access (defines the calendar month for "used")

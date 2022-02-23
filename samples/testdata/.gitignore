@@ -1,0 +1,8 @@
+/*.json
+/*.txt
+/application.yml
+/proseo-ui-cli*
+/*.log
+/stop_brain.sh
+/testfiles/
+/testproducts/

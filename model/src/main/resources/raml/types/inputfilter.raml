@@ -1,0 +1,10 @@
+#%RAML 1.0 DataType
+#  RestInputFilter:
+    type: object
+    properties:
+      productClass:
+        type: string
+        description: The product class the input filters apply to
+      filterConditions:
+        type: RestParameter[]
+        description: Filter conditions to apply to input products of the given product class

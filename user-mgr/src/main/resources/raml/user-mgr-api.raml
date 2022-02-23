@@ -1,0 +1,220 @@
+#%RAML 1.0
+title: prosEO User Manager REST Services API
+version: v0.1
+protocols: [ HTTPS ] 
+baseUri: /proseo/user-mgr/{version}
+mediaType: application/json
+
+securitySchemes:
+  basicAuth:
+    description: Each request must contain the headers necessary for
+                 basic authentication
+    type: Basic Authentication
+    describedBy:
+      headers:
+        Authorization:
+          description: Used to send the Base64-encoded "username:password"
+                       credentials
+          type: string
+      responses:
+        401:
+          description: |
+            Unauthorized. Either the provided username and password
+            combination is invalid, or the user is not allowed to access
+            the content provided by the requested URL.
+
+types:
+  RestUser: !include ../../../../../model/src/main/resources/raml/types/user.raml
+  RestGroup: !include ../../../../../model/src/main/resources/raml/types/group.raml
+  RestQuota: !include ../../../../../model/src/main/resources/raml/types/quota.raml
+
+resourceTypes:
+  standard:
+    get?:
+      responses:          
+        400:
+          description: |
+            The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
+        404:
+          description: |
+            The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
+    patch?:
+      responses:          
+        404:
+          description: |
+            The requested resource on which the modification is being attempted was not found              
+          headers:
+            Warning: !include types/error.raml
+    delete?:
+      responses:          
+        404:
+          description: | 
+            The requested resource to delete was not found 
+          headers:
+            Warning: !include types/error.raml
+              
+/login:
+  type: standard
+  get:
+    description: Log in to the given mission (using credentials in Basic Auth header); mission may be empty for "root" user
+    displayName: login
+    queryParameters:
+      mission?: string
+    responses:
+      200:
+        body:
+          application/json:
+            type: string[]
+            description: A list of authorities granted to the user for the given mission
+/users:
+  type: standard
+  get:
+    description: Get users by mission (may be null, if root user sends request)
+    displayName: getUsers
+    queryParameters:
+      mission?: string
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestUser[]
+            example: !include examples/user-list.json
+  post:
+    description: Create a new user
+    displayName: createUser
+    body:
+      application/json:
+        type: RestUser
+        example: !include examples/user.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: RestUser
+            example: !include examples/user.json
+  /{username}:
+    uriParameters:
+      username: string
+    get:
+      description: Get a user by user name
+      displayName: getUserByName
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestUser
+              example: !include examples/user.json
+    patch:
+      description: Update a user by user name
+      displayName: modifyUser
+      body:
+        application/json:
+          type: RestUser
+          example: !include examples/user.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestUser
+              example: !include examples/user.json
+    delete:
+      description: Delete a user by user name
+      displayName: deleteUserByName
+      responses:
+        204:
+
+/groups:
+  type: standard
+  get:
+    description: Get user groups by mission and optionally by name
+    displayName: getGroups
+    queryParameters:
+      mission: string
+      groupName?: string
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestGroup[]
+            example: !include examples/group-list.json
+  post:
+    description: Create a new user group
+    displayName: createGroup
+    body:
+      application/json:
+        type: RestGroup
+        example: !include examples/group.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: RestGroup
+            example: !include examples/group.json
+  /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
+    get:
+      description: Get a user group by ID
+      displayName: getGroupById
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestGroup
+              example: !include examples/group.json
+    patch:
+      description: Update a user group by ID
+      displayName: modifyGroup
+      body:
+        application/json:
+          type: RestGroup
+          example: !include examples/group.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestGroup
+              example: !include examples/group.json
+    delete:
+      description: Delete a user group by ID
+      displayName: deleteGroupById
+      responses:
+        204:
+    /members:
+      get:
+        description: Get all users in this group
+        displayName: getGroupMembers
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestUser[]
+                description: The list of users in this group        
+      post:
+        description: Add a user to the user group
+        displayName: addGroupMember
+        queryParameters:
+          username:
+            type: string
+            description: The name of the user to add
+        responses:
+          201:
+            body:
+              application/json:
+                type: RestUser[]
+                description: The list of users in this group (after addition)
+      delete:
+        description: Remove a user from the user group
+        displayName: removeGroupMember
+        queryParameters:
+          username:
+            type: string
+            description: The name of the user to remove
+        responses:
+          204:

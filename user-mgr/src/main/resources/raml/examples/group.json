@@ -1,0 +1,5 @@
+{
+  "id":         430459234, 
+  "groupname":  "S5P-users", 
+  "authorities": [ "ROLE_USER" ]
+}

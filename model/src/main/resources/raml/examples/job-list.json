@@ -1,0 +1,50 @@
+[
+    {
+        "id": 23785526,
+        "version": 1,
+        "orderIdentifier": "CO2 products for orbits 2345-4567",
+        "jobState": "INITIAL",
+        "filterConditions": [],
+        "outputParameters": [],
+        "priority": 10,
+        "hasFailedJobSteps": false,
+        "processingFacilityName": "PF1",
+        "jobSteps": [
+            {
+                "id": 23785527,
+                "version": 1,
+                "jobId": 23785526,
+                "jobStepState": "INITIAL",
+                "outputParameters": [],
+                "processingMode": "OFFL",
+                "inputProductClasses": [ "L1B" ],
+                "outputProductClass": "CH4",
+                "outputProduct": 1234
+            }
+        ]
+    },
+    {
+        "id": 23785537,
+        "version": 4,
+        "orderIdentifier": "CLOUD products for orbits 2345-4567",
+        "jobState": "FAILED",
+        "filterConditions": [],
+        "outputParameters": [],
+        "priority": 10,
+        "hasFailedJobSteps": true,
+        "processingFacilityName": "PF2",
+        "jobSteps": [
+            {
+                "id": 23785538,
+                "version": 4,
+                "jobId": 23785537,
+                "jobStepState": "FAILED",
+                "outputParameters": [],
+                "processingMode": "OFFL",
+                "inputProductClasses": [ "L1B", "CO" ],
+                "outputProductClass": "CH4",
+                "outputProduct": 1234
+            }
+        ]
+    }
+]

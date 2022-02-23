@@ -1,0 +1,7 @@
+---
+- name: Install NFS (client)
+  yum:
+    name: 
+    - nfs-utils
+    - java-11-openjdk
+    state: present

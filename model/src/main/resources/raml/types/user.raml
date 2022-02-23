@@ -1,0 +1,25 @@
+#%RAML 1.0 DataType
+#  RestUser:
+    type: object
+    properties:
+      username:
+        type: string
+        description: The (unique) user name, consisting of the mission code, a hyphen ("-") and the actual cross-mission user name
+      password?:
+        type: string
+        description: The user password (BCrypt-encrypted string; not required for updates)
+      enabled:
+        type: boolean
+        description: Flag indicating whether the user account is enabled.
+      authorities:
+        type: string[]
+        description: The authorities granted to this user (filtered by mission)
+      expirationDate?:
+        type: date-only
+        description: The expiration date for the user account (default never)
+      passwordExpirationDate?:
+        type: date-only
+        description: The expiration date for the password (default never)
+      quota?:
+        type: RestQuota
+        description: Data download quota for this user (if not set, no quota applies)

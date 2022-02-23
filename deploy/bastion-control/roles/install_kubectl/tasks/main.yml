@@ -1,0 +1,20 @@
+---
+- name: Ensure Kubernetes repository is available
+  yum_repository:
+    name: kubernetes
+    description: Official Kubernetes repository
+    baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+    gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+
+- name: Install kubectl
+  yum:
+    name: kubectl
+    state: present
+
+- name: Install kubectl configuration for various users
+  include_tasks: install_config.yml
+  vars:
+    user: "{{ item }}"
+  loop: "{{ kubectl_users }}"
+
+    

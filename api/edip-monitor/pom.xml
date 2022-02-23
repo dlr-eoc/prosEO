@@ -1,0 +1,194 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>de.dlr.proseo</groupId>
+		<artifactId>proseo-api</artifactId>
+		<version>0.8.2</version>
+	</parent>
+
+	<artifactId>edip-monitor</artifactId>
+	<name>prosEO EDIP Monitor</name>
+	<description>prosEO monitor for ESA's EDRS Interface Delivery Point (EDIP)</description>
+	<url>https://github.com/dlr-eoc/prosEO/api/prip</url>
+	<organization>
+		<name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
+		<url>http://www.dlr.de</url>
+	</organization>
+
+	<properties>
+		<module.version>0.8.2</module.version>
+		<main.basedir>${basedir}/../..</main.basedir>
+		<raml-path>src/main/resources/raml/edip-monitor-api.raml</raml-path>
+		<raml-base-package>de.dlr.proseo.api.edipmon.rest</raml-base-package>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-configuration-processor</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.projectreactor</groupId>
+			<artifactId>reactor-spring</artifactId>
+			<version>1.0.1.RELEASE</version>
+		</dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
+        </dependency>
+		<!-- https://mvnrepository.com/artifact/commons-net/commons-net -->
+		<dependency>
+			<groupId>commons-net</groupId>
+			<artifactId>commons-net</artifactId>
+			<version>3.8.0</version>
+		</dependency>
+		<dependency>
+			<groupId>de.dlr.proseo</groupId>
+			<artifactId>proseo-base-monitor</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>de.dlr.proseo</groupId>
+			<artifactId>proseo-interfaces</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.phoenixnap.oss</groupId>
+			<artifactId>springmvc-raml-plugin</artifactId>
+			<type>maven-plugin</type>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<finalName>proseo-edip-monitor</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+
+			<!-- required for adding generated sources -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>add-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<!-- where to find the generated sources -->
+								<source>${raml-output-path}</source>
+							</sources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Generate Spring MVC from RAML files -->
+			<plugin>
+				<groupId>com.phoenixnap.oss</groupId>
+				<artifactId>springmvc-raml-plugin</artifactId>
+				<configuration>
+					<basePackage>${raml-base-package}</basePackage>
+					<injectHttpHeadersParameter>true</injectHttpHeadersParameter>
+					<rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerDecoratorRule</rule>
+				</configuration>
+				<executions>
+					<execution>
+						<id>generate-springmvc-endpoints</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate-springmvc-endpoints</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Create HTML documentation from RAML files -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<executable>raml2html</executable>
+					<commandlineArgs>-i ${raml-path} -o src/site/resources/${project.artifactId}.html</commandlineArgs>
+				</configuration>
+			</plugin>
+
+            <!-- Create JAR file to extend specific monitors from -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>extendable-jar</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>extendable</classifier>
+                            <includes>
+                                <include>de/dlr/proseo/api/edipmon/EdipMonitor.class</include>
+                                <include>de/dlr/proseo/api/edipmon/EdipMonitor$*.class</include>
+                                <include>de/dlr/proseo/api/edipmon/EdipMonitorConfiguration.class</include>
+                                <include>de/dlr/proseo/api/edipmon/rest/**</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+			<!-- Build Docker image -->
+			<plugin>
+				<groupId>io.fabric8</groupId>
+				<artifactId>docker-maven-plugin</artifactId>
+				<version>${docker-maven-version}</version>
+				<configuration>
+					<images>
+						<image>
+							<name>${docker.registry}/${project.build.finalName}:${module.version}</name>
+						</image>
+					</images>
+				</configuration>
+				<executions>
+					<execution>
+						<id>default</id>
+						<phase>install</phase>
+						<goals>
+							<goal>build</goal>
+							<goal>push</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

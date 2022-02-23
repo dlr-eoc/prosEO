@@ -1,0 +1,40 @@
+#%RAML 1.0 DataType
+#  RestMission:
+    type: object
+    properties:
+      id?:
+        type: integer
+        format: long
+        description: The persistent id of this object
+      version?:
+        type: integer
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      code:
+        type: string
+        description: The mission code (e. g. S5P)
+      name:
+        type: string
+        description: The mission name (e. g. Sentinel-5 Precursor)
+      fileClasses:
+        type: string[]
+        description: File classes as agreed for this mission (e. g. "TEST", "OPER")
+      processingModes:
+        type: string[]
+        description: Processing mode tags as agreed for this mission
+      productFileTemplate:
+        type: string
+        description: The product filename template implementing the mission's file naming convention
+      processingCentre?:
+        type: string
+        description: An identifying string for the processing centre (organisation) operating this prosEO instance
+      productRetentionPeriod?:
+        type: integer
+        format: long
+        description: The default period of time for keeping products after their generation in seconds
+      orderRetentionPeriod?:
+        type: integer
+        format: long
+        description: The default period of time for keeping orders after their completion in seconds
+      spacecrafts:
+        type: RestSpacecraft[]
+        description: A spacecraft used for a specific Mission. A Mission may operate more than one spacecraft.

@@ -1,0 +1,20 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+        open-in-view: false
+        properties.hibernate.jdbc.time_zone: UTC
+    datasource:
+        url: jdbc:postgresql://proseo-db:5432/proseo
+        username: postgres
+        password: <db_pwd>
+logging:
+    file: /proseo/log/proseo-order-mgr.log
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE
+        org.hibernate.engine.jdbc.env.internal: WARN
+proseo:
+    orderManager:
+        # Wait time for processing order cleanup (in days; default 1 day)
+        cleanupCycleTime: 1

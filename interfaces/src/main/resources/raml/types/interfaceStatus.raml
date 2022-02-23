@@ -1,0 +1,14 @@
+#%RAML 1.0 DataType
+# RestInterfaceStatus:
+type: object
+properties:
+  id:
+    type: string
+    description: Interface identifier
+  available:
+    type: boolean
+    description: Flag indicating whether the interface endpoint is reachable
+  performance:
+    type: number
+    format: double
+    description: Latest download performance in MiB/s

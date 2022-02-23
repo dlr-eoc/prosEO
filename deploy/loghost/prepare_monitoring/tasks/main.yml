@@ -1,0 +1,17 @@
+---
+# Prepare startup of prosEO Monitor and Grafana
+
+- name: Create working directory for prosEO Monitor and Grafana
+  file:
+    path: "/opt/proseo/log/{{ item }}"
+    state: directory
+    mode: 0775
+  loop:
+    - monitor
+    - grafana
+
+- name: Copy Docker compose file for prosEO Monitor and Grafana
+  copy:
+    src: docker-compose.yml
+    dest: /opt/proseo
+    mode: 0644

@@ -1,0 +1,12 @@
+
+                            /-------\ /-------\
+                            |       | |       |
+                            |   /---/ |  /-\  |
+                            |   \---\ |  | |  |   prosEO - The Processing System for Earth Observation Data
+/----\ /----\ /----\ /----\ |       | |  | |  |
+|    | |    | |    | | ---+ |   /---/ |  | |  |   Product Class Manager  ${application.formatted-version}
+| {} | |  /-/ | {} | \    \ |   \---\ |  \-/  |
+|    | |  |   |    | +--- | |       | |       |   :: Spring Boot ::      ${spring-boot.formatted-version}
+|  /-/ \--/   \----/ \----/ \-------/ \-------/
+|  |
+\--/

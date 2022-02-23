@@ -1,0 +1,14 @@
+[
+    {
+        "id": 227108,
+        "selectionRule": "FOR AUX_NPP SELECT ValIntersect(0, 0) OR LatestValidity OPTIONAL",
+        "mode": "OFFL",
+        "configuredProcessors": [ "RAL L2 00.09.00 2018-02-17" ]
+    },
+    {
+        "id" : 227109,
+        "selectionRule": "FOR AUX_NPP SELECT ValIntersect(0, 0) MANDATORY",
+        "mode": "OFFL",
+        "configuredProcessors": [ "RAL L2 01.00.00 2018-04-27", "RAL L2 01.00.00 2018-10-30" ]
+    }
+]

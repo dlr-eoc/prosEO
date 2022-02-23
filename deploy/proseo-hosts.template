@@ -1,0 +1,52 @@
+[bastion_control]
+85.215.x.x
+
+[bastion_prip]
+85.215.x.y
+
+[brain]
+10.x.x.a
+
+[brain:vars]
+# Configure control instance bastion as proxy for brain
+ansible_ssh_common_args='-o ProxyCommand="ssh -i keys/id_rsa -W %h:%p -q proseoadmin@85.215.x.x"'
+
+# IP address of brain in PRIP LAN
+[brain_prip]
+10.z.z.a
+
+[nat_gateway]
+10.x.x.b
+
+[dbhost]
+10.x.x.c
+
+[dbhost:vars]
+# Configure control instance bastion as proxy for brain
+ansible_ssh_common_args='-o ProxyCommand="ssh -i keys/id_rsa -W %h:%p -q proseoadmin@85.215.x.x"'
+
+[loghost]
+10.x.x.d
+
+[loghost:vars]
+# Configure bastion as proxy for NFS server
+ansible_ssh_common_args='-o ProxyCommand="ssh -i keys/id_rsa -W %h:%p -q proseoadmin@85.215.x.x"'
+
+[nfsserver]
+10.x.x.e
+
+[nfsserver:vars]
+# Configure bastion as proxy for NFS server
+ansible_ssh_common_args='-o ProxyCommand="ssh -i keys/id_rsa -W %h:%p -q proseoadmin@85.215.x.x"'
+
+# IP address of nfsserver in PRIP LAN
+[nfsserver_prip]
+10.z.z.b
+
+[master]
+10.x.x.f
+
+[workers]
+10.x.x.g
+10.x.x.h
+# etc.

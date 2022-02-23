@@ -1,0 +1,31 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+        open-in-view: false
+        properties.hibernate.jdbc.time_zone: UTC
+    datasource:
+        url: jdbc:postgresql://proseo-db:5432/proseo
+        username: postgres
+        password: ********
+logging:
+    file: /proseo/log/proseo-ingestor.log
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE
+        org.hibernate.engine.jdbc.env.internal: WARN
+proseo:
+    ingestor:
+        # Wait time for product file cleanup (in days, default 1 day)
+        cleanupCycleTime: 1
+    productionPlanner:
+        url: http://proseo-prodplanner:8080/proseo/planner/v0.1
+        # Connection timeout in ms
+        timeout: 10000
+    storageManager:
+        # Connection timeout in ms
+        timeout: 30000
+        # Shared secret for download token
+        secret: MyVeryLongSecretMustBeAtLeast32Bytes
+        # Validity period for download token
+        validity: 60000

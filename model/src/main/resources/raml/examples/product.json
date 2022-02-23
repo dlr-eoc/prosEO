@@ -1,0 +1,34 @@
+{
+    "id": 689325,
+    "version": 11,
+    "uuid": "3fcab4f3-457a-4424-9287-269286e5c03c",
+    "missionCode": "S5P",
+    "productClass": "AAI",
+    "fileClass": "TEST",
+    "mode": "OFFL",
+    "productQuality": "EXPERIMENTAL",
+    "sensingStartTime": "2018-06-13T09:23:45.396521",
+    "sensingStopTime": "2018-06-13T10:53:45.396521",
+    "generationTime": "2019-10-05T10:12:39.000000",
+    "orbit": {
+        "spacecraftCode": "S5P",
+        "orbitNumber": 4711
+    },
+    "parameters": [
+        {
+            "key": "baselineCollection",
+            "parameterType": "INTEGER",
+            "parameterValue": "99"
+        },
+        {
+            "key": "revision",
+            "parameterType": "INTEGER",
+            "parameterValue": "14"
+        },
+        {
+            "key": "fileClass",
+            "parameterType": "STRING",
+            "parameterValue": "RPRO"
+        }
+    ]
+}

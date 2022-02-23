@@ -1,0 +1,1531 @@
+title: prosEO UI Command Line Interface Syntax
+# This document describes the syntax of the prosEO Command Line Interface. It is inteded to be fed into the syntax parser of the
+# command line program and to be returned as online help for the user.
+version: v0.1
+description: |
+  The general syntax for commands is:
+  
+    command [subcommand...] [option...] [parameter...]
+  
+  Commands can be entered after the "prosEO>" command prompt. They can also be invoked on the shell command line 
+  following the name of the prosEO executable (e. g. "proseo") and at least one whitespace character.
+  
+  Commands may have subcommands, which precede all options and parameters.
+  
+  Commands may have options (--option, a short form -o may be given as alias) and parameters
+  (passed as values without the parameter name).
+  
+  Modal options can be combined into one option, i. e. "-a -b -c" is the same as "-abc".
+  Options with values are either of the form "-ovalue" or "--option=value";
+  in the case of multiple values "--option=value,value,value".
+  
+  Parameters are positional, except (implicitly) for attribute parameters of the form "<attribute name>=<attribute value>".
+  Attribute values may be comma-separated string lists, but they cannot represent attributes of more complex types. To set
+  complex object attributes use the "--file" option and pass a Json, XML or Yaml file.
+  
+  Options and parameters containing blanks and/or quotes must be quoted, e. g. "-ovalue with blanks" or 'My "quoted" parameter'.
+  
+  All date-time values must conform to the ISO date-time format ("YYYY-MM-DD[THH:MM:SS.ssssssZ]"), with or without a second,
+  a fraction of second and/or a time zone, e. g. the following are valid:
+  "2020-04-08", "2020-04-08T11:30+0200", "2020-04-08T11:30:45.123456Z".
+  Value parts not specified will be set to zero, i. e. "2020-04-08" will be interpreted as "2020-04-08T00:00:00.000000" in UTC.
+  Therefore when specifying a time interval using "from"/"to" parameters, be sure to specify the end of the interval correctly,
+  e. g. to cover the whole day 2020-04-08 (in UTC), "2020-04-08" may be specified for the "from" parameter, but the "to" parameter
+  must read "2020-04-08T23:59:59.999999" or "2020-04-09".
+  
+  For all commands except "mission show" a user login is required, all commands except "mission show", "mission create",
+  "user create" and all facility-related commands require login to a specific mission.
+  
+  Caution 1: Typing ^C (Control-C) terminates the Command Line Interface immediately.
+  Caution 2: When run in non-interactive mode (e. g. with input redirection) prompts for missing mandatory attributes do not work.
+             In this case mandatory attributes must be specified on the command line or in an input file.
+             (Exception: Selection rules can be read from input redirection.)
+
+globalOptions:
+    - name: help
+      type: boolean
+      description: Show help information for the current command/subcommand level (top level commands, when called from the shell command line)
+      shortForm: h
+
+options:
+    - name: version
+      type: boolean
+      description: Show the prosEO CLI version and exit (only for call from shell command line)
+      shortForm: V
+    - name: identFile
+      type: string
+      description: |
+          Path to a file containing user name (without mission prefix) and password (in two separate lines);
+          the file will only be read, if it is only readable by the current system user (as far as warranted by the operating system)
+      shortForm: i
+    - name: mission
+      type: string
+      description: The mission to login to (only valid if a user name for login is given)
+      shortForm: m
+
+commands:
+    # Terminate the CLI
+    - name: exit
+      description: Terminate the Command Line Interface
+      
+    # Show the help text (same as "proseo --help")
+    - name: help
+      description: Show the prosEO Command Line Interface help information (this page; for subcommand help, type "<subcommand> --help")
+      
+    # Clear the terminal screen
+    - name: clear
+      description: Clear the terminal screen (but not the scrollback buffer)
+      
+    # Authentication:
+    - name: login
+      description: Log in to a mission in prosEO. All valid commands except for "mission show" require prior login.
+      options:
+        - name: identFile
+          type: string
+          description: |
+              Path to a file containing user name (without mission prefix) and password (in two separate lines);
+              the file will only be read, if it is only readable by the current system user (as far as warranted by the operating system)
+          shortForm: i
+      parameters:
+        - name: missionCode
+          type: string
+          optional: true
+          description: The code of the mission to log in to (may be empty for user with prosEO Administrator privileges)
+    - name: logout
+      description: Log out of prosEO. No commands except "mission show" and "login" will be accepted after logout.
+    
+    # Order manager commands:
+    - name: mission
+      description: Commands related to configuring an earth observation mission
+      subcommands:
+        - name: show
+          description: List all configured missions or only the given one
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give mission details, otherwise show only mission code and name
+              shortForm: v
+          parameters:
+            - name: missionCode
+              type: string
+              optional: true
+              description: The code of the mission to list
+        - name: create
+          description: Create a new earth observation mission in prosEO
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the mission definitions from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+          parameters:
+            - name: missionCode
+              type: string
+              optional: true
+              description: The code of the mission (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A mission attribute to update in the form "<attribute name>=<attribute value>",
+                           overrides values given in the mission definition file
+        - name: update
+          description: Update the mission attributes
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the updated mission definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: delete-attributes
+              type: boolean
+              description: Delete non-mandatory attributes not given in the mission definition file and/or the command parameters
+          parameters:
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A mission attribute to update in the form "<attribute name>=<attribute value>",
+                           overrides values given in the mission definition file
+        - name: delete
+          description: Delete the named mission (optionally including configured items and stored products)
+          options:
+            - name: force
+              type: boolean
+              description: Also delete all configured items (spacecrafts, orbits, processor classes, 
+                           processors, configurations, configured processors and product classes) for this mission, but no products
+            - name: delete-products
+              type: boolean
+              description: Also delete all products for this mission (this will also remove the products from any processing facility),
+                           valid only if "force" is specified, too (both options need to be specified to avoid unintended data loss)
+          parameters:
+            - name: missionCode
+              type: string
+              description: The code of the mission to delete
+        - name: spacecraft
+          description: Commands to manage the spacecrafts for a mission
+          subcommands:
+            - name: add
+              description: Add a spacecraft to the mission list of spacecrafts; 
+                           the user will be prompted for mandatory attributes not given on the command line
+              options:
+                - name: file
+                  type: string
+                  description: Path to file to read the updated mission definition from
+                  shortForm: f
+                - name: format
+                  type: string
+                  description: The file format (one of { JSON, XML, YAML }; default value JSON)
+              parameters:
+                - name: spacecraftCode
+                  type: string
+                  optional: true
+                  description: The code of the spacecraft to remove (mandatory if not read from file)
+                - name: attribute
+                  type: string
+                  optional: true
+                  repeatable: true
+                  description: A spacecraft attribute to set in the form "<attribute name>=<attribute value>"
+            - name: remove
+              description: Remove a spacecraft from the mission list of spacecrafts
+              parameters:
+                - name: spacecraftCode
+                  type: string
+                  description: The code of the spacecraft to remove
+    - name: orbit
+      description: Commands for managing orbits for a given spacecraft
+      subcommands:
+        - name: show
+          description: Lists orbits, optionally restricted to a given orbit number range
+          options:
+            - name: from
+              type: integer
+              description: Lower bound of orbit number range
+            - name: to
+              type: integer
+              description: Upper bound of orbit number range
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give orbit details, otherwise show only spacecraft code, orbit number and start/stop times
+              shortForm: v
+          parameters:
+            - name: spacecraftCode
+              type: string
+              description: The code of the spacecraft the orbits belong to
+        - name: create
+          description: Add or update a set of orbits for the given spacecraft (existing orbits will be updated)
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the orbit definitions from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+          parameters:
+            - name: spacecraftCode
+              type: string
+              optional: true
+              description: The code of the spacecraft the orbits belong to (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: An orbit attribute to update in the form "<attribute name>=<attribute value>",
+                           only allowed if no orbit file is given (i. e. a single orbit is created)
+        - name: update
+          description: Update a set of orbits for the given spacecraft
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the orbit definitions from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+          parameters:
+            - name: spacecraftCode
+              type: string
+              optional: true
+              description: The code of the spacecraft the orbits belong to (mandatory if not read from file)
+            - name: orbitNumber
+              type: string
+              optional: true
+              description: The number of the orbit to update (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: An orbit attribute to update in the form "<attribute name>=<attribute value>",
+                           only allowed if no orbit file is given (i. e. a single orbit is updated)
+        - name: delete
+          description: Deletes orbits in a given orbit range
+          parameters:
+            - name: spacecraftCode
+              type: string
+              description: The code of the spacecraft the orbits belong to
+            - name: from
+              type: integer
+              description: Lower bound of orbit range
+            - name: to
+              type: integer
+              optional: true
+              description: Upper bound of orbit range
+    - name: order
+      description: Commands for managing processing orders; some commands can only be issued, if the order is in the correct status.
+                   Order status sequence is Initial - Approved - Planned - Released - Running - Completed/Failed - Closed.
+                   Additionally an order may be in status "Suspending" after issuing a "suspend" command, until all running
+                   job steps are finished.
+      subcommands:
+        - name: show
+          description: Lists orders, optionally restricted to a given time range or a specific processing order
+          options:
+            - name: from
+              type: datetime
+              description: Lower bound of order start time (rounded down to next full second)
+            - name: to
+              type: datetime
+              description: Upper bound of order start time (rounded up to next full second)
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give order details, otherwise show only order identifier, UUID, start/stop times, mode and state
+              shortForm: v
+          parameters:
+            - name: orderId
+              type: string
+              optional: true
+              description: The order identifier (overrides --from and --to options)
+        - name: create
+          description: Create a new processing order (in status Initial); if the input is not from a file,
+                       the user will be prompted for mandatory attributes not given on the command line
+                       (when prompted for orbits, orbit ranges may be given, e. g. "3000-3003,3005,3009-3011")
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the order definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+          parameters:
+            - name: orderId
+              type: string
+              optional: true
+              description: The order identifier for user reference (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: An order attribute to update in the form "<attribute name>=<attribute value>",
+                           overrides values given in the order definition file
+        - name: update
+          description: Update a processing order (only allowed in status Initial)
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the order definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: delete-attributes
+              type: boolean
+              description: Delete non-mandatory attributes not given in the order definition file and/or the command parameters
+          parameters:
+            - name: orderId
+              type: string
+              optional: true
+              description: The order identifier for user reference (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: An order attribute to update in the form "<attribute name>=<attribute value>",
+                           overrides values given in the order definition file
+        - name: approve
+          description: Approve the named processing order for planning (must be in status Initial, new status is Approved)
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
+        - name: plan
+          description: Plan the jobs for the named processing order (must be in status Approved, new status is Planned)
+          options:
+            - name: format
+              type: string
+              description: The output format for the resulting job list (one of { NONE, PLAIN, JSON, XML, YAML }; default value PLAIN),
+                           NONE suppresses result output, PLAIN format gives job and job step identifiers only, the other
+                           formats give full output of all planned jobs and job steps (may be very verbose!)
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
+            - name: facility
+              type: string
+              description: The processing facility, on which the order shall be run
+        - name: reset
+          description: Reset the named processing order to initial state (must be in status Approved or Planned,
+                       new status is Initial)
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
+        - name: release
+          description: Release the jobs of the named processing order for processing (must be in status Planned,
+                       new status is Released; order status will change to Running, when execution of the first job step starts;
+                       when all job steps are finished, the status will change again to Completed, if all job steps finished
+                       successfully, or Failed, if at least one job step failed)
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
+        - name: suspend
+          description: Suspend starting of further jobs for the named processing order (must be in status Released or Running, 
+                       new status is Suspending, then Planned, when all running job steps are finished)
+          options:
+            - name: force
+              type: boolean
+              shortForm: F
+              description: Force the suspend by immediately terminating all running job steps
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
+        - name: resume
+          description: Resume starting of jobs for the named processing order after suspend (order must be in status Planned,
+                       new status is Released [actually the same command as "release"])
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
+        - name: cancel
+          description: Cancel the named processing order (remaining jobs are not executed, order state changes to Failed;
+              order must be in status Planned, i. e. it may be necessary to issue a "suspend" command first)
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
+        - name: retry
+          description: Retry the named processing order (failed job steps and jobs are set to status Initial, the order itself
+              is set to status Planned, order must be in status Failed)
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
+        - name: close
+          description: Close the named processing order (must be in status Completed or Failed, new status is Closed)
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
+        - name: delete
+          description: Delete the named processing order (only allowed in status Initial or Closed)
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
+
+    # Commands for the Production Planner
+    - name: job
+      description: Commands for managing jobs; some commands can only be issued, if the job is in the correct status.
+                   Job status sequence is Initial - Released - Started - Completed/Failed.
+                   Additionally a job may be in status "On Hold" after issuing a "suspend" command, until all running
+                   job steps are finished.
+      subcommands:
+        - name: show
+          description: Lists jobs for an order, optionally restricted to a specific job state
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give job details including job steps, otherwise show only job database ID, start/stop times and state
+              shortForm: v
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
+            - name: jobState
+              type: string
+              optional: true
+              description: The job state (one of { INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED })
+        - name: suspend
+          description: Suspend starting of further job steps for the named job (must be in status Released or Started, 
+                       new status is On Hold, then Initial, when all running job steps are finished)
+          options:
+            - name: force
+              type: boolean
+              shortForm: F
+              description: Force the suspend by immediately terminating all running job steps
+          parameters:
+            - name: jobId
+              type: integer
+              description: The persistent database ID of the job
+        - name: resume
+          description: Resume starting of job steps for the named job after suspend (job must be in status Initial,
+                       new status is Released)
+          parameters:
+            - name: jobId
+              type: integer
+              description: The persistent database ID of the job
+        - name: cancel
+          description: Cancel the named job (remaining job steps are not executed, job state changes to Failed;
+              job must be in status Initial, i. e. it may be necessary to issue a "suspend" command first)
+          parameters:
+            - name: jobId
+              type: integer
+              description: The persistent database ID of the job
+        - name: retry
+          description: Retry the named job (failed job steps and the job itself are set to status
+              Initial, job must be in status Failed)
+          parameters:
+            - name: jobId
+              type: integer
+              description: The persistent database ID of the job
+        - name: step
+          description: Commands for managing job steps; some commands can only be issued, if the job step is in the correct status.
+                       Job step status sequence is Initial - [Waiting Input -] Ready - Running - Completed/Failed.
+          subcommands:
+            - name: show
+              description: Lists job steps for a job, optionally restricted to a specific job step state
+              options:
+                - name: format
+                  type: string
+                  description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+                - name: verbose
+                  type: boolean
+                  description: If set, give job step details, otherwise show only job step database ID, output product class and state
+                  shortForm: v
+              parameters:
+                - name: jobId
+                  type: integer
+                  description: The persistent database ID of the job
+                - name: jobStepState
+                  type: string
+                  optional: true
+                  description: The job step state (one of { INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED })
+            - name: suspend
+              description: Suspend the named job step (must be in status Ready or Running)
+              options:
+                - name: force
+                  type: boolean
+                  shortForm: F
+                  description: Force the suspend by immediately terminating the job step, if it is already running
+              parameters:
+                - name: jobStepId
+                  type: integer
+                  description: The persistent database ID of the job step
+            - name: resume
+              description: Resume a previously suspended job step (job step must be in status Initial,
+                           new status is Waiting Input or Ready)
+              parameters:
+                - name: jobStepId
+                  type: integer
+                  description: The persistent database ID of the job step
+            - name: cancel
+              description: Cancel the named job step (job step state changes to Failed;
+                  job step must be in status Initial or Running, i. e. it may be necessary to issue a "suspend" command first)
+              parameters:
+                - name: jobStepId
+                  type: integer
+                  description: The persistent database ID of the job step
+            - name: retry
+              description: Retry the named job step (job step state changes to Initial, job step must be in status Failed)
+              parameters:
+                - name: jobStepId
+                  type: integer
+                  description: The persistent database ID of the job step
+
+    # Commands for the Processor Manager
+    - name: processor
+      description: Commands for managing processor classes, processors, configurations and configured processors
+      subcommands:
+        - name: class
+          description: Commands for managing processor classes
+          subcommands:
+            - name: show
+              description: Show all processor classes for the current mission and optionally a given class name
+              options:
+                - name: format
+                  type: string
+                  description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+                - name: verbose
+                  type: boolean
+                  description: If set, give processor class details , otherwise show only processor class name
+                  shortForm: v
+              parameters:
+                - name: processorClass
+                  type: string
+                  optional: true
+                  description: The name of the processor class to show
+            - name: create
+              description: Create a new processor class for the current mission; 
+                           the user will be prompted for mandatory attributes not given on the command line
+              options:
+                - name: file
+                  type: string
+                  description: Path to file to read the processor class definition from
+                  shortForm: f
+                - name: format
+                  type: string
+                  description: The file format (one of { JSON, XML, YAML }; default value JSON)
+              parameters:
+                - name: processorClass
+                  type: string
+                  optional: true
+                  description: The name of the processor class to create (mandatory if not read from file)
+                - name: attribute
+                  type: string
+                  optional: true
+                  repeatable: true
+                  description: A processor class attribute to set in the form "<attribute name>=<attribute value>"
+            - name: update
+              description: Update a processor class for the current mission; 
+                           the user will be prompted for mandatory attributes not given on the command line
+              options:
+                - name: file
+                  type: string
+                  description: Path to file to read the processor class definition from
+                  shortForm: f
+                - name: format
+                  type: string
+                  description: The file format (one of { JSON, XML, YAML }; default value JSON)
+              parameters:
+                - name: processorClass
+                  type: string
+                  optional: true
+                  description: The name of the processor classes to update (mandatory if not read from file)
+                - name: attribute
+                  type: string
+                  optional: true
+                  repeatable: true
+                  description: A processor class attribute to set in the form "<attribute name>=<attribute value>"
+            - name: delete
+              description: Remove the named processor class from the current mission
+              parameters:
+                - name: processorClass
+                  type: string
+                  description: The name of the processor classes to update (mandatory if not read from file)
+        - name: show
+          description: Show all processor versions for the current mission or only the selected ones
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give processor details, otherwise show only processor class name and processor version
+              shortForm: v
+          parameters:
+            - name: processorClass
+              type: string
+              optional: true
+              description: The class name of the processor to show
+            - name: processorVersion
+              type: string
+              optional: true
+              description: The version of the processor to show
+        - name: create
+          description: Create a new processor version for the current mission; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the processor version definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+          parameters:
+            - name: processorClass
+              type: string
+              optional: true
+              description: The class name of the processor to create (mandatory if not read from file)
+            - name: processorVersion
+              type: string
+              optional: true
+              description: The version of the processor to create (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A processor attribute to set in the form "<attribute name>=<attribute value>"
+        - name: update
+          description: Update a processor version for the current mission; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the processor version definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: delete-attributes
+              type: boolean
+              description: Delete non-mandatory attributes not given in the order definition file and/or the command parameters
+          parameters:
+            - name: processorClass
+              type: string
+              optional: true
+              description: The class name of the processor to update (mandatory if not read from file)
+            - name: processorVersion
+              type: string
+              optional: true
+              description: The version of the processor to update (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A processor attribute to set in the form "<attribute name>=<attribute value>"
+        - name: delete
+          description: Delete a processor version from the current mission
+          parameters:
+            - name: processorClass
+              type: string
+              description: The class name of the processor to delete
+            - name: processorVersion
+              type: string
+              description: The version of the processor to delete
+        - name: configuration
+          description: Commands to manage configured processors (combinations of processor versions and processor class configurations)
+          subcommands:
+            - name: show
+              description: Show all configured processors for the current mission or only the one identified
+              options:
+                - name: format
+                  type: string
+                  description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+                - name: verbose
+                  type: boolean
+                  description: If set, give configured processor details, otherwise show only identifier, UUID and
+                               and key data for linked processor and configuration
+                  shortForm: v
+              parameters:
+                - name: configuredProcessorIdentifier
+                  type: string
+                  optional: true
+                  description: The identifier of the configured processor
+            - name: create
+              description: Create a new configured processor by combining a processor version and a (processor class) configuration; 
+                           the user will be prompted for mandatory attributes not given on the command line
+              options:
+                - name: file
+                  type: string
+                  description: Path to file to read the configured processor definition from
+                  shortForm: f
+                - name: format
+                  type: string
+                  description: The file format (one of { JSON, XML, YAML }; default value JSON)
+              parameters:
+                - name: configuredProcessorIdentifier
+                  type: string
+                  optional: true
+                  description: The identifier of the configured processor
+                - name: processorClass
+                  type: string
+                  optional: true
+                  description: The class name of the processor (mandatory if not read from file)
+                - name: processorVersion
+                  type: string
+                  optional: true
+                  description: The version of the processor (mandatory if not read from file)
+                - name: configurationVersion
+                  type: string
+                  optional: true
+                  description: The version of the processor class configuration (mandatory if not read from file)
+                - name: attribute
+                  type: string
+                  optional: true
+                  repeatable: true
+                  description: A configured processor attribute to set in the form "<attribute name>=<attribute value>"
+            - name: update
+              description: Update a configured processor; 
+                           the user will be prompted for mandatory attributes not given on the command line
+              options:
+                - name: file
+                  type: string
+                  description: Path to file to read the configured processor definition from
+                  shortForm: f
+                - name: format
+                  type: string
+                  description: The file format (one of { JSON, XML, YAML }; default value JSON)
+              parameters:
+                - name: configuredProcessorIdentifier
+                  type: string
+                  optional: true
+                  description: The identifier of the configured processor (mandatory if not read from file)
+                - name: attribute
+                  type: string
+                  optional: true
+                  repeatable: true
+                  description: A configured processor attribute to set in the form "<attribute name>=<attribute value>"
+            - name: delete
+              description: Delete a configured processor
+              parameters:
+                - name: configuredProcessorIdentifier
+                  type: string
+                  description: The identifier of the configured processor to delete
+    - name: configuration
+      description: Commands for managing configurations of a specific processor class
+      subcommands:
+        - name: show
+          description: Show all configurations for the current mission and optionally the given processor class and configuration version
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give configuration details, otherwise show only processor class name and configuration version
+              shortForm: v
+          parameters:
+            - name: processorClass
+              type: string
+              optional: true
+              description: The name of the processor class for the configurations
+            - name: configurationVersion
+              type: string
+              optional: true
+              description: The configuration versions to show
+        - name: create
+          description: Create a new configuration for the given processor class in the current mission; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the configuration definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+          parameters:
+            - name: processorClass
+              type: string
+              optional: true
+              description: The name of the processor class (mandatory if not read from file)
+            - name: configurationVersion
+              type: string
+              optional: true
+              description: The version of the configuration to create (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A configuration attribute to set in the form "<attribute name>=<attribute value>"
+        - name: update
+          description: Update a configuration for the given processor class in the current mission; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the configuration definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: delete-attributes
+              type: boolean
+              description: Delete non-mandatory attributes not given in the order definition file and/or the command parameters
+          parameters:
+            - name: processorClass
+              type: string
+              optional: true
+              description: The name of the processor class (mandatory if not read from file)
+            - name: configurationVersion
+              type: string
+              optional: true
+              description: The version of the configuration to update (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A configuration attribute to set in the form "<attribute name>=<attribute value>"
+        - name: delete
+          description: Remove a configuration from the given processor class in the current mission
+          parameters:
+            - name: processorClass
+              type: string
+              description: The name of the processor class
+            - name: configurationVersion
+              type: string
+              description: The version of the configuration to delete
+                 
+    # Commands for the Product Class Manager
+    - name: productclass
+      description: Commands for managing product classes
+      subcommands:
+        - name: show
+          description: Show all product classes for the current mission or only the selected ones
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give product class details, otherwise show only product class name
+              shortForm: v
+          parameters:
+            - name: productClass
+              type: string
+              optional: true
+              description: The name of the product class to show
+        - name: create
+          description: Create a new product class for the current mission; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the product class definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+          parameters:
+            - name: productClass
+              type: string
+              optional: true
+              description: The name of the product class name to create (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A product class attribute to set in the form "<attribute name>=<attribute value>"
+        - name: update
+          description: Update a product class for the current mission; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the product class definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: delete-attributes
+              type: boolean
+              description: Delete non-mandatory attributes not given in the product class definition file and/or the command parameters
+          parameters:
+            - name: productClass
+              type: string
+              optional: true
+              description: The name of the product class name to update (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A product class attribute to set in the form "<attribute name>=<attribute value>"
+        - name: delete
+          description: Delete the named product class from the current mission
+          parameters:
+            - name: productClass
+              type: string
+              description: The name of the product class to delete
+        - name: rule
+          description: Commands for managing selection rules
+          subcommands:
+            - name: show
+              description: Show all selection rules for the current mission and the given target and source product classes
+              options:
+                - name: format
+                  type: string
+                  description: The output format (one of { PLAIN, JSON, XML, YAML }; default value PLAIN [rule language]).
+                - name: verbose
+                  type: boolean
+                  description: If set, give rule details including job steps, otherwise show rule as in PLAIN format
+                  shortForm: v
+              parameters:
+                - name: targetProductClass
+                  type: string
+                  description: The product class using the selection rules
+                - name: sourceProductClass
+                  type: string
+                  optional: true
+                  description: The product class requested by the selection rules
+            - name: create
+              description: Create a new selection rule for the given target product class; 
+                           the user will be prompted for mandatory attributes not given on the command line.
+                           If no file name is given,
+                           the user will be prompted to enter the selection rule in Rule Language.
+              options:
+                - name: file
+                  type: string
+                  description: Path to file to read the selection rule definition from
+                  shortForm: f
+                - name: format
+                  type: string
+                  description: The file format (one of { PLAIN, JSON, XML, YAML }; default value JSON,
+                               or PLAIN if no input file is given)
+              parameters:
+                - name: targetProductClass
+                  type: string
+                  optional: true
+                  description: The target product class name (mandatory if not read from file)
+                - name: attribute
+                  type: string
+                  optional: true
+                  repeatable: true
+                  description: A selection rule attribute to set in the form "<attribute name>=<attribute value>"
+            - name: update
+              description: Update a selection rule for the given target class and configured processor; 
+                           the user will be prompted for mandatory attributes not given on the command line.
+                           If no file name is given,
+                           the user will be prompted to enter the selection rule in Rule Language.
+                           If multiple rules exist for the target product class,
+                           the user will be prompted to select the rule to apply the update to.
+              options:
+                - name: file
+                  type: string
+                  description: Path to file to read the selection rule definition from
+                  shortForm: f
+                - name: format
+                  type: string
+                  description: The file format (one of { PLAIN, JSON, XML, YAML }; default value JSON,
+                               or PLAIN if no input file is given)
+                - name: delete-attributes
+                  type: boolean
+                  description: Delete non-mandatory attributes not given in the selection rule definition file and/or the command parameters
+              parameters:
+                - name: targetProductClass
+                  type: string
+                  optional: true
+                  description: The target product class name (mandatory if not read from file)
+                - name: attribute
+                  type: string
+                  optional: true
+                  repeatable: true
+                  description: A selection rule attribute to set in the form "<attribute name>=<attribute value>"
+            - name: delete
+              description: Delete the selection rule(s) for the given target class
+              parameters:
+                - name: targetProductClass
+                  type: string
+                  description: The product class name of the selection rule
+                - name: ruleId
+                  type: string
+                  description: The database ID of the selection rule to delete
+                    
+    # Commands for the Product Ingestor
+    - name: product
+      description: Commands for managing products
+      subcommands:
+        - name: show
+          description: Show products for a mission and product class, optionally restricted to a given time range
+          options:
+            - name: from
+              type: datetime
+              description: Lower bound of sensing start time (rounded down to next full second)
+            - name: to
+              type: datetime
+              description: Upper bound of sensing start time (rounded up to next full second)
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give product details, otherwise show database ID, UUID and validity period only
+                           (verbose is assumed if product database ID is given as parameter)
+              shortForm: v
+          parameters:
+            - name: productClass
+              type: string
+              repeatable: true
+              description: The name of the product class to show
+            - name: id
+              type: integer
+              optional: true
+              description: The database ID of the product to show (overrides "from" and "to" parameters)
+        - name: create
+          description: Create a new product for the given product class in the current mission; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the product definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+          parameters:
+            - name: productClass
+              type: string
+              optional: true
+              description: The class name of the product to create (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A product attribute to set in the form "<attribute name>=<attribute value>"
+        - name: update
+          description: Update a product for the given product class in the current mission; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the product definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: delete-attributes
+              type: boolean
+              description: Delete non-mandatory attributes not given in the product definition file and/or the command parameters
+          parameters:
+            - name: id
+              type: integer
+              optional: true
+              description: The database ID of the product to update (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A product attribute to set in the form "<attribute name>=<attribute value>"
+        - name: delete
+          description: Delete the product with the given database ID
+          parameters:
+            - name: id
+              type: integer
+              description: The database ID of the product to delete
+        - name: file
+          description: Commands for managing individual product files at a processing facility
+          subcommands:
+            - name: show
+              description: Show the product files for a given product, optionally restricted to a processing facility
+              options:
+                - name: format
+                  type: string
+                  description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+                - name: verbose
+                  type: boolean
+                  description: If set, give product file details, otherwise show processing facility and product filenames only
+                               (setting processing facility parameter implies verbose)
+                  shortForm: v
+              parameters:
+                - name: productId
+                  type: integer
+                  description: The database ID of the product, to which the product files belong
+                - name: processingFacility
+                  type: string
+                  optional: true
+                  description: The processing facility, at which a product file is stored
+#            - name: update
+#              description: Update a product file for a given product and processing facility
+#              options:
+#                - name: file
+#                  type: string
+#                  description: Path to file to read the product file definition from
+#                  shortForm: f
+#                - name: format
+#                  type: string
+#                  description: The file format (one of { JSON, XML, YAML }; default value JSON)
+#                - name: delete-attributes
+#                  type: boolean
+#                  description: Delete non-mandatory attributes not given in the product file definition file and/or the command parameters
+#              parameters:
+#                - name: productId
+#                  type: integer
+#                  description: The database ID of the product, to which the product files belong
+#                - name: processingFacility
+#                  type: string
+#                  description: The processing facility, at which the product file is stored
+            - name: delete
+              description: Delete a product file for a given product and processing facility
+              options:
+                - name: noErase
+                  type: boolean
+                  description: Do not erase the data file(s) from the storage area, e. g. if they are read-only (default "false")
+                  shortForm: n
+              parameters:
+                - name: productId
+                  type: integer
+                  description: The database ID of the product, to which the product files belong
+                - name: processingFacility
+                  type: string
+                  description: The processing facility, at which the product file is stored
+    - name: ingest
+      description: Ingest all products into the storage manager of the given processing facility
+      options:
+        - name: file
+          type: string
+          description: Path to file to read the ingested products from (mandatory)
+          shortForm: f
+        - name: format
+          type: string
+          description: The file format (one of { JSON, XML, YAML }; default value JSON)
+        - name: noCopy
+          type: boolean
+          description: If set, files will not be copied to a new location, if source and target storage types are equal
+          shortForm: n
+      parameters:
+        - name: processingFacility
+          type: string
+          description: The name of the facility to ingest the products to
+
+    # Commands for the User Manager
+    - name: user
+      description: Commands for managing users (note that user names are stored with a mission prefix in the user database,
+                   but the mission prefix is not used in the command-line interface)
+      subcommands:
+        - name: show
+          description: Show user accounts for the current mission
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give user details, otherwise show usernames only (setting username parameter
+                           implies verbose)
+              shortForm: v
+          parameters:
+            - name: userName
+              type: string
+              optional: true
+              description: The name of the user account to show (without mission prefix)
+        - name: create
+          description: Create a new user account within the given mission
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the user account definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: mission
+              type: string
+              description: The mission to create the user for (only valid if not yet logged in into a mission;
+                           basically intended for creating a single user with "ROLE_USERMGR" for a new mission)
+              shortForm: m
+            - name: identFile
+              type: string
+              description: |
+                  Path to a file containing user name (without mission prefix) and password (in two separate lines);
+                  the file will only be read, if it is only readable by the current system user (as far as warranted by the operating system)
+              shortForm: i
+          parameters:
+            - name: userName
+              type: string
+              optional: true
+              description: The name of the user account to create (without mission prefix; mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A user attribute to set in the form "<attribute name>=<attribute value>"
+                           (if a password is specified here, it must be unencrypted, while in the file it must be encrypted)
+        - name: update
+          description: Update the given user account;
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the user account definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: delete-attributes
+              type: boolean
+              description: Delete non-mandatory attributes not given in the user account definition file and/or the command parameters
+          parameters:
+            - name: userName
+              type: string
+              optional: true
+              description: The name of the user account to update (without mission prefix; mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A user account attribute to set in the form "<attribute name>=<attribute value>"
+                           (if a password is specified here, it must be unencrypted, while in the file it must be encrypted)
+        - name: delete
+          description: Delete the user account with the given name
+          options:
+            - name: mission
+              type: string
+              description: The mission to delete the user from (only valid if not yet logged in into a mission;
+                           basically intended for removing the last user with "ROLE_USERMGR" from a mission before deletion)
+              shortForm: m
+          parameters:
+            - name: userName
+              type: string
+              optional: false
+              description: The name of the user account to delete (without mission prefix)
+        - name: enable
+          description: Enable the user account with the given name
+          parameters:
+            - name: userName
+              type: string
+              optional: false
+              description: The name of the user account to enable (without mission prefix)
+        - name: disable
+          description: Disable the user account with the given name
+          parameters:
+            - name: userName
+              type: string
+              optional: false
+              description: The name of the user account to disable (without mission prefix)
+        - name: grant
+          description: Grant authorities for the current mission directly to the user
+                       (not recommended, use of group authorities recommended)
+          parameters:
+            - name: userName
+              type: string
+              optional: false
+              description: The name of the user account to grant authorities to
+                           (without mission prefix; mandatory if not read from file)
+            - name: authority
+              type: string
+              optional: false
+              repeatable: true
+              description: An authority to grant (multiple authorities allowed)
+        - name: revoke
+          description: Revoke authorities for the current mission from the user (directly granted authorities only)
+          parameters:
+            - name: userName
+              type: string
+              optional: false
+              description: The name of the user account to revoke authorities from
+                           (without mission prefix; mandatory if not read from file)
+            - name: authority
+              type: string
+              optional: false
+              repeatable: true
+              description: An authority to revoke (multiple authorities allowed)
+    - name: password
+      description: |
+          Interactively change the password of the logged in user, or of the named user,
+          if executed by a user with user manager permissions
+      parameters:
+        - name: userName
+          type: string
+          optional: true
+          description: The name of the user account to change the password for (default is the logged in user)
+    - name: group
+      description: Commands for managing groups (note that group names are stored with a mission prefix in the user database,
+                   but the mission prefix is not used in the command-line interface)
+      subcommands:
+        - name: show
+          description: Show user groups for the current mission
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give user group details, otherwise show group names only (setting group name parameter
+                           implies verbose)
+              shortForm: v
+          parameters:
+            - name: groupName
+              type: string
+              optional: true
+              description: The name of the user group to show (without mission prefix)
+        - name: create
+          description: Create a new user group within the given mission
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the user group definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+          parameters:
+            - name: groupName
+              type: string
+              optional: true
+              description: The name of the user group to create (without mission prefix; mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A group attribute to set in the form "<attribute name>=<attribute value>"
+        - name: update
+          description: Update the given user group;
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the user group definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: delete-attributes
+              type: boolean
+              description: Delete non-mandatory attributes not given in the user group definition file and/or the command parameters
+          parameters:
+            - name: groupName
+              type: string
+              optional: true
+              description: The name of the user group to update (without mission prefix; mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A user group attribute to set in the form "<attribute name>=<attribute value>"
+        - name: delete
+          description: Delete the group account with the given name
+          parameters:
+            - name: groupName
+              type: string
+              optional: false
+              description: The name of the user group to delete (without mission prefix)
+        - name: grant
+          description: Grant authorities for the current mission to the user group
+          parameters:
+            - name: groupName
+              type: string
+              optional: false
+              description: The name of the user group to grant authorities to (without mission prefix)
+            - name: authority
+              type: string
+              optional: false
+              repeatable: true
+              description: An authority to grant (multiple authorities allowed)
+        - name: revoke
+          description: Revoke authorities for the current mission from the user group
+          parameters:
+            - name: groupName
+              type: string
+              optional: false
+              description: The name of the user group to revoke authorities from (without mission prefix)
+            - name: authority
+              type: string
+              optional: false
+              repeatable: true
+              description: An authority to revoke (multiple authorities allowed)
+        - name: members
+          description: List the user accounts of a user group (for the current mission only, users may have different
+                       group associations in different missions)
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give user details, otherwise show user names only
+              shortForm: v
+          parameters:
+            - name: groupName
+              type: string
+              optional: false
+              description: The name of the user group to list the users for (without mission prefix)
+        - name: add
+          description: Add user accounts to the user group (for the current mission only, users may have different
+                       group associations in different missions)
+          parameters:
+            - name: groupName
+              type: string
+              optional: false
+              description: The name of the user group to add users to (without mission prefix)
+            - name: userName
+              type: string
+              optional: false
+              repeatable: true
+              description: The name of a user account to add (without mission prefix; multiple user names allowed)
+        - name: remove
+          description: Remove user accounts from the user group (for the current mission only)
+          parameters:
+            - name: groupName
+              type: string
+              optional: false
+              description: The name of the user group to remove users from (without mission prefix)
+            - name: userName
+              type: string
+              optional: false
+              repeatable: true
+              description: The name of a user account to add (without mission prefix; multiple user names allowed)
+
+    # Commands for the Facility Manager
+    - name: facility
+      description: Commands for managing processing facilities
+      subcommands:
+        - name: show
+          description: Show all processing facilities or a specific one
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give facility details, otherwise show facility names only (setting facilityName parameter
+                           implies verbose)
+              shortForm: v
+            - name: showPasswords
+              type: boolean
+              description: If set, show passwords for Processing Facility users, otherwise show placeholder
+              shortForm: s
+          parameters:
+            - name: facilityName
+              type: string
+              optional: true
+              description: The name of the processing facility to show
+        - name: create
+          description: Create a new processing facility; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the processing facility definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+          parameters:
+            - name: facilityName
+              type: string
+              optional: true
+              description: The name of the facility to create (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A facility attribute to set in the form "<attribute name>=<attribute value>"
+        - name: update
+          description: Update a processing facility; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the processing facility definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: delete-attributes
+              type: boolean
+              description: Delete non-mandatory attributes not given in the processing facility definition file and/or the command parameters
+          parameters:
+            - name: facilityName
+              type: string
+              optional: true
+              description: The name of the facility to update (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A facility attribute to set in the form "<attribute name>=<attribute value>"
+        - name: delete
+          description: Delete the processing facility with the given name
+          parameters:
+            - name: facilityName
+              type: string
+              description: The name of the facility to delete
+          

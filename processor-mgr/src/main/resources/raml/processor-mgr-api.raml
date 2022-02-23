@@ -1,0 +1,310 @@
+#%RAML 1.0
+title: prosEO Processor Manager REST Services API
+version: v0.1
+protocols: [ HTTPS ] 
+baseUri: /proseo/processor-mgr/{version}
+mediaType: application/json
+
+securitySchemes:
+  basicAuth:
+    description: Each request must contain the headers necessary for
+                 basic authentication
+    type: Basic Authentication
+    describedBy:
+      headers:
+        Authorization:
+          description: Used to send the Base64-encoded "username:password"
+                       credentials
+          type: string
+      responses:
+        401:
+          description: |
+            Unauthorized. Either the provided username and password
+            combination is invalid, or the user is not allowed to access
+            the content provided by the requested URL.
+
+types:
+  RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
+  RestStringParameter: !include ../../../../../model/src/main/resources/raml/types/stringparameter.raml
+  RestProcessor: !include ../../../../../model/src/main/resources/raml/types/processor.raml
+  RestProcessorClass: !include ../../../../../model/src/main/resources/raml/types/processorclass.raml
+  RestTask: !include ../../../../../model/src/main/resources/raml/types/task.raml
+  RestConfiguration: !include ../../../../../model/src/main/resources/raml/types/configuration.raml
+  RestConfigurationFile: !include ../../../../../model/src/main/resources/raml/types/configurationfile.raml
+  RestConfigurationInputFile: !include ../../../../../model/src/main/resources/raml/types/configurationinputfile.raml
+  RestConfiguredProcessor: !include ../../../../../model/src/main/resources/raml/types/configuredprocessor.raml
+
+resourceTypes:
+  standard:
+    get?:
+      responses:          
+        400:
+          description: |
+            The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
+        404:
+          description: |
+            The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
+    put?:
+      responses:          
+        404:
+          description: |
+            The requested resource on which the modification is being attempted was not found              
+          headers:
+            Warning: !include types/error.raml
+    delete?:
+      responses:          
+        404:
+          description: | 
+            The requested resource to delete was not found 
+          headers:
+            Warning: !include types/error.raml
+              
+/processorclasses:
+  type: standard
+  get:
+    description: Get processor classes by mission and name
+    displayName: getProcessorClasses
+    queryParameters:
+      mission?: string
+      processorName?: string
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestProcessorClass[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/processorclass-list.json
+  post:
+    description: Create a new processor class
+    displayName: createProcessorClass
+    body:
+      application/json:
+        type: RestProcessorClass
+        example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: RestProcessorClass
+            example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
+  /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
+    get:
+      description: Get a processor class by ID
+      displayName: getProcessorClassById
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestProcessorClass
+              example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
+    patch:
+      description: Update a processor class by ID
+      displayName: modifyProcessorClass
+      body:
+        application/json:
+          type: RestProcessorClass
+          example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestProcessorClass
+              example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
+    delete:
+      description: Delete a processor class by ID
+      displayName: deleteProcessorClassById
+      responses:
+        204:
+              
+/processors:
+  type: standard
+  get:
+    description: Get processors by mission, name and version
+    displayName: getProcessors
+    queryParameters:
+      mission?: string
+      processorName?: string
+      processorVersion?: string
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestProcessor[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/processor-list.json
+  post:
+    description: Create a new processor
+    displayName: createProcessor
+    body:
+      application/json:
+        type: RestProcessor
+        example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: RestProcessor
+            example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
+  /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
+    get:
+      description: Get a processor by ID
+      displayName: getProcessorById
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestProcessor
+              example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
+    patch:
+      description: Update a processor class by ID
+      displayName: modifyProcessor
+      body:
+        application/json:
+          type: RestProcessor
+          example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestProcessor
+              example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
+    delete:
+      description: Delete a processor class by ID
+      displayName: deleteProcessorById
+      responses:
+        204:
+
+/configurations:
+  type: standard
+  get:
+    description: Get configurations by mission, processor name and configuration version
+    displayName: getConfigurations
+    queryParameters:
+      mission?: string
+      processorName?: string
+      configurationVersion?: string
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestConfiguration[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/configuration-list.json
+  post:
+    description: Create a new configuration
+    displayName: createConfiguration
+    body:
+      application/json:
+        type: RestConfiguration
+        example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: RestConfiguration
+            example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
+  /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
+    get:
+      description: Get a configuration by ID
+      displayName: getConfigurationById
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestConfiguration
+              example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
+    patch:
+      description: Update a configuration by ID
+      displayName: modifyConfiguration
+      body:
+        application/json:
+          type: RestConfiguration
+          example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestConfiguration
+              example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
+    delete:
+      description: Delete a configuration by ID
+      displayName: deleteConfigurationById
+      responses:
+        204:
+
+/configuredprocessors:
+  type: standard
+  get:
+    description: Get configured processors, filtered by mission, identifier, processor name, processor version and/or configuration version
+    displayName: getConfiguredProcessors
+    queryParameters:
+      mission?: string
+      identifier?: string
+      processorName?: string
+      processorVersion?: string
+      configurationVersion?: string
+      uuid?: string
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestConfiguredProcessor[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor-list.json
+  post:
+    description: Create a new configured processor
+    displayName: createConfiguredProcessor
+    body:
+      application/json:
+        type: RestConfiguredProcessor
+        example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: RestConfiguredProcessor
+            example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
+  /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
+    get:
+      description: Get a configured processor by ID
+      displayName: getConfiguredProcessorById
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestConfiguredProcessor
+              example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
+    patch:
+      description: Update a configured processor by ID
+      displayName: modifyConfiguredProcessor
+      body:
+        application/json:
+          type: RestConfiguredProcessor
+          example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestConfiguredProcessor
+              example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
+    delete:
+      description: Delete a configured processor by ID
+      displayName: deleteConfiguredProcessorById
+      responses:
+        204:

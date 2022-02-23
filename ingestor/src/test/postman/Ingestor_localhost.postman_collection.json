@@ -1,0 +1,545 @@
+{
+	"info": {
+		"_postman_id": "f8c75a4b-8120-489a-8e56-b390c07e2847",
+		"name": "prosEO Ingestor localhost",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get Download Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/proseo/ingestor/v1/products/{{productId}}/download/token",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"proseo",
+						"ingestor",
+						"v1",
+						"products",
+						"{{productId}}",
+						"download",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Download Token w/ wrong id",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 404\", function () {",
+							"    pm.response.to.have.status(404);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/proseo/ingestor/v1/products/987654321/download/token",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"proseo",
+						"ingestor",
+						"v1",
+						"products",
+						"987654321",
+						"download",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Download Token w/ filename",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/proseo/ingestor/v1/products/{{productId}}/download/token?fileName={{productFileName}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"proseo",
+						"ingestor",
+						"v1",
+						"products",
+						"{{productId}}",
+						"download",
+						"token"
+					],
+					"query": [
+						{
+							"key": "fileName",
+							"value": "{{productFileName}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Download Product",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Body matches string\", function () {",
+							"    pm.expect(pm.response.text()).to.include(\"1234567\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/proseo/ingestor/v1/products/{{productId}}/download",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"proseo",
+						"ingestor",
+						"v1",
+						"products",
+						"{{productId}}",
+						"download"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Download Product w/ range",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 206\", function () {",
+							"    pm.response.to.have.status(206);",
+							"});",
+							"pm.test(\"Body is correct\", function () {",
+							"    pm.response.to.have.body(\"L0________\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/proseo/ingestor/v1/products/{{productId}}/download?fromByte=8&toByte=17",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"proseo",
+						"ingestor",
+						"v1",
+						"products",
+						"{{productId}}",
+						"download"
+					],
+					"query": [
+						{
+							"key": "fromByte",
+							"value": "8"
+						},
+						{
+							"key": "toByte",
+							"value": "17"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Download Product w/ wrong token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 401\", function () {",
+							"    pm.response.to.have.status(401);",
+							"});",
+							"pm.test(\"Warning is present\", function () {",
+							"    pm.response.to.have.header(\"Warning\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://host.docker.internal:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/products/download/?pathInfo=/proseo/data/60/PTM_L0_20191104090000_20191104094500_20191104120000.RAW&token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MjQzNzczNzQsInN1YiI6IlBUTV9MMF8yMDE5MTEwNDA5MDAwMF8yMDE5MTEwNDA5NDUwMF8yMDE5MTEwNDEyMDAwMC5SQVcifQ.f26so9AjKdESKXWGA_NGyMY5kUMG8oFPcN9pqydN3fM",
+					"protocol": "http",
+					"host": [
+						"host",
+						"docker",
+						"internal"
+					],
+					"port": "8001",
+					"path": [
+						"api",
+						"v1",
+						"namespaces",
+						"default",
+						"services",
+						"storage-mgr-service:service",
+						"proxy",
+						"proseo",
+						"storage-mgr",
+						"v1",
+						"products",
+						"download",
+						""
+					],
+					"query": [
+						{
+							"key": "pathInfo",
+							"value": "/proseo/data/60/PTM_L0_20191104090000_20191104094500_20191104120000.RAW"
+						},
+						{
+							"key": "token",
+							"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MjQzNzczNzQsInN1YiI6IlBUTV9MMF8yMDE5MTEwNDA5MDAwMF8yMDE5MTEwNDA5NDUwMF8yMDE5MTEwNDEyMDAwMC5SQVcifQ.f26so9AjKdESKXWGA_NGyMY5kUMG8oFPcN9pqydN3fM"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Product Details",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Test JSON data\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.productClass).to.eql(\"L0________\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/proseo/ingestor/v1/products/{{productId}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"proseo",
+						"ingestor",
+						"v1",
+						"products",
+						"{{productId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Product Details by UUID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Test JSON data\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.productClass).to.eql(\"L0________\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/proseo/ingestor/v1/products/uuid/{{productUuid}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"proseo",
+						"ingestor",
+						"v1",
+						"products",
+						"uuid",
+						"{{productUuid}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Product Details w/ wrong auth",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 401\", function () {",
+							"    pm.response.to.have.status(401);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "abcdefr",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "abcdef",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/proseo/ingestor/v1/products/{{productId}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"proseo",
+						"ingestor",
+						"v1",
+						"products",
+						"{{productId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Product Details w/ wrong privilege",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 403\", function () {",
+							"    pm.response.to.have.status(403);",
+							"});",
+							"pm.test(\"Warning is present\", function () {",
+							"    pm.response.to.have.header(\"Warning\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "{{pwd2}}",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "{{user2}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/proseo/ingestor/v1/products/{{productId}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"proseo",
+						"ingestor",
+						"v1",
+						"products",
+						"{{productId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Product Count w/ product class",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Body is correct\", function () {",
+							"    pm.response.to.have.body(\"1\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/proseo/ingestor/v1/products/count?productClass=AUX_IERS_B",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"proseo",
+						"ingestor",
+						"v1",
+						"products",
+						"count"
+					],
+					"query": [
+						{
+							"key": "productClass",
+							"value": "AUX_IERS_B"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "basic",
+		"basic": [
+			{
+				"key": "password",
+				"value": "{{password}}",
+				"type": "string"
+			},
+			{
+				"key": "username",
+				"value": "{{username}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

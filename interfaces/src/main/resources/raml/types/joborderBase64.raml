@@ -1,0 +1,14 @@
+#%RAML 1.0 DataType
+# RestJoborder:
+    type: object
+    properties:
+      jobOrderStringBase64?:
+        type: string
+        maxLength: 1000000
+      uploaded?: boolean
+      fsType?:
+        type: string
+        description: The type of the storage
+        pattern: ^(S3|ALLUXIO|POSIX|OTHER)$
+      pathInfo?: string
+      message?: string

@@ -1,0 +1,147 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>de.dlr.proseo</groupId>
+		<artifactId>proseo-ui</artifactId>
+		<version>0.8.2</version>
+	</parent>
+
+	<artifactId>proseo-ui-gui</artifactId>
+	<name>prosEO Graphical User Interface</name>
+	<description>prosEO Graphical User Interface – a browser-based graphical user interface for managing and monitoring prosEO, the Processing System for Earth Observation Data</description>
+
+	<url>https://github.com/dlr-eoc/prosEO/ui/gui</url>
+	<organization>
+		<name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
+		<url>http://www.dlr.de</url>
+	</organization>
+
+	<properties>
+		<module.version>0.8.2</module.version>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-configuration-processor</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		<!-- <dependency> -->
+		<!-- <groupId>org.springframework.boot</groupId> -->
+		<!-- <artifactId>spring-boot-starter-data-jpa</artifactId> -->
+		<!-- </dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>mysql</groupId> -->
+		<!-- <artifactId>mysql-connector-java</artifactId> -->
+		<!-- </dependency> -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.projectreactor</groupId>
+			<artifactId>reactor-spring</artifactId>
+			<version>1.0.1.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>de.dlr.proseo</groupId>
+			<artifactId>proseo-model</artifactId>
+			<version>${project.version}</version>
+			<classifier>rest</classifier>
+			<exclusions>
+				<exclusion>
+					<groupId>javax</groupId>
+					<artifactId>javaee-api</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.glassfish.jersey.bundles</groupId>
+					<artifactId>jaxrs-ri</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-data-jpa</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>mysql</groupId>
+					<artifactId>mysql-connector-java</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.postgresql</groupId>
+					<artifactId>postgresql</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>de.dlr.proseo</groupId>
+			<artifactId>proseo-ui-backend</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars</groupId>
+			<artifactId>bootstrap</artifactId>
+			<version>3.3.7-1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars</groupId>
+			<artifactId>jquery</artifactId>
+			<version>3.1.1</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<finalName>proseo-ui-gui</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+
+			<!-- Build Docker image -->
+ 			<plugin>
+				<groupId>io.fabric8</groupId>
+				<artifactId>docker-maven-plugin</artifactId>
+				<version>${docker-maven-version}</version>
+				<configuration>
+					<images>
+						<image>
+							<name>${docker.registry}/${project.build.finalName}:${module.version}</name>
+						</image>
+					</images>
+				</configuration>
+				<executions>
+					<execution>
+						<id>default</id>
+						<phase>install</phase>
+						<goals>
+							<goal>build</goal>
+							<goal>push</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

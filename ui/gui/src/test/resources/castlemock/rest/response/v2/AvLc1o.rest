@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<restMockResponse>
+    <body>{&#13;
+	"id": 67541&#13;
+&#13;
+}</body>
+    <contentEncodings/>
+    <headerQueries/>
+    <httpHeaders/>
+    <httpStatusCode>200</httpStatusCode>
+    <id>AvLc1o</id>
+    <jsonPathExpressions/>
+    <methodId>gn1Z1U</methodId>
+    <name>ID 67541</name>
+    <parameterQueries/>
+    <status>ENABLED</status>
+    <usingExpressions>false</usingExpressions>
+    <xpathExpressions/>
+</restMockResponse>

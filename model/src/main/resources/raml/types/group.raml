@@ -1,0 +1,14 @@
+#%RAML 1.0 DataType
+#  RestUser:
+    type: object
+    properties:
+      id?:
+        type: integer
+        format: long
+        description: The persistent id of user group
+      groupname:
+        type: string
+        description: The (unique) name of the group, consisting of the mission code, a hyphen ("-") and the actual group name
+      authorities:
+        type: string[]
+        description: The authorities granted to this user group (filtered by mission)

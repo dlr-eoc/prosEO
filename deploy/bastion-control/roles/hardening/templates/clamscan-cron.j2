@@ -1,0 +1,7 @@
+#!/bin/bash
+clamscan -ri /etc /home /opt /srv /sys /tmp /usr /var >/var/log/clamscan.log
+if [ ! 0 -eq $? ] ; then
+  mail -s "ClamAV alert from $HOSTNAME, check log" "{{ rkhunter_email|default('root@localhost') }}" <<EOF
+  Please check /var/log/clamscan.log
+EOF
+fi

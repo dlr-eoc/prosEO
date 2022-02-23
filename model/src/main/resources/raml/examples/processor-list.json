@@ -1,0 +1,67 @@
+[
+    {
+        "id": 1198734,
+        "version": 5,
+        "missionCode": "S5P",
+        "processorName": "KNMI L2",
+        "processorVersion": "01.03.02",
+        "jobOrderVersion": "GMES_1_1",
+        "useInputFileTimeIntervals": true,
+        "isTest": false,
+        "minDiskSpace": 1024,
+        "maxTime": 300,
+        "sensingTimeFlag": true,
+        "configuredProcessors": [ "KNMI L2 01.03.02 2019-03-30" ],
+        "tasks": [
+            {
+                "id": 234961,
+                "version": 1,
+                "taskName": "TROPNLL2",
+                "taskVersion": "01.03.02",
+                "isCritical": true,
+                "criticalityLevel": 100,
+                "numberOfCpus": 10,
+                "minMemory": 64,
+                "breakpointFileNames": []
+            }
+        ],
+        "dockerImage": "knmi-l2:01.03.02",
+        "dockerRunParameters": [ 
+            { 
+                "key": "-v",
+                "value": "/my/source/directory:/container/target/directory"
+            }
+        ]
+    },
+    {
+        "id": 11987345,
+        "version": 57,
+        "missionCode": "S5P",
+        "processorName": "DLR L2 (upas)",
+        "processorVersion": "01.01.07",
+        "isTest": false,
+        "minDiskSpace": 2048,
+        "maxTime": 240,
+        "sensingTimeFlag": true,
+        "configuredProcessors": [ "DLR L2 01.01.07 2019-03-30" ],
+        "tasks": [
+            {
+                "id": 234962,
+                "version": 1,
+                "taskName": "UPAS",
+                "taskVersion": "01.01.07",
+                "isCritical": true,
+                "criticalityLevel": 100,
+                "numberOfCpus": 10,
+                "breakpointFileNames": []
+            }
+        ],
+        "dockerImage": "upas:01.01.07",
+        "dockerRunParameters": [ 
+            { 
+                "key": "-v",
+                "value": "/my/path/to/support_data:/container/path/to/support_data"
+            }
+        ]
+    }
+]

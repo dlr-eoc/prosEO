@@ -1,0 +1,45 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+        open-in-view: false
+        properties.hibernate.jdbc.time_zone: UTC
+    datasource:
+        url: jdbc:postgresql://proseo-db:5432/proseo
+        username: postgres
+        password: ********
+logging:
+    file: /proseo/log/proseo-prodplanner.log
+    level:
+        root: INFO
+        okhttp3: WARN
+        de.dlr.proseo: TRACE
+        #io.kubernetes.client.openapi: INFO
+        org.hibernate.engine.jdbc.env.internal: WARN
+proseo:
+    wrapper:
+        # User and password for wrapper callbacks
+        user: wrapper
+        password: somepw
+    productionPlanner:
+        # Callback URL for wrapper
+        url: http://host.docker.internal:8083/proseo/planner/v0.1
+        # maximum cycles to check finish of k8s proseo job 
+        maxcycles: 50
+        # wait time between cycle in milliseconds  
+        cyclewaittime: 1000
+        # wait time after k8s job creation in milliseconds  
+        jobcreatedwaittime: 2000
+        # wait time between test for new ready jobs in milliseconds (fallback loop, 10 min may be sufficient for test setup)
+        # run once if <= 0 (at startup)
+        dispatcherwaittime: 600000
+        # kubernetes configuration file, used to connect master
+        kubeconfig: empty
+        # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
+        filecheckwaittime: 1000
+        filecheckmaxcycles: 50
+    ingestor:
+        # Callback URL for wrapper
+        url: http://host.docker.internal:8081/proseo/ingestor/v0.1
+    posix:
+        workerMountPoint: /proseo/data
