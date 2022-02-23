@@ -63,6 +63,9 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 	@Autowired
 	private StorageManagerConfiguration cfg;
+	
+	@Autowired 
+	private StorageProvider storageProvider; 
 
 	/**
 	 * Create an HTTP "Warning" header with the given text message
@@ -106,33 +109,24 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		// TODO: WIP
 		if (isStorageManagerVersion2()) {
+			
+			try {
+				Storage storage = storageProvider.getStorage();
+				
+				StorageFile sourceFile = storageProvider.getStorageFile(pathInfo);
+				StorageFile targetFile = storageProvider.getCacheFile(pathInfo);
+				storage.downloadFile(sourceFile, targetFile);
+				RestFileInfo restFileInfo = ControllerUtils.convertToRestFileInfo(targetFile, storage.getFileSize(targetFile));
 
-			Storage externalStorage = StorageProvider.getInstance().getExternalStorage(); // (StorageProviderProfile.INTERNAL_POSIX_EXTERNAL_POSIX);
-			Storage internalStorage = StorageProvider.getInstance().getInternalStorage();
-
-			// TODO: smart create storage, not new(), relPath from pathInfo
-			StorageFile sourceFile = new PosixStorageFile(externalStorage.getBasePath(), pathInfo);
-			StorageFile targetFile = new PosixStorageFile(internalStorage.getBasePath(), pathInfo);
-
-			if (internalStorage.uploadFile(sourceFile, targetFile)) {
-				// TODO: process exceptions in common class for controllers or change logic
-				return new ResponseEntity<>(
-						errorHeaders("Cannot upload file: " + pathInfo),
-						HttpStatus.BAD_REQUEST);
+				return HttpResponses.createOk(restFileInfo); 
+				
+			} catch (Exception e) {
+				return HttpResponses.createError("Cannot upload file", e); 
 			}
-
-			// TODO: process in common class for controllers or in a method
-			RestFileInfo response = new RestFileInfo();
-			response.setFilePath(targetFile.getFullPath());
-			response.setFileName(targetFile.getFileName());
-
-			// TODO: Add to StorageFile or change logic
-			// response.setFileSize(targetFile.getLength());
-			// response.setStorageType(targetFile.getFsType().toString());
-
-			return new ResponseEntity<>(response, HttpStatus.OK);
+			
 		}
 
+		
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRestFileInfoByPathInfo({})", pathInfo);
 

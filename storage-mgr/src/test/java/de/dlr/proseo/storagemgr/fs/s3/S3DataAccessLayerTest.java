@@ -78,8 +78,8 @@ public class S3DataAccessLayerTest {
 
 		String testBucket = "teeest-bucket";
 		
-		String s3AccessKey = "";
-		String s3SecretAccessKey = "";
+		String s3AccessKey = "AKIA2ZGZXGQONEDOYGNP";
+		String s3SecretAccessKey = "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";
 
 		S3DataAccessLayer s3DAL = new S3DataAccessLayer(s3AccessKey, s3SecretAccessKey);
 

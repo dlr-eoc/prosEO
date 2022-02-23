@@ -126,29 +126,33 @@ public class S3DataAccessLayer {
 		s3Client.deleteObject(request);
 	}
 
-	public void uploadFile(String fromFilePath, String toFilePath) {
+	public void uploadFile(String sourcePath, String targetPath) throws IOException {
 
-		PutObjectRequest request = PutObjectRequest.builder().bucket(bucket).key(toFilePath).build();
+		try {
+			PutObjectRequest request = PutObjectRequest.builder().bucket(bucket).key(targetPath).build();
 
-		s3Client.putObject(request, RequestBody.fromFile(new File(fromFilePath)));
+			s3Client.putObject(request, RequestBody.fromFile(new File(sourcePath)));
 
-		S3Waiter waiter = s3Client.waiter();
-		HeadObjectRequest requestWait = HeadObjectRequest.builder().bucket(bucket).key(toFilePath).build();
+			S3Waiter waiter = s3Client.waiter();
+			HeadObjectRequest requestWait = HeadObjectRequest.builder().bucket(bucket).key(targetPath).build();
 
-		WaiterResponse<HeadObjectResponse> waiterResponse = waiter.waitUntilObjectExists(requestWait);
-
-		waiterResponse.matched().response().ifPresent(System.out::println);
-
-		System.out.println("File " + toFilePath + " was uploaded.");
+			WaiterResponse<HeadObjectResponse> waiterResponse = waiter.waitUntilObjectExists(requestWait);
+			waiterResponse.matched().response().ifPresent(System.out::println);
+			
+			System.out.println("File " + targetPath + " was uploaded.");
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			throw e;
+		}
 	}
 
-	public boolean downloadFile(String fromFilePath, String toFilePath) {
-		GetObjectRequest request = GetObjectRequest.builder().bucket(bucket).key(fromFilePath).build();
+	public void downloadFile(String sourcePath, String targetPath) throws IOException {
+		GetObjectRequest request = GetObjectRequest.builder().bucket(bucket).key(sourcePath).build();
 		ResponseInputStream<GetObjectResponse> response = s3Client.getObject(request);
 		BufferedOutputStream outputStream;
-		
+
 		try {
-			outputStream = new BufferedOutputStream(new FileOutputStream(toFilePath));
+			outputStream = new BufferedOutputStream(new FileOutputStream(targetPath));
 			byte[] buffer = new byte[4096];
 			int bytesRead = -1;
 
@@ -157,12 +161,11 @@ public class S3DataAccessLayer {
 			}
 
 			response.close();
-			outputStream.close();			
-			return true; 
+			outputStream.close();
 
-		} catch (Exception e) {
+		} catch (IOException e) {
 			logger.error(e.getMessage());
-			return false; 
+			throw e;
 		}
 	}
 
@@ -171,6 +174,14 @@ public class S3DataAccessLayer {
 
 		ListObjectsResponse response = s3Client.listObjects(request);
 		return toStringFiles(response.contents());
+	}
+
+	public long getFileSize(String filePath) {
+
+		HeadObjectRequest headObjectRequest = HeadObjectRequest.builder().bucket(bucket).key(filePath).build();
+		HeadObjectResponse headObjectResponse = s3Client.headObject(headObjectRequest);
+
+		return headObjectResponse.contentLength();
 	}
 
 	private boolean createBucket(String bucketName) {

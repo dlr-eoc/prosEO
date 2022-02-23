@@ -4,6 +4,7 @@ import java.io.File;
 import java.nio.file.Paths;
 
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
+import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 /**
  * S3 Storage File
@@ -20,10 +21,6 @@ public class S3StorageFile implements StorageFile {
 	private String bucket; 
 	private String relativePath;  
 	
-	// no bucket
-	public S3StorageFile(String relativePath) { 
-		this(StorageFile.NO_BUCKET,  relativePath);
-	}
 	
 	// default or another bucket
 	public S3StorageFile(String bucket, String relativePath) { 
@@ -56,6 +53,11 @@ public class S3StorageFile implements StorageFile {
 	@Override
 	public String getFileName() {
 		return new File(relativePath).getName();
+	}
+	
+	@Override
+	public StorageType getStorageType() {
+		return StorageType.S3;
 	}
 	
 	private String verifyBucket(String bucket) 
