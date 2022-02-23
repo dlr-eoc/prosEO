@@ -1,9 +1,11 @@
 package de.dlr.proseo.storagemgr.version2.posix;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
+import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 /**
  * Posix Storage File
@@ -57,6 +59,13 @@ public class PosixStorageFile implements StorageFile {
 	public String getFileName() {
 		return new File(relativePath).getName();
 	}
+	
+	@Override
+	public StorageType getStorageType() {
+		return StorageType.POSIX;
+	}
+	
+	
 	
 	
 	private String verifyBasePath(String basePath) 

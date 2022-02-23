@@ -1,6 +1,7 @@
 package de.dlr.proseo.storagemgr.version2.posix;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -8,8 +9,12 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.dlr.proseo.storagemgr.version2.model.Storage;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
+import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 /**
  * Posix Storage
@@ -21,22 +26,24 @@ public class PosixStorage implements Storage {
 
 	private String basePath;
 	private String bucket;
-	
-	public PosixStorage() {}
-	
+
+	/** Logger for this class */
+	private static Logger logger = LoggerFactory.getLogger(PosixStorage.class);
+
+	public PosixStorage() {
+	}
 
 	public PosixStorage(String basePath) {
-		this.basePath = basePath; 
-		this.bucket = StorageFile.NO_BUCKET; 
-		
-		createDirectories(basePath); 
-	}	
-	
+		this.basePath = basePath;
+		this.bucket = StorageFile.NO_BUCKET;
+
+		createDirectories(basePath);
+	}
+
 	@Override
 	public String getBasePath() {
 		return basePath;
 	}
-	
 
 	@Override
 	public void setBucket(String bucket) {
@@ -72,43 +79,49 @@ public class PosixStorage implements Storage {
 	}
 
 	@Override
-	public boolean uploadFile(StorageFile sourceFile, StorageFile storageFile) {
-
-		createParentDirectories(storageFile.getFullPath());
-
-		Path sourcePath = new File(sourceFile.getFullPath()).toPath();
-		Path storagePath = new File(storageFile.getFullPath()).toPath();
-
-		try {
-			Files.copy(sourcePath, storagePath, StandardCopyOption.REPLACE_EXISTING);
-		} catch (Exception e) {
-			// TODO: add logger
-			System.out
-					.println("Cannot upload file FROM " + sourceFile.getFullPath() + " TO " + storageFile.getFullPath());
-			return false;
-		}
-
-		return true;
-	}
-
-	@Override
-	public boolean downloadFile(StorageFile storageFile, StorageFile targetFile) {
+	public void uploadFile(StorageFile sourceFile, StorageFile targetFile) throws IOException {
 
 		createParentDirectories(targetFile.getFullPath());
 
-		Path storagePath = new File(storageFile.getFullPath()).toPath();
-		Path targetPath = new File(targetFile.getFullPath()).toPath();
-		
-		try {
-			Files.copy(storagePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
-		} catch (Exception e) {
-			// TODO: add logger
-			System.out
-					.println("Cannot download file FROM " + storageFile.getFullPath() + " TO " + targetFile.getFullPath());
-			return false;
-		}
+		String sourcePath = sourceFile.getFullPath();
+		String targetPath = targetFile.getFullPath();
 
-		return true;
+		Path sourceFilePath = new File(sourcePath).toPath();
+		Path targetFilePath = new File(targetPath).toPath();
+
+		try {
+			Files.copy(sourceFilePath, targetFilePath, StandardCopyOption.REPLACE_EXISTING);
+
+		} catch (IOException e) {
+			if (logger.isTraceEnabled())
+				logger.warn("Cannot upload file from " + sourcePath + " to " + targetPath + " ", e.getMessage());
+			throw e;
+		}
+	}
+
+	@Override
+	public void downloadFile(StorageFile sourceFile, StorageFile targetFile) throws IOException {
+
+		createParentDirectories(targetFile.getFullPath());
+
+		String sourcePath = sourceFile.getFullPath();
+		String targetPath = targetFile.getFullPath();
+
+		Path sourceFilePath = new File(sourcePath).toPath();
+		Path targetFilePath = new File(targetPath).toPath();
+
+		try {
+			Files.copy(sourceFilePath, targetFilePath, StandardCopyOption.REPLACE_EXISTING);
+		} catch (Exception e) {
+			if (logger.isTraceEnabled())
+				logger.warn("Cannot upload file from " + sourcePath + " to " + targetPath + " ", e.getMessage());
+			throw e;
+		}
+	}
+
+	@Override
+	public StorageType getStorageType() {
+		return StorageType.POSIX;
 	}
 
 	private String relativizePath(String absolutePath, String basePath) {
@@ -132,13 +145,25 @@ public class PosixStorage implements Storage {
 			throw new IllegalStateException("Couldn't create dir: " + parent);
 		}
 	}
-	
+
 	public void createDirectories(String path) {
 		File file = new File(path);
 
 		if (!file.exists()) {
 			file.mkdirs();
 		}
+	}
+
+	@Override
+	public long getFileSize(StorageFile storageFile) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public StorageFile getFile(String relativePath) {
+		
+		return new PosixStorageFile(basePath, relativePath);
 	}
 
 }

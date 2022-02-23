@@ -2,6 +2,8 @@ package de.dlr.proseo.storagemgr.version2.posix;
 
 import static org.junit.Assert.*;
 
+import java.io.IOException;
+
 import org.junit.Test;
 
 import de.dlr.proseo.storagemgr.TestUtils;
@@ -31,7 +33,12 @@ public class PosixStorageTest {
 
 		assertTrue("File for upload has not been created: " + sourceFile.getFullPath(), TestUtils.fileExists(sourceFile.getFullPath()));
 		
-		externalStorage.uploadFile(sourceFile, destFile); 
+		try {
+			externalStorage.uploadFile(sourceFile, destFile);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
 		
 		TestUtils.printDirectoryTree(internalStoragePath);
 		TestUtils.printDirectoryTree(externalStoragePath);
