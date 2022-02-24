@@ -125,15 +125,40 @@ public class OrderUtil {
 			case INITIAL:
 				answer = Messages.ORDER_RESET;
 				break;
-			case APPROVED:
-				// jobs are in initial state, no change
-				order.setOrderState(OrderState.INITIAL);
+			case PLANNING:
+				// look for plan thread and interrupt it
+				OrderPlanThread pt = productionPlanner.getPlanThreads().get(ProductionPlanner.PLAN_THREAD_PREFIX + order.getId());
+				if (pt != null) {
+					pt.interrupt();
+					int i = 0;
+					while (pt.isAlive() && i < 100) {
+						i++;
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+							break;
+						}
+					}
+				}
+				order.setOrderState(OrderState.APPROVED);
 				order.setHasFailedJobSteps(false);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				logOrderState(order);
 				answer = Messages.ORDER_RESET;
-				break;		
+				break;	
+			case PLANNING_FAILED:
+				// jobs are in initial state, no change
+				order.setOrderState(OrderState.APPROVED);
+				order.setHasFailedJobSteps(false);
+				order.incrementVersion();
+				RepositoryService.getOrderRepository().save(order);
+				logOrderState(order);
+				answer = Messages.ORDER_RESET;
+				break;			
+			case APPROVED:		
 			case RELEASED:		
 			case PLANNED:
 				// remove jobs and jobsteps
@@ -317,25 +342,18 @@ public class OrderUtil {
 				answer = Messages.ORDER_HASTOBE_APPROVED;
 				break;
 			case APPROVED:
+			case PLANNING_FAILED:
 				order.setOrderState(OrderState.PLANNING);
 				order.incrementVersion();
 				order = RepositoryService.getOrderRepository().save(order);
 				em.merge(order);
-				// OrderPlanThread pt = new OrderPlanThread(productionPlanner, order, procFacility, "PlanOrder_" + order.getId());
-				// pt.start();
-				Message publishAnswer = orderDispatcher.publishOrder(order, procFacility);
-				if (publishAnswer.isTrue()) {
-					if (order.getJobs().isEmpty()) {
-						order.setOrderState(OrderState.COMPLETED);
-						answer = Messages.ORDER_PRODUCT_EXIST;
-					} else {
-						order.setOrderState(OrderState.PLANNED);
-						answer = Messages.ORDER_PLANNED;
-					}
-					order.incrementVersion();
-					order = RepositoryService.getOrderRepository().save(order);
-					logOrderState(order);
+				String threadName = ProductionPlanner.PLAN_THREAD_PREFIX + order.getId();
+				if (!productionPlanner.getPlanThreads().containsKey(threadName)) {
+					OrderPlanThread pt = new OrderPlanThread(productionPlanner, orderDispatcher, order, procFacility, threadName);
+					productionPlanner.getPlanThreads().put(threadName, pt);
+					pt.start();
 				}
+				answer = Messages.ORDER_PLANNING;
 				break;	
 			case PLANNED:	
 				answer = Messages.ORDER_ALREADY_PLANNED;
@@ -603,7 +621,7 @@ public class OrderUtil {
 					jobUtil.retry(job);
 				}
 				for (Job job : order.getJobs()) {
-					if (!(job.getJobState() == JobState.INITIAL || job.getJobState() == JobState.COMPLETED)) {
+					if (!(job.getJobState() == JobState.PLANNED || job.getJobState() == JobState.COMPLETED)) {
 						all = false;
 					}
 					if (job.getJobState() != JobState.COMPLETED) {
@@ -954,7 +972,7 @@ public class OrderUtil {
 			case COMPLETED:
 				break;
 			case FAILED:
-				if (jState == JobState.INITIAL) {
+				if (jState == JobState.PLANNED) {
 					order.setOrderState(OrderState.PLANNED);
 					order.incrementVersion();
 					RepositoryService.getOrderRepository().save(order);
@@ -1020,7 +1038,10 @@ public class OrderUtil {
 	}
 
 	public void logOrderState(ProcessingOrder order) {
-		if (logger.isTraceEnabled()) logger.trace(">>> logOrderState({})", (null == order ? "null" : order.getId()));
+		// at the moment a dummy
+		
+		
+		// if (logger.isTraceEnabled()) logger.trace(">>> logOrderState({})", (null == order ? "null" : order.getId()));
 		
 		// TODO monitoring
 		/*
@@ -1042,7 +1063,7 @@ public class OrderUtil {
 
 		for (JobStep jobStep : jobSteps) {
 			switch (jobStep.getJobStepState()) {
-			case INITIAL:
+			case PLANNED:
 				break;
 			case WAITING_INPUT:
 				break;

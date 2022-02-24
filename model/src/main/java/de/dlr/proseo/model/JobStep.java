@@ -41,8 +41,8 @@ public class JobStep extends PersistentObject {
 	private Job job;
 	
 	/**
-	 * The currenet status of the job step; job steps in status INITIAL need to be released to advance to WAITING_INPUT status,
-	 * job steps in status WAITING_INPUT and READY can be returned to INITIAL status. All other status transitions are automatic
+	 * The currenet status of the job step; job steps in status PLANNED need to be released to advance to WAITING_INPUT status,
+	 * job steps in status WAITING_INPUT and READY can be returned to PLANNED status. All other status transitions are automatic
 	 * depending on processing progress.
 	 */
 	@Enumerated(EnumType.STRING)
@@ -99,22 +99,22 @@ public class JobStep extends PersistentObject {
 	 * The possible processing states for a job step
 	 */
 	public enum JobStepState {
-		INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED, CLOSED;
+		PLANNED, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED, CLOSED;
 		
 		public boolean isLegalTransition(JobStepState other) {
 			switch(this) {
-			case INITIAL:
+			case PLANNED:
 				return other.equals(WAITING_INPUT) || other.equals(READY) || other.equals(FAILED);
 			case COMPLETED:
 				return other.equals(CLOSED);
 			case FAILED:
-				return other.equals(INITIAL) || other.equals(CLOSED);
+				return other.equals(PLANNED) || other.equals(CLOSED);
 			case READY:
-				return other.equals(INITIAL) || other.equals(RUNNING);
+				return other.equals(PLANNED) || other.equals(RUNNING);
 			case RUNNING:
-				return other.equals(INITIAL) || other.equals(COMPLETED) || other.equals(FAILED);
+				return other.equals(PLANNED) || other.equals(COMPLETED) || other.equals(FAILED);
 			case WAITING_INPUT:
-				return other.equals(INITIAL) || other.equals(READY);
+				return other.equals(PLANNED) || other.equals(READY);
 			case CLOSED:
 				return false; // End state
 			default:

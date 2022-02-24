@@ -17,7 +17,7 @@
         format: long
         description: The persistend id of the job this job step belongs to
       jobStepState:
-        enum: [ INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED, CLOSED ]
+        enum: [ PLANNED, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED, CLOSED ]
         description: The currenet status of the job step
       outputParameters:
         type: RestParameter[]

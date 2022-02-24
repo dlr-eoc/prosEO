@@ -660,12 +660,12 @@ public class KubeJob {
 									for (V1JobCondition jc : jobCondList) {
 										if ((jc.getType().equalsIgnoreCase("complete") || jc.getType().equalsIgnoreCase("completed")) && jc.getStatus().equalsIgnoreCase("true")) {
 											if (js.get().getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.FAILED) {
-												js.get().setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
+												js.get().setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.PLANNED);
 											}
 											if (JobStepState.READY.equals(js.get().getJobStepState())) {
 												// Sometimes we don't get the state transition to RUNNING
 												js.get().setJobStepState(JobStepState.RUNNING); // otherwise we cannot set it to COMPLETED
-											} else if (JobStepState.INITIAL.equals(js.get().getJobStepState())) {
+											} else if (JobStepState.PLANNED.equals(js.get().getJobStepState())) {
 												js.get().setJobStepState(JobStepState.READY);
 												js.get().setJobStepState(JobStepState.RUNNING);
 											}
@@ -681,7 +681,7 @@ public class KubeJob {
 											if (JobStepState.READY.equals(js.get().getJobStepState())) {
 												// Sometimes we don't get the state transition to RUNNING
 												js.get().setJobStepState(JobStepState.RUNNING); // otherwise we cannot set it to COMPLETED
-											} else if (JobStepState.INITIAL.equals(js.get().getJobStepState())) {
+											} else if (JobStepState.PLANNED.equals(js.get().getJobStepState())) {
 												js.get().setJobStepState(JobStepState.READY);
 												js.get().setJobStepState(JobStepState.RUNNING);
 											}

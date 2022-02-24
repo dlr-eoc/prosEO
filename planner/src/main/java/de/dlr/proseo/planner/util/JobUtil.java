@@ -64,7 +64,7 @@ public class JobUtil {
 				for (JobStep js : job.getJobSteps()) {
 					UtilService.getJobStepUtil().suspend(js, force);
 				}
-				job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
+				job.setJobState(de.dlr.proseo.model.Job.JobState.PLANNED);
 				job.incrementVersion();
 				RepositoryService.getJobRepository().save(job);
 				answer = Messages.JOB_SUSPENDED;
@@ -80,7 +80,7 @@ public class JobUtil {
 				job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
 				answer = Messages.JOB_HOLD;
 				if (allSuspended) {
-					job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL); // direct transition to INITIAL not allowed
+					job.setJobState(de.dlr.proseo.model.Job.JobState.PLANNED); // direct transition to INITIAL not allowed
 					answer = Messages.JOB_SUSPENDED;
 				}
 				RepositoryService.getJobRepository().save(job);
@@ -118,6 +118,7 @@ public class JobUtil {
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
+			case PLANNED:
 			case RELEASED:
 			case STARTED:
 			case ON_HOLD:
@@ -180,7 +181,7 @@ public class JobUtil {
 				Boolean all = true;
 				Boolean allCompleted = true;
 				for (JobStep js : job.getJobSteps()) {
-					if (!(   js.getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.INITIAL
+					if (!(   js.getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.PLANNED
 						  || js.getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.COMPLETED)) {
 						all = false;
 						
@@ -191,7 +192,7 @@ public class JobUtil {
 				}
 				if (all) {
 					if (allCompleted) {
-						job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
+						job.setJobState(de.dlr.proseo.model.Job.JobState.PLANNED);
 						job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
 						job.setJobState(de.dlr.proseo.model.Job.JobState.STARTED);
 						job.setJobState(de.dlr.proseo.model.Job.JobState.COMPLETED);
@@ -200,7 +201,7 @@ public class JobUtil {
 						em.merge(job);
 						answer = Messages.JOB_COMPLETED;
 					} else {
-						job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
+						job.setJobState(de.dlr.proseo.model.Job.JobState.PLANNED);
 						job.incrementVersion();
 						RepositoryService.getJobRepository().save(job);
 						em.merge(job);
@@ -237,6 +238,7 @@ public class JobUtil {
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
+			case PLANNED:
 				for (JobStep js : job.getJobSteps()) {
 					UtilService.getJobStepUtil().cancel(js);
 				}
@@ -287,6 +289,9 @@ public class JobUtil {
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
+				answer = Messages.JOB_HASTOBE_PLANNED;
+				break;
+			case PLANNED:
 				job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
 				job.incrementVersion();
 				RepositoryService.getJobRepository().save(job);
@@ -386,6 +391,7 @@ public class JobUtil {
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
+			case PLANNED:
 			case RELEASED:
 			case COMPLETED:
 			case FAILED:
@@ -434,6 +440,7 @@ public class JobUtil {
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
+			case PLANNED:
 			case RELEASED:
 			case ON_HOLD:
 			case COMPLETED:
@@ -494,7 +501,7 @@ public class JobUtil {
 				if (!running) {
 					Boolean all = RepositoryService.getJobStepRepository().countJobStepNotFinishedByJobId(job.getId()) == 0;
 					if (!all) {
-						job.setJobState(JobState.INITIAL);
+						job.setJobState(JobState.PLANNED);
 						RepositoryService.getJobRepository().save(job);
 						em.merge(job);
 						hasChanged = true;
@@ -509,7 +516,7 @@ public class JobUtil {
 				if (all) {
 					Boolean completed = RepositoryService.getJobStepRepository().countJobStepFailedByJobId(job.getId()) == 0;
 					if (job.getJobState() == JobState.ON_HOLD) {
-						job.setJobState(JobState.INITIAL);
+						job.setJobState(JobState.PLANNED);
 						job.setJobState(JobState.RELEASED);
 						job.setJobState(JobState.STARTED);
 					}
@@ -557,7 +564,7 @@ public class JobUtil {
 				}
 				if (allHasFinished) {
 					if (job.getJobState() == JobState.ON_HOLD) {
-						job.setJobState(JobState.INITIAL);
+						job.setJobState(JobState.PLANNED);
 						job.setJobState(JobState.RELEASED);
 						job.setJobState(JobState.STARTED);
 					}
@@ -637,16 +644,16 @@ public class JobUtil {
 			case STARTED:
 				// fall through intended
 			case ON_HOLD:
-				if (jsState == JobStepState.INITIAL) {
+				if (jsState == JobStepState.PLANNED) {
 					Boolean allState = true;
 					for (JobStep js : job.getJobSteps()) {
-						if (js.getJobStepState() != JobStepState.INITIAL) {
+						if (js.getJobStepState() != JobStepState.PLANNED) {
 							allState = false;
 							break;
 						}
 					}
 					if (allState) {
-						job.setJobState(JobState.INITIAL);
+						job.setJobState(JobState.PLANNED);
 						job.setHasFailedJobSteps(false);
 						job.incrementVersion();
 						RepositoryService.getJobRepository().save(job);
@@ -672,8 +679,8 @@ public class JobUtil {
 			case COMPLETED:
 				break;
 			case FAILED:
-				if (jsState == JobStepState.INITIAL || jsState == JobStepState.WAITING_INPUT) {
-					job.setJobState(JobState.INITIAL);
+				if (jsState == JobStepState.PLANNED || jsState == JobStepState.WAITING_INPUT) {
+					job.setJobState(JobState.PLANNED);
 					job.incrementVersion();
 					RepositoryService.getJobRepository().save(job);
 					em.merge(job);
@@ -705,7 +712,7 @@ public class JobUtil {
 					job.setJobState(JobState.FAILED);
 				} else {
 					if (job.getJobState() == JobState.FAILED) {
-						job.setJobState(JobState.INITIAL);
+						job.setJobState(JobState.PLANNED);
 						job.setJobState(JobState.RELEASED);
 						job.setJobState(JobState.STARTED);
 					}

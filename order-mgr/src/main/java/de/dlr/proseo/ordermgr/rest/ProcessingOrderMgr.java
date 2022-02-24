@@ -1177,7 +1177,7 @@ public class ProcessingOrderMgr {
 
 		for (JobStep jobStep : jobSteps) {
 			switch (jobStep.getJobStepState()) {
-			case INITIAL:
+			case PLANNED:
 				break;
 			case WAITING_INPUT:
 				break;

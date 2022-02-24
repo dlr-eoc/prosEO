@@ -431,9 +431,9 @@ public class JobCommandRunner {
 		}
 		
 		/* Check whether (database) job is in state "INITIAL", otherwise resuming not allowed */
-		if (!JobState.INITIAL.equals(restJob.getJobState())) {
+		if (!JobState.PLANNED.equals(restJob.getJobState())) {
 			System.err.println(uiMsg(MSG_ID_INVALID_JOB_STATE,
-					CMD_RESUME, restJob.getJobState(), JobState.INITIAL.toString()));
+					CMD_RESUME, restJob.getJobState(), JobState.PLANNED.toString()));
 			return;
 		}
 		
@@ -488,9 +488,9 @@ public class JobCommandRunner {
 		}
 		
 		/* Check whether (database) job is in state "INITIAL", otherwise cancelling not allowed */
-		if (!JobState.INITIAL.equals(restJob.getJobState())) {
+		if (!JobState.PLANNED.equals(restJob.getJobState())) {
 			System.err.println(uiMsg(MSG_ID_INVALID_JOB_STATE,
-					CMD_CANCEL, restJob.getJobState(), JobState.INITIAL.toString()));
+					CMD_CANCEL, restJob.getJobState(), JobState.PLANNED.toString()));
 			return;
 		}
 		
@@ -744,9 +744,9 @@ public class JobCommandRunner {
 		}
 		
 		/* Check whether (database) job step is in state "READY", otherwise resuming not allowed */
-		if (!JobStepState.INITIAL.equals(restJobStep.getJobStepState())) {
+		if (!JobStepState.PLANNED.equals(restJobStep.getJobStepState())) {
 			System.err.println(uiMsg(MSG_ID_INVALID_JOBSTEP_STATE,
-					CMD_RESUME, restJobStep.getJobStepState(), JobStepState.INITIAL.toString()));
+					CMD_RESUME, restJobStep.getJobStepState(), JobStepState.PLANNED.toString()));
 			return;
 		}
 		
@@ -800,12 +800,12 @@ public class JobCommandRunner {
 			return;
 		}
 		
-		/* Check whether (database) job is in state "INITIAL" or "RUNNING", otherwise cancelling not allowed */
-		if (!JobStepState.INITIAL.equals(restJobStep.getJobStepState())
+		/* Check whether (database) job is in state "PLANNED" or "RUNNING", otherwise cancelling not allowed */
+		if (!JobStepState.PLANNED.equals(restJobStep.getJobStepState())
 				&&!JobStepState.RUNNING.equals(restJobStep.getJobStepState())) {
 			System.err.println(uiMsg(MSG_ID_INVALID_JOBSTEP_STATE,
 					CMD_CANCEL, restJobStep.getJobStepState(), 
-					JobStepState.INITIAL.toString() + " or " + JobStepState.RUNNING.toString()));
+					JobStepState.PLANNED.toString() + " or " + JobStepState.RUNNING.toString()));
 			return;
 		}
 		

@@ -21,7 +21,7 @@
         pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$
       orderState:
         type: string
-        description: State of the processing order; one of { INITIAL, APPROVED, RELEASING, RELEASED, PLANNING, PLANNED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED }
+        description: State of the processing order; one of { INITIAL, APPROVED, RELEASING, RELEASED, PLANNING, PLANNING_FAILED, PLANNED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED }
       executionTime?:
         type: datetime-only
         description: Expected execution time (optional, used for scheduling)

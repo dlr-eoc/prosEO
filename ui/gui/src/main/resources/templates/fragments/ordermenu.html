@@ -25,7 +25,7 @@
 					th:onclick="'setState(' + ${ord?.id} + ', \'APPROVE\')'" href="#"><span
 					th:text="#{approve}">approve</span></a> <a
           th:if="${hasroleorderplanner}"
-					th:class="('dropdown-item ' + ((${ord?.orderState} == 'APPROVED') ? 'enabled' : 'disabled font-italic'))"
+					th:class="('dropdown-item ' + ((${ord?.orderState} == 'APPROVED' or ${ord?.orderState} == 'PLANNING_FAILED') ? 'enabled' : 'disabled font-italic'))"
 					th:onclick="'plan(' + ${ord?.id} + ', \'PLAN\')'" href="#"><span
 					th:text="#{plan}">plan</span></a> <a
           th:if="${hasroleorderplanner}"
@@ -45,7 +45,7 @@
 					th:onclick="'setState(' + ${ord?.id} + ', \'RESUME\')'" href="#"><span
 					th:text="#{resume}">resume</span></a> <a
           th:if="${hasroleorderplanner}"
-					th:class="('dropdown-item ' + ((${ord?.orderState} == 'PLANNED' or ${ord?.orderState} == 'APPROVED') ? 'enabled' : 'disabled font-italic'))"
+					th:class="('dropdown-item ' + ((${ord?.orderState} == 'PLANNED' or ${ord?.orderState} == 'APPROVED' or ${ord?.orderState} == 'PLANNING_FAILED' or ${ord?.orderState} == 'PLANNING') ? 'enabled' : 'disabled font-italic'))"
 					th:onclick="'setState(' + ${ord?.id} + ', \'RESET\')'" href="#"><span
 					th:text="#{reset}">reset</span></a> <a
           th:if="${hasroleorderplanner}"
