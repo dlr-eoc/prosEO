@@ -505,11 +505,23 @@ code {
 .PLANNED {
   background-color: #ffeeba !important;
 }
+.PLANNING-c {
+  color: #ffeeba !important;
+}
+.PLANNING {
+  background-color: #ffeeba !important;
+}
 
 .RELEASED-c {
   color: #ffeeba !important;
 }
 .RELEASED {
+  background-color: #ffeeba !important;
+}
+.RELEASING-c {
+  color: #ffeeba !important;
+}
+.RELEASING {
   background-color: #ffeeba !important;
 }
 

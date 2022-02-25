@@ -75,6 +75,9 @@ public class OrderUtil {
 			case INITIAL:
 			case APPROVED:
 			case PLANNED:
+			case RELEASING:
+				answer = Messages.ORDER_ALREADY_RELEASING;
+				break;
 			case RELEASED:
 				for (Job job : order.getJobs()) {
 					jobUtil.cancel(job);
@@ -185,6 +188,9 @@ public class OrderUtil {
 				logOrderState(order);
 				answer = Messages.ORDER_RESET;
 				break;	
+			case RELEASING:
+				answer = Messages.ORDER_ALREADY_RELEASING;
+				break;
 			case RUNNING:
 				answer = Messages.ORDER_ALREADY_RUNNING;
 				break;
@@ -251,6 +257,9 @@ public class OrderUtil {
 				}
 				RepositoryService.getOrderRepository().delete(order);
 				answer = Messages.ORDER_DELETED;
+				break;
+			case RELEASING:
+				answer = Messages.ORDER_ALREADY_RELEASING;
 				break;	
 			case RELEASED:
 				answer = Messages.ORDER_ALREADY_RELEASED;
@@ -296,6 +305,9 @@ public class OrderUtil {
 				break;
 			case PLANNED:	
 				answer = Messages.ORDER_ALREADY_PLANNED;
+				break;
+			case RELEASING:
+				answer = Messages.ORDER_ALREADY_RELEASING;
 				break;
 			case RELEASED:
 				answer = Messages.ORDER_ALREADY_RELEASED;
@@ -358,6 +370,9 @@ public class OrderUtil {
 			case PLANNED:	
 				answer = Messages.ORDER_ALREADY_PLANNED;
 				break;
+			case RELEASING:
+				answer = Messages.ORDER_ALREADY_RELEASING;
+				break;
 			case RELEASED:
 				answer = Messages.ORDER_ALREADY_RELEASED;
 				break;
@@ -407,23 +422,21 @@ public class OrderUtil {
 				break;
 			case PLANNED:
 				order.setOrderState(OrderState.RELEASING);
-				RepositoryService.getOrderRepository().save(order);
-				em.merge(order);
-				for (Job job : order.getJobs()) {
-					jobUtil.resume(job);
-				}
-				if (order.getJobs().isEmpty()) {
-					order.setOrderState(OrderState.COMPLETED);
-					answer = Messages.ORDER_COMPLETED;
-				} else {
-					order.setOrderState(OrderState.RELEASED);
-					answer = Messages.ORDER_RELEASED;
-				}
 				order.incrementVersion();
-				RepositoryService.getOrderRepository().save(order);
+				order = RepositoryService.getOrderRepository().save(order);
+				em.merge(order);
+				String threadName = ProductionPlanner.RELEASE_THREAD_PREFIX + order.getId();
+				if (!productionPlanner.getReleaseThreads().containsKey(threadName)) {
+					OrderReleaseThread rt = new OrderReleaseThread(productionPlanner, jobUtil, order, threadName);
+					productionPlanner.getReleaseThreads().put(threadName, rt);
+					rt.start();
+				}
 				logOrderState(order);
+				answer = Messages.ORDER_RELEASING;
 				break;	
 			case RELEASING:
+				answer = Messages.ORDER_ALREADY_RELEASING;
+				break;
 			case RELEASED:
 				answer = Messages.ORDER_ALREADY_RELEASED;
 				break;
@@ -472,13 +485,16 @@ public class OrderUtil {
 				break;
 			case PLANNED:
 				answer = Messages.ORDER_HASTOBE_RELEASED;
-				break;				
+				break;	
+			case RELEASING:
+				answer = Messages.ORDER_ALREADY_RELEASING;	
+				break;		
 			case RELEASED:
 				order.setOrderState(OrderState.RUNNING);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				logOrderState(order);
-				answer = Messages.ORDER_RELEASED;
+				answer = Messages.ORDER_RUNNING;
 				break;				
 			case RUNNING:
 				answer = Messages.ORDER_RUNNING;
@@ -526,6 +542,24 @@ public class OrderUtil {
 			case PLANNED:	
 				answer = Messages.ORDER_SUSPENDED;
 				break;
+			case RELEASING:
+				// look for plan thread and interrupt it
+				OrderReleaseThread rt = productionPlanner.getReleaseThreads().get(ProductionPlanner.RELEASE_THREAD_PREFIX + order.getId());
+				if (rt != null) {
+					rt.interrupt();
+					int i = 0;
+					while (rt.isAlive() && i < 100) {
+						i++;
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+							break;
+						}
+					}
+				}
+				// intentionally fall through to suspend already running jobs
 			case RELEASED:
 				for (Job job : order.getJobs()) {
 					jobUtil.suspend(job, force);
@@ -606,7 +640,8 @@ public class OrderUtil {
 			switch (order.getOrderState()) {
 			case INITIAL:
 			case APPROVED:
-			case PLANNED:	
+			case PLANNED:
+			case RELEASING:
 			case RELEASED:
 			case RUNNING:
 			case SUSPENDING:
@@ -679,6 +714,7 @@ public class OrderUtil {
 			case INITIAL:
 			case APPROVED:
 			case PLANNED:	
+			case RELEASING:
 			case RELEASED:
 			case RUNNING:
 			case SUSPENDING:

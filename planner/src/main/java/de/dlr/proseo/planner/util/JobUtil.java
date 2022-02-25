@@ -14,12 +14,15 @@ import javax.persistence.PersistenceContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
+import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
 
@@ -280,10 +283,23 @@ public class JobUtil {
 	 * @return Result message
 	 */
 	@Transactional
-	public Messages resume(Job job) {
-		if (logger.isTraceEnabled()) logger.trace(">>> resume({})", (null == job ? "null" : job.getId()));
+	public Messages resume(long jobId) {
+		if (logger.isTraceEnabled()) logger.trace(">>> resume({})", jobId);
 
 		Messages answer = Messages.FALSE;
+		Job job = null;
+		Optional<Job> jo = RepositoryService.getJobRepository().findById(jobId);
+		if (jo.isPresent()) {
+			job = jo.get();
+		}
+		if (job != null) {
+			if (job.getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
+				Messages.FACILITY_NOT_AVAILABLE.log(logger, job.getProcessingFacility().getName(),
+						job.getProcessingFacility().getFacilityState().toString());
+
+		    	return Messages.FACILITY_NOT_AVAILABLE;
+			}
+		}
 		// check current state for possibility to be suspended
 		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {

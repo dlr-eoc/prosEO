@@ -229,7 +229,7 @@ public class JobControllerImpl implements JobController {
 			    	return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}
 
-				Messages msg = jobUtil.resume(job);
+				Messages msg = jobUtil.resume(job.getId());
 				// Already logged
 				
 				if (msg.isTrue()) {
