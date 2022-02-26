@@ -187,6 +187,24 @@ public class StorageManagerConfiguration {
 	public String getPosixBackendPath() {
 		return new File(posixBackendPath).getAbsolutePath();
 	}
+	
+	/**
+	 * Gets the relative path to the POSIX file cache
+	 * 
+	 * @return the POSIX cache path
+	 */
+	public String getRelativePosixCachePath() {
+		return posixCachePath;
+	}
+
+	/**
+	 * Gets the relative path to the POSIX backend storage (if used)
+	 * 
+	 * @return the POSIX backend storage path
+	 */
+	public String getRelativePosixBackendPath() {
+		return posixBackendPath;
+	}
 
 	/**
 	 * @return the alluxioUnderFsDefaultPrefix

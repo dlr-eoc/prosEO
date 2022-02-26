@@ -17,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.storagemgr.StorageManager;
+import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.version2.s3.S3DataAccessLayer;
 
@@ -32,6 +33,9 @@ public class S3DataAccessLayerTest {
 
 	@Autowired
 	private TestUtils testUtils;
+	
+	@Autowired
+	private StorageManagerConfiguration cfg;
 
 
 	@Rule
@@ -78,8 +82,8 @@ public class S3DataAccessLayerTest {
 
 		String testBucket = "teeest-bucket";
 		
-		String s3AccessKey = "AKIA2ZGZXGQONEDOYGNP";
-		String s3SecretAccessKey = "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";
+		String s3AccessKey = cfg.getS3AccessKey();
+		String s3SecretAccessKey = cfg.getS3SecretAccessKey();
 
 		S3DataAccessLayer s3DAL = new S3DataAccessLayer(s3AccessKey, s3SecretAccessKey);
 

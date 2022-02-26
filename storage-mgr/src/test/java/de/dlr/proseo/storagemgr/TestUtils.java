@@ -1,6 +1,7 @@
 package de.dlr.proseo.storagemgr;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +26,7 @@ public class TestUtils {
 	private static final String TEST_SEPARATOR = "===============================================";
 	private static final String PRINT_DIRECTORY_HEADER = "----- Directory";
 	private static final String TEST_DIRECTORY = "testdata";
+	private static final String SOURCE_DIRECTORY = "sourcedata";
 
 	@Autowired
 	private StorageManagerConfiguration cfg;
@@ -71,7 +73,16 @@ public class TestUtils {
 	/**
 	 * @return
 	 */
+	
 	public String getTestSourcePath() {
+
+		return getTestPath(Paths.get(cfg.getPosixCachePath()).getParent().toString());
+	}
+	
+	/**
+	 * @return
+	 */
+	public String getTestStoragePath() {
 
 		return getTestPath(cfg.getPosixBackendPath());
 	}
@@ -83,6 +94,29 @@ public class TestUtils {
 
 		return getTestPath(cfg.getPosixCachePath());
 	}
+	
+	public String getRelativeTestSourcePath() {
+		
+		String sourcePath = Paths.get(cfg.getRelativePosixCachePath()).getParent().toString();
+
+		return getRelativeTestPath(Paths.get(sourcePath, SOURCE_DIRECTORY).toString());
+	}
+	
+	/**
+	 * @return
+	 */
+	public String getRelativeTestStoragePath() {
+
+		return getRelativeTestPath(cfg.getRelativePosixBackendPath());
+	}
+	
+	/**
+	 * @return
+	 */
+	public String getRelativeTestCachePath() {
+
+		return getRelativeTestPath(cfg.getRelativePosixCachePath());
+	}
 
 	/**
 	 * @param path
@@ -93,6 +127,17 @@ public class TestUtils {
 		return Paths.get(path, TEST_DIRECTORY).toString();
 	}
 
+	
+	/**
+	 * @param path
+	 * @return
+	 */
+	private String getRelativeTestPath(String path) {
+
+		return Paths.get(path, TEST_DIRECTORY).toString();
+	}
+
+	
 	/**
 	 * 
 	 */
@@ -166,8 +211,8 @@ public class TestUtils {
 		deleteDirectory(TestUtils.getInstance().getTestCachePath());
 		createDirectory(TestUtils.getInstance().getTestCachePath());
 		
-		deleteDirectory(TestUtils.getInstance().getTestSourcePath());
-		createDirectory(TestUtils.getInstance().getTestSourcePath());
+		deleteDirectory(TestUtils.getInstance().getTestStoragePath());
+		createDirectory(TestUtils.getInstance().getTestStoragePath());
 	}
 
 	/**
@@ -176,7 +221,7 @@ public class TestUtils {
 	public static void deleteTestDirectories() {
 
 		deleteDirectory(TestUtils.getInstance().getTestCachePath());
-		deleteDirectory(TestUtils.getInstance().getTestSourcePath());
+		deleteDirectory(TestUtils.getInstance().getTestStoragePath());
 	}
 
 	/**

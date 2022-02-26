@@ -31,7 +31,7 @@ public class StorageProvider {
 	/** StorageProvider singleton */
 	private static StorageProvider theStorageProvider;
 
-	private StorageProviderProfile profile;
+	//private StorageProfile profile;
 
 	private Storage storage;
 
@@ -60,55 +60,51 @@ public class StorageProvider {
 	@PostConstruct
 	private void init() {
 
-		loadProfile(StorageProviderProfile.DEFAULT);
+		// loadProfile(StorageProfile.getDefaultConfiguration());
 		theStorageProvider = this;
+		
+		// create cache from profile.getCache()
+		createStorage(StorageType.valueOf(cfg.getDefaultStorageType())); 
 	}
 
-	public StorageProvider(StorageProviderProfile profile) {
+	/*
+	public StorageProvider(StorageProfile profile) {
 
 		loadProfile(profile);
 	}
+	*/
 
-	public void loadProfile(StorageProviderProfile profile) {
+	/*
+	public void loadProfile(StorageProfile profile) {
 
 		// TODO: For debugging - remove later
-		if (cfg == null)
-			System.out.println("CFG in loadProfile IS NULL");
+		//if (cfg == null)
+		//	System.out.println("CFG in loadProfile IS NULL");
 
 		this.profile = profile;
-
-		if (profile == StorageProviderProfile.DEFAULT) {
-			storage = createStorage(cfg.getDefaultStorageType());
-		} else if (profile == StorageProviderProfile.STORAGE_POSIX) {
-			storage = createStorage(StorageType.POSIX);
-		} else if (profile == StorageProviderProfile.STORAGE_S3) {
-			storage = createStorage(StorageType.S3);
-		}
+		
+		
+		// create cache from profile.getCache()
+		createStorage(profile.getStorageType()); 
 	}
 
-	public StorageProviderProfile getProfile() {
+	public StorageProfile getProfile() {
 		return profile;
 	}
+	*/
 
 	public Storage getStorage() {
 		return storage;
 	}
 
-	public Storage createStorage(StorageType storageType) {
 
-		if (storageType == StorageType.POSIX) {
-			return new PosixStorage(cfg.getPosixBackendPath());
-
-		} else if (storageType == StorageType.S3) {
-			return new S3Storage(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
-		}
-
-		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
+	public StorageFile getPosixStorageFile(String basePath, String relativePath) {
+		
+			return new PosixStorageFile(basePath, relativePath);
 	}
+	
+	
 
-	public Storage createStorage(String storageType) {
-		return createStorage(StorageType.valueOf(storageType));
-	}
 
 	public StorageFile getStorageFile(String relativePath) {
 
@@ -125,8 +121,21 @@ public class StorageProvider {
 
 	public StorageFile getCacheFile(String relativePath) {
 
-		return new PosixStorageFile(cfg.getPosixCachePath(), relativePath);
+		return new PosixStorageFile(cfg.getPosixBackendPath(), relativePath);
 	}
+	
+	private Storage createStorage(StorageType storageType) {
+		
+		if (storageType == StorageType.POSIX) {
+			return new PosixStorage(cfg.getPosixBackendPath());
+
+		} else if (storageType == StorageType.S3) {
+			return new S3Storage(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
+		}
+
+		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
+	}
+
 
 	/*
 	public long getSize() {

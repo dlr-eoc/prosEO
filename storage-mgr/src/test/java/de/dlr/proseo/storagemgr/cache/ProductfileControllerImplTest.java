@@ -65,7 +65,7 @@ public class ProductfileControllerImplTest {
 		String file1 = "file1.txt";
 		String file2 = "file2.txt";
 
-		String sourcePath = TestUtils.getInstance().getTestSourcePath();
+		String sourcePath = TestUtils.getInstance().getTestStoragePath();
 		String sourcePath1 = Paths.get(sourcePath + "/" + file1).toString();
 		String sourcePath2 = Paths.get(sourcePath + "/" + file2).toString();
 

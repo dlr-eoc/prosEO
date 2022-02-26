@@ -40,7 +40,7 @@ public class ProseoFilePosixTest {
 	@PostConstruct
 	private void init() {
 		testCachePath = testUtils.getTestCachePath();
-		sourceTestPath = testUtils.getTestSourcePath();
+		sourceTestPath = testUtils.getTestStoragePath();
 	}
 
 	@Test
