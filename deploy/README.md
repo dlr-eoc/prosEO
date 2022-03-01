@@ -31,20 +31,24 @@ The deployment of a full prosEO environment requires the following steps:
 3. Configure the Kubernetes cluster (the "hands", see `hands/README.md`).
 4. Re-run the configuration for the bastion host after adding the file `/root/.kube/config` found on the Kubernetes master node
    as `kubectl.conf` in `bastion-control/roles/install_kubectl/files`.
-5. Configure the prosEO Control Instance (the "brain", see `brain/README.md`).
-6. Configure the bastion host for the prosEO PRIP (see `bastion-prip.REAMDE.md`).
+5. Configure the database server (the "brain", see `db-server/README.md`).
+6. Configure the prosEO Control Instance (the "brain", see `brain/README.md`).
 7. Configure the NFS server (see `nfs-server/README.md`).
 8. Configure the logging and monitoring host (see `loghost/README.md`).
-9. Start the brain (see below).
-10. Start the Storage Manager (see below).
-11. Start the InfluxDB and the Grafana server (TBC, maybe already done with deployment).
+9. Configure the bastion host for the prosEO PRIP (see `bastion-prip.REAMDE.md`).
+10. Start the brain (see below).
+11. Start the Storage Manager (see below).
+12. Start the monitoring services (TBC, maybe already done with deployment).
 
 Note that the Kubernetes cluster is started as part of the deployment (step 3).
 
 The dependencies are:
-(3), (4), (6), (7) depend on (2)
-(8) depends on (1) and (4)
-(9) depends on (1) and (6)
+(3), (5), (7), (8) depend on (2)
+(4) depends on (3)
+(6) depends on (5)
+(10) depends on (1) and (6)
+(11) depends on (1) and (7)
+(12) depends on (1) and (8)
 
 Administrative access usually is through the bastion host for the control instance, since all inner nodes are reachable from there.
 

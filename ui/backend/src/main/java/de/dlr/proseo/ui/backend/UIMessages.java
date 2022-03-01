@@ -55,6 +55,7 @@ public class UIMessages {
 	public static final int MSG_ID_INSUFFICIENT_CREDENTIALS = 2827;
 	public static final int MSG_ID_LOGIN_WITHOUT_MISSION_FAILED = 2828;
 	public static final int MSG_ID_CLI_NOT_AUTHORIZED = 2829;
+	public static final int MSG_ID_LOGGING_IN = 2838;
 	
 	// CLIUtil
 	public static final int MSG_ID_INVALID_FILE_TYPE = 2830;
@@ -525,6 +526,7 @@ public class UIMessages {
 		MSG_NOT_MODIFIED ("(I%d) Data not modified", MSG_ID_NOT_MODIFIED),
 		
 		// Login Manager
+		MSG_LOGGING_IN ("(I%d) Logging in to prosEO with user %s", MSG_ID_LOGGING_IN),
 		MSG_LOGGED_IN ("(I%d) User %s logged in", MSG_ID_LOGGED_IN),
 		MSG_LOGGED_OUT ("(I%d) User %s logged out", MSG_ID_LOGGED_OUT),
 		MSG_LOGIN_CANCELLED ("(I%d) No username given, login cancelled", MSG_ID_LOGIN_CANCELLED),

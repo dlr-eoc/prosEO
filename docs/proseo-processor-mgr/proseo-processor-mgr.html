@@ -1,0 +1,782 @@
+<!DOCTYPE HTML><html><head><title>prosEO Processor Manager REST Services API API documentation</title><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="generator" content="https://github.com/raml2html/raml2html 7.5.0"><link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"><script type="text/javascript" src="https://code.jquery.com/jquery-1.11.0.min.js"></script><script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script><script type="text/javascript">
+      $(document).ready(function() {
+  $('.page-header pre code, .top-resource-description pre code, .modal-body pre code').each(function(i, block) {
+    hljs.highlightBlock(block);
+  });
+
+  $('[data-toggle]').click(function() {
+    var selector = $(this).data('target') + ' pre code';
+    $(selector).each(function(i, block) {
+      hljs.highlightBlock(block);
+    });
+  });
+
+  // open modal on hashes like #_action_get
+  $(window).bind('hashchange', function(e) {
+    var anchor_id = document.location.hash.substr(1); //strip #
+    var element = $('#' + anchor_id);
+
+    // do we have such element + is it a modal?  --> show it
+    if (element.length && element.hasClass('modal')) {
+      element.modal('show');
+    }
+  });
+
+  // execute hashchange on first page load
+  $(window).trigger('hashchange');
+
+  // remove url fragment on modal hide
+  $('.modal').on('hidden.bs.modal', function() {
+    try {
+      if (history && history.replaceState) {
+          history.replaceState({}, '', '#');
+      }
+    } catch(e) {}
+  });
+});
+    </script><style>
+      .hljs {
+  background: transparent;
+}
+.parent {
+  color: #999;
+}
+.list-group-item > .badge {
+  float: none;
+  margin-right: 6px;
+}
+.panel-title > .methods {
+  float: right;
+}
+.badge {
+  border-radius: 0;
+  text-transform: uppercase;
+  width: 70px;
+  font-weight: normal;
+  color: #f3f3f6;
+  line-height: normal;
+}
+.badge_get {
+  background-color: #63a8e2;
+}
+.badge_post {
+  background-color: #6cbd7d;
+}
+.badge_put {
+  background-color: #22bac4;
+}
+.badge_delete {
+  background-color: #d26460;
+}
+.badge_patch {
+  background-color: #ccc444;
+}
+.list-group,
+.panel-group {
+  margin-bottom: 0;
+}
+.panel-group .panel+.panel-white {
+  margin-top: 0;
+}
+.panel-group .panel-white {
+  border-bottom: 1px solid #F5F5F5;
+  border-radius: 0;
+}
+.panel-white:last-child {
+  border-bottom-color: white;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
+.panel-white .panel-heading {
+  background: white;
+}
+.tab-pane ul {
+  padding-left: 2em;
+}
+.tab-pane h1 {
+  font-size: 1.3em;
+}
+.tab-pane h2 {
+  font-size: 1.2em;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #ddd;
+}
+.tab-pane h3 {
+  font-size: 1.1em;
+}
+.tab-content {
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  padding: 10px;
+}
+#sidebar {
+  margin-top: 30px;
+  padding-right: 5px;
+  overflow: auto;
+  height: 90%;
+}
+.top-resource-description {
+  border-bottom: 1px solid #ddd;
+  background: #fcfcfc;
+  padding: 15px 15px 0 15px;
+  margin: -15px -15px 10px -15px;
+}
+.resource-description {
+  border-bottom: 1px solid #fcfcfc;
+  background: #fcfcfc;
+  padding: 15px 15px 0 15px;
+  margin: -15px -15px 10px -15px;
+}
+.resource-description p:last-child {
+  margin: 0;
+}
+.list-group .badge {
+  float: left;
+}
+.method_description {
+  margin-left: 85px;
+}
+.method_description p:last-child {
+  margin: 0;
+}
+.list-group-item {
+  cursor: pointer;
+}
+.list-group-item:hover {
+  background-color: #f5f5f5;
+}
+pre code {
+  overflow: auto;
+  word-wrap: normal;
+  white-space: pre;
+}
+.items {
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 9.5px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.42857143;
+}
+.examples {
+  margin-left: 0.5em;
+}
+.resource-modal li > ul {
+  margin-bottom: 1em;
+}
+.required {
+  color: #f00;
+}
+    </style></head><body data-spy="scroll" data-target="#sidebar"><div class="container"><div class="row"><div class="col-md-9" role="main"><div class="page-header"><h1>prosEO Processor Manager REST Services API API documentation <small>version v0.1</small></h1><p>/proseo/processor-mgr/{version}</p><ul><li><strong>version</strong>: <em><span class="required">required</span>(v0.1)</em></li></ul></div><div class="panel panel-default"><div class="panel-heading"><h3 id="processorclasses" class="panel-title">/processorclasses</h3></div><div class="panel-body"><div class="panel-group"><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_processorclasses"><span class="parent"></span>/processorclasses</a> <span class="methods"><a href="#processorclasses_get"><span class="badge badge_get">get</span></a> <a href="#processorclasses_post"><span class="badge badge_post">post</span></a></span></h4></div><div id="panel_processorclasses" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#processorclasses_get'" class="list-group-item"><span class="badge badge_get">get</span><div class="method_description"><p>Get processor classes by mission and name</p></div><div class="clearfix"></div></div><div onclick="window.location.href = '#processorclasses_post'" class="list-group-item"><span class="badge badge_post">post</span><div class="method_description"><p>Create a new processor class</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="processorclasses_get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get</span> <span class="parent"></span>/processorclasses</h4></div><div class="modal-body"><div class="alert alert-info"><p>Get processor classes by mission and name</p></div><ul class="nav nav-tabs"><li class="active"><a href="#processorclasses_get_request" data-toggle="tab">Request</a></li><li><a href="#processorclasses_get_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="processorclasses_get_request"><h3>Query Parameters</h3><ul><li><strong>mission</strong>: <em>(string)</em></li><li><strong>processorName</strong>: <em>(string)</em></li></ul></div><div class="tab-pane" id="processorclasses_get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: array of object</p><p><strong>Items</strong>: RestProcessorClass</p><div class="items"><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>User-defined unique processor class name</p></li><li><strong>productClasses</strong>: <em><span class="required">required</span>(array of string)</em><p>The product types of the product classes a processor of this class can generate</p></li></ul></div><p><strong>Example</strong>:</p><div class="examples"><pre><code>[
+    {
+        "id": 1837725,
+        "version": 2,
+        "missionCode": "S5P",
+        "processorName": "KNMI L2",
+        "productClasses": [ "FRESCO", "CO", "CH4", "ALH", "AAI", "O3PR", "O3TPR" ]
+    },
+    {
+        "id": 1837726,
+        "version": 7,
+        "missionCode": "S5P",
+        "processorName": "DLR L2",
+        "productClasses": [ "CLOUD", "O3", "HCHO", "SO2", "O3TCL" ]
+    }
+]</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/400" target="_blank">400</a></h2><p>The request sent to the server contains data which is not as expected e.g. invalid location URI</p><h3>Headers</h3><ul><li><strong>Warning</strong>: <em><span class="required">required</span>(string - pattern: ^\d{3} proseo-ingestor .+ \(\d+\)$)</em><p>An error code and a plain text error message</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>199 proseo-ingestor IngestorProduct with id 1234ab-0cde45 not found (1001)</code></pre></div></li></ul><h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2><p>The requested resource was not found</p><h3>Headers</h3><ul><li><strong>Warning</strong>: <em><span class="required">required</span>(string - pattern: ^\d{3} proseo-ingestor .+ \(\d+\)$)</em><p>An error code and a plain text error message</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>199 proseo-ingestor IngestorProduct with id 1234ab-0cde45 not found (1001)</code></pre></div></li></ul></div></div></div></div></div></div><div class="modal fade" tabindex="0" id="processorclasses_post"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_post">post</span> <span class="parent"></span>/processorclasses</h4></div><div class="modal-body"><div class="alert alert-info"><p>Create a new processor class</p></div><ul class="nav nav-tabs"><li class="active"><a href="#processorclasses_post_request" data-toggle="tab">Request</a></li><li><a href="#processorclasses_post_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="processorclasses_post_request"><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>User-defined unique processor class name</p></li><li><strong>productClasses</strong>: <em><span class="required">required</span>(array of string)</em><p>The product types of the product classes a processor of this class can generate</p></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+    "id": 1837725,
+    "version": 2,
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "productClasses": [ "FRESCO", "CO", "CH4", "ALH", "AAI", "O3PR", "O3TPR" ]
+}</code></pre></div></div><div class="tab-pane" id="processorclasses_post_response"><h2>HTTP status code <a href="http://httpstatus.es/201" target="_blank">201</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>User-defined unique processor class name</p></li><li><strong>productClasses</strong>: <em><span class="required">required</span>(array of string)</em><p>The product types of the product classes a processor of this class can generate</p></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+    "id": 1837725,
+    "version": 2,
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "productClasses": [ "FRESCO", "CO", "CH4", "ALH", "AAI", "O3PR", "O3TPR" ]
+}</code></pre></div></div></div></div></div></div></div></div><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_processorclasses__id_"><span class="parent">/processorclasses</span>/{id}</a> <span class="methods"><a href="#processorclasses__id__get"><span class="badge badge_get">get</span></a> <a href="#processorclasses__id__patch"><span class="badge badge_patch">patch</span></a> <a href="#processorclasses__id__delete"><span class="badge badge_delete">delete</span></a></span></h4></div><div id="panel_processorclasses__id_" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#processorclasses__id__get'" class="list-group-item"><span class="badge badge_get">get</span><div class="method_description"><p>Get a processor class by ID</p></div><div class="clearfix"></div></div><div onclick="window.location.href = '#processorclasses__id__patch'" class="list-group-item"><span class="badge badge_patch">patch</span><div class="method_description"><p>Update a processor class by ID</p></div><div class="clearfix"></div></div><div onclick="window.location.href = '#processorclasses__id__delete'" class="list-group-item"><span class="badge badge_delete">delete</span><div class="method_description"><p>Delete a processor class by ID</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="processorclasses__id__get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get</span> <span class="parent">/processorclasses</span>/{id}</h4></div><div class="modal-body"><div class="alert alert-info"><p>Get a processor class by ID</p></div><ul class="nav nav-tabs"><li class="active"><a href="#processorclasses__id__get_request" data-toggle="tab">Request</a></li><li><a href="#processorclasses__id__get_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="processorclasses__id__get_request"><h3>URI Parameters</h3><ul><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li></ul></div><div class="tab-pane" id="processorclasses__id__get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>User-defined unique processor class name</p></li><li><strong>productClasses</strong>: <em><span class="required">required</span>(array of string)</em><p>The product types of the product classes a processor of this class can generate</p></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+    "id": 1837725,
+    "version": 2,
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "productClasses": [ "FRESCO", "CO", "CH4", "ALH", "AAI", "O3PR", "O3TPR" ]
+}</code></pre></div></div></div></div></div></div></div><div class="modal fade" tabindex="0" id="processorclasses__id__patch"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_patch">patch</span> <span class="parent">/processorclasses</span>/{id}</h4></div><div class="modal-body"><div class="alert alert-info"><p>Update a processor class by ID</p></div><ul class="nav nav-tabs"><li class="active"><a href="#processorclasses__id__patch_request" data-toggle="tab">Request</a></li><li><a href="#processorclasses__id__patch_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="processorclasses__id__patch_request"><h3>URI Parameters</h3><ul><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li></ul><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>User-defined unique processor class name</p></li><li><strong>productClasses</strong>: <em><span class="required">required</span>(array of string)</em><p>The product types of the product classes a processor of this class can generate</p></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+    "id": 1837725,
+    "version": 2,
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "productClasses": [ "FRESCO", "CO", "CH4", "ALH", "AAI", "O3PR", "O3TPR" ]
+}</code></pre></div></div><div class="tab-pane" id="processorclasses__id__patch_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>User-defined unique processor class name</p></li><li><strong>productClasses</strong>: <em><span class="required">required</span>(array of string)</em><p>The product types of the product classes a processor of this class can generate</p></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+    "id": 1837725,
+    "version": 2,
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "productClasses": [ "FRESCO", "CO", "CH4", "ALH", "AAI", "O3PR", "O3TPR" ]
+}</code></pre></div></div></div></div></div></div></div><div class="modal fade" tabindex="0" id="processorclasses__id__delete"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_delete">delete</span> <span class="parent">/processorclasses</span>/{id}</h4></div><div class="modal-body"><div class="alert alert-info"><p>Delete a processor class by ID</p></div><ul class="nav nav-tabs"><li class="active"><a href="#processorclasses__id__delete_request" data-toggle="tab">Request</a></li><li><a href="#processorclasses__id__delete_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="processorclasses__id__delete_request"><h3>URI Parameters</h3><ul><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li></ul></div><div class="tab-pane" id="processorclasses__id__delete_response"><h2>HTTP status code <a href="http://httpstatus.es/204" target="_blank">204</a></h2></div></div></div></div></div></div></div></div></div></div><div class="panel panel-default"><div class="panel-heading"><h3 id="processors" class="panel-title">/processors</h3></div><div class="panel-body"><div class="panel-group"><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_processors"><span class="parent"></span>/processors</a> <span class="methods"><a href="#processors_get"><span class="badge badge_get">get</span></a> <a href="#processors_post"><span class="badge badge_post">post</span></a></span></h4></div><div id="panel_processors" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#processors_get'" class="list-group-item"><span class="badge badge_get">get</span><div class="method_description"><p>Get processors by mission, name and version</p></div><div class="clearfix"></div></div><div onclick="window.location.href = '#processors_post'" class="list-group-item"><span class="badge badge_post">post</span><div class="method_description"><p>Create a new processor</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="processors_get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get</span> <span class="parent"></span>/processors</h4></div><div class="modal-body"><div class="alert alert-info"><p>Get processors by mission, name and version</p></div><ul class="nav nav-tabs"><li class="active"><a href="#processors_get_request" data-toggle="tab">Request</a></li><li><a href="#processors_get_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="processors_get_request"><h3>Query Parameters</h3><ul><li><strong>mission</strong>: <em>(string)</em></li><li><strong>processorName</strong>: <em>(string)</em></li><li><strong>processorVersion</strong>: <em>(string)</em></li></ul></div><div class="tab-pane" id="processors_get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: array of object</p><p><strong>Items</strong>: RestProcessor</p><div class="items"><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>The name of the processor class this processor (version) belongs to</p></li><li><strong>processorVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the processor executable (Docker image)</p></li><li><strong>jobOrderVersion</strong>: <em>(string)</em><p>Version identification of the Job Order file specification (allowed values MMFI_1_8 [default], GMES_1_1)</p></li><li><strong>useInputFileTimeIntervals</strong>: <em>(boolean)</em><p>Indicates whether time intervals shall be used for input files in the Job Order file (default false)</p></li><li><strong>isTest</strong>: <em>(boolean - default: false)</em><p>Indicates a test version of the processor (default false)</p></li><li><strong>minDiskSpace</strong>: <em>(integer - default: 1024)</em><p>Minimum disk space in MB, worst case estimate plus safety margin (default 1024)</p></li><li><strong>maxTime</strong>: <em>(integer - default: 0)</em><p>Execution time limit in seconds (default 0 means unlimited)</p></li><li><strong>sensingTimeFlag</strong>: <em>(boolean - default: true)</em><p>Indicates whether the processor uses a sensing time interval as main processing parameter (default true)</p></li><li><strong>configuredProcessors</strong>: <em><span class="required">required</span>(array of string)</em><p>The names for the processor configurations this processor version is valid for</p></li><li><strong>tasks</strong>: <em><span class="required">required</span>(array of RestTask)</em><p>List of tasks for this processor</p><p><strong>Items</strong>: RestTask</p><div class="items"><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em>(string)</em><p>The mission code (e. g. S5P) (not required if embedded in processor object)</p></li><li><strong>processorName</strong>: <em>(string)</em><p>User-defined unique processor class name of the owning processor (not required if embedded in processor object)</p></li><li><strong>processorVersion</strong>: <em>(string)</em><p>Version identification of the processor executable (Docker image) (not required if embedded in processor object)</p></li><li><strong>taskName</strong>: <em><span class="required">required</span>(string)</em><p>The task name (unique for the Processor)</p></li><li><strong>taskVersion</strong>: <em><span class="required">required</span>(string)</em><p>A version identifier for the task</p></li><li><strong>isCritical</strong>: <em>(boolean - default: true)</em><p>Indicates whether a failure of the task results in a failure of the whole processor (default true)</p></li><li><strong>criticalityLevel</strong>: <em>(integer)</em><p>Task priority, in case of failure all running tasks with a lower priority number will be aborted (mandatory for processors with more than one task)</p></li><li><strong>numberOfCpus</strong>: <em>(integer)</em><p>The number of CPUs used by the task</p></li><li><strong>minMemory</strong>: <em>(integer)</em><p>Minimum memory (RAM) requirement for this task in GiB</p></li><li><strong>breakpointFileNames</strong>: <em><span class="required">required</span>(array of string)</em><p>Intermediate output files for testing/evaluation purposes</p></li></ul></div></li><li><strong>dockerImage</strong>: <em><span class="required">required</span>(string)</em><p>The name of the docker image (without registry address)</p></li><li><strong>dockerRunParameters</strong>: <em><span class="required">required</span>(array of RestStringParameter)</em><p>Parameters to add to the "docker run" command</p><p><strong>Items</strong>: RestStringParameter</p><div class="items"><ul><li><strong>key</strong>: <em><span class="required">required</span>(string)</em><p>The parameter key</p></li><li><strong>value</strong>: <em><span class="required">required</span>(string)</em><p>The parameter value</p></li></ul></div></li></ul></div><p><strong>Example</strong>:</p><div class="examples"><pre><code>[
+    {
+        "id": 1198734,
+        "version": 5,
+        "missionCode": "S5P",
+        "processorName": "KNMI L2",
+        "processorVersion": "01.03.02",
+        "jobOrderVersion": "GMES_1_1",
+        "useInputFileTimeIntervals": true,
+        "isTest": false,
+        "minDiskSpace": 1024,
+        "maxTime": 300,
+        "sensingTimeFlag": true,
+        "configuredProcessors": [ "KNMI L2 01.03.02 2019-03-30" ],
+        "tasks": [
+            {
+                "id": 234961,
+                "version": 1,
+                "taskName": "TROPNLL2",
+                "taskVersion": "01.03.02",
+                "isCritical": true,
+                "criticalityLevel": 100,
+                "numberOfCpus": 10,
+                "minMemory": 64,
+                "breakpointFileNames": []
+            }
+        ],
+        "dockerImage": "knmi-l2:01.03.02",
+        "dockerRunParameters": [ 
+            { 
+                "key": "-v",
+                "value": "/my/source/directory:/container/target/directory"
+            }
+        ]
+    },
+    {
+        "id": 11987345,
+        "version": 57,
+        "missionCode": "S5P",
+        "processorName": "DLR L2 (upas)",
+        "processorVersion": "01.01.07",
+        "isTest": false,
+        "minDiskSpace": 2048,
+        "maxTime": 240,
+        "sensingTimeFlag": true,
+        "configuredProcessors": [ "DLR L2 01.01.07 2019-03-30" ],
+        "tasks": [
+            {
+                "id": 234962,
+                "version": 1,
+                "taskName": "UPAS",
+                "taskVersion": "01.01.07",
+                "isCritical": true,
+                "criticalityLevel": 100,
+                "numberOfCpus": 10,
+                "breakpointFileNames": []
+            }
+        ],
+        "dockerImage": "upas:01.01.07",
+        "dockerRunParameters": [ 
+            { 
+                "key": "-v",
+                "value": "/my/path/to/support_data:/container/path/to/support_data"
+            }
+        ]
+    }
+]
+</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/400" target="_blank">400</a></h2><p>The request sent to the server contains data which is not as expected e.g. invalid location URI</p><h3>Headers</h3><ul><li><strong>Warning</strong>: <em><span class="required">required</span>(string - pattern: ^\d{3} proseo-ingestor .+ \(\d+\)$)</em><p>An error code and a plain text error message</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>199 proseo-ingestor IngestorProduct with id 1234ab-0cde45 not found (1001)</code></pre></div></li></ul><h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2><p>The requested resource was not found</p><h3>Headers</h3><ul><li><strong>Warning</strong>: <em><span class="required">required</span>(string - pattern: ^\d{3} proseo-ingestor .+ \(\d+\)$)</em><p>An error code and a plain text error message</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>199 proseo-ingestor IngestorProduct with id 1234ab-0cde45 not found (1001)</code></pre></div></li></ul></div></div></div></div></div></div><div class="modal fade" tabindex="0" id="processors_post"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_post">post</span> <span class="parent"></span>/processors</h4></div><div class="modal-body"><div class="alert alert-info"><p>Create a new processor</p></div><ul class="nav nav-tabs"><li class="active"><a href="#processors_post_request" data-toggle="tab">Request</a></li><li><a href="#processors_post_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="processors_post_request"><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>The name of the processor class this processor (version) belongs to</p></li><li><strong>processorVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the processor executable (Docker image)</p></li><li><strong>jobOrderVersion</strong>: <em>(string)</em><p>Version identification of the Job Order file specification (allowed values MMFI_1_8 [default], GMES_1_1)</p></li><li><strong>useInputFileTimeIntervals</strong>: <em>(boolean)</em><p>Indicates whether time intervals shall be used for input files in the Job Order file (default false)</p></li><li><strong>isTest</strong>: <em>(boolean - default: false)</em><p>Indicates a test version of the processor (default false)</p></li><li><strong>minDiskSpace</strong>: <em>(integer - default: 1024)</em><p>Minimum disk space in MB, worst case estimate plus safety margin (default 1024)</p></li><li><strong>maxTime</strong>: <em>(integer - default: 0)</em><p>Execution time limit in seconds (default 0 means unlimited)</p></li><li><strong>sensingTimeFlag</strong>: <em>(boolean - default: true)</em><p>Indicates whether the processor uses a sensing time interval as main processing parameter (default true)</p></li><li><strong>configuredProcessors</strong>: <em><span class="required">required</span>(array of string)</em><p>The names for the processor configurations this processor version is valid for</p></li><li><strong>tasks</strong>: <em><span class="required">required</span>(array of RestTask)</em><p>List of tasks for this processor</p><p><strong>Items</strong>: RestTask</p><div class="items"><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em>(string)</em><p>The mission code (e. g. S5P) (not required if embedded in processor object)</p></li><li><strong>processorName</strong>: <em>(string)</em><p>User-defined unique processor class name of the owning processor (not required if embedded in processor object)</p></li><li><strong>processorVersion</strong>: <em>(string)</em><p>Version identification of the processor executable (Docker image) (not required if embedded in processor object)</p></li><li><strong>taskName</strong>: <em><span class="required">required</span>(string)</em><p>The task name (unique for the Processor)</p></li><li><strong>taskVersion</strong>: <em><span class="required">required</span>(string)</em><p>A version identifier for the task</p></li><li><strong>isCritical</strong>: <em>(boolean - default: true)</em><p>Indicates whether a failure of the task results in a failure of the whole processor (default true)</p></li><li><strong>criticalityLevel</strong>: <em>(integer)</em><p>Task priority, in case of failure all running tasks with a lower priority number will be aborted (mandatory for processors with more than one task)</p></li><li><strong>numberOfCpus</strong>: <em>(integer)</em><p>The number of CPUs used by the task</p></li><li><strong>minMemory</strong>: <em>(integer)</em><p>Minimum memory (RAM) requirement for this task in GiB</p></li><li><strong>breakpointFileNames</strong>: <em><span class="required">required</span>(array of string)</em><p>Intermediate output files for testing/evaluation purposes</p></li></ul></div></li><li><strong>dockerImage</strong>: <em><span class="required">required</span>(string)</em><p>The name of the docker image (without registry address)</p></li><li><strong>dockerRunParameters</strong>: <em><span class="required">required</span>(array of RestStringParameter)</em><p>Parameters to add to the "docker run" command</p><p><strong>Items</strong>: RestStringParameter</p><div class="items"><ul><li><strong>key</strong>: <em><span class="required">required</span>(string)</em><p>The parameter key</p></li><li><strong>value</strong>: <em><span class="required">required</span>(string)</em><p>The parameter value</p></li></ul></div></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+    "id": 1198734,
+    "version": 5,
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "processorVersion": "01.03.02",
+    "jobOrderVersion": "GMES_1_1",
+    "useInputFileTimeIntervals": true,
+    "isTest": false,
+    "minDiskSpace": 1024,
+    "maxTime": 300,
+    "sensingTimeFlag": true,
+    "configuredProcessors": [ "KNMI L2 01.03.02 2019-03-30" ],
+    "tasks": [
+        {
+            "id": 234961,
+            "version": 1,
+            "taskName": "TROPNLL2",
+            "taskVersion": "01.03.02",
+            "isCritical": true,
+            "criticalityLevel": 100,
+            "numberOfCpus": 10,
+            "breakpointFileNames": []
+        }
+    ],
+    "dockerImage": "knmi-l2:01.03.02",
+    "dockerRunParameters": [ 
+        { 
+            "key": "-v",
+            "value": "/my/source/directory:/container/target/directory"
+        }
+    ]
+}</code></pre></div></div><div class="tab-pane" id="processors_post_response"><h2>HTTP status code <a href="http://httpstatus.es/201" target="_blank">201</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>The name of the processor class this processor (version) belongs to</p></li><li><strong>processorVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the processor executable (Docker image)</p></li><li><strong>jobOrderVersion</strong>: <em>(string)</em><p>Version identification of the Job Order file specification (allowed values MMFI_1_8 [default], GMES_1_1)</p></li><li><strong>useInputFileTimeIntervals</strong>: <em>(boolean)</em><p>Indicates whether time intervals shall be used for input files in the Job Order file (default false)</p></li><li><strong>isTest</strong>: <em>(boolean - default: false)</em><p>Indicates a test version of the processor (default false)</p></li><li><strong>minDiskSpace</strong>: <em>(integer - default: 1024)</em><p>Minimum disk space in MB, worst case estimate plus safety margin (default 1024)</p></li><li><strong>maxTime</strong>: <em>(integer - default: 0)</em><p>Execution time limit in seconds (default 0 means unlimited)</p></li><li><strong>sensingTimeFlag</strong>: <em>(boolean - default: true)</em><p>Indicates whether the processor uses a sensing time interval as main processing parameter (default true)</p></li><li><strong>configuredProcessors</strong>: <em><span class="required">required</span>(array of string)</em><p>The names for the processor configurations this processor version is valid for</p></li><li><strong>tasks</strong>: <em><span class="required">required</span>(array of RestTask)</em><p>List of tasks for this processor</p><p><strong>Items</strong>: RestTask</p><div class="items"><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em>(string)</em><p>The mission code (e. g. S5P) (not required if embedded in processor object)</p></li><li><strong>processorName</strong>: <em>(string)</em><p>User-defined unique processor class name of the owning processor (not required if embedded in processor object)</p></li><li><strong>processorVersion</strong>: <em>(string)</em><p>Version identification of the processor executable (Docker image) (not required if embedded in processor object)</p></li><li><strong>taskName</strong>: <em><span class="required">required</span>(string)</em><p>The task name (unique for the Processor)</p></li><li><strong>taskVersion</strong>: <em><span class="required">required</span>(string)</em><p>A version identifier for the task</p></li><li><strong>isCritical</strong>: <em>(boolean - default: true)</em><p>Indicates whether a failure of the task results in a failure of the whole processor (default true)</p></li><li><strong>criticalityLevel</strong>: <em>(integer)</em><p>Task priority, in case of failure all running tasks with a lower priority number will be aborted (mandatory for processors with more than one task)</p></li><li><strong>numberOfCpus</strong>: <em>(integer)</em><p>The number of CPUs used by the task</p></li><li><strong>minMemory</strong>: <em>(integer)</em><p>Minimum memory (RAM) requirement for this task in GiB</p></li><li><strong>breakpointFileNames</strong>: <em><span class="required">required</span>(array of string)</em><p>Intermediate output files for testing/evaluation purposes</p></li></ul></div></li><li><strong>dockerImage</strong>: <em><span class="required">required</span>(string)</em><p>The name of the docker image (without registry address)</p></li><li><strong>dockerRunParameters</strong>: <em><span class="required">required</span>(array of RestStringParameter)</em><p>Parameters to add to the "docker run" command</p><p><strong>Items</strong>: RestStringParameter</p><div class="items"><ul><li><strong>key</strong>: <em><span class="required">required</span>(string)</em><p>The parameter key</p></li><li><strong>value</strong>: <em><span class="required">required</span>(string)</em><p>The parameter value</p></li></ul></div></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+    "id": 1198734,
+    "version": 5,
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "processorVersion": "01.03.02",
+    "jobOrderVersion": "GMES_1_1",
+    "useInputFileTimeIntervals": true,
+    "isTest": false,
+    "minDiskSpace": 1024,
+    "maxTime": 300,
+    "sensingTimeFlag": true,
+    "configuredProcessors": [ "KNMI L2 01.03.02 2019-03-30" ],
+    "tasks": [
+        {
+            "id": 234961,
+            "version": 1,
+            "taskName": "TROPNLL2",
+            "taskVersion": "01.03.02",
+            "isCritical": true,
+            "criticalityLevel": 100,
+            "numberOfCpus": 10,
+            "breakpointFileNames": []
+        }
+    ],
+    "dockerImage": "knmi-l2:01.03.02",
+    "dockerRunParameters": [ 
+        { 
+            "key": "-v",
+            "value": "/my/source/directory:/container/target/directory"
+        }
+    ]
+}</code></pre></div></div></div></div></div></div></div></div><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_processors__id_"><span class="parent">/processors</span>/{id}</a> <span class="methods"><a href="#processors__id__get"><span class="badge badge_get">get</span></a> <a href="#processors__id__patch"><span class="badge badge_patch">patch</span></a> <a href="#processors__id__delete"><span class="badge badge_delete">delete</span></a></span></h4></div><div id="panel_processors__id_" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#processors__id__get'" class="list-group-item"><span class="badge badge_get">get</span><div class="method_description"><p>Get a processor by ID</p></div><div class="clearfix"></div></div><div onclick="window.location.href = '#processors__id__patch'" class="list-group-item"><span class="badge badge_patch">patch</span><div class="method_description"><p>Update a processor class by ID</p></div><div class="clearfix"></div></div><div onclick="window.location.href = '#processors__id__delete'" class="list-group-item"><span class="badge badge_delete">delete</span><div class="method_description"><p>Delete a processor class by ID</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="processors__id__get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get</span> <span class="parent">/processors</span>/{id}</h4></div><div class="modal-body"><div class="alert alert-info"><p>Get a processor by ID</p></div><ul class="nav nav-tabs"><li class="active"><a href="#processors__id__get_request" data-toggle="tab">Request</a></li><li><a href="#processors__id__get_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="processors__id__get_request"><h3>URI Parameters</h3><ul><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li></ul></div><div class="tab-pane" id="processors__id__get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>The name of the processor class this processor (version) belongs to</p></li><li><strong>processorVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the processor executable (Docker image)</p></li><li><strong>jobOrderVersion</strong>: <em>(string)</em><p>Version identification of the Job Order file specification (allowed values MMFI_1_8 [default], GMES_1_1)</p></li><li><strong>useInputFileTimeIntervals</strong>: <em>(boolean)</em><p>Indicates whether time intervals shall be used for input files in the Job Order file (default false)</p></li><li><strong>isTest</strong>: <em>(boolean - default: false)</em><p>Indicates a test version of the processor (default false)</p></li><li><strong>minDiskSpace</strong>: <em>(integer - default: 1024)</em><p>Minimum disk space in MB, worst case estimate plus safety margin (default 1024)</p></li><li><strong>maxTime</strong>: <em>(integer - default: 0)</em><p>Execution time limit in seconds (default 0 means unlimited)</p></li><li><strong>sensingTimeFlag</strong>: <em>(boolean - default: true)</em><p>Indicates whether the processor uses a sensing time interval as main processing parameter (default true)</p></li><li><strong>configuredProcessors</strong>: <em><span class="required">required</span>(array of string)</em><p>The names for the processor configurations this processor version is valid for</p></li><li><strong>tasks</strong>: <em><span class="required">required</span>(array of RestTask)</em><p>List of tasks for this processor</p><p><strong>Items</strong>: RestTask</p><div class="items"><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em>(string)</em><p>The mission code (e. g. S5P) (not required if embedded in processor object)</p></li><li><strong>processorName</strong>: <em>(string)</em><p>User-defined unique processor class name of the owning processor (not required if embedded in processor object)</p></li><li><strong>processorVersion</strong>: <em>(string)</em><p>Version identification of the processor executable (Docker image) (not required if embedded in processor object)</p></li><li><strong>taskName</strong>: <em><span class="required">required</span>(string)</em><p>The task name (unique for the Processor)</p></li><li><strong>taskVersion</strong>: <em><span class="required">required</span>(string)</em><p>A version identifier for the task</p></li><li><strong>isCritical</strong>: <em>(boolean - default: true)</em><p>Indicates whether a failure of the task results in a failure of the whole processor (default true)</p></li><li><strong>criticalityLevel</strong>: <em>(integer)</em><p>Task priority, in case of failure all running tasks with a lower priority number will be aborted (mandatory for processors with more than one task)</p></li><li><strong>numberOfCpus</strong>: <em>(integer)</em><p>The number of CPUs used by the task</p></li><li><strong>minMemory</strong>: <em>(integer)</em><p>Minimum memory (RAM) requirement for this task in GiB</p></li><li><strong>breakpointFileNames</strong>: <em><span class="required">required</span>(array of string)</em><p>Intermediate output files for testing/evaluation purposes</p></li></ul></div></li><li><strong>dockerImage</strong>: <em><span class="required">required</span>(string)</em><p>The name of the docker image (without registry address)</p></li><li><strong>dockerRunParameters</strong>: <em><span class="required">required</span>(array of RestStringParameter)</em><p>Parameters to add to the "docker run" command</p><p><strong>Items</strong>: RestStringParameter</p><div class="items"><ul><li><strong>key</strong>: <em><span class="required">required</span>(string)</em><p>The parameter key</p></li><li><strong>value</strong>: <em><span class="required">required</span>(string)</em><p>The parameter value</p></li></ul></div></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+    "id": 1198734,
+    "version": 5,
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "processorVersion": "01.03.02",
+    "jobOrderVersion": "GMES_1_1",
+    "useInputFileTimeIntervals": true,
+    "isTest": false,
+    "minDiskSpace": 1024,
+    "maxTime": 300,
+    "sensingTimeFlag": true,
+    "configuredProcessors": [ "KNMI L2 01.03.02 2019-03-30" ],
+    "tasks": [
+        {
+            "id": 234961,
+            "version": 1,
+            "taskName": "TROPNLL2",
+            "taskVersion": "01.03.02",
+            "isCritical": true,
+            "criticalityLevel": 100,
+            "numberOfCpus": 10,
+            "breakpointFileNames": []
+        }
+    ],
+    "dockerImage": "knmi-l2:01.03.02",
+    "dockerRunParameters": [ 
+        { 
+            "key": "-v",
+            "value": "/my/source/directory:/container/target/directory"
+        }
+    ]
+}</code></pre></div></div></div></div></div></div></div><div class="modal fade" tabindex="0" id="processors__id__patch"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_patch">patch</span> <span class="parent">/processors</span>/{id}</h4></div><div class="modal-body"><div class="alert alert-info"><p>Update a processor class by ID</p></div><ul class="nav nav-tabs"><li class="active"><a href="#processors__id__patch_request" data-toggle="tab">Request</a></li><li><a href="#processors__id__patch_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="processors__id__patch_request"><h3>URI Parameters</h3><ul><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li></ul><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>The name of the processor class this processor (version) belongs to</p></li><li><strong>processorVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the processor executable (Docker image)</p></li><li><strong>jobOrderVersion</strong>: <em>(string)</em><p>Version identification of the Job Order file specification (allowed values MMFI_1_8 [default], GMES_1_1)</p></li><li><strong>useInputFileTimeIntervals</strong>: <em>(boolean)</em><p>Indicates whether time intervals shall be used for input files in the Job Order file (default false)</p></li><li><strong>isTest</strong>: <em>(boolean - default: false)</em><p>Indicates a test version of the processor (default false)</p></li><li><strong>minDiskSpace</strong>: <em>(integer - default: 1024)</em><p>Minimum disk space in MB, worst case estimate plus safety margin (default 1024)</p></li><li><strong>maxTime</strong>: <em>(integer - default: 0)</em><p>Execution time limit in seconds (default 0 means unlimited)</p></li><li><strong>sensingTimeFlag</strong>: <em>(boolean - default: true)</em><p>Indicates whether the processor uses a sensing time interval as main processing parameter (default true)</p></li><li><strong>configuredProcessors</strong>: <em><span class="required">required</span>(array of string)</em><p>The names for the processor configurations this processor version is valid for</p></li><li><strong>tasks</strong>: <em><span class="required">required</span>(array of RestTask)</em><p>List of tasks for this processor</p><p><strong>Items</strong>: RestTask</p><div class="items"><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em>(string)</em><p>The mission code (e. g. S5P) (not required if embedded in processor object)</p></li><li><strong>processorName</strong>: <em>(string)</em><p>User-defined unique processor class name of the owning processor (not required if embedded in processor object)</p></li><li><strong>processorVersion</strong>: <em>(string)</em><p>Version identification of the processor executable (Docker image) (not required if embedded in processor object)</p></li><li><strong>taskName</strong>: <em><span class="required">required</span>(string)</em><p>The task name (unique for the Processor)</p></li><li><strong>taskVersion</strong>: <em><span class="required">required</span>(string)</em><p>A version identifier for the task</p></li><li><strong>isCritical</strong>: <em>(boolean - default: true)</em><p>Indicates whether a failure of the task results in a failure of the whole processor (default true)</p></li><li><strong>criticalityLevel</strong>: <em>(integer)</em><p>Task priority, in case of failure all running tasks with a lower priority number will be aborted (mandatory for processors with more than one task)</p></li><li><strong>numberOfCpus</strong>: <em>(integer)</em><p>The number of CPUs used by the task</p></li><li><strong>minMemory</strong>: <em>(integer)</em><p>Minimum memory (RAM) requirement for this task in GiB</p></li><li><strong>breakpointFileNames</strong>: <em><span class="required">required</span>(array of string)</em><p>Intermediate output files for testing/evaluation purposes</p></li></ul></div></li><li><strong>dockerImage</strong>: <em><span class="required">required</span>(string)</em><p>The name of the docker image (without registry address)</p></li><li><strong>dockerRunParameters</strong>: <em><span class="required">required</span>(array of RestStringParameter)</em><p>Parameters to add to the "docker run" command</p><p><strong>Items</strong>: RestStringParameter</p><div class="items"><ul><li><strong>key</strong>: <em><span class="required">required</span>(string)</em><p>The parameter key</p></li><li><strong>value</strong>: <em><span class="required">required</span>(string)</em><p>The parameter value</p></li></ul></div></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+    "id": 1198734,
+    "version": 5,
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "processorVersion": "01.03.02",
+    "jobOrderVersion": "GMES_1_1",
+    "useInputFileTimeIntervals": true,
+    "isTest": false,
+    "minDiskSpace": 1024,
+    "maxTime": 300,
+    "sensingTimeFlag": true,
+    "configuredProcessors": [ "KNMI L2 01.03.02 2019-03-30" ],
+    "tasks": [
+        {
+            "id": 234961,
+            "version": 1,
+            "taskName": "TROPNLL2",
+            "taskVersion": "01.03.02",
+            "isCritical": true,
+            "criticalityLevel": 100,
+            "numberOfCpus": 10,
+            "breakpointFileNames": []
+        }
+    ],
+    "dockerImage": "knmi-l2:01.03.02",
+    "dockerRunParameters": [ 
+        { 
+            "key": "-v",
+            "value": "/my/source/directory:/container/target/directory"
+        }
+    ]
+}</code></pre></div></div><div class="tab-pane" id="processors__id__patch_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>The name of the processor class this processor (version) belongs to</p></li><li><strong>processorVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the processor executable (Docker image)</p></li><li><strong>jobOrderVersion</strong>: <em>(string)</em><p>Version identification of the Job Order file specification (allowed values MMFI_1_8 [default], GMES_1_1)</p></li><li><strong>useInputFileTimeIntervals</strong>: <em>(boolean)</em><p>Indicates whether time intervals shall be used for input files in the Job Order file (default false)</p></li><li><strong>isTest</strong>: <em>(boolean - default: false)</em><p>Indicates a test version of the processor (default false)</p></li><li><strong>minDiskSpace</strong>: <em>(integer - default: 1024)</em><p>Minimum disk space in MB, worst case estimate plus safety margin (default 1024)</p></li><li><strong>maxTime</strong>: <em>(integer - default: 0)</em><p>Execution time limit in seconds (default 0 means unlimited)</p></li><li><strong>sensingTimeFlag</strong>: <em>(boolean - default: true)</em><p>Indicates whether the processor uses a sensing time interval as main processing parameter (default true)</p></li><li><strong>configuredProcessors</strong>: <em><span class="required">required</span>(array of string)</em><p>The names for the processor configurations this processor version is valid for</p></li><li><strong>tasks</strong>: <em><span class="required">required</span>(array of RestTask)</em><p>List of tasks for this processor</p><p><strong>Items</strong>: RestTask</p><div class="items"><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em>(string)</em><p>The mission code (e. g. S5P) (not required if embedded in processor object)</p></li><li><strong>processorName</strong>: <em>(string)</em><p>User-defined unique processor class name of the owning processor (not required if embedded in processor object)</p></li><li><strong>processorVersion</strong>: <em>(string)</em><p>Version identification of the processor executable (Docker image) (not required if embedded in processor object)</p></li><li><strong>taskName</strong>: <em><span class="required">required</span>(string)</em><p>The task name (unique for the Processor)</p></li><li><strong>taskVersion</strong>: <em><span class="required">required</span>(string)</em><p>A version identifier for the task</p></li><li><strong>isCritical</strong>: <em>(boolean - default: true)</em><p>Indicates whether a failure of the task results in a failure of the whole processor (default true)</p></li><li><strong>criticalityLevel</strong>: <em>(integer)</em><p>Task priority, in case of failure all running tasks with a lower priority number will be aborted (mandatory for processors with more than one task)</p></li><li><strong>numberOfCpus</strong>: <em>(integer)</em><p>The number of CPUs used by the task</p></li><li><strong>minMemory</strong>: <em>(integer)</em><p>Minimum memory (RAM) requirement for this task in GiB</p></li><li><strong>breakpointFileNames</strong>: <em><span class="required">required</span>(array of string)</em><p>Intermediate output files for testing/evaluation purposes</p></li></ul></div></li><li><strong>dockerImage</strong>: <em><span class="required">required</span>(string)</em><p>The name of the docker image (without registry address)</p></li><li><strong>dockerRunParameters</strong>: <em><span class="required">required</span>(array of RestStringParameter)</em><p>Parameters to add to the "docker run" command</p><p><strong>Items</strong>: RestStringParameter</p><div class="items"><ul><li><strong>key</strong>: <em><span class="required">required</span>(string)</em><p>The parameter key</p></li><li><strong>value</strong>: <em><span class="required">required</span>(string)</em><p>The parameter value</p></li></ul></div></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+    "id": 1198734,
+    "version": 5,
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "processorVersion": "01.03.02",
+    "jobOrderVersion": "GMES_1_1",
+    "useInputFileTimeIntervals": true,
+    "isTest": false,
+    "minDiskSpace": 1024,
+    "maxTime": 300,
+    "sensingTimeFlag": true,
+    "configuredProcessors": [ "KNMI L2 01.03.02 2019-03-30" ],
+    "tasks": [
+        {
+            "id": 234961,
+            "version": 1,
+            "taskName": "TROPNLL2",
+            "taskVersion": "01.03.02",
+            "isCritical": true,
+            "criticalityLevel": 100,
+            "numberOfCpus": 10,
+            "breakpointFileNames": []
+        }
+    ],
+    "dockerImage": "knmi-l2:01.03.02",
+    "dockerRunParameters": [ 
+        { 
+            "key": "-v",
+            "value": "/my/source/directory:/container/target/directory"
+        }
+    ]
+}</code></pre></div></div></div></div></div></div></div><div class="modal fade" tabindex="0" id="processors__id__delete"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_delete">delete</span> <span class="parent">/processors</span>/{id}</h4></div><div class="modal-body"><div class="alert alert-info"><p>Delete a processor class by ID</p></div><ul class="nav nav-tabs"><li class="active"><a href="#processors__id__delete_request" data-toggle="tab">Request</a></li><li><a href="#processors__id__delete_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="processors__id__delete_request"><h3>URI Parameters</h3><ul><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li></ul></div><div class="tab-pane" id="processors__id__delete_response"><h2>HTTP status code <a href="http://httpstatus.es/204" target="_blank">204</a></h2></div></div></div></div></div></div></div></div></div></div><div class="panel panel-default"><div class="panel-heading"><h3 id="configurations" class="panel-title">/configurations</h3></div><div class="panel-body"><div class="panel-group"><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_configurations"><span class="parent"></span>/configurations</a> <span class="methods"><a href="#configurations_get"><span class="badge badge_get">get</span></a> <a href="#configurations_post"><span class="badge badge_post">post</span></a></span></h4></div><div id="panel_configurations" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#configurations_get'" class="list-group-item"><span class="badge badge_get">get</span><div class="method_description"><p>Get configurations by mission, processor name and configuration version</p></div><div class="clearfix"></div></div><div onclick="window.location.href = '#configurations_post'" class="list-group-item"><span class="badge badge_post">post</span><div class="method_description"><p>Create a new configuration</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="configurations_get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get</span> <span class="parent"></span>/configurations</h4></div><div class="modal-body"><div class="alert alert-info"><p>Get configurations by mission, processor name and configuration version</p></div><ul class="nav nav-tabs"><li class="active"><a href="#configurations_get_request" data-toggle="tab">Request</a></li><li><a href="#configurations_get_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="configurations_get_request"><h3>Query Parameters</h3><ul><li><strong>mission</strong>: <em>(string)</em></li><li><strong>processorName</strong>: <em>(string)</em></li><li><strong>configurationVersion</strong>: <em>(string)</em></li></ul></div><div class="tab-pane" id="configurations_get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: array of object</p><p><strong>Items</strong>: RestConfiguration</p><div class="items"><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>The processor class this configuration version belongs to</p></li><li><strong>configurationVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the configuration environment</p></li><li><strong>mode</strong>: <em>(string)</em><p>The processing mode, for which this configuration is valid; optional, if set, must match mission processing modes</p></li><li><strong>dynProcParameters</strong>: <em><span class="required">required</span>(array of RestParameter)</em><p>Dynamic processing parameters, the values denoting default values, which may be changed by the Job Order File generator</p><p><strong>Items</strong>: RestParameter</p><div class="items"><ul><li><strong>key</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>parameterType</strong>: <em><span class="required">required</span>(string)</em><p>The type of the parameter for deserialization (one of { "STRING", "INTEGER", "BOOLEAN", "DOUBLE" } )</p></li><li><strong>parameterValue</strong>: <em><span class="required">required</span>(string)</em><p>All parameter values are serialized to their string representations. For deserialization refer to the parameterType.</p></li></ul></div></li><li><strong>productQuality</strong>: <em>(string)</em><p>Indicates the suitability for general use of products generated with this configuration (NOMINAL, EXPERIMENTAL, TEST; default NOMINAL)</p></li><li><strong>configurationFiles</strong>: <em><span class="required">required</span>(array of RestConfigurationFile)</em><p>The configuration files for this configuration</p><p><strong>Items</strong>: RestConfigurationFile</p><div class="items"><ul><li><strong>fileVersion</strong>: <em>(string)</em><p>Version string for the configuration file</p></li><li><strong>fileName</strong>: <em><span class="required">required</span>(string)</em><p>Path name for the configuration file</p></li></ul></div></li><li><strong>staticInputFiles</strong>: <em><span class="required">required</span>(array of RestConfigurationInputFile)</em><p>Static input files for inclusion in generated Job Order Files</p><p><strong>Items</strong>: RestConfigurationInputFile</p><div class="items"><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>fileType</strong>: <em><span class="required">required</span>(string)</em><p>File type according to processor-specific ICD or "LOG"</p></li><li><strong>fileNameType</strong>: <em><span class="required">required</span>(string)</em><p>Type of the file names (one of { "Physical", "Logical", "Stem", "Regexp", "Directory" })</p></li><li><strong>fileNames</strong>: <em><span class="required">required</span>(array of string)</em><p>A list of legal and valid filenames</p></li></ul></div></li><li><strong>configuredProcessors</strong>: <em><span class="required">required</span>(array of string)</em><p>The names for the processor configurations this processor version is valid for</p></li><li><strong>dockerRunParameters</strong>: <em><span class="required">required</span>(array of RestStringParameter)</em><p>Specific parameter for "docker run" valid for this configuration</p><p><strong>Items</strong>: RestStringParameter</p><div class="items"><ul><li><strong>key</strong>: <em><span class="required">required</span>(string)</em><p>The parameter key</p></li><li><strong>value</strong>: <em><span class="required">required</span>(string)</em><p>The parameter value</p></li></ul></div></li></ul></div><p><strong>Example</strong>:</p><div class="examples"><pre><code>[
+    {
+        "id": 9276488,
+        "version": 5,
+        "missionCode": "S5P",
+        "processorName": "KNMI L2",
+        "configurationVersion": "2019-03-30",
+        "mode": "OFFL",
+        "dynProcParameters": [
+            {
+                "key": "logging.root",
+                "parameterType": "STRING",
+                "parameterValue": "notice"
+            },
+            {
+                "key": "logging.dumplog",
+                "parameterType": "STRING",
+                "parameterValue": "null"
+            }
+        ],
+        "productQuality": "EXPERIMENTAL",
+        "configurationFiles": [
+            {
+                "fileVersion": "1.0",
+                "fileName": "/mnt/sw/MPC/config/S5P_OPER_CFG_MPC_L2_00000000T000000_99999999T999999_20190215T172140.xml"
+            }
+        ],
+        "staticInputFiles": [
+            {
+                "fileType": "directory.lib",
+                "fileNameType": "DIRECTORY",
+                "fileNames": [ "/mnt/sw/IPF_KNMI_L2/config/lib" ]
+            }
+        ],
+        "configuredProcessors":  [ "KNMI L2 01.03.01 2018-10-27", "KNMI L2 01.03.02 2019-03-30" ],
+        "dockerRunParameters": [ 
+            { 
+                "key": "-v",
+                "value": "/my/source/directory:/container/target/directory"
+            }
+        ]
+    },
+    {
+        "id": 9276489,
+        "version": 2,
+        "missionCode": "S5P",
+        "processorName": "KNMI L2",
+        "configurationVersion": "2019-04-27",
+        "dynProcParameters": [
+            {
+                "key": "logging.root",
+                "parameterType": "STRING",
+                "parameterValue": "error"
+            },
+            {
+                "key": "logging.dumplog",
+                "parameterType": "STRING",
+                "parameterValue": "/tmp/knmil2.dump.log"
+            }
+        ],
+        "configurationFiles": [
+            {
+                "fileVersion": "1.0",
+                "fileName": "/mnt/sw/MPC/config/S5P_OPER_CFG_MPC_L2_00000000T000000_99999999T999999_20190215T172140.xml"
+            }
+        ],
+        "staticInputFiles": [ ],
+        "configuredProcessors":  [ "KNMI L2 01.03.02 2019-04-27" ],
+        "dockerRunParameters": []
+    }
+]</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/400" target="_blank">400</a></h2><p>The request sent to the server contains data which is not as expected e.g. invalid location URI</p><h3>Headers</h3><ul><li><strong>Warning</strong>: <em><span class="required">required</span>(string - pattern: ^\d{3} proseo-ingestor .+ \(\d+\)$)</em><p>An error code and a plain text error message</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>199 proseo-ingestor IngestorProduct with id 1234ab-0cde45 not found (1001)</code></pre></div></li></ul><h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2><p>The requested resource was not found</p><h3>Headers</h3><ul><li><strong>Warning</strong>: <em><span class="required">required</span>(string - pattern: ^\d{3} proseo-ingestor .+ \(\d+\)$)</em><p>An error code and a plain text error message</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>199 proseo-ingestor IngestorProduct with id 1234ab-0cde45 not found (1001)</code></pre></div></li></ul></div></div></div></div></div></div><div class="modal fade" tabindex="0" id="configurations_post"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_post">post</span> <span class="parent"></span>/configurations</h4></div><div class="modal-body"><div class="alert alert-info"><p>Create a new configuration</p></div><ul class="nav nav-tabs"><li class="active"><a href="#configurations_post_request" data-toggle="tab">Request</a></li><li><a href="#configurations_post_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="configurations_post_request"><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>The processor class this configuration version belongs to</p></li><li><strong>configurationVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the configuration environment</p></li><li><strong>mode</strong>: <em>(string)</em><p>The processing mode, for which this configuration is valid; optional, if set, must match mission processing modes</p></li><li><strong>dynProcParameters</strong>: <em><span class="required">required</span>(array of RestParameter)</em><p>Dynamic processing parameters, the values denoting default values, which may be changed by the Job Order File generator</p><p><strong>Items</strong>: RestParameter</p><div class="items"><ul><li><strong>key</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>parameterType</strong>: <em><span class="required">required</span>(string)</em><p>The type of the parameter for deserialization (one of { "STRING", "INTEGER", "BOOLEAN", "DOUBLE" } )</p></li><li><strong>parameterValue</strong>: <em><span class="required">required</span>(string)</em><p>All parameter values are serialized to their string representations. For deserialization refer to the parameterType.</p></li></ul></div></li><li><strong>productQuality</strong>: <em>(string)</em><p>Indicates the suitability for general use of products generated with this configuration (NOMINAL, EXPERIMENTAL, TEST; default NOMINAL)</p></li><li><strong>configurationFiles</strong>: <em><span class="required">required</span>(array of RestConfigurationFile)</em><p>The configuration files for this configuration</p><p><strong>Items</strong>: RestConfigurationFile</p><div class="items"><ul><li><strong>fileVersion</strong>: <em>(string)</em><p>Version string for the configuration file</p></li><li><strong>fileName</strong>: <em><span class="required">required</span>(string)</em><p>Path name for the configuration file</p></li></ul></div></li><li><strong>staticInputFiles</strong>: <em><span class="required">required</span>(array of RestConfigurationInputFile)</em><p>Static input files for inclusion in generated Job Order Files</p><p><strong>Items</strong>: RestConfigurationInputFile</p><div class="items"><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>fileType</strong>: <em><span class="required">required</span>(string)</em><p>File type according to processor-specific ICD or "LOG"</p></li><li><strong>fileNameType</strong>: <em><span class="required">required</span>(string)</em><p>Type of the file names (one of { "Physical", "Logical", "Stem", "Regexp", "Directory" })</p></li><li><strong>fileNames</strong>: <em><span class="required">required</span>(array of string)</em><p>A list of legal and valid filenames</p></li></ul></div></li><li><strong>configuredProcessors</strong>: <em><span class="required">required</span>(array of string)</em><p>The names for the processor configurations this processor version is valid for</p></li><li><strong>dockerRunParameters</strong>: <em><span class="required">required</span>(array of RestStringParameter)</em><p>Specific parameter for "docker run" valid for this configuration</p><p><strong>Items</strong>: RestStringParameter</p><div class="items"><ul><li><strong>key</strong>: <em><span class="required">required</span>(string)</em><p>The parameter key</p></li><li><strong>value</strong>: <em><span class="required">required</span>(string)</em><p>The parameter value</p></li></ul></div></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+    "id": 9276488,
+    "version": 5,
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "configurationVersion": "2019-03-30",
+    "mode": "OFFL",
+    "dynProcParameters": [
+        {
+            "key": "logging.root",
+            "parameterType": "STRING",
+            "parameterValue": "notice"
+        },
+        {
+            "key": "logging.dumplog",
+            "parameterType": "STRING",
+            "parameterValue": "null"
+        }
+    ],
+    "productQuality": "EXPERIMENTAL",
+    "configurationFiles": [
+        {
+            "fileVersion": "1.0",
+            "fileName": "/mnt/sw/MPC/config/S5P_OPER_CFG_MPC_L2_00000000T000000_99999999T999999_20190215T172140.xml"
+        }
+    ],
+    "staticInputFiles": [
+        {
+            "fileType": "directory.lib",
+            "fileNameType": "DIRECTORY",
+            "fileNames": [ "/mnt/sw/IPF_KNMI_L01B/config/lib" ]
+        }
+    ],
+    "configuredProcessors":  [ "KNMI L2 01.03.01 2018-10-27", "KNMI L2 01.03.02 2019-03-30" ],
+    "dockerRunParameters": [ 
+        { 
+            "key": "-v",
+            "value": "/my/source/directory:/container/target/directory"
+        }
+    ]
+}</code></pre></div></div><div class="tab-pane" id="configurations_post_response"><h2>HTTP status code <a href="http://httpstatus.es/201" target="_blank">201</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>The processor class this configuration version belongs to</p></li><li><strong>configurationVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the configuration environment</p></li><li><strong>mode</strong>: <em>(string)</em><p>The processing mode, for which this configuration is valid; optional, if set, must match mission processing modes</p></li><li><strong>dynProcParameters</strong>: <em><span class="required">required</span>(array of RestParameter)</em><p>Dynamic processing parameters, the values denoting default values, which may be changed by the Job Order File generator</p><p><strong>Items</strong>: RestParameter</p><div class="items"><ul><li><strong>key</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>parameterType</strong>: <em><span class="required">required</span>(string)</em><p>The type of the parameter for deserialization (one of { "STRING", "INTEGER", "BOOLEAN", "DOUBLE" } )</p></li><li><strong>parameterValue</strong>: <em><span class="required">required</span>(string)</em><p>All parameter values are serialized to their string representations. For deserialization refer to the parameterType.</p></li></ul></div></li><li><strong>productQuality</strong>: <em>(string)</em><p>Indicates the suitability for general use of products generated with this configuration (NOMINAL, EXPERIMENTAL, TEST; default NOMINAL)</p></li><li><strong>configurationFiles</strong>: <em><span class="required">required</span>(array of RestConfigurationFile)</em><p>The configuration files for this configuration</p><p><strong>Items</strong>: RestConfigurationFile</p><div class="items"><ul><li><strong>fileVersion</strong>: <em>(string)</em><p>Version string for the configuration file</p></li><li><strong>fileName</strong>: <em><span class="required">required</span>(string)</em><p>Path name for the configuration file</p></li></ul></div></li><li><strong>staticInputFiles</strong>: <em><span class="required">required</span>(array of RestConfigurationInputFile)</em><p>Static input files for inclusion in generated Job Order Files</p><p><strong>Items</strong>: RestConfigurationInputFile</p><div class="items"><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>fileType</strong>: <em><span class="required">required</span>(string)</em><p>File type according to processor-specific ICD or "LOG"</p></li><li><strong>fileNameType</strong>: <em><span class="required">required</span>(string)</em><p>Type of the file names (one of { "Physical", "Logical", "Stem", "Regexp", "Directory" })</p></li><li><strong>fileNames</strong>: <em><span class="required">required</span>(array of string)</em><p>A list of legal and valid filenames</p></li></ul></div></li><li><strong>configuredProcessors</strong>: <em><span class="required">required</span>(array of string)</em><p>The names for the processor configurations this processor version is valid for</p></li><li><strong>dockerRunParameters</strong>: <em><span class="required">required</span>(array of RestStringParameter)</em><p>Specific parameter for "docker run" valid for this configuration</p><p><strong>Items</strong>: RestStringParameter</p><div class="items"><ul><li><strong>key</strong>: <em><span class="required">required</span>(string)</em><p>The parameter key</p></li><li><strong>value</strong>: <em><span class="required">required</span>(string)</em><p>The parameter value</p></li></ul></div></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+    "id": 9276488,
+    "version": 5,
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "configurationVersion": "2019-03-30",
+    "mode": "OFFL",
+    "dynProcParameters": [
+        {
+            "key": "logging.root",
+            "parameterType": "STRING",
+            "parameterValue": "notice"
+        },
+        {
+            "key": "logging.dumplog",
+            "parameterType": "STRING",
+            "parameterValue": "null"
+        }
+    ],
+    "productQuality": "EXPERIMENTAL",
+    "configurationFiles": [
+        {
+            "fileVersion": "1.0",
+            "fileName": "/mnt/sw/MPC/config/S5P_OPER_CFG_MPC_L2_00000000T000000_99999999T999999_20190215T172140.xml"
+        }
+    ],
+    "staticInputFiles": [
+        {
+            "fileType": "directory.lib",
+            "fileNameType": "DIRECTORY",
+            "fileNames": [ "/mnt/sw/IPF_KNMI_L01B/config/lib" ]
+        }
+    ],
+    "configuredProcessors":  [ "KNMI L2 01.03.01 2018-10-27", "KNMI L2 01.03.02 2019-03-30" ],
+    "dockerRunParameters": [ 
+        { 
+            "key": "-v",
+            "value": "/my/source/directory:/container/target/directory"
+        }
+    ]
+}</code></pre></div></div></div></div></div></div></div></div><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_configurations__id_"><span class="parent">/configurations</span>/{id}</a> <span class="methods"><a href="#configurations__id__get"><span class="badge badge_get">get</span></a> <a href="#configurations__id__patch"><span class="badge badge_patch">patch</span></a> <a href="#configurations__id__delete"><span class="badge badge_delete">delete</span></a></span></h4></div><div id="panel_configurations__id_" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#configurations__id__get'" class="list-group-item"><span class="badge badge_get">get</span><div class="method_description"><p>Get a configuration by ID</p></div><div class="clearfix"></div></div><div onclick="window.location.href = '#configurations__id__patch'" class="list-group-item"><span class="badge badge_patch">patch</span><div class="method_description"><p>Update a configuration by ID</p></div><div class="clearfix"></div></div><div onclick="window.location.href = '#configurations__id__delete'" class="list-group-item"><span class="badge badge_delete">delete</span><div class="method_description"><p>Delete a configuration by ID</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="configurations__id__get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get</span> <span class="parent">/configurations</span>/{id}</h4></div><div class="modal-body"><div class="alert alert-info"><p>Get a configuration by ID</p></div><ul class="nav nav-tabs"><li class="active"><a href="#configurations__id__get_request" data-toggle="tab">Request</a></li><li><a href="#configurations__id__get_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="configurations__id__get_request"><h3>URI Parameters</h3><ul><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li></ul></div><div class="tab-pane" id="configurations__id__get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>The processor class this configuration version belongs to</p></li><li><strong>configurationVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the configuration environment</p></li><li><strong>mode</strong>: <em>(string)</em><p>The processing mode, for which this configuration is valid; optional, if set, must match mission processing modes</p></li><li><strong>dynProcParameters</strong>: <em><span class="required">required</span>(array of RestParameter)</em><p>Dynamic processing parameters, the values denoting default values, which may be changed by the Job Order File generator</p><p><strong>Items</strong>: RestParameter</p><div class="items"><ul><li><strong>key</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>parameterType</strong>: <em><span class="required">required</span>(string)</em><p>The type of the parameter for deserialization (one of { "STRING", "INTEGER", "BOOLEAN", "DOUBLE" } )</p></li><li><strong>parameterValue</strong>: <em><span class="required">required</span>(string)</em><p>All parameter values are serialized to their string representations. For deserialization refer to the parameterType.</p></li></ul></div></li><li><strong>productQuality</strong>: <em>(string)</em><p>Indicates the suitability for general use of products generated with this configuration (NOMINAL, EXPERIMENTAL, TEST; default NOMINAL)</p></li><li><strong>configurationFiles</strong>: <em><span class="required">required</span>(array of RestConfigurationFile)</em><p>The configuration files for this configuration</p><p><strong>Items</strong>: RestConfigurationFile</p><div class="items"><ul><li><strong>fileVersion</strong>: <em>(string)</em><p>Version string for the configuration file</p></li><li><strong>fileName</strong>: <em><span class="required">required</span>(string)</em><p>Path name for the configuration file</p></li></ul></div></li><li><strong>staticInputFiles</strong>: <em><span class="required">required</span>(array of RestConfigurationInputFile)</em><p>Static input files for inclusion in generated Job Order Files</p><p><strong>Items</strong>: RestConfigurationInputFile</p><div class="items"><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>fileType</strong>: <em><span class="required">required</span>(string)</em><p>File type according to processor-specific ICD or "LOG"</p></li><li><strong>fileNameType</strong>: <em><span class="required">required</span>(string)</em><p>Type of the file names (one of { "Physical", "Logical", "Stem", "Regexp", "Directory" })</p></li><li><strong>fileNames</strong>: <em><span class="required">required</span>(array of string)</em><p>A list of legal and valid filenames</p></li></ul></div></li><li><strong>configuredProcessors</strong>: <em><span class="required">required</span>(array of string)</em><p>The names for the processor configurations this processor version is valid for</p></li><li><strong>dockerRunParameters</strong>: <em><span class="required">required</span>(array of RestStringParameter)</em><p>Specific parameter for "docker run" valid for this configuration</p><p><strong>Items</strong>: RestStringParameter</p><div class="items"><ul><li><strong>key</strong>: <em><span class="required">required</span>(string)</em><p>The parameter key</p></li><li><strong>value</strong>: <em><span class="required">required</span>(string)</em><p>The parameter value</p></li></ul></div></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+    "id": 9276488,
+    "version": 5,
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "configurationVersion": "2019-03-30",
+    "mode": "OFFL",
+    "dynProcParameters": [
+        {
+            "key": "logging.root",
+            "parameterType": "STRING",
+            "parameterValue": "notice"
+        },
+        {
+            "key": "logging.dumplog",
+            "parameterType": "STRING",
+            "parameterValue": "null"
+        }
+    ],
+    "productQuality": "EXPERIMENTAL",
+    "configurationFiles": [
+        {
+            "fileVersion": "1.0",
+            "fileName": "/mnt/sw/MPC/config/S5P_OPER_CFG_MPC_L2_00000000T000000_99999999T999999_20190215T172140.xml"
+        }
+    ],
+    "staticInputFiles": [
+        {
+            "fileType": "directory.lib",
+            "fileNameType": "DIRECTORY",
+            "fileNames": [ "/mnt/sw/IPF_KNMI_L01B/config/lib" ]
+        }
+    ],
+    "configuredProcessors":  [ "KNMI L2 01.03.01 2018-10-27", "KNMI L2 01.03.02 2019-03-30" ],
+    "dockerRunParameters": [ 
+        { 
+            "key": "-v",
+            "value": "/my/source/directory:/container/target/directory"
+        }
+    ]
+}</code></pre></div></div></div></div></div></div></div><div class="modal fade" tabindex="0" id="configurations__id__patch"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_patch">patch</span> <span class="parent">/configurations</span>/{id}</h4></div><div class="modal-body"><div class="alert alert-info"><p>Update a configuration by ID</p></div><ul class="nav nav-tabs"><li class="active"><a href="#configurations__id__patch_request" data-toggle="tab">Request</a></li><li><a href="#configurations__id__patch_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="configurations__id__patch_request"><h3>URI Parameters</h3><ul><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li></ul><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>The processor class this configuration version belongs to</p></li><li><strong>configurationVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the configuration environment</p></li><li><strong>mode</strong>: <em>(string)</em><p>The processing mode, for which this configuration is valid; optional, if set, must match mission processing modes</p></li><li><strong>dynProcParameters</strong>: <em><span class="required">required</span>(array of RestParameter)</em><p>Dynamic processing parameters, the values denoting default values, which may be changed by the Job Order File generator</p><p><strong>Items</strong>: RestParameter</p><div class="items"><ul><li><strong>key</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>parameterType</strong>: <em><span class="required">required</span>(string)</em><p>The type of the parameter for deserialization (one of { "STRING", "INTEGER", "BOOLEAN", "DOUBLE" } )</p></li><li><strong>parameterValue</strong>: <em><span class="required">required</span>(string)</em><p>All parameter values are serialized to their string representations. For deserialization refer to the parameterType.</p></li></ul></div></li><li><strong>productQuality</strong>: <em>(string)</em><p>Indicates the suitability for general use of products generated with this configuration (NOMINAL, EXPERIMENTAL, TEST; default NOMINAL)</p></li><li><strong>configurationFiles</strong>: <em><span class="required">required</span>(array of RestConfigurationFile)</em><p>The configuration files for this configuration</p><p><strong>Items</strong>: RestConfigurationFile</p><div class="items"><ul><li><strong>fileVersion</strong>: <em>(string)</em><p>Version string for the configuration file</p></li><li><strong>fileName</strong>: <em><span class="required">required</span>(string)</em><p>Path name for the configuration file</p></li></ul></div></li><li><strong>staticInputFiles</strong>: <em><span class="required">required</span>(array of RestConfigurationInputFile)</em><p>Static input files for inclusion in generated Job Order Files</p><p><strong>Items</strong>: RestConfigurationInputFile</p><div class="items"><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>fileType</strong>: <em><span class="required">required</span>(string)</em><p>File type according to processor-specific ICD or "LOG"</p></li><li><strong>fileNameType</strong>: <em><span class="required">required</span>(string)</em><p>Type of the file names (one of { "Physical", "Logical", "Stem", "Regexp", "Directory" })</p></li><li><strong>fileNames</strong>: <em><span class="required">required</span>(array of string)</em><p>A list of legal and valid filenames</p></li></ul></div></li><li><strong>configuredProcessors</strong>: <em><span class="required">required</span>(array of string)</em><p>The names for the processor configurations this processor version is valid for</p></li><li><strong>dockerRunParameters</strong>: <em><span class="required">required</span>(array of RestStringParameter)</em><p>Specific parameter for "docker run" valid for this configuration</p><p><strong>Items</strong>: RestStringParameter</p><div class="items"><ul><li><strong>key</strong>: <em><span class="required">required</span>(string)</em><p>The parameter key</p></li><li><strong>value</strong>: <em><span class="required">required</span>(string)</em><p>The parameter value</p></li></ul></div></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+    "id": 9276488,
+    "version": 5,
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "configurationVersion": "2019-03-30",
+    "mode": "OFFL",
+    "dynProcParameters": [
+        {
+            "key": "logging.root",
+            "parameterType": "STRING",
+            "parameterValue": "notice"
+        },
+        {
+            "key": "logging.dumplog",
+            "parameterType": "STRING",
+            "parameterValue": "null"
+        }
+    ],
+    "productQuality": "EXPERIMENTAL",
+    "configurationFiles": [
+        {
+            "fileVersion": "1.0",
+            "fileName": "/mnt/sw/MPC/config/S5P_OPER_CFG_MPC_L2_00000000T000000_99999999T999999_20190215T172140.xml"
+        }
+    ],
+    "staticInputFiles": [
+        {
+            "fileType": "directory.lib",
+            "fileNameType": "DIRECTORY",
+            "fileNames": [ "/mnt/sw/IPF_KNMI_L01B/config/lib" ]
+        }
+    ],
+    "configuredProcessors":  [ "KNMI L2 01.03.01 2018-10-27", "KNMI L2 01.03.02 2019-03-30" ],
+    "dockerRunParameters": [ 
+        { 
+            "key": "-v",
+            "value": "/my/source/directory:/container/target/directory"
+        }
+    ]
+}</code></pre></div></div><div class="tab-pane" id="configurations__id__patch_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>The processor class this configuration version belongs to</p></li><li><strong>configurationVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the configuration environment</p></li><li><strong>mode</strong>: <em>(string)</em><p>The processing mode, for which this configuration is valid; optional, if set, must match mission processing modes</p></li><li><strong>dynProcParameters</strong>: <em><span class="required">required</span>(array of RestParameter)</em><p>Dynamic processing parameters, the values denoting default values, which may be changed by the Job Order File generator</p><p><strong>Items</strong>: RestParameter</p><div class="items"><ul><li><strong>key</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>parameterType</strong>: <em><span class="required">required</span>(string)</em><p>The type of the parameter for deserialization (one of { "STRING", "INTEGER", "BOOLEAN", "DOUBLE" } )</p></li><li><strong>parameterValue</strong>: <em><span class="required">required</span>(string)</em><p>All parameter values are serialized to their string representations. For deserialization refer to the parameterType.</p></li></ul></div></li><li><strong>productQuality</strong>: <em>(string)</em><p>Indicates the suitability for general use of products generated with this configuration (NOMINAL, EXPERIMENTAL, TEST; default NOMINAL)</p></li><li><strong>configurationFiles</strong>: <em><span class="required">required</span>(array of RestConfigurationFile)</em><p>The configuration files for this configuration</p><p><strong>Items</strong>: RestConfigurationFile</p><div class="items"><ul><li><strong>fileVersion</strong>: <em>(string)</em><p>Version string for the configuration file</p></li><li><strong>fileName</strong>: <em><span class="required">required</span>(string)</em><p>Path name for the configuration file</p></li></ul></div></li><li><strong>staticInputFiles</strong>: <em><span class="required">required</span>(array of RestConfigurationInputFile)</em><p>Static input files for inclusion in generated Job Order Files</p><p><strong>Items</strong>: RestConfigurationInputFile</p><div class="items"><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>fileType</strong>: <em><span class="required">required</span>(string)</em><p>File type according to processor-specific ICD or "LOG"</p></li><li><strong>fileNameType</strong>: <em><span class="required">required</span>(string)</em><p>Type of the file names (one of { "Physical", "Logical", "Stem", "Regexp", "Directory" })</p></li><li><strong>fileNames</strong>: <em><span class="required">required</span>(array of string)</em><p>A list of legal and valid filenames</p></li></ul></div></li><li><strong>configuredProcessors</strong>: <em><span class="required">required</span>(array of string)</em><p>The names for the processor configurations this processor version is valid for</p></li><li><strong>dockerRunParameters</strong>: <em><span class="required">required</span>(array of RestStringParameter)</em><p>Specific parameter for "docker run" valid for this configuration</p><p><strong>Items</strong>: RestStringParameter</p><div class="items"><ul><li><strong>key</strong>: <em><span class="required">required</span>(string)</em><p>The parameter key</p></li><li><strong>value</strong>: <em><span class="required">required</span>(string)</em><p>The parameter value</p></li></ul></div></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+    "id": 9276488,
+    "version": 5,
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "configurationVersion": "2019-03-30",
+    "mode": "OFFL",
+    "dynProcParameters": [
+        {
+            "key": "logging.root",
+            "parameterType": "STRING",
+            "parameterValue": "notice"
+        },
+        {
+            "key": "logging.dumplog",
+            "parameterType": "STRING",
+            "parameterValue": "null"
+        }
+    ],
+    "productQuality": "EXPERIMENTAL",
+    "configurationFiles": [
+        {
+            "fileVersion": "1.0",
+            "fileName": "/mnt/sw/MPC/config/S5P_OPER_CFG_MPC_L2_00000000T000000_99999999T999999_20190215T172140.xml"
+        }
+    ],
+    "staticInputFiles": [
+        {
+            "fileType": "directory.lib",
+            "fileNameType": "DIRECTORY",
+            "fileNames": [ "/mnt/sw/IPF_KNMI_L01B/config/lib" ]
+        }
+    ],
+    "configuredProcessors":  [ "KNMI L2 01.03.01 2018-10-27", "KNMI L2 01.03.02 2019-03-30" ],
+    "dockerRunParameters": [ 
+        { 
+            "key": "-v",
+            "value": "/my/source/directory:/container/target/directory"
+        }
+    ]
+}</code></pre></div></div></div></div></div></div></div><div class="modal fade" tabindex="0" id="configurations__id__delete"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_delete">delete</span> <span class="parent">/configurations</span>/{id}</h4></div><div class="modal-body"><div class="alert alert-info"><p>Delete a configuration by ID</p></div><ul class="nav nav-tabs"><li class="active"><a href="#configurations__id__delete_request" data-toggle="tab">Request</a></li><li><a href="#configurations__id__delete_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="configurations__id__delete_request"><h3>URI Parameters</h3><ul><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li></ul></div><div class="tab-pane" id="configurations__id__delete_response"><h2>HTTP status code <a href="http://httpstatus.es/204" target="_blank">204</a></h2></div></div></div></div></div></div></div></div></div></div><div class="panel panel-default"><div class="panel-heading"><h3 id="configuredprocessors" class="panel-title">/configuredprocessors</h3></div><div class="panel-body"><div class="panel-group"><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_configuredprocessors"><span class="parent"></span>/configuredprocessors</a> <span class="methods"><a href="#configuredprocessors_get"><span class="badge badge_get">get</span></a> <a href="#configuredprocessors_post"><span class="badge badge_post">post</span></a></span></h4></div><div id="panel_configuredprocessors" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#configuredprocessors_get'" class="list-group-item"><span class="badge badge_get">get</span><div class="method_description"><p>Get configured processors, filtered by mission, identifier, processor name, processor version and/or configuration version</p></div><div class="clearfix"></div></div><div onclick="window.location.href = '#configuredprocessors_post'" class="list-group-item"><span class="badge badge_post">post</span><div class="method_description"><p>Create a new configured processor</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="configuredprocessors_get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get</span> <span class="parent"></span>/configuredprocessors</h4></div><div class="modal-body"><div class="alert alert-info"><p>Get configured processors, filtered by mission, identifier, processor name, processor version and/or configuration version</p></div><ul class="nav nav-tabs"><li class="active"><a href="#configuredprocessors_get_request" data-toggle="tab">Request</a></li><li><a href="#configuredprocessors_get_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="configuredprocessors_get_request"><h3>Query Parameters</h3><ul><li><strong>mission</strong>: <em>(string)</em></li><li><strong>identifier</strong>: <em>(string)</em></li><li><strong>processorName</strong>: <em>(string)</em></li><li><strong>processorVersion</strong>: <em>(string)</em></li><li><strong>configurationVersion</strong>: <em>(string)</em></li><li><strong>uuid</strong>: <em>(string)</em></li></ul></div><div class="tab-pane" id="configuredprocessors_get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: array of object</p><p><strong>Items</strong>: RestConfiguredProcessor</p><div class="items"><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>identifier</strong>: <em><span class="required">required</span>(string)</em><p>User-defined identifier for this processor configuration</p></li><li><strong>uuid</strong>: <em>(string - pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$)</em><p>Universally unique identifier for this processor configuration ("workflow" in ESA terminology)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>User-defined unique processor class name</p></li><li><strong>processorVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the processor executable (Docker image)</p></li><li><strong>configurationVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the configuration environment</p></li><li><strong>enabled</strong>: <em>(boolean)</em><p>Indicator whether the configured processor is enabled and may be run</p></li></ul></div><p><strong>Example</strong>:</p><div class="examples"><pre><code>[
+    {
+        "id": 3367251,
+        "version": 4,
+        "identifier": "KNMI L2 01.03.02 2019-03-30",
+        "uuid": "3fcab4f3-457a-4424-9287-269286e5c03c",
+        "missionCode": "S5P",
+        "processorName": "KNMI L2",
+        "processorVersion": "01.03.02",
+        "configurationVersion": "2019-03-30"
+    },
+    {
+        "id": 3367252,
+        "version": 2,
+        "identifier": "KNMI L2 01.03.02 2019-04-27",
+        "uuid": "2bfd2856-aec7-4d45-bcc0-6418857c448c",
+        "missionCode": "S5P",
+        "processorName": "KNMI L2",
+        "processorVersion": "01.03.02",
+        "configurationVersion": "2019-04-27",
+        "enabled": false
+    }
+]</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/400" target="_blank">400</a></h2><p>The request sent to the server contains data which is not as expected e.g. invalid location URI</p><h3>Headers</h3><ul><li><strong>Warning</strong>: <em><span class="required">required</span>(string - pattern: ^\d{3} proseo-ingestor .+ \(\d+\)$)</em><p>An error code and a plain text error message</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>199 proseo-ingestor IngestorProduct with id 1234ab-0cde45 not found (1001)</code></pre></div></li></ul><h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2><p>The requested resource was not found</p><h3>Headers</h3><ul><li><strong>Warning</strong>: <em><span class="required">required</span>(string - pattern: ^\d{3} proseo-ingestor .+ \(\d+\)$)</em><p>An error code and a plain text error message</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>199 proseo-ingestor IngestorProduct with id 1234ab-0cde45 not found (1001)</code></pre></div></li></ul></div></div></div></div></div></div><div class="modal fade" tabindex="0" id="configuredprocessors_post"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_post">post</span> <span class="parent"></span>/configuredprocessors</h4></div><div class="modal-body"><div class="alert alert-info"><p>Create a new configured processor</p></div><ul class="nav nav-tabs"><li class="active"><a href="#configuredprocessors_post_request" data-toggle="tab">Request</a></li><li><a href="#configuredprocessors_post_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="configuredprocessors_post_request"><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>identifier</strong>: <em><span class="required">required</span>(string)</em><p>User-defined identifier for this processor configuration</p></li><li><strong>uuid</strong>: <em>(string - pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$)</em><p>Universally unique identifier for this processor configuration ("workflow" in ESA terminology)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>User-defined unique processor class name</p></li><li><strong>processorVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the processor executable (Docker image)</p></li><li><strong>configurationVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the configuration environment</p></li><li><strong>enabled</strong>: <em>(boolean)</em><p>Indicator whether the configured processor is enabled and may be run</p></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+    "id": 3367251,
+    "version": 4,
+    "identifier": "KNMI L2 01.03.02 2019-03-30",
+    "uuid": "3fcab4f3-457a-4424-9287-269286e5c03c",
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "processorVersion": "01.03.02",
+    "configurationVersion": "2019-03-30"
+}</code></pre></div></div><div class="tab-pane" id="configuredprocessors_post_response"><h2>HTTP status code <a href="http://httpstatus.es/201" target="_blank">201</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>identifier</strong>: <em><span class="required">required</span>(string)</em><p>User-defined identifier for this processor configuration</p></li><li><strong>uuid</strong>: <em>(string - pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$)</em><p>Universally unique identifier for this processor configuration ("workflow" in ESA terminology)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>User-defined unique processor class name</p></li><li><strong>processorVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the processor executable (Docker image)</p></li><li><strong>configurationVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the configuration environment</p></li><li><strong>enabled</strong>: <em>(boolean)</em><p>Indicator whether the configured processor is enabled and may be run</p></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+    "id": 3367251,
+    "version": 4,
+    "identifier": "KNMI L2 01.03.02 2019-03-30",
+    "uuid": "3fcab4f3-457a-4424-9287-269286e5c03c",
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "processorVersion": "01.03.02",
+    "configurationVersion": "2019-03-30"
+}</code></pre></div></div></div></div></div></div></div></div><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_configuredprocessors__id_"><span class="parent">/configuredprocessors</span>/{id}</a> <span class="methods"><a href="#configuredprocessors__id__get"><span class="badge badge_get">get</span></a> <a href="#configuredprocessors__id__patch"><span class="badge badge_patch">patch</span></a> <a href="#configuredprocessors__id__delete"><span class="badge badge_delete">delete</span></a></span></h4></div><div id="panel_configuredprocessors__id_" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#configuredprocessors__id__get'" class="list-group-item"><span class="badge badge_get">get</span><div class="method_description"><p>Get a configured processor by ID</p></div><div class="clearfix"></div></div><div onclick="window.location.href = '#configuredprocessors__id__patch'" class="list-group-item"><span class="badge badge_patch">patch</span><div class="method_description"><p>Update a configured processor by ID</p></div><div class="clearfix"></div></div><div onclick="window.location.href = '#configuredprocessors__id__delete'" class="list-group-item"><span class="badge badge_delete">delete</span><div class="method_description"><p>Delete a configured processor by ID</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="configuredprocessors__id__get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get</span> <span class="parent">/configuredprocessors</span>/{id}</h4></div><div class="modal-body"><div class="alert alert-info"><p>Get a configured processor by ID</p></div><ul class="nav nav-tabs"><li class="active"><a href="#configuredprocessors__id__get_request" data-toggle="tab">Request</a></li><li><a href="#configuredprocessors__id__get_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="configuredprocessors__id__get_request"><h3>URI Parameters</h3><ul><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li></ul></div><div class="tab-pane" id="configuredprocessors__id__get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>identifier</strong>: <em><span class="required">required</span>(string)</em><p>User-defined identifier for this processor configuration</p></li><li><strong>uuid</strong>: <em>(string - pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$)</em><p>Universally unique identifier for this processor configuration ("workflow" in ESA terminology)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>User-defined unique processor class name</p></li><li><strong>processorVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the processor executable (Docker image)</p></li><li><strong>configurationVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the configuration environment</p></li><li><strong>enabled</strong>: <em>(boolean)</em><p>Indicator whether the configured processor is enabled and may be run</p></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+    "id": 3367251,
+    "version": 4,
+    "identifier": "KNMI L2 01.03.02 2019-03-30",
+    "uuid": "3fcab4f3-457a-4424-9287-269286e5c03c",
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "processorVersion": "01.03.02",
+    "configurationVersion": "2019-03-30"
+}</code></pre></div></div></div></div></div></div></div><div class="modal fade" tabindex="0" id="configuredprocessors__id__patch"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_patch">patch</span> <span class="parent">/configuredprocessors</span>/{id}</h4></div><div class="modal-body"><div class="alert alert-info"><p>Update a configured processor by ID</p></div><ul class="nav nav-tabs"><li class="active"><a href="#configuredprocessors__id__patch_request" data-toggle="tab">Request</a></li><li><a href="#configuredprocessors__id__patch_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="configuredprocessors__id__patch_request"><h3>URI Parameters</h3><ul><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li></ul><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>identifier</strong>: <em><span class="required">required</span>(string)</em><p>User-defined identifier for this processor configuration</p></li><li><strong>uuid</strong>: <em>(string - pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$)</em><p>Universally unique identifier for this processor configuration ("workflow" in ESA terminology)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>User-defined unique processor class name</p></li><li><strong>processorVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the processor executable (Docker image)</p></li><li><strong>configurationVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the configuration environment</p></li><li><strong>enabled</strong>: <em>(boolean)</em><p>Indicator whether the configured processor is enabled and may be run</p></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+    "id": 3367251,
+    "version": 4,
+    "identifier": "KNMI L2 01.03.02 2019-03-30",
+    "uuid": "3fcab4f3-457a-4424-9287-269286e5c03c",
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "processorVersion": "01.03.02",
+    "configurationVersion": "2019-03-30"
+}</code></pre></div></div><div class="tab-pane" id="configuredprocessors__id__patch_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>id</strong>: <em>(integer)</em><p>The persistent id of this object</p></li><li><strong>version</strong>: <em>(integer)</em><p>A version identifier to track updates to the object (especially to detect concurrent update attempts)</p></li><li><strong>identifier</strong>: <em><span class="required">required</span>(string)</em><p>User-defined identifier for this processor configuration</p></li><li><strong>uuid</strong>: <em>(string - pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$)</em><p>Universally unique identifier for this processor configuration ("workflow" in ESA terminology)</p></li><li><strong>missionCode</strong>: <em><span class="required">required</span>(string)</em><p>The mission code (e. g. S5P)</p></li><li><strong>processorName</strong>: <em><span class="required">required</span>(string)</em><p>User-defined unique processor class name</p></li><li><strong>processorVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the processor executable (Docker image)</p></li><li><strong>configurationVersion</strong>: <em><span class="required">required</span>(string)</em><p>Version identification of the configuration environment</p></li><li><strong>enabled</strong>: <em>(boolean)</em><p>Indicator whether the configured processor is enabled and may be run</p></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+    "id": 3367251,
+    "version": 4,
+    "identifier": "KNMI L2 01.03.02 2019-03-30",
+    "uuid": "3fcab4f3-457a-4424-9287-269286e5c03c",
+    "missionCode": "S5P",
+    "processorName": "KNMI L2",
+    "processorVersion": "01.03.02",
+    "configurationVersion": "2019-03-30"
+}</code></pre></div></div></div></div></div></div></div><div class="modal fade" tabindex="0" id="configuredprocessors__id__delete"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_delete">delete</span> <span class="parent">/configuredprocessors</span>/{id}</h4></div><div class="modal-body"><div class="alert alert-info"><p>Delete a configured processor by ID</p></div><ul class="nav nav-tabs"><li class="active"><a href="#configuredprocessors__id__delete_request" data-toggle="tab">Request</a></li><li><a href="#configuredprocessors__id__delete_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="configuredprocessors__id__delete_request"><h3>URI Parameters</h3><ul><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li></ul></div><div class="tab-pane" id="configuredprocessors__id__delete_response"><h2>HTTP status code <a href="http://httpstatus.es/204" target="_blank">204</a></h2></div></div></div></div></div></div></div></div></div></div></div><div class="col-md-3"><div id="sidebar" class="hidden-print affix" role="complementary"><ul class="nav nav-pills nav-stacked"><li><a href="#processorclasses">/processorclasses</a></li><li><a href="#processors">/processors</a></li><li><a href="#configurations">/configurations</a></li><li><a href="#configuredprocessors">/configuredprocessors</a></li></ul></div></div></div></div></body></html>

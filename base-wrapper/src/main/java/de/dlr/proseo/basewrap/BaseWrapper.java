@@ -17,10 +17,10 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,15 +29,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.basewrap.rest.HttpResponseInfo;
 import de.dlr.proseo.basewrap.rest.RestOps;
+import de.dlr.proseo.interfaces.rest.model.IngestorProduct;
 import de.dlr.proseo.interfaces.rest.model.RestFileInfo;
+import de.dlr.proseo.interfaces.rest.model.RestProduct;
 import de.dlr.proseo.interfaces.rest.model.RestProductFile;
 import de.dlr.proseo.model.enums.JobOrderVersion;
+import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.model.joborder.InputOutput;
 import de.dlr.proseo.model.joborder.IpfFileName;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.model.joborder.Proc;
 import de.dlr.proseo.model.joborder.TimeInterval;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
+import de.dlr.proseo.model.util.ProseoUtil;
 
 /**
  * prosEO Base Processor Wrapper - for processors conforming to ESA's
@@ -92,12 +96,12 @@ public class BaseWrapper {
 	private static final String MSG_DIRECTORY_NOT_EMPTY = "Output directory {} is not empty";
 	private static final String MSG_ENVIRONMENT_CHECK_PASSED = "Check of environment variables passed";
 	private static final String MSG_ENVIRONMENT_CHECK_FAILED = "Check of environment variables failed";
-	private static final String MSG_ERROR_CALLING_PLANNER = "Error calling Production Planner (HTTP status code: {})";
+	private static final String MSG_ERROR_CALLING_PLANNER = "Error calling Production Planner, HTTP status code {} (cause: {})";
 	private static final String MSG_ERROR_CONVERTING_INGESTOR_PRODUCT = "Error converting ingestor product with ID {} to JSON (cause: {})";
-	private static final String MSG_ERROR_PUSHING_OUTPUT_FILE = "Error pushing output file {}, HTTP status code {}";
-	private static final String MSG_ERROR_REGISTERING_PRODUCT = "Error registering product with ID {} with Ingestor (HTTP status code: {})";
-	private static final String MSG_ERROR_RETRIEVING_INPUT_FILE = "Error retrieving input file {}, HTTP status code {}";
-	private static final String MSG_ERROR_RETRIEVING_JOB_ORDER = "Error retrieving Job Order File, HTTP status code {}";
+	private static final String MSG_ERROR_PUSHING_OUTPUT_FILE = "Error pushing output file {}, HTTP status code {} (cause: {})";
+	private static final String MSG_ERROR_REGISTERING_PRODUCT = "Error registering product with ID {} with Ingestor, HTTP status code {} (cause: {})";
+	private static final String MSG_ERROR_RETRIEVING_INPUT_FILE = "Error retrieving input file {}, HTTP status code {} (cause: {})";
+	private static final String MSG_ERROR_RETRIEVING_JOB_ORDER = "Error retrieving Job Order File, HTTP status code {} (cause: {})";
 	private static final String MSG_EXCEPTION_RETRIEVING_JOB_ORDER = "Exception encountered retrieving Job Order File (cause: {})";
 	private static final String MSG_ERROR_PARSING_JOB_ORDER = "Error parsing Job Order File";
 	private static final String MSG_ERROR_RUNNING_PROCESSOR = "Error running processor (cause: {})";
@@ -134,6 +138,11 @@ public class BaseWrapper {
 	private static final String MSG_WRAPPER_NOT_SUBCLASS_OF_BASE_WRAPPER = "Requested wrapper class {} is not a subclass of BaseWrapper";
 	private static final String MSG_WRAPPER_CLASS_NOT_FOUND = "Requested wrapper class {} not found";
 	private static final String MSG_CANNOT_PARSE_FILE_INFO = "Cannot parse file info response {} (cause: {} / {})";
+	private static final String MSG_PRODUCT_ID_MISSING = "Product ID missing in output of file type {}, product cannot be updated";
+	private static final String MSG_ERROR_READING_PRODUCT = "Error reading product with ID {} from database (HTTP status code: {}, message: {})";
+	private static final String MSG_ERROR_PARSING_PRODUCT = "Error converting HTTP response {} to REST product (cause: {})";
+	private static final String MSG_ERROR_CONVERTING_PRODUCT = "Error converting REST product of class {} to JSON (cause: {})";
+	private static final String MSG_ERROR_UPDATING_PRODUCT = "Error updating product with ID {} in database (HTTP status code: {}, message: {})";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseWrapper.class);
@@ -225,6 +234,164 @@ public class BaseWrapper {
 	 */
 	@SuppressWarnings("serial")
 	public static class WrapperException extends RuntimeException {};
+	
+	/**
+	 * Extracts the prosEO-compliant message from the "Warning" header, if any
+	 * 
+	 * @param responseInfo the response info object received from RestOps::restApiCall
+	 * @return the prosEO-compliant message, if there is one, or the unchanged warning header, if there is one,
+	 * 		   or null otherwise
+	 */
+	protected String extractProseoMessage(HttpResponseInfo responseInfo) {
+		if (logger.isTraceEnabled()) logger.trace(">>> extractProseoMessage({})", 
+				(null == responseInfo ? "null" : responseInfo.getHttpWarning()));
+		
+		if (null == responseInfo || null == responseInfo.getHttpWarning()) {
+			return null;
+		}
+		
+		return ProseoUtil.extractProseoMessage(responseInfo.getHttpWarning());
+	}
+	
+	/**
+	 * Get the product metadata for a given output element
+	 * 
+	 * @param output the output element from the Job Order file to get the metadata for
+	 * @return a REST interface product
+	 * @throws WrapperException if an error occurs in the communication to the Ingestor,
+	 *         or the output element does not contain a product ID, or the product cannot be found
+	 */
+	protected RestProduct retrieveProductMetadata(InputOutput output) throws WrapperException {
+		if (logger.isTraceEnabled()) logger.trace(">>> retrieveProductMetadata({})",
+				(null == output ? "null" : output.getProductID()));
+
+		if (null == output.getProductID()) {
+			logger.error(MSG_PRODUCT_ID_MISSING, output.getFileType());
+			throw new WrapperException();
+		}
+		
+		// Retrieve product metadata from Ingestor
+		String ingestorRestUrl = "/products/" + output.getProductID();
+
+		HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_PROSEO_USER, ENV_PROSEO_PW, ENV_INGESTOR_ENDPOINT,
+				ingestorRestUrl, null, null, RestOps.HttpMethod.GET);
+
+		if (null == responseInfo || 200 != responseInfo.gethttpCode()) {
+			logger.error(MSG_ERROR_READING_PRODUCT,
+					output.getProductID(), (null == responseInfo ? 500 : responseInfo.gethttpCode()), 
+					extractProseoMessage(responseInfo));
+			throw new WrapperException();
+		}
+		
+		// Set sensing start time to sensing stop time
+		RestProduct restProduct;
+		try {
+			restProduct = new ObjectMapper().readValue(responseInfo.gethttpResponse(), RestProduct.class);
+		} catch (Exception e) {
+			logger.error(MSG_ERROR_PARSING_PRODUCT, responseInfo.gethttpResponse(), e.getMessage());
+			throw new WrapperException();
+		}
+		
+		return restProduct;
+	}
+	
+	/**
+	 * Update the metadata for the product denoted in the given output element
+	 * 
+	 * @param output the output element from the Job Order file to update the metadata for
+	 * @param productMetadata a REST interface product specifying the updated metadata
+	 * @throws WrapperException if an error occurs in the communication to the Ingestor,
+	 *         or the output element does not contain a product ID
+	 */
+	protected void updateProductMetadata(InputOutput output, RestProduct productMetadata) throws WrapperException {
+		if (logger.isTraceEnabled()) logger.trace(">>> updateProductMetadata({}, RestProduct)",
+				(null == output ? "null" : output.getProductID()));
+		
+		if (null == output.getProductID()) {
+			logger.error(MSG_PRODUCT_ID_MISSING, output.getFileType());
+			throw new WrapperException();
+		}
+		
+		// Retrieve product metadata from Ingestor
+		String ingestorRestUrl = "/products/" + output.getProductID();
+
+		String jsonRequest = null;
+		try {
+			jsonRequest = new ObjectMapper().writeValueAsString(productMetadata);
+		} catch (JsonProcessingException e) {
+			logger.error(MSG_ERROR_CONVERTING_PRODUCT, productMetadata.getProductClass(), e.getMessage());
+			throw new WrapperException();
+		}
+		
+		HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_PROSEO_USER, ENV_PROSEO_PW, ENV_INGESTOR_ENDPOINT,
+				ingestorRestUrl, jsonRequest, null, RestOps.HttpMethod.PATCH);
+		
+		if (null == responseInfo || (200 != responseInfo.gethttpCode() && 304 != responseInfo.gethttpCode())) { // 304 Not modified in case of re-runs possible
+			logger.error(MSG_ERROR_UPDATING_PRODUCT,
+					output.getProductID(), (null == responseInfo ? 500 : responseInfo.gethttpCode()), 
+					extractProseoMessage(responseInfo));
+			throw new WrapperException();
+		}
+	}
+	
+	/**
+	 * Create a REST interface product for product ingestion from the given output file path;
+	 * sets attributes mountPoint, filePath, productFileName, fileSize, checksum and checksumTime
+	 * 
+	 * @param outputFilePath path to the output file
+	 * @return a REST interface product for ingestion with ingestion information set
+	 */
+	protected IngestorProduct createIngestorProduct(Path outputFilePath) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createIngestorProduct({})", outputFilePath);
+		
+		IngestorProduct product = new IngestorProduct();
+		
+		product.setMountPoint(ENV_LOCAL_FS_MOUNT);
+		product.setFilePath(Path.of(ENV_LOCAL_FS_MOUNT).relativize(outputFilePath.getParent()).toString());
+		product.setProductFileName(outputFilePath.getFileName().toString());
+		product.setSourceStorageType(StorageType.POSIX.toString());
+		product.setFileSize(outputFilePath.toFile().length());
+		try {
+			product.setChecksum(MD5Util.md5Digest(outputFilePath.toFile()));
+		} catch (IOException e) {
+			// Rather unlikely, but if we fail here, we probably also fail fatally later during ingestion
+			logger.warn(MSG_CANNOT_CALCULATE_CHECKSUM, outputFilePath, e.getClass().getName(), e.getMessage());
+			product.setChecksum("N/A");
+		}
+		product.setChecksumTime(OrbitTimeFormatter.format(Instant.now()));
+
+		return product;
+	}
+	
+	/**
+	 * Ingest the given product into the prosEO metadata database and into the backend storage
+	 * 
+	 * @param product a REST interface product for product ingestion
+	 * @throws WrapperException if an error occurs in the communication to the Ingestor
+	 */
+	protected void ingestProduct(IngestorProduct product) {
+		if (logger.isTraceEnabled()) logger.trace(">>> ingestProduct({})", (null == product ? "null" : product.getId()));
+		
+		// Upload product via Ingestor
+		String ingestorRestUrl = "/ingest/" + ENV_PROCESSING_FACILITY_NAME;
+
+		String jsonRequest = null;
+		try {
+			jsonRequest = new ObjectMapper().writeValueAsString(Arrays.asList(product)); // Ingestion expects list of products
+		} catch (JsonProcessingException e) {
+			logger.error(MSG_ERROR_CONVERTING_PRODUCT, product.getProductClass(), e.getMessage());
+			throw new WrapperException();
+		} 
+		HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_PROSEO_USER, ENV_PROSEO_PW, ENV_INGESTOR_ENDPOINT,
+				ingestorRestUrl, jsonRequest, null, RestOps.HttpMethod.POST);
+
+		if (null == responseInfo || 201 != responseInfo.gethttpCode()) {
+			logger.error(MSG_ERROR_REGISTERING_PRODUCT,
+					product.getProductClass(), (null == responseInfo ? 500 : responseInfo.gethttpCode()), 
+					extractProseoMessage(responseInfo));
+			throw new WrapperException();
+		}
+	}
 	
 	/**
 	 * Remove protocol information, leading and trailing slashes from given file name
@@ -370,7 +537,7 @@ public class BaseWrapper {
 			if (200 == responseInfo.gethttpCode()) {
 				return new String(Base64.getDecoder().decode(responseInfo.gethttpResponse()));
 			} else {
-				logger.error(MSG_ERROR_RETRIEVING_JOB_ORDER, responseInfo.gethttpCode());
+				logger.error(MSG_ERROR_RETRIEVING_JOB_ORDER, responseInfo.gethttpCode(), extractProseoMessage(responseInfo));
 				throw new WrapperException();
 			}
 		} catch (Exception e) {
@@ -457,7 +624,8 @@ public class BaseWrapper {
 							"/productfiles", null, params, RestOps.HttpMethod.GET);
 
 					if (200 != responseInfo.gethttpCode()) {
-						logger.error(MSG_ERROR_RETRIEVING_INPUT_FILE, fn.getFileName(), responseInfo.gethttpCode());
+						logger.error(MSG_ERROR_RETRIEVING_INPUT_FILE, fn.getFileName(), responseInfo.gethttpCode(),
+								extractProseoMessage(responseInfo));
 						throw new WrapperException();
 					}
 
@@ -718,7 +886,8 @@ public class BaseWrapper {
 							"/productfiles", null, params, RestOps.HttpMethod.PUT);
 
 					if (201 != responseInfo.gethttpCode()) {
-						logger.error(MSG_ERROR_PUSHING_OUTPUT_FILE, fn.getFileName(), responseInfo.gethttpCode());
+						logger.error(MSG_ERROR_PUSHING_OUTPUT_FILE, fn.getFileName(), responseInfo.gethttpCode(),
+								extractProseoMessage(responseInfo));
 						throw new WrapperException();
 					}
 
@@ -837,7 +1006,8 @@ public class BaseWrapper {
 
 			if (null == responseInfo || 201 != responseInfo.gethttpCode()) {
 				logger.error(MSG_ERROR_REGISTERING_PRODUCT,
-						productFile.getProductId(), (null == responseInfo ? 500 : responseInfo.gethttpCode()));
+						productFile.getProductId(), (null == responseInfo ? 500 : responseInfo.gethttpCode()),
+						extractProseoMessage(responseInfo));
 				throw new WrapperException();
 			}
 		}
@@ -918,7 +1088,8 @@ public class BaseWrapper {
 					"", null, params, RestOps.HttpMethod.POST);
 
 			if (null == responseInfo || 200 != responseInfo.gethttpCode()) {
-				logger.error(MSG_ERROR_CALLING_PLANNER, (null == responseInfo ? 500 : responseInfo.gethttpCode()));
+				logger.error(MSG_ERROR_CALLING_PLANNER, (null == responseInfo ? 500 : responseInfo.gethttpCode()),
+						extractProseoMessage(responseInfo));
 			}
 
 			logger.info(MSG_PLANNER_RESPONSE, responseInfo.gethttpResponse(), responseInfo.gethttpCode());
