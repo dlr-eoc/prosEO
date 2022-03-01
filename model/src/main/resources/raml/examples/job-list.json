@@ -3,7 +3,7 @@
         "id": 23785526,
         "version": 1,
         "orderIdentifier": "CO2 products for orbits 2345-4567",
-        "jobState": "INITIAL",
+        "jobState": "PLANNED",
         "filterConditions": [],
         "outputParameters": [],
         "priority": 10,
@@ -14,12 +14,13 @@
                 "id": 23785527,
                 "version": 1,
                 "jobId": 23785526,
-                "jobStepState": "INITIAL",
+                "jobStepState": "PLANNED",
                 "outputParameters": [],
                 "processingMode": "OFFL",
                 "inputProductClasses": [ "L1B" ],
                 "outputProductClass": "CH4",
-                "outputProduct": 1234
+                "outputProduct": 1234,
+                "isFailed": false
             }
         ]
     },
@@ -43,7 +44,8 @@
                 "processingMode": "OFFL",
                 "inputProductClasses": [ "L1B", "CO" ],
                 "outputProductClass": "CH4",
-                "outputProduct": 1234
+                "outputProduct": 1234,
+                "isFailed": false
             }
         ]
     }

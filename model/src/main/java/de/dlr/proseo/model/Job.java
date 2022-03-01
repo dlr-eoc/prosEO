@@ -85,22 +85,26 @@ public class Job extends PersistentObject {
 	 * Enumeration describing possible job states.
 	 */
 	public enum JobState {
-		INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED;
+		INITIAL, PLANNED, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED, CLOSED;
 		
 		public boolean isLegalTransition(JobState other) {
 			switch(this) {
 			case COMPLETED:
-				return false; // End state
-			case FAILED:
-				return other.equals(INITIAL);
+				return other.equals(CLOSED);
 			case INITIAL:
+				return other.equals(PLANNED);
+			case FAILED:
+				return other.equals(PLANNED) || other.equals(CLOSED);
+			case PLANNED:
 				return other.equals(RELEASED) || other.equals(FAILED);
 			case ON_HOLD:
-				return other.equals(INITIAL) || other.equals(COMPLETED) || other.equals(FAILED);
+				return other.equals(PLANNED) || other.equals(COMPLETED) || other.equals(FAILED);
 			case RELEASED:
-				return other.equals(INITIAL) || other.equals(STARTED);
+				return other.equals(PLANNED) || other.equals(STARTED);
 			case STARTED:
 				return other.equals(ON_HOLD) || other.equals(COMPLETED) || other.equals(FAILED);
+			case CLOSED:
+				return false; // End state
 			default:
 				return false;
 			}

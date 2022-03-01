@@ -28,6 +28,7 @@ import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Message;
 import de.dlr.proseo.planner.Messages;
+import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 
 /**
@@ -52,6 +53,11 @@ public class OrderUtil {
     @Autowired
     private OrderDispatcher orderDispatcher;
 
+    /** The Production Planner instance */
+    @Autowired
+    private ProductionPlanner productionPlanner;
+
+
 	/**
 	 * Cancel the processing order and it jobs and job steps.
 	 * 
@@ -69,6 +75,9 @@ public class OrderUtil {
 			case INITIAL:
 			case APPROVED:
 			case PLANNED:
+			case RELEASING:
+				answer = Messages.ORDER_ALREADY_RELEASING;
+				break;
 			case RELEASED:
 				for (Job job : order.getJobs()) {
 					jobUtil.cancel(job);
@@ -119,15 +128,40 @@ public class OrderUtil {
 			case INITIAL:
 				answer = Messages.ORDER_RESET;
 				break;
-			case APPROVED:
-				// jobs are in initial state, no change
-				order.setOrderState(OrderState.INITIAL);
+			case PLANNING:
+				// look for plan thread and interrupt it
+				OrderPlanThread pt = productionPlanner.getPlanThreads().get(ProductionPlanner.PLAN_THREAD_PREFIX + order.getId());
+				if (pt != null) {
+					pt.interrupt();
+					int i = 0;
+					while (pt.isAlive() && i < 1000) {
+						i++;
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+							break;
+						}
+					}
+				}
+				order.setOrderState(OrderState.APPROVED);
 				order.setHasFailedJobSteps(false);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				logOrderState(order);
 				answer = Messages.ORDER_RESET;
-				break;		
+				break;	
+			case PLANNING_FAILED:
+				// jobs are in initial state, no change
+				order.setOrderState(OrderState.APPROVED);
+				order.setHasFailedJobSteps(false);
+				order.incrementVersion();
+				RepositoryService.getOrderRepository().save(order);
+				logOrderState(order);
+				answer = Messages.ORDER_RESET;
+				break;			
+			case APPROVED:		
 			case RELEASED:		
 			case PLANNED:
 				// remove jobs and jobsteps
@@ -154,6 +188,9 @@ public class OrderUtil {
 				logOrderState(order);
 				answer = Messages.ORDER_RESET;
 				break;	
+			case RELEASING:
+				answer = Messages.ORDER_ALREADY_RELEASING;
+				break;
 			case RUNNING:
 				answer = Messages.ORDER_ALREADY_RUNNING;
 				break;
@@ -220,6 +257,9 @@ public class OrderUtil {
 				}
 				RepositoryService.getOrderRepository().delete(order);
 				answer = Messages.ORDER_DELETED;
+				break;
+			case RELEASING:
+				answer = Messages.ORDER_ALREADY_RELEASING;
 				break;	
 			case RELEASED:
 				answer = Messages.ORDER_ALREADY_RELEASED;
@@ -266,6 +306,9 @@ public class OrderUtil {
 			case PLANNED:	
 				answer = Messages.ORDER_ALREADY_PLANNED;
 				break;
+			case RELEASING:
+				answer = Messages.ORDER_ALREADY_RELEASING;
+				break;
 			case RELEASED:
 				answer = Messages.ORDER_ALREADY_RELEASED;
 				break;
@@ -311,22 +354,24 @@ public class OrderUtil {
 				answer = Messages.ORDER_HASTOBE_APPROVED;
 				break;
 			case APPROVED:
-				Message publishAnswer = orderDispatcher.publishOrder(order, procFacility);
-				if (publishAnswer.isTrue()) {
-					if (order.getJobs().isEmpty()) {
-						order.setOrderState(OrderState.COMPLETED);
-						answer = Messages.ORDER_PRODUCT_EXIST;
-					} else {
-						order.setOrderState(OrderState.PLANNED);
-						answer = Messages.ORDER_PLANNED;
-					}
-					order.incrementVersion();
-					order = RepositoryService.getOrderRepository().save(order);
-					logOrderState(order);
+			case PLANNING_FAILED:
+				order.setOrderState(OrderState.PLANNING);
+				order.incrementVersion();
+				order = RepositoryService.getOrderRepository().save(order);
+				em.merge(order);
+				String threadName = ProductionPlanner.PLAN_THREAD_PREFIX + order.getId();
+				if (!productionPlanner.getPlanThreads().containsKey(threadName)) {
+					OrderPlanThread pt = new OrderPlanThread(productionPlanner, orderDispatcher, order, procFacility, threadName);
+					productionPlanner.getPlanThreads().put(threadName, pt);
+					pt.start();
 				}
+				answer = Messages.ORDER_PLANNING;
 				break;	
 			case PLANNED:	
 				answer = Messages.ORDER_ALREADY_PLANNED;
+				break;
+			case RELEASING:
+				answer = Messages.ORDER_ALREADY_RELEASING;
 				break;
 			case RELEASED:
 				answer = Messages.ORDER_ALREADY_RELEASED;
@@ -372,23 +417,26 @@ public class OrderUtil {
 				answer = Messages.ORDER_HASTOBE_APPROVED;
 				break;
 			case APPROVED:
+			case PLANNING:
 				answer = Messages.ORDER_HASTOBE_PLANNED;
 				break;
 			case PLANNED:
-				for (Job job : order.getJobs()) {
-					jobUtil.resume(job);
-				}
-				if (order.getJobs().isEmpty()) {
-					order.setOrderState(OrderState.COMPLETED);
-					answer = Messages.ORDER_COMPLETED;
-				} else {
-					order.setOrderState(OrderState.RELEASED);
-					answer = Messages.ORDER_RELEASED;
-				}
+				order.setOrderState(OrderState.RELEASING);
 				order.incrementVersion();
-				RepositoryService.getOrderRepository().save(order);
+				order = RepositoryService.getOrderRepository().save(order);
+				em.merge(order);
+				String threadName = ProductionPlanner.RELEASE_THREAD_PREFIX + order.getId();
+				if (!productionPlanner.getReleaseThreads().containsKey(threadName)) {
+					OrderReleaseThread rt = new OrderReleaseThread(productionPlanner, jobUtil, order, threadName);
+					productionPlanner.getReleaseThreads().put(threadName, rt);
+					rt.start();
+				}
 				logOrderState(order);
+				answer = Messages.ORDER_RELEASING;
 				break;	
+			case RELEASING:
+				answer = Messages.ORDER_ALREADY_RELEASING;
+				break;
 			case RELEASED:
 				answer = Messages.ORDER_ALREADY_RELEASED;
 				break;
@@ -437,13 +485,16 @@ public class OrderUtil {
 				break;
 			case PLANNED:
 				answer = Messages.ORDER_HASTOBE_RELEASED;
-				break;				
+				break;	
+			case RELEASING:
+				answer = Messages.ORDER_ALREADY_RELEASING;	
+				break;		
 			case RELEASED:
 				order.setOrderState(OrderState.RUNNING);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				logOrderState(order);
-				answer = Messages.ORDER_RELEASED;
+				answer = Messages.ORDER_RUNNING;
 				break;				
 			case RUNNING:
 				answer = Messages.ORDER_RUNNING;
@@ -475,9 +526,13 @@ public class OrderUtil {
 	 * @return Result message
 	 */
 	@Transactional
-	public Messages suspend(ProcessingOrder order, Boolean force) {
+	public Messages suspend(long id, Boolean force) {
+		ProcessingOrder order = null;
+		Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+		if (orderOpt.isPresent()) {
+			order = orderOpt.get();
+		}
 		if (logger.isTraceEnabled()) logger.trace(">>> suspend({}, {})", (null == order ? "null" : order.getId()), force);
-		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -491,6 +546,24 @@ public class OrderUtil {
 			case PLANNED:	
 				answer = Messages.ORDER_SUSPENDED;
 				break;
+			case RELEASING:
+				// look for plan thread and interrupt it
+				OrderReleaseThread rt = productionPlanner.getReleaseThreads().get(ProductionPlanner.RELEASE_THREAD_PREFIX + order.getId());
+				if (rt != null) {
+					rt.interrupt();
+					int i = 0;
+					while (rt.isAlive() && i < 1000) {
+						i++;
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+							break;
+						}
+					}
+				}
+				// intentionally fall through to suspend already running jobs
 			case RELEASED:
 				for (Job job : order.getJobs()) {
 					jobUtil.suspend(job, force);
@@ -554,6 +627,83 @@ public class OrderUtil {
 		}
 		return answer;
 	}
+	@Transactional
+	public Messages prepareSuspend(long id, Boolean force) {
+		ProcessingOrder order = null;
+		Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+		if (orderOpt.isPresent()) {
+			order = orderOpt.get();
+		}
+		if (logger.isTraceEnabled()) logger.trace(">>> suspend({}, {})", (null == order ? "null" : order.getId()), force);
+		Messages answer = Messages.FALSE;
+		if (order != null) {
+			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
+			switch (order.getOrderState()) {
+			case INITIAL:
+				answer = Messages.ORDER_SUSPENDED;
+				break;
+			case APPROVED:
+				answer = Messages.ORDER_SUSPENDED;
+				break;
+			case PLANNED:	
+				answer = Messages.ORDER_SUSPENDED;
+				break;
+			case RELEASING:
+				// look for plan thread and interrupt it
+				OrderReleaseThread rt = productionPlanner.getReleaseThreads().get(ProductionPlanner.RELEASE_THREAD_PREFIX + order.getId());
+				if (rt != null) {
+					rt.interrupt();
+					int i = 0;
+					while (rt.isAlive() && i < 1000) {
+						i++;
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+							break;
+						}
+					}
+				}
+				// intentionally fall through to suspend already running jobs
+			case RELEASED:
+			case RUNNING:
+			case SUSPENDING:
+				for (Job job : order.getJobs()) {
+					switch (job.getJobState()) {
+					case INITIAL:
+						job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
+						// intentionally fall through
+					case RELEASED:
+						job.setJobState(de.dlr.proseo.model.Job.JobState.STARTED);
+						// intentionally fall through
+					case STARTED:
+						job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
+						RepositoryService.getJobRepository().save(job);
+						break;
+					default:
+						break;
+						
+					}
+				}
+				answer = Messages.ORDER_SUSPENDED;
+				break;	
+			case COMPLETED:
+				answer = Messages.ORDER_ALREADY_COMPLETED;
+				break;
+			case FAILED:
+				answer = Messages.ORDER_ALREADY_FAILED;
+				break;
+			case CLOSED:
+				answer = Messages.ORDER_ALREADY_CLOSED;
+				break;
+			default:
+				break;
+			}
+			answer.log(logger, order.getIdentifier());
+		}
+		return answer;
+	}
 
 	/**
 	 * Retry the processing order and it jobs and job steps.
@@ -571,7 +721,8 @@ public class OrderUtil {
 			switch (order.getOrderState()) {
 			case INITIAL:
 			case APPROVED:
-			case PLANNED:	
+			case PLANNED:
+			case RELEASING:
 			case RELEASED:
 			case RUNNING:
 			case SUSPENDING:
@@ -586,7 +737,7 @@ public class OrderUtil {
 					jobUtil.retry(job);
 				}
 				for (Job job : order.getJobs()) {
-					if (!(job.getJobState() == JobState.INITIAL || job.getJobState() == JobState.COMPLETED)) {
+					if (!(job.getJobState() == JobState.PLANNED || job.getJobState() == JobState.COMPLETED)) {
 						all = false;
 					}
 					if (job.getJobState() != JobState.COMPLETED) {
@@ -644,6 +795,7 @@ public class OrderUtil {
 			case INITIAL:
 			case APPROVED:
 			case PLANNED:	
+			case RELEASING:
 			case RELEASED:
 			case RUNNING:
 			case SUSPENDING:
@@ -655,6 +807,9 @@ public class OrderUtil {
 				Duration retPeriod = order.getMission().getOrderRetentionPeriod();
 				if (retPeriod != null && order.getProductionType() == ProductionType.SYSTEMATIC) {
 					order.setEvictionTime(Instant.now().plus(retPeriod));
+				}
+				for (Job job : order.getJobs()) {
+					jobUtil.close(job);
 				}
 				order.setOrderState(OrderState.CLOSED);
 				order.incrementVersion();
@@ -795,7 +950,13 @@ public class OrderUtil {
 	 * @param order The processing order
 	 * @return List of processinig facilities
 	 */
-	public List<ProcessingFacility> getProcessingFacilities(ProcessingOrder order) {
+	
+	public List<ProcessingFacility> getProcessingFacilities(long id) {
+		ProcessingOrder order = null;
+		Optional<ProcessingOrder> oOrder = RepositoryService.getOrderRepository().findById(id);
+		if (oOrder.isPresent()) {
+			order = oOrder.get();
+		}
 		if (logger.isTraceEnabled()) logger.trace(">>> getProcessingFacilities({})", (null == order ? "null" : order.getId()));
 		
 		List<ProcessingFacility> pfList = new ArrayList<ProcessingFacility>();
@@ -934,7 +1095,7 @@ public class OrderUtil {
 			case COMPLETED:
 				break;
 			case FAILED:
-				if (jState == JobState.INITIAL) {
+				if (jState == JobState.PLANNED) {
 					order.setOrderState(OrderState.PLANNED);
 					order.incrementVersion();
 					RepositoryService.getOrderRepository().save(order);
@@ -1000,7 +1161,10 @@ public class OrderUtil {
 	}
 
 	public void logOrderState(ProcessingOrder order) {
-		if (logger.isTraceEnabled()) logger.trace(">>> logOrderState({})", (null == order ? "null" : order.getId()));
+		// at the moment a dummy
+		
+		
+		// if (logger.isTraceEnabled()) logger.trace(">>> logOrderState({})", (null == order ? "null" : order.getId()));
 		
 		// TODO monitoring
 		/*
@@ -1022,7 +1186,7 @@ public class OrderUtil {
 
 		for (JobStep jobStep : jobSteps) {
 			switch (jobStep.getJobStepState()) {
-			case INITIAL:
+			case PLANNED:
 				break;
 			case WAITING_INPUT:
 				break;

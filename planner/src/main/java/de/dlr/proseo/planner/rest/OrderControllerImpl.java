@@ -12,6 +12,7 @@ import java.util.Optional;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.FacilityState;
+import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.planner.Messages;
@@ -30,6 +31,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Spring MVC controller for the prosEO planner; implements the services required to plan
@@ -326,24 +328,8 @@ public class OrderControllerImpl implements OrderController {
 			Messages msg = orderUtil.resume(order);
 			
 			// Check whether the release triggers any job steps
-			boolean found = false;
-			for (ProcessingFacility pf : orderUtil.getProcessingFacilities(order)) {
-				if (pf.getFacilityState() != FacilityState.RUNNING) {
-					continue;
-				}
-
-				KubeConfig kc = productionPlanner.getKubeConfig(pf.getName());
-				if (kc != null) {
-					found = true;
-					UtilService.getJobStepUtil().checkOrderToRun(kc, order);
-				}
-			}
-			if (!found) {
-				UtilService.getJobStepUtil().checkForJobStepsToRun();
-			}
-			
-			// Already logged
-			
+			// This is already done during RELEASING
+						
 			if (msg.isTrue()) {
 				// resumed
 				RestOrder ro = RestUtil.createRestOrder(order);
@@ -457,7 +443,6 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	@Transactional
 	public ResponseEntity<RestOrder> suspendOrder(String orderId, Boolean force) {
 		if (logger.isTraceEnabled()) logger.trace(">>> suspendOrder({}, force: {})", orderId, force);
 		
@@ -475,7 +460,7 @@ public class OrderControllerImpl implements OrderController {
 			
 			if (force) {
 				// "Suspend force" is only allowed, if the processing facilities are available
-				for (ProcessingFacility pf : orderUtil.getProcessingFacilities(order)) {
+				for (ProcessingFacility pf : orderUtil.getProcessingFacilities(order.getId())) {
 					if (pf.getFacilityState() != FacilityState.RUNNING) {
 						String message = Messages.FACILITY_NOT_AVAILABLE.log(logger, pf.getName(),
 								pf.getFacilityState().toString());
@@ -484,13 +469,15 @@ public class OrderControllerImpl implements OrderController {
 					}
 				} 
 			}
-			
-			Messages msg = orderUtil.suspend(order, force);
+
+			Messages msg = orderUtil.prepareSuspend(order.getId(), force);
+			msg = orderUtil.suspend(order.getId(), force);
 			// Already logged
 			
 			if (msg.isTrue()) {
 				// suspended
-				RestOrder ro = RestUtil.createRestOrder(order);
+				
+				RestOrder ro = getRestOrder(order.getId());
 
 				return new ResponseEntity<>(ro, HttpStatus.OK);
 			} else {
@@ -583,6 +570,22 @@ public class OrderControllerImpl implements OrderController {
 		}
 		
 		return order;
+	}
+	
+	@Transactional
+	private RestOrder getRestOrder(long id) {
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		RestOrder answer = transactionTemplate.execute((status) -> {
+			RestOrder ro = null;
+			ProcessingOrder order = null;
+			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+			if (orderOpt.isPresent()) {
+				order = orderOpt.get();
+			}
+			ro = RestUtil.createRestOrder(order);
+			return ro;
+		});
+		return answer;
 	}
 
 	

@@ -17,7 +17,7 @@
         format: long
         description: The persistend id of the job this job step belongs to
       jobStepState:
-        enum: [ INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED ]
+        enum: [ PLANNED, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED, CLOSED ]
         description: The currenet status of the job step
       outputParameters:
         type: RestParameter[]
@@ -55,6 +55,9 @@
       processingStdErr?:
         type: string
         description: The standard error output of the processing job
+      isFailed:
+        type: boolean
+        description: The failed state of the job step
       jobOrderFilename?:
         type: string
         description: The filename of the Job Order file in the associated processing facility

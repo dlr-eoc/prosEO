@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
+import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.enums.ParameterType;
@@ -219,6 +220,21 @@ public class OrderUtil {
 			percentRunning = (jsCountRunning * 100 / jsCount);
 		}
 		restOrder.setPercentRunning(percentRunning);
+		Long expectedCount = (long) 0;
+		Long createdCount = (long) 0;
+		if (processingOrder.getOrderState() == OrderState.PLANNING) {
+			expectedCount = (long) processingOrder.getJobs().size();
+			createdCount = (long) RepositoryService.getJobRepository().findAllByJobStateAndProcessingOrder(JobState.PLANNED, processingOrder.getId()).size();
+		} else if (processingOrder.getOrderState() == OrderState.RELEASING) {
+			expectedCount = (long) processingOrder.getJobs().size();
+			createdCount = (long) RepositoryService.getJobRepository().findAllByJobStateAndProcessingOrder(JobState.RELEASED, processingOrder.getId()).size();
+			createdCount += (long) RepositoryService.getJobRepository().findAllByJobStateAndProcessingOrder(JobState.STARTED, processingOrder.getId()).size();
+			createdCount += (long) RepositoryService.getJobRepository().findAllByJobStateAndProcessingOrder(JobState.FAILED, processingOrder.getId()).size();
+			createdCount += (long) RepositoryService.getJobRepository().findAllByJobStateAndProcessingOrder(JobState.COMPLETED, processingOrder.getId()).size();
+			createdCount += (long) RepositoryService.getJobRepository().findAllByJobStateAndProcessingOrder(JobState.ON_HOLD, processingOrder.getId()).size();
+		}
+		restOrder.setExpectedJobs(expectedCount);
+		restOrder.setCreatedJobs(createdCount);
 		return restOrder;
 	}
 

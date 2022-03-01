@@ -150,6 +150,7 @@ public class UIMessages {
 	public static final int MSG_ID_NO_RULEID_GIVEN = 2881;
 	
 	// Order CLI
+	public static final int MSG_ID_ORDER_RELEASING = 2929;
 	public static final int MSG_ID_NO_ORDERS_FOUND = 2930;
 	public static final int MSG_ID_INVALID_SLICING_TYPE = 2931;
 	public static final int MSG_ID_INVALID_SLICE_DURATION = 2932;
@@ -553,6 +554,7 @@ public class UIMessages {
 		MSG_ORDER_UPDATED ("(I%d) Order with identifier %s updated (new version %d)", MSG_ID_ORDER_UPDATED),
 		MSG_ORDER_APPROVED ("(I%d) Order with identifier %s approved (new version %d)", MSG_ID_ORDER_APPROVED),
 		MSG_ORDER_PLANNED ("(I%d) Order with identifier %s planned (new version %d)", MSG_ID_ORDER_PLANNED),
+		MSG_ORDER_RELEASING ("(I%d) Order with identifier %s released (new version %d)", MSG_ID_ORDER_RELEASING),
 		MSG_ORDER_RELEASED ("(I%d) Order with identifier %s released (new version %d)", MSG_ID_ORDER_RELEASED),
 		MSG_ORDER_SUSPENDED ("(I%d) Order with identifier %s suspended (new version %d)", MSG_ID_ORDER_SUSPENDED),
 		MSG_ORDER_CANCELLED ("(I%d) Order with identifier %s cancelled (new version %d)", MSG_ID_ORDER_CANCELLED),
