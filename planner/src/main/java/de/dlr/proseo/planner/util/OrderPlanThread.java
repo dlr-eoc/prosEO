@@ -124,7 +124,7 @@ public class OrderPlanThread extends Thread {
 				}
 			}
 			catch(InterruptedException e) {
-				Messages.ORDER_PLANNING_INTERRUPTED.format(this.getName(), order.getIdentifier());
+				// do nothing, message already logged
 			} 
 			catch(Exception e) {
 				Messages.ORDER_PLANNING_EXCEPTION.format(this.getName(), order.getIdentifier());

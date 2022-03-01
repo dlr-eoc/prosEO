@@ -81,17 +81,7 @@ public class OrderReleaseThread extends Thread {
 					answer = release(order.getId());
 				}
 				if (!answer.isTrue()) {
-					@SuppressWarnings("unused")
-					Object dummy = transactionTemplate.execute((status) -> {
-						ProcessingOrder lambdaOrder = null;
-						Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
-						if (orderOpt.isPresent()) {
-							lambdaOrder = orderOpt.get();
-						}
-						lambdaOrder.setOrderState(OrderState.PLANNED);
-						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
-						return null;
-					});
+					// nothing to do here, order state already set in release
 				}
 			}
 			catch(InterruptedException e) {
@@ -170,23 +160,44 @@ public class OrderReleaseThread extends Thread {
 					lambdaOrder = orderOpt.get();
 				}
 				Message lambdaAnswer = new Message(Messages.FALSE);
-				if (finalAnswer.isTrue()) {
+				if (finalAnswer.isTrue() || finalAnswer.getCode() == Messages.JOB_ALREADY_COMPLETED.getCode()) {
 					if (lambdaOrder.getJobs().isEmpty()) {
 						lambdaOrder.setOrderState(OrderState.COMPLETED);
 						lambdaAnswer = new Message(Messages.ORDER_PRODUCT_EXIST);
 					} else {
 						// TODO check whether order is already running
+						Boolean running = false;
+						for (Job j : lambdaOrder.getJobs()) {
+							if (RepositoryService.getJobStepRepository().countJobStepRunningByJobId(j.getId()) > 0) {
+								running = true;
+								break;
+							}
+						}
 						lambdaOrder.setOrderState(OrderState.RELEASED);
+						if (running) {
+							lambdaOrder.setOrderState(OrderState.RUNNING);
+						} 
 						lambdaAnswer = new Message(Messages.ORDER_RELEASED);
 					}
 					lambdaAnswer.log(logger, lambdaOrder.getIdentifier());
 					lambdaOrder.incrementVersion();
 					lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 				} else {
-					// stay in releasing failed, also if one job is already running
-					lambdaOrder.setOrderState(OrderState.PLANNED);
-					lambdaAnswer = new Message(Messages.ORDER_PLANNED);
+					// the order is also released
+					Boolean running = false;
+					for (Job j : lambdaOrder.getJobs()) {
+						if (RepositoryService.getJobStepRepository().countJobStepRunningByJobId(j.getId()) > 0) {
+							running = true;
+							break;
+						}
+					}
+					lambdaOrder.setOrderState(OrderState.RELEASED);
+					if (running) {
+						lambdaOrder.setOrderState(OrderState.RUNNING);
+					}
+					lambdaAnswer = new Message(Messages.ORDER_RELEASED);
 					lambdaAnswer.log(logger, lambdaOrder.getIdentifier(), this.getName());
+					lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 				}
 				return lambdaAnswer;
 			});

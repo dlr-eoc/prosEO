@@ -134,7 +134,7 @@ public class OrderUtil {
 				if (pt != null) {
 					pt.interrupt();
 					int i = 0;
-					while (pt.isAlive() && i < 100) {
+					while (pt.isAlive() && i < 1000) {
 						i++;
 						try {
 							Thread.sleep(100);
@@ -526,9 +526,13 @@ public class OrderUtil {
 	 * @return Result message
 	 */
 	@Transactional
-	public Messages suspend(ProcessingOrder order, Boolean force) {
+	public Messages suspend(long id, Boolean force) {
+		ProcessingOrder order = null;
+		Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+		if (orderOpt.isPresent()) {
+			order = orderOpt.get();
+		}
 		if (logger.isTraceEnabled()) logger.trace(">>> suspend({}, {})", (null == order ? "null" : order.getId()), force);
-		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -548,7 +552,7 @@ public class OrderUtil {
 				if (rt != null) {
 					rt.interrupt();
 					int i = 0;
-					while (rt.isAlive() && i < 100) {
+					while (rt.isAlive() && i < 1000) {
 						i++;
 						try {
 							Thread.sleep(100);
@@ -606,6 +610,83 @@ public class OrderUtil {
 					logOrderState(order);
 					answer = Messages.ORDER_SUSPENDED;
 				}
+				break;	
+			case COMPLETED:
+				answer = Messages.ORDER_ALREADY_COMPLETED;
+				break;
+			case FAILED:
+				answer = Messages.ORDER_ALREADY_FAILED;
+				break;
+			case CLOSED:
+				answer = Messages.ORDER_ALREADY_CLOSED;
+				break;
+			default:
+				break;
+			}
+			answer.log(logger, order.getIdentifier());
+		}
+		return answer;
+	}
+	@Transactional
+	public Messages prepareSuspend(long id, Boolean force) {
+		ProcessingOrder order = null;
+		Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+		if (orderOpt.isPresent()) {
+			order = orderOpt.get();
+		}
+		if (logger.isTraceEnabled()) logger.trace(">>> suspend({}, {})", (null == order ? "null" : order.getId()), force);
+		Messages answer = Messages.FALSE;
+		if (order != null) {
+			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
+			switch (order.getOrderState()) {
+			case INITIAL:
+				answer = Messages.ORDER_SUSPENDED;
+				break;
+			case APPROVED:
+				answer = Messages.ORDER_SUSPENDED;
+				break;
+			case PLANNED:	
+				answer = Messages.ORDER_SUSPENDED;
+				break;
+			case RELEASING:
+				// look for plan thread and interrupt it
+				OrderReleaseThread rt = productionPlanner.getReleaseThreads().get(ProductionPlanner.RELEASE_THREAD_PREFIX + order.getId());
+				if (rt != null) {
+					rt.interrupt();
+					int i = 0;
+					while (rt.isAlive() && i < 1000) {
+						i++;
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+							break;
+						}
+					}
+				}
+				// intentionally fall through to suspend already running jobs
+			case RELEASED:
+			case RUNNING:
+			case SUSPENDING:
+				for (Job job : order.getJobs()) {
+					switch (job.getJobState()) {
+					case INITIAL:
+						job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
+						// intentionally fall through
+					case RELEASED:
+						job.setJobState(de.dlr.proseo.model.Job.JobState.STARTED);
+						// intentionally fall through
+					case STARTED:
+						job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
+						RepositoryService.getJobRepository().save(job);
+						break;
+					default:
+						break;
+						
+					}
+				}
+				answer = Messages.ORDER_SUSPENDED;
 				break;	
 			case COMPLETED:
 				answer = Messages.ORDER_ALREADY_COMPLETED;
@@ -869,7 +950,13 @@ public class OrderUtil {
 	 * @param order The processing order
 	 * @return List of processinig facilities
 	 */
-	public List<ProcessingFacility> getProcessingFacilities(ProcessingOrder order) {
+	
+	public List<ProcessingFacility> getProcessingFacilities(long id) {
+		ProcessingOrder order = null;
+		Optional<ProcessingOrder> oOrder = RepositoryService.getOrderRepository().findById(id);
+		if (oOrder.isPresent()) {
+			order = oOrder.get();
+		}
 		if (logger.isTraceEnabled()) logger.trace(">>> getProcessingFacilities({})", (null == order ? "null" : order.getId()));
 		
 		List<ProcessingFacility> pfList = new ArrayList<ProcessingFacility>();

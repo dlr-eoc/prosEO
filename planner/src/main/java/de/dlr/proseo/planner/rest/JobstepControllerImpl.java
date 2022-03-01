@@ -168,9 +168,9 @@ public class JobstepControllerImpl implements JobstepController {
 	public ResponseEntity<RestJobStep> resumeJobStep(String jobstepId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> resumeJobStep({})", jobstepId);
 		
+		productionPlanner.acquireReleaseSemaphore();
 		try {
 			// wait until finish of concurrent createJob
-			productionPlanner.acquireReleaseSemaphore();
 			JobStep js = this.findJobStepByNameOrId(jobstepId);
 			if (js != null) {
 				Job job = js.getJob();
@@ -224,10 +224,10 @@ public class JobstepControllerImpl implements JobstepController {
 	@Transactional
 	public ResponseEntity<RestJobStep> cancelJobStep(String jobstepId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> cancelJobStep({})", jobstepId);
-		
+
+		productionPlanner.acquireReleaseSemaphore();
 		try {
 			// wait until finish of concurrent createJob
-			productionPlanner.acquireReleaseSemaphore();
 			JobStep js = this.findJobStepByNameOrId(jobstepId);
 			if (js != null) {
 				Job job = js.getJob();

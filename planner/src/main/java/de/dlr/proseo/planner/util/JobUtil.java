@@ -727,7 +727,7 @@ public class JobUtil {
 				if (hasFailed) {
 					job.setJobState(JobState.FAILED);
 				} else {
-					if (job.getJobState() == JobState.FAILED) {
+					if (job.getJobState() == JobState.FAILED || job.getJobState() == JobState.PLANNED) {
 						job.setJobState(JobState.PLANNED);
 						job.setJobState(JobState.RELEASED);
 						job.setJobState(JobState.STARTED);

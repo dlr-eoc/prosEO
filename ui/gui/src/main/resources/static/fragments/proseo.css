@@ -227,14 +227,18 @@ dropdown-item {
 td, th {
   border: 1px solid #dddddd;
   text-align: left;
-  padding: 0.25rem !important;
+  padding: 0.25rem;
+}
+
+.nopadding {
+  padding: 0rem;
 }
 
 .table td, 
 .table th {
   border: 1px solid #dddddd;
   text-align: left;
-  padding: 0.25rem !important;
+  padding: 0.25rem;
 }
 
 .first-row {  

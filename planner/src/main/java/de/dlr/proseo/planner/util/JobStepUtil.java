@@ -17,6 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
@@ -78,7 +80,7 @@ public class JobStepUtil {
 				" inner join Job j on js.job.id = j.id " + 
 				" inner join ProcessingOrder o on j.processingOrder.id = o.id" + 
 				" inner join Mission m on o.mission.id = m.id " + 
-				" where js.jobStepState = '" + state + "' and m.code = '" + mission + "' order by js.processingCompletionTime desc";
+				" where js.processingCompletionTime is not null and js.jobStepState = '" + state + "' and m.code = '" + mission + "' order by js.processingCompletionTime desc";
 		// em.createNativeQ
 		return em.createQuery(query,
 			JobStep.class)
@@ -528,7 +530,14 @@ public class JobStepUtil {
 			switch (js.getJobStepState()) {
 			case PLANNED:
 			case WAITING_INPUT:
-				checkJobStepQueries(js, force);
+				try {
+					productionPlanner.acquireReleaseSemaphore();
+					checkJobStepQueries(js, force);
+				} catch (Exception e) {
+					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+				} finally {
+					productionPlanner.releaseReleaseSemaphore();					
+				}
 				if (js.getJobStepState() == JobStepState.WAITING_INPUT) {
 					answer = Messages.JOBSTEP_WAITING;
 				} else {
@@ -703,24 +712,32 @@ public class JobStepUtil {
 
 		if (productionPlanner != null) {
 			if (kc != null) {
-				productionPlanner.acquireReleaseSemaphore();
-				List<JobStepState> states = new ArrayList<JobStepState>();
-				states.add(JobStepState.READY);
-				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
-				if (pfo.isPresent()) {
-					if (!onlyRun) {
-						this.searchForJobStepsToRun(pfo.get(), pc);
-					}
-					List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(kc.getLongId(), states);
-					for (JobStep js : jobSteps) {
-						if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
-							if (kc.couldJobRun()) {
-								kc.createJob(String.valueOf(js.getId()), null, null);
+				try {
+					productionPlanner.acquireReleaseSemaphore();
+					List<JobStepState> states = new ArrayList<JobStepState>();
+					states.add(JobStepState.READY);
+					Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
+					if (pfo.isPresent()) {
+						if (!onlyRun) {
+							this.searchForJobStepsToRun(pfo.get(), pc);
+						}
+						List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(kc.getLongId(), states);
+						for (JobStep js : jobSteps) {
+							if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
+								if (kc.couldJobRun()) {
+									kc.createJob(String.valueOf(js.getId()), null, null);
+								} else {
+									// at the moment no further job could be started
+									break;
+								}
 							}
 						}
-					}
+					} 
+				} catch (Exception e) {
+					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+				} finally {
+					productionPlanner.releaseReleaseSemaphore();					
 				}
-				productionPlanner.releaseReleaseSemaphore();
 			} else {
 				checkForJobStepsToRun();
 			}
@@ -786,20 +803,28 @@ public class JobStepUtil {
 				if (pfo.isPresent()) {
 					// wait until finish of concurrent createJob
 					productionPlanner.acquireReleaseSemaphore();
-					List<JobStep> jobSteps = new ArrayList<JobStep>();
-					jobSteps.addAll(job.getJobSteps());
-					for (JobStep js : jobSteps) {
-						em.refresh(js);
-						checkJobStepQueries(js, false);
-						if (js.getJobStepState() == JobStepState.READY) {	
-							if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
-								if (kc.couldJobRun()) {
-									kc.createJob(String.valueOf(js.getId()), null, null);
+					try {
+						List<JobStep> jobSteps = new ArrayList<JobStep>();
+						jobSteps.addAll(job.getJobSteps());
+						for (JobStep js : jobSteps) {
+							em.refresh(js);
+							checkJobStepQueries(js, false);
+							if (js.getJobStepState() == JobStepState.READY) {	
+								if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
+									if (kc.couldJobRun()) {
+										kc.createJob(String.valueOf(js.getId()), null, null);
+									} else {
+										// at the moment no further job could be started
+										break;
+									}
 								}
 							}
 						}
+					} catch (Exception e) {
+						Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+					} finally {
+						productionPlanner.releaseReleaseSemaphore();					
 					}
-					productionPlanner.releaseReleaseSemaphore();
 				}
 			}
 		}
@@ -827,24 +852,38 @@ public class JobStepUtil {
 				if (pfo.isPresent()) {
 					// wait until finish of concurrent createJob
 					productionPlanner.acquireReleaseSemaphore();
-					List<Job> jobList = new ArrayList<Job>();
-					jobList.addAll(order.getJobs());
-					for (Job job : jobList) {
-						List<JobStep> jobStepList = new ArrayList<JobStep>();
-						jobStepList.addAll(job.getJobSteps());
-						for (JobStep js : jobStepList) {
-							em.refresh(js);
-							checkJobStepQueries(js, false);
-							if (js.getJobStepState() == JobStepState.READY) {	
-								if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
-									if (kc.couldJobRun()) {
-										kc.createJob(String.valueOf(js.getId()), null, null);
+					try {
+						List<Job> jobList = new ArrayList<Job>();
+						jobList.addAll(order.getJobs());
+						Boolean finish = false;
+						for (Job job : jobList) {
+							List<JobStep> jobStepList = new ArrayList<JobStep>();
+							jobStepList.addAll(job.getJobSteps());
+							if (finish) {
+								break;
+							} else {
+								for (JobStep js : jobStepList) {
+									em.refresh(js);
+									checkJobStepQueries(js, false);
+									if (js.getJobStepState() == JobStepState.READY) {	
+										if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
+											if (kc.couldJobRun()) {
+												kc.createJob(String.valueOf(js.getId()), null, null);
+											} else {
+												// at the moment no further job could be started
+												finish = true;
+												break;
+											}
+										}
 									}
 								}
 							}
 						}
+					} catch (Exception e) {
+						Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+					} finally {
+						productionPlanner.releaseReleaseSemaphore();					
 					}
-					productionPlanner.releaseReleaseSemaphore();
 				}
 			}
 		}
