@@ -23,8 +23,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Job;
-import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.JobStep.JobStepState;
+import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.rest.JobController;
 import de.dlr.proseo.model.rest.model.RestJob;
 import de.dlr.proseo.model.rest.model.RestJobGraph;

@@ -34,7 +34,6 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
-import de.dlr.proseo.planner.util.JobStepUtil;
 import de.dlr.proseo.planner.util.OrderPlanThread;
 import de.dlr.proseo.planner.util.OrderReleaseThread;
 
@@ -74,11 +73,6 @@ public class ProductionPlanner implements CommandLineRunner {
 	 */
 	@Autowired
 	ProductionPlannerConfiguration plannerConfig;
-    /**
-     * Job step util
-     */
-    @Autowired
-    private JobStepUtil jobStepUtil;
 
 	/**
 	 * Current running KubeConfigs
@@ -164,24 +158,24 @@ public class ProductionPlanner implements CommandLineRunner {
 		return orderPwCache.get(orderId);
 	}
 
-	public void acquireReleaseSemaphore() {
-		if (logger.isTraceEnabled()) logger.trace(">>> acquireReleaseSemaphore()");
+	public void acquireReleaseSemaphore(String here) {
+		if (logger.isTraceEnabled()) logger.trace(">>> acquireReleaseSemaphore({})", here == null ? "null" : here);
 		try {
 			getReleaseSemaphore().acquire();
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		if (logger.isTraceEnabled()) logger.trace("<<< acquireReleaseSemaphore()");
+		if (logger.isTraceEnabled()) logger.trace("<<< acquireReleaseSemaphore({})", here == null ? "null" : here);
 	}
 	
-	public void releaseReleaseSemaphore() {
-		if (logger.isTraceEnabled()) logger.trace(">>> releaseReleaseSemaphore()");
+	public void releaseReleaseSemaphore(String here) {
+		if (logger.isTraceEnabled()) logger.trace(">>> releaseReleaseSemaphore({})", here == null ? "null" : here);
 		if (getReleaseSemaphore().availablePermits() <= 0) {
-			if (logger.isTraceEnabled()) logger.trace("    released");
+			if (logger.isTraceEnabled()) logger.trace("    released({})", here);
 			getReleaseSemaphore().release();
 		} else {
-			if (logger.isTraceEnabled()) logger.trace("    nothing to release");
+			if (logger.isTraceEnabled()) logger.trace("    nothing to release({})", here == null ? "null" : here);
 		}
 	}
 

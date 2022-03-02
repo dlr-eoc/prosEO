@@ -26,7 +26,6 @@ import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.planner.Message;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
@@ -47,9 +46,15 @@ public class OrderUtil {
 	@PersistenceContext
 	private EntityManager em;
 	
+    /**
+     * The job utility instance
+     */
     @Autowired
     private JobUtil jobUtil;
 
+    /**
+     * The order dispatcher instance
+     */
     @Autowired
     private OrderDispatcher orderDispatcher;
 
@@ -70,7 +75,6 @@ public class OrderUtil {
 		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
-			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
 			switch (order.getOrderState()) {
 			case INITIAL:
 			case APPROVED:
@@ -123,7 +127,6 @@ public class OrderUtil {
 		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
-			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
 			switch (order.getOrderState()) {
 			case INITIAL:
 				answer = Messages.ORDER_RESET;
@@ -164,7 +167,7 @@ public class OrderUtil {
 			case APPROVED:		
 			case RELEASED:		
 			case PLANNED:
-				// remove jobs and jobsteps
+				// remove jobs and job steps
 				HashMap<Long,Job> toRemove = new HashMap<Long,Job>();
 				for (Job job : order.getJobs()) {
 					if (jobUtil.delete(job)) {
@@ -226,7 +229,6 @@ public class OrderUtil {
 		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
-			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
 			switch (order.getOrderState()) {
 			case INITIAL:
 			case APPROVED:
@@ -290,7 +292,6 @@ public class OrderUtil {
 		
 		Messages answer = Messages.ORDER_ALREADY_APPROVED;
 		if (order != null) {
-			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
 			switch (order.getOrderState()) {
 			case INITIAL:
 				// jobs are in initial state, no change
@@ -338,7 +339,8 @@ public class OrderUtil {
 	/**
 	 * Plan the processing order and it jobs and job steps.
 	 * 
-	 * @param order The processing Order
+	 * @param order The processing order
+	 * @param procFacility The processing facility to run the order
 	 * @return Result message
 	 */
 	@Transactional
@@ -348,7 +350,6 @@ public class OrderUtil {
 		
 		Messages answer = Messages.FALSE;
 		if (order != null && procFacility != null) {
-			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
 			switch (order.getOrderState()) {
 			case INITIAL:
 				answer = Messages.ORDER_HASTOBE_APPROVED;
@@ -411,7 +412,6 @@ public class OrderUtil {
 		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
-			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
 			switch (order.getOrderState()) {
 			case INITIAL:
 				answer = Messages.ORDER_HASTOBE_APPROVED;
@@ -475,7 +475,6 @@ public class OrderUtil {
 		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
-			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
 			switch (order.getOrderState()) {
 			case INITIAL:
 				answer = Messages.ORDER_HASTOBE_APPROVED;
@@ -520,9 +519,10 @@ public class OrderUtil {
 	}
 
 	/**
-	 * Suspend the processing order and it jobs and job steps.
+	 * Suspend the processing order and its jobs and job steps.
 	 * 
-	 * @param order The processing Order
+	 * @param order The processing order id
+	 * @param force The flag to force kill of currently running job steps on processing facility
 	 * @return Result message
 	 */
 	@Transactional
@@ -535,7 +535,6 @@ public class OrderUtil {
 		if (logger.isTraceEnabled()) logger.trace(">>> suspend({}, {})", (null == order ? "null" : order.getId()), force);
 		Messages answer = Messages.FALSE;
 		if (order != null) {
-			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
 			switch (order.getOrderState()) {
 			case INITIAL:
 				answer = Messages.ORDER_SUSPENDED;
@@ -627,6 +626,15 @@ public class OrderUtil {
 		}
 		return answer;
 	}
+
+	/**
+	 * Prepare the suspend of the processing order.
+	 * All jobs are set to state ON_HOLD first to avoid start of further job steps.
+	 * 
+	 * @param order The processing order id
+	 * @param force The flag to force kill of currently running job steps on processing facility
+	 * @return Result message
+	 */
 	@Transactional
 	public Messages prepareSuspend(long id, Boolean force) {
 		ProcessingOrder order = null;
@@ -637,7 +645,6 @@ public class OrderUtil {
 		if (logger.isTraceEnabled()) logger.trace(">>> suspend({}, {})", (null == order ? "null" : order.getId()), force);
 		Messages answer = Messages.FALSE;
 		if (order != null) {
-			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
 			switch (order.getOrderState()) {
 			case INITIAL:
 				answer = Messages.ORDER_SUSPENDED;
@@ -717,7 +724,6 @@ public class OrderUtil {
 		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
-			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
 			switch (order.getOrderState()) {
 			case INITIAL:
 			case APPROVED:
@@ -790,7 +796,6 @@ public class OrderUtil {
 		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
-			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
 			switch (order.getOrderState()) {
 			case INITIAL:
 			case APPROVED:
@@ -847,7 +852,6 @@ public class OrderUtil {
 			order = oOrder.get();
 		}
 		// check current state for possibility to be suspended
-		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (order != null) {
 			switch (order.getOrderState()) {
 			case INITIAL:
@@ -973,7 +977,6 @@ public class OrderUtil {
 	
 	/**
 	 * Update the order state depending on job state
-	 * TODO
 	 * 
 	 * @param order The processing order
 	 * @param jState The job state
@@ -989,7 +992,6 @@ public class OrderUtil {
 			order = oOrder.get();
 		}
 		if (order != null) {
-			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
 			switch (order.getOrderState()) {
 			case INITIAL:
 				// fall through intended
@@ -1161,94 +1163,7 @@ public class OrderUtil {
 	}
 
 	public void logOrderState(ProcessingOrder order) {
-		// at the moment a dummy
-		
-		
-		// if (logger.isTraceEnabled()) logger.trace(">>> logOrderState({})", (null == order ? "null" : order.getId()));
-		
-		// TODO monitoring
-		/*
-		// No logging, if monitoring host is not set
-		if (null == ProductionPlanner.config.getLogHost()) {
-			return;
-		}
-
-		// calculate necessary data
-		// get all job steps
-		List<JobStep> jobSteps = new ArrayList<JobStep>();
-		for (Job job : order.getJobs()) {
-			jobSteps.addAll(job.getJobSteps());
-		}
-		Integer runningJobSteps = 0;
-		Integer completedJobSteps = 0;
-		Integer failedJobSteps = 0;
-		Integer allJobSteps = jobSteps.size();
-
-		for (JobStep jobStep : jobSteps) {
-			switch (jobStep.getJobStepState()) {
-			case PLANNED:
-				break;
-			case WAITING_INPUT:
-				break;
-			case READY:
-				break;
-			case RUNNING:
-				runningJobSteps++;
-				break;
-			case COMPLETED:
-				completedJobSteps++;
-				break;
-			case FAILED:
-				failedJobSteps++;
-				break;
-			default:
-				break;
-			}
-		}
-
-		String token = ProductionPlanner.config.getLogToken();
-		String bucket = ProductionPlanner.config.getLogBucket();
-		String org = ProductionPlanner.config.getLogOrg();
-
-		InfluxDBClient client = InfluxDBClientFactory.create(ProductionPlanner.config.getLogHost(), token.toCharArray());
-
-		// Use a Data Point to write data
-
-		Point point = Point.measurement("progress")
-		.addField("name", order.getIdentifier())
-		.addField("state", order.getOrderState().toString())
-		.addField("failed_job_steps", allJobSteps == 0 ? 0 : failedJobSteps * 100 / allJobSteps)
-		.addField("completed_job_steps", allJobSteps == 0 ? 0 : completedJobSteps * 100 / allJobSteps)
-		.addField("running_job_steps", allJobSteps == 0 ? 0 : runningJobSteps * 100 / allJobSteps)
-		.addField("finished_job_steps", allJobSteps == 0 ? 0 : (failedJobSteps + completedJobSteps) * 100 / allJobSteps)
-		.addField("all_job_steps", allJobSteps)
-		.time(Instant.now(), WritePrecision.NS);
-
-		try (WriteApi writeApi = client.getWriteApi()) {
-			writeApi.writePoint(bucket, org, point);
-		}
-
-		
-		if (logger.isTraceEnabled()) logger.trace(point.toLineProtocol());
-
-		
-//	    try {  
-//	    	 Files.writeString(
-//	    		        Path.of("influxDB.log"),
-//	    		        "docker exec influxdb2 influx write -o " + org + " --bucket " + bucket + " \"" + 
-//	    		        ProseoUtil.escape(point.toLineProtocol()) + "\"" + System.lineSeparator(),
-//	    		        StandardOpenOption.CREATE, StandardOpenOption.APPEND
-//	    		    );
-//	    } catch (SecurityException e) {  
-//	        e.printStackTrace();  
-//	    } catch (IOException e) {  
-//	        e.printStackTrace();  
-//	    }  
-		
-		//String query = String.format("from(bucket:\"myBucket\") |> range(start: -1h)", bucket);
-		//List<FluxTable> tables = client.getQueryApi().query(query, org);
-		 * 
-		 */
+		// at the moment a dummy		
 	}
 
 }

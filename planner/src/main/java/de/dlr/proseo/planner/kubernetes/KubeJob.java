@@ -33,7 +33,6 @@ import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.JobDispatcher;
-import de.dlr.proseo.planner.rest.model.PodKube;
 import de.dlr.proseo.planner.util.UtilService;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.custom.Quantity;
@@ -647,7 +646,6 @@ public class KubeJob {
 			V1Pod aPod = kubeConfig.getV1Pod(podNames.get(podNames.size()-1));
 
 			if (aPod != null) {
-				String podMessages = "";
 				Long jobStepId = this.getJobId();
 				Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
 				if (js.isPresent()) {

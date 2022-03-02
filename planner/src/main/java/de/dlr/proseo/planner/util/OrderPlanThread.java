@@ -1,15 +1,17 @@
+/**
+ * OrderPlanThread.java
+ * 
+ * @author Ernst Melchinger
+ * © 2019 Prophos Informatik GmbH
+ */
+
 package de.dlr.proseo.planner.util;
 
 
 import java.util.Optional;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.ProcessingFacility;
@@ -21,19 +23,17 @@ import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 
+
+/**
+ * Thread to plan a processing order
+ *
+ */
 public class OrderPlanThread extends Thread {
 
 	/**
 	 * Logger of this class
 	 */
 	private static Logger logger = LoggerFactory.getLogger(OrderPlanThread.class);
-
-	@Autowired
-	private PlatformTransactionManager txManager;
-
-	/** JPA entity manager */
-	@PersistenceContext
-	private EntityManager em;
     
 	/**
 	 * The order dispatcher 
@@ -54,35 +54,12 @@ public class OrderPlanThread extends Thread {
 	private ProcessingFacility procFacility;
 	
 	/**
-	 * The expected job count 
-	 */
-	private int jobCount;
-	
-	/**
-	 * The already planned jobs
-	 */
-	private int plannedJobs;
-	
-	/**
-	 * @return the jobCount
-	 */
-	public int getJobCount() {
-		return jobCount;
-	}
-
-
-	/**
-	 * @return the plannedJobs
-	 */
-	public int getPlannedJobs() {
-		return plannedJobs;
-	}
-
-
-	/**
 	 * Create new thread
 	 * 
+	 * @param productionPlanner The production planner instance
+	 * @param orderDispatcher Ther order dispatcher
 	 * @param order The processing order to plan
+	 * @param procFacility The processing facility to run the order
 	 * @param name The thread name
 	 */
 	public OrderPlanThread(ProductionPlanner productionPlanner, OrderDispatcher orderDispatcher, ProcessingOrder order,  ProcessingFacility procFacility, String name) {
@@ -91,19 +68,18 @@ public class OrderPlanThread extends Thread {
 		this.orderDispatcher = orderDispatcher;
 		this.order = order;
 		this.procFacility = procFacility;
-	}
-	
+	}	
 
+    /**
+     * Start and initialize the thread
+     */
     public void run() {
 		if (logger.isTraceEnabled()) logger.trace(">>> run({})", this.getName());
-		// TODO manage thread map in planner
-
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		
 		Message answer = new Message(Messages.FALSE);
 		if (order != null && productionPlanner != null && orderDispatcher != null) {
 			final long orderId = order.getId();
-			plannedJobs = 0;
 			try {
 				answer = orderDispatcher.prepareExpectedJobs(orderId, procFacility, this);
 				if (answer.isTrue()) {
@@ -147,6 +123,13 @@ public class OrderPlanThread extends Thread {
     }
     
     
+    /**
+     * Plan the order 
+     * 
+     * @param orderId The id of the order
+     * @return The result message
+     * @throws InterruptedException
+     */
     public Message plan(long orderId) throws InterruptedException {
 		ProcessingOrder order = null;
 
