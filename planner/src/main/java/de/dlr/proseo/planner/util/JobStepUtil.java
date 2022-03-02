@@ -531,12 +531,12 @@ public class JobStepUtil {
 			case PLANNED:
 			case WAITING_INPUT:
 				try {
-					productionPlanner.acquireReleaseSemaphore();
+					productionPlanner.acquireReleaseSemaphore("resume");
 					checkJobStepQueries(js, force);
 				} catch (Exception e) {
 					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 				} finally {
-					productionPlanner.releaseReleaseSemaphore();					
+					productionPlanner.releaseReleaseSemaphore("resume");					
 				}
 				if (js.getJobStepState() == JobStepState.WAITING_INPUT) {
 					answer = Messages.JOBSTEP_WAITING;
@@ -713,7 +713,7 @@ public class JobStepUtil {
 		if (productionPlanner != null) {
 			if (kc != null) {
 				try {
-					productionPlanner.acquireReleaseSemaphore();
+					productionPlanner.acquireReleaseSemaphore("checkForJobStepsToRun");
 					List<JobStepState> states = new ArrayList<JobStepState>();
 					states.add(JobStepState.READY);
 					Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
@@ -736,7 +736,7 @@ public class JobStepUtil {
 				} catch (Exception e) {
 					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 				} finally {
-					productionPlanner.releaseReleaseSemaphore();					
+					productionPlanner.releaseReleaseSemaphore("checkForJobStepsToRun");					
 				}
 			} else {
 				checkForJobStepsToRun();
@@ -802,7 +802,7 @@ public class JobStepUtil {
 				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
 				if (pfo.isPresent()) {
 					// wait until finish of concurrent createJob
-					productionPlanner.acquireReleaseSemaphore();
+					productionPlanner.acquireReleaseSemaphore("checkJobToRun");
 					try {
 						List<JobStep> jobSteps = new ArrayList<JobStep>();
 						jobSteps.addAll(job.getJobSteps());
@@ -823,7 +823,7 @@ public class JobStepUtil {
 					} catch (Exception e) {
 						Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 					} finally {
-						productionPlanner.releaseReleaseSemaphore();					
+						productionPlanner.releaseReleaseSemaphore("checkJobToRun");					
 					}
 				}
 			}
@@ -851,7 +851,7 @@ public class JobStepUtil {
 				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
 				if (pfo.isPresent()) {
 					// wait until finish of concurrent createJob
-					productionPlanner.acquireReleaseSemaphore();
+					productionPlanner.acquireReleaseSemaphore("checkOrderToRun");
 					try {
 						List<Job> jobList = new ArrayList<Job>();
 						jobList.addAll(order.getJobs());
@@ -882,7 +882,7 @@ public class JobStepUtil {
 					} catch (Exception e) {
 						Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 					} finally {
-						productionPlanner.releaseReleaseSemaphore();					
+						productionPlanner.releaseReleaseSemaphore("checkOrderToRun");					
 					}
 				}
 			}

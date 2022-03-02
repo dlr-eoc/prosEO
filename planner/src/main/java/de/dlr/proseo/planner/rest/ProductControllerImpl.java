@@ -187,12 +187,12 @@ public class ProductControllerImpl implements ProductController {
 						Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(aKubeConfig.getLongId());
 						if (pfo.isPresent()) {
 							try {
-								productionPlanner.acquireReleaseSemaphore();
+								productionPlanner.acquireReleaseSemaphore("searchForProductPrim");
 								UtilService.getJobStepUtil().searchForJobStepsToRun(pfo.get(), p.getProductClass());
 							} catch (Exception e) {
 								Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 							} finally {
-								productionPlanner.releaseReleaseSemaphore();					
+								productionPlanner.releaseReleaseSemaphore("searchForProductPrim");					
 							}
 						}
 					}

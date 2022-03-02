@@ -620,14 +620,14 @@ public class OrderDispatcher {
 				throw new InterruptedException();
 			}
 			if (job.getJobState() == JobState.INITIAL) {
-				productionPlanner.acquireReleaseSemaphore();
+				productionPlanner.acquireReleaseSemaphore("createJobSteps");
 				try {
 					createJobStepsOfJob(orderId, job.getId(), productionPlanner);
 				}
 				catch (Exception e) {
 					throw e;
 				} finally {
-					productionPlanner.releaseReleaseSemaphore();					
+					productionPlanner.releaseReleaseSemaphore("createJobSteps");					
 				}
 			}
 		}
