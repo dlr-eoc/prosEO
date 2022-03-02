@@ -38,6 +38,10 @@ public class ProductionPlannerConfiguration {
 	@Value("${proseo.ingestor.url}")
 	private String ingestorUrl;
 	
+	/** A host alias to forward to the pods for use in the Planner and Ingestor URLs */
+	@Value("${proseo.wrapper.hostalias:}")
+	private String hostAlias;
+	
 	/** Wait time for K8s job finish cycle in milliseconds */
 	@Value("${proseo.productionPlanner.cyclewaittime}")
 	private Integer productionPlannerCycleWaitTime;
@@ -165,6 +169,17 @@ public class ProductionPlannerConfiguration {
 	 */
 	public String getIngestorUrl() {
 		return ingestorUrl;
+	}
+
+	/**
+	 * @return the host alias entry (or null, if no entry was given and the default has been set)
+	 */
+	public String getHostAlias() {
+		if (hostAlias.isBlank()) {
+			return null;
+		} else {
+			return hostAlias;		
+		}
 	}
 
 }

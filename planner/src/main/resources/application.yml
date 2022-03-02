@@ -21,6 +21,8 @@ proseo:
         # User and password for wrapper callbacks
         user: wrapper
         password: <wrapper_pwd>
+        # (Brain) host alias to forward to the pods for use in the Planner and Ingestor URLs
+        # hostalias: "ip:host1,host2"
     productionPlanner:
         # Callback URL for wrapper
         url: http://192.168.20.155:8080/proseo/planner/v0.1

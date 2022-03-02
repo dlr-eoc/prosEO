@@ -10,6 +10,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,6 +41,7 @@ import io.kubernetes.client.openapi.models.CoreV1Event;
 import io.kubernetes.client.openapi.models.CoreV1EventList;
 import io.kubernetes.client.openapi.models.V1EnvVarSource;
 import io.kubernetes.client.openapi.models.V1EnvVarSourceBuilder;
+import io.kubernetes.client.openapi.models.V1HostAlias;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1JobBuilder;
 import io.kubernetes.client.openapi.models.V1JobCondition;
@@ -364,6 +366,20 @@ public class KubeJob {
 			.putRequestsItem("ephemeral-storage", new Quantity(minDiskSpace));
 		V1EnvVarSource es = new V1EnvVarSourceBuilder().withNewFieldRef().withFieldPath("status.hostIP").endFieldRef().build();
 		String localStorageManagerUrl = kubeConfig.getLocalStorageManagerUrl();
+		
+		// Create a host alias, if given in the config file, for use in the Planner and Ingestor URLs
+		List<V1HostAlias> hostAliases = new ArrayList<>();
+		if (null != ProductionPlanner.config.getHostAlias()) {
+			String[] hostAliasParts = ProductionPlanner.config.getHostAlias().split(":");
+			if (2 != hostAliasParts.length) {
+				logger.warn("Found malformed host alias parameter {}", ProductionPlanner.config.getHostAlias());
+			} else {
+				V1HostAlias hostAlias = new V1HostAlias()
+						.ip(hostAliasParts[0])
+						.hostnames(Arrays.asList(hostAliasParts[1].split(",")));
+				hostAliases.add(hostAlias);
+			}
+		}
 				
 		V1JobSpec jobSpec = new V1JobSpecBuilder()
 				.withNewTemplate()
@@ -373,6 +389,7 @@ public class KubeJob {
 				.endMetadata()
 				.withNewSpec()
 				.addToImagePullSecrets(new V1LocalObjectReference().name("proseo-regcred"))
+				.addAllToHostAliases(hostAliases)
 				.addNewContainer()
 				.withName(containerName)
 				.withImage(imageName)
