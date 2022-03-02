@@ -35,10 +35,11 @@ The deployment of a full prosEO environment requires the following steps:
 6. Configure the prosEO Control Instance (the "brain", see `brain/README.md`).
 7. Configure the NFS server (see `nfs-server/README.md`).
 8. Configure the logging and monitoring host (see `loghost/README.md`).
-9. Configure the bastion host for the prosEO PRIP (see `bastion-prip.REAMDE.md`).
-10. Start the brain (see below).
-11. Start the Storage Manager (see below).
-12. Start the monitoring services (TBC, maybe already done with deployment).
+9. Configure the bastion host for the prosEO PRIP (see `bastion-prip/REAMDE.md`).
+10. Start the database server (see below).
+11. Start the brain (see below).
+12. Start the Storage Manager (see below).
+13. Start the monitoring services (TBC, maybe already done with deployment).
 
 Note that the Kubernetes cluster is started as part of the deployment (step 3).
 
@@ -46,11 +47,21 @@ The dependencies are:
 (3), (5), (7), (8) depend on (2)
 (4) depends on (3)
 (6) depends on (5)
-(10) depends on (1) and (6)
-(11) depends on (1) and (7)
-(12) depends on (1) and (8)
+(10) depends on (1) and (5)
+(11) depends on (1) and (6)
+(12) depends on (1) and (7)
+(13) depends on (1) and (8)
 
 Administrative access usually is through the bastion host for the control instance, since all inner nodes are reachable from there.
+
+
+# Starting the prosEO Database Server
+
+Log in to the db-server host via the control instance bastion host, then create the container for the prosEO metadata database:
+```
+cd /opt/prosEO
+./run_db.sh <private Docker registry> <version>
+```
 
 
 # Starting the prosEO Control Instance ("brain")
@@ -63,14 +74,15 @@ export PGADMIN_PASSWORD=some-pw
 ./run_control_instance.sh <private Docker registry> <version>
 ```
 
-__First start:__ After the first start, the view for products with product files available on any Processing Facility
-needs to be generated. For this, open a shell in the database container:
+__First start:__ After the first start of the brain, the views for products with product files available on any Processing Facility
+and for monitoring need to be generated. For this, return to the database server and open a shell in the database container:
 ```
-docker exec -it proseo_proseo-db_1 /bin/bash
+docker exec -it proseo_proseo-db_1 /bin/bash -c 'su - postgres'
 ```
-Within this shell, run the provided SQL script:
+Within this shell, run the provided SQL scripts:
 ```
 psql proseo -U postgres -h localhost </proseo/create_view_product_processing_facilities.sql
+psql proseo -U postgres -h localhost </proseo/populate_mon_service_state.sql
 ```
 You may be asked to provide the password for the `postgres` user. Enter the password configured in the `docker-compose.yml` file
 in `brain/prepare_proseo/files`.
