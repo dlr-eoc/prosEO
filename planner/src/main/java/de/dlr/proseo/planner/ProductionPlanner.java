@@ -34,7 +34,6 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
-import de.dlr.proseo.planner.util.JobStepUtil;
 import de.dlr.proseo.planner.util.OrderPlanThread;
 import de.dlr.proseo.planner.util.OrderReleaseThread;
 
@@ -74,11 +73,6 @@ public class ProductionPlanner implements CommandLineRunner {
 	 */
 	@Autowired
 	ProductionPlannerConfiguration plannerConfig;
-    /**
-     * Job step util
-     */
-    @Autowired
-    private JobStepUtil jobStepUtil;
 
 	/**
 	 * Current running KubeConfigs

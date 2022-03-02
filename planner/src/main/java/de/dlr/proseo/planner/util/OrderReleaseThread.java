@@ -1,43 +1,38 @@
+/**
+ * OrderReleaseThread.java
+ * 
+ * @author Ernst Melchinger
+ * © 2019 Prophos Informatik GmbH
+ */
+
 package de.dlr.proseo.planner.util;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.Job;
-import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Message;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
-import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 
+/**
+ * The thread to release a processing order
+ *
+ */
 public class OrderReleaseThread extends Thread {
 
 	/**
 	 * Logger of this class
 	 */
 	private static Logger logger = LoggerFactory.getLogger(OrderReleaseThread.class);
-
-	@Autowired
-	private PlatformTransactionManager txManager;
-
-	/** JPA entity manager */
-	@PersistenceContext
-	private EntityManager em;
     
 	/**
 	 * The job utility instance 
@@ -55,6 +50,8 @@ public class OrderReleaseThread extends Thread {
 	/**
 	 * Create new thread
 	 * 
+	 * @param productionPlanner The production planner instance
+	 * @param jobUtil The job utility instance
 	 * @param order The processing order to plan
 	 * @param name The thread name
 	 */
@@ -65,10 +62,11 @@ public class OrderReleaseThread extends Thread {
 		this.order = order;
 	}
 	
-
+    /**
+     * Start and initialize the release thread
+     */
     public void run() {
 		if (logger.isTraceEnabled()) logger.trace(">>> run({})", this.getName());
-		// TODO manage thread map in planner
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		
@@ -108,6 +106,13 @@ public class OrderReleaseThread extends Thread {
     }
     
     
+    /**
+     * Release the processing order 
+     * 
+     * @param orderId The id of the order
+     * @return The result message
+     * @throws InterruptedException
+     */
     public Message release(long orderId) throws InterruptedException {
 		ProcessingOrder order = null;
 
@@ -134,7 +139,7 @@ public class OrderReleaseThread extends Thread {
 				}
 				releaseAnswer = jobUtil.resume(job.getId());
 				if (!releaseAnswer.isTrue()) {
-					// ...
+					// nothing to do here
 				}
 				if (this.isInterrupted()) {
 					answer = new Message(Messages.ORDER_RELEASING_INTERRUPTED);
@@ -142,6 +147,7 @@ public class OrderReleaseThread extends Thread {
 					throw new InterruptedException();
 				}
 				// look for possible job steps to run
+				@SuppressWarnings("unused")
 				String dummy = transactionTemplate.execute((status) -> {
 					Optional<Job> jobOpt = RepositoryService.getJobRepository().findById(job.getId());
 					if (jobOpt.get() != null) {
@@ -165,7 +171,7 @@ public class OrderReleaseThread extends Thread {
 						lambdaOrder.setOrderState(OrderState.COMPLETED);
 						lambdaAnswer = new Message(Messages.ORDER_PRODUCT_EXIST);
 					} else {
-						// TODO check whether order is already running
+						// check whether order is already running
 						Boolean running = false;
 						for (Job j : lambdaOrder.getJobs()) {
 							if (RepositoryService.getJobStepRepository().countJobStepRunningByJobId(j.getId()) > 0) {

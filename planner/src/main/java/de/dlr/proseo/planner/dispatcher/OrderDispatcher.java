@@ -13,7 +13,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -69,7 +68,7 @@ public class OrderDispatcher {
 	/**
 	 * Publish an order, create jobs and job steps needed to create all products
 	 * 
-	 * @param order The processing order
+	 * @param order The processing order id
 	 * @param pf The processing facility 
 	 * @return true after success, else false
 	 */
@@ -175,9 +174,11 @@ public class OrderDispatcher {
 	/**
 	 * Create the needed job for an order of type orbit
 	 * 
-	 * @param order The processing order
+	 * @param order The processing order id
 	 * @param pf The processing facility 
-	 * @return true after success, else false
+	 * @param thread The order plan thread to handle the interrupt
+	 * @return The result message
+	 * @throws InterruptedException
 	 */
 	public Message createJobsForOrbit(ProcessingOrder order, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForOrbit({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
@@ -227,9 +228,11 @@ public class OrderDispatcher {
 	/**
 	 * Create the needed job for an order of type day
 	 * 
-	 * @param order The processing order
+	 * @param order The processing order id
 	 * @param pf The processing facility 
-	 * @return true after success, else false
+	 * @param thread The order plan thread to handle the interrupt
+	 * @return The result message
+	 * @throws InterruptedException
 	 */
 	public Message createJobsForDay(ProcessingOrder order, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForDay({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
@@ -283,9 +286,11 @@ public class OrderDispatcher {
 	/**
 	 * Create the needed job for an order of type month
 	 * 
-	 * @param order The processing order
+	 * @param order The processing order id
 	 * @param pf The processing facility 
-	 * @return true after success, else false
+	 * @param thread The order plan thread to handle the interrupt
+	 * @return The result message
+	 * @throws InterruptedException
 	 */
 	public Message createJobsForMonth(ProcessingOrder order, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForMonth({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
@@ -349,9 +354,11 @@ public class OrderDispatcher {
 	/**
 	 * Create the needed job for an order of type year
 	 * 
-	 * @param order The processing order
+	 * @param order The processing order id
 	 * @param pf The processing facility 
-	 * @return true after success, else false
+	 * @param thread The order plan thread to handle the interrupt
+	 * @return The result message
+	 * @throws InterruptedException
 	 */
 	public Message createJobsForYear(ProcessingOrder order, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForYear({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
@@ -416,9 +423,11 @@ public class OrderDispatcher {
 	/**
 	 * Create the needed job for an order of type time slice
 	 * 
-	 * @param order The processing order
+	 * @param order The processing order id
 	 * @param pf The processing facility 
-	 * @return true after success, else false
+	 * @param thread The order plan thread to handle the interrupt
+	 * @return The result message
+	 * @throws InterruptedException
 	 */
 	public Message createJobsForTimeSlices(ProcessingOrder order, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForTimeSlices({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
@@ -488,7 +497,7 @@ public class OrderDispatcher {
 	 * 
 	 * @param order The processing order
 	 * @param pf The processing facility 
-	 * @return true after success, else false
+	 * @return The result message
 	 */
 	public Message createSingleJob(ProcessingOrder order, ProcessingFacility pf) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createSingleJob({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
@@ -524,7 +533,7 @@ public class OrderDispatcher {
 	 * @param orbit The orbit 
 	 * @param startT The start time
 	 * @param stopT The stop time
-	 * @param pf The facilty to run the job
+	 * @param pf The facility to run the job
 	 * @return true after success, else false
 	 */
 	@Transactional
@@ -594,6 +603,16 @@ public class OrderDispatcher {
 		return answer;
 	}
 
+	/**
+	 * The jobs were created, now create the job steps of each job.
+	 * 
+	 * @param order The processing order id
+	 * @param pf The processing facility 
+	 * @param productionPlanner The production planner instance
+	 * @param thread The order plan thread to handle the interrupt
+	 * @return The result message
+	 * @throws InterruptedException
+	 */
 	public Message createJobSteps(long orderId, ProcessingFacility pf, ProductionPlanner productionPlanner, OrderPlanThread thread) throws InterruptedException {
 		ProcessingOrder order = null;
 
@@ -633,10 +652,19 @@ public class OrderDispatcher {
 		}
 		return answer;
 	}
-	
+
+	/**
+	 * Create the job steps of job with jobId.
+	 * This is one complete transaction
+	 * 
+	 * @param order The processing order id
+	 * @param jobId The job id 
+	 * @param productionPlanner The production planner instance
+	 */
 	@Transactional
 	private void createJobStepsOfJob(long orderId, long jobId, ProductionPlanner productionPlanner) {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		@SuppressWarnings("unused")
 		Object dummy = transactionTemplate.execute((status) -> {
 			ProcessingOrder order = null;
 			Job job = null;
@@ -947,6 +975,12 @@ public class OrderDispatcher {
 		if (logger.isTraceEnabled()) logger.trace("<<< createProductsAndJobStep");
 	}
 	
+	/**
+	 * Find the topmost product class.
+	 * 
+	 * @param pc The current product class
+	 * @return The topmost product class
+	 */
 	public ProductClass getTopProductClassWithPC(ProductClass pc) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getTopProductClassWithPC({})", (null == pc ? "null" : pc.getProductType()));
 		
@@ -957,6 +991,12 @@ public class OrderDispatcher {
 		return rootProductClass;
 	}
 	
+	/**
+	 * Find all descendant product classes of pc
+	 * 
+	 * @param pc The current product class
+	 * @return The list of descendant product classes of pc
+	 */
 	public List<ProductClass> getAllComponentClasses(ProductClass pc) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getAllComponentClasses({})", (null == pc ? "null" : pc.getProductType()));
 		

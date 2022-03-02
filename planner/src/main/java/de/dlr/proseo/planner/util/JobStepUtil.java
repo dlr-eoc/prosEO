@@ -17,8 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
@@ -47,10 +45,6 @@ import de.dlr.proseo.planner.kubernetes.KubeJob;
  * @author Ernst Melchinger
  *
  */
-/**
- * @author melchinger
- *
- */
 @Component
 @Transactional
 public class JobStepUtil {
@@ -73,6 +67,14 @@ public class JobStepUtil {
 	@Autowired
 	RestTemplateBuilder rtb;
 	
+	/**
+	 * Find job steps of specific job step state. The result is ordered by processingCompletionTime descending and returns the first 'limit' entries.
+	 *  
+	 * @param state The job step state
+	 * @param mission The mission code
+	 * @param limit The length of result entry list
+	 * @return The found job steps
+	 */
 	public List<JobStep> findOrderedByJobStepStateAndMission(JobStepState state, String mission, int limit) {
 		if (logger.isTraceEnabled()) logger.trace(">>> findOrderedByJobStepStateAndMission({}, {}, {})", state, mission, limit);
 
@@ -80,7 +82,8 @@ public class JobStepUtil {
 				" inner join Job j on js.job.id = j.id " + 
 				" inner join ProcessingOrder o on j.processingOrder.id = o.id" + 
 				" inner join Mission m on o.mission.id = m.id " + 
-				" where js.processingCompletionTime is not null and js.jobStepState = '" + state + "' and m.code = '" + mission + "' order by js.processingCompletionTime desc";
+				" where js.processingCompletionTime is not null and js.jobStepState = '" + state + "' and m.code = '" + mission + 
+				"' order by js.processingCompletionTime desc";
 		// em.createNativeQ
 		return em.createQuery(query,
 			JobStep.class)

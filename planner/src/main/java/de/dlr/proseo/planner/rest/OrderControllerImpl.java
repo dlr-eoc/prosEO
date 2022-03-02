@@ -12,7 +12,6 @@ import java.util.Optional;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.FacilityState;
-import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.planner.Messages;
@@ -22,8 +21,6 @@ import de.dlr.proseo.model.rest.OrderController;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.planner.rest.model.RestUtil;
 import de.dlr.proseo.planner.util.OrderUtil;
-import de.dlr.proseo.planner.util.UtilService;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

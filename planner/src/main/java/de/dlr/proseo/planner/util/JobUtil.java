@@ -14,8 +14,6 @@ import javax.persistence.PersistenceContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.Job;
@@ -55,7 +53,6 @@ public class JobUtil {
 
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
-		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
@@ -63,7 +60,7 @@ public class JobUtil {
 				break;
 			case RELEASED:
 				// no job step is running
-				// supend all of them
+				// suspend all of them
 				for (JobStep js : job.getJobSteps()) {
 					UtilService.getJobStepUtil().suspend(js, force);
 				}
@@ -117,7 +114,6 @@ public class JobUtil {
 
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
-		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
@@ -161,7 +157,6 @@ public class JobUtil {
 
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
-		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
@@ -237,7 +232,6 @@ public class JobUtil {
 
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
-		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
@@ -279,7 +273,7 @@ public class JobUtil {
 	/**
 	 * Resume a job and its job steps.
 	 * 
-	 * @param job The job
+	 * @param jobId The job id
 	 * @return Result message
 	 */
 	@Transactional
@@ -301,7 +295,6 @@ public class JobUtil {
 			}
 		}
 		// check current state for possibility to be suspended
-		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
@@ -354,7 +347,6 @@ public class JobUtil {
 
 		Boolean answer = false;
 		// check current state for possibility to be suspended
-		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
@@ -403,7 +395,6 @@ public class JobUtil {
 
 		Boolean answer = false;
 		// check current state for possibility to be suspended
-		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
@@ -452,7 +443,6 @@ public class JobUtil {
 
 		Boolean answer = false;
 		// check current state for possibility to be suspended
-		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
@@ -506,7 +496,6 @@ public class JobUtil {
 			job = oJob.get();
 		}
 		// check current state for possibility to be suspended
-		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
@@ -608,7 +597,6 @@ public class JobUtil {
 	
 	/**
 	 * Update the job state depending on job step state
-	 * TODO
 	 * 
 	 * @param job The job
 	 * @param jsState The job step state
@@ -622,8 +610,7 @@ public class JobUtil {
 		if (oJob.isPresent()) {
 			job = oJob.get();
 		}
-		// first implementation for retry
-		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
+
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
