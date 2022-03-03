@@ -23,7 +23,7 @@ public class HttpResponses {
 	
 	private static  HttpHeaders httpErrorHeaders(String message) {
 		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set("Warning", "199 proseo-storage-mgr" + message.replaceAll("\n", " "));
+		responseHeaders.set("Warning", "199 proseo-storage-mgr " + message.replaceAll("\n", " "));
 		return responseHeaders;
 	}
 

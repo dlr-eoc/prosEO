@@ -18,117 +18,109 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.storagemgr.StorageManager;
-import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.version2.model.Storage;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
-import de.dlr.proseo.storagemgr.version2.posix.PosixStorageFile;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestEntityManager
 public class StorageProviderTest {
-	
 
 	@Autowired
 	private TestUtils testUtils;
 	
 	@Autowired
-	private StorageManagerConfiguration cfg;
-	
-	@Autowired
 	private StorageProvider storageProvider;
-
 
 	@Rule
 	public TestName testName = new TestName();
 
-	String testStoragePath; 
-	String testCachePath;
-	String testSourcePath; 
+	String storagePath;
 	String cachePath;
-	
-	String testRelativeStoragePath; 
+	String sourcePath;
+
+	String testStoragePath;
+	String testCachePath;
+	String testSourcePath;
+
+	String testRelativeStoragePath;
 	String testRelativeCachePath;
-	String testRelativeSourcePath; 
+	String testRelativeSourcePath;
 
 	@PostConstruct
 	private void init() {
-		testRelativeSourcePath = testUtils.getRelativeTestSourcePath(); 
-		testRelativeStoragePath = testUtils.getRelativeTestStoragePath(); 
-		testRelativeCachePath = testUtils.getRelativeTestCachePath();
-		
-		testSourcePath = testUtils.getTestSourcePath(); 
-		testStoragePath = testUtils.getTestStoragePath(); 
-		testCachePath = testUtils.getTestCachePath();
-		
+
+		sourcePath = testUtils.getSourcePath();
+		storagePath = testUtils.getStoragePath();
 		cachePath = testUtils.getCachePath();
 	}
-	
-	
+
 	@Test
 	public void testPosixPosixProvider() {
-		
+
 		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyTestDirectories();
+		TestUtils.createEmptyStorageDirectories();
 
 		String testFileName = "testfile.txt";
 		String testFileContent = "some text inside file";
-		
-		String relativeSourceFilePath = Paths.get(testRelativeSourcePath, testFileName).toString();
-		String relativeStorageFilePath = Paths.get(testRelativeStoragePath, testFileName).toString();
-		String relativeCacheFilePath = Paths.get(testRelativeCachePath, testFileName).toString();
 
-		String sourceFilePath = Paths.get(testSourcePath, testFileName).toString();
-		String storageFilePath = Paths.get(testStoragePath, testFileName).toString();
-		String cacheFilePath = Paths.get(testCachePath, testFileName).toString();
-		
-		System.out.println("Relative Source Path: " + relativeSourceFilePath); 
-		System.out.println("Relative Storage Path: " + relativeStorageFilePath); 
-		System.out.println("Relative Cache Path: " + relativeCacheFilePath); 
-		
-		
-		TestUtils.createDirectory(testSourcePath);
-		TestUtils.createDirectory(testStoragePath);
-		TestUtils.createDirectory(testCachePath);
+		String sourceFilePath = Paths.get(sourcePath, testFileName).toString();
+		String storageFilePath = Paths.get(storagePath, testFileName).toString();
+		String cacheFilePath = Paths.get(cachePath, testFileName).toString();
+
+		System.out.println("Source Path:  " + sourceFilePath);
+		System.out.println("Storage Path: " + storageFilePath);
+		System.out.println("Cache Path:   " + cacheFilePath);
+
+		System.out.println();
 
 		TestUtils.createFile(sourceFilePath, testFileContent);
-
-		TestUtils.printDirectoryTree(testSourcePath);
-
+		
+		TestUtils.printDirectoryTree(sourcePath);
+		
 		assertTrue("File for upload has not been created: " + sourceFilePath, TestUtils.fileExists(sourceFilePath));
-		
-		
+
 		Storage storage = storageProvider.getStorage();
-				
-		
-		StorageFile sourceFile = storageProvider.getPosixStorageFile(testSourcePath, relativeSourceFilePath);
-			
-		StorageFile destFile = storageProvider.getStorageFile(relativeStorageFilePath);
-		
-		StorageTestUtils.printStorageFileList("Storage Files ", storage.getFiles());
-		
-		// TODO: add cache storage 
-		// StorageTestUtils.printStorageFileList("Cache Files", cache.getFiles());
-				
+
+		// -------------------- upload ----------------------------
+
+		StorageFile sourceFile = storageProvider.getPosixStorageFile(sourcePath, testFileName);
+		StorageFile destFile = storageProvider.getStorageFile(testFileName);
+
 		try {
 			storage.uploadFile(sourceFile, destFile);
-			
+
 		} catch (IOException e) {
-			e.printStackTrace();
-		} 
+			System.out.println("Cannot upload: " + e.getMessage());
+		}
 
-		assertTrue("File was not uploaded to storage: " + destFile.getFullPath(), storage.fileExists(destFile));
+		assertTrue("File was not uploaded to storage: " + storageFilePath, TestUtils.fileExists(storageFilePath));
 
-		StorageTestUtils.printStorageFileList("Storage Files ", storage.getFiles());
+		StorageTestUtils.printStorageFileList("Storage Files (should be 1 file) ", storage.getFiles());
+
+		// ----------------------- download --------------------------
+
+		sourceFile = storageProvider.getStorageFile(testFileName);
+		destFile = storageProvider.getCacheFile(testFileName);
 		
-		// StorageTestUtils.printStorageFileList("Cache Files", cache.getFiles());
+		try {
+			storage.downloadFile(sourceFile, destFile);
+
+		} catch (IOException e) {
+			System.out.println("Cannot download: " + e.getMessage());
+		}
+				
+		TestUtils.printDirectoryTree(cachePath);
+		
+		assertTrue("File was not downloaded from storage: " + cacheFilePath, TestUtils.fileExists(cacheFilePath));
+		
+		TestUtils.deleteStorageDirectories();
 	}
-	
-	
+
 	@Test
 	public void testDefaultS3PosixProvider() {
-		
+
 	}
 }

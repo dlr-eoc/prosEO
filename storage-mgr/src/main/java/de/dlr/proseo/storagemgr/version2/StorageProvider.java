@@ -64,7 +64,7 @@ public class StorageProvider {
 		theStorageProvider = this;
 		
 		// create cache from profile.getCache()
-		createStorage(StorageType.valueOf(cfg.getDefaultStorageType())); 
+		storage = createStorage(StorageType.valueOf(cfg.getDefaultStorageType())); 
 	}
 
 	/*
@@ -112,6 +112,7 @@ public class StorageProvider {
 
 		if (storageType == StorageType.POSIX) {
 			return new PosixStorageFile(cfg.getPosixBackendPath(), relativePath);
+			
 		} else if (storageType == StorageType.S3) {
 			return new S3StorageFile(cfg.getS3DefaultBucket(), relativePath);
 		}
@@ -121,7 +122,7 @@ public class StorageProvider {
 
 	public StorageFile getCacheFile(String relativePath) {
 
-		return new PosixStorageFile(cfg.getPosixBackendPath(), relativePath);
+		return new PosixStorageFile(cfg.getPosixCachePath(), relativePath);
 	}
 	
 	private Storage createStorage(StorageType storageType) {
@@ -135,6 +136,24 @@ public class StorageProvider {
 
 		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
 	}
+	
+	// no bucket for s3 and posix
+	public String getRelativePath(String absolutePath) {
+		
+		String path = absolutePath;
+		
+		if (path.startsWith("s3:/") || path.startsWith("S3:/")) {
+			path = path.substring(4);
+		}
+		
+		while (path.startsWith("/")) {
+			path = path.substring(1);
+		}
+		
+		return path;
+	}
+	
+	
 
 
 	/*

@@ -112,12 +112,14 @@ public class ProductfileControllerImpl implements ProductfileController {
 			
 			try {
 				Storage storage = storageProvider.getStorage();
+				String relativePath = storageProvider.getRelativePath(pathInfo);
 				
-				StorageFile sourceFile = storageProvider.getStorageFile(pathInfo);
-				StorageFile targetFile = storageProvider.getCacheFile(pathInfo);
+				StorageFile sourceFile = storageProvider.getStorageFile(relativePath);
+				StorageFile targetFile = storageProvider.getCacheFile(relativePath);
+				
 				storage.downloadFile(sourceFile, targetFile);
+				
 				RestFileInfo restFileInfo = ControllerUtils.convertToRestFileInfo(targetFile, storage.getFileSize(targetFile));
-
 				return HttpResponses.createOk(restFileInfo); 
 				
 			} catch (Exception e) {

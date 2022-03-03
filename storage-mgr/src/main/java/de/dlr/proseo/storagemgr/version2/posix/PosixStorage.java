@@ -60,6 +60,7 @@ public class PosixStorage implements Storage {
 		return new File(storageFile.getFullPath()).isFile();
 	}
 
+	// TODO: maybe make recursive
 	@Override
 	public List<StorageFile> getFiles() {
 
@@ -69,10 +70,16 @@ public class PosixStorage implements Storage {
 
 		for (int i = 0; i < listOfFiles.length; i++) {
 			if (listOfFiles[i].isFile()) {
-				String relativePath = relativizePath(getFullBucketPath(), listOfFiles[i].getName());
+				
+				String fullBucketPath = getFullBucketPath(); 
+				String name = listOfFiles[i].getName();
+				
+				// String relativePath = relativizePath(getFullBucketPath(), listOfFiles[i].getName());
 
+				String relativePath = listOfFiles[i].getName();
+				
 				files.add(new PosixStorageFile(getFullBucketPath(), relativePath));
-				System.out.println("File " + listOfFiles[i].getName());
+				// System.out.println("File " + listOfFiles[i].getName());
 			}
 		}
 		return files;
@@ -114,7 +121,7 @@ public class PosixStorage implements Storage {
 			Files.copy(sourceFilePath, targetFilePath, StandardCopyOption.REPLACE_EXISTING);
 		} catch (Exception e) {
 			if (logger.isTraceEnabled())
-				logger.warn("Cannot upload file from " + sourcePath + " to " + targetPath + " ", e.getMessage());
+				logger.warn("Cannot download file from " + sourcePath + " to " + targetPath + " ", e.getMessage());
 			throw e;
 		}
 	}
