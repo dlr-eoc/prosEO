@@ -32,6 +32,9 @@ public class StorageProviderTest {
 	private TestUtils testUtils;
 	
 	@Autowired
+	private StorageTestUtils storageTestUtils;
+	
+	@Autowired
 	private StorageProvider storageProvider;
 
 	@Rule
@@ -40,14 +43,6 @@ public class StorageProviderTest {
 	String storagePath;
 	String cachePath;
 	String sourcePath;
-
-	String testStoragePath;
-	String testCachePath;
-	String testSourcePath;
-
-	String testRelativeStoragePath;
-	String testRelativeCachePath;
-	String testRelativeSourcePath;
 
 	@PostConstruct
 	private void init() {
@@ -116,6 +111,28 @@ public class StorageProviderTest {
 		
 		assertTrue("File was not downloaded from storage: " + cacheFilePath, TestUtils.fileExists(cacheFilePath));
 		
+		TestUtils.deleteStorageDirectories();
+	}
+	
+	
+	@Test 
+	public void probaTest() throws Exception { 
+		
+		TestUtils.printMethodName(this, testName);
+		TestUtils.createEmptyStorageDirectories();
+		
+		String testFile = "probaTest.txt"; 
+		
+		storageTestUtils.createSourceFile(testFile);
+		storageTestUtils.printSource();
+		
+		storageTestUtils.uploadToPosixStorage(testFile);
+		storageTestUtils.printPosixStorage();
+		
+		storageTestUtils.downloadFromPosixStorage(testFile);
+		storageTestUtils.printCache();
+		
+
 		TestUtils.deleteStorageDirectories();
 	}
 
