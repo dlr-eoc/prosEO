@@ -3,7 +3,9 @@ package de.dlr.proseo.storagemgr.rest;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -15,6 +17,9 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import de.dlr.proseo.storagemgr.StorageManager;
+import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.TestUtils;
+import de.dlr.proseo.storagemgr.version2.StorageProvider;
 
 /**
  * Mock Mvc test for Product Controller
@@ -32,8 +37,21 @@ public class ProductfileControllerImplTest {
 
 	@Autowired
 	private MockMvc mockMvc;
+	
+	@Autowired
+	private TestUtils testUtils;
+	
+	@Autowired
+	private StorageTestUtils storageTestUtils;
+	
+	@Autowired
+	private StorageProvider storageProvider;
 
-	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/productsfiles";
+	
+	@Rule
+	public TestName testName = new TestName();
+
+	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/productfiles";
 
 	/**
 	 * Retrieve file from Storage Manager into locally accessible file system
@@ -44,18 +62,28 @@ public class ProductfileControllerImplTest {
 	 */
 	@Test
 	public void testGetRestFileInfoByPathInfo() throws Exception {
-
-		String pathInfo = "/..";
+		
+		TestUtils.printMethodName(this, testName);
+		TestUtils.createEmptyStorageDirectories();
+	
+		String relativePath = "testControllerFile.txt";
+			
+		storageTestUtils.createSourceFile(relativePath);
+		storageTestUtils.uploadToPosixStorage(relativePath);
 
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
-				.param("pathInfo", pathInfo);
+				.param("pathInfo", relativePath);
 
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
 
 		System.out.println("REQUEST: " + REQUEST_STRING);
 		System.out.println("Status: " + mvcResult.getResponse().getStatus());
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
+		
+		storageTestUtils.printCache();
 	}
+	
+	
 
 	/**
      *  Push file from local POSIX file system to Storage Manager
@@ -68,6 +96,7 @@ public class ProductfileControllerImplTest {
 	@Test
 	public void testCreateRestProductFS()  throws Exception {
 		
+		/* 
 		String pathInfo = "/.."; 
 		String productId = "123"; 
 		String fileSize = "234"; 
@@ -77,6 +106,7 @@ public class ProductfileControllerImplTest {
 				.param("productId", productId)
 				.param("fileSize", fileSize);
 		
+		
 		MvcResult mvcResult = mockMvc.perform(request)
 				.andExpect(status().is(201))
 				.andReturn(); 
@@ -84,5 +114,6 @@ public class ProductfileControllerImplTest {
 		System.out.println("REQUEST: " + REQUEST_STRING);
 		System.out.println("Status: " + mvcResult.getResponse().getStatus() );
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString() );
+		*/
 	}
 }

@@ -63,9 +63,9 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 	@Autowired
 	private StorageManagerConfiguration cfg;
-	
-	@Autowired 
-	private StorageProvider storageProvider; 
+
+	@Autowired
+	private StorageProvider storageProvider;
 
 	/**
 	 * Create an HTTP "Warning" header with the given text message
@@ -109,26 +109,26 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		// TODO: WIP
 		if (isStorageManagerVersion2()) {
-			
+
 			try {
 				Storage storage = storageProvider.getStorage();
 				String relativePath = storageProvider.getRelativePath(pathInfo);
-				
+
 				StorageFile sourceFile = storageProvider.getStorageFile(relativePath);
 				StorageFile targetFile = storageProvider.getCacheFile(relativePath);
-				
+
 				storage.downloadFile(sourceFile, targetFile);
-				
-				RestFileInfo restFileInfo = ControllerUtils.convertToRestFileInfo(targetFile, storage.getFileSize(targetFile));
-				return HttpResponses.createOk(restFileInfo); 
-				
+
+				RestFileInfo restFileInfo = ControllerUtils.convertToRestFileInfo(targetFile,
+						storage.getFileSize(targetFile));
+				return HttpResponses.createOk(restFileInfo);
+
 			} catch (Exception e) {
-				return HttpResponses.createError("Cannot upload file", e); 
+				return HttpResponses.createError("Cannot download file", e);
 			}
-			
+
 		}
 
-		
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRestFileInfoByPathInfo({})", pathInfo);
 
@@ -215,6 +215,30 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> updateProductfiles({}, {})", pathInfo, productId);
+
+		
+		// TODO: WIP
+		if (isStorageManagerVersion2()) {
+
+			try {
+				Storage storage = storageProvider.getStorage();
+				String relativePath = storageProvider.getRelativePath(pathInfo);
+
+				StorageFile sourceFile = storageProvider.getStorageFile(relativePath);
+				StorageFile targetFile = storageProvider.getCacheFile(relativePath);
+
+				storage.downloadFile(sourceFile, targetFile);
+
+				RestFileInfo restFileInfo = ControllerUtils.convertToRestFileInfo(targetFile,
+						storage.getFileSize(targetFile));
+				return HttpResponses.createOk(restFileInfo);
+
+			} catch (Exception e) {
+				return HttpResponses.createError("Cannot upload file", e);
+			}
+		}
+		
+		
 
 		RestFileInfo response = new RestFileInfo();
 		if (pathInfo != null) {

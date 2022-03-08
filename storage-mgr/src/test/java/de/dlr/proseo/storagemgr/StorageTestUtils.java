@@ -69,7 +69,13 @@ public class StorageTestUtils {
 		System.out.println();
 	}
 
-	public void createSourceFile(String relativePath) {
+	/**
+	 * Creates file in source and returns absolute path of created file
+	 * 
+	 * @param message
+	 * @param arrayList
+	 */
+	public String createSourceFile(String relativePath) {
 
 		String testFileContent = "some text inside file";
 		String sourceFilePath = Paths.get(sourcePath, relativePath).toString();
@@ -79,6 +85,14 @@ public class StorageTestUtils {
 		assertTrue("File for upload has not been created: " + sourceFilePath, TestUtils.fileExists(sourceFilePath));
 
 		System.out.println("File " + relativePath + " successfully created in Source");
+		
+		return sourceFilePath; 
+	}
+	
+	
+	public String getAbsoluteSourcePath(String relativePath) { 
+		
+		return Paths.get(sourcePath, relativePath).toString();
 	}
 
 	public void uploadToPosixStorage(String relativePath) {
