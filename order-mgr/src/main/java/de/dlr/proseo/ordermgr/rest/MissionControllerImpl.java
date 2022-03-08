@@ -38,6 +38,9 @@ import de.dlr.proseo.ordermgr.rest.model.MissionUtil;
 import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Mission;
+import de.dlr.proseo.model.MonProductProductionDay;
+import de.dlr.proseo.model.MonProductProductionHour;
+import de.dlr.proseo.model.MonProductProductionMonth;
 import de.dlr.proseo.model.Payload;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Processor;
@@ -621,6 +624,31 @@ public class MissionControllerImpl implements MissionController {
 			}
 		}
 		if (logger.isDebugEnabled()) logger.debug("... products deleted");
+		
+		// Delete the production history
+		jpqlQuery = "select mpph from MonProductProductionHour mpph where mpph.mission.id = " + missionId;
+		query = em.createQuery(jpqlQuery);
+		for (Object resultObject: query.getResultList()) {
+			if (resultObject instanceof MonProductProductionHour)
+				RepositoryService.getMonProductProductionHourRepository().deleteById(((MonProductProductionHour) resultObject).getId());
+		}
+		if (logger.isDebugEnabled()) logger.debug("... production history per hour deleted");
+		
+		jpqlQuery = "select mppd from MonProductProductionDay mppd where mppd.mission.id = " + missionId;
+		query = em.createQuery(jpqlQuery);
+		for (Object resultObject: query.getResultList()) {
+			if (resultObject instanceof MonProductProductionDay)
+				RepositoryService.getMonProductProductionDayRepository().deleteById(((MonProductProductionDay) resultObject).getId());
+		}
+		if (logger.isDebugEnabled()) logger.debug("... production history per day deleted");
+		
+		jpqlQuery = "select mppm from MonProductProductionMonth mppm where mppm.mission.id = " + missionId;
+		query = em.createQuery(jpqlQuery);
+		for (Object resultObject: query.getResultList()) {
+			if (resultObject instanceof MonProductProductionMonth)
+				RepositoryService.getMonProductProductionMonthRepository().deleteById(((MonProductProductionMonth) resultObject).getId());
+		}
+		if (logger.isDebugEnabled()) logger.debug("... production history per month deleted");
 		
 		// Delete all processing orders, jobs, job steps and product queries (by cascade)
 		jpqlQuery = "select po from ProcessingOrder po where po.mission.id = " + missionId;
