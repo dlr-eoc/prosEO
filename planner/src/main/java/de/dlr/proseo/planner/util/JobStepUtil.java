@@ -45,10 +45,6 @@ import de.dlr.proseo.planner.kubernetes.KubeJob;
  * @author Ernst Melchinger
  *
  */
-/**
- * @author melchinger
- *
- */
 @Component
 @Transactional
 public class JobStepUtil {
@@ -71,6 +67,14 @@ public class JobStepUtil {
 	@Autowired
 	RestTemplateBuilder rtb;
 	
+	/**
+	 * Find job steps of specific job step state. The result is ordered by processingCompletionTime descending and returns the first 'limit' entries.
+	 *  
+	 * @param state The job step state
+	 * @param mission The mission code
+	 * @param limit The length of result entry list
+	 * @return The found job steps
+	 */
 	public List<JobStep> findOrderedByJobStepStateAndMission(JobStepState state, String mission, int limit) {
 		if (logger.isTraceEnabled()) logger.trace(">>> findOrderedByJobStepStateAndMission({}, {}, {})", state, mission, limit);
 
@@ -78,7 +82,8 @@ public class JobStepUtil {
 				" inner join Job j on js.job.id = j.id " + 
 				" inner join ProcessingOrder o on j.processingOrder.id = o.id" + 
 				" inner join Mission m on o.mission.id = m.id " + 
-				" where js.jobStepState = '" + state + "' and m.code = '" + mission + "' order by js.processingCompletionTime desc";
+				" where js.processingCompletionTime is not null and js.jobStepState = '" + state + "' and m.code = '" + mission + 
+				"' order by js.processingCompletionTime desc";
 		// em.createNativeQ
 		return em.createQuery(query,
 			JobStep.class)
@@ -99,9 +104,9 @@ public class JobStepUtil {
 				(null == processingFacility ? "null" : processingFacility.getName()),
 				(null == pc ? "null" : pc.getProductType()));
 
-		// Search for all job steps on processingFacility with states INITIAL, WAITING_INPUT
+		// Search for all job steps on processingFacility with states PLANNED, WAITING_INPUT
 		List<de.dlr.proseo.model.JobStep.JobStepState> jobStepStates = new ArrayList<>();
-		jobStepStates.add(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
+		jobStepStates.add(de.dlr.proseo.model.JobStep.JobStepState.PLANNED);
 		jobStepStates.add(de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT);
 		List<JobStep> jobSteps = null;
 		if (processingFacility == null) {
@@ -150,15 +155,15 @@ public class JobStepUtil {
 
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
-		// INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED
+		// PLANNED, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED
 		if (js != null) {
 			switch (js.getJobStepState()) {
-			case INITIAL:
+			case PLANNED:
 				answer = Messages.JOBSTEP_SUSPENDED;
 				break;
 			case READY:
 			case WAITING_INPUT:
-				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
+				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.PLANNED);
 				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
 				em.merge(js);
@@ -181,7 +186,7 @@ public class JobStepUtil {
 					js.setProcessingStdOut(null);
 					js.setProcessingStdErr(null);
 					js.setJobOrderFilename(null);
-					js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
+					js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.PLANNED);
 					js.incrementVersion();
 					answer = Messages.JOBSTEP_SUSPENDED;
 					RepositoryService.getJobStepRepository().save(js);
@@ -195,6 +200,9 @@ public class JobStepUtil {
 				break;
 			case FAILED:
 				answer = Messages.JOBSTEP_FAILED;
+				break;
+			case CLOSED:
+				answer = Messages.JOBSTEP_ALREADY_CLOSED;
 				break;
 			default:
 				break;
@@ -218,7 +226,7 @@ public class JobStepUtil {
 		// check current state for possibility to be suspended
 		if (js != null) {
 			switch (js.getJobStepState()) {
-			case INITIAL:
+			case PLANNED:
 			case READY:
 			case WAITING_INPUT:
 				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.FAILED);
@@ -252,6 +260,9 @@ public class JobStepUtil {
 			case FAILED:
 				answer = Messages.JOBSTEP_ALREADY_FAILED;
 				break;
+			case CLOSED:
+				answer = Messages.JOBSTEP_ALREADY_CLOSED;
+				break;
 			default:
 				break;
 			}
@@ -260,6 +271,45 @@ public class JobStepUtil {
 		return answer;
 	}
 
+	/**
+	 * Close job step
+	 * 
+	 * @param js Job step
+	 * @return Result message
+	 */
+	@Transactional
+	public Messages close(JobStep js) {
+		if (logger.isTraceEnabled()) logger.trace(">>> cancel({})", (null == js ? "null" : js.getId()));
+
+		Messages answer = Messages.FALSE;
+		// check current state for possibility to be suspended
+		if (js != null) {
+			switch (js.getJobStepState()) {
+			case PLANNED:
+			case READY:
+			case WAITING_INPUT:
+			case RUNNING:
+				answer = Messages.JOBSTEP_COULD_NOT_CLOSE;
+				break;
+			case COMPLETED:
+			case FAILED:
+				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.CLOSED);
+				js.incrementVersion();
+				RepositoryService.getJobStepRepository().save(js);
+				em.merge(js);
+				answer = Messages.JOBSTEP_CLOSED;
+				break;
+			case CLOSED:
+				answer = Messages.JOBSTEP_ALREADY_CLOSED;
+				break;
+			default:
+				break;
+			}
+			answer.log(logger, String.valueOf(js.getId()));
+		}
+		return answer;
+	}
+	
 	/**
 	 * Retry job step
 	 * 
@@ -274,10 +324,11 @@ public class JobStepUtil {
 		// check current state for possibility to be suspended
 		if (js != null) {
 			switch (js.getJobStepState()) {
-			case INITIAL:
+			case PLANNED:
 			case READY:
 			case RUNNING:
 			case COMPLETED:
+			case CLOSED:
 				answer = Messages.JOBSTEP_COULD_NOT_RETRY;
 				break;
 			case WAITING_INPUT:
@@ -287,11 +338,12 @@ public class JobStepUtil {
 					// collect output products
 					List<Product> jspList = new ArrayList<Product>();
 					collectProducts(jsp, jspList);
+					js.setIsFailed(false);
 					if (checkProducts(jspList, js.getJob().getProcessingFacility())) {
 						// Product was created, due to some communication problems the wrapper process finished with errors. 
 						// Discard this problem and set job step to completed
 						if (js.getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.FAILED) {
-							js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
+							js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.PLANNED);
 						}
 						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.READY);
 						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.RUNNING);
@@ -304,7 +356,7 @@ public class JobStepUtil {
 						break;
 					}		
 				}
-				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
+				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.PLANNED);
 				js.setProcessingStartTime(null);
 				js.setProcessingCompletionTime(null);
 				js.setProcessingStdOut(null);
@@ -337,9 +389,10 @@ public class JobStepUtil {
 		// check current state for possibility to be suspended
 		if (js != null) {
 			switch (js.getJobStepState()) {
-			case INITIAL:
+			case PLANNED:
 			case READY:
 			case WAITING_INPUT:
+			case CLOSED:
 				break;
 			case RUNNING:
 			case COMPLETED:
@@ -348,7 +401,9 @@ public class JobStepUtil {
 				answer = true;
 				break;
 			case FAILED:
-				em.merge(js);
+				js.setIsFailed(true);
+				RepositoryService.getJobStepRepository().save(js);
+				em.merge(js);				
 				UtilService.getJobUtil().setHasFailedJobSteps(js.getJob(), true);
 				UtilService.getJobUtil().checkFinish(js.getJob().getId());
 				answer = true;
@@ -374,7 +429,7 @@ public class JobStepUtil {
 		// check current state for possibility to be suspended
 		if (js != null) {
 			switch (js.getJobStepState()) {
-			case INITIAL:
+			case PLANNED:
 			case READY:
 			case WAITING_INPUT:
 				if (js.getOutputProduct() != null) {
@@ -384,6 +439,7 @@ public class JobStepUtil {
 				// fall through intended
 			case COMPLETED:
 			case FAILED:
+			case CLOSED:
 				deleteJOF(js);
 				js.setJobOrderFilename(null);
 				if (js.getOutputProduct() != null) {
@@ -425,7 +481,7 @@ public class JobStepUtil {
 		// check current state for possibility to be suspended
 		if (js != null) {
 			switch (js.getJobStepState()) {
-			case INITIAL:
+			case PLANNED:
 			case READY:
 			case WAITING_INPUT:
 				if (js.getOutputProduct() != null) {
@@ -434,8 +490,8 @@ public class JobStepUtil {
 				};
 				// Fall through intended
 			case RUNNING:
-			case COMPLETED:
-			case FAILED:
+			case COMPLETED:	
+			case CLOSED:
 				deleteJOF(js);
 				js.setJobOrderFilename(null);
 				if (js.getOutputProduct() != null) {
@@ -475,9 +531,16 @@ public class JobStepUtil {
 		// check current state for possibility to be suspended
 		if (js != null) {
 			switch (js.getJobStepState()) {
-			case INITIAL:
+			case PLANNED:
 			case WAITING_INPUT:
-				checkJobStepQueries(js, force);
+				try {
+					productionPlanner.acquireReleaseSemaphore("resume");
+					checkJobStepQueries(js, force);
+				} catch (Exception e) {
+					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+				} finally {
+					productionPlanner.releaseReleaseSemaphore("resume");					
+				}
 				if (js.getJobStepState() == JobStepState.WAITING_INPUT) {
 					answer = Messages.JOBSTEP_WAITING;
 				} else {
@@ -519,7 +582,7 @@ public class JobStepUtil {
 		// check current state for possibility to be suspended
 		if (js != null) {
 			switch (js.getJobStepState()) {
-			case INITIAL:
+			case PLANNED:
 			case WAITING_INPUT:
 				break;
 			case READY:
@@ -556,7 +619,7 @@ public class JobStepUtil {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkJobStepQueries({}, {})", (null == js ? "null" : js.getId()), force);
 
 		Boolean hasUnsatisfiedInputQueries = false;
-		if (js.getJobStepState() == JobStepState.INITIAL || js.getJobStepState() == JobStepState.WAITING_INPUT) {
+		if (js.getJobStepState() == JobStepState.PLANNED || js.getJobStepState() == JobStepState.WAITING_INPUT) {
 			if (   js.getJob() != null 
 					&& (force || js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)) {
 				logger.trace("Looking for product queries of job step: " + js.getId());
@@ -652,24 +715,32 @@ public class JobStepUtil {
 
 		if (productionPlanner != null) {
 			if (kc != null) {
-				productionPlanner.acquireReleaseSemaphore();
-				List<JobStepState> states = new ArrayList<JobStepState>();
-				states.add(JobStepState.READY);
-				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
-				if (pfo.isPresent()) {
-					if (!onlyRun) {
-						this.searchForJobStepsToRun(pfo.get(), pc);
-					}
-					List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(kc.getLongId(), states);
-					for (JobStep js : jobSteps) {
-						if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
-							if (kc.couldJobRun()) {
-								kc.createJob(String.valueOf(js.getId()), null, null);
+				try {
+					productionPlanner.acquireReleaseSemaphore("checkForJobStepsToRun");
+					List<JobStepState> states = new ArrayList<JobStepState>();
+					states.add(JobStepState.READY);
+					Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
+					if (pfo.isPresent()) {
+						if (!onlyRun) {
+							this.searchForJobStepsToRun(pfo.get(), pc);
+						}
+						List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(kc.getLongId(), states);
+						for (JobStep js : jobSteps) {
+							if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
+								if (kc.couldJobRun()) {
+									kc.createJob(String.valueOf(js.getId()), null, null);
+								} else {
+									// at the moment no further job could be started
+									break;
+								}
 							}
 						}
-					}
+					} 
+				} catch (Exception e) {
+					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+				} finally {
+					productionPlanner.releaseReleaseSemaphore("checkForJobStepsToRun");					
 				}
-				productionPlanner.releaseReleaseSemaphore();
 			} else {
 				checkForJobStepsToRun();
 			}
@@ -734,21 +805,29 @@ public class JobStepUtil {
 				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
 				if (pfo.isPresent()) {
 					// wait until finish of concurrent createJob
-					productionPlanner.acquireReleaseSemaphore();
-					List<JobStep> jobSteps = new ArrayList<JobStep>();
-					jobSteps.addAll(job.getJobSteps());
-					for (JobStep js : jobSteps) {
-						em.refresh(js);
-						checkJobStepQueries(js, false);
-						if (js.getJobStepState() == JobStepState.READY) {	
-							if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
-								if (kc.couldJobRun()) {
-									kc.createJob(String.valueOf(js.getId()), null, null);
+					productionPlanner.acquireReleaseSemaphore("checkJobToRun");
+					try {
+						List<JobStep> jobSteps = new ArrayList<JobStep>();
+						jobSteps.addAll(job.getJobSteps());
+						for (JobStep js : jobSteps) {
+							em.refresh(js);
+							checkJobStepQueries(js, false);
+							if (js.getJobStepState() == JobStepState.READY) {	
+								if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
+									if (kc.couldJobRun()) {
+										kc.createJob(String.valueOf(js.getId()), null, null);
+									} else {
+										// at the moment no further job could be started
+										break;
+									}
 								}
 							}
 						}
+					} catch (Exception e) {
+						Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+					} finally {
+						productionPlanner.releaseReleaseSemaphore("checkJobToRun");					
 					}
-					productionPlanner.releaseReleaseSemaphore();
 				}
 			}
 		}
@@ -775,25 +854,39 @@ public class JobStepUtil {
 				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
 				if (pfo.isPresent()) {
 					// wait until finish of concurrent createJob
-					productionPlanner.acquireReleaseSemaphore();
-					List<Job> jobList = new ArrayList<Job>();
-					jobList.addAll(order.getJobs());
-					for (Job job : jobList) {
-						List<JobStep> jobStepList = new ArrayList<JobStep>();
-						jobStepList.addAll(job.getJobSteps());
-						for (JobStep js : jobStepList) {
-							em.refresh(js);
-							checkJobStepQueries(js, false);
-							if (js.getJobStepState() == JobStepState.READY) {	
-								if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
-									if (kc.couldJobRun()) {
-										kc.createJob(String.valueOf(js.getId()), null, null);
+					productionPlanner.acquireReleaseSemaphore("checkOrderToRun");
+					try {
+						List<Job> jobList = new ArrayList<Job>();
+						jobList.addAll(order.getJobs());
+						Boolean finish = false;
+						for (Job job : jobList) {
+							List<JobStep> jobStepList = new ArrayList<JobStep>();
+							jobStepList.addAll(job.getJobSteps());
+							if (finish) {
+								break;
+							} else {
+								for (JobStep js : jobStepList) {
+									em.refresh(js);
+									checkJobStepQueries(js, false);
+									if (js.getJobStepState() == JobStepState.READY) {	
+										if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
+											if (kc.couldJobRun()) {
+												kc.createJob(String.valueOf(js.getId()), null, null);
+											} else {
+												// at the moment no further job could be started
+												finish = true;
+												break;
+											}
+										}
 									}
 								}
 							}
 						}
+					} catch (Exception e) {
+						Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+					} finally {
+						productionPlanner.releaseReleaseSemaphore("checkOrderToRun");					
 					}
-					productionPlanner.releaseReleaseSemaphore();
 				}
 			}
 		}

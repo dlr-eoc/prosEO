@@ -15,6 +15,7 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -23,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Job;
@@ -44,6 +46,8 @@ import de.dlr.proseo.model.service.ProductQueryService;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Message;
 import de.dlr.proseo.planner.Messages;
+import de.dlr.proseo.planner.ProductionPlanner;
+import de.dlr.proseo.planner.util.OrderPlanThread;
 
 /**
  * Dispatcher to handle processing orders
@@ -64,50 +68,64 @@ public class OrderDispatcher {
 	/**
 	 * Publish an order, create jobs and job steps needed to create all products
 	 * 
-	 * @param order The processing order
+	 * @param order The processing order id
 	 * @param pf The processing facility 
 	 * @return true after success, else false
 	 */
 	@Transactional
-	public Message publishOrder(ProcessingOrder order, ProcessingFacility pf) {
+	public Message prepareExpectedJobs(long orderId, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
+		ProcessingOrder order = null;
+		Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+		if (orderOpt.isPresent()) {
+			order = orderOpt.get();
+		}
 		if (logger.isTraceEnabled()) logger.trace(">>> publishOrder({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 		
 		Message answer = new Message(Messages.FALSE);
+		if (thread.isInterrupted()) {
+			throw new InterruptedException();
+		}
 		if (order != null) {
 			switch (order.getOrderState()) {
+			case PLANNING: 
 			case APPROVED: {
 				// order is released, publish it
 				answer.setMessage(checkForValidOrder(order));
 				if (!answer.isTrue()) {
 					break;
 				}
-				switch (order.getSlicingType()) {
-				case CALENDAR_DAY:
-					answer.setMessage(createJobsForDay(order, pf));
-					break;
-				case CALENDAR_MONTH:
-					answer.setMessage(createJobsForMonth(order, pf));
-					break;
-				case CALENDAR_YEAR:
-					answer.setMessage(createJobsForYear(order, pf));
-					break;
-				case ORBIT:
-					answer.setMessage(createJobsForOrbit(order, pf));
-					break;
-				case TIME_SLICE:
-					answer.setMessage(createJobsForTimeSlices(order, pf));
-					break;
-				case NONE:
-					answer.setMessage(createSingleJob(order, pf));
-					break;
-				default:
-					answer.setMessage(Messages.ORDER_SLICING_TYPE_NOT_SET)
+				try {
+					switch (order.getSlicingType()) {
+					case CALENDAR_DAY:
+						answer.setMessage(createJobsForDay(order, pf, thread));
+						break;
+					case CALENDAR_MONTH:
+						answer.setMessage(createJobsForMonth(order, pf, thread));
+						break;
+					case CALENDAR_YEAR:
+						answer.setMessage(createJobsForYear(order, pf, thread));
+						break;
+					case ORBIT:
+						answer.setMessage(createJobsForOrbit(order, pf, thread));
+						break;
+					case TIME_SLICE:
+						answer.setMessage(createJobsForTimeSlices(order, pf, thread));
+						break;
+					case NONE:
+						answer.setMessage(createSingleJob(order, pf));
+						break;
+					default:
+						answer.setMessage(Messages.ORDER_SLICING_TYPE_NOT_SET)
 						.log(logger, order.getIdentifier());
-					break;
+						break;
 
+					}
+				} catch (InterruptedException e) {
+					throw e;
 				}
 				if (order.getJobs().isEmpty()) {
 					order.setOrderState(OrderState.PLANNED);
+					order.setOrderState(OrderState.RELEASING);
 					order.setOrderState(OrderState.RELEASED);
 					order.setOrderState(OrderState.RUNNING);
 					order.setOrderState(OrderState.COMPLETED);
@@ -156,11 +174,13 @@ public class OrderDispatcher {
 	/**
 	 * Create the needed job for an order of type orbit
 	 * 
-	 * @param order The processing order
+	 * @param order The processing order id
 	 * @param pf The processing facility 
-	 * @return true after success, else false
+	 * @param thread The order plan thread to handle the interrupt
+	 * @return The result message
+	 * @throws InterruptedException
 	 */
-	public Message createJobsForOrbit(ProcessingOrder order, ProcessingFacility pf) {
+	public Message createJobsForOrbit(ProcessingOrder order, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForOrbit({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 		
 		Message answer = new Message(Messages.FALSE);
@@ -183,12 +203,19 @@ public class OrderDispatcher {
 					// create jobs
 					// for each orbit
 					for (Orbit orbit : orbits) {
+						if (thread.isInterrupted()) {
+							answer = new Message(Messages.PLANNING_INTERRUPTED);
+							logger.warn(Messages.PLANNING_INTERRUPTED.format(order.getIdentifier()));
+							throw new InterruptedException();
+						}
 						// create job
 						answer.setMessage(createJobForOrbitOrTime(order, orbit, null, null, pf));
 						if (!answer.isTrue()) break;
 					}
 				}
 			}
+		} catch (InterruptedException e) {
+			throw e;
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			answer.setMessage(Messages.RUNTIME_EXCEPTION)
@@ -201,11 +228,13 @@ public class OrderDispatcher {
 	/**
 	 * Create the needed job for an order of type day
 	 * 
-	 * @param order The processing order
+	 * @param order The processing order id
 	 * @param pf The processing facility 
-	 * @return true after success, else false
+	 * @param thread The order plan thread to handle the interrupt
+	 * @return The result message
+	 * @throws InterruptedException
 	 */
-	public Message createJobsForDay(ProcessingOrder order, ProcessingFacility pf) {
+	public Message createJobsForDay(ProcessingOrder order, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForDay({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 		
 		Message answer = new Message(Messages.FALSE);
@@ -230,6 +259,11 @@ public class OrderDispatcher {
 				} else {
 					// create jobs for each day
 					while (startT.isBefore(stopT)) {
+						if (thread.isInterrupted()) {
+							answer = new Message(Messages.PLANNING_INTERRUPTED);
+							logger.warn(Messages.PLANNING_INTERRUPTED.format(order.getIdentifier()));
+							throw new InterruptedException();
+						}
 						// create job (without orbit association)
 						answer.setMessage(createJobForOrbitOrTime(order, null, startT, sliceStopT, pf));
 						if (!answer.isTrue()) break;
@@ -238,6 +272,8 @@ public class OrderDispatcher {
 					} 
 				}
 			}
+		} catch (InterruptedException e) {
+			throw e;
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			answer.setMessage(Messages.RUNTIME_EXCEPTION)
@@ -246,15 +282,17 @@ public class OrderDispatcher {
 
 		return answer;
 	}
-
+	
 	/**
 	 * Create the needed job for an order of type month
 	 * 
-	 * @param order The processing order
+	 * @param order The processing order id
 	 * @param pf The processing facility 
-	 * @return true after success, else false
+	 * @param thread The order plan thread to handle the interrupt
+	 * @return The result message
+	 * @throws InterruptedException
 	 */
-	public Message createJobsForMonth(ProcessingOrder order, ProcessingFacility pf) {
+	public Message createJobsForMonth(ProcessingOrder order, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForMonth({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 		
 		Message answer = new Message(Messages.FALSE);
@@ -287,6 +325,11 @@ public class OrderDispatcher {
 					// create jobs for each day
 					startT = calStart.toInstant();
 					while (startT.isBefore(stopT)) {
+						if (thread.isInterrupted()) {
+							answer = new Message(Messages.PLANNING_INTERRUPTED);
+							logger.warn(Messages.PLANNING_INTERRUPTED.format(order.getIdentifier()));
+							throw new InterruptedException();
+						}
 						// create job (without orbit association)
 						sliceStopT = calStop.toInstant();
 						answer.setMessage(createJobForOrbitOrTime(order, null, startT, sliceStopT, pf));
@@ -297,6 +340,8 @@ public class OrderDispatcher {
 					} 
 				}
 			}
+		} catch (InterruptedException e) {
+			throw e;
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			answer.setMessage(Messages.RUNTIME_EXCEPTION)
@@ -309,11 +354,13 @@ public class OrderDispatcher {
 	/**
 	 * Create the needed job for an order of type year
 	 * 
-	 * @param order The processing order
+	 * @param order The processing order id
 	 * @param pf The processing facility 
-	 * @return true after success, else false
+	 * @param thread The order plan thread to handle the interrupt
+	 * @return The result message
+	 * @throws InterruptedException
 	 */
-	public Message createJobsForYear(ProcessingOrder order, ProcessingFacility pf) {
+	public Message createJobsForYear(ProcessingOrder order, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForYear({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 		
 		Message answer = new Message(Messages.FALSE);
@@ -347,6 +394,11 @@ public class OrderDispatcher {
 					// create jobs for each day
 					startT = calStart.toInstant();
 					while (startT.isBefore(stopT)) {
+						if (thread.isInterrupted()) {
+							answer = new Message(Messages.PLANNING_INTERRUPTED);
+							logger.warn(Messages.PLANNING_INTERRUPTED.format(order.getIdentifier()));
+							throw new InterruptedException();
+						}
 						// create job (without orbit association)
 						sliceStopT = calStop.toInstant();
 						answer.setMessage(createJobForOrbitOrTime(order, null, startT, sliceStopT, pf));
@@ -357,6 +409,8 @@ public class OrderDispatcher {
 					} 
 				}
 			}
+		} catch (InterruptedException e) {
+			throw e;
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			answer.setMessage(Messages.RUNTIME_EXCEPTION)
@@ -369,11 +423,13 @@ public class OrderDispatcher {
 	/**
 	 * Create the needed job for an order of type time slice
 	 * 
-	 * @param order The processing order
+	 * @param order The processing order id
 	 * @param pf The processing facility 
-	 * @return true after success, else false
+	 * @param thread The order plan thread to handle the interrupt
+	 * @return The result message
+	 * @throws InterruptedException
 	 */
-	public Message createJobsForTimeSlices(ProcessingOrder order, ProcessingFacility pf) {
+	public Message createJobsForTimeSlices(ProcessingOrder order, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForTimeSlices({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 		
 		Message answer = new Message(Messages.FALSE);
@@ -410,6 +466,11 @@ public class OrderDispatcher {
 						}
 						// create jobs for each time slice
 						while (startT.isBefore(stopT)) {
+							if (thread.isInterrupted()) {
+								answer = new Message(Messages.PLANNING_INTERRUPTED);
+								logger.warn(Messages.PLANNING_INTERRUPTED.format(order.getIdentifier()));
+								throw new InterruptedException();
+							}
 							// check orbit
 							Orbit orbit = findOrbit(order, startT.minus(delta), sliceStopT.plus(delta));
 							// create job
@@ -420,6 +481,8 @@ public class OrderDispatcher {
 					}
 				} 
 			}
+		} catch (InterruptedException e) {
+			throw e;
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			answer.setMessage(Messages.RUNTIME_EXCEPTION)
@@ -428,13 +491,13 @@ public class OrderDispatcher {
 
 		return answer;
 	}
-	
+
 	/**
 	 * Create the needed job for an order without slicing
 	 * 
 	 * @param order The processing order
 	 * @param pf The processing facility 
-	 * @return true after success, else false
+	 * @return The result message
 	 */
 	public Message createSingleJob(ProcessingOrder order, ProcessingFacility pf) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createSingleJob({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
@@ -470,7 +533,7 @@ public class OrderDispatcher {
 	 * @param orbit The orbit 
 	 * @param startT The start time
 	 * @param stopT The stop time
-	 * @param pf The facilty to run the job
+	 * @param pf The facility to run the job
 	 * @return true after success, else false
 	 */
 	@Transactional
@@ -514,19 +577,19 @@ public class OrderDispatcher {
 					job.setStopTime(stopT);
 					job.setProcessingOrder(order);
 					job.setProcessingFacility(pf);
-					job = RepositoryService.getJobRepository().save(job);
-					order.getJobs().add(job);
-					List<JobStep> allJobSteps = new ArrayList<JobStep>();
-					List<Product> allProducts = new ArrayList<Product>();
-					if (logger.isTraceEnabled()) logger.trace("Job with time {} - {}", startT, stopT);
-					// look for all products to create
-
-					for (ProductClass productClass : requestedProductClasses) {
-						createProductsAndJobStep(productClass, job, order, allJobSteps, allProducts);
+					Boolean exist = false;
+					for (Job j : order.getJobs()) {
+						if (j.getProcessingOrder().equals(job.getProcessingOrder())
+								&& j.getStartTime().equals(job.getStartTime()) && j.getStopTime().equals(job.getStopTime())) {
+							exist = true;
+							break;
+						}
 					}
-					if (job.getJobSteps().isEmpty()) {
-						order.getJobs().remove(job);
-						RepositoryService.getJobRepository().delete(job);
+					if (exist) {
+						Messages.JOB_ALREADY_EXIST.log(logger, order.getIdentifier());						
+					} else {
+						job = RepositoryService.getJobRepository().save(job);
+						order.getJobs().add(job);
 					}
 				}
 			}
@@ -540,6 +603,101 @@ public class OrderDispatcher {
 		return answer;
 	}
 
+	/**
+	 * The jobs were created, now create the job steps of each job.
+	 * 
+	 * @param order The processing order id
+	 * @param pf The processing facility 
+	 * @param productionPlanner The production planner instance
+	 * @param thread The order plan thread to handle the interrupt
+	 * @return The result message
+	 * @throws InterruptedException
+	 */
+	public Message createJobSteps(long orderId, ProcessingFacility pf, ProductionPlanner productionPlanner, OrderPlanThread thread) throws InterruptedException {
+		ProcessingOrder order = null;
+
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		final List<Job> jobList = new ArrayList<Job>();
+		order = (ProcessingOrder) transactionTemplate.execute((status) -> {
+			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+			if (orderOpt.isPresent()) {
+				for(Job j : ((ProcessingOrder)(orderOpt.get())).getJobs()) {
+					jobList.add(j);
+				}
+				return orderOpt.get();
+			}
+			return null;
+		});
+		if (logger.isTraceEnabled()) logger.trace(">>> createJobSteps({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
+
+		Message answer = new Message(Messages.TRUE);
+		// there has to be a list of orbits
+		for (Job job : order.getJobs()) {
+			if (thread.isInterrupted()) {
+				answer = new Message(Messages.PLANNING_INTERRUPTED);
+				logger.warn(Messages.PLANNING_INTERRUPTED.format(order.getIdentifier()));
+				throw new InterruptedException();
+			}
+			if (job.getJobState() == JobState.INITIAL) {
+				productionPlanner.acquireReleaseSemaphore("createJobSteps");
+				try {
+					createJobStepsOfJob(orderId, job.getId(), productionPlanner);
+				}
+				catch (Exception e) {
+					throw e;
+				} finally {
+					productionPlanner.releaseReleaseSemaphore("createJobSteps");					
+				}
+			}
+		}
+		return answer;
+	}
+
+	/**
+	 * Create the job steps of job with jobId.
+	 * This is one complete transaction
+	 * 
+	 * @param order The processing order id
+	 * @param jobId The job id 
+	 * @param productionPlanner The production planner instance
+	 */
+	@Transactional
+	private void createJobStepsOfJob(long orderId, long jobId, ProductionPlanner productionPlanner) {
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		@SuppressWarnings("unused")
+		Object dummy = transactionTemplate.execute((status) -> {
+			ProcessingOrder order = null;
+			Job job = null;
+			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+			if (orderOpt.isPresent()) {
+				order = orderOpt.get();
+			}
+			if (order != null ) {
+				Optional<Job> jobOpt = RepositoryService.getJobRepository().findById(jobId);
+				if (jobOpt.isPresent()) {
+					job = jobOpt.get();
+				}
+				if (job != null && job.getJobState() == JobState.INITIAL) {
+					List<JobStep> allJobSteps = new ArrayList<JobStep>();
+					List<Product> allProducts = new ArrayList<Product>();
+					// look for all products to create
+					Set<ProductClass> requestedProductClasses = order.getRequestedProductClasses();
+					for (ProductClass productClass : requestedProductClasses) {
+						createProductsAndJobStep(productClass, job, order, allJobSteps, allProducts, productionPlanner);
+					}
+					if (job.getJobSteps().isEmpty()) {
+						order.getJobs().remove(job);
+						RepositoryService.getJobRepository().delete(job);
+					} else {
+						job.setJobState(JobState.PLANNED);
+						RepositoryService.getJobRepository().save(job);
+					}
+				}
+			}
+			return null;
+		});
+	}
+	
 	/**
 	 * Find a suitable orbit for the given start and stop times. This is possible, if exactly one spacecraft exists for the
 	 * mission, to which the order belongs, and the time interval between start and stop time spans at most two orbits
@@ -678,7 +836,7 @@ public class OrderDispatcher {
 	 * @throws NoSuchElementException if a suitable configured processor could not be found
 	 */
 	private void createProductsAndJobStep(ProductClass productClass, Job job, ProcessingOrder order, List<JobStep> allJobSteps,
-			List<Product> allProducts) throws NoSuchElementException {
+			List<Product> allProducts, ProductionPlanner productionPlanner) throws NoSuchElementException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createProductsAndJobStep({}, {}, {}, List<JobStep>, List<Product>)",
 				(null == productClass ? "null" : productClass.getProductType()), (null == job ? "null": job.getId()),
 				(null == order ? "null" : order.getIdentifier()));
@@ -691,6 +849,7 @@ public class OrderDispatcher {
 			// We don't need to create the product, it should be there
 			if (logger.isDebugEnabled()) logger.debug("Skipping product class {} with top product class {} due to order input class stop list",
 					productClass.getProductType(), topProductClass.getProductType());
+			if (logger.isTraceEnabled()) logger.trace("<<< createProductsAndJobStep");
 			return;
 		}
 		
@@ -699,6 +858,7 @@ public class OrderDispatcher {
 			if (i.getOutputProduct() == null || i.getOutputProduct().getProductClass().equals(topProductClass)) {
 				if (logger.isDebugEnabled()) logger.debug("Skipping product class {} because a job step for it has already been generated",
 						productClass.getProductType());
+				if (logger.isTraceEnabled()) logger.trace("<<< createProductsAndJobStep");
 				return;
 			}
 		}
@@ -715,6 +875,7 @@ public class OrderDispatcher {
 				// This was a preceding (possibly auxiliary) input product class, so just wait for the product to appear
 				if (logger.isDebugEnabled()) logger.debug("Skipping product class {} because no configured processor can be found",
 						productClass.getProductType());
+				if (logger.isTraceEnabled()) logger.trace("<<< createProductsAndJobStep");
 				return;
 			}
 		}
@@ -724,7 +885,8 @@ public class OrderDispatcher {
 		// now create products and job steps to generate output files 
 		// create job step(s)
 		JobStep jobStep = new JobStep();
-		jobStep.setJobStepState(JobStepState.INITIAL);
+		jobStep.setIsFailed(false);
+		jobStep.setJobStepState(JobStepState.PLANNED);
 		jobStep.setProcessingMode(order.getProcessingMode());
 		jobStep.setJob(job);
 		jobStep.getOutputParameters().putAll(order.getOutputParameters(topProductClass));
@@ -757,13 +919,17 @@ public class OrderDispatcher {
 		} else {
 			for (Product p : products) {
 				try {
+					// productionPlanner.acquireReleaseSemaphore();
 					findOrCreateProductQuery(jobStep, p.getProductClass());
-				} catch (IllegalArgumentException e) {
+				} catch (Exception e) {
 					logger.error(e.getMessage());
 					job.getJobSteps().remove(jobStep);
 					RepositoryService.getJobStepRepository().delete(jobStep);
 					jobStep = null;
+					if (logger.isTraceEnabled()) logger.trace("<<< createProductsAndJobStep");
 					throw e;
+				} finally {
+					// productionPlanner.releaseReleaseSemaphore();					
 				}
 			}
 			allProducts.addAll(products);
@@ -785,7 +951,8 @@ public class OrderDispatcher {
 							job,
 							order,
 							allJobSteps,
-							allProducts);
+							allProducts, 
+							productionPlanner);
 				} 
 			}
 
@@ -805,8 +972,15 @@ public class OrderDispatcher {
 				}
 			}
 		}
+		if (logger.isTraceEnabled()) logger.trace("<<< createProductsAndJobStep");
 	}
 	
+	/**
+	 * Find the topmost product class.
+	 * 
+	 * @param pc The current product class
+	 * @return The topmost product class
+	 */
 	public ProductClass getTopProductClassWithPC(ProductClass pc) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getTopProductClassWithPC({})", (null == pc ? "null" : pc.getProductType()));
 		
@@ -817,6 +991,12 @@ public class OrderDispatcher {
 		return rootProductClass;
 	}
 	
+	/**
+	 * Find all descendant product classes of pc
+	 * 
+	 * @param pc The current product class
+	 * @return The list of descendant product classes of pc
+	 */
 	public List<ProductClass> getAllComponentClasses(ProductClass pc) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getAllComponentClasses({})", (null == pc ? "null" : pc.getProductType()));
 		
@@ -1026,5 +1206,5 @@ public class OrderDispatcher {
 		
 		return cpFound;
 	}
-	
+		
 }

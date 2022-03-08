@@ -17,7 +17,6 @@ import javax.persistence.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -25,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.enums.FacilityState;
-import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.rest.JobController;
 import de.dlr.proseo.model.rest.model.RestJob;
 import de.dlr.proseo.model.rest.model.RestJobGraph;
@@ -229,7 +227,7 @@ public class JobControllerImpl implements JobController {
 			    	return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}
 
-				Messages msg = jobUtil.resume(job);
+				Messages msg = jobUtil.resume(job.getId());
 				// Already logged
 				
 				if (msg.isTrue()) {

@@ -102,8 +102,19 @@
                     <td th:text="${ord?.id}"></td>
                     <td id="order-name" th:text="${ord?.identifier}"></td>
                     <!-- <td><span id="orderFacility"></span></td> -->
-                    <td th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}" 
-                        th:text="${ord?.orderState}"></td>
+                      <td th:if="(${ord?.orderState} == 'PLANNING' or ${ord?.orderState} == 'RELEASING')" style="padding: 0px;">
+                        <div th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}"
+                             th:text="${ord?.orderState}" style="padding: 0.25rem;">
+                        </div>                          
+                        <div th:title="${ord?.createdJobs} + ' jobs of ' + ${ord?.expectedJobs}" class="progress" style="min-height: 10px; border-radius: 0px;">
+                          <div th:class="'progress-bar ' + ${ord?.orderState}" role="progressbar" th:style="'width: ' + ${#numbers.formatInteger((100.0 / ord?.expectedJobs * ord?.createdJobs),1)} + '%;'" 
+                               th:aria-valuenow="${ord?.createdJobs}" aria-valuemin="0" th:aria-valuemax="${ord?.expectedJobs}">
+                          </div>
+                        </div>
+                      </td>
+                      <td th:unless="(${ord?.orderState} == 'PLANNING' or ${ord?.orderState} == 'RELEASING')"
+                          th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}"
+                          th:text="${ord?.orderState}"></td>
                     <td th:text="${ord?.outputFileClass}"></td>
                     <td th:if="${ord?.slicingType} == 'ORBIT'"><div th:each="orb : ${ord?.orbits}"><p class="p-in-td"><span th:text="#{orbit}">orbit</span>: 
                           <span th:text="#{spacecraft}">spacecraft</span> <span th:text="${orb?.spacecraftCode}">spacecraftCode</span>, 

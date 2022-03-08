@@ -34,7 +34,8 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
-import de.dlr.proseo.planner.util.JobStepUtil;
+import de.dlr.proseo.planner.util.OrderPlanThread;
+import de.dlr.proseo.planner.util.OrderReleaseThread;
 
 /*
  * prosEO Planner application
@@ -60,6 +61,9 @@ public class ProductionPlanner implements CommandLineRunner {
 	public static String hostName = "localhost";
 	public static String hostIP = "127.0.0.1";
 	public static String port = "8080";
+
+	public static String PLAN_THREAD_PREFIX = "PlanOrder_";
+	public static String RELEASE_THREAD_PREFIX = "ReleaseOrder_";
 	
 	public static ProductionPlannerConfiguration config;
 	
@@ -69,11 +73,6 @@ public class ProductionPlanner implements CommandLineRunner {
 	 */
 	@Autowired
 	ProductionPlannerConfiguration plannerConfig;
-    /**
-     * Job step util
-     */
-    @Autowired
-    private JobStepUtil jobStepUtil;
 
 	/**
 	 * Current running KubeConfigs
@@ -91,6 +90,16 @@ public class ProductionPlanner implements CommandLineRunner {
 	 */
 	private Map<Long, Map<String, String>> orderPwCache = new HashMap<>();
 	
+	/**
+	 * Current running order planning threads
+	 */
+	private Map<String, OrderPlanThread> planThreads = new HashMap<>();
+
+	/**
+	 * Current running order release threads
+	 */
+	private Map<String, OrderReleaseThread> releaseThreads = new HashMap<>();
+	
 	/** Transaction manager for transaction control */
 	@Autowired
 	private PlatformTransactionManager txManager;
@@ -103,6 +112,34 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * Semaphore to avoid concurrent kubernetes job generation. 
 	 */
 	private Semaphore releaseSemaphore = new Semaphore(1);
+
+	/**
+	 * @return the planThreads
+	 */
+	public Map<String, OrderPlanThread> getPlanThreads() {
+		return planThreads;
+	}
+
+	/**
+	 * @return the releaseThreads
+	 */
+	public Map<String, OrderReleaseThread> getReleaseThreads() {
+		return releaseThreads;
+	}
+
+	/**
+	 * @return the txManager
+	 */
+	public PlatformTransactionManager getTxManager() {
+		return txManager;
+	}
+
+	/**
+	 * @return the em
+	 */
+	public EntityManager getEm() {
+		return em;
+	}
 
 	/**
 	 * @return the releaseSemaphore
@@ -121,24 +158,24 @@ public class ProductionPlanner implements CommandLineRunner {
 		return orderPwCache.get(orderId);
 	}
 
-	public void acquireReleaseSemaphore() {
-		if (logger.isTraceEnabled()) logger.trace(">>> acquireReleaseSemaphore()");
+	public void acquireReleaseSemaphore(String here) {
+		if (logger.isTraceEnabled()) logger.trace(">>> acquireReleaseSemaphore({})", here == null ? "null" : here);
 		try {
 			getReleaseSemaphore().acquire();
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		if (logger.isTraceEnabled()) logger.trace("<<< acquireReleaseSemaphore()");
+		if (logger.isTraceEnabled()) logger.trace("<<< acquireReleaseSemaphore({})", here == null ? "null" : here);
 	}
 	
-	public void releaseReleaseSemaphore() {
-		if (logger.isTraceEnabled()) logger.trace(">>> releaseReleaseSemaphore()");
+	public void releaseReleaseSemaphore(String here) {
+		if (logger.isTraceEnabled()) logger.trace(">>> releaseReleaseSemaphore({})", here == null ? "null" : here);
 		if (getReleaseSemaphore().availablePermits() <= 0) {
-			if (logger.isTraceEnabled()) logger.trace("    released");
+			if (logger.isTraceEnabled()) logger.trace("    released({})", here);
 			getReleaseSemaphore().release();
 		} else {
-			if (logger.isTraceEnabled()) logger.trace("    nothing to release");
+			if (logger.isTraceEnabled()) logger.trace("    nothing to release({})", here == null ? "null" : here);
 		}
 	}
 
