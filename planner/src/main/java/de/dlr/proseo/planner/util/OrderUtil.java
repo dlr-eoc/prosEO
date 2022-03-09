@@ -78,6 +78,8 @@ public class OrderUtil {
 			switch (order.getOrderState()) {
 			case INITIAL:
 			case APPROVED:
+				answer = Messages.ORDER_HASTOBE_PLANNED;
+				break;
 			case PLANNED:
 				for (Job job : order.getJobs()) {
 					jobUtil.cancel(job);
