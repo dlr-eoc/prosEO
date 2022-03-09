@@ -79,10 +79,6 @@ public class OrderUtil {
 			case INITIAL:
 			case APPROVED:
 			case PLANNED:
-			case RELEASING:
-				answer = Messages.ORDER_ALREADY_RELEASING;
-				break;
-			case RELEASED:
 				for (Job job : order.getJobs()) {
 					jobUtil.cancel(job);
 				}
@@ -92,6 +88,12 @@ public class OrderUtil {
 				logOrderState(order);
 				answer = Messages.ORDER_CANCELED;
 				break;	
+			case RELEASED:
+				answer = Messages.ORDER_ALREADY_RELEASED;
+				break;
+			case RELEASING:
+				answer = Messages.ORDER_ALREADY_RELEASING;
+				break;
 			case RUNNING:
 				answer = Messages.ORDER_ALREADY_RUNNING;
 				break;
