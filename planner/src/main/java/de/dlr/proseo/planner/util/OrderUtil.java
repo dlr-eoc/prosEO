@@ -76,12 +76,12 @@ public class OrderUtil {
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			switch (order.getOrderState()) {
-			case INITIAL:
-			case APPROVED:
-			case PLANNED:
 			case RELEASING:
 				answer = Messages.ORDER_ALREADY_RELEASING;
 				break;
+			case INITIAL:
+			case APPROVED:
+			case PLANNED:
 			case RELEASED:
 				for (Job job : order.getJobs()) {
 					jobUtil.cancel(job);
