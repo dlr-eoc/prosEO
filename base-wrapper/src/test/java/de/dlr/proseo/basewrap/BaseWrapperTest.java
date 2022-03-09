@@ -40,6 +40,8 @@ public class BaseWrapperTest {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseWrapperTest.class);
 	private static final String JOB_ORDER_FILE_NAME = "src/test/resources/JobOrder.609521551_KNMI.xml";
+	private static final String JOB_ORDER_UNFORMATTED_FILE_NAME = "src/test/resources/JobOrderUnformatted.xml";
+	
 	
     public static final String ANSI_RESET = "\u001B[0m";
 	public static final String ANSI_BLACK = "\u001B[30m";
@@ -129,12 +131,6 @@ public class BaseWrapperTest {
 	 */
 	@Test
 	public final void testRun1() {
-		
-//		HttpResponseInfo callback = RestOps.restApiCall("wrapper", "ingest&plan", "http://192.168.20.155:8080/proseo/planner/v0.1/processingfacilities/Lerchenhof/finish/proseojob2111", "", "FAILURE", "status", RestOps.HttpMethod.PATCH);
-//		logger.info(callback.toString());
-//		callback = RestOps.restApiCall("PTM-melchinger", "ernst", "http://192.168.20.155:8080/proseo/planner/v0.1/processingfacilities/Lerchenhof/finish/proseojob2111", "", "FAILURE", "status", RestOps.HttpMethod.PATCH);
-//		logger.info(callback.toString());
-		
 		
 		// test for debug
 		Client client = ClientBuilder.newClient();
@@ -288,8 +284,11 @@ public class BaseWrapperTest {
 			e.printStackTrace();
 		}
 		logger.info(ANSI_YELLOW+"**TEST: S3-JOF but using wrong s3-URI "+envmap+ANSI_RESET);
+		
 		rc = (new BaseWrapper()).run(); 
 		assertEquals("Return code should be 255", 255L, (long) rc);
+		
+		(new BaseWrapper()).logJOF(JOB_ORDER_UNFORMATTED_FILE_NAME);
 		
 	}
 	
