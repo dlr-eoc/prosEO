@@ -59,6 +59,9 @@ public class StorageManagerConfiguration {
 	
 	@Value("${proseo.global.storageManagerVersion2}")
 	private String storageManagerVersion2;
+	
+	@Value("${proseo.global.sourcePath}")
+	private String sourcePath;
 		
 	@Value("${proseo.s3.s3DefaultBucket}")
 	private String s3DefaultBucket;
@@ -134,6 +137,13 @@ public class StorageManagerConfiguration {
 	 */
 	public String getStorageManagerVersion2() {
 		return storageManagerVersion2;
+	}
+	
+	/**
+	 * @return the source Path
+	 */
+	public String getSourcePath() {
+		return sourcePath;
 	}
 	
 	

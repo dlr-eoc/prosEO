@@ -8,6 +8,8 @@ logging:
 proseo:
     global:
       storageIdPrefix: proseo
+      storageManagerVersion2: false
+      sourcePath: default
 
     s3:
       s3AccessKey: short_access_key

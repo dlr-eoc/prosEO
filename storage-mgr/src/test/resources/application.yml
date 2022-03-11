@@ -7,6 +7,8 @@ logging:
 proseo:
     global:
       storageIdPrefix: proseo
+      storageManagerVersion2: true
+      sourcePath: target/testdata/source
 
     s3:
       s3AccessKey: short_access_key
