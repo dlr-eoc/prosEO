@@ -20,7 +20,7 @@ import de.dlr.proseo.planner.util.UtilService;
  * @author Ernst Melchinger
  *
  */
-@Transactional
+// @Transactional
 public class KubeDispatcher extends Thread {
 
 	/**
@@ -70,7 +70,7 @@ public class KubeDispatcher extends Thread {
 	 * 
 	 * @see java.lang.Thread#run()
 	 */
-	@Transactional
+	// @Transactional
     public void run() {
 		if (logger.isTraceEnabled()) logger.trace(">>> run()");
 		
@@ -79,7 +79,7 @@ public class KubeDispatcher extends Thread {
     	if (runOnce) {
 			Messages.KUBEDISPATCHER_RUN_ONCE.log(logger);
     		if (kubeConfig != null) {
-    			UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, null, onlyRun);
+    			UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, onlyRun);
     		} else {
     			Messages.KUBEDISPATCHER_CONFIG_NOT_SET.log(logger);
     		}

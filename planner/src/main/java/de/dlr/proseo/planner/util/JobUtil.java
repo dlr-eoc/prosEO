@@ -16,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.JobStep;
@@ -276,24 +278,28 @@ public class JobUtil {
 	 * @param jobId The job id
 	 * @return Result message
 	 */
-	@Transactional
+	// @Transactional
 	public Messages resume(long jobId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> resume({})", jobId);
 
 		Messages answer = Messages.FALSE;
-		Job job = null;
-		Optional<Job> jo = RepositoryService.getJobRepository().findById(jobId);
-		if (jo.isPresent()) {
-			job = jo.get();
-		}
-		if (job != null) {
-			if (job.getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
-				Messages.FACILITY_NOT_AVAILABLE.log(logger, job.getProcessingFacility().getName(),
-						job.getProcessingFacility().getFacilityState().toString());
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 
-		    	return Messages.FACILITY_NOT_AVAILABLE;
+		final Job job = = transactionTemplate.execute((status) -> {
+			Optional<Job> opt = RepositoryService.getJobRepository().findById(jobId);
+			if (opt.isPresent()) {
+				if (opt.get().getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
+					Messages.FACILITY_NOT_AVAILABLE.log(logger, opt.get().getProcessingFacility().getName(),
+							opt.get().getProcessingFacility().getFacilityState().toString());
+
+			    	return null;
+				} else {
+					return opt.get();
+				}
 			}
-		}
+			return null;
+		});
+
 		// check current state for possibility to be suspended
 		if (job != null) {
 			switch (job.getJobState()) {
@@ -301,11 +307,26 @@ public class JobUtil {
 				answer = Messages.JOB_HASTOBE_PLANNED;
 				break;
 			case PLANNED:
-				job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
-				job.incrementVersion();
-				RepositoryService.getJobRepository().save(job);
-				for (JobStep js : job.getJobSteps()) {
-					UtilService.getJobStepUtil().resume(js, false);
+				final List<Long> jobSteps = new ArrayList<Long>();
+				@SuppressWarnings("unused")
+				String dummy = transactionTemplate.execute((status) -> {
+					Optional<Job> opt = RepositoryService.getJobRepository().findById(jobId);
+					if (opt.isPresent()) {
+						Job jobLoc = opt.get();
+						jobLoc.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
+						jobLoc.incrementVersion();
+						RepositoryService.getJobRepository().save(jobLoc);
+						for (JobStep js : jobLoc.getJobSteps()) {
+							jobSteps.add(js.getId());
+						}
+					}
+					return null;
+				});
+				
+				String dummy = transactionTemplate.execute((status) -> {
+				}
+				for (Long jsId : jobSteps) {
+					UtilService.getJobStepUtil().resume(jsId, false);
 				}
 				answer = Messages.JOB_RELEASED;
 				break;

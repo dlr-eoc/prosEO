@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -46,7 +47,7 @@ import de.dlr.proseo.planner.kubernetes.KubeJob;
  *
  */
 @Component
-@Transactional
+// @Transactional
 public class JobStepUtil {
 	
 	/**
@@ -98,8 +99,24 @@ public class JobStepUtil {
 	 * @param processingFacility
 	 * @param pc Product class
 	 */
-	@Transactional
-	public void searchForJobStepsToRun(ProcessingFacility processingFacility, ProductClass pc) {
+	// @Transactional
+	public void searchForJobStepsToRun(long pfId, long pcId) {
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+
+		final ProcessingFacility processingFacility = transactionTemplate.execute((status) -> {
+			Optional<ProcessingFacility> opt = RepositoryService.getFacilityRepository().findById(pfId);
+			if (opt.isPresent()) {
+				return opt.get();
+			}
+			return null;
+		});
+		final ProductClass pc = transactionTemplate.execute((status) -> {
+			Optional<ProductClass> opt = RepositoryService.getProductClassRepository().findById(pcId);
+			if (opt.isPresent()) {
+				return opt.get();
+			}
+			return null;
+		});
 		if (logger.isTraceEnabled()) logger.trace(">>> searchForJobStepsToRun({}, {})",
 				(null == processingFacility ? "null" : processingFacility.getName()),
 				(null == pc ? "null" : pc.getProductType()));
@@ -108,36 +125,41 @@ public class JobStepUtil {
 		List<de.dlr.proseo.model.JobStep.JobStepState> jobStepStates = new ArrayList<>();
 		jobStepStates.add(de.dlr.proseo.model.JobStep.JobStepState.PLANNED);
 		jobStepStates.add(de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT);
-		List<JobStep> jobSteps = null;
-		if (processingFacility == null) {
-			jobSteps = new ArrayList<>();
-			if (pc != null) {
-				List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
-						.findUnsatisfiedByProductClass(pc.getId());
-				for (ProductQuery pq : productQueries) {
-					jobSteps.add(pq.getJobStep());
-				}
-			} else {
-				for (ProcessingFacility pf : RepositoryService.getFacilityRepository().findAll()) {
-					jobSteps.addAll(RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(pf.getId(), jobStepStates));
-				}
-			}
-		} else {
-			if (pc != null) {
+		List<JobStep> allJobSteps = null;
+
+		allJobSteps = transactionTemplate.execute((status) -> {
+			List<JobStep> jobSteps = null;
+			if (processingFacility == null) {
 				jobSteps = new ArrayList<>();
-				List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
-						.findUnsatisfiedByProductClass(pc.getId());
-				for (ProductQuery pq : productQueries) {
-					if (pq.getJobStep().getJob().getProcessingFacility().getId() == processingFacility.getId()) {
+				if (pc != null) {
+					List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
+							.findUnsatisfiedByProductClass(pcId);
+					for (ProductQuery pq : productQueries) {
 						jobSteps.add(pq.getJobStep());
+					}
+				} else {
+					for (ProcessingFacility pf : RepositoryService.getFacilityRepository().findAll()) {
+						jobSteps.addAll(RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(pf.getId(), jobStepStates));
 					}
 				}
 			} else {
-				jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(processingFacility.getId(), jobStepStates);
+				if (pc != null) {
+					jobSteps = new ArrayList<>();
+					List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
+							.findUnsatisfiedByProductClass(pcId);
+					for (ProductQuery pq : productQueries) {
+						if (pq.getJobStep().getJob().getProcessingFacility().getId() == pfId) {
+							jobSteps.add(pq.getJobStep());
+						}
+					}
+				} else {
+					jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(pfId, jobStepStates);
+				}
 			}
-		}
-		for (JobStep js : jobSteps) {
-			checkJobStepQueries(js, false);
+			return jobSteps;
+		});
+		for (JobStep js : allJobSteps) {
+			checkJobStepQueries(js.getId(), false);
 		}
 	}
 
@@ -523,9 +545,19 @@ public class JobStepUtil {
 	 * @param js Job step
 	 * @return Result message
 	 */
-	@Transactional
-	public Messages resume(JobStep js, Boolean force) {
-		if (logger.isTraceEnabled()) logger.trace(">>> resume({}, {})", (null == js ? "null" : js.getId()), force);
+	// @Transactional
+	public Messages resume(long jsId, Boolean force) {
+		if (logger.isTraceEnabled()) logger.trace(">>> resume({}, {})", jsId, force);
+		
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+
+		final JobStep js = transactionTemplate.execute((status) -> {
+			Optional<JobStep> opt = RepositoryService.getJobStepRepository().findById(jsId);
+			if (opt.isPresent()) {
+				return opt.get();
+			}
+			return null;
+		});
 
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
@@ -535,7 +567,7 @@ public class JobStepUtil {
 			case WAITING_INPUT:
 				try {
 					productionPlanner.acquireReleaseSemaphore("resume");
-					checkJobStepQueries(js, force);
+					checkJobStepQueries(js.getId(), force);
 				} catch (Exception e) {
 					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 				} finally {
@@ -615,11 +647,16 @@ public class JobStepUtil {
 	 * @param force 
 	 */
 	@Transactional
-	public void checkJobStepQueries(JobStep js, Boolean force) {
+	public void checkJobStepQueries(long id, Boolean force) {
+		Optional<JobStep> jsOpt = RepositoryService.getJobStepRepository().findById(id);
+		JobStep js = null;
+		if (jsOpt.isPresent()) {
+			js = jsOpt.get();
+		}
 		if (logger.isTraceEnabled()) logger.trace(">>> checkJobStepQueries({}, {})", (null == js ? "null" : js.getId()), force);
 
 		Boolean hasUnsatisfiedInputQueries = false;
-		if (js.getJobStepState() == JobStepState.PLANNED || js.getJobStepState() == JobStepState.WAITING_INPUT) {
+		if (js != null && (js.getJobStepState() == JobStepState.PLANNED || js.getJobStepState() == JobStepState.WAITING_INPUT)) {
 			if (   js.getJob() != null 
 					&& (force || js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)) {
 				logger.trace("Looking for product queries of job step: " + js.getId());
@@ -679,7 +716,7 @@ public class JobStepUtil {
 	/**
 	 * Check all unsatisfied queries of all job steps on all facilities whether they can be started.
 	 */
-	@Transactional
+	// @Transactional
     public void checkForJobStepsToRun() {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkForJobStepsToRun()");
 
@@ -688,7 +725,7 @@ public class JobStepUtil {
     		if (kcs != null) {
     			for (KubeConfig kc : kcs) {
     				kc.sync();
-    				checkForJobStepsToRun(kc, null, false);
+    				checkForJobStepsToRun(kc, 0, false);
     			}
     		}
     	}
@@ -706,11 +743,11 @@ public class JobStepUtil {
 	 * @param pc ProductClass
 	 * @param onlyRun
 	 */
-	@Transactional
-    synchronized public void checkForJobStepsToRun(KubeConfig kc, ProductClass pc, Boolean onlyRun) {
+	// @Transactional
+    synchronized public void checkForJobStepsToRun(KubeConfig kc, long pcId, Boolean onlyRun) {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkForJobStepsToRun({}, {}, {})",
 				(null == kc ? "null" : kc.getId()),
-				(null == pc ? "null" : pc.getProductType()),
+				(pcId == 0 ? "null" : pcId),
 				onlyRun);
 
 		if (productionPlanner != null) {
@@ -719,22 +756,35 @@ public class JobStepUtil {
 					productionPlanner.acquireReleaseSemaphore("checkForJobStepsToRun");
 					List<JobStepState> states = new ArrayList<JobStepState>();
 					states.add(JobStepState.READY);
-					Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
-					if (pfo.isPresent()) {
-						if (!onlyRun) {
-							this.searchForJobStepsToRun(pfo.get(), pc);
+
+					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+
+					final ProcessingFacility pfo = transactionTemplate.execute((status) -> {
+						Optional<ProcessingFacility> opt = RepositoryService.getFacilityRepository().findById(kc.getLongId());
+						if (opt.isPresent()) {
+							return opt.get();
 						}
-						List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(kc.getLongId(), states);
-						for (JobStep js : jobSteps) {
-							if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
-								if (kc.couldJobRun()) {
-									kc.createJob(String.valueOf(js.getId()), null, null);
-								} else {
-									// at the moment no further job could be started
-									break;
+						return null;
+					});
+					if (pfo != null) {
+						if (!onlyRun) {
+							this.searchForJobStepsToRun(kc.getLongId(), pcId);
+						}
+						@SuppressWarnings("unused")
+						String dummy = transactionTemplate.execute((status) -> {
+							List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(kc.getLongId(), states);
+							for (JobStep js : jobSteps) {
+								if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
+									if (kc.couldJobRun()) {
+										kc.createJob(String.valueOf(js.getId()), null, null);
+									} else {
+										// at the moment no further job could be started
+										break;
+									}
 								}
 							}
-						}
+							return null;
+						});
 					} 
 				} catch (Exception e) {
 					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
@@ -747,7 +797,7 @@ public class JobStepUtil {
 		}
 		if (logger.isTraceEnabled()) logger.trace("<<< checkForJobStepsToRun({}, {}, {})",
 				(null == kc ? "null" : kc.getId()),
-				(null == pc ? "null" : pc.getProductType()),
+				(pcId == 0 ? "null" : pcId),
 				onlyRun);
     }
 
@@ -759,29 +809,48 @@ public class JobStepUtil {
 	 * interfere with each other.
 	 * 
 	 * @param kc KubeConfig
-	 * @param js JobStep
+	 * @param jsId JobStep id
 	 */
-	@Transactional
-    synchronized public void checkJobStepToRun(KubeConfig kc, JobStep js) {
+	// @Transactional
+    synchronized public Boolean checkJobStepToRun(KubeConfig kc, long jsId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkForJobStepsToRun({}, {})",
 				(null == kc ? "null" : kc.getId()),
-				(null == js ? "null" : js.getId()));
+				(0 == jsId ? "null" : jsId));
 
+		Boolean answer = true;
 		if (productionPlanner != null) {
-			if (kc != null && js != null) {
-				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
-				if (pfo.isPresent()) {
-					checkJobStepQueries(js, false);
-					if (js.getJobStepState() == JobStepState.READY) {
-						if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
-							if (kc.couldJobRun()) {
-								kc.createJob(String.valueOf(js.getId()), null, null);
+			if (kc != null && jsId != 0) {
+				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+				final ProcessingFacility pfo = transactionTemplate.execute((status) -> {
+					Optional<ProcessingFacility> opt = RepositoryService.getFacilityRepository().findById(kc.getLongId());
+					if (opt.isPresent()) {
+						return opt.get();
+					}
+					return null;
+				});
+				if (pfo != null) {
+					checkJobStepQueries(jsId, false);
+					answer = transactionTemplate.execute((status) -> {
+						Optional<JobStep> opt = RepositoryService.getJobStepRepository().findById(jsId);
+						JobStep js = null;
+						if (opt.isPresent()) {
+							js =  opt.get();
+						}
+						if (js != null && js.getJobStepState() == JobStepState.READY) {
+							if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
+								if (kc.couldJobRun()) {
+									kc.createJob(String.valueOf(js.getId()), null, null);
+								} else {
+									return false;
+								}
 							}
 						}
-					}
+						return true;
+					});
 				}
 			}
 		}
+		return answer;
 	}
 
 	/**
@@ -794,34 +863,42 @@ public class JobStepUtil {
 	 * @param kc KubeConfig
 	 * @param job Job
 	 */
-	@Transactional
-    synchronized public void checkJobToRun(KubeConfig kc, Job job) {
+	// @Transactional
+    synchronized public void checkJobToRun(KubeConfig kc, long jobId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkJobToRun({}, {})",
 				(null == kc ? "null" : kc.getId()),
-				(null == job ? "null" : job.getId()));
+				(0 == jobId ? "null" : jobId));
 
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		if (productionPlanner != null) {
-			if (kc != null && job != null) {
-				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
-				if (pfo.isPresent()) {
+			if (kc != null && jobId != 0) {
+				final ProcessingFacility pfo = transactionTemplate.execute((status) -> {
+					Optional<ProcessingFacility> opt = RepositoryService.getFacilityRepository().findById(kc.getLongId());
+					if (opt.isPresent()) {
+						return opt.get();
+					}
+					return null;
+				});
+				if (pfo != null) {
 					// wait until finish of concurrent createJob
 					productionPlanner.acquireReleaseSemaphore("checkJobToRun");
 					try {
-						List<JobStep> jobSteps = new ArrayList<JobStep>();
-						jobSteps.addAll(job.getJobSteps());
-						for (JobStep js : jobSteps) {
-							em.refresh(js);
-							checkJobStepQueries(js, false);
-							if (js.getJobStepState() == JobStepState.READY) {	
-								if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
-									if (kc.couldJobRun()) {
-										kc.createJob(String.valueOf(js.getId()), null, null);
-									} else {
-										// at the moment no further job could be started
-										break;
-									}
+						final List<Long> jobSteps = new ArrayList<Long>();
+
+						@SuppressWarnings("unused")
+						String dummy = transactionTemplate.execute((status) -> {
+							Optional<Job> opt = RepositoryService.getJobRepository().findById(jobId);
+							if (opt.isPresent()) {
+								Job job = opt.get();
+								for (JobStep js : job.getJobSteps()) {
+									jobSteps.add(js.getId());
 								}
 							}
+							return null;
+						});
+						
+						for (Long jsId : jobSteps) {
+							checkJobStepToRun(kc, jsId);
 						}
 					} catch (Exception e) {
 						Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
@@ -843,43 +920,48 @@ public class JobStepUtil {
 	 * @param kc KubeConfig
 	 * @param order ProcessingOrder
 	 */
-	@Transactional
-    synchronized public void checkOrderToRun(KubeConfig kc, ProcessingOrder order) {
+	// @Transactional
+    synchronized public void checkOrderToRun(KubeConfig kc, long orderId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkOrderToRun({}, {})",
 				(null == kc ? "null" : kc.getId()),
-				(null == order ? "null" : order.getId()));
+				(0 == orderId ? "null" : orderId));
 
 		if (productionPlanner != null) {
-			if (kc != null && order != null) {
-				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
-				if (pfo.isPresent()) {
+			if (kc != null && orderId != 0) {
+				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+				final ProcessingFacility pfo = transactionTemplate.execute((status) -> {
+					Optional<ProcessingFacility> opt = RepositoryService.getFacilityRepository().findById(kc.getLongId());
+					if (opt.isPresent()) {
+						return opt.get();
+					}
+					return null;
+				});
+				if (pfo != null) {
 					// wait until finish of concurrent createJob
 					productionPlanner.acquireReleaseSemaphore("checkOrderToRun");
+					final List<Long> jobSteps = new ArrayList<Long>();
 					try {
-						List<Job> jobList = new ArrayList<Job>();
-						jobList.addAll(order.getJobs());
-						Boolean finish = false;
-						for (Job job : jobList) {
-							List<JobStep> jobStepList = new ArrayList<JobStep>();
-							jobStepList.addAll(job.getJobSteps());
-							if (finish) {
-								break;
-							} else {
-								for (JobStep js : jobStepList) {
-									em.refresh(js);
-									checkJobStepQueries(js, false);
-									if (js.getJobStepState() == JobStepState.READY) {	
-										if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
-											if (kc.couldJobRun()) {
-												kc.createJob(String.valueOf(js.getId()), null, null);
-											} else {
-												// at the moment no further job could be started
-												finish = true;
-												break;
-											}
-										}
+						@SuppressWarnings("unused")
+						String dummy = transactionTemplate.execute((status) -> {
+							ProcessingOrder order = null;
+							Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(orderId);
+							if (opt.isPresent()) {
+								order = opt.get();
+							}
+							if (order != null) {
+								for (Job job : order.getJobs()) {
+									for (JobStep js : job.getJobSteps()) {
+										jobSteps.add(js.getId());
 									}
+
 								}
+							}
+							return null;
+						});
+
+						for (Long jsId : jobSteps) {
+							if (!checkJobStepToRun(kc, jsId)) {
+								break;
 							}
 						}
 					} catch (Exception e) {

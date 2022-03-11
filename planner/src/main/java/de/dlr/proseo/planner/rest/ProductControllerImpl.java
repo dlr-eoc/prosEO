@@ -90,7 +90,7 @@ public class ProductControllerImpl implements ProductController {
 		}
 		try {
 			if (aKubeConfig != null) {
-				UtilService.getJobStepUtil().checkForJobStepsToRun(aKubeConfig, null, true);
+				UtilService.getJobStepUtil().checkForJobStepsToRun(aKubeConfig, 0, true);
 			}
 		} catch (Exception e) {
 			if (logger.isDebugEnabled()) logger.debug("Exception in planning check: ", e);

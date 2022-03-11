@@ -147,15 +147,14 @@ public class OrderReleaseThread extends Thread {
 					throw new InterruptedException();
 				}
 				// look for possible job steps to run
-				@SuppressWarnings("unused")
-				String dummy = transactionTemplate.execute((status) -> {
+				final KubeConfig kc = transactionTemplate.execute((status) -> {
 					Optional<Job> jobOpt = RepositoryService.getJobRepository().findById(job.getId());
 					if (jobOpt.get() != null) {
-						KubeConfig kc = productionPlanner.getKubeConfig(jobOpt.get().getProcessingFacility().getName());
-						UtilService.getJobStepUtil().checkJobToRun(kc, jobOpt.get());						
+						return productionPlanner.getKubeConfig(jobOpt.get().getProcessingFacility().getName());
 					}
 					return null;
 				});
+				UtilService.getJobStepUtil().checkJobToRun(kc, job.getId());						
 				
 			}
 			final Messages finalAnswer = releaseAnswer;
