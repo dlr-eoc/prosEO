@@ -3,9 +3,7 @@ package de.dlr.proseo.storagemgr;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -13,7 +11,6 @@ import javax.annotation.PostConstruct;
 import org.junit.rules.TestName;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.cache.FileUtils;
 
 /**
@@ -28,7 +25,6 @@ public class TestUtils {
 	private static final String TEST_SEPARATOR = "===============================================";
 	private static final String PRINT_DIRECTORY_HEADER = "----- Folder";
 	private static final String TEST_DIRECTORY = "testdata";
-	private static final String SOURCE_DIRECTORY = "sourcedata";
 
 	@Autowired
 	private StorageManagerConfiguration cfg;
@@ -67,9 +63,7 @@ public class TestUtils {
 	 */
 	public String getSourcePath() {
 
-		String sourcePath = Paths.get(cfg.getPosixCachePath()).getParent().toString();
-
-		return Paths.get(sourcePath, SOURCE_DIRECTORY).toString();
+		return cfg.getSourcePath();
 	}
 
 	/**
@@ -86,9 +80,7 @@ public class TestUtils {
 
 	public String getTestSourcePath() {
 
-		String sourcePath = Paths.get(cfg.getPosixCachePath()).getParent().toString();
-
-		return getTestPath(Paths.get(sourcePath, SOURCE_DIRECTORY).toString());
+		return getTestPath(getSourcePath());
 	}
 
 	/**
@@ -96,7 +88,7 @@ public class TestUtils {
 	 */
 	public String getTestStoragePath() {
 
-		return getTestPath(cfg.getPosixBackendPath());
+		return getTestPath(getStoragePath());
 	}
 
 	/**
@@ -104,30 +96,7 @@ public class TestUtils {
 	 */
 	public String getTestCachePath() {
 
-		return getTestPath(cfg.getPosixCachePath());
-	}
-
-	public String getRelativeTestSourcePath() {
-
-		String sourcePath = Paths.get(cfg.getRelativePosixCachePath()).getParent().toString();
-
-		return getRelativeTestPath(Paths.get(sourcePath, SOURCE_DIRECTORY).toString());
-	}
-
-	/**
-	 * @return
-	 */
-	public String getRelativeTestStoragePath() {
-
-		return getRelativeTestPath(cfg.getRelativePosixBackendPath());
-	}
-
-	/**
-	 * @return
-	 */
-	public String getRelativeTestCachePath() {
-
-		return getRelativeTestPath(cfg.getRelativePosixCachePath());
+		return getTestPath(getCachePath());
 	}
 
 	/**
@@ -135,15 +104,6 @@ public class TestUtils {
 	 * @return
 	 */
 	private String getTestPath(String path) {
-
-		return Paths.get(path, TEST_DIRECTORY).toString();
-	}
-
-	/**
-	 * @param path
-	 * @return
-	 */
-	private String getRelativeTestPath(String path) {
 
 		return Paths.get(path, TEST_DIRECTORY).toString();
 	}
