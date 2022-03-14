@@ -1,8 +1,10 @@
 package de.dlr.proseo.storagemgr.rest;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -80,22 +82,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 		return responseHeaders;
 	}
 
-	/**
-	 * Checks if version 2 of Storage Manager is used
-	 * 
-	 * @return true if version 2
-	 */
-	private boolean isStorageManagerVersion2() {
-		try {
-			if (cfg.getStorageManagerVersion2().equals("true")) {
-				return true;
-			} else {
-				return false;
-			}
-		} catch (Exception e) {
-			return false;
-		}
-	}
+
 
 	/**
 	 * Copy source file named pathInfo to file cache used by processors. The local
@@ -107,8 +94,12 @@ public class ProductfileControllerImpl implements ProductfileController {
 	@Override
 	public ResponseEntity<RestFileInfo> getRestFileInfoByPathInfo(String pathInfo) {
 
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getRestFileInfoByPathInfo({})", pathInfo);
+
+		
 		// TODO: WIP
-		if (isStorageManagerVersion2()) {
+		if (storageProvider.isVersion2()) {
 
 			try {
 				Storage storage = storageProvider.getStorage();
@@ -126,12 +117,10 @@ public class ProductfileControllerImpl implements ProductfileController {
 			} catch (Exception e) {
 				return HttpResponses.createError("Cannot download file", e);
 			}
-
+			
 		}
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> getRestFileInfoByPathInfo({})", pathInfo);
-
+	
 		if (null == pathInfo || pathInfo.isBlank())
 
 		{
@@ -218,16 +207,18 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		
 		// TODO: WIP
-		if (isStorageManagerVersion2()) {
+		if (storageProvider.isVersion2()) {
 
 			try {
 				Storage storage = storageProvider.getStorage();
 				String relativePath = storageProvider.getRelativePath(pathInfo);
+				String fileName = new File(relativePath).getName();
+				String relativePathWithProductFolder = Paths.get(String.valueOf(productId), fileName).toString();
 
 				StorageFile sourceFile = storageProvider.getStorageFile(relativePath);
-				StorageFile targetFile = storageProvider.getCacheFile(relativePath);
+				StorageFile targetFile = storageProvider.getCacheFile(relativePathWithProductFolder);
 
-				storage.downloadFile(sourceFile, targetFile);
+				storage.uploadFile(sourceFile, targetFile);
 
 				RestFileInfo restFileInfo = ControllerUtils.convertToRestFileInfo(targetFile,
 						storage.getFileSize(targetFile));

@@ -8,6 +8,7 @@ public class ControllerUtils {
 	public static RestFileInfo convertToRestFileInfo(StorageFile storageFile, long fileSize) { 
 		
 		RestFileInfo restFileInfo = new RestFileInfo();
+		
 		restFileInfo.setStorageType(storageFile.getStorageType().toString());
 		restFileInfo.setFilePath(storageFile.getFullPath());
 		restFileInfo.setFileName(storageFile.getFileName());

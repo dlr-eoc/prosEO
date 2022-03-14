@@ -54,7 +54,7 @@ public class ProductfileControllerImplTest {
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/productfiles";
 
 	/**
-	 * Retrieve file from Storage Manager into locally accessible file system
+	 * Retrieve file from Storage Manager into locally accessible file system // DOWNLOAD TEST
 	 * 
 	 * GET /productfiles pathInfo="/.."
 	 * 
@@ -96,24 +96,28 @@ public class ProductfileControllerImplTest {
 	@Test
 	public void testCreateRestProductFS()  throws Exception {
 		
-		/* 
-		String pathInfo = "/.."; 
-		String productId = "123"; 
-		String fileSize = "234"; 
+		TestUtils.printMethodName(this, testName);
+		TestUtils.createEmptyStorageDirectories();
+		
+		Long productId = 123l; 
+		Long fileSize = 234l; 
+		
+		String relativePath = "testControllerFile.txt";
+			
+		storageTestUtils.createSourceFile(relativePath);
+		//storageTestUtils.uploadToPosixStorage(relativePath);
+
+		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.put(REQUEST_STRING)
+				.param("pathInfo", relativePath);
+		//		.param("productId", productId)
 				
-		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.post(REQUEST_STRING)
-				.param("pathInfo", pathInfo)
-				.param("productId", productId)
-				.param("fileSize", fileSize);
-		
-		
-		MvcResult mvcResult = mockMvc.perform(request)
-				.andExpect(status().is(201))
-				.andReturn(); 
-		
+
+		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
+
 		System.out.println("REQUEST: " + REQUEST_STRING);
-		System.out.println("Status: " + mvcResult.getResponse().getStatus() );
-		System.out.println("Content: " + mvcResult.getResponse().getContentAsString() );
-		*/
+		System.out.println("Status: " + mvcResult.getResponse().getStatus());
+		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
+		
+		storageTestUtils.printCache();
 	}
 }

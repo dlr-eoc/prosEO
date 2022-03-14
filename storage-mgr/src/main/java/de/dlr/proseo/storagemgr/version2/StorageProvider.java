@@ -31,9 +31,11 @@ public class StorageProvider {
 	/** StorageProvider singleton */
 	private static StorageProvider theStorageProvider;
 
-	//private StorageProfile profile;
-
 	private Storage storage;
+
+	private PathConverter pathConverter = new PathConverter();
+
+	private boolean version2;
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(StorageProvider.class);
@@ -60,51 +62,42 @@ public class StorageProvider {
 	@PostConstruct
 	private void init() {
 
-		// loadProfile(StorageProfile.getDefaultConfiguration());
 		theStorageProvider = this;
+		storage = createStorage(StorageType.valueOf(cfg.getDefaultStorageType()));
+
+		version2 = cfg.getStorageManagerVersion2().equals("true") ? true : false;
 		
-		// create cache from profile.getCache()
-		storage = createStorage(StorageType.valueOf(cfg.getDefaultStorageType())); 
+		pathConverter.addBasePath(storage.getBasePath());
+		pathConverter.addBasePath(cfg.getSourcePath());
+		pathConverter.addBasePath(cfg.getPosixCachePath());
 	}
-
-	/*
-	public StorageProvider(StorageProfile profile) {
-
-		loadProfile(profile);
-	}
-	*/
-
-	/*
-	public void loadProfile(StorageProfile profile) {
-
-		// TODO: For debugging - remove later
-		//if (cfg == null)
-		//	System.out.println("CFG in loadProfile IS NULL");
-
-		this.profile = profile;
-		
-		
-		// create cache from profile.getCache()
-		createStorage(profile.getStorageType()); 
-	}
-
-	public StorageProfile getProfile() {
-		return profile;
-	}
-	*/
 
 	public Storage getStorage() {
 		return storage;
 	}
 
+	public void loadStorage(StorageType storageType) {
+
+		storage = createStorage(storageType);
+	}
+
+	// all ..version.. methods will be removed in release, for smooth integration only
+	public void loadVersion1() {
+		version2 = false;
+	}
+
+	public void loadVersion2() {
+		version2 = true;
+	}
+
+	public boolean isVersion2() {
+		return version2;
+	}
 
 	public StorageFile getPosixStorageFile(String basePath, String relativePath) {
-		
-			return new PosixStorageFile(basePath, relativePath);
-	}
-	
-	
 
+		return new PosixStorageFile(basePath, relativePath);
+	}
 
 	public StorageFile getStorageFile(String relativePath) {
 
@@ -112,7 +105,7 @@ public class StorageProvider {
 
 		if (storageType == StorageType.POSIX) {
 			return new PosixStorageFile(cfg.getPosixBackendPath(), relativePath);
-			
+
 		} else if (storageType == StorageType.S3) {
 			return new S3StorageFile(cfg.getS3DefaultBucket(), relativePath);
 		}
@@ -124,9 +117,9 @@ public class StorageProvider {
 
 		return new PosixStorageFile(cfg.getPosixCachePath(), relativePath);
 	}
-	
+
 	private Storage createStorage(StorageType storageType) {
-		
+
 		if (storageType == StorageType.POSIX) {
 			return new PosixStorage(cfg.getPosixBackendPath());
 
@@ -136,31 +129,9 @@ public class StorageProvider {
 
 		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
 	}
-	
-	// no bucket for s3 and posix
+
 	public String getRelativePath(String absolutePath) {
-		
-		String path = absolutePath;
-		
-		if (path.startsWith("s3:/") || path.startsWith("S3:/")) {
-			path = path.substring(4);
-		}
-		
-		while (path.startsWith("/")) {
-			path = path.substring(1);
-		}
-		
-		return path;
+
+		return pathConverter.getRelativePath(absolutePath);
 	}
-	
-	
-
-
-	/*
-	public long getSize() {
-
-		// TODO: Maybe use method from FileUtils
-		return new File(getFullPath()).length();
-	}
-	*/
 }
