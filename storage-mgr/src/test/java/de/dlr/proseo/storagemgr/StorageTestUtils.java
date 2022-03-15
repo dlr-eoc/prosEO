@@ -99,7 +99,7 @@ public class StorageTestUtils {
 
 		Storage storage = storageProvider.getStorage();
 
-		StorageFile sourceFile = storageProvider.getPosixStorageFile(sourcePath, relativePath);
+		StorageFile sourceFile = storageProvider.getPosixFile(sourcePath, relativePath);
 		StorageFile destFile = storageProvider.getStorageFile(relativePath);
 
 		try {

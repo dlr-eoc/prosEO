@@ -98,7 +98,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 			logger.trace(">>> getRestFileInfoByPathInfo({})", pathInfo);
 
 		
-		// TODO: WIP
+		// pathInfo is absolute path s3://.. or /..   DOWNLOAD Storage -> Cache
 		if (storageProvider.isVersion2()) {
 
 			try {
@@ -111,7 +111,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 				storage.downloadFile(sourceFile, targetFile);
 
 				RestFileInfo restFileInfo = ControllerUtils.convertToRestFileInfo(targetFile,
-						storage.getFileSize(targetFile));
+						storageProvider.getCacheFileSize(relativePath));
 				return HttpResponses.createOk(restFileInfo);
 
 			} catch (Exception e) {
@@ -206,17 +206,18 @@ public class ProductfileControllerImpl implements ProductfileController {
 			logger.trace(">>> updateProductfiles({}, {})", pathInfo, productId);
 
 		
-		// TODO: WIP
+		// pathInfo absolute path, UPLOAD absolute file -> storage 
 		if (storageProvider.isVersion2()) {
 
 			try {
 				Storage storage = storageProvider.getStorage();
-				String relativePath = storageProvider.getRelativePath(pathInfo);
-				String fileName = new File(relativePath).getName();
-				String relativePathWithProductFolder = Paths.get(String.valueOf(productId), fileName).toString();
+				String absolutePath = pathInfo;
+				// String relativePath = storageProvider.getRelativePath(absolutePath);
+				String fileName = new File(pathInfo).getName();
+				String productFolderWithFilename = Paths.get(String.valueOf(productId), fileName).toString();
 
-				StorageFile sourceFile = storageProvider.getStorageFile(relativePath);
-				StorageFile targetFile = storageProvider.getCacheFile(relativePathWithProductFolder);
+				StorageFile sourceFile = storageProvider.getAbsoluteFile(absolutePath);
+				StorageFile targetFile = storageProvider.getStorageFile(productFolderWithFilename);
 
 				storage.uploadFile(sourceFile, targetFile);
 

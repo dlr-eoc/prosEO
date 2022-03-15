@@ -1,6 +1,10 @@
 package de.dlr.proseo.storagemgr.version2;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.annotation.PostConstruct;
 
@@ -35,6 +39,7 @@ public class StorageProvider {
 
 	private PathConverter pathConverter = new PathConverter();
 
+	/** For smooth integration only, will be removed */
 	private boolean version2;
 
 	/** Logger for this class */
@@ -44,9 +49,9 @@ public class StorageProvider {
 	private StorageManagerConfiguration cfg;
 
 	/**
-	 * Instance of file cache
+	 * Instance of storage provider
 	 * 
-	 * @return file cache singleton
+	 * @return storage provider singleton
 	 */
 	public static StorageProvider getInstance() {
 
@@ -66,7 +71,7 @@ public class StorageProvider {
 		storage = createStorage(StorageType.valueOf(cfg.getDefaultStorageType()));
 
 		version2 = cfg.getStorageManagerVersion2().equals("true") ? true : false;
-		
+
 		pathConverter.addBasePath(storage.getBasePath());
 		pathConverter.addBasePath(cfg.getSourcePath());
 		pathConverter.addBasePath(cfg.getPosixCachePath());
@@ -81,7 +86,8 @@ public class StorageProvider {
 		storage = createStorage(storageType);
 	}
 
-	// all ..version.. methods will be removed in release, for smooth integration only
+	// all ..version.. methods will be removed in release, for smooth integration
+	// only
 	public void loadVersion1() {
 		version2 = false;
 	}
@@ -94,28 +100,22 @@ public class StorageProvider {
 		return version2;
 	}
 
-	public StorageFile getPosixStorageFile(String basePath, String relativePath) {
 
-		return new PosixStorageFile(basePath, relativePath);
+
+	public long getCacheFileSize(String relativePath) throws IOException {
+
+		return getPosixFileSize(getAbsoluteCachePath(relativePath));
 	}
 
-	public StorageFile getStorageFile(String relativePath) {
+	public long getSourceFileSize(String relativePath) throws IOException {
 
-		StorageType storageType = storage.getStorageType();
-
-		if (storageType == StorageType.POSIX) {
-			return new PosixStorageFile(cfg.getPosixBackendPath(), relativePath);
-
-		} else if (storageType == StorageType.S3) {
-			return new S3StorageFile(cfg.getS3DefaultBucket(), relativePath);
-		}
-
-		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
+		return getPosixFileSize(getAbsoluteSourcePath(relativePath));
 	}
 
-	public StorageFile getCacheFile(String relativePath) {
+	public long getPosixFileSize(String absolutePath) throws IOException {
 
-		return new PosixStorageFile(cfg.getPosixCachePath(), relativePath);
+		Path path = Paths.get(absolutePath);
+		return Files.size(path);
 	}
 
 	private Storage createStorage(StorageType storageType) {
@@ -130,6 +130,61 @@ public class StorageProvider {
 		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
 	}
 
+	public StorageFile getCacheFile(String relativePath) {
+
+		return new PosixStorageFile(cfg.getPosixCachePath(), relativePath);
+	}
+
+	public StorageFile getSourceFile(String relativePath) {
+
+		return new PosixStorageFile(cfg.getSourcePath(), relativePath);
+	}
+
+	public StorageFile getPosixFile(String basePath, String relativePath) {
+
+		return new PosixStorageFile(basePath, relativePath);
+	}
+	
+	public StorageFile getStorageFile(String relativePath) {
+
+		StorageType storageType = storage.getStorageType();
+
+		if (storageType == StorageType.POSIX) {
+			return new PosixStorageFile(cfg.getPosixBackendPath(), relativePath);
+
+		} else if (storageType == StorageType.S3) {
+			return new S3StorageFile(cfg.getS3DefaultBucket(), relativePath);
+		}
+
+		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
+	}
+	
+	// if file only, return source path
+	public StorageFile getAbsoluteFile(String absolutePath) {
+
+		Path path = Paths.get(absolutePath);
+		String filename = path.getFileName().toString();
+		String folder;
+
+		if (path.getParent() == null) {
+			folder = cfg.getSourcePath();
+		} else {
+			folder = path.getParent().getFileName().toString();
+		}
+
+		return new PosixStorageFile(folder, filename);
+	}
+
+	public String getAbsoluteSourcePath(String relativePath) {
+
+		return Paths.get(cfg.getSourcePath(), relativePath).toString();
+	}
+
+	public String getAbsoluteCachePath(String relativePath) {
+
+		return Paths.get(cfg.getPosixCachePath(), relativePath).toString();
+	}
+	
 	public String getRelativePath(String absolutePath) {
 
 		return pathConverter.getRelativePath(absolutePath);

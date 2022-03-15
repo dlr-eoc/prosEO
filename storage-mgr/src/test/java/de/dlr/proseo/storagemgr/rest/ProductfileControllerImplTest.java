@@ -66,13 +66,13 @@ public class ProductfileControllerImplTest {
 		TestUtils.printMethodName(this, testName);
 		TestUtils.createEmptyStorageDirectories();
 	
-		String relativePath = "testControllerFile.txt";
+		String relativePath = "product/testControllerFile.txt";
 			
-		storageTestUtils.createSourceFile(relativePath);
+		String absolutePath = storageTestUtils.createSourceFile(relativePath);
 		storageTestUtils.uploadToPosixStorage(relativePath);
 
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
-				.param("pathInfo", relativePath);
+				.param("pathInfo", absolutePath);
 
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
 
@@ -99,8 +99,8 @@ public class ProductfileControllerImplTest {
 		TestUtils.printMethodName(this, testName);
 		TestUtils.createEmptyStorageDirectories();
 		
-		Long productId = 123l; 
-		Long fileSize = 234l; 
+		String productId = "123"; 
+		String fileSize = "234"; 
 		
 		String relativePath = "testControllerFile.txt";
 			
@@ -108,8 +108,9 @@ public class ProductfileControllerImplTest {
 		//storageTestUtils.uploadToPosixStorage(relativePath);
 
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.put(REQUEST_STRING)
-				.param("pathInfo", relativePath);
-		//		.param("productId", productId)
+				.param("pathInfo", relativePath)
+				.param("productId", productId)
+				.param("fileSize", fileSize);
 				
 
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();

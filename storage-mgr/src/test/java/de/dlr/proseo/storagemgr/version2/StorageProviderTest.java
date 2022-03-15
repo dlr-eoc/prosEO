@@ -81,7 +81,7 @@ public class StorageProviderTest {
 
 		// -------------------- upload ----------------------------
 
-		StorageFile sourceFile = storageProvider.getPosixStorageFile(sourcePath, testFileName);
+		StorageFile sourceFile = storageProvider.getPosixFile(sourcePath, testFileName);
 		StorageFile destFile = storageProvider.getStorageFile(testFileName);
 
 		try {

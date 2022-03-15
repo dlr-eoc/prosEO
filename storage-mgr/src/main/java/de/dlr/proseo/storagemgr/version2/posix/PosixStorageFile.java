@@ -22,6 +22,7 @@ public class PosixStorageFile implements StorageFile {
 	private String bucket; 
 	private String relativePath;  
 	
+	
 	// no bucket
 	public PosixStorageFile(String basePath, String relativePath) { 
 		this(basePath, StorageFile.NO_BUCKET,  relativePath);
