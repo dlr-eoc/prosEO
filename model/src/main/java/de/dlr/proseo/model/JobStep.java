@@ -164,6 +164,13 @@ public class JobStep extends PersistentObject {
 	}
 
 	/**
+	 * @return the isFailed
+	 */
+	public Boolean isFailed() {
+		return getIsFailed();
+	}
+
+	/**
 	 * @param isFailed the isFailed to set
 	 */
 	public void setIsFailed(Boolean isFailed) {
@@ -198,14 +205,27 @@ public class JobStep extends PersistentObject {
 	}
 
 	/**
-	 * Sets the state of the job step
+	 * Sets the state of the job step (and optionally its failure flag) and propagates this state to the job
 	 * 
 	 * @param jobStepState the jobStepState to set
 	 * @throws IllegalStateException if the intended job step state transition is illegal
 	 */
 	public void setJobStepState(JobStepState jobStepState) throws IllegalStateException {
-		if (null == this.jobStepState || this.jobStepState.equals(jobStepState) || this.jobStepState.isLegalTransition(jobStepState)) {
+		if (this.jobStepState.equals(jobStepState)) {
+			// Do nothing
+		} else if (null == this.jobStepState || this.jobStepState.isLegalTransition(jobStepState)) {
+			// Update job step state
 			this.jobStepState = jobStepState;
+			
+			// Set failure flag
+			if (JobStepState.FAILED.equals(jobStepState)) {
+				this.isFailed = true;
+			} else if (!JobStepState.CLOSED.equals(jobStepState)) {
+				this.isFailed = false;
+			}
+			
+			// Propagate state change
+			job.checkStateChange();
 		} else {
 			throw new IllegalStateException(String.format(MSG_ILLEGAL_STATE_TRANSITION,
 					this.jobStepState.toString(), jobStepState.toString()));
