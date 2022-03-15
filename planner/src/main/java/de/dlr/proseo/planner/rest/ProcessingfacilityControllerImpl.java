@@ -143,7 +143,6 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      * @return a JSON object describing the processing facility that was synchronized
      */
 	@Override
-	@Transactional
 	public ResponseEntity<RestProcessingFacility> synchronizeFacility(String name) {
 		if (logger.isTraceEnabled()) logger.trace(">>> synchronizeFacility({})", name);
 		
@@ -158,7 +157,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 		
 		try {
 			kc.sync();
-			UtilService.getJobStepUtil().checkForJobStepsToRun(kc, null, false);
+			UtilService.getJobStepUtil().checkForJobStepsToRun(kc, 0, false);
 			
 			RestProcessingFacility pf = new RestProcessingFacility(
 					kc.getLongId(),

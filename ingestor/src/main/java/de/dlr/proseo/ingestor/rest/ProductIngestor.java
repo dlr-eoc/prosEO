@@ -736,7 +736,7 @@ public class ProductIngestor {
 	 * @throws ProcessingException if the communication with the Production Planner fails
      * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public void notifyPlanner(String user, String password, IngestorProduct ingestorProduct)
+	public void notifyPlanner(String user, String password, IngestorProduct ingestorProduct, long facilityId)
 			throws IllegalArgumentException, RestClientException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> notifyPlanner({}, PWD, {})", user, ingestorProduct.getProductClass());
 
@@ -760,7 +760,7 @@ public class ProductIngestor {
 		if (!productQueries.isEmpty()) {
 			// If so, inform the production planner of the new product
 			String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl() + String.format(URL_PLANNER_NOTIFY, ingestorProduct.getId());
-
+			productionPlannerUrl += "?facility=" + facilityId;
 			
 			RestTemplate restTemplate = rtb
 					.setConnectTimeout(Duration.ofMillis(ingestorConfig.getProductionPlannerTimeout()))
@@ -785,7 +785,7 @@ public class ProductIngestor {
 	 * @throws ProcessingException if the communication with the Production Planner fails
      * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public void notifyPlanner(String user, String password, RestProductFile restProductFile)
+	public void notifyPlanner(String user, String password, RestProductFile restProductFile, long facilityId)
 			throws IllegalArgumentException, RestClientException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> notifyPlanner({}, PWD, {})", user, restProductFile.getProductFileName());
 
@@ -808,7 +808,7 @@ public class ProductIngestor {
 		ingestorProduct.setProductClass(modelProduct.get().getProductClass().getProductType());
 		
 		// Notify planner
-		notifyPlanner(user, password, ingestorProduct);
+		notifyPlanner(user, password, ingestorProduct, facilityId);
 	}
 
 }

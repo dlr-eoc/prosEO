@@ -199,6 +199,14 @@ public class JobStepUtil {
 						KubeJob kj = kc.getKubeJob(ProductionPlanner.jobNamePrefix + js.getId());
 						if (kj != null) {
 							deleted = kc.deleteJob(kj.getJobName());
+						} else {
+							kc.sync();kj = kc.getKubeJob(ProductionPlanner.jobNamePrefix + js.getId());
+							if (kj != null) {
+								deleted = kc.deleteJob(kj.getJobName());
+							} else {
+								// job not found, it was deleted anywhere else
+								deleted = true;
+							}
 						}
 					}
 				}
@@ -643,24 +651,35 @@ public class JobStepUtil {
 	 * Check the queries of a job step which job is released or started.
 	 * Check all if force is true
 	 *  
-	 * @param js Job step
+	 * @param id Job step id
 	 * @param force 
 	 */
 	@Transactional
 	public void checkJobStepQueries(long id, Boolean force) {
-		Optional<JobStep> jsOpt = RepositoryService.getJobStepRepository().findById(id);
-		JobStep js = null;
-		if (jsOpt.isPresent()) {
-			js = jsOpt.get();
-		}
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+
+		final JobStep js = transactionTemplate.execute((status) -> {
+			Optional<JobStep> jsOpt = RepositoryService.getJobStepRepository().findById(id);
+			if (jsOpt.isPresent()) {
+				return jsOpt.get();
+			}
+			return null;
+		});
+		
 		if (logger.isTraceEnabled()) logger.trace(">>> checkJobStepQueries({}, {})", (null == js ? "null" : js.getId()), force);
 
-		Boolean hasUnsatisfiedInputQueries = false;
 		if (js != null && (js.getJobStepState() == JobStepState.PLANNED || js.getJobStepState() == JobStepState.WAITING_INPUT)) {
 			if (   js.getJob() != null 
 					&& (force || js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)) {
 				logger.trace("Looking for product queries of job step: " + js.getId());
-				for (ProductQuery pq : js.getInputProductQueries()) {
+				final JobStep dummy = transactionTemplate.execute((status) -> {
+					Boolean hasUnsatisfiedInputQueries = false;
+					JobStep jsx = null;
+					Optional<JobStep> jsOpt = RepositoryService.getJobStepRepository().findById(id);
+					if (jsOpt.isPresent()) {
+						jsx = jsOpt.get();
+					}
+				for (ProductQuery pq : jsx.getInputProductQueries()) {
 					if (!pq.isSatisfied()) {
 						if (productQueryService.executeQuery(pq, false)) {
 							RepositoryService.getProductQueryRepository().save(pq);
@@ -668,27 +687,30 @@ public class JobStepUtil {
 								RepositoryService.getProductRepository().save(p);
 							}
 							// The following removed - it is the *input* product queries that matter!
-//							js.getOutputProduct().getSatisfiedProductQueries().add(pq);
-//							RepositoryService.getProductRepository().save(js.getOutputProduct());
+//							jsx.getOutputProduct().getSatisfiedProductQueries().add(pq);
+//							RepositoryService.getProductRepository().save(jsx.getOutputProduct());
 						} else {
 							hasUnsatisfiedInputQueries = true;
 						}
 					}
 				}
 				if (hasUnsatisfiedInputQueries) {
-					if (js.getJobStepState() != de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT) {
-						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT);
-						js.incrementVersion();
-						RepositoryService.getJobStepRepository().save(js);
-						em.merge(js);
+					if (jsx.getJobStepState() != de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT) {
+						jsx.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT);
+						jsx.incrementVersion();
+						RepositoryService.getJobStepRepository().save(jsx);
+						em.merge(jsx);
 					}				
 				} else {
-					js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.READY);
-					js.incrementVersion();
-					RepositoryService.getJobStepRepository().save(js);
-					em.merge(js);
+					jsx.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.READY);
+					jsx.incrementVersion();
+					RepositoryService.getJobStepRepository().save(jsx);
+					em.merge(jsx);
 				}
+				return null;
+				});
 			}
+			
 		}
 	}
 
@@ -837,6 +859,10 @@ public class JobStepUtil {
 							js =  opt.get();
 						}
 						if (js != null && js.getJobStepState() == JobStepState.READY) {
+							if (js.getJob().getJobState() == JobState.PLANNED) {
+								js.getJob().setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
+								RepositoryService.getJobRepository().save(js.getJob());
+							}
 							if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
 								if (kc.couldJobRun()) {
 									kc.createJob(String.valueOf(js.getId()), null, null);

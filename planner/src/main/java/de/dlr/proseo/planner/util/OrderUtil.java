@@ -1004,6 +1004,7 @@ public class OrderUtil {
 				break;
 			case PLANNED:
 				if (jState == JobState.RELEASED) {
+					order.setOrderState(OrderState.RELEASING);
 					order.setOrderState(OrderState.RELEASED);
 					order.incrementVersion();
 					RepositoryService.getOrderRepository().save(order);
@@ -1018,12 +1019,22 @@ public class OrderUtil {
 						}
 					}
 					if (allState) {
+						order.setOrderState(OrderState.RELEASING);
+						order.setOrderState(OrderState.RELEASED);
+						order.setOrderState(OrderState.RUNNING);
 						order.setOrderState(OrderState.FAILED);
 						order.incrementVersion();
 						RepositoryService.getOrderRepository().save(order);
 						em.merge(order);
 					}
-				}	
+				} else if (jState == JobState.STARTED) {
+					order.setOrderState(OrderState.RELEASING);
+					order.setOrderState(OrderState.RELEASED);
+					order.setOrderState(OrderState.RUNNING);
+					order.incrementVersion();
+					RepositoryService.getOrderRepository().save(order);
+					em.merge(order);
+				}
 				break;
 			case RELEASED:
 				if (jState == JobState.FAILED) {

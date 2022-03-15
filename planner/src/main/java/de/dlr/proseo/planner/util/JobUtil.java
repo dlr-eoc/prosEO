@@ -14,6 +14,7 @@ import javax.persistence.PersistenceContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -25,6 +26,7 @@ import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
+import de.dlr.proseo.planner.ProductionPlanner;
 
 /**
  * Handle jobs
@@ -33,7 +35,6 @@ import de.dlr.proseo.planner.Messages;
  *
  */
 @Component
-@Transactional
 public class JobUtil {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(JobUtil.class);
@@ -41,9 +42,12 @@ public class JobUtil {
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
+
+	@Autowired
+	private ProductionPlanner productionPlanner;
 	
 	/**
-	 * Suspend the job and its job steps. If force ist true, running Kubernetes jobs of are killed.
+	 * Suspend the job and its job steps. If force is true, running Kubernetes jobs of are killed.
 	 *  
 	 * @param job The job
 	 * @param force 
@@ -285,7 +289,7 @@ public class JobUtil {
 		Messages answer = Messages.FALSE;
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 
-		final Job job = = transactionTemplate.execute((status) -> {
+		final Job job = transactionTemplate.execute((status) -> {
 			Optional<Job> opt = RepositoryService.getJobRepository().findById(jobId);
 			if (opt.isPresent()) {
 				if (opt.get().getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
@@ -323,8 +327,6 @@ public class JobUtil {
 					return null;
 				});
 				
-				String dummy = transactionTemplate.execute((status) -> {
-				}
 				for (Long jsId : jobSteps) {
 					UtilService.getJobStepUtil().resume(jsId, false);
 				}
@@ -735,10 +737,21 @@ public class JobUtil {
 				if (hasFailed) {
 					job.setJobState(JobState.FAILED);
 				} else {
-					if (job.getJobState() == JobState.FAILED || job.getJobState() == JobState.PLANNED) {
+					switch (job.getJobState()) {
+					case FAILED:
 						job.setJobState(JobState.PLANNED);
 						job.setJobState(JobState.RELEASED);
 						job.setJobState(JobState.STARTED);
+						break;
+					case PLANNED:
+						job.setJobState(JobState.RELEASED);
+						job.setJobState(JobState.STARTED);
+						break;
+					case RELEASED:
+						job.setJobState(JobState.STARTED);
+						break;
+					default:
+						break;						
 					}
 					job.setJobState(JobState.COMPLETED);
 				}

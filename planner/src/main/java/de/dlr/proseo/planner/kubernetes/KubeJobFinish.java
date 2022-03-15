@@ -5,12 +5,24 @@
  */
 package de.dlr.proseo.planner.kubernetes;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import de.dlr.proseo.model.JobStep;
+import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.ProductionPlanner;
+import de.dlr.proseo.planner.ProductionPlannerConfiguration;
 import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
+import de.dlr.proseo.planner.util.UtilService;
 
 /**
  * Wait for finished Kubernetes job
@@ -26,6 +38,9 @@ public class KubeJobFinish extends Thread {
 	 * Logger of this class
 	 */
 	private static Logger logger = LoggerFactory.getLogger(KubeJobFinish.class);
+	 	 
+	@Autowired
+	private ProductionPlanner planner;
 	
 	/**
 	 * The Kubernetes job name which is regarded
@@ -73,6 +88,20 @@ public class KubeJobFinish extends Thread {
     				found = kubeJob.updateFinishInfoAndDelete(jobName);
     				if (found) {
     		    		// Check once for runnable job steps, which can be started as a result of "kubeJob" being finished 
+    					Long jobStepId = kubeJob.getJobId();
+    					Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
+    					if (js.isPresent()) {	
+    						if (js.get().getOutputProduct() != null) {
+    							List<ProductClass> productClasses = 
+    									getAllComponentClasses(js.get().getOutputProduct().getProductClass());
+    							productClasses.add(js.get().getOutputProduct().getProductClass());
+    							for (ProductClass pc : productClasses) {
+    								UtilService.getJobStepUtil().checkForJobStepsToRun(kubeJob.getKubeConfig(), 
+    										pc.getId(), 
+    										false);		    				
+    							}
+    						}			
+    					}
     		    		KubeDispatcher kd = new KubeDispatcher(null, kubeJob.getKubeConfig(), true);
     		    		kd.start();    					
     				}
@@ -81,5 +110,30 @@ public class KubeJobFinish extends Thread {
     			}
     		}
     	}
-    }    	
+    }  
+
+	/**
+	 * Collect all component classes into a list
+	 * 
+	 * @param pc Product class
+	 * @return The collected component classes
+	 */
+	@Transactional
+	private List<ProductClass> getAllComponentClasses(ProductClass pc) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getAllComponentClasses({})", (null == pc ? "null" : pc.getProductType()));
+		TransactionTemplate transactionTemplate = new TransactionTemplate(ProductionPlanner.productionPlanner.getTxManager());
+		final List<ProductClass> productClasses = new ArrayList<ProductClass>();
+		final List<ProductClass> dummy = transactionTemplate.execute((status) -> {
+			Optional<ProductClass> pcx = RepositoryService.getProductClassRepository().findById(pc.getId());
+			if (pcx.isPresent()) {	
+				productClasses.addAll(pcx.get().getComponentClasses());
+				for (ProductClass subPC : pcx.get().getComponentClasses()) {
+					productClasses.addAll(getAllComponentClasses(subPC));
+				}		
+			}
+			return productClasses;
+		});
+		return productClasses;
+	}
+	
 }
