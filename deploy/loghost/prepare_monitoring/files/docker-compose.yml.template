@@ -9,7 +9,7 @@ services:
       - /opt/proseo/log/grafana:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_USER=proseoadmin
-      - GF_SECURITY_ADMIN_PASSWORD=VVRVOzcXe1PsvpWnFpqbPWoB
+      - GF_SECURITY_ADMIN_PASSWORD=TBD
       - GF_SERVER_ROOT_URL=/proseo/grafana/
     logging:
       driver: local

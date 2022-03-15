@@ -98,14 +98,14 @@ my @users = (
         groups => [ 'operator', 'archivist', 'engineer', 'approver' ]
     },
     {
-        name => 'esaprip',
-        pwd => 'esaPrip.012',
+        name => 'sciuserprip',
+        pwd => 'sciUserPrip.012',
         authorities => [],
         groups => [ 'prippublic' ]
     },
     {
-        name => 'knmiprip',
-        pwd => 'knmiPrip.678',
+        name => 'cfidevprip',
+        pwd => 'cfiDevPrip.678',
         authorities => [],
         groups => [ 'externalprocessor' ]
     },
@@ -262,48 +262,48 @@ my %selection_rules;
 my %applicable_processors;
 
 # Product types without processor
-push @product_types, 'L0________';
-$visibilities{'L0________'} = 'RESTRICTED';
+push @product_types, 'PTM_L0';
+$visibilities{'PTM_L0'} = 'RESTRICTED';
 push @product_types, 'AUX_IERS_B';
 $visibilities{'AUX_IERS_B'} = 'INTERNAL';
     
 # Selection rule for PTM L1B
 # Expected time coverage of the L1B products is on orbit
-push @product_types, 'L1B_______';
-push @product_types, 'L1B_PART1';
-push @product_types, 'L1B_PART2';
-$enclosing_product_types{'L1B_PART1'} = 'L1B_______';
-$enclosing_product_types{'L1B_PART2'} = 'L1B_______';
-$processing_levels{'L1B_______'} = 'L1B';
-$processing_levels{'L1B_PART1'} = 'L1B';
-$processing_levels{'L1B_PART2'} = 'L1B';
-$slicing_types{'L1B_______'} = 'ORBIT';
-$product_processor_class{'L1B_______'} = 'PTML1B';
+push @product_types, 'PTM_L1B';
+push @product_types, 'PTM_L1B_P1';
+push @product_types, 'PTM_L1B_P2';
+$enclosing_product_types{'PTM_L1B_P1'} = 'PTM_L1B';
+$enclosing_product_types{'PTM_L1B_P2'} = 'PTM_L1B';
+$processing_levels{'PTM_L1B'} = 'L1B';
+$processing_levels{'PTM_L1B_P1'} = 'L1B';
+$processing_levels{'PTM_L1B_P2'} = 'L1B';
+$slicing_types{'PTM_L1B'} = 'ORBIT';
+$product_processor_class{'PTM_L1B'} = 'PTML1B';
 # Output L1B
-$selection_rules{'L1B_______'} = '
-    FOR L0________ SELECT ValIntersect(0, 0);
+$selection_rules{'PTM_L1B'} = '
+    FOR PTM_L0 SELECT ValIntersect(0, 0);
     FOR AUX_IERS_B SELECT LatestValIntersect(60 D, 60 D)';
-$applicable_processors{'L1B_______'} = [ 'PTML1B_0.1.0_OPER_2020-03-25' ];
+$applicable_processors{'PTM_L1B'} = [ 'PTML1B_0.1.0_OPER_2020-03-25' ];
 
 # Selection rules for PTM L2
 # Expected time coverage of the L2 products is on orbit (same as for the L1B product)
 
-# Output PTM_L2A
-push @product_types, 'PTM_L2A';
-$processing_levels{'PTM_L2A'} = 'L2A';
-$slicing_types{'PTM_L2A'} = 'ORBIT';
-$product_processor_class{'PTM_L2A'} = 'PTML2';
-$selection_rules{'PTM_L2A'} = '
-    FOR L1B_______ SELECT LatestValCover(0, 0)';
-$applicable_processors{'PTM_L2A'} = [ 'PTML2_0.1.0_OPER_2020-03-25' ];
-# Output PTM_L2B
-push @product_types, 'PTM_L2B';
-$processing_levels{'PTM_L2B'} = 'L2B';
-$slicing_types{'PTM_L2B'} = 'ORBIT';
-$product_processor_class{'PTM_L2B'} = 'PTML2';
-$selection_rules{'PTM_L2B'} = '
-    FOR L1B_PART1 SELECT LatestValCover(0, 0)';
-$applicable_processors{'PTM_L2B'} = [ 'PTML2_0.1.0_OPER_2020-03-25' ];
+# Output PTM_L2_A
+push @product_types, 'PTM_L2_A';
+$processing_levels{'PTM_L2_A'} = 'L2A';
+$slicing_types{'PTM_L2_A'} = 'ORBIT';
+$product_processor_class{'PTM_L2_A'} = 'PTML2';
+$selection_rules{'PTM_L2_A'} = '
+    FOR PTM_L1B SELECT LatestValCover(0, 0)';
+$applicable_processors{'PTM_L2_A'} = [ 'PTML2_0.1.0_OPER_2020-03-25' ];
+# Output PTM_L2_B
+push @product_types, 'PTM_L2_B';
+$processing_levels{'PTM_L2_B'} = 'L2B';
+$slicing_types{'PTM_L2_B'} = 'ORBIT';
+$product_processor_class{'PTM_L2_B'} = 'PTML2';
+$selection_rules{'PTM_L2_B'} = '
+    FOR PTM_L1B_P1 SELECT LatestValCover(0, 0)';
+$applicable_processors{'PTM_L2_B'} = [ 'PTML2_0.1.0_OPER_2020-03-25' ];
 
 # Selection rules for PTM L3
 # Expected time coverage of the L3 products is 4 hours
@@ -314,8 +314,8 @@ $slicing_types{'PTM_L3'} = 'TIME_SLICE';
 $slice_durations{'PTM_L3'} = 14400;
 $product_processor_class{'PTM_L3'} = 'PTML3';
 $selection_rules{'PTM_L3'} = '
-    FOR PTM_L2A SELECT ValIntersect(0, 0) MINCOVER(90);
-    FOR PTM_L2B SELECT ValIntersect(0, 0) MINCOVER(90)';
+    FOR PTM_L2_A SELECT ValIntersect(0, 0) MINCOVER(90);
+    FOR PTM_L2_B SELECT ValIntersect(0, 0) MINCOVER(90)';
 $applicable_processors{'PTM_L3'} = [ 'PTML3_0.1.0_OPER_2020-03-25' ];
 
 

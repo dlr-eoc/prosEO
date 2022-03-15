@@ -30,8 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import de.dlr.proseo.model.enums.ProductionType;
-
 /**
  * A provider for the Product entity data model (as defined in Production Interface Delivery Point Specification,
  * ESA-EOPG-EOPGC-IF-3, issue 1.2, sec. 3.1)
@@ -65,6 +63,7 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 	public static final String ET_PRODUCT_PROP_CHECKSUM = "Checksum";
 	public static final String ET_PRODUCT_PROP_CONTENT_DATE = "ContentDate";
 	public static final String ET_PRODUCT_PROP_PRODUCTION_TYPE = "ProductionType";
+	public static final String ET_PRODUCT_PROP_FOOTPRINT = "Footprint";
 	public static final String ET_PRODUCT_PROP_ATTRIBUTES = "Attributes";
 	public static final String ET_PRODUCT_PROP_STRING_ATTRIBUTES = "StringAttributes";
 	public static final String ET_PRODUCT_PROP_INT_ATTRIBUTES = "IntegerAttributes";
@@ -322,6 +321,8 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 					.setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName()).setPrecision(3);
 			CsdlProperty evictionDate = new CsdlProperty().setName(ET_PRODUCT_PROP_EVICTION_DATE)
 					.setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName()).setPrecision(3);
+			CsdlProperty footprint = new CsdlProperty().setName(ET_PRODUCT_PROP_FOOTPRINT)
+					.setType(EdmPrimitiveTypeKind.GeographyPolygon.getFullQualifiedName());
 
 			// Add structured properties
 			CsdlProperty checksum = new CsdlProperty().setName(ET_PRODUCT_PROP_CHECKSUM).setCollection(true)
@@ -332,18 +333,6 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 					.setType(EN_PRODUCTIONTYPE_FQN);
 			
 			// Add navigation properties
-//			CsdlNavigationProperty attributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_ATTRIBUTES)
-//					.setType(ET_ATTRIBUTE_FQN).setCollection(true).setPartner(ES_PRODUCTS_NAME);
-//			CsdlNavigationProperty stringAttributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_STRING_ATTRIBUTES)
-//					.setType(ET_STRINGATTRIBUTE_FQN).setCollection(true).setPartner(ES_PRODUCTS_NAME);
-//			CsdlNavigationProperty intAttributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_INT_ATTRIBUTES)
-//					.setType(ET_INTEGERATTRIBUTE_FQN).setCollection(true).setPartner(ES_PRODUCTS_NAME);
-//			CsdlNavigationProperty doubleAttributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_DOUBLE_ATTRIBUTES)
-//					.setType(ET_DOUBLEATTRIBUTE_FQN).setCollection(true).setPartner(ES_PRODUCTS_NAME);
-//			CsdlNavigationProperty boolAttributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_BOOL_ATTRIBUTES)
-//					.setType(ET_BOOLEANATTRIBUTE_FQN).setCollection(true).setPartner(ES_PRODUCTS_NAME);
-//			CsdlNavigationProperty dateAttributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_DATE_ATTRIBUTES)
-//					.setType(ET_DATEATTRIBUTE_FQN).setCollection(true).setPartner(ES_PRODUCTS_NAME);
 			CsdlNavigationProperty attributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_ATTRIBUTES)
 					.setType(ET_ATTRIBUTE_FQN).setCollection(true);
 			CsdlNavigationProperty stringAttributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_STRING_ATTRIBUTES)
@@ -365,7 +354,7 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 			CsdlEntityType productType = new CsdlEntityType();
 			productType.setName(ET_PRODUCT_NAME);
 			productType.setProperties(Arrays.asList(id, name , contentType, contentLength, originDate, publicationDate, 
-					evictionDate, checksum, contentDate, productionType));
+					evictionDate, footprint, checksum, contentDate, productionType));
 			productType.setNavigationProperties(Arrays.asList(attributes, stringAttributes, intAttributes, doubleAttributes, 
 					boolAttributes, dateAttributes));
 			productType.setKey(Collections.singletonList(idRef));

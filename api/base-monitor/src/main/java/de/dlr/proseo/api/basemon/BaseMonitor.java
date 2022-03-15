@@ -238,7 +238,7 @@ public abstract class BaseMonitor extends Thread {
 	}
 
 	/**
-	 * Read identifiers of transfer objects from history file
+	 * Read identifiers of transfer objects from history file, sets the reference time stamp as a side effect
 	 * 
 	 * @return a set of transfer object identifiers
 	 * @throws IOException if an I/O error occurs opening or reading the file
@@ -418,6 +418,7 @@ public abstract class BaseMonitor extends Thread {
 			}
 		}
 		
+		if (logger.isTraceEnabled()) logger.trace("... objects to transfer after filtering: " + objectsToTransfer.size());
 		return objectsToTransfer;
 	}
 	
@@ -477,7 +478,7 @@ public abstract class BaseMonitor extends Thread {
 		
 		// Initialize transfer history
 		try {
-			transferHistory = readTransferHistory();
+			transferHistory = readTransferHistory(); // Sets the reference time stamp as a side effect
 		} catch (IOException e) {
 			logger.error(String.format(MSG_ABORTING_MONITOR, MSG_ID_ABORTING_MONITOR, e.getMessage()));
 			return;
@@ -507,7 +508,6 @@ public abstract class BaseMonitor extends Thread {
 						e.getClass().getName(), e.getMessage()), e);
 				continue;
 			}
-			referenceTimeStamp = transferControl.referenceTime;
 			
 			// Filter objects not yet processed from transfer history
 			List<TransferObject> objectsToTransfer = filterTransferableObjects(transferControl.transferObjects);
@@ -601,6 +601,14 @@ public abstract class BaseMonitor extends Thread {
 			// Count cycles only if maximum of cycles is set
 			if (logger.isTraceEnabled()) logger.trace("... leaving check loop # " + i);
 			if (null != maxCycles) ++i;
+			
+			// Update transfer history
+			try {
+				transferHistory = readTransferHistory(); // Sets the reference time stamp as a side effect
+			} catch (IOException e) {
+				logger.error(String.format(MSG_ABORTING_MONITOR, MSG_ID_ABORTING_MONITOR, e.getMessage()));
+				return;
+			}
 		}
 	}
 	

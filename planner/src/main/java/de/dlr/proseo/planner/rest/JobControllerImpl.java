@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.Job;
+import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.rest.JobController;
 import de.dlr.proseo.model.rest.model.RestJob;
@@ -475,7 +476,7 @@ public class JobControllerImpl implements JobController {
 
 		query.setParameter("missionCode", securityService.getMission());
 		if (null != state) {
-			query.setParameter("state",state);
+			query.setParameter("state", JobStepState.valueOf(state));
 		}
 		if (null != orderId) {
 			query.setParameter("orderId", orderId);

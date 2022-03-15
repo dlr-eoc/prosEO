@@ -23,6 +23,10 @@ import org.apache.olingo.commons.api.data.Link;
 import org.apache.olingo.commons.api.data.Property;
 import org.apache.olingo.commons.api.data.ValueType;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
+import org.apache.olingo.commons.api.edm.geo.Geospatial;
+import org.apache.olingo.commons.api.edm.geo.LineString;
+import org.apache.olingo.commons.api.edm.geo.Point;
+import org.apache.olingo.commons.api.edm.geo.Polygon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,6 +117,37 @@ public class ProductUtil {
 				Date.from(modelProductFile.getZipChecksumTime()))));
 		checksums.add(checksum);
 		product.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUM, ValueType.COLLECTION_COMPLEX, checksums));
+		
+		// Set footprint information from "coordinates" parameter, if available
+		Parameter footprintParameter = modelProduct.getParameters().get("coordinates");
+		if (null != footprintParameter) {
+			try {
+				// Coordinates are blank-separated lists of blank- or comma-separated latitude/longitude pairs in counter-clockwise sequence
+				
+				// First normalize coordinates to gml:posList separated by single blanks (older missions may have gml:coordinates format with comma separation)
+				String footprintPosList = footprintParameter.getStringValue().replaceAll(",? +", " ");
+				
+				// Convert GML posList to OData list of Point
+				String[] pointValues = footprintPosList.split(" ");
+				List<Point> exteriorRing = new ArrayList<>();
+				for (int i = 0; i < pointValues.length / 2; ++i) {
+					// OData has longitude as x-value and latitude as y-value, in contrast to GML
+					Point p = new Point(Geospatial.Dimension.GEOGRAPHY, null);
+					p.setY(Double.parseDouble(pointValues[2 * i].split(",")[0])); // Latitude
+					p.setX(Double.parseDouble(pointValues[2 * i + 1].split(",")[1])); // Longitude
+					exteriorRing.add(p);
+				}
+				
+				// Create the footprint polygon
+				Polygon footprint = new Polygon(Geospatial.Dimension.GEOGRAPHY, null, new ArrayList<LineString>(),
+						new LineString(Geospatial.Dimension.GEOGRAPHY, null, exteriorRing));
+				product.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_FOOTPRINT, ValueType.PRIMITIVE, footprint));
+			} catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+				// Log warning, otherwise ignore
+				logger.warn("Cannot convert coordinate string '{}' to footprint",
+						footprintParameter.getStringValue());
+			}
+		}
 
 		// Create navigable collection of attributes
 		EntityCollection attributes = new EntityCollection();
@@ -239,16 +274,6 @@ public class ProductUtil {
 				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE,
 						null == modelProduct.getMode() ? 0 : modelProduct.getMode()));
 		attributes.getEntities().add(processingMode);
-		
-		Entity productClass = new Entity();
-		productClass.setType(ProductEdmProvider.ET_STRINGATTRIBUTE_FQN.toString());
-		productClass
-				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, PRODUCT_CLASS.getValue()))
-				.addProperty(new Property(null, ProductEdmProvider.ET_ATTRIBUTE_PROP_VALUETYPE, ValueType.PRIMITIVE,
-						ProductEdmProvider.ET_STRINGATTRIBUTE_NAME))
-				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE,
-						modelProduct.getFileClass()));
-		attributes.getEntities().add(productClass);
 		
 		Entity productType = new Entity();
 		productType.setType(ProductEdmProvider.ET_STRINGATTRIBUTE_FQN.toString());

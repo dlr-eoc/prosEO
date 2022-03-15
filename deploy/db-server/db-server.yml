@@ -1,0 +1,10 @@
+---
+# Configure prosEO Database Server ("db-server")
+
+- hosts: dbhost
+  become: true
+  
+  roles:
+  - prepare_network
+  - install_docker
+  - prepare_db

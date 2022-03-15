@@ -9,8 +9,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,12 +43,15 @@ import org.apache.olingo.client.api.uri.QueryOption;
 import org.apache.olingo.client.core.ODataClientFactory;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeException;
 import org.apache.olingo.commons.api.format.ContentType;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.core.io.buffer.PooledDataBuffer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -51,6 +60,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.RequestBodySpec;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -59,7 +69,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.api.basemon.BaseMonitor;
 import de.dlr.proseo.api.basemon.TransferObject;
+import de.dlr.proseo.basewrap.MD5Util;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 /**
@@ -116,6 +128,9 @@ public class AuxipMonitor extends BaseMonitor {
 	private static final int MSG_ID_EXCEPTION_THROWN = 5386;
 	private static final int MSG_ID_PRODUCT_DOWNLOAD_FAILED = 5387;
 	private static final int MSG_ID_RETRIEVAL_RESULT = 5388;
+	private static final int MSG_ID_FILE_SIZE_MISMATCH = 5389;
+	private static final int MSG_ID_CHECKSUM_MISMATCH = 5390;
+	private static final int MSG_ID_CANNOT_RELEASE_BUFFER = 5391;
 	
 	/* Same as XBIP Monitor */
 	private static final int MSG_ID_AVAILABLE_DOWNLOADS_FOUND = 5302;
@@ -148,11 +163,14 @@ public class AuxipMonitor extends BaseMonitor {
 	private static final String MSG_ODATA_REQUEST_ABORTED = "(E%d) OData request for reference time %s aborted (cause: %s / %s)";
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown in AUXIP monitor: ";
 	private static final String MSG_PRODUCT_DOWNLOAD_FAILED = "(E%d) Download of product file %s failed (cause: %s)";
+	private static final String MSG_FILE_SIZE_MISMATCH = "(E%d) File size mismatch for product file %s (expected: %d Bytes, got %d Bytes)";
+	private static final String MSG_CHECKSUM_MISMATCH = "(E%d) Checksum mismatch for product file %s (expected: %s, got %s)";
+	private static final String MSG_CANNOT_RELEASE_BUFFER = "(E%d) Cannot release data buffer %s of transfer request for product file %s";
 
 	private static final String MSG_PRODUCT_EVICTED = "(W%d) Product %s already evicted at %s – skipped";
 
 	private static final String MSG_AVAILABLE_DOWNLOADS_FOUND = "(I%d) %d session entries found for download (unfiltered)";
-	private static final String MSG_PRODUCT_TRANSFER_COMPLETED = "(I%d) Transfer for session %s completed";
+	private static final String MSG_PRODUCT_TRANSFER_COMPLETED = "(I%d) Transfer completed: |%s|%s|%d|%s|%s|";
 	private static final String MSG_FOLLOW_ON_ACTION_STARTED = "(I%d) Follow-on action for session %s started with command %s";
 	private static final String MSG_RETRIEVAL_RESULT = "(I%d) Retrieval request returned %d products out of %d available";
 
@@ -698,7 +716,6 @@ public class AuxipMonitor extends BaseMonitor {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkAvailableDownloads({})", referenceTimeStamp);
 
 		TransferControl transferControl = new TransferControl();
-//		transferControl.referenceTime = referenceTimeStamp;
 		
 		try {
 			// If token-based authentication is required, login to AUXIP and request token
@@ -711,27 +728,6 @@ public class AuxipMonitor extends BaseMonitor {
 					return transferControl;
 				}
 			}
-			
-			// Loop over all configured product types
-			
-//			for (String productType: config.getAuxipProductTypes()) {
-//				if (null == productTypeReferenceTimes.get(productType)) {
-//					productTypeReferenceTimes.put(productType, referenceTimeStamp);
-//				}
-//				Instant productTypeReferenceTime = productTypeReferenceTimes.get(productType);
-//				
-//				if (logger.isTraceEnabled()) logger.trace("... checking for products of type {}", productType);
-//				TransferControl productTypeTransferControl = checkAvailableProducts(productType, productTypeReferenceTime, bearerToken);
-//				if (logger.isTraceEnabled()) logger.trace("... found {} products", productTypeTransferControl.transferObjects.size());
-//
-//				if (productTypeReferenceTime.isBefore(productTypeTransferControl.referenceTime)) {
-//					productTypeReferenceTimes.put(productType, productTypeTransferControl.referenceTime);
-//				}
-//				if (transferControl.referenceTime.isBefore(productTypeTransferControl.referenceTime)) {
-//					transferControl.referenceTime = productTypeTransferControl.referenceTime;
-//				}
-//				transferControl.transferObjects.addAll(productTypeTransferControl.transferObjects);
-//			}
 			
 			// Only a single request is made (not considering paging) with all
 			// product types OR'ed in a single list
@@ -775,6 +771,7 @@ public class AuxipMonitor extends BaseMonitor {
 						+ "/$value";
 				
 				HttpClient httpClient = HttpClient.create()
+						.secure()
 						.headers(httpHeaders -> {
 							if (config.getAuxipUseToken()) {
 								httpHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
@@ -805,7 +802,6 @@ public class AuxipMonitor extends BaseMonitor {
 								return false;
 							}
 						}, null)
-						.secure()
 						.doAfterResponse((response, connection) -> {
 							if (logger.isTraceEnabled()) {
 								logger.trace("... response code: {}", response.status());
@@ -823,22 +819,31 @@ public class AuxipMonitor extends BaseMonitor {
 				
 				// Retrieve and store product file
 				Instant copyStart = Instant.now();
-				String productFileName = config.getAuxipDirectoryPath() + File.separator + transferProduct.getName();
+				File productFile = new File(config.getAuxipDirectoryPath() + File.separator + transferProduct.getName());
 
 				logger.trace("... starting request for URL '{}'", requestUri);
 				
-				try (FileOutputStream fileOutputStream = new FileOutputStream(productFileName);) {
+				try (FileOutputStream fileOutputStream = new FileOutputStream(productFile)) {
 					
-					Flux<DataBuffer> dataBuffer = webClient
+					Mono<byte[]> dataBuffer = webClient
 							.get()
 							.uri(requestUri)
 				            .accept(MediaType.APPLICATION_OCTET_STREAM)
 							.retrieve()
-							.bodyToFlux(DataBuffer.class);
-
-					DataBufferUtils.write(dataBuffer, fileOutputStream).blockLast(Duration.ofSeconds(600));
+							.bodyToMono(byte[].class);
+					
+					if (logger.isTraceEnabled()) logger.trace("... after webClient...bodyToMono()");
+					
+					byte[] buffer = dataBuffer.block();
+					
+					if (logger.isTraceEnabled()) logger.trace("... got buffer of size {}", buffer.length);
+					
+					fileOutputStream.write(buffer);
+					
+					if (logger.isTraceEnabled()) logger.trace("... buffer written to file {}", productFile);
+					
 				} catch (FileNotFoundException e) {
-					logger.error(String.format(MSG_FILE_NOT_WRITABLE, MSG_ID_FILE_NOT_WRITABLE, productFileName));
+					logger.error(String.format(MSG_FILE_NOT_WRITABLE, MSG_ID_FILE_NOT_WRITABLE, productFile.toString()));
 					return false;
 				} catch (WebClientResponseException e) {
 					logger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED, 
@@ -850,20 +855,37 @@ public class AuxipMonitor extends BaseMonitor {
 					return false;
 				}
 
+				// Compare file size with value given by AUXIP 
+				Long productFileLength = productFile.length();
+				if (!productFileLength.equals(transferProduct.getSize())) {
+					logger.error(String.format(MSG_FILE_SIZE_MISMATCH, MSG_ID_FILE_SIZE_MISMATCH, transferProduct.getIdentifier(),
+							transferProduct.getSize(), productFileLength));
+					return false;
+				}
+
+				// Record the performance for files of sufficient size
 				Duration copyDuration = Duration.between(copyStart, Instant.now());
-				Double copyPerformance = new File(productFileName).length() / // Bytes
+				Double copyPerformance = productFileLength / // Bytes
 						(copyDuration.toNanos() / 1000000000.0) // seconds (with fraction)
 						/ (1024 * 1024); // --> MiB/s
 				
-				// Record the performance for files of sufficient size
-				if (config.getAuxipPerformanceMinSize() < new File(productFileName).length()) {
+				if (config.getAuxipPerformanceMinSize() < productFileLength) {
 					setLastCopyPerformance(copyPerformance);
 				}
 				
-				// TODO Compute checksum and compare with value given by AUXIP
-				// TODO Log download with UUID, file name, size, checksum, publication date (request by ESA)
+				// Compute checksum and compare with value given by AUXIP
+				String md5Hash = MD5Util.md5Digest(productFile);
+				if (!md5Hash.equalsIgnoreCase(transferProduct.checksum)) {
+					logger.error(String.format(MSG_CHECKSUM_MISMATCH, MSG_ID_CHECKSUM_MISMATCH, transferProduct.getIdentifier(),
+							transferProduct.getChecksum(), md5Hash));
+					return false;
+				}
 				
-				logger.info(String.format(MSG_PRODUCT_TRANSFER_COMPLETED, MSG_ID_PRODUCT_TRANSFER_COMPLETED, transferProduct.getIdentifier()));
+				// Log download with UUID, file name, size, checksum, publication date (request by ESA)
+				logger.info(String.format(MSG_PRODUCT_TRANSFER_COMPLETED, MSG_ID_PRODUCT_TRANSFER_COMPLETED,
+						transferProduct.getIdentifier(), transferProduct.getName(),
+						transferProduct.getSize(), transferProduct.getChecksum(),
+						transferProduct.getPublicationTime().toString()));
 				
 				return true;
 			} catch (Exception e) {

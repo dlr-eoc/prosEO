@@ -5,7 +5,7 @@
 all:
     # image: centos:7
     # UUID from 'ionosctl image list' for alias 'centos:7' and location 'de/txl'
-    image: "152db695-6aa8-11ec-a917-62772f9c5dc0"
+    image: "fafeddbf-8303-11ec-bda6-02086196891f"
     image_password: "prosEO21ionos"
     ssh_key: "{{ lookup('file', 'keys/id_rsa.pub') }}"
 
@@ -32,6 +32,15 @@ brain:
     ram: 12288
     # Disk size in GB
     disk: 100
+    
+# Database server configuration:
+dbhost:
+    # Number of cores (vCPUs = 2 x cores)
+    cores: 6
+    # RAM in MiB
+    ram: 24576
+    # Disk size in GB
+    disk: 200
     
 # NFS server configuration:
 nfs:

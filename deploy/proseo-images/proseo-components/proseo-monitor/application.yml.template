@@ -5,7 +5,7 @@ spring:
         open-in-view: false
         properties.hibernate.jdbc.time_zone: UTC
     datasource:
-        url: jdbc:postgresql://10.x.x.a:5432/proseo
+        url: jdbc:postgresql://10.x.x.c:5432/proseo
         username: postgres
         password: "********"
 logging:

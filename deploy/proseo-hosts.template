@@ -18,8 +18,15 @@ ansible_ssh_common_args='-o ProxyCommand="ssh -i keys/id_rsa -W %h:%p -q proseoa
 [nat_gateway]
 10.x.x.b
 
-[loghost]
+[dbhost]
 10.x.x.c
+
+[dbhost:vars]
+# Configure control instance bastion as proxy for brain
+ansible_ssh_common_args='-o ProxyCommand="ssh -i keys/id_rsa -W %h:%p -q proseoadmin@85.215.x.x"'
+
+[loghost]
+10.x.x.d
 
 [loghost:vars]
 # Configure bastion as proxy for NFS server

@@ -1,5 +1,5 @@
-CProS Bastion Host for Control Instance
-=======================================
+prosEO Bastion Host for Control Instance
+========================================
 
 The bastion host is installed using Ansible.
 

@@ -207,29 +207,29 @@ public class ProseoFilePosix extends ProseoFile {
 		File srcFile = new File(this.getFullPath());
 		switch (proFile.getFsType()) {
 		case S3:// create internal buckets & prefixes if not exists..
-			String targetPath = null;
-			if (srcFile.isDirectory()) {
-				StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());
-				S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getS3Region());
-				S3Ops.createFolder(s3, cfg.getS3DefaultBucket(), proFile.getRelPath());
-				result = new ArrayList<String>();
-				result.add(proFile.getFullPath());
-				if (recursive) {
-					targetPath = proFile.getRelPath();
-				}
-			} else {
-				targetPath = proFile.getRelPath();
-			}
-			if (targetPath != null) {
-				if (targetPath.endsWith("/")) {
-					targetPath = targetPath.substring(0, targetPath.length() - 1);
-				}
-				StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());
-				AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getS3Region());
-				// *** HACK FOR DDS3 - TODO Replace constants by configurable values !!! ***
-				long retryCount = 0, maxRetry = 3, retryInterval = 5000 /* ms */;
-				while (retryCount <= maxRetry) {
-					try {
+			// *** HACK FOR DDS3 - TODO Replace constants by configurable values !!! ***
+			long retryCount = 0, maxRetry = 3, retryInterval = 5000 /* ms */;
+			while (retryCount <= maxRetry) {
+				try {
+					String targetPath = null;
+					if (srcFile.isDirectory()) {
+						StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());
+						S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getS3Region());
+						S3Ops.createFolder(s3, cfg.getS3DefaultBucket(), proFile.getRelPath());
+						result = new ArrayList<String>();
+						result.add(proFile.getFullPath());
+						if (recursive) {
+							targetPath = proFile.getRelPath();
+						}
+					} else {
+						targetPath = proFile.getRelPath();
+					}
+					if (targetPath != null) {
+						if (targetPath.endsWith("/")) {
+							targetPath = targetPath.substring(0, targetPath.length() - 1);
+						}
+						StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());
+						AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getS3Region());
 						result = S3Ops.v1Upload(
 								//the client
 								s3, 
@@ -244,16 +244,16 @@ public class ProseoFilePosix extends ProseoFile {
 						if (null != result) {
 							break; // No exception and a valid result
 						}
-					} catch (Exception e) {
-						if (retryCount >= maxRetry) {
-							throw e;
-						} // else try again, see below
 					}
-					++retryCount;
-					StorageLogger.logInfo(logger, MSG_S3_REQUEST_FAILED_RETRYING, MSG_ID_S3_REQUEST_FAILED_RETRYING, 
-							retryInterval, retryCount, maxRetry);
-					Thread.sleep(retryInterval);
+				} catch (Exception e) {
+					if (retryCount >= maxRetry) {
+						throw e;
+					} // else try again, see below
 				}
+				++retryCount;
+				StorageLogger.logInfo(logger, MSG_S3_REQUEST_FAILED_RETRYING, MSG_ID_S3_REQUEST_FAILED_RETRYING, 
+						retryInterval, retryCount, maxRetry);
+				Thread.sleep(retryInterval);
 			}
 			break;
 		case POSIX:

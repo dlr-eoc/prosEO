@@ -1,0 +1,7 @@
+de.dlr.proseo.storagemgr
+de.dlr.proseo.storagemgr.cache
+de.dlr.proseo.storagemgr.fs.alluxio
+de.dlr.proseo.storagemgr.fs.s3
+de.dlr.proseo.storagemgr.rest
+de.dlr.proseo.storagemgr.rest.model
+de.dlr.proseo.storagemgr.utils

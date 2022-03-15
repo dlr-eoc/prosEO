@@ -96,6 +96,25 @@
     debug:
       msg: "{{ brainhost }}"
   
+  - name: Provision database server
+    server:
+      datacenter: "{{ datacenter.name }}"
+      name: "db-server"
+      auto_increment: false
+      image: "{{ all.image }}"
+      image_password: "{{ all.image_password }}"
+      cores: "{{ dbhost.cores }}"
+      ram: "{{ dbhost.ram }}"
+      volume_size: "{{ dbhost.disk }}"
+      disk_type: SSD
+      ssh_keys:
+      - "{{ all.ssh_key }}"
+    register: dbhost
+  
+  - name: Show database server
+    debug:
+      msg: "{{ dbhost }}"
+  
   - name: Provision NFS host
     server:
       datacenter: "{{ datacenter.name }}"
@@ -110,16 +129,6 @@
       - "{{ all.ssh_key }}"
     register: nfshost
     
-  - name: Add NFS disk volumes of 2 TB each to NFS host
-    volume:
-      datacenter: "{{ datacenter.name }}"
-#     server: "nfs-server"
-      name: "nfsdisk%02d"
-      count: 3
-      size: 2048
-      disk_type: HDD
-      licence_type: OTHER
-  
   - name: Add NFS SSD volumes of 2 TB each to NFS host
     volume:
       datacenter: "{{ datacenter.name }}"
@@ -200,6 +209,7 @@
     loop:
     - "{{ bastionhosts.results[0].machines[0].id }}"
     - "{{ brainhost.machines[0].id }}"
+    - "{{ dbhost.machines[0].id }}"
     - "{{ nfshost.machines[0].id }}"
     - "{{ loghost.machines[0].id }}"
     - "{{ kube_master.machines[0].id }}"
