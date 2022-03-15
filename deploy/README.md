@@ -30,7 +30,8 @@ The deployment of a full prosEO environment requires the following steps:
 2. Configure the bastion host for the prosEO Control Instance (see `bastion-control/README.md`).
 3. Configure the Kubernetes cluster (the "hands", see `hands/README.md`).
 4. Re-run the configuration for the bastion host after adding the file `/root/.kube/config` found on the Kubernetes master node
-   as `kubectl.conf` in `bastion-control/roles/install_kubectl/files`.
+   as `kubectl.conf` in `bastion-control/roles/install_kubectl/files`, replacing the IP address `127.0.0.1` by the IP address 
+   of the master node.
 5. Configure the database server (the "brain", see `db-server/README.md`).
 6. Configure the prosEO Control Instance (the "brain", see `brain/README.md`).
 7. Configure the NFS server (see `nfs-server/README.md`).
@@ -87,13 +88,12 @@ psql proseo -U postgres -h localhost </proseo/populate_mon_service_state.sql
 You may be asked to provide the password for the `postgres` user. Enter the password configured in the `docker-compose.yml` file
 in `brain/prepare_proseo/files`.
 
-The control instance can be stopped using the script `stop_control_instance.sh`. To stop only the prosEO microservices, but not
-the database (e. g. for maintenance work on the database) use the script `stop_brain.sh`.
+The control instance can be stopped using the script `stop_control_instance.sh`.
 
 
 # Starting the prosEO Storage Manager
 
-Log in to the brain host via the control instance bastion host, then create the containers for the prosEO microservices:
+Log in to the NFS server host via the control instance bastion host, then create the containers for the prosEO microservices:
 ```
 cd /opt/prosEO
 ./run_storage_mgr.sh <private Docker registry> <version>

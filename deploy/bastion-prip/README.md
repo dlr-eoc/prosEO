@@ -1,5 +1,5 @@
-prosEO Bastion Host for Control Instance
-========================================
+prosEO Bastion Host for Production Service Interface Point
+==========================================================
 
 The bastion host is installed using Ansible.
 
