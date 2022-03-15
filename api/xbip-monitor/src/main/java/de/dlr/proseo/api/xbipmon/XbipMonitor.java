@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributeView;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -100,6 +101,7 @@ public class XbipMonitor extends BaseMonitor {
 	private static final int MSG_ID_DATA_SIZE_MISMATCH = 5313;
 	private static final int MSG_ID_COPY_TIMEOUT = 5314;
 	private static final int MSG_ID_SKIPPING_SESSION_DIRECTORY = 5315;
+	private static final int MSG_ID_SKIPPING_SESSION_FOR_DELAY = 5316;
 
 	/* Message string constants */
 	private static final String MSG_XBIP_NOT_READABLE = "(E%d) XBIP directory %s not readable (cause: %s)";
@@ -121,6 +123,7 @@ public class XbipMonitor extends BaseMonitor {
 	private static final String MSG_AVAILABLE_DOWNLOADS_FOUND = "(I%d) %d session entries found for download (unfiltered)";
 	private static final String MSG_SESSION_TRANSFER_INCOMPLETE = "(I%d) Transfer for session %s still incomplete - skipped";
 	private static final String MSG_SESSION_TRANSFER_COMPLETED = "(I%d) Transfer for session %s completed with result %s";
+	private static final String MSG_SKIPPING_SESSION_FOR_DELAY = "(I%d) Waiting for retrieval delay for session %s to expire - skipped";
 	private static final String MSG_FOLLOW_ON_ACTION_STARTED = "(I%d) Follow-on action for session %s started with command %s";
 
 	/** A logger for this class */
@@ -406,6 +409,7 @@ public class XbipMonitor extends BaseMonitor {
 					List<Path> dsibFilePaths = new ArrayList<>();
 					
 					String[] channelEntries = sessionEntry.toFile().list();
+					Instant latestDsibTimestamp = Instant.MIN;
 					if (null == channelEntries) {
 						logger.warn(String.format(MSG_SKIPPING_SESSION_DIRECTORY, MSG_ID_SKIPPING_SESSION_DIRECTORY,
 								sessionEntry.getFileName().toString()));
@@ -435,7 +439,28 @@ public class XbipMonitor extends BaseMonitor {
 									sessionEntry.getFileName().toString()));
 							return;
 						}
+						
+						// Check DSIB file timestamp
+						try {
+							Instant dsibTimestamp = Files.getFileAttributeView(dsibFilePath, BasicFileAttributeView.class)
+									.readAttributes().lastModifiedTime().toInstant();
+							if (latestDsibTimestamp.isBefore(dsibTimestamp)) {
+								latestDsibTimestamp = dsibTimestamp;
+							}
+						} catch (IOException e) {
+							logger.error(String.format(MSG_CANNOT_READ_DSIB_FILE, MSG_ID_CANNOT_READ_DSIB_FILE, dsibFilePath,
+									e.toString()));
+							return;
+						}
+						
 						dsibFilePaths.add(dsibFilePath);
+					}
+					
+					// Check configured retrieval delay
+					if (Instant.now().isBefore(latestDsibTimestamp.plusMillis(config.getXbipRetrievalDelay()))) {
+						logger.info(String.format(MSG_SKIPPING_SESSION_FOR_DELAY, MSG_ID_SKIPPING_SESSION_FOR_DELAY, 
+								sessionEntry.getFileName().toString()));
+						return;
 					}
 
 					if (logger.isTraceEnabled()) logger.trace("... downloadable session found!");
