@@ -67,6 +67,8 @@ public class ProductionPlanner implements CommandLineRunner {
 	
 	public static ProductionPlannerConfiguration config;
 	
+	public static ProductionPlanner productionPlanner;
+	
 
 	/** 
 	 * Planner configuration 
@@ -268,7 +270,7 @@ public class ProductionPlanner implements CommandLineRunner {
 				}
 			}
 			if (kubeConfig == null) {
-				kubeConfig = new KubeConfig(pf);
+				kubeConfig = new KubeConfig(pf, this);
 				if (kubeConfig != null && kubeConfig.connect()) {
 					kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
 					Messages.PLANNER_FACILITY_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
@@ -293,6 +295,7 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * @param facilityName the name of the processing facility to connect
 	 * @return the KubeConfig object for this processing facility, or null, if the facility is not connected
 	 */
+	@Transactional
 	public KubeConfig updateKubeConfig(String facilityName) {
 		if (logger.isTraceEnabled()) logger.trace(">>> updateKubeConfig({})", facilityName);
 		
@@ -309,7 +312,7 @@ public class ProductionPlanner implements CommandLineRunner {
 		
 		if (null == kubeConfig) {
 			// Planner does not know facility yet, so create a new KubeConfig object and make sure it can be connected
-			kubeConfig = new KubeConfig(pf);
+			kubeConfig = new KubeConfig(pf, this);
 			if (kubeConfig.connect()) {
 				kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
 				Messages.PLANNER_FACILITY_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
@@ -341,6 +344,7 @@ public class ProductionPlanner implements CommandLineRunner {
 		InetAddress ip;
 		String hostname;
 		config = plannerConfig;
+		productionPlanner = this;
 		try {
 			ip = InetAddress.getLocalHost();
 			hostname = ip.getHostName();

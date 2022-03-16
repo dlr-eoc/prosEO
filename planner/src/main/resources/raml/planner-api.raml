@@ -405,6 +405,9 @@ resourceTypes:
   /{productid}:
     get:
       description: Product created and available, sent by prosEO Ingestor
+      displayName: getObjectByProductidAndFacilityId
+      queryParameters:
+        facility: integer
       responses:
         200:
         

@@ -211,6 +211,9 @@ public class JobStep extends PersistentObject {
 	 * @throws IllegalStateException if the intended job step state transition is illegal
 	 */
 	public void setJobStepState(JobStepState jobStepState) throws IllegalStateException {
+		if (null == this.jobStepState) {
+			this.jobStepState = jobStepState;
+		}
 		if (this.jobStepState.equals(jobStepState)) {
 			// Do nothing
 		} else if (null == this.jobStepState || this.jobStepState.isLegalTransition(jobStepState)) {
@@ -225,7 +228,9 @@ public class JobStep extends PersistentObject {
 			}
 			
 			// Propagate state change
-			job.checkStateChange();
+			if (job != null) {
+				job.checkStateChange();
+			}
 		} else {
 			throw new IllegalStateException(String.format(MSG_ILLEGAL_STATE_TRANSITION,
 					this.jobStepState.toString(), jobStepState.toString()));

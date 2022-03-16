@@ -79,7 +79,7 @@ public class OrderDispatcher {
 		if (orderOpt.isPresent()) {
 			order = orderOpt.get();
 		}
-		if (logger.isTraceEnabled()) logger.trace(">>> publishOrder({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
+		if (logger.isTraceEnabled()) logger.trace(">>> prepareExpectedJobs({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 		
 		Message answer = new Message(Messages.FALSE);
 		if (thread.isInterrupted()) {
@@ -661,7 +661,7 @@ public class OrderDispatcher {
 	 * @param jobId The job id 
 	 * @param productionPlanner The production planner instance
 	 */
-	@Transactional
+	// @Transactional
 	private void createJobStepsOfJob(long orderId, long jobId, ProductionPlanner productionPlanner) {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		@SuppressWarnings("unused")

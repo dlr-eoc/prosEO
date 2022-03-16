@@ -215,7 +215,7 @@ public class IngestControllerImpl implements IngestController {
 				return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 			}
 			try {
-				productIngestor.notifyPlanner(userPassword[0], userPassword[1], ingestorProduct);
+				productIngestor.notifyPlanner(userPassword[0], userPassword[1], ingestorProduct, facility.getId());
 				if (logger.isTraceEnabled()) logger.trace("... planner notification successful");
 			} catch (Exception e) {
 				// If notification fails, log warning, but otherwise ignore
@@ -319,7 +319,7 @@ public class IngestControllerImpl implements IngestController {
 		}
 		
 		try {
-			productIngestor.notifyPlanner(userPassword[0], userPassword[1], restProductFile);
+			productIngestor.notifyPlanner(userPassword[0], userPassword[1], restProductFile, facility.getId());
 		} catch (Exception e) {
 			// If notification fails, log warning, but otherwise ignore
 			log(Level.WARN, MSG_NOTIFICATION_FAILED, MSG_ID_NOTIFICATION_FAILED, e.getMessage());

@@ -21,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep.JobStepState;
@@ -213,34 +214,49 @@ public class JobControllerImpl implements JobController {
 	 * 
 	 * @param jobId
 	 */
-	@Transactional
 	@Override 
 	public ResponseEntity<RestJob> resumeJob(String jobId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> resumeJob({})", jobId);
 		
 		try {
-			Job job = this.findJobById(jobId);
+			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+
+			final Job job = transactionTemplate.execute((status) -> {
+				return this.findJobById(jobId);
+			});
 			if (job != null) {
-				if (job.getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
-					String message = Messages.FACILITY_NOT_AVAILABLE.log(logger, job.getProcessingFacility().getName(),
-							job.getProcessingFacility().getFacilityState().toString());
 
-			    	return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+				final ResponseEntity<RestJob> answer = transactionTemplate.execute((status) -> {
+					if (job.getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
+						String message = Messages.FACILITY_NOT_AVAILABLE.log(logger, job.getProcessingFacility().getName(),
+								job.getProcessingFacility().getFacilityState().toString());
+
+				    	return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+					}
+					return null;
+				});
+				if (answer != null) {
+					return answer;
 				}
-
 				Messages msg = jobUtil.resume(job.getId());
 				// Already logged
 				
 				if (msg.isTrue()) {
-					UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
-					if (job.getProcessingFacility() != null) {
-						KubeConfig kc = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
-						if (kc != null) {
-							UtilService.getJobStepUtil().checkJobToRun(kc, job);
+					final KubeConfig kc = transactionTemplate.execute((status) -> {
+						UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
+						if (job.getProcessingFacility() != null) {
+							return productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
+						} else {
+							return null;
 						}
+					});
+					if (kc != null) {
+						UtilService.getJobStepUtil().checkJobToRun(kc, job.getId());
 					}
-					RestJob rj = RestUtil.createRestJob(job, false);
-
+					final RestJob rj = transactionTemplate.execute((status) -> {
+						Job jobx = this.findJobById(jobId);
+					 	return RestUtil.createRestJob(jobx, false);
+					});
 					return new ResponseEntity<>(rj, HttpStatus.OK);
 				} else {
 					String message = msg.format(jobId);
