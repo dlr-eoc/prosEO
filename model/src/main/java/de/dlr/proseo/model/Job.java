@@ -150,11 +150,16 @@ public class Job extends PersistentObject {
 	 * @throws IllegalStateException if the intended job state transition is illegal
 	 */
 	public void setJobState(JobState jobState) throws IllegalStateException {
+		if (null == this.jobState) {
+			this.jobState = jobState;
+		}
 		if (this.jobState.equals(jobState)) {
 			// Do nothing
 		} else if (null == this.jobState || this.jobState.isLegalTransition(jobState)) {
 			this.jobState = jobState;
-			processingOrder.checkStateChange();
+			if (processingOrder != null) {
+				processingOrder.checkStateChange();
+			}
 		} else {
 			throw new IllegalStateException(String.format(MSG_ILLEGAL_STATE_TRANSITION,
 					this.jobState.toString(), jobState.toString()));

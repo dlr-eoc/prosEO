@@ -157,7 +157,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 		
 		try {
 			kc.sync();
-			UtilService.getJobStepUtil().checkForJobStepsToRun(kc, 0, false);
+			UtilService.getJobStepUtil().checkForJobStepsToRun(kc, 0, false, true);
 			
 			RestProcessingFacility pf = new RestProcessingFacility(
 					kc.getLongId(),

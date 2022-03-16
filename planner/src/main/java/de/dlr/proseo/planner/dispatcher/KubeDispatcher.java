@@ -79,7 +79,7 @@ public class KubeDispatcher extends Thread {
     	if (runOnce) {
 			Messages.KUBEDISPATCHER_RUN_ONCE.log(logger);
     		if (kubeConfig != null) {
-    			UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, onlyRun);
+    			UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, onlyRun, true);
     		} else {
     			Messages.KUBEDISPATCHER_CONFIG_NOT_SET.log(logger);
     		}

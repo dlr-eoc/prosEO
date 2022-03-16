@@ -73,7 +73,7 @@ public class ProductControllerImpl implements ProductController {
 		if (pcId != 0 && facilityId != 0) {
 			try {
 				productionPlanner.acquireReleaseSemaphore("getObjectByProductidAndFacilityId");
-				UtilService.getJobStepUtil().searchForJobStepsToRun(facilityId, pcId);
+				UtilService.getJobStepUtil().searchForJobStepsToRun(facilityId, pcId, true);
 			} catch (Exception e) {
 				Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 			} finally {

@@ -7,3 +7,5 @@ spring:
         url: jdbc:postgresql://localhost:5432/proseo
         username: <db_user>
         password: <db_pwd>
+logging:
+    file: planner.log

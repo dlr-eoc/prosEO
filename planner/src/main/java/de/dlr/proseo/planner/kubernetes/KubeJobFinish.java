@@ -98,7 +98,8 @@ public class KubeJobFinish extends Thread {
     							for (ProductClass pc : productClasses) {
     								UtilService.getJobStepUtil().checkForJobStepsToRun(kubeJob.getKubeConfig(), 
     										pc.getId(), 
-    										false);		    				
+    										false,
+    										true);		    				
     							}
     						}			
     					}
