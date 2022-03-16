@@ -45,9 +45,9 @@ public class Job extends PersistentObject {
 	private ProcessingOrder processingOrder;
 	
 	/** 
-	 * Status of the whole job; jobs in status INITIAL or ON_HOLD need to be released to reach status STARTED, jobs in status 
-	 * STARTED can be set to ON_HOLD, meaning that all qualifying dependent job steps are returned to status INITIAL (i. e. except 
-	 * those in status RUNNING, COMPLETED and FAILED).
+	 * Status of the whole job; jobs in status PLANNED or ON_HOLD need to be released to reach status STARTED, jobs in status 
+	 * STARTED can be set to ON_HOLD, meaning that all qualifying dependent job steps are returned to status PLANNED (i. e. except 
+	 * those in status RUNNING, COMPLETED, FAILED and CLOSED).
 	 */
 	@Enumerated(EnumType.STRING)
 	private JobState jobState;

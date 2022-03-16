@@ -333,6 +333,11 @@ public class ProcessingOrder extends PersistentObject {
 			// At least one job has terminated, but none is currently active
 			if (OrderState.SUSPENDING.equals(orderState)) {
 				orderState = OrderState.PLANNED;
+			} else if (OrderState.RELEASING.equals(orderState)) {
+				// Keep status until all jobs are released
+				if (0 == jobStateMap.get(JobState.PLANNED)) {
+					orderState = OrderState.RUNNING;
+				}
 			} else {
 				orderState = OrderState.RUNNING;
 			}
@@ -340,6 +345,11 @@ public class ProcessingOrder extends PersistentObject {
 			// At least one job is active
 			if (OrderState.SUSPENDING.equals(orderState)) {
 				// Do nothing, suspended order is waiting for active jobs to terminate
+			} else if (OrderState.RELEASING.equals(orderState)) {
+				// Keep status until all jobs are released
+				if (0 == jobStateMap.get(JobState.PLANNED)) {
+					orderState = OrderState.RUNNING;
+				}
 			} else {
 				orderState = OrderState.RUNNING;
 			}
