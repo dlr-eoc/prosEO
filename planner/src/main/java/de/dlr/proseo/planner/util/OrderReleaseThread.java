@@ -85,6 +85,32 @@ public class OrderReleaseThread extends Thread {
 			catch(InterruptedException e) {
 				Messages.ORDER_RELEASING_INTERRUPTED.format(this.getName(), order.getIdentifier());
 			} 
+			catch(IllegalStateException e) {
+				final ProcessingOrder order = transactionTemplate.execute((status) -> {
+					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+					if (orderOpt.isPresent()) {
+						return orderOpt.get();
+					}
+					return null;
+				});
+				if (order.getOrderState().equals(OrderState.RUNNING) || order.getOrderState().equals(OrderState.RELEASED)) {
+					// order already set to RELEASED or RUNNING, nothing to do					
+				} else {
+					Messages.ORDER_RELEASING_EXCEPTION.format(this.getName(), order.getIdentifier());
+					logger.error(e.getMessage());
+					@SuppressWarnings("unused")
+					Object dummy = transactionTemplate.execute((status) -> {
+						ProcessingOrder lambdaOrder = null;
+						Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+						if (orderOpt.isPresent()) {
+							lambdaOrder = orderOpt.get();
+						}
+						lambdaOrder.setOrderState(OrderState.PLANNED);
+						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
+						return null;
+					});
+				}
+			}
 			catch(Exception e) {
 				Messages.ORDER_RELEASING_EXCEPTION.format(this.getName(), order.getIdentifier());
 				logger.error(e.getMessage());
@@ -134,7 +160,7 @@ public class OrderReleaseThread extends Thread {
 			for (Job job : jobList) {
 				if (this.isInterrupted()) {
 					answer = new Message(Messages.ORDER_RELEASING_INTERRUPTED);
-					logger.warn(Messages.ORDER_RELEASING_INTERRUPTED.format(order.getIdentifier()));
+					logger.warn(Messages.ORDER_RELEASING_INTERRUPTED.format(this.getName(), order.getIdentifier()));
 					throw new InterruptedException();
 				}
 				releaseAnswer = jobUtil.resume(job.getId());
@@ -143,7 +169,7 @@ public class OrderReleaseThread extends Thread {
 				}
 				if (this.isInterrupted()) {
 					answer = new Message(Messages.ORDER_RELEASING_INTERRUPTED);
-					logger.warn(Messages.ORDER_RELEASING_INTERRUPTED.format(order.getIdentifier()));
+					logger.warn(Messages.ORDER_RELEASING_INTERRUPTED.format(this.getName(), order.getIdentifier()));
 					throw new InterruptedException();
 				}
 				// look for possible job steps to run

@@ -64,6 +64,9 @@ public class JobUtil {
 			case INITIAL:
 				answer = Messages.JOB_INITIAL;
 				break;
+			case PLANNED:
+				answer = Messages.JOB_SUSPENDED;
+				break;
 			case RELEASED:
 				// no job step is running
 				// suspend all of them
@@ -83,11 +86,17 @@ public class JobUtil {
 					allSuspended = UtilService.getJobStepUtil().suspend(js, force).isTrue() && allSuspended;
 				}
 				job.incrementVersion();
-				job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
-				answer = Messages.JOB_HOLD;
 				if (allSuspended) {
-					job.setJobState(de.dlr.proseo.model.Job.JobState.PLANNED); // direct transition to INITIAL not allowed
+					if (job.getJobState() == JobState.STARTED) {
+						job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
+						job.setJobState(de.dlr.proseo.model.Job.JobState.PLANNED);
+					} else if (job.getJobState() == JobState.RELEASED) {
+						job.setJobState(de.dlr.proseo.model.Job.JobState.PLANNED);
+					}
 					answer = Messages.JOB_SUSPENDED;
+				} else {
+					job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
+					answer = Messages.JOB_HOLD;
 				}
 				RepositoryService.getJobRepository().save(job);
 				break;
@@ -172,6 +181,9 @@ public class JobUtil {
 				break;
 			case COMPLETED:
 				answer = Messages.JOB_ALREADY_COMPLETED;
+				break;
+			case PLANNED:
+				answer = Messages.JOB_RETRIED;
 				break;
 			case ON_HOLD:
 			case FAILED:
@@ -378,6 +390,9 @@ public class JobUtil {
 			case ON_HOLD:
 				Messages.JOB_HOLD.log(logger, String.valueOf(job.getId()));
 				break;
+			case PLANNED:
+				Messages.JOB_PLANNED.log(logger, String.valueOf(job.getId()));
+				break;
 			case RELEASED:
 				UtilService.getOrderUtil().startOrder(job.getProcessingOrder());
 				job.setJobState(de.dlr.proseo.model.Job.JobState.STARTED);
@@ -523,6 +538,7 @@ public class JobUtil {
 			switch (job.getJobState()) {
 			case INITIAL:
 			case RELEASED:
+			case PLANNED:
 				break;
 			case ON_HOLD:
 				Boolean running = RepositoryService.getJobStepRepository().countJobStepRunningByJobId(job.getId()) > 0;
@@ -616,151 +632,6 @@ public class JobUtil {
 			}
 		}
  		return answer;
-	}
-	
-	/**
-	 * Update the job state depending on job step state
-	 * 
-	 * @param job The job
-	 * @param jsState The job step state
-	 */
-	@Transactional
-	public void updateState(Job jobOrig, JobStepState jsState) {
-		if (logger.isTraceEnabled()) logger.trace(">>> updateState({}, {})", (null == jobOrig ? "null" : jobOrig.getId()), jsState);
-
-		Job job = null;
-		Optional<Job> oJob = RepositoryService.getJobRepository().findById(jobOrig.getId());
-		if (oJob.isPresent()) {
-			job = oJob.get();
-		}
-
-		if (job != null) {
-			switch (job.getJobState()) {
-			case INITIAL:
-				if (jsState == JobStepState.READY || jsState == JobStepState.WAITING_INPUT) {
-					job.setJobState(JobState.RELEASED);
-					job.incrementVersion();
-					RepositoryService.getJobRepository().save(job);
-					em.merge(job);
-				} else if (jsState == JobStepState.FAILED) {
-					Boolean allState = true;
-					this.setHasFailedJobSteps(job,  true);
-					for (JobStep js : job.getJobSteps()) {
-						if (js.getJobStepState() != JobStepState.FAILED && js.getJobStepState() != JobStepState.COMPLETED) {
-							allState = false;
-							break;
-						}
-					}
-					if (allState) {
-						job.setJobState(JobState.FAILED);
-						job.incrementVersion();
-						RepositoryService.getJobRepository().save(job);
-						em.merge(job);
-					}
-				}
-				break;
-			case RELEASED:
-				if (jsState == JobStepState.RUNNING) {
-					job.setJobState(JobState.STARTED);
-					job.incrementVersion();
-					RepositoryService.getJobRepository().save(job);
-					em.merge(job);
-				}
-				break;
-			case STARTED:
-				// fall through intended
-			case ON_HOLD:
-				if (jsState == JobStepState.PLANNED) {
-					Boolean allState = true;
-					for (JobStep js : job.getJobSteps()) {
-						if (js.getJobStepState() != JobStepState.PLANNED) {
-							allState = false;
-							break;
-						}
-					}
-					if (allState) {
-						job.setJobState(JobState.PLANNED);
-						job.setHasFailedJobSteps(false);
-						job.incrementVersion();
-						RepositoryService.getJobRepository().save(job);
-						em.merge(job);
-					}
-				} else if (jsState == JobStepState.FAILED) {
-					Boolean allState = true;
-					this.setHasFailedJobSteps(job,  true);
-					for (JobStep js : job.getJobSteps()) {
-						if (js.getJobStepState() != JobStepState.FAILED && js.getJobStepState() != JobStepState.COMPLETED) {
-							allState = false;
-							break;
-						}
-					}
-					if (allState) {
-						job.setJobState(JobState.FAILED);
-						job.incrementVersion();
-						RepositoryService.getJobRepository().save(job);
-						em.merge(job);
-					}
-				}
-				break;
-			case COMPLETED:
-				break;
-			case FAILED:
-				if (jsState == JobStepState.PLANNED || jsState == JobStepState.WAITING_INPUT) {
-					job.setJobState(JobState.PLANNED);
-					job.incrementVersion();
-					RepositoryService.getJobRepository().save(job);
-					em.merge(job);
-				}
-				break;
-			case CLOSED:
-				break;
-			default:
-				break;
-			}	
-			Boolean hasFailed = false;
-			for (JobStep js : job.getJobSteps()) {
-				if (js.getJobStepState() == JobStepState.FAILED) {
-					hasFailed = true;
-					break;
-				}
-			}
-			job.setHasFailedJobSteps(hasFailed);
-			// check the states of job steps and update job state
-			Boolean allHasFinished = true;
-			for (JobStep js : job.getJobSteps()) {
-				if (js.getJobStepState() != JobStepState.FAILED && js.getJobStepState() != JobStepState.COMPLETED) {
-					allHasFinished = false;
-					break;
-				}
-			}
-			if (allHasFinished) {
-				if (hasFailed) {
-					job.setJobState(JobState.FAILED);
-				} else {
-					switch (job.getJobState()) {
-					case FAILED:
-						job.setJobState(JobState.PLANNED);
-						job.setJobState(JobState.RELEASED);
-						job.setJobState(JobState.STARTED);
-						break;
-					case PLANNED:
-						job.setJobState(JobState.RELEASED);
-						job.setJobState(JobState.STARTED);
-						break;
-					case RELEASED:
-						job.setJobState(JobState.STARTED);
-						break;
-					default:
-						break;						
-					}
-					job.setJobState(JobState.COMPLETED);
-				}
-				job.incrementVersion();
-				RepositoryService.getJobRepository().save(job);
-				em.merge(job);
-			}
-			UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
-		}
 	}
 	
 	/**

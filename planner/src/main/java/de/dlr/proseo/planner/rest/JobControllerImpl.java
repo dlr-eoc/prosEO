@@ -243,7 +243,6 @@ public class JobControllerImpl implements JobController {
 				
 				if (msg.isTrue()) {
 					final KubeConfig kc = transactionTemplate.execute((status) -> {
-						UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
 						if (job.getProcessingFacility() != null) {
 							return productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
 						} else {
@@ -289,7 +288,6 @@ public class JobControllerImpl implements JobController {
 			if (job != null) {
 				Messages msg = jobUtil.cancel(job);
 				if (msg.isTrue()) {
-					UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
 					RestJob rj = RestUtil.createRestJob(job, false);
 
 					return new ResponseEntity<>(rj, HttpStatus.OK);
@@ -340,14 +338,13 @@ public class JobControllerImpl implements JobController {
 				// Already logged
 				
 				if (msg.isTrue()) {
-					UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
 					RestJob pj = RestUtil.createRestJob(job, false);
 
 					return new ResponseEntity<>(pj, HttpStatus.OK);
 				} else {
 					String message = msg.format(jobId);
 
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.OK);
+					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_ACCEPTABLE);
 				}
 			}
 			String message = Messages.JOB_NOT_EXIST.log(logger, jobId);
@@ -412,7 +409,6 @@ public class JobControllerImpl implements JobController {
 				// Already logged
 				
 				if (msg.isTrue()) {
-					UtilService.getOrderUtil().updateState(j.getProcessingOrder(), j.getJobState());
 					RestJob pj = RestUtil.createRestJob(j, false);
 
 					return new ResponseEntity<>(pj, HttpStatus.OK);

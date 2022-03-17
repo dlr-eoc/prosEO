@@ -87,6 +87,7 @@ public enum Messages {
 	JOB_DELETED 					(true, MessageType.I, "Job '%s' is deleted"), 
 	JOB_SUSPENDED					(true, MessageType.I, "Job '%s' is suspended"), 
 	JOB_HOLD						(true, MessageType.I, "Job '%s' is on hold"), 
+	JOB_PLANNED						(true, MessageType.I, "Job '%s' is planned"), 
 	JOB_INITIAL						(true, MessageType.I, "Job '%s' is initial"), 
 	JOB_RETRIED						(true, MessageType.I, "Job '%s' set to inital"), 
 	JOB_STARTED						(true, MessageType.I, "Job '%s' is started"), 

@@ -562,9 +562,8 @@ function setJobState(jId, state) {
             hideLoader();
             if (jqXHR.getResponseHeader("warnstatus") != null && jqXHR.getResponseHeader("warnstatus") != 'nocontent') {
                 alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
-            } else {
-                retrieveData(oId);
             }
+            retrieveData(oId);
         },
         error : function(jqXHR, textStatus, errorThrown) {
             hideLoader();
@@ -586,9 +585,8 @@ function setJobStepState(jsId, state) {
             hideLoader();
             if (jqXHR.getResponseHeader("warnstatus") != null && jqXHR.getResponseHeader("warnstatus") != 'nocontent') {
                 alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
-            } else {
-                retrieveData(oId);
             }
+            retrieveData(oId);
         },
         error : function(jqXHR, textStatus, errorThrown) {
             hideLoader();

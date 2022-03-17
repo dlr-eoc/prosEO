@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.ProcessingFacility;
@@ -410,7 +411,6 @@ public class OrderUtil {
 	 * @param order The processing Order
 	 * @return Result message
 	 */
-	@Transactional
 	public Messages resume(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> resume({})", (null == order ? "null" : order.getId()));
 		
@@ -425,18 +425,39 @@ public class OrderUtil {
 				answer = Messages.ORDER_HASTOBE_PLANNED;
 				break;
 			case PLANNED:
-				order.setOrderState(OrderState.RELEASING);
-				order.incrementVersion();
-				order = RepositoryService.getOrderRepository().save(order);
-				em.merge(order);
-				String threadName = ProductionPlanner.RELEASE_THREAD_PREFIX + order.getId();
-				if (!productionPlanner.getReleaseThreads().containsKey(threadName)) {
-					OrderReleaseThread rt = new OrderReleaseThread(productionPlanner, jobUtil, order, threadName);
-					productionPlanner.getReleaseThreads().put(threadName, rt);
-					rt.start();
+				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+
+				final Boolean doIt = transactionTemplate.execute((status) -> {
+					Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
+					if (opt.isPresent()) {
+						ProcessingOrder orderx = opt.get();
+						orderx.setOrderState(OrderState.RELEASING);
+						orderx.incrementVersion();
+						orderx = RepositoryService.getOrderRepository().save(orderx);
+						em.merge(orderx);
+						return true;
+					}
+					return false;
+				});
+				if (doIt) {
+					final ProcessingOrder ordery = transactionTemplate.execute((status) -> {
+						Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(order.getId());
+						if (orderOpt.isPresent()) {
+							return orderOpt.get();
+						}
+						return null;
+					});
+					if (ordery != null) {
+						String threadName = ProductionPlanner.RELEASE_THREAD_PREFIX + ordery.getId();
+						if (!productionPlanner.getReleaseThreads().containsKey(threadName)) {
+							OrderReleaseThread rt = new OrderReleaseThread(productionPlanner, jobUtil, ordery, threadName);
+							productionPlanner.getReleaseThreads().put(threadName, rt);
+							rt.start();
+						}
+						logOrderState(order);
+						answer = Messages.ORDER_RELEASING;
+					}
 				}
-				logOrderState(order);
-				answer = Messages.ORDER_RELEASING;
 				break;	
 			case RELEASING:
 				answer = Messages.ORDER_ALREADY_RELEASING;
@@ -977,188 +998,7 @@ public class OrderUtil {
 		}
 		return pfList;
 	}
-
 	
-	/**
-	 * Update the order state depending on job state
-	 * 
-	 * @param order The processing order
-	 * @param jState The job state
-	 */
-
-	@Transactional
-	public void updateState(ProcessingOrder orderOrig, JobState jState) {
-		if (logger.isTraceEnabled()) logger.trace(">>> updateState({}, {})", (null == orderOrig ? "null" : orderOrig.getId()), jState);
-		
-		ProcessingOrder order = null;
-		Optional<ProcessingOrder> oOrder = RepositoryService.getOrderRepository().findById(orderOrig.getId());
-		if (oOrder.isPresent()) {
-			order = oOrder.get();
-		}
-		if (order != null) {
-			switch (order.getOrderState()) {
-			case INITIAL:
-				// fall through intended
-			case APPROVED:
-				// no job and job step exists
-				break;
-			case PLANNED:
-				if (jState == JobState.RELEASED) {
-					order.setOrderState(OrderState.RELEASING);
-					order.setOrderState(OrderState.RELEASED);
-					order.incrementVersion();
-					RepositoryService.getOrderRepository().save(order);
-					em.merge(order);
-				} else if (jState == JobState.FAILED) {
-					Boolean allState = true;
-					this.setHasFailedJobSteps(order,  true);
-					for (Job j : order.getJobs()) {
-						if (j.getJobState() != JobState.FAILED && j.getJobState() != JobState.COMPLETED) {
-							allState = false;
-							break;
-						}
-					}
-					if (allState) {
-						order.setOrderState(OrderState.RELEASING);
-						order.setOrderState(OrderState.RELEASED);
-						order.setOrderState(OrderState.RUNNING);
-						order.setOrderState(OrderState.FAILED);
-						order.incrementVersion();
-						RepositoryService.getOrderRepository().save(order);
-						em.merge(order);
-					}
-				} else if (jState == JobState.STARTED) {
-					order.setOrderState(OrderState.RELEASING);
-					order.setOrderState(OrderState.RELEASED);
-					order.setOrderState(OrderState.RUNNING);
-					order.incrementVersion();
-					RepositoryService.getOrderRepository().save(order);
-					em.merge(order);
-				}
-				break;
-			case RELEASED:
-				if (jState == JobState.FAILED) {
-					Boolean allState = true;
-					this.setHasFailedJobSteps(order,  true);
-					for (Job j : order.getJobs()) {
-						if (j.getJobState() != JobState.FAILED && j.getJobState() != JobState.COMPLETED) {
-							allState = false;
-							break;
-						}
-					}
-					if (allState) {
-						order.setOrderState(OrderState.FAILED);
-						order.incrementVersion();
-						RepositoryService.getOrderRepository().save(order);
-						em.merge(order);
-					}
-				} else if (jState == JobState.STARTED) {
-					order.setOrderState(OrderState.RUNNING);
-					order.incrementVersion();
-					RepositoryService.getOrderRepository().save(order);
-					em.merge(order);
-				}	
-				break;
-			case RUNNING:
-				if (jState == JobState.FAILED) {
-					Boolean allState = true;
-					this.setHasFailedJobSteps(order,  true);
-					for (Job j : order.getJobs()) {
-						if (j.getJobState() != JobState.FAILED && j.getJobState() != JobState.COMPLETED) {
-							allState = false;
-							break;
-						}
-					}
-					if (allState) {
-						order.setOrderState(OrderState.FAILED);
-						order.incrementVersion();
-						RepositoryService.getOrderRepository().save(order);
-						em.merge(order);
-					}
-				} else if (jState == JobState.ON_HOLD) {
-					Boolean allState = true;
-					for (Job j : order.getJobs()) {
-						if (j.getJobState() != JobState.ON_HOLD) {
-							allState = false;
-							break;
-						}
-					}
-					if (allState) {
-						order.setOrderState(OrderState.SUSPENDING);
-						order.incrementVersion();
-						RepositoryService.getOrderRepository().save(order);
-						em.merge(order);
-					}
-				}	
-				break;
-			case SUSPENDING:
-				if (jState == JobState.FAILED) {
-					Boolean allState = true;
-					this.setHasFailedJobSteps(order,  true);
-					for (Job j : order.getJobs()) {
-						if (j.getJobState() != JobState.FAILED && j.getJobState() != JobState.COMPLETED) {
-							allState = false;
-							break;
-						}
-					}
-					if (allState) {
-						order.setOrderState(OrderState.FAILED);
-						order.incrementVersion();
-						RepositoryService.getOrderRepository().save(order);
-						em.merge(order);
-					}
-				}	
-				break;
-			case COMPLETED:
-				break;
-			case FAILED:
-				if (jState == JobState.PLANNED) {
-					order.setOrderState(OrderState.PLANNED);
-					order.incrementVersion();
-					RepositoryService.getOrderRepository().save(order);
-					em.merge(order);
-				}
-				break;
-			case CLOSED:
-				break;
-			default:
-				break;
-			}
-			Boolean hasFailed = false;
-			for (Job j : order.getJobs()) {
-				if (j.getJobState() == JobState.FAILED || j.hasFailedJobSteps()) {
-					hasFailed = true;
-					break;
-				}
-			}
-			order.setHasFailedJobSteps(hasFailed);
-			Boolean allHasFinished = true;
-			for (Job j : order.getJobs()) {
-				if (j.getJobState() != JobState.FAILED && j.getJobState() != JobState.COMPLETED) {
-					allHasFinished = false;
-					break;
-				}
-			}
-			if (allHasFinished) {
-				if (hasFailed) {
-					order.setOrderState(OrderState.FAILED);
-				} else {
-					if (order.getOrderState() == OrderState.FAILED) {
-						order.setOrderState(OrderState.PLANNED);
-						order.setOrderState(OrderState.RELEASED);
-						order.setOrderState(OrderState.RUNNING);
-					}
-					order.setOrderState(OrderState.COMPLETED);
-				}
-				order.incrementVersion();
-				RepositoryService.getOrderRepository().save(order);
-				em.merge(order);
-			}
-			logOrderState(order);
-		}
-	}
-	
-
 	/**
 	 * Set the failed job steps flag in the order on failure
 	 * 

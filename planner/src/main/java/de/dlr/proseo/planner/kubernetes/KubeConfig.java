@@ -162,6 +162,13 @@ public class KubeConfig {
 	private String storageManagerPassword;
 
 	/**
+	 * @return the productionPlanner
+	 */
+	public ProductionPlanner getProductionPlanner() {
+		return productionPlanner;
+	}
+
+	/**
 	 * @return the maxJobsPerNode
 	 */
 	public Integer getMaxJobsPerNode() {
@@ -559,7 +566,6 @@ public class KubeConfig {
 						js.setProcessingStdOut("Job on Processing Facility was deleted/canceled by others (e.g. operator) or crashed\n\n" + stdout);
 					}
 					js = RepositoryService.getJobStepRepository().save(js);
-					UtilService.getJobUtil().updateState(js.getJob(), js.getJobStepState());
 					UtilService.getJobStepUtil().checkFinish(js);
 				}			
 			}	

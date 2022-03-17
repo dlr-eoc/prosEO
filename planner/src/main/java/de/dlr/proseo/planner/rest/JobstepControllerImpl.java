@@ -198,7 +198,6 @@ public class JobstepControllerImpl implements JobstepController {
 				if (msg.isTrue()) {
 					final ResponseEntity<RestJobStep> msgS = transactionTemplate.execute((status) -> {
 						JobStep jsx = this.findJobStepByNameOrId(jobstepId);
-						UtilService.getJobUtil().updateState(job, JobStepState.READY);
 						if (job != null && job.getProcessingFacility() != null) {
 							KubeConfig kc = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
 							if (kc != null) {
@@ -251,7 +250,6 @@ public class JobstepControllerImpl implements JobstepController {
 				Job job = js.getJob();
 				Messages msg = jobStepUtil.cancel(js);
 				if (msg.isTrue()) {
-					UtilService.getJobUtil().updateState(job, js.getJobStepState());
 					if (job != null && job.getProcessingFacility() != null) {
 						KubeConfig kc = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
 						if (kc != null) {
@@ -315,7 +313,6 @@ public class JobstepControllerImpl implements JobstepController {
 				Messages msg = jobStepUtil.suspend(js, force); 
 				if (msg.isTrue()) {
 					// suspended
-					UtilService.getJobUtil().updateState(job, js.getJobStepState());
 					RestJobStep pjs = RestUtil.createRestJobStep(js, false);
 
 					return new ResponseEntity<>(pjs, HttpStatus.OK);
@@ -391,7 +388,6 @@ public class JobstepControllerImpl implements JobstepController {
 				// Already logged
 				
 				if (msg.isTrue()) {
-					UtilService.getJobUtil().updateState(job, js.getJobStepState());
 					RestJobStep pjs = RestUtil.createRestJobStep(js, false);
 
 					return new ResponseEntity<>(pjs, HttpStatus.OK);

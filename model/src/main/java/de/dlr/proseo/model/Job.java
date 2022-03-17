@@ -23,6 +23,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.enums.OrderState;
 
@@ -149,6 +151,7 @@ public class Job extends PersistentObject {
 	 * @param jobState the jobState to set
 	 * @throws IllegalStateException if the intended job state transition is illegal
 	 */
+	@Transactional
 	public void setJobState(JobState jobState) throws IllegalStateException {
 		if (null == this.jobState) {
 			this.jobState = jobState;
@@ -170,6 +173,7 @@ public class Job extends PersistentObject {
 	 * Check whether a job state change is required based on the current state of the contained job steps,
 	 * and if so, propagate the state change to the processing order
 	 */
+	@Transactional
 	public void checkStateChange() {
 		hasFailedJobSteps = false;
 		

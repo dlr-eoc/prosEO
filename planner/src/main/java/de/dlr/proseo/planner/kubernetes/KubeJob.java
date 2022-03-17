@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.ConfiguredProcessor;
@@ -543,55 +544,58 @@ public class KubeJob {
 	 */
 	public void finish(KubeConfig aKubeConfig, String jobname) {
 		if (logger.isTraceEnabled()) logger.trace(">>> finish({}, {})", (null == aKubeConfig ? "null" : aKubeConfig.getId()), jobname);
-		
+
 		if (aKubeConfig != null || kubeConfig != null) {
 			if (kubeConfig == null) {
 				kubeConfig = aKubeConfig;
 			}
 			searchPod();
 
-			V1Job aJob = aKubeConfig.getV1Job(jobname);
-			if (aJob != null) {
-				Long jobStepId = this.getJobId();
-				Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
-				if (js.isPresent()) {
-					updateJobLog(js.get());
-					try {
-						if (aJob.getStatus() != null) {
-							OffsetDateTime d;
-							d = aJob.getStatus().getStartTime();
-							if (d != null) {
-								js.get().setProcessingStartTime(d.toInstant());
-							}
+			TransactionTemplate transactionTemplate = new TransactionTemplate(aKubeConfig.getProductionPlanner().getTxManager());
+			final String dummy = transactionTemplate.execute((status) -> {
+				V1Job aJob = aKubeConfig.getV1Job(jobname);
+				if (aJob != null) {
+					Long jobStepId = this.getJobId();
+					Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
+					if (js.isPresent()) {
+						updateJobLog(js.get());
+						try {
+							if (aJob.getStatus() != null) {
+								OffsetDateTime d;
+								d = aJob.getStatus().getStartTime();
+								if (d != null) {
+									js.get().setProcessingStartTime(d.toInstant());
+								}
 
-							d = aJob.getStatus().getCompletionTime();
-							if (d != null) {
-								js.get().setProcessingCompletionTime(d.toInstant());
-							}
-							if (aJob.getStatus().getConditions() != null) {
-								List<V1JobCondition> jobCondList = aJob.getStatus().getConditions();
-								for (V1JobCondition jc : jobCondList) {
-									if ((jc.getType().equalsIgnoreCase("complete") || jc.getType().equalsIgnoreCase("completed")) && jc.getStatus().equalsIgnoreCase("true")) {
-										js.get().setJobStepState(JobStepState.COMPLETED);
-										UtilService.getJobStepUtil().checkCreatedProducts(js.get());
-										js.get().incrementVersion();	
-									} else if (jc.getType().equalsIgnoreCase("failed") || jc.getType().equalsIgnoreCase("failure")) {
-										js.get().setJobStepState(JobStepState.FAILED);	
-										js.get().incrementVersion();
+								d = aJob.getStatus().getCompletionTime();
+								if (d != null) {
+									js.get().setProcessingCompletionTime(d.toInstant());
+								}
+								if (aJob.getStatus().getConditions() != null) {
+									List<V1JobCondition> jobCondList = aJob.getStatus().getConditions();
+									for (V1JobCondition jc : jobCondList) {
+										if ((jc.getType().equalsIgnoreCase("complete") || jc.getType().equalsIgnoreCase("completed")) && jc.getStatus().equalsIgnoreCase("true")) {
+											js.get().setJobStepState(JobStepState.COMPLETED);
+											UtilService.getJobStepUtil().checkCreatedProducts(js.get());
+											js.get().incrementVersion();	
+										} else if (jc.getType().equalsIgnoreCase("failed") || jc.getType().equalsIgnoreCase("failure")) {
+											js.get().setJobStepState(JobStepState.FAILED);	
+											js.get().incrementVersion();
+										}
 									}
 								}
 							}
+						} catch (Exception e) {
+							e.printStackTrace();						
 						}
-					} catch (Exception e) {
-						e.printStackTrace();						
+						RepositoryService.getJobStepRepository().save(js.get());
+						UtilService.getOrderUtil().logOrderState(js.get().getJob().getProcessingOrder());
 					}
-					RepositoryService.getJobStepRepository().save(js.get());
-					UtilService.getJobUtil().updateState(js.get().getJob(), js.get().getJobStepState());
-					UtilService.getOrderUtil().logOrderState(js.get().getJob().getProcessingOrder());
 				}
-			}
-			KubeJobFinish toFini = new KubeJobFinish(this, jobname);
-			toFini.start();
+				KubeJobFinish toFini = new KubeJobFinish(this, jobname);
+				toFini.start();
+				return null;
+			});
 		}
 	}	
 	
@@ -628,7 +632,6 @@ public class KubeJob {
 	public UpdateInfoResult updateInfo(String aJobName) {
 		if (logger.isTraceEnabled()) logger.trace(">>> updateInfo({})", aJobName);
 		
-		UpdateInfoResult success = UpdateInfoResult.FALSE;
 		if (kubeConfig != null && kubeConfig.isConnected() && aJobName != null) {
 			V1Job aJob = kubeConfig.getV1Job(aJobName);
 			if (aJob == null) {
@@ -646,104 +649,110 @@ public class KubeJob {
 			V1Pod aPod = kubeConfig.getV1Pod(podNames.get(podNames.size()-1));
 
 			if (aPod != null) {
-				Long jobStepId = this.getJobId();
-				Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
-				if (js.isPresent()) {
-					int oldVersion = js.get().getVersion();
-					try {
-						if (aJob.getStatus() != null) {
-							if (logger.isTraceEnabled()) logger.trace("    updateInfo: analyze job state");
-							OffsetDateTime d;
-							d = aJob.getStatus().getStartTime();
-							if (d != null) {
-								js.get().setProcessingStartTime(d.toInstant());
-							}
-
-							OffsetDateTime cd = aJob.getStatus().getCompletionTime();
-							if (cd != null) {
-								js.get().setProcessingCompletionTime(cd.toInstant());
-							} else {
-								// something wrong with job, try to get info from pod
-								if (aPod != null) {
-									// pod exists! 
+				TransactionTemplate transactionTemplate = new TransactionTemplate(this.kubeConfig.getProductionPlanner().getTxManager());
+				final UpdateInfoResult successx = transactionTemplate.execute((status) -> {
+					UpdateInfoResult success = UpdateInfoResult.FALSE;
+					Long jobStepId = this.getJobId();
+					Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
+					if (js.isPresent()) {
+						int oldVersion = js.get().getVersion();
+						try {
+							if (aJob.getStatus() != null) {
+								if (logger.isTraceEnabled()) logger.trace("    updateInfo: analyze job state");
+								OffsetDateTime d;
+								d = aJob.getStatus().getStartTime();
+								if (d != null) {
+									js.get().setProcessingStartTime(d.toInstant());
 								}
-							}
-							if (aJob.getStatus().getConditions() != null) {
-								List<V1JobCondition> jobCondList = aJob.getStatus().getConditions();
 
-								if (jobCondList != null) {
-									for (V1JobCondition jc : jobCondList) {
-										if ((jc.getType().equalsIgnoreCase("complete") || jc.getType().equalsIgnoreCase("completed")) && jc.getStatus().equalsIgnoreCase("true")) {
-											if (js.get().getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.FAILED) {
-												js.get().setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.PLANNED);
+								OffsetDateTime cd = aJob.getStatus().getCompletionTime();
+								if (cd != null) {
+									js.get().setProcessingCompletionTime(cd.toInstant());
+								} else {
+									// something wrong with job, try to get info from pod
+									if (aPod != null) {
+										// pod exists! 
+									}
+								}
+								if (aJob.getStatus().getConditions() != null) {
+									List<V1JobCondition> jobCondList = aJob.getStatus().getConditions();
+
+									if (jobCondList != null) {
+										for (V1JobCondition jc : jobCondList) {
+											if ((jc.getType().equalsIgnoreCase("complete") || jc.getType().equalsIgnoreCase("completed")) && jc.getStatus().equalsIgnoreCase("true")) {
+												if (js.get().getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.FAILED) {
+													js.get().setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.PLANNED);
+												}
+												if (JobStepState.READY.equals(js.get().getJobStepState())) {
+													// Sometimes we don't get the state transition to RUNNING
+													js.get().setJobStepState(JobStepState.RUNNING); // otherwise we cannot set it to COMPLETED
+												} else if (JobStepState.PLANNED.equals(js.get().getJobStepState())) {
+													js.get().setJobStepState(JobStepState.READY);
+													js.get().setJobStepState(JobStepState.RUNNING);
+												}
+												js.get().setJobStepState(JobStepState.COMPLETED);
+												UtilService.getJobStepUtil().checkCreatedProducts(js.get());
+
+												if (cd == null) {
+													cd = jc.getLastProbeTime();
+													js.get().setProcessingCompletionTime(cd.toInstant());
+												}
+												success = UpdateInfoResult.TRUE;
+											} else if ((jc.getType().equalsIgnoreCase("failed") || jc.getType().equalsIgnoreCase("failure")) && jc.getStatus().equalsIgnoreCase("true")) {
+												if (JobStepState.READY.equals(js.get().getJobStepState())) {
+													// Sometimes we don't get the state transition to RUNNING
+													js.get().setJobStepState(JobStepState.RUNNING); // otherwise we cannot set it to COMPLETED
+												} else if (JobStepState.PLANNED.equals(js.get().getJobStepState())) {
+													js.get().setJobStepState(JobStepState.READY);
+													js.get().setJobStepState(JobStepState.RUNNING);
+												}
+												js.get().setJobStepState(JobStepState.FAILED);	
+												if (cd == null) {
+													cd = jc.getLastProbeTime();
+													js.get().setProcessingCompletionTime(cd.toInstant());
+												}
+												success = UpdateInfoResult.TRUE;
 											}
-											if (JobStepState.READY.equals(js.get().getJobStepState())) {
-												// Sometimes we don't get the state transition to RUNNING
-												js.get().setJobStepState(JobStepState.RUNNING); // otherwise we cannot set it to COMPLETED
-											} else if (JobStepState.PLANNED.equals(js.get().getJobStepState())) {
-												js.get().setJobStepState(JobStepState.READY);
-												js.get().setJobStepState(JobStepState.RUNNING);
-											}
-										    js.get().setJobStepState(JobStepState.COMPLETED);
-											UtilService.getJobStepUtil().checkCreatedProducts(js.get());
-											
-											if (cd == null) {
-												cd = jc.getLastProbeTime();
-												js.get().setProcessingCompletionTime(cd.toInstant());
-											}
-											success = UpdateInfoResult.TRUE;
-										} else if ((jc.getType().equalsIgnoreCase("failed") || jc.getType().equalsIgnoreCase("failure")) && jc.getStatus().equalsIgnoreCase("true")) {
-											if (JobStepState.READY.equals(js.get().getJobStepState())) {
-												// Sometimes we don't get the state transition to RUNNING
-												js.get().setJobStepState(JobStepState.RUNNING); // otherwise we cannot set it to COMPLETED
-											} else if (JobStepState.PLANNED.equals(js.get().getJobStepState())) {
-												js.get().setJobStepState(JobStepState.READY);
-												js.get().setJobStepState(JobStepState.RUNNING);
-											}
-											js.get().setJobStepState(JobStepState.FAILED);	
-											if (cd == null) {
-												cd = jc.getLastProbeTime();
-												js.get().setProcessingCompletionTime(cd.toInstant());
-											}
-											success = UpdateInfoResult.TRUE;
 										}
 									}
 								}
+								// cancel pod and job, write reasons into job step log
+
+
+								// TODO check whether pod is in normal state or has an Error/Warning event
+								// example
+								// kubeConfig.getApiV1().listNamespacedEvent("default",null,false,null,"involvedObject.name=proseojob733-bwzf4",null,null,null,null,false);
+
+
+							} else {
+								if (logger.isTraceEnabled()) logger.trace("    updateInfo: status not found");
 							}
-							// cancel pod and job, write reasons into job step log
-
-
-							// TODO check whether pod is in normal state or has an Error/Warning event
-							// example
-							// kubeConfig.getApiV1().listNamespacedEvent("default",null,false,null,"involvedObject.name=proseojob733-bwzf4",null,null,null,null,false);
-
-
-						} else {
-							if (logger.isTraceEnabled()) logger.trace("    updateInfo: status not found");
+						} catch (Exception e) {
+							e.printStackTrace();						
 						}
-					} catch (Exception e) {
-						e.printStackTrace();						
+						updateJobLog(js.get());
+						RepositoryService.getJobStepRepository().save(js.get());
+						Optional<JobStep> jsn = RepositoryService.getJobStepRepository().findById(jobStepId);
+						if (jsn.isPresent()) {
+							if (oldVersion == jsn.get().getVersion()) {
+								if (success == UpdateInfoResult.TRUE) {
+									js.get().incrementVersion();
+									RepositoryService.getJobStepRepository().save(js.get());
+								}
+							} else {
+								if (logger.isTraceEnabled()) logger.trace("    updateInfo: job step changed by others");
+								success = UpdateInfoResult.CHANGED;
+							}
+						}						
 					}
-					updateJobLog(js.get());
-					RepositoryService.getJobStepRepository().save(js.get());
-					Optional<JobStep> jsn = RepositoryService.getJobStepRepository().findById(jobStepId);
-					if (jsn.isPresent()) {
-						if (oldVersion == jsn.get().getVersion()) {
-							if (success == UpdateInfoResult.TRUE) {
-								js.get().incrementVersion();
-								RepositoryService.getJobStepRepository().save(js.get());
-								UtilService.getJobUtil().updateState(js.get().getJob(), js.get().getJobStepState());
-							}
-						} else {
-							if (logger.isTraceEnabled()) logger.trace("    updateInfo: job step changed by others");
-							success = UpdateInfoResult.CHANGED;
-						}
-					}						
-				}
+					return success;
+				});
+				if (logger.isTraceEnabled()) logger.trace("<<< updateInfo({})", aJobName);
+				return successx;
 			}
 		}
 		if (logger.isTraceEnabled()) logger.trace("<<< updateInfo({})", aJobName);
-		return success;
+		return UpdateInfoResult.FALSE;
 	}
 
 	
