@@ -32,6 +32,7 @@ import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.ProductQuery;
+import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.service.ProductQueryService;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -211,7 +212,8 @@ public class JobStepUtil {
 						if (kj != null) {
 							deleted = kc.deleteJob(kj.getJobName());
 						} else {
-							kc.sync();kj = kc.getKubeJob(ProductionPlanner.jobNamePrefix + js.getId());
+							kc.sync();
+							kj = kc.getKubeJob(ProductionPlanner.jobNamePrefix + js.getId());
 							if (kj != null) {
 								deleted = kc.deleteJob(kj.getJobName());
 							} else {
@@ -222,18 +224,34 @@ public class JobStepUtil {
 					}
 				}
 				if (deleted) {
-					js.setProcessingStartTime(null);
-					js.setProcessingCompletionTime(null);
-					js.setProcessingStdOut(null);
-					js.setProcessingStdErr(null);
-					js.setJobOrderFilename(null);
-					js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.PLANNED);
-					js.incrementVersion();
-					answer = Messages.JOBSTEP_SUSPENDED;
-					RepositoryService.getJobStepRepository().save(js);
 					em.merge(js);
+					if (js.getJobStepState() == JobStepState.COMPLETED) {
+						answer = Messages.JOBSTEP_COMPLETED;
+					} else if (js.getJobStepState() == JobStepState.FAILED) {
+						answer = Messages.JOBSTEP_COMPLETED;
+					} else {
+						js.setProcessingStartTime(null);
+						js.setProcessingCompletionTime(null);
+						js.setProcessingStdOut(null);
+						js.setProcessingStdErr(null);
+						js.setJobOrderFilename(null);
+						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.PLANNED);
+						js.incrementVersion();
+						answer = Messages.JOBSTEP_SUSPENDED;
+						RepositoryService.getJobStepRepository().save(js);
+						em.merge(js);
+					}
 				} else {
-					answer = Messages.JOBSTEP_ALREADY_RUNNING;
+					KubeConfig kc = productionPlanner.getKubeConfig(js.getJob().getProcessingFacility().getName());
+					if (kc != null) {
+						kc.sync();
+						KubeJob kj = kc.getKubeJob(ProductionPlanner.jobNamePrefix + js.getId());
+						if (kj != null) {
+							answer = Messages.JOBSTEP_ALREADY_RUNNING;
+						}
+					} else {
+						answer = Messages.JOBSTEP_SUSPENDED;
+					}
 				}
 				break;
 			case COMPLETED:
@@ -807,7 +825,8 @@ public class JobStepUtil {
 						String dummy = transactionTemplate.execute((status) -> {
 							List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(kc.getLongId(), states);
 							for (JobStep js : jobSteps) {
-								if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
+								if ((js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)
+										&& js.getJob().getProcessingOrder().getOrderState() != OrderState.RELEASING) {
 									if (kc.couldJobRun()) {
 										kc.createJob(String.valueOf(js.getId()), null, null);
 									} else {
@@ -910,9 +929,10 @@ public class JobStepUtil {
 	 * 
 	 * @param kc KubeConfig
 	 * @param job Job
+	 * @throws InterruptedException 
 	 */
 	// @Transactional
-    synchronized public void checkJobToRun(KubeConfig kc, long jobId) {
+    synchronized public void checkJobToRun(KubeConfig kc, long jobId) throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkJobToRun({}, {})",
 				(null == kc ? "null" : kc.getId()),
 				(0 == jobId ? "null" : jobId));
@@ -929,8 +949,8 @@ public class JobStepUtil {
 				});
 				if (pfo != null) {
 					// wait until finish of concurrent createJob
-					productionPlanner.acquireReleaseSemaphore("checkJobToRun");
 					try {
+						productionPlanner.acquireReleaseSemaphore("checkJobToRun");
 						final List<Long> jobSteps = new ArrayList<Long>();
 
 						@SuppressWarnings("unused")
@@ -948,6 +968,8 @@ public class JobStepUtil {
 						for (Long jsId : jobSteps) {
 							checkJobStepToRun(kc, jsId);
 						}
+					} catch (InterruptedException e) {
+						throw e;
 					} catch (Exception e) {
 						Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 					} finally {
@@ -986,9 +1008,9 @@ public class JobStepUtil {
 				});
 				if (pfo != null) {
 					// wait until finish of concurrent createJob
-					productionPlanner.acquireReleaseSemaphore("checkOrderToRun");
 					final List<Long> jobSteps = new ArrayList<Long>();
 					try {
+						productionPlanner.acquireReleaseSemaphore("checkOrderToRun");
 						@SuppressWarnings("unused")
 						String dummy = transactionTemplate.execute((status) -> {
 							ProcessingOrder order = null;

@@ -160,13 +160,16 @@ public class ProductionPlanner implements CommandLineRunner {
 		return orderPwCache.get(orderId);
 	}
 
-	public void acquireReleaseSemaphore(String here) {
+	public void acquireReleaseSemaphore(String here) throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> acquireReleaseSemaphore({})", here == null ? "null" : here);
 		try {
 			getReleaseSemaphore().acquire();
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			if (getReleaseSemaphore().availablePermits() <= 0) {
+				getReleaseSemaphore().release();
+			}
+			if (logger.isTraceEnabled()) logger.trace("<<< acquireReleaseSemaphore({}) interrupted", here == null ? "null" : here);
+			throw e;
 		}
 		if (logger.isTraceEnabled()) logger.trace("<<< acquireReleaseSemaphore({})", here == null ? "null" : here);
 	}

@@ -639,8 +639,8 @@ public class OrderDispatcher {
 				throw new InterruptedException();
 			}
 			if (job.getJobState() == JobState.INITIAL) {
-				productionPlanner.acquireReleaseSemaphore("createJobSteps");
 				try {
+					productionPlanner.acquireReleaseSemaphore("createJobSteps");
 					createJobStepsOfJob(orderId, job.getId(), productionPlanner);
 				}
 				catch (Exception e) {

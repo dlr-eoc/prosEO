@@ -180,7 +180,11 @@ public class OrderReleaseThread extends Thread {
 					}
 					return null;
 				});
-				UtilService.getJobStepUtil().checkJobToRun(kc, job.getId());						
+				try {
+					UtilService.getJobStepUtil().checkJobToRun(kc, job.getId());
+				} catch (InterruptedException e) {
+					throw e;
+				}
 				
 			}
 			final Messages finalAnswer = releaseAnswer;

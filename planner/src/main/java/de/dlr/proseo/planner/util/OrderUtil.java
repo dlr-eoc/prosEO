@@ -550,13 +550,16 @@ public class OrderUtil {
 	 * @param force The flag to force kill of currently running job steps on processing facility
 	 * @return Result message
 	 */
-	@Transactional
 	public Messages suspend(long id, Boolean force) {
-		ProcessingOrder order = null;
-		Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
-		if (orderOpt.isPresent()) {
-			order = orderOpt.get();
-		}
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+
+		final ProcessingOrder order = transactionTemplate.execute((status) -> {
+			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+			if (orderOpt.isPresent()) {
+				return orderOpt.get();
+			}
+			return null;
+		});
 		if (logger.isTraceEnabled()) logger.trace(">>> suspend({}, {})", (null == order ? "null" : order.getId()), force);
 		Messages answer = Messages.FALSE;
 		if (order != null) {
@@ -588,53 +591,73 @@ public class OrderUtil {
 					}
 				}
 				// intentionally fall through to suspend already running jobs
-			case RELEASED:
-				for (Job job : order.getJobs()) {
-					jobUtil.suspend(job, force);
-				}
-				order.setOrderState(OrderState.PLANNED);
-				order.incrementVersion();
-				RepositoryService.getOrderRepository().save(order);
-				logOrderState(order);
-				answer = Messages.ORDER_SUSPENDED;
-				break;			
 			case RUNNING:
 			case SUSPENDING:
-				Boolean suspending = false;
-				Boolean allFinished = true;
-				for (Job job : order.getJobs()) {
-					jobUtil.suspend(job, force);
-					// check for state
-					if (job.getJobState() == JobState.COMPLETED || job.getJobState() == JobState.RELEASED) {
-						allFinished = allFinished & true;
-					} else {
-						allFinished = allFinished & false;
+				final ProcessingOrder ordery = transactionTemplate.execute((status) -> {
+					if (order.getOrderState() == OrderState.RELEASING) {
+						order.setOrderState(OrderState.RELEASED);
+						order.setOrderState(OrderState.RUNNING);
 					}
-					if (job.getJobState() == JobState.ON_HOLD || job.getJobState() == JobState.STARTED) {
-						suspending = true;
-					}
-				}
-				order.incrementVersion();
-				if (suspending) {
-					// check whether some jobs are already finished
 					order.setOrderState(OrderState.SUSPENDING);
 					RepositoryService.getOrderRepository().save(order);
-					logOrderState(order);
-					answer = Messages.ORDER_SUSPENDED;
-				} else if (allFinished) {
-					// check whether some jobs are already finished
-					order.setOrderState(OrderState.COMPLETED);
-					RepositoryService.getOrderRepository().save(order);
-					logOrderState(order);
-					answer = Messages.ORDER_COMPLETED;
-				} else {
-					order.setOrderState(OrderState.SUSPENDING); // direct transition to PLANNED not allowed
-					order.setOrderState(OrderState.PLANNED);
-					RepositoryService.getOrderRepository().save(order);
-					logOrderState(order);
-					answer = Messages.ORDER_SUSPENDED;
-				}
+					em.merge(order);
+					return order;
+				});
+				final ProcessingOrder orderx = transactionTemplate.execute((status) -> {
+					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+					if (orderOpt.isPresent()) {
+						return orderOpt.get();
+					}
+					return null;
+				});
+				answer = transactionTemplate.execute((status) -> {
+					Boolean suspending = false;
+					Boolean allFinished = true;
+					for (Job job : orderx.getJobs()) {
+						jobUtil.suspend(job, force);
+						// check for state
+						if (job.getJobState() == JobState.COMPLETED || job.getJobState() == JobState.RELEASED) {
+							allFinished = allFinished & true;
+						} else {
+							allFinished = allFinished & false;
+						}
+						if (job.getJobState() == JobState.ON_HOLD || job.getJobState() == JobState.STARTED) {
+							suspending = true;
+						}
+					}
+					orderx.incrementVersion();
+					if (suspending) {
+						// check whether some jobs are already finished
+						orderx.setOrderState(OrderState.SUSPENDING);
+						RepositoryService.getOrderRepository().save(orderx);
+						logOrderState(orderx);
+						return Messages.ORDER_SUSPENDED;
+					} else if (allFinished) {
+						// check whether some jobs are already finished
+						orderx.setOrderState(OrderState.COMPLETED);
+						RepositoryService.getOrderRepository().save(orderx);
+						logOrderState(orderx);
+						return  Messages.ORDER_COMPLETED;
+					} else {
+						orderx.setOrderState(OrderState.PLANNED);
+						RepositoryService.getOrderRepository().save(orderx);
+						logOrderState(orderx);
+						return  Messages.ORDER_SUSPENDED;
+					}
+				});
 				break;	
+			case RELEASED:
+				answer = transactionTemplate.execute((status) -> {
+					for (Job job : order.getJobs()) {
+						jobUtil.suspend(job, force);
+					}
+					order.setOrderState(OrderState.PLANNED);
+					order.incrementVersion();
+					RepositoryService.getOrderRepository().save(order);
+					logOrderState(order);
+					return Messages.ORDER_SUSPENDED;
+				});
+				break;			
 			case COMPLETED:
 				answer = Messages.ORDER_ALREADY_COMPLETED;
 				break;

@@ -92,6 +92,8 @@ public class JobUtil {
 						job.setJobState(de.dlr.proseo.model.Job.JobState.PLANNED);
 					} else if (job.getJobState() == JobState.RELEASED) {
 						job.setJobState(de.dlr.proseo.model.Job.JobState.PLANNED);
+					} else if (job.getJobState() == JobState.ON_HOLD) {
+						job.setJobState(de.dlr.proseo.model.Job.JobState.PLANNED);
 					}
 					answer = Messages.JOB_SUSPENDED;
 				} else {
@@ -99,6 +101,7 @@ public class JobUtil {
 					answer = Messages.JOB_HOLD;
 				}
 				RepositoryService.getJobRepository().save(job);
+				em.merge(job);
 				break;
 			case COMPLETED:
 				answer = Messages.JOB_ALREADY_COMPLETED;

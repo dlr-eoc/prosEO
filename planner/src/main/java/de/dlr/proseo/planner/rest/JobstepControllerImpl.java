@@ -201,8 +201,8 @@ public class JobstepControllerImpl implements JobstepController {
 						if (job != null && job.getProcessingFacility() != null) {
 							KubeConfig kc = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
 							if (kc != null) {
-								productionPlanner.acquireReleaseSemaphore("resumeJobStep");
 								try {
+									productionPlanner.acquireReleaseSemaphore("resumeJobStep");
 									UtilService.getJobStepUtil().checkJobStepToRun(kc, jsx.getId());
 									productionPlanner.releaseReleaseSemaphore("resumeJobStep");
 								} catch (Exception e) {
@@ -253,8 +253,8 @@ public class JobstepControllerImpl implements JobstepController {
 					if (job != null && job.getProcessingFacility() != null) {
 						KubeConfig kc = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
 						if (kc != null) {
-							productionPlanner.acquireReleaseSemaphore("cancelJobStep");
 							try {
+								productionPlanner.acquireReleaseSemaphore("cancelJobStep");
 								UtilService.getJobStepUtil().checkJobStepToRun(kc, js.getId());
 								productionPlanner.releaseReleaseSemaphore("cancelJobStep");
 							} catch (Exception e) {
