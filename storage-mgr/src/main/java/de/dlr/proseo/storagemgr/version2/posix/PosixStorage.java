@@ -70,14 +70,15 @@ public class PosixStorage implements Storage {
 
 		for (int i = 0; i < listOfFiles.length; i++) {
 			if (listOfFiles[i].isFile()) {
-				
-				String fullBucketPath = getFullBucketPath(); 
+
+				String fullBucketPath = getFullBucketPath();
 				String name = listOfFiles[i].getName();
-				
-				// String relativePath = relativizePath(getFullBucketPath(), listOfFiles[i].getName());
+
+				// String relativePath = relativizePath(getFullBucketPath(),
+				// listOfFiles[i].getName());
 
 				String relativePath = listOfFiles[i].getName();
-				
+
 				files.add(new PosixStorageFile(getFullBucketPath(), relativePath));
 				// System.out.println("File " + listOfFiles[i].getName());
 			}
@@ -118,13 +119,18 @@ public class PosixStorage implements Storage {
 		Path targetFilePath = new File(targetPath).toPath();
 
 		try {
+			// copies file or folder
 			Files.copy(sourceFilePath, targetFilePath, StandardCopyOption.REPLACE_EXISTING);
 		} catch (Exception e) {
 			if (logger.isTraceEnabled())
-				logger.warn("Cannot download file from " + sourcePath + " to " + targetPath + " ", e.getMessage());
+				logger.warn("Cannot download file/folder from " + sourcePath + " to " + targetPath + " ", e.getMessage());
 			throw e;
 		}
 	}
+
+
+
+	
 
 	@Override
 	public StorageType getStorageType() {
@@ -169,7 +175,7 @@ public class PosixStorage implements Storage {
 
 	@Override
 	public StorageFile getFile(String relativePath) {
-		
+
 		return new PosixStorageFile(basePath, relativePath);
 	}
 

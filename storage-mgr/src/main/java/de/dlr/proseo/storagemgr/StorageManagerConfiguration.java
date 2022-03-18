@@ -138,14 +138,7 @@ public class StorageManagerConfiguration {
 	public String getStorageManagerVersion2() {
 		return storageManagerVersion2;
 	}
-	
-	/**
-	 * @return the source Path
-	 */
-	public String getSourcePath() {
-		return sourcePath;
-	}
-	
+
 	
 	/**
 	 * @return the defaultStorageType
@@ -188,6 +181,15 @@ public class StorageManagerConfiguration {
 	public String getPosixCachePath() {
 		return new File(posixCachePath).getAbsolutePath();
 	}
+	
+	/**
+	 * Gets the absolute path to the POSIX source path
+	 * 
+	 * @return the POSIX source path
+	 */
+	public String getPosixSourcePath() {
+		return new File(sourcePath).getAbsolutePath();
+	}
 
 	/**
 	 * Gets the absolute path to the POSIX backend storage (if used)
@@ -198,24 +200,6 @@ public class StorageManagerConfiguration {
 		return new File(posixBackendPath).getAbsolutePath();
 	}
 	
-	/**
-	 * Gets the relative path to the POSIX file cache
-	 * 
-	 * @return the POSIX cache path
-	 */
-	public String getRelativePosixCachePath() {
-		return posixCachePath;
-	}
-
-	/**
-	 * Gets the relative path to the POSIX backend storage (if used)
-	 * 
-	 * @return the POSIX backend storage path
-	 */
-	public String getRelativePosixBackendPath() {
-		return posixBackendPath;
-	}
-
 	/**
 	 * @return the alluxioUnderFsDefaultPrefix
 	 */

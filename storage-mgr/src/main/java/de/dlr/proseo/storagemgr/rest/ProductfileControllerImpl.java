@@ -96,6 +96,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRestFileInfoByPathInfo({})", pathInfo);
+		// StorageLogger.trace() - can avoid if logger.isTraceEnabled()
 
 		
 		// pathInfo is absolute path s3://.. or /..   DOWNLOAD Storage -> Cache
@@ -223,7 +224,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 				RestFileInfo restFileInfo = ControllerUtils.convertToRestFileInfo(targetFile,
 						storage.getFileSize(targetFile));
-				return HttpResponses.createOk(restFileInfo);
+				return HttpResponses.createCreated(restFileInfo);
 
 			} catch (Exception e) {
 				return HttpResponses.createError("Cannot upload file", e);

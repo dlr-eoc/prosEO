@@ -136,8 +136,9 @@ public class StorageTestUtils {
 
 	public void printPosixStorage() {
 
-		Storage storage = storageProvider.getStorage();
-		StorageTestUtils.printStorageFileList("Storage Files: ", storage.getFiles());
+		// Storage storage = storageProvider.getStorage();
+		// StorageTestUtils.printStorageFileList("Storage Files: ", storage.getFiles());
+		TestUtils.printDirectoryTree(storagePath);
 	}
 
 	public void printCache() {
@@ -149,5 +150,9 @@ public class StorageTestUtils {
 
 		TestUtils.printDirectoryTree(sourcePath);
 	}
-
+	
+	public void printVersion(String msg) {
+		
+		System.out.println(msg + (storageProvider.isVersion2() ? " Version-2" : " Version-1"));
+	}
 }

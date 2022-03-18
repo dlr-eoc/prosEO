@@ -63,7 +63,7 @@ public class TestUtils {
 	 */
 	public String getSourcePath() {
 
-		return cfg.getSourcePath();
+		return cfg.getPosixSourcePath();
 	}
 
 	/**
@@ -292,7 +292,7 @@ public class TestUtils {
 	public static void printList(String message, List<String> list) {
 
 		System.out.println();
-		System.out.println(message + " SIZE: " + list.size());
+		System.out.println(message + " || LIST SIZE: " + list.size());
 		for (String element : list) {
 
 			System.out.println(" - " + element);
@@ -306,7 +306,12 @@ public class TestUtils {
 	public static void printDirectoryTree(String directoryPath) {
 
 		System.out.println();
-		// System.out.println(PRINT_DIRECTORY_HEADER + ": " + directoryPath);
+		String directory = new File(directoryPath).getName();
+		
+		System.out.print("FOLDER: " + directory + " PATH: " + directoryPath);
+		System.out.print(" Files: " + countFilesInDirectory(directoryPath));
+		System.out.println(" Folders: " + countDirectoriesInDirectory(directoryPath));
+		
 		printDirectoryTree(directoryPath, "");
 		System.out.println();
 	}
@@ -317,9 +322,9 @@ public class TestUtils {
 	 */
 	private static void printDirectoryTree(String directoryPath, String depth) {
 
-		System.out.println("Folder: " + directoryPath + " " + " depth: " + depth);
-
 		File directory = new File(directoryPath);
+		
+		// System.out.println("FOLDER: " + directoryPath + " " + " DEPTH: " + depth);
 
 		File[] files = directory.listFiles();
 		Arrays.sort(files);
@@ -337,9 +342,43 @@ public class TestUtils {
 
 		for (File file : files) {
 			if (file.isDirectory()) {
-				System.out.println(depth + file.getName());
+				System.out.println(depth + file.getName() + " <DIR>");
 				printDirectoryTree(file.getPath(), OUTPUT_TAB + depth);
 			}
 		}
+	}
+
+	public static int countFilesInDirectory(String directory) {
+
+		return countFilesInDirectory(new File(directory));
+	}
+
+	private static int countFilesInDirectory(File directory) {
+		int count = 0;
+		for (File file : directory.listFiles()) {
+			if (file.isFile()) {
+				count++;
+			}
+			if (file.isDirectory()) {
+				count += countFilesInDirectory(file);
+			}
+		}
+		return count;
+	}
+
+	public static int countDirectoriesInDirectory(String directory) {
+
+		return countDirectoriesInDirectory(new File(directory));
+	}
+
+	private static int countDirectoriesInDirectory(File directory) {
+		int count = 0;
+		for (File file : directory.listFiles()) {
+			if (file.isDirectory()) {
+				count++;
+				count += countDirectoriesInDirectory(file);
+			}
+		}
+		return count;
 	}
 }

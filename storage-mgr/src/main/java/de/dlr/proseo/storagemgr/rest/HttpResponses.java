@@ -4,7 +4,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import org.slf4j.Logger;
+
 import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
+import de.dlr.proseo.storagemgr.utils.StorageLogger;
 
 public class HttpResponses {
 	
@@ -12,6 +15,9 @@ public class HttpResponses {
 		return new ResponseEntity<>(restFileInfo, HttpStatus.OK);
 	}
 	
+	public static ResponseEntity<RestFileInfo> createCreated(RestFileInfo restFileInfo) { 
+		return new ResponseEntity<>(restFileInfo, HttpStatus.CREATED);
+	}
 	
 	public static ResponseEntity<RestFileInfo> createError(String message, Exception e) { 
 		
@@ -26,5 +32,4 @@ public class HttpResponses {
 		responseHeaders.set("Warning", "199 proseo-storage-mgr " + message.replaceAll("\n", " "));
 		return responseHeaders;
 	}
-
 }

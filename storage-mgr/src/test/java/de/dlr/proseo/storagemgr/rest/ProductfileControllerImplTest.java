@@ -61,13 +61,77 @@ public class ProductfileControllerImplTest {
 	 * @return RestFileInfo
 	 */
 	@Test
-	public void testGetRestFileInfoByPathInfo() throws Exception {
+	public void testDownload() throws Exception {
+		
+		String relativePath = "product/testControllerFile.txt";
+		
+		storageProvider.loadVersion2();
+		download(relativePath);
+		
+		storageProvider.loadVersion1();
+		download(relativePath);
+	}
+	
+	@Test
+	public void testUpload() throws Exception {
+		
+		String relativePath2 = "testControllerFile.txt";
+
+		storageProvider.loadVersion2();
+		upload(relativePath2);
+		
+		storageProvider.loadVersion1();
+		upload(relativePath2);
+	}
+	
+	
+	/**
+     *  Push file from local POSIX file system to Storage Manager
+     *  
+     *  POST /productfiles pathInfo="/.."&productId="123"&fileSize="234"  
+     * 
+     * @return
+     *     RestFileInfo
+     */
+	/*
+	@Test
+	public void testCreateRestProductFS()  throws Exception {
+		
+	
+	}
+	*/
+	
+	public void upload(String relativePath) throws Exception {
+		
+		TestUtils.printMethodName(this, testName);
+		TestUtils.createEmptyStorageDirectories();
+		
+		String productId = "123"; 	
+		String absolutePath = storageTestUtils.createSourceFile(relativePath);
+		String fileSize = Long.toString(storageProvider.getSourceFileSize(relativePath));
+		
+		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.put(REQUEST_STRING)
+				.param("pathInfo", absolutePath)
+				.param("productId", productId)
+				.param("fileSize", fileSize);
+				
+		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isCreated()).andReturn();
+
+		System.out.println("REQUEST: " + REQUEST_STRING);
+		System.out.println("Status: " + mvcResult.getResponse().getStatus());
+		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
+		
+		storageTestUtils.printPosixStorage();
+		storageTestUtils.printVersion("FINISHED upload-Test");
+		
+		TestUtils.deleteStorageDirectories();
+	}
+	
+	public void download(String relativePath) throws Exception {
 		
 		TestUtils.printMethodName(this, testName);
 		TestUtils.createEmptyStorageDirectories();
 	
-		String relativePath = "product/testControllerFile.txt";
-			
 		String absolutePath = storageTestUtils.createSourceFile(relativePath);
 		storageTestUtils.uploadToPosixStorage(relativePath);
 
@@ -81,44 +145,9 @@ public class ProductfileControllerImplTest {
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
 		
 		storageTestUtils.printCache();
-	}
-	
-	
+		storageTestUtils.printVersion("FINISHED download-Test");
 
-	/**
-     *  Push file from local POSIX file system to Storage Manager
-     *  
-     *  POST /productfiles pathInfo="/.."&productId="123"&fileSize="234"  
-     * 
-     * @return
-     *     RestFileInfo
-     */
-	@Test
-	public void testCreateRestProductFS()  throws Exception {
 		
-		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyStorageDirectories();
-		
-		String productId = "123"; 
-		String fileSize = "234"; 
-		
-		String relativePath = "testControllerFile.txt";
-			
-		storageTestUtils.createSourceFile(relativePath);
-		//storageTestUtils.uploadToPosixStorage(relativePath);
-
-		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.put(REQUEST_STRING)
-				.param("pathInfo", relativePath)
-				.param("productId", productId)
-				.param("fileSize", fileSize);
-				
-
-		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
-
-		System.out.println("REQUEST: " + REQUEST_STRING);
-		System.out.println("Status: " + mvcResult.getResponse().getStatus());
-		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
-		
-		storageTestUtils.printCache();
+		TestUtils.deleteStorageDirectories();
 	}
 }

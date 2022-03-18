@@ -73,7 +73,7 @@ public class StorageProvider {
 		version2 = cfg.getStorageManagerVersion2().equals("true") ? true : false;
 
 		pathConverter.addBasePath(storage.getBasePath());
-		pathConverter.addBasePath(cfg.getSourcePath());
+		pathConverter.addBasePath(cfg.getPosixSourcePath());
 		pathConverter.addBasePath(cfg.getPosixCachePath());
 	}
 
@@ -99,8 +99,6 @@ public class StorageProvider {
 	public boolean isVersion2() {
 		return version2;
 	}
-
-
 
 	public long getCacheFileSize(String relativePath) throws IOException {
 
@@ -137,7 +135,7 @@ public class StorageProvider {
 
 	public StorageFile getSourceFile(String relativePath) {
 
-		return new PosixStorageFile(cfg.getSourcePath(), relativePath);
+		return new PosixStorageFile(cfg.getPosixSourcePath(), relativePath);
 	}
 
 	public StorageFile getPosixFile(String basePath, String relativePath) {
@@ -167,9 +165,9 @@ public class StorageProvider {
 		String folder;
 
 		if (path.getParent() == null) {
-			folder = cfg.getSourcePath();
+			folder = cfg.getPosixSourcePath();
 		} else {
-			folder = path.getParent().getFileName().toString();
+			folder = path.getParent().toString();
 		}
 
 		return new PosixStorageFile(folder, filename);
@@ -177,9 +175,9 @@ public class StorageProvider {
 
 	public String getAbsoluteSourcePath(String relativePath) {
 
-		return Paths.get(cfg.getSourcePath(), relativePath).toString();
+		return Paths.get(cfg.getPosixSourcePath(), relativePath).toString();
 	}
-
+	
 	public String getAbsoluteCachePath(String relativePath) {
 
 		return Paths.get(cfg.getPosixCachePath(), relativePath).toString();
