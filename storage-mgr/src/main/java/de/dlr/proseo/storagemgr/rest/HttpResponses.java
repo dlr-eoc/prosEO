@@ -24,6 +24,9 @@ public class HttpResponses {
 		// TODO: switch for exception 
 		// getHTTPStatus from Exception 
 		
+		System.out.println("ERROR: " + e.getMessage());
+		e.printStackTrace(System.out);
+		
 		return new ResponseEntity<>(httpErrorHeaders(message), HttpStatus.BAD_REQUEST);
 	}
 	

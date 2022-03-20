@@ -61,27 +61,39 @@ public class ProductfileControllerImplTest {
 	 * @return RestFileInfo
 	 */
 	@Test
-	public void testDownload() throws Exception {
+	public void testDownloadV1() throws Exception {
 		
 		String relativePath = "product/testControllerFile.txt";
-		
-		storageProvider.loadVersion2();
-		download(relativePath);
 		
 		storageProvider.loadVersion1();
 		download(relativePath);
 	}
 	
 	@Test
-	public void testUpload() throws Exception {
+	public void testDownloadV2() throws Exception {
 		
-		String relativePath2 = "testControllerFile.txt";
-
+		String relativePath = "product/testControllerFile.txt";
+		
 		storageProvider.loadVersion2();
-		upload(relativePath2);
+		download(relativePath);
+	}
+	
+	@Test
+	public void testUploadV1() throws Exception {
+		
+		String relativePath = "testControllerFile.txt";
 		
 		storageProvider.loadVersion1();
-		upload(relativePath2);
+		upload(relativePath);
+	}
+	
+	@Test
+	public void testUploadV2() throws Exception {
+		
+		String relativePath = "testControllerFile.txt";
+
+		storageProvider.loadVersion2();
+		upload(relativePath);
 	}
 	
 	

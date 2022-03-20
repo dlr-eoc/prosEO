@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.cache.FileCache;
 import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
 import de.dlr.proseo.storagemgr.utils.StorageType;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
@@ -105,11 +106,17 @@ public class ProductfileControllerImpl implements ProductfileController {
 			try {
 				Storage storage = storageProvider.getStorage();
 				String relativePath = storageProvider.getRelativePath(pathInfo);
+				FileCache cache = FileCache.getInstance();
 
-				StorageFile sourceFile = storageProvider.getStorageFile(relativePath);
+				//StorageFile sourceFile = storageProvider.getStorageFile(relativePath); 
+				StorageFile sourceFile = storageProvider.getAbsoluteFile(pathInfo);
 				StorageFile targetFile = storageProvider.getCacheFile(relativePath);
-
-				storage.downloadFile(sourceFile, targetFile);
+				
+				if (!cache.containsKey(targetFile.getFullPath())) {
+					
+					storage.downloadFile(sourceFile, targetFile);
+					cache.put(targetFile.getFullPath()); 
+				}
 
 				RestFileInfo restFileInfo = ControllerUtils.convertToRestFileInfo(targetFile,
 						storageProvider.getCacheFileSize(relativePath));

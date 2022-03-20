@@ -4,11 +4,10 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-
 public class PathConverterTest {
 
 	@Test
-	public void test() {
+	public void testRelative() {
 
 		String cachePath = "/target/cache";
 		// String storagePath;
@@ -31,4 +30,23 @@ public class PathConverterTest {
 		}
 	}
 
+	@Test
+	public void testFirstFolder() {
+
+		String cachePath = "/target/cache";
+
+		String path1 = "/first/second/file.txt";
+		String expectedFirst1 = "first";
+		String expectedWithoutFirst1 = "second/file.txt";
+
+		PathConverter pathConverter = new PathConverter();
+		pathConverter.addBasePath(cachePath);
+
+		String firstPath = pathConverter.getFirstFolder(path1);
+		assertTrue("Wrong first path: " + firstPath + " expected: " + expectedFirst1, firstPath.equals(expectedFirst1));
+
+		String withoutFirst = pathConverter.removeFirstFolder(path1);
+		assertTrue("Wrong without first path: " + withoutFirst + " expected: " + expectedWithoutFirst1,
+				withoutFirst.equals(expectedWithoutFirst1));
+	}
 }

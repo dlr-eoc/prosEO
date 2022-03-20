@@ -1,5 +1,7 @@
 package de.dlr.proseo.storagemgr.version2;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 
 /**
@@ -37,7 +39,36 @@ public class PathConverter {
 
 		return path;
 	}
+	
+	public String getFirstFolder(String path) {
+		
+		String p = path.trim();
+		
+		p = removeLeftSlash(p);	
+		File file = new File(p);
+		
+		if (file.getParent() == null) {
+			return "";
+		}
+		
+		return p.substring(0, p.indexOf(slash));
+	}
 
+	
+	public String removeFirstFolder(String path) {
+		
+		String p = path.trim();
+		
+		p = removeLeftSlash(p);	
+		File file = new File(p);
+		
+		if (file.getParent() == null) {
+			return p;
+		} 
+		
+		return p.substring(p.indexOf(slash) + 1);
+	}
+	
 	public boolean isS3Path(String path) {
 
 		return path.startsWith(s3Prefix) ? true : false;
@@ -61,7 +92,7 @@ public class PathConverter {
 			}
 		}
 
-		return removeLeftSlash(path);
+		return removeFirstFolder(path);
 	}
 
 	public String removeBucket(String path) {

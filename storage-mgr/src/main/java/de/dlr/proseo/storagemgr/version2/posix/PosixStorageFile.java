@@ -71,6 +71,8 @@ public class PosixStorageFile implements StorageFile {
 	
 	private String verifyBasePath(String basePath) 
 	{
+		if (!basePath.startsWith("/")) basePath = "/" + basePath;
+	
 		return basePath; 
 	}
 	

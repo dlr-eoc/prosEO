@@ -47,6 +47,8 @@ public class StorageProvider {
 
 	@Autowired
 	private StorageManagerConfiguration cfg;
+	
+	
 
 	/**
 	 * Instance of storage provider
@@ -73,7 +75,7 @@ public class StorageProvider {
 		version2 = cfg.getStorageManagerVersion2().equals("true") ? true : false;
 
 		pathConverter.addBasePath(storage.getBasePath());
-		pathConverter.addBasePath(cfg.getPosixSourcePath());
+		// pathConverter.addBasePath(cfg.getPosixSourcePath());
 		pathConverter.addBasePath(cfg.getPosixCachePath());
 	}
 
@@ -160,6 +162,7 @@ public class StorageProvider {
 	// if file only, return source path
 	public StorageFile getAbsoluteFile(String absolutePath) {
 
+		/*
 		Path path = Paths.get(absolutePath);
 		String filename = path.getFileName().toString();
 		String folder;
@@ -169,8 +172,11 @@ public class StorageProvider {
 		} else {
 			folder = path.getParent().toString();
 		}
+		*/
+		String basePath = pathConverter.getFirstFolder(absolutePath);
+		String relativePath = pathConverter.removeFirstFolder(absolutePath);
 
-		return new PosixStorageFile(folder, filename);
+		return new PosixStorageFile(basePath, relativePath);
 	}
 
 	public String getAbsoluteSourcePath(String relativePath) {
