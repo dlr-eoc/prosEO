@@ -768,9 +768,9 @@ public class OrderCommandRunner {
 			return;
 		}
 		
-		/* Delete order using Production Planner service */
+		/* Delete order using Order Manager service */
 		try {
-			serviceConnection.deleteFromService(serviceConfig.getProductionPlannerUrl(), URI_PATH_ORDERS + "/" + restOrder.getId(),
+			serviceConnection.deleteFromService(serviceConfig.getOrderManagerUrl(), URI_PATH_ORDERS + "/" + restOrder.getId(),
 						loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
