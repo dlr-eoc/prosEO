@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Optional;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+
+import org.hibernate.resource.transaction.spi.TransactionStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +40,6 @@ import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
  *
  */
 @Component
-@Transactional
 public class OrderUtil {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(OrderUtil.class);
@@ -434,7 +435,6 @@ public class OrderUtil {
 						orderx.setOrderState(OrderState.RELEASING);
 						orderx.incrementVersion();
 						orderx = RepositoryService.getOrderRepository().save(orderx);
-						em.merge(orderx);
 						return true;
 					}
 					return false;
@@ -574,6 +574,8 @@ public class OrderUtil {
 				answer = Messages.ORDER_SUSPENDED;
 				break;
 			case RELEASING:
+			case RUNNING:
+			case SUSPENDING:
 				// look for plan thread and interrupt it
 				OrderReleaseThread rt = productionPlanner.getReleaseThreads().get(ProductionPlanner.RELEASE_THREAD_PREFIX + order.getId());
 				if (rt != null) {
@@ -590,9 +592,6 @@ public class OrderUtil {
 						}
 					}
 				}
-				// intentionally fall through to suspend already running jobs
-			case RUNNING:
-			case SUSPENDING:
 				final ProcessingOrder ordery = transactionTemplate.execute((status) -> {
 					if (order.getOrderState() == OrderState.RELEASING) {
 						order.setOrderState(OrderState.RELEASED);
@@ -613,7 +612,15 @@ public class OrderUtil {
 				answer = transactionTemplate.execute((status) -> {
 					Boolean suspending = false;
 					Boolean allFinished = true;
-					for (Job job : orderx.getJobs()) {
+					ProcessingOrder orderz = null;
+					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+					if (orderOpt.isPresent()) {
+						orderz = orderOpt.get();
+					}
+					if (orderz == null) {
+						return null;
+					}
+					for (Job job : orderz.getJobs()) {
 						jobUtil.suspend(job, force);
 						// check for state
 						if (job.getJobState() == JobState.COMPLETED || job.getJobState() == JobState.RELEASED) {
@@ -625,23 +632,26 @@ public class OrderUtil {
 							suspending = true;
 						}
 					}
-					orderx.incrementVersion();
+					orderz.incrementVersion();
+					if (orderz.getOrderState() == OrderState.RUNNING) {
+						orderz.setOrderState(OrderState.SUSPENDING);
+					}
 					if (suspending) {
 						// check whether some jobs are already finished
-						orderx.setOrderState(OrderState.SUSPENDING);
-						RepositoryService.getOrderRepository().save(orderx);
-						logOrderState(orderx);
+						orderz.setOrderState(OrderState.SUSPENDING);
+						RepositoryService.getOrderRepository().save(orderz);
+						logOrderState(orderz);
 						return Messages.ORDER_SUSPENDED;
 					} else if (allFinished) {
 						// check whether some jobs are already finished
-						orderx.setOrderState(OrderState.COMPLETED);
-						RepositoryService.getOrderRepository().save(orderx);
-						logOrderState(orderx);
+						orderz.setOrderState(OrderState.COMPLETED);
+						RepositoryService.getOrderRepository().save(orderz);
+						logOrderState(orderz);
 						return  Messages.ORDER_COMPLETED;
 					} else {
-						orderx.setOrderState(OrderState.PLANNED);
-						RepositoryService.getOrderRepository().save(orderx);
-						logOrderState(orderx);
+						orderz.setOrderState(OrderState.PLANNED);
+						RepositoryService.getOrderRepository().save(orderz);
+						logOrderState(orderz);
 						return  Messages.ORDER_SUSPENDED;
 					}
 				});
@@ -683,14 +693,16 @@ public class OrderUtil {
 	 * @param force The flag to force kill of currently running job steps on processing facility
 	 * @return Result message
 	 */
-	@Transactional
 	public Messages prepareSuspend(long id, Boolean force) {
-		ProcessingOrder order = null;
-		Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
-		if (orderOpt.isPresent()) {
-			order = orderOpt.get();
-		}
-		if (logger.isTraceEnabled()) logger.trace(">>> suspend({}, {})", (null == order ? "null" : order.getId()), force);
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		final ProcessingOrder order = transactionTemplate.execute((status) -> {
+			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+			if (orderOpt.isPresent()) {
+				return orderOpt.get();
+			}
+			return null;
+		});
+		if (logger.isTraceEnabled()) logger.trace(">>> prepareSuspend({}, {})", (null == order ? "null" : order.getId()), force);
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			switch (order.getOrderState()) {
@@ -704,7 +716,11 @@ public class OrderUtil {
 				answer = Messages.ORDER_SUSPENDED;
 				break;
 			case RELEASING:
+			case RELEASED:
+			case RUNNING:
+			case SUSPENDING:
 				// look for plan thread and interrupt it
+				answer = Messages.TRUE;
 				OrderReleaseThread rt = productionPlanner.getReleaseThreads().get(ProductionPlanner.RELEASE_THREAD_PREFIX + order.getId());
 				if (rt != null) {
 					rt.interrupt();
@@ -712,36 +728,59 @@ public class OrderUtil {
 					while (rt.isAlive() && i < 1000) {
 						i++;
 						try {
-							Thread.sleep(100);
+							Thread.sleep(1000);
+							rt.interrupt();
 						} catch (InterruptedException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 							break;
 						}
 					}
-				}
-				// intentionally fall through to suspend already running jobs
-			case RELEASED:
-			case RUNNING:
-			case SUSPENDING:
-				for (Job job : order.getJobs()) {
-					switch (job.getJobState()) {
-					case INITIAL:
-						job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
-						// intentionally fall through
-					case RELEASED:
-						job.setJobState(de.dlr.proseo.model.Job.JobState.STARTED);
-						// intentionally fall through
-					case STARTED:
-						job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
-						RepositoryService.getJobRepository().save(job);
-						break;
-					default:
-						break;
-						
+					if (rt.isAlive()) {
+						answer = Messages.ORDER_COULD_NOT_INTERRUPT;
 					}
 				}
-				answer = Messages.ORDER_SUSPENDED;
+				if (answer.isTrue()) {
+					transactionTemplate.execute((status) -> {
+						ProcessingOrder orderz = null;
+						Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+						if (orderOpt.isPresent()) {
+							orderz = orderOpt.get();
+						}
+						if (orderz.getOrderState() == OrderState.RELEASING) {
+							orderz.setOrderState(OrderState.RELEASED);
+							orderz.setOrderState(OrderState.RUNNING);
+						}
+						orderz.setOrderState(OrderState.SUSPENDING);
+						RepositoryService.getOrderRepository().save(orderz);
+						return null;
+					});
+					transactionTemplate.execute((status) -> {
+						ProcessingOrder orderz = null;
+						Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+						if (orderOpt.isPresent()) {
+							orderz = orderOpt.get();
+						}
+						for (Job job : orderz.getJobs()) {
+							switch (job.getJobState()) {
+							case INITIAL:
+								job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
+								// intentionally fall through
+							case RELEASED:
+								job.setJobState(de.dlr.proseo.model.Job.JobState.STARTED);
+								// intentionally fall through
+							case STARTED:
+								job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
+								RepositoryService.getJobRepository().save(job);
+								break;
+							default:
+								break;						
+							}
+						}
+						return null;
+					});
+					answer = Messages.ORDER_SUSPEND_PREPARED;
+				}
 				break;	
 			case COMPLETED:
 				answer = Messages.ORDER_ALREADY_COMPLETED;
@@ -802,7 +841,9 @@ public class OrderUtil {
 					}
 				}
 				if (all) {
-					if (allCompleted) {
+					if (order.getOrderState() == OrderState.COMPLETED) {
+						answer = Messages.ORDER_COMPLETED;
+					} else if (allCompleted) {
 						order.setOrderState(OrderState.PLANNED);
 						order.setOrderState(OrderState.RELEASED);
 						order.setOrderState(OrderState.RUNNING);
@@ -1002,7 +1043,7 @@ public class OrderUtil {
 	 * @param order The processing order
 	 * @return List of processinig facilities
 	 */
-	
+	@Transactional
 	public List<ProcessingFacility> getProcessingFacilities(long id) {
 		ProcessingOrder order = null;
 		Optional<ProcessingOrder> oOrder = RepositoryService.getOrderRepository().findById(id);

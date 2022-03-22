@@ -65,19 +65,7 @@ public class JobUtil {
 				answer = Messages.JOB_INITIAL;
 				break;
 			case PLANNED:
-				answer = Messages.JOB_SUSPENDED;
-				break;
 			case RELEASED:
-				// no job step is running
-				// suspend all of them
-				for (JobStep js : job.getJobSteps()) {
-					UtilService.getJobStepUtil().suspend(js, force);
-				}
-				job.setJobState(de.dlr.proseo.model.Job.JobState.PLANNED);
-				job.incrementVersion();
-				RepositoryService.getJobRepository().save(job);
-				answer = Messages.JOB_SUSPENDED;
-				break;
 			case ON_HOLD:
 			case STARTED:
 				// try to suspend job steps not running
@@ -210,7 +198,9 @@ public class JobUtil {
 					}
 				}
 				if (all) {
-					if (allCompleted) {
+					if (job.getJobState() == JobState.COMPLETED) {
+						answer = Messages.JOB_COMPLETED;
+					} else if (allCompleted) {
 						job.setJobState(de.dlr.proseo.model.Job.JobState.PLANNED);
 						job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
 						job.setJobState(de.dlr.proseo.model.Job.JobState.STARTED);

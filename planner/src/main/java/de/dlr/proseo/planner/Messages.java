@@ -36,6 +36,8 @@ public enum Messages {
 	ORDER_RELEASED					(true, MessageType.I, "Processing order '%s' is released"), 
 	ORDER_RUNNING					(true, MessageType.I, "Processing order '%s' is running"), 
 	ORDER_SUSPENDED					(true, MessageType.I, "Processing order '%s' is suspended"), 
+	ORDER_SUSPEND_PREPARED			(true, MessageType.I, "Processing order '%s' is prepared for suspend"), 
+	ORDER_COULD_NOT_INTERRUPT		(false, MessageType.E, "Processing order '%s' could not onterrpt release thread"), 
 	ORDER_CANCELED					(true, MessageType.I, "Processing order '%s' is canceled"), 
 	ORDER_RESET						(true, MessageType.I, "Processing order '%s' is reset"), 
 	ORDER_DELETED					(true, MessageType.I, "Processing order '%s' deleted"), 

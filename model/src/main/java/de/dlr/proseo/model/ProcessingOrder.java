@@ -30,10 +30,11 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Job.JobState;
-import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ProductionType;
@@ -54,6 +55,10 @@ import de.dlr.proseo.model.enums.ProductionType;
 	@Index(unique = false, columnList = "execution_time") 
 })
 public class ProcessingOrder extends PersistentObject {
+	/**
+	 * Logger of this class
+	 */
+	private static Logger logger = LoggerFactory.getLogger(ProcessingOrder.class);
 	
 	private static final String MSG_ILLEGAL_STATE_TRANSITION = "Illegal order state transition from %s to %s";
 
@@ -332,8 +337,8 @@ public class ProcessingOrder extends PersistentObject {
 			} else {
 				orderState = OrderState.COMPLETED;
 			}
-		// We still have unfinished jobs
-		} else if (0 == activeJobCount && 0 < terminatedJobCount) {
+		// We still have unfinished jobs   && 0 < terminatedJobCount
+		} else if (0 == activeJobCount) {
 			// At least one job has terminated, but none is currently active
 			if (OrderState.SUSPENDING.equals(orderState)) {
 				orderState = OrderState.PLANNED;
@@ -343,7 +348,8 @@ public class ProcessingOrder extends PersistentObject {
 					orderState = OrderState.RUNNING;
 				}
 			} else {
-				orderState = OrderState.RUNNING;
+				// keep state
+				// orderState = OrderState.RUNNING;
 			}
 		} else if (0 < activeJobCount) {
 			// At least one job is active
@@ -354,6 +360,10 @@ public class ProcessingOrder extends PersistentObject {
 				if (0 == jobStateMap.get(JobState.PLANNED)) {
 					orderState = OrderState.RUNNING;
 				}
+			} else if (orderState == OrderState.PLANNED) {
+				// The complete order was suspended and some job steps finished later
+				// keep the order state
+				orderState = OrderState.PLANNED;
 			} else {
 				orderState = OrderState.RUNNING;
 			}

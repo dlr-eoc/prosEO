@@ -187,6 +187,11 @@ public class OrderReleaseThread extends Thread {
 				}
 				
 			}
+			if (this.isInterrupted()) {
+				answer = new Message(Messages.ORDER_RELEASING_INTERRUPTED);
+				logger.warn(Messages.ORDER_RELEASING_INTERRUPTED.format(this.getName(), order.getIdentifier()));
+				throw new InterruptedException();
+			}
 			final Messages finalAnswer = releaseAnswer;
 			answer = transactionTemplate.execute((status) -> {
 				ProcessingOrder lambdaOrder = null;
