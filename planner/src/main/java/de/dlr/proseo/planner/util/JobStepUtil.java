@@ -139,9 +139,11 @@ public class JobStepUtil {
 					List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
 							.findUnsatisfiedByProductClass(pcId);
 					for (ProductQuery pq : productQueries) {
-						if (pq.getJobStep().getJobStepState().equals(JobStepState.WAITING_INPUT)) {
+						if (pq.getJobStep().getJobStepState().equals(JobStepState.WAITING_INPUT)
+								&& pq.getJobStep().getJob().getJobState() != JobState.ON_HOLD) {
 							jobSteps.add(pq.getJobStep());
-						} else if (!onlyWaiting && pq.getJobStep().getJobStepState().equals(JobStepState.PLANNED)) {
+						} else if (!onlyWaiting && pq.getJobStep().getJobStepState().equals(JobStepState.PLANNED)
+								&& pq.getJobStep().getJob().getJobState() != JobState.ON_HOLD) {
 							jobSteps.add(pq.getJobStep());
 						}
 					}
@@ -157,9 +159,11 @@ public class JobStepUtil {
 							.findUnsatisfiedByProductClass(pcId);
 					for (ProductQuery pq : productQueries) {
 						if (pq.getJobStep().getJob().getProcessingFacility().getId() == pfId) {
-							if (pq.getJobStep().getJobStepState().equals(JobStepState.WAITING_INPUT)) {
+							if (pq.getJobStep().getJobStepState().equals(JobStepState.WAITING_INPUT)
+									&& pq.getJobStep().getJob().getJobState() != JobState.ON_HOLD) {
 								jobSteps.add(pq.getJobStep());
-							} else if (!onlyWaiting && pq.getJobStep().getJobStepState().equals(JobStepState.PLANNED)) {
+							} else if (!onlyWaiting && pq.getJobStep().getJobStepState().equals(JobStepState.PLANNED)
+									&& pq.getJobStep().getJob().getJobState() != JobState.ON_HOLD) {
 								jobSteps.add(pq.getJobStep());
 							}
 						}
@@ -826,7 +830,8 @@ public class JobStepUtil {
 							List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(kc.getLongId(), states);
 							for (JobStep js : jobSteps) {
 								if ((js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)
-										&& js.getJob().getProcessingOrder().getOrderState() != OrderState.RELEASING) {
+										&& js.getJob().getProcessingOrder().getOrderState() != OrderState.SUSPENDING
+										&& js.getJob().getProcessingOrder().getOrderState() != OrderState.PLANNED) {
 									if (kc.couldJobRun()) {
 										kc.createJob(String.valueOf(js.getId()), null, null);
 									} else {
@@ -882,15 +887,18 @@ public class JobStepUtil {
 				});
 				if (pfo != null) {
 
-					JobStep jsx = transactionTemplate.execute((status) -> {
+					Boolean checkQueries = transactionTemplate.execute((status) -> {
 						Optional<JobStep> opt = RepositoryService.getJobStepRepository().findById(jsId);
 						if (opt.isPresent()) {
-							return opt.get();
+							if ((opt.get().getJobStepState().equals(JobStepState.PLANNED) 
+									||  opt.get().getJobStepState().equals(JobStepState.WAITING_INPUT))
+									&& opt.get().getJob().getJobState() != JobState.ON_HOLD) {
+								return true;
+							}
 						}
-						return null;
+						return false;
 					});
-					if (jsx.getJobStepState().equals(JobStepState.PLANNED) 
-							|| jsx.getJobStepState().equals(JobStepState.WAITING_INPUT)) {
+					if (checkQueries) {
 						checkJobStepQueries(jsId, false);
 					}
 					answer = transactionTemplate.execute((status) -> {
@@ -904,7 +912,9 @@ public class JobStepUtil {
 								js.getJob().setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
 								RepositoryService.getJobRepository().save(js.getJob());
 							}
-							if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
+							if ((js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)
+									&& js.getJob().getProcessingOrder().getOrderState() != OrderState.SUSPENDING
+									&& js.getJob().getProcessingOrder().getOrderState() != OrderState.PLANNED) {
 								if (kc.couldJobRun()) {
 									kc.createJob(String.valueOf(js.getId()), null, null);
 								} else {

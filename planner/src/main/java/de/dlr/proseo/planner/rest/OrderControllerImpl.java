@@ -309,7 +309,6 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	@Transactional
 	public ResponseEntity<RestOrder> releaseOrder(String orderId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> releaseOrder({})", orderId);
 		
@@ -329,7 +328,7 @@ public class OrderControllerImpl implements OrderController {
 						
 			if (msg.isTrue()) {
 				// resumed
-				RestOrder ro = RestUtil.createRestOrder(order);
+				RestOrder ro = getRestOrder(order.getId());
 
 				return new ResponseEntity<>(ro, HttpStatus.OK);
 			} else {
@@ -468,7 +467,9 @@ public class OrderControllerImpl implements OrderController {
 			}
 
 			Messages msg = orderUtil.prepareSuspend(order.getId(), force);
-			msg = orderUtil.suspend(order.getId(), force);
+			if (msg.isTrue()) {
+				msg = orderUtil.suspend(order.getId(), force);
+			}
 			// Already logged
 			
 			if (msg.isTrue()) {
