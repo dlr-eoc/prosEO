@@ -46,7 +46,7 @@ public class OrderPlanThread extends Thread {
 	/**
 	 * The processing order to plan.
 	 */
-	private ProcessingOrder order;
+	private long orderId;
 	
 	/**
 	 * The facility to process the order
@@ -62,11 +62,11 @@ public class OrderPlanThread extends Thread {
 	 * @param procFacility The processing facility to run the order
 	 * @param name The thread name
 	 */
-	public OrderPlanThread(ProductionPlanner productionPlanner, OrderDispatcher orderDispatcher, ProcessingOrder order,  ProcessingFacility procFacility, String name) {
+	public OrderPlanThread(ProductionPlanner productionPlanner, OrderDispatcher orderDispatcher, long orderId,  ProcessingFacility procFacility, String name) {
 		super(name);
 		this.productionPlanner = productionPlanner;
 		this.orderDispatcher = orderDispatcher;
-		this.order = order;
+		this.orderId = orderId;
 		this.procFacility = procFacility;
 	}	
 
@@ -78,12 +78,11 @@ public class OrderPlanThread extends Thread {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		
 		Message answer = new Message(Messages.FALSE);
-		if (order != null && productionPlanner != null && orderDispatcher != null) {
-			final long orderId = order.getId();
+		if (orderId != 0 && productionPlanner != null && orderDispatcher != null) {
 			try {
 				answer = orderDispatcher.prepareExpectedJobs(orderId, procFacility, this);
 				if (answer.isTrue()) {
-					answer = plan(order.getId());
+					answer = plan(orderId);
 				}
 				if (!answer.isTrue()) {
 					@SuppressWarnings("unused")
@@ -103,8 +102,6 @@ public class OrderPlanThread extends Thread {
 				// do nothing, message already logged
 			} 
 			catch(Exception e) {
-				Messages.ORDER_PLANNING_EXCEPTION.format(this.getName(), order.getIdentifier());
-				logger.error(e.getMessage());
 				@SuppressWarnings("unused")
 				Object dummy = transactionTemplate.execute((status) -> {
 					ProcessingOrder lambdaOrder = null;
@@ -112,6 +109,8 @@ public class OrderPlanThread extends Thread {
 					if (orderOpt.isPresent()) {
 						lambdaOrder = orderOpt.get();
 					}
+					Messages.ORDER_PLANNING_EXCEPTION.format(this.getName(), lambdaOrder.getIdentifier());
+					logger.error(e.getMessage());
 					lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
 					lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 					return null;
