@@ -60,7 +60,6 @@ import io.kubernetes.client.openapi.models.V1ResourceRequirements;
  *
  */
 
-//@Transactional
 @Component
 public class KubeJob {
 	
@@ -592,7 +591,7 @@ public class KubeJob {
 						UtilService.getOrderUtil().logOrderState(js.get().getJob().getProcessingOrder());
 					}
 				}
-				KubeJobFinish toFini = new KubeJobFinish(this, jobname);
+				KubeJobFinish toFini = new KubeJobFinish(this, aKubeConfig.getProductionPlanner(), jobname);
 				toFini.start();
 				return null;
 			});
@@ -628,7 +627,6 @@ public class KubeJob {
 	 * @param aJobName The Kubernetes job name
 	 * @return true after success
 	 */
-	@Transactional
 	public UpdateInfoResult updateInfo(String aJobName) {
 		if (logger.isTraceEnabled()) logger.trace(">>> updateInfo({})", aJobName);
 		
@@ -762,18 +760,21 @@ public class KubeJob {
 	 * @param aJobName The Kubernetes job name 
 	 * @return true after success
 	 */
-	@Transactional
 	public boolean updateFinishInfoAndDelete(String aJobName) {
 		if (logger.isTraceEnabled()) logger.trace(">>> updateFinishInfoAndDelete({})", aJobName);
 		
 		UpdateInfoResult success = UpdateInfoResult.FALSE;
 		success = updateInfo(aJobName);
 		if (success.equals(UpdateInfoResult.TRUE)) {
-			Long jobStepId = this.getJobId();
-			Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
-			if (js.isPresent()) {							
-				UtilService.getJobStepUtil().checkFinish(js.get());
-			}
+			TransactionTemplate transactionTemplate = new TransactionTemplate(this.kubeConfig.getProductionPlanner().getTxManager());
+			transactionTemplate.execute((status) -> {
+				Long jobStepId = this.getJobId();
+				Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
+				if (js.isPresent()) {							
+					UtilService.getJobStepUtil().checkFinish(js.get());
+				}
+				return null;
+			});
 		}
 		if (!success.equals(UpdateInfoResult.FALSE)) {
 			// delete kube job

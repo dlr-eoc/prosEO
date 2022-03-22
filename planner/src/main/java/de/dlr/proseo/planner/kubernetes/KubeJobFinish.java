@@ -17,8 +17,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.ProductionPlannerConfiguration;
 import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
@@ -31,7 +33,6 @@ import de.dlr.proseo.planner.util.UtilService;
  *
  */
 
-@Transactional
 public class KubeJobFinish extends Thread {
 
 	/**
@@ -39,7 +40,6 @@ public class KubeJobFinish extends Thread {
 	 */
 	private static Logger logger = LoggerFactory.getLogger(KubeJobFinish.class);
 	 	 
-	@Autowired
 	private ProductionPlanner planner;
 	
 	/**
@@ -58,10 +58,11 @@ public class KubeJobFinish extends Thread {
 	 * @param aJob The planner kube job
 	 * @param aJobName The Kubernetes job name
 	 */
-	public KubeJobFinish(KubeJob aJob, String aJobName) {
+	public KubeJobFinish(KubeJob aJob, ProductionPlanner planner, String aJobName) {
 		super(aJobName);
 		kubeJob = aJob;
 		jobName = aJobName;
+		this.planner = planner;
 	}
 
 	/**
@@ -71,7 +72,6 @@ public class KubeJobFinish extends Thread {
 	 * 
      * @see java.lang.Thread#run()
      */
-	@Transactional
     public void run() {
 		if (logger.isTraceEnabled()) logger.trace(">>> run()");
 		
@@ -85,25 +85,48 @@ public class KubeJobFinish extends Thread {
     			try {
     				i++;
     				sleep(wait);
-    				found = kubeJob.updateFinishInfoAndDelete(jobName);
+    				try {
+    					planner.acquireReleaseSemaphore("KubeJobFinish.run");
+    					found = kubeJob.updateFinishInfoAndDelete(jobName);
+    				} catch (Exception e) {
+    					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+    				} finally {
+    					planner.releaseReleaseSemaphore("KubeJobFinish.run");					
+    				}
     				if (found) {
     		    		// Check once for runnable job steps, which can be started as a result of "kubeJob" being finished 
-    					Long jobStepId = kubeJob.getJobId();
-    					Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
-    					if (js.isPresent()) {	
-    						if (js.get().getOutputProduct() != null) {
-    							List<ProductClass> productClasses = 
-    									getAllComponentClasses(js.get().getOutputProduct().getProductClass());
-    							productClasses.add(js.get().getOutputProduct().getProductClass());
-    							for (ProductClass pc : productClasses) {
-    								UtilService.getJobStepUtil().checkForJobStepsToRun(kubeJob.getKubeConfig(), 
-    										pc.getId(), 
-    										false,
-    										true);		    				
+    					final Long jobStepId = kubeJob.getJobId();
+    					TransactionTemplate transactionTemplate = new TransactionTemplate(planner.getTxManager());
+
+    					try {
+    						planner.acquireReleaseSemaphore("KubeJobFinish.run");
+    						final List<Long> pcList = transactionTemplate.execute((status) -> {
+    							Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
+    							List<Long> pcList1 = new ArrayList<Long>();
+    							if (js.isPresent()) {	
+    								if (js.get().getOutputProduct() != null) {
+    									List<ProductClass> productClasses = 
+    											getAllComponentClasses(js.get().getOutputProduct().getProductClass());
+    									productClasses.add(js.get().getOutputProduct().getProductClass());
+    									for (ProductClass pc : productClasses) {
+    										pcList1.add(pc.getId());
+    									}
+    								}
     							}
-    						}			
+    							return pcList1;
+    						});
+    						planner.releaseReleaseSemaphore("KubeJobFinish.run");		
+        					for (Long pcId : pcList) {
+        						UtilService.getJobStepUtil().checkForJobStepsToRun(kubeJob.getKubeConfig(), 
+        								pcId, 
+        								false,
+        								true);		    				
+        					}			
+    					} catch (Exception e) {
+    						planner.releaseReleaseSemaphore("KubeJobFinish.run");					
+    						Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
     					}
-    		    		KubeDispatcher kd = new KubeDispatcher(null, kubeJob.getKubeConfig(), true);
+    					KubeDispatcher kd = new KubeDispatcher(null, kubeJob.getKubeConfig(), true);
     		    		kd.start();    					
     				}
     			}

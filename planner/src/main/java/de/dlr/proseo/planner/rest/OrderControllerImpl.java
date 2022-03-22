@@ -238,7 +238,6 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	@Transactional
 	public ResponseEntity<RestOrder> planOrder(String releaseId, String facility) {
 		if (logger.isTraceEnabled()) logger.trace(">>> planOrder({}, {})", releaseId, facility);
 		
@@ -278,17 +277,17 @@ public class OrderControllerImpl implements OrderController {
 		    	return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
 			}
 			
-			Messages msg = orderUtil.plan(order, pf);
+			Messages msg = orderUtil.plan(order.getId(), pf);
 			if (msg.isTrue()) {
-				RestOrder ro = RestUtil.createRestOrder(order);
+				RestOrder ro = getRestOrder(order.getId());
 
 				return new ResponseEntity<>(ro, HttpStatus.CREATED);
 			} else if (msg.getCode() == Messages.ORDER_PRODUCT_EXIST.getCode()) {
-				RestOrder ro = RestUtil.createRestOrder(order);
+				RestOrder ro = getRestOrder(order.getId());
 
 				return new ResponseEntity<>(ro, HttpStatus.CREATED);
 			} else if (msg.getType() == Messages.MessageType.W) {
-				RestOrder ro = RestUtil.createRestOrder(order);
+				RestOrder ro = getRestOrder(order.getId());
 				String message = msg.formatWithPrefix();					
 
 				return new ResponseEntity<>(ro, Messages.errorHeaders(message), HttpStatus.NOT_MODIFIED);

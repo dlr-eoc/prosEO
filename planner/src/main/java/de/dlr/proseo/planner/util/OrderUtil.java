@@ -349,8 +349,16 @@ public class OrderUtil {
 	 * @param procFacility The processing facility to run the order
 	 * @return Result message
 	 */
-	@Transactional
-	public Messages plan(ProcessingOrder order,  ProcessingFacility procFacility) {
+	public Messages plan(long id,  ProcessingFacility procFacility) {
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+
+		final ProcessingOrder order = transactionTemplate.execute((status) -> {
+			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+			if (orderOpt.isPresent()) {
+				return orderOpt.get();
+			}
+			return null;
+		});
 		if (logger.isTraceEnabled()) logger.trace(">>> plan({}, {})", (null == order ? "null" : order.getId()),
 				(null == procFacility ? "null" : procFacility.getName()));
 		
@@ -362,17 +370,27 @@ public class OrderUtil {
 				break;
 			case APPROVED:
 			case PLANNING_FAILED:
-				order.setOrderState(OrderState.PLANNING);
-				order.incrementVersion();
-				order = RepositoryService.getOrderRepository().save(order);
-				em.merge(order);
-				String threadName = ProductionPlanner.PLAN_THREAD_PREFIX + order.getId();
-				if (!productionPlanner.getPlanThreads().containsKey(threadName)) {
-					OrderPlanThread pt = new OrderPlanThread(productionPlanner, orderDispatcher, order, procFacility, threadName);
-					productionPlanner.getPlanThreads().put(threadName, pt);
-					pt.start();
+				answer = transactionTemplate.execute((status) -> {
+					Messages answerx = Messages.FALSE;
+					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+					if (orderOpt.isPresent()) {
+						orderOpt.get().setOrderState(OrderState.PLANNING);
+						orderOpt.get().incrementVersion();
+						RepositoryService.getOrderRepository().save(orderOpt.get());
+						answerx = Messages.ORDER_PLANNING;
+					} else {
+						answerx = Messages.ORDER_PLANNING_FAILED;
+					}
+					return answerx;
+				});
+				if (answer.isTrue()) {
+					String threadName = ProductionPlanner.PLAN_THREAD_PREFIX + order.getId();
+					if (!productionPlanner.getPlanThreads().containsKey(threadName)) {
+						OrderPlanThread pt = new OrderPlanThread(productionPlanner, orderDispatcher, id, procFacility, threadName);
+						productionPlanner.getPlanThreads().put(threadName, pt);
+						pt.start();
+					}
 				}
-				answer = Messages.ORDER_PLANNING;
 				break;	
 			case PLANNED:	
 				answer = Messages.ORDER_ALREADY_PLANNED;
