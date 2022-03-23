@@ -8,6 +8,7 @@ spring:
         url: jdbc:postgresql://10.x.x.c:5432/proseo
         username: postgres
         password: ********
+        hikari.transaction-isolation: TRANSACTION_SERIALIZABLE
 logging:
     file: /proseo/log/proseo-prodplanner.log
     level:
