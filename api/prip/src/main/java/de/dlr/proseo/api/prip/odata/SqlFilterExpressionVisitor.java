@@ -20,6 +20,7 @@ import org.apache.olingo.commons.api.edm.EdmNavigationProperty;
 import org.apache.olingo.commons.api.edm.EdmProperty;
 import org.apache.olingo.commons.api.edm.EdmType;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
+import org.apache.olingo.commons.core.edm.primitivetype.EdmBoolean;
 import org.apache.olingo.commons.core.edm.primitivetype.EdmByte;
 import org.apache.olingo.commons.core.edm.primitivetype.EdmDateTimeOffset;
 import org.apache.olingo.commons.core.edm.primitivetype.EdmDecimal;
@@ -256,11 +257,12 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 		} else if (literal.getType() instanceof EdmByte || literal.getType() instanceof EdmSByte
 				|| literal.getType() instanceof EdmInt16 || literal.getType() instanceof EdmInt32
 				|| literal.getType() instanceof EdmInt64 || literal.getType() instanceof EdmDecimal
-				|| literal.getType() instanceof EdmSingle || literal.getType() instanceof EdmDouble) {
+				|| literal.getType() instanceof EdmSingle || literal.getType() instanceof EdmDouble
+				|| literal.getType() instanceof EdmBoolean) {
 			result = literalAsString;
 		} else {
 			if (logger.isTraceEnabled()) logger.trace("... found literal of type: " + literal.getType().getName());
-			throw new ODataApplicationException("Only Edm.Byte, Edm.SByte, Edm.Int16, Edm.Int32, Edm.Int64, Edm.String, Edm.DateTimeOffset, Edm.Decimal, Edm.Single and Edm.Double literals are implemented", 
+			throw new ODataApplicationException("Only Edm.Boolean, Edm.Byte, Edm.SByte, Edm.Int16, Edm.Int32, Edm.Int64, Edm.String, Edm.DateTimeOffset, Edm.Decimal, Edm.Single and Edm.Double literals are implemented", 
 					HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
 		}
 		
