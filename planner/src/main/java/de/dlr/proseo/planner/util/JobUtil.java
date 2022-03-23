@@ -287,7 +287,6 @@ public class JobUtil {
 	 * @param jobId The job id
 	 * @return Result message
 	 */
-	// @Transactional
 	public Messages resume(long jobId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> resume({})", jobId);
 
@@ -316,26 +315,33 @@ public class JobUtil {
 				answer = Messages.JOB_HASTOBE_PLANNED;
 				break;
 			case PLANNED:
-				final List<Long> jobSteps = new ArrayList<Long>();
-				@SuppressWarnings("unused")
-				String dummy = transactionTemplate.execute((status) -> {
-					Optional<Job> opt = RepositoryService.getJobRepository().findById(jobId);
-					if (opt.isPresent()) {
-						Job jobLoc = opt.get();
-						jobLoc.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
-						jobLoc.incrementVersion();
-						RepositoryService.getJobRepository().save(jobLoc);
-						for (JobStep js : jobLoc.getJobSteps()) {
-							jobSteps.add(js.getId());
+				try {
+					productionPlanner.acquireThreadSemaphore("resume");	
+					final List<Long> jobSteps = new ArrayList<Long>();
+					@SuppressWarnings("unused")
+					String dummy = transactionTemplate.execute((status) -> {
+						Optional<Job> opt = RepositoryService.getJobRepository().findById(jobId);
+						if (opt.isPresent()) {
+							Job jobLoc = opt.get();
+							jobLoc.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
+							jobLoc.incrementVersion();
+							RepositoryService.getJobRepository().save(jobLoc);
+							for (JobStep js : jobLoc.getJobSteps()) {
+								jobSteps.add(js.getId());
+							}
 						}
+						return null;
+					});
+
+					for (Long jsId : jobSteps) {
+						UtilService.getJobStepUtil().resume(jsId, false);
 					}
-					return null;
-				});
-				
-				for (Long jsId : jobSteps) {
-					UtilService.getJobStepUtil().resume(jsId, false);
+					answer = Messages.JOB_RELEASED;
+				} catch (Exception e) {
+					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+				} finally {
+					productionPlanner.releaseThreadSemaphore("resume");					
 				}
-				answer = Messages.JOB_RELEASED;
 				break;
 			case RELEASED:
 				answer = Messages.JOB_RELEASED;

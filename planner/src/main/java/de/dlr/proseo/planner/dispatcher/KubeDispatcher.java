@@ -70,7 +70,6 @@ public class KubeDispatcher extends Thread {
 	 * 
 	 * @see java.lang.Thread#run()
 	 */
-	// @Transactional
     public void run() {
 		if (logger.isTraceEnabled()) logger.trace(">>> run()");
 		

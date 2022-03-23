@@ -109,11 +109,16 @@ public class ProductionPlanner implements CommandLineRunner {
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
-	
+
 	/**
 	 * Semaphore to avoid concurrent kubernetes job generation. 
 	 */
 	private Semaphore releaseSemaphore = new Semaphore(1);
+
+	/**
+	 * Semaphore to avoid concurrent db access of threads. 
+	 */
+	private Semaphore threadSemaphore = new Semaphore(1);
 
 	/**
 	 * @return the planThreads
@@ -148,6 +153,14 @@ public class ProductionPlanner implements CommandLineRunner {
 	 */
 	public Semaphore getReleaseSemaphore() {
 		return releaseSemaphore;
+	}
+	
+
+	/**
+	 * @return the threadSemaphore
+	 */
+	public Semaphore getThreadSemaphore() {
+		return threadSemaphore;
 	}
 
 	/**
@@ -184,12 +197,30 @@ public class ProductionPlanner implements CommandLineRunner {
 		}
 	}
 
-	public boolean tryAcquireReleaseSemaphore() {
-		if (logger.isTraceEnabled()) logger.trace(">>> tryAcquireReleaseSemaphore()");
-		boolean answer = getReleaseSemaphore().tryAcquire();
-		if (logger.isTraceEnabled()) logger.trace("    tryAcquire = {}", answer);
-		return answer;
+	public void acquireThreadSemaphore(String here) throws InterruptedException {
+		if (logger.isTraceEnabled()) logger.trace(">>> acquireThreadSemaphore({})", here == null ? "null" : here);
+		try {
+			getThreadSemaphore().acquire();
+		} catch (InterruptedException e) {
+			if (getThreadSemaphore().availablePermits() <= 0) {
+				getThreadSemaphore().release();
+			}
+			if (logger.isTraceEnabled()) logger.trace("<<< acquireThreadSemaphore({}) interrupted", here == null ? "null" : here);
+			throw e;
+		}
+		if (logger.isTraceEnabled()) logger.trace("<<< acquireThreadSemaphore({})", here == null ? "null" : here);
 	}
+	
+	public void releaseThreadSemaphore(String here) {
+		if (logger.isTraceEnabled()) logger.trace(">>> releaseThreadSemaphore({})", here == null ? "null" : here);
+		if (getThreadSemaphore().availablePermits() <= 0) {
+			if (logger.isTraceEnabled()) logger.trace("    released({})", here);
+			getThreadSemaphore().release();
+		} else {
+			if (logger.isTraceEnabled()) logger.trace("    nothing to release({})", here == null ? "null" : here);
+		}
+	}
+
 	/**
 	 * Set or update user/pw of a processing order
 	 * 

@@ -632,7 +632,7 @@ public class OrderDispatcher {
 
 		Message answer = new Message(Messages.TRUE);
 		// there has to be a list of orbits
-		for (Job job : order.getJobs()) {
+		for (Job job : jobList) {
 			if (thread.isInterrupted()) {
 				answer = new Message(Messages.PLANNING_INTERRUPTED);
 				logger.warn(Messages.PLANNING_INTERRUPTED.format(order.getIdentifier()));
@@ -640,13 +640,13 @@ public class OrderDispatcher {
 			}
 			if (job.getJobState() == JobState.INITIAL) {
 				try {
-					productionPlanner.acquireReleaseSemaphore("createJobSteps");
+					productionPlanner.acquireThreadSemaphore("createJobSteps");
 					createJobStepsOfJob(orderId, job.getId(), productionPlanner);
+					productionPlanner.releaseThreadSemaphore("createJobSteps");			
 				}
 				catch (Exception e) {
+					productionPlanner.releaseThreadSemaphore("createJobSteps");		
 					throw e;
-				} finally {
-					productionPlanner.releaseReleaseSemaphore("createJobSteps");					
 				}
 			}
 		}
@@ -663,6 +663,7 @@ public class OrderDispatcher {
 	 */
 	// @Transactional
 	private void createJobStepsOfJob(long orderId, long jobId, ProductionPlanner productionPlanner) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createJobStepsOfJob({}, {})", orderId, jobId);
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		@SuppressWarnings("unused")
 		Object dummy = transactionTemplate.execute((status) -> {
@@ -696,6 +697,7 @@ public class OrderDispatcher {
 			}
 			return null;
 		});
+		if (logger.isTraceEnabled()) logger.trace("<<< createJobStepsOfJob({}, {})", orderId, jobId);
 	}
 	
 	/**

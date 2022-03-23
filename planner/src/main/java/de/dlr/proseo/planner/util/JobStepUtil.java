@@ -586,7 +586,6 @@ public class JobStepUtil {
 	 * @param js Job step
 	 * @return Result message
 	 */
-	// @Transactional
 	public Messages resume(long jsId, Boolean force) {
 		if (logger.isTraceEnabled()) logger.trace(">>> resume({}, {})", jsId, force);
 		
@@ -798,7 +797,6 @@ public class JobStepUtil {
 	 * @param pc ProductClass
 	 * @param onlyRun
 	 */
-	// @Transactional
     synchronized public void checkForJobStepsToRun(KubeConfig kc, long pcId, Boolean onlyRun, Boolean onlyWaiting) {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkForJobStepsToRun({}, {}, {})",
 				(null == kc ? "null" : kc.getId()),
