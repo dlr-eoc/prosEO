@@ -80,11 +80,35 @@ public class OrderPlanThread extends Thread {
 		Message answer = new Message(Messages.FALSE);
 		if (orderId != 0 && productionPlanner != null && orderDispatcher != null) {
 			try {
+				productionPlanner.acquireThreadSemaphore("OrderPlanThread.run");
 				answer = orderDispatcher.prepareExpectedJobs(orderId, procFacility, this);
+				productionPlanner.releaseThreadSemaphore("OrderPlanThread.run");
+			} catch(InterruptedException e) {
+				productionPlanner.releaseThreadSemaphore("OrderPlanThread.run");
+			} 
+			try {
 				if (answer.isTrue()) {
 					answer = plan(orderId);
 				}
+			} catch(InterruptedException e) {
+			} catch(Exception e) {
+				@SuppressWarnings("unused")
+				Object dummy = transactionTemplate.execute((status) -> {
+					ProcessingOrder lambdaOrder = null;
+					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+					if (orderOpt.isPresent()) {
+						lambdaOrder = orderOpt.get();
+					}
+					Messages.ORDER_PLANNING_EXCEPTION.format(this.getName(), lambdaOrder.getIdentifier());
+					logger.error(e.getMessage());
+					lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
+					lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
+					return null;
+				});
+			}
+			try {
 				if (!answer.isTrue()) {
+					productionPlanner.acquireThreadSemaphore("OrderPlanThread.run");
 					@SuppressWarnings("unused")
 					Object dummy = transactionTemplate.execute((status) -> {
 						ProcessingOrder lambdaOrder = null;
@@ -96,12 +120,14 @@ public class OrderPlanThread extends Thread {
 						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 						return null;
 					});
+					productionPlanner.releaseThreadSemaphore("OrderPlanThread.run");
 				}
 			}
 			catch(InterruptedException e) {
-				// do nothing, message already logged
+				productionPlanner.releaseThreadSemaphore("OrderPlanThread.run");
 			} 
 			catch(Exception e) {
+				productionPlanner.releaseThreadSemaphore("OrderPlanThread.run");
 				@SuppressWarnings("unused")
 				Object dummy = transactionTemplate.execute((status) -> {
 					ProcessingOrder lambdaOrder = null;
@@ -151,7 +177,9 @@ public class OrderPlanThread extends Thread {
 				publishAnswer = orderDispatcher.createJobSteps(order.getId(), procFacility, productionPlanner, this);
 			} catch (InterruptedException e) {
 				throw e;
-			} finally {
+			}
+			try {
+				productionPlanner.acquireThreadSemaphore("OrderPlanThread.plan");
 				final Message finalAnswer = publishAnswer;
 				answer = transactionTemplate.execute((status) -> {
 					ProcessingOrder lambdaOrder = null;
@@ -173,11 +201,16 @@ public class OrderPlanThread extends Thread {
 						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 					} else {
 						lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
+						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 						lambdaAnswer = new Message(Messages.ORDER_PLANNING_FAILED);
 						lambdaAnswer.log(logger, lambdaOrder.getIdentifier(), this.getName());
 					}
 					return lambdaAnswer;
 				});
+				productionPlanner.releaseThreadSemaphore("OrderPlanThread.plan");
+			} catch (InterruptedException e) {
+				productionPlanner.releaseThreadSemaphore("OrderPlanThread.plan");
+				throw e;
 			}
 		}
 		

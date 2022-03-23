@@ -95,20 +95,24 @@ public class OrderControllerImpl implements OrderController {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrder({})", orderId);
 		
 		try {
+			productionPlanner.acquireThreadSemaphore("getOrder");	
 			ProcessingOrder order = this.findOrder(orderId);
 			
 			if (null == order) {
 				String message = Messages.ORDER_NOT_EXIST.log(logger, orderId);
+				productionPlanner.releaseThreadSemaphore("getOrder");	
 				
 				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
 			} else {
 				RestOrder ro = RestUtil.createRestOrder(order);
+				productionPlanner.releaseThreadSemaphore("getOrder");	
 
 				Messages.ORDER_RETRIEVED.log(logger, orderId);
 
 				return new ResponseEntity<>(ro, HttpStatus.OK);
 			}
 		} catch (Exception e) {
+			productionPlanner.releaseThreadSemaphore("getOrder");	
 			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 			
 			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -159,7 +163,6 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	@Transactional
 	public ResponseEntity<RestOrder> resetOrder(String orderId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> resetOrder({})", orderId);
 		
@@ -176,7 +179,7 @@ public class OrderControllerImpl implements OrderController {
 				
 				if (msg.isTrue()) {
 					// reset
-					RestOrder ro = RestUtil.createRestOrder(order);
+					RestOrder ro = getRestOrder(order.getId());
 
 					return new ResponseEntity<>(ro, HttpStatus.OK);
 				} else {
@@ -568,21 +571,27 @@ public class OrderControllerImpl implements OrderController {
 		
 		return order;
 	}
-	
-	@Transactional
+
 	private RestOrder getRestOrder(long id) {
-		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
-		RestOrder answer = transactionTemplate.execute((status) -> {
-			RestOrder ro = null;
-			ProcessingOrder order = null;
-			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
-			if (orderOpt.isPresent()) {
-				order = orderOpt.get();
-			}
-			ro = RestUtil.createRestOrder(order);
-			return ro;
-		});
-		return answer;
+		try {
+			productionPlanner.acquireThreadSemaphore("getRestOrder");
+			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+			RestOrder answer = transactionTemplate.execute((status) -> {
+				RestOrder ro = null;
+				ProcessingOrder order = null;
+				Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+				if (orderOpt.isPresent()) {
+					order = orderOpt.get();
+				}
+				ro = RestUtil.createRestOrder(order);
+				return ro;
+			});
+			productionPlanner.releaseThreadSemaphore("getRestOrder");
+			return answer;
+		} catch (InterruptedException e) {
+			productionPlanner.releaseThreadSemaphore("getRestOrder");
+			return null;
+		}
 	}
 
 	

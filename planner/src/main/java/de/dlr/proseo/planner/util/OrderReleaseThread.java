@@ -144,14 +144,21 @@ public class OrderReleaseThread extends Thread {
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		final List<Job> jobList = new ArrayList<Job>();
-		order = transactionTemplate.execute((status) -> {
-			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
-			if (orderOpt.isPresent()) {
-				jobList.addAll(orderOpt.get().getJobs());
-				return orderOpt.get();
-			}
-			return null;
-		});
+		try {
+			productionPlanner.acquireThreadSemaphore("release");	
+			order = transactionTemplate.execute((status) -> {
+				Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+				if (orderOpt.isPresent()) {
+					jobList.addAll(orderOpt.get().getJobs());
+					return orderOpt.get();
+				}
+				return null;
+			});
+		} catch (Exception e) {
+			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+		} finally {
+			productionPlanner.releaseThreadSemaphore("release");					
+		}
 		if (logger.isTraceEnabled()) logger.trace(">>> release({})", (null == order ? "null" : order.getId()));
 		Message answer = new Message(Messages.FALSE);
 		Messages releaseAnswer = Messages.FALSE;
