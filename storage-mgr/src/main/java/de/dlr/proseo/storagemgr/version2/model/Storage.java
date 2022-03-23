@@ -24,13 +24,15 @@ public interface Storage {
 	
 	public long getFileSize(StorageFile storageFile);
 	
-	public StorageFile getFile(String relativePath);
+	public StorageFile getStorageFile(String relativePath);
 
-	public List<StorageFile> getFiles();
+	public List<StorageFile> getStorageFiles();
 	
 	public void uploadFile(StorageFile sourceFile, StorageFile targetFile) throws IOException;
 	
 	public void downloadFile(StorageFile sourceFile, StorageFile targetFile) throws IOException;
 	
-	public StorageType getStorageType(); 
+	public StorageType getStorageType();
+
+	public StorageFile createStorageFile(String relativePath, String content); 
 }

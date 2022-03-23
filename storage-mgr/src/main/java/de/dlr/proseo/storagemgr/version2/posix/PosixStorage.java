@@ -12,6 +12,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.dlr.proseo.storagemgr.cache.FileUtils;
 import de.dlr.proseo.storagemgr.version2.model.Storage;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
@@ -57,12 +58,13 @@ public class PosixStorage implements Storage {
 
 	@Override
 	public boolean fileExists(StorageFile storageFile) {
+		
 		return new File(storageFile.getFullPath()).isFile();
 	}
 
 	// TODO: maybe make recursive
 	@Override
-	public List<StorageFile> getFiles() {
+	public List<StorageFile> getStorageFiles() {
 
 		File folder = new File(getFullBucketPath());
 		File[] listOfFiles = folder.listFiles();
@@ -128,10 +130,6 @@ public class PosixStorage implements Storage {
 		}
 	}
 
-
-
-	
-
 	@Override
 	public StorageType getStorageType() {
 		return StorageType.POSIX;
@@ -152,8 +150,10 @@ public class PosixStorage implements Storage {
 	}
 
 	private void createParentDirectories(String fullPath) {
+		
 		File targetFile = new File(fullPath);
 		File parent = targetFile.getParentFile();
+		
 		if (parent != null && !parent.exists() && !parent.mkdirs()) {
 			throw new IllegalStateException("Couldn't create dir: " + parent);
 		}
@@ -169,14 +169,26 @@ public class PosixStorage implements Storage {
 
 	@Override
 	public long getFileSize(StorageFile storageFile) {
-		// TODO Auto-generated method stub
-		return 0;
+
+		FileUtils fileUtils = new FileUtils(storageFile.getFullPath());
+		return fileUtils.getFileSize();
 	}
 
 	@Override
-	public StorageFile getFile(String relativePath) {
+	public StorageFile getStorageFile(String relativePath) {
 
 		return new PosixStorageFile(basePath, relativePath);
+	}
+
+	@Override
+	public StorageFile createStorageFile(String relativePath, String content) {
+		
+		StorageFile storageFile = getStorageFile(relativePath);
+		
+		FileUtils fileUtils = new FileUtils(storageFile.getFullPath());
+		fileUtils.createFile(content);
+		
+		return storageFile;
 	}
 
 }

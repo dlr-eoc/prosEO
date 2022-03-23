@@ -30,9 +30,26 @@ public class HttpResponses {
 		return new ResponseEntity<>(httpErrorHeaders(message), HttpStatus.BAD_REQUEST);
 	}
 	
-	private static  HttpHeaders httpErrorHeaders(String message) {
+	public static String createErrorString(String message, Exception e) {
+		
+		return "Error: " + message + e.getClass().toString() + ": " + e.getMessage();
+	}
+	
+	
+	private static  HttpHeaders httpWarningHeaders(String message) {
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set("Warning", "199 proseo-storage-mgr " + message.replaceAll("\n", " "));
 		return responseHeaders;
+	}
+	
+	private static  HttpHeaders httpErrorHeaders(String message) {
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.set("Error", "proseo-storage-mgr " + message.replaceAll("\n", " "));
+		return responseHeaders;
+	}
+
+	public static ResponseEntity<String> createOk(String response) {
+		
+		return new ResponseEntity<>(response, HttpStatus.OK);		
 	}
 }

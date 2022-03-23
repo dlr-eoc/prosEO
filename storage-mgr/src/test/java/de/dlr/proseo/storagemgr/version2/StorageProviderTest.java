@@ -93,7 +93,7 @@ public class StorageProviderTest {
 
 		assertTrue("File was not uploaded to storage: " + storageFilePath, TestUtils.fileExists(storageFilePath));
 
-		StorageTestUtils.printStorageFileList("Storage Files (should be 1 file) ", storage.getFiles());
+		StorageTestUtils.printStorageFileList("Storage Files (should be 1 file) ", storage.getStorageFiles());
 
 		// ----------------------- download --------------------------
 

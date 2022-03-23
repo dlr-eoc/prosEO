@@ -189,8 +189,20 @@ public class StorageProvider {
 		return Paths.get(cfg.getPosixCachePath(), relativePath).toString();
 	}
 	
+	public String getAbsoluteStoragePath(String relativePath) {
+		
+		return Paths.get(cfg.getPosixBackendPath(), relativePath).toString();
+	}
+	
 	public String getRelativePath(String absolutePath) {
 
 		return pathConverter.getRelativePath(absolutePath);
 	}
+
+	public StorageFile createStorageFile(String relativePath, String content) {
+		
+		return storage.createStorageFile(relativePath, content);
+	}
+
+
 }

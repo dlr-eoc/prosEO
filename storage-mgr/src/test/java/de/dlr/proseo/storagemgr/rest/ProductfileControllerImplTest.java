@@ -70,6 +70,15 @@ public class ProductfileControllerImplTest {
 	}
 	
 	@Test
+	public void testDownloadManyV1() throws Exception {
+		
+		String relativePath = "product/";
+		
+		storageProvider.loadVersion1();
+		// downloadMany(relativePath);
+	}
+	
+	@Test
 	public void testDownloadV2() throws Exception {
 		
 		String relativePath = "product/testControllerFile.txt";
@@ -146,6 +155,38 @@ public class ProductfileControllerImplTest {
 	
 		String absolutePath = storageTestUtils.createSourceFile(relativePath);
 		storageTestUtils.uploadToPosixStorage(relativePath);
+
+		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
+				.param("pathInfo", absolutePath);
+
+		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
+
+		System.out.println("REQUEST: " + REQUEST_STRING);
+		System.out.println("Status: " + mvcResult.getResponse().getStatus());
+		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
+		
+		storageTestUtils.printCache();
+		storageTestUtils.printVersion("FINISHED download-Test");
+
+		
+		TestUtils.deleteStorageDirectories();
+	}
+	
+	public void downloadMany(String relativePath) throws Exception {
+		
+		TestUtils.printMethodName(this, testName);
+		TestUtils.createEmptyStorageDirectories();
+	
+		String relativePath1 = relativePath + "file1.txt";
+		String relativePath2 = relativePath + "file2.txt";
+		
+		String absolutePath = storageProvider.getAbsoluteStoragePath(relativePath);
+		
+		String absolutePath1 = storageTestUtils.createSourceFile(relativePath1);
+		String absolutePath2 = storageTestUtils.createSourceFile(relativePath2);
+		
+		storageTestUtils.uploadToPosixStorage(relativePath1);
+		storageTestUtils.uploadToPosixStorage(relativePath2);
 
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
 				.param("pathInfo", absolutePath);
