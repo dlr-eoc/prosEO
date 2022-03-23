@@ -747,16 +747,23 @@ public class OrderUtil {
 				}
 				break;	
 			case RELEASED:
-				answer = transactionTemplate.execute((status) -> {
-					for (Job job : order.getJobs()) {
-						jobUtil.suspend(job, force);
-					}
-					order.setOrderState(OrderState.PLANNED);
-					order.incrementVersion();
-					RepositoryService.getOrderRepository().save(order);
-					logOrderState(order);
-					return Messages.ORDER_SUSPENDED;
-				});
+				try {
+					productionPlanner.acquireThreadSemaphore("suspend");	
+					answer = transactionTemplate.execute((status) -> {
+						for (Job job : order.getJobs()) {
+							jobUtil.suspend(job, force);
+						}
+						order.setOrderState(OrderState.PLANNED);
+						order.incrementVersion();
+						RepositoryService.getOrderRepository().save(order);
+						logOrderState(order);
+						return Messages.ORDER_SUSPENDED;
+					});
+				} catch (Exception e) {
+					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+				} finally {
+					productionPlanner.releaseThreadSemaphore("suspend");					
+				}
 				break;			
 			case COMPLETED:
 				answer = Messages.ORDER_ALREADY_COMPLETED;

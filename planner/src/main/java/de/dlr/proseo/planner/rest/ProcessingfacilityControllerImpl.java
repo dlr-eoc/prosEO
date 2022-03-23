@@ -192,7 +192,6 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      * @return a JSON object describing the finished pod (currently not implemented)
      */
 	@Override
-	@Transactional
     public ResponseEntity<PlannerPod> finishKubeJob(String podname, String name, String status) {
 		if (logger.isTraceEnabled()) logger.trace(">>> finishKubeJob({}, {}, {})", podname, name, status);
 		

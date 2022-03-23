@@ -180,13 +180,21 @@ public class OrderReleaseThread extends Thread {
 					throw new InterruptedException();
 				}
 				// look for possible job steps to run
-				final KubeConfig kc = transactionTemplate.execute((status) -> {
-					Optional<Job> jobOpt = RepositoryService.getJobRepository().findById(job.getId());
-					if (jobOpt.get() != null) {
-						return productionPlanner.getKubeConfig(jobOpt.get().getProcessingFacility().getName());
-					}
-					return null;
-				});
+				KubeConfig kc = null;
+				try {
+					productionPlanner.acquireThreadSemaphore("release");
+					kc = transactionTemplate.execute((status) -> {
+						Optional<Job> jobOpt = RepositoryService.getJobRepository().findById(job.getId());
+						if (jobOpt.get() != null) {
+							return productionPlanner.getKubeConfig(jobOpt.get().getProcessingFacility().getName());
+						}
+						return null;
+					});
+				} catch (Exception e) {
+					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+				} finally {
+					productionPlanner.releaseThreadSemaphore("release");					
+				}
 				try {
 					UtilService.getJobStepUtil().checkJobToRun(kc, job.getId());
 				} catch (InterruptedException e) {

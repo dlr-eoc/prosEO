@@ -806,45 +806,52 @@ public class JobStepUtil {
 		if (productionPlanner != null) {
 			if (kc != null) {
 				try {
-					productionPlanner.acquireReleaseSemaphore("checkForJobStepsToRun");
-					List<JobStepState> states = new ArrayList<JobStepState>();
-					states.add(JobStepState.READY);
+					productionPlanner.acquireThreadSemaphore("checkForJobStepsToRun");
+					try {
+						productionPlanner.acquireReleaseSemaphore("checkForJobStepsToRun");
+						List<JobStepState> states = new ArrayList<JobStepState>();
+						states.add(JobStepState.READY);
 
-					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+						TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 
-					final ProcessingFacility pfo = transactionTemplate.execute((status) -> {
-						Optional<ProcessingFacility> opt = RepositoryService.getFacilityRepository().findById(kc.getLongId());
-						if (opt.isPresent()) {
-							return opt.get();
-						}
-						return null;
-					});
-					if (pfo != null) {
-						if (!onlyRun) {
-							this.searchForJobStepsToRun(kc.getLongId(), pcId, onlyWaiting);
-						}
-						@SuppressWarnings("unused")
-						String dummy = transactionTemplate.execute((status) -> {
-							List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(kc.getLongId(), states);
-							for (JobStep js : jobSteps) {
-								if ((js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)
-										&& js.getJob().getProcessingOrder().getOrderState() != OrderState.SUSPENDING
-										&& js.getJob().getProcessingOrder().getOrderState() != OrderState.PLANNED) {
-									if (kc.couldJobRun()) {
-										kc.createJob(String.valueOf(js.getId()), null, null);
-									} else {
-										// at the moment no further job could be started
-										break;
-									}
-								}
+						final ProcessingFacility pfo = transactionTemplate.execute((status) -> {
+							Optional<ProcessingFacility> opt = RepositoryService.getFacilityRepository().findById(kc.getLongId());
+							if (opt.isPresent()) {
+								return opt.get();
 							}
 							return null;
 						});
+						if (pfo != null) {
+							if (!onlyRun) {
+								this.searchForJobStepsToRun(kc.getLongId(), pcId, onlyWaiting);
+							}
+							@SuppressWarnings("unused")
+							String dummy = transactionTemplate.execute((status) -> {
+								List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(kc.getLongId(), states);
+								for (JobStep js : jobSteps) {
+									if ((js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)
+											&& js.getJob().getProcessingOrder().getOrderState() != OrderState.SUSPENDING
+											&& js.getJob().getProcessingOrder().getOrderState() != OrderState.PLANNED) {
+										if (kc.couldJobRun()) {
+											kc.createJob(String.valueOf(js.getId()), null, null);
+										} else {
+											// at the moment no further job could be started
+											break;
+										}
+									}
+								}
+								return null;
+							});
+						} 
+						productionPlanner.releaseReleaseSemaphore("checkForJobStepsToRun");	
+					} catch (Exception e) {
+						productionPlanner.releaseReleaseSemaphore("checkForJobStepsToRun");	
+						Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 					} 
+					productionPlanner.releaseThreadSemaphore("checkForJobStepsToRun");		
 				} catch (Exception e) {
+					productionPlanner.releaseThreadSemaphore("checkForJobStepsToRun");		
 					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-				} finally {
-					productionPlanner.releaseReleaseSemaphore("checkForJobStepsToRun");					
 				}
 			} else {
 				checkForJobStepsToRun();
@@ -939,7 +946,6 @@ public class JobStepUtil {
 	 * @param job Job
 	 * @throws InterruptedException 
 	 */
-	// @Transactional
     synchronized public void checkJobToRun(KubeConfig kc, long jobId) throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkJobToRun({}, {})",
 				(null == kc ? "null" : kc.getId()),
@@ -948,41 +954,48 @@ public class JobStepUtil {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		if (productionPlanner != null) {
 			if (kc != null && jobId != 0) {
-				final ProcessingFacility pfo = transactionTemplate.execute((status) -> {
-					Optional<ProcessingFacility> opt = RepositoryService.getFacilityRepository().findById(kc.getLongId());
-					if (opt.isPresent()) {
-						return opt.get();
-					}
-					return null;
-				});
-				if (pfo != null) {
-					// wait until finish of concurrent createJob
-					try {
-						productionPlanner.acquireReleaseSemaphore("checkJobToRun");
-						final List<Long> jobSteps = new ArrayList<Long>();
-
-						@SuppressWarnings("unused")
-						String dummy = transactionTemplate.execute((status) -> {
-							Optional<Job> opt = RepositoryService.getJobRepository().findById(jobId);
-							if (opt.isPresent()) {
-								Job job = opt.get();
-								for (JobStep js : job.getJobSteps()) {
-									jobSteps.add(js.getId());
-								}
-							}
-							return null;
-						});
-						
-						for (Long jsId : jobSteps) {
-							checkJobStepToRun(kc, jsId);
+				try {
+					productionPlanner.acquireThreadSemaphore("checkJobToRun");
+					final ProcessingFacility pfo = transactionTemplate.execute((status) -> {
+						Optional<ProcessingFacility> opt = RepositoryService.getFacilityRepository().findById(kc.getLongId());
+						if (opt.isPresent()) {
+							return opt.get();
 						}
-					} catch (InterruptedException e) {
-						throw e;
-					} catch (Exception e) {
-						Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-					} finally {
-						productionPlanner.releaseReleaseSemaphore("checkJobToRun");					
+						return null;
+					});
+					if (pfo != null) {
+						// wait until finish of concurrent createJob
+						try {
+							productionPlanner.acquireReleaseSemaphore("checkJobToRun");
+							final List<Long> jobSteps = new ArrayList<Long>();
+
+							@SuppressWarnings("unused")
+							String dummy = transactionTemplate.execute((status) -> {
+								Optional<Job> opt = RepositoryService.getJobRepository().findById(jobId);
+								if (opt.isPresent()) {
+									Job job = opt.get();
+									for (JobStep js : job.getJobSteps()) {
+										jobSteps.add(js.getId());
+									}
+								}
+								return null;
+							});
+
+							for (Long jsId : jobSteps) {
+								checkJobStepToRun(kc, jsId);
+							}
+						} catch (InterruptedException e) {
+							throw e;
+						} catch (Exception e) {
+							Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+						} finally {
+							productionPlanner.releaseReleaseSemaphore("checkJobToRun");					
+						}
 					}
+				} catch (Exception e) {
+					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+				} finally {
+					productionPlanner.releaseThreadSemaphore("release");					
 				}
 			}
 		}

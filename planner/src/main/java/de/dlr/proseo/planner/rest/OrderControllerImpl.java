@@ -90,7 +90,6 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	@Transactional
 	public ResponseEntity<RestOrder> getOrder(String orderId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrder({})", orderId);
 		
