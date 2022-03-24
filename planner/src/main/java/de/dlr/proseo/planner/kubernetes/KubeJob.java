@@ -771,17 +771,24 @@ public class KubeJob {
 		if (logger.isTraceEnabled()) logger.trace(">>> updateFinishInfoAndDelete({})", aJobName);
 		
 		UpdateInfoResult success = UpdateInfoResult.FALSE;
-		success = updateInfo(aJobName);
-		if (success.equals(UpdateInfoResult.TRUE)) {
-			TransactionTemplate transactionTemplate = new TransactionTemplate(this.kubeConfig.getProductionPlanner().getTxManager());
-			transactionTemplate.execute((status) -> {
-				Long jobStepId = this.getJobId();
-				Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
-				if (js.isPresent()) {							
-					UtilService.getJobStepUtil().checkFinish(js.get());
-				}
-				return null;
-			});
+		try {
+			kubeConfig.getProductionPlanner().acquireThreadSemaphore("updateFinishInfoAndDelete");
+			success = updateInfo(aJobName);
+			if (success.equals(UpdateInfoResult.TRUE)) {
+				TransactionTemplate transactionTemplate = new TransactionTemplate(this.kubeConfig.getProductionPlanner().getTxManager());
+				transactionTemplate.execute((status) -> {
+					Long jobStepId = this.getJobId();
+					Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
+					if (js.isPresent()) {							
+						UtilService.getJobStepUtil().checkFinish(js.get());
+					}
+					return null;
+				});
+			}
+		} catch (Exception e) {
+			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+		} finally {
+			kubeConfig.getProductionPlanner().releaseThreadSemaphore("updateFinishInfoAndDelete");					
 		}
 		if (!success.equals(UpdateInfoResult.FALSE)) {
 			// delete kube job

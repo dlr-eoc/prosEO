@@ -85,14 +85,7 @@ public class KubeJobFinish extends Thread {
     			try {
     				i++;
     				sleep(wait);
-    				try {
-    					planner.acquireThreadSemaphore("KubeJobFinish.run");
-    					found = kubeJob.updateFinishInfoAndDelete(jobName);
-    				} catch (Exception e) {
-    					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-    				} finally {
-    					planner.releaseThreadSemaphore("KubeJobFinish.run");					
-    				}
+    				found = kubeJob.updateFinishInfoAndDelete(jobName);
     				if (found) {
     		    		// Check once for runnable job steps, which can be started as a result of "kubeJob" being finished 
     					final Long jobStepId = kubeJob.getJobId();
