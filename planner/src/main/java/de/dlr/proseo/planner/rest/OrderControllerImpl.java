@@ -149,8 +149,6 @@ public class OrderControllerImpl implements OrderController {
 				String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
 				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
-			// Already logged
-
 			if (msg.isTrue()) {
 				// approved
 				RestOrder ro = getRestOrder(order.getId());

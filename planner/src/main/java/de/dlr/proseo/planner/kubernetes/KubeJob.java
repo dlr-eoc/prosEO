@@ -275,7 +275,7 @@ public class KubeJob {
 	 * @throws Exception 
 	 */
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRES_NEW)
-	synchronized public KubeJob createJob(KubeConfig aKubeConfig, String stdoutLogLevel, String stderrLogLevel) throws Exception {	
+	public KubeJob createJob(KubeConfig aKubeConfig, String stdoutLogLevel, String stderrLogLevel) throws Exception {	
 		if (logger.isTraceEnabled()) logger.trace(">>> createJob({}, {}, {})", aKubeConfig, stdoutLogLevel, stderrLogLevel);
 		
 		kubeConfig = aKubeConfig;
@@ -771,24 +771,17 @@ public class KubeJob {
 		if (logger.isTraceEnabled()) logger.trace(">>> updateFinishInfoAndDelete({})", aJobName);
 		
 		UpdateInfoResult success = UpdateInfoResult.FALSE;
-		try {
-			kubeConfig.getProductionPlanner().acquireThreadSemaphore("updateFinishInfoAndDelete");
-			success = updateInfo(aJobName);
-			if (success.equals(UpdateInfoResult.TRUE)) {
-				TransactionTemplate transactionTemplate = new TransactionTemplate(this.kubeConfig.getProductionPlanner().getTxManager());
-				transactionTemplate.execute((status) -> {
-					Long jobStepId = this.getJobId();
-					Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
-					if (js.isPresent()) {							
-						UtilService.getJobStepUtil().checkFinish(js.get());
-					}
-					return null;
-				});
-			}
-		} catch (Exception e) {
-			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-		} finally {
-			kubeConfig.getProductionPlanner().releaseThreadSemaphore("updateFinishInfoAndDelete");					
+		success = updateInfo(aJobName);
+		if (success.equals(UpdateInfoResult.TRUE)) {
+			TransactionTemplate transactionTemplate = new TransactionTemplate(this.kubeConfig.getProductionPlanner().getTxManager());
+			transactionTemplate.execute((status) -> {
+				Long jobStepId = this.getJobId();
+				Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
+				if (js.isPresent()) {							
+					UtilService.getJobStepUtil().checkFinish(js.get());
+				}
+				return null;
+			});
 		}
 		if (!success.equals(UpdateInfoResult.FALSE)) {
 			// delete kube job

@@ -526,13 +526,11 @@ public class KubeConfig {
 			if (kj != null) {
 				if (kj.updateFinishInfoAndDelete(kName)) {
 
-				}
+				}	
 			}			
 		}
 		// get all job steps of DB with states RUNNING
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
-		try {
-			getProductionPlanner().acquireThreadSemaphore("sync");
 		final String dummy = transactionTemplate.execute((status) -> {
 			List<de.dlr.proseo.model.JobStep.JobStepState> jobStepStates = new ArrayList<>();
 			jobStepStates.add(de.dlr.proseo.model.JobStep.JobStepState.RUNNING);
@@ -573,11 +571,6 @@ public class KubeConfig {
 			}	
 			return null;
 		});
-		} catch (Exception e) {
-			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-		} finally {
-			getProductionPlanner().releaseThreadSemaphore("sync");					
-		}
 	}
 	/**
 	 * Retrieve all pods of cluster

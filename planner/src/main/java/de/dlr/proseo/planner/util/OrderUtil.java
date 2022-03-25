@@ -948,14 +948,19 @@ public class OrderUtil {
 					if (order.getOrderState() == OrderState.COMPLETED) {
 						answer = Messages.ORDER_COMPLETED;
 					} else if (allCompleted) {
-						order.setOrderState(OrderState.PLANNED);
-						order.setOrderState(OrderState.RELEASED);
-						order.setOrderState(OrderState.RUNNING);
+						if (order.getOrderState() != OrderState.RUNNING) {
+							order.setOrderState(OrderState.PLANNED);
+							order.setOrderState(OrderState.RELEASED);
+							order.setOrderState(OrderState.RUNNING);
+						}
 						order.setOrderState(OrderState.COMPLETED);
 						order.incrementVersion();
 						RepositoryService.getOrderRepository().save(order);
 						answer = Messages.ORDER_COMPLETED;
 					} else {
+						if (order.getOrderState() == OrderState.RUNNING) {
+							order.setOrderState(OrderState.SUSPENDING);
+						}
 						order.setOrderState(OrderState.PLANNED);
 						order.incrementVersion();
 						RepositoryService.getOrderRepository().save(order);

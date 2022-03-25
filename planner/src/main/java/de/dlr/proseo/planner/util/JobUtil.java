@@ -210,6 +210,9 @@ public class JobUtil {
 						em.merge(job);
 						answer = Messages.JOB_COMPLETED;
 					} else {
+						if (job.getJobState() == JobState.STARTED) {
+							job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
+						}
 						job.setJobState(de.dlr.proseo.model.Job.JobState.PLANNED);
 						job.incrementVersion();
 						RepositoryService.getJobRepository().save(job);
