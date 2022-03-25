@@ -618,16 +618,23 @@ public class OrderDispatcher {
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		final List<Job> jobList = new ArrayList<Job>();
-		order = (ProcessingOrder) transactionTemplate.execute((status) -> {
-			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
-			if (orderOpt.isPresent()) {
-				for(Job j : ((ProcessingOrder)(orderOpt.get())).getJobs()) {
-					jobList.add(j);
+		try {
+			productionPlanner.acquireThreadSemaphore("createJobSteps");
+			order = (ProcessingOrder) transactionTemplate.execute((status) -> {
+				Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+				if (orderOpt.isPresent()) {
+					for(Job j : ((ProcessingOrder)(orderOpt.get())).getJobs()) {
+						jobList.add(j);
+					}
+					return orderOpt.get();
 				}
-				return orderOpt.get();
-			}
-			return null;
-		});
+				return null;
+			});
+			productionPlanner.releaseThreadSemaphore("createJobSteps");	
+		} catch (Exception e) {
+			productionPlanner.releaseThreadSemaphore("createJobSteps");		
+			throw e;
+		}
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobSteps({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 
 		Message answer = new Message(Messages.TRUE);

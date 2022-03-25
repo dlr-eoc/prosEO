@@ -78,7 +78,14 @@ public class KubeDispatcher extends Thread {
     	if (runOnce) {
 			Messages.KUBEDISPATCHER_RUN_ONCE.log(logger);
     		if (kubeConfig != null) {
-    			UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, onlyRun, true);
+				try {
+					kubeConfig.getProductionPlanner().acquireThreadSemaphore("run");
+					UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, onlyRun, true);
+					kubeConfig.getProductionPlanner().releaseThreadSemaphore("run");		
+				} catch (Exception e) {
+					kubeConfig.getProductionPlanner().releaseThreadSemaphore("run");		
+					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+				}
     		} else {
     			Messages.KUBEDISPATCHER_CONFIG_NOT_SET.log(logger);
     		}
@@ -87,19 +94,25 @@ public class KubeDispatcher extends Thread {
     			if (wait <= 0) {
 					Messages.KUBEDISPATCHER_RUN_ONCE.log(logger);
 					try {
-						UtilService.getJobStepUtil().checkForJobStepsToRun();
+						productionPlanner.acquireThreadSemaphore("run");
+						UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, onlyRun, true);
+						productionPlanner.releaseThreadSemaphore("run");		
 					} catch (Exception e) {
-						logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+						productionPlanner.releaseThreadSemaphore("run");		
+						Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 					}
     			} else {
     				while (!this.isInterrupted()) {
     					// look for job steps to run
     					Messages.KUBEDISPATCHER_CYCLE.log(logger);
     					try {
-    						UtilService.getJobStepUtil().checkForJobStepsToRun();
-						} catch (Exception e) {
-							logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
-						}
+    						productionPlanner.acquireThreadSemaphore("run");
+    						UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, onlyRun, true);
+    						productionPlanner.releaseThreadSemaphore("run");		
+    					} catch (Exception e) {
+    						productionPlanner.releaseThreadSemaphore("run");		
+    						Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+    					}
     					try {
         					Messages.KUBEDISPATCHER_SLEEP.log(logger, wait);
     						sleep(wait);

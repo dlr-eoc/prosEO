@@ -88,18 +88,11 @@ public class KubeJobFinish extends Thread {
     				try {
     					planner.acquireThreadSemaphore("KubeJobFinish.run");
     					found = kubeJob.updateFinishInfoAndDelete(jobName);
-    				} catch (Exception e) {
-    					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-    				} finally {
-    					planner.releaseThreadSemaphore("KubeJobFinish.run");					
-    				}
-    				if (found) {
-    		    		// Check once for runnable job steps, which can be started as a result of "kubeJob" being finished 
-    					final Long jobStepId = kubeJob.getJobId();
-    					TransactionTemplate transactionTemplate = new TransactionTemplate(planner.getTxManager());
+    					if (found) {
+    						// Check once for runnable job steps, which can be started as a result of "kubeJob" being finished 
+    						final Long jobStepId = kubeJob.getJobId();
+    						TransactionTemplate transactionTemplate = new TransactionTemplate(planner.getTxManager());
 
-    					try {
-    						planner.acquireThreadSemaphore("KubeJobFinish.run");
     						final List<Long> pcList = transactionTemplate.execute((status) -> {
     							Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
     							List<Long> pcList1 = new ArrayList<Long>();
@@ -114,20 +107,22 @@ public class KubeJobFinish extends Thread {
     								}
     							}
     							return pcList1;
-    						});
-    						planner.releaseThreadSemaphore("KubeJobFinish.run");		
-        					for (Long pcId : pcList) {
-        						UtilService.getJobStepUtil().checkForJobStepsToRun(kubeJob.getKubeConfig(), 
-        								pcId, 
-        								false,
-        								true);		    				
-        					}			
-    					} catch (Exception e) {
-    						planner.releaseThreadSemaphore("KubeJobFinish.run");					
-    						Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+    						});	
+    						for (Long pcId : pcList) {
+    							UtilService.getJobStepUtil().checkForJobStepsToRun(kubeJob.getKubeConfig(), 
+    									pcId, 
+    									false,
+    									true);		    				
+    						}	
+    						planner.releaseThreadSemaphore("KubeJobFinish.run");
+    						KubeDispatcher kd = new KubeDispatcher(null, kubeJob.getKubeConfig(), true);
+    						kd.start();    					
+    					} else {
+    						planner.releaseThreadSemaphore("KubeJobFinish.run");
     					}
-    					KubeDispatcher kd = new KubeDispatcher(null, kubeJob.getKubeConfig(), true);
-    		    		kd.start();    					
+    				} catch (Exception e) {
+    					planner.releaseThreadSemaphore("KubeJobFinish.run");					
+    					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
     				}
     			}
     			catch(InterruptedException e) {

@@ -63,23 +63,31 @@ public class ProductControllerImpl implements ProductController {
 		
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 
-		final long pcId = transactionTemplate.execute((status) -> {
-			Product p = RepositoryService.getProductRepository().getOne(Long.valueOf(productid));
-			if (p != null) {
-				return p.getProductClass().getId();
+		try {
+			productionPlanner.acquireThreadSemaphore("getObjectByProductidAndFacilityId");
+			final long pcId = transactionTemplate.execute((status) -> {
+				Product p = RepositoryService.getProductRepository().getOne(Long.valueOf(productid));
+				if (p != null) {
+					return p.getProductClass().getId();
+				}
+				productionPlanner.releaseThreadSemaphore("getObjectByProductidAndFacilityId");	
+				return null;
+			});
+			if (pcId != 0 && facilityId != 0) {
+				try {
+					productionPlanner.acquireReleaseSemaphore("getObjectByProductidAndFacilityId");
+					UtilService.getJobStepUtil().searchForJobStepsToRun(facilityId, pcId, true);
+					productionPlanner.releaseReleaseSemaphore("getObjectByProductidAndFacilityId");		
+				} catch (Exception e) {
+					productionPlanner.releaseReleaseSemaphore("getObjectByProductidAndFacilityId");		
+					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+				} 
+				Messages.PLANNING_CHECK_COMPLETE.log(logger, Long.valueOf(productid));
 			}
-			return null;
-		});
-		if (pcId != 0 && facilityId != 0) {
-			try {
-				productionPlanner.acquireReleaseSemaphore("getObjectByProductidAndFacilityId");
-				UtilService.getJobStepUtil().searchForJobStepsToRun(facilityId, pcId, true);
-			} catch (Exception e) {
-				Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-			} finally {
-				productionPlanner.releaseReleaseSemaphore("getObjectByProductidAndFacilityId");					
-			}
-			Messages.PLANNING_CHECK_COMPLETE.log(logger, Long.valueOf(productid));
+			productionPlanner.releaseThreadSemaphore("getObjectByProductidAndFacilityId");	
+		} catch (Exception e) {
+			productionPlanner.releaseThreadSemaphore("getObjectByProductidAndFacilityId");	
+			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 		}
 		return new ResponseEntity<>("Checked", HttpStatus.OK);
 	}

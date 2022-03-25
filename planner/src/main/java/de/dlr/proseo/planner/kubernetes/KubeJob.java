@@ -275,7 +275,7 @@ public class KubeJob {
 	 * @throws Exception 
 	 */
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRES_NEW)
-	synchronized public KubeJob createJob(KubeConfig aKubeConfig, String stdoutLogLevel, String stderrLogLevel) throws Exception {	
+	public KubeJob createJob(KubeConfig aKubeConfig, String stdoutLogLevel, String stderrLogLevel) throws Exception {	
 		if (logger.isTraceEnabled()) logger.trace(">>> createJob({}, {}, {})", aKubeConfig, stdoutLogLevel, stderrLogLevel);
 		
 		kubeConfig = aKubeConfig;
@@ -551,50 +551,57 @@ public class KubeJob {
 			searchPod();
 
 			TransactionTemplate transactionTemplate = new TransactionTemplate(aKubeConfig.getProductionPlanner().getTxManager());
-			final String dummy = transactionTemplate.execute((status) -> {
-				V1Job aJob = aKubeConfig.getV1Job(jobname);
-				if (aJob != null) {
-					Long jobStepId = this.getJobId();
-					Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
-					if (js.isPresent()) {
-						updateJobLog(js.get());
-						try {
-							if (aJob.getStatus() != null) {
-								OffsetDateTime d;
-								d = aJob.getStatus().getStartTime();
-								if (d != null) {
-									js.get().setProcessingStartTime(d.toInstant());
-								}
+			try {
+				aKubeConfig.getProductionPlanner().acquireThreadSemaphore("finish");
+				final String dummy = transactionTemplate.execute((status) -> {
+					V1Job aJob = aKubeConfig.getV1Job(jobname);
+					if (aJob != null) {
+						Long jobStepId = this.getJobId();
+						Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
+						if (js.isPresent()) {
+							updateJobLog(js.get());
+							try {
+								if (aJob.getStatus() != null) {
+									OffsetDateTime d;
+									d = aJob.getStatus().getStartTime();
+									if (d != null) {
+										js.get().setProcessingStartTime(d.toInstant());
+									}
 
-								d = aJob.getStatus().getCompletionTime();
-								if (d != null) {
-									js.get().setProcessingCompletionTime(d.toInstant());
-								}
-								if (aJob.getStatus().getConditions() != null) {
-									List<V1JobCondition> jobCondList = aJob.getStatus().getConditions();
-									for (V1JobCondition jc : jobCondList) {
-										if ((jc.getType().equalsIgnoreCase("complete") || jc.getType().equalsIgnoreCase("completed")) && jc.getStatus().equalsIgnoreCase("true")) {
-											js.get().setJobStepState(JobStepState.COMPLETED);
-											UtilService.getJobStepUtil().checkCreatedProducts(js.get());
-											js.get().incrementVersion();	
-										} else if (jc.getType().equalsIgnoreCase("failed") || jc.getType().equalsIgnoreCase("failure")) {
-											js.get().setJobStepState(JobStepState.FAILED);	
-											js.get().incrementVersion();
+									d = aJob.getStatus().getCompletionTime();
+									if (d != null) {
+										js.get().setProcessingCompletionTime(d.toInstant());
+									}
+									if (aJob.getStatus().getConditions() != null) {
+										List<V1JobCondition> jobCondList = aJob.getStatus().getConditions();
+										for (V1JobCondition jc : jobCondList) {
+											if ((jc.getType().equalsIgnoreCase("complete") || jc.getType().equalsIgnoreCase("completed")) && jc.getStatus().equalsIgnoreCase("true")) {
+												js.get().setJobStepState(JobStepState.COMPLETED);
+												UtilService.getJobStepUtil().checkCreatedProducts(js.get());
+												js.get().incrementVersion();	
+											} else if (jc.getType().equalsIgnoreCase("failed") || jc.getType().equalsIgnoreCase("failure")) {
+												js.get().setJobStepState(JobStepState.FAILED);	
+												js.get().incrementVersion();
+											}
 										}
 									}
 								}
+							} catch (Exception e) {
+								e.printStackTrace();						
 							}
-						} catch (Exception e) {
-							e.printStackTrace();						
+							RepositoryService.getJobStepRepository().save(js.get());
+							UtilService.getOrderUtil().logOrderState(js.get().getJob().getProcessingOrder());
 						}
-						RepositoryService.getJobStepRepository().save(js.get());
-						UtilService.getOrderUtil().logOrderState(js.get().getJob().getProcessingOrder());
 					}
-				}
-				KubeJobFinish toFini = new KubeJobFinish(this, aKubeConfig.getProductionPlanner(), jobname);
-				toFini.start();
-				return null;
-			});
+					return null;
+				});
+			} catch (Exception e) {
+				Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			} finally {
+				aKubeConfig.getProductionPlanner().releaseThreadSemaphore("finish");					
+			}
+			KubeJobFinish toFini = new KubeJobFinish(this, aKubeConfig.getProductionPlanner(), jobname);
+			toFini.start();
 		}
 	}	
 	

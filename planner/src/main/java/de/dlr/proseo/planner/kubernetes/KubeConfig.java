@@ -526,7 +526,7 @@ public class KubeConfig {
 			if (kj != null) {
 				if (kj.updateFinishInfoAndDelete(kName)) {
 
-				}
+				}	
 			}			
 		}
 		// get all job steps of DB with states RUNNING

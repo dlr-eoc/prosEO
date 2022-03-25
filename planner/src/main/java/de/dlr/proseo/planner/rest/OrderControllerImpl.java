@@ -27,7 +27,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -62,19 +61,28 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	@Transactional
 	public ResponseEntity<List<RestOrder>> getOrders() {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrders()");
 		
 		try {
-			Iterable<ProcessingOrder> orders = RepositoryService.getOrderRepository().findAll();
 			List<RestOrder> list = new ArrayList<RestOrder>();
-
-			for (ProcessingOrder po : orders) {
-				RestOrder ro = RestUtil.createRestOrder(po);
-				list.add(ro);			
-			}
-			
+			try {
+				productionPlanner.acquireThreadSemaphore("getOrders");
+				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+				transactionTemplate.execute((status) -> {
+					Iterable<ProcessingOrder> orders = RepositoryService.getOrderRepository().findAll();
+					for (ProcessingOrder po : orders) {
+						RestOrder ro = getRestOrder(po.getId());
+						list.add(ro);			
+					}
+					return null;
+				});
+				productionPlanner.releaseThreadSemaphore("getOrders");	
+			} catch (Exception e) {
+				productionPlanner.releaseThreadSemaphore("getOrders");	
+				String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
+				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			}			
 			Messages.ORDERS_RETRIEVED.log(logger);
 
 			return new ResponseEntity<>(list, HttpStatus.OK);
@@ -90,29 +98,24 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	@Transactional
 	public ResponseEntity<RestOrder> getOrder(String orderId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrder({})", orderId);
 		
 		try {
-			productionPlanner.acquireThreadSemaphore("getOrder");	
 			ProcessingOrder order = this.findOrder(orderId);
 			
 			if (null == order) {
 				String message = Messages.ORDER_NOT_EXIST.log(logger, orderId);
-				productionPlanner.releaseThreadSemaphore("getOrder");	
 				
 				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
 			} else {
-				RestOrder ro = RestUtil.createRestOrder(order);
-				productionPlanner.releaseThreadSemaphore("getOrder");	
+				RestOrder ro = getRestOrder(order.getId());
 
 				Messages.ORDER_RETRIEVED.log(logger, orderId);
 
 				return new ResponseEntity<>(ro, HttpStatus.OK);
 			}
-		} catch (Exception e) {
-			productionPlanner.releaseThreadSemaphore("getOrder");	
+		} catch (Exception e) {	
 			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 			
 			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -123,37 +126,40 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	@Transactional
 	public ResponseEntity<RestOrder> approveOrder(String orderId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> approveOrder({})", orderId);
-		
-		try {
-			ProcessingOrder order = this.findOrder(orderId);
-			
-			if (null == order) {
-				String message = Messages.ORDER_NOT_EXIST.log(logger, orderId);
-				
-				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
-			} else {
-				Messages msg = orderUtil.approve(order);
-				// Already logged
-				
-				if (msg.isTrue()) {
-					// approved
-					RestOrder ro = RestUtil.createRestOrder(order);
 
-					return new ResponseEntity<>(ro, HttpStatus.OK);
-				} else {
-					// already running or at end, could not approve
-					String message = msg.format(orderId);
+		ProcessingOrder order = this.findOrder(orderId);
+		if (null == order) {
+			String message = Messages.ORDER_NOT_EXIST.log(logger, orderId);
 
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
-				}
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+		} else {
+			Messages msg = null;
+			try {
+				productionPlanner.acquireThreadSemaphore("approveOrder");
+				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+				msg = transactionTemplate.execute((status) -> {
+					ProcessingOrder orderx = this.findOrderPrim(orderId);
+					return orderUtil.approve(orderx);
+				});
+				productionPlanner.releaseThreadSemaphore("approveOrder");	
+			} catch (Exception e) {
+				productionPlanner.releaseThreadSemaphore("approveOrder");	
+				String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
+				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
-		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			if (msg.isTrue()) {
+				// approved
+				RestOrder ro = getRestOrder(order.getId());
+
+				return new ResponseEntity<>(ro, HttpStatus.OK);
+			} else {
+				// already running or at end, could not approve
+				String message = msg.format(orderId);
+
+				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+			}
 		}
 	}
 
@@ -202,7 +208,6 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	@Transactional
 	public ResponseEntity<RestOrder> deleteOrder(String orderId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteOrder({})", orderId);
 		
@@ -214,12 +219,24 @@ public class OrderControllerImpl implements OrderController {
 				
 				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
 			} else {
-				Messages msg = orderUtil.delete(order);
-				// Already logged
-				
+				Messages msg = null;
+				try {
+					productionPlanner.acquireThreadSemaphore("deleteOrder");
+					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+					msg = transactionTemplate.execute((status) -> {
+						ProcessingOrder orderx = this.findOrderPrim(orderId);
+						return orderUtil.delete(orderx);
+					});
+					productionPlanner.releaseThreadSemaphore("deleteOrder");	
+				} catch (Exception e) {
+					productionPlanner.releaseThreadSemaphore("deleteOrder");	
+					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
+					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+				}
+
 				if (msg.isTrue()) {
-					// deleted
-					RestOrder ro = RestUtil.createRestOrder(order);
+					// cancelled
+					RestOrder ro = getRestOrder(order.getId());
 
 					return new ResponseEntity<>(ro, HttpStatus.OK);
 				} else {
@@ -351,7 +368,6 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	@Transactional
 	public ResponseEntity<RestOrder> resumeOrder(String orderId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> resumeOrder({})", orderId);
 		
@@ -363,37 +379,42 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	@Transactional
 	public ResponseEntity<RestOrder> cancelOrder(String orderId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> cancelOrder({})", orderId);
-		
+
+		ProcessingOrder order = this.findOrder(orderId);
+
+		if (null == order) {
+			String message = Messages.ORDER_NOT_EXIST.log(logger, orderId);
+
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+		}
+
+		Messages msg = null;
 		try {
-			ProcessingOrder order = this.findOrder(orderId);
-
-			if (null == order) {
-				String message = Messages.ORDER_NOT_EXIST.log(logger, orderId);
-				
-				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
-			}
-			
-			Messages msg = orderUtil.cancel(order);
-			// Already logged
-			
-			if (msg.isTrue()) {
-				// cancelled
-				RestOrder ro = RestUtil.createRestOrder(order);
-
-				return new ResponseEntity<>(ro, HttpStatus.OK);
-			} else {
-				// illegal state for cancel
-				String message = msg.format(orderId);
-
-				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
-			}
+			productionPlanner.acquireThreadSemaphore("cancelOrder");
+			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+			msg = transactionTemplate.execute((status) -> {
+				ProcessingOrder orderx = this.findOrderPrim(orderId);
+				return orderUtil.cancel(orderx);
+			});
+			productionPlanner.releaseThreadSemaphore("cancelOrder");	
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-			
+			productionPlanner.releaseThreadSemaphore("cancelOrder");	
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
 			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		if (msg.isTrue()) {
+			// cancelled
+			RestOrder ro = getRestOrder(order.getId());
+
+			return new ResponseEntity<>(ro, HttpStatus.OK);
+		} else {
+			// illegal state for cancel
+			String message = msg.format(orderId);
+
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -402,37 +423,41 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	@Transactional
 	public ResponseEntity<RestOrder> closeOrder(String orderId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> closeOrder({})", orderId);
-		
+
+		ProcessingOrder order = this.findOrder(orderId);
+
+		if (null == order) {
+			String message = Messages.ORDER_NOT_EXIST.log(logger, orderId);
+
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+		}
+		Messages msg = null;
 		try {
-			ProcessingOrder order = this.findOrder(orderId);
-
-			if (null == order) {
-				String message = Messages.ORDER_NOT_EXIST.log(logger, orderId);
-				
-				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
-			}
-			
-			Messages msg = orderUtil.close(order);
-			// Already logged
-			
-			if (msg.isTrue()) {
-				// closed
-				RestOrder ro = RestUtil.createRestOrder(order);
-
-				return new ResponseEntity<>(ro, HttpStatus.OK);
-			} else {
-				// illegal state for close
-				String message = msg.format(orderId);
-
-				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
-			}
+			productionPlanner.acquireThreadSemaphore("closeOrder");
+			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+			msg = transactionTemplate.execute((status) -> {
+				ProcessingOrder orderx = this.findOrderPrim(orderId);
+				return orderUtil.close(orderx);
+			});
+			productionPlanner.releaseThreadSemaphore("closeOrder");	
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-			
+			productionPlanner.releaseThreadSemaphore("closeOrder");	
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
 			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		if (msg.isTrue()) {
+			// cancelled
+			RestOrder ro = getRestOrder(order.getId());
+
+			return new ResponseEntity<>(ro, HttpStatus.OK);
+		} else {
+			// illegal state for close
+			String message = msg.format(orderId);
+
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -498,7 +523,6 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	@Transactional
 	public ResponseEntity<RestOrder> retryOrder(String orderId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> retryOrder({})", orderId);
 		
@@ -511,12 +535,23 @@ public class OrderControllerImpl implements OrderController {
 				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
 			}
 			
-			Messages msg = orderUtil.retry(order);
-			// Already logged
-			
+			Messages msg = null;
+			try {
+				productionPlanner.acquireThreadSemaphore("retryOrder");
+				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+				msg = transactionTemplate.execute((status) -> {
+					ProcessingOrder orderx = this.findOrderPrim(orderId);
+					return orderUtil.retry(orderx);
+				});
+				productionPlanner.releaseThreadSemaphore("retryOrder");	
+			} catch (Exception e) {
+				productionPlanner.releaseThreadSemaphore("retryOrder");	
+				String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
+				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			}
 			if (msg.isTrue()) {
-				// retrying
-				RestOrder ro = RestUtil.createRestOrder(order);
+				// approved
+				RestOrder ro = getRestOrder(order.getId());
 
 				return new ResponseEntity<>(ro, HttpStatus.OK);
 			} else {
@@ -539,39 +574,56 @@ public class OrderControllerImpl implements OrderController {
 	 * @param orderId DB id or identifier
 	 * @return Order found
 	 */
-	@Transactional
-	private ProcessingOrder findOrder(String orderId) {
-		if (logger.isTraceEnabled()) logger.trace(">>> findOrder({})", orderId);
+	private ProcessingOrder findOrderPrim(String orderId) {
+		if (logger.isTraceEnabled()) logger.trace(">>> findOrderPrim({})", orderId);
 				
 		String missionCode = securityService.getMission();
 
 		ProcessingOrder order = null;
-		try {
-			Long id = Long.valueOf(orderId);
-			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
-			if (orderOpt.isPresent()) {
-				order = orderOpt.get();
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		order = transactionTemplate.execute((status) -> {
+			ProcessingOrder orderx = null;
+			try {
+				Long id = Long.valueOf(orderId);
+				Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+				if (orderOpt.isPresent()) {
+					orderx = orderOpt.get();
+				}
+			} catch (NumberFormatException nfe) {
+				// use orderId as identifier
 			}
-		} catch (NumberFormatException nfe) {
-			// use orderId as identifier
-		}
-		if (order == null) {
-			order = RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(missionCode, orderId);
-		}
-		
-		if (null == order) {
-			return null;
-		}
-		
-		// Ensure user is authorized for the mission of the order
-		if (!missionCode.equals(order.getMission().getCode())) {
-			Messages.ILLEGAL_CROSS_MISSION_ACCESS.log(logger, order.getMission().getCode(), missionCode);
-			return null;			
-		}
-		
+			if (orderx == null) {
+				orderx = RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(missionCode, orderId);
+			}
+
+			if (null == orderx) {
+				return null;
+			}
+
+			// Ensure user is authorized for the mission of the order
+			if (!missionCode.equals(orderx.getMission().getCode())) {
+				Messages.ILLEGAL_CROSS_MISSION_ACCESS.log(logger, orderx.getMission().getCode(), missionCode);
+				return null;			
+			}
+			return orderx;
+		});
 		return order;
 	}
 
+	private ProcessingOrder findOrder(String orderId) {
+		if (logger.isTraceEnabled()) logger.trace(">>> findOrder({})", orderId);
+		ProcessingOrder order = null;
+		try {
+			productionPlanner.acquireThreadSemaphore("approveOrder");
+			order = this.findOrderPrim(orderId);
+			productionPlanner.releaseThreadSemaphore("approveOrder");	
+		} catch (Exception e) {
+			productionPlanner.releaseThreadSemaphore("approveOrder");	
+			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());	
+		}
+		return order;
+	}
+	
 	private RestOrder getRestOrder(long id) {
 		try {
 			productionPlanner.acquireThreadSemaphore("getRestOrder");
