@@ -21,7 +21,7 @@
           th:onclick="'setJobState(' + ${job?.id} + ', \'SUSPENDFORCE\')'"
           href="#"><span th:text="#{suspendforce}">suspendforce</span></a> <a
           th:if="${hasroleorderplanner}"
-          th:class="('dropdown-item ' + ((${job?.jobState} == 'INITIAL') ? 'enabled' : 'disabled font-italic'))"
+          th:class="('dropdown-item ' + ((${job?.jobState} == 'INITIAL' or ${job?.jobState} == 'PLANNED') ? 'enabled' : 'disabled font-italic'))"
           th:onclick="'setJobState(' + ${job?.id} + ', \'CANCEL\')'" href="#"><span
           th:text="#{cancel}">cancel</span></a> <a
           th:if="${hasroleorderplanner}"
