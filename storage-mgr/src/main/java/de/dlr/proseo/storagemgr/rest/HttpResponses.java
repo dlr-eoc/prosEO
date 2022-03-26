@@ -36,13 +36,13 @@ public class HttpResponses {
 	}
 	
 	
-	private static  HttpHeaders httpWarningHeaders(String message) {
+	public static  HttpHeaders httpWarningHeaders(String message) {
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set("Warning", "199 proseo-storage-mgr " + message.replaceAll("\n", " "));
 		return responseHeaders;
 	}
 	
-	private static  HttpHeaders httpErrorHeaders(String message) {
+	public static  HttpHeaders httpErrorHeaders(String message) {
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set("Error", "proseo-storage-mgr " + message.replaceAll("\n", " "));
 		return responseHeaders;

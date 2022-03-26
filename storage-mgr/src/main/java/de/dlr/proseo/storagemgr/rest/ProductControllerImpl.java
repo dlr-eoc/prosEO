@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.List;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,12 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
 import de.dlr.proseo.storagemgr.utils.StorageType;
+import de.dlr.proseo.storagemgr.version2.StorageProvider;
+import de.dlr.proseo.storagemgr.version2.model.Storage;
+import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.cache.FileCache;
+import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
 import de.dlr.proseo.storagemgr.rest.model.RestProductFS;
 import de.dlr.proseo.storagemgr.utils.ProseoFile;
 import de.dlr.proseo.storagemgr.utils.StorageLogger;
@@ -96,6 +102,9 @@ public class ProductControllerImpl implements ProductController {
 	@Autowired
 	private StorageManagerConfiguration cfg;
 
+	@Autowired
+	private StorageProvider storageProvider;
+	
 	/**
 	 * Log an error and return the corresponding HTTP message header
 	 * 
@@ -139,6 +148,39 @@ public class ProductControllerImpl implements ProductController {
 		if (logger.isTraceEnabled()) logger.trace(">>> createRestProductFs({})", 
 				(null == restProductFS ? "MISSING" : restProductFS.getProductId()));
 		
+		
+		if (storageProvider.isVersion2()) { // begin version 2 list copy source -> storage
+
+			try {
+				String hostName = getLocalHostName();
+				String prefix = addSlashAtEnd(restProductFS.getProductId());
+				ArrayList<String> allUploaded = new ArrayList<String>();
+				
+				StorageFile targetFolder = storageProvider.getStorageFile(prefix);
+				
+				for (String fileOrDir : restProductFS.getSourceFilePaths()) {
+					
+					StorageFile sourceFileOrDir = storageProvider.getAbsoluteFile(fileOrDir);	
+					List<String> uploaded = storageProvider.getStorage().upload(sourceFileOrDir, targetFolder); 
+					
+					if (uploaded != null) 
+						allUploaded.addAll(uploaded);
+				}
+				
+				RestProductFS response = setRestProductFS(restProductFS, targetFolder.getBasePath(), true, targetFolder.getFullPath() + "/",
+						allUploaded, false, "registration executed on node " + hostName);
+				
+				return new ResponseEntity<>(response, HttpStatus.CREATED);
+				
+			} catch (Exception e) {
+				
+				String errorString = HttpResponses.createErrorString("Cannot make something", e);
+				return new ResponseEntity<>(HttpResponses.httpErrorHeaders(errorString), HttpStatus.BAD_REQUEST);
+			}
+			
+		} // end version 2
+			
+		
 		// get node name info...
 		String hostName = null;
 		try {
@@ -180,6 +222,22 @@ public class ProductControllerImpl implements ProductController {
 		} catch (Exception e) {
 			return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
 					e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	private String addSlashAtEnd(String path) {
+		
+		return !path.endsWith("/") ?  path + "/" : path;
+	}
+
+	private String getLocalHostName() {
+		
+		try {
+			InetAddress iAddress = InetAddress.getLocalHost();
+			return iAddress.getHostName();
+			
+		} catch (UnknownHostException e1) {
+			return "(UNKNOWN)";
 		}
 	}
 
@@ -463,5 +521,44 @@ public class ProductControllerImpl implements ProductController {
 			response.add(fs);
 		}
 	}
-
+	
+	/**
+	 * Set the members of RestProductFS response.
+	 * 
+	 * @param restProductFS the ingest info structure to copy product ID and source information from
+	 * @param storageId the ID of the storage used
+	 * @param registered true, if the requested files have been ingested, false otherwise
+	 * @param registeredFilePath common path to the ingested files
+	 * @param registeredFiles file names after ingestion
+	 * @param deleted true, if the files were deleted, false otherwise
+	 * @param msg a response message text
+	 * @return the updated response object
+	 */
+	private RestProductFS setRestProductFS(RestProductFS restProductFS, String storageId,
+			Boolean registered, String registeredFilePath, List<String> registeredFiles, Boolean deleted, String msg) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> setRestProductFS({}, {}, {}, {}, {}, {}, {})", 
+				(null == restProductFS ? "MISSING" : restProductFS.getProductId()),
+				storageId, registered, registeredFilePath, registeredFiles.size(), deleted, msg);
+		
+		RestProductFS response = new RestProductFS();
+		
+		if (response != null && restProductFS != null) {
+			response.setProductId(restProductFS.getProductId());
+			response.setTargetStorageId(storageId);
+			response.setRegistered(registered);
+			response.setRegisteredFilePath(registeredFilePath);
+			response.setSourceFilePaths(restProductFS.getSourceFilePaths());
+			response.setSourceStorageType(restProductFS.getSourceStorageType());
+			response.setTargetStorageType(restProductFS.getTargetStorageType());
+			response.setRegisteredFilesCount(Long.valueOf(registeredFiles.size()));
+			response.setRegisteredFilesList(registeredFiles);
+			response.setDeleted(deleted);
+			response.setMessage(msg);
+		}
+		
+		if (logger.isDebugEnabled()) logger.debug("Response created: {}", response);
+		
+		return response;
+	}
 }

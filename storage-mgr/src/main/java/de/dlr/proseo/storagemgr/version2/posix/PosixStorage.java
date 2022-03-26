@@ -191,4 +191,10 @@ public class PosixStorage implements Storage {
 		return storageFile;
 	}
 
+	@Override
+	public List<String> upload(StorageFile sourceFileOrDir, StorageFile targetFileOrDir) {
+		// TODO: add implementation
+		return null;
+	}
+
 }
