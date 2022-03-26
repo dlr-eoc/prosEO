@@ -3,6 +3,9 @@ package de.dlr.proseo.storagemgr.rest;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,18 +72,45 @@ public class ProductControllerImplTest {
 	@Test
 	public void testCreateRestProductFS() throws Exception {
 
-		RestProductFS restProductRequest = new RestProductFS();
+		RestProductFS restProductFS = populateRestProductFS();
 
-		// TODO: populate request restProductRequest
-
+		
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.post(REQUEST_STRING).
-				sessionAttr("restProductFS", restProductRequest);
+				sessionAttr("restProductFS", restProductFS);
 
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().is(201)).andReturn();
 
 		System.out.println("REQUEST: " + REQUEST_STRING);
 		System.out.println("Status: " + mvcResult.getResponse().getStatus());
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
+	}
+	
+	RestProductFS populateRestProductFS() {
+		
+		
+		String productId = "123";
+        String sourceStorageType = "POSIX";
+        
+        List <String> sourceFilePaths = new ArrayList<>();
+        sourceFilePaths.add("/folder1/file1.txt");
+        sourceFilePaths.add("/folder1/file2.txt");
+        
+        String targetStorageId = "234";
+        String targetStorageType = "POSIX";
+        String registeredFilePath = "/registeredPath";
+        Boolean registered = false;
+        Long registeredFilesCount = 3l;
+        
+        List <String> registeredFilesList = new ArrayList<>();
+        sourceFilePaths.add("/registered/file1.txt");
+        sourceFilePaths.add("/registered/file2.txt");
+        
+        Boolean deleted = false;
+        String message = "message";
+        
+        return new RestProductFS( productId,  sourceStorageType, sourceFilePaths, targetStorageId, targetStorageType, 
+        		registeredFilePath, registered, registeredFilesCount, registeredFilesList, deleted, message);
+  		
 	}
 
 	/**
