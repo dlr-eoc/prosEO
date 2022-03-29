@@ -107,6 +107,7 @@ public class JobOrderControllerImpl implements JoborderController {
 				return new ResponseEntity<>(createBadResponse(msg, jobOrder64), HttpStatus.FORBIDDEN);
 			}
 
+			// delete
 			if (!StorageFileConverter.isValidXml(jobOrder64)) {
 
 				String msg = "XML Doc parsed from attribute jobOrderStringBase64 is not valid";

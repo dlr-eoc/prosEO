@@ -37,5 +37,9 @@ public interface Storage {
 
 	public StorageFile createStorageFile(String relativePath, String content);
 
-	public List<String> upload(StorageFile sourceFileOrDir, StorageFile targetFileOrDir); 
+	public List<String> upload(StorageFile sourceFileOrDir, StorageFile targetFileOrDir);
+
+	public List<String> getFiles(String prefix); 
+	
+	public List<String> delete(StorageFile storageFileOrDir);
 }

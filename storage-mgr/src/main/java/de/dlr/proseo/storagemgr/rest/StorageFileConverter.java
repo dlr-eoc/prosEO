@@ -38,7 +38,7 @@ public class StorageFileConverter {
 		return converter.convertToString(stream);
 	}
 
-	private FileInputStream convertToInputStream(StorageFile sourceFile) throws FileNotFoundException {
+	public static FileInputStream convertToInputStream(StorageFile sourceFile) throws FileNotFoundException {
 
 		String fullpath = sourceFile.getFullPath();
 

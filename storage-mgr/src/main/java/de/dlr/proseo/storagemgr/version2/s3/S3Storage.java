@@ -53,7 +53,7 @@ public class S3Storage implements BucketsStorage {
 	}
 
 	@Override
-	public List<StorageFile> getFiles() {
+	public List<StorageFile> getStorageFiles() {
 
 		List<String> files = s3DAL.getFiles();
 		List<StorageFile> storageFiles = new ArrayList<StorageFile>();
@@ -130,7 +130,31 @@ public class S3Storage implements BucketsStorage {
 	}
 
 	@Override
-	public StorageFile getFile(String relativePath) {
+	public StorageFile getStorageFile(String relativePath) {
 		return new S3StorageFile(s3DAL.getBucket(), relativePath);
+	}
+
+	@Override
+	public StorageFile createStorageFile(String relativePath, String content) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<String> upload(StorageFile sourceFileOrDir, StorageFile targetFileOrDir) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<String> getFiles(String prefix) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<String> delete(StorageFile storageFileOrDir) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

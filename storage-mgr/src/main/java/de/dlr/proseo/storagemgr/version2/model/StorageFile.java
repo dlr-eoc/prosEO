@@ -21,5 +21,7 @@ public interface StorageFile {
 	public String getFileName();
 	
 	public StorageType getStorageType(); 
+	
+	public String getExtension();
 }	
 

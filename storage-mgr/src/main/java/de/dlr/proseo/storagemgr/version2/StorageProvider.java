@@ -204,5 +204,13 @@ public class StorageProvider {
 		return storage.createStorageFile(relativePath, content);
 	}
 
+	public Storage getStorage(StorageType storageType) {
+		
+		return createStorage(storageType);
+	}
 
+	public Storage getStorage(de.dlr.proseo.storagemgr.utils.StorageType posix) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

@@ -6,6 +6,7 @@
  */
 package de.dlr.proseo.storagemgr.rest;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -255,6 +256,33 @@ public class ProductControllerImpl implements ProductController {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> getProductFiles({}, {})", storageType, prefix);
 		
+		
+		if (storageProvider.isVersion2()) { // begin version 2 - get product files
+
+			try {
+				List<String> response; 
+				
+				if (storageType == null) { // add both 
+					
+					response = storageProvider.getStorage(StorageType.S3).getFiles(prefix);
+					response.addAll(storageProvider.getStorage(StorageType.POSIX).getFiles(prefix));
+					
+				} else { 
+					response = storageProvider.getStorage().getFiles(prefix);					
+				}
+				
+				response = storageProvider.getStorage().getFiles(prefix);
+				return new ResponseEntity<>(response, HttpStatus.CREATED);
+				
+			} catch (Exception e) {
+				
+				String errorString = HttpResponses.createErrorString("Cannot get product files", e);
+				return new ResponseEntity<>(HttpResponses.httpErrorHeaders(errorString), HttpStatus.BAD_REQUEST);
+			}
+			
+		} // end version 2
+		
+		
 		List<StorageType> stl = new ArrayList<StorageType>();
 		List<String> response = new ArrayList<String>();
 		try {
@@ -400,6 +428,47 @@ public class ProductControllerImpl implements ProductController {
 					claimsSet.getExpirationTime().toString()), HttpStatus.UNAUTHORIZED);
 		}
 		
+		
+		if (storageProvider.isVersion2()) { // begin version 2 - storage file -> byte page
+
+			try {				
+				StorageFile sourceFile = storageProvider.getAbsoluteFile(pathInfo);
+				
+				if (sourceFile == null) {
+					return new ResponseEntity<>(errorHeaders(MSG_INVALID_PATH, MSG_ID_INVALID_PATH,
+							pathInfo), HttpStatus.BAD_REQUEST);
+				}
+				
+				if (!sourceFile.getFileName().equals(claimsSet.getSubject())) {
+					return new ResponseEntity<>(errorHeaders(MSG_TOKEN_MISMATCH, MSG_ID_TOKEN_MISMATCH,
+							sourceFile.getFileName()), HttpStatus.UNAUTHORIZED);
+				}
+				
+				InputStream stream = StorageFileConverter.convertToInputStream(sourceFile); 
+				if (stream == null) {
+					return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND,
+							pathInfo), HttpStatus.NOT_FOUND);
+				}
+				
+				HttpHeaders headers = getFilePage(sourceFile, stream, fromByte, toByte);
+				HttpStatus status = getOkOrPartialStatus(fromByte, toByte);
+				
+				InputStreamResource fsr = new InputStreamResource(stream);
+				if (fsr != null) {
+					StorageLogger.logInfo(logger, MSG_FILE_RETRIEVED, MSG_ID_FILE_RETRIEVED, pathInfo, fromByte, toByte);
+					return new ResponseEntity<>(fsr, headers, status);
+				}
+				
+			} catch (Exception e) {
+				
+				String errorString = HttpResponses.createErrorString("Cannot get file page", e);
+				return new ResponseEntity<>(HttpResponses.httpErrorHeaders(errorString), HttpStatus.BAD_REQUEST);
+			}
+			
+		} // end version 2
+		
+		
+		
 		// Download file
 		
 		try {
@@ -457,6 +526,55 @@ public class ProductControllerImpl implements ProductController {
 		return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND,
 				pathInfo), HttpStatus.NOT_FOUND);
 	}
+	
+	private HttpStatus getOkOrPartialStatus(Long fromByte, Long toByte) {
+		
+		HttpStatus status; 
+		
+		if (fromByte != null || toByte != null) {
+			status = HttpStatus.PARTIAL_CONTENT;
+		}
+		else { 
+			 status = HttpStatus.OK;					
+		}
+		
+		return status; 		
+	}
+
+	private HttpHeaders getFilePage(StorageFile sourceFile, InputStream stream, Long fromByte, Long toByte) throws IOException {
+		
+		Long len = storageProvider.getStorage().getFileSize(sourceFile); 
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentDispositionFormData("attachment", sourceFile.getFileName());
+		long from = 0;
+		long to = len - 1;
+		
+		if (fromByte != null || toByte != null) {
+			
+			List<HttpRange> ranges = new ArrayList<HttpRange>();
+			
+			if (fromByte != null) {
+				from = fromByte;
+				stream.skip(from);
+			}
+			
+			if (toByte != null) {
+				to = Math.min(toByte, len - 1);
+			}
+			
+			len = to - from + 1;
+			HttpRange range = HttpRange.createByteRange(from, to);
+			ranges.add(range);
+			headers.setRange(ranges);
+			headers.setContentType(new MediaType("multipart", "byteranges"));
+			
+		} else {
+			headers.setContentType(new MediaType("application", sourceFile.getExtension()));
+		}
+		headers.setContentLength(len);
+		
+		return headers; 
+	}
 
 	/**
 	 * Delete object(s) 
@@ -472,6 +590,27 @@ public class ProductControllerImpl implements ProductController {
 	public ResponseEntity<RestProductFS> deleteProductByPathInfo(String pathInfo) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductByPathInfo({})", pathInfo);
+		
+		
+		if (storageProvider.isVersion2()) { // begin version 2 - delete files in storage
+
+			try {				
+				StorageFile sourceFileOrDir = storageProvider.getAbsoluteFile(pathInfo);
+				String storageType = storageProvider.getStorage().getStorageType().toString();
+				 
+				List<String> deletedFilesOrDir = storageProvider.getStorage().delete(sourceFileOrDir);
+				RestProductFS response = createRestProductFilesDeleted(deletedFilesOrDir, storageType);
+				
+				return new ResponseEntity<>(response, HttpStatus.OK);
+				
+			} catch (Exception e) {
+				
+				String errorString = HttpResponses.createErrorString("Cannot delete file(s)", e);
+				return new ResponseEntity<>(HttpResponses.httpErrorHeaders(errorString), HttpStatus.BAD_REQUEST);
+			}
+			
+		} // end version 2
+		
 		
 		RestProductFS response = new RestProductFS();
 		if (pathInfo != null) {
@@ -496,6 +635,19 @@ public class ProductControllerImpl implements ProductController {
 		}
 		return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND,
 				pathInfo), HttpStatus.NOT_FOUND);
+	}
+	
+	public RestProductFS createRestProductFilesDeleted(List<String> deletedFiles, String storageType) { 
+		
+		RestProductFS response = new RestProductFS();
+		
+		response.setProductId("");
+		response.setDeleted(true);
+		response.setRegistered(false);
+		response.setSourceFilePaths(deletedFiles);
+		response.setSourceStorageType(storageType);
+		
+		return response; 
 	}
 	
 	/**

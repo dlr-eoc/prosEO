@@ -70,4 +70,10 @@ public class S3StorageFile implements StorageFile {
 		return relativePath; 
 	}
 
+	@Override
+	public String getExtension() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

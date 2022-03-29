@@ -197,4 +197,15 @@ public class PosixStorage implements Storage {
 		return null;
 	}
 
+	@Override
+	public List<String> getFiles(String prefix) {
+		// TODO add implementation
+		return null;
+	}
+
+	@Override
+	public List<String> delete(StorageFile storageFileOrDir) {
+		// TODO  add implementation
+		return null;
+	}
 }
