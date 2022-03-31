@@ -268,14 +268,14 @@ public class ProductControllerImpl implements ProductController {
 					response.addAll(storageProvider.getStorage(StorageType.POSIX).getFiles(prefix));
 					
 				} else { 
-					response = storageProvider.getStorage().getFiles(prefix);					
+					response = storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.valueOf(storageType)).getFiles(prefix);					
 				}
 				
-				response = storageProvider.getStorage().getFiles(prefix);
-				return new ResponseEntity<>(response, HttpStatus.CREATED);
+				return new ResponseEntity<>(response, HttpStatus.OK);
 				
 			} catch (Exception e) {
 				
+				e.printStackTrace();
 				String errorString = HttpResponses.createErrorString("Cannot get product files", e);
 				return new ResponseEntity<>(HttpResponses.httpErrorHeaders(errorString), HttpStatus.BAD_REQUEST);
 			}

@@ -126,7 +126,7 @@ public class S3DataAccessLayer {
 		s3Client.deleteObject(request);
 	}
 
-	public void uploadFile(String sourcePath, String targetPath) throws IOException {
+	public String uploadFile(String sourcePath, String targetPath) throws IOException {
 
 		try {
 			PutObjectRequest request = PutObjectRequest.builder().bucket(bucket).key(targetPath).build();
@@ -138,15 +138,19 @@ public class S3DataAccessLayer {
 
 			WaiterResponse<HeadObjectResponse> waiterResponse = waiter.waitUntilObjectExists(requestWait);
 			waiterResponse.matched().response().ifPresent(System.out::println);
-			
+						
 			System.out.println("File " + targetPath + " was uploaded.");
+			
+			return targetPath; 
+			
 		} catch (Exception e) {
 			logger.error(e.getMessage());
 			throw e;
 		}
 	}
 
-	public void downloadFile(String sourcePath, String targetPath) throws IOException {
+	public String downloadFile(String sourcePath, String targetPath) throws IOException {
+		
 		GetObjectRequest request = GetObjectRequest.builder().bucket(bucket).key(sourcePath).build();
 		ResponseInputStream<GetObjectResponse> response = s3Client.getObject(request);
 		BufferedOutputStream outputStream;
@@ -162,6 +166,8 @@ public class S3DataAccessLayer {
 
 			response.close();
 			outputStream.close();
+			
+			return targetPath;
 
 		} catch (IOException e) {
 			logger.error(e.getMessage());

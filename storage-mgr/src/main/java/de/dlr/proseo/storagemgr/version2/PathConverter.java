@@ -14,8 +14,9 @@ public class PathConverter {
 
 	private ArrayList<String> basePaths = new ArrayList<>();
 
-	private String s3Prefix = "s3://";
-	private String slash = "/";
+	private static String S3PREFIX = "s3://";
+	private static String SLASH = "/";
+	private static String BACKSLASH = "\\"; 
 
 	public void addBasePath(String basePath) {
 		basePaths.add(removeLeftSlash(basePath.trim()));
@@ -51,7 +52,7 @@ public class PathConverter {
 			return "";
 		}
 		
-		return p.substring(0, p.indexOf(slash));
+		return p.substring(0, p.indexOf(SLASH));
 	}
 
 	
@@ -66,18 +67,18 @@ public class PathConverter {
 			return p;
 		} 
 		
-		return p.substring(p.indexOf(slash) + 1);
+		return p.substring(p.indexOf(SLASH) + 1);
 	}
 	
 	public boolean isS3Path(String path) {
 
-		return path.startsWith(s3Prefix) ? true : false;
+		return path.startsWith(S3PREFIX) ? true : false;
 	}
 
 	public String removeFsPrefix(String path) {
 
-		if (path.startsWith(s3Prefix)) {
-			return path.substring(s3Prefix.length());
+		if (path.startsWith(S3PREFIX)) {
+			return path.substring(S3PREFIX.length());
 		}
 
 		return removeLeftSlash(path);
@@ -97,17 +98,28 @@ public class PathConverter {
 
 	public String removeBucket(String path) {
 
-		return path.substring(path.indexOf(slash));
+		return path.substring(path.indexOf(SLASH));
 	}
 
 	public String removeLeftSlash(String path) {
 
 		String p = path;
 
-		while (p.startsWith(slash)) {
-			p = path.substring(slash.length());
+		while (p.startsWith(SLASH)) {
+			p = path.substring(SLASH.length());
 		}
 
 		return p;
+	}
+	
+	public static String addSlashAtEnd(String path) { 
+		
+		if (path.contains(SLASH)) 
+			return path + SLASH; 
+		
+		if (path.contains(BACKSLASH)) 
+			return path + BACKSLASH;
+		
+		return path;
 	}
 }

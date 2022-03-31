@@ -29,17 +29,23 @@ public interface Storage {
 
 	public List<StorageFile> getStorageFiles();
 	
-	public void uploadFile(StorageFile sourceFile, StorageFile targetFile) throws IOException;
+	public String uploadFile(StorageFile sourceFile, StorageFile targetFileOrDir) throws IOException;
 	
-	public void downloadFile(StorageFile sourceFile, StorageFile targetFile) throws IOException;
+	public String downloadFile(StorageFile sourceFile, StorageFile targetFileOrDir) throws IOException;
 	
 	public StorageType getStorageType();
 
 	public StorageFile createStorageFile(String relativePath, String content);
 
-	public List<String> upload(StorageFile sourceFileOrDir, StorageFile targetFileOrDir);
+	public List<String> upload(StorageFile sourceFileOrDir, StorageFile targetFileOrDir) throws IOException;
+	
+	public List<String> download(StorageFile sourceFileOrDir, StorageFile targetFileOrDir) throws IOException;
 
 	public List<String> getFiles(String prefix); 
 	
 	public List<String> delete(StorageFile storageFileOrDir);
+	
+	public boolean isFile(StorageFile storageFileOrDir);
+	
+	public boolean isDirectory(StorageFile storageFileOrDir);
 }

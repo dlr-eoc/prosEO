@@ -76,4 +76,28 @@ public class S3StorageFile implements StorageFile {
 		return null;
 	}
 
+	@Override
+	public void setBasePath(String basePath) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setBucket(String bucket) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setRelativePath(String relativePath) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean isDirectory() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 }

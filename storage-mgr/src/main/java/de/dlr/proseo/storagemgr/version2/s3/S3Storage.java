@@ -68,15 +68,15 @@ public class S3Storage implements BucketsStorage {
 	}
 
 	@Override
-	public void uploadFile(StorageFile sourceFile, StorageFile targetFile) throws IOException {
+	public String uploadFile(StorageFile sourceFile, StorageFile targetFileOrDir) throws IOException {
 
 		String sourcePath = sourceFile.getFullPath();
-		String targetPath = targetFile.getRelativePath();
+		String targetPath = targetFileOrDir.getRelativePath();
 
-		s3DAL.setBucket(targetFile.getBucket());
+		s3DAL.setBucket(targetFileOrDir.getBucket());
 
 		try {
-			s3DAL.uploadFile(sourcePath, targetPath);
+			return s3DAL.uploadFile(sourcePath, targetPath);
 		} catch (IOException e) {
 			if (logger.isTraceEnabled())
 				logger.warn("Cannot upload file from " + sourcePath + " to " + targetPath + " ", e.getMessage());
@@ -85,15 +85,15 @@ public class S3Storage implements BucketsStorage {
 	}
 
 	@Override
-	public void downloadFile(StorageFile sourceFile, StorageFile targetFile) throws IOException {
+	public String downloadFile(StorageFile sourceFile, StorageFile targetFileOrDir) throws IOException {
 
 		String sourcePath = sourceFile.getRelativePath();
-		String targetPath = targetFile.getFullPath();
+		String targetPath = targetFileOrDir.getFullPath();
 		
 		s3DAL.setBucket(sourceFile.getBucket());
 
 		try {
-			s3DAL.downloadFile(sourcePath, targetPath);		
+			return s3DAL.downloadFile(sourcePath, targetPath);		
 		} catch (IOException e) {
 			if (logger.isTraceEnabled())
 				logger.warn("Cannot download file from " + sourcePath + " to " + targetPath + " ", e.getMessage());
@@ -154,6 +154,24 @@ public class S3Storage implements BucketsStorage {
 
 	@Override
 	public List<String> delete(StorageFile storageFileOrDir) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isFile(StorageFile storageFileOrDir) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean isDirectory(StorageFile storageFileOrDir) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public List<String> download(StorageFile sourceFileOrDir, StorageFile targetFileOrDir) throws IOException {
 		// TODO Auto-generated method stub
 		return null;
 	}

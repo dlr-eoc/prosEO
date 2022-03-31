@@ -6,7 +6,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -18,7 +20,10 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import de.dlr.proseo.storagemgr.StorageManager;
+import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.rest.model.RestProductFS;
+import de.dlr.proseo.storagemgr.version2.StorageProvider;
 
 /**
  * Mock Mvc test for Product Controller
@@ -36,6 +41,19 @@ public class ProductControllerImplTest {
 
 	@Autowired
 	private MockMvc mockMvc;
+	
+	@Autowired
+	private TestUtils testUtils;
+	
+	@Autowired
+	private StorageTestUtils storageTestUtils;
+	
+	@Autowired
+	private StorageProvider storageProvider;
+
+	
+	@Rule
+	public TestName testName = new TestName();
 
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/products";
 
@@ -47,11 +65,49 @@ public class ProductControllerImplTest {
 	 * @return products string[]
 	 */
 	@Test
-	public void testGetProductFiles() throws Exception {
+	public void testGetProductFilesV2() throws Exception {
+		
+		storageProvider.loadVersion2();
+		getProductFiles(); 
+	}
+	
+	/**
+	 * Get products with given directory prefix
+	 * 
+	 * GET /products storageType="POSIX"&prefix="/.."
+	 * 
+	 * @return products string[]
+	 */
+	@Test
+	public void testGetProductFilesV1() throws Exception {
+		
+		storageProvider.loadVersion1();
+		getProductFiles(); 
+	}
+	
+			
+	
+	private void getProductFiles() throws Exception {
+		
+		TestUtils.printMethodName(this, testName);
+		TestUtils.createEmptyStorageDirectories();
 
 		String storageType = "POSIX";
-		String prefix = "";
-
+		String prefix = "files/"; 
+		
+		List<String> pathes = new ArrayList<>();
+		pathes.add(prefix + "file1.txt");
+		pathes.add(prefix + "file2.txt");
+		pathes.add(prefix + "dir/file3.txt");
+		
+		for (String path : pathes) {
+			
+			storageTestUtils.createSourceFile(path);
+			storageTestUtils.uploadToPosixStorage(path);
+		}
+		
+		storageTestUtils.printPosixStorage();
+		
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
 				.param("storageType", storageType).param("prefix", prefix);
 
@@ -61,6 +117,7 @@ public class ProductControllerImplTest {
 		System.out.println("Status: " + mvcResult.getResponse().getStatus());
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
 	}
+	
 
 	/**
 	 * Register products/files/dirs from unstructered storage in prosEO-storage
@@ -85,7 +142,7 @@ public class ProductControllerImplTest {
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
 	}
 	
-	RestProductFS populateRestProductFS() {
+	private RestProductFS populateRestProductFS() {
 		
 		
 		String productId = "123";

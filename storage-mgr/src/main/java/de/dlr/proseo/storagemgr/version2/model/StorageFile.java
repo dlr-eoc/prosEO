@@ -13,15 +13,23 @@ public interface StorageFile {
 	public String getFullPath(); 
 	// path to bucket 
 	public String getBasePath();
+	
+	public void setBasePath(String basePath); 
 
 	public String getBucket();
+	
+	public void setBucket(String bucket); 
 	// path from bucket 
 	public String getRelativePath();
+	
+	public void setRelativePath(String relativePath);
 
 	public String getFileName();
 	
 	public StorageType getStorageType(); 
 	
 	public String getExtension();
+	
+	public boolean isDirectory(); 
 }	
 

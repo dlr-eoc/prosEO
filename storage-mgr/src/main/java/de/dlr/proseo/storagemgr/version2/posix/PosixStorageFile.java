@@ -9,11 +9,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.storagemgr.utils.ProseoFile;
+import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 /**
- * Posix Storage File
+ * Posix Storage File 
  * 
  * @author Denys Chaykovskiy
  *
@@ -47,7 +48,18 @@ public class PosixStorageFile implements StorageFile {
 
 	@Override
 	public String getFullPath() {
-		return Paths.get(basePath, bucket, relativePath).toString();
+		
+		try {
+			String path= Paths.get(basePath, bucket, relativePath).toString();
+			if (isDirectory()) path = PathConverter.addSlashAtEnd(path); 
+			
+			return path;
+		}
+		catch (Exception e) {
+			
+			e.printStackTrace();
+			throw e;
+		}
 	}
 
 	@Override
@@ -76,8 +88,8 @@ public class PosixStorageFile implements StorageFile {
 	}
 
 	private String verifyBasePath(String basePath) {
-		if (!basePath.startsWith("/"))
-			basePath = "/" + basePath;
+		//if (!basePath.startsWith("/"))
+		//	basePath = "/" + basePath;
 
 		return basePath;
 	}
@@ -97,5 +109,33 @@ public class PosixStorageFile implements StorageFile {
 			logger.trace(">>> getExtension()");
 
 		return FilenameUtils.getExtension(relativePath);
+	}
+	
+	@Override
+	public boolean isDirectory() { 
+		
+		return (relativePath.endsWith("/") || relativePath.endsWith("\\"))  ? true : false; 		
+	}
+	
+	
+	
+	public PosixStorageFile(StorageFile targetDir) { 
+		this(targetDir.getBasePath(), targetDir.getBucket(), targetDir.getRelativePath() );
+	}
+
+	@Override
+	public void setBasePath(String basePath) {
+		this.basePath = basePath; 
+	}
+
+	@Override
+	public void setBucket(String bucket) {
+		this.bucket = bucket; 
+		
+	}
+
+	@Override
+	public void setRelativePath(String relativePath) {
+		this.relativePath = relativePath; 
 	}
 }
