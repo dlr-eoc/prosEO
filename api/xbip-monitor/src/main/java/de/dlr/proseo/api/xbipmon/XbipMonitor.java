@@ -567,7 +567,7 @@ public class XbipMonitor extends BaseMonitor {
 										logger.debug("... file download semaphore acquired, {} permits remaining",
 												semaphore.availablePermits());
 								} catch (InterruptedException e) {
-									logger.error(String.format(MSG_ABORTING_TASK, MSG_ID_ABORTING_TASK, e.getMessage()));
+									logger.error(String.format(MSG_ABORTING_TASK, MSG_ID_ABORTING_TASK, e.toString()));
 									return;
 								}
 								
@@ -642,8 +642,8 @@ public class XbipMonitor extends BaseMonitor {
 				if (k == maxFileWaitCycles) {
 					// Timeout reached --> kill download and report error
 					copyTask.interrupt();
-					logger.error(MSG_COPY_TIMEOUT, MSG_ID_COPY_TIMEOUT, (maxFileWaitCycles * fileWaitInterval) / 1000,
-							transferSession.sessionPath.toString());
+					logger.error(String.format(MSG_COPY_TIMEOUT, MSG_ID_COPY_TIMEOUT, (maxFileWaitCycles * fileWaitInterval) / 1000,
+							transferSession.sessionPath.toString()));
 				}
 			}
 			

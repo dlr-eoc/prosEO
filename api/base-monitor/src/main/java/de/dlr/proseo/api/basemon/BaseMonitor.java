@@ -528,7 +528,7 @@ public abstract class BaseMonitor extends Thread {
 							semaphore.acquire();
 							if (logger.isDebugEnabled()) logger.debug("... task semaphore acquired, {} permits remaining", semaphore.availablePermits());
 						} catch (InterruptedException e) {
-							logger.error(String.format(MSG_ABORTING_TASK, MSG_ID_ABORTING_TASK, e.getMessage()));
+							logger.error(String.format(MSG_ABORTING_TASK, MSG_ID_ABORTING_TASK, e.toString()));
 							return;
 						}
 						
@@ -540,7 +540,7 @@ public abstract class BaseMonitor extends Thread {
 								try {
 									recordTransfer(objectToTransfer);
 								} catch (IOException e) {
-									logger.error(String.format(MSG_ABORTING_TASK, MSG_ID_ABORTING_TASK, e.getMessage()));
+									logger.error(String.format(MSG_ABORTING_TASK, MSG_ID_ABORTING_TASK, e.toString()));
 									return;
 								}
 								
