@@ -21,6 +21,7 @@ proseo:
         cycle: 10000
         # cycle wait time for checking services
         serviceCycle: 10000
+        serviceAggregationCycle: 30000
         # cycle wait time for checking orders
         orderCycle: 30000
         # cycle wait time for checking products

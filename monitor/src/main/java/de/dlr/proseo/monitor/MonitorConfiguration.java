@@ -48,6 +48,10 @@ public class MonitorConfiguration {
 	 */
 	private Long serviceCycle;
 	/**
+	 * Cycle wait time for service monitoring aggregation
+	 */
+	private Long serviceAggregationCycle;
+	/**
 	 * Cycle wait time for order monitoring
 	 */
 	private Long orderCycle;
@@ -191,6 +195,22 @@ public class MonitorConfiguration {
 	public void setOrderCycle(Long orderCycle) {
 		this.orderCycle = orderCycle;
 	}
+	
+
+	/**
+	 * @return the serviceAggregationCycle
+	 */
+	public Long getServiceAggregationCycle() {
+		return serviceAggregationCycle;
+	}
+
+	/**
+	 * @param serviceAggregationCycle the serviceAggregationCycle to set
+	 */
+	public void setServiceAggregationCycle(Long serviceAggregationCycle) {
+		this.serviceAggregationCycle = serviceAggregationCycle;
+	}
+
 
 	public static class Service {
 		/**
