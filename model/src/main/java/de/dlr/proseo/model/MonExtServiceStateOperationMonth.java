@@ -22,8 +22,8 @@ public class MonExtServiceStateOperationMonth extends PersistentObject {
 	/**
 	 * The service id
 	 */
-	@Column(name = "mon_service_id")
-	private long monServiceId;
+	@Column(name = "mon_ext_service_id")
+	private long monExtServiceId;
 
 	/**
 	 * The service up time
@@ -39,10 +39,10 @@ public class MonExtServiceStateOperationMonth extends PersistentObject {
 	}
 
 	/**
-	 * @return the monServiceId
+	 * @return the monExtServiceId
 	 */
-	public long getMonServiceId() {
-		return monServiceId;
+	public long getMonExtServiceId() {
+		return monExtServiceId;
 	}
 
 	/**
@@ -60,10 +60,10 @@ public class MonExtServiceStateOperationMonth extends PersistentObject {
 	}
 
 	/**
-	 * @param monServiceId the monServiceId to set
+	 * @param monExtServiceId the monExtServiceId to set
 	 */
-	public void setMonServiceId(long monServiceId) {
-		this.monServiceId = monServiceId;
+	public void setMonExtServiceId(long monServiceId) {
+		this.monExtServiceId = monServiceId;
 	}
 
 	/**

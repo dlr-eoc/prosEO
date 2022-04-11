@@ -19,7 +19,6 @@ import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.MonExtService;
 import de.dlr.proseo.model.MonExtServiceStateOperationDay;
 import de.dlr.proseo.model.MonExtServiceStateOperationMonth;
@@ -126,7 +125,7 @@ public class MonServiceAggregation extends Thread {
 				} catch (IndexOutOfBoundsException ex) {
 					tm = new MonExtServiceStateOperationDay();
 				}
-				tm.setMonServiceId(m.getId());
+				tm.setMonExtServiceId(m.getId());
 				tm.setUpTime(upPercent);
 				tm.setDatetime(timeFrom);
 				RepositoryService.getMonExtServiceStateOperationDayRepository().save(tm);			
@@ -185,7 +184,7 @@ public class MonServiceAggregation extends Thread {
 				} catch (IndexOutOfBoundsException ex) {
 					tm = new MonExtServiceStateOperationMonth();
 				}
-				tm.setMonServiceId(m.getId());
+				tm.setMonExtServiceId(m.getId());
 				tm.setUpTime(upPercent);
 				tm.setDatetime(timeFrom);
 				RepositoryService.getMonExtServiceStateOperationMonthRepository().save(tm);
