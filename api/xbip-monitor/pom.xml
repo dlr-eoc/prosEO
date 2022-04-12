@@ -162,23 +162,29 @@
 
             <!-- Build Docker image -->
             <plugin>
-                <groupId>io.fabric8</groupId>
-                <artifactId>docker-maven-plugin</artifactId>
-                <version>${docker-maven-version}</version>
-                <configuration>
-                    <images>
-                        <image>
-                            <name>${docker.registry}/${project.build.finalName}:${module.version}</name>
-                        </image>
-                    </images>
-                </configuration>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>default</id>
                         <phase>install</phase>
+                        <configuration>
+                            <target>
+                                <exec executable="docker">
+                                    <arg value="build" />
+                                    <arg value="-t" />
+                                    <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
+                                    <arg value="--platform" />
+                                    <arg value="linux/amd64" />
+                                    <arg value="." />
+                                </exec>
+                                <exec executable="docker">
+                                    <arg value="push" />
+                                    <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
+                                </exec>
+                            </target>
+                        </configuration>
                         <goals>
-                            <goal>build</goal>
-                            <goal>push</goal>
+                            <goal>run</goal>
                         </goals>
                     </execution>
                 </executions>
