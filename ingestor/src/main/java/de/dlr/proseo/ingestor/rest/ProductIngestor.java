@@ -739,6 +739,12 @@ public class ProductIngestor {
 	public void notifyPlanner(String user, String password, IngestorProduct ingestorProduct, long facilityId)
 			throws IllegalArgumentException, RestClientException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> notifyPlanner({}, PWD, {})", user, ingestorProduct.getProductClass());
+		
+		// Check whether Planner notification is desirable at all
+		if (!ingestorConfig.getNotifyPlanner()) {
+			if (logger.isDebugEnabled()) logger.debug("... skipping Planner notification due to configuration setting");
+			return;
+		}
 
 		// Ensure user is authorized for the product's mission
 		if (!securityService.isAuthorizedForMission(ingestorProduct.getMissionCode())) {
