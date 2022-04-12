@@ -302,7 +302,7 @@ public class BaseWrapper {
 			throw new WrapperException();
 		}
 		
-		// Set sensing start time to sensing stop time
+		// Convert JSON string to RestProduct
 		RestProduct restProduct;
 		try {
 			restProduct = new ObjectMapper().readValue(responseInfo.gethttpResponse(), RestProduct.class);
