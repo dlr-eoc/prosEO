@@ -6,7 +6,7 @@ services:
       - POSTGRES_DB=proseo
       - POSTGRES_PASSWORD=TJ5AFSVJPOkUYcJdMMpBF8Pl
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - /opt/prosEO/pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     logging:
@@ -140,9 +140,6 @@ services:
       options:
         max-size: 100m
     # No automatic restart
-
-volumes:
-  pgdata:
 
 networks:
   default:
