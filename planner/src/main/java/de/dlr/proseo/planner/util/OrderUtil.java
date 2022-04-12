@@ -674,22 +674,22 @@ public class OrderUtil {
 				}
 				try {
 					productionPlanner.acquireThreadSemaphore("suspend");	
-					final ProcessingOrder ordery = transactionTemplate.execute((status) -> {
-						if (order.getOrderState() == OrderState.RELEASING) {
-							order.setOrderState(OrderState.RELEASED);
-							order.setOrderState(OrderState.RUNNING);
-						}
-						order.setOrderState(OrderState.SUSPENDING);
-						RepositoryService.getOrderRepository().save(order);
-						em.merge(order);
-						return order;
-					});
-					final ProcessingOrder orderx = transactionTemplate.execute((status) -> {
+					transactionTemplate.execute((status) -> {
+						ProcessingOrder ordery = null;
 						Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
 						if (orderOpt.isPresent()) {
-							return orderOpt.get();
+							ordery = orderOpt.get();
 						}
-						return null;
+						if (ordery == null) {
+							return null;
+						}
+						if (ordery.getOrderState() == OrderState.RELEASING) {
+							ordery.setOrderState(OrderState.RELEASED);
+							ordery.setOrderState(OrderState.RUNNING);
+						}
+						ordery.setOrderState(OrderState.SUSPENDING);
+						RepositoryService.getOrderRepository().save(ordery);
+						return ordery;
 					});
 					answer = transactionTemplate.execute((status) -> {
 						Boolean suspending = false;
@@ -700,7 +700,7 @@ public class OrderUtil {
 							orderz = orderOpt.get();
 						}
 						if (orderz == null) {
-							return null;
+							return Messages.ORDER_NOT_EXIST;
 						}
 						for (Job job : orderz.getJobs()) {
 							jobUtil.suspend(job, force);
@@ -750,13 +750,27 @@ public class OrderUtil {
 				try {
 					productionPlanner.acquireThreadSemaphore("suspend");	
 					answer = transactionTemplate.execute((status) -> {
-						for (Job job : order.getJobs()) {
+						ProcessingOrder orderz = null;
+						Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+						if (orderOpt.isPresent()) {
+							orderz = orderOpt.get();
+						}
+						if (orderz == null) {
+							return Messages.ORDER_NOT_EXIST;
+						}
+						for (Job job : orderz.getJobs()) {
 							jobUtil.suspend(job, force);
 						}
-						order.setOrderState(OrderState.PLANNED);
-						order.incrementVersion();
-						RepositoryService.getOrderRepository().save(order);
-						logOrderState(order);
+						if (orderz.getOrderState() == OrderState.RELEASED) {
+							orderz.setOrderState(OrderState.SUSPENDING);
+						}
+						if (orderz.getOrderState() == OrderState.RUNNING) {
+							orderz.setOrderState(OrderState.SUSPENDING);
+						}
+						orderz.setOrderState(OrderState.PLANNED);
+						orderz.incrementVersion();
+						RepositoryService.getOrderRepository().save(orderz);
+						logOrderState(orderz);
 						return Messages.ORDER_SUSPENDED;
 					});
 				} catch (Exception e) {
