@@ -767,6 +767,7 @@ public class OrderDispatcher {
 		}
 		
 		// Evaluate selection rules
+		SELECTION_RULE:
 		for (SimpleSelectionRule selectionRule : selectedSelectionRules) {
 			
 			// Skip selection rules not applicable for the selected configured processor
@@ -798,7 +799,7 @@ public class OrderDispatcher {
 								logger.debug(
 										"Skipping selection rule '{}', because it is not applicable for the requested processors",
 										selectionRule);
-							continue; // with next selection rule
+							continue SELECTION_RULE; // with next selection rule
 						} 
 					} 
 				}
@@ -809,11 +810,12 @@ public class OrderDispatcher {
 			Boolean exist = false;
 			for (ProductQuery productQuery: jobStep.getInputProductQueries()) {
 				if (productQuery.getGeneratingRule().getSourceProductClass().equals(selectionRule.getSourceProductClass())) {
-					// Make sure selection rules match
+					// Make sure selection rules match (there may be multiple applicable selection rules/configured processors) 
 					if (!selectionRule.toString().equals(productQuery.getGeneratingRule().toString())) {
-						throw new IllegalArgumentException(
+						if (logger.isDebugEnabled()) logger.debug(
 							String.format("Selection rule %s from product query does not match selection rule %s from product class %s",
-									productQuery.getGeneratingRule().toString(), selectionRule.toString(), productClass.getProductType()));
+								productQuery.getGeneratingRule().toString(), selectionRule.toString(), productClass.getProductType()));
+						continue SELECTION_RULE;
 					}
 					// OK, product query already exists
 					exist = true;
