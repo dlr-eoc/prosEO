@@ -2,6 +2,7 @@ version: '3'
 services:
   proseo-db:
     image: ${REGISTRY_URL}/postgres:11-proseo
+    platform: linux/amd64
     environment:
       - POSTGRES_DB=proseo
       - POSTGRES_PASSWORD=TJ5AFSVJPOkUYcJdMMpBF8Pl
@@ -16,6 +17,7 @@ services:
     restart: unless-stopped
   proseo-ingestor:
     image: ${REGISTRY_URL}/proseo-ingestor:${VERSION}-proseo
+    platform: linux/amd64
     volumes:
       - /opt/prosEO/log:/proseo/log
     ports:
@@ -27,6 +29,7 @@ services:
     restart: unless-stopped
   proseo-order-mgr:
     image: ${REGISTRY_URL}/proseo-order-mgr:${VERSION}-proseo
+    platform: linux/amd64
     volumes:
       - /opt/prosEO/log:/proseo/log
     ports:
@@ -38,6 +41,7 @@ services:
     restart: unless-stopped
   proseo-prodplanner:
     image: ${REGISTRY_URL}/proseo-planner:${VERSION}-proseo
+    platform: linux/amd64
     volumes:
       - /opt/prosEO/log:/proseo/log
     ports:
@@ -49,6 +53,7 @@ services:
     restart: unless-stopped
   proseo-processor-mgr:
     image: ${REGISTRY_URL}/proseo-processor-mgr:${VERSION}-proseo
+    platform: linux/amd64
     volumes:
       - /opt/prosEO/log:/proseo/log
     ports:
@@ -60,6 +65,7 @@ services:
     restart: unless-stopped
   proseo-productclass-mgr:
     image: ${REGISTRY_URL}/proseo-productclass-mgr:${VERSION}-proseo
+    platform: linux/amd64
     volumes:
       - /opt/prosEO/log:/proseo/log
     ports:
@@ -71,6 +77,7 @@ services:
     restart: unless-stopped
   proseo-user-mgr:
     image: ${REGISTRY_URL}/proseo-user-mgr:${VERSION}-proseo
+    platform: linux/amd64
     volumes:
       - /opt/prosEO/log:/proseo/log
     ports:
@@ -82,6 +89,7 @@ services:
     restart: unless-stopped
   proseo-facility-mgr:
     image: ${REGISTRY_URL}/proseo-facility-mgr:${VERSION}-proseo
+    platform: linux/amd64
     volumes:
       - /opt/prosEO/log:/proseo/log
     ports:
@@ -93,6 +101,7 @@ services:
     restart: unless-stopped
   proseo-gui:
     image: ${REGISTRY_URL}/proseo-ui-gui:${VERSION}-proseo
+    platform: linux/amd64
     volumes:
       - /opt/prosEO/log:/proseo/log
     ports:
@@ -112,6 +121,7 @@ services:
     restart: unless-stopped
   proseo-api-prip:
     image: ${REGISTRY_URL}/proseo-api-prip:${VERSION}-proseo
+    platform: linux/amd64
     volumes:
       - /opt/prosEO/log:/proseo/log
     ports:
@@ -126,6 +136,7 @@ services:
     restart: unless-stopped
   proseo-pgadmin:
     image: ${REGISTRY_URL}/dpage/pgadmin4:latest-proseo
+    platform: linux/amd64
     environment:
       - PGADMIN_ENABLE_TLS=True
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}

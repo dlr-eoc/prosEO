@@ -8,7 +8,7 @@ function build_component {
   cd $component
   TAGGED_IMAGENAME=$(cat Dockerfile | grep FROM | awk '{gsub("localhost:5000/",""); split($0,a," "); print a[2]}')-$TAG_SUFFIX
   echo "Image name: $TAGGED_IMAGENAME"
-  docker build -t $REGISTRY/$TAGGED_IMAGENAME .
+  docker build -t $REGISTRY/$TAGGED_IMAGENAME --platform linux/amd64 .
   cd - >/dev/null
 }
 
