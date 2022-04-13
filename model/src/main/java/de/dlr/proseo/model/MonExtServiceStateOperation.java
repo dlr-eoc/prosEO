@@ -10,7 +10,9 @@ import javax.persistence.Table;
 
 @Entity
 @Table(indexes = {
-	@Index(unique = false, columnList = "datetime")
+		@Index(unique = false, columnList = "datetime"),
+		@Index(unique = false, columnList = "mon_ext_service_id"),
+		@Index(unique = false, columnList = "mon_service_state_id")
 })
 public class MonExtServiceStateOperation extends PersistentObject {
 	/**
