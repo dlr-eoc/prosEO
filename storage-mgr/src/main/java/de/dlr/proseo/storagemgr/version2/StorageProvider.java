@@ -173,6 +173,7 @@ public class StorageProvider {
 			folder = path.getParent().toString();
 		}
 		*/
+		
 		String basePath = pathConverter.getFirstFolder(absolutePath);
 		String relativePath = pathConverter.removeFirstFolder(absolutePath);
 

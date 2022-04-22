@@ -43,7 +43,9 @@ public interface Storage {
 
 	public List<String> getFiles(String prefix); 
 	
-	public List<String> delete(StorageFile storageFileOrDir);
+	public List<String> delete(StorageFile storageFileOrDir) throws IOException;
+	
+	public String deleteFile(StorageFile storageFileOrDir) throws IOException;
 	
 	public boolean isFile(StorageFile storageFileOrDir);
 	
