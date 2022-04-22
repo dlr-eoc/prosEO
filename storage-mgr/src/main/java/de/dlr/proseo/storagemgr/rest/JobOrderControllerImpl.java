@@ -107,13 +107,7 @@ public class JobOrderControllerImpl implements JoborderController {
 				return new ResponseEntity<>(createBadResponse(msg, jobOrder64), HttpStatus.FORBIDDEN);
 			}
 
-			// delete
-			if (!StorageFileConverter.isValidXml(jobOrder64)) {
-
-				String msg = "XML Doc parsed from attribute jobOrderStringBase64 is not valid";
-				return new ResponseEntity<>(createBadResponse(msg, jobOrder64), HttpStatus.FORBIDDEN);
-			}
-
+		
 			String relativePath = getJobOrderRelativePath(cfg.getJoborderPrefix());
 
 			try {
@@ -201,6 +195,8 @@ public class JobOrderControllerImpl implements JoborderController {
 				return new ResponseEntity<>(response, HttpStatus.OK);
 
 			} catch (Exception e) {
+				
+				e.printStackTrace();
 
 				String errorString = HttpResponses.createErrorString("Cannot get job order file", e);
 				return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);

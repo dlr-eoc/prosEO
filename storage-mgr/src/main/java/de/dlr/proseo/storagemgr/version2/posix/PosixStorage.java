@@ -312,7 +312,7 @@ public class PosixStorage implements Storage {
 	@Override
 	public List<String> getFiles(String relativePath) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> getProductFiles({})", relativePath);
+		if (logger.isTraceEnabled()) logger.trace(">>> getFiles({})", relativePath);
 
 		String prefix = StorageType.POSIX.toString() + "|";
 		List<String> returnFiles = new ArrayList<String>();
@@ -345,13 +345,64 @@ public class PosixStorage implements Storage {
 
 		return returnFiles;
 	}
-
-	@Override
-	public List<String> delete(StorageFile storageFileOrDir) {
-		// TODO add implementation
-		return null;
+	
+	
+	public String deleteFile(StorageFile storageFile) throws IOException  {
+		
+		boolean fileDeleted = new File(storageFile.getFullPath()).delete();
+		
+		if (fileDeleted) { 
+			return storageFile.getFullPath(); 
+		}
+		
+		throw new IOException("Cannot delete file: " + storageFile.getFullPath());  
 	}
 
+	@Override
+	public List<String> delete(StorageFile sourceFileOrDir) throws IOException {
+	
+	if (logger.isTraceEnabled()) logger.trace(">>> delete({})", sourceFileOrDir.getFullPath());
+		
+		String prefix = StorageType.POSIX.toString() + "|";
+		List<String> deletedFiles = new ArrayList<String>();
+		
+		if (isFile(sourceFileOrDir)) {
+			
+			String deletedFile = deleteFile(sourceFileOrDir);
+			deletedFiles.add(deletedFile);
+			return deletedFiles;
+		}
+
+		StorageFile sourceDir = sourceFileOrDir; 
+	
+		File directory = new File(sourceDir.getFullPath());
+		File[] files = directory.listFiles();
+		Arrays.sort(files);
+
+		for (File file : files) {
+			
+			if (file.isFile()) {
+				
+				StorageFile sourceFile = getStorageFile(getRelativePath(file.getAbsolutePath()));
+				String deletedFile = deleteFile(sourceFile);
+				deletedFiles.add(deletedFile);
+			}
+		}
+
+		for (File file : files) {
+			
+			if (file.isDirectory()) {
+				
+				StorageFile sourceSubDir = getStorageFile(getRelativePath(file.getAbsolutePath()));
+				List<String> subDirFilesDeleted = delete(sourceSubDir);
+				
+				deletedFiles.addAll(subDirFilesDeleted);
+			}
+		}
+		
+		return deletedFiles;
+	}
+	
 	@Override
 	public boolean isFile(StorageFile storageFileOrDir) {
 	     return new File(storageFileOrDir.getFullPath()).isFile();

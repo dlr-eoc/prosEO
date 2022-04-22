@@ -12,6 +12,7 @@ import java.util.ArrayList;
  */
 public class PathConverter {
 
+	// private String path; 
 	private ArrayList<String> basePaths = new ArrayList<>();
 
 	private static String S3PREFIX = "s3://";
@@ -21,13 +22,29 @@ public class PathConverter {
 	public void addBasePath(String basePath) {
 		basePaths.add(removeLeftSlash(basePath.trim()));
 	}
+	
+	/*
+	public String getPath() { 
+		
+		return path; 
+	}
+	*/
 
 	public PathConverter() {
+		
+		//this.path = convertToSlash(path); 
+	}
+	
+	public String convertToSlash(String backSlashPath) { 
+	
+		return backSlashPath.replace(BACKSLASH, SLASH);
 	}
 
 	public String getRelativePath(String absolutePath) {
-
+		
 		String path = absolutePath.trim();
+		
+		path = convertToSlash(path); 
 
 		path = removeFsPrefix(path);
 		path = removeBasePath(path);
@@ -43,6 +60,8 @@ public class PathConverter {
 	
 	public String getFirstFolder(String path) {
 		
+		path = convertToSlash(path); 
+		
 		String p = path.trim();
 		
 		p = removeLeftSlash(p);	
@@ -57,6 +76,8 @@ public class PathConverter {
 
 	
 	public String removeFirstFolder(String path) {
+		
+		path = convertToSlash(path); 
 		
 		String p = path.trim();
 		
