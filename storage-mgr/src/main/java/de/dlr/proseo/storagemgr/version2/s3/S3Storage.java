@@ -175,4 +175,10 @@ public class S3Storage implements BucketsStorage {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public String deleteFile(StorageFile storageFileOrDir) throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

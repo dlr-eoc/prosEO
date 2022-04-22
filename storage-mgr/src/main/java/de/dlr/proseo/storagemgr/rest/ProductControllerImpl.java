@@ -175,6 +175,8 @@ public class ProductControllerImpl implements ProductController {
 				
 			} catch (Exception e) {
 				
+				e.printStackTrace();
+				
 				String errorString = HttpResponses.createErrorString("Cannot make something", e);
 				return new ResponseEntity<>(HttpResponses.httpErrorHeaders(errorString), HttpStatus.BAD_REQUEST);
 			}
