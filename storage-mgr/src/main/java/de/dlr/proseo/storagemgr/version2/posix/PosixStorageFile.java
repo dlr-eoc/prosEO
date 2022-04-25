@@ -51,7 +51,8 @@ public class PosixStorageFile implements StorageFile {
 		
 		try {
 			String path= Paths.get(basePath, bucket, relativePath).toString();
-			if (isDirectory()) path = PathConverter.addSlashAtEnd(path); 
+			
+			path = new PathConverter().verifyAbsolutePath(path);
 			
 			return path;
 		}

@@ -295,7 +295,7 @@ public class PosixStorage implements Storage {
 				StorageFile sourceSubDir = getStorageFile(getRelativePath(file.getAbsolutePath()));
 				StorageFile targetSubDir = new PosixStorageFile(targetDir);
 				String targetSubDirPath = Paths.get(targetDir.getRelativePath(), file.getName()).toString();
-				targetSubDir.setRelativePath(PathConverter.addSlashAtEnd(targetSubDirPath));
+				targetSubDir.setRelativePath(new PathConverter().addSlashAtEnd(targetSubDirPath));
 				
 				List<String> subDirFiles = download(sourceSubDir, targetSubDir);
 				

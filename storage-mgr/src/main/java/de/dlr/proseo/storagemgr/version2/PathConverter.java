@@ -133,7 +133,7 @@ public class PathConverter {
 		return p;
 	}
 	
-	public static String addSlashAtEnd(String path) { 
+	public String addSlashAtEnd(String path) { 
 		
 		if (path.contains(SLASH)) 
 			return path + SLASH; 
@@ -143,4 +143,44 @@ public class PathConverter {
 		
 		return path;
 	}
+
+	public String verifyAbsolutePath(String path) {
+		
+		if (isDirectory(path)) path = addSlashAtEnd(path); 
+		
+		if (isLinuxPath(path)) path = addSlashAtBegin(path);
+		
+		return path;
+	}
+	
+	private boolean isDirectory(String path) {
+		
+		return new File(path).isDirectory();
+	}
+
+	public String addSlashAtBegin(String path) {
+		
+		if (path.startsWith(SLASH)) return path; 
+		
+		return path = SLASH + path; 
+		
+	}
+
+	public boolean isWindowsPath(String path) {
+		
+		if (isS3Path(path)) return false; 
+		
+		if (path.indexOf(':') >= 0) return true;
+		
+		return false;
+	}
+	
+	public boolean isLinuxPath(String path) {
+		
+		if (isS3Path(path)) return false; 
+		if (isWindowsPath(path)) return false; 
+		
+		return true; 
+	}
+		
 }

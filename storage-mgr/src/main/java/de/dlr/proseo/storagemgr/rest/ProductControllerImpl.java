@@ -606,7 +606,7 @@ public class ProductControllerImpl implements ProductController {
 				return new ResponseEntity<>(response, HttpStatus.OK);
 				
 			} catch (Exception e) {
-				
+				e.printStackTrace();
 				String errorString = HttpResponses.createErrorString("Cannot delete file(s)", e);
 				return new ResponseEntity<>(HttpResponses.httpErrorHeaders(errorString), HttpStatus.BAD_REQUEST);
 			}
