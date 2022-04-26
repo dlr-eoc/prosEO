@@ -14,7 +14,6 @@ import java.util.Optional;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import org.hibernate.resource.transaction.spi.TransactionStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -728,6 +727,7 @@ public class OrderUtil {
 						} else if (allFinished) {
 							// check whether some jobs are already finished
 							orderz.setOrderState(OrderState.COMPLETED);
+							checkAutoClose(order);
 							RepositoryService.getOrderRepository().save(orderz);
 							logOrderState(orderz);
 							productionPlanner.releaseThreadSemaphore("suspend");			
@@ -968,6 +968,7 @@ public class OrderUtil {
 							order.setOrderState(OrderState.RUNNING);
 						}
 						order.setOrderState(OrderState.COMPLETED);
+						checkAutoClose(order);
 						order.incrementVersion();
 						RepositoryService.getOrderRepository().save(order);
 						answer = Messages.ORDER_COMPLETED;
@@ -1092,6 +1093,7 @@ public class OrderUtil {
 					Boolean completed = RepositoryService.getJobRepository().countJobFailedByProcessingOrderId(order.getId()) == 0;
 					if (completed) {
 						order.setOrderState(OrderState.COMPLETED);
+						checkAutoClose(order);
 					} else {
 						order.setOrderState(OrderState.FAILED);
 					}
@@ -1105,6 +1107,10 @@ public class OrderUtil {
 			case COMPLETED:
 			case FAILED:
 				checkFurther = true;
+				answer = true;
+				break;
+			case CLOSED:
+				checkAutoClose(order);
 				answer = true;
 				break;
 			default:
@@ -1134,18 +1140,12 @@ public class OrderUtil {
 				if (allHasFinished) {
 					if (hasFailed) {
 						order.setOrderState(OrderState.FAILED);
+						RepositoryService.getOrderRepository().save(order);
+						em.merge(order);
 					} else {
 						order.setOrderState(OrderState.COMPLETED);
-						// If the order is in systematic processing and the mission has an order retention period,
-						// the order is automatically closed after completion and the eviction time is set.
-						Duration retPeriod = order.getMission().getOrderRetentionPeriod();
-						if (retPeriod != null && order.getProductionType() == ProductionType.SYSTEMATIC) {
-							order.setEvictionTime(Instant.now().plus(retPeriod));
-							order.setOrderState(OrderState.CLOSED);
-						}
+						checkAutoClose(order);
 					}
-					RepositoryService.getOrderRepository().save(order);
-					em.merge(order);
 					hasChanged = true;
 				}
 			}
@@ -1158,7 +1158,32 @@ public class OrderUtil {
 		}
  		return answer;
 	}
-		
+
+	/**
+	 * If the order is in systematic processing and the mission has an order retention period,
+	 * the order is automatically closed after completion and the eviction time is set.
+	 * 
+	 * @param order The processing order
+	 * @return true if closed
+	 */
+	@Transactional
+	public Boolean checkAutoClose(ProcessingOrder order) {
+		Duration retPeriod = order.getMission().getOrderRetentionPeriod();
+		if (retPeriod != null && order.getProductionType() == ProductionType.SYSTEMATIC) {
+			order.setEvictionTime(Instant.now().plus(retPeriod));
+			for (Job job : order.getJobs()) {
+				if (job.getJobState() == JobState.COMPLETED) {
+					jobUtil.close(job);
+				}
+			}
+			if (order.getOrderState() == OrderState.COMPLETED) {
+				order.setOrderState(OrderState.CLOSED);
+			}
+			return true;
+		}
+		return false;
+	}
+	
 	/**
 	 * Get the processing facility(-ies) processing the order
 	 * At the moment there is normally only one facility to do so.

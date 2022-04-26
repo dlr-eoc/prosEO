@@ -191,6 +191,7 @@ public class OrderPlanThread extends Thread {
 					if (finalAnswer.isTrue()) {
 						if (lambdaOrder.getJobs().isEmpty()) {
 							lambdaOrder.setOrderState(OrderState.COMPLETED);
+							UtilService.getOrderUtil().checkAutoClose(lambdaOrder);
 							lambdaAnswer = new Message(Messages.ORDER_PRODUCT_EXIST);
 						} else {
 							lambdaOrder.setOrderState(OrderState.PLANNED);

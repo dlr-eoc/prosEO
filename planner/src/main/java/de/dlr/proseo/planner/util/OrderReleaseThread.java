@@ -218,6 +218,7 @@ public class OrderReleaseThread extends Thread {
 				if (finalAnswer.isTrue() || finalAnswer.getCode() == Messages.JOB_ALREADY_COMPLETED.getCode()) {
 					if (lambdaOrder.getJobs().isEmpty()) {
 						lambdaOrder.setOrderState(OrderState.COMPLETED);
+						UtilService.getOrderUtil().checkAutoClose(lambdaOrder);
 						lambdaAnswer = new Message(Messages.ORDER_PRODUCT_EXIST);
 					} else {
 						// check whether order is already running

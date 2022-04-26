@@ -704,6 +704,7 @@ public class JobStepUtil {
 			if (   js.getJob() != null 
 					&& (force || js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)) {
 				logger.trace("Looking for product queries of job step: " + js.getId());
+				@SuppressWarnings("unused")
 				final JobStep dummy = transactionTemplate.execute((status) -> {
 					Boolean hasUnsatisfiedInputQueries = false;
 					JobStep jsx = null;
