@@ -145,6 +145,7 @@ public class OrderPlanThread extends Thread {
 		}
 		productionPlanner.getPlanThreads().remove(this.getName());
 		if (logger.isTraceEnabled()) logger.trace("<<< run({})", this.getName());
+		productionPlanner.checkNextForRestart();				
     }
     
     
