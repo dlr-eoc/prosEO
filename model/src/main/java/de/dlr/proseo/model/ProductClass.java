@@ -50,6 +50,8 @@ public class ProductClass extends PersistentObject {
 	/**
 	 * The level of processing required for this product class (roughly equivalent to the number of processing steps required
 	 * to produce data of this product class from unprocessed [level 0] data)
+	 * 
+	 * Note: If the processing level is not set, products of this product class will not be reported by the monitoring component.
 	 */
 	@Enumerated(EnumType.STRING)
 	private ProcessingLevel processingLevel;
