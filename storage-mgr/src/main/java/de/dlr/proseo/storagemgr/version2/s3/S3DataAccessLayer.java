@@ -4,6 +4,7 @@ import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Paths;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import software.amazon.awssdk.services.s3.model.Bucket;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.DeleteBucketRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
@@ -36,6 +38,16 @@ import software.amazon.awssdk.services.s3.waiters.S3Waiter;
 import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
+
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.transfer.s3.S3ClientConfiguration;
+import software.amazon.awssdk.transfer.s3.S3TransferManager;
+import software.amazon.awssdk.transfer.s3.CompletedDownload;
+import software.amazon.awssdk.transfer.s3.CompletedUpload;
+import software.amazon.awssdk.transfer.s3.Download;
+import software.amazon.awssdk.transfer.s3.Upload;
+import software.amazon.awssdk.transfer.s3.UploadRequest;
+
 
 /**
  * S3 Data Access Layer based on Amazon S3 SDK v2
@@ -67,8 +79,9 @@ public class S3DataAccessLayer {
 				.credentialsProvider(StaticCredentialsProvider.create(s3Creds)).build();
 
 	}
+	
+	
 
-	// high-level function
 	public void setBucket(String bucket) {
 		if (!bucketExists(bucket)) {
 			createBucket(bucket);
@@ -120,10 +133,10 @@ public class S3DataAccessLayer {
 		}
 	}
 
-	public void deleteFile(String filePath) {
+	public String deleteFile(String filePath) {
 		DeleteObjectRequest request = DeleteObjectRequest.builder().bucket(bucket).key(filePath).build();
-
-		s3Client.deleteObject(request);
+		
+		return filePath;	
 	}
 
 	public String uploadFile(String sourcePath, String targetPath) throws IOException {
@@ -177,6 +190,14 @@ public class S3DataAccessLayer {
 
 	public List<String> getFiles() {
 		ListObjectsRequest request = ListObjectsRequest.builder().bucket(bucket).build();
+
+		ListObjectsResponse response = s3Client.listObjects(request);
+		return toStringFiles(response.contents());
+	}
+	
+	public List<String> getFiles(String folder) {
+		
+		ListObjectsRequest request = ListObjectsRequest.builder().bucket(bucket).prefix(folder).build();
 
 		ListObjectsResponse response = s3Client.listObjects(request);
 		return toStringFiles(response.contents());
@@ -239,6 +260,9 @@ public class S3DataAccessLayer {
 
 		return fileNames;
 	}
+	
+
+
 
 	/*
 	 * // TODO: Delete? Do we need async upload? add attempts private void

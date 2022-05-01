@@ -3,36 +3,42 @@ package de.dlr.proseo.storagemgr.version2.s3;
 import java.io.File;
 import java.nio.file.Paths;
 
+import org.apache.commons.io.FilenameUtils;
+
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 /**
  * S3 Storage File
  * 
+ * s3:/ + basepath + bucket (optional) + relativePath (with fileName)  
+ * 
  * @author Denys Chaykovskiy
  *
  */
 public class S3StorageFile implements StorageFile {
 	
-	// TODO: Make verifications for pathes 
+	private static final String S3PREFIX = "s3:/"; 
+	private static final String SLASH = "/"; 
 
-	//   "/" + basepath + bucket (optional) + relativePath (with fileName)    
-	private static final String basePath = "S3:/"; 
+	public String basePath;
 	private String bucket; 
 	private String relativePath;  
 	
 	
-	// default or another bucket
 	public S3StorageFile(String bucket, String relativePath) { 
 
-		
-		this.bucket = verifyBucket(bucket); 
-		this.relativePath = verifyRelativePath(relativePath); 
+		this.bucket = bucket; 
+		this.relativePath = relativePath; 
 	}
 	
 	@Override
 	public String getFullPath() {
-		return Paths.get(basePath, bucket, relativePath).toString();
+		return addS3Prefix(Paths.get(basePath, bucket, relativePath).toString());
+	}
+	
+	private String addS3Prefix(String path) {
+		return path.startsWith(SLASH) ? S3PREFIX + path : S3PREFIX + SLASH + path;
 	}
 
 	@Override
@@ -60,44 +66,30 @@ public class S3StorageFile implements StorageFile {
 		return StorageType.S3;
 	}
 	
-	private String verifyBucket(String bucket) 
-	{
-		return bucket; 
-	}
-	
-	private String verifyRelativePath(String relativePath) 
-	{
-		return relativePath; 
-	}
 
 	@Override
 	public String getExtension() {
-		// TODO Auto-generated method stub
-		return null;
+		return FilenameUtils.getExtension(relativePath);
 	}
 
 	@Override
 	public void setBasePath(String basePath) {
-		// TODO Auto-generated method stub
-		
+		this.basePath = basePath; 		
 	}
 
 	@Override
 	public void setBucket(String bucket) {
-		// TODO Auto-generated method stub
-		
+		this.bucket = bucket; 		
 	}
 
 	@Override
 	public void setRelativePath(String relativePath) {
-		// TODO Auto-generated method stub
-		
+		this.relativePath = relativePath; 	
 	}
 
 	@Override
 	public boolean isDirectory() {
-		// TODO Auto-generated method stub
-		return false;
+		return true; // no folders in s3, files only
 	}
 
 }

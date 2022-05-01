@@ -1,15 +1,22 @@
 package de.dlr.proseo.storagemgr.version2.s3;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.dlr.proseo.storagemgr.cache.FileUtils;
+import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.model.BucketsStorage;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
+import de.dlr.proseo.storagemgr.version2.posix.PosixStorageFile;
 
 /**
  * S3 Storage
@@ -20,21 +27,25 @@ import de.dlr.proseo.storagemgr.version2.model.StorageType;
 public class S3Storage implements BucketsStorage {
 
 	private S3DataAccessLayer s3DAL;
+	private String basePath;
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3Storage.class);
 
-	public S3Storage(String s3AccessKey, String s3SecretAccessKey) {
+	public S3Storage(String basePath, String s3AccessKey, String s3SecretAccessKey) {
 		s3DAL = new S3DataAccessLayer(s3AccessKey, s3SecretAccessKey);
+		this.basePath = basePath;
 	}
 
-	public S3Storage(String s3AccessKey, String s3SecretAccessKey, String s3Region, String s3EndPoint) {
+	public S3Storage(String basePath, String s3AccessKey, String s3SecretAccessKey, String s3Region,
+			String s3EndPoint) {
 		s3DAL = new S3DataAccessLayer(s3AccessKey, s3SecretAccessKey, s3Region, s3EndPoint);
+		this.basePath = basePath;
 	}
 
 	@Override
 	public String getBasePath() {
-		return "";
+		return basePath;
 	}
 
 	@Override
@@ -78,6 +89,7 @@ public class S3Storage implements BucketsStorage {
 		try {
 			return s3DAL.uploadFile(sourcePath, targetPath);
 		} catch (IOException e) {
+			e.printStackTrace();
 			if (logger.isTraceEnabled())
 				logger.warn("Cannot upload file from " + sourcePath + " to " + targetPath + " ", e.getMessage());
 			throw e;
@@ -89,12 +101,13 @@ public class S3Storage implements BucketsStorage {
 
 		String sourcePath = sourceFile.getRelativePath();
 		String targetPath = targetFileOrDir.getFullPath();
-		
+
 		s3DAL.setBucket(sourceFile.getBucket());
 
 		try {
-			return s3DAL.downloadFile(sourcePath, targetPath);		
+			return s3DAL.downloadFile(sourcePath, targetPath);
 		} catch (IOException e) {
+			e.printStackTrace();
 			if (logger.isTraceEnabled())
 				logger.warn("Cannot download file from " + sourcePath + " to " + targetPath + " ", e.getMessage());
 			throw e;
@@ -136,38 +149,109 @@ public class S3Storage implements BucketsStorage {
 
 	@Override
 	public StorageFile createStorageFile(String relativePath, String content) {
-		// TODO Auto-generated method stub
-		return null;
+
+		String path = Paths.get(basePath, relativePath).toString();
+
+		path = new PathConverter().verifyAbsolutePath(path);
+
+		FileUtils fileUtils = new FileUtils(path);
+		fileUtils.createFile(content);
+
+		StorageFile sourceFile = new PosixStorageFile(basePath, relativePath);
+		StorageFile targetFile = new S3StorageFile(s3DAL.getBucket(), relativePath);
+
+		try {
+			uploadFile(sourceFile, targetFile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		new File(path).delete();
+
+		return targetFile;
 	}
 
 	@Override
-	public List<String> upload(StorageFile sourceFileOrDir, StorageFile targetFileOrDir) {
-		// TODO Auto-generated method stub
-		return null;
+	public List<String> upload(StorageFile sourceFileOrDir, StorageFile targetFileOrDir) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> upload({},())", sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
+
+		String prefix = StorageType.POSIX.toString() + "|";
+		List<String> uploadedFiles = new ArrayList<String>();
+
+		if (isFile(sourceFileOrDir)) {
+
+			uploadFile(sourceFileOrDir, targetFileOrDir);
+			uploadedFiles.add(targetFileOrDir.getFullPath());
+			return uploadedFiles;
+		}
+
+		StorageFile sourceDir = sourceFileOrDir;
+		StorageFile targetDir = targetFileOrDir;
+		File directory = new File(sourceDir.getFullPath());
+		File[] files = directory.listFiles();
+		Arrays.sort(files);
+
+		for (File file : files) {
+
+			if (file.isFile()) {
+
+				StorageFile sourceFile = getStorageFile(getRelativePath(file.getAbsolutePath()));
+				String uploadedFile = uploadFile(sourceFile, targetDir);
+
+				uploadedFiles.add(prefix + uploadedFile);
+			}
+		}
+
+		for (File file : files) {
+
+			if (file.isDirectory()) {
+
+				StorageFile sourceSubDir = getStorageFile(getRelativePath(file.getAbsolutePath()));
+				List<String> subDirFiles = upload(sourceSubDir, targetDir);
+
+				uploadedFiles.addAll(subDirFiles);
+			}
+		}
+
+		return uploadedFiles;
+
+	}
+	
+	private String getRelativePath(String absolutePath) {
+
+		Path pathAbsolute = Paths.get(absolutePath);
+		Path pathBase = Paths.get(basePath);
+		Path pathRelative = pathBase.relativize(pathAbsolute);
+		System.out.println("RelativePath: " + pathRelative + " from AbsolutePath: " + pathAbsolute);
+
+		return pathRelative.toString();
 	}
 
 	@Override
-	public List<String> getFiles(String prefix) {
-		// TODO Auto-generated method stub
-		return null;
+	public List<String> getFiles(String folder) {
+
+		return s3DAL.getFiles(folder);
 	}
 
 	@Override
 	public List<String> delete(StorageFile storageFileOrDir) {
-		// TODO Auto-generated method stub
+
+		s3DAL.deleteFile(storageFileOrDir.getRelativePath());
+
+		// TODO: Change S3 DAL
 		return null;
 	}
 
 	@Override
 	public boolean isFile(StorageFile storageFileOrDir) {
-		// TODO Auto-generated method stub
-		return false;
+		return s3DAL.fileExists(storageFileOrDir.getRelativePath());
 	}
 
 	@Override
 	public boolean isDirectory(StorageFile storageFileOrDir) {
-		// TODO Auto-generated method stub
-		return false;
+		return !isFile(storageFileOrDir);
 	}
 
 	@Override

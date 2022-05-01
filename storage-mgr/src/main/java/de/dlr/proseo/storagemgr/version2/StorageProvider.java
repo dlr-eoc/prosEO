@@ -124,7 +124,7 @@ public class StorageProvider {
 			return new PosixStorage(cfg.getPosixBackendPath());
 
 		} else if (storageType == StorageType.S3) {
-			return new S3Storage(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
+			return new S3Storage(cfg.getPosixBackendPath(), cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
 		}
 
 		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
