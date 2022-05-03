@@ -182,17 +182,17 @@ public class StorageProvider {
 
 	public String getAbsoluteSourcePath(String relativePath) {
 
-		return Paths.get(cfg.getPosixSourcePath(), relativePath).toString();
+		return new PathConverter().convertToSlash(Paths.get(cfg.getPosixSourcePath(), relativePath).toString());
 	}
 	
 	public String getAbsoluteCachePath(String relativePath) {
 
-		return Paths.get(cfg.getPosixCachePath(), relativePath).toString();
+		return new PathConverter().convertToSlash(Paths.get(cfg.getPosixCachePath(), relativePath).toString());
 	}
 	
 	public String getAbsoluteStoragePath(String relativePath) {
 		
-		return Paths.get(cfg.getPosixBackendPath(), relativePath).toString();
+		return new PathConverter().convertToSlash(Paths.get(cfg.getPosixBackendPath(), relativePath).toString());
 	}
 	
 	public String getRelativePath(String absolutePath) {

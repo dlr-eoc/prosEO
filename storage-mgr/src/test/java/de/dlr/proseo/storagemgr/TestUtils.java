@@ -12,6 +12,7 @@ import org.junit.rules.TestName;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import de.dlr.proseo.storagemgr.cache.FileUtils;
+import de.dlr.proseo.storagemgr.version2.PathConverter;
 
 /**
  * @author Denys Chaykovskiy
@@ -55,7 +56,7 @@ public class TestUtils {
 	 */
 	public String getStoragePath() {
 
-		return cfg.getPosixBackendPath();
+		return new PathConverter().convertToSlash(cfg.getPosixBackendPath());
 	}
 
 	/**
@@ -63,7 +64,7 @@ public class TestUtils {
 	 */
 	public String getSourcePath() {
 
-		return cfg.getPosixSourcePath();
+		return new PathConverter().convertToSlash(cfg.getPosixSourcePath());
 	}
 
 	/**
@@ -71,7 +72,7 @@ public class TestUtils {
 	 */
 	public String getCachePath() {
 
-		return cfg.getPosixCachePath();
+		return new PathConverter().convertToSlash(cfg.getPosixCachePath());
 	}
 
 	/**
@@ -80,7 +81,7 @@ public class TestUtils {
 
 	public String getTestSourcePath() {
 
-		return getTestPath(getSourcePath());
+		return new PathConverter().convertToSlash(getTestPath(getSourcePath()));
 	}
 
 	/**
@@ -88,7 +89,7 @@ public class TestUtils {
 	 */
 	public String getTestStoragePath() {
 
-		return getTestPath(getStoragePath());
+		return new PathConverter().convertToSlash(getTestPath(getStoragePath()));
 	}
 
 	/**
@@ -96,7 +97,7 @@ public class TestUtils {
 	 */
 	public String getTestCachePath() {
 
-		return getTestPath(getCachePath());
+		return new PathConverter().convertToSlash(getTestPath(getCachePath()));
 	}
 
 	/**
@@ -105,7 +106,7 @@ public class TestUtils {
 	 */
 	private String getTestPath(String path) {
 
-		return Paths.get(path, TEST_DIRECTORY).toString();
+		return new PathConverter().convertToSlash(Paths.get(path, TEST_DIRECTORY).toString());
 	}
 
 	/**

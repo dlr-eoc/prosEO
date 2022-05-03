@@ -16,6 +16,8 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import de.dlr.proseo.storagemgr.version2.PathConverter;
+
 /**
  * Configuration class for the prosEO Ingestor component
  * 
@@ -179,7 +181,7 @@ public class StorageManagerConfiguration {
 	 * @return the POSIX cache path
 	 */
 	public String getPosixCachePath() {
-		return new File(posixCachePath).getAbsolutePath();
+		return new PathConverter().convertToSlash(new File(posixCachePath).getAbsolutePath());
 	}
 	
 	/**
@@ -188,7 +190,7 @@ public class StorageManagerConfiguration {
 	 * @return the POSIX source path
 	 */
 	public String getPosixSourcePath() {
-		return new File(sourcePath).getAbsolutePath();
+		return new PathConverter().convertToSlash(new File(sourcePath).getAbsolutePath());
 	}
 
 	/**
@@ -197,7 +199,7 @@ public class StorageManagerConfiguration {
 	 * @return the POSIX backend storage path
 	 */
 	public String getPosixBackendPath() {
-		return new File(posixBackendPath).getAbsolutePath();
+		return new PathConverter().convertToSlash(new File(posixBackendPath).getAbsolutePath());
 	}
 	
 	/**
