@@ -9,19 +9,23 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Bucket;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteBucketRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
@@ -32,8 +36,12 @@ import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListBucketsResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsResponse;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
+import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
 import software.amazon.awssdk.services.s3.waiters.S3Waiter;
 import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.core.ResponseInputStream;
@@ -48,7 +56,6 @@ import software.amazon.awssdk.transfer.s3.Download;
 import software.amazon.awssdk.transfer.s3.Upload;
 import software.amazon.awssdk.transfer.s3.UploadRequest;
 
-
 /**
  * S3 Data Access Layer based on Amazon S3 SDK v2
  * 
@@ -61,28 +68,39 @@ public class S3DataAccessLayer {
 	private S3Client s3Client;
 
 	private String bucket;
+	
+	private AwsBasicCredentials credentials; 
+	private AwsCredentialsProvider credentialsProvider;
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3DataAccessLayer.class);
 
 	public S3DataAccessLayer(String s3AccessKey, String s3SecretAccessKey) {
-		AwsBasicCredentials s3Creds = AwsBasicCredentials.create(s3AccessKey, s3SecretAccessKey);
-
+		
+		initCredentials(s3AccessKey, s3SecretAccessKey); 
+		
 		s3Client = S3Client.builder().region(Region.EU_CENTRAL_1)
-				.credentialsProvider(StaticCredentialsProvider.create(s3Creds)).build();
+				.credentialsProvider(StaticCredentialsProvider.create(credentials)).build();
 	}
 
 	public S3DataAccessLayer(String s3AccessKey, String s3SecretAccessKey, String s3Region, String s3EndPoint) {
-		AwsBasicCredentials s3Creds = AwsBasicCredentials.create(s3AccessKey, s3SecretAccessKey);
-
+		
+		initCredentials(s3AccessKey, s3SecretAccessKey); 
+		
 		s3Client = S3Client.builder().region(Region.of(s3Region)).endpointOverride(URI.create(s3EndPoint))
-				.credentialsProvider(StaticCredentialsProvider.create(s3Creds)).build();
-
+				.credentialsProvider(StaticCredentialsProvider.create(credentials)).build();
 	}
 	
-	
+	private void initCredentials(String s3AccessKey, String s3SecretAccessKey) { 
+		
+		credentials = AwsBasicCredentials.create(s3AccessKey, s3SecretAccessKey);
+		
+		credentialsProvider = StaticCredentialsProvider
+				.create(AwsBasicCredentials.create(s3AccessKey, s3SecretAccessKey));
+	}
 
 	public void setBucket(String bucket) {
+		
 		if (!bucketExists(bucket)) {
 			createBucket(bucket);
 		}
@@ -134,9 +152,75 @@ public class S3DataAccessLayer {
 	}
 
 	public String deleteFile(String filePath) {
-		DeleteObjectRequest request = DeleteObjectRequest.builder().bucket(bucket).key(filePath).build();
-		
-		return filePath;	
+
+		ArrayList<ObjectIdentifier> toDelete = new ArrayList<ObjectIdentifier>();
+		toDelete.add(ObjectIdentifier.builder().key(filePath).build());
+
+		try {
+			DeleteObjectsRequest dor = DeleteObjectsRequest.builder().bucket(bucket)
+					.delete(Delete.builder().objects(toDelete).build()).build();
+			s3Client.deleteObjects(dor);
+			System.out.println("Successfully deleted object " + filePath);
+
+		} catch (S3Exception e) {
+			System.err.println(e.awsErrorDetails().errorMessage());
+			e.printStackTrace();
+			throw e;
+		}
+
+		return filePath;
+	}
+
+	public List<String> deleteFiles(List<String> toDeleteList) {
+
+		ArrayList<ObjectIdentifier> keys = new ArrayList<>();
+		ObjectIdentifier objectId = null;
+
+		for (String toDelete : toDeleteList) {
+
+			objectId = ObjectIdentifier.builder().key(toDelete).build();
+			keys.add(objectId);
+		}
+
+		Delete del = Delete.builder().objects(keys).build();
+
+		try {
+			DeleteObjectsRequest multiObjectDeleteRequest = DeleteObjectsRequest.builder().bucket(bucket).delete(del)
+					.build();
+			s3Client.deleteObjects(multiObjectDeleteRequest);
+			System.out.println("Multiple objects are deleted!");
+
+		} catch (S3Exception e) {
+			System.err.println(e.awsErrorDetails().errorMessage());
+			e.printStackTrace();
+			throw e;
+		}
+
+		return toDeleteList;
+	}
+
+	public void deleteFolder(String prefix) {
+
+		ListObjectsV2Request request = ListObjectsV2Request.builder().bucket(bucket).prefix(prefix).build();
+		ListObjectsV2Iterable list = s3Client.listObjectsV2Paginator(request);
+
+		List<ObjectIdentifier> objectIdentifiers = list.stream().flatMap(r -> r.contents().stream())
+				.map(o -> ObjectIdentifier.builder().key(o.key()).build()).collect(Collectors.toList());
+
+		if (objectIdentifiers.isEmpty())
+			return;
+		DeleteObjectsRequest deleteObjectsRequest = DeleteObjectsRequest.builder().bucket(bucket)
+				.delete(Delete.builder().objects(objectIdentifiers).build()).build();
+
+		try {
+			s3Client.deleteObjects(deleteObjectsRequest);
+			System.out.println("Folder/prefix deleted successfully " + prefix);
+
+		} catch (S3Exception e) {
+			System.err.println(e.awsErrorDetails().errorMessage());
+			e.printStackTrace();
+			throw e;
+		}
 	}
 
 	public String uploadFile(String sourcePath, String targetPath) throws IOException {
@@ -151,11 +235,11 @@ public class S3DataAccessLayer {
 
 			WaiterResponse<HeadObjectResponse> waiterResponse = waiter.waitUntilObjectExists(requestWait);
 			waiterResponse.matched().response().ifPresent(System.out::println);
-						
+
 			System.out.println("File " + targetPath + " was uploaded.");
-			
-			return targetPath; 
-			
+
+			return targetPath;
+
 		} catch (Exception e) {
 			logger.error(e.getMessage());
 			throw e;
@@ -163,7 +247,7 @@ public class S3DataAccessLayer {
 	}
 
 	public String downloadFile(String sourcePath, String targetPath) throws IOException {
-		
+
 		GetObjectRequest request = GetObjectRequest.builder().bucket(bucket).key(sourcePath).build();
 		ResponseInputStream<GetObjectResponse> response = s3Client.getObject(request);
 		BufferedOutputStream outputStream;
@@ -179,7 +263,7 @@ public class S3DataAccessLayer {
 
 			response.close();
 			outputStream.close();
-			
+
 			return targetPath;
 
 		} catch (IOException e) {
@@ -194,9 +278,9 @@ public class S3DataAccessLayer {
 		ListObjectsResponse response = s3Client.listObjects(request);
 		return toStringFiles(response.contents());
 	}
-	
+
 	public List<String> getFiles(String folder) {
-		
+
 		ListObjectsRequest request = ListObjectsRequest.builder().bucket(bucket).prefix(folder).build();
 
 		ListObjectsResponse response = s3Client.listObjects(request);
@@ -260,9 +344,6 @@ public class S3DataAccessLayer {
 
 		return fileNames;
 	}
-	
-
-
 
 	/*
 	 * // TODO: Delete? Do we need async upload? add attempts private void
