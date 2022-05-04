@@ -1,4 +1,4 @@
-package de.dlr.proseo.storagemgr.fs.s3;
+package de.dlr.proseo.storagemgr.version2.s3;
 
 import static org.junit.Assert.*;
 
@@ -62,6 +62,7 @@ public class S3DataAccessLayerTest {
 	}
 
 	/**
+	 * @throws Exception 
 	 * @throws IOException
 	 * 
 	 */
@@ -132,7 +133,7 @@ public class S3DataAccessLayerTest {
 	 */
 
 	@Test
-	public void tryS3Manager_upload() {
+	public void tryS3Manager_upload() throws Exception {
 
 		TestUtils.printMethodName(this, testName);
 		TestUtils.createEmptyTestDirectories();
@@ -169,24 +170,16 @@ public class S3DataAccessLayerTest {
 		TestUtils.printList("Buckets before bucket creation", s3DAL.getBuckets());
 		TestUtils.printList("Files before upload in bucket: " + s3DAL.getBucket(), s3DAL.getFiles());
 
-		// upload
-		AwsCredentialsProvider credentialsProvider = StaticCredentialsProvider
-				.create(AwsBasicCredentials.create(s3AccessKey, s3SecretAccessKey));
-				
+		// upload and download	
 		try {
-
-			Region region = Region.EU_CENTRAL_1;
-
-			S3TransferManager transferManager = S3TransferManager.builder()
-					.s3ClientConfiguration(
-							cfg -> cfg.credentialsProvider(credentialsProvider).region(Region.EU_CENTRAL_1)
-									.targetThroughputInGbps(20.0).minimumPartSizeInBytes((long) (10 * 1024 * 1024))
-					).build();
-
-			FileUpload upload = transferManager.uploadFile(b -> b.source(Paths.get(uploadFilePath))
-					.putObjectRequest(req -> req.bucket(testBucket).key(uploadFilePath)));
-
-			upload.completionFuture().join();
+			
+			s3DAL.uploadFileTransferManager(uploadFilePath, uploadFilePath);
+			TestUtils.printList("Files after upload in bucket: " + s3DAL.getBucket(), s3DAL.getFiles());
+			assertTrue("File was not uploaded: " + uploadFilePath, s3DAL.fileExists(uploadFilePath));
+			
+			s3DAL.downloadFileTransferManager(uploadFilePath, downloadFilePath);
+			TestUtils.printDirectoryTree(downloadDirectory);
+			assertTrue("File was not downloaded: " + downloadFilePath, TestUtils.fileExists(downloadFilePath));
 
 			System.out.println("HI FROM TEST");
 
@@ -195,14 +188,11 @@ public class S3DataAccessLayerTest {
 			throw e;
 		}
 
-		// after upload
-		// assertTrue("File was not uploaded! " + uploadFilePath,
-		// s3DAL.fileExists(uploadFilePath));
+	
 		TestUtils.printList("Files after upload in bucket: " + s3DAL.getBucket(), s3DAL.getFiles());
 
-		for (String file : s3DAL.getFiles()) {
-			s3DAL.deleteFile(file);
-		}
+		
+	
 
 		// delete file
 		s3DAL.deleteFile(uploadFilePath);

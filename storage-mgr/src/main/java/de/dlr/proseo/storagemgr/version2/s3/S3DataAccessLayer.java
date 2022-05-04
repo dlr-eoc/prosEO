@@ -8,12 +8,15 @@ import java.nio.file.Paths;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.dlr.proseo.storagemgr.version2.model.StorageFile;
+import de.dlr.proseo.storagemgr.version2.model.StorageType;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -53,6 +56,8 @@ import software.amazon.awssdk.transfer.s3.S3TransferManager;
 import software.amazon.awssdk.transfer.s3.CompletedDownload;
 import software.amazon.awssdk.transfer.s3.CompletedUpload;
 import software.amazon.awssdk.transfer.s3.Download;
+import software.amazon.awssdk.transfer.s3.FileDownload;
+import software.amazon.awssdk.transfer.s3.FileUpload;
 import software.amazon.awssdk.transfer.s3.Upload;
 import software.amazon.awssdk.transfer.s3.UploadRequest;
 
@@ -68,39 +73,51 @@ public class S3DataAccessLayer {
 	private S3Client s3Client;
 
 	private String bucket;
-	
-	private AwsBasicCredentials credentials; 
+
+	private AwsBasicCredentials credentials;
 	private AwsCredentialsProvider credentialsProvider;
+	private S3TransferManager transferManager;
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3DataAccessLayer.class);
 
 	public S3DataAccessLayer(String s3AccessKey, String s3SecretAccessKey) {
-		
-		initCredentials(s3AccessKey, s3SecretAccessKey); 
-		
-		s3Client = S3Client.builder().region(Region.EU_CENTRAL_1)
+
+		Region s3Region = Region.EU_CENTRAL_1;
+
+		initCredentials(s3AccessKey, s3SecretAccessKey);
+		initTransferManager(s3Region);
+
+		s3Client = S3Client.builder().region(s3Region)
 				.credentialsProvider(StaticCredentialsProvider.create(credentials)).build();
 	}
 
 	public S3DataAccessLayer(String s3AccessKey, String s3SecretAccessKey, String s3Region, String s3EndPoint) {
-		
-		initCredentials(s3AccessKey, s3SecretAccessKey); 
-		
+
+		initCredentials(s3AccessKey, s3SecretAccessKey);
+
 		s3Client = S3Client.builder().region(Region.of(s3Region)).endpointOverride(URI.create(s3EndPoint))
 				.credentialsProvider(StaticCredentialsProvider.create(credentials)).build();
 	}
-	
-	private void initCredentials(String s3AccessKey, String s3SecretAccessKey) { 
-		
+
+	private void initCredentials(String s3AccessKey, String s3SecretAccessKey) {
+
 		credentials = AwsBasicCredentials.create(s3AccessKey, s3SecretAccessKey);
-		
+
 		credentialsProvider = StaticCredentialsProvider
 				.create(AwsBasicCredentials.create(s3AccessKey, s3SecretAccessKey));
 	}
 
+	private void initTransferManager(Region region) {
+
+		transferManager = S3TransferManager.builder()
+				.s3ClientConfiguration(cfg -> cfg.credentialsProvider(credentialsProvider).region(region)
+						.targetThroughputInGbps(20.0).minimumPartSizeInBytes((long) (10 * 1024 * 1024)))
+				.build();
+	}
+
 	public void setBucket(String bucket) {
-		
+
 		if (!bucketExists(bucket)) {
 			createBucket(bucket);
 		}
@@ -136,9 +153,7 @@ public class S3DataAccessLayer {
 
 	public void deleteBucket(String bucketName) {
 
-		// TODO: Delete all files from bucket
-		// deleteObjectsInBucket(bucketName);
-
+		deleteFiles();
 		deleteEmptyBucket(bucketName);
 	}
 
@@ -169,6 +184,13 @@ public class S3DataAccessLayer {
 		}
 
 		return filePath;
+	}
+
+	public void deleteFiles() {
+
+		for (String file : getFiles()) {
+			deleteFile(file);
+		}
 	}
 
 	public List<String> deleteFiles(List<String> toDeleteList) {
@@ -241,6 +263,41 @@ public class S3DataAccessLayer {
 			return targetPath;
 
 		} catch (Exception e) {
+			logger.error(e.getMessage());
+			throw e;
+		}
+	}
+
+	public String uploadFileTransferManager(String sourcePath, String targetPath) throws IOException {
+
+		try {
+			FileUpload upload = transferManager.uploadFile(
+					b -> b.source(Paths.get(sourcePath)).putObjectRequest(req -> req.bucket(bucket).key(targetPath)));
+
+			upload.completionFuture().join();
+
+			return targetPath;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error(e.getMessage());
+			throw e;
+		}
+	}
+	
+
+	public String downloadFileTransferManager(String sourcePath, String targetPath) throws IOException {
+
+		try {
+
+			FileDownload download = transferManager.downloadFile(b -> b.destination(Paths.get(targetPath))
+					.getObjectRequest(req -> req.bucket(bucket).key(sourcePath)));
+			download.completionFuture().join();
+
+			return targetPath;
+
+		} catch (Exception e) {
+			e.printStackTrace();
 			logger.error(e.getMessage());
 			throw e;
 		}

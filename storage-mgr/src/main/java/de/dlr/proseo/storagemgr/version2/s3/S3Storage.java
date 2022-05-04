@@ -180,7 +180,7 @@ public class S3Storage implements BucketsStorage {
 		String prefix = StorageType.POSIX.toString() + "|";
 		List<String> uploadedFiles = new ArrayList<String>();
 
-		if (isFile(sourceFileOrDir)) {
+		if (isExistingPosixFile(sourceFileOrDir.getFullPath())) {
 
 			uploadFile(sourceFileOrDir, targetFileOrDir);
 			uploadedFiles.add(targetFileOrDir.getFullPath());
@@ -219,6 +219,14 @@ public class S3Storage implements BucketsStorage {
 
 	}
 	
+	
+	private boolean isExistingPosixFile(String path) {
+		
+		File f = new File(path);
+		return (f.exists() && !f.isDirectory()) ? true : false;
+	}
+	
+	
 	private String getRelativePath(String absolutePath) {
 
 		Path pathAbsolute = Paths.get(absolutePath);
@@ -243,6 +251,8 @@ public class S3Storage implements BucketsStorage {
 		// TODO: Change S3 DAL
 		return null;
 	}
+	
+	
 
 	@Override
 	public boolean isFile(StorageFile storageFileOrDir) {
