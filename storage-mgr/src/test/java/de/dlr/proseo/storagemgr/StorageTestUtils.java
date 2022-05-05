@@ -13,6 +13,7 @@ import org.junit.rules.TestName;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
 import de.dlr.proseo.storagemgr.version2.model.Storage;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
@@ -78,7 +79,7 @@ public class StorageTestUtils {
 	public String createSourceFile(String relativePath) {
 
 		String testFileContent = "some text inside file";
-		String sourceFilePath = Paths.get(sourcePath, relativePath).toString();
+		String sourceFilePath = new PathConverter().convertToSlash(Paths.get(sourcePath, relativePath).toString());
 
 		TestUtils.createFile(sourceFilePath, testFileContent);
 
@@ -92,7 +93,7 @@ public class StorageTestUtils {
 	
 	public String getAbsoluteSourcePath(String relativePath) { 
 		
-		return Paths.get(sourcePath, relativePath).toString();
+		return  new PathConverter().convertToSlash(Paths.get(sourcePath, relativePath).toString());
 	}
 
 	public void uploadToPosixStorage(String relativePath) {

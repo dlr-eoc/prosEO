@@ -266,11 +266,16 @@ public class ProductControllerImpl implements ProductController {
 				
 				if (storageType == null) { // add both 
 					
-					response = storageProvider.getStorage(StorageType.S3).getFiles(prefix);
-					response.addAll(storageProvider.getStorage(StorageType.POSIX).getFiles(prefix));
+					storageProvider.setStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.S3);
+					response = storageProvider.getStorage().getFiles(prefix);
+					
+					storageProvider.setStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.POSIX);
+					response.addAll(storageProvider.getStorage().getFiles(prefix));
 					
 				} else { 
-					response = storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.valueOf(storageType)).getFiles(prefix);					
+					
+					storageProvider.setStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.valueOf(storageType));
+					response = storageProvider.getStorage().getFiles(prefix);					
 				}
 				
 				return new ResponseEntity<>(response, HttpStatus.OK);

@@ -5,6 +5,7 @@ import java.nio.file.Paths;
 
 import org.apache.commons.io.FilenameUtils;
 
+import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
@@ -21,7 +22,6 @@ public class S3StorageFile implements StorageFile {
 	private static final String S3PREFIX = "s3:/"; 
 	private static final String SLASH = "/"; 
 
-	public String basePath;
 	private String bucket; 
 	private String relativePath;  
 	
@@ -34,7 +34,7 @@ public class S3StorageFile implements StorageFile {
 	
 	@Override
 	public String getFullPath() {
-		return addS3Prefix(Paths.get(basePath, bucket, relativePath).toString());
+		return addS3Prefix( new PathConverter().convertToSlash(Paths.get(bucket, relativePath).toString()));
 	}
 	
 	private String addS3Prefix(String path) {
@@ -43,7 +43,7 @@ public class S3StorageFile implements StorageFile {
 
 	@Override
 	public String getBasePath() {
-		return basePath;
+		return ""; // no base path in s3
 	}
 
 	@Override
@@ -65,7 +65,6 @@ public class S3StorageFile implements StorageFile {
 	public StorageType getStorageType() {
 		return StorageType.S3;
 	}
-	
 
 	@Override
 	public String getExtension() {
@@ -74,7 +73,6 @@ public class S3StorageFile implements StorageFile {
 
 	@Override
 	public void setBasePath(String basePath) {
-		this.basePath = basePath; 		
 	}
 
 	@Override

@@ -156,17 +156,18 @@ public class S3DataAccessLayerTest {
 
 		////////////////// TEST BODY BEGIN
 
-		String testBucket = "teeest-bucket";
+		String bucket = cfg.getS3DefaultBucket();
 
 		String s3AccessKey = cfg.getS3AccessKey();
 		String s3SecretAccessKey = cfg.getS3SecretAccessKey();
+		
 
-		S3DataAccessLayer s3DAL = new S3DataAccessLayer(s3AccessKey, s3SecretAccessKey);
+		S3DataAccessLayer s3DAL = new S3DataAccessLayer(s3AccessKey, s3SecretAccessKey, bucket);
 
 		TestUtils.printList("Buckets before bucket creation", s3DAL.getBuckets());
 
 		// create bucket in setBucket
-		s3DAL.setBucket(testBucket);
+		s3DAL.setBucket(bucket);
 		TestUtils.printList("Buckets before bucket creation", s3DAL.getBuckets());
 		TestUtils.printList("Files before upload in bucket: " + s3DAL.getBucket(), s3DAL.getFiles());
 
@@ -200,9 +201,10 @@ public class S3DataAccessLayerTest {
 		TestUtils.printList("Files after deletion in bucket: " + s3DAL.getBucket(), s3DAL.getFiles());
 
 		// delete bucket
-		s3DAL.deleteBucket(testBucket);
+		s3DAL.deleteBucket(bucket);
+		
 
-		TestUtils.printList("Buckets before bucket deletion", s3DAL.getBuckets());
+		TestUtils.printList("Buckets after bucket deletion. End", s3DAL.getBuckets());
 
 		////////////////// TEST BODY END
 

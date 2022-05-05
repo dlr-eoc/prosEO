@@ -83,9 +83,10 @@ public class StorageProvider {
 		return storage;
 	}
 
-	public void loadStorage(StorageType storageType) {
+	public Storage setStorage(StorageType storageType) {
 
 		storage = createStorage(storageType);
+		return storage; 
 	}
 
 	// all ..version.. methods will be removed in release, for smooth integration
@@ -124,7 +125,7 @@ public class StorageProvider {
 			return new PosixStorage(cfg.getPosixBackendPath());
 
 		} else if (storageType == StorageType.S3) {
-			return new S3Storage(cfg.getPosixBackendPath(), cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
+			return new S3Storage(cfg.getPosixBackendPath(), cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3DefaultBucket());
 		}
 
 		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
@@ -205,13 +206,6 @@ public class StorageProvider {
 		return storage.createStorageFile(relativePath, content);
 	}
 
-	public Storage getStorage(StorageType storageType) {
-		
-		return createStorage(storageType);
-	}
-
-	public Storage getStorage(de.dlr.proseo.storagemgr.utils.StorageType posix) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
+	
 }

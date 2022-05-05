@@ -81,7 +81,7 @@ public class S3DataAccessLayer {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3DataAccessLayer.class);
 
-	public S3DataAccessLayer(String s3AccessKey, String s3SecretAccessKey) {
+	public S3DataAccessLayer(String s3AccessKey, String s3SecretAccessKey, String bucket) {
 
 		Region s3Region = Region.EU_CENTRAL_1;
 
@@ -90,14 +90,19 @@ public class S3DataAccessLayer {
 
 		s3Client = S3Client.builder().region(s3Region)
 				.credentialsProvider(StaticCredentialsProvider.create(credentials)).build();
+		
+		setBucket(bucket);
 	}
 
-	public S3DataAccessLayer(String s3AccessKey, String s3SecretAccessKey, String s3Region, String s3EndPoint) {
+	public S3DataAccessLayer(String s3AccessKey, String s3SecretAccessKey, String s3Region, String s3EndPoint, String bucket) {
 
 		initCredentials(s3AccessKey, s3SecretAccessKey);
+		initTransferManager(Region.of(s3Region));
 
 		s3Client = S3Client.builder().region(Region.of(s3Region)).endpointOverride(URI.create(s3EndPoint))
 				.credentialsProvider(StaticCredentialsProvider.create(credentials)).build();
+		
+		setBucket(bucket);
 	}
 
 	private void initCredentials(String s3AccessKey, String s3SecretAccessKey) {

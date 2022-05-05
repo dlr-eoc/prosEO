@@ -32,14 +32,14 @@ public class S3Storage implements BucketsStorage {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3Storage.class);
 
-	public S3Storage(String basePath, String s3AccessKey, String s3SecretAccessKey) {
-		s3DAL = new S3DataAccessLayer(s3AccessKey, s3SecretAccessKey);
+	public S3Storage(String basePath, String s3AccessKey, String s3SecretAccessKey, String bucket) {
+		s3DAL = new S3DataAccessLayer(s3AccessKey, s3SecretAccessKey, bucket);
 		this.basePath = basePath;
 	}
 
 	public S3Storage(String basePath, String s3AccessKey, String s3SecretAccessKey, String s3Region,
-			String s3EndPoint) {
-		s3DAL = new S3DataAccessLayer(s3AccessKey, s3SecretAccessKey, s3Region, s3EndPoint);
+			String s3EndPoint, String bucket) {
+		s3DAL = new S3DataAccessLayer(s3AccessKey, s3SecretAccessKey, s3Region, s3EndPoint, bucket);
 		this.basePath = basePath;
 	}
 

@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
-import de.dlr.proseo.storagemgr.utils.StorageType;
+import de.dlr.proseo.storagemgr.version2.model.StorageType;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
 import de.dlr.proseo.storagemgr.version2.model.Storage;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
@@ -31,26 +31,26 @@ import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 public class S3StorageTest {
-	
+
 	@Autowired
 	private MockMvc mockMvc;
-	
+
 	@Autowired
 	private TestUtils testUtils;
-	
+
 	@Autowired
 	private StorageTestUtils storageTestUtils;
-	
+
 	@Autowired
 	private StorageProvider storageProvider;
 
 	@Rule
 	public TestName testName = new TestName();
-	
+
 	String testCachePath;
 	String cachePath;
-	String testSourcePath;	
-	
+	String testSourcePath;
+
 	@PostConstruct
 	private void init() {
 		testCachePath = testUtils.getTestCachePath();
@@ -61,48 +61,51 @@ public class S3StorageTest {
 
 	@Test
 	public void testUploadFile() throws IOException {
-		
-	TestUtils.createEmptyStorageDirectories();
-		
-		String prefix = "files/"; 
-		
+
+		TestUtils.createEmptyStorageDirectories();
+
+		String prefix = "files/";
+
 		List<String> pathes = new ArrayList<>();
 		pathes.add(prefix + "file1.txt");
 		pathes.add(prefix + "file2.txt");
 		pathes.add(prefix + "dir/file3.txt");
-		
+
 		for (String path : pathes) {
-			
+
 			storageTestUtils.createSourceFile(path);
 		}
-				
-		storageTestUtils.printPosixStorage();
-		
-		
-		Storage storage = storageProvider.getStorage(StorageType.S3); 
-		
-		StorageFile sourceDir = storageProvider.getSourceFile(prefix);
-		StorageFile targetDir = storageProvider.getStorageFile(prefix); 
-		
-		List<String> uploadedPathes = storage.upload(sourceDir, targetDir);
-		
-		
-		List<StorageFile> storageFiles = storage.getStorageFiles();
-		
-		System.out.println("S3 Storage files: " + storageFiles.size());
-		for (StorageFile storageFile : storageFiles ) { 
-			
-			System.out.println(" - " + storageFile.getFullPath());
+
+		try {
+
+			storageTestUtils.printPosixStorage();
+
+			Storage storage = storageProvider.setStorage(StorageType.S3);
+
+			StorageFile sourceDir = storageProvider.getSourceFile(prefix);
+			StorageFile targetDir = storageProvider.getStorageFile(prefix);
+
+			List<String> uploadedPathes = storage.upload(sourceDir, targetDir);
+
+			List<StorageFile> storageFiles = storage.getStorageFiles();
+
+			System.out.println("S3 Storage files: " + storageFiles.size());
+			for (StorageFile storageFile : storageFiles) {
+
+				System.out.println(" - " + storageFile.getFullPath());
+
+			}
+
+			for (String uploadedPath : uploadedPathes) {
+
+				System.out.println("Uploaded: " + uploadedPath);
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
 		}
-		
-		
-		for (String uploadedPath : uploadedPathes) { 
-			
-			System.out.println("Uploaded: " + uploadedPath);
-		}
-		
-		
-		
+
 	}
 
 }

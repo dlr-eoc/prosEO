@@ -164,7 +164,7 @@ public class PosixStorage implements Storage {
 	
 	
 	private String getAbsolutePath(String relativePath) {
-		return Paths.get(getFullBucketPath(), relativePath).toString();
+		return  new PathConverter().convertToSlash(Paths.get(getFullBucketPath(), relativePath).toString());
 	}
 
 	private void createParentDirectories(String fullPath) {
@@ -337,7 +337,7 @@ public class PosixStorage implements Storage {
 		for (File file : files) {
 			
 			if (file.isDirectory()) {
-				String relativeDir = Paths.get(relativePath, file.getName()).toString();
+				String relativeDir =  new PathConverter().convertToSlash(Paths.get(relativePath, file.getName()).toString());
 				List<String> dirFiles = getFiles(relativeDir);
 				returnFiles.addAll(dirFiles);
 			}
