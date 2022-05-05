@@ -721,6 +721,7 @@ public class JobStepUtil {
 						if (!pq.isSatisfied()) {
 							if (productQueryService.executeQuery(pq, false)) {
 								RepositoryService.getProductQueryRepository().save(pq);
+								for (Product p: pq.getSatisfyingProducts()) {
 									RepositoryService.getProductRepository().save(p);
 								}
 								// The following removed - it is the *input* product queries that matter!
