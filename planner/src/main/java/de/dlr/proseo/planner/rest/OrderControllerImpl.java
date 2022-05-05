@@ -625,25 +625,20 @@ public class OrderControllerImpl implements OrderController {
 	}
 	
 	private RestOrder getRestOrder(long id) {
-		try {
-			productionPlanner.acquireThreadSemaphore("getRestOrder");
-			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
-			RestOrder answer = transactionTemplate.execute((status) -> {
-				RestOrder ro = null;
-				ProcessingOrder order = null;
-				Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
-				if (orderOpt.isPresent()) {
-					order = orderOpt.get();
-				}
-				ro = RestUtil.createRestOrder(order);
-				return ro;
-			});
-			productionPlanner.releaseThreadSemaphore("getRestOrder");
-			return answer;
-		} catch (InterruptedException e) {
-			productionPlanner.releaseThreadSemaphore("getRestOrder");
-			return null;
-		}
+		productionPlanner.acquireThreadSemaphore("getRestOrder");
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		RestOrder answer = transactionTemplate.execute((status) -> {
+			RestOrder ro = null;
+			ProcessingOrder order = null;
+			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+			if (orderOpt.isPresent()) {
+				order = orderOpt.get();
+			}
+			ro = RestUtil.createRestOrder(order);
+			return ro;
+		});
+		productionPlanner.releaseThreadSemaphore("getRestOrder");
+		return answer;
 	}
 
 	

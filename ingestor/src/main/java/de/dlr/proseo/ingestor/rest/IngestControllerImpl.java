@@ -17,6 +17,8 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.validation.Valid;
 import javax.ws.rs.ProcessingException;
+
+import org.hibernate.exception.LockAcquisitionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
@@ -316,6 +318,9 @@ public class IngestControllerImpl implements IngestController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		} catch (LockAcquisitionException e) {
+			e.printStackTrace();
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
 		try {

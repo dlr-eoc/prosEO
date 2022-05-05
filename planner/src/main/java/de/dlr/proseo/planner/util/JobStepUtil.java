@@ -7,11 +7,14 @@ package de.dlr.proseo.planner.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
+import javax.persistence.LockModeType;
 import javax.persistence.PersistenceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -712,35 +715,36 @@ public class JobStepUtil {
 					if (jsOpt.isPresent()) {
 						jsx = jsOpt.get();
 					}
-				for (ProductQuery pq : jsx.getInputProductQueries()) {
-					if (!pq.isSatisfied()) {
-						if (productQueryService.executeQuery(pq, false)) {
-							RepositoryService.getProductQueryRepository().save(pq);
-							for (Product p: pq.getSatisfyingProducts()) {
-								RepositoryService.getProductRepository().save(p);
+					Map<String, Object> properties = new HashMap<>(); 
+					properties.put("javax.persistence.lock.timeout", 10000L); 
+					for (ProductQuery pq : jsx.getInputProductQueries()) {
+						if (!pq.isSatisfied()) {
+							if (productQueryService.executeQuery(pq, false)) {
+								RepositoryService.getProductQueryRepository().save(pq);
+									RepositoryService.getProductRepository().save(p);
+								}
+								// The following removed - it is the *input* product queries that matter!
+								//							jsx.getOutputProduct().getSatisfiedProductQueries().add(pq);
+								//							RepositoryService.getProductRepository().save(jsx.getOutputProduct());
+							} else {
+								hasUnsatisfiedInputQueries = true;
 							}
-							// The following removed - it is the *input* product queries that matter!
-//							jsx.getOutputProduct().getSatisfiedProductQueries().add(pq);
-//							RepositoryService.getProductRepository().save(jsx.getOutputProduct());
-						} else {
-							hasUnsatisfiedInputQueries = true;
 						}
 					}
-				}
-				if (hasUnsatisfiedInputQueries) {
-					if (jsx.getJobStepState() != de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT) {
-						jsx.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT);
+					if (hasUnsatisfiedInputQueries) {
+						if (jsx.getJobStepState() != de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT) {
+							jsx.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT);
+							jsx.incrementVersion();
+							RepositoryService.getJobStepRepository().save(jsx);
+							em.merge(jsx);
+						}				
+					} else {
+						jsx.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.READY);
 						jsx.incrementVersion();
 						RepositoryService.getJobStepRepository().save(jsx);
 						em.merge(jsx);
-					}				
-				} else {
-					jsx.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.READY);
-					jsx.incrementVersion();
-					RepositoryService.getJobStepRepository().save(jsx);
-					em.merge(jsx);
-				}
-				return null;
+					}
+					return null;
 				});
 			}
 			
@@ -948,49 +952,42 @@ public class JobStepUtil {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		if (productionPlanner != null) {
 			if (kc != null && jobId != 0) {
-				try {
-					productionPlanner.acquireThreadSemaphore("checkJobToRun");
-					final ProcessingFacility pfo = transactionTemplate.execute((status) -> {
-						Optional<ProcessingFacility> opt = RepositoryService.getFacilityRepository().findById(kc.getLongId());
-						if (opt.isPresent()) {
-							return opt.get();
-						}
-						return null;
-					});
-					if (pfo != null) {
-						// wait until finish of concurrent createJob
-						try {
-							productionPlanner.acquireReleaseSemaphore("checkJobToRun");
-							final List<Long> jobSteps = new ArrayList<Long>();
-
-							@SuppressWarnings("unused")
-							String dummy = transactionTemplate.execute((status) -> {
-								Optional<Job> opt = RepositoryService.getJobRepository().findById(jobId);
-								if (opt.isPresent()) {
-									Job job = opt.get();
-									for (JobStep js : job.getJobSteps()) {
-										jobSteps.add(js.getId());
-									}
-								}
-								return null;
-							});
-
-							for (Long jsId : jobSteps) {
-								checkJobStepToRun(kc, jsId);
-							}
-						} catch (InterruptedException e) {
-							throw e;
-						} catch (Exception e) {
-							Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-						} finally {
-							productionPlanner.releaseReleaseSemaphore("checkJobToRun");					
-						}
+				productionPlanner.acquireThreadSemaphore("checkJobToRun");
+				final ProcessingFacility pfo = transactionTemplate.execute((status) -> {
+					Optional<ProcessingFacility> opt = RepositoryService.getFacilityRepository().findById(kc.getLongId());
+					if (opt.isPresent()) {
+						return opt.get();
 					}
-				} catch (Exception e) {
-					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-				} finally {
-					productionPlanner.releaseThreadSemaphore("release");					
+					return null;
+				});
+				if (pfo != null) {
+					// wait until finish of concurrent createJob
+					try {
+						productionPlanner.acquireReleaseSemaphore("checkJobToRun");
+						final List<Long> jobSteps = new ArrayList<Long>();
+
+						@SuppressWarnings("unused")
+						String dummy = transactionTemplate.execute((status) -> {
+							Optional<Job> opt = RepositoryService.getJobRepository().findById(jobId);
+							if (opt.isPresent()) {
+								Job job = opt.get();
+								for (JobStep js : job.getJobSteps()) {
+									jobSteps.add(js.getId());
+								}
+							}
+							return null;
+						});
+
+						for (Long jsId : jobSteps) {
+							checkJobStepToRun(kc, jsId);
+						}
+					} catch (Exception e) {
+						Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+					} finally {
+						productionPlanner.releaseReleaseSemaphore("checkJobToRun");					
+					}
 				}
+				productionPlanner.releaseThreadSemaphore("release");	
 			}
 		}
 	}

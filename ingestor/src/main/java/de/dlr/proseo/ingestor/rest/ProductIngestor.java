@@ -17,8 +17,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
+import javax.persistence.LockModeType;
 import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
 import javax.ws.rs.ProcessingException;
 
 import org.slf4j.Logger;
@@ -141,6 +144,10 @@ public class ProductIngestor {
 	/** Product Manager */
 	@Autowired
 	ProductManager productManager;
+	
+	/** JPA entity manager */
+	@PersistenceContext
+	private EntityManager em;
 	
 	/**
 	 * Create and log a formatted informational message
@@ -423,11 +430,12 @@ public class ProductIngestor {
 
 		// Find the product with the given ID
 		Optional<Product> product = RepositoryService.getProductRepository().findById(productId);
+		
 		if (product.isEmpty()) {
 			throw new IllegalArgumentException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, productId));
 		}
 		Product modelProduct = product.get();
-		
+
 		// Ensure user is authorized for the product's mission
 		if (!securityService.isAuthorizedForMission(modelProduct.getProductClass().getMission().getCode())) {
 			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,

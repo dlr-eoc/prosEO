@@ -70,9 +70,30 @@ public class ProductionPlannerConfiguration {
 	@Value("${proseo.productionPlanner.filecheckwaittime}")
 	private Integer productionPlannerFileCheckWaitTime;
 
+	/** Check for further job steps after one had finished */
+	@Value("${proseo.productionPlanner.checkForFurtherJobStepsToRun}")
+	private Boolean checkForFurtherJobStepsToRun;
+
 	/** Mount point for wrapper */
 	@Value("${proseo.posix.workerMountPoint}")
 	private String posixWorkerMountPoint;
+
+	/**
+	 * @return the checkForFurtherJobStepsToRun
+	 */
+	public Boolean getCheckForFurtherJobStepsToRun() {
+		if (checkForFurtherJobStepsToRun == null) {
+			checkForFurtherJobStepsToRun = true;
+		}
+		return checkForFurtherJobStepsToRun;
+	}
+
+	/**
+	 * @param checkForFurtherJobStepsToRun the checkForFurtherJobStepsToRun to set
+	 */
+	public void setCheckForFurtherJobStepsToRun(Boolean checkForFurtherJobStepsToRun) {
+		this.checkForFurtherJobStepsToRun = checkForFurtherJobStepsToRun;
+	}
 
 	/**
 	 * @return the productionPlannerJobCreatedWaitTime

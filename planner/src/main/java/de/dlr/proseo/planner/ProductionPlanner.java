@@ -27,14 +27,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderState;
@@ -43,7 +41,6 @@ import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.util.OrderPlanThread;
 import de.dlr.proseo.planner.util.OrderReleaseThread;
 import de.dlr.proseo.planner.util.UtilService;
-import sun.nio.ch.Interruptible;
 
 /*
  * prosEO Planner application

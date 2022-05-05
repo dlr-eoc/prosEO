@@ -156,86 +156,78 @@ public class OrderUtil {
 					}
 				}
 
-				try {
-					productionPlanner.acquireThreadSemaphore("OrderPlanThread.reset");
-					transactionTemplate.execute((status) -> {
-						Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
-						if (opt.isPresent()) {
-							ProcessingOrder orderx = opt.get();
-							orderx.setOrderState(OrderState.APPROVED);
-							orderx.setHasFailedJobSteps(false);
-							orderx.incrementVersion();
-							RepositoryService.getOrderRepository().save(orderx);
-							logOrderState(orderx);
-						}
-						return null;
-					});
-					productionPlanner.releaseThreadSemaphore("OrderPlanThread.reset");
-				} catch (InterruptedException e) {
-					productionPlanner.releaseThreadSemaphore("OrderPlanThread.reset");
-				}
+				productionPlanner.acquireThreadSemaphore("OrderUtil.reset");
+				transactionTemplate.execute((status) -> {
+					Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
+					if (opt.isPresent()) {
+						ProcessingOrder orderx = opt.get();
+						orderx.setOrderState(OrderState.APPROVED);
+						orderx.setHasFailedJobSteps(false);
+						orderx.incrementVersion();
+						RepositoryService.getOrderRepository().save(orderx);
+						logOrderState(orderx);
+					}
+					return null;
+				});
+				productionPlanner.releaseThreadSemaphore("OrderUtil.reset");
 				answer = Messages.ORDER_RESET;
 				break;	
 			case PLANNING_FAILED:
 				// jobs are in initial state, no change
-				try {
-					productionPlanner.acquireThreadSemaphore("OrderPlanThread.reset");
-					transactionTemplate.execute((status) -> {
-						Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
-						if (opt.isPresent()) {
-							ProcessingOrder orderx = opt.get();
-							orderx.setOrderState(OrderState.APPROVED);
-							orderx.setHasFailedJobSteps(false);
-							orderx.incrementVersion();
-							RepositoryService.getOrderRepository().save(orderx);
-							logOrderState(orderx);
-						}
-						return null;
-					});
-					productionPlanner.releaseThreadSemaphore("OrderPlanThread.reset");
-				} catch (InterruptedException e) {
-					productionPlanner.releaseThreadSemaphore("OrderPlanThread.reset");
-				}
+				productionPlanner.acquireThreadSemaphore("OrderUtil.reset");
+				transactionTemplate.execute((status) -> {
+					Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
+					if (opt.isPresent()) {
+						ProcessingOrder orderx = opt.get();
+						orderx.setOrderState(OrderState.APPROVED);
+						orderx.setHasFailedJobSteps(false);
+						orderx.incrementVersion();
+						RepositoryService.getOrderRepository().save(orderx);
+						logOrderState(orderx);
+					}
+					return null;
+				});
+				productionPlanner.releaseThreadSemaphore("OrderUtil.reset");
 				answer = Messages.ORDER_RESET;
 				break;			
 			case APPROVED:		
 			case RELEASED:		
 			case PLANNED:
 				// remove jobs and job steps
+				productionPlanner.acquireThreadSemaphore("OrderUtil.reset");
 				try {
-					productionPlanner.acquireThreadSemaphore("OrderPlanThread.reset");
-					transactionTemplate.execute((status) -> {
-						Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
-						if (opt.isPresent()) {
-							ProcessingOrder orderx = opt.get();
-							HashMap<Long,Job> toRemove = new HashMap<Long,Job>();
-							for (Job job : orderx.getJobs()) {
-								if (jobUtil.delete(job)) {
-									toRemove.put(job.getId(), job);
-								}
+				transactionTemplate.execute((status) -> {
+					Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
+					if (opt.isPresent()) {
+						ProcessingOrder orderx = opt.get();
+						HashMap<Long,Job> toRemove = new HashMap<Long,Job>();
+						for (Job job : orderx.getJobs()) {
+							if (jobUtil.delete(job)) {
+								toRemove.put(job.getId(), job);
 							}
-							List<Job> existingJobs = new ArrayList<Job>();
-							existingJobs.addAll(orderx.getJobs());
-							orderx.getJobs().clear();
-							for (Job job : existingJobs) {
-								if (toRemove.get(job.getId()) == null) {
-									orderx.getJobs().add(job);
-								} else {
-									RepositoryService.getJobRepository().delete(job);
-								}
-							}
-							orderx.setOrderState(OrderState.INITIAL);
-							orderx.setHasFailedJobSteps(false);
-							orderx.incrementVersion();
-							RepositoryService.getOrderRepository().save(orderx);
-							logOrderState(orderx);
 						}
-						return null;
-					});
-					productionPlanner.releaseThreadSemaphore("OrderPlanThread.reset");
-				} catch (InterruptedException e) {
-					productionPlanner.releaseThreadSemaphore("OrderPlanThread.reset");
+						List<Job> existingJobs = new ArrayList<Job>();
+						existingJobs.addAll(orderx.getJobs());
+						orderx.getJobs().clear();
+						for (Job job : existingJobs) {
+							if (toRemove.get(job.getId()) == null) {
+								orderx.getJobs().add(job);
+							} else {
+								RepositoryService.getJobRepository().delete(job);
+							}
+						}
+						orderx.setOrderState(OrderState.INITIAL);
+						orderx.setHasFailedJobSteps(false);
+						orderx.incrementVersion();
+						RepositoryService.getOrderRepository().save(orderx);
+						logOrderState(orderx);
+					}
+					return null;
+				});
+				} catch (Exception e) {
+					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 				}
+				productionPlanner.releaseThreadSemaphore("OrderUtil.reset");
 				answer = Messages.ORDER_RESET;
 				break;	
 			case RELEASING:
@@ -412,27 +404,21 @@ public class OrderUtil {
 			case APPROVED:
 			case PLANNING:
 			case PLANNING_FAILED:
-				try {
-					productionPlanner.acquireThreadSemaphore("plan");
-					answer = transactionTemplate.execute((status) -> {
-						Messages answerx = Messages.FALSE;
-						Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
-						if (orderOpt.isPresent()) {
-							orderOpt.get().setOrderState(OrderState.PLANNING);
-							orderOpt.get().incrementVersion();
-							RepositoryService.getOrderRepository().save(orderOpt.get());
-							answerx = Messages.ORDER_PLANNING;
-						} else {
-							answerx = Messages.ORDER_PLANNING_FAILED;
-						}
-						return answerx;
-					});
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} finally {
-					productionPlanner.releaseThreadSemaphore("plan");
-				}
+				productionPlanner.acquireThreadSemaphore("plan");
+				answer = transactionTemplate.execute((status) -> {
+					Messages answerx = Messages.FALSE;
+					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+					if (orderOpt.isPresent()) {
+						orderOpt.get().setOrderState(OrderState.PLANNING);
+						orderOpt.get().incrementVersion();
+						RepositoryService.getOrderRepository().save(orderOpt.get());
+						answerx = Messages.ORDER_PLANNING;
+					} else {
+						answerx = Messages.ORDER_PLANNING_FAILED;
+					}
+					return answerx;
+				});
+				productionPlanner.releaseThreadSemaphore("plan");
 				if (answer.isTrue()) {
 					String threadName = ProductionPlanner.PLAN_THREAD_PREFIX + order.getId();
 					if (!productionPlanner.getPlanThreads().containsKey(threadName)) {
