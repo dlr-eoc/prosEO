@@ -18,6 +18,7 @@ public class PathConverter {
 	private static String S3PREFIX = "s3://";
 	private static String SLASH = "/";
 	private static String BACKSLASH = "\\"; 
+	private static String WINPATH_IN_S3 = "-WIN-PATH-"; 
 
 	public void addBasePath(String basePath) {
 		basePaths.add(removeLeftSlash(basePath.trim()));
@@ -181,6 +182,39 @@ public class PathConverter {
 		if (isWindowsPath(path)) return false; 
 		
 		return true; 
+	}
+	
+	public String posixToS3Path(String path) {
+		
+		path = convertToSlash(path); 
+		
+		// windows - replace ":"
+		if (isWindowsPath(path)) {
+			
+			return path.replace(":", WINPATH_IN_S3);
+		}
+		
+		// Linux - no action
+		return path; 
+	}
+	
+	public String s3ToPosixPath(String path) {
+		
+		path = convertToSlash(path); 
+		
+		// windows - restore ":"
+		if (isWinPathInS3(path)) {
+			
+			return path.replace(WINPATH_IN_S3, ":");
+		}
+		
+		// Linux - no action
+		return path; 
+	}
+	
+	public boolean isWinPathInS3(String path) {
+		
+		return (path.indexOf(WINPATH_IN_S3) >= 0) ? true : false;
 	}
 		
 }

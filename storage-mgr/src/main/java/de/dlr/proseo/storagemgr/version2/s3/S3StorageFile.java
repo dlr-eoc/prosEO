@@ -87,7 +87,8 @@ public class S3StorageFile implements StorageFile {
 
 	@Override
 	public boolean isDirectory() {
-		return true; // no folders in s3, files only
+		
+		return relativePath.endsWith(SLASH) ? true : false; 
 	}
 
 }
