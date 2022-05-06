@@ -75,7 +75,8 @@ The `proseo-images` directory may be populated with convenience scripts for thes
 
 ## Step 3: Deploy the prosEO Control Instance
 
-Create the prosEO Control Instance from a `docker-compose.yml` file like the following:
+Create the prosEO Control Instance from a `docker-compose.yml` file like the following (a `docker-compose.yml.template`
+file is provided in the `proseo-images` directory):
 ```yaml
 version: '3'
 services:
@@ -179,7 +180,7 @@ A template for the `docker-compose.yml` file can be found at `<project root>/dep
 
 After starting the prosEO control instance two SQL scripts need to be executed. First login to the proseo-db container:
 ```
-docker exec -it proseo_proseo-db_1 /bin/bash -c 'su - postgres'
+docker exec -it proseo-proseo-db-1 su - postgres
 ```
 From within the container (which should now show a prompt like `postgres@...:~$ `) execute the SQL command files provided:
 ```
