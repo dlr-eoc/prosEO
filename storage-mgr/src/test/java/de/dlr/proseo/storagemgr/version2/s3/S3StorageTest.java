@@ -64,15 +64,14 @@ public class S3StorageTest {
 
 		TestUtils.createEmptyStorageDirectories();
 
-		String prefix = "files/";
+		String prefix = "files";
 
 		List<String> pathes = new ArrayList<>();
-		pathes.add(prefix + "file1.txt");
-		pathes.add(prefix + "file2.txt");
-		pathes.add(prefix + "dir/file3.txt");
+		pathes.add(prefix + "/file1.txt");
+		pathes.add(prefix + "/file2.txt");
+		pathes.add(prefix + "/dir/file3.txt");
 
 		for (String path : pathes) {
-
 			storageTestUtils.createSourceFile(path);
 		}
 
@@ -86,20 +85,19 @@ public class S3StorageTest {
 			StorageFile targetDir = storageProvider.getStorageFile(prefix);
 
 			List<String> uploadedPathes = storage.upload(sourceDir, targetDir);
-
-			List<StorageFile> storageFiles = storage.getStorageFiles();
-
-			System.out.println("S3 Storage files: " + storageFiles.size());
-			for (StorageFile storageFile : storageFiles) {
-
-				System.out.println(" - " + storageFile.getFullPath());
-
+			
+			TestUtils.printList("S3 Storage files after upload:", storage.getFiles());
+			TestUtils.printList("Response uploaded pathes:", uploadedPathes);
+			
+			List<String> deletedPathes = new ArrayList<>();
+			for (String path : pathes) {
+				StorageFile storageFile = storage.getStorageFile(path);
+				String deletedFile = storage.deleteFile(storageFile);
+				deletedPathes.add(deletedFile);
 			}
-
-			for (String uploadedPath : uploadedPathes) {
-
-				System.out.println("Uploaded: " + uploadedPath);
-			}
+			
+			TestUtils.printList("Deleted storage pathes:", deletedPathes);
+			
 
 		} catch (Exception e) {
 			e.printStackTrace();

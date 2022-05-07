@@ -8,6 +8,7 @@ import org.apache.commons.io.FilenameUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
+import de.dlr.proseo.storagemgr.version2.posix.PosixStorageFile;
 
 /**
  * S3 Storage File
@@ -30,6 +31,10 @@ public class S3StorageFile implements StorageFile {
 
 		this.bucket = bucket; 
 		this.relativePath = relativePath; 
+	}
+	
+	public S3StorageFile(StorageFile storageFile) { 
+		this(storageFile.getBucket(), storageFile.getRelativePath() );
 	}
 	
 	@Override

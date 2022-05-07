@@ -45,7 +45,11 @@ public class PosixStorageFile implements StorageFile {
 		this.bucket = verifyBucket(bucket);
 		this.relativePath = verifyRelativePath(relativePath);
 	}
-
+	
+	public PosixStorageFile(StorageFile storageFile) { 
+		this(storageFile.getBasePath(), storageFile.getBucket(), storageFile.getRelativePath() );
+	}
+	
 	@Override
 	public String getFullPath() {
 		
@@ -118,11 +122,6 @@ public class PosixStorageFile implements StorageFile {
 		return (relativePath.endsWith("/") || relativePath.endsWith("\\"))  ? true : false; 		
 	}
 	
-	
-	
-	public PosixStorageFile(StorageFile targetDir) { 
-		this(targetDir.getBasePath(), targetDir.getBucket(), targetDir.getRelativePath() );
-	}
 
 	@Override
 	public void setBasePath(String basePath) {

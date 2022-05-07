@@ -182,7 +182,7 @@ public class S3Storage implements BucketsStorage {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> upload({},())", sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
 
-		String prefix = StorageType.POSIX.toString() + "|";
+		String prefix = StorageType.S3.toString() + "|";
 		List<String> uploadedFiles = new ArrayList<String>();
 
 		if (isExistingPosixFile(sourceFileOrDir.getFullPath())) {
@@ -213,8 +213,14 @@ public class S3Storage implements BucketsStorage {
 
 			if (file.isDirectory()) {
 				
-				StorageFile sourceSubDir = getAbsoluteStorageFile(file.getAbsolutePath());
-				List<String> subDirFiles = upload(sourceSubDir, targetDir);
+				StorageFile sourceSubDir = getAbsoluteStorageFile(file.getAbsolutePath() + "/");
+				
+				String targetSubDirPath = targetDir.getRelativePath() + sourceSubDir.getFileName() + "/"; 
+
+				StorageFile targetSubDir = new S3StorageFile(targetDir);
+				targetSubDir.setRelativePath(targetSubDirPath);
+				
+				List<String> subDirFiles = upload(sourceSubDir, targetSubDir);
 
 				uploadedFiles.addAll(subDirFiles);
 			}
@@ -290,7 +296,9 @@ public class S3Storage implements BucketsStorage {
 
 		return new PosixStorageFile(basePath, relativePath);
 	}
-	
 
-	
+	@Override
+	public List<String> getFiles() {
+		return s3DAL.getFiles();
+	}
 }

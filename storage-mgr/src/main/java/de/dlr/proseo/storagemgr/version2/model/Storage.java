@@ -43,7 +43,7 @@ public interface Storage {
 
 	public List<String> getFiles(String prefix); 
 	
-	// public List<String> getFiles(); 
+	public List<String> getFiles(); 
 	
 	public List<String> delete(StorageFile storageFileOrDir) throws IOException;
 	
