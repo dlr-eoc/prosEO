@@ -14,7 +14,7 @@ spec:
   persistentVolumeReclaimPolicy: Retain 
   hostPath:
     path: %SHARED_STORAGE_PATH%/transfer
-    type: Directory
+    type: DirectoryOrCreate
 
 ---
 # The common storage area for Storage Manager and Processing Engine
@@ -32,4 +32,4 @@ spec:
   persistentVolumeReclaimPolicy: Retain 
   hostPath:
     path: %SHARED_STORAGE_PATH%/proseodata
-    type: Directory
+    type: DirectoryOrCreate

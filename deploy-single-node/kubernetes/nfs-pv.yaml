@@ -13,8 +13,8 @@ spec:
     storage: 50Gi
   persistentVolumeReclaimPolicy: Retain 
   hostPath:
-    path: /Volumes/MOBILE_DATA/storage-mgr/transfer
-    type: Directory
+    path: /opt/prosEO/data/transfer
+    type: DirectoryOrCreate
 
 ---
 # The common storage area for Storage Manager and Processing Engine
@@ -31,5 +31,5 @@ spec:
     storage: 50Gi
   persistentVolumeReclaimPolicy: Retain 
   hostPath:
-    path: /Volumes/MOBILE_DATA/storage-mgr/proseodata
-    type: Directory
+    path: /opt/prosEO/data/proseodata
+    type: DirectoryOrCreate
