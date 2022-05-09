@@ -255,7 +255,7 @@ subjects:
 
 Create the account, role and role binding, and retrieve the authentication token for the new account:
 ```bash
-kubectl apply -f kubernetes/planner-account.yaml
+kubectl apply -f ../deploy/hands/kubernetes/planner-account.yaml
 kubectl describe secret/$(kubectl get secrets | grep proseo-planner | cut -d ' ' -f 1)
 ```
 
@@ -279,8 +279,16 @@ storage options are meant for externally provided installations only, where onli
 is expensive (a multi-TB USB-3 disk on a laptop is not).
 
 This step requires configuring a "host path" file server to serve the common storage area
-to both the Storage Manager and the Processing Engine. Assuming a configuration as in the files
-given in the current (example) directory, the following commands must be issued
+to both the Storage Manager and the Processing Engine. Note that Docker Desktop imposes certain
+*restrictions on the location of the data:*
+- On macOS, the directory must be located below any of the paths available for sharing *by default* (e. g. `/Users`),
+  using other paths (e. g. `/opt`) does not work, even if they are declared as sharable in the Docker Desktop
+  preferences.
+- On Windows it appears that the paths to use are somewhat weird, see for example this discussion: 
+  <https://stackoverflow.com/questions/54073794/kubernetes-persistent-volume-on-docker-desktop-windows>
+  (However this has not been verified by the author of this documentation)
+
+Assuming a configuration as in the files given in the current (example) directory, the following commands must be issued
 (also available as part of the script `ptm-config/create_data_local.sh`):
 ```sh
 # Define actual path to storage area
