@@ -17,6 +17,7 @@ public class PathConverter {
 
 	private static String S3PREFIX = "s3://";
 	private static String SLASH = "/";
+	private static String DOUBLESLASH = "//";
 	private static String BACKSLASH = "\\"; 
 	private static String WINPATH_IN_S3 = "-WIN-PATH-"; 
 
@@ -216,5 +217,9 @@ public class PathConverter {
 		
 		return (path.indexOf(WINPATH_IN_S3) >= 0) ? true : false;
 	}
+
+	public String removeDoubleSlash(String targetSubDirPath) {
 		
+		return targetSubDirPath.replace(DOUBLESLASH, SLASH);
+	}
 }

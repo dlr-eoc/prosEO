@@ -412,6 +412,18 @@ public class PosixStorage implements Storage {
 	public boolean isDirectory(StorageFile storageFileOrDir) {
 	     return new File(storageFileOrDir.getFullPath()).isDirectory();
 	}
+
+	@Override
+	public List<String> getFiles() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void deleteBucket(String bucket) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 	
 }

@@ -52,4 +52,6 @@ public interface Storage {
 	public boolean isFile(StorageFile storageFileOrDir);
 	
 	public boolean isDirectory(StorageFile storageFileOrDir);
+
+	public void deleteBucket(String bucket);
 }

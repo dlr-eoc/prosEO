@@ -21,5 +21,5 @@ public interface BucketsStorage extends Storage {
 	
 	public boolean bucketExists(String bucketName); 
 	
-	public boolean deleteBucket(String bucketName);
+	public void deleteBucket(String bucketName);
 }

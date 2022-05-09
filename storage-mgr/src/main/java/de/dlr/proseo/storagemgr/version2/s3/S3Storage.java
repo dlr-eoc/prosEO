@@ -130,11 +130,8 @@ public class S3Storage implements BucketsStorage {
 	}
 
 	@Override
-	public boolean deleteBucket(String bucketName) {
+	public void deleteBucket(String bucketName) {
 		s3DAL.deleteBucket(bucketName);
-
-		// TODO: change DAL layer to boolean
-		return true;
 	}
 
 	@Override
@@ -215,8 +212,10 @@ public class S3Storage implements BucketsStorage {
 				
 				StorageFile sourceSubDir = getAbsoluteStorageFile(file.getAbsolutePath() + "/");
 				
-				String targetSubDirPath = targetDir.getRelativePath() + sourceSubDir.getFileName() + "/"; 
+				String targetSubDirPath = targetDir.getRelativePath() + "/" + sourceSubDir.getFileName() + "/"; 
 
+				targetSubDirPath = new PathConverter().removeDoubleSlash(targetSubDirPath);
+				
 				StorageFile targetSubDir = new S3StorageFile(targetDir);
 				targetSubDir.setRelativePath(targetSubDirPath);
 				

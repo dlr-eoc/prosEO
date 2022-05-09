@@ -70,6 +70,8 @@ public class S3StorageTest {
 		pathes.add(prefix + "/file1.txt");
 		pathes.add(prefix + "/file2.txt");
 		pathes.add(prefix + "/dir/file3.txt");
+		pathes.add(prefix + "/dir/dir2/file4.txt");
+		pathes.add(prefix + "/dir/dir2/file5.txt");
 
 		for (String path : pathes) {
 			storageTestUtils.createSourceFile(path);
@@ -77,7 +79,7 @@ public class S3StorageTest {
 
 		try {
 
-			storageTestUtils.printPosixStorage();
+			storageTestUtils.printSource();
 
 			Storage storage = storageProvider.setStorage(StorageType.S3);
 
@@ -96,7 +98,10 @@ public class S3StorageTest {
 				deletedPathes.add(deletedFile);
 			}
 			
+			//storage.deleteBucket(storage.getBucket());
+			
 			TestUtils.printList("Deleted storage pathes:", deletedPathes);
+			TestUtils.printList("S3 Storage files after delete:", storage.getFiles());
 			
 
 		} catch (Exception e) {
