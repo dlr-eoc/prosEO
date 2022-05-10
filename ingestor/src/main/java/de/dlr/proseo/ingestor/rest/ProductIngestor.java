@@ -85,7 +85,9 @@ public class ProductIngestor {
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2069;
 	private static final int MSG_ID_ERROR_DELETING_PRODUCT = 2070;
 	private static final int MSG_ID_PRODUCT_QUERY_EXISTS = 2071;
-	private static final int MSG_ID_NUMBER_PRODUCT_FILES_DELETED = 2068;
+	private static final int MSG_ID_NUMBER_PRODUCT_FILES_DELETED = 2068;	
+	private static final int MSG_ID_ERROR_ACQUIRE_SEMAPHORE = 2072;
+	private static final int MSG_ID_ERROR_RELEASE_SEMAPHORE = 2073;
 
 	// Same as in ProductManager
 	private static final int MSG_ID_PRODUCT_CLASS_INVALID = 2012;
@@ -107,6 +109,8 @@ public class ProductIngestor {
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Deletion unsuccessful for product file %s in product with ID %d";
 	private static final String MSG_ERROR_DELETING_PRODUCT = "(E%d) Error deleting product with ID %d from processing facility %s (cause: %s)";
 	private static final String MSG_PRODUCT_QUERY_EXISTS = "(E%d) Product with ID %d is required for at least one job step on processing facility %s";
+	private static final String MSG_ERROR_ACQUIRE_SEMAPHORE = "(E%d) Error to acquire semaphore from prosEO Production Planner (cause: %s)";
+	private static final String MSG_ERROR_RELEASE_SEMAPHORE = "(E%d) Error to release semaphore from prosEO Production Planner (cause: %s)";
 
 	// Same as in ProductManager
 	private static final String MSG_PRODUCT_CLASS_INVALID = "(E%d) Product type %s invalid";
@@ -224,6 +228,8 @@ public class ProductIngestor {
      * @throws ProcessingException if the communication with the Storage Manager fails
      * @throws SecurityException if a cross-mission data access was attempted
 	 */
+
+	@Transactional
 	public RestProduct ingestProduct(ProcessingFacility facility, Boolean copyFiles, IngestorProduct ingestorProduct, String user, String password)
 			throws IllegalArgumentException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> ingestProduct({}, {}, {}, PWD)", facility.getName(), ingestorProduct.getProductClass(), user);
@@ -825,4 +831,49 @@ public class ProductIngestor {
 		notifyPlanner(user, password, ingestorProduct, facilityId);
 	}
 
+	/**
+	 * Ask production planner for a slot to manipulate product(s)
+	 * 
+	 * @param user The user
+	 * @param password The password
+	 * @return true after semaphore was available 
+	 */
+	public Boolean acquireSemaphore(String user, String password) {
+		if (logger.isTraceEnabled()) logger.trace(">>> acquireSemaphore({}, PWD)", user);
+		
+		String url = ingestorConfig.getProductionPlannerUrl() + "/semaphore/acquire";
+		RestTemplate restTemplate = rtb
+				.setConnectTimeout(Duration.ofMillis(ingestorConfig.getProductionPlannerTimeout()))
+				.basicAuthentication(user, password)
+				.build();
+		ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+		if (!HttpStatus.OK.equals(response.getStatusCode())) {
+			throw new ProcessingException(logError(MSG_ERROR_ACQUIRE_SEMAPHORE, MSG_ID_ERROR_ACQUIRE_SEMAPHORE,
+					response.getStatusCode().toString()));
+		}
+		return true;
+	}
+
+	/**
+	 * Release semaphore of production planner
+	 * 
+	 * @param user The user
+	 * @param password The password
+	 * @return true after semaphore was released 
+	 */
+	public Boolean releaseSemaphore(String user, String password) {
+		if (logger.isTraceEnabled()) logger.trace(">>> releaseSemaphore({}, PWD)", user);
+		
+		String url = ingestorConfig.getProductionPlannerUrl() + "/semaphore/release";
+		RestTemplate restTemplate = rtb
+				.setConnectTimeout(Duration.ofMillis(ingestorConfig.getProductionPlannerTimeout()))
+				.basicAuthentication(user, password)
+				.build();
+		ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+		if (!HttpStatus.OK.equals(response.getStatusCode())) {
+			throw new ProcessingException(logError(MSG_ERROR_RELEASE_SEMAPHORE, MSG_ID_ERROR_RELEASE_SEMAPHORE,
+					response.getStatusCode().toString()));
+		}
+		return true;
+	}
 }

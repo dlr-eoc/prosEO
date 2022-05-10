@@ -330,7 +330,19 @@ public class KubeJob {
 		}
 		setGenerationTime(jobStep.getOutputProduct(), genTime, retentionPeriod);
 		JobDispatcher jd = new JobDispatcher();
-		jobOrder = jd.createJobOrder(jobStep);
+		try {
+			jobOrder = jd.createJobOrder(jobStep);
+		} catch (Exception e) {
+			String errStr = String.format("Exception: creation of job order for job step %d failed", jobStep.getId());
+			errStr += "\n";
+			errStr += e.getMessage();
+			logger.error(errStr);
+			jobStep.setProcessingStdOut(errStr);
+			jobStep.setJobStepState(JobStepState.RUNNING);
+			jobStep.setJobStepState(JobStepState.FAILED);
+			RepositoryService.getJobStepRepository().save(jobStep);
+			return null;
+		}
 		if (jobOrder == null) {
 			String errStr = String.format("Creation of job order for job step %d failed", jobStep.getId());
 			logger.error(errStr);

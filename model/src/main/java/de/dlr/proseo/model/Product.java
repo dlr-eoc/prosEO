@@ -659,8 +659,12 @@ public class Product extends PersistentObject {
 		ExpressionParser parser = new SpelExpressionParser();
 		List<String> replacedExpressions = new ArrayList<>();
 		for (String expression: expressions) {
-			Expression exp = parser.parseExpression(expression);
-			replacedExpressions.add((String) exp.getValue(this));
+			try {
+				Expression exp = parser.parseExpression(expression);
+				replacedExpressions.add((String) exp.getValue(this));
+			} catch (EvaluationException e) {
+				throw new EvaluationException(e.getMessage() + "\n Parameter expression: " + expression);
+			}
 		}
 		if (logger.isDebugEnabled()) logger.debug("Replaced expressions: " + replacedExpressions);
 		
