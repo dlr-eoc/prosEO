@@ -164,7 +164,8 @@ public class PosixStorage implements Storage {
 	
 	
 	private String getAbsolutePath(String relativePath) {
-		return  new PathConverter().convertToSlash(Paths.get(getFullBucketPath(), relativePath).toString());
+		String path = Paths.get(getFullBucketPath(), relativePath).toString();
+		return  new PathConverter(path).convertToSlash().getPath();
 	}
 
 	private void createParentDirectories(String fullPath) {
@@ -295,7 +296,9 @@ public class PosixStorage implements Storage {
 				StorageFile sourceSubDir = getStorageFile(getRelativePath(file.getAbsolutePath()));
 				StorageFile targetSubDir = new PosixStorageFile(targetDir);
 				String targetSubDirPath = Paths.get(targetDir.getRelativePath(), file.getName()).toString();
-				targetSubDir.setRelativePath(new PathConverter().addSlashAtEnd(targetSubDirPath));
+				
+				String path = new PathConverter(targetSubDirPath).addSlashAtEnd().getPath();
+				targetSubDir.setRelativePath(path);
 				
 				List<String> subDirFiles = download(sourceSubDir, targetSubDir);
 				
@@ -337,7 +340,9 @@ public class PosixStorage implements Storage {
 		for (File file : files) {
 			
 			if (file.isDirectory()) {
-				String relativeDir =  new PathConverter().convertToSlash(Paths.get(relativePath, file.getName()).toString());
+				
+				String path = Paths.get(relativePath, file.getName()).toString();
+				String relativeDir = new PathConverter(path).convertToSlash().getPath();
 				List<String> dirFiles = getFiles(relativeDir);
 				returnFiles.addAll(dirFiles);
 			}

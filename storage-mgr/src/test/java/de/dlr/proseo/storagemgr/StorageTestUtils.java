@@ -79,7 +79,8 @@ public class StorageTestUtils {
 	public String createSourceFile(String relativePath) {
 
 		String testFileContent = "some text inside file";
-		String sourceFilePath = new PathConverter().convertToSlash(Paths.get(sourcePath, relativePath).toString());
+		String path = Paths.get(sourcePath, relativePath).toString();
+		String sourceFilePath = new PathConverter(path).convertToSlash().getPath();
 
 		TestUtils.createFile(sourceFilePath, testFileContent);
 
@@ -93,7 +94,8 @@ public class StorageTestUtils {
 	
 	public String getAbsoluteSourcePath(String relativePath) { 
 		
-		return  new PathConverter().convertToSlash(Paths.get(sourcePath, relativePath).toString());
+		String path = Paths.get(sourcePath, relativePath).toString();
+		return new PathConverter(path).convertToSlash().getPath();
 	}
 
 	public void uploadToPosixStorage(String relativePath) {

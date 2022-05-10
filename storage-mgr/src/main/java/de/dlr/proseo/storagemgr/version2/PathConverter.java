@@ -3,6 +3,7 @@ package de.dlr.proseo.storagemgr.version2;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Path Converter
@@ -12,214 +13,214 @@ import java.util.ArrayList;
  */
 public class PathConverter {
 
-	// private String path; 
-	private ArrayList<String> basePaths = new ArrayList<>();
+	private String p;
+	private List<String> basePaths = new ArrayList<>();
 
 	private static String S3PREFIX = "s3://";
 	private static String SLASH = "/";
 	private static String DOUBLESLASH = "//";
-	private static String BACKSLASH = "\\"; 
-	private static String WINPATH_IN_S3 = "-WIN-PATH-"; 
+	private static String BACKSLASH = "\\";
+	private static String WINPATH_IN_S3 = "-WIN-PATH-";
+
+	public PathConverter(String path) {
+		p = path.replace(BACKSLASH, SLASH); // convertToSlash
+		p = p.trim();
+	}
+
+	public PathConverter(String path, List<String> basePaths) {
+		this(path);
+		this.basePaths = basePaths;
+	}
+
+	public PathConverter(PathConverter pathConverter) {
+		this(pathConverter.getPath());
+		this.basePaths = pathConverter.basePaths;
+	}
 
 	public void addBasePath(String basePath) {
-		basePaths.add(removeLeftSlash(basePath.trim()));
-	}
-	
-	/*
-	public String getPath() { 
-		
-		return path; 
-	}
-	*/
-
-	public PathConverter() {
-		
-		//this.path = convertToSlash(path); 
-	}
-	
-	public String convertToSlash(String backSlashPath) { 
-	
-		return backSlashPath.replace(BACKSLASH, SLASH);
+		String path = new PathConverter(basePath).removeLeftSlash().getPath();
+		basePaths.add(path);
 	}
 
-	public String getRelativePath(String absolutePath) {
-		
-		String path = absolutePath.trim();
-		
-		path = convertToSlash(path); 
-
-		path = removeFsPrefix(path);
-		path = removeBasePath(path);
-
-		if (isS3Path(absolutePath)) {
-			path = removeBucket(path);
-		}
-
-		path = removeLeftSlash(path);
-
-		return path;
+	public String getPath() {
+		return p;
 	}
-	
-	public String getFirstFolder(String path) {
-		
-		path = convertToSlash(path); 
-		
-		String p = path.trim();
-		
-		p = removeLeftSlash(p);	
-		File file = new File(p);
-		
+
+	public PathConverter convertToSlash() {
+		return new PathConverter(p.replace(BACKSLASH, SLASH), basePaths);
+	}
+
+	public PathConverter getFirstFolder() {
+
+		String path = new PathConverter(p).removeLeftSlash().getPath();
+
+		File file = new File(path);
+
 		if (file.getParent() == null) {
-			return "";
+			return new PathConverter("", basePaths);
 		}
-		
-		return p.substring(0, p.indexOf(SLASH));
+
+		return new PathConverter(path.substring(0, path.indexOf(SLASH)), basePaths);
 	}
 
-	
-	public String removeFirstFolder(String path) {
-		
-		path = convertToSlash(path); 
-		
-		String p = path.trim();
-		
-		p = removeLeftSlash(p);	
-		File file = new File(p);
-		
+	public PathConverter removeFirstFolder() {
+
+		String path = new PathConverter(p).removeLeftSlash().getPath();
+
+		File file = new File(path);
+
 		if (file.getParent() == null) {
-			return p;
-		} 
-		
-		return p.substring(p.indexOf(SLASH) + 1);
-	}
-	
-	public boolean isS3Path(String path) {
-
-		return path.startsWith(S3PREFIX) ? true : false;
-	}
-
-	public String removeFsPrefix(String path) {
-
-		if (path.startsWith(S3PREFIX)) {
-			return path.substring(S3PREFIX.length());
+			return new PathConverter(path, basePaths);
 		}
 
-		return removeLeftSlash(path);
+		return new PathConverter(path.substring(p.indexOf(SLASH) + 1), basePaths);
 	}
 
-	public String removeBasePath(String path) {
+	public boolean isS3Path() {
+
+		return p.startsWith(S3PREFIX) ? true : false;
+	}
+
+	public PathConverter removeFsPrefix() {
+
+		if (p.startsWith(S3PREFIX)) {
+			return new PathConverter(p.substring(S3PREFIX.length()), basePaths);
+		}
+
+		return new PathConverter(p, basePaths).removeLeftSlash();
+	}
+
+	// removes base Path from path if base path is in the list. If not, deletes
+	// first folder as base path
+	public PathConverter removeBasePath() {
 
 		for (String basePath : basePaths) {
 
-			if (path.startsWith(basePath)) {
-				return path.substring(basePath.length());
+			if (p.startsWith(basePath)) {
+				return new PathConverter(p.substring(basePath.length()), basePaths);
 			}
 		}
 
-		return removeFirstFolder(path);
+		return new PathConverter(p, basePaths).removeFirstFolder();
 	}
 
-	public String removeBucket(String path) {
+	public PathConverter removeBucket() {
 
-		return path.substring(path.indexOf(SLASH));
+		return new PathConverter(p.substring(p.indexOf(SLASH)), basePaths);
 	}
 
-	public String removeLeftSlash(String path) {
+	public PathConverter removeLeftSlash() {
 
-		String p = path;
+		String path = p;
 
-		while (p.startsWith(SLASH)) {
-			p = path.substring(SLASH.length());
+		while (path.startsWith(SLASH)) {
+			path = path.substring(SLASH.length());
 		}
 
-		return p;
-	}
-	
-	public String addSlashAtEnd(String path) { 
-		
-		if (path.contains(SLASH)) 
-			return path + SLASH; 
-		
-		if (path.contains(BACKSLASH)) 
-			return path + BACKSLASH;
-		
-		return path;
+		return new PathConverter(path, basePaths);
 	}
 
-	public String verifyAbsolutePath(String path) {
-		
-		if (isDirectory(path)) path = addSlashAtEnd(path); 
-		
-		if (isLinuxPath(path)) path = addSlashAtBegin(path);
-		
-		return path;
-	}
-	
-	private boolean isDirectory(String path) {
-		
-		return new File(path).isDirectory();
+	public PathConverter addSlashAtEnd() {
+
+		if (p.contains(SLASH))
+			return new PathConverter(p + SLASH, basePaths);
+
+		if (p.contains(BACKSLASH))
+			return new PathConverter(p + BACKSLASH, basePaths);
+
+		return this;
 	}
 
-	public String addSlashAtBegin(String path) {
-		
-		if (path.startsWith(SLASH)) return path; 
-		
-		return path = SLASH + path; 
-		
+	public PathConverter verifyAbsolutePath() {
+
+		PathConverter pathConverter = this;
+
+		if (isDirectory())
+			pathConverter.addSlashAtEnd();
+
+		if (isLinuxPath())
+			pathConverter.addSlashAtBegin();
+
+		return pathConverter;
 	}
 
-	public boolean isWindowsPath(String path) {
-		
-		if (isS3Path(path)) return false; 
-		
-		if (path.indexOf(':') >= 0) return true;
-		
+	private boolean isDirectory() {
+
+		return new File(p).isDirectory();
+	}
+
+	public PathConverter addSlashAtBegin() {
+
+		if (p.startsWith(SLASH))
+			return this;
+
+		return new PathConverter(SLASH + p, basePaths);
+	}
+
+	public boolean isWindowsPath() {
+
+		if (isS3Path())
+			return false;
+
+		if (p.indexOf(':') >= 0)
+			return true;
+
 		return false;
 	}
-	
-	public boolean isLinuxPath(String path) {
-		
-		if (isS3Path(path)) return false; 
-		if (isWindowsPath(path)) return false; 
-		
-		return true; 
-	}
-	
-	public String posixToS3Path(String path) {
-		
-		path = convertToSlash(path); 
-		
-		// windows - replace ":"
-		if (isWindowsPath(path)) {
-			
-			return path.replace(":", WINPATH_IN_S3);
-		}
-		
-		// Linux - no action
-		return path; 
-	}
-	
-	public String s3ToPosixPath(String path) {
-		
-		path = convertToSlash(path); 
-		
-		// windows - restore ":"
-		if (isWinPathInS3(path)) {
-			
-			return path.replace(WINPATH_IN_S3, ":");
-		}
-		
-		// Linux - no action
-		return path; 
-	}
-	
-	public boolean isWinPathInS3(String path) {
-		
-		return (path.indexOf(WINPATH_IN_S3) >= 0) ? true : false;
+
+	public boolean isLinuxPath() {
+
+		if (isS3Path())
+			return false;
+
+		if (isWindowsPath())
+			return false;
+
+		return true;
 	}
 
-	public String removeDoubleSlash(String targetSubDirPath) {
-		
-		return targetSubDirPath.replace(DOUBLESLASH, SLASH);
+	public PathConverter posixToS3Path() {
+
+		// windows - replace ":"
+		if (isWindowsPath()) {
+			return new PathConverter(p.replace(":", WINPATH_IN_S3), basePaths);
+		}
+
+		// Linux - no action
+		return this;
+	}
+
+	public PathConverter s3ToPosixPath() {
+
+		// windows - restore ":"
+		if (isWinPathInS3()) {
+			return new PathConverter(p.replace(WINPATH_IN_S3, ":"), basePaths);
+		}
+
+		// Linux - no action
+		return this;
+	}
+
+	public boolean isWinPathInS3() {
+
+		return (p.indexOf(WINPATH_IN_S3) >= 0) ? true : false;
+	}
+
+	public PathConverter removeDoubleSlash() {
+
+		return new PathConverter(p.replace(DOUBLESLASH, SLASH), basePaths);
+	}
+
+	public PathConverter getRelativePath() {
+
+		PathConverter pathConverter = new PathConverter(this).removeFsPrefix().removeBasePath();
+
+		if (isS3Path()) {
+			pathConverter.removeBucket();
+		}
+
+		pathConverter.removeLeftSlash();
+
+		return pathConverter;
 	}
 }

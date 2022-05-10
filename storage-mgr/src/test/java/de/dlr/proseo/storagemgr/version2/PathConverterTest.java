@@ -2,6 +2,9 @@ package de.dlr.proseo.storagemgr.version2;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Test;
 
 public class PathConverterTest {
@@ -18,12 +21,12 @@ public class PathConverterTest {
 
 		String[] expected = { "mnt/blabla/", "folder1/file.txt", "file.txt", "folder/file.txt", "file.txt" };
 
-		PathConverter pathConverter = new PathConverter();
-		pathConverter.addBasePath(cachePath);
-
+		List<String> basePaths = new ArrayList<>();
+		basePaths.add(cachePath);
+	
 		for (int i = 0; i < pathes.length; i++) {
 
-			String relativePath = pathConverter.getRelativePath(pathes[i]);
+			String relativePath = new PathConverter(pathes[i], basePaths).getRelativePath().getPath();
 
 			assertTrue("Wrong relative path: " + relativePath + " expected: " + expected[i],
 					relativePath.equals(expected[i]));
@@ -39,13 +42,13 @@ public class PathConverterTest {
 		String expectedFirst1 = "first";
 		String expectedWithoutFirst1 = "second/file.txt";
 
-		PathConverter pathConverter = new PathConverter();
-		pathConverter.addBasePath(cachePath);
+		List<String> basePaths = new ArrayList<>();
+		basePaths.add(cachePath);
 
-		String firstPath = pathConverter.getFirstFolder(path1);
+		String firstPath = new PathConverter(path1, basePaths).getFirstFolder().getPath();
 		assertTrue("Wrong first path: " + firstPath + " expected: " + expectedFirst1, firstPath.equals(expectedFirst1));
 
-		String withoutFirst = pathConverter.removeFirstFolder(path1);
+		String withoutFirst = new PathConverter(path1, basePaths).removeFirstFolder().getPath();
 		assertTrue("Wrong without first path: " + withoutFirst + " expected: " + expectedWithoutFirst1,
 				withoutFirst.equals(expectedWithoutFirst1));
 	}

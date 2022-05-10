@@ -39,7 +39,8 @@ public class S3StorageFile implements StorageFile {
 	
 	@Override
 	public String getFullPath() {
-		return addS3Prefix( new PathConverter().convertToSlash(Paths.get(bucket, relativePath).toString()));
+		String path = Paths.get(bucket, relativePath).toString();
+		return addS3Prefix( new PathConverter(path).convertToSlash().getPath());
 	}
 	
 	private String addS3Prefix(String path) {

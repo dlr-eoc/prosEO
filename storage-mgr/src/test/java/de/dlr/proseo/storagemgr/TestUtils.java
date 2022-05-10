@@ -56,7 +56,7 @@ public class TestUtils {
 	 */
 	public String getStoragePath() {
 
-		return new PathConverter().convertToSlash(cfg.getPosixBackendPath());
+		return new PathConverter(cfg.getPosixBackendPath()).convertToSlash().getPath();
 	}
 
 	/**
@@ -64,7 +64,7 @@ public class TestUtils {
 	 */
 	public String getSourcePath() {
 
-		return new PathConverter().convertToSlash(cfg.getPosixSourcePath());
+		return new PathConverter(cfg.getPosixSourcePath()).convertToSlash().getPath();
 	}
 
 	/**
@@ -72,7 +72,7 @@ public class TestUtils {
 	 */
 	public String getCachePath() {
 
-		return new PathConverter().convertToSlash(cfg.getPosixCachePath());
+		return new PathConverter(cfg.getPosixCachePath()).convertToSlash().getPath();
 	}
 
 	/**
@@ -81,7 +81,7 @@ public class TestUtils {
 
 	public String getTestSourcePath() {
 
-		return new PathConverter().convertToSlash(getTestPath(getSourcePath()));
+		return new PathConverter(getTestPath(getSourcePath())).convertToSlash().getPath();
 	}
 
 	/**
@@ -89,7 +89,7 @@ public class TestUtils {
 	 */
 	public String getTestStoragePath() {
 
-		return new PathConverter().convertToSlash(getTestPath(getStoragePath()));
+		return new PathConverter(getTestPath(getStoragePath())).convertToSlash().getPath();
 	}
 
 	/**
@@ -97,7 +97,7 @@ public class TestUtils {
 	 */
 	public String getTestCachePath() {
 
-		return new PathConverter().convertToSlash(getTestPath(getCachePath()));
+		return new PathConverter(getTestPath(getCachePath())).convertToSlash().getPath();
 	}
 
 	/**
@@ -105,8 +105,8 @@ public class TestUtils {
 	 * @return
 	 */
 	private String getTestPath(String path) {
-
-		return new PathConverter().convertToSlash(Paths.get(path, TEST_DIRECTORY).toString());
+		String p = Paths.get(path, TEST_DIRECTORY).toString();
+		return new PathConverter(p).convertToSlash().getPath();
 	}
 
 	/**

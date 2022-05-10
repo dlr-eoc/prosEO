@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.annotation.PostConstruct;
 
@@ -36,8 +38,8 @@ public class StorageProvider {
 	private static StorageProvider theStorageProvider;
 
 	private Storage storage;
-
-	private PathConverter pathConverter = new PathConverter();
+	
+	List<String> basePaths = new ArrayList<>();
 
 	/** For smooth integration only, will be removed */
 	private boolean version2;
@@ -74,9 +76,9 @@ public class StorageProvider {
 
 		version2 = cfg.getStorageManagerVersion2().equals("true") ? true : false;
 
-		pathConverter.addBasePath(storage.getBasePath());
-		// pathConverter.addBasePath(cfg.getPosixSourcePath());
-		pathConverter.addBasePath(cfg.getPosixCachePath());
+		basePaths.add(storage.getBasePath());
+		// basePaths.add(cfg.getPosixSourcePath());   
+		basePaths.add(cfg.getPosixCachePath());
 	}
 
 	public Storage getStorage() {
@@ -162,50 +164,39 @@ public class StorageProvider {
 	
 	// if file only, return source path
 	public StorageFile getAbsoluteFile(String absolutePath) {
-
-		/*
-		Path path = Paths.get(absolutePath);
-		String filename = path.getFileName().toString();
-		String folder;
-
-		if (path.getParent() == null) {
-			folder = cfg.getPosixSourcePath();
-		} else {
-			folder = path.getParent().toString();
-		}
-		*/
 		
-		String basePath = pathConverter.getFirstFolder(absolutePath);
-		String relativePath = pathConverter.removeFirstFolder(absolutePath);
+		String basePath = new PathConverter(absolutePath, basePaths).getFirstFolder().getPath();
+		String relativePath = new PathConverter(absolutePath, basePaths).removeFirstFolder().getPath();
 
 		return new PosixStorageFile(basePath, relativePath);
 	}
 
 	public String getAbsoluteSourcePath(String relativePath) {
-
-		return new PathConverter().convertToSlash(Paths.get(cfg.getPosixSourcePath(), relativePath).toString());
+		
+		String path = Paths.get(cfg.getPosixSourcePath(), relativePath).toString();
+		return new PathConverter(path, basePaths).convertToSlash().getPath();
 	}
 	
 	public String getAbsoluteCachePath(String relativePath) {
-
-		return new PathConverter().convertToSlash(Paths.get(cfg.getPosixCachePath(), relativePath).toString());
+		
+		String path = Paths.get(cfg.getPosixCachePath(), relativePath).toString();
+		return new PathConverter(path, basePaths).convertToSlash().getPath();
 	}
 	
 	public String getAbsoluteStoragePath(String relativePath) {
 		
-		return new PathConverter().convertToSlash(Paths.get(cfg.getPosixBackendPath(), relativePath).toString());
+		String path = Paths.get(cfg.getPosixBackendPath(), relativePath).toString();
+		
+		return new PathConverter(path, basePaths).convertToSlash().getPath();
 	}
 	
 	public String getRelativePath(String absolutePath) {
 
-		return pathConverter.getRelativePath(absolutePath);
+		return new PathConverter(absolutePath).getRelativePath().getPath();
 	}
 
 	public StorageFile createStorageFile(String relativePath, String content) {
 		
 		return storage.createStorageFile(relativePath, content);
-	}
-
-	
-	
+	}	
 }

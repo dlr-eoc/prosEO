@@ -104,7 +104,7 @@ public class S3Storage implements BucketsStorage {
 	@Override
 	public String downloadFile(StorageFile sourceFile, StorageFile targetFileOrDir) throws IOException {
 
-		String sourcePath =  new PathConverter().posixToS3Path(sourceFile.getRelativePath());
+		String sourcePath =  new PathConverter(sourceFile.getRelativePath()).posixToS3Path().getPath();
 		String targetPath = targetFileOrDir.getFullPath();
 
 		s3DAL.setBucket(sourceFile.getBucket());
@@ -154,7 +154,7 @@ public class S3Storage implements BucketsStorage {
 
 		String path = Paths.get(basePath, relativePath).toString();
 
-		path = new PathConverter().verifyAbsolutePath(path);
+		path = new PathConverter(path).verifyAbsolutePath().getPath();
 
 		FileUtils fileUtils = new FileUtils(path);
 		fileUtils.createFile(content);
@@ -214,7 +214,7 @@ public class S3Storage implements BucketsStorage {
 				
 				String targetSubDirPath = targetDir.getRelativePath() + "/" + sourceSubDir.getFileName() + "/"; 
 
-				targetSubDirPath = new PathConverter().removeDoubleSlash(targetSubDirPath);
+				targetSubDirPath = new PathConverter(targetSubDirPath).removeDoubleSlash().getPath();
 				
 				StorageFile targetSubDir = new S3StorageFile(targetDir);
 				targetSubDir.setRelativePath(targetSubDirPath);
@@ -288,10 +288,8 @@ public class S3Storage implements BucketsStorage {
 	
 	public StorageFile getAbsoluteStorageFile(String absolutePath) {
 		
-		PathConverter pathConverter = new PathConverter(); 
-		
-		String basePath = pathConverter.getFirstFolder(absolutePath);
-		String relativePath = pathConverter.removeFirstFolder(absolutePath);
+		String basePath = new PathConverter(absolutePath).getFirstFolder().getPath();
+		String relativePath = new PathConverter(absolutePath).removeFirstFolder().getPath();
 
 		return new PosixStorageFile(basePath, relativePath);
 	}
