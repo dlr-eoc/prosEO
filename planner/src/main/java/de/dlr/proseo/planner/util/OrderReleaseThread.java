@@ -8,6 +8,7 @@
 package de.dlr.proseo.planner.util;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -16,6 +17,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.ProcessingOrder;
+import de.dlr.proseo.model.SimplePolicy;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Message;
@@ -151,6 +153,13 @@ public class OrderReleaseThread extends Thread {
 				Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
 				if (orderOpt.isPresent()) {
 					jobList.addAll(orderOpt.get().getJobs());
+
+					jobList.sort(new Comparator<Job>() {
+						@Override
+						public int compare(Job o1, Job o2) {
+							return o1.getStartTime().compareTo(o2.getStartTime());
+						}});
+					
 					return orderOpt.get();
 				}
 				return null;

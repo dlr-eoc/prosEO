@@ -7,6 +7,7 @@ package de.dlr.proseo.planner.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -152,7 +153,7 @@ public class JobStepUtil {
 					}
 				} else {
 					for (ProcessingFacility pf : RepositoryService.getFacilityRepository().findAll()) {
-						jobSteps.addAll(RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(pf.getId(), jobStepStates));
+						jobSteps.addAll(RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(pf.getId(), jobStepStates));
 					}
 				}
 			} else {
@@ -172,7 +173,7 @@ public class JobStepUtil {
 						}
 					}
 				} else {
-					jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(pfId, jobStepStates);
+					jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(pfId, jobStepStates);
 				}
 			}
 			return jobSteps;
@@ -831,7 +832,7 @@ public class JobStepUtil {
 						}
 						@SuppressWarnings("unused")
 						String dummy = transactionTemplate.execute((status) -> {
-							List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(kc.getLongId(), states);
+							List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(kc.getLongId(), states);
 							for (JobStep js : jobSteps) {
 								if ((js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)
 										&& js.getJob().getProcessingOrder().getOrderState() != OrderState.SUSPENDING
@@ -1032,7 +1033,15 @@ public class JobStepUtil {
 								order = opt.get();
 							}
 							if (order != null) {
-								for (Job job : order.getJobs()) {
+								List<Job> jobList = new ArrayList<Job>();
+								jobList.addAll(order.getJobs());
+								jobList.sort(new Comparator<Job>() {
+									@Override
+									public int compare(Job o1, Job o2) {
+										return o1.getStartTime().compareTo(o2.getStartTime());
+									}});
+								
+								for (Job job : jobList) {
 									for (JobStep js : job.getJobSteps()) {
 										jobSteps.add(js.getId());
 									}
