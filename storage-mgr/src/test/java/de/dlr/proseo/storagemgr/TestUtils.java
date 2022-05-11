@@ -56,7 +56,7 @@ public class TestUtils {
 	 */
 	public String getStoragePath() {
 
-		return new PathConverter(cfg.getPosixBackendPath()).convertToSlash().getPath();
+		return cfg.getPosixBackendPath();
 	}
 
 	/**
@@ -64,7 +64,7 @@ public class TestUtils {
 	 */
 	public String getSourcePath() {
 
-		return new PathConverter(cfg.getPosixSourcePath()).convertToSlash().getPath();
+		return cfg.getPosixSourcePath();
 	}
 
 	/**
@@ -72,7 +72,7 @@ public class TestUtils {
 	 */
 	public String getCachePath() {
 
-		return new PathConverter(cfg.getPosixCachePath()).convertToSlash().getPath();
+		return cfg.getPosixCachePath();
 	}
 
 	/**
@@ -81,7 +81,7 @@ public class TestUtils {
 
 	public String getTestSourcePath() {
 
-		return new PathConverter(getTestPath(getSourcePath())).convertToSlash().getPath();
+		return getTestPath(getSourcePath());
 	}
 
 	/**
@@ -89,7 +89,7 @@ public class TestUtils {
 	 */
 	public String getTestStoragePath() {
 
-		return new PathConverter(getTestPath(getStoragePath())).convertToSlash().getPath();
+		return getTestPath(getStoragePath());
 	}
 
 	/**
@@ -97,7 +97,7 @@ public class TestUtils {
 	 */
 	public String getTestCachePath() {
 
-		return new PathConverter(getTestPath(getCachePath())).convertToSlash().getPath();
+		return getTestPath(getCachePath());
 	}
 
 	/**
@@ -105,8 +105,7 @@ public class TestUtils {
 	 * @return
 	 */
 	private String getTestPath(String path) {
-		String p = Paths.get(path, TEST_DIRECTORY).toString();
-		return new PathConverter(p).convertToSlash().getPath();
+		return Paths.get(path, TEST_DIRECTORY).toString();
 	}
 
 	/**
@@ -307,6 +306,14 @@ public class TestUtils {
 	public static void printDirectoryTree(String directoryPath) {
 
 		System.out.println();
+		
+		File dir = new File(directoryPath);
+
+		if ((null == dir) || !dir.exists()) {
+			System.out.println("Error in printDirectoryTree: Directory does not exist: " + directoryPath);
+			return;
+		}
+		
 		String directory = new File(directoryPath).getName();
 		
 		System.out.print("FOLDER: " + directory + " PATH: " + directoryPath);
@@ -355,6 +362,12 @@ public class TestUtils {
 	}
 
 	private static int countFilesInDirectory(File directory) {
+		
+		if ((null == directory) || !directory.exists()) {
+			System.out.println("Error in countFilesInDirectory: Directory does not exist: " + directory);
+			return 0;
+		}
+		
 		int count = 0;
 		for (File file : directory.listFiles()) {
 			if (file.isFile()) {
@@ -373,6 +386,12 @@ public class TestUtils {
 	}
 
 	private static int countDirectoriesInDirectory(File directory) {
+		
+		if ((null == directory) || !directory.exists()) {
+			System.out.println("Error in countDirectoriesInDirectory: Directory does not exist: " + directory);
+			return 0;
+		}
+		
 		int count = 0;
 		for (File file : directory.listFiles()) {
 			if (file.isDirectory()) {

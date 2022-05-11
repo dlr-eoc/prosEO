@@ -73,7 +73,7 @@ public class PathConverter {
 			return new PathConverter(path, basePaths);
 		}
 
-		return new PathConverter(path.substring(p.indexOf(SLASH) + 1), basePaths);
+		return new PathConverter(path.substring(path.indexOf(SLASH) + 1), basePaths);
 	}
 
 	public boolean isS3Path() {
@@ -87,7 +87,7 @@ public class PathConverter {
 			return new PathConverter(p.substring(S3PREFIX.length()), basePaths);
 		}
 
-		return new PathConverter(p, basePaths).removeLeftSlash();
+		return new PathConverter(p, basePaths);
 	}
 
 	// removes base Path from path if base path is in the list. If not, deletes
@@ -101,7 +101,7 @@ public class PathConverter {
 			}
 		}
 
-		return new PathConverter(p, basePaths).removeFirstFolder();
+		return this;
 	}
 
 	public PathConverter removeBucket() {
@@ -216,11 +216,9 @@ public class PathConverter {
 		PathConverter pathConverter = new PathConverter(this).removeFsPrefix().removeBasePath();
 
 		if (isS3Path()) {
-			pathConverter.removeBucket();
+			pathConverter = pathConverter.removeBucket();
 		}
 
-		pathConverter.removeLeftSlash();
-
-		return pathConverter;
+		return pathConverter.removeLeftSlash();
 	}
 }

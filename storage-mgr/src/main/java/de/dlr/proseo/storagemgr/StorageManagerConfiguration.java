@@ -181,7 +181,7 @@ public class StorageManagerConfiguration {
 	 * @return the POSIX cache path
 	 */
 	public String getPosixCachePath() {
-		return new PathConverter(new File(posixCachePath).getAbsolutePath()).convertToSlash().getPath();
+		return new File(posixCachePath).getAbsolutePath();
 	}
 	
 	/**
@@ -190,7 +190,7 @@ public class StorageManagerConfiguration {
 	 * @return the POSIX source path
 	 */
 	public String getPosixSourcePath() {
-		return new PathConverter(new File(sourcePath).getAbsolutePath()).convertToSlash().getPath();
+		return new File(sourcePath).getAbsolutePath();
 	}
 
 	/**
@@ -199,7 +199,7 @@ public class StorageManagerConfiguration {
 	 * @return the POSIX backend storage path
 	 */
 	public String getPosixBackendPath() {
-		return new PathConverter(new File(posixBackendPath).getAbsolutePath()).convertToSlash().getPath();
+		return new File(posixBackendPath).getAbsolutePath();
 	}
 	
 	/**
