@@ -296,11 +296,13 @@ public class PosixStorage implements Storage {
 			if (file.isDirectory()) {
 				
 				StorageFile sourceSubDir = getStorageFile(getRelativePath(file.getAbsolutePath()));
+				String sourceSubDirPath = new PathConverter(sourceSubDir.getRelativePath()).addSlashAtEnd().getPath();
+				sourceSubDir.setRelativePath(sourceSubDirPath);
+				
 				StorageFile targetSubDir = new PosixStorageFile(targetDir);
 				String targetSubDirPath = Paths.get(targetDir.getRelativePath(), file.getName()).toString();
-				
-				String path = new PathConverter(targetSubDirPath).addSlashAtEnd().getPath();
-				targetSubDir.setRelativePath(path);
+				targetSubDirPath = new PathConverter(targetSubDirPath).addSlashAtEnd().getPath();
+				targetSubDir.setRelativePath(targetSubDirPath);
 				
 				List<String> subDirFiles = download(sourceSubDir, targetSubDir);
 				

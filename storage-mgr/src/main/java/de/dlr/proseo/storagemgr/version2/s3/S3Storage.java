@@ -281,14 +281,13 @@ public class S3Storage implements BucketsStorage {
 	}
 
 	@Override
-	public String deleteFile(StorageFile storageFileOrDir) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+	public String deleteFile(StorageFile storageFile) throws IOException {
+		return s3DAL.deleteFile(storageFile.getRelativePath());
 	}
 	
 	public StorageFile getAbsoluteStorageFile(String absolutePath) {
 		
-		String basePath = new PathConverter(absolutePath).getFirstFolder().getPath();
+		String basePath = new PathConverter(absolutePath).getFirstFolder().addSlashAtBegin().getPath();
 		String relativePath = new PathConverter(absolutePath).removeFirstFolder().getPath();
 
 		return new PosixStorageFile(basePath, relativePath);

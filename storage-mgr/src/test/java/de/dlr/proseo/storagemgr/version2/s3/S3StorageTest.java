@@ -64,14 +64,14 @@ public class S3StorageTest {
 
 		TestUtils.createEmptyStorageDirectories();
 
-		String prefix = "files";
+		String prefix = "files/";
 
 		List<String> pathes = new ArrayList<>();
-		pathes.add(prefix + "/file1.txt");
-		pathes.add(prefix + "/file2.txt");
-		pathes.add(prefix + "/dir/file3.txt");
-		pathes.add(prefix + "/dir/dir2/file4.txt");
-		pathes.add(prefix + "/dir/dir2/file5.txt");
+		pathes.add(prefix + "file1.txt");
+		pathes.add(prefix + "file2.txt");
+		pathes.add(prefix + "dir/file3.txt");
+		pathes.add(prefix + "dir/dir2/file4.txt");
+		pathes.add(prefix + "dir/dir2/file5.txt");
 
 		for (String path : pathes) {
 			storageTestUtils.createSourceFile(path);
@@ -84,6 +84,8 @@ public class S3StorageTest {
 			Storage storage = storageProvider.setStorage(StorageType.S3);
 
 			StorageFile sourceDir = storageProvider.getSourceFile(prefix);
+			
+			// change prefix to source absolute path to have right uploaded path - sourceDir.fullPath instead prefix
 			StorageFile targetDir = storageProvider.getStorageFile(prefix);
 
 			List<String> uploadedPathes = storage.upload(sourceDir, targetDir);
@@ -98,7 +100,7 @@ public class S3StorageTest {
 				deletedPathes.add(deletedFile);
 			}
 			
-			//storage.deleteBucket(storage.getBucket());
+			// storage.deleteBucket(storage.getBucket());
 			
 			TestUtils.printList("Deleted storage pathes:", deletedPathes);
 			TestUtils.printList("S3 Storage files after delete:", storage.getFiles());
