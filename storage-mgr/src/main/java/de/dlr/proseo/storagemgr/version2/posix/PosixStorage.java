@@ -34,6 +34,8 @@ public class PosixStorage implements Storage {
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(PosixStorage.class);
+	
+	private PosixDAL posixDAL = new PosixDAL(); 
 
 	public PosixStorage() {
 	}
