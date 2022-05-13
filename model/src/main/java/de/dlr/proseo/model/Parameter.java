@@ -6,6 +6,10 @@
 package de.dlr.proseo.model;
 
 import java.io.Serializable;
+import java.time.DateTimeException;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.TemporalAccessor;
 
 import javax.persistence.Basic;
 import javax.persistence.Embeddable;
@@ -13,6 +17,7 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 
 import de.dlr.proseo.model.enums.ParameterType;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
  * This class allows to add mission-specific parameters to any persistent object. A parameter consists of a type
@@ -149,6 +154,20 @@ public class Parameter {
 			}
 			throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), 
 					parameterType.toString()));
+		case INSTANT:
+			if (parameterValue instanceof TemporalAccessor) {
+				this.parameterValue = OrbitTimeFormatter.format((TemporalAccessor) parameterValue);
+			}
+			if (parameterValue instanceof String) {
+				try {
+					this.parameterValue = OrbitTimeFormatter.format(OrbitTimeFormatter.parseDateTime((String) parameterValue));
+					break;
+				} catch (DateTimeException e) {
+					// Handled below
+				}
+			}
+			throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), 
+					parameterType.toString()));
 		}
 	}
 	
@@ -233,6 +252,28 @@ public class Parameter {
 	public void setDoubleValue(Double newValue) {
 		parameterType = ParameterType.DOUBLE;
 		parameterValue = newValue.toString();
+	}
+	
+	/**
+	 * Gets the parameter value as Instant, if it has the appropriate type
+	 * @return the parameter value
+	 * @throws ClassCastException if the parameter is not of type ParameterType.INSTANT
+	 */
+	public Instant getInstantValue() throws ClassCastException {
+		if (ParameterType.INSTANT.equals(parameterType)) {
+			return Instant.from(OrbitTimeFormatter.parseDateTime(parameterValue));
+		} else {
+			throw new ClassCastException(String.format(MSG_PARAMETER_CANNOT_BE_CONVERTED, parameterType.toString(), 
+					ParameterType.INSTANT.toString()));
+		}
+	}
+	/**
+	 * Sets the value of the parameter to the given instant and the type to ParameterType.INSTANT
+	 * @param newValue the value to set (the type is implicit)
+	 */
+	public void setInstantValue(TemporalAccessor newValue) {
+		parameterType = ParameterType.INSTANT;
+		parameterValue = OrbitTimeFormatter.format(newValue);
 	}
 	
 	@Override

@@ -6,6 +6,7 @@
 package de.dlr.proseo.model;
 
 import java.time.Instant;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -623,6 +624,32 @@ public class Product extends PersistentObject {
 			param = new Parameter();
 		}
 		param.setDoubleValue(value);
+		this.parameters.put(key, param);
+	}
+	
+	/**
+	 * Get a named Instant parameter
+	 * 
+	 * @param key the name of the Instant parameter
+	 * @return the parameter value casted to Instant
+	 * @throws ClassCastException if the named parameter is not of an appropriate type
+	 */
+	public Instant getInstantParameter(String key) throws ClassCastException {
+		return parameters.get(key).getInstantValue();
+	}
+
+	/**
+	 * Set the named Instant parameter to the given value
+	 * 
+	 * @param key the parameter name
+	 * @param value the parameter value to set
+	 */
+	public void setInstantParameter(String key, TemporalAccessor value) {
+		Parameter param = parameters.get(key);
+		if (null == param) {
+			param = new Parameter();
+		}
+		param.setInstantValue(value);
 		this.parameters.put(key, param);
 	}
 	

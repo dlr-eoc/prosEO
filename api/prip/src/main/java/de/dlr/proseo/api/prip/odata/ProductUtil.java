@@ -305,8 +305,12 @@ public class ProductUtil {
 				entityValue = parameter.getValue().getDoubleValue();
 				break;
 			case BOOLEAN:
-				entityType = (FullQualifiedName) ProductEdmProvider.ET_STRINGATTRIBUTE_FQN;
+				entityType = (FullQualifiedName) ProductEdmProvider.ET_BOOLEANATTRIBUTE_FQN;
 				entityValue = parameter.getValue().getBooleanValue().toString();
+				break;
+			case INSTANT:
+				entityType = (FullQualifiedName) ProductEdmProvider.ET_DATEATTRIBUTE_FQN;
+				entityValue = parameter.getValue().getInstantValue();
 				break;
 			}
 			Entity parameterEntity = new Entity();
