@@ -122,6 +122,12 @@ public class PathConverter {
 
 	public PathConverter addSlashAtEnd() {
 
+		if (p.endsWith(SLASH))
+			return this;
+		
+		if (p.endsWith(BACKSLASH))
+			return this;
+		
 		if (p.contains(SLASH))
 			return new PathConverter(p + SLASH, basePaths);
 

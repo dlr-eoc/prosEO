@@ -27,66 +27,65 @@ public class PosixDALTest {
 
 	@Rule
 	public TestName testName = new TestName();
-	
+
 	@Autowired
 	private TestUtils testUtils;
-	
+
 	@Autowired
 	private StorageTestUtils storageTestUtils;
-	
+
 	@Test
 	public void test() {
-		
+
 		TestUtils.printMethodName(this, testName);
 		TestUtils.createEmptyStorageDirectories();
-		
-		String prefix = "files/"; 
-		
+
+		String prefix = "files/";
+
 		List<String> pathes = new ArrayList<>();
 		pathes.add(prefix + "file1.txt");
 		pathes.add(prefix + "file2.txt");
 		pathes.add(prefix + "dir/file3.txt");
-		
+
 		List<String> sourcePathes = new ArrayList<>();
-		
+
 		for (String path : pathes) {
-			
+
 			String sourcePath = storageTestUtils.createSourceFile(path);
-			sourcePathes.add(sourcePath); 
-			
+			sourcePathes.add(sourcePath);
+
 		}
-		
+
 		String sourcePath = testUtils.getSourcePath();
 		String storagePath = testUtils.getStoragePath();
-		
-		PosixDAL posixDAL = new PosixDAL(); 
-		
-		
+
+		PosixDAL posixDAL = new PosixDAL();
+
 		try {
-			// create source files 
-			List<String> sourceFiles = 	posixDAL.getFiles(sourcePath);
+			// create source files
+			List<String> sourceFiles = posixDAL.getFiles(sourcePath);
 			TestUtils.printList("Source Files: ", sourceFiles);
 			assertTrue("Expected: 3, " + " Exists: " + sourceFiles.size(), sourceFiles.size() == 3);
-			
+
 			// upload files to storage
 			List<String> uploadedFiles = posixDAL.upload(sourcePath, storagePath);
 			TestUtils.printList("Uploaded Files: ", uploadedFiles);
 			assertTrue("Expected: 3, " + " Exists: " + uploadedFiles.size(), uploadedFiles.size() == 3);
-		
-			// delete source files 
+
+			// delete source files
 			List<String> deletedFiles = posixDAL.delete(sourcePath);
 			TestUtils.printList("Deleted Files: ", deletedFiles);
 			assertTrue("Expected: 3, " + " Exists: " + deletedFiles.size(), deletedFiles.size() == 3);
 
-			// download files from storage 
+			// download files from storage
 			List<String> downloadedFiles = posixDAL.download(storagePath, sourcePath);
 			TestUtils.printList("Downloaded Files: ", downloadedFiles);
 			assertTrue("Expected: 3, " + " Exists: " + downloadedFiles.size(), downloadedFiles.size() == 3);
-	
-		} catch (IOException e) {			
+
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
 
 }
