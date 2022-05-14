@@ -63,17 +63,25 @@ public class PosixDALTest {
 		
 		
 		try {
+			// create source files 
 			List<String> sourceFiles = 	posixDAL.getFiles(sourcePath);
 			TestUtils.printList("Source Files: ", sourceFiles);
+			assertTrue("Expected: 3, " + " Exists: " + sourceFiles.size(), sourceFiles.size() == 3);
 			
+			// upload files to storage
 			List<String> uploadedFiles = posixDAL.upload(sourcePath, storagePath);
 			TestUtils.printList("Uploaded Files: ", uploadedFiles);
+			assertTrue("Expected: 3, " + " Exists: " + uploadedFiles.size(), uploadedFiles.size() == 3);
 		
+			// delete source files 
 			List<String> deletedFiles = posixDAL.delete(sourcePath);
 			TestUtils.printList("Deleted Files: ", deletedFiles);
+			assertTrue("Expected: 3, " + " Exists: " + deletedFiles.size(), deletedFiles.size() == 3);
 
+			// download files from storage 
 			List<String> downloadedFiles = posixDAL.download(storagePath, sourcePath);
 			TestUtils.printList("Downloaded Files: ", downloadedFiles);
+			assertTrue("Expected: 3, " + " Exists: " + downloadedFiles.size(), downloadedFiles.size() == 3);
 	
 		} catch (IOException e) {			
 			e.printStackTrace();

@@ -46,24 +46,23 @@ public class PosixDAL {
 	}
 
 	public String uploadFile(String sourceFile, String targetFileOrDir) throws IOException {
-
-		createParentDirectories(targetFileOrDir);
-
-		Path sourceFilePath = new File(sourceFile).toPath();
-
-		// if targetDir, takes filename from sourceFile automatically, if targetFile,
-		// takes name from sourceFile
-		Path targetFileOrDirPath = new File(targetFileOrDir).toPath();
 		
-		if (targetFileOrDir.endsWith("/") || targetFileOrDir.endsWith("\\")) { 
-			
-			
-			
+		if (logger.isTraceEnabled())
+			logger.trace(">>> uploadFile({},{})", sourceFile, targetFileOrDir);
+		
+		String targetFile = targetFileOrDir; 
+		
+		if (new PathConverter(targetFileOrDir).isDirectory()) {
+			targetFile = Paths.get(targetFileOrDir, getFileName(sourceFile)).toString();
 		}
+				
+		createParentDirectories(targetFile);
 		
+		Path sourceFilePath = new File(sourceFile).toPath();
+		Path targetFilePath = new File(targetFile).toPath();
 
 		try {
-			Path copiedPath = Files.copy(sourceFilePath, targetFileOrDirPath, StandardCopyOption.REPLACE_EXISTING);
+			Path copiedPath = Files.copy(sourceFilePath, targetFilePath, StandardCopyOption.REPLACE_EXISTING);
 			return copiedPath.toString();
 
 		} catch (IOException e) {
@@ -77,7 +76,7 @@ public class PosixDAL {
 	public List<String> upload(String sourceFileOrDir, String targetFileOrDir) throws IOException {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> upload({},())", sourceFileOrDir, targetFileOrDir);
+			logger.trace(">>> upload({},{})", sourceFileOrDir, targetFileOrDir);
 
 		List<String> uploadedFiles = new ArrayList<String>();
 
@@ -116,24 +115,23 @@ public class PosixDAL {
 	}
 
 	public String downloadFile(String sourceFile, String targetFileOrDir) throws IOException {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> downloadFile({},{})", sourceFile, targetFileOrDir);
 
-		createParentDirectories(targetFileOrDir);
+		String targetFile = targetFileOrDir;
 
-		String targetPath = targetFileOrDir;
-
-		if (isDirectory(targetFileOrDir)) {
-			targetPath = Paths.get(targetPath, getFileName(sourceFile)).toString();
-			createParentDirectories(targetPath);
+		if (new PathConverter(targetFileOrDir).isDirectory()) {
+			targetFile = Paths.get(targetFileOrDir, getFileName(sourceFile)).toString();
 		}
+		
+		createParentDirectories(targetFile);
 
 		Path sourceFilePath = new File(sourceFile).toPath();
-
-		// if targetDir, takes filename from sourceFile automatically,
-		// if targetFile, takes name from sourceFile
-		Path targetFileOrDirPath = new File(targetPath).toPath();
+		Path targetFilePath = new File(targetFile).toPath();
 
 		try {
-			Path copiedPath = Files.copy(sourceFilePath, targetFileOrDirPath, StandardCopyOption.REPLACE_EXISTING);
+			Path copiedPath = Files.copy(sourceFilePath, targetFilePath, StandardCopyOption.REPLACE_EXISTING);
 			return copiedPath.toString();
 
 		} catch (Exception e) {
@@ -148,7 +146,7 @@ public class PosixDAL {
 	public List<String> download(String sourceFileOrDir, String targetFileOrDir) throws IOException {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> upload({},())", sourceFileOrDir, targetFileOrDir);
+			logger.trace(">>> upload({},{})", sourceFileOrDir, targetFileOrDir);
 
 		List<String> downloadedFiles = new ArrayList<String>();
 
@@ -192,21 +190,24 @@ public class PosixDAL {
 		return downloadedFiles;
 	}
 
-	public String deleteFile(String filepath) throws IOException {
+	public String deleteFile(String sourceFile) throws IOException {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteFile({})", sourceFile);
 
 		try {
-			boolean fileDeleted = new File(filepath).delete();
+			boolean fileDeleted = new File(sourceFile).delete();
 
 			if (fileDeleted) {
-				return filepath;
+				return sourceFile;
 			} else {
-				throw new IOException("Cannot delete file: " + filepath);
+				throw new IOException("Cannot delete file: " + sourceFile);
 			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
 			if (logger.isTraceEnabled())
-				logger.error("Cannot download file: " + filepath, e.getMessage());
+				logger.error("Cannot download file: " + sourceFile, e.getMessage());
 			throw e;
 		}
 	}
@@ -283,14 +284,16 @@ public class PosixDAL {
 		return returnFiles;
 	}
 
-	private void createParentDirectories(String fullPath) {
+	private void createParentDirectories(String path) {
+				
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getFiles({})", path);
 
-		File targetFile = new File(fullPath);
+		File targetFile = new File(path);
 		File parent = targetFile.getParentFile();
 
 		if (parent != null && !parent.exists() && !parent.mkdirs()) {
 			throw new IllegalStateException("Couldn't create dir: " + parent);
 		}
 	}
-
 }

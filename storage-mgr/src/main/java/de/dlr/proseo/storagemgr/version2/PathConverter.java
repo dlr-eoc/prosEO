@@ -144,9 +144,9 @@ public class PathConverter {
 		return pathConverter;
 	}
 
-	private boolean isDirectory() {
+	public boolean isDirectory() {
 
-		return new File(p).isDirectory();
+		return (p.endsWith(SLASH) || p.endsWith(BACKSLASH)) ? true : false; 
 	}
 
 	public PathConverter addSlashAtBegin() {
