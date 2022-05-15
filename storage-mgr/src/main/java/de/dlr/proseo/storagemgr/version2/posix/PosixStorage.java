@@ -29,13 +29,13 @@ public class PosixStorage implements Storage {
 
 	private String basePath;
 	private String bucket;
-	
+
 	private static String PREFIX = StorageType.POSIX.toString() + "|";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(PosixStorage.class);
-	
-	private PosixDAL posixDAL = new PosixDAL(); 
+
+	private PosixDAL posixDAL = new PosixDAL();
 
 	public PosixStorage() {
 	}
@@ -44,7 +44,7 @@ public class PosixStorage implements Storage {
 		this.basePath = basePath;
 		this.bucket = StorageFile.NO_BUCKET;
 
-		createDirectories(basePath);
+		new FileUtils(basePath).createDirectories();
 	}
 
 	@Override
@@ -55,6 +55,9 @@ public class PosixStorage implements Storage {
 	@Override
 	public void setBucket(String bucket) {
 		this.bucket = bucket;
+
+		String bucketPath = Paths.get(basePath, bucket).toString();
+		new FileUtils(bucketPath).createDirectories();
 	}
 
 	@Override
@@ -68,124 +71,41 @@ public class PosixStorage implements Storage {
 		return new File(storageFile.getFullPath()).isFile();
 	}
 
-	// TODO: maybe make recursive
 	@Override
 	public List<StorageFile> getStorageFiles() {
 
-		File folder = new File(getFullBucketPath());
-		File[] listOfFiles = folder.listFiles();
-		List<StorageFile> files = new ArrayList<StorageFile>();
+		List<String> pathes = posixDAL.getFiles(basePath);
+		List<StorageFile> storageFiles = new ArrayList<>();
 
-		for (int i = 0; i < listOfFiles.length; i++) {
-			if (listOfFiles[i].isFile()) {
-
-				String fullBucketPath = getFullBucketPath();
-				String name = listOfFiles[i].getName();
-
-				// String relativePath = relativizePath(getFullBucketPath(),
-				// listOfFiles[i].getName());
-
-				String relativePath = listOfFiles[i].getName();
-
-				files.add(new PosixStorageFile(getFullBucketPath(), relativePath));
-				// System.out.println("File " + listOfFiles[i].getName());
-			}
+		for (String path : pathes) {
+			StorageFile storageFile = getStorageFile(getRelativePath(path));
+			storageFiles.add(storageFile);
 		}
-		return files;
+
+		return storageFiles;
 	}
 
 	@Override
 	public String uploadFile(StorageFile sourceFile, StorageFile targetFileOrDir) throws IOException {
 
-		createParentDirectories(targetFileOrDir.getFullPath());
+		if (logger.isTraceEnabled())
+			logger.trace(">>> uploadFile({},{})", sourceFile.getFullPath(), targetFileOrDir.getFullPath());
 
-		String sourcePath = sourceFile.getFullPath();
-		String targetPath = targetFileOrDir.getFullPath();
-	
-		Path sourceFilePath = new File(sourcePath).toPath();
-		Path targetFilePath = new File(targetPath).toPath();
-
-		try {
-			Path copiedPath = Files.copy(sourceFilePath, targetFilePath, StandardCopyOption.REPLACE_EXISTING);
-			return PREFIX + copiedPath.toString();
-			
-		} catch (IOException e) {
-			if (logger.isTraceEnabled())
-				logger.warn("Cannot upload file from " + sourcePath + " to " + targetPath + " ", e.getMessage());
-			throw e;
-		}
+		return posixDAL.uploadFile(sourceFile.getFullPath(), targetFileOrDir.getFullPath());
 	}
 
 	@Override
 	public String downloadFile(StorageFile sourceFile, StorageFile targetFileOrDir) throws IOException {
 
-		createParentDirectories(targetFileOrDir.getFullPath());
+		if (logger.isTraceEnabled())
+			logger.trace(">>> downloadFile({},{})", sourceFile.getFullPath(), targetFileOrDir.getFullPath());
 
-		String sourcePath = sourceFile.getFullPath();
-		String targetPath = targetFileOrDir.getFullPath();
-		
-		if (targetFileOrDir.isDirectory()) {			
-			targetPath = Paths.get(targetPath, sourceFile.getFileName()).toString();
-			createParentDirectories(targetPath);
-		}
-		
-		Path sourceFilePath = new File(sourcePath).toPath();
-		Path targetFilePath = new File(targetPath).toPath();
-
-		try {
-			Path copiedPath = Files.copy(sourceFilePath, targetFilePath, StandardCopyOption.REPLACE_EXISTING);
-			return PREFIX + copiedPath.toString();
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-			if (logger.isTraceEnabled())
-				logger.warn("Cannot download file/folder from " + sourcePath + " to " + targetPath + " ",
-						e.getMessage());
-			throw e;
-		}
+		return posixDAL.downloadFile(sourceFile.getFullPath(), targetFileOrDir.getFullPath());
 	}
 
 	@Override
 	public StorageType getStorageType() {
 		return StorageType.POSIX;
-	}
-
-	private String getRelativePath(String absolutePath) {
-
-		Path pathAbsolute = Paths.get(absolutePath);
-		Path pathBase = Paths.get(basePath);
-		Path pathRelative = pathBase.relativize(pathAbsolute);
-		System.out.println("RelativePath: " + pathRelative + " from AbsolutePath: " + pathAbsolute);
-
-		return pathRelative.toString();
-	}
-
-	private String getFullBucketPath() {
-		return bucket.equals(StorageFile.NO_BUCKET) ? basePath : Paths.get(basePath, bucket).toString();
-	}
-	
-	
-	private String getAbsolutePath(String relativePath) {
-		String path = Paths.get(getFullBucketPath(), relativePath).toString();
-		return  new PathConverter(path).convertToSlash().getPath();
-	}
-
-	private void createParentDirectories(String fullPath) {
-
-		File targetFile = new File(fullPath);
-		File parent = targetFile.getParentFile();
-
-		if (parent != null && !parent.exists() && !parent.mkdirs()) {
-			throw new IllegalStateException("Couldn't create dir: " + parent);
-		}
-	}
-
-	public void createDirectories(String path) {
-		File file = new File(path);
-
-		if (!file.exists()) {
-			file.mkdirs();
-		}
 	}
 
 	@Override
@@ -214,225 +134,110 @@ public class PosixStorage implements Storage {
 
 	@Override
 	public List<String> upload(StorageFile sourceFileOrDir, StorageFile targetFileOrDir) throws IOException {
-		
-		if (logger.isTraceEnabled()) logger.trace(">>> upload({},())", sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
-		
-		String prefix = StorageType.POSIX.toString() + "|";
-		List<String> uploadedFiles = new ArrayList<String>();
-		
-		if (isFile(sourceFileOrDir)) {
-			
-			uploadFile(sourceFileOrDir, targetFileOrDir);
-			uploadedFiles.add(targetFileOrDir.getFullPath());
-			return uploadedFiles;
-		}
 
-		StorageFile sourceDir = sourceFileOrDir; 
-		StorageFile targetDir = targetFileOrDir; 
-		File directory = new File(sourceDir.getFullPath());
-		File[] files = directory.listFiles();
-		Arrays.sort(files);
+		if (logger.isTraceEnabled())
+			logger.trace(">>> upload({},())", sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
 
-		for (File file : files) {
-			
-			if (file.isFile()) {
-				
-				StorageFile sourceFile = getStorageFile(getRelativePath(file.getAbsolutePath()));
-				String uploadedFile = uploadFile(sourceFile, targetDir);
-			
-				uploadedFiles.add(prefix + uploadedFile);
-			}
-		}
-
-		for (File file : files) {
-			
-			if (file.isDirectory()) {
-				
-				StorageFile sourceSubDir = getStorageFile(getRelativePath(file.getAbsolutePath()));
-				List<String> subDirFiles = upload(sourceSubDir, targetDir);
-				
-				uploadedFiles.addAll(subDirFiles);
-			}
-		}
-		
-		return uploadedFiles;
+		return posixDAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
 	}
-	
-	
+
+	public String addFSPrefix(String path) {
+
+		String prefix = StorageType.POSIX.toString() + "|";
+		return path + prefix;
+	}
+
+	public List<String> addFSPrefix(List<String> paths) {
+
+		List<String> pathsWithPrefix = new ArrayList<>();
+
+		for (String path : paths) {
+			String pathWithPrefix = addFSPrefix(path);
+			pathsWithPrefix.add(pathWithPrefix);
+		}
+
+		return pathsWithPrefix;
+	}
+
 	@Override
 	public List<String> download(StorageFile sourceFileOrDir, StorageFile targetFileOrDir) throws IOException {
-		
-		if (logger.isTraceEnabled()) logger.trace(">>> upload({},())", sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
-		
-		String prefix = StorageType.POSIX.toString() + "|";
-		List<String> downloadedFiles = new ArrayList<String>();
-		
-		if (isFile(sourceFileOrDir)) {
-			
-			downloadFile(sourceFileOrDir, targetFileOrDir);
-			downloadedFiles.add(targetFileOrDir.getFullPath());
-			return downloadedFiles;
-		}
 
-		StorageFile sourceDir = sourceFileOrDir; 
-		StorageFile targetDir = targetFileOrDir; 
-		File directory = new File(sourceDir.getFullPath());
-		File[] files = directory.listFiles();
-		Arrays.sort(files);
+		if (logger.isTraceEnabled())
+			logger.trace(">>> download({},{})", sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
 
-		for (File file : files) {
-			
-			if (file.isFile()) {
-				
-				StorageFile sourceFile = getStorageFile(getRelativePath(file.getAbsolutePath()));
-				String downloadedFile = downloadFile(sourceFile, targetDir);
-			
-				downloadedFiles.add(prefix + downloadedFile);
-			}
-		}
-
-		for (File file : files) {
-			
-			if (file.isDirectory()) {
-				
-				StorageFile sourceSubDir = getStorageFile(getRelativePath(file.getAbsolutePath()));
-				String sourceSubDirPath = new PathConverter(sourceSubDir.getRelativePath()).addSlashAtEnd().getPath();
-				sourceSubDir.setRelativePath(sourceSubDirPath);
-				
-				StorageFile targetSubDir = new PosixStorageFile(targetDir);
-				String targetSubDirPath = Paths.get(targetDir.getRelativePath(), file.getName()).toString();
-				targetSubDirPath = new PathConverter(targetSubDirPath).addSlashAtEnd().getPath();
-				targetSubDir.setRelativePath(targetSubDirPath);
-				
-				List<String> subDirFiles = download(sourceSubDir, targetSubDir);
-				
-				downloadedFiles.addAll(subDirFiles);
-			}
-		}
-		
-		return downloadedFiles;
-	}
-
-	
-
-	// list of POSIX|absolutPath
-	@Override
-	public List<String> getFiles(String relativePath) {
-		
-		if (logger.isTraceEnabled()) logger.trace(">>> getFiles({})", relativePath);
-
-		String prefix = StorageType.POSIX.toString() + "|";
-		List<String> returnFiles = new ArrayList<String>();
-		
-		String absolutePath = getAbsolutePath(relativePath);
-		File directory = new File(absolutePath);
-
-		if (directory.isFile()) {
-			returnFiles.add(prefix + absolutePath);
-		}
-
-		File[] files = directory.listFiles();
-		Arrays.sort(files);
-
-		for (File file : files) {
-			
-			if (file.isFile()) {
-				returnFiles.add(prefix + file.getAbsolutePath());
-			}
-		}
-
-		for (File file : files) {
-			
-			if (file.isDirectory()) {
-				
-				String path = Paths.get(relativePath, file.getName()).toString();
-				String relativeDir = new PathConverter(path).convertToSlash().getPath();
-				List<String> dirFiles = getFiles(relativeDir);
-				returnFiles.addAll(dirFiles);
-			}
-		}
-
-		return returnFiles;
-	}
-	
-	
-	public String deleteFile(StorageFile storageFile) throws IOException  {
-		
-		boolean fileDeleted = new File(storageFile.getFullPath()).delete();
-		
-		if (fileDeleted) { 
-			return storageFile.getFullPath(); 
-		}
-		
-		throw new IOException("Cannot delete file: " + storageFile.getFullPath());  
+		return posixDAL.download(sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
 	}
 
 	@Override
-	public List<String> delete(StorageFile sourceFileOrDir) throws IOException {
-	
-	if (logger.isTraceEnabled()) logger.trace(">>> delete({})", sourceFileOrDir.getFullPath());
-		
-		String prefix = StorageType.POSIX.toString() + "|";
-		List<String> deletedFiles = new ArrayList<String>();
-		
-		if (isFile(sourceFileOrDir)) {
-			
-			String deletedFile = deleteFile(sourceFileOrDir);
-			deletedFiles.add(deletedFile);
-			return deletedFiles;
-		}
+	public List<String> getFiles(String relativePath) {
 
-		StorageFile sourceDir = sourceFileOrDir; 
-	
-		File directory = new File(sourceDir.getFullPath());
-		File[] files = directory.listFiles();
-		Arrays.sort(files);
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getFiles({})", relativePath);
 
-		for (File file : files) {
-			
-			if (file.isFile()) {
-				
-				StorageFile sourceFile = getStorageFile(getRelativePath(file.getAbsolutePath()));
-				String deletedFile = deleteFile(sourceFile);
-				deletedFiles.add(deletedFile);
-			}
-		}
-
-		for (File file : files) {
-			
-			if (file.isDirectory()) {
-				
-				StorageFile sourceSubDir = getStorageFile(getRelativePath(file.getAbsolutePath()));
-				List<String> subDirFilesDeleted = delete(sourceSubDir);
-				
-				deletedFiles.addAll(subDirFilesDeleted);
-			}
-		}
-		
-		return deletedFiles;
+		return posixDAL.getFiles(relativePath);
 	}
-	
+
+	public String deleteFile(StorageFile storageFile) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteFile({})", storageFile.getFullPath());
+
+		return posixDAL.deleteFile(storageFile.getFullPath());
+	}
+
+	@Override
+	public List<String> delete(StorageFile storageFileOrDir) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> delete({})", storageFileOrDir.getFullPath());
+
+		return posixDAL.delete(storageFileOrDir.getFullPath());
+	}
+
 	@Override
 	public boolean isFile(StorageFile storageFileOrDir) {
-	     return new File(storageFileOrDir.getFullPath()).isFile();
+		return new File(storageFileOrDir.getFullPath()).isFile();
 	}
 
 	@Override
 	public boolean isDirectory(StorageFile storageFileOrDir) {
-	     return new File(storageFileOrDir.getFullPath()).isDirectory();
+		return new File(storageFileOrDir.getFullPath()).isDirectory();
 	}
 
 	@Override
 	public List<String> getFiles() {
-		// TODO Auto-generated method stub
-		return null;
+		return posixDAL.getFiles(basePath);
 	}
 
 	@Override
-	public void deleteBucket(String bucket) {
-		// TODO Auto-generated method stub
+	public void deleteBucket(String bucket) throws IOException  {
 		
+		posixDAL.delete(getFullBucketPath());
 	}
-	
-	
+
+	private String getAbsolutePath(String relativePath) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getAbsolutePath({})", relativePath);
+
+		String path = Paths.get(getFullBucketPath(), relativePath).toString();
+		return new PathConverter(path).convertToSlash().getPath();
+	}
+
+	private String getRelativePath(String absolutePath) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getRelativePath({})", absolutePath);
+
+		Path pathAbsolute = Paths.get(absolutePath);
+		Path pathBase = Paths.get(basePath);
+		Path pathRelative = pathBase.relativize(pathAbsolute);
+		System.out.println("RelativePath: " + pathRelative + " from AbsolutePath: " + pathAbsolute);
+
+		return pathRelative.toString();
+	}
+
+	private String getFullBucketPath() {
+		return bucket.equals(StorageFile.NO_BUCKET) ? basePath : Paths.get(basePath, bucket).toString();
+	}
 }

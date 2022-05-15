@@ -53,7 +53,6 @@ public class PosixDALTest {
 
 			String sourcePath = storageTestUtils.createSourceFile(path);
 			sourcePathes.add(sourcePath);
-
 		}
 
 		String sourcePath = testUtils.getSourcePath();

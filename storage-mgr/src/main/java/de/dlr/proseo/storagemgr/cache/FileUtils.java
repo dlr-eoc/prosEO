@@ -92,13 +92,13 @@ public class FileUtils {
 	 * Checks if the directory is empty
 	 * 
 	 * @param path full path to the directory
-	 * @return true if directory is empty 
+	 * @return true if directory is empty
 	 */
 	public boolean isEmptyDirectory() {
-		
+
 		File directory = new File(path);
-						
-	    return directory.list().length > 0 ? false : true;
+
+		return directory.list().length > 0 ? false : true;
 	}
 
 	/**
@@ -119,6 +119,35 @@ public class FileUtils {
 		}
 
 		return content;
+	}
+
+	/**
+	 * Create parent directories
+	 * 
+	 * @param exceptionMessage IllegalStateException if cannot create dir
+	 */
+	public void createParentDirectories() {
+
+		File targetFile = new File(path);
+		File parent = targetFile.getParentFile();
+
+		if (parent != null && !parent.exists() && !parent.mkdirs()) {
+			throw new IllegalStateException("Couldn't create parent dirs: " + parent);
+		}
+	}
+
+	/**
+	 * Create path directories
+	 * 
+	 * @param exceptionMessage IllegalStateException if cannot create dir
+	 */
+	public void createDirectories() {
+		
+		File file = new File(path);
+
+		if (file != null && !file.exists() && !file.mkdirs()) {
+			throw new IllegalStateException("Couldn't create dirs: " + file);
+		}
 	}
 
 	/**

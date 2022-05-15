@@ -46,7 +46,6 @@ public class PosixStorageTest {
 	
 	@Rule
 	public TestName testName = new TestName();
-	
 
 	@Test
 	public void testPosixPosixUpload() throws IOException {
@@ -60,23 +59,20 @@ public class PosixStorageTest {
 		pathes.add(prefix + "file1.txt");
 		pathes.add(prefix + "file2.txt");
 		pathes.add(prefix + "dir/file3.txt");
-		
+
+		// create source files
 		for (String path : pathes) {
-			
 			storageTestUtils.createSourceFile(path);
 		}
-				
-		storageTestUtils.printPosixStorage();
 		
 		StorageFile sourceDir = storageProvider.getSourceFile(prefix);
 		StorageFile targetDir = storageProvider.getStorageFile(prefix); 
 		
+		// upload files
 		List<String> uploadedPathes = storageProvider.getStorage().upload(sourceDir, targetDir);
-				
-		for (String uploadedPath : uploadedPathes) { 
-			
-			System.out.println("Uploaded: " + uploadedPath);
-		}
+		storageTestUtils.printPosixStorage();
+		TestUtils.printList("Storage Files: ", uploadedPathes);
+		assertTrue("Expected: 3, " + " Exists: " + uploadedPathes.size(), uploadedPathes.size() == 3);
 	}
 	
 	
@@ -93,59 +89,19 @@ public class PosixStorageTest {
 		pathes.add(prefix + "file2.txt");
 		pathes.add(prefix + "dir/file3.txt");
 		
+		// create source and upload files 
 		for (String path : pathes) {
-			
 			storageTestUtils.createSourceFile(path);
 			storageTestUtils.uploadToPosixStorage(path);
 		}
-				
 		storageTestUtils.printPosixStorage();
 		
 		StorageFile sourceDir = storageProvider.getStorageFile(prefix);
 		StorageFile targetDir = storageProvider.getCacheFile(prefix); 
 		
+		// download files
 		List<String> downloadedPathes = storageProvider.getStorage().download(sourceDir, targetDir);
-				
-		for (String downloadedPath : downloadedPathes) { 
-			
-			System.out.println("Downloaded: " + downloadedPath);
-		}
+		TestUtils.printList("Source Files: ", downloadedPathes);
+		assertTrue("Expected: 3, " + " Exists: " + downloadedPathes.size(), downloadedPathes.size() == 3);
 	}
-	
-	
-/*	
-	@Test
-	public void testPosixPosixUploadFile() {
-		
-		String internalStoragePath = "E:\\test\\internalStorage\\";
-		String externalStoragePath = "E:\\test\\externalStorage\\";
-		String fileName = "source.txt"; 
-		String testFileContent = "some text inside file";
-		
-		StorageFile sourceFile = new PosixStorageFile(internalStoragePath, fileName);
-		StorageFile destFile = new PosixStorageFile(externalStoragePath, fileName);
-		
-		Storage externalStorage = new PosixStorage(internalStoragePath);
-		Storage internalStorage = new PosixStorage(externalStoragePath); 
-		
-		//TestUtils.createFile(sourceFile.getFullPath(), testFileContent);
-		
-		TestUtils.printDirectoryTree(internalStoragePath);
-		TestUtils.printDirectoryTree(externalStoragePath);
-
-		assertTrue("File for upload has not been created: " + sourceFile.getFullPath(), TestUtils.fileExists(sourceFile.getFullPath()));
-		
-		try {
-			externalStorage.uploadFile(sourceFile, destFile);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} 
-		
-		TestUtils.printDirectoryTree(internalStoragePath);
-		TestUtils.printDirectoryTree(externalStoragePath);
-	
-	}
-*/
-
 }

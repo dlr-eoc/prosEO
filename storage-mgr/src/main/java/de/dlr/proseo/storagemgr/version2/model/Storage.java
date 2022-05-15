@@ -53,5 +53,5 @@ public interface Storage {
 	
 	public boolean isDirectory(StorageFile storageFileOrDir);
 
-	public void deleteBucket(String bucket);
+	public void deleteBucket(String bucket) throws IOException;
 }

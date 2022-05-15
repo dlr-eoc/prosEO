@@ -129,10 +129,7 @@ public class S3Storage implements BucketsStorage {
 		return s3DAL.bucketExists(bucketName);
 	}
 
-	@Override
-	public void deleteBucket(String bucketName) {
-		s3DAL.deleteBucket(bucketName);
-	}
+	
 
 	@Override
 	public StorageType getStorageType() {
@@ -296,5 +293,10 @@ public class S3Storage implements BucketsStorage {
 	@Override
 	public List<String> getFiles() {
 		return s3DAL.getFiles();
+	}
+
+	@Override
+	public void deleteBucket(String bucketName) {
+		s3DAL.deleteBucket(bucketName);
 	}
 }
