@@ -38,7 +38,7 @@ import software.amazon.awssdk.transfer.s3.S3TransferManager;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestEntityManager
-public class S3DALTest {
+public class S3DALTransferManagerTest {
 
 	@Autowired
 	private TestUtils testUtils;
@@ -103,11 +103,11 @@ public class S3DALTest {
 		// upload and download	
 		try {
 			
-			s3DAL.uploadFile(uploadFilePath, uploadFilePath);
+			s3DAL.uploadFileTransferManager(uploadFilePath, uploadFilePath);
 			TestUtils.printList("Files after upload in bucket: " + s3DAL.getBucket(), s3DAL.getFiles());
 			assertTrue("File was not uploaded: " + uploadFilePath, s3DAL.fileExists(uploadFilePath));
 			
-			s3DAL.downloadFile(uploadFilePath, downloadFilePath);
+			s3DAL.downloadFileTransferManager(uploadFilePath, downloadFilePath);
 			TestUtils.printDirectoryTree(downloadDirectory);
 			assertTrue("File was not downloaded: " + downloadFilePath, TestUtils.fileExists(downloadFilePath));
 

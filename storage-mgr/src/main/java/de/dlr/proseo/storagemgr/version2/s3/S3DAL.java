@@ -122,6 +122,9 @@ public class S3DAL {
 	}
 
 	public void setBucket(String bucket) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> setBucket({})", bucket);
 
 		if (!bucketExists(bucket)) {
 			createBucket(bucket);
@@ -135,16 +138,22 @@ public class S3DAL {
 	}
 
 	public List<String> getBuckets() {
+		
 		try {
 			ListBucketsResponse listBucketsResponse = s3Client.listBuckets();
 			return toStringBuckets(listBucketsResponse.buckets());
 		} catch (Exception e) {
 			System.out.println("Cannot get s3 buckets " + e.getMessage());
+			e.printStackTrace();
 			throw e;
 		}
 	}
 
 	public boolean bucketExists(String bucketName) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> bucketExists({})", bucketName);
+		
 		List<String> buckets = getBuckets();
 
 		for (String bucket : buckets) {
@@ -157,12 +166,19 @@ public class S3DAL {
 	}
 
 	public void deleteBucket(String bucketName) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteBucket({})", bucketName);
 
 		deleteFiles();
 		deleteEmptyBucket(bucketName);
 	}
 
 	public boolean fileExists(String filePath) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> fileExists({},{})", filePath);
+		
 		try {
 			s3Client.headObject(HeadObjectRequest.builder().bucket(bucket).key(filePath).build());
 			return true;
@@ -172,6 +188,9 @@ public class S3DAL {
 	}
 
 	public String deleteFile(String filePath) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteFile({})", filePath);
 
 		ArrayList<ObjectIdentifier> toDelete = new ArrayList<ObjectIdentifier>();
 		toDelete.add(ObjectIdentifier.builder().key(filePath).build());
@@ -199,6 +218,9 @@ public class S3DAL {
 	}
 
 	public List<String> deleteFiles(List<String> toDeleteList) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteFiles({})", "size:" + toDeleteList.size());
 
 		ArrayList<ObjectIdentifier> keys = new ArrayList<>();
 		ObjectIdentifier objectId = null;
@@ -227,6 +249,9 @@ public class S3DAL {
 	}
 
 	public void deleteFolder(String prefix) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteFolder({})", prefix);
 
 		ListObjectsV2Request request = ListObjectsV2Request.builder().bucket(bucket).prefix(prefix).build();
 		ListObjectsV2Iterable list = s3Client.listObjectsV2Paginator(request);
@@ -251,6 +276,9 @@ public class S3DAL {
 	}
 
 	public String uploadFile(String sourcePath, String targetPath) throws IOException {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> uploadFile({},{})", sourcePath, targetPath);
 
 		try {
 			PutObjectRequest request = PutObjectRequest.builder().bucket(bucket).key(targetPath).build();
@@ -269,46 +297,15 @@ public class S3DAL {
 
 		} catch (Exception e) {
 			logger.error(e.getMessage());
-			throw e;
-		}
-	}
-
-	public String uploadFileTransferManager(String sourcePath, String targetPath) throws IOException {
-
-		try {
-			FileUpload upload = transferManager.uploadFile(
-					b -> b.source(Paths.get(sourcePath)).putObjectRequest(req -> req.bucket(bucket).key(targetPath)));
-
-			upload.completionFuture().join();
-
-			return targetPath;
-
-		} catch (Exception e) {
 			e.printStackTrace();
-			logger.error(e.getMessage());
-			throw e;
-		}
-	}
-	
-
-	public String downloadFileTransferManager(String sourcePath, String targetPath) throws IOException {
-
-		try {
-
-			FileDownload download = transferManager.downloadFile(b -> b.destination(Paths.get(targetPath))
-					.getObjectRequest(req -> req.bucket(bucket).key(sourcePath)));
-			download.completionFuture().join();
-
-			return targetPath;
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error(e.getMessage());
 			throw e;
 		}
 	}
 
 	public String downloadFile(String sourcePath, String targetPath) throws IOException {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> downloadFile({},{})", sourcePath, targetPath);
 
 		GetObjectRequest request = GetObjectRequest.builder().bucket(bucket).key(sourcePath).build();
 		ResponseInputStream<GetObjectResponse> response = s3Client.getObject(request);
@@ -342,6 +339,9 @@ public class S3DAL {
 	}
 
 	public List<String> getFiles(String folder) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getFiles({})", folder);
 
 		ListObjectsRequest request = ListObjectsRequest.builder().bucket(bucket).prefix(folder).build();
 
@@ -350,7 +350,10 @@ public class S3DAL {
 	}
 
 	public long getFileSize(String filePath) {
-
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getFileSize({})", filePath);
+		
 		HeadObjectRequest headObjectRequest = HeadObjectRequest.builder().bucket(bucket).key(filePath).build();
 		HeadObjectResponse headObjectResponse = s3Client.headObject(headObjectRequest);
 
@@ -358,6 +361,9 @@ public class S3DAL {
 	}
 
 	private boolean createBucket(String bucketName) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> createBucket({})", bucketName);
 
 		try {
 			S3Waiter s3Waiter = s3Client.waiter();
@@ -376,11 +382,16 @@ public class S3DAL {
 		} catch (Exception e) {
 			System.err.println(e.getMessage());
 			logger.error(e.getMessage());
+			e.printStackTrace();
 			return false;
 		}
 	}
 
 	private void deleteEmptyBucket(String bucketName) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteEmptyBucket({})", bucketName);
+		
 		DeleteBucketRequest deleteBucketRequest = DeleteBucketRequest.builder().bucket(bucketName).build();
 		s3Client.deleteBucket(deleteBucketRequest);
 	}
@@ -405,6 +416,46 @@ public class S3DAL {
 		}
 
 		return fileNames;
+	}
+	
+	public String uploadFileTransferManager(String sourcePath, String targetPath) throws IOException {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> uploadFileTransferManager({},{})", sourcePath, targetPath);
+
+		try {
+			FileUpload upload = transferManager.uploadFile(
+					b -> b.source(Paths.get(sourcePath)).putObjectRequest(req -> req.bucket(bucket).key(targetPath)));
+
+			upload.completionFuture().join();
+
+			return targetPath;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error(e.getMessage());
+			throw e;
+		}
+	}
+	
+	public String downloadFileTransferManager(String sourcePath, String targetPath) throws IOException {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> downloadFileTransferManager({},{})", sourcePath, targetPath);
+
+		try {
+
+			FileDownload download = transferManager.downloadFile(b -> b.destination(Paths.get(targetPath))
+					.getObjectRequest(req -> req.bucket(bucket).key(sourcePath)));
+			download.completionFuture().join();
+
+			return targetPath;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error(e.getMessage());
+			throw e;
+		}
 	}
 
 	/*
