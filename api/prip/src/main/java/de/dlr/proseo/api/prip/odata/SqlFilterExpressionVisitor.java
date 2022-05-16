@@ -386,7 +386,7 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 				// Remove quotes added by visitLiteral
 				valueParam2 = valueParam2.substring(1, valueParam2.length() - 1);
 
-				result = valueParam1 + " LIKE '%" + valueParam2 + "%'";
+				result = valueParam1 + " LIKE '%" + valueParam2.replace("%", "\\%").replace("_", "\\_") + "%' ESCAPE '\\'";
 			} else {
 				throw new ODataApplicationException("contains() needs two parametres of type Edm.String", 
 						HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ENGLISH);
@@ -400,7 +400,7 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 				// Remove quotes added by visitLiteral
 				valueParam2 = valueParam2.substring(1, valueParam2.length() - 1);
 
-				result = valueParam1 + " LIKE '" + valueParam2 + "%'";
+				result = valueParam1 + " LIKE '" + valueParam2.replace("%", "\\%").replace("_", "\\_") + "%' ESCAPE '\\'";
 			} else {
 				throw new ODataApplicationException("startswith() needs two parametres of type Edm.String", 
 						HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ENGLISH);
@@ -414,7 +414,7 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 				// Remove quotes added by visitLiteral
 				valueParam2 = valueParam2.substring(1, valueParam2.length() - 1);
 
-				result = valueParam1 + " LIKE '%" + valueParam2 + "'";
+				result = valueParam1 + " LIKE '%" + valueParam2.replace("%", "\\%").replace("_", "\\_") + "' ESCAPE '\\'";
 			} else {
 				throw new ODataApplicationException("endswith() needs two parametres of type Edm.String", 
 						HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ENGLISH);
@@ -514,7 +514,26 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 	@Override
 	public String visitBinaryOperator(BinaryOperatorKind operator, String left, List<String> right)
 			throws ExpressionVisitException, ODataApplicationException {
-		throw new ODataApplicationException("Binary operators on lists are not implemented", 
-				HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
+		if (logger.isTraceEnabled()) logger.trace(">>> visitBinaryOperator({}, {}, {})", operator, left, right);
+		
+		if (null == left || null == right || right.isEmpty()) {
+			throw new ODataApplicationException("Cannot compare string '" + left + "' to string list '" + right + "'", 
+					HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ENGLISH);
+		}
+		
+		StringBuilder result = new StringBuilder();
+		if (BinaryOperatorKind.IN.equals(operator)) {
+			result.append(left).append(" IN (").append(right.get(0));
+			for (int i = 1; i < right.size(); ++i) {
+				result.append(", ").append(right.get(i));
+			}
+			result.append(')');
+		} else {
+			throw new ODataApplicationException("Binary operator '" + operator + "' on lists is not implemented", 
+					HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
+		}
+
+		if (logger.isTraceEnabled()) logger.trace("<<< visitBinaryOperator()");
+		return result.toString();
 	}
 }

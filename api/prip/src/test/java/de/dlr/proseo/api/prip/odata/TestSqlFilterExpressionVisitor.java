@@ -226,7 +226,7 @@ public class TestSqlFilterExpressionVisitor {
 		String uriQuery = "$filter=startswith(Name,'S3B_DO_0')";
 		// TODO Implement check for ZIP files
 		// String sqlQuery = "(pf.product_file_name LIKE 'S3B_DO_0%' OR pf.zip_file_name LIKE 'S3B_DO_0%')"; 
-		String sqlQuery = "pf.product_file_name LIKE 'S3B_DO_0%'"; 
+		String sqlQuery = "pf.product_file_name LIKE 'S3B\\_DO\\_0%' ESCAPE '\\'"; 
 		
 		runTest(uriQuery, sqlQuery);
 	}
