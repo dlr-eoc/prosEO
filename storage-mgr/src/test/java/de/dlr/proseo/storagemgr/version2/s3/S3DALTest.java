@@ -20,7 +20,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.TestUtils;
-import de.dlr.proseo.storagemgr.version2.s3.S3DataAccessLayer;
+import de.dlr.proseo.storagemgr.version2.s3.S3DAL;
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
@@ -38,7 +38,7 @@ import software.amazon.awssdk.transfer.s3.S3TransferManager;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestEntityManager
-public class S3DataAccessLayerTest {
+public class S3DALTest {
 
 	@Autowired
 	private TestUtils testUtils;
@@ -162,7 +162,7 @@ public class S3DataAccessLayerTest {
 		String s3SecretAccessKey = cfg.getS3SecretAccessKey();
 		
 
-		S3DataAccessLayer s3DAL = new S3DataAccessLayer(s3AccessKey, s3SecretAccessKey, bucket);
+		S3DAL s3DAL = new S3DAL(s3AccessKey, s3SecretAccessKey, bucket);
 
 		TestUtils.printList("Buckets before bucket creation", s3DAL.getBuckets());
 

@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
-import de.dlr.proseo.storagemgr.version2.s3.S3DataAccessLayer;
+import de.dlr.proseo.storagemgr.version2.s3.S3DAL;
 
 /**
  * Posix Data Access Layer

@@ -26,20 +26,20 @@ import de.dlr.proseo.storagemgr.version2.posix.PosixStorageFile;
  */
 public class S3Storage implements BucketsStorage {
 
-	private S3DataAccessLayer s3DAL;
+	private S3DAL s3DAL;
 	private String basePath;
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3Storage.class);
 
 	public S3Storage(String basePath, String s3AccessKey, String s3SecretAccessKey, String bucket) {
-		s3DAL = new S3DataAccessLayer(s3AccessKey, s3SecretAccessKey, bucket);
+		s3DAL = new S3DAL(s3AccessKey, s3SecretAccessKey, bucket);
 		this.basePath = basePath;
 	}
 
 	public S3Storage(String basePath, String s3AccessKey, String s3SecretAccessKey, String s3Region,
 			String s3EndPoint, String bucket) {
-		s3DAL = new S3DataAccessLayer(s3AccessKey, s3SecretAccessKey, s3Region, s3EndPoint, bucket);
+		s3DAL = new S3DAL(s3AccessKey, s3SecretAccessKey, s3Region, s3EndPoint, bucket);
 		this.basePath = basePath;
 	}
 

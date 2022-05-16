@@ -67,7 +67,7 @@ import software.amazon.awssdk.transfer.s3.UploadRequest;
  * @author Denys Chaykovskiy
  *
  */
-public class S3DataAccessLayer {
+public class S3DAL {
 
 	/** S3 Client */
 	private S3Client s3Client;
@@ -79,9 +79,9 @@ public class S3DataAccessLayer {
 	private S3TransferManager transferManager;
 
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(S3DataAccessLayer.class);
+	private static Logger logger = LoggerFactory.getLogger(S3DAL.class);
 
-	public S3DataAccessLayer(String s3AccessKey, String s3SecretAccessKey, String bucket) {
+	public S3DAL(String s3AccessKey, String s3SecretAccessKey, String bucket) {
 
 		Region s3Region = Region.EU_CENTRAL_1;
 
@@ -94,7 +94,7 @@ public class S3DataAccessLayer {
 		setBucket(bucket);
 	}
 
-	public S3DataAccessLayer(String s3AccessKey, String s3SecretAccessKey, String s3Region, String s3EndPoint, String bucket) {
+	public S3DAL(String s3AccessKey, String s3SecretAccessKey, String s3Region, String s3EndPoint, String bucket) {
 
 		initCredentials(s3AccessKey, s3SecretAccessKey);
 		initTransferManager(Region.of(s3Region));
