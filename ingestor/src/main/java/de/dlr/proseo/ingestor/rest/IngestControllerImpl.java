@@ -17,6 +17,8 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.validation.Valid;
 import javax.ws.rs.ProcessingException;
+
+import org.hibernate.exception.LockAcquisitionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
@@ -30,7 +32,6 @@ import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.ingestor.rest.model.RestProductFile;
 import de.dlr.proseo.model.ProcessingFacility;
-import de.dlr.proseo.model.service.RepositoryService;
 
 /**
  * Spring MVC controller for the prosEO Ingestor; implements the services required to ingest
@@ -203,15 +204,20 @@ public class IngestControllerImpl implements IngestController {
 
 		for (IngestorProduct ingestorProduct: ingestorProducts) {
 			try {
+				productIngestor.acquireSemaphore(userPassword[0], userPassword[1]);
 				RestProduct restProduct = productIngestor.ingestProduct(facility, copyFiles, ingestorProduct, userPassword[0], userPassword[1]);
 				result.add(restProduct);
 				ingestorProduct.setId(restProduct.getId());
+				productIngestor.releaseSemaphore(userPassword[0], userPassword[1]);
 				if (logger.isTraceEnabled()) logger.trace("... product ingested, now notifying planner");
 			} catch (ProcessingException e) {
+				productIngestor.releaseSemaphore(userPassword[0], userPassword[1]);
 				return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 			} catch (IllegalArgumentException e) {
+				productIngestor.releaseSemaphore(userPassword[0], userPassword[1]);
 				return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 			} catch (SecurityException e) {
+				productIngestor.releaseSemaphore(userPassword[0], userPassword[1]);
 				return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 			}
 			try {
@@ -308,14 +314,23 @@ public class IngestControllerImpl implements IngestController {
 		
 		RestProductFile restProductFile = null;
 		try {
+			productIngestor.acquireSemaphore(userPassword[0], userPassword[1]);
 			restProductFile = productIngestor.ingestProductFile(
 						productId, facility, productFile, userPassword[0], userPassword[1]);
+			productIngestor.releaseSemaphore(userPassword[0], userPassword[1]);
 		} catch (ProcessingException e) {
+			productIngestor.releaseSemaphore(userPassword[0], userPassword[1]);
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		} catch (IllegalArgumentException e) {
+			productIngestor.releaseSemaphore(userPassword[0], userPassword[1]);
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (SecurityException e) {
+			productIngestor.releaseSemaphore(userPassword[0], userPassword[1]);
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		} catch (LockAcquisitionException e) {
+			productIngestor.releaseSemaphore(userPassword[0], userPassword[1]);
+			e.printStackTrace();
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
 		try {

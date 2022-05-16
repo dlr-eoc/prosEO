@@ -48,6 +48,7 @@ import de.dlr.proseo.planner.Message;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.util.OrderPlanThread;
+import de.dlr.proseo.planner.util.UtilService;
 
 /**
  * Dispatcher to handle processing orders
@@ -129,6 +130,7 @@ public class OrderDispatcher {
 					order.setOrderState(OrderState.RELEASED);
 					order.setOrderState(OrderState.RUNNING);
 					order.setOrderState(OrderState.COMPLETED);
+					UtilService.getOrderUtil().checkAutoClose(order);
 				}
 				break;
 			}

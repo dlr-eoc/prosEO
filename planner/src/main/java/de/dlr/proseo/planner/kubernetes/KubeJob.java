@@ -11,9 +11,15 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.LockModeType;
+
+import org.hibernate.exception.LockAcquisitionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -29,6 +35,7 @@ import de.dlr.proseo.model.JobStep.StdLogLevel;
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.Task;
 import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.enums.JobOrderVersion;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.planner.Messages;
@@ -285,6 +292,7 @@ public class KubeJob {
 			return null;
 		}
 		
+		EntityManager em = kubeConfig.getProductionPlanner().getEm();
 		Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(this.getJobId());
 		if (js.isEmpty()) {
 			Messages.JOB_STEP_NOT_FOUND.log(logger, this.getJobId());
@@ -292,6 +300,7 @@ public class KubeJob {
 		}
 		
 		JobStep jobStep = js.get();
+		
 		ConfiguredProcessor configuredProcessor = jobStep.getOutputProduct().getConfiguredProcessor();
 		if (null == configuredProcessor || !configuredProcessor.getEnabled()) {
 			Messages.CONFIG_PROC_DISABLED.log(logger, jobStep.getOutputProduct().getConfiguredProcessor().getIdentifier());
@@ -321,7 +330,20 @@ public class KubeJob {
 		}
 		setGenerationTime(jobStep.getOutputProduct(), genTime, retentionPeriod);
 		JobDispatcher jd = new JobDispatcher();
-		jobOrder = jd.createJobOrder(jobStep);
+		try {
+			jobOrder = jd.createJobOrder(jobStep);
+		} catch (Exception e) {
+			String errStr = String.format("Exception: creation of job order for job step %d failed", jobStep.getId());
+			errStr += "\n";
+			errStr += e.getMessage();
+			logger.error(errStr);
+			jobStep.setProcessingStartTime(genTime);
+			jobStep.setProcessingStdOut(errStr);
+			jobStep.setJobStepState(JobStepState.RUNNING);
+			jobStep.setJobStepState(JobStepState.FAILED);
+			RepositoryService.getJobStepRepository().save(jobStep);
+			return null;
+		}
 		if (jobOrder == null) {
 			String errStr = String.format("Creation of job order for job step %d failed", jobStep.getId());
 			logger.error(errStr);
@@ -479,6 +501,7 @@ public class KubeJob {
 			if (logger.isTraceEnabled()) {
 				logger.trace("Creating job {}", job.toString());
 			}
+			jobStep.setProcessingStartTime(genTime);
 			job = aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
 			logger.info("Job {} created with status {}", job.getMetadata().getName(), job.getStatus().toString());
 			UtilService.getJobStepUtil().startJobStep(jobStep);
@@ -549,11 +572,12 @@ public class KubeJob {
 				kubeConfig = aKubeConfig;
 			}
 			searchPod();
-
+			JobStep rjs;
+			List<JobStep> tjs = new ArrayList<JobStep>();
 			TransactionTemplate transactionTemplate = new TransactionTemplate(aKubeConfig.getProductionPlanner().getTxManager());
 			try {
 				aKubeConfig.getProductionPlanner().acquireThreadSemaphore("finish");
-				final String dummy = transactionTemplate.execute((status) -> {
+				rjs = transactionTemplate.execute((status) -> {
 					V1Job aJob = aKubeConfig.getV1Job(jobname);
 					if (aJob != null) {
 						Long jobStepId = this.getJobId();
@@ -591,10 +615,14 @@ public class KubeJob {
 							}
 							RepositoryService.getJobStepRepository().save(js.get());
 							UtilService.getOrderUtil().logOrderState(js.get().getJob().getProcessingOrder());
+							tjs.add(js.get());
+							return js.get();
 						}
 					}
 					return null;
 				});
+			} catch (LockAcquisitionException e) {
+				Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 			} catch (Exception e) {
 				Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 			} finally {
@@ -797,7 +825,7 @@ public class KubeJob {
 	 * @param product The product
 	 * @param genTime The generation time
 	 */
-	void setGenerationTime(Product product, Instant genTime, Duration retentionPeriod) {
+	private void setGenerationTime(Product product, Instant genTime, Duration retentionPeriod) {
 		if (logger.isTraceEnabled()) logger.trace(">>> setGenerationTime({}, {}, {})",
 				(null == product ? "null" : product.getId()), genTime, retentionPeriod);
 		
@@ -812,6 +840,23 @@ public class KubeJob {
 			RepositoryService.getProductRepository().save(product);
 		}
 	}
+
+	private void lockProduct(Product product, EntityManager em) {
+		Map<String, Object> properties = new HashMap<>(); 
+		properties.put("javax.persistence.lock.timeout", 10000L); 
+		if (product != null) {
+			if (logger.isTraceEnabled()) logger.trace("  lock product {}", product.getId());
+			try {
+				em.lock(product, LockModeType.PESSIMISTIC_WRITE, properties);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			for (Product p : product.getComponentProducts()) {
+				lockProduct(p, em);
+			}
+		}
+	}
+	
 	
 	/**
 	 * Get the maximum setting of cpus of processor tasks

@@ -108,15 +108,19 @@ public class KubeJobFinish extends Thread {
     							}
     							return pcList1;
     						});	
-    						for (Long pcId : pcList) {
-    							UtilService.getJobStepUtil().checkForJobStepsToRun(kubeJob.getKubeConfig(), 
-    									pcId, 
-    									false,
-    									true);		    				
-    						}	
+    						if (ProductionPlanner.config.getCheckForFurtherJobStepsToRun()) {
+    							for (Long pcId : pcList) {
+    								UtilService.getJobStepUtil().checkForJobStepsToRun(kubeJob.getKubeConfig(), 
+    										pcId, 
+    										false,
+    										true);		    				
+    							}
+    						}
     						planner.releaseThreadSemaphore("KubeJobFinish.run");
-    						KubeDispatcher kd = new KubeDispatcher(null, kubeJob.getKubeConfig(), true);
-    						kd.start();    					
+    						if (ProductionPlanner.config.getCheckForFurtherJobStepsToRun()) {
+    							KubeDispatcher kd = new KubeDispatcher(null, kubeJob.getKubeConfig(), true);
+    							kd.start();    		
+    						}
     					} else {
     						planner.releaseThreadSemaphore("KubeJobFinish.run");
     					}

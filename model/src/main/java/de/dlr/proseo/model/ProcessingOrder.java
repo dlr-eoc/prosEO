@@ -330,6 +330,11 @@ public class ProcessingOrder extends PersistentObject {
 		if (jobCount == jobStateMap.get(JobState.CLOSED)) {
 			// All jobs are CLOSED
 			orderState = OrderState.CLOSED;
+			Duration retPeriod = getMission().getOrderRetentionPeriod();
+			if (retPeriod != null && getProductionType() == ProductionType.SYSTEMATIC) {
+				setEvictionTime(Instant.now().plus(retPeriod));
+				orderState = OrderState.CLOSED;
+			}
 		} else if (jobCount == terminatedJobCount) {
 			// All jobs are terminated in some way
 			if (0 < jobStateMap.get(JobState.FAILED)) {

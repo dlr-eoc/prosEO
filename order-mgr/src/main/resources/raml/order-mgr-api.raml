@@ -26,6 +26,8 @@ securitySchemes:
 types:
   RestClassOutputParameter: !include ../../../../../model/src/main/resources/raml/types/classoutputparameter.raml
   RestInputFilter: !include ../../../../../model/src/main/resources/raml/types/inputfilter.raml
+  RestJob: !include ../../../../../model/src/main/resources/raml/types/job.raml
+  RestJobStep: !include ../../../../../model/src/main/resources/raml/types/jobstep.raml
   RestOrder: !include ../../../../../model/src/main/resources/raml/types/order.raml
   RestOrbitQuery: !include ../../../../../model/src/main/resources/raml/types/orbitquery.raml
   RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
@@ -179,6 +181,73 @@ resourceTypes:
       displayName: deleteOrderById
       responses:
         204:
+        
+/orderjobs:
+  type: standard
+  get:
+    description: Get order jobs by state
+    displayName: getJobs
+    queryParameters:
+      state?: string
+      orderid?: 
+        type: integer
+        format: long
+        description: The persistent id of the processing order
+      recordFrom?: integer
+      recordTo?: integer
+      logs?: boolean
+      orderBy?:
+        type: string[]
+        description: an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestJob[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/job-list.json  
+  /count:
+    type: standard
+    get:
+      description: Get number of jobs, possibly filtered by state and processing order 
+      displayName: countJobs
+      queryParameters:
+        state?: string
+        orderid?: 
+          type: integer
+          format: long
+          description: The persistent id of the processing order
+      responses:
+        200:
+          body:
+            text/plain:
+/orderjobsteps:
+  type: standard
+  get:
+    description: Get production planner jobsteps
+    displayName: getJobSteps
+    queryParameters:
+      status?:
+        type: string
+        enum: [ INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED, NONE ]
+      mission?: string
+      last?: integer
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestJobStep[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/jobstep-list.json
+  /{name}:
+    get:
+      description: Get production planner jobstep
+      displayName: getJobStep
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestJobStep
+              example: !include ../../../../../model/src/main/resources/raml/examples/jobstep.json
+        
 /missions:
   type: standard
   get:

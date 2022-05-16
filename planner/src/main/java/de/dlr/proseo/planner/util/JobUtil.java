@@ -133,7 +133,9 @@ public class JobUtil {
 			case FAILED:
 				job.setJobState(JobState.CLOSED);
 				for (JobStep js : job.getJobSteps()) {
-					UtilService.getJobStepUtil().close(js);
+					if (js.getJobStepState() != JobStepState.CLOSED) {
+						UtilService.getJobStepUtil().close(js);
+					}
 				}		
 				job.incrementVersion();
 				RepositoryService.getJobRepository().save(job);
@@ -579,6 +581,8 @@ public class JobUtil {
 				answer = true;
 				break;
 			case COMPLETED:
+				UtilService.getOrderUtil().checkFinish(job.getProcessingOrder().getId());	
+				answer = true;
 			case FAILED:
 			case CLOSED:
 				answer = true;

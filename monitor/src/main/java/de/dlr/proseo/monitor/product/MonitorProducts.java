@@ -429,6 +429,7 @@ public class MonitorProducts extends Thread {
 			}
 		}
 	}
+	
 
     /**
      * Start the monitor thread

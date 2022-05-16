@@ -51,6 +51,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
+import de.dlr.proseo.model.rest.model.JobStepState;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestOrder;
@@ -809,12 +810,22 @@ public class GUIOrderController extends GUIBaseController {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String result = "";
 		RestJobStep js;
-		// String id = identifier.replace(".txt", "");
+
 		try {
-			js = serviceConnection.getFromService(config.getProductionPlanner(),
-					"/jobsteps/" + id, RestJobStep.class, auth.getProseoName(), auth.getPassword());
+			js = serviceConnection.getFromService(config.getOrderManager(),
+					"/orderjobsteps/" + id, RestJobStep.class, auth.getProseoName(), auth.getPassword());
+			if (js !=  null) {
+				if (js.getJobStepState() == JobStepState.RUNNING) {
+					// update log file before, this does the planner 
+					js = serviceConnection.getFromService(config.getProductionPlanner(),
+							"/jobsteps/" + id, RestJobStep.class, auth.getProseoName(), auth.getPassword());
+				}
+			}
 			if (js !=  null) {
 				result = js.getProcessingStdOut();
+			}
+			if (result == null) {
+				result = "";
 			}
 		} catch (RestClientResponseException e) {
 			String message = null;
@@ -953,7 +964,7 @@ public class GUIOrderController extends GUIBaseController {
 
     private Long countJobs(String id)  {	    	
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
-		String uri = "/jobs/count";
+		String uri = "/orderjobs/count";
 		String divider = "?";
 		if (id != null) {
 			uri += divider + "orderid=" + id;
@@ -961,7 +972,7 @@ public class GUIOrderController extends GUIBaseController {
 		}
 		Long result = (long) -1;
 		try {
-			String resStr = serviceConnection.getFromService(serviceConfig.getProductionPlannerUrl(),
+			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
 					uri, String.class, auth.getProseoName(), auth.getPassword());
 
 			if (resStr != null && resStr.length() > 0) {
