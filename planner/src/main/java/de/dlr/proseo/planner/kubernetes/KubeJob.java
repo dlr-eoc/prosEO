@@ -337,6 +337,7 @@ public class KubeJob {
 			errStr += "\n";
 			errStr += e.getMessage();
 			logger.error(errStr);
+			jobStep.setProcessingStartTime(genTime);
 			jobStep.setProcessingStdOut(errStr);
 			jobStep.setJobStepState(JobStepState.RUNNING);
 			jobStep.setJobStepState(JobStepState.FAILED);
@@ -500,6 +501,7 @@ public class KubeJob {
 			if (logger.isTraceEnabled()) {
 				logger.trace("Creating job {}", job.toString());
 			}
+			jobStep.setProcessingStartTime(genTime);
 			job = aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
 			logger.info("Job {} created with status {}", job.getMetadata().getName(), job.getStatus().toString());
 			UtilService.getJobStepUtil().startJobStep(jobStep);
