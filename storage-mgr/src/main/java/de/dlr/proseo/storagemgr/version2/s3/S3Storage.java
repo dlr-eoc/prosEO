@@ -80,201 +80,40 @@ public class S3Storage implements BucketsStorage {
 
 	@Override
 	public String uploadFile(StorageFile sourceFile, StorageFile targetFileOrDir) throws IOException {
-
-		String sourcePath = sourceFile.getFullPath();
-		String targetPath = targetFileOrDir.getRelativePath();
 		
-		if (targetFileOrDir.isDirectory()) { 
-			
-			targetPath += sourceFile.getFileName();
-		}
-		
-		s3DAL.setBucket(targetFileOrDir.getBucket());
+		if (logger.isTraceEnabled())
+			logger.trace(">>> uploadFile({},{})", sourceFile.getFullPath(), targetFileOrDir.getFullPath());
 
-		try {
-			return s3DAL.uploadFile(sourcePath, targetPath);
-		} catch (IOException e) {
-			e.printStackTrace();
-			if (logger.isTraceEnabled())
-				logger.warn("Cannot upload file from " + sourcePath + " to " + targetPath + " ", e.getMessage());
-			throw e;
-		}
+		return s3DAL.uploadFile(sourceFile.getFullPath(), targetFileOrDir.getFullPath());
 	}
-
-	@Override
-	public String downloadFile(StorageFile sourceFile, StorageFile targetFileOrDir) throws IOException {
-
-		String sourcePath =  new PathConverter(sourceFile.getRelativePath()).posixToS3Path().getPath();
-		String targetPath = targetFileOrDir.getFullPath();
-
-		s3DAL.setBucket(sourceFile.getBucket());
-
-		try {
-			return s3DAL.downloadFile(sourcePath, targetPath);
-		} catch (IOException e) {
-			e.printStackTrace();
-			if (logger.isTraceEnabled())
-				logger.warn("Cannot download file from " + sourcePath + " to " + targetPath + " ", e.getMessage());
-			throw e;
-		}
-	}
-
-	@Override
-	public List<String> getBuckets() {
-		return s3DAL.getBuckets();
-	}
-
-	@Override
-	public boolean bucketExists(String bucketName) {
-		return s3DAL.bucketExists(bucketName);
-	}
-
 	
-
-	@Override
-	public StorageType getStorageType() {
-		return StorageType.S3;
-	}
-
-	@Override
-	public long getFileSize(StorageFile storageFile) {
-		return s3DAL.getFileSize(storageFile.getRelativePath());
-	}
-
-	@Override
-	public StorageFile getStorageFile(String relativePath) {
-		return new S3StorageFile(s3DAL.getBucket(), relativePath);
-	}
-
-	@Override
-	public StorageFile createStorageFile(String relativePath, String content) {
-
-		String path = Paths.get(basePath, relativePath).toString();
-
-		path = new PathConverter(path).verifyAbsolutePath().getPath();
-
-		FileUtils fileUtils = new FileUtils(path);
-		fileUtils.createFile(content);
-
-		StorageFile sourceFile = new PosixStorageFile(basePath, relativePath);
-		StorageFile targetFile = new S3StorageFile(s3DAL.getBucket(), relativePath);
-
-		try {
-			uploadFile(sourceFile, targetFile);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		new File(path).delete();
-
-		return targetFile;
-	}
-
 	@Override
 	public List<String> upload(StorageFile sourceFileOrDir, StorageFile targetFileOrDir) throws IOException {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> upload({},())", sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
+			logger.trace(">>> upload({},{})", sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
 
-		String prefix = StorageType.S3.toString() + "|";
-		List<String> uploadedFiles = new ArrayList<String>();
-
-		if (isExistingPosixFile(sourceFileOrDir.getFullPath())) {
-
-			uploadFile(sourceFileOrDir, targetFileOrDir);
-			uploadedFiles.add(targetFileOrDir.getFullPath());
-			return uploadedFiles;
-		}
-
-		StorageFile sourceDir = sourceFileOrDir;
-		StorageFile targetDir = targetFileOrDir;
-		File directory = new File(sourceDir.getFullPath());
-		File[] files = directory.listFiles();
-		Arrays.sort(files);
-
-		for (File file : files) {
-
-			if (file.isFile()) {
-
-				StorageFile sourceFile = getAbsoluteStorageFile(file.getAbsolutePath());
-				String uploadedFile = uploadFile(sourceFile, targetDir);
-
-				uploadedFiles.add(prefix + uploadedFile);
-			}
-		}
-
-		for (File file : files) {
-
-			if (file.isDirectory()) {
-				
-				StorageFile sourceSubDir = getAbsoluteStorageFile(file.getAbsolutePath() + "/");
-				
-				String targetSubDirPath = targetDir.getRelativePath() + "/" + sourceSubDir.getFileName() + "/"; 
-
-				targetSubDirPath = new PathConverter(targetSubDirPath).removeDoubleSlash().getPath();
-				
-				StorageFile targetSubDir = new S3StorageFile(targetDir);
-				targetSubDir.setRelativePath(targetSubDirPath);
-				
-				List<String> subDirFiles = upload(sourceSubDir, targetSubDir);
-
-				uploadedFiles.addAll(subDirFiles);
-			}
-		}
-
-		return uploadedFiles;
-
+		return s3DAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
 	}
 	
 	
-	private boolean isExistingPosixFile(String path) {
+
+	@Override
+	public String downloadFile(StorageFile sourceFile, StorageFile targetFileOrDir) throws IOException {
 		
-		File f = new File(path);
-		return (f.exists() && !f.isDirectory()) ? true : false;
+		if (logger.isTraceEnabled())
+			logger.trace(">>> downloadFile({},{})", sourceFile.getFullPath(), targetFileOrDir.getFullPath());
+
+		return s3DAL.downloadFile(sourceFile.getFullPath(), targetFileOrDir.getFullPath());
 	}
 	
-	
-	private String getRelativePath(String absolutePath) {
-
-		Path pathAbsolute = Paths.get(absolutePath);
-		Path pathBase = Paths.get(basePath);
-		Path pathRelative = pathBase.relativize(pathAbsolute);
-		System.out.println("RelativePath: " + pathRelative + " from AbsolutePath: " + pathAbsolute);
-
-		return pathRelative.toString();
-	}
-
-	@Override
-	public List<String> getFiles(String folder) {
-
-		return s3DAL.getFiles(folder);
-	}
-
-	@Override
-	public List<String> delete(StorageFile storageFileOrDir) {
-
-		s3DAL.deleteFile(storageFileOrDir.getRelativePath());
-
-		// TODO: Change S3 DAL
-		return null;
-	}
-	
-	
-
-	@Override
-	public boolean isFile(StorageFile storageFileOrDir) {
-		return s3DAL.fileExists(storageFileOrDir.getRelativePath());
-	}
-
-	@Override
-	public boolean isDirectory(StorageFile storageFileOrDir) {
-		return !isFile(storageFileOrDir);
-	}
-
 	@Override
 	public List<String> download(StorageFile sourceFileOrDir, StorageFile targetFileOrDir) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> download({},{})", sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
+
+		return s3DAL.download(sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
 	}
 
 	@Override
@@ -299,4 +138,122 @@ public class S3Storage implements BucketsStorage {
 	public void deleteBucket(String bucketName) {
 		s3DAL.deleteBucket(bucketName);
 	}
+
+	@Override
+	public List<String> getBuckets() {
+		return s3DAL.getBuckets();
+	}
+
+	@Override
+	public boolean bucketExists(String bucketName) {
+		return s3DAL.bucketExists(bucketName);
+	}
+
+	@Override
+	public StorageType getStorageType() {
+		return StorageType.S3;
+	}
+
+	@Override
+	public long getFileSize(StorageFile storageFile) {
+		return s3DAL.getFileSize(storageFile.getRelativePath());
+	}
+
+	@Override
+	public StorageFile getStorageFile(String relativePath) {
+		return new S3StorageFile(s3DAL.getBucket(), relativePath);
+	}
+
+	@Override
+	public StorageFile createStorageFile(String relativePath, String content) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> createStorageFile({},{})", relativePath, content);
+
+		String path = Paths.get(basePath, relativePath).toString();
+
+		path = new PathConverter(path).verifyAbsolutePath().getPath();
+
+		FileUtils fileUtils = new FileUtils(path);
+		fileUtils.createFile(content);
+
+		StorageFile sourceFile = new PosixStorageFile(basePath, relativePath);
+		StorageFile targetFile = new S3StorageFile(s3DAL.getBucket(), relativePath);
+
+		try {
+			uploadFile(sourceFile, targetFile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		new File(path).delete();
+
+		return targetFile;
+	}
+	
+	public String addFSPrefix(String path) {
+
+		String prefix = StorageType.S3.toString() + "|";
+		return path + prefix;
+	}
+
+	public List<String> addFSPrefix(List<String> paths) {
+
+		List<String> pathsWithPrefix = new ArrayList<>();
+
+		for (String path : paths) {
+			String pathWithPrefix = addFSPrefix(path);
+			pathsWithPrefix.add(pathWithPrefix);
+		}
+
+		return pathsWithPrefix;
+	}
+
+	
+	
+	private boolean isExistingPosixFile(String path) {
+		
+		File f = new File(path);
+		return (f.exists() && !f.isDirectory()) ? true : false;
+	}
+	
+	
+	private String getRelativePath(String absolutePath) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getRelativePath({})", absolutePath);
+
+		Path pathAbsolute = Paths.get(absolutePath);
+		Path pathBase = Paths.get(basePath);
+		Path pathRelative = pathBase.relativize(pathAbsolute);
+		System.out.println("RelativePath: " + pathRelative + " from AbsolutePath: " + pathAbsolute);
+
+		return pathRelative.toString();
+	}
+
+	@Override
+	public List<String> getFiles(String folder) {
+
+		return s3DAL.getFiles(folder);
+	}
+
+	@Override
+	public List<String> delete(StorageFile storageFileOrDir) {
+
+		return s3DAL.delete(storageFileOrDir.getRelativePath());
+	}
+	
+	
+
+	@Override
+	public boolean isFile(StorageFile storageFileOrDir) {
+		return s3DAL.fileExists(storageFileOrDir.getRelativePath());
+	}
+
+	@Override
+	public boolean isDirectory(StorageFile storageFileOrDir) {
+		return !isFile(storageFileOrDir);
+	}
+
+	
 }

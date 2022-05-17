@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.annotation.PostConstruct;
 
@@ -19,7 +21,9 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
+import de.dlr.proseo.storagemgr.version2.posix.PosixDAL;
 import de.dlr.proseo.storagemgr.version2.s3.S3DAL;
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -45,6 +49,9 @@ public class S3DALTest {
 
 	@Autowired
 	private StorageManagerConfiguration cfg;
+	
+	@Autowired
+	private StorageTestUtils storageTestUtils;
 
 	@Rule
 	public TestName testName = new TestName();
@@ -65,79 +72,54 @@ public class S3DALTest {
 	public void testS3_uploadDownload() throws Exception {
 
 		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyTestDirectories();
+		TestUtils.createEmptyStorageDirectories();
 
-		String uploadDirectory = testSourcePath + "/upload/";
-		String downloadDirectory = testCachePath + "/download/";
-		String testFileName = "testfile.txt";
-		String testFileContent = "some text inside file";
-		String uploadFilePath = uploadDirectory + testFileName;
-		String downloadFilePath = downloadDirectory + testFileName;
+		String prefix = "files/";
 
-		TestUtils.createDirectory(uploadDirectory);
-		TestUtils.createDirectory(downloadDirectory);
+		List<String> pathes = new ArrayList<>();
+		pathes.add(prefix + "file1.txt");
+		pathes.add(prefix + "file2.txt");
+		pathes.add(prefix + "dir/file3.txt");
 
-		TestUtils.createFile(uploadFilePath, testFileContent);
+		List<String> sourcePathes = new ArrayList<>();
 
-		TestUtils.printDirectoryTree(testCachePath);
+		for (String path : pathes) {
 
-		assertTrue("File for upload has not been created: " + uploadFilePath, TestUtils.fileExists(uploadFilePath));
-
-		////////////////// TEST BODY BEGIN
-
-		String bucket = cfg.getS3DefaultBucket();
-
-		String s3AccessKey = cfg.getS3AccessKey();
-		String s3SecretAccessKey = cfg.getS3SecretAccessKey();
-		
-
-		S3DAL s3DAL = new S3DAL(s3AccessKey, s3SecretAccessKey, bucket);
-
-		TestUtils.printList("Buckets before bucket creation", s3DAL.getBuckets());
-
-		// create bucket in setBucket
-		s3DAL.setBucket(bucket);
-		TestUtils.printList("Buckets before bucket creation", s3DAL.getBuckets());
-		TestUtils.printList("Files before upload in bucket: " + s3DAL.getBucket(), s3DAL.getFiles());
-
-		// upload and download	
-		try {
-			
-			s3DAL.uploadFile(uploadFilePath, uploadFilePath);
-			TestUtils.printList("Files after upload in bucket: " + s3DAL.getBucket(), s3DAL.getFiles());
-			assertTrue("File was not uploaded: " + uploadFilePath, s3DAL.fileExists(uploadFilePath));
-			
-			s3DAL.downloadFile(uploadFilePath, downloadFilePath);
-			TestUtils.printDirectoryTree(downloadDirectory);
-			assertTrue("File was not downloaded: " + downloadFilePath, TestUtils.fileExists(downloadFilePath));
-
-			System.out.println("HI FROM TEST");
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw e;
+			String sourcePath = storageTestUtils.createSourceFile(path);
+			sourcePathes.add(sourcePath);
 		}
 
-		TestUtils.printList("Files after upload in bucket: " + s3DAL.getBucket(), s3DAL.getFiles());
+		String sourcePath = testUtils.getSourcePath();
+		String storagePath = testUtils.getStoragePath();
 
-		// delete file
-		s3DAL.deleteFile(uploadFilePath);
-
-		TestUtils.printList("Files after deletion in bucket: " + s3DAL.getBucket(), s3DAL.getFiles());
-		assertTrue("File was not deleted: " + uploadFilePath, !s3DAL.fileExists(uploadFilePath));
-
-		// delete bucket
-		// s3DAL.deleteBucket(bucket);
+		S3DAL s3DAL = new S3DAL( cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3DefaultBucket());
 		
-		TestUtils.printList("Buckets after bucket deletion. End", s3DAL.getBuckets());
+		s3DAL.deleteFiles();
 
-		////////////////// TEST BODY END
+		try {
+			// create source files
+			List<String> sourceFiles = s3DAL.getFiles(sourcePath);
+			TestUtils.printList("Source Files: ", sourceFiles);
+			//assertTrue("Expected: 3, " + " Exists: " + sourceFiles.size(), sourceFiles.size() == 3);
 
-		TestUtils.deleteTestDirectories();
+			// upload files to storage
+			List<String> uploadedFiles = s3DAL.upload(sourcePath, storagePath);
+			TestUtils.printList("Uploaded Files: ", uploadedFiles);
+			assertTrue("Expected: 3, " + " Exists: " + uploadedFiles.size(), uploadedFiles.size() == 3);
+			TestUtils.printList("S3 Storage after upload: ", s3DAL.getFiles());
+			
+			// delete source files
+			//List<String> deletedFiles = s3DAL.delete(sourcePath);
+			//TestUtils.printList("Deleted Files: ", deletedFiles);
+			//assertTrue("Expected: 3, " + " Exists: " + deletedFiles.size(), deletedFiles.size() == 3);
 
-		System.out.println("TEST s3 DAL has no exceptions, EXCELLENT! ");
+			// download files from storage
+			List<String> downloadedFiles = s3DAL.download(storagePath, sourcePath);
+			TestUtils.printList("Downloaded Files: ", downloadedFiles);
+			assertTrue("Expected: 3, " + " Exists: " + downloadedFiles.size(), downloadedFiles.size() == 3);
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
-	
-	
-	
 }

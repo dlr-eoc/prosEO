@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -29,6 +30,8 @@ import software.amazon.awssdk.services.s3.model.DeleteBucketRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
+import software.amazon.awssdk.services.s3.model.DeletedObject;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
@@ -186,114 +189,33 @@ public class S3DAL {
 			return false;
 		}
 	}
-
-	public String deleteFile(String filePath) {
+	
+	public String uploadFile(String sourceFile, String targetFileOrDir) throws IOException {
 		
 		if (logger.isTraceEnabled())
-			logger.trace(">>> deleteFile({})", filePath);
-
-		ArrayList<ObjectIdentifier> toDelete = new ArrayList<ObjectIdentifier>();
-		toDelete.add(ObjectIdentifier.builder().key(filePath).build());
-
-		try {
-			DeleteObjectsRequest dor = DeleteObjectsRequest.builder().bucket(bucket)
-					.delete(Delete.builder().objects(toDelete).build()).build();
-			s3Client.deleteObjects(dor);
-			System.out.println("Successfully deleted object " + filePath);
-
-		} catch (S3Exception e) {
-			System.err.println(e.awsErrorDetails().errorMessage());
-			e.printStackTrace();
-			throw e;
-		}
-
-		return filePath;
-	}
-
-	public void deleteFiles() {
-
-		for (String file : getFiles()) {
-			deleteFile(file);
-		}
-	}
-
-	public List<String> deleteFiles(List<String> toDeleteList) {
+			logger.trace(">>> uploadFile({},{})", sourceFile, targetFileOrDir);
 		
-		if (logger.isTraceEnabled())
-			logger.trace(">>> deleteFiles({})", "size:" + toDeleteList.size());
-
-		ArrayList<ObjectIdentifier> keys = new ArrayList<>();
-		ObjectIdentifier objectId = null;
-
-		for (String toDelete : toDeleteList) {
-
-			objectId = ObjectIdentifier.builder().key(toDelete).build();
-			keys.add(objectId);
-		}
-
-		Delete del = Delete.builder().objects(keys).build();
-
-		try {
-			DeleteObjectsRequest multiObjectDeleteRequest = DeleteObjectsRequest.builder().bucket(bucket).delete(del)
-					.build();
-			s3Client.deleteObjects(multiObjectDeleteRequest);
-			System.out.println("Multiple objects are deleted!");
-
-		} catch (S3Exception e) {
-			System.err.println(e.awsErrorDetails().errorMessage());
-			e.printStackTrace();
-			throw e;
-		}
-
-		return toDeleteList;
-	}
-
-	public void deleteFolder(String prefix) {
+		String targetFile = targetFileOrDir; 
 		
-		if (logger.isTraceEnabled())
-			logger.trace(">>> deleteFolder({})", prefix);
-
-		ListObjectsV2Request request = ListObjectsV2Request.builder().bucket(bucket).prefix(prefix).build();
-		ListObjectsV2Iterable list = s3Client.listObjectsV2Paginator(request);
-
-		List<ObjectIdentifier> objectIdentifiers = list.stream().flatMap(r -> r.contents().stream())
-				.map(o -> ObjectIdentifier.builder().key(o.key()).build()).collect(Collectors.toList());
-
-		if (objectIdentifiers.isEmpty())
-			return;
-		DeleteObjectsRequest deleteObjectsRequest = DeleteObjectsRequest.builder().bucket(bucket)
-				.delete(Delete.builder().objects(objectIdentifiers).build()).build();
-
-		try {
-			s3Client.deleteObjects(deleteObjectsRequest);
-			System.out.println("Folder/prefix deleted successfully " + prefix);
-
-		} catch (S3Exception e) {
-			System.err.println(e.awsErrorDetails().errorMessage());
-			e.printStackTrace();
-			throw e;
+		if (new PathConverter(targetFileOrDir).isDirectory()) {
+			targetFile = Paths.get(targetFileOrDir, getFileName(sourceFile)).toString();
+			targetFile = new PathConverter(targetFile).posixToS3Path().convertToSlash().getPath();
 		}
-	}
-
-	public String uploadFile(String sourcePath, String targetPath) throws IOException {
-		
-		if (logger.isTraceEnabled())
-			logger.trace(">>> uploadFile({},{})", sourcePath, targetPath);
 
 		try {
-			PutObjectRequest request = PutObjectRequest.builder().bucket(bucket).key(targetPath).build();
+			PutObjectRequest request = PutObjectRequest.builder().bucket(bucket).key(targetFile).build();
 
-			s3Client.putObject(request, RequestBody.fromFile(new File(sourcePath)));
+			s3Client.putObject(request, RequestBody.fromFile(new File(sourceFile)));
 
 			S3Waiter waiter = s3Client.waiter();
-			HeadObjectRequest requestWait = HeadObjectRequest.builder().bucket(bucket).key(targetPath).build();
+			HeadObjectRequest requestWait = HeadObjectRequest.builder().bucket(bucket).key(targetFile).build();
 
 			WaiterResponse<HeadObjectResponse> waiterResponse = waiter.waitUntilObjectExists(requestWait);
 			waiterResponse.matched().response().ifPresent(System.out::println);
 
-			System.out.println("File " + targetPath + " was uploaded.");
+			System.out.println("File " + targetFile + " was uploaded.");
 
-			return targetPath;
+			return targetFile;
 
 		} catch (Exception e) {
 			logger.error(e.getMessage());
@@ -301,18 +223,68 @@ public class S3DAL {
 			throw e;
 		}
 	}
+	
+	
+	public List<String> upload(String sourceFileOrDir, String targetFileOrDir) throws IOException {
 
-	public String downloadFile(String sourcePath, String targetPath) throws IOException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> upload({},{})", sourceFileOrDir, targetFileOrDir);
+
+		List<String> uploadedFiles = new ArrayList<String>();
+
+		if (isFile(sourceFileOrDir)) {
+			String uploadedFile = uploadFile(sourceFileOrDir, targetFileOrDir);
+			uploadedFiles.add(uploadedFile);
+			return uploadedFiles;
+		}
+
+		String sourceDir = sourceFileOrDir;
+		String targetDir = targetFileOrDir;
+		targetDir = new PathConverter(targetDir).posixToS3Path().addSlashAtEnd().getPath();
+		File directory = new File(sourceDir);
+		File[] files = directory.listFiles();
+		Arrays.sort(files);
+
+		for (File file : files) {
+			if (file.isFile()) {
+				String sourceFile = file.getAbsolutePath();
+				String uploadedFile = uploadFile(sourceFile, targetDir);
+				uploadedFiles.add(uploadedFile);
+			}
+		}
+
+		for (File file : files) {
+			if (file.isDirectory()) {
+				String sourceSubDir = file.getAbsolutePath();
+				String targetSubDir = Paths.get(targetDir, file.getName()).toString();
+				targetSubDir = new PathConverter(targetSubDir).posixToS3Path().addSlashAtEnd().getPath();
+				List<String> subDirUploadedFiles = upload(sourceSubDir, targetSubDir);
+				uploadedFiles.addAll(subDirUploadedFiles);
+			}
+		}
+
+		return uploadedFiles;
+	}
+
+	
+	public String downloadFile(String sourceFile, String targetFileOrDir) throws IOException {
 		
 		if (logger.isTraceEnabled())
-			logger.trace(">>> downloadFile({},{})", sourcePath, targetPath);
+			logger.trace(">>> downloadFile({},{})", sourceFile, targetFileOrDir);
+		
+		String targetFile = targetFileOrDir; 
+		
+		if (new PathConverter(targetFileOrDir).isDirectory()) {
+			targetFile = Paths.get(targetFileOrDir, getFileName(sourceFile)).toString();
+			targetFile = new PathConverter(targetFile).s3ToPosixPath().convertToSlash().getPath();
+		}
 
-		GetObjectRequest request = GetObjectRequest.builder().bucket(bucket).key(sourcePath).build();
+		GetObjectRequest request = GetObjectRequest.builder().bucket(bucket).key(sourceFile).build();
 		ResponseInputStream<GetObjectResponse> response = s3Client.getObject(request);
 		BufferedOutputStream outputStream;
 
 		try {
-			outputStream = new BufferedOutputStream(new FileOutputStream(targetPath));
+			outputStream = new BufferedOutputStream(new FileOutputStream(targetFile));
 			byte[] buffer = new byte[4096];
 			int bytesRead = -1;
 
@@ -323,13 +295,58 @@ public class S3DAL {
 			response.close();
 			outputStream.close();
 
-			return targetPath;
+			return targetFile;
 
 		} catch (IOException e) {
 			logger.error(e.getMessage());
 			throw e;
 		}
 	}
+	
+	public List<String> download(String sourceFileOrDir, String targetFileOrDir) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> download({},{})", sourceFileOrDir, targetFileOrDir);
+
+		List<String> downloadedFiles = new ArrayList<String>();
+
+		if (isFile(sourceFileOrDir)) {
+			String downloadedFile = downloadFile(sourceFileOrDir, targetFileOrDir);
+			downloadedFiles.add(downloadedFile);
+			return downloadedFiles;
+		}
+
+		String sourceDir = sourceFileOrDir;
+		String targetDir = targetFileOrDir;
+		targetDir = new PathConverter(targetDir).addSlashAtEnd().getPath();
+
+		File directory = new File(sourceDir);
+		File[] files = directory.listFiles();
+		Arrays.sort(files);
+
+		for (File file : files) {
+			if (file.isFile()) {
+				String sourceFile = file.getAbsolutePath();
+				String downloadedFile = downloadFile(sourceFile, targetDir);
+				downloadedFiles.add(downloadedFile);
+			}
+		}
+
+		for (File file : files) {
+			if (file.isDirectory()) {
+
+				String sourceSubDir = file.getAbsolutePath();
+				String targetSubDir = Paths.get(targetDir, file.getName()).toString();
+				targetSubDir = new PathConverter(targetSubDir).s3ToPosixPath().addSlashAtEnd().getPath();
+		
+				List<String> subDirFiles = download(sourceSubDir, targetSubDir);
+				downloadedFiles.addAll(subDirFiles);
+			}
+		}
+
+		return downloadedFiles;
+	}
+	
 
 	public List<String> getFiles() {
 		ListObjectsRequest request = ListObjectsRequest.builder().bucket(bucket).build();
@@ -358,6 +375,98 @@ public class S3DAL {
 		HeadObjectResponse headObjectResponse = s3Client.headObject(headObjectRequest);
 
 		return headObjectResponse.contentLength();
+	}
+	
+public List<String> delete(String fileOrDir) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> delete({})", fileOrDir);
+
+		ArrayList<ObjectIdentifier> toDelete = new ArrayList<ObjectIdentifier>();
+		toDelete.add(ObjectIdentifier.builder().key(fileOrDir).build());
+
+		try {
+			DeleteObjectsRequest dor = DeleteObjectsRequest.builder().bucket(bucket)
+					.delete(Delete.builder().objects(toDelete).build()).build();
+			s3Client.deleteObjects(dor);
+			System.out.println("Successfully deleted object " + fileOrDir);
+			
+			DeleteObjectsResponse deleteResponse = s3Client.deleteObjects(dor);
+			return toStringDeletedObjects(deleteResponse.deleted());
+
+		} catch (S3Exception e) {
+			System.err.println(e.awsErrorDetails().errorMessage());
+			e.printStackTrace();
+			throw e;
+		}
+	}
+	
+	public String deleteFile(String filepath) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> delete({})", filepath);
+
+		ArrayList<ObjectIdentifier> toDelete = new ArrayList<ObjectIdentifier>();
+		toDelete.add(ObjectIdentifier.builder().key(filepath).build());
+
+		try {
+			DeleteObjectsRequest dor = DeleteObjectsRequest.builder().bucket(bucket)
+					.delete(Delete.builder().objects(toDelete).build()).build();
+			s3Client.deleteObjects(dor);
+			System.out.println("Successfully deleted object " + filepath);
+			
+			DeleteObjectsResponse deleteResponse = s3Client.deleteObjects(dor);
+			return toStringDeletedObject(deleteResponse.deleted());
+
+		} catch (S3Exception e) {
+			System.err.println(e.awsErrorDetails().errorMessage());
+			e.printStackTrace();
+			throw e;
+		}
+	}
+	
+
+	public List<String> deleteFiles() {
+		
+		List<String> deletedFiles = new ArrayList<>();
+
+		for (String file : getFiles()) {
+			String deletedFile = deleteFile(file);
+			deletedFiles.add(deletedFile); 
+		}
+		
+		return deletedFiles; 
+	}
+
+	public List<String> deleteFiles(List<String> toDeleteList) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteFiles({})", "size:" + toDeleteList.size());
+
+		ArrayList<ObjectIdentifier> keys = new ArrayList<>();
+		ObjectIdentifier objectId = null;
+
+		for (String toDelete : toDeleteList) {
+
+			objectId = ObjectIdentifier.builder().key(toDelete).build();
+			keys.add(objectId);
+		}
+
+		Delete del = Delete.builder().objects(keys).build();
+
+		try {
+			DeleteObjectsRequest multiObjectDeleteRequest = DeleteObjectsRequest.builder().bucket(bucket).delete(del)
+					.build();
+			System.out.println("Multiple objects are deleted!");
+			
+			DeleteObjectsResponse deleteResponse = s3Client.deleteObjects(multiObjectDeleteRequest);
+			return toStringDeletedObjects(deleteResponse.deleted());
+
+		} catch (S3Exception e) {
+			System.err.println(e.awsErrorDetails().errorMessage());
+			e.printStackTrace();
+			throw e;
+		}
 	}
 
 	private boolean createBucket(String bucketName) {
@@ -418,6 +527,33 @@ public class S3DAL {
 		return fileNames;
 	}
 	
+	private List<String> toStringDeletedObjects(List<DeletedObject> files) {
+
+		List<String> fileNames = new ArrayList<String>();
+
+		for (DeletedObject f : files) {
+			fileNames.add(f.key());
+		}
+
+		return fileNames;
+	}
+	
+	private String toStringDeletedObject(List<DeletedObject> files) {
+
+		List<String> fileNames = new ArrayList<String>();
+
+		for (DeletedObject f : files) {
+			fileNames.add(f.key());
+		}
+		
+		if (fileNames.size() > 1) { 
+			System.out.println("Expected 1 s3 object to delete. Deleted:" + fileNames.size());
+		}
+
+		return fileNames.get(0);
+	}
+	
+	
 	public String uploadFileTransferManager(String sourcePath, String targetPath) throws IOException {
 		
 		if (logger.isTraceEnabled())
@@ -457,6 +593,15 @@ public class S3DAL {
 			throw e;
 		}
 	}
+	
+	public boolean isFile(String path) {
+		return new File(path).isFile();
+	}
+
+	public String getFileName(String path) {
+		return new File(path).getName();
+	}
+	
 
 	/*
 	 * // TODO: Delete? Do we need async upload? add attempts private void
