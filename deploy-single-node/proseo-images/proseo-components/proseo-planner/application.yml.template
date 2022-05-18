@@ -39,6 +39,8 @@ proseo:
         # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
         filecheckwaittime: 1000
         filecheckmaxcycles: 50
+        # check for job steps to run after one has finished
+        checkForFurtherJobStepsToRun: true
     ingestor:
         # Callback URL for wrapper
         url: http://host.docker.internal:8081/proseo/ingestor/v0.1
