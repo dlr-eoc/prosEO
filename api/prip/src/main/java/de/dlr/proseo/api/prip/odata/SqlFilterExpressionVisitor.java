@@ -64,8 +64,8 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 	private int paramCount = 0;
 	
 	/** SQL command parts */
-	private static final String SELECT_CLAUSE = "SELECT p.* ";
-	private static final String SELECT_COUNT_CLAUSE = "SELECT count(*) ";
+	private static final String SELECT_CLAUSE = "SELECT DISTINCT p.* ";
+	private static final String SELECT_COUNT_CLAUSE = "SELECT count(DISTINCT p.*) ";
 	private static final String FROM_CLAUSE = "FROM product p\n" +
 			"JOIN product_file pf ON p.id = pf.product_id\n" +
 			"JOIN product_class pc ON p.product_class_id = pc.id\n" +

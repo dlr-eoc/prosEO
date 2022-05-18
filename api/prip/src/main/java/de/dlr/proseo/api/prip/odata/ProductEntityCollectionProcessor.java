@@ -52,6 +52,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.api.prip.ProductionInterfaceConfiguration;
 import de.dlr.proseo.api.prip.ProductionInterfaceSecurity;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.enums.ProductVisibility;
@@ -76,6 +77,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	private static final int MSG_ID_EXCEPTION = 5009;
 	private static final int MSG_ID_INVALID_FILTER_CONDITION = 5010;
 	private static final int MSG_ID_INVALID_QUERY_RESULT = 5011;
+	private static final int MSG_ID_QUOTA_EXCEEDED = 5012;
 
 	/* Message string constants */
 	private static final String MSG_INVALID_ENTITY_TYPE = "(E%d) Invalid entity type %s referenced in service request";
@@ -84,9 +86,13 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	private static final String MSG_INVALID_QUERY_CONDITION = "(E%d) Invalid query condition (cause: %s)";
 	private static final String MSG_UNSUPPORTED_FORMAT = "(E%d) Unsupported response format %s";
 	private static final String MSG_INVALID_QUERY_RESULT = "(E%d) Invalid result for 'count(*)' query: %s";
+	private static final String MSG_QUOTA_EXCEEDED = "(E%d) Result set exceeds maximum quota of %d products";
 
 	/* Other string constants */
 	private static final String HTTP_HEADER_WARNING = "Warning";
+	
+	/* Product retrieval quota exceeded (HTTP status 429 as per PRIP ICD) */
+	private static final int HTTP_STATUS_TOO_MANY_REQUESTS = 429;
 
 	/** The cached OData factory object */
 	private OData odata;
@@ -97,12 +103,27 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	@PersistenceContext
 	private EntityManager em;
 	
+	/** The configuration for the PRIP API */
+	@Autowired
+	private ProductionInterfaceConfiguration config;
+	
 	/** The security utilities for the PRIP API */
 	@Autowired
 	private ProductionInterfaceSecurity securityConfig;
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductEntityCollectionProcessor.class);
+	
+	/**
+	 * Inner class denoting that a retrieval request exceeded the configured quota
+	 */
+	private static class QuotaExceededException extends RuntimeException {
+		private static final long serialVersionUID = 1L;
+
+		public QuotaExceededException(String message) {
+			super(message);
+		}
+	}
 
 	/**
 	 * Create and log a formatted error message
@@ -225,7 +246,10 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		
 		// Test topOption
 		TopOption topOption = uriInfo.getTopOption();
-		if (null != topOption) {
+		if (null == topOption) {
+			// In any case we restrict the number of products to retrieve to the quota
+			sqlCommand.append("\nLIMIT ").append(config.getQuota() + 1);
+		} else {
 			sqlCommand.append("\nLIMIT ").append(topOption.getValue());
 		}
 
@@ -245,9 +269,10 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	 * 
 	 * @return a collection of entities representing products
 	 * @throws URISyntaxException if a valid URI cannot be generated from any product UUID
+	 * @throws QuotaExceededException if the result set exceeds the configured quota
 	 * @throws ODataApplicationException if an error occurs during evaluation of a filtering condition
 	 */
-	private EntityCollection queryProducts(UriInfo uriInfo) throws URISyntaxException, ODataApplicationException {
+	private EntityCollection queryProducts(UriInfo uriInfo) throws URISyntaxException, QuotaExceededException, ODataApplicationException {
 		if (logger.isTraceEnabled()) logger.trace(">>> queryProducts({})", uriInfo);
 		
 		EntityCollection productsCollection = new EntityCollection();
@@ -257,6 +282,14 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		String sqlCommand = createProductSqlQuery(uriInfo);
 		
 		Query query = em.createNativeQuery(sqlCommand, Product.class);
+		List<?> resultList = query.getResultList();
+		
+		// Check quota
+		if (resultList.size() > config.getQuota()) {
+			String message = logError(MSG_QUOTA_EXCEEDED, MSG_ID_QUOTA_EXCEEDED, config.getQuota());
+			throw new QuotaExceededException(message);
+		}
+		
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof Product) {
 				// Create output product
@@ -326,6 +359,12 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 						LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), message)).getContent());
 				response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
 				response.setHeader(HTTP_HEADER_WARNING, message);
+				return;
+			} catch (QuotaExceededException e) {
+				response.setContent(serializer.error(
+						LogUtil.oDataServerError(HTTP_STATUS_TOO_MANY_REQUESTS, e.getMessage())).getContent());
+				response.setStatusCode(HTTP_STATUS_TOO_MANY_REQUESTS);
+				response.setHeader(HTTP_HEADER_WARNING, e.getMessage());
 				return;
 			} catch (ODataApplicationException e) {
 				String message = logError(MSG_INVALID_QUERY_CONDITION, MSG_ID_INVALID_FILTER_CONDITION, e.getMessage());

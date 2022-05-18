@@ -342,7 +342,7 @@ public class ProductUtil {
 				break;
 			case BOOLEAN:
 				entityType = (FullQualifiedName) ProductEdmProvider.ET_BOOLEANATTRIBUTE_FQN;
-				entityValue = parameter.getValue().getBooleanValue().toString();
+				entityValue = parameter.getValue().getBooleanValue();
 				break;
 			case INSTANT:
 				entityType = (FullQualifiedName) ProductEdmProvider.ET_DATEATTRIBUTE_FQN;
