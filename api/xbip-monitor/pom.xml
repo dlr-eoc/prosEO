@@ -174,7 +174,7 @@
                                     <arg value="-t" />
                                     <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
                                     <arg value="--platform" />
-                                    <arg value="linux/amd64" />
+                                    <arg value="${project.build.platform}" />
                                     <arg value="." />
                                 </exec>
                                 <exec executable="docker">
