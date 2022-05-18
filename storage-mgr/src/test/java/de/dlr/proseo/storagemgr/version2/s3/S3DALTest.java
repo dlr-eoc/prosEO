@@ -23,6 +23,7 @@ import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
+import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.posix.PosixDAL;
 import de.dlr.proseo.storagemgr.version2.s3.S3DAL;
 
@@ -81,42 +82,39 @@ public class S3DALTest {
 		pathes.add(prefix + "file2.txt");
 		pathes.add(prefix + "dir/file3.txt");
 
-		List<String> sourcePathes = new ArrayList<>();
-
+		List<String> sourceFiles = new ArrayList<>();
+		
+		// create source files
 		for (String path : pathes) {
-
-			String sourcePath = storageTestUtils.createSourceFile(path);
-			sourcePathes.add(sourcePath);
+			String sourceFile = storageTestUtils.createSourceFile(path);
+			sourceFiles.add(sourceFile);
 		}
 
 		String sourcePath = testUtils.getSourcePath();
-		String storagePath = testUtils.getStoragePath();
+		sourcePath = new PathConverter(sourcePath).convertToSlash().addSlashAtEnd().getPath();
 
 		S3DAL s3DAL = new S3DAL( cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3DefaultBucket());
 		
 		s3DAL.deleteFiles();
 
 		try {
-			// create source files
-			List<String> sourceFiles = s3DAL.getFiles(sourcePath);
 			TestUtils.printList("Source Files: ", sourceFiles);
-			//assertTrue("Expected: 3, " + " Exists: " + sourceFiles.size(), sourceFiles.size() == 3);
+			assertTrue("Expected: 3, " + " Exists: " + sourceFiles.size(), sourceFiles.size() == 3);
 
 			// upload files to storage
-			List<String> uploadedFiles = s3DAL.upload(sourcePath, storagePath);
+			List<String> uploadedFiles = s3DAL.upload(sourcePath);
 			TestUtils.printList("Uploaded Files: ", uploadedFiles);
 			assertTrue("Expected: 3, " + " Exists: " + uploadedFiles.size(), uploadedFiles.size() == 3);
 			TestUtils.printList("S3 Storage after upload: ", s3DAL.getFiles());
 			
 			// delete source files
-			//List<String> deletedFiles = s3DAL.delete(sourcePath);
-			//TestUtils.printList("Deleted Files: ", deletedFiles);
-			//assertTrue("Expected: 3, " + " Exists: " + deletedFiles.size(), deletedFiles.size() == 3);
-
+			TestUtils.deleteDirectory(sourcePath);
+		
 			// download files from storage
-			List<String> downloadedFiles = s3DAL.download(storagePath, sourcePath);
+			List<String> downloadedFiles = s3DAL.download(sourcePath);
 			TestUtils.printList("Downloaded Files: ", downloadedFiles);
 			assertTrue("Expected: 3, " + " Exists: " + downloadedFiles.size(), downloadedFiles.size() == 3);
+			TestUtils.printDirectory(sourcePath);
 
 		} catch (IOException e) {
 			e.printStackTrace();

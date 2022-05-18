@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.dlr.proseo.storagemgr.cache.FileUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
@@ -224,7 +225,6 @@ public class S3DAL {
 		}
 	}
 	
-	
 	public List<String> upload(String sourceFileOrDir, String targetFileOrDir) throws IOException {
 
 		if (logger.isTraceEnabled())
@@ -265,26 +265,33 @@ public class S3DAL {
 
 		return uploadedFiles;
 	}
-
 	
+	public List<String> upload(String sourceFileOrDir) throws IOException {
+		return upload(sourceFileOrDir, sourceFileOrDir);
+	}
+
 	public String downloadFile(String sourceFile, String targetFileOrDir) throws IOException {
 		
 		if (logger.isTraceEnabled())
 			logger.trace(">>> downloadFile({},{})", sourceFile, targetFileOrDir);
 		
-		String targetFile = targetFileOrDir; 
+		String sourceS3File= new PathConverter(sourceFile).posixToS3Path().convertToSlash().getPath();
+		String targetPosixFile = targetFileOrDir; 
 		
 		if (new PathConverter(targetFileOrDir).isDirectory()) {
-			targetFile = Paths.get(targetFileOrDir, getFileName(sourceFile)).toString();
-			targetFile = new PathConverter(targetFile).s3ToPosixPath().convertToSlash().getPath();
+			targetPosixFile = Paths.get(targetFileOrDir, getFileName(sourceS3File)).toString();
+	
 		}
-
-		GetObjectRequest request = GetObjectRequest.builder().bucket(bucket).key(sourceFile).build();
+		
+		targetPosixFile = new PathConverter(targetPosixFile).s3ToPosixPath().convertToSlash().getPath();
+		new FileUtils(targetPosixFile).createParentDirectories();
+		
+		GetObjectRequest request = GetObjectRequest.builder().bucket(bucket).key(sourceS3File).build();
 		ResponseInputStream<GetObjectResponse> response = s3Client.getObject(request);
 		BufferedOutputStream outputStream;
 
 		try {
-			outputStream = new BufferedOutputStream(new FileOutputStream(targetFile));
+			outputStream = new BufferedOutputStream(new FileOutputStream(targetPosixFile));
 			byte[] buffer = new byte[4096];
 			int bytesRead = -1;
 
@@ -295,7 +302,7 @@ public class S3DAL {
 			response.close();
 			outputStream.close();
 
-			return targetFile;
+			return targetPosixFile;
 
 		} catch (IOException e) {
 			logger.error(e.getMessage());
@@ -307,47 +314,38 @@ public class S3DAL {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> download({},{})", sourceFileOrDir, targetFileOrDir);
-
-		List<String> downloadedFiles = new ArrayList<String>();
-
-		if (isFile(sourceFileOrDir)) {
-			String downloadedFile = downloadFile(sourceFileOrDir, targetFileOrDir);
-			downloadedFiles.add(downloadedFile);
-			return downloadedFiles;
-		}
-
-		String sourceDir = sourceFileOrDir;
-		String targetDir = targetFileOrDir;
-		targetDir = new PathConverter(targetDir).addSlashAtEnd().getPath();
-
-		File directory = new File(sourceDir);
-		File[] files = directory.listFiles();
-		Arrays.sort(files);
-
-		for (File file : files) {
-			if (file.isFile()) {
-				String sourceFile = file.getAbsolutePath();
-				String downloadedFile = downloadFile(sourceFile, targetDir);
-				downloadedFiles.add(downloadedFile);
-			}
-		}
-
-		for (File file : files) {
-			if (file.isDirectory()) {
-
-				String sourceSubDir = file.getAbsolutePath();
-				String targetSubDir = Paths.get(targetDir, file.getName()).toString();
-				targetSubDir = new PathConverter(targetSubDir).s3ToPosixPath().addSlashAtEnd().getPath();
 		
-				List<String> subDirFiles = download(sourceSubDir, targetSubDir);
-				downloadedFiles.addAll(subDirFiles);
-			}
+		String sourcePosixFileOrDir = new PathConverter(sourceFileOrDir).posixToS3Path().convertToSlash().getPath();
+		
+		List<String> toDownloadFiles = getFiles(sourcePosixFileOrDir);
+		List<String> downloadedFiles = new ArrayList<String>();
+		
+		for (String sourceFile : toDownloadFiles) {
+			String downloadedFile = downloadFile(sourceFile, targetFileOrDir);
+			downloadedFiles.add(downloadedFile);
 		}
-
+		
 		return downloadedFiles;
 	}
 	
+	public List<String> download(String prefixFileOrDir) throws IOException {
 
+		if (logger.isTraceEnabled())
+			logger.trace(">>> download({})", prefixFileOrDir);
+		
+		String s3PrefixFileOrDir = new PathConverter(prefixFileOrDir).posixToS3Path().convertToSlash().getPath();
+		
+		List<String> toDownloadFiles = getFiles(s3PrefixFileOrDir);
+		List<String> downloadedFiles = new ArrayList<String>();
+		
+		for (String sourceFile : toDownloadFiles) {
+			String downloadedFile = downloadFile(sourceFile, sourceFile); // download as is
+			downloadedFiles.add(downloadedFile);
+		}
+		
+		return downloadedFiles;
+	}
+	
 	public List<String> getFiles() {
 		ListObjectsRequest request = ListObjectsRequest.builder().bucket(bucket).build();
 
@@ -377,7 +375,7 @@ public class S3DAL {
 		return headObjectResponse.contentLength();
 	}
 	
-public List<String> delete(String fileOrDir) {
+	public List<String> delete(String fileOrDir) {
 		
 		if (logger.isTraceEnabled())
 			logger.trace(">>> delete({})", fileOrDir);
@@ -601,15 +599,4 @@ public List<String> delete(String fileOrDir) {
 	public String getFileName(String path) {
 		return new File(path).getName();
 	}
-	
-
-	/*
-	 * // TODO: Delete? Do we need async upload? add attempts private void
-	 * uploadFileAsync(String bucketName, String filePath) { PutObjectRequest
-	 * request =
-	 * PutObjectRequest.builder().bucket(bucketName).key(filePath).build();
-	 * 
-	 * theS3Client.putObject(request, RequestBody.fromFile(new File(filePath))); }
-	 */
-
 }
