@@ -173,8 +173,10 @@ public class PosixStorage implements Storage {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFiles({})", relativePath);
+		
+		String path = new PathConverter(basePath, relativePath).getPath(); 
 
-		return posixDAL.getFiles(relativePath);
+		return posixDAL.getFiles(path);
 	}
 
 	public String deleteFile(StorageFile storageFile) throws IOException {

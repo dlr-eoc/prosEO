@@ -84,7 +84,7 @@ public class S3Storage implements BucketsStorage {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> uploadFile({},{})", sourceFile.getFullPath(), targetFileOrDir.getFullPath());
 
-		return s3DAL.uploadFile(sourceFile.getFullPath(), targetFileOrDir.getFullPath());
+		return s3DAL.uploadFile(sourceFile.getFullPath(), targetFileOrDir.getRelativePath());
 	}
 	
 	@Override
@@ -93,7 +93,7 @@ public class S3Storage implements BucketsStorage {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> upload({},{})", sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
 
-		return s3DAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
+		return s3DAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getRelativePath());
 	}
 	
 	
@@ -104,7 +104,7 @@ public class S3Storage implements BucketsStorage {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> downloadFile({},{})", sourceFile.getFullPath(), targetFileOrDir.getFullPath());
 
-		return s3DAL.downloadFile(sourceFile.getFullPath(), targetFileOrDir.getFullPath());
+		return s3DAL.downloadFile(sourceFile.getRelativePath(), targetFileOrDir.getFullPath());
 	}
 	
 	@Override
@@ -113,7 +113,7 @@ public class S3Storage implements BucketsStorage {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> download({},{})", sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
 
-		return s3DAL.download(sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
+		return s3DAL.download(sourceFileOrDir.getRelativePath(), targetFileOrDir.getFullPath());
 	}
 
 	@Override

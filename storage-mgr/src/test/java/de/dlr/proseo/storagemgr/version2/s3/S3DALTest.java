@@ -111,7 +111,8 @@ public class S3DALTest {
 			TestUtils.deleteDirectory(sourcePath);
 		
 			// download files from storage
-			List<String> downloadedFiles = s3DAL.download(sourcePath);
+			List<String> downloadedFiles = s3DAL
+					.download(sourcePath);
 			TestUtils.printList("Downloaded Files: ", downloadedFiles);
 			assertTrue("Expected: 3, " + " Exists: " + downloadedFiles.size(), downloadedFiles.size() == 3);
 			TestUtils.printDirectory(sourcePath);

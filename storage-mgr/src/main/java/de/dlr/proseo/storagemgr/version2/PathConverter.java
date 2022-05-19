@@ -2,6 +2,7 @@ package de.dlr.proseo.storagemgr.version2;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +25,12 @@ public class PathConverter {
 
 	public PathConverter(String path) {
 		p = path.replace(BACKSLASH, SLASH); // convertToSlash
+		p = p.trim();
+	}
+	
+	public PathConverter(String path1, String path2) {
+		p = Paths.get(path1, path2).toString();
+		p = p.replace(BACKSLASH, SLASH); // convertToSlash
 		p = p.trim();
 	}
 
