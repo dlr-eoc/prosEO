@@ -1,10 +1,13 @@
-package de.dlr.proseo.storagemgr.cache;
+package de.dlr.proseo.storagemgr.version2;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,6 +104,7 @@ public class FileUtils {
 		return directory.list().length > 0 ? false : true;
 	}
 
+
 	/**
 	 * Gets the file content
 	 * 
@@ -149,6 +153,15 @@ public class FileUtils {
 			throw new IllegalStateException("Couldn't create dirs: " + file);
 		}
 	}
+	
+	public String deleteFile() throws IOException { 
+		return deleteFile(path); 
+	}
+
+	
+	public List<String> delete() throws IOException { 
+		return delete(path); 
+	}
 
 	/**
 	 * Checks if path is a file
@@ -163,4 +176,81 @@ public class FileUtils {
 			throw new IllegalArgumentException(path + ": " + exceptionMessage);
 		}
 	}
+	
+	
+	/**
+	 * Deletes a file 
+	 * 
+	 * @return
+	 * @throws IOException
+	 */
+	private String deleteFile(String sourceFile) throws IOException {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteFile({})", sourceFile);
+
+		try {
+			boolean fileDeleted = new File(sourceFile).delete();
+
+			if (fileDeleted) {
+				return sourceFile;
+			} else {
+				throw new IOException("Cannot delete file: " + sourceFile);
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			if (logger.isTraceEnabled())
+				logger.error("Cannot download file: " + sourceFile, e.getMessage());
+			throw e;
+		}
+	}
+	
+	private List<String> delete(String sourceFileOrDir) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> delete({})", sourceFileOrDir);
+
+		List<String> deletedFiles = new ArrayList<String>();
+
+		if (isFile(sourceFileOrDir)) {
+
+			String deletedFile = deleteFile(sourceFileOrDir);
+			deletedFiles.add(deletedFile);
+			return deletedFiles;
+		}
+
+		String sourceDir = sourceFileOrDir;
+		//sourceDir = new PathConverter(sourceDir).addSlashAtEnd().getPath();
+
+		File directory = new File(sourceDir);
+		File[] files = directory.listFiles();
+		Arrays.sort(files);
+
+		for (File file : files) {
+			if (file.isFile()) {
+				String deletedFile = deleteFile(file.getAbsolutePath());
+				deletedFiles.add(deletedFile);
+			}
+		}
+
+		for (File file : files) {
+			if (file.isDirectory()) {
+				List<String> subDirDeletedFiles = delete(file.getAbsolutePath());
+				deletedFiles.addAll(subDirDeletedFiles);
+			}
+		}
+
+		return deletedFiles;
+	}
+	
+	/**
+	 * Checks if path is file
+	 * 
+	 * @return true if path is file
+	 */
+	private boolean isFile(String sourceFile) {
+		return new File(sourceFile).isFile();
+	}
+	
 }

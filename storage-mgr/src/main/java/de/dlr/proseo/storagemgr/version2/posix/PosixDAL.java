@@ -13,6 +13,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.dlr.proseo.storagemgr.version2.FileUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
@@ -194,60 +195,17 @@ public class PosixDAL {
 		
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteFile({})", sourceFile);
-
-		try {
-			boolean fileDeleted = new File(sourceFile).delete();
-
-			if (fileDeleted) {
-				return sourceFile;
-			} else {
-				throw new IOException("Cannot delete file: " + sourceFile);
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			if (logger.isTraceEnabled())
-				logger.error("Cannot download file: " + sourceFile, e.getMessage());
-			throw e;
-		}
+		
+		return new FileUtils(sourceFile).deleteFile();
 	}
 
 	public List<String> delete(String sourceFileOrDir) throws IOException {
-
+		
 		if (logger.isTraceEnabled())
 			logger.trace(">>> delete({})", sourceFileOrDir);
-
-		List<String> deletedFiles = new ArrayList<String>();
-
-		if (isFile(sourceFileOrDir)) {
-
-			String deletedFile = deleteFile(sourceFileOrDir);
-			deletedFiles.add(deletedFile);
-			return deletedFiles;
-		}
-
-		String sourceDir = sourceFileOrDir;
-		//sourceDir = new PathConverter(sourceDir).addSlashAtEnd().getPath();
-
-		File directory = new File(sourceDir);
-		File[] files = directory.listFiles();
-		Arrays.sort(files);
-
-		for (File file : files) {
-			if (file.isFile()) {
-				String deletedFile = deleteFile(file.getAbsolutePath());
-				deletedFiles.add(deletedFile);
-			}
-		}
-
-		for (File file : files) {
-			if (file.isDirectory()) {
-				List<String> subDirDeletedFiles = delete(file.getAbsolutePath());
-				deletedFiles.addAll(subDirDeletedFiles);
-			}
-		}
-
-		return deletedFiles;
+		
+		
+		return new FileUtils(sourceFileOrDir).delete(); 
 	}
 
 	public List<String> getFiles(String path) {

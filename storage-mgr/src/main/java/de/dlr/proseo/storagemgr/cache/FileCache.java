@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.version2.FileUtils;
 
 /**
  * File cache for managing files in cache storage.
