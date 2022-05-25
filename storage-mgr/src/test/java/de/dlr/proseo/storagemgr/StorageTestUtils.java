@@ -2,6 +2,7 @@ package de.dlr.proseo.storagemgr;
 
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
@@ -87,13 +88,12 @@ public class StorageTestUtils {
 		assertTrue("File for upload has not been created: " + sourceFilePath, TestUtils.fileExists(sourceFilePath));
 
 		System.out.println("File " + relativePath + " successfully created in Source");
-		
-		return sourceFilePath; 
+
+		return sourceFilePath;
 	}
-	
-	
-	public String getAbsoluteSourcePath(String relativePath) { 
-		
+
+	public String getAbsoluteSourcePath(String relativePath) {
+
 		String path = Paths.get(sourcePath, relativePath).toString();
 		return new PathConverter(path).convertToSlash().getPath();
 	}
@@ -153,9 +153,22 @@ public class StorageTestUtils {
 
 		TestUtils.printDirectoryTree(sourcePath);
 	}
-	
+
 	public void printVersion(String msg) {
-		
+
 		System.out.println(msg + (storageProvider.isVersion2() ? " Version-2" : " Version-1"));
 	}
+
+	public String getStoragePath() {
+		return storagePath;
+	}
+
+	public String getCachePath() {
+		return cachePath;
+	}
+
+	public String getSourcePath() {
+		return sourcePath;
+	}
+
 }

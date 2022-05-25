@@ -27,6 +27,7 @@ public class TestUtils {
 	private static final String TEST_SEPARATOR = "===============================================";
 	private static final String PRINT_DIRECTORY_HEADER = "----- Folder";
 	private static final String TEST_DIRECTORY = "testdata";
+	private static final String TARGET_DIRECTORY = "target";
 
 	@Autowired
 	private StorageManagerConfiguration cfg;
@@ -107,6 +108,16 @@ public class TestUtils {
 	 */
 	private String getTestPath(String path) {
 		return Paths.get(path, TEST_DIRECTORY).toString();
+	}
+
+	public static String getTestFolder() {
+
+		String testPath = Paths.get(TARGET_DIRECTORY, TEST_DIRECTORY).toString(); // str-mgr/target/testdata
+		testPath = new File(testPath).getAbsolutePath();
+
+		createDirectory(testPath);
+
+		return testPath;
 	}
 
 	/**
@@ -307,20 +318,20 @@ public class TestUtils {
 	public static void printDirectoryTree(String directoryPath) {
 
 		System.out.println();
-		
+
 		File dir = new File(directoryPath);
 
 		if ((null == dir) || !dir.exists()) {
 			System.out.println("Error in printDirectoryTree: Directory does not exist: " + directoryPath);
 			return;
 		}
-		
+
 		String directory = new File(directoryPath).getName();
-		
+
 		System.out.print("FOLDER: " + directory + " PATH: " + directoryPath);
 		System.out.print(" Files: " + countFilesInDirectory(directoryPath));
 		System.out.println(" Folders: " + countDirectoriesInDirectory(directoryPath));
-		
+
 		printDirectoryTree(directoryPath, "");
 		System.out.println();
 	}
@@ -332,7 +343,7 @@ public class TestUtils {
 	private static void printDirectoryTree(String directoryPath, String depth) {
 
 		File directory = new File(directoryPath);
-		
+
 		// System.out.println("FOLDER: " + directoryPath + " " + " DEPTH: " + depth);
 
 		File[] files = directory.listFiles();
@@ -363,12 +374,12 @@ public class TestUtils {
 	}
 
 	private static int countFilesInDirectory(File directory) {
-		
+
 		if ((null == directory) || !directory.exists()) {
 			System.out.println("Error in countFilesInDirectory: Directory does not exist: " + directory);
 			return 0;
 		}
-		
+
 		int count = 0;
 		for (File file : directory.listFiles()) {
 			if (file.isFile()) {
@@ -387,12 +398,12 @@ public class TestUtils {
 	}
 
 	private static int countDirectoriesInDirectory(File directory) {
-		
+
 		if ((null == directory) || !directory.exists()) {
 			System.out.println("Error in countDirectoriesInDirectory: Directory does not exist: " + directory);
 			return 0;
 		}
-		
+
 		int count = 0;
 		for (File file : directory.listFiles()) {
 			if (file.isDirectory()) {
