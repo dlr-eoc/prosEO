@@ -15,21 +15,21 @@ import de.dlr.proseo.storagemgr.version2.posix.PosixStorageFile;
 import de.dlr.proseo.storagemgr.version2.s3.S3StorageFile;
 
 public class BaseStorageTestUtils {
-	
+
 	protected String sourcePath;
 	protected String storagePath;
 	protected String cachePath;
-	
+
 	public StorageFile getSourceFile(String relativePath) {
 
 		return new PosixStorageFile(sourcePath, relativePath);
 	}
-	
+
 	public StorageFile getStorageFile(String relativePath) {
 
 		return new PosixStorageFile(storagePath, relativePath);
 	}
-	
+
 	public StorageFile getCacheFile(String relativePath) {
 
 		return new PosixStorageFile(cachePath, relativePath);
@@ -78,7 +78,7 @@ public class BaseStorageTestUtils {
 	}
 
 	public void uploadToPosixStorage(String relativePath) {
-		
+
 		PosixDAL posixDAL = new PosixDAL();
 
 		StorageFile sourceFile = getSourceFile(relativePath);
@@ -115,12 +115,12 @@ public class BaseStorageTestUtils {
 
 		System.out.println("File " + relativePath + " successfully downloaded from Posix Storage to Cache");
 	}
-	
+
 	public void printSource() {
 
 		TestUtils.printDirectoryTree(sourcePath);
 	}
-	
+
 	public void printPosixStorage() {
 
 		TestUtils.printDirectoryTree(storagePath);
@@ -130,8 +130,6 @@ public class BaseStorageTestUtils {
 
 		TestUtils.printDirectoryTree(cachePath);
 	}
-
-
 
 	public String getStoragePath() {
 		return storagePath;
@@ -144,9 +142,4 @@ public class BaseStorageTestUtils {
 	public String getSourcePath() {
 		return sourcePath;
 	}
-
-	
-	
-	
-
 }

@@ -11,7 +11,7 @@ import de.dlr.proseo.storagemgr.version2.PathConverter;
  * @author Denys Chaykovskiy
  *
  */
-public class UniqueStorageTestPathes {
+public class UniqueStorageTestPaths {
 
 	private static final String SOURCE_DIRECTORY = "source";
 	private static final String STORAGE_DIRECTORY = "backend";
@@ -23,12 +23,12 @@ public class UniqueStorageTestPathes {
 	private String storagePath;
 	private String cachePath;
 
-	public UniqueStorageTestPathes(String uniqueTestFolder) {
+	public UniqueStorageTestPaths(String uniqueTestFolder) {
 
 		init(uniqueTestFolder);
 	}
 
-	public UniqueStorageTestPathes(Object unitTest, TestName testName) {
+	public UniqueStorageTestPaths(Object unitTest, TestName testName) {
 
 		String className = unitTest.getClass().getSimpleName();
 		String methodName = testName.getMethodName();

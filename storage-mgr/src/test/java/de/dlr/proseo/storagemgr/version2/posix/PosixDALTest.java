@@ -16,11 +16,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
-import de.dlr.proseo.storagemgr.UniquePathesStorageTestUtils;
-import de.dlr.proseo.storagemgr.UniqueStorageTestPathes;
+import de.dlr.proseo.storagemgr.UniquePathsStorageTestUtils;
+import de.dlr.proseo.storagemgr.UniqueStorageTestPaths;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -30,16 +31,13 @@ public class PosixDALTest {
 	@Rule
 	public TestName testName = new TestName();
 
-	@Autowired
-	private TestUtils testUtils;
-
 	@Test
 	public void test() {
 
 		TestUtils.printMethodName(this, testName);
-		UniqueStorageTestPathes uniquePathes = new UniqueStorageTestPathes(this, testName);
-		UniquePathesStorageTestUtils storageTestUtils = new UniquePathesStorageTestUtils(uniquePathes.getSourcePath(),
-				uniquePathes.getStoragePath(), uniquePathes.getCachePath());
+		UniqueStorageTestPaths uniquePaths = new UniqueStorageTestPaths(this, testName); 
+		UniquePathsStorageTestUtils uniqueUtils = new UniquePathsStorageTestUtils(uniquePaths.getSourcePath(),
+				uniquePaths.getStoragePath(), uniquePaths.getCachePath());
 
 		String prefix = "files/";
 
@@ -52,12 +50,12 @@ public class PosixDALTest {
 
 		for (String path : pathes) {
 
-			String sourcePath = storageTestUtils.createSourceFile(path);
+			String sourcePath = uniqueUtils.createSourceFile(path);
 			sourcePathes.add(sourcePath);
 		}
 
-		String sourcePath = uniquePathes.getSourcePath();
-		String storagePath = uniquePathes.getStoragePath();
+		String sourcePath = uniquePaths.getSourcePath();
+		String storagePath = uniquePaths.getStoragePath();
 
 		PosixDAL posixDAL = new PosixDAL();
 
@@ -85,7 +83,7 @@ public class PosixDALTest {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
+		
+		uniquePaths.deleteUniqueTestPath();
 	}
-
 }

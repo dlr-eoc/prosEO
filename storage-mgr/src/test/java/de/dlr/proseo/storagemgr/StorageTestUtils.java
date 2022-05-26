@@ -26,6 +26,7 @@ import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 @Component
 public class StorageTestUtils extends BaseStorageTestUtils {
 
+
 	@Autowired
 	private TestUtils testUtils;
 
@@ -34,7 +35,6 @@ public class StorageTestUtils extends BaseStorageTestUtils {
 
 	@Rule
 	public TestName testName = new TestName();
-
 
 	@PostConstruct
 	private void init() {
@@ -57,5 +57,4 @@ public class StorageTestUtils extends BaseStorageTestUtils {
 
 		System.out.println(msg + (storageProvider.isVersion2() ? " Version-2" : " Version-1"));
 	}
-
 }
