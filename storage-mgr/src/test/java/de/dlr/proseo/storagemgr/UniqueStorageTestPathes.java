@@ -5,6 +5,8 @@ import java.nio.file.Paths;
 
 import org.junit.rules.TestName;
 
+import de.dlr.proseo.storagemgr.version2.PathConverter;
+
 /**
  * @author Denys Chaykovskiy
  *
@@ -15,17 +17,31 @@ public class UniqueStorageTestPathes {
 	private static final String STORAGE_DIRECTORY = "backend";
 	private static final String CACHE_DIRECTORY = "cache";
 
-	private TestName testName;
-	private Object unitTest;
+	private String uniqueTestPath;
 
-	private String sourceDir;
-	private String storageDir;
-	private String cacheDir;
+	private String sourcePath;
+	private String storagePath;
+	private String cachePath;
+
+	public UniqueStorageTestPathes(String uniqueTestFolder) {
+
+		init(uniqueTestFolder);
+	}
 
 	public UniqueStorageTestPathes(Object unitTest, TestName testName) {
 
-		this.unitTest = unitTest;
-		this.testName = testName;
+		String className = unitTest.getClass().getSimpleName();
+		String methodName = testName.getMethodName();
+		String uniqueTestFolder = className + "_" + methodName;
+
+		init(uniqueTestFolder);
+
+	}
+
+	private void init(String uniqueTestFolder) {
+
+		uniqueTestPath = TestUtils.getTestFolder(); // str-mgr/target/testdata
+		uniqueTestPath = Paths.get(uniqueTestPath, uniqueTestFolder).toString(); // testdata/className_methodName
 
 		createStorageFolders();
 	}
@@ -34,40 +50,41 @@ public class UniqueStorageTestPathes {
 
 		String uniqueTestPath = getUniqueTestPath();
 
-		sourceDir = Paths.get(uniqueTestPath, SOURCE_DIRECTORY).toString();
-		TestUtils.createDirectory(sourceDir);
+		sourcePath = Paths.get(uniqueTestPath, SOURCE_DIRECTORY).toString();
+		sourcePath = new PathConverter(sourcePath).convertToSlash().getPath();
+		TestUtils.createDirectory(sourcePath);
 
-		storageDir = Paths.get(uniqueTestPath, STORAGE_DIRECTORY).toString();
-		TestUtils.createDirectory(storageDir);
+		storagePath = Paths.get(uniqueTestPath, STORAGE_DIRECTORY).toString();
+		storagePath = new PathConverter(storagePath).convertToSlash().getPath();
+		TestUtils.createDirectory(storagePath);
 
-		cacheDir = Paths.get(uniqueTestPath, CACHE_DIRECTORY).toString();
-		TestUtils.createDirectory(cacheDir);
+		cachePath = Paths.get(uniqueTestPath, CACHE_DIRECTORY).toString();
+		cachePath = new PathConverter(cachePath).convertToSlash().getPath();
+		TestUtils.createDirectory(cachePath);
 	}
 
 	public String getUniqueTestPath() {
 
-		String testPath = TestUtils.getTestFolder(); // str-mgr/target/testdata
+		if (!TestUtils.directoryExists(uniqueTestPath))
+			TestUtils.createDirectory(uniqueTestPath);
 
-		String className = unitTest.getClass().getSimpleName();
-		String methodName = testName.getMethodName();
+		return uniqueTestPath;
+	}
 
-		testPath = Paths.get(testPath, className + "_" + methodName).toString();
-		testPath = new File(testPath).getAbsolutePath();
+	public void deleteUniqueTestPath() {
 
-		TestUtils.createDirectory(testPath);
-
-		return testPath;
+		TestUtils.deleteDirectory(uniqueTestPath);
 	}
 
 	public String getSourcePath() {
-		return sourceDir;
+		return sourcePath;
 	}
 
 	public String getStoragePath() {
-		return storageDir;
+		return storagePath;
 	}
 
 	public String getCachePath() {
-		return storageDir;
+		return cachePath;
 	}
 }

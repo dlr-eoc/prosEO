@@ -19,6 +19,8 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
+import de.dlr.proseo.storagemgr.UniquePathesStorageTestUtils;
+import de.dlr.proseo.storagemgr.UniqueStorageTestPathes;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -31,14 +33,13 @@ public class PosixDALTest {
 	@Autowired
 	private TestUtils testUtils;
 
-	@Autowired
-	private StorageTestUtils storageTestUtils;
-
 	@Test
 	public void test() {
 
 		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyStorageDirectories();
+		UniqueStorageTestPathes uniquePathes = new UniqueStorageTestPathes(this, testName);
+		UniquePathesStorageTestUtils storageTestUtils = new UniquePathesStorageTestUtils(uniquePathes.getSourcePath(),
+				uniquePathes.getStoragePath(), uniquePathes.getCachePath());
 
 		String prefix = "files/";
 
@@ -55,8 +56,8 @@ public class PosixDALTest {
 			sourcePathes.add(sourcePath);
 		}
 
-		String sourcePath = testUtils.getSourcePath();
-		String storagePath = testUtils.getStoragePath();
+		String sourcePath = uniquePathes.getSourcePath();
+		String storagePath = uniquePathes.getStoragePath();
 
 		PosixDAL posixDAL = new PosixDAL();
 
