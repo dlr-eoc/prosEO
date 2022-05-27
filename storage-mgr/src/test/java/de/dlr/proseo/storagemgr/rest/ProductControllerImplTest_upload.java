@@ -41,7 +41,7 @@ import de.dlr.proseo.storagemgr.version2.StorageProvider;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-public class ProductControllerImplTest {
+public class ProductControllerImplTest_upload {
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -60,64 +60,6 @@ public class ProductControllerImplTest {
 
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/products";
 
-	/**
-	 * Get products with given directory prefix
-	 * 
-	 * GET /products storageType="POSIX"&prefix="/.."
-	 * 
-	 * @return products string[]
-	 */
-	@Test
-	public void testGetProductFilesV2() throws Exception {
-
-		storageProvider.loadVersion2();
-		getProductFiles();
-	}
-
-	/**
-	 * Get products with given directory prefix
-	 * 
-	 * GET /products storageType="POSIX"&prefix="/.."
-	 * 
-	 * @return products string[]
-	 */
-	@Test
-	public void testGetProductFilesV1() throws Exception {
-
-		storageProvider.loadVersion1();
-		getProductFiles();
-	}
-
-	private void getProductFiles() throws Exception {
-
-		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyStorageDirectories();
-
-		String storageType = "POSIX";
-		String prefix = "files/";
-
-		List<String> pathes = new ArrayList<>();
-		pathes.add(prefix + "file1.txt");
-		pathes.add(prefix + "file2.txt");
-		pathes.add(prefix + "dir/file3.txt");
-
-		for (String path : pathes) {
-
-			storageTestUtils.createSourceFile(path);
-			storageTestUtils.uploadToPosixStorage(path);
-		}
-
-		storageTestUtils.printPosixStorage();
-
-		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
-				.param("storageType", storageType).param("prefix", prefix);
-
-		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
-
-		System.out.println("REQUEST: " + REQUEST_STRING);
-		System.out.println("Status: " + mvcResult.getResponse().getStatus());
-		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
-	}
 	
 	/**
 	 * Register products/files/dirs from unstructered storage in prosEO-storage
@@ -127,7 +69,7 @@ public class ProductControllerImplTest {
 	 * @return RestProductFS
 	 */
 	@Test
-	public void testCreateRestProductFSV1() throws Exception {
+	public void testUpload_v1Posix() throws Exception {
 		
 		storageProvider.loadVersion1();
 		createRestProductFS();
@@ -141,7 +83,7 @@ public class ProductControllerImplTest {
 	 * @return RestProductFS
 	 */
 	@Test
-	public void testCreateRestProductFSV2() throws Exception {
+	public void testUpload_v2Posix() throws Exception {
 		
 		storageProvider.loadVersion2();
 		createRestProductFS();
@@ -163,14 +105,6 @@ public class ProductControllerImplTest {
 		System.out.println("REQUEST: " + REQUEST_STRING);
 		System.out.println("Status: " + mvcResult.getResponse().getStatus());
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
-	}
-	
-	public static String asJsonString(final Object obj) {
-		try {
-			return new ObjectMapper().writeValueAsString(obj);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	private RestProductFS populateRestProductFS() {
@@ -207,70 +141,15 @@ public class ProductControllerImplTest {
 				registeredFilePath, registered, registeredFilesCount, registeredFilesList, deleted, message);
 
 	}
-
-	/**
-	 * Delete/remove product by product path info from prosEO storage
-	 * 
-	 * DELETE /products pathInfo="/.."
-	 * 
-	 * @return RestProductFS
-	 */
-	@Test
-	public void testDeleteV1() throws Exception {
-
-		storageProvider.loadVersion1();
-		delete();
-	}
-
-
-
-	/**
-	 * Delete/remove product by product path info from prosEO storage
-	 * 
-	 * DELETE /products pathInfo="/.."
-	 * 
-	 * @return RestProductFS
-	 */
-	@Test
-	public void testDeleteV2() throws Exception {
-		
-		storageProvider.loadVersion2();
-		delete();
-
-	}
-
-	private void delete() throws Exception {
-		
-		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyStorageDirectories();
-
-		String storageType = "POSIX";
-		String prefix = "files/";
-
-		List<String> pathes = new ArrayList<>();
-		pathes.add(prefix + "file1.txt");
-		pathes.add(prefix + "file2.txt");
-		pathes.add(prefix + "dir/file3.txt");
-
-		for (String path : pathes) {
-
-			storageTestUtils.createSourceFile(path);
-			storageTestUtils.uploadToPosixStorage(path);
+	
+	
+	private static String asJsonString(final Object obj) {
+		try {
+			return new ObjectMapper().writeValueAsString(obj);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
-
-		storageTestUtils.printPosixStorage();
-		
-
-		String pathInfo = storageProvider.getStorage().getStorageFile(prefix).getFullPath();
-
-		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.delete(REQUEST_STRING).param("pathInfo",
-				pathInfo);
-
-		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
-
-		System.out.println("REQUEST: " + REQUEST_STRING);
-		System.out.println("Status: " + mvcResult.getResponse().getStatus());
-		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
-
 	}
+
+	
 }

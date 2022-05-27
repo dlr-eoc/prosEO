@@ -150,7 +150,7 @@ public class ProductControllerImpl implements ProductController {
 				(null == restProductFS ? "MISSING" : restProductFS.getProductId()));
 		
 		
-		if (storageProvider.isVersion2()) { // begin version 2 list copy source -> storage
+		if (storageProvider.isVersion2()) { // begin version 2 list upload source -> storage
 
 			try {
 				String hostName = getLocalHostName();

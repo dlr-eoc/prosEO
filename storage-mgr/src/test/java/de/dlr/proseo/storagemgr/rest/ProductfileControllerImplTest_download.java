@@ -33,7 +33,7 @@ import de.dlr.proseo.storagemgr.version2.StorageProvider;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-public class ProductfileControllerImplTest {
+public class ProductfileControllerImplTest_download {
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -61,7 +61,7 @@ public class ProductfileControllerImplTest {
 	 * @return RestFileInfo
 	 */
 	@Test
-	public void testDownloadV1() throws Exception {
+	public void testDownload_v1Posix() throws Exception {
 		
 		String relativePath = "product/testControllerFile.txt";
 		
@@ -70,7 +70,7 @@ public class ProductfileControllerImplTest {
 	}
 	
 	@Test
-	public void testDownloadManyV1() throws Exception {
+	public void testDownload_v1PosixMany() throws Exception {
 		
 		String relativePath = "product/";
 		
@@ -79,7 +79,7 @@ public class ProductfileControllerImplTest {
 	}
 	
 	@Test
-	public void testDownloadV2() throws Exception {
+	public void testDownload_v2Posix() throws Exception {
 		
 		String relativePath = "product/testControllerFile.txt";
 		
@@ -87,68 +87,7 @@ public class ProductfileControllerImplTest {
 		download(relativePath);
 	}
 	
-	@Test
-	public void testUploadV1() throws Exception {
-		
-		String relativePath = "testControllerFile.txt";
-		
-		storageProvider.loadVersion1();
-		upload(relativePath);
-	}
-	
-	@Test
-	public void testUploadV2() throws Exception {
-		
-		String relativePath = "testControllerFile.txt";
-
-		storageProvider.loadVersion2();
-		upload(relativePath);
-	}
-	
-	
-	/**
-     *  Push file from local POSIX file system to Storage Manager
-     *  
-     *  POST /productfiles pathInfo="/.."&productId="123"&fileSize="234"  
-     * 
-     * @return
-     *     RestFileInfo
-     */
-	/*
-	@Test
-	public void testCreateRestProductFS()  throws Exception {
-		
-	
-	}
-	*/
-	
-	public void upload(String relativePath) throws Exception {
-		
-		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyStorageDirectories();
-		
-		String productId = "123"; 	
-		String absolutePath = storageTestUtils.createSourceFile(relativePath);
-		String fileSize = Long.toString(storageProvider.getSourceFileSize(relativePath));
-		
-		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.put(REQUEST_STRING)
-				.param("pathInfo", absolutePath)
-				.param("productId", productId)
-				.param("fileSize", fileSize);
-				
-		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isCreated()).andReturn();
-
-		System.out.println("REQUEST: " + REQUEST_STRING);
-		System.out.println("Status: " + mvcResult.getResponse().getStatus());
-		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
-		
-		storageTestUtils.printPosixStorage();
-		storageTestUtils.printVersion("FINISHED upload-Test");
-		
-		TestUtils.deleteStorageDirectories();
-	}
-	
-	public void download(String relativePath) throws Exception {
+	private void download(String relativePath) throws Exception {
 		
 		TestUtils.printMethodName(this, testName);
 		TestUtils.createEmptyStorageDirectories();
@@ -172,7 +111,7 @@ public class ProductfileControllerImplTest {
 		TestUtils.deleteStorageDirectories();
 	}
 	
-	public void downloadMany(String relativePath) throws Exception {
+	private void downloadMany(String relativePath) throws Exception {
 		
 		TestUtils.printMethodName(this, testName);
 		TestUtils.createEmptyStorageDirectories();

@@ -36,7 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-public class JobOrderControllerImplTest {
+public class JobOrderControllerImplTest_upload {
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -64,20 +64,20 @@ public class JobOrderControllerImplTest {
 	 */
 
 	@Test
-	public void testCreateRestJoborderV2() throws Exception {
+	public void testUpload_v2Posix() throws Exception {
 
 		storageProvider.loadVersion2();
 		uploadRestJobOrder();
 	}
 
-	/*
+	
 	@Test
-	public void testCreateRestJoborderV1() throws Exception {
+	public void testUpload_v1Posix() throws Exception {
 
 		storageProvider.loadVersion1();
 		uploadRestJobOrder();
 	}
-	*/
+	
 
 	private void uploadRestJobOrder() throws Exception {
 
@@ -105,51 +105,11 @@ public class JobOrderControllerImplTest {
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
 	}
 
-	public static String asJsonString(final Object obj) {
+	private static String asJsonString(final Object obj) {
 		try {
 			return new ObjectMapper().writeValueAsString(obj);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
-
-	/**
-	 * Download prosEO Job Order File as Base64-encoded string
-	 * 
-	 * GET /joborders pathInfo="/.."
-	 * 
-	 * @return String
-	 */
-
-	/*
-	 * @Test public void testDownloadRestJobOrderV2() throws Exception {
-	 * 
-	 * storageProvider.loadVersion2(); downloadRestJobOrder(); }
-	 * 
-	 * 
-	 * @Test public void testDownloadRestJobOrderV1() throws Exception {
-	 * 
-	 * storageProvider.loadVersion1(); downloadRestJobOrder(); }
-	 * 
-	 * 
-	 * private void downloadRestJobOrder() throws Exception {
-	 * 
-	 * TestUtils.printMethodName(this, testName);
-	 * TestUtils.createEmptyStorageDirectories();
-	 * 
-	 * String relativePath = "file.txt";
-	 * 
-	 * String pathInfo = storageTestUtils.createSourceFile(relativePath);
-	 * 
-	 * MockHttpServletRequestBuilder request =
-	 * MockMvcRequestBuilders.get(REQUEST_STRING) .param("pathInfo", pathInfo);
-	 * 
-	 * MvcResult mvcResult = mockMvc.perform(request)
-	 * .andExpect(status().isOk()).andReturn();
-	 * 
-	 * System.out.println("REQUEST: " + REQUEST_STRING);
-	 * System.out.println("Status: " + mvcResult.getResponse().getStatus());
-	 * System.out.println("Content: " +
-	 * mvcResult.getResponse().getContentAsString()); }
-	 */
 }
