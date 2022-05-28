@@ -192,7 +192,7 @@ public class StorageProvider {
 	
 	public String getRelativePath(String absolutePath) {
 
-		return new PathConverter(absolutePath).getRelativePath().getPath();
+		return new PathConverter(absolutePath, basePaths).getRelativePath().getPath();
 	}
 
 	public StorageFile createStorageFile(String relativePath, String content) {

@@ -149,10 +149,10 @@ public class PathConverter {
 		PathConverter pathConverter = this;
 
 		if (isDirectory())
-			pathConverter.addSlashAtEnd();
+			pathConverter = pathConverter.addSlashAtEnd();
 
 		if (isLinuxPath())
-			pathConverter.addSlashAtBegin();
+			pathConverter = pathConverter.addSlashAtBegin();
 
 		return pathConverter;
 	}
