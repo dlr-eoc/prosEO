@@ -71,7 +71,7 @@ public class UniqueStorageTestPaths {
 		return uniqueTestPath;
 	}
 
-	public void deleteUniqueTestPath() {
+	public void deleteUniqueTestDirectory() {
 
 		TestUtils.deleteDirectory(uniqueTestPath);
 	}

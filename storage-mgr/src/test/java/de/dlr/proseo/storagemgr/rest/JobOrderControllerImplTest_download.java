@@ -20,8 +20,12 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
+import de.dlr.proseo.storagemgr.UniquePathsStorageTestUtils;
+import de.dlr.proseo.storagemgr.UniqueStorageTestPaths;
 import de.dlr.proseo.storagemgr.rest.model.RestJoborder;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
+import de.dlr.proseo.storagemgr.version2.model.StorageType;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -41,8 +45,6 @@ public class JobOrderControllerImplTest_download {
 	@Autowired
 	private MockMvc mockMvc;
 
-	@Autowired
-	private TestUtils testUtils;
 
 	@Autowired
 	private StorageTestUtils storageTestUtils;
@@ -52,6 +54,9 @@ public class JobOrderControllerImplTest_download {
 
 	@Rule
 	public TestName testName = new TestName();
+	
+	private UniqueStorageTestPaths uniquePaths;
+	private UniquePathsStorageTestUtils uniqueUtils;
 
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/joborders";
 
@@ -65,26 +70,44 @@ public class JobOrderControllerImplTest_download {
 
 	@Test
 	public void testDownload_v2Posix() throws Exception {
+		
+		setUniqueTestPaths(); 
 
 		storageProvider.loadVersion2();
+		storageProvider.setStorage(StorageType.POSIX);
+	
 		downloadRestJobOrder();
 	}
 
 	@Test
 	public void testDownload_v1Posix() throws Exception {
-
+		
+		setUniqueTestPaths(); 
+		
 		storageProvider.loadVersion1();
+		storageProvider.setStorage(StorageType.POSIX);
+		
 		downloadRestJobOrder();
+	}
+	
+	private void setUniqueTestPaths() {
+		
+		uniquePaths = new UniqueStorageTestPaths(this, testName); 
+		uniqueUtils = new UniquePathsStorageTestUtils(uniquePaths.getSourcePath(),
+				uniquePaths.getStoragePath(), uniquePaths.getCachePath());
+		
+		storageProvider.setSourcePath(uniquePaths.getSourcePath());
+		storageProvider.setStoragePath(uniquePaths.getStoragePath());
+		storageProvider.setCachePath(uniquePaths.getCachePath());
 	}
 
 	private void downloadRestJobOrder() throws Exception {
 
 		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyStorageDirectories();
-
+	
 		String relativePath = "file.txt";
 
-		String pathInfo = storageTestUtils.createSourceFile(relativePath);
+		String pathInfo = uniqueUtils.createSourceFile(relativePath);
 
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING).param("pathInfo", pathInfo);
 
@@ -93,15 +116,7 @@ public class JobOrderControllerImplTest_download {
 		System.out.println("REQUEST: " + REQUEST_STRING);
 		System.out.println("Status: " + mvcResult.getResponse().getStatus());
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
+		
+		uniquePaths.deleteUniqueTestDirectory();
 	}
-	
-	private static String asJsonString(final Object obj) {
-		try {
-			return new ObjectMapper().writeValueAsString(obj);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-
 }

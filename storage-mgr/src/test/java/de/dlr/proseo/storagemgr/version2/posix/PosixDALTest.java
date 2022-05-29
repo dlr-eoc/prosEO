@@ -84,6 +84,6 @@ public class PosixDALTest {
 			e.printStackTrace();
 		}
 		
-		uniquePaths.deleteUniqueTestPath();
+		uniquePaths.deleteUniqueTestDirectory();
 	}
 }

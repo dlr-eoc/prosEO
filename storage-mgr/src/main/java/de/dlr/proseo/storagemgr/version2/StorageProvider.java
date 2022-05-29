@@ -50,8 +50,10 @@ public class StorageProvider {
 	@Autowired
 	private StorageManagerConfiguration cfg;
 	
+	private String sourcePath; 
+	private String storagePath; 
+	private String cachePath; 
 	
-
 	/**
 	 * Instance of storage provider
 	 * 
@@ -72,13 +74,29 @@ public class StorageProvider {
 	private void init() {
 
 		theStorageProvider = this;
-		storage = createStorage(StorageType.valueOf(cfg.getDefaultStorageType()));
+		storage = createStorage(StorageType.valueOf(cfg.getDefaultStorageType()), cfg.getPosixBackendPath());
 
 		version2 = cfg.getStorageManagerVersion2().equals("true") ? true : false;
 
 		basePaths.add(storage.getBasePath());
 		// basePaths.add(cfg.getPosixSourcePath());   
 		basePaths.add(cfg.getPosixCachePath());
+		
+		sourcePath = cfg.getPosixSourcePath();
+		storagePath = cfg.getPosixBackendPath();
+		cachePath = cfg.getPosixCachePath();
+	}
+	
+	public void setSourcePath(String sourcePath) {
+		this.sourcePath = sourcePath; 
+	}
+	
+	public void setStoragePath(String storagePath) {
+		this.storagePath = storagePath; 
+	}
+	
+	public void setCachePath(String cachePath) {
+		this.cachePath = cachePath; 
 	}
 
 	public Storage getStorage() {
@@ -87,7 +105,7 @@ public class StorageProvider {
 
 	public Storage setStorage(StorageType storageType) {
 
-		storage = createStorage(storageType);
+		storage = createStorage(storageType, storagePath);
 		return storage; 
 	}
 
@@ -121,13 +139,13 @@ public class StorageProvider {
 		return Files.size(path);
 	}
 
-	private Storage createStorage(StorageType storageType) {
+	private Storage createStorage(StorageType storageType, String storagePath) {
 
 		if (storageType == StorageType.POSIX) {
-			return new PosixStorage(cfg.getPosixBackendPath());
+			return new PosixStorage(storagePath);
 
 		} else if (storageType == StorageType.S3) {
-			return new S3Storage(cfg.getPosixBackendPath(), cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3DefaultBucket());
+			return new S3Storage(storagePath, cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3DefaultBucket());
 		}
 
 		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
@@ -135,12 +153,12 @@ public class StorageProvider {
 
 	public StorageFile getCacheFile(String relativePath) {
 
-		return new PosixStorageFile(cfg.getPosixCachePath(), relativePath);
+		return new PosixStorageFile(cachePath, relativePath);
 	}
 
 	public StorageFile getSourceFile(String relativePath) {
 
-		return new PosixStorageFile(cfg.getPosixSourcePath(), relativePath);
+		return new PosixStorageFile(sourcePath, relativePath);
 	}
 
 	public StorageFile getPosixFile(String basePath, String relativePath) {
@@ -153,7 +171,7 @@ public class StorageProvider {
 		StorageType storageType = storage.getStorageType();
 
 		if (storageType == StorageType.POSIX) {
-			return new PosixStorageFile(cfg.getPosixBackendPath(), relativePath);
+			return new PosixStorageFile(storagePath, relativePath);
 
 		} else if (storageType == StorageType.S3) {
 			return new S3StorageFile(cfg.getS3DefaultBucket(), relativePath);
@@ -173,19 +191,19 @@ public class StorageProvider {
 
 	public String getAbsoluteSourcePath(String relativePath) {
 		
-		String path = Paths.get(cfg.getPosixSourcePath(), relativePath).toString();
+		String path = Paths.get(sourcePath, relativePath).toString();
 		return new PathConverter(path, basePaths).convertToSlash().getPath();
 	}
 	
 	public String getAbsoluteCachePath(String relativePath) {
 		
-		String path = Paths.get(cfg.getPosixCachePath(), relativePath).toString();
+		String path = Paths.get(cachePath, relativePath).toString();
 		return new PathConverter(path, basePaths).convertToSlash().getPath();
 	}
 	
 	public String getAbsoluteStoragePath(String relativePath) {
 		
-		String path = Paths.get(cfg.getPosixBackendPath(), relativePath).toString();
+		String path = Paths.get(storagePath, relativePath).toString();
 		
 		return new PathConverter(path, basePaths).convertToSlash().getPath();
 	}
