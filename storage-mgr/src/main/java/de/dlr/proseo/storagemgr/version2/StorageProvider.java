@@ -82,6 +82,11 @@ public class StorageProvider {
 		// basePaths.add(cfg.getPosixSourcePath());   
 		basePaths.add(cfg.getPosixCachePath());
 		
+		loadDefaultPaths();
+	}
+	
+	public void loadDefaultPaths() {
+		
 		sourcePath = cfg.getPosixSourcePath();
 		storagePath = cfg.getPosixBackendPath();
 		cachePath = cfg.getPosixCachePath();

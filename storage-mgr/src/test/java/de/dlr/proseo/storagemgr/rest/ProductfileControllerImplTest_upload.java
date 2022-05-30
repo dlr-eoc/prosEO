@@ -60,6 +60,7 @@ public class ProductfileControllerImplTest_upload {
 		
 		String relativePath = "testControllerFile.txt";
 		
+		storageProvider.loadDefaultPaths();
 		storageProvider.loadVersion1();
 		upload(relativePath);
 	}
@@ -69,6 +70,7 @@ public class ProductfileControllerImplTest_upload {
 		
 		String relativePath = "testControllerFile.txt";
 
+		storageProvider.loadDefaultPaths();
 		storageProvider.loadVersion2();
 		upload(relativePath);
 	}

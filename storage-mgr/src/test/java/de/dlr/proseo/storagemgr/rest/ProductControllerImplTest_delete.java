@@ -26,6 +26,8 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
+import de.dlr.proseo.storagemgr.UniquePathsStorageTestUtils;
+import de.dlr.proseo.storagemgr.UniqueStorageTestPaths;
 import de.dlr.proseo.storagemgr.rest.model.RestProductFS;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
 
@@ -57,6 +59,9 @@ public class ProductControllerImplTest_delete {
 
 	@Rule
 	public TestName testName = new TestName();
+	
+	private UniqueStorageTestPaths uniquePaths;
+	private UniquePathsStorageTestUtils uniqueUtils;
 
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/products";
 
@@ -69,6 +74,8 @@ public class ProductControllerImplTest_delete {
 	 */
 	@Test
 	public void testDelete_v1Posix() throws Exception {
+
+		storageProvider.loadDefaultPaths();
 
 		storageProvider.loadVersion1();
 		delete();
@@ -84,6 +91,9 @@ public class ProductControllerImplTest_delete {
 	 */
 	@Test
 	public void testDelete_v2Posix() throws Exception {
+		
+	
+
 		
 		storageProvider.loadVersion2();
 		delete();

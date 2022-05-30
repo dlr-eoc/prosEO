@@ -45,17 +45,12 @@ public class JobOrderControllerImplTest_download {
 	@Autowired
 	private MockMvc mockMvc;
 
-
-	@Autowired
-	private StorageTestUtils storageTestUtils;
-
 	@Autowired
 	private StorageProvider storageProvider;
 
 	@Rule
 	public TestName testName = new TestName();
 	
-	private UniqueStorageTestPaths uniquePaths;
 	private UniquePathsStorageTestUtils uniqueUtils;
 
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/joborders";
@@ -71,7 +66,7 @@ public class JobOrderControllerImplTest_download {
 	@Test
 	public void testDownload_v2Posix() throws Exception {
 		
-		setUniqueTestPaths(); 
+		uniqueUtils = new UniquePathsStorageTestUtils(this, testName, storageProvider); 
 
 		storageProvider.loadVersion2();
 		storageProvider.setStorage(StorageType.POSIX);
@@ -82,7 +77,7 @@ public class JobOrderControllerImplTest_download {
 	@Test
 	public void testDownload_v1Posix() throws Exception {
 		
-		setUniqueTestPaths(); 
+		uniqueUtils = new UniquePathsStorageTestUtils(this, testName, storageProvider); 
 		
 		storageProvider.loadVersion1();
 		storageProvider.setStorage(StorageType.POSIX);
@@ -90,16 +85,6 @@ public class JobOrderControllerImplTest_download {
 		downloadRestJobOrder();
 	}
 	
-	private void setUniqueTestPaths() {
-		
-		uniquePaths = new UniqueStorageTestPaths(this, testName); 
-		uniqueUtils = new UniquePathsStorageTestUtils(uniquePaths.getSourcePath(),
-				uniquePaths.getStoragePath(), uniquePaths.getCachePath());
-		
-		storageProvider.setSourcePath(uniquePaths.getSourcePath());
-		storageProvider.setStoragePath(uniquePaths.getStoragePath());
-		storageProvider.setCachePath(uniquePaths.getCachePath());
-	}
 
 	private void downloadRestJobOrder() throws Exception {
 
@@ -117,6 +102,6 @@ public class JobOrderControllerImplTest_download {
 		System.out.println("Status: " + mvcResult.getResponse().getStatus());
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
 		
-		uniquePaths.deleteUniqueTestDirectory();
+		uniqueUtils.deleteUniqueTestDirectory();
 	}
 }
