@@ -53,8 +53,8 @@ public class PosixDALTest {
 			sourcePathes.add(sourcePath);
 		}
 
-		String sourcePath = storageTestUtils.getSourcePath();
-		String storagePath = storageTestUtils.getStoragePath();
+		String sourcePath = uniquePaths.getUniqueSourcePath();
+		String storagePath = uniquePaths.getUniqueStoragePath();
 		PosixDAL posixDAL = new PosixDAL();
 
 		try {
