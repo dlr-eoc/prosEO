@@ -26,8 +26,11 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
+import de.dlr.proseo.storagemgr.UniqueStorageTestPaths;
 import de.dlr.proseo.storagemgr.rest.model.RestProductFS;
+import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
+import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 /**
  * Mock Mvc test for Product Controller
@@ -69,8 +72,9 @@ public class ProductControllerImplTest_get {
 
 		StorageProvider storageProvider = new StorageProvider();
 		storageProvider.loadVersion2();
+		storageProvider.setStorage(StorageType.POSIX);
 		
-		getProductFiles();
+		getProductFiles(StorageType.POSIX);
 	}
 
 	/**
@@ -85,22 +89,22 @@ public class ProductControllerImplTest_get {
 
 		StorageProvider storageProvider = new StorageProvider();
 		storageProvider.loadVersion1();
+		storageProvider.setStorage(StorageType.POSIX);
 		
-		getProductFiles();
+		getProductFiles(StorageType.POSIX);
 	}
 
-	private void getProductFiles() throws Exception {
+	private void getProductFiles(StorageType storageType) throws Exception {
 
 		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyStorageDirectories();
+		UniqueStorageTestPaths uniquePaths = new UniqueStorageTestPaths(this, testName);
 
-		String storageType = "POSIX";
-		String prefix = "files/";
-
+		// create unique source pathes
+		String prefix = uniquePaths.getUniqueTestFolder();
 		List<String> pathes = new ArrayList<>();
-		pathes.add(prefix + "file1.txt");
-		pathes.add(prefix + "file2.txt");
-		pathes.add(prefix + "dir/file3.txt");
+		pathes.add(new PathConverter(prefix, "file1.txt").getPath());
+		pathes.add(new PathConverter(prefix, "file2.txt").getPath());
+		pathes.add(new PathConverter(prefix, "dir/file3.txt").getPath());
 
 		for (String path : pathes) {
 
@@ -111,12 +115,14 @@ public class ProductControllerImplTest_get {
 		storageTestUtils.printPosixStorage();
 
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
-				.param("storageType", storageType).param("prefix", prefix);
+				.param("storageType", storageType.toString()).param("prefix", prefix);
 
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
 
 		System.out.println("REQUEST: " + REQUEST_STRING);
 		System.out.println("Status: " + mvcResult.getResponse().getStatus());
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
+		
+		uniquePaths.deleteUniqueTestDirectories();
 	}
 }

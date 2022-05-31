@@ -119,5 +119,8 @@ public class ProductControllerImplTest_delete {
 		System.out.println("REQUEST: " + REQUEST_STRING);
 		System.out.println("Status: " + mvcResult.getResponse().getStatus());
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
+		
+		uniquePaths.deleteUniqueTestDirectories();
+
 	}
 }

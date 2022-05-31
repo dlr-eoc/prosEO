@@ -19,7 +19,10 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
+import de.dlr.proseo.storagemgr.UniqueStorageTestPaths;
+import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
+import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 /**
  * Mock Mvc test for Product Controller
@@ -48,30 +51,31 @@ public class ProductfileControllerImplTest_upload {
 
 	@Test
 	public void testUpload_v1Posix() throws Exception {
-		
-		String relativePath = "testControllerFile.txt";
-		
+				
 		StorageProvider storageProvider = new StorageProvider();
-		storageProvider.loadDefaultPaths();
 		storageProvider.loadVersion1();
-		upload(storageProvider, relativePath);
+		storageProvider.setStorage(StorageType.POSIX);
+		
+		upload(storageProvider);
 	}
 	
 	@Test
 	public void testUpload_v2Posix() throws Exception {
 		
-		String relativePath = "testControllerFile.txt";
-
 		StorageProvider storageProvider = new StorageProvider();
-		storageProvider.loadDefaultPaths();
 		storageProvider.loadVersion2();
-		upload(storageProvider, relativePath);
+		storageProvider.setStorage(StorageType.POSIX);
+		
+		upload(storageProvider);
 	}
 	
-	private void upload(StorageProvider storageProvider, String relativePath) throws Exception {
+	private void upload(StorageProvider storageProvider) throws Exception {
 		
 		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyStorageDirectories();
+		UniqueStorageTestPaths uniquePaths = new UniqueStorageTestPaths(this, testName);
+		
+		String relativePath = "testControllerFile.txt";
+		relativePath = new PathConverter(uniquePaths.getUniqueTestFolder(), relativePath).getPath();
 		
 		String productId = "123"; 	
 		String absolutePath = storageTestUtils.createSourceFile(relativePath);
@@ -91,6 +95,6 @@ public class ProductfileControllerImplTest_upload {
 		storageTestUtils.printPosixStorage();
 		storageTestUtils.printVersion("FINISHED upload-Test");
 		
-		TestUtils.deleteStorageDirectories();
+		uniquePaths.deleteUniqueTestDirectories();
 	}
 }

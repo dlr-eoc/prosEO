@@ -19,7 +19,10 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
+import de.dlr.proseo.storagemgr.UniqueStorageTestPaths;
+import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
+import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 /**
  * Mock Mvc test for Product Controller
@@ -55,12 +58,12 @@ public class ProductfileControllerImplTest_download {
 	 */
 	@Test
 	public void testDownload_v1Posix() throws Exception {
-		
-		String relativePath = "product/testControllerFile.txt";
-		
+				
 		StorageProvider storageProvider = new StorageProvider();
 		storageProvider.loadVersion1();
-		download(relativePath);
+		storageProvider.setStorage(StorageType.POSIX);
+
+		download();
 	}
 	
 	@Test
@@ -70,23 +73,29 @@ public class ProductfileControllerImplTest_download {
 		
 		StorageProvider storageProvider = new StorageProvider();
 		storageProvider.loadVersion1();
+		storageProvider.setStorage(StorageType.POSIX);
+
 		// downloadMany(relativePath);
 	}
 	
 	@Test
 	public void testDownload_v2Posix() throws Exception {
 		
-		String relativePath = "product/testControllerFile.txt";
 		
 		StorageProvider storageProvider = new StorageProvider();
 		storageProvider.loadVersion2();
-		download(relativePath);
+		storageProvider.setStorage(StorageType.POSIX);
+
+		download();
 	}
 	
-	private void download(String relativePath) throws Exception {
+	private void download() throws Exception {
 		
 		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyStorageDirectories();
+		UniqueStorageTestPaths uniquePaths = new UniqueStorageTestPaths(this, testName);
+		
+		String relativePath = "product/testControllerFile.txt";
+		relativePath = new PathConverter(uniquePaths.getUniqueTestFolder(), relativePath).getPath();
 	
 		String absolutePath = storageTestUtils.createSourceFile(relativePath);
 		storageTestUtils.uploadToPosixStorage(relativePath);
@@ -103,18 +112,23 @@ public class ProductfileControllerImplTest_download {
 		storageTestUtils.printCache();
 		storageTestUtils.printVersion("FINISHED download-Test");
 
-		
-		TestUtils.deleteStorageDirectories();
+		uniquePaths.deleteUniqueTestDirectories();		
 	}
 	
-	private void downloadMany(StorageProvider storageProvider, String relativePath) throws Exception {
+	private void downloadMany(StorageProvider storageProvider) throws Exception {
+		
+		// TODO: refactoring
 		
 		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyStorageDirectories();
+		UniqueStorageTestPaths uniquePaths = new UniqueStorageTestPaths(this, testName);
 	
+		String relativePath = "product/";
 		String relativePath1 = relativePath + "file1.txt";
 		String relativePath2 = relativePath + "file2.txt";
 		
+		relativePath1 = new PathConverter(uniquePaths.getUniqueTestFolder(), relativePath1).getPath();
+		relativePath2 = new PathConverter(uniquePaths.getUniqueTestFolder(), relativePath2).getPath();
+
 		String absolutePath = storageProvider.getAbsoluteStoragePath(relativePath);
 		
 		String absolutePath1 = storageTestUtils.createSourceFile(relativePath1);
@@ -135,7 +149,6 @@ public class ProductfileControllerImplTest_download {
 		storageTestUtils.printCache();
 		storageTestUtils.printVersion("FINISHED download-Test");
 
-		
-		TestUtils.deleteStorageDirectories();
+		uniquePaths.deleteUniqueTestDirectories();
 	}
 }

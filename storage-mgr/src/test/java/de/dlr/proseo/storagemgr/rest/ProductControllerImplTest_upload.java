@@ -26,8 +26,11 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
+import de.dlr.proseo.storagemgr.UniqueStorageTestPaths;
 import de.dlr.proseo.storagemgr.rest.model.RestProductFS;
+import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
+import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 /**
  * Mock Mvc test for Product Controller
@@ -65,6 +68,7 @@ public class ProductControllerImplTest_upload {
 		
 		StorageProvider storageProvider = new StorageProvider();
 		storageProvider.loadVersion1();
+		storageProvider.setStorage(StorageType.POSIX);
 		
 		createRestProductFS(storageProvider);
 	}
@@ -81,6 +85,7 @@ public class ProductControllerImplTest_upload {
 		
 		StorageProvider storageProvider = new StorageProvider();
 		storageProvider.loadVersion2();
+		storageProvider.setStorage(StorageType.POSIX);
 		
 		createRestProductFS(storageProvider);
 	}
@@ -88,7 +93,7 @@ public class ProductControllerImplTest_upload {
 	private void createRestProductFS(StorageProvider storageProvider) throws Exception {
 		
 		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyStorageDirectories();
+		UniqueStorageTestPaths uniquePaths = new UniqueStorageTestPaths(this, testName);
 
 		RestProductFS restProductFS = populateRestProductFS(storageProvider);
 
@@ -101,14 +106,18 @@ public class ProductControllerImplTest_upload {
 		System.out.println("REQUEST: " + REQUEST_STRING);
 		System.out.println("Status: " + mvcResult.getResponse().getStatus());
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
+		
+		uniquePaths.deleteUniqueTestDirectories();
 	}
 
 	private RestProductFS populateRestProductFS(StorageProvider storageProvider) {
+		
+		UniqueStorageTestPaths uniquePaths = new UniqueStorageTestPaths(this, testName);
 
 		String productId = "123";
 		String sourceStorageType = "POSIX";
-		String relativePath1 = "/folder1/file1.txt";
-		String relativePath2 = "/folder1/file2.txt";
+		String relativePath1 = new PathConverter(uniquePaths.getUniqueTestFolder(), "folder1/file1.txt").getPath();
+		String relativePath2 = new PathConverter(uniquePaths.getUniqueTestFolder(), "folder1/file2.txt").getPath();
 		
 		String absolutePath1 = storageProvider.getSourceFile(relativePath1).getFullPath();
 		String absolutePath2 = storageProvider.getSourceFile(relativePath2).getFullPath();
