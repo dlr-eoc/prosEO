@@ -16,12 +16,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
-import de.dlr.proseo.storagemgr.UniquePathsStorageTestUtils;
 import de.dlr.proseo.storagemgr.UniqueStorageTestPaths;
+import de.dlr.proseo.storagemgr.version2.PathConverter;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -30,37 +29,36 @@ public class PosixDALTest {
 
 	@Rule
 	public TestName testName = new TestName();
+	
+	@Autowired
+	private StorageTestUtils storageTestUtils;
 
 	@Test
 	public void test() {
 
 		TestUtils.printMethodName(this, testName);
 		UniqueStorageTestPaths uniquePaths = new UniqueStorageTestPaths(this, testName); 
-		UniquePathsStorageTestUtils uniqueUtils = new UniquePathsStorageTestUtils(uniquePaths.getSourcePath(),
-				uniquePaths.getStoragePath(), uniquePaths.getCachePath());
 
-		String prefix = "files/";
-
+		// create unique source pathes
 		List<String> pathes = new ArrayList<>();
-		pathes.add(prefix + "file1.txt");
-		pathes.add(prefix + "file2.txt");
-		pathes.add(prefix + "dir/file3.txt");
+		pathes.add(new PathConverter(uniquePaths.getUniqueTestFolder(), "file1.txt").getPath());
+		pathes.add(new PathConverter(uniquePaths.getUniqueTestFolder(), "file2.txt").getPath());
+		pathes.add(new PathConverter(uniquePaths.getUniqueTestFolder(), "dir/file3.txt").getPath());
 
+		// create source files 
 		List<String> sourcePathes = new ArrayList<>();
-
 		for (String path : pathes) {
 
-			String sourcePath = uniqueUtils.createSourceFile(path);
+			String sourcePath = storageTestUtils.createSourceFile(path);
 			sourcePathes.add(sourcePath);
 		}
 
-		String sourcePath = uniquePaths.getSourcePath();
-		String storagePath = uniquePaths.getStoragePath();
-
+		String sourcePath = storageTestUtils.getSourcePath();
+		String storagePath = storageTestUtils.getStoragePath();
 		PosixDAL posixDAL = new PosixDAL();
 
 		try {
-			// create source files
+			// print source files
 			List<String> sourceFiles = posixDAL.getFiles(sourcePath);
 			TestUtils.printList("Source Files: ", sourceFiles);
 			assertTrue("Expected: 3, " + " Exists: " + sourceFiles.size(), sourceFiles.size() == 3);
@@ -84,6 +82,6 @@ public class PosixDALTest {
 			e.printStackTrace();
 		}
 		
-		uniquePaths.deleteUniqueTestDirectory();
+		uniquePaths.deleteUniqueTestDirectories();
 	}
 }

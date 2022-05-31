@@ -2,8 +2,6 @@ package de.dlr.proseo.storagemgr.rest;
 
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
@@ -17,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -26,10 +23,10 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
-import de.dlr.proseo.storagemgr.UniquePathsStorageTestUtils;
 import de.dlr.proseo.storagemgr.UniqueStorageTestPaths;
-import de.dlr.proseo.storagemgr.rest.model.RestProductFS;
+import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
+import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 /**
  * Mock Mvc test for Product Controller
@@ -49,19 +46,10 @@ public class ProductControllerImplTest_delete {
 	private MockMvc mockMvc;
 
 	@Autowired
-	private TestUtils testUtils;
-
-	@Autowired
 	private StorageTestUtils storageTestUtils;
-
-	@Autowired
-	private StorageProvider storageProvider;
 
 	@Rule
 	public TestName testName = new TestName();
-	
-	private UniqueStorageTestPaths uniquePaths;
-	private UniquePathsStorageTestUtils uniqueUtils;
 
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/products";
 
@@ -75,13 +63,13 @@ public class ProductControllerImplTest_delete {
 	@Test
 	public void testDelete_v1Posix() throws Exception {
 
-		storageProvider.loadDefaultPaths();
-
+		StorageProvider storageProvider = new StorageProvider();
 		storageProvider.loadVersion1();
-		delete();
+		storageProvider.setStorage(StorageType.POSIX);
+
+		delete(storageProvider);
 	}
 
-	
 	/**
 	 * Delete/remove product by product path info from prosEO storage
 	 * 
@@ -91,28 +79,28 @@ public class ProductControllerImplTest_delete {
 	 */
 	@Test
 	public void testDelete_v2Posix() throws Exception {
-		
-	
 
-		
+		StorageProvider storageProvider = new StorageProvider();
 		storageProvider.loadVersion2();
-		delete();
+		storageProvider.setStorage(StorageType.POSIX);
+
+		delete(storageProvider);
 
 	}
 
-	private void delete() throws Exception {
-		
+	private void delete(StorageProvider storageProvider) throws Exception {
+
 		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyStorageDirectories();
+		UniqueStorageTestPaths uniquePaths = new UniqueStorageTestPaths(this, testName);
 
-		String storageType = "POSIX";
-		String prefix = "files/";
-
+		// create unique source pathes
+		String prefix = uniquePaths.getUniqueTestFolder();
 		List<String> pathes = new ArrayList<>();
-		pathes.add(prefix + "file1.txt");
-		pathes.add(prefix + "file2.txt");
-		pathes.add(prefix + "dir/file3.txt");
+		pathes.add(new PathConverter(prefix, "file1.txt").getPath());
+		pathes.add(new PathConverter(prefix, "file2.txt").getPath());
+		pathes.add(new PathConverter(prefix, "dir/file3.txt").getPath());
 
+		// create and upload source files
 		for (String path : pathes) {
 
 			storageTestUtils.createSourceFile(path);

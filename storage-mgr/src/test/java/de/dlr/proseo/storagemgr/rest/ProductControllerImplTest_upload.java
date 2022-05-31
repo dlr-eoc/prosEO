@@ -46,14 +46,6 @@ public class ProductControllerImplTest_upload {
 	@Autowired
 	private MockMvc mockMvc;
 
-	@Autowired
-	private TestUtils testUtils;
-
-	@Autowired
-	private StorageTestUtils storageTestUtils;
-
-	@Autowired
-	private StorageProvider storageProvider;
 
 	@Rule
 	public TestName testName = new TestName();
@@ -71,8 +63,10 @@ public class ProductControllerImplTest_upload {
 	@Test
 	public void testUpload_v1Posix() throws Exception {
 		
+		StorageProvider storageProvider = new StorageProvider();
 		storageProvider.loadVersion1();
-		createRestProductFS();
+		
+		createRestProductFS(storageProvider);
 	}
 	
 	/**
@@ -85,16 +79,18 @@ public class ProductControllerImplTest_upload {
 	@Test
 	public void testUpload_v2Posix() throws Exception {
 		
+		StorageProvider storageProvider = new StorageProvider();
 		storageProvider.loadVersion2();
-		createRestProductFS();
+		
+		createRestProductFS(storageProvider);
 	}
 	
-	private void createRestProductFS() throws Exception {
+	private void createRestProductFS(StorageProvider storageProvider) throws Exception {
 		
 		TestUtils.printMethodName(this, testName);
 		TestUtils.createEmptyStorageDirectories();
 
-		RestProductFS restProductFS = populateRestProductFS();
+		RestProductFS restProductFS = populateRestProductFS(storageProvider);
 
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.post(REQUEST_STRING)	
 				.content(asJsonString(restProductFS)).contentType(MediaType.APPLICATION_JSON)
@@ -107,7 +103,7 @@ public class ProductControllerImplTest_upload {
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
 	}
 
-	private RestProductFS populateRestProductFS() {
+	private RestProductFS populateRestProductFS(StorageProvider storageProvider) {
 
 		String productId = "123";
 		String sourceStorageType = "POSIX";

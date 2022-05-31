@@ -31,11 +31,7 @@ import de.dlr.proseo.storagemgr.version2.s3.S3StorageFile;
  * @author Denys Chaykovskiy
  *
  */
-@Component
 public class StorageProvider {
-
-	/** StorageProvider singleton */
-	private static StorageProvider theStorageProvider;
 
 	private Storage storage;
 	
@@ -47,24 +43,16 @@ public class StorageProvider {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(StorageProvider.class);
 
-	@Autowired
 	private StorageManagerConfiguration cfg;
 	
 	private String sourcePath; 
 	private String storagePath; 
 	private String cachePath; 
 	
-	/**
-	 * Instance of storage provider
-	 * 
-	 * @return storage provider singleton
-	 */
-	public static StorageProvider getInstance() {
-
-		return theStorageProvider;
-	}
 
 	public StorageProvider() {
+		
+		init();
 	}
 
 	/**
@@ -72,8 +60,9 @@ public class StorageProvider {
 	 */
 	@PostConstruct
 	private void init() {
+		
+		cfg = StorageManagerConfiguration.getConfiguration();
 
-		theStorageProvider = this;
 		storage = createStorage(StorageType.valueOf(cfg.getDefaultStorageType()), cfg.getPosixBackendPath());
 
 		version2 = cfg.getStorageManagerVersion2().equals("true") ? true : false;

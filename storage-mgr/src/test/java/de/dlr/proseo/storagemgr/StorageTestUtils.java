@@ -30,7 +30,6 @@ public class StorageTestUtils extends BaseStorageTestUtils {
 	@Autowired
 	private TestUtils testUtils;
 
-	@Autowired
 	private StorageProvider storageProvider;
 
 	@Rule
@@ -44,6 +43,8 @@ public class StorageTestUtils extends BaseStorageTestUtils {
 		cachePath = testUtils.getCachePath();
 
 		theTestUtils = this;
+		
+		storageProvider = new StorageProvider();
 	}
 
 	private static StorageTestUtils theTestUtils;

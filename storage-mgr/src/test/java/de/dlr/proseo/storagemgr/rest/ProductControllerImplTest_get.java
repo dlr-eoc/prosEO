@@ -52,9 +52,6 @@ public class ProductControllerImplTest_get {
 	@Autowired
 	private StorageTestUtils storageTestUtils;
 
-	@Autowired
-	private StorageProvider storageProvider;
-
 	@Rule
 	public TestName testName = new TestName();
 
@@ -70,7 +67,9 @@ public class ProductControllerImplTest_get {
 	@Test
 	public void testGet_v2Posix() throws Exception {
 
+		StorageProvider storageProvider = new StorageProvider();
 		storageProvider.loadVersion2();
+		
 		getProductFiles();
 	}
 
@@ -84,7 +83,9 @@ public class ProductControllerImplTest_get {
 	@Test
 	public void testGet_v1Posix() throws Exception {
 
+		StorageProvider storageProvider = new StorageProvider();
 		storageProvider.loadVersion1();
+		
 		getProductFiles();
 	}
 

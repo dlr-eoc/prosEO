@@ -40,10 +40,6 @@ public class PosixStorageTest {
 	@Autowired
 	private StorageTestUtils storageTestUtils;
 	
-	@Autowired
-	private StorageProvider storageProvider;
-
-	
 	@Rule
 	public TestName testName = new TestName();
 
@@ -52,6 +48,8 @@ public class PosixStorageTest {
 		
 		TestUtils.printMethodName(this, testName);
 		TestUtils.createEmptyStorageDirectories();
+		
+		StorageProvider storageProvider = new StorageProvider();
 		
 		String prefix = "files/"; 
 		
@@ -81,6 +79,9 @@ public class PosixStorageTest {
 		
 		TestUtils.printMethodName(this, testName);
 		TestUtils.createEmptyStorageDirectories();
+		
+		StorageProvider storageProvider = new StorageProvider();
+
 		
 		String prefix = "files/"; 
 		

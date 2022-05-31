@@ -17,74 +17,65 @@ public class UniqueStorageTestPaths {
 	private static final String STORAGE_DIRECTORY = "backend";
 	private static final String CACHE_DIRECTORY = "cache";
 
-	private String uniqueTestPath;
+	private String uniqueTestFolder; // testName_methodName
 
-	private String sourcePath;
-	private String storagePath;
-	private String cachePath;
+	private String uniqueSourcePath;  //  /../testdata/source/testName_methodName
+	private String uniqueStoragePath;
+	private String uniqueCachePath;
 
 	public UniqueStorageTestPaths(String uniqueTestFolder) {
 
-		init(uniqueTestFolder);
+		this.uniqueTestFolder = uniqueTestFolder;
+		
+		createUniqueTestFolders();
 	}
 
 	public UniqueStorageTestPaths(Object unitTest, TestName testName) {
 
 		String className = unitTest.getClass().getSimpleName();
 		String methodName = testName.getMethodName();
-		String uniqueTestFolder = className + "_" + methodName;
+		uniqueTestFolder = className + "_" + methodName;
 
-		init(uniqueTestFolder);
-
+		createUniqueTestFolders();
 	}
 
-	private void init(String uniqueTestFolder) {
+	public void createUniqueTestFolders() {
 
-		uniqueTestPath = TestUtils.getTestFolder(); // str-mgr/target/testdata
-		uniqueTestPath = Paths.get(uniqueTestPath, uniqueTestFolder).toString(); // testdata/className_methodName
+		String testPath = TestUtils.getTestFolder();
 
-		createStorageFolders();
+		uniqueSourcePath = Paths.get(testPath, SOURCE_DIRECTORY, uniqueTestFolder).toString();
+		uniqueSourcePath = new PathConverter(uniqueSourcePath).convertToSlash().getPath();
+		TestUtils.createDirectory(uniqueSourcePath);
+
+		uniqueStoragePath = Paths.get(testPath, STORAGE_DIRECTORY, uniqueTestFolder).toString();
+		uniqueStoragePath = new PathConverter(uniqueStoragePath).convertToSlash().getPath();
+		TestUtils.createDirectory(uniqueStoragePath);
+
+		uniqueCachePath = Paths.get(testPath, CACHE_DIRECTORY, uniqueTestFolder).toString();
+		uniqueCachePath = new PathConverter(uniqueCachePath).convertToSlash().getPath();
+		TestUtils.createDirectory(uniqueCachePath);
 	}
 
-	public void createStorageFolders() {
+	public void deleteUniqueTestDirectories() {
 
-		String uniqueTestPath = getUniqueTestPath();
-
-		sourcePath = Paths.get(uniqueTestPath, SOURCE_DIRECTORY).toString();
-		sourcePath = new PathConverter(sourcePath).convertToSlash().getPath();
-		TestUtils.createDirectory(sourcePath);
-
-		storagePath = Paths.get(uniqueTestPath, STORAGE_DIRECTORY).toString();
-		storagePath = new PathConverter(storagePath).convertToSlash().getPath();
-		TestUtils.createDirectory(storagePath);
-
-		cachePath = Paths.get(uniqueTestPath, CACHE_DIRECTORY).toString();
-		cachePath = new PathConverter(cachePath).convertToSlash().getPath();
-		TestUtils.createDirectory(cachePath);
+		TestUtils.deleteDirectory(uniqueSourcePath);
+		TestUtils.deleteDirectory(uniqueStoragePath);
+		TestUtils.deleteDirectory(uniqueCachePath);
 	}
 
-	public String getUniqueTestPath() {
-
-		if (!TestUtils.directoryExists(uniqueTestPath))
-			TestUtils.createDirectory(uniqueTestPath);
-
-		return uniqueTestPath;
+	public String getUniqueSourcePath() {
+		return uniqueSourcePath;
 	}
 
-	public void deleteUniqueTestDirectory() {
-
-		TestUtils.deleteDirectory(uniqueTestPath);
+	public String getUniqueStoragePath() {
+		return uniqueStoragePath;
 	}
 
-	public String getSourcePath() {
-		return sourcePath;
+	public String getUniqueCachePath() {
+		return uniqueCachePath;
 	}
-
-	public String getStoragePath() {
-		return storagePath;
-	}
-
-	public String getCachePath() {
-		return cachePath;
+	
+	public String getUniqueTestFolder() {
+		return uniqueTestFolder; 
 	}
 }

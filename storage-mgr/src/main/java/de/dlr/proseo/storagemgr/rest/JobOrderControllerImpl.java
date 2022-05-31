@@ -55,8 +55,7 @@ public class JobOrderControllerImpl implements JoborderController {
 	@Autowired
 	private StorageManagerConfiguration cfg;
 
-	@Autowired
-	private StorageProvider storageProvider;
+	StorageProvider storageProvider = new StorageProvider();
 
 	/**
 	 * Log an error and return the corresponding HTTP message header

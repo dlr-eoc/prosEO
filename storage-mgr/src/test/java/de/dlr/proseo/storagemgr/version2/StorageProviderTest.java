@@ -33,9 +33,6 @@ public class StorageProviderTest {
 	
 	@Autowired
 	private StorageTestUtils storageTestUtils;
-	
-	@Autowired
-	private StorageProvider storageProvider;
 
 	@Rule
 	public TestName testName = new TestName();
@@ -77,6 +74,7 @@ public class StorageProviderTest {
 		
 		assertTrue("File for upload has not been created: " + sourceFilePath, TestUtils.fileExists(sourceFilePath));
 
+		StorageProvider storageProvider = new StorageProvider();
 		Storage storage = storageProvider.getStorage();
 
 		// -------------------- upload ----------------------------

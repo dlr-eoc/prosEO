@@ -39,30 +39,22 @@ public class ProductfileControllerImplTest_upload {
 	private MockMvc mockMvc;
 	
 	@Autowired
-	private TestUtils testUtils;
-	
-	@Autowired
 	private StorageTestUtils storageTestUtils;
-	
-	@Autowired
-	private StorageProvider storageProvider;
-
 	
 	@Rule
 	public TestName testName = new TestName();
 
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/productfiles";
 
-	
-	
 	@Test
 	public void testUpload_v1Posix() throws Exception {
 		
 		String relativePath = "testControllerFile.txt";
 		
+		StorageProvider storageProvider = new StorageProvider();
 		storageProvider.loadDefaultPaths();
 		storageProvider.loadVersion1();
-		upload(relativePath);
+		upload(storageProvider, relativePath);
 	}
 	
 	@Test
@@ -70,12 +62,13 @@ public class ProductfileControllerImplTest_upload {
 		
 		String relativePath = "testControllerFile.txt";
 
+		StorageProvider storageProvider = new StorageProvider();
 		storageProvider.loadDefaultPaths();
 		storageProvider.loadVersion2();
-		upload(relativePath);
+		upload(storageProvider, relativePath);
 	}
 	
-	private void upload(String relativePath) throws Exception {
+	private void upload(StorageProvider storageProvider, String relativePath) throws Exception {
 		
 		TestUtils.printMethodName(this, testName);
 		TestUtils.createEmptyStorageDirectories();

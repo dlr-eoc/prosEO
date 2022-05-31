@@ -41,9 +41,6 @@ public class S3StorageTest {
 	@Autowired
 	private StorageTestUtils storageTestUtils;
 
-	@Autowired
-	private StorageProvider storageProvider;
-
 	@Rule
 	public TestName testName = new TestName();
 
@@ -63,6 +60,9 @@ public class S3StorageTest {
 	public void testUploadFile() throws IOException {
 
 		TestUtils.createEmptyStorageDirectories();
+		
+		StorageProvider storageProvider = new StorageProvider();
+
 
 		String prefix = "files/";
 

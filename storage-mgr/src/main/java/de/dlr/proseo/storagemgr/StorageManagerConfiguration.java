@@ -97,22 +97,6 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.storageManager.filecheck.waittime}")
 	private Long fileCheckWaitTime;
 	
-	// Alluxio configuration values currently not in use
-	
-//	@Value("${proseo.alluxio.alluxioUnderFsDefaultPrefix}")
-//	private String alluxioUnderFsDefaultPrefix;
-//	
-//	@Value("${proseo.alluxio.alluxioUnderFsMaxPrefixes}")
-//	private int alluxioUnderFsMaxPrefixes;
-//	
-//	@Value("${proseo.alluxio.alluxioUnderFsS3BucketEndPoint}")
-//	private String alluxioUnderFsS3BucketEndPoint;
-//	
-//	@Value("${proseo.mountpoints.alluxio.k8sNode.alluxioCache}")
-//	private String alluxioK8sMountPointCache;
-//	
-//	@Value("${proseo.mountpoints.alluxio.k8sNode.alluxioFuse}")
-//	private String alluxioK8sMountPointFuse;
 	
 	/** Singleton object */
 	private static StorageManagerConfiguration theConfiguration = null;

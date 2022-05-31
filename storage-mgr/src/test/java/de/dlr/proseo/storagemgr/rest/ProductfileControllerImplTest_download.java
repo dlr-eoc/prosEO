@@ -39,14 +39,7 @@ public class ProductfileControllerImplTest_download {
 	private MockMvc mockMvc;
 	
 	@Autowired
-	private TestUtils testUtils;
-	
-	@Autowired
 	private StorageTestUtils storageTestUtils;
-	
-	@Autowired
-	private StorageProvider storageProvider;
-
 	
 	@Rule
 	public TestName testName = new TestName();
@@ -65,6 +58,7 @@ public class ProductfileControllerImplTest_download {
 		
 		String relativePath = "product/testControllerFile.txt";
 		
+		StorageProvider storageProvider = new StorageProvider();
 		storageProvider.loadVersion1();
 		download(relativePath);
 	}
@@ -74,6 +68,7 @@ public class ProductfileControllerImplTest_download {
 		
 		String relativePath = "product/";
 		
+		StorageProvider storageProvider = new StorageProvider();
 		storageProvider.loadVersion1();
 		// downloadMany(relativePath);
 	}
@@ -83,6 +78,7 @@ public class ProductfileControllerImplTest_download {
 		
 		String relativePath = "product/testControllerFile.txt";
 		
+		StorageProvider storageProvider = new StorageProvider();
 		storageProvider.loadVersion2();
 		download(relativePath);
 	}
@@ -111,7 +107,7 @@ public class ProductfileControllerImplTest_download {
 		TestUtils.deleteStorageDirectories();
 	}
 	
-	private void downloadMany(String relativePath) throws Exception {
+	private void downloadMany(StorageProvider storageProvider, String relativePath) throws Exception {
 		
 		TestUtils.printMethodName(this, testName);
 		TestUtils.createEmptyStorageDirectories();

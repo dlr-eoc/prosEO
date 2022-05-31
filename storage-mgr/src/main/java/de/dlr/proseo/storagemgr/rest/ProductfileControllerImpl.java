@@ -68,8 +68,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 	@Autowired
 	private StorageManagerConfiguration cfg;
 
-	@Autowired
-	private StorageProvider storageProvider;
+	StorageProvider storageProvider = new StorageProvider();
 
 	/**
 	 * Create an HTTP "Warning" header with the given text message
