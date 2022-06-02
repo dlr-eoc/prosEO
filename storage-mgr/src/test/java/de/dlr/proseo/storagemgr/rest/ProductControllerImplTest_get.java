@@ -4,6 +4,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
@@ -54,6 +55,9 @@ public class ProductControllerImplTest_get {
 
 	@Autowired
 	private StorageTestUtils storageTestUtils;
+	
+ 	@Autowired
+	private StorageProvider storageProvider;
 
 	@Rule
 	public TestName testName = new TestName();
@@ -70,11 +74,16 @@ public class ProductControllerImplTest_get {
 	@Test
 	public void testGet_v2Posix() throws Exception {
 
-		StorageProvider storageProvider = new StorageProvider();
+		// StorageProvider storageProvider = new StorageProvider();
+		StorageType storageType = StorageType.POSIX; 
 		storageProvider.loadVersion2();
-		storageProvider.setStorage(StorageType.POSIX);
+		storageProvider.setStorage(storageType);
 		
-		getProductFiles(StorageType.POSIX);
+		getProductFiles(storageType);
+		
+		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
+		StorageType realStorageType = storageProvider.getStorage().getStorageType();
+		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
 
 	/**
@@ -87,11 +96,16 @@ public class ProductControllerImplTest_get {
 	@Test
 	public void testGet_v1Posix() throws Exception {
 
-		StorageProvider storageProvider = new StorageProvider();
+		// StorageProvider storageProvider = new StorageProvider();
+		StorageType storageType = StorageType.POSIX; 
 		storageProvider.loadVersion1();
-		storageProvider.setStorage(StorageType.POSIX);
+		storageProvider.setStorage(storageType);
 		
-		getProductFiles(StorageType.POSIX);
+		getProductFiles(storageType);
+		
+		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
+		StorageType realStorageType = storageProvider.getStorage().getStorageType();
+		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
 
 	private void getProductFiles(StorageType storageType) throws Exception {

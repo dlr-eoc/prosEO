@@ -39,7 +39,7 @@ public class PosixDALTest {
 		TestUtils.printMethodName(this, testName);
 		UniqueStorageTestPaths uniquePaths = new UniqueStorageTestPaths(this, testName); 
 
-		// create unique source pathes
+		// create unique source paths
 		List<String> pathes = new ArrayList<>();
 		pathes.add(new PathConverter(uniquePaths.getUniqueTestFolder(), "file1.txt").getPath());
 		pathes.add(new PathConverter(uniquePaths.getUniqueTestFolder(), "file2.txt").getPath());

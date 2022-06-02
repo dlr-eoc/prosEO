@@ -30,6 +30,7 @@ public class StorageTestUtils extends BaseStorageTestUtils {
 	@Autowired
 	private TestUtils testUtils;
 
+ 	@Autowired
 	private StorageProvider storageProvider;
 
 	@Rule
@@ -44,7 +45,7 @@ public class StorageTestUtils extends BaseStorageTestUtils {
 
 		theTestUtils = this;
 		
-		storageProvider = new StorageProvider();
+		// storageProvider = new StorageProvider();
 	}
 
 	private static StorageTestUtils theTestUtils;

@@ -22,6 +22,7 @@ import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.version2.model.Storage;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
+import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -33,6 +34,9 @@ public class StorageProviderTest {
 	
 	@Autowired
 	private StorageTestUtils storageTestUtils;
+	
+	@Autowired
+	private StorageProvider storageProvider;
 
 	@Rule
 	public TestName testName = new TestName();
@@ -74,8 +78,11 @@ public class StorageProviderTest {
 		
 		assertTrue("File for upload has not been created: " + sourceFilePath, TestUtils.fileExists(sourceFilePath));
 
-		StorageProvider storageProvider = new StorageProvider();
+		// StorageProvider storageProvider = new StorageProvider();
 		Storage storage = storageProvider.getStorage();
+		StorageType storageType = StorageType.POSIX; 
+		storageProvider.loadVersion2();
+		storageProvider.setStorage(storageType);
 
 		// -------------------- upload ----------------------------
 
@@ -108,6 +115,10 @@ public class StorageProviderTest {
 		TestUtils.printDirectoryTree(cachePath);
 		
 		assertTrue("File was not downloaded from storage: " + cacheFilePath, TestUtils.fileExists(cacheFilePath));
+		
+		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
+		StorageType realStorageType = storageProvider.getStorage().getStorageType();
+		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 		
 		TestUtils.deleteStorageDirectories();
 	}

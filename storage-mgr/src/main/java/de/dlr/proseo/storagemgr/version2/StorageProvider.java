@@ -31,10 +31,14 @@ import de.dlr.proseo.storagemgr.version2.s3.S3StorageFile;
  * @author Denys Chaykovskiy
  *
  */
+@Component
 public class StorageProvider {
 
+	/** StorageProvider singleton */
+	private static StorageProvider theStorageProvider;
+
 	private Storage storage;
-	
+
 	List<String> basePaths = new ArrayList<>();
 
 	/** For smooth integration only, will be removed */
@@ -43,16 +47,26 @@ public class StorageProvider {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(StorageProvider.class);
 
+	@Autowired
 	private StorageManagerConfiguration cfg;
-	
-	private String sourcePath; 
-	private String storagePath; 
-	private String cachePath; 
-	
+
+	private String sourcePath;
+	private String storagePath;
+	private String cachePath;
+
+	/**
+	 * Instance of storage provider
+	 * 
+	 * @return storage provider singleton
+	 */
+	public static StorageProvider getInstance() {
+
+		return theStorageProvider;
+	}
 
 	public StorageProvider() {
-		
-		init();
+
+		//init();
 	}
 
 	/**
@@ -60,37 +74,38 @@ public class StorageProvider {
 	 */
 	@PostConstruct
 	private void init() {
-		
-		cfg = StorageManagerConfiguration.getConfiguration();
 
+		//cfg = StorageManagerConfiguration.getConfiguration();
+
+		theStorageProvider = this;
 		storage = createStorage(StorageType.valueOf(cfg.getDefaultStorageType()), cfg.getPosixBackendPath());
 
 		version2 = cfg.getStorageManagerVersion2().equals("true") ? true : false;
 
 		basePaths.add(storage.getBasePath());
-		// basePaths.add(cfg.getPosixSourcePath());   
+		// basePaths.add(cfg.getPosixSourcePath());
 		basePaths.add(cfg.getPosixCachePath());
-		
+
 		loadDefaultPaths();
 	}
-	
+
 	public void loadDefaultPaths() {
-		
+
 		sourcePath = cfg.getPosixSourcePath();
 		storagePath = cfg.getPosixBackendPath();
 		cachePath = cfg.getPosixCachePath();
 	}
-	
+
 	public void setSourcePath(String sourcePath) {
-		this.sourcePath = sourcePath; 
+		this.sourcePath = sourcePath;
 	}
-	
+
 	public void setStoragePath(String storagePath) {
-		this.storagePath = storagePath; 
+		this.storagePath = storagePath;
 	}
-	
+
 	public void setCachePath(String cachePath) {
-		this.cachePath = cachePath; 
+		this.cachePath = cachePath;
 	}
 
 	public Storage getStorage() {
@@ -100,7 +115,7 @@ public class StorageProvider {
 	public Storage setStorage(StorageType storageType) {
 
 		storage = createStorage(storageType, storagePath);
-		return storage; 
+		return storage;
 	}
 
 	// all ..version.. methods will be removed in release, for smooth integration
@@ -139,7 +154,8 @@ public class StorageProvider {
 			return new PosixStorage(storagePath);
 
 		} else if (storageType == StorageType.S3) {
-			return new S3Storage(storagePath, cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3DefaultBucket());
+			return new S3Storage(storagePath, cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(),
+					cfg.getS3DefaultBucket());
 		}
 
 		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
@@ -159,7 +175,7 @@ public class StorageProvider {
 
 		return new PosixStorageFile(basePath, relativePath);
 	}
-	
+
 	public StorageFile getStorageFile(String relativePath) {
 
 		StorageType storageType = storage.getStorageType();
@@ -173,10 +189,10 @@ public class StorageProvider {
 
 		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
 	}
-	
+
 	// if file only, return source path
 	public StorageFile getAbsoluteFile(String absolutePath) {
-		
+
 		String basePath = new PathConverter(absolutePath, basePaths).getFirstFolder().getPath();
 		String relativePath = new PathConverter(absolutePath, basePaths).removeFirstFolder().getPath();
 
@@ -184,31 +200,31 @@ public class StorageProvider {
 	}
 
 	public String getAbsoluteSourcePath(String relativePath) {
-		
+
 		String path = Paths.get(sourcePath, relativePath).toString();
 		return new PathConverter(path, basePaths).convertToSlash().getPath();
 	}
-	
+
 	public String getAbsoluteCachePath(String relativePath) {
-		
+
 		String path = Paths.get(cachePath, relativePath).toString();
 		return new PathConverter(path, basePaths).convertToSlash().getPath();
 	}
-	
+
 	public String getAbsoluteStoragePath(String relativePath) {
-		
+
 		String path = Paths.get(storagePath, relativePath).toString();
-		
+
 		return new PathConverter(path, basePaths).convertToSlash().getPath();
 	}
-	
+
 	public String getRelativePath(String absolutePath) {
 
 		return new PathConverter(absolutePath, basePaths).getRelativePath().getPath();
 	}
 
 	public StorageFile createStorageFile(String relativePath, String content) {
-		
+
 		return storage.createStorageFile(relativePath, content);
-	}	
+	}
 }

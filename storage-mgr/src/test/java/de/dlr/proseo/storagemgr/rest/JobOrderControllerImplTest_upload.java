@@ -1,6 +1,8 @@
 package de.dlr.proseo.storagemgr.rest;
 
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.Rule;
@@ -46,6 +48,9 @@ public class JobOrderControllerImplTest_upload {
 	@Autowired
 	private StorageTestUtils storageTestUtils;
 	
+ 	@Autowired
+	private StorageProvider storageProvider;
+	
 	@Rule
 	public TestName testName = new TestName();
 
@@ -62,21 +67,31 @@ public class JobOrderControllerImplTest_upload {
 	@Test
 	public void testUpload_v2Posix() throws Exception {
 
-		StorageProvider storageProvider = new StorageProvider();
+		// StorageProvider storageProvider = new StorageProvider();
+		StorageType storageType = StorageType.POSIX; 
 		storageProvider.loadVersion2();
-		storageProvider.setStorage(StorageType.POSIX);
+		storageProvider.setStorage(storageType);
 
 		uploadRestJobOrder();
+		
+		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
+		StorageType realStorageType = storageProvider.getStorage().getStorageType();
+		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
 
 	@Test
 	public void testUpload_v1Posix() throws Exception {
 
-		StorageProvider storageProvider = new StorageProvider();
+		// StorageProvider storageProvider = new StorageProvider();
+		StorageType storageType = StorageType.POSIX; 
 		storageProvider.loadVersion1();
-		storageProvider.setStorage(StorageType.POSIX);
+		storageProvider.setStorage(storageType);
 
 		uploadRestJobOrder();
+		
+		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
+		StorageType realStorageType = storageProvider.getStorage().getStorageType();
+		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
 	
 	private void uploadRestJobOrder() throws Exception {

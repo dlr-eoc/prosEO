@@ -40,6 +40,9 @@ public class S3StorageTest {
 
 	@Autowired
 	private StorageTestUtils storageTestUtils;
+	
+	@Autowired
+	private StorageProvider storageProvider;
 
 	@Rule
 	public TestName testName = new TestName();
@@ -61,8 +64,11 @@ public class S3StorageTest {
 
 		TestUtils.createEmptyStorageDirectories();
 		
-		StorageProvider storageProvider = new StorageProvider();
+		// StorageProvider storageProvider = new StorageProvider();
 
+		StorageType storageType = StorageType.S3; 
+		storageProvider.loadVersion2();
+		storageProvider.setStorage(storageType);
 
 		String prefix = "files/";
 
@@ -81,7 +87,7 @@ public class S3StorageTest {
 
 			storageTestUtils.printSource();
 
-			Storage storage = storageProvider.setStorage(StorageType.S3);
+			Storage storage = storageProvider.getStorage();
 
 			StorageFile sourceDir = storageProvider.getSourceFile(prefix);
 			
@@ -110,6 +116,10 @@ public class S3StorageTest {
 			e.printStackTrace();
 			throw e;
 		}
+		
+		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
+		StorageType realStorageType = storageProvider.getStorage().getStorageType();
+		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 
 	}
 

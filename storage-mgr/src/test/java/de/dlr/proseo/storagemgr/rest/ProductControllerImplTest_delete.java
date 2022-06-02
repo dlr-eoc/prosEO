@@ -2,6 +2,7 @@ package de.dlr.proseo.storagemgr.rest;
 
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
@@ -50,6 +51,9 @@ public class ProductControllerImplTest_delete {
 
 	@Rule
 	public TestName testName = new TestName();
+	
+ 	@Autowired
+	private StorageProvider storageProvider;
 
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/products";
 
@@ -63,11 +67,16 @@ public class ProductControllerImplTest_delete {
 	@Test
 	public void testDelete_v1Posix() throws Exception {
 
-		StorageProvider storageProvider = new StorageProvider();
+		// StorageProvider storageProvider = new StorageProvider();
+		StorageType storageType = StorageType.POSIX; 
 		storageProvider.loadVersion1();
-		storageProvider.setStorage(StorageType.POSIX);
+		storageProvider.setStorage(storageType);
 
 		delete(storageProvider);
+		
+		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
+		StorageType realStorageType = storageProvider.getStorage().getStorageType();
+		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
 
 	/**
@@ -80,12 +89,16 @@ public class ProductControllerImplTest_delete {
 	@Test
 	public void testDelete_v2Posix() throws Exception {
 
-		StorageProvider storageProvider = new StorageProvider();
+		// StorageProvider storageProvider = new StorageProvider();
+		StorageType storageType = StorageType.POSIX; 
 		storageProvider.loadVersion2();
-		storageProvider.setStorage(StorageType.POSIX);
+		storageProvider.setStorage(storageType);
 
 		delete(storageProvider);
-
+		
+		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
+		StorageType realStorageType = storageProvider.getStorage().getStorageType();
+		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
 
 	private void delete(StorageProvider storageProvider) throws Exception {
