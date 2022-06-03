@@ -18,7 +18,8 @@ git clone https://github.com/ionos-cloud/module-ansible
 # Configure Ansible files
 
 The following files need to be customized (a template is provided for each with a filename ending in `.template`):
-- `group_vars/all.yml`: Set the desired infrastructure names, sizes etc.
+- `group_vars/all.yml`: Set the desired infrastructure names, sizes etc. If a pre-created set of external IPs is to be used,
+  its name must match the data center name configured here.
 
 Note that the customized files are included in `.gitignore` by default and will not be included in the Git directory.
 
@@ -35,7 +36,7 @@ ansible-playbook proseo-infrastructure.yml
 ```
 
 Note: We use the environment variables for username and password to avoid having to specify the `username` and `password`
-parameters with every single deploymente task. After setting up the infrastructure, these variables MUST be removed from
+parameters with every single deployment task. After setting up the infrastructure, these variables MUST be removed from
 the environment (username and password for security reasons, the IONOS Ansible library, because it interferes with standard
 Ansible modules, e. g. `user`):
 ```
@@ -81,3 +82,25 @@ As above, remove the environment variables after completing the infrastructure c
 
 Whenever the CPU and memory resources of a Kubernetes worker node are updated, the `kubelet` on the worker node needs to be
 restarted (for details see `../hands/README.md`).
+
+
+# Adding and removing processing nodes
+
+To add processing nodes just update the file `group_vars/all.yml` with the desired number of Kubernetes worker nodes and run the
+Ansible playbook `proseo-infrastructure.yml` as above.
+
+To remove processing nodes, copy and edit the file `proseo-worker-delete.yml.template`,
+then run Ansible on the edited file:
+```
+cp proseo-worker-delete.yml.template proseo-worker-delete.yml
+
+vi proseo-worker-delete.yml # or whatever editor you prefer
+
+export ANSIBLE_LIBRARY=</path/to/ionos/module-ansible>
+export IONOS_USERNAME=<IONOS DCD user>
+export IONOS_PASSWORD=<IONOS DCD password>
+
+ansible-playbook proseo-worker-delete.yml
+```
+
+As above, remove the environment variables after completing the infrastructure change.
