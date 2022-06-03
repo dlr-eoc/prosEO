@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import javax.annotation.PostConstruct;
 
@@ -74,8 +75,12 @@ public class StorageProvider {
 	 */
 	@PostConstruct
 	private void init() {
+		
+		// System.out.println();
+		// System.out.println("STORAGE PROVIDER ID = " + new Random().nextInt());
+		// System.out.println();
 
-		//cfg = StorageManagerConfiguration.getConfiguration();
+		// cfg = StorageManagerConfiguration.getConfiguration();
 
 		theStorageProvider = this;
 		storage = createStorage(StorageType.valueOf(cfg.getDefaultStorageType()), cfg.getPosixBackendPath());

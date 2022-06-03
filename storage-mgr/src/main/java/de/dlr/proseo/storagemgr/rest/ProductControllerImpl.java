@@ -103,7 +103,8 @@ public class ProductControllerImpl implements ProductController {
 	@Autowired
 	private StorageManagerConfiguration cfg;
 
-	StorageProvider storageProvider = new StorageProvider();
+	@Autowired
+	private StorageProvider storageProvider;
 	
 	/**
 	 * Log an error and return the corresponding HTTP message header

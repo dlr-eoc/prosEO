@@ -52,10 +52,12 @@ public class JobOrderControllerImpl implements JoborderController {
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
 	private static final int MSG_ID_EXCEPTION_THROWN = 9001;
 	private static Logger logger = LoggerFactory.getLogger(JoborderController.class);
+	
 	@Autowired
 	private StorageManagerConfiguration cfg;
 
-	StorageProvider storageProvider = new StorageProvider();
+	@Autowired
+	private StorageProvider storageProvider;
 
 	/**
 	 * Log an error and return the corresponding HTTP message header
