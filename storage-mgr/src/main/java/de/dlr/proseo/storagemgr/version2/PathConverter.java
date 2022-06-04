@@ -24,14 +24,31 @@ public class PathConverter {
 	private static String WINPATH_IN_S3 = "-WIN-PATH-";
 
 	public PathConverter(String path) {
-		p = path.replace(BACKSLASH, SLASH); // convertToSlash
-		p = p.trim();
+		p = path;
+		init(path);
 	}
-	
+
 	public PathConverter(String path1, String path2) {
 		p = Paths.get(path1, path2).toString();
+		init(path2);
+	}
+
+	public PathConverter(String path1, String path2, String path3) {
+		p = Paths.get(path1, path2, path3).toString();
+		init(path3);
+	}
+
+	private void init(String endPath) {
 		p = p.replace(BACKSLASH, SLASH); // convertToSlash
 		p = p.trim();
+
+		if (p.endsWith(SLASH)) { 
+			return;
+		}
+		
+		if (endPath.endsWith(SLASH)) { // do not forget directory at end
+			p = p + SLASH;
+		}
 	}
 
 	public PathConverter(String path, List<String> basePaths) {
@@ -131,17 +148,14 @@ public class PathConverter {
 
 		if (p.endsWith(SLASH))
 			return this;
-		
+
 		if (p.endsWith(BACKSLASH))
 			return this;
-		
-		if (p.contains(SLASH))
-			return new PathConverter(p + SLASH, basePaths);
 
 		if (p.contains(BACKSLASH))
 			return new PathConverter(p + BACKSLASH, basePaths);
 
-		return this;
+		return new PathConverter(p + SLASH, basePaths);
 	}
 
 	public PathConverter verifyAbsolutePath() {
@@ -159,7 +173,7 @@ public class PathConverter {
 
 	public boolean isDirectory() {
 
-		return (p.endsWith(SLASH) || p.endsWith(BACKSLASH)) ? true : false; 
+		return (p.endsWith(SLASH) || p.endsWith(BACKSLASH)) ? true : false;
 	}
 
 	public PathConverter addSlashAtBegin() {

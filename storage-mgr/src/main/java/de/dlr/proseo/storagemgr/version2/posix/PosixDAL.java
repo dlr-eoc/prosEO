@@ -54,7 +54,7 @@ public class PosixDAL {
 		String targetFile = targetFileOrDir; 
 		
 		if (new PathConverter(targetFileOrDir).isDirectory()) {
-			targetFile = Paths.get(targetFileOrDir, getFileName(sourceFile)).toString();
+			targetFile = new PathConverter(targetFileOrDir, getFileName(sourceFile)).getPath();
 		}
 				
 		createParentDirectories(targetFile);
@@ -123,7 +123,7 @@ public class PosixDAL {
 		String targetFile = targetFileOrDir;
 
 		if (new PathConverter(targetFileOrDir).isDirectory()) {
-			targetFile = Paths.get(targetFileOrDir, getFileName(sourceFile)).toString();
+			targetFile = new PathConverter(targetFileOrDir, getFileName(sourceFile)).getPath();
 		}
 		
 		createParentDirectories(targetFile);

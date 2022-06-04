@@ -37,6 +37,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
 import de.dlr.proseo.storagemgr.utils.StorageType;
+import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
 import de.dlr.proseo.storagemgr.version2.model.Storage;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
@@ -154,7 +155,7 @@ public class ProductControllerImpl implements ProductController {
 
 			try {
 				String hostName = getLocalHostName();
-				String prefix = addSlashAtEnd(restProductFS.getProductId());
+				String prefix = new PathConverter(restProductFS.getProductId()).addSlashAtEnd().getPath();
 				ArrayList<String> allUploaded = new ArrayList<String>();
 				
 				StorageFile targetFolder = storageProvider.getStorageFile(prefix);
