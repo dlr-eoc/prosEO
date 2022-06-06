@@ -5,6 +5,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
+
+import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -22,8 +25,12 @@ import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.UniqueStorageTestPaths;
+import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
+import de.dlr.proseo.storagemgr.rest.model.RestJoborder;
+import de.dlr.proseo.storagemgr.version2.FileUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
+import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 /**
@@ -62,7 +69,7 @@ public class ProductfileControllerImplTest_upload {
 		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
 		
-		upload(storageProvider);
+		upload();
 		
 		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
@@ -77,22 +84,54 @@ public class ProductfileControllerImplTest_upload {
 		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 		
-		upload(storageProvider);
+		upload();
 		
 		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
 	
-	private void upload(StorageProvider storageProvider) throws Exception {
+	
+	@Test
+	public void testUpload_v1S3() throws Exception {
+				
+		// StorageProvider storageProvider = new StorageProvider();
+		StorageType storageType = StorageType.S3; 
+		storageProvider.loadVersion1();
+		storageProvider.setStorage(storageType);
+		
+		upload();
+		
+		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
+		StorageType realStorageType = storageProvider.getStorage().getStorageType();
+		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
+	}
+	
+	@Test
+	public void testUpload_v2S3() throws Exception {
+		
+		// StorageProvider storageProvider = new StorageProvider();
+		StorageType storageType = StorageType.S3; 
+		storageProvider.loadVersion2();
+		storageProvider.setStorage(storageType);
+		
+		upload();
+		
+		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
+		StorageType realStorageType = storageProvider.getStorage().getStorageType();
+		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
+	}
+	
+	// UPLOAD absolute file -> storage (productid/filename)
+	// takes filename from path and productid from parameter, ignores the rest of the path
+	private void upload() throws Exception {
 		
 		TestUtils.printMethodName(this, testName);
-		UniqueStorageTestPaths uniquePaths = new UniqueStorageTestPaths(this, testName);
 		
-		String relativePath = "testControllerFile.txt";
-		relativePath = new PathConverter(uniquePaths.getUniqueTestFolder(), relativePath).getPath();
+		String productId = "12345"; // only int type allowed
+		String filename = "testControllerFile.txt";
+		String relativePath = new PathConverter(productId, filename).getPath();
 		
-		String productId = "123"; 	
 		String absolutePath = storageTestUtils.createSourceFile(relativePath);
 		String fileSize = Long.toString(storageProvider.getSourceFileSize(relativePath));
 		
@@ -110,6 +149,23 @@ public class ProductfileControllerImplTest_upload {
 		storageTestUtils.printPosixStorage();
 		storageTestUtils.printVersion("FINISHED upload-Test");
 		
-		uniquePaths.deleteUniqueTestDirectories();
+		// show path of created rest job
+		String json = mvcResult.getResponse().getContentAsString();
+		RestFileInfo result = new ObjectMapper().readValue(json, RestFileInfo.class);
+		String expectedPath = storageProvider.getRelativePath(result.getFilePath());
+		System.out.println("Created job order path: " + expectedPath);
+		assertTrue("Expected path: " + expectedPath + " Exists: " + expectedPath, 
+				relativePath.equals(expectedPath));
+		
+		// show storage files 
+		List<String> storageFiles = storageProvider.getStorage().getFiles();
+		String storageType = storageProvider.getStorage().getStorageType().toString();
+		TestUtils.printList("Storage " + storageType + " files:", storageFiles);
+		
+		// delete files with empty folders
+		new FileUtils(absolutePath).deleteFile(); // source
+	
+		StorageFile storageFile = storageProvider.getStorageFile(expectedPath);
+		storageProvider.getStorage().deleteFile(storageFile);
 	}
 }
