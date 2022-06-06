@@ -154,6 +154,7 @@ public class FileUtils {
 		}
 	}
 	
+	// deletes file with empty directories
 	public String deleteFile() throws IOException { 
 		return deleteFile(path); 
 	}
@@ -179,6 +180,39 @@ public class FileUtils {
 	
 	
 	/**
+	 * Deletes empty directories recursively in the direction of root
+	 * 
+	 * @param directoryToDelete the path to the directory
+	 */
+	public void deleteEmptyDirectoriesToTop(String directoryToDelete) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteEmptyDirectoriesToTop({})", directoryToDelete);
+
+		if (null == directoryToDelete) {
+			return;
+		}
+
+		File directory = new File(directoryToDelete);
+
+		if (!directory.isDirectory()) {
+			return;
+		}
+
+		File[] allFiles = directory.listFiles();
+		String parent = directory.getParent();
+
+		if (allFiles.length == 0) {
+
+			directory.delete();
+
+			deleteEmptyDirectoriesToTop(parent);
+		}
+	}
+
+	
+	
+	/**
 	 * Deletes a file 
 	 * 
 	 * @return
@@ -190,9 +224,11 @@ public class FileUtils {
 			logger.trace(">>> deleteFile({})", sourceFile);
 
 		try {
+			String folder = new File(sourceFile).getParent();
 			boolean fileDeleted = new File(sourceFile).delete();
 
 			if (fileDeleted) {
+				deleteEmptyDirectoriesToTop(folder);
 				return sourceFile;
 			} else {
 				throw new IOException("Cannot delete file: " + sourceFile);
