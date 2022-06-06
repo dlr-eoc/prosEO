@@ -105,20 +105,18 @@ public class ProductfileControllerImpl implements ProductfileController {
 		if (storageProvider.isVersion2()) {
 
 			try {
-				String storagePath = new PathConverter(pathInfo).removeFsPrefix().removeBucket().getPath();
+				String productPath = new PathConverter(pathInfo).removeFsPrefix().removeBucket().getPath();
+				String relativePath = storageProvider.getRelativePath(productPath);
 				
-				
-				Storage storage = storageProvider.getStorage();
-				String relativePath = storageProvider.getRelativePath(pathInfo);
-				FileCache cache = FileCache.getInstance();
-
-				//StorageFile sourceFile = storageProvider.getStorageFile(relativePath); 
-				StorageFile sourceFile = storageProvider.getAbsoluteFile(pathInfo);
+				StorageFile sourceFile = storageProvider.getStorageFile(relativePath); 
+				//StorageFile sourceFile = storageProvider.getAbsoluteFile(pathInfo);
 				StorageFile targetFile = storageProvider.getCacheFile(relativePath);
+				
+				FileCache cache = FileCache.getInstance();
 				
 				if (!cache.containsKey(targetFile.getFullPath())) {
 					
-					storage.downloadFile(sourceFile, targetFile);
+					storageProvider.getStorage().downloadFile(sourceFile, targetFile);
 					cache.put(targetFile.getFullPath()); 
 				}
 

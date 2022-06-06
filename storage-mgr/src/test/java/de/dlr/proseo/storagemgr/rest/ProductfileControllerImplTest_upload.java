@@ -154,7 +154,7 @@ public class ProductfileControllerImplTest_upload {
 		RestFileInfo result = new ObjectMapper().readValue(json, RestFileInfo.class);
 		String expectedPath = storageProvider.getRelativePath(result.getFilePath());
 		System.out.println("Created job order path: " + expectedPath);
-		assertTrue("Expected path: " + expectedPath + " Exists: " + expectedPath, 
+		assertTrue("Expected path: " + expectedPath + " Exists: " + relativePath, 
 				relativePath.equals(expectedPath));
 		
 		// show storage files 

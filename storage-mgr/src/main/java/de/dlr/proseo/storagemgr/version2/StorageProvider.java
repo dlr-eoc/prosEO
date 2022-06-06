@@ -88,7 +88,7 @@ public class StorageProvider {
 		version2 = cfg.getStorageManagerVersion2().equals("true") ? true : false;
 
 		basePaths.add(storage.getBasePath());
-		// basePaths.add(cfg.getPosixSourcePath());
+		basePaths.add(cfg.getPosixSourcePath());
 		basePaths.add(cfg.getPosixCachePath());
 
 		loadDefaultPaths();
