@@ -72,7 +72,7 @@ public class ProductfileControllerImplTest_download {
 				
 		StorageType storageType = StorageType.POSIX; 
 		storageProvider.loadVersion1();
-		storageProvider.setStorage(StorageType.POSIX);
+		storageProvider.setStorage(storageType);
 
 		download();
 		
@@ -94,6 +94,39 @@ public class ProductfileControllerImplTest_download {
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
+	
+	
+	@Test
+	public void testDownload_v1S3() throws Exception {
+				
+		StorageType storageType = StorageType.S3; 
+		storageProvider.loadVersion1();
+		storageProvider.setStorage(storageType);
+
+		download();
+		
+		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
+		StorageType realStorageType = storageProvider.getStorage().getStorageType();
+		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
+	}
+
+	@Test
+	public void testDownload_v2S3() throws Exception {
+		
+		StorageType storageType = StorageType.S3; 
+		storageProvider.loadVersion2();
+		storageProvider.setStorage(storageType);
+
+		download();
+		
+		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
+		StorageType realStorageType = storageProvider.getStorage().getStorageType();
+		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
+	}
+	
+	// pathInfo is absolute path s3://.. or /..   DOWNLOAD Storage -> Cache
+	// input /bucket/path/  -> path (without first folder as bucket)
+	// output /cache/path (without first folder as bucket) 
 	
 	private void download() throws Exception {
 		
@@ -123,12 +156,16 @@ public class ProductfileControllerImplTest_download {
 		storageTestUtils.printVersion("FINISHED download-Test");
 		
 		// show path of created rest job
+		String expectedCachePath = new PathConverter(absolutePath).removeFirstFolder().getPath();
+		expectedCachePath = new PathConverter(storageProvider.getCachePath(), expectedCachePath).getPath();
+		
 		String json = mvcResult.getResponse().getContentAsString();
 		RestFileInfo result = new ObjectMapper().readValue(json, RestFileInfo.class);
-		String expectedPath = result.getFilePath();
-		System.out.println("Downloaded job order path: " + expectedPath);
-		assertTrue("Expected path: " + expectedPath + " Exists: " + relativePath, 
-				relativePath.equals(expectedPath));
+		String realCachePath = result.getFilePath();
+		
+		System.out.println("Downloaded real job order path: " + realCachePath);
+		assertTrue("Expected path: " + expectedCachePath + " Exists: " + realCachePath, 
+				expectedCachePath.equals(realCachePath));
 		
 		// show storage files 
 		List<String> storageFiles = storageProvider.getStorage().getFiles();

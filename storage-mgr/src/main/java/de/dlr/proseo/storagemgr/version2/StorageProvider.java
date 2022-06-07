@@ -112,7 +112,19 @@ public class StorageProvider {
 	public void setCachePath(String cachePath) {
 		this.cachePath = cachePath;
 	}
-
+	
+	public String getSourcePath() {
+		return sourcePath; 
+	}
+	
+	public String getStoragePath() {
+		return storagePath; 
+	}
+	
+	public String getCachePath() {
+		return cachePath; 
+	}
+	
 	public Storage getStorage() {
 		return storage;
 	}

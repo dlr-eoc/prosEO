@@ -108,9 +108,9 @@ public class ProductfileControllerImpl implements ProductfileController {
 				String productPath = new PathConverter(pathInfo).removeFsPrefix().removeBucket().getPath();
 				String relativePath = storageProvider.getRelativePath(productPath);
 				
-				StorageFile sourceFile = storageProvider.getStorageFile(relativePath); 
-				//StorageFile sourceFile = storageProvider.getAbsoluteFile(pathInfo);
-				StorageFile targetFile = storageProvider.getCacheFile(relativePath);
+				// StorageFile sourceFile = storageProvider.getStorageFile(relativePath); 
+				StorageFile sourceFile = storageProvider.getAbsoluteFile(pathInfo);
+				StorageFile targetFile = storageProvider.getCacheFile(sourceFile.getRelativePath());
 				
 				FileCache cache = FileCache.getInstance();
 				
