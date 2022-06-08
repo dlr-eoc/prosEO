@@ -229,11 +229,6 @@ public class ProductControllerImpl implements ProductController {
 		}
 	}
 
-	private String addSlashAtEnd(String path) {
-		
-		return !path.endsWith("/") ?  path + "/" : path;
-	}
-
 	private String getLocalHostName() {
 		
 		try {
@@ -264,19 +259,23 @@ public class ProductControllerImpl implements ProductController {
 
 			try {
 				List<String> response; 
+				Storage storage = storageProvider.getStorage(); 
 				
 				if (storageType == null) { // add both 
 					
 					storageProvider.setStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.S3);
 					response = storageProvider.getStorage().getFiles(prefix);
+					response = storageProvider.getStorage().addFSPrefix(response);
 					
 					storageProvider.setStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.POSIX);
 					response.addAll(storageProvider.getStorage().getFiles(prefix));
+					response = storageProvider.getStorage().addFSPrefix(response);
 					
 				} else { 
 					
 					storageProvider.setStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.valueOf(storageType));
-					response = storageProvider.getStorage().getFiles(prefix);					
+					response = storageProvider.getStorage().getFiles(prefix);		
+					response = storageProvider.getStorage().addFSPrefix(response);
 				}
 				
 				return new ResponseEntity<>(response, HttpStatus.OK);

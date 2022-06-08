@@ -191,12 +191,14 @@ public class S3Storage implements BucketsStorage {
 		return targetFile;
 	}
 	
+	@Override
 	public String addFSPrefix(String path) {
 
 		String prefix = StorageType.S3.toString() + "|";
-		return path + prefix;
+		return prefix + path;
 	}
 
+	@Override
 	public List<String> addFSPrefix(List<String> paths) {
 
 		List<String> pathsWithPrefix = new ArrayList<>();

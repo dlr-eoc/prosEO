@@ -141,12 +141,14 @@ public class PosixStorage implements Storage {
 		return posixDAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
 	}
 
+	@Override
 	public String addFSPrefix(String path) {
 
 		String prefix = StorageType.POSIX.toString() + "|";
-		return path + prefix;
+		return prefix + path;
 	}
 
+	@Override
 	public List<String> addFSPrefix(List<String> paths) {
 
 		List<String> pathsWithPrefix = new ArrayList<>();

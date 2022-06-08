@@ -54,4 +54,8 @@ public interface Storage {
 	public boolean isDirectory(StorageFile storageFileOrDir);
 
 	public void deleteBucket(String bucket) throws IOException;
+	
+	public String addFSPrefix(String path);
+
+	public List<String> addFSPrefix(List<String> paths);
 }

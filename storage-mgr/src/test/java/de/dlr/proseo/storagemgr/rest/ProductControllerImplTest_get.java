@@ -28,6 +28,7 @@ import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.UniqueStorageTestPaths;
+import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
 import de.dlr.proseo.storagemgr.rest.model.RestProductFS;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
@@ -74,7 +75,6 @@ public class ProductControllerImplTest_get {
 	@Test
 	public void testGet_v2Posix() throws Exception {
 
-		// StorageProvider storageProvider = new StorageProvider();
 		StorageType storageType = StorageType.POSIX; 
 		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
@@ -96,7 +96,6 @@ public class ProductControllerImplTest_get {
 	@Test
 	public void testGet_v1Posix() throws Exception {
 
-		// StorageProvider storageProvider = new StorageProvider();
 		StorageType storageType = StorageType.POSIX; 
 		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
@@ -107,14 +106,56 @@ public class ProductControllerImplTest_get {
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
+	
+	/**
+	 * Get products with given directory prefix
+	 * 
+	 * GET /products storageType="POSIX"&prefix="/.."
+	 * 
+	 * @return products string[]
+	 */
+	@Test
+	public void testGet_v2S3() throws Exception {
+
+		StorageType storageType = StorageType.S3; 
+		storageProvider.loadVersion2();
+		storageProvider.setStorage(storageType);
+		
+		getProductFiles(storageType);
+		
+		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
+		StorageType realStorageType = storageProvider.getStorage().getStorageType();
+		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
+	}
+
+	/**
+	 * Get products with given directory prefix
+	 * 
+	 * GET /products storageType="POSIX"&prefix="/.."
+	 * 
+	 * @return products string[]
+	 */
+	@Test
+	public void testGet_v1S3() throws Exception {
+
+		StorageType storageType = StorageType.S3; 
+		storageProvider.loadVersion1();
+		storageProvider.setStorage(storageType);
+		
+		getProductFiles(storageType);
+		
+		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
+		StorageType realStorageType = storageProvider.getStorage().getStorageType();
+		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
+	}
+
 
 	private void getProductFiles(StorageType storageType) throws Exception {
 
 		TestUtils.printMethodName(this, testName);
-		UniqueStorageTestPaths uniquePaths = new UniqueStorageTestPaths(this, testName);
 
 		// create unique source pathes
-		String prefix = uniquePaths.getUniqueTestFolder();
+		String prefix = "prodContrGet";
 		List<String> pathes = new ArrayList<>();
 		pathes.add(new PathConverter(prefix, "file1.txt").getPath());
 		pathes.add(new PathConverter(prefix, "file2.txt").getPath());
@@ -125,8 +166,9 @@ public class ProductControllerImplTest_get {
 			storageTestUtils.createSourceFile(path);
 			storageTestUtils.uploadToPosixStorage(path);
 		}
-
-		storageTestUtils.printPosixStorage();
+		
+		List<String> storageFiles = storageProvider.getStorage().getFiles();	
+		TestUtils.printList("Storage Files before HTTP call", storageFiles);
 
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
 				.param("storageType", storageType.toString()).param("prefix", prefix);
@@ -137,6 +179,9 @@ public class ProductControllerImplTest_get {
 		System.out.println("Status: " + mvcResult.getResponse().getStatus());
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
 		
-		uniquePaths.deleteUniqueTestDirectories();
+		// TODO: maybe convert List
+		// String json = mvcResult.getResponse().getContentAsString();
+		// RestFileInfo result = new ObjectMapper().readValue(json, RestFileInfo.class);
+		// String realCachePath = result.getFilePath();		
 	}
 }
