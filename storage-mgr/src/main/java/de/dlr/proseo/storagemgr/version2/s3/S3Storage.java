@@ -28,24 +28,32 @@ public class S3Storage implements BucketsStorage {
 
 	private S3DAL s3DAL;
 	private String basePath;
+	private String sourcePath; 
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3Storage.class);
 
-	public S3Storage(String basePath, String s3AccessKey, String s3SecretAccessKey, String bucket) {
+	public S3Storage(String basePath, String sourcePath, String s3AccessKey, String s3SecretAccessKey, String bucket) {
 		s3DAL = new S3DAL(s3AccessKey, s3SecretAccessKey, bucket);
 		this.basePath = basePath;
+		this.sourcePath = sourcePath; 
 	}
 
-	public S3Storage(String basePath, String s3AccessKey, String s3SecretAccessKey, String s3Region,
+	public S3Storage(String basePath, String sourcePath, String s3AccessKey, String s3SecretAccessKey, String s3Region,
 			String s3EndPoint, String bucket) {
 		s3DAL = new S3DAL(s3AccessKey, s3SecretAccessKey, s3Region, s3EndPoint, bucket);
 		this.basePath = basePath;
+		this.sourcePath = sourcePath; 
 	}
 
 	@Override
 	public String getBasePath() {
 		return basePath;
+	}
+	
+	@Override
+	public String getSourcePath() {
+		return sourcePath;
 	}
 
 	@Override
@@ -96,8 +104,52 @@ public class S3Storage implements BucketsStorage {
 		return s3DAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getRelativePath());
 	}
 	
-	
+	@Override
+	public List<String> upload(StorageFile sourceFileOrDir) throws IOException {
 
+		if (logger.isTraceEnabled())
+			logger.trace(">>> upload({})", sourceFileOrDir.getFullPath());
+		
+		StorageFile targetFileOrDir = new S3StorageFile(s3DAL.getBucket(), sourceFileOrDir.getRelativePath());
+
+		return s3DAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getRelativePath());
+	}
+	
+	@Override
+	public String uploadFile(StorageFile sourceFile) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> uploadFile({})", sourceFile.getFullPath());
+		
+		StorageFile targetFile = new S3StorageFile(s3DAL.getBucket(), sourceFile.getRelativePath());
+
+		return s3DAL.uploadFile(sourceFile.getFullPath(), targetFile.getRelativePath());
+	} 
+	
+	@Override
+	public List<String> uploadSourceFileOrDir(String relativeSourceFileOrDir) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> upload({})", relativeSourceFileOrDir);
+		
+		StorageFile sourceFileOrDir = new PosixStorageFile(sourcePath, relativeSourceFileOrDir);
+		StorageFile targetFileOrDir = new S3StorageFile(s3DAL.getBucket(), sourceFileOrDir.getRelativePath());
+
+		return s3DAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getRelativePath());
+	}
+	
+	@Override
+	public String uploadSourceFile(String relativeSourceFile) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> uploadFile({})", relativeSourceFile);
+		
+		StorageFile sourceFile = new PosixStorageFile(sourcePath, relativeSourceFile);		
+		StorageFile targetFile = new S3StorageFile(s3DAL.getBucket(), sourceFile.getRelativePath());
+
+		return s3DAL.uploadFile(sourceFile.getFullPath(), sourceFile.getFullPath());
+	} 
+	
 	@Override
 	public String downloadFile(StorageFile sourceFile, StorageFile targetFileOrDir) throws IOException {
 		

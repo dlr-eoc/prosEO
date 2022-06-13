@@ -380,23 +380,29 @@ public class S3DAL {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> delete({})", fileOrDir);
 
-		ArrayList<ObjectIdentifier> toDelete = new ArrayList<ObjectIdentifier>();
-		toDelete.add(ObjectIdentifier.builder().key(fileOrDir).build());
+		return deleteS3Data(s3Client, bucket, fileOrDir);
+	}
+	
+	private List<String> deleteS3Data(S3Client s3Client, String bucket, String prefix) {
+		
+	    ListObjectsV2Request request = ListObjectsV2Request.builder().bucket(bucket).prefix(prefix).build();
+	    ListObjectsV2Iterable list = s3Client.listObjectsV2Paginator(request);
 
-		try {
-			DeleteObjectsRequest dor = DeleteObjectsRequest.builder().bucket(bucket)
-					.delete(Delete.builder().objects(toDelete).build()).build();
-			s3Client.deleteObjects(dor);
-			System.out.println("Successfully deleted object " + fileOrDir);
-			
-			DeleteObjectsResponse deleteResponse = s3Client.deleteObjects(dor);
-			return toStringDeletedObjects(deleteResponse.deleted());
+	    List<ObjectIdentifier> objectIdentifiers = list
+	            .stream()
+	            .flatMap(r -> r.contents().stream())
+	            .map(o -> ObjectIdentifier.builder().key(o.key()).build())
+	            .collect(Collectors.toList());
 
-		} catch (S3Exception e) {
-			System.err.println(e.awsErrorDetails().errorMessage());
-			e.printStackTrace();
-			throw e;
-		}
+	    if (objectIdentifiers.isEmpty()) return new ArrayList<String>();
+	    DeleteObjectsRequest deleteObjectsRequest = DeleteObjectsRequest
+	            .builder()
+	            .bucket(bucket)
+	            .delete(Delete.builder().objects(objectIdentifiers).build())
+	            .build();
+	    
+		DeleteObjectsResponse deleteResponse = s3Client.deleteObjects(deleteObjectsRequest);
+		return toStringDeletedObjects(deleteResponse.deleted());
 	}
 	
 	public String deleteFile(String filepath) {

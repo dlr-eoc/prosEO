@@ -261,6 +261,7 @@ public class FileUtils {
 
 		File directory = new File(sourceDir);
 		File[] files = directory.listFiles();
+		if (files == null) return deletedFiles;
 		Arrays.sort(files);
 
 		for (File file : files) {

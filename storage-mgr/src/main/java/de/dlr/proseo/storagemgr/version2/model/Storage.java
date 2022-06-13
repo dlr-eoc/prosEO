@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.dlr.proseo.storagemgr.version2.posix.PosixStorageFile;
+
 /**
  * Storage
  * 
@@ -16,6 +18,8 @@ import java.util.List;
 public interface Storage {
 	
 	public String getBasePath(); 
+	
+	public String getSourcePath(); 
 	
 	public void setBucket(String bucket);
 	
@@ -38,6 +42,14 @@ public interface Storage {
 	public StorageFile createStorageFile(String relativePath, String content);
 
 	public List<String> upload(StorageFile sourceFileOrDir, StorageFile targetFileOrDir) throws IOException;
+	
+	public List<String> upload(StorageFile sourceFileOrDir) throws IOException; 
+	
+	public String uploadFile(StorageFile sourceFile) throws IOException;
+	
+	public List<String> uploadSourceFileOrDir(String relativeSourceFileOrDir) throws IOException; 
+	
+	public String uploadSourceFile(String relativeSourceFile) throws IOException; 
 	
 	public List<String> download(StorageFile sourceFileOrDir, StorageFile targetFileOrDir) throws IOException;
 

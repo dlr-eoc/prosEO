@@ -349,6 +349,7 @@ public class TestUtils {
 		// System.out.println("FOLDER: " + directoryPath + " " + " DEPTH: " + depth);
 
 		File[] files = directory.listFiles();
+		if (files == null) return;
 		Arrays.sort(files);
 
 		/*

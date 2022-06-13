@@ -28,6 +28,7 @@ import de.dlr.proseo.storagemgr.version2.model.StorageType;
 public class PosixStorage implements Storage {
 
 	private String basePath;
+	private String sourcePath; 
 	private String bucket;
 
 	private static String PREFIX = StorageType.POSIX.toString() + "|";
@@ -40,8 +41,9 @@ public class PosixStorage implements Storage {
 	public PosixStorage() {
 	}
 
-	public PosixStorage(String basePath) {
+	public PosixStorage(String basePath, String sourcePath) {
 		this.basePath = basePath;
+		this.sourcePath = sourcePath; 
 		this.bucket = StorageFile.NO_BUCKET;
 
 		new FileUtils(basePath).createDirectories();
@@ -50,6 +52,11 @@ public class PosixStorage implements Storage {
 	@Override
 	public String getBasePath() {
 		return basePath;
+	}
+	
+	@Override
+	public String getSourcePath() {
+		return sourcePath;
 	}
 
 	@Override
@@ -136,10 +143,57 @@ public class PosixStorage implements Storage {
 	public List<String> upload(StorageFile sourceFileOrDir, StorageFile targetFileOrDir) throws IOException {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> upload({},())", sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
+			logger.trace(">>> upload({},{})", sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
 
 		return posixDAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
 	}
+	
+	@Override
+	public List<String> upload(StorageFile sourceFileOrDir) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> upload({})", sourceFileOrDir.getFullPath());
+		
+		StorageFile targetFileOrDir = new PosixStorageFile(basePath, sourceFileOrDir.getRelativePath());
+
+		return posixDAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
+	}
+	
+	@Override
+	public String uploadFile(StorageFile sourceFile) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> uploadFile({})", sourceFile.getFullPath());
+		
+		StorageFile targetFile = new PosixStorageFile(basePath, sourceFile.getRelativePath());
+
+		return posixDAL.uploadFile(sourceFile.getFullPath(), targetFile.getFullPath());
+	} 
+	
+	@Override
+	public List<String> uploadSourceFileOrDir(String relativeSourceFileOrDir) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> upload({})", relativeSourceFileOrDir);
+		
+		StorageFile sourceFileOrDir = new PosixStorageFile(sourcePath, relativeSourceFileOrDir);
+		StorageFile targetFileOrDir = new PosixStorageFile(basePath, relativeSourceFileOrDir);
+
+		return posixDAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
+	}
+	
+	@Override
+	public String uploadSourceFile(String relativeSourceFile) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> uploadFile({})", relativeSourceFile);
+		
+		StorageFile sourceFile = new PosixStorageFile(sourcePath, relativeSourceFile);		
+		StorageFile targetFile = new PosixStorageFile(basePath, relativeSourceFile);
+
+		return posixDAL.uploadFile(sourceFile.getFullPath(), targetFile.getFullPath());
+	} 
+	
 
 	@Override
 	public String addFSPrefix(String path) {

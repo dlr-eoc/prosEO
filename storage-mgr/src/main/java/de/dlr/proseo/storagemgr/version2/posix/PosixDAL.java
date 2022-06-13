@@ -92,6 +92,7 @@ public class PosixDAL {
 		targetDir = new PathConverter(targetDir).addSlashAtEnd().getPath();
 		File directory = new File(sourceDir);
 		File[] files = directory.listFiles();
+		if (files == null) return uploadedFiles;
 		Arrays.sort(files);
 
 		for (File file : files) {
@@ -163,6 +164,7 @@ public class PosixDAL {
 
 		File directory = new File(sourceDir);
 		File[] files = directory.listFiles();
+		if (files == null) return downloadedFiles;
 		Arrays.sort(files);
 
 		for (File file : files) {
@@ -224,6 +226,7 @@ public class PosixDAL {
 		File directory = dirOrFile;
 
 		File[] files = directory.listFiles();
+		if (files == null) return returnFiles;
 		Arrays.sort(files);
 
 		for (File file : files) {

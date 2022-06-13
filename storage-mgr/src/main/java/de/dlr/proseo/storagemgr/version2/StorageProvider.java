@@ -134,6 +134,11 @@ public class StorageProvider {
 		storage = createStorage(storageType, storagePath);
 		return storage;
 	}
+	
+	public List<String> getBasePaths() {
+		
+		return basePaths; 
+	}
 
 	// all ..version.. methods will be removed in release, for smooth integration
 	// only
@@ -168,10 +173,10 @@ public class StorageProvider {
 	private Storage createStorage(StorageType storageType, String storagePath) {
 
 		if (storageType == StorageType.POSIX) {
-			return new PosixStorage(storagePath);
+			return new PosixStorage(storagePath, sourcePath);
 
 		} else if (storageType == StorageType.S3) {
-			return new S3Storage(storagePath, cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(),
+			return new S3Storage(storagePath, sourcePath, cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(),
 					cfg.getS3DefaultBucket());
 		}
 

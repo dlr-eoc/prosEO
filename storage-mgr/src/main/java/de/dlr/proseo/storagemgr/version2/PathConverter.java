@@ -114,9 +114,8 @@ public class PathConverter {
 		return new PathConverter(p, basePaths);
 	}
 
-	// removes base Path from path if base path is in the list. If not, deletes
-	// first folder as base path
-	public PathConverter removeBasePath() {
+	// removes base Path from path if base path is in the list. 
+	public PathConverter removeBasePaths() {
 
 		for (String basePath : basePaths) {
 
@@ -126,6 +125,18 @@ public class PathConverter {
 		}
 
 		return this;
+	}
+	
+	public boolean hasBasePaths() {
+
+		for (String basePath : basePaths) {
+
+			if (p.startsWith(basePath)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public PathConverter removeBucket() {
@@ -240,7 +251,7 @@ public class PathConverter {
 
 	public PathConverter getRelativePath() {
 
-		PathConverter pathConverter = new PathConverter(this).removeFsPrefix().removeBasePath();
+		PathConverter pathConverter = new PathConverter(this).removeFsPrefix().removeBasePaths();
 
 		if (isS3Path()) {
 			pathConverter = pathConverter.removeBucket();
