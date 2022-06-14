@@ -660,7 +660,7 @@ public class ProductControllerImpl implements ProductController {
 				pathInfo), HttpStatus.NOT_FOUND);
 	}
 	
-	public RestProductFS createRestProductFilesDeleted(List<String> deletedFiles, String storageType) { 
+	private RestProductFS createRestProductFilesDeleted(List<String> deletedFiles, String storageType) { 
 		
 		RestProductFS response = new RestProductFS();
 		
