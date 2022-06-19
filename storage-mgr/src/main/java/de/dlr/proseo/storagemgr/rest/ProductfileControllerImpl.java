@@ -105,11 +105,11 @@ public class ProductfileControllerImpl implements ProductfileController {
 		if (storageProvider.isVersion2()) {
 
 			try {
-				String productPath = new PathConverter(pathInfo).removeFsPrefix().removeBucket().getPath();
-				String relativePath = storageProvider.getRelativePath(productPath);
+				// String productPath = new PathConverter(pathInfo).removeFsPrefix().removeBucket().getPath();
+				String relativePath = storageProvider.getRelativePath(pathInfo);
 				
-				// StorageFile sourceFile = storageProvider.getStorageFile(relativePath); 
-				StorageFile sourceFile = storageProvider.getAbsoluteFile(pathInfo);
+				StorageFile sourceFile = storageProvider.getStorageFile(relativePath); 
+				// StorageFile sourceFile = storageProvider.getAbsoluteFile(pathInfo);
 				StorageFile targetFile = storageProvider.getCacheFile(sourceFile.getRelativePath());
 				
 				FileCache cache = FileCache.getInstance();
@@ -121,7 +121,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 				}
 
 				RestFileInfo restFileInfo = ControllerUtils.convertToRestFileInfo(targetFile,
-						storageProvider.getCacheFileSize(relativePath));
+						storageProvider.getCacheFileSize(sourceFile.getRelativePath()));
 				return HttpResponses.createOk(restFileInfo);
 
 			} catch (Exception e) {
