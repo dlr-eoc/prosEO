@@ -97,6 +97,8 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.storageManager.filecheck.waittime}")
 	private Long fileCheckWaitTime;
 	
+	/** Mounted default storage type to change it with storage set property */
+	String mountedDefaultStorageType = ""; 
 	
 	/** Singleton object */
 	private static StorageManagerConfiguration theConfiguration = null;
@@ -127,10 +129,23 @@ public class StorageManagerConfiguration {
 
 	
 	/**
-	 * @return the defaultStorageType
+	 * @return the defaultStorageType from config file or mounted storage type
 	 */
 	public String getDefaultStorageType() {
+		
+		if (mountedDefaultStorageType.length() > 0) {
+			return mountedDefaultStorageType; 
+		}
+		
 		return defaultStorageType;
+	}
+	
+	/**
+	 * Sets the singleton object for this class
+	 */
+	public void setDefaultStorageType(String storageType)
+	{
+		mountedDefaultStorageType = storageType; 
 	}
 
 	/**

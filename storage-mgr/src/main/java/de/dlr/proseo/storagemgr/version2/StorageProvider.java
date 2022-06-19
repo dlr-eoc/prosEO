@@ -130,8 +130,10 @@ public class StorageProvider {
 	}
 
 	public Storage setStorage(StorageType storageType) {
-
+		
+		cfg.setDefaultStorageType(storageType.toString());
 		storage = createStorage(storageType, storagePath);
+		
 		return storage;
 	}
 	
