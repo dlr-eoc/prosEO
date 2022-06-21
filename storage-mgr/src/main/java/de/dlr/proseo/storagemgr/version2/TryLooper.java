@@ -4,8 +4,8 @@ public class TryLooper {
 	// command execute(String)
 	
 	/** Amount of retries and time interval */
-	private static final int BUCKET_CREATION_RETRIES = 3;
-	private static final int BUCKET_CREATION_RETRY_INTERVAL = 5000;
+	// private static final int BUCKET_CREATION_RETRIES = 3;
+	// private static final int BUCKET_CREATION_RETRY_INTERVAL = 5000;
 	
 
 	/*

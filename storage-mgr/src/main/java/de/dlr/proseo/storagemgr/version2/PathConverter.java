@@ -1,7 +1,6 @@
 package de.dlr.proseo.storagemgr.version2;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +18,7 @@ public class PathConverter {
 
 	/** path */
 	private String p;
-	
+
 	/** base pathes, which are used to make relative path */
 	private List<String> basePaths = new ArrayList<>();
 
@@ -30,8 +29,11 @@ public class PathConverter {
 	private static String SLASH = "/";
 	private static String DOUBLESLASH = "//";
 	private static String BACKSLASH = "\\";
-	
-	/** no ":" is allowed in s3, that's why transformation of windows path to s3 compatible path  */
+
+	/**
+	 * no ":" is allowed in s3, that's why transformation of windows path to s3
+	 * compatible path
+	 */
 	private static String WINPATH_IN_S3 = "-WIN-PATH-";
 
 	/**

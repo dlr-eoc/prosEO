@@ -18,10 +18,6 @@ import org.slf4j.LoggerFactory;
  * @author Denys Chaykovskiy
  *
  */
-/**
- * @author den
- *
- */
 public class FileUtils {
 
 	/** the full path to file */

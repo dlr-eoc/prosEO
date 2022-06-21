@@ -16,8 +16,6 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-import de.dlr.proseo.storagemgr.version2.PathConverter;
-
 /**
  * Configuration class for the prosEO Ingestor component
  * 
@@ -25,46 +23,46 @@ import de.dlr.proseo.storagemgr.version2.PathConverter;
  *
  */
 @Configuration
-@ConfigurationProperties(prefix="proseo")
+@ConfigurationProperties(prefix = "proseo")
 @EntityScan(basePackages = "de.dlr.proseo.model")
 public class StorageManagerConfiguration {
-	
+
 	@Value("${proseo.s3.s3AccessKey}")
 	private String s3AccessKey;
-	
+
 	@Value("${proseo.s3.s3SecretAccessKey}")
 	private String s3SecretAccessKey;
-	
+
 	@Value("${proseo.s3.s3EndPoint}")
 	private String s3EndPoint;
-	
+
 	@Value("${proseo.alluxio.alluxioUnderFsS3Bucket}")
 	private String alluxioUnderFsS3Bucket;
-	
+
 	@Value("${proseo.alluxio.alluxioUnderFsS3BucketPrefix}")
 	private String alluxioUnderFsS3BucketPrefix;
-	
+
 	@Value("${proseo.joborder.bucket}")
 	private String joborderBucket;
-	
+
 	@Value("${proseo.joborder.prefix}")
 	private String joborderPrefix;
-	
+
 	@Value("${proseo.s3.s3MaxNumberOfBuckets}")
 	private int s3MaxNumberOfBuckets;
 
 	@Value("${proseo.s3.s3Region}")
 	private String s3Region;
-	
+
 	@Value("${proseo.global.storageIdPrefix}")
 	private String storageIdPrefix;
-	
+
 	@Value("${proseo.global.storageManagerVersion2}")
 	private String storageManagerVersion2;
-	
+
 	@Value("${proseo.global.sourcePath}")
 	private String sourcePath;
-		
+
 	@Value("${proseo.s3.s3DefaultBucket}")
 	private String s3DefaultBucket;
 
@@ -73,14 +71,17 @@ public class StorageManagerConfiguration {
 
 	@Value("${proseo.posix.cachePath}")
 	private String posixCachePath;
-	
+
 	@Value("${proseo.storageManager.defaultStorageType}")
 	private String defaultStorageType;
 
-	/** Recommended minimum cache usage for efficient operation (percentage of file system size) */
+	/**
+	 * Recommended minimum cache usage for efficient operation (percentage of file
+	 * system size)
+	 */
 	@Value("${proseo.storageManager.cache.expectedUsage}")
 	private Integer expectedCacheUsage;
-	
+
 	/** Maximum cache usage (percentage of file system size) */
 	@Value("${proseo.storageManager.cache.maximumUsage}")
 	private Integer maximumCacheUsage;
@@ -88,21 +89,21 @@ public class StorageManagerConfiguration {
 	/** Shared secret for Storage Manager download tokens */
 	@Value("${proseo.storageManager.secret}")
 	private String storageManagerSecret;
-	
+
 	/** Maximum cycles for file size check */
 	@Value("${proseo.storageManager.filecheck.maxcycles}")
 	private Long fileCheckMaxCycles;
-	
+
 	/** Wait time for file size check cycle in milliseconds */
 	@Value("${proseo.storageManager.filecheck.waittime}")
 	private Long fileCheckWaitTime;
-	
+
 	/** Mounted default storage type to change it with storage set property */
-	String mountedDefaultStorageType = ""; 
-	
+	String mountedDefaultStorageType = "";
+
 	/** Singleton object */
 	private static StorageManagerConfiguration theConfiguration = null;
-	
+
 	/**
 	 * Sets the singleton object for this class
 	 */
@@ -110,7 +111,7 @@ public class StorageManagerConfiguration {
 	private void init() {
 		theConfiguration = this;
 	}
-	
+
 	/**
 	 * Gets the singleton object for this class
 	 * 
@@ -119,7 +120,7 @@ public class StorageManagerConfiguration {
 	public static StorageManagerConfiguration getConfiguration() {
 		return theConfiguration;
 	}
-	
+
 	/**
 	 * @return the storageManagerVersion2
 	 */
@@ -127,40 +128,37 @@ public class StorageManagerConfiguration {
 		return storageManagerVersion2;
 	}
 
-	
 	/**
 	 * @return the defaultStorageType from config file or mounted storage type
 	 */
 	public String getDefaultStorageType() {
-		
+
 		if (mountedDefaultStorageType.length() > 0) {
-			return mountedDefaultStorageType; 
+			return mountedDefaultStorageType;
 		}
-		
+
 		return defaultStorageType;
-	}
-	
-	/**
-	 * Sets the singleton object for this class
-	 */
-	public void setDefaultStorageType(String storageType)
-	{
-		mountedDefaultStorageType = storageType; 
 	}
 
 	/**
-	 * Gets the shared secret for generating Storage Manager download tokens as 256-bit byte array
+	 * Sets the singleton object for this class
+	 */
+	public void setDefaultStorageType(String storageType) {
+		mountedDefaultStorageType = storageType;
+	}
+
+	/**
+	 * Gets the shared secret for generating Storage Manager download tokens as
+	 * 256-bit byte array
 	 * 
 	 * @return the Storage Manager secret
 	 */
 	public byte[] getStorageManagerSecret() {
-		byte[] sharedSecret = Arrays.copyOf(
-				(storageManagerSecret + "                ").getBytes(),
-				32);
+		byte[] sharedSecret = Arrays.copyOf((storageManagerSecret + "                ").getBytes(), 32);
 		return sharedSecret;
 	}
 
-    /**
+	/**
 	 * @return the fileCheckMaxCycles
 	 */
 	public Long getFileCheckMaxCycles() {
@@ -182,7 +180,7 @@ public class StorageManagerConfiguration {
 	public String getPosixCachePath() {
 		return new File(posixCachePath).getAbsolutePath();
 	}
-	
+
 	/**
 	 * Gets the absolute path to the POSIX source path
 	 * 
@@ -200,7 +198,7 @@ public class StorageManagerConfiguration {
 	public String getPosixBackendPath() {
 		return new File(posixBackendPath).getAbsolutePath();
 	}
-	
+
 	/**
 	 * @return the alluxioUnderFsDefaultPrefix
 	 */
@@ -243,8 +241,7 @@ public class StorageManagerConfiguration {
 	public String getJoborderPrefix() {
 		return joborderPrefix;
 	}
-	
-	
+
 	/**
 	 * @return the joborderBucket
 	 */
@@ -307,7 +304,7 @@ public class StorageManagerConfiguration {
 	public String getS3EndPoint() {
 		return s3EndPoint;
 	}
-	
+
 	/**
 	 * @return the expected cache usage
 	 */

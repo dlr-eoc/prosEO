@@ -1,13 +1,11 @@
 package de.dlr.proseo.storagemgr.version2;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import javax.annotation.PostConstruct;
 
@@ -17,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
-import de.dlr.proseo.storagemgr.cache.FileCache;
 import de.dlr.proseo.storagemgr.version2.model.Storage;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
@@ -56,10 +53,10 @@ public class StorageProvider {
 
 	/** Source path is used as a central place to upload files to storage */
 	private String sourcePath;
-	
+
 	/** Storage path is used for posix storage */
 	private String storagePath;
-	
+
 	/** Cache path is used for downloaded files from storage */
 	private String cachePath;
 
@@ -78,7 +75,7 @@ public class StorageProvider {
 	 */
 	public StorageProvider() {
 
-		//init();
+		// init();
 	}
 
 	/**
@@ -98,7 +95,7 @@ public class StorageProvider {
 
 		loadDefaultPaths();
 	}
-	
+
 	/**
 	 * Load default source, storage and cache paths
 	 */
@@ -108,11 +105,11 @@ public class StorageProvider {
 		storagePath = cfg.getPosixBackendPath();
 		cachePath = cfg.getPosixCachePath();
 	}
-	
+
 	/**
 	 * Sets source path
 	 * 
-	 * @param sourcePath 
+	 * @param sourcePath
 	 */
 	public void setSourcePath(String sourcePath) {
 		this.sourcePath = sourcePath;
@@ -135,34 +132,34 @@ public class StorageProvider {
 	public void setCachePath(String cachePath) {
 		this.cachePath = cachePath;
 	}
-	
+
 	/**
 	 * Gets source path
 	 * 
 	 * @return source path
 	 */
 	public String getSourcePath() {
-		return sourcePath; 
+		return sourcePath;
 	}
-	
+
 	/**
 	 * Gets storage path
 	 * 
 	 * @return storage path
 	 */
 	public String getStoragePath() {
-		return storagePath; 
+		return storagePath;
 	}
-	
+
 	/**
 	 * Gets cache path
 	 * 
 	 * @return cache path
 	 */
 	public String getCachePath() {
-		return cachePath; 
+		return cachePath;
 	}
-	
+
 	/**
 	 * Gets storage
 	 * 
@@ -171,7 +168,7 @@ public class StorageProvider {
 	public Storage getStorage() {
 		return storage;
 	}
-	
+
 	/**
 	 * Sets Storage
 	 * 
@@ -179,28 +176,30 @@ public class StorageProvider {
 	 * @return storage, which was set
 	 */
 	public Storage setStorage(StorageType storageType) {
-		
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> setStorage({})", storageType.toString());
+
 		cfg.setDefaultStorageType(storageType.toString());
 		storage = createStorage(storageType, storagePath);
-		
+
 		return storage;
 	}
-	
-	
+
 	/**
 	 * Gets the list of base paths
 	 * 
-	 * @return  the list of base paths
+	 * @return the list of base paths
 	 */
 	public List<String> getBasePaths() {
-		
-		return basePaths; 
+
+		return basePaths;
 	}
 
 	// all ..version.. methods will be removed in release, for integration only
-	
+
 	/**
-	 * Loads version 1 of storage manager (currently used) 
+	 * Loads version 1 of storage manager (currently used)
 	 * 
 	 */
 	public void loadVersion1() {
@@ -208,7 +207,7 @@ public class StorageProvider {
 	}
 
 	/**
-	 * Loads version 2 of storage manager (new source code) 
+	 * Loads version 2 of storage manager (new source code)
 	 * 
 	 */
 	public void loadVersion2() {
@@ -216,38 +215,79 @@ public class StorageProvider {
 	}
 
 	/**
-	 * Checks if version 2 of storage manager is currently used 
+	 * Checks if version 2 of storage manager is currently used
 	 * 
 	 */
 	public boolean isVersion2() {
 		return version2;
 	}
-	
+
 	/**
-	 * Checks if version 1 of storage manager is currently used 
+	 * Checks if version 1 of storage manager is currently used
 	 * 
-	 */	
+	 */
 	public boolean isVersion1() {
 		return !version2;
 	}
 
+	/**
+	 * Gets the cache file size
+	 * 
+	 * @param relativePath relative path of cache file
+	 * @return file size in bytes
+	 * @throws IOException if cannot get file size
+	 */
 	public long getCacheFileSize(String relativePath) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getCacheFileSize({})", relativePath);
 
 		return getPosixFileSize(getAbsoluteCachePath(relativePath));
 	}
 
+	/**
+	 * Gets the source file size
+	 * 
+	 * @param relativePath relative source file path
+	 * @return file size in bytes
+	 * @throws IOException if cannot get file size
+	 */
 	public long getSourceFileSize(String relativePath) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getSourceFileSize({})", relativePath);
 
 		return getPosixFileSize(getAbsoluteSourcePath(relativePath));
 	}
 
+	/**
+	 * Gets the posix file size
+	 * 
+	 * @param absolutePath absolute path
+	 * @return file size in bytes
+	 * @throws IOException if cannot get file size
+	 */
 	public long getPosixFileSize(String absolutePath) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getPosixFileSize({})", absolutePath);
 
 		Path path = Paths.get(absolutePath);
 		return Files.size(path);
 	}
 
+	/**
+	 * Creates storage under storage path.
+	 * 
+	 * @param storageType currently s3 or posix
+	 * @param storagePath base path of posix storage, for s3 will be used for
+	 *                    temporary files
+	 * @return created storage
+	 */
 	private Storage createStorage(StorageType storageType, String storagePath) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> createStorage({}, {})", storageType.toString(), storagePath);
 
 		if (storageType == StorageType.POSIX) {
 			return new PosixStorage(storagePath, sourcePath);
@@ -260,22 +300,58 @@ public class StorageProvider {
 		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
 	}
 
+	/**
+	 * Gets cache file as StorageFile from relative path. Path can be virtual
+	 * 
+	 * @param relativePath
+	 * @return StorageFile
+	 */
 	public StorageFile getCacheFile(String relativePath) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getCacheFile({})", relativePath);
 
 		return new PosixStorageFile(cachePath, relativePath);
 	}
 
+	/**
+	 * Gets source file as StorageFile from relative path. Path can be virtual
+	 * 
+	 * @param relativePath
+	 * @return StorageFile
+	 */
 	public StorageFile getSourceFile(String relativePath) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getSourceFile({})", relativePath);
 
 		return new PosixStorageFile(sourcePath, relativePath);
 	}
 
+	/**
+	 * Gets posix file as StorageFile from relative path. Path can be virtual
+	 * 
+	 * @param relativePath
+	 * @return StorageFile
+	 */
 	public StorageFile getPosixFile(String basePath, String relativePath) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getPosixFile({})", relativePath);
 
 		return new PosixStorageFile(basePath, relativePath);
 	}
 
+	/**
+	 * Gets storage file as StorageFile from relative path. Path can be virtual
+	 * 
+	 * @param relativePath
+	 * @return StorageFile
+	 */
 	public StorageFile getStorageFile(String relativePath) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getStorageFile({})", relativePath);
 
 		StorageType storageType = storage.getStorageType();
 
@@ -289,8 +365,16 @@ public class StorageProvider {
 		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
 	}
 
-	// if file only, return source path
+	/**
+	 * Gets a file as StorageFile from absolute path. Path to file can be virtual
+	 * 
+	 * @param relativePath
+	 * @return StorageFile
+	 */
 	public StorageFile getAbsoluteFile(String absolutePath) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getAbsoluteFile({})", absolutePath);
 
 		String basePath = new PathConverter(absolutePath, basePaths).getFirstFolder().getPath();
 		String relativePath = new PathConverter(absolutePath, basePaths).removeFirstFolder().getPath();
@@ -298,31 +382,76 @@ public class StorageProvider {
 		return new PosixStorageFile(basePath, relativePath);
 	}
 
+	/**
+	 * Gets absolute source path from relative path
+	 * 
+	 * @param relativePath relative path to file
+	 * @return absolute source path from relative path
+	 */
 	public String getAbsoluteSourcePath(String relativePath) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getAbsoluteSourcePath({})", relativePath);
 
 		String path = Paths.get(sourcePath, relativePath).toString();
 		return new PathConverter(path, basePaths).convertToSlash().getPath();
 	}
 
+	/**
+	 * Gets absolute cache path from relative path
+	 * 
+	 * @param relativePath relative path to file
+	 * @return absolute source path from relative path
+	 */
 	public String getAbsoluteCachePath(String relativePath) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getAbsoluteCachePath({})", relativePath);
 
 		String path = Paths.get(cachePath, relativePath).toString();
 		return new PathConverter(path, basePaths).convertToSlash().getPath();
 	}
 
-	public String getAbsoluteStoragePath(String relativePath) {
+	/**
+	 * Gets absolute posix storage path from relative path
+	 * 
+	 * @param relativePath relative path
+	 * @return absolute source path from relative path
+	 */
+	public String getAbsolutePosixStoragePath(String relativePath) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getAbsolutePosixStoragePath({})", relativePath);
 
 		String path = Paths.get(storagePath, relativePath).toString();
-
 		return new PathConverter(path, basePaths).convertToSlash().getPath();
 	}
 
+	/**
+	 * Gets relative path from absolute path using base path list
+	 * 
+	 * @param absolutePath absolute path
+	 * @return relative path
+	 */
 	public String getRelativePath(String absolutePath) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getRelativePath({})", absolutePath);
 
 		return new PathConverter(absolutePath, basePaths).getRelativePath().getPath();
 	}
 
+	/**
+	 * Creates physically file in storage, based on relative path and content
+	 * 
+	 * @param relativePath relative path to file
+	 * @param content      content of file
+	 * @return StorageFile of physically created file
+	 */
 	public StorageFile createStorageFile(String relativePath, String content) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> createStorageFile({}, {})", relativePath, content.length());
 
 		return storage.createStorageFile(relativePath, content);
 	}

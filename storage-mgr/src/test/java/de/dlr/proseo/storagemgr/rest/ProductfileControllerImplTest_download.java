@@ -209,7 +209,7 @@ public class ProductfileControllerImplTest_download {
 		relativePath1 = new PathConverter(uniquePaths.getUniqueTestFolder(), relativePath1).getPath();
 		relativePath2 = new PathConverter(uniquePaths.getUniqueTestFolder(), relativePath2).getPath();
 
-		String absolutePath = storageProvider.getAbsoluteStoragePath(relativePath);
+		String absolutePath = storageProvider.getAbsolutePosixStoragePath(relativePath);
 		
 		String absolutePath1 = storageTestUtils.createSourceFile(relativePath1);
 		String absolutePath2 = storageTestUtils.createSourceFile(relativePath2);
