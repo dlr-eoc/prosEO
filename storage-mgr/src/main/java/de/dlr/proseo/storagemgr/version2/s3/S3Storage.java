@@ -224,7 +224,7 @@ public class S3Storage implements BucketsStorage {
 
 		String path = Paths.get(basePath, relativePath).toString();
 
-		path = new PathConverter(path).verifyAbsolutePath().getPath();
+		path = new PathConverter(path).fixAbsolutePath().getPath();
 
 		FileUtils fileUtils = new FileUtils(path);
 		fileUtils.createFile(content);

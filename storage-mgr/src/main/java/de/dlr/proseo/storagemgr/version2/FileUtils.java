@@ -18,6 +18,10 @@ import org.slf4j.LoggerFactory;
  * @author Denys Chaykovskiy
  *
  */
+/**
+ * @author den
+ *
+ */
 public class FileUtils {
 
 	/** the full path to file */
@@ -104,7 +108,6 @@ public class FileUtils {
 		return directory.list().length > 0 ? false : true;
 	}
 
-
 	/**
 	 * Gets the file content
 	 * 
@@ -146,39 +149,26 @@ public class FileUtils {
 	 * @param exceptionMessage IllegalStateException if cannot create dir
 	 */
 	public void createDirectories() {
-		
+
 		File file = new File(path);
 
 		if (file != null && !file.exists() && !file.mkdirs()) {
 			throw new IllegalStateException("Couldn't create dirs: " + file);
 		}
 	}
-	
-	// deletes file with empty directories
-	public String deleteFile() throws IOException { 
-		return deleteFile(path); 
-	}
-
-	
-	public List<String> delete() throws IOException { 
-		return delete(path); 
-	}
 
 	/**
-	 * Checks if path is a file
-	 * 
-	 * @param exceptionMessage Exception will be thrown if path is not a file
+	 * @return
+	 * @throws IOException
 	 */
-	private void checkIfFile(String exceptionMessage) {
-
-		File file = new File(path);
-
-		if (!file.isFile()) {
-			throw new IllegalArgumentException(path + ": " + exceptionMessage);
-		}
+	public String deleteFile() throws IOException {
+		return deleteFile(path);
 	}
-	
-	
+
+	public List<String> delete() throws IOException {
+		return delete(path);
+	}
+
 	/**
 	 * Deletes empty directories recursively in the direction of root
 	 * 
@@ -210,16 +200,14 @@ public class FileUtils {
 		}
 	}
 
-	
-	
 	/**
-	 * Deletes a file 
+	 * Deletes a file
 	 * 
-	 * @return
-	 * @throws IOException
+	 * @return path to deleted file
+	 * @throws IOException if file cannot be deleted
 	 */
 	private String deleteFile(String sourceFile) throws IOException {
-		
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteFile({})", sourceFile);
 
@@ -241,7 +229,14 @@ public class FileUtils {
 			throw e;
 		}
 	}
-	
+
+	/**
+	 * Deletes file or directory with subdirectories
+	 * 
+	 * @param sourceFileOrDir file or directory to delete
+	 * @return list of deleted files
+	 * @throws IOException if file or dir cannot be deleted
+	 */
 	private List<String> delete(String sourceFileOrDir) throws IOException {
 
 		if (logger.isTraceEnabled())
@@ -257,11 +252,12 @@ public class FileUtils {
 		}
 
 		String sourceDir = sourceFileOrDir;
-		//sourceDir = new PathConverter(sourceDir).addSlashAtEnd().getPath();
+		// sourceDir = new PathConverter(sourceDir).addSlashAtEnd().getPath();
 
 		File directory = new File(sourceDir);
 		File[] files = directory.listFiles();
-		if (files == null) return deletedFiles;
+		if (files == null)
+			return deletedFiles;
 		Arrays.sort(files);
 
 		for (File file : files) {
@@ -280,7 +276,7 @@ public class FileUtils {
 
 		return deletedFiles;
 	}
-	
+
 	/**
 	 * Checks if path is file
 	 * 
@@ -289,5 +285,18 @@ public class FileUtils {
 	private boolean isFile(String sourceFile) {
 		return new File(sourceFile).isFile();
 	}
-	
+
+	/**
+	 * Checks if path is a file
+	 * 
+	 * @param exceptionMessage Exception will be thrown if path is not a file
+	 */
+	private void checkIfFile(String exceptionMessage) {
+
+		File file = new File(path);
+
+		if (!file.isFile()) {
+			throw new IllegalArgumentException(path + ": " + exceptionMessage);
+		}
+	}
 }

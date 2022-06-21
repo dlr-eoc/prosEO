@@ -27,7 +27,7 @@ import de.dlr.proseo.storagemgr.version2.s3.S3Storage;
 import de.dlr.proseo.storagemgr.version2.s3.S3StorageFile;
 
 /**
- * Storage Provider for different storages and different profiles
+ * Storage Provider for different storages
  * 
  * @author Denys Chaykovskiy
  *
@@ -38,8 +38,10 @@ public class StorageProvider {
 	/** StorageProvider singleton */
 	private static StorageProvider theStorageProvider;
 
+	/** Storage */
 	private Storage storage;
 
+	/** Base Paths are used to get relative path from absolute path */
 	List<String> basePaths = new ArrayList<>();
 
 	/** For smooth integration only, will be removed */
@@ -48,11 +50,17 @@ public class StorageProvider {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(StorageProvider.class);
 
+	/** Storage Manager Configuration */
 	@Autowired
 	private StorageManagerConfiguration cfg;
 
+	/** Source path is used as a central place to upload files to storage */
 	private String sourcePath;
+	
+	/** Storage path is used for posix storage */
 	private String storagePath;
+	
+	/** Cache path is used for downloaded files from storage */
 	private String cachePath;
 
 	/**
@@ -65,6 +73,9 @@ public class StorageProvider {
 		return theStorageProvider;
 	}
 
+	/**
+	 * Simple default Constructor
+	 */
 	public StorageProvider() {
 
 		//init();
@@ -75,12 +86,6 @@ public class StorageProvider {
 	 */
 	@PostConstruct
 	private void init() {
-		
-		// System.out.println();
-		// System.out.println("STORAGE PROVIDER ID = " + new Random().nextInt());
-		// System.out.println();
-
-		// cfg = StorageManagerConfiguration.getConfiguration();
 
 		theStorageProvider = this;
 		storage = createStorage(StorageType.valueOf(cfg.getDefaultStorageType()), cfg.getPosixBackendPath());
@@ -93,42 +98,86 @@ public class StorageProvider {
 
 		loadDefaultPaths();
 	}
-
+	
+	/**
+	 * Load default source, storage and cache paths
+	 */
 	public void loadDefaultPaths() {
 
 		sourcePath = cfg.getPosixSourcePath();
 		storagePath = cfg.getPosixBackendPath();
 		cachePath = cfg.getPosixCachePath();
 	}
-
+	
+	/**
+	 * Sets source path
+	 * 
+	 * @param sourcePath 
+	 */
 	public void setSourcePath(String sourcePath) {
 		this.sourcePath = sourcePath;
 	}
 
+	/**
+	 * Sets storage path
+	 * 
+	 * @param storagePath
+	 */
 	public void setStoragePath(String storagePath) {
 		this.storagePath = storagePath;
 	}
 
+	/**
+	 * Sets cache path
+	 * 
+	 * @param cachePath
+	 */
 	public void setCachePath(String cachePath) {
 		this.cachePath = cachePath;
 	}
 	
+	/**
+	 * Gets source path
+	 * 
+	 * @return source path
+	 */
 	public String getSourcePath() {
 		return sourcePath; 
 	}
 	
+	/**
+	 * Gets storage path
+	 * 
+	 * @return storage path
+	 */
 	public String getStoragePath() {
 		return storagePath; 
 	}
 	
+	/**
+	 * Gets cache path
+	 * 
+	 * @return cache path
+	 */
 	public String getCachePath() {
 		return cachePath; 
 	}
 	
+	/**
+	 * Gets storage
+	 * 
+	 * @return storage
+	 */
 	public Storage getStorage() {
 		return storage;
 	}
-
+	
+	/**
+	 * Sets Storage
+	 * 
+	 * @param storageType
+	 * @return storage, which was set
+	 */
 	public Storage setStorage(StorageType storageType) {
 		
 		cfg.setDefaultStorageType(storageType.toString());
@@ -137,23 +186,49 @@ public class StorageProvider {
 		return storage;
 	}
 	
+	
+	/**
+	 * Gets the list of base paths
+	 * 
+	 * @return  the list of base paths
+	 */
 	public List<String> getBasePaths() {
 		
 		return basePaths; 
 	}
 
-	// all ..version.. methods will be removed in release, for smooth integration
-	// only
+	// all ..version.. methods will be removed in release, for integration only
+	
+	/**
+	 * Loads version 1 of storage manager (currently used) 
+	 * 
+	 */
 	public void loadVersion1() {
 		version2 = false;
 	}
 
+	/**
+	 * Loads version 2 of storage manager (new source code) 
+	 * 
+	 */
 	public void loadVersion2() {
 		version2 = true;
 	}
 
+	/**
+	 * Checks if version 2 of storage manager is currently used 
+	 * 
+	 */
 	public boolean isVersion2() {
 		return version2;
+	}
+	
+	/**
+	 * Checks if version 1 of storage manager is currently used 
+	 * 
+	 */	
+	public boolean isVersion1() {
+		return !version2;
 	}
 
 	public long getCacheFileSize(String relativePath) throws IOException {
