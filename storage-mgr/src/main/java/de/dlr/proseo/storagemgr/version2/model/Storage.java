@@ -9,7 +9,6 @@ import java.util.List;
  * @author Denys Chaykovskiy
  *
  */
-// implements concepts of empty bucket, default bucket and one-bucket storages   
 public interface Storage {
 	
 	/**
@@ -118,7 +117,6 @@ public interface Storage {
 	 */
 	public boolean isDirectory(StorageFile storageFileOrDir);
 
-
 	/**
 	 * Gets the file size
 	 * 
@@ -175,6 +173,8 @@ public interface Storage {
 	public List<String> uploadSourceFileOrDir(String relativeSourceFileOrDir) throws IOException;
 
 	/**
+ 	 * Uploads source file to the storage
+ 	 * 
 	 * @param relativeSourceFile relative path to source file
 	 * @return uploaded to storage source file
 	 * @throws IOException if file cannot be uploaded
@@ -182,6 +182,8 @@ public interface Storage {
 	public String uploadSourceFile(String relativeSourceFile) throws IOException;
 
 	/**
+	 * Downloads file or directory recursively
+	 *   
 	 * @param sourceFileOrDir source file or directory in the storage
 	 * @param targetFileOrDir target file or directory
 	 * @return list of downloaded files
