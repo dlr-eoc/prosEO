@@ -15,9 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.storagemgr.version2.FileUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
-import de.dlr.proseo.storagemgr.version2.model.StorageFile;
-import de.dlr.proseo.storagemgr.version2.model.StorageType;
-import de.dlr.proseo.storagemgr.version2.s3.S3DAL;
 
 /**
  * Posix Data Access Layer
@@ -30,35 +27,109 @@ public class PosixDAL {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(PosixDAL.class);
 
+	/**
+	 * Gets files which match path (prefix)
+	 * 
+	 * @param path path (prefix)
+	 * @return list if files
+	 */
+	public List<String> getFiles(String path) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getFiles({})", path);
+
+		List<String> returnFiles = new ArrayList<String>();
+
+		File dirOrFile = new File(path);
+
+		if (dirOrFile.isFile()) {
+			returnFiles.add(path);
+		}
+
+		File directory = dirOrFile;
+
+		File[] files = directory.listFiles();
+		if (files == null)
+			return returnFiles;
+		Arrays.sort(files);
+
+		for (File file : files) {
+			if (file.isFile()) {
+				returnFiles.add(file.getAbsolutePath());
+			}
+		}
+
+		for (File file : files) {
+			if (file.isDirectory()) {
+				List<String> dirFiles = getFiles(file.getAbsolutePath());
+				returnFiles.addAll(dirFiles);
+			}
+		}
+
+		return returnFiles;
+	}
+
+	/**
+	 * Gets file name
+	 * 
+	 * @param path path
+	 * @return file name
+	 */
 	public String getFileName(String path) {
 		return new File(path).getName();
 	}
 
+	/**
+	 * Checks if file physically exists
+	 * 
+	 * @param path path
+	 * @return true if file exists
+	 */
 	public boolean fileExists(String path) {
 		return new File(path).isFile();
 	}
 
+	/**
+	 * Checks if path is existing directory
+	 * 
+	 * @param path path
+	 * @return true if path is directory
+	 */
 	public boolean isDirectory(String path) {
 		return new File(path).isDirectory();
 	}
 
+	/**
+	 * Checks if path is existing file
+	 * 
+	 * @param path path
+	 * @return true if file exists
+	 */
 	public boolean isFile(String path) {
 		return new File(path).isFile();
 	}
 
+	/**
+	 * Uploads file to posix storage
+	 * 
+	 * @param sourceFile      source file to upload
+	 * @param targetFileOrDir target file or directory in storage
+	 * @return path of uploaded file
+	 * @throws IOException if file cannot be uploaded
+	 */
 	public String uploadFile(String sourceFile, String targetFileOrDir) throws IOException {
-		
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> uploadFile({},{})", sourceFile, targetFileOrDir);
-		
-		String targetFile = targetFileOrDir; 
-		
+
+		String targetFile = targetFileOrDir;
+
 		if (new PathConverter(targetFileOrDir).isDirectory()) {
 			targetFile = new PathConverter(targetFileOrDir, getFileName(sourceFile)).getPath();
 		}
-				
+
 		createParentDirectories(targetFile);
-		
+
 		Path sourceFilePath = new File(sourceFile).toPath();
 		Path targetFilePath = new File(targetFile).toPath();
 
@@ -74,6 +145,14 @@ public class PosixDAL {
 		}
 	}
 
+	/**
+	 * Uploads file or directory to storage
+	 * 
+	 * @param sourceFileOrDir source file or directory to upload
+	 * @param targetFileOrDir target file or directory in storage
+	 * @return path list of uploaded files
+	 * @throws IOException if files cannot be uploaded
+	 */
 	public List<String> upload(String sourceFileOrDir, String targetFileOrDir) throws IOException {
 
 		if (logger.isTraceEnabled())
@@ -92,7 +171,8 @@ public class PosixDAL {
 		targetDir = new PathConverter(targetDir).addSlashAtEnd().getPath();
 		File directory = new File(sourceDir);
 		File[] files = directory.listFiles();
-		if (files == null) return uploadedFiles;
+		if (files == null)
+			return uploadedFiles;
 		Arrays.sort(files);
 
 		for (File file : files) {
@@ -116,8 +196,16 @@ public class PosixDAL {
 		return uploadedFiles;
 	}
 
+	/**
+	 * Downloads file from storage
+	 * 
+	 * @param sourceFile      source file in storage to download
+	 * @param targetFileOrDir target file or directory
+	 * @return path of downloaded file
+	 * @throws IOException if file cannot be downloaded
+	 */
 	public String downloadFile(String sourceFile, String targetFileOrDir) throws IOException {
-		
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> downloadFile({},{})", sourceFile, targetFileOrDir);
 
@@ -126,7 +214,7 @@ public class PosixDAL {
 		if (new PathConverter(targetFileOrDir).isDirectory()) {
 			targetFile = new PathConverter(targetFileOrDir, getFileName(sourceFile)).getPath();
 		}
-		
+
 		createParentDirectories(targetFile);
 
 		Path sourceFilePath = new File(sourceFile).toPath();
@@ -145,6 +233,14 @@ public class PosixDAL {
 		}
 	}
 
+	/**
+	 * Downloads file or directory from storage
+	 * 
+	 * @param sourceFileOrDir source file or directory in storage to download
+	 * @param targetFileOrDir target file or directory
+	 * @return path list of downloaded files
+	 * @throws IOException true if file or directory cannot be downloaded
+	 */
 	public List<String> download(String sourceFileOrDir, String targetFileOrDir) throws IOException {
 
 		if (logger.isTraceEnabled())
@@ -164,7 +260,8 @@ public class PosixDAL {
 
 		File directory = new File(sourceDir);
 		File[] files = directory.listFiles();
-		if (files == null) return downloadedFiles;
+		if (files == null)
+			return downloadedFiles;
 		Arrays.sort(files);
 
 		for (File file : files) {
@@ -193,60 +290,43 @@ public class PosixDAL {
 		return downloadedFiles;
 	}
 
+	/**
+	 * Deletes file in storage
+	 * 
+	 * @param sourceFile file to delete in storage
+	 * @return path of deleted file
+	 * @throws IOException true if file cannot be deleted
+	 */
 	public String deleteFile(String sourceFile) throws IOException {
-		
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteFile({})", sourceFile);
-		
+
 		return new FileUtils(sourceFile).deleteFile();
 	}
 
+	/**
+	 * Deletes file or directory in storage
+	 * 
+	 * @param sourceFileOrDir file or directory to delete
+	 * @return path list of deleted file or directory
+	 * @throws IOException true if file or directory cannot be deleted
+	 */
 	public List<String> delete(String sourceFileOrDir) throws IOException {
-		
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> delete({})", sourceFileOrDir);
-		
-		
-		return new FileUtils(sourceFileOrDir).delete(); 
+
+		return new FileUtils(sourceFileOrDir).delete();
 	}
 
-	public List<String> getFiles(String path) {
-
-		if (logger.isTraceEnabled())
-			logger.trace(">>> getFiles({})", path);
-
-		List<String> returnFiles = new ArrayList<String>();
-
-		File dirOrFile = new File(path);
-
-		if (dirOrFile.isFile()) {
-			returnFiles.add(path);
-		}
-
-		File directory = dirOrFile;
-
-		File[] files = directory.listFiles();
-		if (files == null) return returnFiles;
-		Arrays.sort(files);
-
-		for (File file : files) {
-			if (file.isFile()) {
-				returnFiles.add(file.getAbsolutePath());
-			}
-		}
-
-		for (File file : files) {
-			if (file.isDirectory()) {
-				List<String> dirFiles = getFiles(file.getAbsolutePath());
-				returnFiles.addAll(dirFiles);
-			}
-		}
-
-		return returnFiles;
-	}
-
+	/**
+	 * Creates parent directories
+	 * 
+	 * @param path path
+	 */
 	private void createParentDirectories(String path) {
-				
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFiles({})", path);
 
