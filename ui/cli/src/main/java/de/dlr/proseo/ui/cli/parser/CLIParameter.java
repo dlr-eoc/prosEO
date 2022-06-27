@@ -96,5 +96,34 @@ public class CLIParameter {
 				+ ",\n  repeatable=" + repeatable + "\n]";
 	}
 
+	/**
+	 * Appends the StringBuilder provided by the caller with HTML code that prints a
+	 * table with the parameter's name and a description. If applicable, the
+	 * parameter is marked as optional and/or repeatable.
+	 * 
+	 * @param htmlDoc A StringBuilder that may already contain information.
+	 * @return The same StringBuilder, appended information on the option.
+	 */
+	public StringBuilder printHTML(StringBuilder htmlDoc) {
+
+		htmlDoc.append(
+				"<table>" + "<tr>" + "<td>" + "Paramenter" + "</td>" + "<td>" + "<strong>" + this.name + "</strong>");
+
+		if (this.optional != null)
+			if (this.repeatable != null)
+				htmlDoc.append(" (optional, repeatable)");
+			else
+				htmlDoc.append(" (optional)");
+		else if (this.repeatable != null)
+			htmlDoc.append(" (repeatable)");
+
+		htmlDoc.append("</td>" + "</tr>")
+				.append("<tr>" + "<td>" + "Type" + "</td>" + "<td>" + this.type + "</td>" + "</tr>").append("<tr>"
+						+ "<td>" + "Description" + "</td>" + "<td>" + this.description + "." + "</td>" + "</tr>");
+
+		htmlDoc.append("</table>").append("<br>");
+
+		return htmlDoc;
+	}
 
 }

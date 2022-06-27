@@ -86,5 +86,28 @@ public class CLIOption {
 		return "CLIOption [\n  name=" + name + ",\n  type=" + type + ",\n  description=" + description + ",\n  shortForm=" + shortForm + "\n]";
 	}
 	
+	/**
+	 * Appends the StringBuilder provided by the caller with HTML code that prints a
+	 * table with the option's name, short form (if applicable) and description.
+	 * 
+	 * @param htmlDoc A StringBuilder that may already contain information.
+	 * @return The same StringBuilder, appended information on the option.
+	 */
+	public StringBuilder printHTML(StringBuilder htmlDoc) {
+
+		htmlDoc.append("<table>").append("<tr>" + "<td>" + "Option" + "</td>" + "<td>" + "<strong>" + this.name
+				+ "</strong>" + "</td>" + "</tr>");
+
+		if (this.shortForm != null) {
+			htmlDoc.append("<tr>" + "<td>" + "Short form" + "</td>" + "<td>" + "<em>" + this.shortForm + "</em>"
+					+ "</td>" + "</tr>");
+		}
+
+		htmlDoc.append("<tr>" + "<td>" + "Type" + "</td>" + "<td>" + this.type + "</td>" + "</tr>")
+				.append("<tr>" + "<td>" + "Description" + "</td>" + "<td>" + this.description + "." + "</td>" + "</tr>")
+				.append("</table>").append("<br>");
+
+		return htmlDoc;
+	}
 	
 }
