@@ -100,13 +100,13 @@ public class S3DAL {
 	}
 
 	/**
-	 * Constructor with access keys, region, end point and bucket 
+	 * Constructor with access keys, region, end point and bucket
 	 * 
-	 * @param s3AccessKey s3 access key
-	 * @param s3SecretAccessKey s3 secret access key 
-	 * @param s3Region s3 region 
-	 * @param s3EndPoint s3 end point 
-	 * @param bucket bucket 
+	 * @param s3AccessKey       s3 access key
+	 * @param s3SecretAccessKey s3 secret access key
+	 * @param s3Region          s3 region
+	 * @param s3EndPoint        s3 end point
+	 * @param bucket            bucket
 	 */
 	public S3DAL(String s3AccessKey, String s3SecretAccessKey, String s3Region, String s3EndPoint, String bucket) {
 
@@ -118,23 +118,23 @@ public class S3DAL {
 
 		setBucket(bucket);
 	}
-	
+
 	/**
 	 * Gets all files from current bucket
 	 *
 	 * @return list of all files
 	 */
 	public List<String> getFiles() {
-		
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFiles()");
-		
+
 		ListObjectsRequest request = ListObjectsRequest.builder().bucket(bucket).build();
 
 		ListObjectsResponse response = s3Client.listObjects(request);
 		return toStringFiles(response.contents());
-	}	
-	
+	}
+
 	/**
 	 * Gets files which match path (prefix)
 	 * 
@@ -153,9 +153,9 @@ public class S3DAL {
 	}
 
 	/**
-	 * Checks if file exists in storage 
+	 * Checks if file exists in storage
 	 * 
-	 * @param filePath file path 
+	 * @param filePath file path
 	 * @return
 	 */
 	public boolean fileExists(String filePath) {
@@ -170,7 +170,7 @@ public class S3DAL {
 			return false;
 		}
 	}
-	
+
 	/**
 	 * Checks if the path is file (not a directory)
 	 * 
@@ -185,7 +185,7 @@ public class S3DAL {
 	 * Gets file name
 	 * 
 	 * @param path path
-	 * @return file name 
+	 * @return file name
 	 */
 	public String getFileName(String path) {
 		return new File(path).getName();
@@ -207,13 +207,13 @@ public class S3DAL {
 
 		return headObjectResponse.contentLength();
 	}
-	
+
 	/**
-	 * Uploads file to storage 
+	 * Uploads file to storage
 	 * 
-	 * @param sourceFile source file to upload
+	 * @param sourceFile      source file to upload
 	 * @param targetFileOrDir target file or directory in storage
-	 * @return uploaded to storage file path 
+	 * @return uploaded to storage file path
 	 * @throws IOException if file cannot be uploaded
 	 */
 	public String uploadFile(String sourceFile, String targetFileOrDir) throws IOException {
@@ -251,11 +251,11 @@ public class S3DAL {
 	}
 
 	/**
-	 * Uploads file or directory to storage 
+	 * Uploads file or directory to storage
 	 * 
-	 * @param sourceFileOrDir source file or directory to upload 
-	 * @param targetFileOrDir target file or directory in storage 
-	 * @return uploaded to storage file path list 
+	 * @param sourceFileOrDir source file or directory to upload
+	 * @param targetFileOrDir target file or directory in storage
+	 * @return uploaded to storage file path list
 	 * @throws IOException
 	 */
 	public List<String> upload(String sourceFileOrDir, String targetFileOrDir) throws IOException {
@@ -300,7 +300,7 @@ public class S3DAL {
 	}
 
 	/**
-	 * Uploads file or directory to storage 
+	 * Uploads file or directory to storage
 	 * 
 	 * @param sourceFileOrDir source file or directory to upload
 	 * @return uploaded file or directory file path list
@@ -311,9 +311,9 @@ public class S3DAL {
 	}
 
 	/**
-	 * Downloads file from storage 
+	 * Downloads file from storage
 	 * 
-	 * @param sourceFile source file in storage to download
+	 * @param sourceFile      source file in storage to download
 	 * @param targetFileOrDir target file or directory
 	 * @return downloaded file path
 	 * @throws IOException if file cannot be downloaded
@@ -359,12 +359,12 @@ public class S3DAL {
 	}
 
 	/**
-	 * Downloads file or directory from storage 
+	 * Downloads file or directory from storage
 	 * 
-	 * @param sourceFileOrDir source file or directory in storage to download 
-	 * @param targetFileOrDir target file or directory 
-	 * @return downloaded file or directory file path list 
-	 * @throws IOException if file or directory cannot be downloaded 
+	 * @param sourceFileOrDir source file or directory in storage to download
+	 * @param targetFileOrDir target file or directory
+	 * @return downloaded file or directory file path list
+	 * @throws IOException if file or directory cannot be downloaded
 	 */
 	public List<String> download(String sourceFileOrDir, String targetFileOrDir) throws IOException {
 
@@ -384,6 +384,13 @@ public class S3DAL {
 		return downloadedFiles;
 	}
 
+	/**
+	 * Downloads file or directory with prefix match
+	 * 
+	 * @param prefixFileOrDir prefix file or directory
+	 * @return downloaded file path list
+	 * @throws IOException if file or directorz cannot be downloaded
+	 */
 	public List<String> download(String prefixFileOrDir) throws IOException {
 
 		if (logger.isTraceEnabled())
@@ -402,7 +409,12 @@ public class S3DAL {
 		return downloadedFiles;
 	}
 
-
+	/**
+	 * Deletes file or directory
+	 * 
+	 * @param fileOrDir file or directory
+	 * @return deleted file path list
+	 */
 	public List<String> delete(String fileOrDir) {
 
 		if (logger.isTraceEnabled())
@@ -411,7 +423,12 @@ public class S3DAL {
 		return deleteS3Data(s3Client, bucket, fileOrDir);
 	}
 
-
+	/**
+	 * Deletes file
+	 * 
+	 * @param filepath file path
+	 * @return deleted file path
+	 */
 	public String deleteFile(String filepath) {
 
 		if (logger.isTraceEnabled())
@@ -436,6 +453,11 @@ public class S3DAL {
 		}
 	}
 
+	/**
+	 * Deletes files
+	 * 
+	 * @return deleted file path list
+	 */
 	public List<String> deleteFiles() {
 
 		List<String> deletedFiles = new ArrayList<>();
@@ -448,6 +470,12 @@ public class S3DAL {
 		return deletedFiles;
 	}
 
+	/**
+	 * Deletes files
+	 * 
+	 * @param toDeleteList list of file or directory paths to delete
+	 * @return deleted file path list
+	 */
 	public List<String> deleteFiles(List<String> toDeleteList) {
 
 		if (logger.isTraceEnabled())
@@ -478,9 +506,15 @@ public class S3DAL {
 			throw e;
 		}
 	}
-	
 
-
+	/**
+	 * Uploads file or directory with file transfer manager
+	 * 
+	 * @param sourcePath source path to upload
+	 * @param targetPath target path in storage
+	 * @return uploaded file path
+	 * @throws IOException if file or directory cannot be uploaded
+	 */
 	public String uploadFileTransferManager(String sourcePath, String targetPath) throws IOException {
 
 		if (logger.isTraceEnabled())
@@ -501,6 +535,14 @@ public class S3DAL {
 		}
 	}
 
+	/**
+	 * Downloads file or directory with file transfer manager
+	 * 
+	 * @param sourcePath source path in storage to download
+	 * @param targetPath target path
+	 * @return downloaded file path
+	 * @throws IOException if file or directory cannot be downloaded
+	 */
 	public String downloadFileTransferManager(String sourcePath, String targetPath) throws IOException {
 
 		if (logger.isTraceEnabled())
@@ -521,13 +563,10 @@ public class S3DAL {
 		}
 	}
 
-
-	
-	
 	/**
-	 * Sets bucket 
+	 * Sets bucket
 	 * 
-	 * @param bucket bucket 
+	 * @param bucket bucket
 	 */
 	public void setBucket(String bucket) {
 
@@ -542,7 +581,7 @@ public class S3DAL {
 	}
 
 	/**
-	 * Gets current bucket 
+	 * Gets current bucket
 	 * 
 	 * @return bucket
 	 */
@@ -551,9 +590,9 @@ public class S3DAL {
 	}
 
 	/**
-	 * Gets buckets 
+	 * Gets buckets
 	 * 
-	 * @return list of buckets 
+	 * @return list of buckets
 	 */
 	public List<String> getBuckets() {
 
@@ -567,12 +606,11 @@ public class S3DAL {
 		}
 	}
 
-		
 	/**
-	 * Checks if bucket exists 
+	 * Checks if bucket exists
 	 * 
-	 * @param bucketName bucket name 
-	 * @return true if bucket exists 
+	 * @param bucketName bucket name
+	 * @return true if bucket exists
 	 */
 	public boolean bucketExists(String bucketName) {
 
@@ -591,9 +629,9 @@ public class S3DAL {
 	}
 
 	/**
-	 * Deletes bucket 
+	 * Deletes bucket
 	 * 
-	 * @param bucketName bucket name 
+	 * @param bucketName bucket name
 	 */
 	public void deleteBucket(String bucketName) {
 
@@ -603,12 +641,12 @@ public class S3DAL {
 		deleteFiles();
 		deleteEmptyBucket(bucketName);
 	}
-	
+
 	/**
-	 * Initializes credentials 
+	 * Initializes credentials
 	 * 
-	 * @param s3AccessKey s3 access key
-	 * @param s3SecretAccessKey s3 secret access key 
+	 * @param s3AccessKey       s3 access key
+	 * @param s3SecretAccessKey s3 secret access key
 	 */
 	private void initCredentials(String s3AccessKey, String s3SecretAccessKey) {
 
@@ -618,9 +656,10 @@ public class S3DAL {
 				.create(AwsBasicCredentials.create(s3AccessKey, s3SecretAccessKey));
 	}
 
-	/** Initializes transfer manager for productive upload and download  
+	/**
+	 * Initializes transfer manager for productive upload and download
 	 * 
-	 * @param region region 
+	 * @param region region
 	 */
 	private void initTransferManager(Region region) {
 
@@ -629,7 +668,15 @@ public class S3DAL {
 						.targetThroughputInGbps(20.0).minimumPartSizeInBytes((long) (10 * 1024 * 1024)))
 				.build();
 	}
-	
+
+	/**
+	 * Deletes S3 file or directory which matches prefix
+	 * 
+	 * @param s3Client s3 client
+	 * @param bucket   bucket
+	 * @param prefix   prefix
+	 * @return deleted file path list
+	 */
 	private List<String> deleteS3Data(S3Client s3Client, String bucket, String prefix) {
 
 		ListObjectsV2Request request = ListObjectsV2Request.builder().bucket(bucket).prefix(prefix).build();
@@ -647,6 +694,12 @@ public class S3DAL {
 		return toStringDeletedObjects(deleteResponse.deleted());
 	}
 
+	/**
+	 * Creates bucket
+	 * 
+	 * @param bucketName bucket name
+	 * @return true if bucket has been created
+	 */
 	private boolean createBucket(String bucketName) {
 
 		if (logger.isTraceEnabled())
@@ -674,6 +727,11 @@ public class S3DAL {
 		}
 	}
 
+	/**
+	 * Deletes empty bucket
+	 * 
+	 * @param bucketName bucket name
+	 */
 	private void deleteEmptyBucket(String bucketName) {
 
 		if (logger.isTraceEnabled())
@@ -683,6 +741,12 @@ public class S3DAL {
 		s3Client.deleteBucket(deleteBucketRequest);
 	}
 
+	/**
+	 * Converts bucket object list in bucket string list
+	 * 
+	 * @param buckets bucket object list
+	 * @return bucket string list
+	 */
 	private List<String> toStringBuckets(List<Bucket> buckets) {
 
 		List<String> bucketNames = new ArrayList<String>();
@@ -694,6 +758,12 @@ public class S3DAL {
 		return bucketNames;
 	}
 
+	/**
+	 * Converts s3 object file list to file string list
+	 * 
+	 * @param files s3 object file list
+	 * @return file string list
+	 */
 	private List<String> toStringFiles(List<S3Object> files) {
 
 		List<String> fileNames = new ArrayList<String>();
@@ -705,6 +775,12 @@ public class S3DAL {
 		return fileNames;
 	}
 
+	/**
+	 * Converts deleted object file list to deleted file string list
+	 * 
+	 * @param files deleted object file list
+	 * @return deleted file string list
+	 */
 	private List<String> toStringDeletedObjects(List<DeletedObject> files) {
 
 		List<String> fileNames = new ArrayList<String>();
@@ -716,6 +792,12 @@ public class S3DAL {
 		return fileNames;
 	}
 
+	/**
+	 * Converts deleted object file to deleted file string
+	 * 
+	 * @param files files
+	 * @return deleted storage file path
+	 */
 	private String toStringDeletedObject(List<DeletedObject> files) {
 
 		List<String> fileNames = new ArrayList<String>();
