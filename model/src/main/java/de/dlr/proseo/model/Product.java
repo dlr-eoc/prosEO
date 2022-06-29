@@ -729,7 +729,7 @@ public class Product extends PersistentObject {
 	 * Tests equality of products based on their attribute values. Returns true if either of the following alternatives holds:
 	 * <ol>
 	 *   <li>The database IDs are equal</li>
-	 *   <li>The UUIDs are equal</li>
+	 *   <li>The UUIDs are equal or at least one of the UUIDs is null (i.e. they do not have different UUIDs)</li>
 	 *   <li>All of the following attributes are equal:
 	 *     <ul>
 	 *       <li>Product class</li>
@@ -739,7 +739,7 @@ public class Product extends PersistentObject {
 	 *       <li>File class</li>
 	 *       <li>Product quality</li>
 	 *       <li>Production type</li>
-	 *       <li>All product parameters</li>
+	 *       <li>All product parameters present in both products (additional parameters on either product will be ignored)</li>
 	 *     </ul>
 	 *   </li>
 	 * </ol>
@@ -751,19 +751,37 @@ public class Product extends PersistentObject {
 	 */
 	@Override
 	public boolean equals(Object obj) {
+		// Object identity
 		if (this == obj)
 			return true;
+		
+		// Same database object
 		if (super.equals(obj))
 			return true;
+		
+		// Same UUIDs or at least one UUID is null
 		if (!(obj instanceof Product))
 			return false;
 		Product other = (Product) obj;
 		if (uuid.equals(other.uuid))
 			return true;
-		return Objects.equals(configuredProcessor, other.configuredProcessor) && Objects.equals(fileClass, other.fileClass)
+		if (null != uuid && null != other.uuid) // both UUIDs set, and they are different
+			return false;
+		
+		// Overlapping parameters are the same (mandatory, but not sufficient)
+		for (String key: parameters.keySet()) {
+			if (other.parameters.containsKey(key) && !parameters.get(key).equals(other.parameters.get(key))) {
+				return false;
+			}
+		}
+		
+		// All other attributes mentioned above are the same (mandatory and sufficient)
+		return Objects.equals(configuredProcessor, other.configuredProcessor)
+				&& Objects.equals(fileClass, other.fileClass)
 				&& Objects.equals(mode, other.mode)
-				&& Objects.equals(parameters, other.parameters) && Objects.equals(productClass, other.productClass)
-				&& productQuality == other.productQuality && productionType == other.productionType
+				&& Objects.equals(productClass, other.productClass)
+				&& productQuality == other.productQuality
+				&& productionType == other.productionType
 				&& Objects.equals(sensingStartTime, other.sensingStartTime)
 				&& Objects.equals(sensingStopTime, other.sensingStopTime);
 	}
