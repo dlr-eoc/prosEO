@@ -129,27 +129,27 @@ public class ProductfileControllerImplTest_upload {
 		TestUtils.printMethodName(this, testName);
 		
 		String productId = "12345"; // only int type allowed
-		String filename = "testControllerFile.txt";
+		String filename = "productFileUpload.txt";
 		String relativePath = new PathConverter(productId, filename).getPath();
 		
+		// create file in source for upload
 		String absolutePath = storageTestUtils.createSourceFile(relativePath);
 		String fileSize = Long.toString(storageProvider.getSourceFileSize(relativePath));
 		
+		// upload
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.put(REQUEST_STRING)
 				.param("pathInfo", absolutePath)
 				.param("productId", productId)
-				.param("fileSize", fileSize);
-				
+				.param("fileSize", fileSize);			
+		
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isCreated()).andReturn();
 
+		// show results of http-upload
 		System.out.println("REQUEST: " + REQUEST_STRING);
 		System.out.println("Status: " + mvcResult.getResponse().getStatus());
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
 		
-		storageTestUtils.printPosixStorage();
-		storageTestUtils.printVersion("FINISHED upload-Test");
-		
-		// show path of created rest job
+		// show file path of created rest job in storage
 		String json = mvcResult.getResponse().getContentAsString();
 		RestFileInfo result = new ObjectMapper().readValue(json, RestFileInfo.class);
 		String expectedPath = storageProvider.getRelativePath(result.getFilePath());
