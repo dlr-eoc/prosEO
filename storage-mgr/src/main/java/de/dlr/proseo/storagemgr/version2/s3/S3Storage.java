@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.storagemgr.version2.FileUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
-import de.dlr.proseo.storagemgr.version2.model.BucketsStorage;
+import de.dlr.proseo.storagemgr.version2.model.Storage;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
 import de.dlr.proseo.storagemgr.version2.posix.PosixStorageFile;
@@ -22,7 +22,7 @@ import de.dlr.proseo.storagemgr.version2.posix.PosixStorageFile;
  * @author Denys Chaykovskiy
  *
  */
-public class S3Storage implements BucketsStorage {
+public class S3Storage implements Storage {
 
 	/** s3 data access layer object */
 	private S3DAL s3DAL;

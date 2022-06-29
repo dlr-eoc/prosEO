@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -111,6 +112,27 @@ public class PosixStorage implements Storage {
 	@Override
 	public String getBucket() {
 		return bucket;
+	}
+	
+	/**
+	 * Gets buckets from storage (one-bucket concept for posix)
+	 * 
+	 * @return list of buckets (one bucket)
+	 */
+	@Override
+	public List<String> getBuckets() {
+		return Arrays.asList(bucket);
+	}
+	
+	/**
+	 * Checks if the bucket exists (in one-bucket concept compares with current bucket)
+	 * 
+	 * @param bucketName the name of the bucket
+	 * @return true if the bucket exists
+	 */
+	@Override
+	public boolean bucketExists(String bucketName) {
+		return bucket.equals(bucketName);
 	}
 
 	/**

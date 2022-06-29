@@ -6,11 +6,14 @@ import java.util.List;
 /**
  * Storage Interface
  * 
+ * concept of default bucket
+ * 1. No Bucket (now in POSIX) 2. Default bucket 3. Buckets 
+ * 
  * @author Denys Chaykovskiy
  *
  */
 public interface Storage {
-	
+		
 	/**
 	 * Gets storage type
 	 * 
@@ -40,11 +43,26 @@ public interface Storage {
 	public void setBucket(String bucket);
 
 	/**
-	 * Gets the bucket
+	 * Gets the current bucket
 	 * 
 	 * @return current bucket
 	 */
 	public String getBucket();
+	
+	/**
+	 * Gets buckets from storage
+	 * 
+	 * @return list of buckets
+	 */
+	public List<String> getBuckets();
+	
+	/**
+	 * Checks if the bucket exists
+	 * 
+	 * @param bucketName the name of the bucket
+	 * @return true if the bucket exists
+	 */
+	public boolean bucketExists(String bucketName);
 
 	/**
 	 * Deletes bucket in storage

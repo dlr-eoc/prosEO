@@ -168,11 +168,21 @@ public class StorageProvider {
 	public Storage getStorage() {
 		return storage;
 	}
+	
+	/**
+	 * Gets desired storage
+	 * 
+	 * @param storageType storage type
+	 * @return storage storage
+	 */
+	public Storage getStorage(StorageType storageType) {
+		return createStorage(storageType, storagePath);
+	}
 
 	/**
 	 * Sets Storage
 	 * 
-	 * @param storageType
+	 * @param storageType storage
 	 * @return storage, which was set
 	 */
 	public Storage setStorage(StorageType storageType) {
