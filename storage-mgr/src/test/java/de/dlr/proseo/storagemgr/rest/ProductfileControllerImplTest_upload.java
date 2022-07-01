@@ -62,7 +62,6 @@ public class ProductfileControllerImplTest_upload {
 	@Test
 	public void testUpload_v1Posix() throws Exception {
 				
-		// StorageProvider storageProvider = new StorageProvider();
 		StorageType storageType = StorageType.POSIX; 
 		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
@@ -77,7 +76,6 @@ public class ProductfileControllerImplTest_upload {
 	@Test
 	public void testUpload_v2Posix() throws Exception {
 		
-		// StorageProvider storageProvider = new StorageProvider();
 		StorageType storageType = StorageType.POSIX; 
 		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
@@ -93,7 +91,6 @@ public class ProductfileControllerImplTest_upload {
 	@Test
 	public void testUpload_v1S3() throws Exception {
 				
-		// StorageProvider storageProvider = new StorageProvider();
 		StorageType storageType = StorageType.S3; 
 		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
@@ -108,7 +105,6 @@ public class ProductfileControllerImplTest_upload {
 	@Test
 	public void testUpload_v2S3() throws Exception {
 		
-		// StorageProvider storageProvider = new StorageProvider();
 		StorageType storageType = StorageType.S3; 
 		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
@@ -120,8 +116,25 @@ public class ProductfileControllerImplTest_upload {
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
 	
-	// UPLOAD absolute file -> storage (productid/filename)
-	// takes filename from path and productid from parameter, ignores the rest of the path
+	
+
+	/**
+	 * UPLOAD (updateProductfiles)
+	 * 
+	 * absolute file -> storage (productid/filename)
+	 * takes filename from path and productid from parameter, ignores the rest of the path
+	 * 
+	 * INPUT 
+	 * 
+	 * absolutePath  /../filename.* (posix absolut file)
+	 * productId     12345 (digits only)
+	 * fileSize      123l (long)
+	 * 
+	 * OUTPUT 
+	 * 
+	 * Posix:  /<storagePath>/<productId>/<filename from input absolutPath>
+	 * S3:     s3://<defaultBucket>/<productId>/<filename from input absolutPath>
+	 */
 	private void upload() throws Exception {
 		
 		TestUtils.printMethodName(this, testName);

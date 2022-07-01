@@ -124,30 +124,46 @@ public class ProductfileControllerImplTest_download {
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
 	
-	// pathInfo is absolute path s3://.. or /..   DOWNLOAD Storage -> Cache
 	// input /bucket/path/  -> path (without first folder as bucket)
 	// output /cache/path (without first folder as bucket) 
+	
+	
+	/**
+	 * DOWNLOAD Storage -> Cache (getRestFileInfoByPathInfo)
+	 * 
+	 * absolute file   s3://.. or /..
+	 * takes filename from path and productid from parameter, ignores the rest of the path
+	 * 
+	 * INPUT 
+	 * 
+	 * absolutePath  /<bucket>/<relativePath>  -> relativePath (without first folder as bucket)
+	 * 
+	 * OUTPUT 
+	 * 
+	 * Posix only (cache):  /<cachePath>/<relativePath> (without first folder as bucket) 
+	 */
 	
 	private void download() throws Exception {
 		
 		TestUtils.printMethodName(this, testName);
 		
-		String relativePath = "product/testControllerFile.txt";
+		String relativePath = "product/productFileDownload.txt";
 		relativePath = new PathConverter(relativePath).getPath();
 	
+		// create file in source 
 		String absolutePath = storageTestUtils.createSourceFile(relativePath);
 		
+		// upload file to storage from source
 		StorageFile sourceFile = storageProvider.getSourceFile(relativePath);
 		StorageFile storageFile = storageProvider.getStorageFile(relativePath);
 		storageProvider.getStorage().upload(sourceFile, storageFile);
 		
-		// storageTestUtils.uploadToPosixStorage(relativePath);
-
+		// download file from storage to cache
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
 				.param("pathInfo", absolutePath);
-
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
-
+		
+		// show results of http-upload
 		System.out.println("REQUEST: " + REQUEST_STRING);
 		System.out.println("Status: " + mvcResult.getResponse().getStatus());
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
@@ -155,7 +171,7 @@ public class ProductfileControllerImplTest_download {
 		storageTestUtils.printCache();
 		storageTestUtils.printVersion("FINISHED download-Test");
 		
-		// show path of created rest job
+		// show path of created rest job without first folder (bucket)
 		String expectedCachePath = new PathConverter(absolutePath).removeFirstFolder().getPath();
 		expectedCachePath = new PathConverter(storageProvider.getCachePath(), expectedCachePath).getPath();
 		
