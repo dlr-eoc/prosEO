@@ -15,6 +15,7 @@
     <body>
         <menu name="Project Reports">
             <item name="Javadocs" href="apidocs/index.html" />
+            <item name="Syntax" href="syntax.html" />   
         </menu>
         <menu ref="parent" />
     </body>
