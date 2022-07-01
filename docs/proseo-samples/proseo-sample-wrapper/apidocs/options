@@ -1,0 +1,27 @@
+-classpath
+'/Users/thomas/.m2/repository/ch/qos/logback/logback-classic/1.2.3/logback-classic-1.2.3.jar:/Users/thomas/.m2/repository/ch/qos/logback/logback-core/1.2.3/logback-core-1.2.3.jar:/Users/thomas/.m2/repository/org/slf4j/slf4j-api/1.7.26/slf4j-api-1.7.26.jar:/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/base-wrapper/target/proseo-base-wrapper.jar:/Users/thomas/.m2/repository/commons-logging/commons-logging/1.2/commons-logging-1.2.jar:/Users/thomas/.m2/repository/org/jboss/resteasy/resteasy-client/3.0.2.Final/resteasy-client-3.0.2.Final.jar:/Users/thomas/.m2/repository/org/jboss/resteasy/resteasy-jaxrs/3.0.2.Final/resteasy-jaxrs-3.0.2.Final.jar:/Users/thomas/.m2/repository/org/jboss/resteasy/jaxrs-api/3.0.2.Final/jaxrs-api-3.0.2.Final.jar:/Users/thomas/.m2/repository/org/slf4j/slf4j-simple/1.7.26/slf4j-simple-1.7.26.jar:/Users/thomas/.m2/repository/org/scannotation/scannotation/1.0.3/scannotation-1.0.3.jar:/Users/thomas/.m2/repository/javassist/javassist/3.12.1.GA/javassist-3.12.1.GA.jar:/Users/thomas/.m2/repository/javax/annotation/jsr250-api/1.0/jsr250-api-1.0.jar:/Users/thomas/.m2/repository/javax/activation/activation/1.1/activation-1.1.jar:/Users/thomas/.m2/repository/org/apache/httpcomponents/httpclient/4.5.9/httpclient-4.5.9.jar:/Users/thomas/.m2/repository/org/apache/httpcomponents/httpcore/4.4.11/httpcore-4.4.11.jar:/Users/thomas/.m2/repository/commons-codec/commons-codec/1.11/commons-codec-1.11.jar:/Users/thomas/.m2/repository/commons-io/commons-io/2.1/commons-io-2.1.jar:/Users/thomas/.m2/repository/net/jcip/jcip-annotations/1.0/jcip-annotations-1.0.jar:/Users/thomas/.m2/repository/javax/ws/rs/javax.ws.rs-api/2.1/javax.ws.rs-api-2.1.jar:/Users/thomas/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.9.9/jackson-databind-2.9.9.jar:/Users/thomas/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.9.0/jackson-annotations-2.9.0.jar:/Users/thomas/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.9.9/jackson-core-2.9.9.jar:/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/common/target/proseo-common.jar:/Users/thomas/.m2/repository/org/apache/logging/log4j/log4j-to-slf4j/2.15.0/log4j-to-slf4j-2.15.0.jar:/Users/thomas/.m2/repository/org/apache/logging/log4j/log4j-api/2.15.0/log4j-api-2.15.0.jar:/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/interfaces/target/proseo-interfaces.jar:/Users/thomas/.m2/repository/commons-lang/commons-lang/2.6/commons-lang-2.6.jar'
+-encoding
+'UTF-8'
+-package
+-quiet
+-sourcepath
+'/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/samples/sample-wrapper/src/main/java:/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/samples/sample-wrapper/target/generated-sources/annotations'
+-author
+-bottom
+'Copyright &#169; 2022 <a href="http://www.dlr.de">DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</a>. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/samples/sample-wrapper/target/site/apidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'prosEO Sample Processor Wrapper 0.8.2 API'
+-linkoffline
+'https://docs.oracle.com/en/java/javase/11/docs/api' '/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/samples/sample-wrapper/target/javadoc-bundle-options'
+-linkoffline
+'https://github.com/dlr-eoc/prosEO/base-wrapper/apidocs' '/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/base-wrapper/target/site/apidocs'
+-use
+-version
+-windowtitle
+'prosEO Sample Processor Wrapper 0.8.2 API'
