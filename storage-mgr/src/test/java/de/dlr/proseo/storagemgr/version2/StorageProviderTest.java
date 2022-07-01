@@ -78,11 +78,10 @@ public class StorageProviderTest {
 		
 		assertTrue("File for upload has not been created: " + sourceFilePath, TestUtils.fileExists(sourceFilePath));
 
-		// StorageProvider storageProvider = new StorageProvider();
-		Storage storage = storageProvider.getStorage();
 		StorageType storageType = StorageType.POSIX; 
 		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
+		Storage storage = storageProvider.getStorage();
 
 		// -------------------- upload ----------------------------
 
