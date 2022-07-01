@@ -125,17 +125,17 @@ public class ProductUtil {
 			try {
 				// Coordinates are blank-separated lists of blank- or comma-separated latitude/longitude pairs in counter-clockwise sequence
 				
-				// First normalize coordinates to gml:posList separated by single blanks (older missions may have gml:coordinates format with comma separation)
-				String footprintPosList = footprintParameter.getStringValue().replaceAll(",? +", " ");
+				// First normalize coordinates to gml:posList separated by white space (older missions may have gml:coordinates format with comma separation)
+				String footprintPosList = footprintParameter.getStringValue().replaceAll(",", " ");
 				
 				// Convert GML posList to OData list of Point
-				String[] pointValues = footprintPosList.split(" ");
+				String[] pointValues = footprintPosList.split("\\s+");
 				List<Point> exteriorRing = new ArrayList<>();
 				for (int i = 0; i < pointValues.length / 2; ++i) {
 					// OData has longitude as x-value and latitude as y-value, in contrast to GML
 					Point p = new Point(Geospatial.Dimension.GEOGRAPHY, null);
-					p.setY(Double.parseDouble(pointValues[2 * i].split(",")[0])); // Latitude
-					p.setX(Double.parseDouble(pointValues[2 * i + 1].split(",")[1])); // Longitude
+					p.setY(Double.parseDouble(pointValues[2 * i])); // Latitude
+					p.setX(Double.parseDouble(pointValues[2 * i + 1])); // Longitude
 					exteriorRing.add(p);
 				}
 				
