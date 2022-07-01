@@ -6,6 +6,10 @@
 package de.dlr.proseo.model;
 
 import java.io.Serializable;
+import java.time.DateTimeException;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.TemporalAccessor;
 
 import javax.persistence.Basic;
 import javax.persistence.Embeddable;
@@ -13,6 +17,7 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 
 import de.dlr.proseo.model.enums.ParameterType;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
  * This class allows to add mission-specific parameters to any persistent object. A parameter consists of a type
@@ -23,6 +28,7 @@ import de.dlr.proseo.model.enums.ParameterType;
 @Embeddable
 public class Parameter {
 	
+	private static final int MAX_VARCHAR_LENGTH = 255;
 	/* Error messages */
 	private static final String MSG_INVALID_PARAMETER_VALUE_FOR_TYPE = "Invalid parameter value %s for type %s";
 	private static final String MSG_PARAMETER_CANNOT_BE_CONVERTED = "Parameter of type %s cannot be converted to %s";
@@ -32,8 +38,17 @@ public class Parameter {
 	@Basic(optional = false)
 	private ParameterType parameterType;
 	
-	/** The parameter value */
+	/** 
+	 * The parameter value (unless it is a string of more than 255 characters, in which case the parameter value is stored
+	 * in parameterClob). 
+	 */
 	private String parameterValue;
+	
+	/**
+	 * A string parameter value of more than 255 characters (takes precedence over any value in the parameterValue attribute).
+	 */
+	@org.hibernate.annotations.Type(type = "materialized_clob")
+	private String parameterClob;
 	
 	/**
 	 * Initializer with type and value (values of type Short and Float are converted to Integer and Double, respectively)
@@ -45,9 +60,54 @@ public class Parameter {
 	 */
 	public Parameter init(ParameterType parameterType, Serializable parameterValue) throws IllegalArgumentException {
 		this.parameterType = parameterType;
+		setParameterValue(parameterValue);
+		
+		return this;
+	}
+	
+	/**
+	 * Gets the type of the parameter
+	 * 
+	 * @return the parameter type
+	 */
+	public ParameterType getParameterType() {
+		return parameterType;
+	}
+	
+	/**
+	 * Sets the type of the parameter
+	 * 
+	 * @param parameterType the type to set
+	 */
+	public void setParameterType(ParameterType parameterType) {
+		this.parameterType = parameterType;
+	}
+	
+	/**
+	 * Gets the value of the parameter
+	 * 
+	 * @return the parameter value
+	 */
+	public String getParameterValue() { 
+		return (null == parameterClob ? parameterValue : parameterClob);
+	}
+	
+	/**
+	 * Sets the value of the parameter
+	 * 
+	 * @param parameterValue the value to set
+	 * @throws IllegalArgumentException if parameter type and class of parameter value do not match
+	 */
+	public void setParameterValue(Serializable parameterValue) throws IllegalArgumentException {
 		switch(parameterType) {
 		case STRING:
-			this.parameterValue = parameterValue.toString();
+			String parameterValueString = parameterValue.toString();
+			if (MAX_VARCHAR_LENGTH < parameterValueString.length()) {
+				this.parameterClob = parameterValueString;
+				this.parameterValue = parameterValueString.substring(0, MAX_VARCHAR_LENGTH - 3) + "...";
+			} else {
+				this.parameterValue = parameterValueString;
+			}
 			break;
 		case BOOLEAN:
 			if (parameterValue instanceof Boolean) {
@@ -78,7 +138,8 @@ public class Parameter {
 					// Handled below
 				}
 			}
-			throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), parameterType.toString()));
+			throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), 
+					parameterType.toString()));
 		case DOUBLE:
 			if (parameterValue instanceof Float || parameterValue instanceof Double) {
 				this.parameterValue = parameterValue.toString();
@@ -91,63 +152,40 @@ public class Parameter {
 					// Handled below
 				}
 			}
-			throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), parameterType.toString()));
+			throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), 
+					parameterType.toString()));
+		case INSTANT:
+			if (parameterValue instanceof TemporalAccessor) {
+				this.parameterValue = OrbitTimeFormatter.format((TemporalAccessor) parameterValue);
+			}
+			if (parameterValue instanceof String) {
+				try {
+					this.parameterValue = OrbitTimeFormatter.format(OrbitTimeFormatter.parseDateTime((String) parameterValue));
+					break;
+				} catch (DateTimeException e) {
+					// Handled below
+				}
+			}
+			throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), 
+					parameterType.toString()));
 		}
-		
-		return this;
 	}
 	
 	/**
-	 * Gets the type of the parameter
-	 * 
-	 * @return the parameter type
-	 */
-	public ParameterType getParameterType() {
-		return parameterType;
-	}
-	
-	/**
-	 * Sets the type of the parameter
-	 * 
-	 * @param parameterType the type to set
-	 */
-	public void setParameterType(ParameterType parameterType) {
-		this.parameterType = parameterType;
-	}
-	
-	/**
-	 * Gets the value of the parameter
-	 * 
+	 * Gets the parameter value as String
 	 * @return the parameter value
-	 */
-	public String getParameterValue() {
-		return parameterValue;
-	}
-	
-	/**
-	 * Sets the value of the parameter
-	 * 
-	 * @param parameterValue the value to set
-	 */
-	public void setParameterValue(String parameterValue) {
-		this.parameterValue = parameterValue;
-	}
-	
-	/**
-	 * Gets the parameter value as String, if it has the appropriate type
-	 * @return the parameter value
-	 * @throws ClassCastException if the parameter is not of type ParameterType.STRING
 	 */
 	public String getStringValue() throws ClassCastException {
-		return parameterValue;
+		return getParameterValue();
 	}
+	
 	/**
 	 * Sets the value of the parameter to the given string and the type to ParameterType.STRING
 	 * @param newValue the value to set (the type is implicit)
 	 */
 	public void setStringValue(String newValue) {
 		parameterType = ParameterType.STRING;
-		parameterValue = newValue;
+		setParameterValue(newValue);
 	}
 
 	/**
@@ -159,7 +197,8 @@ public class Parameter {
 		if (ParameterType.INTEGER.equals(parameterType)) {
 			return Integer.parseInt(parameterValue);
 		} else {
-			throw new ClassCastException(String.format(MSG_PARAMETER_CANNOT_BE_CONVERTED, parameterType.toString(), ParameterType.INTEGER.toString()));
+			throw new ClassCastException(String.format(MSG_PARAMETER_CANNOT_BE_CONVERTED, parameterType.toString(),
+					ParameterType.INTEGER.toString()));
 		}
 	}
 	/**
@@ -180,7 +219,8 @@ public class Parameter {
 		if (ParameterType.BOOLEAN.equals(parameterType)) {
 			return Boolean.parseBoolean(parameterValue);
 		} else {
-			throw new ClassCastException(String.format(MSG_PARAMETER_CANNOT_BE_CONVERTED, parameterType.toString(), ParameterType.BOOLEAN.toString()));
+			throw new ClassCastException(String.format(MSG_PARAMETER_CANNOT_BE_CONVERTED, parameterType.toString(), 
+					ParameterType.BOOLEAN.toString()));
 		}
 	}
 	/**
@@ -201,7 +241,8 @@ public class Parameter {
 		if (ParameterType.DOUBLE.equals(parameterType)) {
 			return Double.parseDouble(parameterValue);
 		} else {
-			throw new ClassCastException(String.format(MSG_PARAMETER_CANNOT_BE_CONVERTED, parameterType.toString(), ParameterType.DOUBLE.toString()));
+			throw new ClassCastException(String.format(MSG_PARAMETER_CANNOT_BE_CONVERTED, parameterType.toString(), 
+					ParameterType.DOUBLE.toString()));
 		}
 	}
 	/**
@@ -211,6 +252,28 @@ public class Parameter {
 	public void setDoubleValue(Double newValue) {
 		parameterType = ParameterType.DOUBLE;
 		parameterValue = newValue.toString();
+	}
+	
+	/**
+	 * Gets the parameter value as Instant, if it has the appropriate type
+	 * @return the parameter value
+	 * @throws ClassCastException if the parameter is not of type ParameterType.INSTANT
+	 */
+	public Instant getInstantValue() throws ClassCastException {
+		if (ParameterType.INSTANT.equals(parameterType)) {
+			return Instant.from(OrbitTimeFormatter.parseDateTime(parameterValue));
+		} else {
+			throw new ClassCastException(String.format(MSG_PARAMETER_CANNOT_BE_CONVERTED, parameterType.toString(), 
+					ParameterType.INSTANT.toString()));
+		}
+	}
+	/**
+	 * Sets the value of the parameter to the given instant and the type to ParameterType.INSTANT
+	 * @param newValue the value to set (the type is implicit)
+	 */
+	public void setInstantValue(TemporalAccessor newValue) {
+		parameterType = ParameterType.INSTANT;
+		parameterValue = OrbitTimeFormatter.format(newValue);
 	}
 	
 	@Override

@@ -296,8 +296,8 @@ public class ProcessingFacility extends PersistentObject {
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (!super.equals(obj))
-			return false;
+		if (super.equals(obj))
+			return true;
 		if (!(obj instanceof ProcessingFacility))
 			return false;
 		ProcessingFacility other = (ProcessingFacility) obj;

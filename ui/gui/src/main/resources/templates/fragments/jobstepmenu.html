@@ -9,7 +9,7 @@
       <div class="dropdown-menu dropdown-menu-right menu">
         <a
           th:if="${hasroleorderplanner}"
-          th:class="('dropdown-item ' + ((${jobstep?.jobStepState} == 'INITIAL') ? 'enabled' : 'disabled font-italic'))"
+          th:class="('dropdown-item ' + ((${jobstep?.jobStepState} == 'PLANNED') ? 'enabled' : 'disabled font-italic'))"
           th:onclick="'setJobStepState(' + ${jobstep?.id} + ', \'RELEASE\')'" href="#"><span
           th:text="#{release}">release</span></a> <a
           th:if="${hasroleorderplanner}"

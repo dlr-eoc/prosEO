@@ -81,7 +81,10 @@
               <select n name="orderstates" id="orderstates" multiple="multiple">
                 <option>INITIAL</option>
                 <option>APPROVED</option>
+                <option>PLANNING</option>
+                <option>PLANNING_FAILED</option>
                 <option>PLANNED</option>
+                <option>RELEASING</option>
                 <option>RELEASED</option>
                 <option>RUNNING</option>
                 <option>SUSPENDING</option>
@@ -176,7 +179,19 @@
                       <td><a th:if="${hasroleorderreader}" th:href="'/order?id=' + ${ord?.id}"
                           th:text="${ord?.identifier}"></a><span th:unless="${hasroleorderreader}"
                           th:text="${ord?.identifier}"></span></td>
-                      <td th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}"
+                          
+                      <td th:if="(${ord?.orderState} == 'PLANNING' or ${ord?.orderState} == 'RELEASING')" style="padding: 0px;">
+                        <div th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}"
+                             th:text="${ord?.orderState}" style="padding: 0.25rem;">
+                        </div>                          
+                        <div th:title="${ord?.createdJobs} + ' jobs of ' + ${ord?.expectedJobs}" class="progress" style="min-height: 10px; border-radius: 0px;">
+                          <div th:class="'progress-bar ' + ${ord?.orderState}" role="progressbar" th:style="'width: ' + ${#numbers.formatInteger((100.0 / ord?.expectedJobs * ord?.createdJobs),1)} + '%;'" 
+                               th:aria-valuenow="${ord?.createdJobs}" aria-valuemin="0" th:aria-valuemax="${ord?.expectedJobs}">
+                          </div>
+                        </div>
+                      </td>
+                      <td th:unless="(${ord?.orderState} == 'PLANNING' or ${ord?.orderState} == 'RELEASING')"
+                          th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}"
                           th:text="${ord?.orderState}"></td>
                       <td><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
                       <td><a th:if="${hasroleproductclassreader}" th:each="comp : ${ord?.requestedProductClasses}" 

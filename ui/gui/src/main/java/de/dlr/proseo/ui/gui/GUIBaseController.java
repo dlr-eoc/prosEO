@@ -113,8 +113,8 @@ public class GUIBaseController {
 		List<?> resultList = null;
 		
 		try {
-			resultList = serviceConnection.getFromService(config.getProductionPlanner(),
-					"/processingfacilities", List.class, auth.getProseoName(), auth.getPassword());
+			resultList = serviceConnection.getFromService(serviceConfig.getFacilityManagerUrl(),
+					"/facilities", List.class, auth.getProseoName(), auth.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {

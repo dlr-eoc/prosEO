@@ -19,6 +19,7 @@ de.dlr.proseo.model
 de.dlr.proseo.model
 de.dlr.proseo.model
 de.dlr.proseo.model
+de.dlr.proseo.model
 de.dlr.proseo.model.dao
 de.dlr.proseo.model.dao
 de.dlr.proseo.model.dao
@@ -47,6 +48,12 @@ de.dlr.proseo.model.dao
 de.dlr.proseo.model.dao
 de.dlr.proseo.model.dao
 de.dlr.proseo.model.dao
+de.dlr.proseo.model.dao
+de.dlr.proseo.model.dao
+de.dlr.proseo.model.dao
+de.dlr.proseo.model.dao
+de.dlr.proseo.model
+de.dlr.proseo.model
 de.dlr.proseo.model
 de.dlr.proseo.model
 de.dlr.proseo.model
@@ -66,6 +73,7 @@ de.dlr.proseo.model.service
 de.dlr.proseo.model.service
 de.dlr.proseo.model.service
 de.dlr.proseo.model.service
+de.dlr.proseo.model
 de.dlr.proseo.model
 de.dlr.proseo.model
 de.dlr.proseo.model

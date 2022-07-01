@@ -20,6 +20,7 @@ import org.apache.olingo.commons.api.edm.EdmNavigationProperty;
 import org.apache.olingo.commons.api.edm.EdmProperty;
 import org.apache.olingo.commons.api.edm.EdmType;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
+import org.apache.olingo.commons.core.edm.primitivetype.EdmBoolean;
 import org.apache.olingo.commons.core.edm.primitivetype.EdmByte;
 import org.apache.olingo.commons.core.edm.primitivetype.EdmDateTimeOffset;
 import org.apache.olingo.commons.core.edm.primitivetype.EdmDecimal;
@@ -63,8 +64,8 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 	private int paramCount = 0;
 	
 	/** SQL command parts */
-	private static final String SELECT_CLAUSE = "SELECT p.* ";
-	private static final String SELECT_COUNT_CLAUSE = "SELECT count(*) ";
+	private static final String SELECT_CLAUSE = "SELECT DISTINCT p.* ";
+	private static final String SELECT_COUNT_CLAUSE = "SELECT count(DISTINCT p.*) ";
 	private static final String FROM_CLAUSE = "FROM product p\n" +
 			"JOIN product_file pf ON p.id = pf.product_id\n" +
 			"JOIN product_class pc ON p.product_class_id = pc.id\n" +
@@ -256,11 +257,12 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 		} else if (literal.getType() instanceof EdmByte || literal.getType() instanceof EdmSByte
 				|| literal.getType() instanceof EdmInt16 || literal.getType() instanceof EdmInt32
 				|| literal.getType() instanceof EdmInt64 || literal.getType() instanceof EdmDecimal
-				|| literal.getType() instanceof EdmSingle || literal.getType() instanceof EdmDouble) {
+				|| literal.getType() instanceof EdmSingle || literal.getType() instanceof EdmDouble
+				|| literal.getType() instanceof EdmBoolean) {
 			result = literalAsString;
 		} else {
 			if (logger.isTraceEnabled()) logger.trace("... found literal of type: " + literal.getType().getName());
-			throw new ODataApplicationException("Only Edm.Byte, Edm.SByte, Edm.Int16, Edm.Int32, Edm.Int64, Edm.String, Edm.DateTimeOffset, Edm.Decimal, Edm.Single and Edm.Double literals are implemented", 
+			throw new ODataApplicationException("Only Edm.Boolean, Edm.Byte, Edm.SByte, Edm.Int16, Edm.Int32, Edm.Int64, Edm.String, Edm.DateTimeOffset, Edm.Decimal, Edm.Single and Edm.Double literals are implemented", 
 					HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
 		}
 		
@@ -384,7 +386,7 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 				// Remove quotes added by visitLiteral
 				valueParam2 = valueParam2.substring(1, valueParam2.length() - 1);
 
-				result = valueParam1 + " LIKE '%" + valueParam2 + "%'";
+				result = valueParam1 + " LIKE '%" + valueParam2.replace("%", "\\%").replace("_", "\\_") + "%' ESCAPE '\\'";
 			} else {
 				throw new ODataApplicationException("contains() needs two parametres of type Edm.String", 
 						HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ENGLISH);
@@ -398,7 +400,7 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 				// Remove quotes added by visitLiteral
 				valueParam2 = valueParam2.substring(1, valueParam2.length() - 1);
 
-				result = valueParam1 + " LIKE '" + valueParam2 + "%'";
+				result = valueParam1 + " LIKE '" + valueParam2.replace("%", "\\%").replace("_", "\\_") + "%' ESCAPE '\\'";
 			} else {
 				throw new ODataApplicationException("startswith() needs two parametres of type Edm.String", 
 						HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ENGLISH);
@@ -412,7 +414,7 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 				// Remove quotes added by visitLiteral
 				valueParam2 = valueParam2.substring(1, valueParam2.length() - 1);
 
-				result = valueParam1 + " LIKE '%" + valueParam2 + "'";
+				result = valueParam1 + " LIKE '%" + valueParam2.replace("%", "\\%").replace("_", "\\_") + "' ESCAPE '\\'";
 			} else {
 				throw new ODataApplicationException("endswith() needs two parametres of type Edm.String", 
 						HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ENGLISH);
@@ -512,7 +514,26 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 	@Override
 	public String visitBinaryOperator(BinaryOperatorKind operator, String left, List<String> right)
 			throws ExpressionVisitException, ODataApplicationException {
-		throw new ODataApplicationException("Binary operators on lists are not implemented", 
-				HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
+		if (logger.isTraceEnabled()) logger.trace(">>> visitBinaryOperator({}, {}, {})", operator, left, right);
+		
+		if (null == left || null == right || right.isEmpty()) {
+			throw new ODataApplicationException("Cannot compare string '" + left + "' to string list '" + right + "'", 
+					HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ENGLISH);
+		}
+		
+		StringBuilder result = new StringBuilder();
+		if (BinaryOperatorKind.IN.equals(operator)) {
+			result.append(left).append(" IN (").append(right.get(0));
+			for (int i = 1; i < right.size(); ++i) {
+				result.append(", ").append(right.get(i));
+			}
+			result.append(')');
+		} else {
+			throw new ODataApplicationException("Binary operator '" + operator + "' on lists is not implemented", 
+					HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
+		}
+
+		if (logger.isTraceEnabled()) logger.trace("<<< visitBinaryOperator()");
+		return result.toString();
 	}
 }

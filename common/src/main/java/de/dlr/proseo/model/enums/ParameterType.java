@@ -8,5 +8,6 @@ public enum ParameterType {
 	STRING, 
 	BOOLEAN, 
 	INTEGER, 
-	DOUBLE 
+	DOUBLE,
+	INSTANT
 }

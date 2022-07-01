@@ -108,7 +108,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 				}
 				if (logger.isDebugEnabled())
 					logger.debug("... waiting for concurrent access to {} to terminate", sourceFile.getFileName());
-				Thread.sleep(500);
+				Thread.sleep(cfg.getFileCheckWaitTime());
 			};
 			if (i == cfg.getFileCheckMaxCycles()) {
 				return new ResponseEntity<>(

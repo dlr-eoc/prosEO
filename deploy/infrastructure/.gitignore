@@ -1,3 +1,2 @@
-/credentials.yml
 /run_ansible.sh
-/proseo-infrastructure_IONOS.json
+/proseo-worker-delete.yml

@@ -1,0 +1,20 @@
+---
+# Delete Kubernetes cluster processing nodes
+- hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+
+    # --- Hosts ---
+  
+  - name: Delete Kubernetes cluster processing nodes
+    server:
+      datacenter: "{{ datacenter.name }}"
+      instance_ids:
+      # Enter worker nodes here, e.g.
+#      - worker01
+#      - worker02
+#      - worker03
+      wait_timeout: 500
+      state: absent

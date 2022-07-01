@@ -24,6 +24,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import de.dlr.proseo.monitor.microservice.MonServiceAggregation;
 import de.dlr.proseo.monitor.microservice.MonitorServices;
 import de.dlr.proseo.monitor.order.MonitorOrders;
 import de.dlr.proseo.monitor.product.MonitorProducts;
@@ -77,6 +78,7 @@ public class MonitorApplication implements CommandLineRunner {
 	private EntityManager em;
 
 	private MonitorServices monServices = null;
+	private MonServiceAggregation monServiceAggregation = null;
 	private MonitorOrders monOrders = null;
 	private MonitorProducts monProducts = null;
 
@@ -128,6 +130,44 @@ public class MonitorApplication implements CommandLineRunner {
 			}
 		}
 		monServices = null;
+	}
+
+	/**
+	 * Start the service monitoring thread
+	 */
+	public void startMonitorServicesAggregation() {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> startMonitorServicesAggregation()");
+
+		if (monServiceAggregation == null || !monServiceAggregation.isAlive()) {
+			monServiceAggregation = new MonServiceAggregation(monitorConfig, txManager, em);
+			monServiceAggregation.start();
+		} else {
+			if (monServiceAggregation.isInterrupted()) {
+				// kubeDispatcher
+			}
+		}
+	}
+
+	/**
+	 * Stop the service monitoring thread
+	 */
+	public void stopMonitorServicesAggregation() {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> stopMonitorServicesAggregation()");
+
+		if (monServiceAggregation != null && monServiceAggregation.isAlive()) {
+			monServiceAggregation.interrupt();
+			int i = 0;
+			while (monServiceAggregation.isAlive() && i < 100) {
+				try {
+					wait(100);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		monServiceAggregation = null;
 	}
 
 	/**
@@ -230,6 +270,7 @@ public class MonitorApplication implements CommandLineRunner {
 		}
 
 		startMonitorServices();
+		startMonitorServicesAggregation();
 		startMonitorOrders();
 		startMonitorProducts();
 	}

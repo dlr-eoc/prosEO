@@ -105,10 +105,79 @@
 	<build>
 		<finalName>proseo-ui-cli</finalName>
 		<plugins>
+			
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+			
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>default-jar</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<excludes>
+								<exclude>de/dlr/proseo/ui/cli/syntax2html/**</exclude>
+							</excludes>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+	
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>syntax2html</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+						<configuration>
+							<descriptors>
+								<descriptor>src/assembly/syntax2html.xml</descriptor>
+							</descriptors>
+							<archive>
+								<manifest>
+									<addClasspath>true</addClasspath>
+									<mainClass>de.dlr.proseo.ui.cli.syntax2html.Syntax2HTML</mainClass>
+								</manifest>
+							</archive>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			
+			
+			 <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <configuration>
+                            <target>
+                                <exec executable="java">
+                                    <arg value="-jar" />
+                                    <arg value="target/proseo-ui-cli-syntax2html.jar" />
+                                    <arg value="src/main/resources/ui-cli-syntax.yml" />
+                                    <arg value="src/site/resources/syntax.html" />
+                                </exec>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            
+			
 		</plugins>
 	</build>
 </project>

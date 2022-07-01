@@ -50,6 +50,8 @@ public class ProductClass extends PersistentObject {
 	/**
 	 * The level of processing required for this product class (roughly equivalent to the number of processing steps required
 	 * to produce data of this product class from unprocessed [level 0] data)
+	 * 
+	 * Note: If the processing level is not set, products of this product class will not be reported by the monitoring component.
 	 */
 	@Enumerated(EnumType.STRING)
 	private ProcessingLevel processingLevel;
@@ -70,6 +72,7 @@ public class ProductClass extends PersistentObject {
 	 * Template for the generation of product files, indicating variable parts using Spring Expression Language;
 	 * overrides file naming convention set in the Mission object.
 	 */
+	@org.hibernate.annotations.Type(type = "materialized_clob")
 	private String productFileTemplate;
 	
 	/** The default slice length to be applied; mandatory if the default slicing type is "TIME_SLICE" */

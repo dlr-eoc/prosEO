@@ -6,7 +6,9 @@
 package de.dlr.proseo.model;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -20,6 +22,11 @@ import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+
+import org.springframework.transaction.annotation.Transactional;
+
+import de.dlr.proseo.model.JobStep.JobStepState;
+import de.dlr.proseo.model.enums.OrderState;
 
 /**
  * A collection of job steps required to fulfil an order for a specific period of time (e. g. one orbit).
@@ -40,9 +47,9 @@ public class Job extends PersistentObject {
 	private ProcessingOrder processingOrder;
 	
 	/** 
-	 * Status of the whole job; jobs in status INITIAL or ON_HOLD need to be released to reach status STARTED, jobs in status 
-	 * STARTED can be set to ON_HOLD, meaning that all qualifying dependent job steps are returned to status INITIAL (i. e. except 
-	 * those in status RUNNING, COMPLETED and FAILED).
+	 * Status of the whole job; jobs in status PLANNED or ON_HOLD need to be released to reach status STARTED, jobs in status 
+	 * STARTED can be set to ON_HOLD, meaning that all qualifying dependent job steps are returned to status PLANNED (i. e. except 
+	 * those in status RUNNING, COMPLETED, FAILED and CLOSED).
 	 */
 	@Enumerated(EnumType.STRING)
 	private JobState jobState;
@@ -85,22 +92,26 @@ public class Job extends PersistentObject {
 	 * Enumeration describing possible job states.
 	 */
 	public enum JobState {
-		INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED;
+		INITIAL, PLANNED, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED, CLOSED;
 		
 		public boolean isLegalTransition(JobState other) {
 			switch(this) {
 			case COMPLETED:
-				return false; // End state
-			case FAILED:
-				return other.equals(INITIAL);
+				return other.equals(CLOSED);
 			case INITIAL:
+				return other.equals(PLANNED);
+			case FAILED:
+				return other.equals(PLANNED) || other.equals(CLOSED);
+			case PLANNED:
 				return other.equals(RELEASED) || other.equals(FAILED);
 			case ON_HOLD:
-				return other.equals(INITIAL) || other.equals(COMPLETED) || other.equals(FAILED);
+				return other.equals(PLANNED) || other.equals(COMPLETED) || other.equals(FAILED);
 			case RELEASED:
-				return other.equals(INITIAL) || other.equals(STARTED);
+				return other.equals(PLANNED) || other.equals(STARTED);
 			case STARTED:
 				return other.equals(ON_HOLD) || other.equals(COMPLETED) || other.equals(FAILED);
+			case CLOSED:
+				return false; // End state
 			default:
 				return false;
 			}
@@ -135,19 +146,130 @@ public class Job extends PersistentObject {
 	}
 
 	/**
-	 * Sets the processing state of the job
+	 * Sets the processing state of the job and propagates it to the processing order
 	 * 
 	 * @param jobState the jobState to set
 	 * @throws IllegalStateException if the intended job state transition is illegal
 	 */
+	@Transactional
 	public void setJobState(JobState jobState) throws IllegalStateException {
-		if (null == this.jobState || this.jobState.equals(jobState) || this.jobState.isLegalTransition(jobState)) {
+		if (null == this.jobState) {
 			this.jobState = jobState;
+		}
+		if (this.jobState.equals(jobState)) {
+			// Do nothing
+		} else if (null == this.jobState || this.jobState.isLegalTransition(jobState)) {
+			this.jobState = jobState;
+			if (processingOrder != null) {
+				processingOrder.checkStateChange();
+			}
 		} else {
 			throw new IllegalStateException(String.format(MSG_ILLEGAL_STATE_TRANSITION,
 					this.jobState.toString(), jobState.toString()));
 		}
 	}
+
+	/**
+	 * Check whether a job state change is required based on the current state of the contained job steps,
+	 * and if so, propagate the state change to the processing order
+	 */
+	@Transactional
+	public void checkStateChange() {
+		hasFailedJobSteps = false;
+		
+		// Check whether the job has any job steps at all
+		OrderState orderState = processingOrder.getOrderState();
+		if (0 == jobSteps.size()) {
+			if (OrderState.INITIAL.equals(orderState)
+					|| OrderState.APPROVED.equals(orderState)
+					|| OrderState.PLANNING.equals(orderState)
+					|| OrderState.PLANNING_FAILED.equals(orderState)) {
+				// Order planning is not yet completed (order states INITIAL and APPROVED should not happen here, but we account
+				// for possible data inconsistencies)
+				jobState = JobState.INITIAL;
+			} else if (OrderState.CLOSED.equals(orderState)) {
+				// Order is closed
+				jobState = JobState.CLOSED;
+			} else {
+				// Order planning is completed, the order is still active, but no job steps were generated
+				jobState = JobState.COMPLETED;
+			}
+			return;
+		}
+		
+		// Prepare counter for job step states
+		Map<JobStepState, Integer> jobStepStateMap = new HashMap<>();
+		for (JobStepState jobStepState: JobStepState.values()) {
+			jobStepStateMap.put(jobStepState, 0);
+		}
+		
+		// Check status of job steps
+		for (JobStep jobStep: jobSteps) {
+			// Update job step failure flag
+			hasFailedJobSteps = hasFailedJobSteps || jobStep.isFailed();
+			
+			// Count job steps per state
+			jobStepStateMap.put(jobStep.getJobStepState(), jobStepStateMap.get(jobStep.getJobStepState()) + 1);
+		}
+		
+		// Update job state according to distribution of job step states
+		int jobStepCount = jobSteps.size();
+		int terminatedJobStepCount = (jobStepStateMap.get(JobStepState.COMPLETED) 
+				+ jobStepStateMap.get(JobStepState.FAILED)
+				+ jobStepStateMap.get(JobStepState.CLOSED));
+		
+		// First check, whether all job steps are finished
+		if (jobStepCount == jobStepStateMap.get(JobStepState.CLOSED)) {
+			// All job steps are CLOSED
+			jobState = JobState.CLOSED;
+		} else if (jobStepCount == terminatedJobStepCount) {
+			// All job steps are terminated in some way
+			if (0 < jobStepStateMap.get(JobStepState.FAILED)) {
+				jobState = JobState.FAILED;
+			} else {
+				jobState = JobState.COMPLETED;
+			}
+		// We still have unfinished job steps
+		} else if (0 == jobStepStateMap.get(JobStepState.RUNNING) && 0 < terminatedJobStepCount) {
+			// At least one job step has terminated, but none is running
+			if (JobState.ON_HOLD.equals(jobState)) {
+				jobState = JobState.PLANNED;
+			} else {
+				jobState = JobState.STARTED;
+			}
+		} else if (0 < jobStepStateMap.get(JobStepState.RUNNING)) {
+			// At least one job step is running
+			if (JobState.ON_HOLD.equals(jobState)) {
+				// Do nothing, suspended job is waiting for the running jobs steps to terminate
+			} else {
+				jobState = JobState.STARTED; // This may already be the case
+			}
+		// No running and no terminated job steps
+		} else if (0 < jobStepStateMap.get(JobStepState.READY) || 0 < jobStepStateMap.get(JobStepState.WAITING_INPUT)) {
+			// The job was released, but job steps are waiting to be run
+			jobState = JobState.RELEASED;
+		// All existing job steps should be in state PLANNED
+		} else {
+			if (jobStepCount != jobStepStateMap.get(JobStepState.PLANNED)) {
+				// Hmm, we missed a case in the selections above
+				throw new RuntimeException("Unexpected job step state combination " + jobStepStateMap.toString());
+			}
+			// Now the state depends on whether planning was already completed
+			if (OrderState.INITIAL.equals(orderState)
+					|| OrderState.APPROVED.equals(orderState)
+					|| OrderState.PLANNING.equals(orderState)
+					|| OrderState.PLANNING_FAILED.equals(orderState)) {
+				// Order planning is not yet completed (order states INITIAL and APPROVED should not happen here, but we account
+				// for possible data inconsistencies)
+				jobState = JobState.INITIAL;
+			} else {
+				jobState = JobState.PLANNED;
+			}
+		}
+		
+		
+		processingOrder.checkStateChange();
+	};
 
 	/**
 	 * Gets the related orbit (if any)
@@ -310,6 +432,6 @@ public class Job extends PersistentObject {
 		return "Job [jobState=" + jobState + ", orbit=" + orbit + ", startTime="
 				+ startTime + ", stopTime=" + stopTime + ", priority=" + priority + ", hasFailedJobSteps=" + hasFailedJobSteps
 				+ ", processingFacility=" + processingFacility + ", jobSteps=" + jobSteps + "]";
-	};
+	}
 
 }

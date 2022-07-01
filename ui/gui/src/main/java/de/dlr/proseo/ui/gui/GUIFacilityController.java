@@ -97,7 +97,7 @@ public class GUIFacilityController extends GUIBaseController {
 
 		private Mono<ClientResponse> get() {
 			GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
-			String uri = serviceConfig.getProductionPlannerUrl() + "/processingfacilities";
+			String uri = serviceConfig.getFacilityManagerUrl() + "/facilities";
 			
 			logger.trace("URI " + uri);
 			Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(

@@ -6,6 +6,7 @@
 package de.dlr.proseo.model;
 
 import java.time.Instant;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -627,6 +628,32 @@ public class Product extends PersistentObject {
 	}
 	
 	/**
+	 * Get a named Instant parameter
+	 * 
+	 * @param key the name of the Instant parameter
+	 * @return the parameter value casted to Instant
+	 * @throws ClassCastException if the named parameter is not of an appropriate type
+	 */
+	public Instant getInstantParameter(String key) throws ClassCastException {
+		return parameters.get(key).getInstantValue();
+	}
+
+	/**
+	 * Set the named Instant parameter to the given value
+	 * 
+	 * @param key the parameter name
+	 * @param value the parameter value to set
+	 */
+	public void setInstantParameter(String key, TemporalAccessor value) {
+		Parameter param = parameters.get(key);
+		if (null == param) {
+			param = new Parameter();
+		}
+		param.setInstantValue(value);
+		this.parameters.put(key, param);
+	}
+	
+	/**
 	 * Generates a product filename according to the file name template given for the enclosing mission
 	 * 
 	 * @return a filename string
@@ -659,8 +686,12 @@ public class Product extends PersistentObject {
 		ExpressionParser parser = new SpelExpressionParser();
 		List<String> replacedExpressions = new ArrayList<>();
 		for (String expression: expressions) {
-			Expression exp = parser.parseExpression(expression);
-			replacedExpressions.add((String) exp.getValue(this));
+			try {
+				Expression exp = parser.parseExpression(expression);
+				replacedExpressions.add((String) exp.getValue(this));
+			} catch (EvaluationException e) {
+				throw new EvaluationException(e.getMessage() + "\n Parameter expression: " + expression);
+			}
 		}
 		if (logger.isDebugEnabled()) logger.debug("Replaced expressions: " + replacedExpressions);
 		
@@ -698,7 +729,7 @@ public class Product extends PersistentObject {
 	 * Tests equality of products based on their attribute values. Returns true if either of the following alternatives holds:
 	 * <ol>
 	 *   <li>The database IDs are equal</li>
-	 *   <li>The UUIDs are equal</li>
+	 *   <li>The UUIDs are equal or at least one of the UUIDs is null (i.e. they do not have different UUIDs)</li>
 	 *   <li>All of the following attributes are equal:
 	 *     <ul>
 	 *       <li>Product class</li>
@@ -708,7 +739,7 @@ public class Product extends PersistentObject {
 	 *       <li>File class</li>
 	 *       <li>Product quality</li>
 	 *       <li>Production type</li>
-	 *       <li>All product parameters</li>
+	 *       <li>All product parameters present in both products (additional parameters on either product will be ignored)</li>
 	 *     </ul>
 	 *   </li>
 	 * </ol>
@@ -720,19 +751,37 @@ public class Product extends PersistentObject {
 	 */
 	@Override
 	public boolean equals(Object obj) {
+		// Object identity
 		if (this == obj)
 			return true;
+		
+		// Same database object
 		if (super.equals(obj))
 			return true;
+		
+		// Same UUIDs or at least one UUID is null
 		if (!(obj instanceof Product))
 			return false;
 		Product other = (Product) obj;
 		if (uuid.equals(other.uuid))
 			return true;
-		return Objects.equals(configuredProcessor, other.configuredProcessor) && Objects.equals(fileClass, other.fileClass)
+		if (null != uuid && null != other.uuid) // both UUIDs set, and they are different
+			return false;
+		
+		// Overlapping parameters are the same (mandatory, but not sufficient)
+		for (String key: parameters.keySet()) {
+			if (other.parameters.containsKey(key) && !parameters.get(key).equals(other.parameters.get(key))) {
+				return false;
+			}
+		}
+		
+		// All other attributes mentioned above are the same (mandatory and sufficient)
+		return Objects.equals(configuredProcessor, other.configuredProcessor)
+				&& Objects.equals(fileClass, other.fileClass)
 				&& Objects.equals(mode, other.mode)
-				&& Objects.equals(parameters, other.parameters) && Objects.equals(productClass, other.productClass)
-				&& productQuality == other.productQuality && productionType == other.productionType
+				&& Objects.equals(productClass, other.productClass)
+				&& productQuality == other.productQuality
+				&& productionType == other.productionType
 				&& Objects.equals(sensingStartTime, other.sensingStartTime)
 				&& Objects.equals(sensingStopTime, other.sensingStopTime);
 	}

@@ -43,6 +43,8 @@ public class OrderManager implements CommandLineRunner{
 	
 	private CleanupOrdersThread cleanupThread = null;
 
+	public static final String jobNamePrefix = "proseojob";
+	
 	/**
 	 * @return the procOrderManager
 	 */

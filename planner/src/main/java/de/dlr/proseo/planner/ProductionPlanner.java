@@ -22,17 +22,25 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
+
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.ProcessingOrder;
+import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
-import de.dlr.proseo.planner.util.JobStepUtil;
+import de.dlr.proseo.planner.util.OrderPlanThread;
+import de.dlr.proseo.planner.util.OrderReleaseThread;
+import de.dlr.proseo.planner.util.UtilService;
 
 /*
  * prosEO Planner application
@@ -58,8 +66,13 @@ public class ProductionPlanner implements CommandLineRunner {
 	public static String hostName = "localhost";
 	public static String hostIP = "127.0.0.1";
 	public static String port = "8080";
+
+	public static String PLAN_THREAD_PREFIX = "PlanOrder_";
+	public static String RELEASE_THREAD_PREFIX = "ReleaseOrder_";
 	
 	public static ProductionPlannerConfiguration config;
+	
+	public static ProductionPlanner productionPlanner;
 	
 
 	/** 
@@ -67,11 +80,6 @@ public class ProductionPlanner implements CommandLineRunner {
 	 */
 	@Autowired
 	ProductionPlannerConfiguration plannerConfig;
-    /**
-     * Job step util
-     */
-    @Autowired
-    private JobStepUtil jobStepUtil;
 
 	/**
 	 * Current running KubeConfigs
@@ -89,6 +97,16 @@ public class ProductionPlanner implements CommandLineRunner {
 	 */
 	private Map<Long, Map<String, String>> orderPwCache = new HashMap<>();
 	
+	/**
+	 * Current running order planning threads
+	 */
+	private Map<String, OrderPlanThread> planThreads = new HashMap<>();
+
+	/**
+	 * Current running order release threads
+	 */
+	private Map<String, OrderReleaseThread> releaseThreads = new HashMap<>();
+	
 	/** Transaction manager for transaction control */
 	@Autowired
 	private PlatformTransactionManager txManager;
@@ -96,6 +114,95 @@ public class ProductionPlanner implements CommandLineRunner {
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
+
+	/**
+	 * Semaphore to avoid concurrent kubernetes job generation. 
+	 */
+	private Semaphore releaseSemaphore = new Semaphore(1);
+
+	/**
+	 * Semaphore to avoid concurrent db access of threads. 
+	 */
+	private Semaphore threadSemaphore = new Semaphore(1);
+
+	/**
+	 * Collect at planner start all orders of state SUSPENDING
+	 */
+	private List<Long> suspendingOrders = new ArrayList<Long>();
+
+	/**
+	 * Collect at planner start all orders of state RELEASING
+	 */
+	private List<Long> releasingOrders = new ArrayList<Long>();
+
+	/**
+	 * Collect at planner start all orders of state PLANNING
+	 */
+	private List<Long> planningOrders = new ArrayList<Long>();
+
+	/**
+	 * @return the suspendingOrders
+	 */
+	public List<Long> getSuspendingOrders() {
+		return suspendingOrders;
+	}
+
+	/**
+	 * @return the releasingOrders
+	 */
+	public List<Long> getReleasingOrders() {
+		return releasingOrders;
+	}
+
+	/**
+	 * @return the planningOrders
+	 */
+	public List<Long> getPlanningOrders() {
+		return planningOrders;
+	}
+
+	/**
+	 * @return the planThreads
+	 */
+	public Map<String, OrderPlanThread> getPlanThreads() {
+		return planThreads;
+	}
+
+	/**
+	 * @return the releaseThreads
+	 */
+	public Map<String, OrderReleaseThread> getReleaseThreads() {
+		return releaseThreads;
+	}
+
+	/**
+	 * @return the txManager
+	 */
+	public PlatformTransactionManager getTxManager() {
+		return txManager;
+	}
+
+	/**
+	 * @return the em
+	 */
+	public EntityManager getEm() {
+		return em;
+	}
+
+	/**
+	 * @return the releaseSemaphore
+	 */
+	public Semaphore getReleaseSemaphore() {
+		return releaseSemaphore;
+	}
+	
+
+	/**
+	 * @return the threadSemaphore
+	 */
+	public Semaphore getThreadSemaphore() {
+		return threadSemaphore;
+	}
 
 	/**
 	 * Get the user/pw for processing order
@@ -106,7 +213,55 @@ public class ProductionPlanner implements CommandLineRunner {
 	public Map<String, String> getAuth(Long orderId) {
 		return orderPwCache.get(orderId);
 	}
+
+	/**
+	 * Acquires the release semaphore not interruptible 
+	 * @param here
+	 */
+	public void acquireReleaseSemaphore(String here) {
+		if (logger.isTraceEnabled()) logger.trace(">>> acquireReleaseSemaphore({})", here == null ? "null" : here);
+		getReleaseSemaphore().acquireUninterruptibly();
+		if (logger.isTraceEnabled()) logger.trace("<<< acquireReleaseSemaphore({})", here == null ? "null" : here);
+	}
 	
+	/**
+	 * Release the release semaphore
+	 * @param here
+	 */
+	public void releaseReleaseSemaphore(String here) {
+		if (logger.isTraceEnabled()) logger.trace(">>> releaseReleaseSemaphore({})", here == null ? "null" : here);
+		if (getReleaseSemaphore().availablePermits() <= 0) {
+			if (logger.isTraceEnabled()) logger.trace("    released({})", here);
+			getReleaseSemaphore().release();
+		} else {
+			if (logger.isTraceEnabled()) logger.trace("    nothing to release({})", here == null ? "null" : here);
+		}
+	}
+
+	/**
+	 * Acquires the thread semaphore not interruptible 
+	 * @param here
+	 */
+	public void acquireThreadSemaphore(String here) {
+		if (logger.isTraceEnabled()) logger.trace(">>> acquireThreadSemaphore({})", here == null ? "null" : here);
+		getThreadSemaphore().acquireUninterruptibly();
+		if (logger.isTraceEnabled()) logger.trace("<<< acquireThreadSemaphore({})", here == null ? "null" : here);
+	}
+	
+	/**
+	 * Release the thread semaphore
+	 * @param here
+	 */
+	public void releaseThreadSemaphore(String here) {
+		if (logger.isTraceEnabled()) logger.trace(">>> releaseThreadSemaphore({})", here == null ? "null" : here);
+		if (getThreadSemaphore().availablePermits() <= 0) {
+			if (logger.isTraceEnabled()) logger.trace("    released({})", here);
+			getThreadSemaphore().release();
+		} else {
+			if (logger.isTraceEnabled()) logger.trace("    nothing to release({})", here == null ? "null" : here);
+		}
+	}
+
 	/**
 	 * Set or update user/pw of a processing order
 	 * 
@@ -190,7 +345,7 @@ public class ProductionPlanner implements CommandLineRunner {
 				}
 			}
 			if (kubeConfig == null) {
-				kubeConfig = new KubeConfig(pf);
+				kubeConfig = new KubeConfig(pf, this);
 				if (kubeConfig != null && kubeConfig.connect()) {
 					kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
 					Messages.PLANNER_FACILITY_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
@@ -215,6 +370,7 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * @param facilityName the name of the processing facility to connect
 	 * @return the KubeConfig object for this processing facility, or null, if the facility is not connected
 	 */
+	@Transactional
 	public KubeConfig updateKubeConfig(String facilityName) {
 		if (logger.isTraceEnabled()) logger.trace(">>> updateKubeConfig({})", facilityName);
 		
@@ -231,7 +387,7 @@ public class ProductionPlanner implements CommandLineRunner {
 		
 		if (null == kubeConfig) {
 			// Planner does not know facility yet, so create a new KubeConfig object and make sure it can be connected
-			kubeConfig = new KubeConfig(pf);
+			kubeConfig = new KubeConfig(pf, this);
 			if (kubeConfig.connect()) {
 				kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
 				Messages.PLANNER_FACILITY_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
@@ -252,6 +408,38 @@ public class ProductionPlanner implements CommandLineRunner {
 		}
 		return kubeConfig;
 	}
+
+	/**
+	 * Collect the orders in state SUSPENDING, RELEASING and PLANNING, store their ids
+	 * and restart the first.
+	 */
+	private void checkForRestart() {
+		// collect orders in ...ING state	
+		List<ProcessingOrder> orders = RepositoryService.getOrderRepository().findByOrderState(OrderState.SUSPENDING);
+		for (ProcessingOrder order : orders) {
+			// resume the order
+			suspendingOrders.add(order.getId());
+		}
+		orders = RepositoryService.getOrderRepository().findByOrderState(OrderState.RELEASING);
+		for (ProcessingOrder order : orders) {
+			// resume the order
+			releasingOrders.add(order.getId());
+		}
+		orders = RepositoryService.getOrderRepository().findByOrderState(OrderState.PLANNING);
+		for (ProcessingOrder order : orders) {
+			// resume the order
+			planningOrders.add(order.getId());
+		}		
+		UtilService.getOrderUtil().checkNextForRestart();
+	}
+	
+	/**
+	 * Dispatch checkNextForRestart to UtilService
+	 */
+	public void checkNextForRestart() {
+		UtilService.getOrderUtil().checkNextForRestart();
+	}
+	
 	
 	/* (non-Javadoc)
 	 * @see org.springframework.boot.CommandLineRunner#run(java.lang.String[])
@@ -259,20 +447,11 @@ public class ProductionPlanner implements CommandLineRunner {
 	@Override
 	public void run(String... arg0) throws Exception {
 		if (logger.isTraceEnabled()) logger.trace(">>> run({})", arg0.toString());
-		
-		//		
-		//		List<String> pfs = new ArrayList<String>();
-		//		
-		//        for (int i = 0; i < arg0.length; i++) {
-		//        	if (arg0[i].equalsIgnoreCase("-processingfacility") && (i + 1) < arg0.length) {
-		//        		pfs.add(arg0[i+1]);
-		//        	}
-		//        } 
       
 		InetAddress ip;
 		String hostname;
-		// TimeZone.setDefault( TimeZone.getTimeZone( "UTC" ) );
 		config = plannerConfig;
+		productionPlanner = this;
 		try {
 			ip = InetAddress.getLocalHost();
 			hostname = ip.getHostName();
@@ -297,6 +476,8 @@ public class ProductionPlanner implements CommandLineRunner {
 		}
 		
 		this.startDispatcher();
+		
+		checkForRestart();
 	}
 
 	

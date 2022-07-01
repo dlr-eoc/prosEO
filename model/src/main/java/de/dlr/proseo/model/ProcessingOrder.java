@@ -30,6 +30,11 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Transactional;
+
+import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ProductionType;
@@ -50,6 +55,10 @@ import de.dlr.proseo.model.enums.ProductionType;
 	@Index(unique = false, columnList = "execution_time") 
 })
 public class ProcessingOrder extends PersistentObject {
+	/**
+	 * Logger of this class
+	 */
+	private static Logger logger = LoggerFactory.getLogger(ProcessingOrder.class);
 	
 	private static final String MSG_ILLEGAL_STATE_TRANSITION = "Illegal order state transition from %s to %s";
 
@@ -262,6 +271,7 @@ public class ProcessingOrder extends PersistentObject {
 	 * @param orderState the orderState to set
 	 * @throws IllegalStateException if the intended order state transition is illegal
 	 */
+	@Transactional
 	public void setOrderState(OrderState orderState) throws IllegalStateException {
 		if (null == this.orderState || this.orderState.equals(orderState) || this.orderState.isLegalTransition(orderState)) {
 			this.orderState = orderState;
@@ -269,6 +279,125 @@ public class ProcessingOrder extends PersistentObject {
 			throw new IllegalStateException(String.format(MSG_ILLEGAL_STATE_TRANSITION,
 					this.orderState.toString(), orderState.toString()));
 		}
+	}
+
+	/**
+	 * Check whether a processing order state change is required based on the current state of the contained jobs
+	 */
+	@Transactional
+	public void checkStateChange() {
+		hasFailedJobSteps = false;
+		
+		// Check whether the processing order has any jobs at all
+		if (0 == jobs.size()) {
+			if (OrderState.INITIAL.equals(orderState)
+					|| OrderState.APPROVED.equals(orderState)
+					|| OrderState.PLANNING.equals(orderState)
+					|| OrderState.PLANNING_FAILED.equals(orderState)
+					|| OrderState.COMPLETED.equals(orderState)
+					|| OrderState.CLOSED.equals(orderState)) {
+				// Do nothing, as in any of these states the order may have no jobs
+				return;
+			} else {
+				// Something is wrong, so setting the order to FAILED to be able to restart/reset it
+				orderState = OrderState.FAILED;
+				return;
+			}
+		}
+		
+		// Prepare counter for job step states
+		Map<JobState, Integer> jobStateMap = new HashMap<>();
+		for (JobState jobStepState: JobState.values()) {
+			jobStateMap.put(jobStepState, 0);
+		}
+		
+		// Check status of job steps
+		for (Job job: jobs) {
+			// Update job step failure flag
+			hasFailedJobSteps = hasFailedJobSteps || job.hasFailedJobSteps();
+			
+			// Count jobs  per state
+			jobStateMap.put(job.getJobState(), jobStateMap.get(job.getJobState()) + 1);
+		}
+		
+		// Update order state according to distribution of job states
+		int jobCount = jobs.size();
+		int terminatedJobCount = jobStateMap.get(JobState.COMPLETED)
+				+ jobStateMap.get(JobState.FAILED) + jobStateMap.get(JobState.CLOSED);
+		int activeJobCount = jobStateMap.get(JobState.STARTED) + jobStateMap.get(JobState.ON_HOLD);
+		
+		// First check, whether all jobs are finished
+		if (jobCount == jobStateMap.get(JobState.CLOSED)) {
+			// All jobs are CLOSED
+			orderState = OrderState.CLOSED;
+			Duration retPeriod = getMission().getOrderRetentionPeriod();
+			if (retPeriod != null && getProductionType() == ProductionType.SYSTEMATIC) {
+				setEvictionTime(Instant.now().plus(retPeriod));
+				orderState = OrderState.CLOSED;
+			}
+		} else if (jobCount == terminatedJobCount) {
+			// All jobs are terminated in some way
+			if (0 < jobStateMap.get(JobState.FAILED)) {
+				orderState = OrderState.FAILED;
+			} else {
+				orderState = OrderState.COMPLETED;
+			}
+		// We still have unfinished jobs   && 0 < terminatedJobCount
+		} else if (0 == activeJobCount) {
+			// At least one job has terminated, but none is currently active
+			if (OrderState.SUSPENDING.equals(orderState)) {
+				orderState = OrderState.PLANNED;
+			} else if (OrderState.RELEASING.equals(orderState)) {
+				// Keep status until all jobs are released
+				if (0 == jobStateMap.get(JobState.PLANNED)) {
+					orderState = OrderState.RUNNING;
+				}
+			} else {
+				// keep state
+				// orderState = OrderState.RUNNING;
+			}
+		} else if (0 < activeJobCount) {
+			// At least one job is active
+			if (OrderState.SUSPENDING.equals(orderState)) {
+				// Do nothing, suspended order is waiting for active jobs to terminate
+			} else if (OrderState.RELEASING.equals(orderState)) {
+				// Keep status until all jobs are released
+				if (0 == jobStateMap.get(JobState.PLANNED)) {
+					orderState = OrderState.RUNNING;
+				}
+			} else if (orderState == OrderState.PLANNED) {
+				// The complete order was suspended and some job steps finished later
+				// keep the order state
+				orderState = OrderState.PLANNED;
+			} else {
+				orderState = OrderState.RUNNING;
+			}
+		// No active and no terminated jobs
+		} else if (0 < jobStateMap.get(JobState.RELEASED)) {
+			// The order was released, but jobs are waiting to start
+			if (OrderState.RELEASING.equals(orderState)) {
+				if (jobCount == jobStateMap.get(JobState.RELEASED)) {
+					// All jobs are released
+					orderState = OrderState.RELEASED;
+				} else {
+					// Do nothing, there are still jobs to release
+				}
+			} else {
+				orderState = OrderState.RELEASED;
+			}
+		// All jobs should be either in state INITIAL or in state PLANNED
+		} else if (jobCount == jobStateMap.get(JobState.PLANNED)) {
+			// All jobs are planned
+			orderState = OrderState.PLANNED;
+		} else {
+			if (OrderState.PLANNING_FAILED.equals(orderState)) {
+				// Do nothing, further way of action to be decided by operator
+			} else {
+				// We do have jobs, but they are not fully planned yet
+				orderState = OrderState.PLANNING;
+			}
+		}
+		
 	}
 
 	/**
@@ -710,4 +839,5 @@ public class ProcessingOrder extends PersistentObject {
 				+ ", classOutputParameters=" + classOutputParameters + ", processingMode=" + processingMode
 				+ ", productionType=" + productionType + ", hasFailedJobSteps=" + hasFailedJobSteps + "]";
 	}
+
 }

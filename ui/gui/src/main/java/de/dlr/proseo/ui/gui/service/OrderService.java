@@ -136,7 +136,7 @@ public class OrderService {
 	public Mono<ClientResponse> getJobsOfOrder(String id,Long from, Long to) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
-		String uri = config.getProductionPlanner() + "/jobs";
+		String uri = config.getOrderManager() + "/orderjobs";
 		// get one order identified by id.
 		String divider = "?";
 		if(null != id && !id.trim().isEmpty()) {

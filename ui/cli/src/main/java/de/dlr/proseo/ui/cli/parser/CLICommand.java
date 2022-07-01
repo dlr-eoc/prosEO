@@ -141,4 +141,57 @@ public class CLICommand {
 	}
 
 
+	/**
+	 * Appends the StringBuilder provided by the caller with HTML code that prints a
+	 * table with the command's name and description and calls - if applicable - the
+	 * printHTML() methods of subcommands, options and parameters.
+	 * 
+	 * @param htmlDoc A StringBuilder that may already contain information.
+	 * @return The same StringBuilder, appended information on the command.
+	 */
+	public StringBuilder printHTML(StringBuilder htmlDoc) {
+
+		htmlDoc.append("<table>")
+				.append("<tr>" + "<td>" + "Command" + "</td>" + "<td>" + "<strong>" + this.name + "</strong>" + "</td>"
+						+ "</tr>")
+				.append("<tr>" + "<td>" + "Description" + "</td>" + "<td>" + this.description + "." + "</td>"
+						+ "</tr>");
+
+		// Subcommands:
+		if (this.subcommands != null) {
+			htmlDoc.append("<tr><td>Subcommands</td><td>");
+
+			for (CLICommand subcommand : this.subcommands) {
+				subcommand.printHTML(htmlDoc);
+			}
+
+			htmlDoc.append("</td></tr>");
+		}
+
+		// Options:
+		if (this.options != null) {
+			htmlDoc.append("<tr><td>Options</td><td>");
+
+			for (CLIOption option : this.options) {
+				option.printHTML(htmlDoc);
+			}
+
+			htmlDoc.append("</td></tr>");
+		}
+
+		// Parameters:
+		if (this.parameters != null) {
+			htmlDoc.append("<tr><td>Parameters</td><td>");
+
+			for (CLIParameter parameter : this.parameters) {
+				parameter.printHTML(htmlDoc);
+			}
+
+			htmlDoc.append("</td></tr>");
+		}
+
+		htmlDoc.append("</table>").append("<br>");
+		return htmlDoc;
+	}
+
 }

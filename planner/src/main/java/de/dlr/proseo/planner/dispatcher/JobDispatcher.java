@@ -147,7 +147,7 @@ public class JobDispatcher {
 
 			} catch (Exception e) {
 				e.printStackTrace();
-				jobOrder = null;
+				throw e;
 			}
 
 			// write a job order file for test purposes

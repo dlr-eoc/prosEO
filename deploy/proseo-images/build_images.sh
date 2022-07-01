@@ -2,13 +2,14 @@
 set -e
 
 TAG_SUFFIX="proseo"
+PLATFORM=${PROSEO_PLATFORM:-linux/amd64}
 
 function build_component {
   echo "Building $component"
   cd $component
   TAGGED_IMAGENAME=$(cat Dockerfile | grep FROM | awk '{gsub("localhost:5000/",""); split($0,a," "); print a[2]}')-$TAG_SUFFIX
   echo "Image name: $TAGGED_IMAGENAME"
-  docker build -t $REGISTRY/$TAGGED_IMAGENAME .
+  docker build -t $REGISTRY/$TAGGED_IMAGENAME --platform ${PLATFORM} .
   cd - >/dev/null
 }
 

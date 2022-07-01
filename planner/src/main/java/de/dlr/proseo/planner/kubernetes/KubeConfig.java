@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
@@ -59,6 +60,11 @@ public class KubeConfig {
 	 * Logger of this class 
 	 */
 	private static Logger logger = LoggerFactory.getLogger(KubeConfig.class);
+
+	/**
+	 * The production planner instance
+	 */
+	private ProductionPlanner productionPlanner;
 	
 	/**
 	 * Map containing the created Kubernetes jobs
@@ -154,6 +160,13 @@ public class KubeConfig {
 	
 	/** Password for connecting to the Storage Manager (locally and from external services) */
 	private String storageManagerPassword;
+
+	/**
+	 * @return the productionPlanner
+	 */
+	public ProductionPlanner getProductionPlanner() {
+		return productionPlanner;
+	}
 
 	/**
 	 * @return the maxJobsPerNode
@@ -301,8 +314,9 @@ public class KubeConfig {
 	 * Instantiate a KubeConfig object with a processing facility
 	 * @param pf the processing facility to set
 	 */
-	public KubeConfig(ProcessingFacility pf) {
+	public KubeConfig(ProcessingFacility pf, ProductionPlanner planner) {
 		setFacility(pf);
+		productionPlanner = planner;
 	}
 	
 	/**
@@ -511,49 +525,52 @@ public class KubeConfig {
 			KubeJob kj = kubeJobList.get(kName);
 			if (kj != null) {
 				if (kj.updateFinishInfoAndDelete(kName)) {
-					
-				}
+
+				}	
 			}			
 		}
 		// get all job steps of DB with states RUNNING
-		List<de.dlr.proseo.model.JobStep.JobStepState> jobStepStates = new ArrayList<>();
-		jobStepStates.add(de.dlr.proseo.model.JobStep.JobStepState.RUNNING);
-		List<JobStep> runningJobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(processingFacility.getId(), jobStepStates);
-		// These job steps has to be in Kubernetes job list. If not, there was a problem. Set it to failed.
-		for (JobStep js : runningJobSteps) {
-			String aName = ProductionPlanner.jobNamePrefix + js.getId();
-			// If no job with this name is running, change state to FAILED and set info in log
-			if (!kJobs.containsKey(aName)) {
-				Product jsp = js.getOutputProduct();
-				Boolean wasFailed = true;
-				
-				if (jsp != null) {
-					// collect output products
-					List<Product> jspList = new ArrayList<Product>();
-					UtilService.getJobStepUtil().collectProducts(jsp, jspList);
-					if (UtilService.getJobStepUtil().checkProducts(jspList, js.getJob().getProcessingFacility())) {
-						js.setJobStepState(JobStepState.COMPLETED);
-						wasFailed = false;
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		final String dummy = transactionTemplate.execute((status) -> {
+			List<de.dlr.proseo.model.JobStep.JobStepState> jobStepStates = new ArrayList<>();
+			jobStepStates.add(de.dlr.proseo.model.JobStep.JobStepState.RUNNING);
+			List<JobStep> runningJobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(processingFacility.getId(), jobStepStates);
+			// These job steps has to be in Kubernetes job list. If not, there was a problem. Set it to failed.
+			for (JobStep js : runningJobSteps) {
+				String aName = ProductionPlanner.jobNamePrefix + js.getId();
+				// If no job with this name is running, change state to FAILED and set info in log
+				if (!kJobs.containsKey(aName)) {
+					Product jsp = js.getOutputProduct();
+					Boolean wasFailed = true;
+
+					if (jsp != null) {
+						// collect output products
+						List<Product> jspList = new ArrayList<Product>();
+						UtilService.getJobStepUtil().collectProducts(jsp, jspList);
+						if (UtilService.getJobStepUtil().checkProducts(jspList, js.getJob().getProcessingFacility())) {
+							js.setJobStepState(JobStepState.COMPLETED);
+							wasFailed = false;
+						} else {
+							js.setJobStepState(JobStepState.FAILED);
+						}
 					} else {
 						js.setJobStepState(JobStepState.FAILED);
 					}
-				} else {
-					js.setJobStepState(JobStepState.FAILED);
-				}
-				
-				js.incrementVersion();
-				String stdout = js.getProcessingStdOut();
-				if (stdout == null) {
-					stdout = "";
-				}
-				if (wasFailed) {
-					js.setProcessingStdOut("Job on Processing Facility was deleted/canceled by others (e.g. operator) or crashed\n\n" + stdout);
-				}
-				js = RepositoryService.getJobStepRepository().save(js);
-				UtilService.getJobUtil().updateState(js.getJob(), js.getJobStepState());
-				UtilService.getJobStepUtil().checkFinish(js);
-			}			
-		}		
+
+					js.incrementVersion();
+					String stdout = js.getProcessingStdOut();
+					if (stdout == null) {
+						stdout = "";
+					}
+					if (wasFailed) {
+						js.setProcessingStdOut("Job on Processing Facility was deleted/canceled by others (e.g. operator) or crashed\n\n" + stdout);
+					}
+					js = RepositoryService.getJobStepRepository().save(js);
+					UtilService.getJobStepUtil().checkFinish(js);
+				}			
+			}	
+			return null;
+		});
 	}
 	/**
 	 * Retrieve all pods of cluster

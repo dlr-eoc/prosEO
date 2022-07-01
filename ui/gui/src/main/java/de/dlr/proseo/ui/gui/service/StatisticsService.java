@@ -46,7 +46,7 @@ public class StatisticsService {
 	public Mono<ClientResponse> getJobsteps(String status, Long last) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
-		String uri = config.getProductionPlanner() + "/jobsteps?status=" + status;
+		String uri = config.getOrderManager() + "/orderjobsteps?status=" + status;
 		uri += "&mission=" + mission;
 		if (last != null && last > 0) {
 			uri += "&last=" + last;
@@ -71,8 +71,8 @@ public class StatisticsService {
 		Object result = null;
 		String jobId = "";
 		try {
-			result = serviceConnection.getFromService(config.getProductionPlanner(),
-					"/jobs/" + id, HashMap.class,  auth.getProseoName(), auth.getPassword());
+			result = serviceConnection.getFromService(config.getOrderManager(),
+					"/orderjobs/" + id, HashMap.class,  auth.getProseoName(), auth.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {

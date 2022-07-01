@@ -227,14 +227,18 @@ dropdown-item {
 td, th {
   border: 1px solid #dddddd;
   text-align: left;
-  padding: 0.25rem !important;
+  padding: 0.25rem;
+}
+
+.nopadding {
+  padding: 0rem;
 }
 
 .table td, 
 .table th {
   border: 1px solid #dddddd;
   text-align: left;
-  padding: 0.25rem !important;
+  padding: 0.25rem;
 }
 
 .first-row {  
@@ -505,11 +509,23 @@ code {
 .PLANNED {
   background-color: #ffeeba !important;
 }
+.PLANNING-c {
+  color: #ffeeba !important;
+}
+.PLANNING {
+  background-color: #ffeeba !important;
+}
 
 .RELEASED-c {
   color: #ffeeba !important;
 }
 .RELEASED {
+  background-color: #ffeeba !important;
+}
+.RELEASING-c {
+  color: #ffeeba !important;
+}
+.RELEASING {
   background-color: #ffeeba !important;
 }
 

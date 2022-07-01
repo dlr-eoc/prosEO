@@ -188,6 +188,7 @@ public class RestUtil {
 			}
 			pjs.setStderrLogLevel(StderrLogLevel.fromValue(js.getStderrLogLevel().toString()));
 			pjs.setStdoutLogLevel(StdoutLogLevel.fromValue(js.getStdoutLogLevel().toString()));
+			pjs.setIsFailed(js.getIsFailed() == null ? false : js.getIsFailed());
 			pjs.setJobId(js.getJob() == null ? null : js.getJob().getId());
 			if (js.getOutputProduct() != null && js.getOutputProduct().getProductClass() != null && js.getOutputProduct().getProductClass().getProductType() != null) {
 				pjs.setOutputProductClass(js.getOutputProduct().getProductClass().getProductType());

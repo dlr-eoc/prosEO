@@ -458,9 +458,16 @@ public class AuxipMonitor extends BaseMonitor {
         			"Basic " + Base64.getEncoder().encode((config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes());
 		
 		// Create query filter for all product types configured
-		StringBuilder queryFilter = new StringBuilder("(false");
+		// Note: 'false' literal not implemented in some AUXIPs, therefore approach "false or ..." does not work
+		StringBuilder queryFilter = new StringBuilder("(");
+		boolean firstFilter = true;
 		for (String productType: config.getAuxipProductTypes()) {
-			queryFilter.append(" or startswith(Name,'").append(productType).append("')");
+			if (firstFilter) {
+				firstFilter = false;
+			} else {
+				queryFilter.append(" or ");
+			}
+			queryFilter.append("startswith(Name,'").append(productType).append("')");
 		}
 		queryFilter.append(") and PublicationDate gt ").append(referenceTimeStamp);
 		
