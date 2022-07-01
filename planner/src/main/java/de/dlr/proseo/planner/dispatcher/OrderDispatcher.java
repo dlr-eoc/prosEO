@@ -1045,13 +1045,24 @@ public class OrderDispatcher {
 				(null == job ? "null" : job.getId()), (null == js ? "null" : js), fileClass, startTime, stopTime);
 		
 		Product product = createProduct(productClass, enclosingProduct, cp, orbit, job, js, fileClass, startTime, stopTime);
+
 		if (product != null) {
-			products.add(product);
-		}
-		for (ProductClass pc : productClass.getComponentClasses()) {
-			Product p = createProducts(pc, product, cp, orbit, job, null, fileClass, startTime, stopTime, products);
-			if (p != null && product != null) {
-				product.getComponentProducts().add(p);
+			for (ProductClass pc : productClass.getComponentClasses()) {
+				Product p = createProducts(pc, product, cp, orbit, job, null, fileClass, startTime, stopTime, products);
+				if (p != null && product != null) {
+					product.getComponentProducts().add(p);
+				}
+			}
+
+			// We only add products, if they are not expected to have component products, or else if component products
+			// have actually been generated
+			if (productClass.getComponentClasses().isEmpty() || !product.getComponentProducts().isEmpty()) {
+				products.add(product);
+			} else {
+				logger.trace("... no component products generated, dropping generated product");
+				RepositoryService.getProductRepository().delete(product);
+				product = null;
+				js.setOutputProduct(null);
 			}
 		}
 		return product;
@@ -1079,8 +1090,8 @@ public class OrderDispatcher {
 				(null == job ? "null" : job.getId()), (null == js ? "null" : js), fileClass, startTime, stopTime);
 		
 		Product p = new Product();
+		// Do not set UUID before checking for existing products, otherwise Product::equals() will always fail!
 		p.getParameters().clear();
-		p.setUuid(UUID.randomUUID());
 		p.getParameters().putAll(job.getProcessingOrder().getOutputParameters(productClass));
 		p.setProductClass(productClass);
 		p.setConfiguredProcessor(cp);
@@ -1100,16 +1111,24 @@ public class OrderDispatcher {
 		}
 		// check if product exists
 		// use configured processor, product class, sensing start and stop time
-		for (Product foundProduct : RepositoryService.getProductRepository()
+		List<Product> foundProducts = RepositoryService.getProductRepository()
 				.findByProductClassAndConfiguredProcessorAndSensingStartTimeAndSensingStopTime(
 						productClass.getId(),
 						cp.getId(),
 						startTime,
-						stopTime)) {
+						stopTime);
+		logger.trace("... found {} products with product class {}, configured processor {}, start time {} and stop time {}",
+				productClass.getProductType(), cp.getIdentifier(), startTime, stopTime);
+		for (Product foundProduct : foundProducts) {
+			logger.trace("... testing product with ID {}", foundProduct.getId());
 			if (foundProduct.equals(p)) {
+				logger.trace("    ... fulfills 'equals'");
 				if (!foundProduct.getProductFile().isEmpty()) {
+					logger.trace("    ... has product files");
 					for (ProductFile foundFile : foundProduct.getProductFile()) {
+						logger.trace("        ... at facility {} (requested: {})", foundFile.getProcessingFacility().getName(), job.getProcessingFacility().getName());
 						if (foundFile.getProcessingFacility().equals(job.getProcessingFacility())) {
+							logger.trace("            ... skipping job step ('return null')");
 							// it exists, nothing to do
 							return null;
 						}
@@ -1118,6 +1137,8 @@ public class OrderDispatcher {
 			}
 		}
 
+		// New product, now we can safely set the UUID and store the product
+		p.setUuid(UUID.randomUUID());
 		p = RepositoryService.getProductRepository().save(p);
 		if (js != null) {
 			js.setOutputProduct(p);
