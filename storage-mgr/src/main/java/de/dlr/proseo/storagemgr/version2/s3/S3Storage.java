@@ -451,34 +451,34 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Adds file system prefix to the path
+	 * Adds file system prefix and bucket to the path
 	 * 
 	 * @param path path to extend
-	 * @return file system prefix + path
+	 * @return file system prefix + bucket + path
 	 */
 	@Override
-	public String addFSPrefix(String path) {
+	public String addFSPrefixWithBucket(String path) {
 
 		String prefix = StorageType.S3.toString() + "|";
-		return prefix + path;
+		return new PathConverter(prefix, getBucket(), path).getPath();
 	}
 
 	/**
-	 * Adds file system prefix to paths
+	 * Adds file system prefix and bucket to paths
 	 * 
 	 * @param paths paths to extend
-	 * @return list of file system prefix + path
+	 * @return list of file system prefix + bucket + path
 	 */
 	@Override
-	public List<String> addFSPrefix(List<String> paths) {
+	public List<String> addFSPrefixWithBucket(List<String> paths) {
 
-		List<String> pathsWithPrefix = new ArrayList<>();
+		List<String> pathsWithPrefixAndBucket = new ArrayList<>();
 
 		for (String path : paths) {
-			String pathWithPrefix = addFSPrefix(path);
-			pathsWithPrefix.add(pathWithPrefix);
+			String pathWithPrefixAndBucket = addFSPrefixWithBucket(path);
+			pathsWithPrefixAndBucket.add(pathWithPrefixAndBucket);
 		}
 
-		return pathsWithPrefix;
+		return pathsWithPrefixAndBucket;
 	}
 }

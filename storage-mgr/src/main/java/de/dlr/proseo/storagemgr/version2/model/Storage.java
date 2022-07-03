@@ -238,18 +238,18 @@ public interface Storage {
 	public String deleteFile(StorageFile storageFileOrDir) throws IOException;
 
 	/**
-	 * Adds file system prefix to the path
+	 * Adds file system prefix and bucket to the path
 	 * 
 	 * @param path path to extend
-	 * @return file system prefix + path
+	 * @return file system prefix + bucket + path
 	 */
-	public String addFSPrefix(String path);
+	public String addFSPrefixWithBucket(String path);
 
 	/**
-	 * Adds file system prefix to paths
+	 * Adds file system prefix and bucket to paths
 	 * 
 	 * @param paths paths to extend
-	 * @return list of file system prefix + path
+	 * @return list of file system prefix + bucket + path
 	 */
-	public List<String> addFSPrefix(List<String> paths);
+	public List<String> addFSPrefixWithBucket(List<String> paths);
 }
