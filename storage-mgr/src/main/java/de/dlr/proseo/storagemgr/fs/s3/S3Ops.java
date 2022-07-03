@@ -21,6 +21,7 @@ import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.AmazonS3URI;
 import com.amazonaws.services.s3.model.DeleteObjectsRequest;
@@ -32,6 +33,9 @@ import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import alluxio.exception.FileAlreadyExistsException;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.version2.StorageProvider;
+import de.dlr.proseo.storagemgr.version2.model.Storage;
+import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
@@ -104,6 +108,18 @@ public class S3Ops {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> listObjectsInBucket({}, {}, {})", s3, bucketName, prefix);
 		
+		// Amazon v1 problems, that's why this change. 
+		// To rollback delete everything before the next comment block and uncomment the block
+		
+		List<String> response; 
+		Storage storage = StorageProvider.getInstance().getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.S3); 
+		
+		response = storage.getFiles(prefix);
+		response = storage.addFSPrefixWithBucket(response);
+		
+		return response; 
+
+		/*
 		Boolean isTopLevel = false;
 		String delimiter = "/";
 		if (prefix == "" || prefix == "/") {
@@ -132,6 +148,7 @@ public class S3Ops {
 			}
 		}
 		return folderLike;
+		*/
 	}
 
 	/**
@@ -143,7 +160,14 @@ public class S3Ops {
 	public static ArrayList<String> listBuckets(S3Client s3) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> listBuckets({})", s3);
-			
+		
+		// Amazon v1 problems, that's why this change. 
+		// To rollback delete everything before the next comment block and uncomment the block
+		ArrayList<String> buckets = (ArrayList<String>) StorageProvider.getInstance()
+				.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.S3).getBuckets();
+		return buckets;
+
+		/*
 		ArrayList<String> buckets = new ArrayList<String>();
 		ListBucketsRequest listBucketsRequest = ListBucketsRequest.builder().build();
 		ListBucketsResponse listBucketsResponse = null;
@@ -155,6 +179,7 @@ public class S3Ops {
 		}
 		listBucketsResponse.buckets().stream().forEach(x -> buckets.add(x.name()));
 		return buckets;
+		*/
 	}
 
 	/**
@@ -222,16 +247,24 @@ public class S3Ops {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> v1S3Client({}, {}, {}, {}))", "***", "***", s3Endpoint, region);
 		
-		try {
-
+		try {	 
 			BasicAWSCredentials awsCreds = new BasicAWSCredentials(s3AccessKey, secretAccessKey);
 			ClientConfiguration clientConfiguration = new ClientConfiguration();
 			clientConfiguration.setSignerOverride("AWSS3V4SignerType");
+		
 			AmazonS3 amazonS3 = AmazonS3ClientBuilder.standard()
 					.withEndpointConfiguration(
 							new AwsClientBuilder.EndpointConfiguration(s3Endpoint, Region.of(region).id()))
 					.withPathStyleAccessEnabled(true).withClientConfiguration(clientConfiguration)
 					.withCredentials(new AWSStaticCredentialsProvider(awsCreds)).build();
+		
+			/*
+			AmazonS3 amazonS3 = AmazonS3ClientBuilder.standard()
+			            .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(s3AccessKey, secretAccessKey)))
+			            .withClientConfiguration(clientConfiguration)
+			            .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Endpoint, region)).build();
+			 */
+			
 			return amazonS3;
 		} catch (AmazonServiceException e) {
 			logger.error(e.getMessage());
@@ -412,11 +445,10 @@ public class S3Ops {
 	 * @param targetKeyPrefix The key in the bucket to store the file
 	 * @param pause       (not used)
 	 * @return a single-element list of keys uploaded or null, if the operation failed
-	 * @throws AmazonClientException if an error occurred during communication with the S3 backend storage
-	 * @throws InterruptedException if the wait for the upload completion was interrupted
+	 * @throws Exception 
 	 */
 	public static ArrayList<String> v1UploadFile(AmazonS3 v1S3Client, String sourceFilePath, String targetBucketName, String targetKeyPrefix,
-			boolean pause) throws AmazonClientException, InterruptedException {
+			boolean pause) throws Exception {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> v1UploadFile({}, {}, {}, {}, {})", 
 				v1S3Client, sourceFilePath, targetBucketName, targetKeyPrefix, pause);
@@ -438,9 +470,13 @@ public class S3Ops {
 
 			for (int i = 1; i <= MAX_UPLOAD_RETRIES ; ++i) {
 				try {
-					transferManager
-					.upload(bucket, targetKeyName, f)
-						.waitForCompletion();
+					
+					StorageFile sourceFile = StorageProvider.getInstance().getAbsoluteFile(sourceFilePath);
+					StorageFile targetFile = StorageProvider.getInstance().getStorageFile(targetKeyName);
+
+					StorageProvider.getInstance().getStorage().uploadFile(sourceFile, targetFile);
+					
+					// transferManager.upload(bucket, targetKeyName, f).waitForCompletion();
 					// Success, so no retry required
 					break;
 				} catch (Exception e) {
@@ -489,7 +525,11 @@ public class S3Ops {
 		ArrayList<String> response = null;
 		try {
 			if (f.isFile()) {
-				response = v1UploadFile(v1S3Client, sourcePath, targetBucketName, targetPathPrefix, false);
+				try {
+					response = v1UploadFile(v1S3Client, sourcePath, targetBucketName, targetPathPrefix, false);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 			if (f.isDirectory()) {
 				response = v1UploadDir(v1S3Client, sourcePath, targetBucketName, targetPathPrefix, true, false);
@@ -662,6 +702,12 @@ public class S3Ops {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> getLength({}, {}, {})", client, bucketName, key);
 		
+		// Amazon v1 problems, that's why this change. 
+		// To rollback delete everything before the next comment block and uncomment the block
+		StorageFile storageFile = StorageProvider.getInstance().getStorage().getStorageFile(key);
+		return StorageProvider.getInstance().getStorage().getFileSize(storageFile);
+		
+		/*
 		ObjectMetadata md;
 		try {
 			md = client.getObjectMetadata(bucketName, key);
@@ -676,6 +722,7 @@ public class S3Ops {
 			return md.getContentLength();
 		}
 		return 0;
+		*/
 	}
 
 }
