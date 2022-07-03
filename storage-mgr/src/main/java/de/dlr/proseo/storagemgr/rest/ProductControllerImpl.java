@@ -259,23 +259,19 @@ public class ProductControllerImpl implements ProductController {
 
 			try {
 				List<String> response; 
-				Storage storage = storageProvider.getStorage(); 
 				
 				if (storageType == null) { // add both 
 					
-					storageProvider.setStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.S3);
-					response = storageProvider.getStorage().getFiles(prefix);
-					response = storageProvider.getStorage().addFSPrefix(response);
+					response = storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.S3).getFiles(prefix);
+					response = storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.S3).addFSPrefixWithBucket(response);
 					
-					storageProvider.setStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.POSIX);
-					response.addAll(storageProvider.getStorage().getFiles(prefix));
-					response = storageProvider.getStorage().addFSPrefix(response);
+					response.addAll(storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.POSIX).getFiles(prefix));
+					response = storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.POSIX).addFSPrefixWithBucket(response);
 					
 				} else { 
 					
-					storageProvider.setStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.valueOf(storageType));
-					response = storageProvider.getStorage().getFiles(prefix);		
-					response = storageProvider.getStorage().addFSPrefix(response);
+					response = storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.valueOf(storageType)).getFiles(prefix);		
+					response = storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.valueOf(storageType)).addFSPrefixWithBucket(response);
 				}
 				
 				return new ResponseEntity<>(response, HttpStatus.OK);

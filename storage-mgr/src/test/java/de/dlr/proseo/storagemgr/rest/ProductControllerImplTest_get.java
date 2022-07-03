@@ -32,6 +32,7 @@ import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
 import de.dlr.proseo.storagemgr.rest.model.RestProductFS;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
+import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 /**
@@ -154,24 +155,31 @@ public class ProductControllerImplTest_get {
 
 		TestUtils.printMethodName(this, testName);
 
-		// create unique source pathes
-		String prefix = "prodContrGet";
-		List<String> pathes = new ArrayList<>();
-		pathes.add(new PathConverter(prefix, "file1.txt").getPath());
-		pathes.add(new PathConverter(prefix, "file2.txt").getPath());
-		pathes.add(new PathConverter(prefix, "dir/file3.txt").getPath());
+		// create source paths
+		String prefix = "prodGetPrefix";
+		List<String> relativePaths = new ArrayList<>();
+		relativePaths.add(new PathConverter(prefix, "productGet1.txt").getPath());
+		relativePaths.add(new PathConverter(prefix, "productGet2.txt").getPath());
+		relativePaths.add(new PathConverter(prefix, "productGetDir/productGet3.txt").getPath());
 
-		for (String path : pathes) {
-
-			storageTestUtils.createSourceFile(path);
-			storageTestUtils.uploadToPosixStorage(path);
+		for (String relativePath : relativePaths) {
+			
+			// create file in source 
+			storageTestUtils.createSourceFile(relativePath);
+			
+			// upload file to storage from source
+			storageProvider.getStorage().uploadSourceFile(relativePath);
 		}
 		
+		// show files in storage
 		List<String> storageFiles = storageProvider.getStorage().getFiles();	
 		TestUtils.printList("Storage Files before HTTP call", storageFiles);
 
+		// HTTP Get files from storage
+		String absolutePrefix = new PathConverter(storageProvider.getSourcePath(), prefix).getPath();
+		
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
-				.param("storageType", storageType.toString()).param("prefix", prefix);
+				.param("storageType", storageType.toString()).param("prefix", absolutePrefix);
 
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
 
