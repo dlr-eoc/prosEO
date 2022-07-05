@@ -2,8 +2,6 @@ package de.dlr.proseo.storagemgr.rest;
 
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -18,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -27,9 +24,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
-import de.dlr.proseo.storagemgr.UniqueStorageTestPaths;
-import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
-import de.dlr.proseo.storagemgr.rest.model.RestProductFS;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
@@ -53,9 +47,6 @@ public class ProductControllerImplTest_get {
 	private MockMvc mockMvc;
 
 	@Autowired
-	private TestUtils testUtils;
-
-	@Autowired
 	private StorageTestUtils storageTestUtils;
 	
  	@Autowired
@@ -75,7 +66,7 @@ public class ProductControllerImplTest_get {
 	 */
 	@Test
 	public void testGet_v2Posix() throws Exception {
-
+		
 		StorageType storageType = StorageType.POSIX; 
 		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
@@ -117,7 +108,7 @@ public class ProductControllerImplTest_get {
 	 */
 	@Test
 	public void testGet_v2S3() throws Exception {
-
+		
 		StorageType storageType = StorageType.S3; 
 		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
@@ -150,7 +141,6 @@ public class ProductControllerImplTest_get {
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
 
-
 	private void getProductFiles(StorageType storageType) throws Exception {
 
 		TestUtils.printMethodName(this, testName);
@@ -168,21 +158,22 @@ public class ProductControllerImplTest_get {
 			storageTestUtils.createSourceFile(relativePath);
 			
 			// upload file to storage from source
-			storageProvider.getStorage().uploadSourceFile(relativePath);
+			StorageFile sourceFile = storageProvider.getSourceFile(relativePath);
+			StorageFile targetFile = storageProvider.getStorageFile(relativePath);
+			storageProvider.getStorage().uploadFile(sourceFile, targetFile);
 		}
 		
-		// show files in storage
+		// show files in storage before http call
 		List<String> storageFiles = storageProvider.getStorage().getFiles();	
 		TestUtils.printList("Storage Files before HTTP call", storageFiles);
 
-		// HTTP Get files from storage
-		String absolutePrefix = new PathConverter(storageProvider.getSourcePath(), prefix).getPath();
-		
+		// HTTP Get files from storage		
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
-				.param("storageType", storageType.toString()).param("prefix", absolutePrefix);
+				.param("storageType", storageType.toString()).param("prefix", prefix);
 
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
 
+		// show results of http-upload
 		System.out.println("REQUEST: " + REQUEST_STRING);
 		System.out.println("Status: " + mvcResult.getResponse().getStatus());
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
@@ -191,5 +182,12 @@ public class ProductControllerImplTest_get {
 		// String json = mvcResult.getResponse().getContentAsString();
 		// RestFileInfo result = new ObjectMapper().readValue(json, RestFileInfo.class);
 		// String realCachePath = result.getFilePath();		
+		
+		// delete storage file with prefix
+		storageProvider.getStorage().delete(prefix);
+		
+		// show files in storage after deletion
+		storageFiles = storageProvider.getStorage().getFiles();	
+		TestUtils.printList("Storage Files after deletion", storageFiles);
 	}
 }
