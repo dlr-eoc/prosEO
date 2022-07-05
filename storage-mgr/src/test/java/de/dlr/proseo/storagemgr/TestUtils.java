@@ -16,6 +16,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.storagemgr.version2.FileUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
+import de.dlr.proseo.storagemgr.version2.StorageProvider;
+import de.dlr.proseo.storagemgr.version2.model.Storage;
+import de.dlr.proseo.storagemgr.version2.model.StorageFile;
+import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 /**
  * @author Denys Chaykovskiy
@@ -31,6 +35,9 @@ public class TestUtils {
 	private static final String TEST_DIRECTORY = "testdata";
 	private static final String TARGET_DIRECTORY = "target";
 
+	@Autowired
+	private StorageProvider storageProvider; 
+	
 	@Autowired
 	private StorageManagerConfiguration cfg;
 
@@ -422,6 +429,45 @@ public class TestUtils {
 			return new ObjectMapper().writeValueAsString(obj);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
+		}
+	}
+	
+	/**
+	 */
+	public void deleteFilesinS3Storage() {
+		
+		deleteFilesInStorage(StorageType.S3); 
+	}
+	
+	/**
+	 */
+	public void deleteFilesinPosixStorage() {
+		
+		deleteFilesInStorage(StorageType.POSIX); 
+	}
+	
+	/**
+	 */
+	private void deleteFilesInStorage(StorageType storageType) {
+		
+		File file = new File(getStoragePath());
+
+		if (!file.getPath().contains(TEST_DIRECTORY)) {
+
+			System.out.println("Attempt to delete " + storageType.toString() + " storage files not from unit test: " + getStoragePath());
+			return;
+		}
+				
+		Storage storage = storageProvider.getStorage(storageType);
+		List<String> relativePaths = storage.getFiles();
+		
+		for(String relativePath : relativePaths) {
+			StorageFile storageFile = storage.getStorageFile(relativePath);
+			try {
+				storage.delete(storageFile);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 }
