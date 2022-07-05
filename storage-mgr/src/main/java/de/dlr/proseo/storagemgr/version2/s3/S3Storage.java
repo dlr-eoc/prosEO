@@ -451,6 +451,24 @@ public class S3Storage implements Storage {
 	}
 
 	/**
+	 * Deletes file or directory recursively from the storage
+	 * 
+	 * @param relativeFileOrDir Storage file or directory to delete
+	 * @return list of deleted files from storage
+	 * @throws IOException if file or directory cannot be deleted
+	 */
+	@Override
+	public List<String> delete(String relativeFileOrDir) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> delete({})", relativeFileOrDir);
+
+		StorageFile storageFileOrDir = getStorageFile(relativeFileOrDir);
+
+		return s3DAL.delete(storageFileOrDir.getRelativePath());
+	}
+
+	/**
 	 * Adds file system prefix and bucket to the path
 	 * 
 	 * @param path path to extend

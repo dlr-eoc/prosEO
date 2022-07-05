@@ -6,14 +6,14 @@ import java.util.List;
 /**
  * Storage Interface
  * 
- * concept of default bucket
- * 1. No Bucket (now in POSIX) 2. Default bucket 3. Buckets 
+ * concept of default bucket 1. No Bucket (now in POSIX) 2. Default bucket 3.
+ * Buckets
  * 
  * @author Denys Chaykovskiy
  *
  */
 public interface Storage {
-		
+
 	/**
 	 * Gets storage type
 	 * 
@@ -48,14 +48,14 @@ public interface Storage {
 	 * @return current bucket
 	 */
 	public String getBucket();
-	
+
 	/**
 	 * Gets buckets from storage
 	 * 
 	 * @return list of buckets
 	 */
 	public List<String> getBuckets();
-	
+
 	/**
 	 * Checks if the bucket exists
 	 * 
@@ -71,7 +71,7 @@ public interface Storage {
 	 * @throws IOException if bucket cannot be deleted
 	 */
 	public void deleteBucket(String bucket) throws IOException;
-	
+
 	/**
 	 * Gets files from storage with given prefix (folder)
 	 * 
@@ -86,7 +86,7 @@ public interface Storage {
 	 * @return list of all files from storage
 	 */
 	public List<String> getFiles();
-	
+
 	/**
 	 * Gets Storage File
 	 * 
@@ -101,7 +101,7 @@ public interface Storage {
 	 * @return list of storage files
 	 */
 	public List<StorageFile> getStorageFiles();
-	
+
 	/**
 	 * Creates physically storage file
 	 * 
@@ -110,7 +110,7 @@ public interface Storage {
 	 * @return storage file object of created file
 	 */
 	public StorageFile createStorageFile(String relativePath, String content);
-	
+
 	/**
 	 * Checks if file exists
 	 * 
@@ -118,7 +118,7 @@ public interface Storage {
 	 * @return true if file exists physically
 	 */
 	public boolean fileExists(StorageFile storageFile);
-	
+
 	/**
 	 * Checks if Storage file or directory is file (no slash at the end of the path)
 	 * 
@@ -191,8 +191,8 @@ public interface Storage {
 	public List<String> uploadSourceFileOrDir(String relativeSourceFileOrDir) throws IOException;
 
 	/**
- 	 * Uploads source file to the storage
- 	 * 
+	 * Uploads source file to the storage
+	 * 
 	 * @param relativeSourceFile relative path to source file
 	 * @return uploaded to storage source file
 	 * @throws IOException if file cannot be uploaded
@@ -201,7 +201,7 @@ public interface Storage {
 
 	/**
 	 * Downloads file or directory recursively
-	 *   
+	 * 
 	 * @param sourceFileOrDir source file or directory in the storage
 	 * @param targetFileOrDir target file or directory
 	 * @return list of downloaded files
@@ -236,6 +236,15 @@ public interface Storage {
 	 * @throws IOException if file cannot be deleted
 	 */
 	public String deleteFile(StorageFile storageFileOrDir) throws IOException;
+
+	/**
+	 * Deletes file or directory recursively from the storage
+	 * 
+	 * @param relativeFileOrDir Storage file or directory to delete
+	 * @return list of deleted files from storage
+	 * @throws IOException if file or directory cannot be deleted
+	 */
+	public List<String> delete(String relativeFileOrDir) throws IOException;
 
 	/**
 	 * Adds file system prefix and bucket to the path

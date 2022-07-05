@@ -113,7 +113,7 @@ public class PosixStorage implements Storage {
 	public String getBucket() {
 		return bucket;
 	}
-	
+
 	/**
 	 * Gets buckets from storage (one-bucket concept for posix)
 	 * 
@@ -123,9 +123,10 @@ public class PosixStorage implements Storage {
 	public List<String> getBuckets() {
 		return Arrays.asList(bucket);
 	}
-	
+
 	/**
-	 * Checks if the bucket exists (in one-bucket concept compares with current bucket)
+	 * Checks if the bucket exists (in one-bucket concept compares with current
+	 * bucket)
 	 * 
 	 * @param bucketName the name of the bucket
 	 * @return true if the bucket exists
@@ -441,6 +442,24 @@ public class PosixStorage implements Storage {
 	}
 
 	/**
+	 * Deletes file or directory recursively from the storage
+	 * 
+	 * @param relativeFileOrDir Storage file or directory to delete
+	 * @return list of deleted files from storage
+	 * @throws IOException if file or directory cannot be deleted
+	 */
+	@Override
+	public List<String> delete(String relativeFileOrDir) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> delete({})", relativeFileOrDir);
+
+		StorageFile storageFileOrDir = getStorageFile(relativeFileOrDir);
+
+		return posixDAL.delete(storageFileOrDir.getFullPath());
+	}
+
+	/**
 	 * Adds file system prefix and bucket to the path
 	 * 
 	 * @param path path to extend
@@ -499,4 +518,5 @@ public class PosixStorage implements Storage {
 	private String getFullBucketPath() {
 		return bucket.equals(StorageFile.NO_BUCKET) ? basePath : Paths.get(basePath, bucket).toString();
 	}
+
 }
