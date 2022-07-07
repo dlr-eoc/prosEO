@@ -31,8 +31,10 @@ import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
+import de.dlr.proseo.storagemgr.version2.FileUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
+import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -133,68 +135,59 @@ public class ProductfileControllerImplTest_cache {
 	}
 
 	
-	// pathInfo is absolute path s3://.. or /.. DOWNLOAD Storage -> Cache
-	// input /bucket/path/ -> path (without first folder as bucket)
-	// output /cache/path (without first folder as bucket)
+	// pathInfo is absolute path s3://.. or /.. DOWNLOAD Storage -> Posix Cache
+	// input /storagePath/relativePath
+	// output /cache/relativePath
 	
 	
 	// just create files in storage, no upload 
+	
+	
+	/**
+	 * DOWNLOAD Storage -> Cache (getRestFileInfoByPathInfo)
+	 * 
+	 * absolute file   s3://.. or /..
+	 * takes filename from path and productid from parameter, ignores the rest of the path
+	 * 
+	 * INPUT 
+	 * 
+	 * absolutePath  /<bucket>/<relativePath>  -> relativePath (without first folder as bucket)
+	 * 
+	 * OUTPUT 
+	 * 
+	 * Posix only (cache):  /<cachePath>/<relativePath> (without first folder as bucket) 
+	 */
 	private void testCache() throws Exception {
 
 		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyStorageDirectories();
-		fileCache.setPath(cachePath);
-
-		String str = restTemplate.getForObject("http://localhost:" + port + "/proseo/storage-mgr/x/info", String.class);
-
-		System.out.println();
-		System.out.println(str);
-		System.out.println();
-
-		String file1 = "cachetest/file1.txt";
-		String file2 = "cachetest/file2.txt";
+				
+		String relativePath = "product/productFileDownload.txt";
+		relativePath = new PathConverter(relativePath).getPath();
+	
+		// create file in source 
+		String absolutePath = storageTestUtils.createSourceFile(relativePath);
 		
-		// create storage files directly in storage
-		String relativePath1 = new PathConverter(file1).getPath();
-		String relativePath2 = new PathConverter(file2).getPath();
-
-		storageProvider.createStorageFile(relativePath1, "123");
-		storageProvider.createStorageFile(relativePath2, "12345");
+		// upload file to storage from source
+		StorageFile sourceFile = storageProvider.getSourceFile(relativePath);
+		StorageFile storageFile = storageProvider.getStorageFile(relativePath);
+		storageProvider.getStorage().upload(sourceFile, storageFile);
 		
-		// show storage files 
-		List<String> storageFiles = storageProvider.getStorage().getFiles();
-		String storageType = storageProvider.getStorage().getStorageType().toString();
-		TestUtils.printList("Storage " + storageType + " files:", storageFiles);
-
-		// check cache files
-		String cachePath1 = new PathConverter(cachePath, relativePath1).getPath();
-		String cachePath2 = new PathConverter(cachePath, relativePath2).getPath();
-		
-		System.out.println("Cache file 1: " + cachePath1);
-		System.out.println("Cache file 2: " + cachePath2);
-
-		assertTrue("Cache File 1 exists already in cache: " + cachePath1, !new File(cachePath1).exists());
-		assertTrue("Cache File 2 exists already in cache: " + cachePath2, !new File(cachePath2).exists());
-		
-		// TODO: create absolute path for s3 also
-		String absolutePath1 = new PathConverter(storagePath, relativePath1).getPath();
-		String absolutePath2 = new PathConverter(storagePath, relativePath2).getPath();
-		
-		// before HTTP Calls 2 files in storage, no files in cache
-		
-		// HTTP download-call 1 
-		// file1 downloaded (copied to dest and cache), file2 not downloaded - not copied to dest and cache
+		// download file from storage to cache
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
-				.param("pathInfo", absolutePath1);
-
+				.param("pathInfo", absolutePath);
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
-
+		
+		// show results of http-upload
 		System.out.println("REQUEST: " + REQUEST_STRING);
 		System.out.println("Status: " + mvcResult.getResponse().getStatus());
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
 		
-		// check http-returned cache path
-		String expectedCachePath = cachePath1;
+		storageTestUtils.printCache();
+		storageTestUtils.printVersion("FINISHED download-Test");
+		
+		// show path of created rest job without first folder (bucket)
+		String expectedCachePath = new PathConverter(absolutePath).removeFirstFolder().getPath();
+		expectedCachePath = new PathConverter(storageProvider.getCachePath(), expectedCachePath).getPath();
 		
 		String json = mvcResult.getResponse().getContentAsString();
 		RestFileInfo result = new ObjectMapper().readValue(json, RestFileInfo.class);
@@ -204,69 +197,15 @@ public class ProductfileControllerImplTest_cache {
 		assertTrue("Expected path: " + expectedCachePath + " Exists: " + realCachePath, 
 				expectedCachePath.equals(realCachePath));
 		
-		// check cache files
-		System.out.println("Storage file 1 downloaded with http call: " + relativePath1);
-
-		assertTrue("Cache File 1 does not exist: " + cachePath1, new File(cachePath1).exists());
-		assertTrue("Cache File 2 exists already: " + cachePath2, !new File(cachePath2).exists());
-
-		assertTrue("Cache does not have 1 element. Cache Size: " + fileCache.size(), fileCache.size() == 1);
-
-		// HTTP download-call 2
-		// file1 and file2 downloaded (copied to dest and cache)
-		request = MockMvcRequestBuilders.get(REQUEST_STRING)
-				.param("pathInfo", absolutePath2);
-
-		mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
-
-		System.out.println("REQUEST: " + REQUEST_STRING);
-		System.out.println("Status: " + mvcResult.getResponse().getStatus());
-		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
+		// show storage files 
+		List<String> storageFiles = storageProvider.getStorage().getFiles();
+		String storageType = storageProvider.getStorage().getStorageType().toString();
+		TestUtils.printList("Storage " + storageType + " files:", storageFiles);
 		
-		// check http-returned cache path
-		expectedCachePath = cachePath2;
-		
-		json = mvcResult.getResponse().getContentAsString();
-		result = new ObjectMapper().readValue(json, RestFileInfo.class);
-		realCachePath = result.getFilePath();
-		
-		System.out.println("Downloaded real job order path: " + realCachePath);
-		assertTrue("Expected path: " + expectedCachePath + " Exists: " + realCachePath, 
-				expectedCachePath.equals(realCachePath));
-		
-		// check cache files
-		System.out.println("Storage file 2 downloaded with http call: " + relativePath2);
-
-		assertTrue("Cache File1 does not exist: " + cachePath1, new File(cachePath1).exists());
-		assertTrue("Cache File2 does not exist: " + cachePath2, new File(cachePath2).exists());
-
-		assertTrue("Cache does not have 2 element. Cache Size: " + fileCache.size(), fileCache.size() == 2);
-
-		System.out.println();
-		System.out.println(str);
-		System.out.println();
-
-		// file1 deleted from dest and from cache, file2 - not
-
-		fileCache.remove(cachePath1);
-
-		assertTrue("File1 exists: " + cachePath1, !new File(cachePath1).exists());
-		assertTrue("File2 does not exist: " + cachePath2, new File(cachePath2).exists());
-
-		assertTrue("Cache does not have 1 element. Cache Size: " + fileCache.size(), fileCache.size() == 1);
-
-		// file1 and file2 deleted from dest and from cache
-
-		fileCache.remove(cachePath2);
-
-		assertTrue("File1 exists: " + cachePath1, !new File(cachePath1).exists());
-		assertTrue("File2 exists: " + cachePath2, !new File(cachePath2).exists());
-
-		assertTrue("Cache does not have 0 elements. Cache Size: " + fileCache.size(), fileCache.size() == 0);
-
-		fileCache.clear();
-
-		TestUtils.deleteStorageDirectories();
+		// delete files with empty folders
+		new FileUtils(absolutePath).deleteFile(); // source
+	
+		storageProvider.getStorage().deleteFile(storageFile); // in storage
 	}
 
 }

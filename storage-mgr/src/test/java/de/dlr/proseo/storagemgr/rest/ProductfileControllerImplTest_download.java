@@ -142,11 +142,10 @@ public class ProductfileControllerImplTest_download {
 	 * 
 	 * Posix only (cache):  /<cachePath>/<relativePath> (without first folder as bucket) 
 	 */
-	
 	private void download() throws Exception {
 		
 		TestUtils.printMethodName(this, testName);
-		
+				
 		String relativePath = "product/productFileDownload.txt";
 		relativePath = new PathConverter(relativePath).getPath();
 	
