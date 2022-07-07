@@ -68,7 +68,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 	@Autowired
 	private StorageProvider storageProvider;
-	
+
 	/**
 	 * Create an HTTP "Warning" header with the given text message
 	 * 
@@ -81,8 +81,6 @@ public class ProductfileControllerImpl implements ProductfileController {
 				HTTP_MSG_PREFIX + (null == message ? "null" : message.replaceAll("\n", " ")));
 		return responseHeaders;
 	}
-
-
 
 	/**
 	 * Copy source file named pathInfo to file cache used by processors. The local
@@ -98,24 +96,30 @@ public class ProductfileControllerImpl implements ProductfileController {
 			logger.trace(">>> getRestFileInfoByPathInfo({})", pathInfo);
 		// StorageLogger.trace() - can avoid if logger.isTraceEnabled()
 
-		
-		// pathInfo is absolute path s3://.. or /..   DOWNLOAD Storage -> Cache
+		// pathInfo is absolute path s3://.. or /.. DOWNLOAD Storage -> Cache
 		if (storageProvider.isVersion2()) {
 
 			try {
-				// String productPath = new PathConverter(pathInfo).removeFsPrefix().removeBucket().getPath();
-				String relativePath = storageProvider.getRelativePath(pathInfo);
-				
-				StorageFile sourceFile = storageProvider.getStorageFile(relativePath); 
-				// StorageFile sourceFile = storageProvider.getAbsoluteFile(pathInfo);
+				/*
+				 * PathConverter pathConverter = new PathConverter(pathInfo,
+				 * storageProvider.getBasePaths()); StorageFile sourceFile;
+				 * 
+				 * if (pathConverter.hasBasePaths()) { // source file String relativePath =
+				 * storageProvider.getRelativePath(pathInfo); sourceFile =
+				 * storageProvider.getSourceFile(relativePath); } else { // all others
+				 * sourceFile = storageProvider.getAbsoluteFile(pathInfo); }
+				 */
+
+				StorageFile sourceFile = storageProvider.getAbsoluteFile(pathInfo);
+
 				StorageFile targetFile = storageProvider.getCacheFile(sourceFile.getRelativePath());
-				
+
 				FileCache cache = FileCache.getInstance();
-				
+
 				if (!cache.containsKey(targetFile.getFullPath())) {
-					
+
 					storageProvider.getStorage().downloadFile(sourceFile, targetFile);
-					cache.put(targetFile.getFullPath()); 
+					cache.put(targetFile.getFullPath());
 				}
 
 				RestFileInfo restFileInfo = ControllerUtils.convertToRestFileInfo(targetFile,
@@ -125,10 +129,8 @@ public class ProductfileControllerImpl implements ProductfileController {
 			} catch (Exception e) {
 				return HttpResponses.createError("Cannot download file", e);
 			}
-			
 		}
 
-	
 		if (null == pathInfo || pathInfo.isBlank())
 
 		{
@@ -213,8 +215,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> updateProductfiles({}, {})", pathInfo, productId);
 
-		
-		// pathInfo absolute path, UPLOAD absolute file -> storage 
+		// pathInfo absolute path, UPLOAD absolute file -> storage
 		if (storageProvider.isVersion2()) {
 
 			try {
@@ -237,8 +238,6 @@ public class ProductfileControllerImpl implements ProductfileController {
 				return HttpResponses.createError("Cannot upload file", e);
 			}
 		}
-		
-		
 
 		RestFileInfo response = new RestFileInfo();
 		if (pathInfo != null) {
