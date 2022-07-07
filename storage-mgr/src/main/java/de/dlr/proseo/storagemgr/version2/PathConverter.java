@@ -43,9 +43,6 @@ public class PathConverter {
 	 */
 	public PathConverter(String path) {
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> PathConverter({})", path);
-
 		p = path;
 		init(path);
 	}
@@ -57,9 +54,6 @@ public class PathConverter {
 	 * @param path2 end of the path
 	 */
 	public PathConverter(String path1, String path2) {
-
-		if (logger.isTraceEnabled())
-			logger.trace(">>> PathConverter({}, {})", path1, path2);
 
 		p = Paths.get(path1, path2).toString();
 		init(path2);
@@ -73,9 +67,6 @@ public class PathConverter {
 	 * @param path3 end of the path
 	 */
 	public PathConverter(String path1, String path2, String path3) {
-
-		if (logger.isTraceEnabled())
-			logger.trace(">>> PathConverter({}, {}, {})", path1, path2, path3);
 
 		p = Paths.get(path1, path2, path3).toString();
 		init(path3);
