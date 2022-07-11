@@ -469,5 +469,8 @@ public class TestUtils {
 				e.printStackTrace();
 			}
 		}
+		
+		List<String> storageFilesAfterDelete = storage.getFiles();
+		TestUtils.printList("Storage after delete all " + storageType + " files:", storageFilesAfterDelete);
 	}
 }

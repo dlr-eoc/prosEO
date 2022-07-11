@@ -145,7 +145,11 @@ public class ProductfileControllerImplTest_download {
 	private void download() throws Exception {
 		
 		TestUtils.printMethodName(this, testName);
-				
+		
+		// create file in source
+		// upload to storage <bucket>/relative path only
+		// call http-download 
+		
 		String relativePath = "product/productFileDownload.txt";
 		relativePath = new PathConverter(relativePath).getPath();
 	
@@ -157,9 +161,27 @@ public class ProductfileControllerImplTest_download {
 		StorageFile storageFile = storageProvider.getStorageFile(relativePath);
 		storageProvider.getStorage().upload(sourceFile, storageFile);
 		
+		// show storage files
+		List<String> storageFiles = storageProvider.getStorage().getFiles();
+		String storageType = storageProvider.getStorage().getStorageType().toString();
+		TestUtils.printList("Storage (after upload) " + storageType + " files:", storageFiles);
+
 		// download file from storage to cache
+		String httpAbsolutePath;
+		String bucket = storageProvider.getStorage().getBucket();
+				
+		if (storageProvider.getStorage().getStorageType() == StorageType.S3) {
+			
+			httpAbsolutePath = "s3://" + bucket  + "/" + relativePath;	
+		}
+		else {
+			
+			httpAbsolutePath = new PathConverter(storageProvider.getStoragePath(), relativePath).getPath();
+		}
+		
+		System.out.println("Http call path:" + httpAbsolutePath);
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
-				.param("pathInfo", absolutePath);
+				.param("pathInfo", httpAbsolutePath);
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
 		
 		// show results of http-upload
@@ -171,24 +193,21 @@ public class ProductfileControllerImplTest_download {
 		storageTestUtils.printVersion("FINISHED download-Test");
 		
 		// show path of created rest job without first folder (bucket)
-		String expectedCachePath = new PathConverter(absolutePath).removeFirstFolder().getPath();
-		expectedCachePath = new PathConverter(storageProvider.getCachePath(), expectedCachePath).getPath();
+		// String expectedCachePath = new PathConverter(absolutePath).removeFirstFolder().getPath();
+		String expectedCachePath = new PathConverter(storageProvider.getCachePath(), relativePath).getPath();
 		
 		String json = mvcResult.getResponse().getContentAsString();
 		RestFileInfo result = new ObjectMapper().readValue(json, RestFileInfo.class);
 		String realCachePath = result.getFilePath();
 		
-		System.out.println("Downloaded real job order path: " + realCachePath);
+		System.out.println("Expected cache path: " + expectedCachePath);
+		System.out.println("Real cache path:     " + realCachePath);
 		assertTrue("Expected path: " + expectedCachePath + " Exists: " + realCachePath, 
 				expectedCachePath.equals(realCachePath));
 		
-		// show storage files 
-		List<String> storageFiles = storageProvider.getStorage().getFiles();
-		String storageType = storageProvider.getStorage().getStorageType().toString();
-		TestUtils.printList("Storage " + storageType + " files:", storageFiles);
-		
 		// delete files with empty folders
 		new FileUtils(absolutePath).deleteFile(); // source
+		new FileUtils(expectedCachePath).deleteFile(); // cache
 	
 		storageProvider.getStorage().deleteFile(storageFile); // in storage
 	}

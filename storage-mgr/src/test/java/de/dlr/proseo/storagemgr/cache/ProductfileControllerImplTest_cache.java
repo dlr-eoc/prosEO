@@ -3,8 +3,6 @@ package de.dlr.proseo.storagemgr.cache;
 import static org.junit.Assert.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.io.File;
-import java.nio.file.Paths;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -15,11 +13,9 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -53,9 +49,6 @@ public class ProductfileControllerImplTest_cache {
 
 	@Rule
 	public TestName testName = new TestName();
-
-	@Autowired
-	private FileCache fileCache;
 	
 	@Autowired
 	private StorageTestUtils storageTestUtils;
@@ -74,8 +67,6 @@ public class ProductfileControllerImplTest_cache {
 	@LocalServerPort
 	private int port;
 
-	@Autowired
-	private TestRestTemplate restTemplate;
 
 	@Test
 	public void testCache_v1Posix() throws Exception {
@@ -159,9 +150,16 @@ public class ProductfileControllerImplTest_cache {
 	 */
 	private void testCache() throws Exception {
 
+		TestUtils.getInstance().deleteFilesinS3Storage();
+		TestUtils.getInstance().deleteFilesinPosixStorage();
+		
 		TestUtils.printMethodName(this, testName);
-				
-		String relativePath = "product/productFileDownload.txt";
+		
+		// create file in source
+		// upload to storage <bucket>/relative path only
+		// call http-download 
+		
+		String relativePath = "cachetest/cachedownload.txt";
 		relativePath = new PathConverter(relativePath).getPath();
 	
 		// create file in source 
@@ -172,9 +170,27 @@ public class ProductfileControllerImplTest_cache {
 		StorageFile storageFile = storageProvider.getStorageFile(relativePath);
 		storageProvider.getStorage().upload(sourceFile, storageFile);
 		
+		// show storage files
+		List<String> storageFiles = storageProvider.getStorage().getFiles();
+		String storageType = storageProvider.getStorage().getStorageType().toString();
+		TestUtils.printList("Storage (after upload) " + storageType + " files:", storageFiles);
+
 		// download file from storage to cache
+		String httpAbsolutePath;
+		String bucket = storageProvider.getStorage().getBucket();
+				
+		if (storageProvider.getStorage().getStorageType() == StorageType.S3) {
+			
+			httpAbsolutePath = "s3://" + bucket  + "/" + relativePath;	
+		}
+		else {
+			
+			httpAbsolutePath = new PathConverter(storageProvider.getStoragePath(), relativePath).getPath();
+		}
+		
+		System.out.println("Http call path:" + httpAbsolutePath);
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
-				.param("pathInfo", absolutePath);
+				.param("pathInfo", httpAbsolutePath);
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
 		
 		// show results of http-upload
@@ -186,26 +202,22 @@ public class ProductfileControllerImplTest_cache {
 		storageTestUtils.printVersion("FINISHED download-Test");
 		
 		// show path of created rest job without first folder (bucket)
-		String expectedCachePath = new PathConverter(absolutePath).removeFirstFolder().getPath();
-		expectedCachePath = new PathConverter(storageProvider.getCachePath(), expectedCachePath).getPath();
+		// String expectedCachePath = new PathConverter(absolutePath).removeFirstFolder().getPath();
+		String expectedCachePath = new PathConverter(storageProvider.getCachePath(), relativePath).getPath();
 		
 		String json = mvcResult.getResponse().getContentAsString();
 		RestFileInfo result = new ObjectMapper().readValue(json, RestFileInfo.class);
 		String realCachePath = result.getFilePath();
 		
-		System.out.println("Downloaded real job order path: " + realCachePath);
+		System.out.println("Expected cache path: " + expectedCachePath);
+		System.out.println("Real cache path:     " + realCachePath);
 		assertTrue("Expected path: " + expectedCachePath + " Exists: " + realCachePath, 
 				expectedCachePath.equals(realCachePath));
 		
-		// show storage files 
-		List<String> storageFiles = storageProvider.getStorage().getFiles();
-		String storageType = storageProvider.getStorage().getStorageType().toString();
-		TestUtils.printList("Storage " + storageType + " files:", storageFiles);
-		
 		// delete files with empty folders
 		new FileUtils(absolutePath).deleteFile(); // source
+		new FileUtils(expectedCachePath).deleteFile(); // cache
 	
 		storageProvider.getStorage().deleteFile(storageFile); // in storage
 	}
-
 }

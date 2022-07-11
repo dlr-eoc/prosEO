@@ -118,17 +118,17 @@ public class ProductfileControllerImplTest_upload {
 	/**
 	 * UPLOAD (updateProductfiles)
 	 * 
-	 * absolute file -> storage (productid/filename) takes filename from path and
+	 * absolute file -> storage (absoluteSourcePath/filename) takes filename from path and
 	 * productid from parameter, ignores the rest of the path
 	 * 
 	 * INPUT
 	 * 
-	 * absolutePath /../filename.* (posix absolut file) productId 12345 (digits
+	 * absolutePath /../filename.* (posix absolute file) productId 12345 (digits
 	 * only) fileSize 123l (long)
 	 * 
 	 * OUTPUT
 	 * 
-	 * Posix: /<storagePath>/<productId>/<filename from input absolutPath> S3:
+	 * Posix: /<storagePath>/<productId>/<filename from input absolutPath>
 	 * s3://<defaultBucket>/<productId>/<filename from input absolutPath>
 	 */
 	private void upload() throws Exception {

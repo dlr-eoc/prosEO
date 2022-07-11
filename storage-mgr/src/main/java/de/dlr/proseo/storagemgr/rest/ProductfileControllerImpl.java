@@ -18,8 +18,10 @@ import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.cache.FileCache;
+import de.dlr.proseo.storagemgr.rest.model.Posix;
 import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
 import de.dlr.proseo.storagemgr.utils.StorageType;
+import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
 import de.dlr.proseo.storagemgr.version2.model.Storage;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
@@ -94,12 +96,13 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRestFileInfoByPathInfo({})", pathInfo);
-		// StorageLogger.trace() - can avoid if logger.isTraceEnabled()
-
+	
 		// pathInfo is absolute path s3://.. or /.. DOWNLOAD Storage -> Cache
 		if (storageProvider.isVersion2()) {
 
 			try {
+				
+				// separate for s3 and Posix. posix has no bucket only storage path and relative path
 				/*
 				 * PathConverter pathConverter = new PathConverter(pathInfo,
 				 * storageProvider.getBasePaths()); StorageFile sourceFile;
@@ -109,9 +112,19 @@ public class ProductfileControllerImpl implements ProductfileController {
 				 * storageProvider.getSourceFile(relativePath); } else { // all others
 				 * sourceFile = storageProvider.getAbsoluteFile(pathInfo); }
 				 */
+				//StorageFile sourceFile = storageProvider.getAbsoluteFile(pathInfo);
 
-				StorageFile sourceFile = storageProvider.getAbsoluteFile(pathInfo);
-
+				String relativePath;
+				if (new PathConverter(pathInfo).isS3Path()) {
+					
+					relativePath = new PathConverter(pathInfo).removeFsPrefix().removeBucket().removeLeftSlash().getPath();
+				}
+				else {
+					
+					relativePath = storageProvider.getRelativePath(pathInfo); 
+				}
+				
+				StorageFile sourceFile = storageProvider.getStorageFile(relativePath);
 				StorageFile targetFile = storageProvider.getCacheFile(sourceFile.getRelativePath());
 
 				FileCache cache = FileCache.getInstance();
@@ -124,6 +137,9 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 				RestFileInfo restFileInfo = ControllerUtils.convertToRestFileInfo(targetFile,
 						storageProvider.getCacheFileSize(sourceFile.getRelativePath()));
+				
+				System.out.println("Downloaded file: " + targetFile.getFullPath());
+				
 				return HttpResponses.createOk(restFileInfo);
 
 			} catch (Exception e) {
