@@ -33,6 +33,7 @@ import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import alluxio.exception.FileAlreadyExistsException;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
 import de.dlr.proseo.storagemgr.version2.model.Storage;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
@@ -291,6 +292,24 @@ public class S3Ops {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> v2FetchFile({}, {}, {})",
 				(null == s3 ? "MISSING" : s3.serviceName()), s3Object, containerPath);
+		
+		// S3Client problems, that's why this change. 
+		// To rollback delete everything before the next comment block and uncomment the block
+		StorageProvider storageProvider = StorageProvider.getInstance();
+		String relativePath = new PathConverter(s3Object).removeFsPrefix().removeBucket().removeLeftSlash().getPath();
+		StorageFile storageFile = storageProvider.getStorageFile(relativePath);
+		StorageFile targetFile = storageProvider.getAbsoluteFile(containerPath);
+		
+		try {
+			storageProvider.getStorage().download(storageFile, targetFile);
+			return true;
+		} catch (IOException e1) {
+			logger.error("Cannot download S3 object {}, {}", relativePath, containerPath);
+			e1.printStackTrace();
+			return false; 
+		}
+		
+		/*
 
 		try {
 			Path targetPath = Paths.get(containerPath);
@@ -346,6 +365,7 @@ public class S3Ops {
 			logger.error("Security exception accessing S3 object {} (cause: {})", s3Object, e.getMessage());
 			return false;
 		}
+		*/
 	}
 
 	/**
