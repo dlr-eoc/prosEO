@@ -7,6 +7,7 @@ package de.dlr.proseo.model;
 
 import java.time.Duration;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.ElementCollection;
@@ -323,27 +324,19 @@ public class Mission extends PersistentObject {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((code == null) ? 0 : code.hashCode());
-		return result;
+		return code.hashCode();
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (!super.equals(obj))
-			return false;
+		if (super.equals(obj))
+			return true;
 		if (!(obj instanceof Mission))
 			return false;
 		Mission other = (Mission) obj;
-		if (code == null) {
-			if (other.code != null)
-				return false;
-		} else if (!code.equals(other.code))
-			return false;
-		return true;
+		return Objects.equals(code, other.code);
 	}
 
 	@Override

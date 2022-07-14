@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -400,6 +401,23 @@ public class JobStep extends PersistentObject {
 	 */
 	public void setJobOrderFilename(String jobOrderFilename) {
 		this.jobOrderFilename = jobOrderFilename;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(job, outputProduct);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (super.equals(obj))
+			return true;
+		if (!(obj instanceof JobStep))
+			return false;
+		JobStep other = (JobStep) obj;
+		return Objects.equals(job, other.job) && Objects.equals(outputProduct, other.outputProduct);
 	}
 
 	@Override

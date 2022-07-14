@@ -408,18 +408,15 @@ public class Job extends PersistentObject {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + Objects.hash(processingOrder, startTime, stopTime);
-		return result;
+		return Objects.hash(startTime, stopTime); // excluding processingOrder, same time interval is unlikely
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (!super.equals(obj))
-			return false;
+		if (super.equals(obj))
+			return true;
 		if (!(obj instanceof Job))
 			return false;
 		Job other = (Job) obj;

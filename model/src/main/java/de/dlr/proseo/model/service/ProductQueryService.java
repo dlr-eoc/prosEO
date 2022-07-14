@@ -7,9 +7,11 @@ package de.dlr.proseo.model.service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
@@ -200,7 +202,9 @@ public class ProductQueryService {
 			for (Object selectedItem: selectedItems) {
 				if (selectedItem instanceof Product) {
 					Product product = (Product) selectedItem;
+					if (logger.isTraceEnabled()) logger.trace("... before adding product query to list of satisfied product queries");
 					product.getSatisfiedProductQueries().add(productQuery);
+					if (logger.isTraceEnabled()) logger.trace("... after adding product query to list of satisfied product queries");
 					productQuery.getSatisfyingProducts().add(product);
 				}
 			}

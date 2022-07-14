@@ -811,18 +811,15 @@ public class ProcessingOrder extends PersistentObject {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + Objects.hash(identifier, mission);
-		return result;
+		return Objects.hash(identifier); // same identifier in different missions unlikely
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (!super.equals(obj))
-			return false;
+		if (super.equals(obj))
+			return true;
 		if (!(obj instanceof ProcessingOrder))
 			return false;
 		ProcessingOrder other = (ProcessingOrder) obj;

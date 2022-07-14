@@ -7,6 +7,7 @@ package de.dlr.proseo.model;
 
 import java.time.Duration;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -338,33 +339,19 @@ public class ProductClass extends PersistentObject {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((mission == null) ? 0 : mission.hashCode());
-		result = prime * result + ((productType == null) ? 0 : productType.hashCode());
-		return result;
+		return Objects.hash(productType);
 	}
 	
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (!super.equals(obj))
-			return false;
+		if (super.equals(obj))
+			return true;
 		if (!(obj instanceof ProductClass))
 			return false;
 		ProductClass other = (ProductClass) obj;
-		if (mission == null) {
-			if (other.mission != null)
-				return false;
-		} else if (!mission.equals(other.mission))
-			return false;
-		if (productType == null) {
-			if (other.productType != null)
-				return false;
-		} else if (!productType.equals(other.productType))
-			return false;
-		return true;
+		return Objects.equals(mission, other.mission) && Objects.equals(productType, other.productType);
 	}
 
 	@Override
