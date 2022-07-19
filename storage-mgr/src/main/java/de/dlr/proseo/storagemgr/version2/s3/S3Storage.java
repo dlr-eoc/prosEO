@@ -172,7 +172,38 @@ public class S3Storage implements Storage {
 	public List<String> getFiles() {
 		return s3DAL.getFiles();
 	}
+	
 
+	/**
+	 * Gets the absolute path (s3://<bucket>/<relativePath>)
+	 * 
+	 * @param relativePath relative path
+	 * @return the absolute file depending on storage file system
+	 */
+	public String getAbsolutePath(String relativePath) {
+		
+		return new PathConverter(s3DAL.getBucket(), relativePath).addS3Prefix().getPath();			
+	}
+	
+	/**
+	 * Gets absolute paths (s3://<bucket>/<relativePath>)
+	 * 
+	 * @param relativePath relative paths
+	 * @return absolute paths depending on storage file system
+	 */
+	public List<String> getAbsolutePath(List<String> relativePaths) {
+		
+		List<String> absolutePaths = new ArrayList<>();
+		
+		for (String relativePath : relativePaths) {
+			
+			String absolutePath = getAbsolutePath(relativePath);
+			absolutePaths.add(absolutePath);
+		}
+		
+		return absolutePaths; 
+	}
+	
 	/**
 	 * Gets Storage File
 	 * 
@@ -469,34 +500,34 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Adds file system prefix and bucket to the path
+	 * Adds file system prefix to the path
 	 * 
 	 * @param path path to extend
 	 * @return file system prefix + bucket + path
 	 */
 	@Override
-	public String addFSPrefixWithBucket(String path) {
+	public String addFSPrefix(String path) {
 
 		String prefix = StorageType.S3.toString() + "|";
-		return new PathConverter(prefix, getBucket(), path).getPath();
+		return new PathConverter(prefix, path).getPath();
 	}
 
 	/**
-	 * Adds file system prefix and bucket to paths
+	 * Adds file system prefix to paths
 	 * 
 	 * @param paths paths to extend
-	 * @return list of file system prefix + bucket + path
+	 * @return list of file system prefix + path
 	 */
 	@Override
-	public List<String> addFSPrefixWithBucket(List<String> paths) {
+	public List<String> addFSPrefix(List<String> paths) {
 
-		List<String> pathsWithPrefixAndBucket = new ArrayList<>();
+		List<String> pathsWithPrefix = new ArrayList<>();
 
 		for (String path : paths) {
-			String pathWithPrefixAndBucket = addFSPrefixWithBucket(path);
-			pathsWithPrefixAndBucket.add(pathWithPrefixAndBucket);
+			String pathWithPrefix = addFSPrefix(path);
+			pathsWithPrefix.add(pathWithPrefix);
 		}
 
-		return pathsWithPrefixAndBucket;
+		return pathsWithPrefix;
 	}
 }

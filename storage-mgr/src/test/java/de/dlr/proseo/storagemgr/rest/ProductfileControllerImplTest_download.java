@@ -24,7 +24,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
-import de.dlr.proseo.storagemgr.UniqueStorageTestPaths;
 import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
 import de.dlr.proseo.storagemgr.version2.FileUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
@@ -123,24 +122,21 @@ public class ProductfileControllerImplTest_download {
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
-	
-	// input /bucket/path/  -> path (without first folder as bucket)
-	// output /cache/path (without first folder as bucket) 
-	
-	
+		
 	/**
 	 * DOWNLOAD Storage -> Cache (getRestFileInfoByPathInfo)
-	 * 
-	 * absolute file   s3://.. or /..
+	 *
 	 * takes filename from path and productid from parameter, ignores the rest of the path
 	 * 
 	 * INPUT 
 	 * 
-	 * absolutePath  /<bucket>/<relativePath>  -> relativePath (without first folder as bucket)
+	 * absolutePath  	 
+	 * s3://<bucket>/<relativePath>        // no storage path in s3
+	 * /<storagePath>/<relativePath>       // no bucket in posix currently
 	 * 
 	 * OUTPUT 
 	 * 
-	 * Posix only (cache):  /<cachePath>/<relativePath> (without first folder as bucket) 
+	 * Posix only (cache):  /<cachePath>/<relativePath>
 	 */
 	private void download() throws Exception {
 		
@@ -193,7 +189,6 @@ public class ProductfileControllerImplTest_download {
 		storageTestUtils.printVersion("FINISHED download-Test");
 		
 		// show path of created rest job without first folder (bucket)
-		// String expectedCachePath = new PathConverter(absolutePath).removeFirstFolder().getPath();
 		String expectedCachePath = new PathConverter(storageProvider.getCachePath(), relativePath).getPath();
 		
 		String json = mvcResult.getResponse().getContentAsString();
@@ -208,61 +203,6 @@ public class ProductfileControllerImplTest_download {
 		// delete files with empty folders
 		new FileUtils(absolutePath).deleteFile(); // source
 		new FileUtils(expectedCachePath).deleteFile(); // cache
-	
 		storageProvider.getStorage().deleteFile(storageFile); // in storage
-	}
-	
-	@Test
-	public void testDownload_v1PosixMany() throws Exception {
-		
-		String relativePath = "product/";
-		
-		StorageType storageType = StorageType.POSIX; 
-		storageProvider.loadVersion1();
-		storageProvider.setStorage(storageType);
-
-		// TODO: refactoring
-		// downloadMany(relativePath);
-		
-		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-	
-	private void downloadMany(StorageProvider storageProvider) throws Exception {
-		
-		// TODO: refactoring
-		
-		TestUtils.printMethodName(this, testName);
-		UniqueStorageTestPaths uniquePaths = new UniqueStorageTestPaths(this, testName);
-	
-		String relativePath = "product/";
-		String relativePath1 = relativePath + "file1.txt";
-		String relativePath2 = relativePath + "file2.txt";
-		
-		relativePath1 = new PathConverter(uniquePaths.getUniqueTestFolder(), relativePath1).getPath();
-		relativePath2 = new PathConverter(uniquePaths.getUniqueTestFolder(), relativePath2).getPath();
-
-		String absolutePath = storageProvider.getAbsolutePosixStoragePath(relativePath);
-		
-		String absolutePath1 = storageTestUtils.createSourceFile(relativePath1);
-		String absolutePath2 = storageTestUtils.createSourceFile(relativePath2);
-		
-		storageTestUtils.uploadToPosixStorage(relativePath1);
-		storageTestUtils.uploadToPosixStorage(relativePath2);
-
-		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
-				.param("pathInfo", absolutePath);
-
-		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
-
-		System.out.println("REQUEST: " + REQUEST_STRING);
-		System.out.println("Status: " + mvcResult.getResponse().getStatus());
-		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
-		
-		storageTestUtils.printCache();
-		storageTestUtils.printVersion("FINISHED download-Test");
-
-		uniquePaths.deleteUniqueTestDirectories();
 	}
 }

@@ -263,15 +263,18 @@ public class ProductControllerImpl implements ProductController {
 				if (storageType == null) { // add both 
 					
 					response = storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.S3).getFiles(prefix);
-					response = storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.S3).addFSPrefixWithBucket(response);
+					response = storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.S3).getAbsolutePath(response);
+					response = storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.S3).addFSPrefix(response);
 					
 					response.addAll(storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.POSIX).getFiles(prefix));
-					response = storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.POSIX).addFSPrefixWithBucket(response);
+					response = storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.POSIX).getAbsolutePath(response);
+					response = storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.POSIX).addFSPrefix(response);
 					
 				} else { 
 					
-					response = storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.valueOf(storageType)).getFiles(prefix);		
-					response = storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.valueOf(storageType)).addFSPrefixWithBucket(response);
+					response = storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.valueOf(storageType)).getFiles(prefix);	
+					response = storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.valueOf(storageType)).getAbsolutePath(response);
+					response = storageProvider.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.valueOf(storageType)).addFSPrefix(response);
 				}
 				
 				return new ResponseEntity<>(response, HttpStatus.OK);

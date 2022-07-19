@@ -86,7 +86,23 @@ public interface Storage {
 	 * @return list of all files from storage
 	 */
 	public List<String> getFiles();
-
+	
+	/**
+	 * Gets the absolute path depending on storage file system
+	 * 
+	 * @param relativePath relative path
+	 * @return the absolute file depending on storage file system
+	 */
+	public String getAbsolutePath(String relativePath);
+	
+	/**
+	 * Gets absolute paths depending on storage file system
+	 * 
+	 * @param relativePath relative paths
+	 * @return absolute paths depending on storage file system
+	 */
+	public List<String> getAbsolutePath(List<String> relativePaths);
+	
 	/**
 	 * Gets Storage File
 	 * 
@@ -247,18 +263,18 @@ public interface Storage {
 	public List<String> delete(String relativeFileOrDir) throws IOException;
 
 	/**
-	 * Adds file system prefix and bucket to the path
+	 * Adds file system prefix to the path
 	 * 
 	 * @param path path to extend
-	 * @return file system prefix + bucket + path
+	 * @return file system prefix + path
 	 */
-	public String addFSPrefixWithBucket(String path);
+	public String addFSPrefix(String path);
 
 	/**
 	 * Adds file system prefix and bucket to paths
 	 * 
 	 * @param paths paths to extend
-	 * @return list of file system prefix + bucket + path
+	 * @return list of file system prefix + path
 	 */
-	public List<String> addFSPrefixWithBucket(List<String> paths);
+	public List<String> addFSPrefix(List<String> paths);
 }

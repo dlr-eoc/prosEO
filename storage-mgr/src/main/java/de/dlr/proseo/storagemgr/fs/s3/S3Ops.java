@@ -116,7 +116,8 @@ public class S3Ops {
 		Storage storage = StorageProvider.getInstance().getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.S3); 
 		
 		response = storage.getFiles(prefix);
-		response = storage.addFSPrefixWithBucket(response);
+		response = storage.getAbsolutePath(response);
+		response = storage.addFSPrefix(response);
 		
 		return response; 
 

@@ -424,4 +424,16 @@ public class PathConverter {
 
 		return pathConverter.removeLeftSlash();
 	}
+	
+	/**
+	 * Adds s3 prefix to the path
+	 * 
+	 * @return s3 prefix + path
+	 */
+	public PathConverter addS3Prefix() {
+		
+		 String pathWithoutLeftSlash = new PathConverter(this).removeLeftSlash().getPath();
+		 
+		 return new PathConverter(S3PREFIX + pathWithoutLeftSlash, basePaths);
+	}
 }
