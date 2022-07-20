@@ -24,14 +24,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.Job;
-import de.dlr.proseo.model.JobStep;
-import de.dlr.proseo.model.ProcessingOrder;
-import de.dlr.proseo.model.JobStep.JobStepState;
+import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.rest.JobController;
 import de.dlr.proseo.model.rest.model.RestJob;
 import de.dlr.proseo.model.rest.model.RestJobGraph;
-import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.planner.Messages;
@@ -561,7 +558,7 @@ public class JobControllerImpl implements JobController {
 
 		query.setParameter("missionCode", securityService.getMission());
 		if (null != state) {
-			query.setParameter("state", JobStepState.valueOf(state));
+			query.setParameter("state", JobState.valueOf(state));
 		}
 		if (null != orderId) {
 			query.setParameter("orderId", orderId);
