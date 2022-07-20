@@ -10,19 +10,12 @@ import static de.dlr.proseo.ui.backend.UIMessages.uiMsg;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.http.HttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,13 +34,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.async.DeferredResult;
-import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.client.ClientResponse;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
@@ -57,10 +46,8 @@ import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestJobStep;
 import de.dlr.proseo.model.rest.model.RestParameter;
-import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
-import de.dlr.proseo.ui.gui.service.MapComparator;
 import de.dlr.proseo.ui.gui.service.OrderService;
 import reactor.core.publisher.Mono;
 
@@ -91,7 +78,7 @@ public class GUIOrderController extends GUIBaseController {
 	/**
 	 * Date formatter for input type date
 	 */
-	private static final SimpleDateFormat simpleDateFormatter = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);	
+//	private static final SimpleDateFormat simpleDateFormatter = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);	
 
 	private static final String HTTP_HEADER_WARNING = "Warning";
 
@@ -148,11 +135,9 @@ public class GUIOrderController extends GUIBaseController {
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getIdentifier({}, {}, model)", identifier, identifier);
-    	checkClearCache();
-		String myIdent = null;
-		if (identifier != null && identifier.indexOf("*") < 0) {
-			myIdent = identifier;
-		}
+
+		checkClearCache();
+
 		Long fromi = null;
 		Long toi = null;
 		if (recordFrom != null && recordFrom >= 0) {
@@ -873,94 +858,94 @@ public class GUIOrderController extends GUIBaseController {
 	 * @param products The product class list (seperated by ':')
 	 * @return List of selected orders
 	 */
-	private List<Object> selectOrders(List<Object> orderList, String identifier, String states, String from, String to, String products) {
-		List<Object> result = new ArrayList<Object>();
-		if (orderList != null && (identifier != null || states != null || from != null || to != null || products != null)) {
-			String myident = null;
-			if (identifier != null) {
-				// at the moment only simple pattern are supported, replace '*'
-				myident = identifier.replaceAll("[*]", ".*");
-			}
-			ArrayList<String> stateArray = null;
-			if (states != null) {
-				// build array of selected states
-				stateArray = new ArrayList<String>();
-				String[] x = states.split(":");				
-				for (int i = 0; i < x.length; i++) {
-					stateArray.add(x[i]);
-				}
-			}
-			ArrayList<String> productArray = null;
-			if (products != null) {
-				productArray = new ArrayList<String>();
-				String[] x = products.split(":");		
-				for (int i = 0; i < x.length; i++) {
-					productArray.add(x[i]);
-				}
-			}
-			Date fromTime = null;
-			if (from != null) {			
-				try {
-					fromTime = simpleDateFormatter.parse(from);
-				} catch (ParseException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-			Date toTime = null;
-			if (to != null) {		
-				try {
-					toTime = simpleDateFormatter.parse(to);
-					Instant t = toTime.toInstant().plus(Duration.ofDays(1));
-					toTime = Date.from(t);
-				} catch (ParseException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-			ObjectMapper mapper = new ObjectMapper();
-			Boolean found = true;
-			for (Object o : orderList) {
-				found = true;
-				try {
-					RestOrder order =  mapper.convertValue(o, RestOrder.class);
-					if (order != null) {
-						if (found && identifier != null) {
-							if (!order.getIdentifier().matches(myident)) found = false;					
-						}
-						if (stateArray != null) {
-							if (!stateArray.contains(order.getOrderState())) found = false;
-						}
-						if (fromTime != null && order.getStartTime() != null) {
-							if (fromTime.compareTo(Date.from(Instant.from(OrbitTimeFormatter.parse(order.getStartTime())))) > 0) found = false;
-						}
-						if (toTime != null && order.getStopTime() != null) {
-							if (toTime.compareTo(Date.from(Instant.from(OrbitTimeFormatter.parse(order.getStopTime())))) < 0) found = false;
-						}
-						if (productArray != null && order.getRequestedProductClasses() != null) {
-							Boolean lfound = false;
-							for (String pc : order.getRequestedProductClasses()) {
-								if (productArray.contains(pc)) {
-									lfound = true;
-									break;
-								}
-							}
-							if (!lfound) found = false;
-						}
-					}
-					if (found) {
-						result.add(o);
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-			
-		} else {
-			return orderList;
-		}
-		return result;
-	}
+//	private List<Object> selectOrders(List<Object> orderList, String identifier, String states, String from, String to, String products) {
+//		List<Object> result = new ArrayList<Object>();
+//		if (orderList != null && (identifier != null || states != null || from != null || to != null || products != null)) {
+//			String myident = null;
+//			if (identifier != null) {
+//				// at the moment only simple pattern are supported, replace '*'
+//				myident = identifier.replaceAll("[*]", ".*");
+//			}
+//			ArrayList<String> stateArray = null;
+//			if (states != null) {
+//				// build array of selected states
+//				stateArray = new ArrayList<String>();
+//				String[] x = states.split(":");				
+//				for (int i = 0; i < x.length; i++) {
+//					stateArray.add(x[i]);
+//				}
+//			}
+//			ArrayList<String> productArray = null;
+//			if (products != null) {
+//				productArray = new ArrayList<String>();
+//				String[] x = products.split(":");		
+//				for (int i = 0; i < x.length; i++) {
+//					productArray.add(x[i]);
+//				}
+//			}
+//			Date fromTime = null;
+//			if (from != null) {			
+//				try {
+//					fromTime = simpleDateFormatter.parse(from);
+//				} catch (ParseException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//			}
+//			Date toTime = null;
+//			if (to != null) {		
+//				try {
+//					toTime = simpleDateFormatter.parse(to);
+//					Instant t = toTime.toInstant().plus(Duration.ofDays(1));
+//					toTime = Date.from(t);
+//				} catch (ParseException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//			}
+//			ObjectMapper mapper = new ObjectMapper();
+//			Boolean found = true;
+//			for (Object o : orderList) {
+//				found = true;
+//				try {
+//					RestOrder order =  mapper.convertValue(o, RestOrder.class);
+//					if (order != null) {
+//						if (found && identifier != null) {
+//							if (!order.getIdentifier().matches(myident)) found = false;					
+//						}
+//						if (stateArray != null) {
+//							if (!stateArray.contains(order.getOrderState())) found = false;
+//						}
+//						if (fromTime != null && order.getStartTime() != null) {
+//							if (fromTime.compareTo(Date.from(Instant.from(OrbitTimeFormatter.parse(order.getStartTime())))) > 0) found = false;
+//						}
+//						if (toTime != null && order.getStopTime() != null) {
+//							if (toTime.compareTo(Date.from(Instant.from(OrbitTimeFormatter.parse(order.getStopTime())))) < 0) found = false;
+//						}
+//						if (productArray != null && order.getRequestedProductClasses() != null) {
+//							Boolean lfound = false;
+//							for (String pc : order.getRequestedProductClasses()) {
+//								if (productArray.contains(pc)) {
+//									lfound = true;
+//									break;
+//								}
+//							}
+//							if (!lfound) found = false;
+//						}
+//					}
+//					if (found) {
+//						result.add(o);
+//					}
+//				} catch (Exception e) {
+//					e.printStackTrace();
+//				}
+//			}
+//			
+//		} else {
+//			return orderList;
+//		}
+//		return result;
+//	}
 
     private Long countJobs(String id)  {	    	
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
