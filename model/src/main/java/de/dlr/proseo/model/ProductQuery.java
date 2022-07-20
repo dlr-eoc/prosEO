@@ -378,12 +378,9 @@ public class ProductQuery extends PersistentObject {
 	
 	/**
 	 * Calculate the hashCode and store it in the hashCache
-	 * 
-	 * @return the hashCode calculated
 	 */
-	private int calcHash() {
+	private void calcHash() {
 		hashCache = Objects.hash(jobStep, requestedProductClass);
-		return hashCache;
 	}
 
 	@Override
@@ -392,7 +389,7 @@ public class ProductQuery extends PersistentObject {
 			// this is usually called after the object is read from DB.
 			calcHash();
 		}
-		return Objects.hash(jobStep, requestedProductClass);
+		return hashCache;
 	}
 
 	@Override
