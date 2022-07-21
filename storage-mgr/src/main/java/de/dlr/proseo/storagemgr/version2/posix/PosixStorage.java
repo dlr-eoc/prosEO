@@ -494,13 +494,12 @@ public class PosixStorage implements Storage {
 	 * Adds file system prefix to the path
 	 * 
 	 * @param path path to extend
-	 * @return file system prefix + path
+	 * @return file system prefix + "|" + path
 	 */
 	@Override
 	public String addFSPrefix(String path) {
 
-		String prefix = StorageType.POSIX.toString() + "|";
-		return new PathConverter(prefix, path).getPath();
+		return StorageType.POSIX.toString() + "|" + path; 
 	}
 
 	/**

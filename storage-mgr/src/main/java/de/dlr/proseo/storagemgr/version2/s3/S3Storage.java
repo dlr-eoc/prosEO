@@ -503,13 +503,12 @@ public class S3Storage implements Storage {
 	 * Adds file system prefix to the path
 	 * 
 	 * @param path path to extend
-	 * @return file system prefix + bucket + path
+	 * @return file system prefix + "|" + path
 	 */
 	@Override
 	public String addFSPrefix(String path) {
 
-		String prefix = StorageType.S3.toString() + "|";
-		return new PathConverter(prefix, path).getPath();
+		return StorageType.S3.toString() + "|" + path; 
 	}
 
 	/**

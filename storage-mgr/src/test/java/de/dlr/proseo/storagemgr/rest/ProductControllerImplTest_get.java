@@ -165,18 +165,21 @@ public class ProductControllerImplTest_get {
 		
 		// show files in storage before http call
 		List<String> storageFiles = storageProvider.getStorage().getFiles();	
-		TestUtils.printList("Storage Files before HTTP call", storageFiles);
+		String stType = storageProvider.getStorage().getStorageType().toString();
+		TestUtils.printList(stType + " Storage Files before HTTP call", storageFiles);
 
 		// HTTP Get files from storage		
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
 				.param("storageType", storageType.toString()).param("prefix", prefix);
-
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
 
 		// show results of http-upload
-		System.out.println("REQUEST: " + REQUEST_STRING);
+		System.out.println();
+		System.out.println("HTTP Response");
+		System.out.println("Request: " + REQUEST_STRING);
 		System.out.println("Status: " + mvcResult.getResponse().getStatus());
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
+		System.out.println();
 		
 		// TODO: maybe convert List
 		// String json = mvcResult.getResponse().getContentAsString();
@@ -188,6 +191,7 @@ public class ProductControllerImplTest_get {
 		
 		// show files in storage after deletion
 		storageFiles = storageProvider.getStorage().getFiles();	
-		TestUtils.printList("Storage Files after deletion", storageFiles);
+		stType = storageProvider.getStorage().getStorageType().toString();
+		TestUtils.printList(stType + " Storage Files after deletion", storageFiles);
 	}
 }
