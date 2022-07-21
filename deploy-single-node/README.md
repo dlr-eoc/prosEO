@@ -80,13 +80,13 @@ The `proseo-images` directory may be populated with convenience scripts for thes
 
 ## Step 3: Deploy the prosEO Control Instance
 
-Create the prosEO Control Instance from a `docker-compose.yml` file like the following (a `docker-compose.yml.template`
-file is provided in the `proseo-images` directory):
+Create the prosEO Control Instance from a `docker-compose.yml` file. A `docker-compose.yml.template`
+file is provided in the `proseo-images` directory, a simplified file would look something like the following:
 ```yaml
 version: '3'
 services:
   proseo-db:
-    image: postgres:11
+    image: ${REGISTRY_URL}/postgres:11-proseo
     environment:
       - POSTGRES_DB=proseo
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
