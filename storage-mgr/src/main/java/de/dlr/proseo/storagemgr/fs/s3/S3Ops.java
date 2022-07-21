@@ -117,7 +117,6 @@ public class S3Ops {
 		
 		response = storage.getFiles(prefix);
 		response = storage.getAbsolutePath(response);
-		response = storage.addFSPrefix(response);
 		
 		return response; 
 
