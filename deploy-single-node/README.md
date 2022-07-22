@@ -181,7 +181,6 @@ docker-compose -p proseo up -d
 ```
 
 The `proseo-images` directory may be populated with convenience scripts for these steps (see `proseo-images/README.md`).
-A template for the `docker-compose.yml` file can be found at `<project root>/deploy/brain/prepare_proseo/files`.
 
 After starting the prosEO control instance two SQL scripts need to be executed. First login to the proseo-db container:
 ```
