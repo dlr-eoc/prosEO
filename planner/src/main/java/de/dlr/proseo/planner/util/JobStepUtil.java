@@ -361,6 +361,7 @@ public class JobStepUtil {
 			case COMPLETED:
 			case FAILED:
 				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.CLOSED);
+				UtilService.getJobStepUtil().deleteSatisfiedProductQueries(js);				
 				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
 				em.merge(js);
@@ -515,6 +516,7 @@ public class JobStepUtil {
 				for (ProductQuery pq : js.getInputProductQueries()) {
 					for (Product p : pq.getSatisfyingProducts()) {						
 						p.getSatisfiedProductQueries().remove(pq);
+						RepositoryService.getProductRepository().save(p);
 					}
 					pq.getSatisfyingProducts().clear();
 					RepositoryService.getProductQueryRepository().delete(pq);
@@ -525,6 +527,41 @@ public class JobStepUtil {
 				break;
 			case RUNNING:
 				Messages.JOBSTEP_ALREADY_RUNNING.log(logger, String.valueOf(js.getId()));
+				break;
+			default:
+				break;
+			}
+		}
+		return answer;
+	}
+
+	/**
+	 * Delete satisfied product queries of job step
+	 * 
+	 * @param js Job step
+	 * @return true  if deleted
+	 */
+	@Transactional
+	public Boolean deleteSatisfiedProductQueries(JobStep js) {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteSatisfiedProductQueries({})", (null == js ? "null" : js.getId()));
+
+		Boolean answer = false;
+		if (js != null) {
+			switch (js.getJobStepState()) {
+			case COMPLETED:
+			case FAILED:
+			case CLOSED:
+				for (ProductQuery pq : js.getInputProductQueries()) {
+					for (Product p : pq.getSatisfyingProducts()) {						
+						p.getSatisfiedProductQueries().remove(pq);
+						RepositoryService.getProductRepository().save(p);
+					}
+					pq.getSatisfyingProducts().clear();
+					RepositoryService.getProductQueryRepository().delete(pq);
+				}
+				js.getInputProductQueries().clear();
+				Messages.JOBSTEP_SPQ_DELETED.log(logger, String.valueOf(js.getId()));
+				answer = true;
 				break;
 			default:
 				break;
@@ -567,6 +604,7 @@ public class JobStepUtil {
 				for (ProductQuery pq : js.getInputProductQueries()) {
 					for (Product p : pq.getSatisfyingProducts()) {
 						p.getSatisfiedProductQueries().clear();
+						RepositoryService.getProductRepository().save(p);
 					}
 					pq.getSatisfyingProducts().clear();
 					RepositoryService.getProductQueryRepository().delete(pq);
