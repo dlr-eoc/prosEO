@@ -109,7 +109,7 @@ public class JobUtil {
 
 
 	/**
-	 * Close a job and its job steps.
+	 * Delete satisfied product queries of its job steps.
 	 * 
 	 * @param job The job
 	 * @return Result message

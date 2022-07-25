@@ -439,8 +439,10 @@ public class OrderControllerImpl implements OrderController {
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 			msg = transactionTemplate.execute((status) -> {
 				ProcessingOrder orderx = this.findOrderPrim(orderId);
+				Messages.ORDER_SAVE.log(logger, order.getIdentifier());
 				return orderUtil.close(orderx);
 			});
+			msg.log(logger, order.getIdentifier());
 			productionPlanner.releaseThreadSemaphore("closeOrder");	
 		} catch (Exception e) {
 			productionPlanner.releaseThreadSemaphore("closeOrder");	
