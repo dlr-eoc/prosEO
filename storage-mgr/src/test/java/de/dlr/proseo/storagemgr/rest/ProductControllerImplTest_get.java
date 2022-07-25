@@ -2,12 +2,16 @@ package de.dlr.proseo.storagemgr.rest;
 
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -182,16 +186,48 @@ public class ProductControllerImplTest_get {
 		System.out.println();
 		
 		// TODO: maybe convert List
-		// String json = mvcResult.getResponse().getContentAsString();
+		String json = mvcResult.getResponse().getContentAsString();
 		// RestFileInfo result = new ObjectMapper().readValue(json, RestFileInfo.class);
 		// String realCachePath = result.getFilePath();		
 		
-		// delete storage file with prefix
+		//List<StringClass> actual = new ObjectMapper().readValue(json, new TypeReference<List<StringClass>>() {});
+		
+		// ObjectMapper mapper = new ObjectMapper();
+
+		// this uses a TypeReference to inform Jackson about the Lists's generic type
+		// List<PersonDto> actual = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<List<PersonDto>>() {});
+
+		/*
+		String listFormat = "%-20s %s";
+		List<String> resultList = null; 
+		System.out.println(String.format(listFormat, "Processor Name", "Version"));
+		for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
+			if (resultObject instanceof Map) {
+				Map<?, ?> resultMap = (Map<?, ?>) resultObject;
+				System.out.println(String.format(listFormat, resultMap.get("processorName"), resultMap.get("processorVersion")));
+			}
+		*/
+		
+		// delete storage files with prefix
 		storageProvider.getStorage().delete(prefix);
 		
 		// show files in storage after deletion
 		storageFiles = storageProvider.getStorage().getFiles();	
 		stType = storageProvider.getStorage().getStorageType().toString();
 		TestUtils.printList(stType + " Storage Files after deletion", storageFiles);
+	}
+	
+	
+	private class StringClass {
+		
+		private String value;
+
+		public String getValue() {
+			return value;
+		}
+
+		public void setValue(String value) {
+			this.value = value;
+		} 
 	}
 }

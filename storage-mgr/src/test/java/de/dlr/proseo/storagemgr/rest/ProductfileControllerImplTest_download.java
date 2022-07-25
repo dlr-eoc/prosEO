@@ -160,30 +160,23 @@ public class ProductfileControllerImplTest_download {
 		// show storage files
 		List<String> storageFiles = storageProvider.getStorage().getFiles();
 		String storageType = storageProvider.getStorage().getStorageType().toString();
-		TestUtils.printList("Storage (after upload) " + storageType + " files:", storageFiles);
+		TestUtils.printList(storageType + "Storage (after upload) " + " files:", storageFiles);
 
-		// download file from storage to cache
-		String httpAbsolutePath;
-		String bucket = storageProvider.getStorage().getBucket();
-				
-		if (storageProvider.getStorage().getStorageType() == StorageType.S3) {
-			
-			httpAbsolutePath = "s3://" + bucket  + "/" + relativePath;	
-		}
-		else {
-			
-			httpAbsolutePath = new PathConverter(storageProvider.getStoragePath(), relativePath).getPath();
-		}
+		// rest-download file from storage to cache
+		String absoluteStoragePath = storageProvider.getStorage().getAbsolutePath(relativePath);
 		
-		System.out.println("Http call path:" + httpAbsolutePath);
+		System.out.println("Http call path:" + absoluteStoragePath);
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
-				.param("pathInfo", httpAbsolutePath);
+				.param("pathInfo", absoluteStoragePath);
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
 		
 		// show results of http-upload
-		System.out.println("REQUEST: " + REQUEST_STRING);
+		System.out.println();
+		System.out.println("HTTP Response");
+		System.out.println("Request: " + REQUEST_STRING);
 		System.out.println("Status: " + mvcResult.getResponse().getStatus());
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
+		System.out.println();
 		
 		storageTestUtils.printCache();
 		storageTestUtils.printVersion("FINISHED download-Test");

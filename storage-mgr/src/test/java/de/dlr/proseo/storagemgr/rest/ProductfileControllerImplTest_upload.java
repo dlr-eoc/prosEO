@@ -140,19 +140,21 @@ public class ProductfileControllerImplTest_upload {
 		String relativePath = new PathConverter(productId, filename).getPath();
 
 		// create file in source for upload
-		String absolutePath = storageTestUtils.createSourceFile(relativePath);
+		String absoluteSourcePath = storageTestUtils.createSourceFile(relativePath);
 		String fileSize = Long.toString(storageProvider.getSourceFileSize(relativePath));
 
-		// upload
+		// rest-upload file from source to storage
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.put(REQUEST_STRING)
-				.param("pathInfo", absolutePath).param("productId", productId).param("fileSize", fileSize);
-
+				.param("pathInfo", absoluteSourcePath).param("productId", productId).param("fileSize", fileSize);
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isCreated()).andReturn();
 
 		// show results of http-upload
-		System.out.println("REQUEST: " + REQUEST_STRING);
+		System.out.println();
+		System.out.println("HTTP Response");
+		System.out.println("Request: " + REQUEST_STRING);
 		System.out.println("Status: " + mvcResult.getResponse().getStatus());
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
+		System.out.println();
 
 		// show file path of created rest job in storage
 		String json = mvcResult.getResponse().getContentAsString();
@@ -167,9 +169,8 @@ public class ProductfileControllerImplTest_upload {
 		TestUtils.printList("Storage " + storageType + " files:", storageFiles);
 
 		// delete files with empty folders
-		new FileUtils(absolutePath).deleteFile(); // source
-
-		StorageFile storageFile = storageProvider.getStorageFile(expectedPath);
+		new FileUtils(absoluteSourcePath).deleteFile(); // source
+		StorageFile storageFile = storageProvider.getStorageFile(expectedPath); // storage
 		storageProvider.getStorage().deleteFile(storageFile);
 	}
 }
