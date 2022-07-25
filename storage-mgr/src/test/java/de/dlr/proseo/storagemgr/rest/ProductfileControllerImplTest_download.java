@@ -5,8 +5,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.List;
-
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Rule;
 import org.junit.Test;
@@ -143,14 +141,15 @@ public class ProductfileControllerImplTest_download {
 		TestUtils.printMethodName(this, testName);
 		
 		// create file in source
-		// upload to storage <bucket>/relative path only
+		// upload to storage 
 		// call http-download 
+		// check results (download in cache)
 		
 		String relativePath = "product/productFileDownload.txt";
 		relativePath = new PathConverter(relativePath).getPath();
 	
 		// create file in source 
-		String absolutePath = storageTestUtils.createSourceFile(relativePath);
+		String absoluteSourcePath = storageTestUtils.createSourceFile(relativePath);
 		
 		// upload file to storage from source
 		StorageFile sourceFile = storageProvider.getSourceFile(relativePath);
@@ -158,44 +157,37 @@ public class ProductfileControllerImplTest_download {
 		storageProvider.getStorage().upload(sourceFile, storageFile);
 		
 		// show storage files
-		List<String> storageFiles = storageProvider.getStorage().getFiles();
-		String storageType = storageProvider.getStorage().getStorageType().toString();
-		TestUtils.printList(storageType + "Storage (after upload) " + " files:", storageFiles);
+		StorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
 
 		// rest-download file from storage to cache
 		String absoluteStoragePath = storageProvider.getStorage().getAbsolutePath(relativePath);
+		System.out.println("Http-download call path (absolute storage path):" + absoluteStoragePath);
 		
-		System.out.println("Http call path:" + absoluteStoragePath);
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
 				.param("pathInfo", absoluteStoragePath);
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
 		
-		// show results of http-upload
-		System.out.println();
-		System.out.println("HTTP Response");
-		System.out.println("Request: " + REQUEST_STRING);
-		System.out.println("Status: " + mvcResult.getResponse().getStatus());
-		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
-		System.out.println();
-		
+		// show results of http-download
+		TestUtils.printMvcResult(REQUEST_STRING, mvcResult); 
+
 		storageTestUtils.printCache();
 		storageTestUtils.printVersion("FINISHED download-Test");
 		
-		// show path of created rest job without first folder (bucket)
-		String expectedCachePath = new PathConverter(storageProvider.getCachePath(), relativePath).getPath();
+		// check real with expected absolute cache path 
+		String expectedAbsoluteCachePath = new PathConverter(storageProvider.getCachePath(), relativePath).getPath();
 		
 		String json = mvcResult.getResponse().getContentAsString();
 		RestFileInfo result = new ObjectMapper().readValue(json, RestFileInfo.class);
-		String realCachePath = result.getFilePath();
+		String realAbsoluteCachePath = result.getFilePath();
 		
-		System.out.println("Expected cache path: " + expectedCachePath);
-		System.out.println("Real cache path:     " + realCachePath);
-		assertTrue("Expected path: " + expectedCachePath + " Exists: " + realCachePath, 
-				expectedCachePath.equals(realCachePath));
+		System.out.println("Real cache path:     " + realAbsoluteCachePath);
+		System.out.println("Expected cache path: " + expectedAbsoluteCachePath);
+		assertTrue("Real cache path: " + realAbsoluteCachePath + " expected cache path: " + expectedAbsoluteCachePath, 
+				realAbsoluteCachePath.equals(expectedAbsoluteCachePath));
 		
 		// delete files with empty folders
-		new FileUtils(absolutePath).deleteFile(); // source
-		new FileUtils(expectedCachePath).deleteFile(); // cache
+		new FileUtils(absoluteSourcePath).deleteFile(); // source
+		new FileUtils(expectedAbsoluteCachePath).deleteFile(); // cache
 		storageProvider.getStorage().deleteFile(storageFile); // in storage
 	}
 }

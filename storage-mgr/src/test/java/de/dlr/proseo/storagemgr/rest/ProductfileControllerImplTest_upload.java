@@ -5,8 +5,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.List;
-
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Rule;
 import org.junit.Test;
@@ -28,7 +26,6 @@ import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
 import de.dlr.proseo.storagemgr.version2.FileUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
-import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 /**
@@ -149,28 +146,20 @@ public class ProductfileControllerImplTest_upload {
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isCreated()).andReturn();
 
 		// show results of http-upload
-		System.out.println();
-		System.out.println("HTTP Response");
-		System.out.println("Request: " + REQUEST_STRING);
-		System.out.println("Status: " + mvcResult.getResponse().getStatus());
-		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
-		System.out.println();
+		TestUtils.printMvcResult(REQUEST_STRING, mvcResult); 
 
-		// show file path of created rest job in storage
+		// check real with expected storage path 
 		String json = mvcResult.getResponse().getContentAsString();
 		RestFileInfo result = new ObjectMapper().readValue(json, RestFileInfo.class);
-		String expectedPath = storageProvider.getRelativePath(result.getFilePath());
-		System.out.println("Created job order path: " + expectedPath);
-		assertTrue("Expected path: " + expectedPath + " Exists: " + relativePath, relativePath.equals(expectedPath));
+		String realRelativeStoragePath = storageProvider.getRelativePath(result.getFilePath());
+		System.out.println("Created job order path: " + realRelativeStoragePath);
+		assertTrue("Expected path: " + realRelativeStoragePath + " Exists: " + relativePath, relativePath.equals(realRelativeStoragePath));
 
 		// show storage files
-		List<String> storageFiles = storageProvider.getStorage().getFiles();
-		String storageType = storageProvider.getStorage().getStorageType().toString();
-		TestUtils.printList("Storage " + storageType + " files:", storageFiles);
+		StorageTestUtils.printStorageFiles("After http-call", storageProvider.getStorage());
 
 		// delete files with empty folders
 		new FileUtils(absoluteSourcePath).deleteFile(); // source
-		StorageFile storageFile = storageProvider.getStorageFile(expectedPath); // storage
-		storageProvider.getStorage().deleteFile(storageFile);
+		storageProvider.getStorage().delete(realRelativeStoragePath); // storage
 	}
 }

@@ -3,6 +3,7 @@ package de.dlr.proseo.storagemgr;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
@@ -11,6 +12,7 @@ import javax.annotation.PostConstruct;
 import org.junit.rules.TestName;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -472,5 +474,21 @@ public class TestUtils {
 		
 		List<String> storageFilesAfterDelete = storage.getFiles();
 		TestUtils.printList("Storage after delete all " + storageType + " files:", storageFilesAfterDelete);
+	}
+
+	public static void printMvcResult(String requestString, MvcResult mvcResult) {
+		
+		System.out.println();
+		System.out.println("HTTP Response");
+		System.out.println("Request: " + requestString);
+		System.out.println("Status: " + mvcResult.getResponse().getStatus());
+		
+		try {
+			System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		
+		System.out.println();		
 	}
 }

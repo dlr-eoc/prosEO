@@ -145,6 +145,24 @@ public class ProductControllerImplTest_get {
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
 
+	/**
+	 * GET Files, Storage -> List<String> getProductFiles(String storageType, String prefix)
+	 *
+	 * gets files from storage with prefix (folder) and returns absolute paths List<String>
+	 * 
+	 * INPUT 
+	 * 
+	 * storageType: "S3" or "POSIX"
+	 * prefix (folder): "somefolder/folder"
+	 * 
+	 * OUTPUT 
+	 * 
+	 * List<String> absolute paths (if no storage type - union from all storages) 	
+	 *  
+	 * s3://<bucket>/<relativePath>        // no storage path in s3
+	 * /<storagePath>/<relativePath>       // no bucket in posix currently
+	 * 
+	 */
 	private void getProductFiles(StorageType storageType) throws Exception {
 
 		TestUtils.printMethodName(this, testName);
@@ -167,30 +185,23 @@ public class ProductControllerImplTest_get {
 			storageProvider.getStorage().uploadFile(sourceFile, targetFile);
 		}
 		
-		// show files in storage before http call
-		List<String> storageFiles = storageProvider.getStorage().getFiles();	
-		String stType = storageProvider.getStorage().getStorageType().toString();
-		TestUtils.printList(stType + " Storage Files before HTTP call", storageFiles);
+		// show storage files
+		StorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
 
 		// HTTP Get files from storage		
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
 				.param("storageType", storageType.toString()).param("prefix", prefix);
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
 
-		// show results of http-upload
-		System.out.println();
-		System.out.println("HTTP Response");
-		System.out.println("Request: " + REQUEST_STRING);
-		System.out.println("Status: " + mvcResult.getResponse().getStatus());
-		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
-		System.out.println();
+		// show results of http-download
+		TestUtils.printMvcResult(REQUEST_STRING, mvcResult); 
 		
 		// TODO: maybe convert List
-		String json = mvcResult.getResponse().getContentAsString();
+		// String json = mvcResult.getResponse().getContentAsString();
 		// RestFileInfo result = new ObjectMapper().readValue(json, RestFileInfo.class);
 		// String realCachePath = result.getFilePath();		
 		
-		//List<StringClass> actual = new ObjectMapper().readValue(json, new TypeReference<List<StringClass>>() {});
+		// List<StringClass> actual = new ObjectMapper().readValue(json, new TypeReference<List<StringClass>>() {});
 		
 		// ObjectMapper mapper = new ObjectMapper();
 
@@ -211,10 +222,8 @@ public class ProductControllerImplTest_get {
 		// delete storage files with prefix
 		storageProvider.getStorage().delete(prefix);
 		
-		// show files in storage after deletion
-		storageFiles = storageProvider.getStorage().getFiles();	
-		stType = storageProvider.getStorage().getStorageType().toString();
-		TestUtils.printList(stType + " Storage Files after deletion", storageFiles);
+		// show storage files
+		StorageTestUtils.printStorageFiles("After deletion", storageProvider.getStorage());
 	}
 	
 	

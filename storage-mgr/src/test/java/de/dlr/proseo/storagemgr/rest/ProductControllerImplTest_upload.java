@@ -157,9 +157,7 @@ public class ProductControllerImplTest_upload {
 
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().is(201)).andReturn();
 
-		System.out.println("REQUEST: " + REQUEST_STRING);
-		System.out.println("Status: " + mvcResult.getResponse().getStatus());
-		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
+		TestUtils.printMvcResult(REQUEST_STRING, mvcResult); 
 	}
 
 	private RestProductFS populateRestProductFS() {

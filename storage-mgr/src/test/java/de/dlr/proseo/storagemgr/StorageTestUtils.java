@@ -59,4 +59,11 @@ public class StorageTestUtils extends BaseStorageTestUtils {
 
 		System.out.println(msg + (storageProvider.isVersion2() ? " Version-2" : " Version-1"));
 	}
+	
+	public static void printStorageFiles(String message, Storage storage) {
+		
+		List<String> storageFiles = storage.getFiles();
+		String storageType = storage.getStorageType().toString();
+		TestUtils.printList(message + ". Storage " + storageType + " files:", storageFiles);
+	}
 }
