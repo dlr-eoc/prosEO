@@ -2,14 +2,11 @@ package de.dlr.proseo.storagemgr.rest;
 
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Rule;
@@ -30,6 +27,7 @@ import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
+import de.dlr.proseo.storagemgr.version2.model.Storage;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
@@ -52,8 +50,8 @@ public class ProductControllerImplTest_get {
 
 	@Autowired
 	private StorageTestUtils storageTestUtils;
-	
- 	@Autowired
+
+	@Autowired
 	private StorageProvider storageProvider;
 
 	@Rule
@@ -70,13 +68,13 @@ public class ProductControllerImplTest_get {
 	 */
 	@Test
 	public void testGet_v2Posix() throws Exception {
-		
-		StorageType storageType = StorageType.POSIX; 
+
+		StorageType storageType = StorageType.POSIX;
 		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
-		
+
 		getProductFiles(storageType);
-		
+
 		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
@@ -92,17 +90,17 @@ public class ProductControllerImplTest_get {
 	@Test
 	public void testGet_v1Posix() throws Exception {
 
-		StorageType storageType = StorageType.POSIX; 
+		StorageType storageType = StorageType.POSIX;
 		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
-		
+
 		getProductFiles(storageType);
-		
+
 		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
-	
+
 	/**
 	 * Get products with given directory prefix
 	 * 
@@ -112,13 +110,13 @@ public class ProductControllerImplTest_get {
 	 */
 	@Test
 	public void testGet_v2S3() throws Exception {
-		
-		StorageType storageType = StorageType.S3; 
+
+		StorageType storageType = StorageType.S3;
 		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
-		
+
 		getProductFiles(storageType);
-		
+
 		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
@@ -134,33 +132,35 @@ public class ProductControllerImplTest_get {
 	@Test
 	public void testGet_v1S3() throws Exception {
 
-		StorageType storageType = StorageType.S3; 
+		StorageType storageType = StorageType.S3;
 		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
-		
+
 		getProductFiles(storageType);
-		
+
 		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
 
 	/**
-	 * GET Files, Storage -> List<String> getProductFiles(String storageType, String prefix)
+	 * GET Files, Storage -> List<String> getProductFiles(String storageType, String
+	 * prefix)
 	 *
-	 * gets files from storage with prefix (folder) and returns absolute paths List<String>
+	 * gets files from storage with prefix (folder) and returns absolute paths
+	 * List<String>
 	 * 
-	 * INPUT 
+	 * INPUT
 	 * 
-	 * storageType: "S3" or "POSIX"
-	 * prefix (folder): "somefolder/folder"
+	 * storageType: "S3" or "POSIX" prefix (folder): "somefolder/folder" or "" - all
+	 * storage files
 	 * 
-	 * OUTPUT 
+	 * OUTPUT
 	 * 
-	 * List<String> absolute paths (if no storage type - union from all storages) 	
-	 *  
-	 * s3://<bucket>/<relativePath>        // no storage path in s3
-	 * /<storagePath>/<relativePath>       // no bucket in posix currently
+	 * List<String> absolute paths (if no storage type - union from all storages)
+	 * 
+	 * s3://<bucket>/<relativePath> // no storage path in s3
+	 * /<storagePath>/<relativePath> // no bucket in posix currently
 	 * 
 	 */
 	private void getProductFiles(StorageType storageType) throws Exception {
@@ -175,68 +175,50 @@ public class ProductControllerImplTest_get {
 		relativePaths.add(new PathConverter(prefix, "productGetDir/productGet3.txt").getPath());
 
 		for (String relativePath : relativePaths) {
-			
-			// create file in source 
+
+			// create file in source
 			storageTestUtils.createSourceFile(relativePath);
-			
+
 			// upload file to storage from source
 			StorageFile sourceFile = storageProvider.getSourceFile(relativePath);
 			StorageFile targetFile = storageProvider.getStorageFile(relativePath);
 			storageProvider.getStorage().uploadFile(sourceFile, targetFile);
 		}
-		
+
 		// show storage files
 		StorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
 
-		// HTTP Get files from storage		
+		// HTTP Get files from storage
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
 				.param("storageType", storageType.toString()).param("prefix", prefix);
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
 
 		// show results of http-download
-		TestUtils.printMvcResult(REQUEST_STRING, mvcResult); 
-		
-		// TODO: maybe convert List
-		// String json = mvcResult.getResponse().getContentAsString();
-		// RestFileInfo result = new ObjectMapper().readValue(json, RestFileInfo.class);
-		// String realCachePath = result.getFilePath();		
-		
-		// List<StringClass> actual = new ObjectMapper().readValue(json, new TypeReference<List<StringClass>>() {});
-		
-		// ObjectMapper mapper = new ObjectMapper();
+		TestUtils.printMvcResult(REQUEST_STRING, mvcResult);
 
-		// this uses a TypeReference to inform Jackson about the Lists's generic type
-		// List<PersonDto> actual = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<List<PersonDto>>() {});
+		// check real with expected absolute storage paths
+		String json = mvcResult.getResponse().getContentAsString();
+		List<?> realAbsoluteStoragePaths = new ObjectMapper().readValue(json, List.class);
 
-		/*
-		String listFormat = "%-20s %s";
-		List<String> resultList = null; 
-		System.out.println(String.format(listFormat, "Processor Name", "Version"));
-		for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
-			if (resultObject instanceof Map) {
-				Map<?, ?> resultMap = (Map<?, ?>) resultObject;
-				System.out.println(String.format(listFormat, resultMap.get("processorName"), resultMap.get("processorVersion")));
-			}
-		*/
-		
-		// delete storage files with prefix
-		storageProvider.getStorage().delete(prefix);
-		
-		// show storage files
-		StorageTestUtils.printStorageFiles("After deletion", storageProvider.getStorage());
-	}
-	
-	
-	private class StringClass {
-		
-		private String value;
+		Storage storage = storageProvider.getStorage();
+		for (int i = 0; i < realAbsoluteStoragePaths.size(); i++) {
 
-		public String getValue() {
-			return value;
+			String realAbsoluteStoragePath = (String) realAbsoluteStoragePaths.get(i);
+
+			String expectedAbsoluteStoragePath = storage.getAbsolutePath(relativePaths.get(i));
+			expectedAbsoluteStoragePath = storage.addFSPrefix(expectedAbsoluteStoragePath);
+
+			System.out.println("Real      " + realAbsoluteStoragePath);
+			System.out.println("Expected: " + expectedAbsoluteStoragePath);
+
+			assertTrue("Real path: " + realAbsoluteStoragePath + " Expected  path: " + expectedAbsoluteStoragePath,
+					realAbsoluteStoragePath.equals(expectedAbsoluteStoragePath));
 		}
 
-		public void setValue(String value) {
-			this.value = value;
-		} 
+		// delete storage files with prefix
+		storageProvider.getStorage().delete(prefix);
+
+		// show storage files after deletion
+		StorageTestUtils.printStorageFiles("After deletion", storageProvider.getStorage());
 	}
 }
