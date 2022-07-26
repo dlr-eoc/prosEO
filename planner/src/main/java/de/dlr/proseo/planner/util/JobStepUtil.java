@@ -346,7 +346,7 @@ public class JobStepUtil {
 	 */
 	@Transactional
 	public Messages close(JobStep js) {
-		if (logger.isTraceEnabled()) logger.trace(">>> cancel({})", (null == js ? "null" : js.getId()));
+		if (logger.isTraceEnabled()) logger.trace(">>> close({})", (null == js ? "null" : js.getId()));
 
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
