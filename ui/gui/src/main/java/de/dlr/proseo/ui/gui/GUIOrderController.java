@@ -628,12 +628,16 @@ public class GUIOrderController extends GUIBaseController {
 	}
 
 	/**
-	 * Retrieve all jobs of an order
+	 * Retrieve the jobs of an order filtered by following criteria
+	 * If fromIndex is not set the job or job step are used to calculate it.
 	 * 
 	 * @param id The order id
-	 * @param model The model to hold the data
-	 * 
-	 * @return The result
+	 * @param fromIndex The from index (first row)
+	 * @param toIndex The to index (last row)
+	 * @param jobId The job id 
+	 * @param jobStepId
+	 * @param model
+	 * @return The jobs found
 	 */
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/jobs/get")
@@ -642,16 +646,21 @@ public class GUIOrderController extends GUIBaseController {
 			@RequestParam(required = false, value = "recordFrom") Long fromIndex,
 			@RequestParam(required = false, value = "recordTo") Long toIndex,
 			@RequestParam(required = false, value = "job") String jobId,
+			@RequestParam(required = false, value = "jobStep") String jobStepId,
 			Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getId({}, model)", id);
     	checkClearCache();
 		Long from = null;
 		Long to = null;
+		Boolean calcPage = false;
 		if (fromIndex != null && fromIndex >= 0) {
 			from = fromIndex;
 		} else {
 			from = (long) 0;
+			if (jobId != null || jobStepId != null) {
+				calcPage = true;
+			}
 		}
 		Long count = countJobs(id);
 		if (toIndex != null && from != null && toIndex > from) {
@@ -660,6 +669,11 @@ public class GUIOrderController extends GUIBaseController {
 			to = count;
 		}
 		Long pageSize = to - from;
+		if (calcPage) {
+			Long page = pageOfJob(id, jobId, jobStepId, pageSize);
+			from = page * pageSize;
+			to = from + pageSize;
+		}
 		Long deltaPage = (long) ((count % pageSize)==0?0:1);
 		Long pages = (count / pageSize) + deltaPage;
 		Long page = (from / pageSize) + 1;
@@ -947,6 +961,12 @@ public class GUIOrderController extends GUIBaseController {
 //		return result;
 //	}
 
+    /**
+     * Count the number of jobs in an order.
+     * 
+     * @param id The order id
+     * @return The number of jobs
+     */
     private Long countJobs(String id)  {	    	
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String uri = "/orderjobs/count";
@@ -986,7 +1006,79 @@ public class GUIOrderController extends GUIBaseController {
         return result;
     }
     
+    /**
+     * Get the display page of a job in an order
+     * 
+     * @param orderId The order id
+     * @param jobId The job id
+     * @param jobStepId The job step id
+     * @param pageSize The page six
+     * @return The page number
+     */
+    private Long pageOfJob(String orderId, String jobId, String jobStepId, Long pageSize) {    	
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String uri = "/orderjobs/index";
+		String divider = "?";
+		if (orderId != null) {
+			uri += divider + "orderid=" + orderId;
+			divider ="&";
+		}
+		if (jobId != null) {
+			uri += divider + "jobid=" + jobId;
+			divider ="&";
+		}
+		if (jobStepId != null) {
+			uri += divider + "jobstepid=" + jobStepId;
+			divider ="&";
+		}
+		divider ="&";
+		try {
+			uri += divider + "orderBy=startTime"  + URLEncoder.encode(" ASC", "UTF-8");
+		} catch (UnsupportedEncodingException e1) {
+			// should not be, but in case of
+			e1.printStackTrace();
+		}
+		Long result = (long) 0;
+		try {
+			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
+					uri, String.class, auth.getProseoName(), auth.getPassword());
 
+			if (resStr != null && resStr.length() > 0) {
+				result = Long.valueOf(resStr);
+				// this is the row index in complete list, now calculate the page
+				result = (result) / pageSize;
+			}
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_MISSIONS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return result;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return result;
+		}
+		
+        return result;
+    }
+
+    /**
+     * Count the existing orbits of a spacecraft between from and to.
+     * 
+     * @param spacecraft The spacecraft code
+     * @param from Orbit number from
+     * @param to Orbit number to
+     * @return The orbit count
+     */
     private Long countOrbits(String spacecraft, Long from, Long to)  {	    	
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String uri = "/orbits/count";
@@ -1034,6 +1126,13 @@ public class GUIOrderController extends GUIBaseController {
         return result;
     }
 
+    /**
+     * Count the number of orders
+     * 
+     * @param orderName
+     * @param nid
+     * @return The number of orbits
+     */
     public Long countOrders(String orderName, String nid) {
     	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
     	Long result = (long) -1;
@@ -1080,6 +1179,19 @@ public class GUIOrderController extends GUIBaseController {
     	return result;
     }
 
+	/** Count the orders specified by following parameters
+	 * 
+	 * @param identifier Identifier pattern
+	 * @param states The states (divided by ':')
+	 * @param products The product classes (divided by ':')
+	 * @param from The earliest start time
+	 * @param to The latest start time
+	 * @param recordFrom 
+	 * @param recordTo
+	 * @param sortCol The sort criteria
+	 * @param up Ascending if true, otherwise descending
+	 * @return The number of orders found
+	 */
 	public Long countOrdersL(String identifier, String states, String products, String from, String to, 
 			Long recordFrom, Long recordTo, String sortCol, Boolean up) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
@@ -1183,6 +1295,14 @@ public class GUIOrderController extends GUIBaseController {
 		return result;
 		
 	}
+	
+    /**
+     * Normalize the date string
+     * 
+     * @param se The input date string
+     * @param type The type of it
+     * @return The normalized date string
+     */
     private String normStartEnd(String se, String type) {
     	String val = se;
     	if (se != null) {
