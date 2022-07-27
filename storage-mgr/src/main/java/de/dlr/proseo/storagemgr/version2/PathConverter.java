@@ -263,6 +263,16 @@ public class PathConverter {
 
 		return new PathConverter(path, basePaths);
 	}
+	
+	/**
+	 * Checks if path starts with slash (absolute path)
+	 * 
+	 * @return true if path starts with slash
+	 */
+	public boolean startsWithSlash() {
+
+		return p.startsWith(SLASH);
+	}
 
 	/**
 	 * Adds slash at end of path

@@ -183,6 +183,8 @@ public class PosixStorage implements Storage {
 	 */
 	public String getAbsolutePath(String relativePath) {
 		
+		if (new PathConverter(relativePath).startsWithSlash()) return relativePath;
+		
 		return new PathConverter(getBasePath(), relativePath).getPath();				
 	}
 	
