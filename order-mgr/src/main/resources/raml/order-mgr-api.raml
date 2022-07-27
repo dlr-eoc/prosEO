@@ -220,6 +220,31 @@ resourceTypes:
         200:
           body:
             text/plain:
+  /index:
+    type: standard
+    get:
+      description: Get index of job in job list of order 
+      displayName: indexOfJob
+      queryParameters:
+        orderid: 
+          type: integer
+          format: long
+          description: The persistent id of the processing order
+        jobid?: 
+          type: integer
+          format: long
+          description: The persistent id of the job to show
+        jobstepid?: 
+          type: integer
+          format: long
+          description: The persistent id of the job step to show
+        orderBy?:
+          type: string[]
+          description: an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+      responses:
+        200:
+          body:
+            text/plain:
 /orderjobsteps:
   type: standard
   get:

@@ -122,6 +122,71 @@ public class OrderjobControllerImpl implements OrderjobController {
 			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}	
 	}
+	
+    /**
+     * Get the index of a job in ordered list of all jobs of order
+     * 
+	 * @param state state of jobs
+	 * @param orderId order id
+	 * @param jobId job id
+	 * @param jobStepId job step id
+	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+	 * @return index of job in ordered list (0 based)
+     */
+	@Transactional(readOnly = true)
+	@Override
+    public ResponseEntity<String> indexOfJob(Long orderId, Long jobId, Long jobStepId, String[] orderBy) {
+		if (logger.isTraceEnabled()) logger.trace(">>> indexOfJob({}, {}, {})", orderId, jobId, jobStepId);
+		
+		try {
+			// Find using search parameters
+			String jpqlQuery = null;
+			jpqlQuery = "select j.id from Job j where j.processingOrder.id = ";
+			if (orderId != null) {
+				jpqlQuery += orderId;
+			} else if (jobId != null) {
+				jpqlQuery += "select jx.processingOrder.id from Job jx where jx.id = " + jobId;
+			} else if (jobStepId != null) {
+				jpqlQuery += "select js.job.processingOrder.id from JobStep js where js.id = " + jobStepId;
+			} else {
+				return new ResponseEntity<>("0", HttpStatus.OK);
+			}
+			// order by
+			if (null != orderBy && 0 < orderBy.length) {
+				jpqlQuery += " order by ";
+				for (int i = 0; i < orderBy.length; ++i) {
+					if (0 < i) jpqlQuery += ", ";
+					jpqlQuery += "j.";
+					jpqlQuery += orderBy[i];
+				}
+			}
+			if (jobId == null && jobStepId != null) {
+				Object res = em.createQuery("select js.job.id from JobStep js where js.id = " + jobStepId).getSingleResult();
+				if (res instanceof Long) {
+					jobId = (Long)res;
+				}
+			}
+			if (jobId == null) {
+				return new ResponseEntity<>("0", HttpStatus.OK);
+			}
+			
+			Object resultObject = (long) em.createQuery(jpqlQuery).getResultList().indexOf(jobId);
+
+			Messages.JOBINDEX_RETRIEVED.log(logger, orderId);
+
+			if (resultObject instanceof Long) {
+				return new ResponseEntity<>(((Long)resultObject).toString(), HttpStatus.OK);	
+			}
+			if (resultObject instanceof String) {
+				return new ResponseEntity<>((String) resultObject, HttpStatus.OK);	
+			}
+			return new ResponseEntity<>("0", HttpStatus.OK);
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+		}	
+	}
 
 	/**
 	 * Create a JPQL query for jobs, filtering by the mission the user is logged in to, and optionally by job state and/or order ID

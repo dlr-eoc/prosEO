@@ -22,6 +22,7 @@ public enum Messages {
 	HTTP_HEADER_SUCCESS				(true, MessageType.I, "Success"),
 	MSG_PREFIX						(true, MessageType.I, "199 order-mgr "), 
 	JOBCOUNT_RETRIEVED				(true, MessageType.I, "Job count for processing order '%s' retrieved"), 
+	JOBINDEX_RETRIEVED				(true, MessageType.I, "Job index for processing order '%s' retrieved"), 
 	JOB_RETRIED						(true, MessageType.I, "Job '%s' set to inital"), 
 	JOB_NOT_EXIST					(false, MessageType.E, "Job '%s' does not exist"),
 	JOBSTEP_NOT_EXIST				(false, MessageType.E, "Job step '%s' does not exist"),
