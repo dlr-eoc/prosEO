@@ -144,18 +144,15 @@ public class ConfiguredProcessor extends PersistentObject {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + Objects.hash(identifier);
-		return result;
+		return Objects.hash(identifier);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (!super.equals(obj))
-			return false;
+		if (super.equals(obj))
+			return true;
 		if (!(obj instanceof ConfiguredProcessor))
 			return false;
 		ConfiguredProcessor other = (ConfiguredProcessor) obj;

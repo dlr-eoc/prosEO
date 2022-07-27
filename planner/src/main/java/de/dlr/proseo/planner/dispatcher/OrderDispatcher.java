@@ -1176,8 +1176,12 @@ public class OrderDispatcher {
 			List <ConfiguredProcessor> cplist = new ArrayList<ConfiguredProcessor>();
 			for (Processor p : productClass.getProcessorClass().getProcessors()) {
 				for (ConfiguredProcessor cp : p.getConfiguredProcessors()) {
-					cplist.add(cp);
-					if (logger.isDebugEnabled()) logger.debug("Candidate configured processor {} found", cp.getIdentifier());
+					if (cp.getEnabled()) {
+						cplist.add(cp);
+						if (logger.isDebugEnabled()) logger.debug("Candidate configured processor {} found", cp.getIdentifier());
+					} else {
+						if (logger.isDebugEnabled()) logger.debug("Candidate configured processor {} is disabled", cp.getIdentifier());
+					}
 				}
 			}
 			// now look whether one configured processor is in requested configured processors

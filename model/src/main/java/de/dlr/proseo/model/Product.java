@@ -719,11 +719,7 @@ public class Product extends PersistentObject {
 	}
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + Objects.hash(configuredProcessor, fileClass, mode, parameters, productClass,
-				productQuality, productionType, sensingStartTime, sensingStopTime);
-		return result;
+		return Objects.hash(productClass, sensingStartTime); // most distinguishing attributes
 	}
 	/**
 	 * Tests equality of products based on their attribute values. Returns true if either of the following alternatives holds:

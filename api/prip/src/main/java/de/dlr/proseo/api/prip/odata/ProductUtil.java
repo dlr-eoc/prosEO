@@ -29,6 +29,7 @@ import org.apache.olingo.commons.api.edm.geo.Point;
 import org.apache.olingo.commons.api.edm.geo.Polygon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Parameter;
@@ -87,7 +88,7 @@ public class ProductUtil {
 			.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, 
 				(null == modelProductFile.getZipFileName() ? modelProductFile.getProductFileName() : modelProductFile.getZipFileName())))
 			.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_CONTENT_TYPE, ValueType.PRIMITIVE,
-				"application/octet-stream"))
+				MediaType.APPLICATION_OCTET_STREAM.toString()))
 			.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_CONTENT_LENGTH, ValueType.PRIMITIVE,
 				(null == modelProductFile.getZipFileName() ? modelProductFile.getFileSize() : modelProductFile.getZipFileSize())))
 			.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_ORIGIN_DATE, ValueType.PRIMITIVE,
@@ -262,7 +263,7 @@ public class ProductUtil {
 					.addProperty(new Property(null, ProductEdmProvider.ET_ATTRIBUTE_PROP_VALUETYPE, ValueType.PRIMITIVE,
 							ProductEdmProvider.ET_STRINGATTRIBUTE_NAME))
 					.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE,
-							null == modelProduct.getConfiguredProcessor() ? 0
+							null == modelProduct.getConfiguredProcessor() ? ""
 									: modelProduct.getConfiguredProcessor().getProcessor().getProcessorClass().getProcessorName()));
 			attributes.getEntities().add(processorName);
 		}
@@ -276,7 +277,7 @@ public class ProductUtil {
 					.addProperty(new Property(null, ProductEdmProvider.ET_ATTRIBUTE_PROP_VALUETYPE, ValueType.PRIMITIVE,
 							ProductEdmProvider.ET_STRINGATTRIBUTE_NAME))
 					.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE,
-							null == modelProduct.getConfiguredProcessor() ? 0
+							null == modelProduct.getConfiguredProcessor() ? ""
 									: modelProduct.getConfiguredProcessor().getProcessor().getProcessorVersion()));
 			attributes.getEntities().add(processorVersion);
 		}
@@ -304,7 +305,7 @@ public class ProductUtil {
 					.addProperty(new Property(null, ProductEdmProvider.ET_ATTRIBUTE_PROP_VALUETYPE, ValueType.PRIMITIVE,
 							ProductEdmProvider.ET_STRINGATTRIBUTE_NAME))
 					.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE,
-							null == modelProduct.getMode() ? 0 : modelProduct.getMode()));
+							null == modelProduct.getMode() ? "" : modelProduct.getMode()));
 			attributes.getEntities().add(processingMode);
 		}
 		

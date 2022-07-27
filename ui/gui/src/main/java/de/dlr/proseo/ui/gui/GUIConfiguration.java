@@ -30,26 +30,32 @@ public class GUIConfiguration implements WebMvcConfigurer {
 	@Value("${proseo.productionPlanner.url}")
 	private String productionPlanner;
 
-	/** The timeout used for long order actions */
+	/** The timeout in ms used for long order actions (asynchronous requests) */
 	@Value("${proseo.gui.timeout}")
 	private Long timeout;
 	
 	/**
-	 * @return the timeout
+	 * Gets the timeout for asynchronous requests in ms
+	 * 
+	 * @return the timeout in ms
 	 */
 	public Long getTimeout() {
 		return timeout;
 	}
 
 	/**
-	 * @return the productionPlanner
+	 * Gets the Production Planner base URI
+	 * 
+	 * @return the Production Planner URI
 	 */
 	public String getProductionPlanner() {
 		return productionPlanner;
 	}
 
 	/**
-	 * @return the orderManager
+	 * Gets the Order Manager base URI
+	 * 
+	 * @return the Order Manager URI
 	 */
 	public String getOrderManager() {
 		return orderManager;
@@ -58,7 +64,7 @@ public class GUIConfiguration implements WebMvcConfigurer {
 	/**
 	 * Gets the Processor Manager base URI
 	 * 
-	 * @return the processorManager base URI
+	 * @return the Processor Manager URI
 	 */
 	public String getProcessorManager() {
 		return processorManager;

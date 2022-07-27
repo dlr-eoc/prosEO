@@ -1027,7 +1027,8 @@ public class OrderUtil {
 			default:
 				break;
 			}
-			answer.log(logger, order.getIdentifier());
+			// don't log here, it is done by the caller
+			// answer.log(logger, order.getIdentifier());
 		}
 		return answer;
 	}
