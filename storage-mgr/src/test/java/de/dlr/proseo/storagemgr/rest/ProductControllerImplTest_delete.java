@@ -51,8 +51,8 @@ public class ProductControllerImplTest_delete {
 
 	@Rule
 	public TestName testName = new TestName();
-	
- 	@Autowired
+
+	@Autowired
 	private StorageProvider storageProvider;
 
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/products";
@@ -67,12 +67,12 @@ public class ProductControllerImplTest_delete {
 	@Test
 	public void testDelete_v1Posix() throws Exception {
 
-		StorageType storageType = StorageType.POSIX; 
+		StorageType storageType = StorageType.POSIX;
 		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
 
 		delete(storageProvider);
-		
+
 		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
@@ -88,12 +88,12 @@ public class ProductControllerImplTest_delete {
 	@Test
 	public void testDelete_v2Posix() throws Exception {
 
-		StorageType storageType = StorageType.POSIX; 
+		StorageType storageType = StorageType.POSIX;
 		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 
 		delete(storageProvider);
-		
+
 		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
@@ -109,12 +109,12 @@ public class ProductControllerImplTest_delete {
 	@Test
 	public void testDelete_v1S3() throws Exception {
 
-		StorageType storageType = StorageType.S3; 
+		StorageType storageType = StorageType.S3;
 		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
 
 		delete(storageProvider);
-		
+
 		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
@@ -130,60 +130,70 @@ public class ProductControllerImplTest_delete {
 	@Test
 	public void testDelete_v2S3() throws Exception {
 
-		StorageType storageType = StorageType.S3; 
+		StorageType storageType = StorageType.S3;
 		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 
 		delete(storageProvider);
-		
+
 		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
-	
+
 	private void delete(StorageProvider storageProvider) throws Exception {
 
 		TestUtils.printMethodName(this, testName);
 
 		// create unique source paths
 		String prefix = "product_delete";
-		List<String> paths = new ArrayList<>();
-		//paths.add(new PathConverter(prefix, "file1.txt").getPath());
-		//paths.add(new PathConverter(prefix, "file2.txt").getPath());
-		paths.add(new PathConverter(prefix, "dir/file3.txt").getPath());
-		
+		List<String> relativePaths = new ArrayList<>();
+		relativePaths.add(new PathConverter(prefix, "deletefile1.txt").getPath());
+		// relativePaths.add(new PathConverter(prefix, "deletefile2.txt").getPath());
+		// relativePaths.add(new PathConverter(prefix, "deletefiledir/file3.txt").getPath());
+
+		// delete possible existing files with prefix before test
+		storageProvider.getStorage().delete(prefix);
+
 		// create and upload source files
-		for (String path : paths) {
+		for (String relativePath : relativePaths) {
 
-			storageTestUtils.createSourceFile(path);
-			storageProvider.getStorage().uploadSourceFile(path);
+			storageTestUtils.createSourceFile(relativePath);
+			storageProvider.getStorage().uploadSourceFile(relativePath);
 		}
+			
+		// show storage files before http-delete-call
+		StorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
 
-		// check uploaded files
-		int realCount = storageProvider.getStorage().getFiles(prefix).size();
-		// assertTrue("After upload - Expected: 1, " + " Exists: " + realCount, realCount == 1);
+		// show storage files with prefix before http-delete-call
+		StorageTestUtils.printStorageFilesWithPrefix("Before http-call", storageProvider.getStorage(), prefix);
+
+		// check count of uploaded prefix storage files
+		int realStorageFileCount = storageProvider.getStorage().getFiles(prefix).size();
+		int expectedStorageFileCount = relativePaths.size();
+		assertTrue("After upload - Expected:" + expectedStorageFileCount + " Exists: " + realStorageFileCount,
+				realStorageFileCount == expectedStorageFileCount);
+
+		// absolute prefix path to delete
+		String pathInfo = new PathConverter(storageProvider.getStorage().getAbsolutePath(prefix)).addSlashAtEnd()
+				.getPath();
+		System.out.println("HTTP PathInfo: " + pathInfo);
 
 		// HTTP delete call (prefix)
-		// String pathInfo = storageProvider.getStorage().getStorageFile(prefix).getFullPath();
-		
-		String pathInfo = new PathConverter(storageProvider.getStorage().getBasePath(), prefix).addSlashAtEnd().getPath();
-		
-		TestUtils.printList("Storage files (prefix) before delete: ", storageProvider.getStorage().getFiles(prefix));
-		System.out.println("Prefix: " + pathInfo);
-
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.delete(REQUEST_STRING).param("pathInfo",
 				pathInfo);
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
 
-		// check response after delete
-		System.out.println("REQUEST: " + REQUEST_STRING);
-		System.out.println("Status: " + mvcResult.getResponse().getStatus());
-		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
-		
-		TestUtils.printList("Storage files (prefix) after delete: ", storageProvider.getStorage().getFiles(prefix));
-	
-		// check files after delete
-		realCount = storageProvider.getStorage().getFiles(prefix).size();
-		assertTrue("After delete - Expected: 0, " + " Exists: " + realCount, realCount == 0);
+		// show results of http-download
+		TestUtils.printMvcResult(REQUEST_STRING, mvcResult);
+
+		// show storage files with prefix before http-delete-call
+		StorageTestUtils.printStorageFilesWithPrefix("After http-call", storageProvider.getStorage(), prefix);
+
+		// check files after delete (expected: 0)
+		realStorageFileCount = storageProvider.getStorage().getFiles(prefix).size();
+		expectedStorageFileCount = 0;
+		assertTrue("After upload - Expected:" + expectedStorageFileCount + " Exists: " + realStorageFileCount,
+				realStorageFileCount == expectedStorageFileCount);
 	}
 }
