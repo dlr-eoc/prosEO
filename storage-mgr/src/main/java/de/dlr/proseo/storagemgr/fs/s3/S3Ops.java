@@ -686,6 +686,18 @@ public class S3Ops {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteDirectory({}, {}, {})", client, bucketName, prefix);
 		
+		// Amazon v1 problems, that's why this change. 
+		// To rollback delete everything before the next comment block and uncomment the block
+		try {
+			StorageProvider.getInstance()
+					.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.S3).delete(prefix);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		/*
 	    try {
 			ObjectListing objectList = client.listObjects(bucketName, prefix );
 			List<S3ObjectSummary> objectSummeryList =  objectList.getObjectSummaries();
@@ -707,7 +719,7 @@ public class S3Ops {
 		} catch (com.amazonaws.SdkClientException e) {
 			logger.error(e.getMessage());
 			throw e;
-		}
+		*/
 	}
 	
 	/**
