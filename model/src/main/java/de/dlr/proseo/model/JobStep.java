@@ -217,10 +217,9 @@ public class JobStep extends PersistentObject {
 	public void setJobStepState(JobStepState jobStepState) throws IllegalStateException {
 		if (null == this.jobStepState) {
 			this.jobStepState = jobStepState;
-		}
-		if (this.jobStepState.equals(jobStepState)) {
+		} else if (this.jobStepState.equals(jobStepState)) {
 			// Do nothing
-		} else if (null == this.jobStepState || this.jobStepState.isLegalTransition(jobStepState)) {
+		} else if (this.jobStepState.isLegalTransition(jobStepState)) {
 			// Update job step state
 			this.jobStepState = jobStepState;
 			

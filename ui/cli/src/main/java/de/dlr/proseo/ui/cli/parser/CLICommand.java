@@ -152,7 +152,7 @@ public class CLICommand {
 	public StringBuilder printHTML(StringBuilder htmlDoc) {
 
 		htmlDoc.append("<table>")
-				.append("<tr>" + "<td>" + "Command" + "</td>" + "<td>" + "<strong>" + this.name + "</strong>" + "</td>"
+				.append("<tr>" + "<td>" + "Command" + "</td>" + "<td id=\"" + this.name + "\">" + "<strong>" + this.name + "</strong>" + "</td>"
 						+ "</tr>")
 				.append("<tr>" + "<td>" + "Description" + "</td>" + "<td>" + this.description + "." + "</td>"
 						+ "</tr>");

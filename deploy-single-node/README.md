@@ -59,7 +59,7 @@ When all `application.yml` files have been created, for each component a configu
 file) must be created and pushed to the Docker registry to be used:
 ```
 export REGISTRY_URL=<your preferred prosEO repository, e. g. localhost:5000>
-export VERSION=<the prosEO version to install, e. g. 0.8.2>
+export VERSION=<the prosEO version to install, e. g. 0.9.0>
 
 cd proseo-images/proseo-components
 
@@ -80,13 +80,13 @@ The `proseo-images` directory may be populated with convenience scripts for thes
 
 ## Step 3: Deploy the prosEO Control Instance
 
-Create the prosEO Control Instance from a `docker-compose.yml` file like the following (a `docker-compose.yml.template`
-file is provided in the `proseo-images` directory):
+Create the prosEO Control Instance from a `docker-compose.yml` file. A `docker-compose.yml.template`
+file is provided in the `proseo-images` directory, a simplified file would look something like the following:
 ```yaml
 version: '3'
 services:
   proseo-db:
-    image: postgres:11
+    image: ${REGISTRY_URL}/postgres:11-proseo
     environment:
       - POSTGRES_DB=proseo
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -181,7 +181,6 @@ docker-compose -p proseo up -d
 ```
 
 The `proseo-images` directory may be populated with convenience scripts for these steps (see `proseo-images/README.md`).
-A template for the `docker-compose.yml` file can be found at `<project root>/deploy/brain/prepare_proseo/files`.
 
 After starting the prosEO control instance two SQL scripts need to be executed. First login to the proseo-db container:
 ```

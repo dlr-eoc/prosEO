@@ -5,7 +5,7 @@
 -package
 -quiet
 -sourcepath
-'/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/storage-mgr/src/main/java:/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/storage-mgr/target/generated-raml-mvc:/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/storage-mgr/target/generated-sources/annotations'
+'/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/storage-mgr/src/main/java:/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/storage-mgr/target/generated-raml-mvc'
 -author
 -bottom
 'Copyright &#169; 2022 <a href="http://www.dlr.de">DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</a>. All rights reserved.'
@@ -16,10 +16,10 @@
 -docencoding
 'UTF-8'
 -doctitle
-'prosEO Storage Manager 0.8.2 API'
+'prosEO Storage Manager 0.9.0 API'
 -linkoffline
 'https://docs.oracle.com/en/java/javase/11/docs/api' '/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/storage-mgr/target/javadoc-bundle-options'
 -use
 -version
 -windowtitle
-'prosEO Storage Manager 0.8.2 API'
+'prosEO Storage Manager 0.9.0 API'

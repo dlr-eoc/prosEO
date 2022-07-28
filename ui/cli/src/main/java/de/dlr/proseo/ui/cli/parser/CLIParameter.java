@@ -107,7 +107,7 @@ public class CLIParameter {
 	public StringBuilder printHTML(StringBuilder htmlDoc) {
 
 		htmlDoc.append(
-				"<table>" + "<tr>" + "<td>" + "Paramenter" + "</td>" + "<td>" + "<strong>" + this.name + "</strong>");
+				"<table>" + "<tr>" + "<td>" + "Parameter" + "</td>" + "<td>" + "<strong>" + this.name + "</strong>");
 
 		if (this.optional != null)
 			if (this.repeatable != null)

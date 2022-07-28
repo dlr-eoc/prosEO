@@ -263,7 +263,7 @@ public class ProductUtil {
 					.addProperty(new Property(null, ProductEdmProvider.ET_ATTRIBUTE_PROP_VALUETYPE, ValueType.PRIMITIVE,
 							ProductEdmProvider.ET_STRINGATTRIBUTE_NAME))
 					.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE,
-							null == modelProduct.getConfiguredProcessor() ? 0
+							null == modelProduct.getConfiguredProcessor() ? ""
 									: modelProduct.getConfiguredProcessor().getProcessor().getProcessorClass().getProcessorName()));
 			attributes.getEntities().add(processorName);
 		}
@@ -277,7 +277,7 @@ public class ProductUtil {
 					.addProperty(new Property(null, ProductEdmProvider.ET_ATTRIBUTE_PROP_VALUETYPE, ValueType.PRIMITIVE,
 							ProductEdmProvider.ET_STRINGATTRIBUTE_NAME))
 					.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE,
-							null == modelProduct.getConfiguredProcessor() ? 0
+							null == modelProduct.getConfiguredProcessor() ? ""
 									: modelProduct.getConfiguredProcessor().getProcessor().getProcessorVersion()));
 			attributes.getEntities().add(processorVersion);
 		}
@@ -305,7 +305,7 @@ public class ProductUtil {
 					.addProperty(new Property(null, ProductEdmProvider.ET_ATTRIBUTE_PROP_VALUETYPE, ValueType.PRIMITIVE,
 							ProductEdmProvider.ET_STRINGATTRIBUTE_NAME))
 					.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE,
-							null == modelProduct.getMode() ? 0 : modelProduct.getMode()));
+							null == modelProduct.getMode() ? "" : modelProduct.getMode()));
 			attributes.getEntities().add(processingMode);
 		}
 		

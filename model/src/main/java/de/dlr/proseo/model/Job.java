@@ -175,7 +175,6 @@ public class Job extends PersistentObject {
 	 */
 	@Transactional
 	public void checkStateChange() {
-		hasFailedJobSteps = false;
 		
 		// Check whether the job has any job steps at all
 		OrderState orderState = processingOrder.getOrderState();
@@ -204,6 +203,8 @@ public class Job extends PersistentObject {
 		}
 		
 		// Check status of job steps
+		hasFailedJobSteps = false;
+		
 		for (JobStep jobStep: jobSteps) {
 			// Update job step failure flag
 			hasFailedJobSteps = hasFailedJobSteps || jobStep.isFailed();
