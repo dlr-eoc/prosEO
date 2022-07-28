@@ -1,1 +1,1 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"de.dlr.proseo.facmgr"},{"l":"de.dlr.proseo.facmgr.rest"},{"l":"de.dlr.proseo.facmgr.rest.model"}];updateSearchResults();
+packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"l":"de.dlr.proseo.facmgr"},{"l":"de.dlr.proseo.facmgr.rest"},{"l":"de.dlr.proseo.facmgr.rest.model"}]
