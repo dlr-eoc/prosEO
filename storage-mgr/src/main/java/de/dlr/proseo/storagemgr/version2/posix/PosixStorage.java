@@ -2,7 +2,6 @@ package de.dlr.proseo.storagemgr.version2.posix;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -175,6 +174,25 @@ public class PosixStorage implements Storage {
 		return posixDAL.getFiles(basePath);
 	}
 
+	/**
+	 * Gets relative path from absolute path using base path list
+	 * 
+	 * @param absolutePath absolute path
+	 * @return relative path
+	 */
+	@Override
+	public String getRelativePath(String absolutePath) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getRelativePath({})", absolutePath);
+		
+		List<String> basePaths = new ArrayList<>();
+		basePaths.add(basePath);
+		basePaths.add(sourcePath);
+
+		return new PathConverter(absolutePath, basePaths).getRelativePath().getPath();
+	}
+	
 	/**
 	 * Gets the absolute path (posix: /<storagePath>/<relativePath>)
 	 * 
@@ -529,6 +547,8 @@ public class PosixStorage implements Storage {
 	 * @param absolutePath absolute path
 	 * @return relative path
 	 */
+	
+	/*
 	private String getRelativePath(String absolutePath) {
 
 		if (logger.isTraceEnabled())
@@ -541,6 +561,7 @@ public class PosixStorage implements Storage {
 
 		return pathRelative.toString();
 	}
+	*/
 
 	/**
 	 * Gets full bucket path

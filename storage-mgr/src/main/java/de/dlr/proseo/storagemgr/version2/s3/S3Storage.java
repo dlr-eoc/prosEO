@@ -173,7 +173,21 @@ public class S3Storage implements Storage {
 		return s3DAL.getFiles();
 	}
 	
-
+	/**
+	 * Gets relative path from absolute path removing s3 prefix, bucket and left slash
+	 * 
+	 * @param absolutePath absolute path
+	 * @return relative path
+	 */
+	@Override
+	public String getRelativePath(String absolutePath) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getRelativePath({})", absolutePath);
+		
+		return new PathConverter(absolutePath).removeFsPrefix().removeBucket().removeLeftSlash().getPath();
+	}
+	
 	/**
 	 * Gets the absolute path (s3://<bucket>/<relativePath>)
 	 * 
@@ -419,7 +433,7 @@ public class S3Storage implements Storage {
 		// StorageFile targetFile = new S3StorageFile(s3DAL.getBucket(),
 		// sourceFile.getRelativePath());
 
-		return s3DAL.uploadFile(sourceFile.getFullPath(), sourceFile.getFullPath());
+		return s3DAL.uploadFile(sourceFile.getFullPath(), sourceFile.getRelativePath());
 	}
 
 	/**

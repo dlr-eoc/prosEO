@@ -88,6 +88,14 @@ public interface Storage {
 	public List<String> getFiles();
 	
 	/**
+	 * Gets relative path from absolute path
+	 * 
+	 * @param absolutePath absolute path
+	 * @return relative path
+	 */
+	public String getRelativePath(String absolutePath);
+	
+	/**
 	 * Gets the absolute path depending on storage file system
 	 * 
 	 * @param relativePath relative path
