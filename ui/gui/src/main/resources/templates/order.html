@@ -638,7 +638,12 @@ function retrieveData(id) {
                     if (jh.length > 0) {
                         aJob = jh[0];
                     }
-                    retrieveJobs(id, 0, 20, aJob); 
+                    var aJobStep = null;
+                    var jsh = getURLParams('jsh'); 
+                    if (jsh.length > 0) {
+                        aJobStep = jsh[0];
+                    }
+                    retrieveJobs(id, null, 20, aJob, aJobStep); 
                 },
                 error : function(jqXHR, textStatus, errorThrown) {
                     hideLoader();
@@ -656,7 +661,7 @@ function retrieveDataPage(from, to) {
     retrieveJobs(myid, from, to, null);
 }
 
-function retrieveJobs(id, from, to, aJob) {
+function retrieveJobs(id, from, to, aJob, aJobStep) {
     if ([[${hasroleorderreader}]]) {
         showLoader();
         var tableRows = $("jobs").rows;
@@ -680,6 +685,9 @@ function retrieveJobs(id, from, to, aJob) {
             }
             if (aJob != null) {
                 url = url + divider + "job=" + aJob;
+            }
+            if (aJobStep != null) {
+                url = url + divider + "jobStep=" + aJobStep;
             }
 
             $.ajax({
