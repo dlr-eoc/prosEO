@@ -97,32 +97,12 @@ public class ProductfileControllerImpl implements ProductfileController {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRestFileInfoByPathInfo({})", pathInfo);
 	
-		// pathInfo is absolute path s3://.. or /.. DOWNLOAD Storage -> Cache
+		// pathInfo is absolute path s3://bucket/.. or /storagePath/.. DOWNLOAD Storage -> Cache
 		if (storageProvider.isVersion2()) {
 
 			try {
-				
-				// separate for s3 and Posix. posix has no bucket only storage path and relative path
-				/*
-				 * PathConverter pathConverter = new PathConverter(pathInfo,
-				 * storageProvider.getBasePaths()); StorageFile sourceFile;
-				 * 
-				 * if (pathConverter.hasBasePaths()) { // source file String relativePath =
-				 * storageProvider.getRelativePath(pathInfo); sourceFile =
-				 * storageProvider.getSourceFile(relativePath); } else { // all others
-				 * sourceFile = storageProvider.getAbsoluteFile(pathInfo); }
-				 */
-				//StorageFile sourceFile = storageProvider.getAbsoluteFile(pathInfo);
-
-				String relativePath;
-				if (new PathConverter(pathInfo).isS3Path()) {
-					
-					relativePath = new PathConverter(pathInfo).removeFsPrefix().removeBucket().removeLeftSlash().getPath();
-				}
-				else {
-					
-					relativePath = storageProvider.getRelativePath(pathInfo); 
-				}
+				// relative path depends on path, not on actual storage
+				String relativePath = storageProvider.getRelativePath(pathInfo); 
 				
 				StorageFile sourceFile = storageProvider.getStorageFile(relativePath);
 				StorageFile targetFile = storageProvider.getCacheFile(sourceFile.getRelativePath());
