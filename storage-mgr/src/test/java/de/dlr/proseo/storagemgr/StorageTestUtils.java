@@ -66,4 +66,11 @@ public class StorageTestUtils extends BaseStorageTestUtils {
 		String storageType = storage.getStorageType().toString();
 		TestUtils.printList(message + ". Storage " + storageType + " files:", storageFiles);
 	}
+	
+	public static void printStorageFilesWithPrefix(String message, Storage storage, String prefix) {
+		
+		List<String> storageFiles = storage.getFiles(prefix);
+		String storageType = storage.getStorageType().toString();
+		TestUtils.printList(message + ". Storage " + storageType + " files(prefix: " + prefix + "):", storageFiles);
+	}
 }
