@@ -601,26 +601,10 @@ public class ProductControllerImpl implements ProductController {
 		if (storageProvider.isVersion2()) { // begin version 2 - delete files in storage
 
 			try {				
-				PathConverter path = new PathConverter(pathInfo, storageProvider.getBasePaths());
-				StorageFile sourceFileOrDir; 
-				System.out.println("Controller: path " + pathInfo);
-				
-				if (path.hasBasePaths()) {
-					
-					String withoutBasePath = path.removeBasePaths().removeLeftSlash().getPath();
-					sourceFileOrDir = storageProvider.getStorageFile(withoutBasePath);
-				}
-				else {
-					
-					String withoutFirstFolder = path.removeFirstFolder().removeLeftSlash().getPath();
-					sourceFileOrDir = storageProvider.getStorageFile(withoutFirstFolder);			
-				}
-				
-				System.out.println("Controller: final path to delete " + sourceFileOrDir.getRelativePath());
-
 				String storageType = storageProvider.getStorage().getStorageType().toString();
 				
-				List<String> deletedFilesOrDir = storageProvider.getStorage().delete(sourceFileOrDir);
+				String relativePath = storageProvider.getRelativePath(pathInfo);
+				List<String> deletedFilesOrDir = storageProvider.getStorage().delete(relativePath);
 				RestProductFS response = createRestProductFilesDeleted(deletedFilesOrDir, storageType);
 				
 				return new ResponseEntity<>(response, HttpStatus.OK);
