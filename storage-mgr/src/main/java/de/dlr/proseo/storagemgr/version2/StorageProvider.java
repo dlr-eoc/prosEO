@@ -447,8 +447,15 @@ public class StorageProvider {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRelativePath({})", absolutePath);
-
-		return new PathConverter(absolutePath, basePaths).getRelativePath().getPath();
+		
+		if (new PathConverter(absolutePath).isS3Path()) {
+			
+			return getStorage(StorageType.S3).getRelativePath(absolutePath);
+		}
+		else {
+			
+			return getStorage(StorageType.POSIX).getRelativePath(absolutePath);	
+		}
 	}
 
 	/**
