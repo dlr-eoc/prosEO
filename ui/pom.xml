@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo</artifactId>
-		<version>0.9.0</version>
+		<version>0.9.0-HOTFIX</version>
 	</parent>
 
 	<artifactId>proseo-ui</artifactId>
