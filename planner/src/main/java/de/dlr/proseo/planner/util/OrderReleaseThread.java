@@ -18,6 +18,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.SimplePolicy;
+import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Message;
@@ -174,43 +175,59 @@ public class OrderReleaseThread extends Thread {
 		Messages releaseAnswer = Messages.FALSE;
 		if (order != null && 
 				(order.getOrderState() == OrderState.RELEASING || order.getOrderState() == OrderState.PLANNED)) {
-			for (Job job : jobList) {
-				if (this.isInterrupted()) {
-					answer = new Message(Messages.ORDER_RELEASING_INTERRUPTED);
-					logger.warn(Messages.ORDER_RELEASING_INTERRUPTED.format(this.getName(), order.getIdentifier()));
-					throw new InterruptedException();
-				}
-				releaseAnswer = jobUtil.resume(job.getId());
-				if (!releaseAnswer.isTrue()) {
-					// nothing to do here
-				}
-				if (this.isInterrupted()) {
-					answer = new Message(Messages.ORDER_RELEASING_INTERRUPTED);
-					logger.warn(Messages.ORDER_RELEASING_INTERRUPTED.format(this.getName(), order.getIdentifier()));
-					throw new InterruptedException();
-				}
-				// look for possible job steps to run
-				KubeConfig kc = null;
-				try {
-					productionPlanner.acquireThreadSemaphore("release");
-					kc = transactionTemplate.execute((status) -> {
-						Optional<Job> jobOpt = RepositoryService.getJobRepository().findById(job.getId());
-						if (jobOpt.get() != null) {
-							return productionPlanner.getKubeConfig(jobOpt.get().getProcessingFacility().getName());
+			
+
+			int packetSize = ProductionPlanner.config.getPlanningBatchSize();
+			final Long jCount = (long) jobList.size();
+			List<Integer> curJList = new ArrayList<Integer>();
+			curJList.add(0);
+			List<Integer> curJSList = new ArrayList<Integer>();
+			curJSList.add(0);
+			List<Job> releasedJobs = new ArrayList<Job>();
+			try {
+				while (curJList.get(0) < jCount) {
+					releasedJobs.clear();
+					productionPlanner.acquireThreadSemaphore("releaseOrder");	
+					if (logger.isTraceEnabled()) logger.trace(">>> releaseJobBlock({})", curJList.get(0));
+					Object answer1 = transactionTemplate.execute((status) -> {
+						curJSList.set(0, 0);
+						Messages locAnswer = Messages.TRUE;
+						while (curJList.get(0) < jCount && curJSList.get(0) < packetSize) {
+							if (this.isInterrupted()) {
+								return new Message(Messages.PLANNING_INTERRUPTED);
+							}
+							if (jobList.get(curJList.get(0)).getJobState() == JobState.PLANNED) {
+								Job locJob = RepositoryService.getJobRepository().getOne(jobList.get(curJList.get(0)).getId());
+								locAnswer = jobUtil.resume(locJob);
+								releasedJobs.add(locJob);
+								curJSList.set(0, curJSList.get(0) + locJob.getJobSteps().size());
+							}
+							curJList.set(0, curJList.get(0) + 1);		
 						}
-						return null;
+						return locAnswer;					
 					});
-				} catch (Exception e) {
-					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-				} finally {
-					productionPlanner.releaseThreadSemaphore("release");					
+					if(answer1 instanceof Messages) {
+						answer = new Message((Messages)answer1);
+					}
+					productionPlanner.releaseThreadSemaphore("releaseOrder");
+					
+					@SuppressWarnings("unused")
+					Object answer2 = transactionTemplate.execute((status) -> {
+						for (Job j : releasedJobs) {
+							Job locJob = RepositoryService.getJobRepository().getOne(j.getId());
+							KubeConfig kc = productionPlanner.getKubeConfig(locJob.getProcessingFacility().getName());
+							try {
+								UtilService.getJobStepUtil().checkJobToRun(kc, locJob.getId());
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}
+						return null;					
+					});
 				}
-				try {
-					UtilService.getJobStepUtil().checkJobToRun(kc, job.getId());
-				} catch (InterruptedException e) {
-					throw e;
-				}
-				
+			} catch (Exception e) {	
+				productionPlanner.releaseThreadSemaphore("releaseOrder");
+				throw e;
 			}
 			if (this.isInterrupted()) {
 				answer = new Message(Messages.ORDER_RELEASING_INTERRUPTED);

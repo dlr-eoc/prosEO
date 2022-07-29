@@ -78,6 +78,11 @@ public class ProductionPlannerConfiguration {
 	@Value("${proseo.posix.workerMountPoint}")
 	private String posixWorkerMountPoint;
 
+	/** Wait time for file size check cycle in milliseconds */
+	@Value("${proseo.productionPlanner.planningbatchsize}")
+	private Integer planningBatchSize;
+
+
 	/**
 	 * @return the checkForFurtherJobStepsToRun
 	 */
@@ -93,6 +98,23 @@ public class ProductionPlannerConfiguration {
 	 */
 	public void setCheckForFurtherJobStepsToRun(Boolean checkForFurtherJobStepsToRun) {
 		this.checkForFurtherJobStepsToRun = checkForFurtherJobStepsToRun;
+	}
+
+	/**
+	 * @return the planningBatchSize
+	 */
+	public Integer getPlanningBatchSize() {
+		if (planningBatchSize == null || planningBatchSize < 1) {
+			planningBatchSize = 1;
+		}
+		return planningBatchSize;
+	}
+
+	/**
+	 * @param planningBatchSize the planningBatchSize to set
+	 */
+	public void setPlanningBatchSize(Integer planningBatchSize) {
+		this.planningBatchSize = planningBatchSize;
 	}
 
 	/**

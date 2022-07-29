@@ -640,24 +640,44 @@ public class OrderDispatcher {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobSteps({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 
 		Message answer = new Message(Messages.TRUE);
-		// there has to be a list of orbits
-		for (Job job : jobList) {
-			if (thread.isInterrupted()) {
-				answer = new Message(Messages.PLANNING_INTERRUPTED);
-				logger.warn(Messages.PLANNING_INTERRUPTED.format(order.getIdentifier()));
-				throw new InterruptedException();
-			}
-			if (job.getJobState() == JobState.INITIAL) {
-				try {
-					productionPlanner.acquireThreadSemaphore("createJobSteps");
-					createJobStepsOfJob(orderId, job.getId(), productionPlanner);
-					productionPlanner.releaseThreadSemaphore("createJobSteps");			
+		// calculate the planning packet size 
+		
+		int packetSize = ProductionPlanner.config.getPlanningBatchSize();
+		final Long jCount = (long) jobList.size();
+		List<Integer> curJList = new ArrayList<Integer>();
+		curJList.add(0);
+		List<Integer> curJSList = new ArrayList<Integer>();
+		curJSList.add(0);
+		try {
+			while (curJList.get(0) < jCount) {
+				productionPlanner.acquireThreadSemaphore("createJobSteps");
+				Message answer1 = transactionTemplate.execute((status) -> {
+					curJSList.set(0, 0);
+				    ProcessingOrder locOrder =  RepositoryService.getOrderRepository().getOne(orderId);
+					while (curJList.get(0) < jCount && curJSList.get(0) < packetSize) {
+						if (thread.isInterrupted()) {
+							return new Message(Messages.PLANNING_INTERRUPTED);
+						}
+						if (jobList.get(curJList.get(0)).getJobState() == JobState.INITIAL) {
+							Job locJob = RepositoryService.getJobRepository().getOne(jobList.get(curJList.get(0)).getId());
+							createJobStepsOfJob(locOrder, locJob, productionPlanner);	
+							curJSList.set(0, curJSList.get(0) + locJob.getJobSteps().size());
+						}
+						curJList.set(0, curJList.get(0) + 1);
+					}
+					return new Message(Messages.TRUE);
+				});
+				if (!answer1.isTrue()) {
+					answer = answer1;
+					productionPlanner.releaseThreadSemaphore("createJobSteps");	
+					return new Message(Messages.PLANNING_INTERRUPTED);
 				}
-				catch (Exception e) {
-					productionPlanner.releaseThreadSemaphore("createJobSteps");		
-					throw e;
-				}
+				productionPlanner.releaseThreadSemaphore("createJobSteps");	
 			}
+		}
+		catch (Exception e) {	
+			productionPlanner.releaseThreadSemaphore("createJobSteps");
+			throw e;
 		}
 		return answer;
 	}
@@ -671,22 +691,9 @@ public class OrderDispatcher {
 	 * @param productionPlanner The production planner instance
 	 */
 	// @Transactional
-	private void createJobStepsOfJob(long orderId, long jobId, ProductionPlanner productionPlanner) {
-		if (logger.isTraceEnabled()) logger.trace(">>> createJobStepsOfJob({}, {})", orderId, jobId);
-		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
-		@SuppressWarnings("unused")
-		Object dummy = transactionTemplate.execute((status) -> {
-			ProcessingOrder order = null;
-			Job job = null;
-			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
-			if (orderOpt.isPresent()) {
-				order = orderOpt.get();
-			}
+	private void createJobStepsOfJob(ProcessingOrder order, Job job, ProductionPlanner productionPlanner) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createJobStepsOfJob({}, {})", order.getId(), job.getId());
 			if (order != null ) {
-				Optional<Job> jobOpt = RepositoryService.getJobRepository().findById(jobId);
-				if (jobOpt.isPresent()) {
-					job = jobOpt.get();
-				}
 				if (job != null && job.getJobState() == JobState.INITIAL) {
 					List<JobStep> allJobSteps = new ArrayList<JobStep>();
 					List<Product> allProducts = new ArrayList<Product>();
@@ -704,9 +711,7 @@ public class OrderDispatcher {
 					}
 				}
 			}
-			return null;
-		});
-		if (logger.isTraceEnabled()) logger.trace("<<< createJobStepsOfJob({}, {})", orderId, jobId);
+		if (logger.isTraceEnabled()) logger.trace("<<< createJobStepsOfJob({}, {})", order.getId(), job.getId());
 	}
 	
 	/**
