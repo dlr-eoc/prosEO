@@ -651,7 +651,9 @@ public class ProductManager {
 			productChanged = true;
 			modelProduct.setRawDataAvailabilityTime(changedProduct.getRawDataAvailabilityTime());
 		}
-		if (!modelProduct.getGenerationTime().equals(changedProduct.getGenerationTime())) {
+		if (null == modelProduct.getGenerationTime() && null != changedProduct.getGenerationTime()
+				|| null != modelProduct.getGenerationTime()
+					&& !modelProduct.getGenerationTime().equals(changedProduct.getGenerationTime())) {
 			productChanged = true;
 			modelProduct.setGenerationTime(changedProduct.getGenerationTime());
 		}
