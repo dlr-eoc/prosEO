@@ -446,4 +446,14 @@ public class PathConverter {
 		 
 		 return new PathConverter(S3PREFIX + pathWithoutLeftSlash, basePaths);
 	}
+	
+	/**
+	 * Gets file name from path
+	 * 
+	 * @return file name
+	 */
+	public String getFileName() {
+		
+		return new File(p).getName();
+	}
 }
