@@ -156,7 +156,7 @@ public class ProductControllerImpl implements ProductController {
 			try {
 				String hostName = getLocalHostName();
 				String prefix = new PathConverter(restProductFS.getProductId()).addSlashAtEnd().getPath();
-				ArrayList<String> allUploaded = new ArrayList<String>();
+				List<String> allUploaded = new ArrayList<String>();
 				
 				StorageFile targetFolder = storageProvider.getStorageFile(prefix);
 				
@@ -168,6 +168,8 @@ public class ProductControllerImpl implements ProductController {
 					if (uploaded != null) 
 						allUploaded.addAll(uploaded);
 				}
+				
+				allUploaded = storageProvider.getStorage().getAbsolutePath(allUploaded);
 				
 				RestProductFS response = setRestProductFS(restProductFS, targetFolder.getBasePath(), true, targetFolder.getFullPath() + "/",
 						allUploaded, false, "registration executed on node " + hostName);
