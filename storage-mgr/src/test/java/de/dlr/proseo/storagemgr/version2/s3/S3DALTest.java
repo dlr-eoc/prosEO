@@ -3,7 +3,6 @@ package de.dlr.proseo.storagemgr.version2.s3;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,22 +23,11 @@ import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
-import de.dlr.proseo.storagemgr.version2.posix.PosixDAL;
-import de.dlr.proseo.storagemgr.version2.s3.S3DAL;
-
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.transfer.s3.FileUpload;
-import software.amazon.awssdk.transfer.s3.S3ClientConfiguration;
-import software.amazon.awssdk.transfer.s3.S3TransferManager;
 
 /**
  * @author Denys Chaykovskiy
  *
  */
-
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestEntityManager
@@ -50,7 +38,7 @@ public class S3DALTest {
 
 	@Autowired
 	private StorageManagerConfiguration cfg;
-	
+
 	@Autowired
 	private StorageTestUtils storageTestUtils;
 
@@ -83,7 +71,7 @@ public class S3DALTest {
 		pathes.add(prefix + "dir/file3.txt");
 
 		List<String> sourceFiles = new ArrayList<>();
-		
+
 		// create source files
 		for (String path : pathes) {
 			String sourceFile = storageTestUtils.createSourceFile(path);
@@ -93,8 +81,8 @@ public class S3DALTest {
 		String sourcePath = testUtils.getSourcePath();
 		sourcePath = new PathConverter(sourcePath).convertToSlash().addSlashAtEnd().getPath();
 
-		S3DAL s3DAL = new S3DAL( cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3DefaultBucket());
-		
+		S3DAL s3DAL = new S3DAL(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3DefaultBucket());
+
 		s3DAL.deleteFiles();
 
 		try {
@@ -106,13 +94,12 @@ public class S3DALTest {
 			TestUtils.printList("Uploaded Files: ", uploadedFiles);
 			assertTrue("Expected: 3, " + " Exists: " + uploadedFiles.size(), uploadedFiles.size() == 3);
 			TestUtils.printList("S3 Storage after upload: ", s3DAL.getFiles());
-			
+
 			// delete source files
 			TestUtils.deleteDirectory(sourcePath);
-		
+
 			// download files from storage
-			List<String> downloadedFiles = s3DAL
-					.download(sourcePath);
+			List<String> downloadedFiles = s3DAL.download(sourcePath);
 			TestUtils.printList("Downloaded Files: ", downloadedFiles);
 			assertTrue("Expected: 3, " + " Exists: " + downloadedFiles.size(), downloadedFiles.size() == 3);
 			TestUtils.printDirectory(sourcePath);

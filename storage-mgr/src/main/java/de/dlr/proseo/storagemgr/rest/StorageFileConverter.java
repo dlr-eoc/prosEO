@@ -1,20 +1,15 @@
 package de.dlr.proseo.storagemgr.rest;
 
-import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
-import javax.swing.text.Document;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.dlr.proseo.storagemgr.utils.StorageManagerUtils;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 
 public class StorageFileConverter {
@@ -34,7 +29,7 @@ public class StorageFileConverter {
 	public static String convertToString(StorageFile sourceFile) throws IOException {
 
 		StorageFileConverter converter = new StorageFileConverter();
-		FileInputStream stream = converter.convertToInputStream(sourceFile);
+		FileInputStream stream = StorageFileConverter.convertToInputStream(sourceFile);
 		return converter.convertToString(stream);
 	}
 

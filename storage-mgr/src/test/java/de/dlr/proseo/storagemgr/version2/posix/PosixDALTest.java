@@ -29,7 +29,7 @@ public class PosixDALTest {
 
 	@Rule
 	public TestName testName = new TestName();
-	
+
 	@Autowired
 	private StorageTestUtils storageTestUtils;
 
@@ -37,7 +37,7 @@ public class PosixDALTest {
 	public void test() {
 
 		TestUtils.printMethodName(this, testName);
-		UniqueStorageTestPaths uniquePaths = new UniqueStorageTestPaths(this, testName); 
+		UniqueStorageTestPaths uniquePaths = new UniqueStorageTestPaths(this, testName);
 
 		// create unique source paths
 		List<String> pathes = new ArrayList<>();
@@ -45,7 +45,7 @@ public class PosixDALTest {
 		pathes.add(new PathConverter(uniquePaths.getUniqueTestFolder(), "file2.txt").getPath());
 		pathes.add(new PathConverter(uniquePaths.getUniqueTestFolder(), "dir/file3.txt").getPath());
 
-		// create source files 
+		// create source files
 		List<String> sourcePathes = new ArrayList<>();
 		for (String path : pathes) {
 
@@ -81,7 +81,7 @@ public class PosixDALTest {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		uniquePaths.deleteUniqueTestDirectories();
 	}
 }

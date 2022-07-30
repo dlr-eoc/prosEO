@@ -2,9 +2,6 @@ package de.dlr.proseo.storagemgr.version2.s3;
 
 import static org.junit.Assert.*;
 
-import java.io.IOException;
-import java.nio.file.Paths;
-
 import javax.annotation.PostConstruct;
 
 import org.junit.Rule;
@@ -20,21 +17,11 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.TestUtils;
-import de.dlr.proseo.storagemgr.version2.s3.S3DAL;
-
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.transfer.s3.FileUpload;
-import software.amazon.awssdk.transfer.s3.S3ClientConfiguration;
-import software.amazon.awssdk.transfer.s3.S3TransferManager;
 
 /**
  * @author Denys Chaykovskiy
  *
  */
-
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestEntityManager
@@ -89,7 +76,6 @@ public class S3DALTransferManagerTest {
 
 		String s3AccessKey = cfg.getS3AccessKey();
 		String s3SecretAccessKey = cfg.getS3SecretAccessKey();
-		
 
 		S3DAL s3DAL = new S3DAL(s3AccessKey, s3SecretAccessKey, bucket);
 
@@ -100,13 +86,13 @@ public class S3DALTransferManagerTest {
 		TestUtils.printList("Buckets before bucket creation", s3DAL.getBuckets());
 		TestUtils.printList("Files before upload in bucket: " + s3DAL.getBucket(), s3DAL.getFiles());
 
-		// upload and download	
+		// upload and download
 		try {
-			
+
 			s3DAL.uploadFileTransferManager(uploadFilePath, uploadFilePath);
 			TestUtils.printList("Files after upload in bucket: " + s3DAL.getBucket(), s3DAL.getFiles());
 			assertTrue("File was not uploaded: " + uploadFilePath, s3DAL.fileExists(uploadFilePath));
-			
+
 			s3DAL.downloadFileTransferManager(uploadFilePath, downloadFilePath);
 			TestUtils.printDirectoryTree(downloadDirectory);
 			assertTrue("File was not downloaded: " + downloadFilePath, TestUtils.fileExists(downloadFilePath));
@@ -128,7 +114,7 @@ public class S3DALTransferManagerTest {
 
 		// delete bucket
 		// s3DAL.deleteBucket(bucket);
-		
+
 		TestUtils.printList("Buckets after bucket deletion. End", s3DAL.getBuckets());
 
 		////////////////// TEST BODY END
@@ -137,7 +123,5 @@ public class S3DALTransferManagerTest {
 
 		System.out.println("TEST s3 DAL has no exceptions, EXCELLENT! ");
 	}
-	
-	
-	
+
 }
