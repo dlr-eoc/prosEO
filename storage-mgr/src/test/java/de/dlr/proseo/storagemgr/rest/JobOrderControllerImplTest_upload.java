@@ -5,8 +5,11 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.codehaus.jackson.map.ObjectMapper;
+import java.io.File;
 
+import org.codehaus.jackson.map.ObjectMapper;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -27,11 +30,10 @@ import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.rest.model.RestJoborder;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
-import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 /**
- * Mock Mvc test for Product Controller
+ * Job Order Upload test for Product Controller
  * 
  * @author Denys Chaykovskiy
  * 
@@ -46,20 +48,20 @@ public class JobOrderControllerImplTest_upload {
 
 	@Autowired
 	private MockMvc mockMvc;
-	
- 	@Autowired
+
+	@Autowired
 	private StorageProvider storageProvider;
- 	
+
 	@Autowired
 	private StorageManagerConfiguration cfg;
-	
+
 	@Rule
 	public TestName testName = new TestName();
 
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/joborders";
 
 	/**
-	 * Upload prosEO Job Order File for later use in a job   // String -> StorageFile
+	 * Upload prosEO Job Order File for later use in a job // String -> StorageFile
 	 * 
 	 * POST /joborders RestJoborder
 	 * 
@@ -69,12 +71,12 @@ public class JobOrderControllerImplTest_upload {
 	@Test
 	public void testUpload_v2Posix() throws Exception {
 
-		StorageType storageType = StorageType.POSIX; 
+		StorageType storageType = StorageType.POSIX;
 		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 
 		uploadRestJobOrder(storageType);
-		
+
 		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
@@ -83,26 +85,26 @@ public class JobOrderControllerImplTest_upload {
 	@Test
 	public void testUpload_v1Posix() throws Exception {
 
-		StorageType storageType = StorageType.POSIX; 
+		StorageType storageType = StorageType.POSIX;
 		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
 
 		uploadRestJobOrder(storageType);
-		
+
 		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
-	
+
 	@Test
 	public void testUpload_v2S3() throws Exception {
 
-		StorageType storageType = StorageType.S3; 
+		StorageType storageType = StorageType.S3;
 		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 
 		uploadRestJobOrder(storageType);
-		
+
 		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
@@ -111,19 +113,19 @@ public class JobOrderControllerImplTest_upload {
 	@Test
 	public void testUpload_v1S3() throws Exception {
 
-		StorageType storageType = StorageType.S3; 
+		StorageType storageType = StorageType.S3;
 		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
 
 		uploadRestJobOrder(storageType);
-		
+
 		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
-	
+
 	/**
-	 * Upload prosEO Job Order String to storage  // String -> StorageFile 
+	 * Upload prosEO Job Order String to storage // String -> StorageFile
 	 * 
 	 * output name of file is a random-generated name
 	 * 
@@ -132,9 +134,9 @@ public class JobOrderControllerImplTest_upload {
 	 * POST /joborders RestJoborder
 	 * 
 	 * @return RestJoborder
-	 */	
+	 */
 	private void uploadRestJobOrder(StorageType storageType) throws Exception {
-		
+
 		TestUtils.printMethodName(this, testName);
 
 		// create rest job object from string
@@ -144,6 +146,12 @@ public class JobOrderControllerImplTest_upload {
 		String message = "message";
 		String pathInfo = ""; // output parameter, path of created job order, see below
 
+		// delete all job orders
+		// storageProvider.getStorage().delete(cfg.getJoborderPrefix());
+
+		// delete today job orders
+		storageProvider.getStorage().delete(getJobOrderPrefixForToday());
+
 		RestJoborder joborder = new RestJoborder(base64, uploaded, fsType, pathInfo, message);
 
 		// upload rest job
@@ -151,30 +159,38 @@ public class JobOrderControllerImplTest_upload {
 				.content(TestUtils.asJsonString(joborder)).contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON);
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().is(201)).andReturn();
-		
-		// String createdJobOrderPath = getJobOrderRelativePath(cfg.getJoborderPrefix());
-		// StorageFile jobOrder = storageProvider.getStorageFile(createdJobOrderPath);
-		// boolean jobOrderExists = storageProvider.getStorage().fileExists(jobOrder);
-		// assertTrue("Job Order was not created in Storage", jobOrderExists);   // job order is a random name
-		
+
 		// show results of http-download
-		TestUtils.printMvcResult(REQUEST_STRING, mvcResult); 
-		
+		TestUtils.printMvcResult(REQUEST_STRING, mvcResult);
+
 		// show path of created rest job
 		String json = mvcResult.getResponse().getContentAsString();
 		RestJoborder result = new ObjectMapper().readValue(json, RestJoborder.class);
 		System.out.println("Created job order path: " + result.getPathInfo());
-		
+
 		// show storage files
 		StorageTestUtils.printStorageFiles("After http-call", storageProvider.getStorage());
 
-		// no delete of created order
+		// Only 1 job order expected today, because we deleted all today-orders earlier
+		int jobOrderCount = storageProvider.getStorage().getFiles(getJobOrderPrefixForToday()).size();
+		assertTrue("Only 1 job order expected. Exists=" + jobOrderCount, jobOrderCount == 1); // job order is a random
+																								// name
+
+		// delete today job orders
+		storageProvider.getStorage().delete(getJobOrderPrefixForToday());
+
+		// show storage files
+		StorageTestUtils.printStorageFiles("After job order cleaning", storageProvider.getStorage());
 	}
-	
-	// TODO: Delete it if no need for deleting job orders
-	private void deleteJobOrders() {
-		
-		StorageFile jobOrder = storageProvider.getStorageFile(cfg.getJoborderPrefix());
-		TestUtils.deleteDirectory(jobOrder.getFullPath());
+
+	// creates prefix for today only. ignores hour and file name (because it is
+	// random-generated)
+	private String getJobOrderPrefixForToday() {
+
+		String separator = File.separator;
+		DateTime timestamp = DateTime.now(DateTimeZone.UTC);
+
+		return cfg.getJoborderPrefix() + separator + timestamp.getYear() + separator + timestamp.getMonthOfYear()
+				+ separator + timestamp.getDayOfMonth() + separator;
 	}
 }
