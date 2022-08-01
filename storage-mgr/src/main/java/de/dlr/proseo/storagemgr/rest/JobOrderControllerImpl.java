@@ -117,7 +117,7 @@ public class JobOrderControllerImpl implements JoborderController {
 				
 			} catch (Exception e) {
 				
-				String msg = "Cannot creat job order file";
+				String msg = "Cannot create job order file";
 				return new ResponseEntity<>(createBadResponse(msg, jobOrder64), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 		} // end version 2
@@ -155,6 +155,25 @@ public class JobOrderControllerImpl implements JoborderController {
 			// ...);
 			ProseoFile proFile = ProseoFile.fromType(StorageType.valueOf(joborder.getFsType()), objKey, cfg);
 			if (proFile != null) {
+				
+				// S3Client problems, that's why this change. 
+				// To rollback delete everything before the next comment block and uncomment the block
+				
+				String jobOrder64 = joborder.getJobOrderStringBase64();
+
+				if (!StorageFileConverter.isStringBase64(jobOrder64)) {
+
+					String msg = "Attribute jobOrderStringBase64 is not Base64-encoded";
+					return new ResponseEntity<>(createBadResponse(msg, jobOrder64), HttpStatus.FORBIDDEN);
+				}
+
+			
+				String relativePath = getJobOrderRelativePath(cfg.getJoborderPrefix());
+
+				StorageFile targetFile = storageProvider.createStorageFile(relativePath, jobOrder64);
+				return new ResponseEntity<>(createOkResponse(targetFile, jobOrder64), HttpStatus.CREATED);
+					
+				/*
 				if (proFile.writeBytes(bytes)) {
 					response.setFsType(proFile.getFsType().toString());
 					response.setPathInfo(proFile.getFullPath());
@@ -163,6 +182,7 @@ public class JobOrderControllerImpl implements JoborderController {
 					logger.info("Received & Uploaded joborder-file: {}", response.getPathInfo());
 					return new ResponseEntity<>(response, HttpStatus.CREATED);
 				}
+				*/
 			}
 		} catch (Exception e) {
 			return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
