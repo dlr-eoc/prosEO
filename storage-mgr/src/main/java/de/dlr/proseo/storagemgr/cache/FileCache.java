@@ -169,12 +169,23 @@ public class FileCache {
 					long duration = endTime - startTime;
 					
 					if (logger.isTraceEnabled())
-						logger.trace(">>> deleteLRU.duration of sorting({} ms, {} ns, Cache size - {} records)", duration / 1000000,
+						logger.trace("... deleteLRU.duration of sorting({} ms, {} ns, Cache size - {} records)", duration / 1000000,
 								duration, size());
 					
 					long entryCount = 0;
-					while (getRealUsage() > cfg.getExpectedCacheUsage() && cacheIterator.hasNext()) {
-						remove(cacheIterator.next().getKey());
+					long bytesToDelete =
+							(long) ((getRealUsage() - cfg.getExpectedCacheUsage()) * (new File(cachePath)).getTotalSpace() / 100.0);
+					
+					// We do not rely on getRealUsage() during the deletion, because the file system information may not be
+					// updated as fast as we are deleting files (this has been observed in practice)
+					while (0 < bytesToDelete && cacheIterator.hasNext()) {
+						if (logger.isTraceEnabled()) logger.trace("... to delete: {} --> deleting next entry", bytesToDelete);
+						
+						Entry<String, FileInfo> entry = cacheIterator.next();
+						bytesToDelete -= entry.getValue().getSize();
+						
+						remove(entry.getKey());
+						
 						++entryCount;
 					}
 					logger.info("Cache cleanup removed {} entries from file cache in {} ms", entryCount,
@@ -259,7 +270,7 @@ public class FileCache {
 	/* package */ void remove(String pathKey) {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> remove({})", pathKey);
+			logger.trace(">>> remove({}) - last accessed {}", pathKey, mapCache.get(pathKey).getAccessed());
 
 		deleteFileAndAccessed(pathKey);
 
