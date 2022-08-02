@@ -101,6 +101,7 @@ public class OrderReleaseThread extends Thread {
 				} else {
 					Messages.ORDER_RELEASING_EXCEPTION.format(this.getName(), order.getIdentifier());
 					logger.error(e.getMessage());
+					productionPlanner.acquireThreadSemaphore("runRelease1");	
 					@SuppressWarnings("unused")
 					Object dummy = transactionTemplate.execute((status) -> {
 						ProcessingOrder lambdaOrder = null;
@@ -112,11 +113,14 @@ public class OrderReleaseThread extends Thread {
 						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 						return null;
 					});
+
+					productionPlanner.releaseThreadSemaphore("runRelease1");
 				}
 			}
 			catch(Exception e) {
 				Messages.ORDER_RELEASING_EXCEPTION.format(this.getName(), order.getIdentifier());
 				logger.error(e.getMessage());
+				productionPlanner.acquireThreadSemaphore("runRelease2");
 				@SuppressWarnings("unused")
 				Object dummy = transactionTemplate.execute((status) -> {
 					ProcessingOrder lambdaOrder = null;
@@ -128,6 +132,7 @@ public class OrderReleaseThread extends Thread {
 					lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 					return null;
 				});
+				productionPlanner.releaseThreadSemaphore("runRelease1");
 			}
 		}
 		productionPlanner.getReleaseThreads().remove(this.getName());
@@ -149,7 +154,7 @@ public class OrderReleaseThread extends Thread {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		final List<Job> jobList = new ArrayList<Job>();
 		try {
-			productionPlanner.acquireThreadSemaphore("release");	
+			productionPlanner.acquireThreadSemaphore("release1");	
 			order = transactionTemplate.execute((status) -> {
 				Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
 				if (orderOpt.isPresent()) {
@@ -168,7 +173,7 @@ public class OrderReleaseThread extends Thread {
 		} catch (Exception e) {
 			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 		} finally {
-			productionPlanner.releaseThreadSemaphore("release");					
+			productionPlanner.releaseThreadSemaphore("release1");					
 		}
 		if (logger.isTraceEnabled()) logger.trace(">>> release({})", (null == order ? "null" : order.getId()));
 		Message answer = new Message(Messages.FALSE);
@@ -235,6 +240,8 @@ public class OrderReleaseThread extends Thread {
 				throw new InterruptedException();
 			}
 			final Messages finalAnswer = releaseAnswer;
+			try {
+			productionPlanner.acquireThreadSemaphore("releaseOrder2");	
 			answer = transactionTemplate.execute((status) -> {
 				ProcessingOrder lambdaOrder = null;
 				Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
@@ -284,6 +291,12 @@ public class OrderReleaseThread extends Thread {
 				}
 				return lambdaAnswer;
 			});
+
+			} catch (Exception e) {	
+				throw e;
+			} finally {
+				productionPlanner.releaseThreadSemaphore("releaseOrder2");
+			}
 		}
 
 		return answer;
