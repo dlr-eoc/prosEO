@@ -210,8 +210,12 @@ public class JobOrderControllerImpl implements JoborderController {
 
 			try {
 
-				StorageFile sourceFile = storageProvider.getAbsoluteFile(pathInfo);
-				String response = StorageFileConverter.convertToString(sourceFile);
+				String relativePath = storageProvider.getRelativePath(pathInfo);
+				StorageFile storageFile = storageProvider.getStorageFile(relativePath);
+				
+				//String response = StorageFileConverter.convertToString(sourceFile);
+				
+				String response = storageProvider.getStorage().getFileContent(storageFile);
 
 				return new ResponseEntity<>(response, HttpStatus.OK);
 
@@ -233,9 +237,33 @@ public class JobOrderControllerImpl implements JoborderController {
 				logger.warn("Invalid storage type for path: {}", pathInfo);
 				return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 			}
+			
+			// S3Client problems, that's why this change. 
+			// To rollback delete everything before the next comment block and uncomment the block
+			try {
+
+				String relativePath = storageProvider.getRelativePath(pathInfo);
+				StorageFile storageFile = storageProvider.getStorageFile(relativePath);
+				
+				//String response = StorageFileConverter.convertToString(sourceFile);
+				
+				response = storageProvider.getStorage().getFileContent(storageFile);
+
+				return new ResponseEntity<>(response, HttpStatus.OK);
+
+			} catch (Exception e) {
+				
+				e.printStackTrace();
+
+				String errorString = HttpResponses.createErrorString("Cannot get job order file", e);
+				return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
+			}
+
+			/*
 			InputStream jofStream = proFile.getDataAsInputStream();
 			if (jofStream != null) {
 				byte[] bytes = null;
+			
 				try {
 					bytes = java.util.Base64.getEncoder().encode(jofStream.readAllBytes());
 				} catch (IOException e) {
@@ -251,6 +279,7 @@ public class JobOrderControllerImpl implements JoborderController {
 				}
 				return new ResponseEntity<>(response, HttpStatus.OK);
 			}
+			*/
 		}
 		return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 	}
