@@ -28,9 +28,7 @@ import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
-import de.dlr.proseo.storagemgr.UniqueStorageTestPaths;
 import de.dlr.proseo.storagemgr.rest.model.RestJoborder;
-import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
@@ -50,9 +48,6 @@ public class JobOrderControllerImplTest_download {
 
 	@Autowired
 	private MockMvc mockMvc;
-	
-	@Autowired
-	private StorageTestUtils storageTestUtils;
 	
 	@Autowired
 	private StorageManagerConfiguration cfg;
@@ -176,8 +171,12 @@ public class JobOrderControllerImplTest_download {
 		TestUtils.printMvcResult(REQUEST_STRING, mvcResult);
 		
 		// show path of created rest job
-		System.out.println("Downloaded job order content: " + mvcResult.getResponse().getContentAsString());
-		
+		String expectedJob = base64; 
+		String realJob = mvcResult.getResponse().getContentAsString();
+		System.out.println("Downloaded job order content: " + realJob);
+		System.out.println("Expected job order content:   " + expectedJob);
+		assertTrue("Downloaded job order content is not as expected", realJob.equals(expectedJob)); // job order is a random name
+
 		// delete today job orders
 		storageProvider.getStorage().delete(getJobOrderPrefixForToday());
 	}
