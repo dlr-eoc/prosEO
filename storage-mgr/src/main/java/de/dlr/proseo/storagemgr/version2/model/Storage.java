@@ -166,6 +166,14 @@ public interface Storage {
 	 * @return the file size of the storage file
 	 */
 	public long getFileSize(StorageFile storageFile);
+	
+	/**
+	 * Gets file content
+	 * 
+	 * @param storageFile storage file
+	 * @return file content
+	 */
+	public String getFileContent(StorageFile storageFile) throws IOException;
 
 	/**
 	 * Uploads file to storage

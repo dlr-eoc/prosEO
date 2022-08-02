@@ -110,6 +110,20 @@ public class PosixDAL {
 	}
 
 	/**
+	 * Gets file content
+	 * 
+	 * @param storageFile storage file
+	 * @return file content
+	 */
+	public String getFileContent(String path) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getFileContent({})", path);
+
+		return Files.readString(Path.of(path));
+	}
+
+	/**
 	 * Uploads file to posix storage
 	 * 
 	 * @param sourceFile      source file to upload

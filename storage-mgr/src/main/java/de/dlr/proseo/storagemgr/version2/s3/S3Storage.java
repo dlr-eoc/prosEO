@@ -172,22 +172,23 @@ public class S3Storage implements Storage {
 	public List<String> getFiles() {
 		return s3DAL.getFiles();
 	}
-	
+
 	/**
-	 * Gets relative path from absolute path removing s3 prefix, bucket and left slash
+	 * Gets relative path from absolute path removing s3 prefix, bucket and left
+	 * slash
 	 * 
 	 * @param absolutePath absolute path
 	 * @return relative path
 	 */
 	@Override
 	public String getRelativePath(String absolutePath) {
-		
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRelativePath({})", absolutePath);
-		
+
 		return new PathConverter(absolutePath).removeFsPrefix().removeBucket().removeLeftSlash().getPath();
 	}
-	
+
 	/**
 	 * Gets the absolute path (s3://<bucket>/<relativePath>)
 	 * 
@@ -195,10 +196,10 @@ public class S3Storage implements Storage {
 	 * @return the absolute file depending on storage file system
 	 */
 	public String getAbsolutePath(String relativePath) {
-		
-		return new PathConverter(s3DAL.getBucket(), relativePath).addS3Prefix().getPath();			
+
+		return new PathConverter(s3DAL.getBucket(), relativePath).addS3Prefix().getPath();
 	}
-	
+
 	/**
 	 * Gets absolute paths (s3://<bucket>/<relativePath>)
 	 * 
@@ -206,18 +207,18 @@ public class S3Storage implements Storage {
 	 * @return absolute paths depending on storage file system
 	 */
 	public List<String> getAbsolutePath(List<String> relativePaths) {
-		
+
 		List<String> absolutePaths = new ArrayList<>();
-		
+
 		for (String relativePath : relativePaths) {
-			
+
 			String absolutePath = getAbsolutePath(relativePath);
 			absolutePaths.add(absolutePath);
 		}
-		
-		return absolutePaths; 
+
+		return absolutePaths;
 	}
-	
+
 	/**
 	 * Gets Storage File
 	 * 
@@ -325,6 +326,21 @@ public class S3Storage implements Storage {
 	@Override
 	public long getFileSize(StorageFile storageFile) {
 		return s3DAL.getFileSize(storageFile.getRelativePath());
+	}
+
+	/**
+	 * Gets file content
+	 * 
+	 * @param storageFile storage file
+	 * @return file content
+	 */
+	@Override
+	public String getFileContent(StorageFile storageFile) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getFileContent({})", storageFile.getFullPath());
+
+		return s3DAL.getFileContent(storageFile.getRelativePath());
 	}
 
 	/**
@@ -522,7 +538,7 @@ public class S3Storage implements Storage {
 	@Override
 	public String addFSPrefix(String path) {
 
-		return StorageType.S3.toString() + "|" + path; 
+		return StorageType.S3.toString() + "|" + path;
 	}
 
 	/**

@@ -321,6 +321,22 @@ public class PosixStorage implements Storage {
 		FileUtils fileUtils = new FileUtils(storageFile.getFullPath());
 		return fileUtils.getFileSize();
 	}
+	
+	/**
+	 * Gets file content
+	 * 
+	 * @param storageFile storage file
+	 * @return file content
+	 */
+	@Override
+	public String getFileContent(StorageFile storageFile) throws IOException {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getFileContent({})", storageFile.getFullPath());
+
+		return posixDAL.getFileContent(storageFile.getFullPath());
+	}
+
 
 	/**
 	 * Uploads file to storage

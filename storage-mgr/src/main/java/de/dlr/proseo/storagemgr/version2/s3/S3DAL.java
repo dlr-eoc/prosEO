@@ -4,6 +4,7 @@ import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.io.File;
 import java.util.ArrayList;
@@ -206,6 +207,28 @@ public class S3DAL {
 		HeadObjectResponse headObjectResponse = s3Client.headObject(headObjectRequest);
 
 		return headObjectResponse.contentLength();
+	}
+
+	/**
+	 * Gets file content
+	 * 
+	 * @param filePath file path
+	 * @return file content
+	 */
+	public String getFileContent(String filePath) throws IOException {
+
+		GetObjectRequest getObjectRequest = GetObjectRequest.builder().bucket(bucket).key(filePath).build();
+
+		ResponseInputStream<GetObjectResponse> responseInputStream = s3Client.getObject(getObjectRequest);
+
+		// InputStream stream = new
+		// ByteArrayInputStream(responseInputStream.readAllBytes());
+
+		String content = new String(responseInputStream.readAllBytes(), StandardCharsets.UTF_8);
+
+		System.out.println("Content :" + content);
+
+		return content;
 	}
 
 	/**
