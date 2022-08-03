@@ -115,7 +115,7 @@ public class S3Ops {
 		List<String> response; 
 		Storage storage = StorageProvider.getInstance().getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.S3); 
 		
-		response = storage.getFiles(prefix);
+		response = storage.getRelativeFiles(prefix);
 		response = storage.getAbsolutePath(response);
 		
 		return response; 

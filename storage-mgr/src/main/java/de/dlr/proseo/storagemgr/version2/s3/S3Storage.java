@@ -158,7 +158,7 @@ public class S3Storage implements Storage {
 	 * @return list of files with given prefix
 	 */
 	@Override
-	public List<String> getFiles(String folder) {
+	public List<String> getRelativeFiles(String folder) {
 
 		return s3DAL.getFiles(folder);
 	}
@@ -169,8 +169,33 @@ public class S3Storage implements Storage {
 	 * @return list of all files from storage
 	 */
 	@Override
-	public List<String> getFiles() {
+	public List<String> getRelativeFiles() {
 		return s3DAL.getFiles();
+	}
+	
+	/**
+	 * Gets files (absolute paths) from storage with given prefix (folder)
+	 * 
+	 * @param prefix prefix (relative path) for search in storage
+	 * @return list of files with given prefix
+	 */
+	public List<String> getAbsoluteFiles(String relativePath) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getAbsoluteFiles({})", relativePath);
+
+		String path = new PathConverter(basePath, relativePath).getPath();
+
+		return getAbsolutePath(s3DAL.getFiles(path));
+	}
+
+	/**
+	 * Gets all files (absolute paths) from storage
+	 * 
+	 * @return list of all files from storage
+	 */
+	public List<String> getAbsoluteFiles() {
+		return getAbsolutePath(s3DAL.getFiles(basePath));	
 	}
 
 	/**
@@ -187,6 +212,30 @@ public class S3Storage implements Storage {
 			logger.trace(">>> getRelativePath({})", absolutePath);
 
 		return new PathConverter(absolutePath).removeFsPrefix().removeBucket().removeLeftSlash().getPath();
+	}
+	
+	/**
+	 * Gets relative paths from absolute paths removing s3 prefix, bucket and left
+	 * slash
+	 * 
+	 * @param absolutePaths absolute paths
+	 * @return relative paths
+	 */
+	@Override
+	public List<String> getRelativePath(List<String> absolutePaths) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getRelativePath({})", absolutePaths.size());
+		
+		List<String> relativePaths = new ArrayList<>();
+		
+		for (String absolutePath :absolutePaths) {
+			
+			String relativePath = new PathConverter(absolutePath).removeFsPrefix().removeBucket().removeLeftSlash().getPath();
+			relativePaths.add(relativePath);
+		}
+		
+		return relativePaths; 
 	}
 
 	/**

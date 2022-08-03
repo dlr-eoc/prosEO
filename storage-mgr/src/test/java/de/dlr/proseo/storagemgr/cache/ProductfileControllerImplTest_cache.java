@@ -171,7 +171,7 @@ public class ProductfileControllerImplTest_cache {
 		storageProvider.getStorage().upload(sourceFile, storageFile);
 		
 		// show storage files
-		List<String> storageFiles = storageProvider.getStorage().getFiles();
+		List<String> storageFiles = storageProvider.getStorage().getRelativeFiles();
 		String storageType = storageProvider.getStorage().getStorageType().toString();
 		TestUtils.printList("Storage (after upload) " + storageType + " files:", storageFiles);
 

@@ -92,7 +92,7 @@ public class S3StorageTest {
 
 			List<String> uploadedPathes = storage.upload(sourceDir, targetDir);
 			
-			TestUtils.printList("S3 Storage files after upload:", storage.getFiles());
+			TestUtils.printList("S3 Storage files after upload:", storage.getRelativeFiles());
 			TestUtils.printList("Response uploaded pathes:", uploadedPathes);
 			
 			List<String> deletedPathes = new ArrayList<>();
@@ -105,7 +105,7 @@ public class S3StorageTest {
 			// storage.deleteBucket(storage.getBucket());
 			
 			TestUtils.printList("Deleted storage pathes:", deletedPathes);
-			TestUtils.printList("S3 Storage files after delete:", storage.getFiles());
+			TestUtils.printList("S3 Storage files after delete:", storage.getRelativeFiles());
 			
 
 		} catch (Exception e) {

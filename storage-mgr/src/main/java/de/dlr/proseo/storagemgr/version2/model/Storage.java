@@ -73,19 +73,34 @@ public interface Storage {
 	public void deleteBucket(String bucket) throws IOException;
 
 	/**
-	 * Gets files from storage with given prefix (folder)
+	 * Gets files (relative paths) from storage with given prefix (folder)
 	 * 
 	 * @param prefix prefix (folder) for search in storage
 	 * @return list of files with given prefix
 	 */
-	public List<String> getFiles(String prefix);
+	public List<String> getRelativeFiles(String prefix);
 
 	/**
-	 * Gets all files from storage
+	 * Gets all files (relative paths) from storage
 	 * 
 	 * @return list of all files from storage
 	 */
-	public List<String> getFiles();
+	public List<String> getRelativeFiles();
+	
+	/**
+	 * Gets files (absolute paths) from storage with given prefix (folder)
+	 * 
+	 * @param prefix prefix (folder) for search in storage
+	 * @return list of files with given prefix
+	 */
+	public List<String> getAbsoluteFiles(String prefix);
+
+	/**
+	 * Gets all files (absolute paths) from storage
+	 * 
+	 * @return list of all files from storage
+	 */
+	public List<String> getAbsoluteFiles();
 	
 	/**
 	 * Gets relative path from absolute path
@@ -94,6 +109,14 @@ public interface Storage {
 	 * @return relative path
 	 */
 	public String getRelativePath(String absolutePath);
+	
+	/**
+	 * Gets relative paths from absolute paths 
+	 * 
+	 * @param absolutePaths absolute paths
+	 * @return relative paths
+	 */
+	public List<String> getRelativePath(List<String> absolutePaths);
 	
 	/**
 	 * Gets the absolute path depending on storage file system

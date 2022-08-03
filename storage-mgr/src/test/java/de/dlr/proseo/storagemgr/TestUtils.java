@@ -461,7 +461,7 @@ public class TestUtils {
 		}
 				
 		Storage storage = storageProvider.getStorage(storageType);
-		List<String> relativePaths = storage.getFiles();
+		List<String> relativePaths = storage.getRelativeFiles();
 		
 		for(String relativePath : relativePaths) {
 			StorageFile storageFile = storage.getStorageFile(relativePath);
@@ -472,7 +472,7 @@ public class TestUtils {
 			}
 		}
 		
-		List<String> storageFilesAfterDelete = storage.getFiles();
+		List<String> storageFilesAfterDelete = storage.getRelativeFiles();
 		TestUtils.printList("Storage after delete all " + storageType + " files:", storageFilesAfterDelete);
 	}
 

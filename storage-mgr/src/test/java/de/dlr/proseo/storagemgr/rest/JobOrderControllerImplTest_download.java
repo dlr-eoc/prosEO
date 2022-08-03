@@ -159,7 +159,7 @@ public class JobOrderControllerImplTest_download {
 		StorageTestUtils.printStorageFiles("After http-upload-call", storageProvider.getStorage());
 
 		// Only 1 job order expected today, because we deleted all today-orders earlier
-		int jobOrderCount = storageProvider.getStorage().getFiles(getJobOrderPrefixForToday()).size();
+		int jobOrderCount = storageProvider.getStorage().getRelativeFiles(getJobOrderPrefixForToday()).size();
 		assertTrue("Only 1 job order expected. Exists=" + jobOrderCount, jobOrderCount == 1); // job order is a random name
 																							
 		// download created rest job

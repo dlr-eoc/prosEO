@@ -168,7 +168,7 @@ public class ProductControllerImplTest_delete {
 		StorageTestUtils.printStorageFilesWithPrefix("Before http-call", storageProvider.getStorage(), prefix);
 
 		// check count of uploaded prefix storage files
-		int realStorageFileCount = storageProvider.getStorage().getFiles(prefix).size();
+		int realStorageFileCount = storageProvider.getStorage().getRelativeFiles(prefix).size();
 		int expectedStorageFileCount = relativePaths.size();
 		assertTrue("After upload - Expected:" + expectedStorageFileCount + " Exists: " + realStorageFileCount,
 				realStorageFileCount == expectedStorageFileCount);
@@ -190,7 +190,7 @@ public class ProductControllerImplTest_delete {
 		StorageTestUtils.printStorageFilesWithPrefix("After http-call", storageProvider.getStorage(), prefix);
 
 		// check files after delete (expected: 0)
-		realStorageFileCount = storageProvider.getStorage().getFiles(prefix).size();
+		realStorageFileCount = storageProvider.getStorage().getRelativeFiles(prefix).size();
 		expectedStorageFileCount = 0;
 		assertTrue("After upload - Expected:" + expectedStorageFileCount + " Exists: " + realStorageFileCount,
 				realStorageFileCount == expectedStorageFileCount);

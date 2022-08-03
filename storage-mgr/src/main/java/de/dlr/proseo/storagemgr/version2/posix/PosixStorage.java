@@ -154,8 +154,34 @@ public class PosixStorage implements Storage {
 	 * @return list of files with given prefix
 	 */
 	@Override
-	public List<String> getFiles(String relativePath) {
+	public List<String> getRelativeFiles(String relativePath) {
 
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getFiles({})", relativePath);
+
+		String path = new PathConverter(basePath, relativePath).getPath();
+
+		return getRelativePath(posixDAL.getFiles(path));
+	}
+
+	/**
+	 * Gets all files from storage
+	 * 
+	 * @return list of all files from storage
+	 */
+	@Override
+	public List<String> getRelativeFiles() {
+		return getRelativePath(posixDAL.getFiles(basePath));
+	}
+	
+	/**
+	 * Gets files (absolute paths) from storage with given prefix (folder)
+	 * 
+	 * @param prefix prefix (relative path) for search in storage
+	 * @return list of files with given prefix
+	 */
+	public List<String> getAbsoluteFiles(String relativePath) {
+		
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFiles({})", relativePath);
 
@@ -165,13 +191,12 @@ public class PosixStorage implements Storage {
 	}
 
 	/**
-	 * Gets all files from storage
+	 * Gets all files (absolute paths) from storage
 	 * 
 	 * @return list of all files from storage
 	 */
-	@Override
-	public List<String> getFiles() {
-		return posixDAL.getFiles(basePath);
+	public List<String> getAbsoluteFiles() {
+		return posixDAL.getFiles(basePath);	
 	}
 
 	/**
@@ -191,6 +216,33 @@ public class PosixStorage implements Storage {
 		basePaths.add(sourcePath);
 
 		return new PathConverter(absolutePath, basePaths).getRelativePath().getPath();
+	}
+	
+	/**
+	 * Gets relative paths from absolute paths using base path list
+	 * 
+	 * @param absolutePaths absolute paths
+	 * @return relative paths
+	 */
+	@Override
+	public List<String> getRelativePath(List<String> absolutePaths) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getRelativePath({})", absolutePaths.size());
+		
+		List<String> basePaths = new ArrayList<>();
+		basePaths.add(basePath);
+		basePaths.add(sourcePath);
+		
+		List<String> relativePaths = new ArrayList<>();
+		
+		for (String absolutePath :absolutePaths) {
+			
+			String relativePath = new PathConverter(absolutePath, basePaths).getRelativePath().getPath();
+			relativePaths.add(relativePath);
+		}
+		
+		return relativePaths; 
 	}
 	
 	/**
