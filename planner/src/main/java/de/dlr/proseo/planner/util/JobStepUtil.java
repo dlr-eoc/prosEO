@@ -974,7 +974,6 @@ public class JobStepUtil {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		if (productionPlanner != null) {
 			if (kc != null && jobId != 0) {
-				productionPlanner.acquireThreadSemaphore("checkJobToRun");
 				final ProcessingFacility pfo = transactionTemplate.execute((status) -> {
 					Optional<ProcessingFacility> opt = RepositoryService.getFacilityRepository().findById(kc.getLongId());
 					if (opt.isPresent()) {
@@ -1009,7 +1008,6 @@ public class JobStepUtil {
 						productionPlanner.releaseReleaseSemaphore("checkJobToRun");					
 					}
 				}
-				productionPlanner.releaseThreadSemaphore("release");	
 			}
 		}
 	}

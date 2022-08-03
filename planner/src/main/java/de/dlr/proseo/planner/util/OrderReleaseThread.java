@@ -219,12 +219,15 @@ public class OrderReleaseThread extends Thread {
 					@SuppressWarnings("unused")
 					Object answer2 = transactionTemplate.execute((status) -> {
 						for (Job j : releasedJobs) {
-							Job locJob = RepositoryService.getJobRepository().getOne(j.getId());
-							KubeConfig kc = productionPlanner.getKubeConfig(locJob.getProcessingFacility().getName());
 							try {
+								productionPlanner.acquireThreadSemaphore("releaseOrder2");	
+								Job locJob = RepositoryService.getJobRepository().getOne(j.getId());
+								KubeConfig kc = productionPlanner.getKubeConfig(locJob.getProcessingFacility().getName());
 								UtilService.getJobStepUtil().checkJobToRun(kc, locJob.getId());
 							} catch (InterruptedException e) {
 								e.printStackTrace();
+							} finally {
+								productionPlanner.releaseThreadSemaphore("releaseOrder2");
 							}
 						}
 						return null;					
@@ -241,7 +244,7 @@ public class OrderReleaseThread extends Thread {
 			}
 			final Messages finalAnswer = releaseAnswer;
 			try {
-			productionPlanner.acquireThreadSemaphore("releaseOrder2");	
+			productionPlanner.acquireThreadSemaphore("releaseOrder3");	
 			answer = transactionTemplate.execute((status) -> {
 				ProcessingOrder lambdaOrder = null;
 				Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
@@ -295,7 +298,7 @@ public class OrderReleaseThread extends Thread {
 			} catch (Exception e) {	
 				throw e;
 			} finally {
-				productionPlanner.releaseThreadSemaphore("releaseOrder2");
+				productionPlanner.releaseThreadSemaphore("releaseOrder3");
 			}
 		}
 
