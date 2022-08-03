@@ -27,6 +27,15 @@ public interface Storage {
 	 * @return base path
 	 */
 	public String getBasePath();
+	
+	/**
+	 * Gets absolute base path (fs prefix + bucket + base path), depends on fs
+	 * 
+	 * in other words absolute path without relative path
+	 * 
+	 * @return absolute base path
+	 */
+	public String getAbsoluteBasePath();
 
 	/**
 	 * Gets source path

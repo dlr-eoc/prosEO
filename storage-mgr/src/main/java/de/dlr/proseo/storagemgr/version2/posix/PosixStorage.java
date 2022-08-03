@@ -79,6 +79,20 @@ public class PosixStorage implements Storage {
 	public String getBasePath() {
 		return basePath;
 	}
+	
+	/**
+	 * Gets absolute base path (fs prefix + bucket + base path), depends on fs
+	 * 
+	 * in other words absolute path without relative path
+	 * in this no-bucket posix version returns base path
+	 * 
+	 * @return absolute base path
+	 */
+	@Override
+	public String getAbsoluteBasePath() {
+			
+		return new PathConverter(getBasePath()).getPath();
+	}
 
 	/**
 	 * Gets source path

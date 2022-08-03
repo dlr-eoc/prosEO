@@ -88,6 +88,20 @@ public class S3Storage implements Storage {
 	public String getBasePath() {
 		return basePath;
 	}
+	
+	/**
+	 * Gets absolute base path (fs prefix + bucket + base path), depends on fs
+	 * 
+	 * in other words it is absolute path without relative path
+	 * in this s3 version s3://bucket/
+	 * 	 
+	 * @return absolute base path
+	 */
+	@Override
+	public String getAbsoluteBasePath() {
+			
+		return new PathConverter(s3DAL.getBucket()).addS3Prefix().getPath();
+	}
 
 	/**
 	 * Gets source path

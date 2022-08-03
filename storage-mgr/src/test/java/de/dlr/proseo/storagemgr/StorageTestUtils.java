@@ -64,13 +64,13 @@ public class StorageTestUtils extends BaseStorageTestUtils {
 		
 		List<String> storageFiles = storage.getRelativeFiles();
 		String storageType = storage.getStorageType().toString();
-		TestUtils.printList(message + ". Storage " + storageType + " files:", storageFiles);
+		TestUtils.printList(message + ". Storage " + storageType + " files || " + storage.getAbsoluteBasePath(), storageFiles);
 	}
 	
 	public static void printStorageFilesWithPrefix(String message, Storage storage, String prefix) {
 		
 		List<String> storageFiles = storage.getRelativeFiles(prefix);
 		String storageType = storage.getStorageType().toString();
-		TestUtils.printList(message + ". Storage " + storageType + " files(prefix: " + prefix + "):", storageFiles);
+		TestUtils.printList(message + ". Storage " + storageType + " files || Prefix: " + prefix + " || " + storage.getAbsoluteBasePath(), storageFiles);
 	}
 }
