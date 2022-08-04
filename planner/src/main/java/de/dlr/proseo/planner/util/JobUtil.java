@@ -292,26 +292,26 @@ public class JobUtil {
 	 * @param jobId The job id
 	 * @return Result message
 	 */
-	public Messages resume(long jobId) {
-		if (logger.isTraceEnabled()) logger.trace(">>> resume({})", jobId);
+	public Messages resume(Job job) {
+		if (logger.isTraceEnabled()) logger.trace(">>> resume({})", job.getId());
 
 		Messages answer = Messages.FALSE;
-		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
-
-		final Job job = transactionTemplate.execute((status) -> {
-			Optional<Job> opt = RepositoryService.getJobRepository().findById(jobId);
-			if (opt.isPresent()) {
-				if (opt.get().getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
-					Messages.FACILITY_NOT_AVAILABLE.log(logger, opt.get().getProcessingFacility().getName(),
-							opt.get().getProcessingFacility().getFacilityState().toString());
-
-			    	return null;
-				} else {
-					return opt.get();
-				}
-			}
-			return null;
-		});
+//		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+//
+//		final Job job = transactionTemplate.execute((status) -> {
+//			Optional<Job> opt = RepositoryService.getJobRepository().findById(jobId);
+//			if (opt.isPresent()) {
+//				if (opt.get().getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
+//					Messages.FACILITY_NOT_AVAILABLE.log(logger, opt.get().getProcessingFacility().getName(),
+//							opt.get().getProcessingFacility().getFacilityState().toString());
+//
+//			    	return null;
+//				} else {
+//					return opt.get();
+//				}
+//			}
+//			return null;
+//		});
 
 		// check current state for possibility to be suspended
 		if (job != null) {
@@ -321,31 +321,17 @@ public class JobUtil {
 				break;
 			case PLANNED:
 				try {
-					productionPlanner.acquireThreadSemaphore("resume");	
-					final List<Long> jobSteps = new ArrayList<Long>();
-					@SuppressWarnings("unused")
-					String dummy = transactionTemplate.execute((status) -> {
-						Optional<Job> opt = RepositoryService.getJobRepository().findById(jobId);
-						if (opt.isPresent()) {
-							Job jobLoc = opt.get();
-							jobLoc.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
-							jobLoc.incrementVersion();
-							RepositoryService.getJobRepository().save(jobLoc);
-							for (JobStep js : jobLoc.getJobSteps()) {
-								jobSteps.add(js.getId());
-							}
-						}
-						return null;
-					});
+					job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
+					job.incrementVersion();
+					RepositoryService.getJobRepository().save(job);
 
-					for (Long jsId : jobSteps) {
-						UtilService.getJobStepUtil().resume(jsId, false);
+
+					for (JobStep js : job.getJobSteps()) {
+						UtilService.getJobStepUtil().resume(js, false);
 					}
 					answer = Messages.JOB_RELEASED;
 				} catch (Exception e) {
 					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-				} finally {
-					productionPlanner.releaseThreadSemaphore("resume");					
 				}
 				break;
 			case RELEASED:

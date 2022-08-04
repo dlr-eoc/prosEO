@@ -235,6 +235,7 @@ public class JobControllerImpl implements JobController {
 
 							return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
 						}
+						jobUtil.resume(jobx);
 						return null;
 					});
 					if (answer != null) {
@@ -248,7 +249,6 @@ public class JobControllerImpl implements JobController {
 					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
 					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
-				msg = jobUtil.resume(job.getId());
 				if (msg.isTrue()) {
 					final KubeConfig kc = transactionTemplate.execute((status) -> {
 						if (job.getProcessingFacility() != null) {
@@ -258,7 +258,15 @@ public class JobControllerImpl implements JobController {
 						}
 					});
 					if (kc != null) {
-						UtilService.getJobStepUtil().checkJobToRun(kc, job.getId());
+						try {
+							productionPlanner.acquireThreadSemaphore("resumeJob2");
+							UtilService.getJobStepUtil().checkJobToRun(kc, job.getId());
+							productionPlanner.releaseThreadSemaphore("resumeJob2");	
+						} catch (Exception e) {
+							productionPlanner.releaseThreadSemaphore("resumeJob2");	
+							String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
+							return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+						}
 					}
 					RestJob rj = getRestJob(job.getId(), false);
 					return new ResponseEntity<>(rj, HttpStatus.OK);

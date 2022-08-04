@@ -18,6 +18,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.SimplePolicy;
+import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Message;
@@ -100,6 +101,7 @@ public class OrderReleaseThread extends Thread {
 				} else {
 					Messages.ORDER_RELEASING_EXCEPTION.format(this.getName(), order.getIdentifier());
 					logger.error(e.getMessage());
+					productionPlanner.acquireThreadSemaphore("runRelease1");	
 					@SuppressWarnings("unused")
 					Object dummy = transactionTemplate.execute((status) -> {
 						ProcessingOrder lambdaOrder = null;
@@ -111,11 +113,14 @@ public class OrderReleaseThread extends Thread {
 						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 						return null;
 					});
+
+					productionPlanner.releaseThreadSemaphore("runRelease1");
 				}
 			}
 			catch(Exception e) {
 				Messages.ORDER_RELEASING_EXCEPTION.format(this.getName(), order.getIdentifier());
 				logger.error(e.getMessage());
+				productionPlanner.acquireThreadSemaphore("runRelease2");
 				@SuppressWarnings("unused")
 				Object dummy = transactionTemplate.execute((status) -> {
 					ProcessingOrder lambdaOrder = null;
@@ -127,6 +132,7 @@ public class OrderReleaseThread extends Thread {
 					lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 					return null;
 				});
+				productionPlanner.releaseThreadSemaphore("runRelease1");
 			}
 		}
 		productionPlanner.getReleaseThreads().remove(this.getName());
@@ -148,7 +154,7 @@ public class OrderReleaseThread extends Thread {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		final List<Job> jobList = new ArrayList<Job>();
 		try {
-			productionPlanner.acquireThreadSemaphore("release");	
+			productionPlanner.acquireThreadSemaphore("release1");	
 			order = transactionTemplate.execute((status) -> {
 				Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
 				if (orderOpt.isPresent()) {
@@ -167,50 +173,69 @@ public class OrderReleaseThread extends Thread {
 		} catch (Exception e) {
 			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 		} finally {
-			productionPlanner.releaseThreadSemaphore("release");					
+			productionPlanner.releaseThreadSemaphore("release1");					
 		}
 		if (logger.isTraceEnabled()) logger.trace(">>> release({})", (null == order ? "null" : order.getId()));
 		Message answer = new Message(Messages.FALSE);
 		Messages releaseAnswer = Messages.FALSE;
 		if (order != null && 
 				(order.getOrderState() == OrderState.RELEASING || order.getOrderState() == OrderState.PLANNED)) {
-			for (Job job : jobList) {
-				if (this.isInterrupted()) {
-					answer = new Message(Messages.ORDER_RELEASING_INTERRUPTED);
-					logger.warn(Messages.ORDER_RELEASING_INTERRUPTED.format(this.getName(), order.getIdentifier()));
-					throw new InterruptedException();
-				}
-				releaseAnswer = jobUtil.resume(job.getId());
-				if (!releaseAnswer.isTrue()) {
-					// nothing to do here
-				}
-				if (this.isInterrupted()) {
-					answer = new Message(Messages.ORDER_RELEASING_INTERRUPTED);
-					logger.warn(Messages.ORDER_RELEASING_INTERRUPTED.format(this.getName(), order.getIdentifier()));
-					throw new InterruptedException();
-				}
-				// look for possible job steps to run
-				KubeConfig kc = null;
-				try {
-					productionPlanner.acquireThreadSemaphore("release");
-					kc = transactionTemplate.execute((status) -> {
-						Optional<Job> jobOpt = RepositoryService.getJobRepository().findById(job.getId());
-						if (jobOpt.get() != null) {
-							return productionPlanner.getKubeConfig(jobOpt.get().getProcessingFacility().getName());
+			
+
+			int packetSize = ProductionPlanner.config.getPlanningBatchSize();
+			final Long jCount = (long) jobList.size();
+			List<Integer> curJList = new ArrayList<Integer>();
+			curJList.add(0);
+			List<Integer> curJSList = new ArrayList<Integer>();
+			curJSList.add(0);
+			List<Job> releasedJobs = new ArrayList<Job>();
+			try {
+				while (curJList.get(0) < jCount) {
+					releasedJobs.clear();
+					productionPlanner.acquireThreadSemaphore("releaseOrder");	
+					if (logger.isTraceEnabled()) logger.trace(">>> releaseJobBlock({})", curJList.get(0));
+					Object answer1 = transactionTemplate.execute((status) -> {
+						curJSList.set(0, 0);
+						Messages locAnswer = Messages.TRUE;
+						while (curJList.get(0) < jCount && curJSList.get(0) < packetSize) {
+							if (this.isInterrupted()) {
+								return new Message(Messages.PLANNING_INTERRUPTED);
+							}
+							if (jobList.get(curJList.get(0)).getJobState() == JobState.PLANNED) {
+								Job locJob = RepositoryService.getJobRepository().getOne(jobList.get(curJList.get(0)).getId());
+								locAnswer = jobUtil.resume(locJob);
+								releasedJobs.add(locJob);
+								curJSList.set(0, curJSList.get(0) + locJob.getJobSteps().size());
+							}
+							curJList.set(0, curJList.get(0) + 1);		
 						}
-						return null;
+						return locAnswer;					
 					});
-				} catch (Exception e) {
-					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-				} finally {
-					productionPlanner.releaseThreadSemaphore("release");					
+					if(answer1 instanceof Messages) {
+						answer = new Message((Messages)answer1);
+					}
+					productionPlanner.releaseThreadSemaphore("releaseOrder");
+					
+					@SuppressWarnings("unused")
+					Object answer2 = transactionTemplate.execute((status) -> {
+						for (Job j : releasedJobs) {
+							try {
+								productionPlanner.acquireThreadSemaphore("releaseOrder2");	
+								Job locJob = RepositoryService.getJobRepository().getOne(j.getId());
+								KubeConfig kc = productionPlanner.getKubeConfig(locJob.getProcessingFacility().getName());
+								UtilService.getJobStepUtil().checkJobToRun(kc, locJob.getId());
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							} finally {
+								productionPlanner.releaseThreadSemaphore("releaseOrder2");
+							}
+						}
+						return null;					
+					});
 				}
-				try {
-					UtilService.getJobStepUtil().checkJobToRun(kc, job.getId());
-				} catch (InterruptedException e) {
-					throw e;
-				}
-				
+			} catch (Exception e) {	
+				productionPlanner.releaseThreadSemaphore("releaseOrder");
+				throw e;
 			}
 			if (this.isInterrupted()) {
 				answer = new Message(Messages.ORDER_RELEASING_INTERRUPTED);
@@ -218,6 +243,8 @@ public class OrderReleaseThread extends Thread {
 				throw new InterruptedException();
 			}
 			final Messages finalAnswer = releaseAnswer;
+			try {
+			productionPlanner.acquireThreadSemaphore("releaseOrder3");	
 			answer = transactionTemplate.execute((status) -> {
 				ProcessingOrder lambdaOrder = null;
 				Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
@@ -267,6 +294,12 @@ public class OrderReleaseThread extends Thread {
 				}
 				return lambdaAnswer;
 			});
+
+			} catch (Exception e) {	
+				throw e;
+			} finally {
+				productionPlanner.releaseThreadSemaphore("releaseOrder3");
+			}
 		}
 
 		return answer;

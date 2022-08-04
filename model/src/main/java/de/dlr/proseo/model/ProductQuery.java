@@ -15,6 +15,7 @@ import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Index;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
@@ -40,19 +41,19 @@ public class ProductQuery extends PersistentObject {
 	private static final String MSG_CANNOT_ACCESS_PRODUCT_FIELD = "Cannot access product field %s (cause: %s)";
 
 	/** Job step issuing this query */
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private JobStep jobStep;
 	
 	/**
 	 * The selection rule, from which this query was derived
 	 */
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private SimpleSelectionRule generatingRule;
 	
 	/**
 	 * The product class requested by the selection rule
 	 */
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private ProductClass requestedProductClass;
 	
 	/**

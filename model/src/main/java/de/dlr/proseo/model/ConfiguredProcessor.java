@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
@@ -39,11 +40,11 @@ public class ConfiguredProcessor extends PersistentObject {
 	private UUID uuid;
 	
 	/** The processor version */
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private Processor processor;
 	
 	/** The configuration file version */
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private Configuration configuration;
 	
 	/**

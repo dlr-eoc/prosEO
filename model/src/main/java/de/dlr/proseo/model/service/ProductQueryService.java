@@ -5,14 +5,13 @@
  */
 package de.dlr.proseo.model.service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Set;
-
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -151,7 +150,11 @@ public class ProductQueryService {
 		Query query = em.createNativeQuery(sqlQuery, Product.class);
 		query.setParameter("facility_id", facility.getId());
 		
+		Instant queryStart = Instant.now();
 		List<?> queryResult = (List<?>) query.getResultList();
+		if (logger.isTraceEnabled()) 
+			logger.trace("... product selection query returned {} products in {} ms", queryResult.size(), Duration.between(queryStart, Instant.now()).toMillis());
+		
 		List<Product> products = new ArrayList<>();
 		for (Object resultObject: queryResult) {
 			if (resultObject instanceof Product) {
