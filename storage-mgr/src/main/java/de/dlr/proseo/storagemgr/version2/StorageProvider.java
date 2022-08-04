@@ -44,6 +44,9 @@ public class StorageProvider {
 	/** For smooth integration only, will be removed */
 	private boolean version2;
 
+	/** For smooth integration only, will be removed */
+	private boolean storageProviderForV1;
+	
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(StorageProvider.class);
 
@@ -88,6 +91,7 @@ public class StorageProvider {
 		storage = createStorage(StorageType.valueOf(cfg.getDefaultStorageType()), cfg.getPosixBackendPath());
 
 		version2 = cfg.getStorageManagerVersion2().equals("true") ? true : false;
+		storageProviderForV1 = cfg.getStorageProviderForVersion1().equals("true") ? true : false;
 
 		basePaths.add(storage.getBasePath());
 		basePaths.add(cfg.getPosixSourcePath());
@@ -206,7 +210,7 @@ public class StorageProvider {
 		return basePaths;
 	}
 
-	// all ..version.. methods will be removed in release, for integration only
+	// all ..version.. methods will be removed in release, for smooth integration only
 
 	/**
 	 * Loads version 1 of storage manager (currently used)
@@ -238,6 +242,38 @@ public class StorageProvider {
 	 */
 	public boolean isVersion1() {
 		return !version2;
+	}
+	
+	/**
+	 * Activates storage provider for v1
+	 * 
+	 */
+	public void activateStorageProviderforV1() {
+		storageProviderForV1 = true;
+	}
+
+	/**
+	 * Deactivates storage provider for v1
+	 * 
+	 */
+	public void deactivateStorageProviderforV1() {
+		storageProviderForV1 = false;
+	}
+
+	/**
+	 * Checks if storage provider for v1 is activated
+	 * 
+	 */
+	public boolean activatedStorageProviderforV1() {
+		return storageProviderForV1;
+	}
+
+	/**
+	 * Checks if storage provider for v1 is deactivated
+	 * 
+	 */
+	public boolean deactivatedStorageProviderforV1() {
+		return !storageProviderForV1;
 	}
 
 	/**

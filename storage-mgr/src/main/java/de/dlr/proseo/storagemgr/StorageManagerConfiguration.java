@@ -59,6 +59,9 @@ public class StorageManagerConfiguration {
 
 	@Value("${proseo.global.storageManagerVersion2}")
 	private String storageManagerVersion2;
+	
+	@Value("${proseo.global.storageProviderForVersion1}")
+	private String storageProviderForVersion1;
 
 	@Value("${proseo.global.sourcePath}")
 	private String sourcePath;
@@ -126,6 +129,13 @@ public class StorageManagerConfiguration {
 	 */
 	public String getStorageManagerVersion2() {
 		return storageManagerVersion2;
+	}
+	
+	/**
+	 * @return the storageProviderForVersion1
+	 */
+	public String getStorageProviderForVersion1() {
+		return storageProviderForVersion1;
 	}
 
 	/**
