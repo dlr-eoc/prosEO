@@ -243,7 +243,19 @@ public class S3DAL {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> uploadFile({},{})", sourceFile, targetFileOrDir);
-
+		
+		// TODO: Read from application.yml 
+		int maxAttempts = 3; 
+		
+		S3AtomicFileUploader fileUploader = new S3AtomicFileUploader(s3Client, bucket, sourceFile, targetFileOrDir);
+		try {
+			return new S3DefaultRetryStrategy(fileUploader, maxAttempts).execute();
+		} catch (IOException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+			throw e;	
+		}
+/*
 		String targetFile = targetFileOrDir;
 
 		if (new PathConverter(targetFileOrDir).isDirectory()) {
@@ -271,6 +283,8 @@ public class S3DAL {
 			e.printStackTrace();
 			throw e;
 		}
+		
+		*/
 	}
 
 	/**
