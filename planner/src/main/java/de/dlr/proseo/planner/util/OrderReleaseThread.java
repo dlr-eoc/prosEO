@@ -199,7 +199,7 @@ public class OrderReleaseThread extends Thread {
 						Messages locAnswer = Messages.TRUE;
 						while (curJList.get(0) < jCount && curJSList.get(0) < packetSize) {
 							if (this.isInterrupted()) {
-								return new Message(Messages.PLANNING_INTERRUPTED);
+								return new Message(Messages.ORDER_RELEASING_INTERRUPTED);
 							}
 							if (jobList.get(curJList.get(0)).getJobState() == JobState.PLANNED) {
 								Job locJob = RepositoryService.getJobRepository().getOne(jobList.get(curJList.get(0)).getId());
@@ -211,11 +211,13 @@ public class OrderReleaseThread extends Thread {
 						}
 						return locAnswer;					
 					});
-					if(answer1 instanceof Messages) {
-						answer = new Message((Messages)answer1);
-					}
 					productionPlanner.releaseThreadSemaphore("releaseOrder");
-					
+					if(answer1 instanceof Message) {
+						answer = (Message)answer1;
+						if (answer.getMessage().getCode() == (Messages.ORDER_RELEASING_INTERRUPTED).getCode()) {
+							break;
+						}
+					}
 					@SuppressWarnings("unused")
 					Object answer2 = transactionTemplate.execute((status) -> {
 						for (Job j : releasedJobs) {
