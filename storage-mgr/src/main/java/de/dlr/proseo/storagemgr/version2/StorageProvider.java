@@ -20,6 +20,7 @@ import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
 import de.dlr.proseo.storagemgr.version2.posix.PosixStorage;
 import de.dlr.proseo.storagemgr.version2.posix.PosixStorageFile;
+import de.dlr.proseo.storagemgr.version2.s3.S3Configuration;
 import de.dlr.proseo.storagemgr.version2.s3.S3Storage;
 import de.dlr.proseo.storagemgr.version2.s3.S3StorageFile;
 
@@ -339,8 +340,9 @@ public class StorageProvider {
 			return new PosixStorage(storagePath, sourcePath);
 
 		} else if (storageType == StorageType.S3) {
-			return new S3Storage(storagePath, sourcePath, cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(),
-					cfg.getS3DefaultBucket());
+			
+			// init with default region in DAL
+			return new S3Storage(getS3ConfigurationFromFile());
 		}
 
 		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
@@ -507,5 +509,30 @@ public class StorageProvider {
 			logger.trace(">>> createStorageFile({}, {})", relativePath, content.length());
 
 		return storage.createStorageFile(relativePath, content);
+	}
+	
+	/**
+	 * Gets S3 Configuration from file
+	 * 
+	 * @return s3 configuration 
+	 */
+	public S3Configuration getS3ConfigurationFromFile() {
+
+		S3Configuration s3Configuration = new S3Configuration(); 
+		
+		s3Configuration.setS3AccessKey(cfg.getS3AccessKey());
+		s3Configuration.setS3SecretAccessKey(cfg.getS3SecretAccessKey());
+		s3Configuration.setS3Region(cfg.getS3Region());
+		s3Configuration.setS3EndPoint(cfg.getS3EndPoint());
+
+		s3Configuration.setBucket(cfg.getS3DefaultBucket());
+		s3Configuration.setBasePath(cfg.getPosixBackendPath());
+		s3Configuration.setSourcePath(cfg.getPosixSourcePath());
+
+		s3Configuration.setMaxUploadAttempts(cfg.getS3MaxUploadAttempts());
+		s3Configuration.setMaxDownloadAttempts(cfg.getS3MaxDownloadAttempts());
+		s3Configuration.setMaxRequestAttempts(cfg.getS3MaxRequestAttempts());
+
+		return s3Configuration;
 	}
 }

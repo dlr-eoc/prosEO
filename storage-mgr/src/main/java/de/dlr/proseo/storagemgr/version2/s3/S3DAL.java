@@ -42,14 +42,12 @@ import software.amazon.awssdk.services.s3.model.ListObjectsRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
 import software.amazon.awssdk.services.s3.waiters.S3Waiter;
 import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.core.ResponseInputStream;
-import software.amazon.awssdk.core.sync.RequestBody;
 
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 import software.amazon.awssdk.transfer.s3.FileDownload;
@@ -91,6 +89,16 @@ public class S3DAL {
 		this.cfg = cfg; 
 		
 		initS3Client(); 
+	}
+
+	/**
+	 * Gets Configuration  
+	 * 
+	 * @return cfg s3Configuration 
+	 */
+	public S3Configuration getConfiguration() {
+		
+		return cfg; 
 	}
 	
 	/**
@@ -243,14 +251,14 @@ public class S3DAL {
 	 * @return uploaded to storage file path
 	 * @throws IOException if file cannot be uploaded
 	 */
-	public String uploadFile(String sourceFile, String targetFileOrDir, int maxAttempts) throws IOException {
+	public String uploadFile(String sourceFile, String targetFileOrDir) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> uploadFile({},{})", sourceFile, targetFileOrDir);
 				
 		AtomicCommand fileUploader = new S3AtomicFileUploader(s3Client, cfg.getBucket(), sourceFile, targetFileOrDir);
 		try {
-			return new S3DefaultRetryStrategy(fileUploader, maxAttempts).execute();
+			return new S3DefaultRetryStrategy(fileUploader, cfg.getMaxUploadAttempts() ).execute();
 		} catch (IOException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
@@ -267,7 +275,7 @@ public class S3DAL {
 	 * @return uploaded to storage file path list
 	 * @throws IOException
 	 */
-	public List<String> upload(String sourceFileOrDir, String targetFileOrDir, int maxAttempts) throws IOException {
+	public List<String> upload(String sourceFileOrDir, String targetFileOrDir) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> upload({},{})", sourceFileOrDir, targetFileOrDir);
@@ -275,7 +283,7 @@ public class S3DAL {
 		List<String> uploadedFiles = new ArrayList<String>();
 
 		if (isFile(sourceFileOrDir)) {
-			String uploadedFile = uploadFile(sourceFileOrDir, targetFileOrDir, maxAttempts);
+			String uploadedFile = uploadFile(sourceFileOrDir, targetFileOrDir);
 			uploadedFiles.add(uploadedFile);
 			return uploadedFiles;
 		}
@@ -290,7 +298,7 @@ public class S3DAL {
 		for (File file : files) {
 			if (file.isFile()) {
 				String sourceFile = file.getAbsolutePath();
-				String uploadedFile = uploadFile(sourceFile, targetDir, maxAttempts);
+				String uploadedFile = uploadFile(sourceFile, targetDir);
 				uploadedFiles.add(uploadedFile);
 			}
 		}
@@ -300,7 +308,7 @@ public class S3DAL {
 				String sourceSubDir = file.getAbsolutePath();
 				String targetSubDir = Paths.get(targetDir, file.getName()).toString();
 				targetSubDir = new PathConverter(targetSubDir).posixToS3Path().addSlashAtEnd().getPath();
-				List<String> subDirUploadedFiles = upload(sourceSubDir, targetSubDir, maxAttempts);
+				List<String> subDirUploadedFiles = upload(sourceSubDir, targetSubDir);
 				uploadedFiles.addAll(subDirUploadedFiles);
 			}
 		}
@@ -317,7 +325,7 @@ public class S3DAL {
 	 * @throws IOException if file or directory cannot be uploaded
 	 */
 	public List<String> upload(String sourceFileOrDir, int maxAttempts) throws IOException {
-		return upload(sourceFileOrDir, sourceFileOrDir, maxAttempts);
+		return upload(sourceFileOrDir, sourceFileOrDir);
 	}
 
 	/**
@@ -448,7 +456,7 @@ public class S3DAL {
 		toDelete.add(ObjectIdentifier.builder().key(filepath).build());
 
 		try {
-			DeleteObjectsRequest dor = DeleteObjectsRequest.builder().bucket(bucket)
+			DeleteObjectsRequest dor = DeleteObjectsRequest.builder().bucket(cfg.getBucket())
 					.delete(Delete.builder().objects(toDelete).build()).build();
 			s3Client.deleteObjects(dor);
 			System.out.println("Successfully deleted object " + filepath);
@@ -503,7 +511,7 @@ public class S3DAL {
 		Delete del = Delete.builder().objects(keys).build();
 
 		try {
-			DeleteObjectsRequest multiObjectDeleteRequest = DeleteObjectsRequest.builder().bucket(bucket).delete(del)
+			DeleteObjectsRequest multiObjectDeleteRequest = DeleteObjectsRequest.builder().bucket(cfg.getBucket()).delete(del)
 					.build();
 			System.out.println("Multiple objects are deleted!");
 
@@ -532,7 +540,7 @@ public class S3DAL {
 
 		try {
 			FileUpload upload = transferManager.uploadFile(
-					b -> b.source(Paths.get(sourcePath)).putObjectRequest(req -> req.bucket(bucket).key(targetPath)));
+					b -> b.source(Paths.get(sourcePath)).putObjectRequest(req -> req.bucket(cfg.getBucket()).key(targetPath)));
 
 			upload.completionFuture().join();
 
@@ -561,7 +569,7 @@ public class S3DAL {
 		try {
 
 			FileDownload download = transferManager.downloadFile(b -> b.destination(Paths.get(targetPath))
-					.getObjectRequest(req -> req.bucket(bucket).key(sourcePath)));
+					.getObjectRequest(req -> req.bucket(cfg.getBucket()).key(sourcePath)));
 			download.completionFuture().join();
 
 			return targetPath;
@@ -587,7 +595,7 @@ public class S3DAL {
 			createBucket(bucket);
 		}
 
-		this.bucket = bucket;
+		cfg.setBucket(bucket);
 	}
 
 	/**
@@ -596,7 +604,7 @@ public class S3DAL {
 	 * @return bucket
 	 */
 	public String getBucket() {
-		return bucket;
+		return cfg.getBucket();
 	}
 
 	/**

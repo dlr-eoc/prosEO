@@ -27,9 +27,6 @@ public class S3Storage implements Storage {
 	/** s3 data access layer object */
 	private S3DAL s3DAL;
 
-	/** s3 configuration */
-	private S3Configuration cfg;
-
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3Storage.class);
 
@@ -39,31 +36,7 @@ public class S3Storage implements Storage {
 	 * @param cfg s3 configuration
 	 */
 	public S3Storage(S3Configuration cfg) {
-		s3DAL = new S3DAL(s3AccessKey, s3SecretAccessKey, bucket);
-		this.basePath = basePath;
-
-
-	}
-
-	/**
-	 * Constructor with bucket and access keys
-	 * 
-	 * @param basePath          base path
-	 * @param sourcePath        source path
-	 * @param s3AccessKey       s3 access key
-	 * @param s3SecretAccessKey s3 secret access key
-	 * @param s3Region          s3 region
-	 * @param s3EndPoint        s3 end point
-	 * @param bucket            bucket
-	 */
-	public S3Storage(String basePath, String sourcePath, String s3AccessKey, String s3SecretAccessKey, String s3Region,
-			String s3EndPoint, String bucket, int maxUploadAttempts, int maxDownloadAttempts, int maxRequestAttempts) {
-		s3DAL = new S3DAL(s3AccessKey, s3SecretAccessKey, s3Region, s3EndPoint, bucket);
-		this.basePath = basePath;
-		this.sourcePath = sourcePath;
-		this.maxUploadAttempts = maxUploadAttempts;
-		this.maxDownloadAttempts = maxDownloadAttempts;
-		this.maxRequestAttempts = maxRequestAttempts;
+		s3DAL = new S3DAL(cfg);
 	}
 
 	/**
@@ -83,7 +56,7 @@ public class S3Storage implements Storage {
 	 */
 	@Override
 	public String getBasePath() {
-		return basePath;
+		return s3DAL.getConfiguration().getBasePath();
 	}
 
 	/**
@@ -107,7 +80,7 @@ public class S3Storage implements Storage {
 	 */
 	@Override
 	public String getSourcePath() {
-		return sourcePath;
+		return s3DAL.getConfiguration().getSourcePath();
 	}
 
 	/**
@@ -195,7 +168,7 @@ public class S3Storage implements Storage {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getAbsoluteFiles({})", relativePath);
 
-		String path = new PathConverter(basePath, relativePath).getPath();
+		String path = new PathConverter(s3DAL.getConfiguration().getBasePath(), relativePath).getPath();
 
 		return getAbsolutePath(s3DAL.getFiles(path));
 	}
@@ -206,7 +179,7 @@ public class S3Storage implements Storage {
 	 * @return list of all files from storage
 	 */
 	public List<String> getAbsoluteFiles() {
-		return getAbsolutePath(s3DAL.getFiles(basePath));
+		return getAbsolutePath(s3DAL.getFiles(s3DAL.getConfiguration().getBasePath()));
 	}
 
 	/**
@@ -324,14 +297,14 @@ public class S3Storage implements Storage {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createStorageFile({},{})", relativePath, content);
 
-		String path = Paths.get(basePath, relativePath).toString();
+		String path = Paths.get(s3DAL.getConfiguration().getBasePath(), relativePath).toString();
 
 		path = new PathConverter(path).fixAbsolutePath().getPath();
 
 		FileUtils fileUtils = new FileUtils(path);
 		fileUtils.createFile(content);
 
-		StorageFile sourceFile = new PosixStorageFile(basePath, relativePath);
+		StorageFile sourceFile = new PosixStorageFile(s3DAL.getConfiguration().getBasePath(), relativePath);
 		StorageFile targetFile = new S3StorageFile(s3DAL.getBucket(), relativePath);
 
 		try {
@@ -417,8 +390,6 @@ public class S3Storage implements Storage {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> uploadFile({},{})", sourceFile.getFullPath(), targetFileOrDir.getFullPath());
-		
-		int maxAttempts = 
 
 		return s3DAL.uploadFile(sourceFile.getFullPath(), targetFileOrDir.getRelativePath());
 	}
@@ -489,7 +460,7 @@ public class S3Storage implements Storage {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> upload({})", relativeSourceFileOrDir);
 
-		StorageFile sourceFileOrDir = new PosixStorageFile(sourcePath, relativeSourceFileOrDir);
+		StorageFile sourceFileOrDir = new PosixStorageFile(s3DAL.getConfiguration().getSourcePath(), relativeSourceFileOrDir);
 		StorageFile targetFileOrDir = new S3StorageFile(s3DAL.getBucket(), sourceFileOrDir.getRelativePath());
 
 		return s3DAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getRelativePath());
@@ -508,7 +479,7 @@ public class S3Storage implements Storage {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> uploadFile({})", relativeSourceFile);
 
-		StorageFile sourceFile = new PosixStorageFile(sourcePath, relativeSourceFile);
+		StorageFile sourceFile = new PosixStorageFile(s3DAL.getConfiguration().getSourcePath(), relativeSourceFile);
 		// StorageFile targetFile = new S3StorageFile(s3DAL.getBucket(),
 		// sourceFile.getRelativePath());
 
