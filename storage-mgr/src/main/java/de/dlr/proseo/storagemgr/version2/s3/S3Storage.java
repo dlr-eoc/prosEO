@@ -27,11 +27,8 @@ public class S3Storage implements Storage {
 	/** s3 data access layer object */
 	private S3DAL s3DAL;
 
-	/** base path */
-	private String basePath;
-
-	/** source path */
-	private String sourcePath;
+	/** s3 configuration */
+	private S3Configuration cfg;
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3Storage.class);
@@ -39,16 +36,13 @@ public class S3Storage implements Storage {
 	/**
 	 * Constructor with bucket, access keys, region and end point
 	 * 
-	 * @param basePath          base path
-	 * @param sourcePath        source path
-	 * @param s3AccessKey       s3 access key
-	 * @param s3SecretAccessKey s3 secret access key
-	 * @param bucket            bucket
+	 * @param cfg s3 configuration
 	 */
-	public S3Storage(String basePath, String sourcePath, String s3AccessKey, String s3SecretAccessKey, String bucket) {
+	public S3Storage(S3Configuration cfg) {
 		s3DAL = new S3DAL(s3AccessKey, s3SecretAccessKey, bucket);
 		this.basePath = basePath;
-		this.sourcePath = sourcePath;
+
+
 	}
 
 	/**
@@ -63,10 +57,13 @@ public class S3Storage implements Storage {
 	 * @param bucket            bucket
 	 */
 	public S3Storage(String basePath, String sourcePath, String s3AccessKey, String s3SecretAccessKey, String s3Region,
-			String s3EndPoint, String bucket) {
+			String s3EndPoint, String bucket, int maxUploadAttempts, int maxDownloadAttempts, int maxRequestAttempts) {
 		s3DAL = new S3DAL(s3AccessKey, s3SecretAccessKey, s3Region, s3EndPoint, bucket);
 		this.basePath = basePath;
 		this.sourcePath = sourcePath;
+		this.maxUploadAttempts = maxUploadAttempts;
+		this.maxDownloadAttempts = maxDownloadAttempts;
+		this.maxRequestAttempts = maxRequestAttempts;
 	}
 
 	/**
@@ -88,18 +85,18 @@ public class S3Storage implements Storage {
 	public String getBasePath() {
 		return basePath;
 	}
-	
+
 	/**
 	 * Gets absolute base path (fs prefix + bucket + base path), depends on fs
 	 * 
-	 * in other words it is absolute path without relative path
-	 * in this s3 version s3://bucket/
-	 * 	 
+	 * in other words it is absolute path without relative path in this s3 version
+	 * s3://bucket/
+	 * 
 	 * @return absolute base path
 	 */
 	@Override
 	public String getAbsoluteBasePath() {
-			
+
 		return new PathConverter(s3DAL.getBucket()).addS3Prefix().getPath();
 	}
 
@@ -186,7 +183,7 @@ public class S3Storage implements Storage {
 	public List<String> getRelativeFiles() {
 		return s3DAL.getFiles();
 	}
-	
+
 	/**
 	 * Gets files (absolute paths) from storage with given prefix (folder)
 	 * 
@@ -194,7 +191,7 @@ public class S3Storage implements Storage {
 	 * @return list of files with given prefix
 	 */
 	public List<String> getAbsoluteFiles(String relativePath) {
-		
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getAbsoluteFiles({})", relativePath);
 
@@ -209,7 +206,7 @@ public class S3Storage implements Storage {
 	 * @return list of all files from storage
 	 */
 	public List<String> getAbsoluteFiles() {
-		return getAbsolutePath(s3DAL.getFiles(basePath));	
+		return getAbsolutePath(s3DAL.getFiles(basePath));
 	}
 
 	/**
@@ -227,7 +224,7 @@ public class S3Storage implements Storage {
 
 		return new PathConverter(absolutePath).removeFsPrefix().removeBucket().removeLeftSlash().getPath();
 	}
-	
+
 	/**
 	 * Gets relative paths from absolute paths removing s3 prefix, bucket and left
 	 * slash
@@ -237,19 +234,20 @@ public class S3Storage implements Storage {
 	 */
 	@Override
 	public List<String> getRelativePath(List<String> absolutePaths) {
-		
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRelativePath({})", absolutePaths.size());
-		
+
 		List<String> relativePaths = new ArrayList<>();
-		
-		for (String absolutePath :absolutePaths) {
-			
-			String relativePath = new PathConverter(absolutePath).removeFsPrefix().removeBucket().removeLeftSlash().getPath();
+
+		for (String absolutePath : absolutePaths) {
+
+			String relativePath = new PathConverter(absolutePath).removeFsPrefix().removeBucket().removeLeftSlash()
+					.getPath();
 			relativePaths.add(relativePath);
 		}
-		
-		return relativePaths; 
+
+		return relativePaths;
 	}
 
 	/**
@@ -419,6 +417,8 @@ public class S3Storage implements Storage {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> uploadFile({},{})", sourceFile.getFullPath(), targetFileOrDir.getFullPath());
+		
+		int maxAttempts = 
 
 		return s3DAL.uploadFile(sourceFile.getFullPath(), targetFileOrDir.getRelativePath());
 	}

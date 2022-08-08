@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.storagemgr.version2.FileUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
+import de.dlr.proseo.storagemgr.version2.model.AtomicCommand;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -64,9 +65,9 @@ public class S3DAL {
 
 	/** S3 Client */
 	private S3Client s3Client;
-
-	/** Bucket */
-	private String bucket;
+	
+	/** s3 configuration */
+	private S3Configuration cfg;
 
 	/** AWS Basic Credentials */
 	private AwsBasicCredentials credentials;
@@ -81,43 +82,45 @@ public class S3DAL {
 	private static Logger logger = LoggerFactory.getLogger(S3DAL.class);
 
 	/**
-	 * Constructor with access keys and bucket
+	 * Constructor 
 	 * 
-	 * @param s3AccessKey       s3 access key
-	 * @param s3SecretAccessKey s3 secret access key
-	 * @param bucket            bucket
+	 * @param cfg s3Configuration 
 	 */
-	public S3DAL(String s3AccessKey, String s3SecretAccessKey, String bucket) {
-
+	public S3DAL(S3Configuration cfg) {
+		
+		this.cfg = cfg; 
+		
+		initS3Client(); 
+	}
+	
+	/**
+	 * Initialization of s3 client
+	 */
+	public void initS3Client() {
+		
 		Region s3Region = Region.EU_CENTRAL_1;
 
-		initCredentials(s3AccessKey, s3SecretAccessKey);
+		initCredentials(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
 		initTransferManager(s3Region);
 
 		s3Client = S3Client.builder().region(s3Region)
 				.credentialsProvider(StaticCredentialsProvider.create(credentials)).build();
 
-		setBucket(bucket);
+		setBucket(cfg.getBucket());
 	}
-
+	
 	/**
-	 * Constructor with access keys, region, end point and bucket
-	 * 
-	 * @param s3AccessKey       s3 access key
-	 * @param s3SecretAccessKey s3 secret access key
-	 * @param s3Region          s3 region
-	 * @param s3EndPoint        s3 end point
-	 * @param bucket            bucket
+	 * Initialization of s3 client with region
 	 */
-	public S3DAL(String s3AccessKey, String s3SecretAccessKey, String s3Region, String s3EndPoint, String bucket) {
+	public void initS3ClientWithRegion() {
+		
+		initCredentials(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
+		initTransferManager(Region.of(cfg.getS3Region()));
 
-		initCredentials(s3AccessKey, s3SecretAccessKey);
-		initTransferManager(Region.of(s3Region));
-
-		s3Client = S3Client.builder().region(Region.of(s3Region)).endpointOverride(URI.create(s3EndPoint))
+		s3Client = S3Client.builder().region(Region.of(cfg.getS3Region())).endpointOverride(URI.create(cfg.getS3EndPoint()))
 				.credentialsProvider(StaticCredentialsProvider.create(credentials)).build();
 
-		setBucket(bucket);
+		setBucket(cfg.getBucket());
 	}
 
 	/**
@@ -130,7 +133,7 @@ public class S3DAL {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFiles()");
 
-		ListObjectsRequest request = ListObjectsRequest.builder().bucket(bucket).build();
+		ListObjectsRequest request = ListObjectsRequest.builder().bucket(cfg.getBucket()).build();
 
 		ListObjectsResponse response = s3Client.listObjects(request);
 		return toStringFiles(response.contents());
@@ -147,7 +150,7 @@ public class S3DAL {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFiles({})", folder);
 
-		ListObjectsRequest request = ListObjectsRequest.builder().bucket(bucket).prefix(folder).build();
+		ListObjectsRequest request = ListObjectsRequest.builder().bucket(cfg.getBucket()).prefix(folder).build();
 
 		ListObjectsResponse response = s3Client.listObjects(request);
 		return toStringFiles(response.contents());
@@ -165,7 +168,7 @@ public class S3DAL {
 			logger.trace(">>> fileExists({},{})", filePath);
 
 		try {
-			s3Client.headObject(HeadObjectRequest.builder().bucket(bucket).key(filePath).build());
+			s3Client.headObject(HeadObjectRequest.builder().bucket(cfg.getBucket()).key(filePath).build());
 			return true;
 		} catch (Exception e) {
 			return false;
@@ -203,7 +206,7 @@ public class S3DAL {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFileSize({})", filePath);
 
-		HeadObjectRequest headObjectRequest = HeadObjectRequest.builder().bucket(bucket).key(filePath).build();
+		HeadObjectRequest headObjectRequest = HeadObjectRequest.builder().bucket(cfg.getBucket()).key(filePath).build();
 		HeadObjectResponse headObjectResponse = s3Client.headObject(headObjectRequest);
 
 		return headObjectResponse.contentLength();
@@ -217,7 +220,7 @@ public class S3DAL {
 	 */
 	public String getFileContent(String filePath) throws IOException {
 
-		GetObjectRequest getObjectRequest = GetObjectRequest.builder().bucket(bucket).key(filePath).build();
+		GetObjectRequest getObjectRequest = GetObjectRequest.builder().bucket(cfg.getBucket()).key(filePath).build();
 
 		ResponseInputStream<GetObjectResponse> responseInputStream = s3Client.getObject(getObjectRequest);
 
@@ -236,18 +239,16 @@ public class S3DAL {
 	 * 
 	 * @param sourceFile      source file to upload
 	 * @param targetFileOrDir target file or directory in storage
+	 * @param maxAttempts max attempts
 	 * @return uploaded to storage file path
 	 * @throws IOException if file cannot be uploaded
 	 */
-	public String uploadFile(String sourceFile, String targetFileOrDir) throws IOException {
+	public String uploadFile(String sourceFile, String targetFileOrDir, int maxAttempts) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> uploadFile({},{})", sourceFile, targetFileOrDir);
-		
-		// TODO: Read from application.yml 
-		int maxAttempts = 3; 
-		
-		S3AtomicFileUploader fileUploader = new S3AtomicFileUploader(s3Client, bucket, sourceFile, targetFileOrDir);
+				
+		AtomicCommand fileUploader = new S3AtomicFileUploader(s3Client, cfg.getBucket(), sourceFile, targetFileOrDir);
 		try {
 			return new S3DefaultRetryStrategy(fileUploader, maxAttempts).execute();
 		} catch (IOException e) {
@@ -255,36 +256,6 @@ public class S3DAL {
 			e.printStackTrace();
 			throw e;	
 		}
-/*
-		String targetFile = targetFileOrDir;
-
-		if (new PathConverter(targetFileOrDir).isDirectory()) {
-			targetFile = Paths.get(targetFileOrDir, getFileName(sourceFile)).toString();
-			targetFile = new PathConverter(targetFile).posixToS3Path().convertToSlash().getPath();
-		}
-
-		try {
-			PutObjectRequest request = PutObjectRequest.builder().bucket(bucket).key(targetFile).build();
-
-			s3Client.putObject(request, RequestBody.fromFile(new File(sourceFile)));
-
-			S3Waiter waiter = s3Client.waiter();
-			HeadObjectRequest requestWait = HeadObjectRequest.builder().bucket(bucket).key(targetFile).build();
-
-			WaiterResponse<HeadObjectResponse> waiterResponse = waiter.waitUntilObjectExists(requestWait);
-			waiterResponse.matched().response().ifPresent(System.out::println);
-
-			System.out.println("File " + targetFile + " was uploaded.");
-
-			return targetFile;
-
-		} catch (Exception e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-			throw e;
-		}
-		
-		*/
 	}
 
 	/**
@@ -292,10 +263,11 @@ public class S3DAL {
 	 * 
 	 * @param sourceFileOrDir source file or directory to upload
 	 * @param targetFileOrDir target file or directory in storage
+	 * @param maxAttempts max attempts
 	 * @return uploaded to storage file path list
 	 * @throws IOException
 	 */
-	public List<String> upload(String sourceFileOrDir, String targetFileOrDir) throws IOException {
+	public List<String> upload(String sourceFileOrDir, String targetFileOrDir, int maxAttempts) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> upload({},{})", sourceFileOrDir, targetFileOrDir);
@@ -303,7 +275,7 @@ public class S3DAL {
 		List<String> uploadedFiles = new ArrayList<String>();
 
 		if (isFile(sourceFileOrDir)) {
-			String uploadedFile = uploadFile(sourceFileOrDir, targetFileOrDir);
+			String uploadedFile = uploadFile(sourceFileOrDir, targetFileOrDir, maxAttempts);
 			uploadedFiles.add(uploadedFile);
 			return uploadedFiles;
 		}
@@ -318,7 +290,7 @@ public class S3DAL {
 		for (File file : files) {
 			if (file.isFile()) {
 				String sourceFile = file.getAbsolutePath();
-				String uploadedFile = uploadFile(sourceFile, targetDir);
+				String uploadedFile = uploadFile(sourceFile, targetDir, maxAttempts);
 				uploadedFiles.add(uploadedFile);
 			}
 		}
@@ -328,7 +300,7 @@ public class S3DAL {
 				String sourceSubDir = file.getAbsolutePath();
 				String targetSubDir = Paths.get(targetDir, file.getName()).toString();
 				targetSubDir = new PathConverter(targetSubDir).posixToS3Path().addSlashAtEnd().getPath();
-				List<String> subDirUploadedFiles = upload(sourceSubDir, targetSubDir);
+				List<String> subDirUploadedFiles = upload(sourceSubDir, targetSubDir, maxAttempts);
 				uploadedFiles.addAll(subDirUploadedFiles);
 			}
 		}
@@ -340,11 +312,12 @@ public class S3DAL {
 	 * Uploads file or directory to storage
 	 * 
 	 * @param sourceFileOrDir source file or directory to upload
+	 * @param maxAttempts max attempts
 	 * @return uploaded file or directory file path list
 	 * @throws IOException if file or directory cannot be uploaded
 	 */
-	public List<String> upload(String sourceFileOrDir) throws IOException {
-		return upload(sourceFileOrDir, sourceFileOrDir);
+	public List<String> upload(String sourceFileOrDir, int maxAttempts) throws IOException {
+		return upload(sourceFileOrDir, sourceFileOrDir, maxAttempts);
 	}
 
 	/**
@@ -371,7 +344,7 @@ public class S3DAL {
 		targetPosixFile = new PathConverter(targetPosixFile).s3ToPosixPath().convertToSlash().getPath();
 		new FileUtils(targetPosixFile).createParentDirectories();
 
-		GetObjectRequest request = GetObjectRequest.builder().bucket(bucket).key(sourceS3File).build();
+		GetObjectRequest request = GetObjectRequest.builder().bucket(cfg.getBucket()).key(sourceS3File).build();
 		ResponseInputStream<GetObjectResponse> response = s3Client.getObject(request);
 		BufferedOutputStream outputStream;
 
@@ -457,7 +430,7 @@ public class S3DAL {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> delete({})", fileOrDir);
 
-		return deleteS3Data(s3Client, bucket, fileOrDir);
+		return deleteS3Data(s3Client, cfg.getBucket(), fileOrDir);
 	}
 
 	/**
