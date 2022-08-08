@@ -68,12 +68,30 @@ public class StorageManagerConfiguration {
 
 	@Value("${proseo.s3.s3DefaultBucket}")
 	private String s3DefaultBucket;
+	
+	@Value("${proseo.s3.s3MaxUploadAttempts}")
+	private Integer s3MaxUploadAttempts;
+	
+	@Value("${proseo.s3.s3MaxDownloadAttempts}")
+	private Integer s3MaxDownloadAttempts;
+	
+	@Value("${proseo.s3.s3MaxRequestAttempts}")
+	private Integer s3MaxRequestAttempts;
 
 	@Value("${proseo.posix.backendPath}")
 	private String posixBackendPath;
 
 	@Value("${proseo.posix.cachePath}")
 	private String posixCachePath;
+	
+	@Value("${proseo.posix.posixMaxUploadAttempts}")
+	private Integer posixMaxUploadAttempts;
+	
+	@Value("${proseo.posix.posixMaxDownloadAttempts}")
+	private Integer posixMaxDownloadAttempts;
+	
+	@Value("${proseo.posix.posixMaxRequestAttempts}")
+	private Integer posixMaxRequestAttempts;
 
 	@Value("${proseo.storageManager.defaultStorageType}")
 	private String defaultStorageType;
@@ -314,7 +332,49 @@ public class StorageManagerConfiguration {
 	public String getS3EndPoint() {
 		return s3EndPoint;
 	}
+	
+	/**
+	 * @return the s3MaxUploadAttempts
+	 */
+	public int getS3MaxUploadAttempts() {
+		return s3MaxUploadAttempts;
+	}
 
+	/**
+	 * @return the s3MaxDownloadAttempts
+	 */
+	public int getS3MaxDownloadAttempts() {
+		return s3MaxDownloadAttempts;
+	}
+	
+	/**
+	 * @return the s3MaxRequestAttempts
+	 */
+	public int getS3MaxRequestAttempts() {
+		return s3MaxRequestAttempts;
+	}
+	
+	/**
+	 * @return the posixMaxUploadAttempts
+	 */
+	public int getPosixMaxUploadAttempts() {
+		return posixMaxUploadAttempts;
+	}
+
+	/**
+	 * @return the posixMaxDownloadAttempts
+	 */
+	public int getPosixMaxDownloadAttempts() {
+		return posixMaxDownloadAttempts;
+	}
+	
+	/**
+	 * @return the posixMaxRequestAttempts
+	 */
+	public int getPosixMaxRequestAttempts() {
+		return posixMaxRequestAttempts;
+	}
+	
 	/**
 	 * @return the expected cache usage
 	 */
@@ -328,5 +388,4 @@ public class StorageManagerConfiguration {
 	public Integer getMaximumCacheUsage() {
 		return maximumCacheUsage;
 	}
-
 }
