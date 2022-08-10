@@ -46,6 +46,14 @@ public class S3AtomicFileUploader implements AtomicCommand {
 	/** Bucket */
 	private String bucket;
 	
+	/**
+	 * Constructor
+	 * 
+	 * @param s3Client s3 client
+	 * @param bucket bucket
+	 * @param sourceFile sourceFile
+	 * @param targetFileOrDir target file or directory
+	 */
 	public S3AtomicFileUploader(S3Client s3Client, String bucket, String sourceFile, String targetFileOrDir) {
 		
 		this.s3Client = s3Client; 

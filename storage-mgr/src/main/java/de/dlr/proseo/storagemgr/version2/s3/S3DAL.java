@@ -340,39 +340,14 @@ public class S3DAL {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> downloadFile({},{})", sourceFile, targetFileOrDir);
-
-		String sourceS3File = new PathConverter(sourceFile).posixToS3Path().convertToSlash().getPath();
-		String targetPosixFile = targetFileOrDir;
-
-		if (new PathConverter(targetFileOrDir).isDirectory()) {
-			targetPosixFile = Paths.get(targetFileOrDir, getFileName(sourceS3File)).toString();
-
-		}
-
-		targetPosixFile = new PathConverter(targetPosixFile).s3ToPosixPath().convertToSlash().getPath();
-		new FileUtils(targetPosixFile).createParentDirectories();
-
-		GetObjectRequest request = GetObjectRequest.builder().bucket(cfg.getBucket()).key(sourceS3File).build();
-		ResponseInputStream<GetObjectResponse> response = s3Client.getObject(request);
-		BufferedOutputStream outputStream;
-
+		
+		AtomicCommand fileDownloader = new S3AtomicFileDownloader(s3Client, cfg.getBucket(), sourceFile, targetFileOrDir);
 		try {
-			outputStream = new BufferedOutputStream(new FileOutputStream(targetPosixFile));
-			byte[] buffer = new byte[4096];
-			int bytesRead = -1;
-
-			while ((bytesRead = response.read(buffer)) != -1) {
-				outputStream.write(buffer, 0, bytesRead);
-			}
-
-			response.close();
-			outputStream.close();
-
-			return targetPosixFile;
-
+			return new S3DefaultRetryStrategy(fileDownloader, cfg.getMaxUploadAttempts() ).execute();
 		} catch (IOException e) {
 			logger.error(e.getMessage());
-			throw e;
+			e.printStackTrace();
+			throw e;	
 		}
 	}
 
