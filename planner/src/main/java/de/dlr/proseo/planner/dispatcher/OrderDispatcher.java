@@ -73,82 +73,92 @@ public class OrderDispatcher {
 	 * @param pf The processing facility 
 	 * @return true after success, else false
 	 */
-	@Transactional
 	public Message prepareExpectedJobs(long orderId, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
-		ProcessingOrder order = null;
-		Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
-		if (orderOpt.isPresent()) {
-			order = orderOpt.get();
-		}
-		if (logger.isTraceEnabled()) logger.trace(">>> prepareExpectedJobs({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
-		
-		Message answer = new Message(Messages.FALSE);
-		if (thread.isInterrupted()) {
-			throw new InterruptedException();
-		}
-		if (order != null) {
-			switch (order.getOrderState()) {
-			case PLANNING: 
-			case APPROVED: {
-				// order is released, publish it
-				answer.setMessage(checkForValidOrder(order));
-				if (!answer.isTrue()) {
-					break;
+		TransactionTemplate transactionTemplate = new TransactionTemplate(ProductionPlanner.productionPlanner.getTxManager());
+		Message msg = new Message(Messages.FALSE);
+		try	{	
+			msg = (Message) transactionTemplate.execute((status) -> {
+				ProcessingOrder order = null;
+				Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+				if (orderOpt.isPresent()) {
+					order = orderOpt.get();
 				}
-				try {
-					switch (order.getSlicingType()) {
-					case CALENDAR_DAY:
-						answer.setMessage(createJobsForDay(order, pf, thread));
+				if (logger.isTraceEnabled()) logger.trace(">>> prepareExpectedJobs({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
+
+				Message answer = new Message(Messages.FALSE);
+				if (thread.isInterrupted()) {
+					return new Message(Messages.PLANNING_INTERRUPTED);
+				}
+				if (order != null) {
+					switch (order.getOrderState()) {
+					case PLANNING: 
+					case APPROVED: {
+						// order is released, publish it
+						answer.setMessage(checkForValidOrder(order));
+						if (!answer.isTrue()) {
+							break;
+						}
+						try {
+							switch (order.getSlicingType()) {
+							case CALENDAR_DAY:
+								answer.setMessage(createJobsForDay(order, pf, thread));
+								break;
+							case CALENDAR_MONTH:
+								answer.setMessage(createJobsForMonth(order, pf, thread));
+								break;
+							case CALENDAR_YEAR:
+								answer.setMessage(createJobsForYear(order, pf, thread));
+								break;
+							case ORBIT:
+								answer.setMessage(createJobsForOrbit(order, pf, thread));
+								break;
+							case TIME_SLICE:
+								answer.setMessage(createJobsForTimeSlices(order, pf, thread));
+								break;
+							case NONE:
+								answer.setMessage(createSingleJob(order, pf));
+								break;
+							default:
+								answer.setMessage(Messages.ORDER_SLICING_TYPE_NOT_SET)
+								.log(logger, order.getIdentifier());
+								break;
+
+							}
+						} catch (InterruptedException e) {
+							return new Message(Messages.PLANNING_INTERRUPTED);
+						}
+						if (order.getJobs().isEmpty()) {
+							order.setOrderState(OrderState.PLANNED);
+							order.setOrderState(OrderState.RELEASING);
+							order.setOrderState(OrderState.RELEASED);
+							order.setOrderState(OrderState.RUNNING);
+							order.setOrderState(OrderState.COMPLETED);
+							UtilService.getOrderUtil().checkAutoClose(order);
+						}
 						break;
-					case CALENDAR_MONTH:
-						answer.setMessage(createJobsForMonth(order, pf, thread));
+					}
+					case RELEASED: {
+						answer.setMessage(Messages.ORDER_WAIT_FOR_RELEASE)
+						.log(logger, order.getIdentifier(), order.getOrderState().toString());
 						break;
-					case CALENDAR_YEAR:
-						answer.setMessage(createJobsForYear(order, pf, thread));
+					}
+					default: {
+						answer.setMessage(Messages.ORDER_WAIT_FOR_RELEASE)
+						.log(logger, order.getIdentifier(), order.getOrderState().toString());
 						break;
-					case ORBIT:
-						answer.setMessage(createJobsForOrbit(order, pf, thread));
-						break;
-					case TIME_SLICE:
-						answer.setMessage(createJobsForTimeSlices(order, pf, thread));
-						break;
-					case NONE:
-						answer.setMessage(createSingleJob(order, pf));
-						break;
-					default:
-						answer.setMessage(Messages.ORDER_SLICING_TYPE_NOT_SET)
-						.log(logger, order.getIdentifier());
-						break;
+					}
 
 					}
-				} catch (InterruptedException e) {
-					throw e;
-				}
-				if (order.getJobs().isEmpty()) {
-					order.setOrderState(OrderState.PLANNED);
-					order.setOrderState(OrderState.RELEASING);
-					order.setOrderState(OrderState.RELEASED);
-					order.setOrderState(OrderState.RUNNING);
-					order.setOrderState(OrderState.COMPLETED);
-					UtilService.getOrderUtil().checkAutoClose(order);
-				}
-				break;
-			}
-			case RELEASED: {
-				answer.setMessage(Messages.ORDER_WAIT_FOR_RELEASE)
-					.log(logger, order.getIdentifier(), order.getOrderState().toString());
-				break;
-			}
-			default: {
-				answer.setMessage(Messages.ORDER_WAIT_FOR_RELEASE)
-					.log(logger, order.getIdentifier(), order.getOrderState().toString());
-				break;
-			}
-				
-			}
-		}		
-		
-		return answer;
+				}	
+				return answer;
+			});
+		} catch (Exception e) {
+			throw e;
+		}
+		if (msg.getMessage().getCode() == Messages.PLANNING_INTERRUPTED.getCode()) {
+			throw new InterruptedException();
+		}
+		return msg;
 	}
 
 	/**

@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.Job;
+import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderState;
@@ -293,6 +294,7 @@ public class OrderUtil {
 					if (toRemove.get(job.getId()) == null) {
 						order.getJobs().add(job);
 					} else {
+						job.setProcessingOrder(null);
 						RepositoryService.getJobRepository().delete(job);
 					}
 				}
@@ -989,10 +991,22 @@ public class OrderUtil {
 	 * @param order The processing Order
 	 * @return Result message
 	 */
-	@Transactional
-	public Messages close(ProcessingOrder order) {
-		if (logger.isTraceEnabled()) logger.trace(">>> close({})", (null == order ? "null" : order.getId()));
+	public Messages close(Long orderId) {
+		if (logger.isTraceEnabled()) logger.trace(">>> close({})", (null == orderId ? "null" : orderId));
+
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		List<Long> jobIds = new ArrayList<Long>();
 		
+		final ProcessingOrder order = transactionTemplate.execute((status) -> {
+			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+			if (orderOpt.isPresent()) {
+				for (Job j : orderOpt.get().getJobs()) {
+					jobIds.add(j.getId());
+				}
+				return orderOpt.get();
+			}
+			return null;
+		});
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			switch (order.getOrderState()) {
@@ -1008,17 +1022,27 @@ public class OrderUtil {
 			case COMPLETED:
 			case FAILED:
 				// job steps are completed/failed
-				Duration retPeriod = order.getMission().getOrderRetentionPeriod();
-				if (retPeriod != null && order.getProductionType() == ProductionType.SYSTEMATIC) {
-					order.setEvictionTime(Instant.now().plus(retPeriod));
+				for (Long jobId : jobIds) {
+					jobUtil.close(jobId);
 				}
-				for (Job job : order.getJobs()) {
-					jobUtil.close(job);
-				}
-				order.setOrderState(OrderState.CLOSED);
-				order.incrementVersion();
-				RepositoryService.getOrderRepository().save(order);
-				logOrderState(order);
+				final Object dummy = transactionTemplate.execute((status) -> {
+					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+					if (orderOpt.isPresent()) {
+						ProcessingOrder locOrder = orderOpt.get();
+						Duration retPeriod = locOrder.getMission().getOrderRetentionPeriod();
+						if (retPeriod != null && locOrder.getProductionType() == ProductionType.SYSTEMATIC) {
+							locOrder.setEvictionTime(Instant.now().plus(retPeriod));
+						}
+						if (locOrder.getOrderState() == OrderState.RUNNING) {
+							locOrder.setOrderState(OrderState.FAILED);
+						}
+						locOrder.setOrderState(OrderState.CLOSED);
+						locOrder.incrementVersion();
+						RepositoryService.getOrderRepository().save(locOrder);
+						logOrderState(locOrder);
+					}
+					return null;
+				});
 				answer = Messages.ORDER_CLOSED;
 				break;			
 			case CLOSED:
@@ -1039,7 +1063,6 @@ public class OrderUtil {
 	 * @param order The processing Order
 	 * @return true after success
 	 */
-	@Transactional
 	public Boolean checkFinish(Long orderId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkFinish({})", orderId);
 		
@@ -1160,7 +1183,7 @@ public class OrderUtil {
 			order.setEvictionTime(Instant.now().plus(retPeriod));
 			for (Job job : order.getJobs()) {
 				if (job.getJobState() == JobState.COMPLETED) {
-					jobUtil.close(job);
+					jobUtil.close(job.getId());
 				}
 			}
 			if (order.getOrderState() == OrderState.COMPLETED) {
@@ -1230,18 +1253,21 @@ public class OrderUtil {
 		if (productionPlanner.getSuspendingOrders().size() > 0) {
 			id = (long)productionPlanner.getSuspendingOrders().get(0);
 			productionPlanner.getSuspendingOrders().remove(0);
+			if (logger.isTraceEnabled()) logger.trace(">>> suspend order ({})", id);
 			restartSuspendingOrder(id);
 			return;
 		}
 		if (productionPlanner.getReleasingOrders().size() > 0) {
 			id = (long)productionPlanner.getReleasingOrders().get(0);
 			productionPlanner.getReleasingOrders().remove(0);
+			if (logger.isTraceEnabled()) logger.trace(">>> release order ({})", id);
 			restartReleasingOrder(id);
 			return;
 		}
 		if (productionPlanner.getPlanningOrders().size() > 0) {
 			id = (long)productionPlanner.getPlanningOrders().get(0);
 			productionPlanner.getPlanningOrders().remove(0);
+			if (logger.isTraceEnabled()) logger.trace(">>> plan order ({})", id);
 			restartPlanningOrder(id);
 			return;
 		}
