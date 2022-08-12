@@ -534,7 +534,10 @@ public class StorageProvider {
 		s3Configuration.setMaxRequestAttempts(cfg.getS3MaxRequestAttempts());
 		
 		s3Configuration.setFileCheckWaitTime(cfg.getFileCheckWaitTime());
-
+		
+		s3Configuration.setDefaultRegion(Boolean.parseBoolean(cfg.getS3DefaultRegion()));
+		s3Configuration.setFileTransferManager(Boolean.parseBoolean(cfg.getS3FileTransferManager()));
+		
 		return s3Configuration;
 	}
 }

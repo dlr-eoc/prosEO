@@ -77,6 +77,12 @@ public class StorageManagerConfiguration {
 	
 	@Value("${proseo.s3.s3MaxRequestAttempts}")
 	private Integer s3MaxRequestAttempts;
+	   
+	@Value("${proseo.s3.s3DefaultRegion}")
+	private String s3DefaultRegion;
+    
+	@Value("${proseo.s3.s3FileTransferManager}")
+	private String s3FileTransferManager;
 
 	@Value("${proseo.posix.backendPath}")
 	private String posixBackendPath;
@@ -352,6 +358,20 @@ public class StorageManagerConfiguration {
 	 */
 	public int getS3MaxRequestAttempts() {
 		return s3MaxRequestAttempts;
+	}
+	
+	/**
+	 * @return the s3DefaultRegion
+	 */
+	public String getS3DefaultRegion() {
+		return s3DefaultRegion;
+	}
+	
+	/**
+	 * @return the s3FileTransferManager
+	 */
+	public String getS3FileTransferManager() {
+		return s3FileTransferManager;
 	}
 	
 	/**

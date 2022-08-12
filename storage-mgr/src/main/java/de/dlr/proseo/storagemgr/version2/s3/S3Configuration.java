@@ -41,6 +41,33 @@ public class S3Configuration {
 	/** wait time */
 	private long fileCheckWaitTime;
 	
+	/** default region */
+	private boolean defaultRegion;
+	
+	public boolean isDefaultRegion() {
+		return defaultRegion;
+	}
+
+	public void setDefaultRegion(boolean defaultRegion) {
+		this.defaultRegion = defaultRegion;
+	}
+
+	public boolean isFileTransferManager() {
+		return fileTransferManager;
+	}
+
+	public void setFileTransferManager(boolean fileTransferManager) {
+		this.fileTransferManager = fileTransferManager;
+	}
+
+	public void setFileCheckWaitTime(long fileCheckWaitTime) {
+		this.fileCheckWaitTime = fileCheckWaitTime;
+	}
+
+	/** File transferManager */
+	private boolean fileTransferManager;
+	
+	
 	public String getS3AccessKey() {
 		return s3AccessKey;
 	}

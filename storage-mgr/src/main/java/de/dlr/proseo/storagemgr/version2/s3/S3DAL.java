@@ -63,7 +63,7 @@ public class S3DAL {
 
 	/** S3 Client */
 	private S3Client s3Client;
-	
+
 	/** s3 configuration */
 	private S3Configuration cfg;
 
@@ -80,32 +80,36 @@ public class S3DAL {
 	private static Logger logger = LoggerFactory.getLogger(S3DAL.class);
 
 	/**
-	 * Constructor 
+	 * Constructor
 	 * 
-	 * @param cfg s3Configuration 
+	 * @param cfg s3Configuration
 	 */
 	public S3DAL(S3Configuration cfg) {
-		
-		this.cfg = cfg; 
-		
-		initS3Client(); 
+
+		this.cfg = cfg;
+
+		if (cfg.isDefaultRegion()) {
+			initS3Client();
+		} else {
+			initS3ClientWithRegion();
+		}
 	}
 
 	/**
-	 * Gets Configuration  
+	 * Gets Configuration
 	 * 
-	 * @return cfg s3Configuration 
+	 * @return cfg s3Configuration
 	 */
 	public S3Configuration getConfiguration() {
-		
-		return cfg; 
+
+		return cfg;
 	}
-	
+
 	/**
 	 * Initialization of s3 client
 	 */
 	public void initS3Client() {
-		
+
 		Region s3Region = Region.EU_CENTRAL_1;
 
 		initCredentials(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
@@ -116,16 +120,17 @@ public class S3DAL {
 
 		setBucket(cfg.getBucket());
 	}
-	
+
 	/**
 	 * Initialization of s3 client with region
 	 */
 	public void initS3ClientWithRegion() {
-		
+
 		initCredentials(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
 		initTransferManager(Region.of(cfg.getS3Region()));
 
-		s3Client = S3Client.builder().region(Region.of(cfg.getS3Region())).endpointOverride(URI.create(cfg.getS3EndPoint()))
+		s3Client = S3Client.builder().region(Region.of(cfg.getS3Region()))
+				.endpointOverride(URI.create(cfg.getS3EndPoint()))
 				.credentialsProvider(StaticCredentialsProvider.create(credentials)).build();
 
 		setBucket(cfg.getBucket());
@@ -247,7 +252,7 @@ public class S3DAL {
 	 * 
 	 * @param sourceFile      source file to upload
 	 * @param targetFileOrDir target file or directory in storage
-	 * @param maxAttempts max attempts
+	 * @param maxAttempts     max attempts
 	 * @return uploaded to storage file path
 	 * @throws IOException if file cannot be uploaded
 	 */
@@ -255,14 +260,15 @@ public class S3DAL {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> uploadFile({},{})", sourceFile, targetFileOrDir);
-				
+
 		AtomicCommand fileUploader = new S3AtomicFileUploader(s3Client, cfg.getBucket(), sourceFile, targetFileOrDir);
 		try {
-			return new S3DefaultRetryStrategy(fileUploader, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime() ).execute();
+			return new S3DefaultRetryStrategy(fileUploader, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
+					.execute();
 		} catch (IOException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
-			throw e;	
+			throw e;
 		}
 	}
 
@@ -271,7 +277,7 @@ public class S3DAL {
 	 * 
 	 * @param sourceFileOrDir source file or directory to upload
 	 * @param targetFileOrDir target file or directory in storage
-	 * @param maxAttempts max attempts
+	 * @param maxAttempts     max attempts
 	 * @return uploaded to storage file path list
 	 * @throws IOException
 	 */
@@ -320,7 +326,7 @@ public class S3DAL {
 	 * Uploads file or directory to storage
 	 * 
 	 * @param sourceFileOrDir source file or directory to upload
-	 * @param maxAttempts max attempts
+	 * @param maxAttempts     max attempts
 	 * @return uploaded file or directory file path list
 	 * @throws IOException if file or directory cannot be uploaded
 	 */
@@ -340,14 +346,16 @@ public class S3DAL {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> downloadFile({},{})", sourceFile, targetFileOrDir);
-		
-		AtomicCommand fileDownloader = new S3AtomicFileDownloader(s3Client, cfg.getBucket(), sourceFile, targetFileOrDir);
+
+		AtomicCommand fileDownloader = new S3AtomicFileDownloader(s3Client, cfg.getBucket(), sourceFile,
+				targetFileOrDir);
 		try {
-			return new S3DefaultRetryStrategy(fileDownloader, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime() ).execute();
+			return new S3DefaultRetryStrategy(fileDownloader, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
+					.execute();
 		} catch (IOException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
-			throw e;	
+			throw e;
 		}
 	}
 
@@ -486,8 +494,8 @@ public class S3DAL {
 		Delete del = Delete.builder().objects(keys).build();
 
 		try {
-			DeleteObjectsRequest multiObjectDeleteRequest = DeleteObjectsRequest.builder().bucket(cfg.getBucket()).delete(del)
-					.build();
+			DeleteObjectsRequest multiObjectDeleteRequest = DeleteObjectsRequest.builder().bucket(cfg.getBucket())
+					.delete(del).build();
 			System.out.println("Multiple objects are deleted!");
 
 			DeleteObjectsResponse deleteResponse = s3Client.deleteObjects(multiObjectDeleteRequest);
@@ -514,8 +522,8 @@ public class S3DAL {
 			logger.trace(">>> uploadFileTransferManager({},{})", sourcePath, targetPath);
 
 		try {
-			FileUpload upload = transferManager.uploadFile(
-					b -> b.source(Paths.get(sourcePath)).putObjectRequest(req -> req.bucket(cfg.getBucket()).key(targetPath)));
+			FileUpload upload = transferManager.uploadFile(b -> b.source(Paths.get(sourcePath))
+					.putObjectRequest(req -> req.bucket(cfg.getBucket()).key(targetPath)));
 
 			upload.completionFuture().join();
 
