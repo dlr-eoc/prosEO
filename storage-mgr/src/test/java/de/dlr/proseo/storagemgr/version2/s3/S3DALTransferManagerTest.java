@@ -17,6 +17,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.TestUtils;
+import de.dlr.proseo.storagemgr.version2.StorageProvider;
 
 /**
  * @author Denys Chaykovskiy
@@ -32,6 +33,9 @@ public class S3DALTransferManagerTest {
 
 	@Autowired
 	private StorageManagerConfiguration cfg;
+	
+	@Autowired 
+	private StorageProvider storageProvider;
 
 	@Rule
 	public TestName testName = new TestName();
@@ -74,10 +78,7 @@ public class S3DALTransferManagerTest {
 
 		String bucket = cfg.getS3DefaultBucket();
 
-		String s3AccessKey = cfg.getS3AccessKey();
-		String s3SecretAccessKey = cfg.getS3SecretAccessKey();
-
-		S3DAL s3DAL = new S3DAL(s3AccessKey, s3SecretAccessKey, bucket);
+		S3DAL s3DAL = new S3DAL(storageProvider.getS3ConfigurationFromFile());
 
 		TestUtils.printList("Buckets before bucket creation", s3DAL.getBuckets());
 

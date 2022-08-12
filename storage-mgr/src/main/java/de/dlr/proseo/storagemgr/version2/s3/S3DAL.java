@@ -324,7 +324,7 @@ public class S3DAL {
 	 * @return uploaded file or directory file path list
 	 * @throws IOException if file or directory cannot be uploaded
 	 */
-	public List<String> upload(String sourceFileOrDir, int maxAttempts) throws IOException {
+	public List<String> upload(String sourceFileOrDir) throws IOException {
 		return upload(sourceFileOrDir, sourceFileOrDir);
 	}
 

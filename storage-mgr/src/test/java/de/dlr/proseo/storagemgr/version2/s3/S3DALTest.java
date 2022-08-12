@@ -23,6 +23,7 @@ import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
+import de.dlr.proseo.storagemgr.version2.StorageProvider;
 
 /**
  * @author Denys Chaykovskiy
@@ -35,6 +36,9 @@ public class S3DALTest {
 
 	@Autowired
 	private TestUtils testUtils;
+	
+	@Autowired 
+	private StorageProvider storageProvider;
 
 	@Autowired
 	private StorageManagerConfiguration cfg;
@@ -81,7 +85,7 @@ public class S3DALTest {
 		String sourcePath = testUtils.getSourcePath();
 		sourcePath = new PathConverter(sourcePath).convertToSlash().addSlashAtEnd().getPath();
 
-		S3DAL s3DAL = new S3DAL(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3DefaultBucket());
+		S3DAL s3DAL = new S3DAL(storageProvider.getS3ConfigurationFromFile());
 
 		s3DAL.deleteFiles();
 
