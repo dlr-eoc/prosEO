@@ -1,6 +1,5 @@
 package de.dlr.proseo.storagemgr.version2.s3;
 
-
 /**
  * S3 Storage
  * 
@@ -38,6 +37,9 @@ public class S3Configuration {
 
 	/** max request attempts */
 	private int maxRequestAttempts;
+	
+	/** wait time */
+	private long fileCheckWaitTime;
 	
 	public String getS3AccessKey() {
 		return s3AccessKey;
@@ -117,5 +119,13 @@ public class S3Configuration {
 
 	public void setMaxRequestAttempts(int maxRequestAttempts) {
 		this.maxRequestAttempts = maxRequestAttempts;
+	}
+
+	public long getFileCheckWaitTime() {
+		return fileCheckWaitTime;
+	}
+
+	public void setFileCheckWaitTime(Long fileCheckWaitTime) {
+		this.fileCheckWaitTime = fileCheckWaitTime;
 	}
 }

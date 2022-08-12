@@ -23,17 +23,21 @@ public class S3DefaultRetryStrategy {
 
 	/** Max attempts */
 	private int maxAttempts; 
-
+	
+	/** Wait time */
+	private long waitTime; 
+	
 	/**
 	 * Constructor 
 	 * 
 	 * @param atomicCommand atomic command
 	 * @param maxAttempts maximal attempts
 	 */
-	public S3DefaultRetryStrategy(AtomicCommand atomicCommand, int maxAttempts) {
+	public S3DefaultRetryStrategy(AtomicCommand atomicCommand, int maxAttempts, long waitTime) {
 		
 		this.atomicCommand = atomicCommand; 
 		this.maxAttempts = maxAttempts; 
+		this.waitTime = waitTime;
 	}
 	
 	/**
@@ -58,6 +62,8 @@ public class S3DefaultRetryStrategy {
 				
 				exception = e;
 				logger.warn(">>>>> " + atomicCommand.getInfo() + ". Attempt " + i + " was not successful: " + e.getMessage());
+				
+				threadSleep();
 			}	
 		}
 		
@@ -70,6 +76,19 @@ public class S3DefaultRetryStrategy {
 			logger.error("ERROR. " + atomicCommand.getInfo() + "All " + maxAttempts + " attempts were not successful: " + exception.getMessage());
 			exception.printStackTrace();
 			throw exception; 
+		}
+	}
+	
+	/**
+	 * Thread sleep
+	 * 
+	 */
+	private void threadSleep() {
+		
+		try {
+			Thread.sleep(waitTime);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
 		}
 	}
 }

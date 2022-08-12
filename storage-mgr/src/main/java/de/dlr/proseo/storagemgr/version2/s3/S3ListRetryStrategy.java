@@ -24,6 +24,9 @@ public class S3ListRetryStrategy {
 
 	/** Max attempts */
 	private int maxAttempts; 
+	
+	/** Wait time */
+	private long waitTime; 
 
 	/**
 	 * Constructor 
@@ -59,6 +62,8 @@ public class S3ListRetryStrategy {
 				
 				exception = e;
 				logger.warn(">>>>> " + atomicListCommand.getInfo() + ". Attempt " + i + " was not successful: " + e.getMessage());
+				
+				threadSleep();
 			}	
 		}
 		
@@ -70,6 +75,19 @@ public class S3ListRetryStrategy {
 			logger.error("ERROR. " + atomicListCommand.getInfo() + "All " + maxAttempts + " attempts were not successful: " + exception.getMessage());
 			exception.printStackTrace();
 			throw exception; 
+		}
+	}
+	
+	/**
+	 * Thread sleep
+	 *
+	 */
+	private void threadSleep() {
+		
+		try {
+			Thread.sleep(waitTime);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
 		}
 	}
 }

@@ -532,6 +532,8 @@ public class StorageProvider {
 		s3Configuration.setMaxUploadAttempts(cfg.getS3MaxUploadAttempts());
 		s3Configuration.setMaxDownloadAttempts(cfg.getS3MaxDownloadAttempts());
 		s3Configuration.setMaxRequestAttempts(cfg.getS3MaxRequestAttempts());
+		
+		s3Configuration.setFileCheckWaitTime(cfg.getFileCheckWaitTime());
 
 		return s3Configuration;
 	}

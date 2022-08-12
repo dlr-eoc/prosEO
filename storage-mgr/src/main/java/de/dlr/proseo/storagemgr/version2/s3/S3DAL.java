@@ -258,7 +258,7 @@ public class S3DAL {
 				
 		AtomicCommand fileUploader = new S3AtomicFileUploader(s3Client, cfg.getBucket(), sourceFile, targetFileOrDir);
 		try {
-			return new S3DefaultRetryStrategy(fileUploader, cfg.getMaxUploadAttempts() ).execute();
+			return new S3DefaultRetryStrategy(fileUploader, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime() ).execute();
 		} catch (IOException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
@@ -343,7 +343,7 @@ public class S3DAL {
 		
 		AtomicCommand fileDownloader = new S3AtomicFileDownloader(s3Client, cfg.getBucket(), sourceFile, targetFileOrDir);
 		try {
-			return new S3DefaultRetryStrategy(fileDownloader, cfg.getMaxUploadAttempts() ).execute();
+			return new S3DefaultRetryStrategy(fileDownloader, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime() ).execute();
 		} catch (IOException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
