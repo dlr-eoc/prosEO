@@ -121,7 +121,7 @@ public class FileCacheTest {
 		String path = dir + "/" + fileName;
 
 		String accessedPath = fileCache.getAccessedPath(path);
-		String expectedAccessedPath = dir + "/" + FileCache.getPrefix() + fileName;
+		String expectedAccessedPath = dir + "/" + FileCache.getAccessedPrefix() + fileName;
 
 		System.out.println("Path:                   " + path);
 		System.out.println("Accessed Path:          " + accessedPath);
