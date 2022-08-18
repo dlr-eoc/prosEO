@@ -62,7 +62,8 @@ public class FileCache {
 	}
 
 	/**
-	 * Puts the new element to map. If element exists, it will be overwritten
+	 * Puts the new element to map. If element exists, it will be overwritten.
+	 * Removes the file if it is temporary
 	 * 
 	 * @param pathKey File path as a key
 	 */
@@ -80,6 +81,12 @@ public class FileCache {
 			if (logger.isTraceEnabled())
 				logger.trace("... not adding {} to cache, because it is considered a backend file", pathKey);
 			return;
+		}
+
+		if (isTemporaryPrefixFile(pathKey)) {
+
+			deleteFile(pathKey);
+			logger.warn("> Temporary file has been deleted: " + pathKey);
 		}
 
 		if (!mapCache.containsKey(pathKey)) {
@@ -121,6 +128,15 @@ public class FileCache {
 		put(pathKey);
 
 		return true;
+	}
+
+	/**
+	 * Gets temporary prefix of the file
+	 * 
+	 * @return temporary prefix of the file
+	 */
+	public static String getTemporaryPrefix() {
+		return TEMPORARY_PREFIX;
 	}
 
 	/**
@@ -330,9 +346,10 @@ public class FileCache {
 
 		return ACCESSED_PREFIX;
 	}
-	
+
 	/**
-	 * Puts files to cache, removes accessed prefix files without files, removes temporary prefix files 
+	 * Puts files to cache, removes accessed prefix files without files, removes
+	 * temporary prefix files
 	 * 
 	 * @param path Path to files
 	 */
@@ -354,13 +371,13 @@ public class FileCache {
 
 		for (File file : files) {
 
+			// check if already in cache
 			if (mapCache.containsKey(file.getPath())) {
-				
 				continue;
 			}
 
+			// recursive processing if directory
 			if (file.isDirectory()) {
-
 				if (new FileUtils(file.getPath()).isEmptyDirectory()) {
 
 					deleteEmptyDirectoriesToTop(file.getPath());
@@ -368,15 +385,15 @@ public class FileCache {
 
 					putFilesToCache(file.getPath());
 				}
-
 				continue;
 			}
-			
+
+			// delete if temporary file
 			if (isTemporaryPrefixFile(file.getPath())) {
-				
 				deleteFile(file.getPath());
 			}
 
+			// delete if accessed file alone without file
 			if (isAccessedPrefixFile(file.getPath()) && !Files.exists(Paths.get(getPathFromAccessed(file.getPath())))) {
 
 				file.delete();
@@ -384,13 +401,12 @@ public class FileCache {
 				if (new FileUtils(path).isEmptyDirectory()) {
 
 					deleteEmptyDirectoriesToTop(path);
-
 					return;
 				}
-
 				continue;
 			}
 
+			// if cache file, adds to cache without update accessed prefix file
 			else if (file.isFile() && isCacheFile(file.getPath())) {
 
 				putWithoutUpdateAccessedPrefixFile(file.getPath());
@@ -399,12 +415,12 @@ public class FileCache {
 	}
 
 	/**
-	 * Puts the file to map without update accessed prefix file. If element exists, it
-	 * will be overwritten.
+	 * Puts the file to map without update accessed prefix file. If element exists,
+	 * it will be overwritten.
 	 *
 	 * @param pathKey File path as a key
 	 */
-	public void putWithoutUpdateAccessedPrefixFile(String pathKey) {
+	/* package */ void putWithoutUpdateAccessedPrefixFile(String pathKey) {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> putWithoutUpdateAccessedPrefixFile({})", pathKey);
@@ -528,7 +544,6 @@ public class FileCache {
 		String accessedPath = file.getParent() + "/" + ACCESSED_PREFIX + file.getName();
 
 		return accessedPath;
-
 	}
 
 	/**
@@ -546,7 +561,6 @@ public class FileCache {
 		String path = file.getParent() + "/" + file.getName().replace(ACCESSED_PREFIX, "");
 
 		return path;
-
 	}
 
 	/**
@@ -563,7 +577,8 @@ public class FileCache {
 	}
 
 	/**
-	 * Returns true if the file is the cache file (not accessed, not temporary and not hidden file)
+	 * Returns true if the file is the cache file (not accessed, not temporary and
+	 * not hidden file)
 	 * 
 	 * @param path the full path to the file
 	 * @return true if the file is the cache file
@@ -573,7 +588,7 @@ public class FileCache {
 		if (isAccessedPrefixFile(path)) {
 			return false;
 		}
-		
+
 		if (isTemporaryPrefixFile(path)) {
 			return false;
 		}
