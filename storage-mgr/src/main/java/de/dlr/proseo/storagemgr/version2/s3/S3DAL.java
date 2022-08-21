@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import de.dlr.proseo.storagemgr.version2.FileUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.model.AtomicCommand;
+import de.dlr.proseo.storagemgr.version2.model.AtomicListCommand;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -140,16 +141,24 @@ public class S3DAL {
 	 * Gets all files from current bucket
 	 *
 	 * @return list of all files
+	 * @throws IOException 
 	 */
-	public List<String> getFiles() {
+	public List<String> getFiles() throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFiles()");
+		
+		AtomicListCommand fileGetter = new S3AtomicFileGetter(s3Client, cfg.getBucket());
+		
+		return new S3ListRetryStrategy(fileGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
+					.execute();		
 
+		/*
 		ListObjectsRequest request = ListObjectsRequest.builder().bucket(cfg.getBucket()).build();
 
 		ListObjectsResponse response = s3Client.listObjects(request);
 		return toStringFiles(response.contents());
+		*/
 	}
 
 	/**
@@ -157,16 +166,24 @@ public class S3DAL {
 	 * 
 	 * @param path path (prefix)
 	 * @return list if files
+	 * @throws IOException 
 	 */
-	public List<String> getFiles(String folder) {
+	public List<String> getFiles(String folder) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFiles({})", folder);
+		
+		AtomicListCommand fileGetter = new S3AtomicFileGetter(s3Client, cfg.getBucket(), folder);
+		
+		return new S3ListRetryStrategy(fileGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
+					.execute();		
 
+		/*
 		ListObjectsRequest request = ListObjectsRequest.builder().bucket(cfg.getBucket()).prefix(folder).build();
 
 		ListObjectsResponse response = s3Client.listObjects(request);
 		return toStringFiles(response.contents());
+		*/
 	}
 
 	/**
@@ -174,18 +191,28 @@ public class S3DAL {
 	 * 
 	 * @param filePath file path
 	 * @return
+	 * @throws IOException 
 	 */
-	public boolean fileExists(String filePath) {
+	public boolean fileExists(String filePath) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> fileExists({},{})", filePath);
+		
+		AtomicCommand fileExistsGetter = new S3AtomicFileExistsGetter(s3Client, cfg.getBucket(), filePath);
+		
+		String fileExists = new S3DefaultRetryStrategy(fileExistsGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
+					.execute();
+		
+		return Boolean.valueOf(fileExists);		
 
+		/*
 		try {
 			s3Client.headObject(HeadObjectRequest.builder().bucket(cfg.getBucket()).key(filePath).build());
 			return true;
 		} catch (Exception e) {
 			return false;
 		}
+		*/
 	}
 
 	/**
@@ -213,16 +240,26 @@ public class S3DAL {
 	 * 
 	 * @param filePath file path
 	 * @return file size in bytes
+	 * @throws IOException 
 	 */
-	public long getFileSize(String filePath) {
+	public long getFileSize(String filePath) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFileSize({})", filePath);
-
+		
+		AtomicCommand fileSizesGetter = new S3AtomicFileExistsGetter(s3Client, cfg.getBucket(), filePath);
+		
+		String fileExists = new S3DefaultRetryStrategy(fileSizesGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
+					.execute();
+		
+		return Long.valueOf(fileExists);		
+		
+		/*
 		HeadObjectRequest headObjectRequest = HeadObjectRequest.builder().bucket(cfg.getBucket()).key(filePath).build();
 		HeadObjectResponse headObjectResponse = s3Client.headObject(headObjectRequest);
 
 		return headObjectResponse.contentLength();
+		*/
 	}
 
 	/**
@@ -232,7 +269,13 @@ public class S3DAL {
 	 * @return file content
 	 */
 	public String getFileContent(String filePath) throws IOException {
-
+		
+		AtomicCommand fileSizesGetter = new S3AtomicFileExistsGetter(s3Client, cfg.getBucket(), filePath);
+		
+		return new S3DefaultRetryStrategy(fileSizesGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
+					.execute();
+		
+		/*
 		GetObjectRequest getObjectRequest = GetObjectRequest.builder().bucket(cfg.getBucket()).key(filePath).build();
 
 		ResponseInputStream<GetObjectResponse> responseInputStream = s3Client.getObject(getObjectRequest);
@@ -245,6 +288,7 @@ public class S3DAL {
 		System.out.println("Content :" + content);
 
 		return content;
+		*/ 
 	}
 
 	/**
@@ -262,14 +306,9 @@ public class S3DAL {
 			logger.trace(">>> uploadFile({},{})", sourceFile, targetFileOrDir);
 
 		AtomicCommand fileUploader = new S3AtomicFileUploader(s3Client, cfg.getBucket(), sourceFile, targetFileOrDir);
-		try {
-			return new S3DefaultRetryStrategy(fileUploader, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
+		
+		return new S3DefaultRetryStrategy(fileUploader, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
 					.execute();
-		} catch (IOException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-			throw e;
-		}
 	}
 
 	/**
@@ -349,14 +388,8 @@ public class S3DAL {
 
 		AtomicCommand fileDownloader = new S3AtomicFileDownloader(s3Client, cfg.getBucket(), sourceFile,
 				targetFileOrDir);
-		try {
-			return new S3DefaultRetryStrategy(fileDownloader, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
-					.execute();
-		} catch (IOException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-			throw e;
-		}
+		return new S3DefaultRetryStrategy(fileDownloader, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
+					.execute();		
 	}
 
 	/**
@@ -429,12 +462,19 @@ public class S3DAL {
 	 * 
 	 * @param filepath file path
 	 * @return deleted file path
+	 * @throws IOException 
 	 */
-	public String deleteFile(String filepath) {
+	public String deleteFile(String filepath) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> delete({})", filepath);
-
+		
+		AtomicCommand fileDeleter = new S3AtomicFileDeleter(s3Client, cfg.getBucket(), filepath);
+		
+		return new S3DefaultRetryStrategy(fileDeleter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
+					.execute();		
+		
+		/*
 		ArrayList<ObjectIdentifier> toDelete = new ArrayList<ObjectIdentifier>();
 		toDelete.add(ObjectIdentifier.builder().key(filepath).build());
 
@@ -452,14 +492,16 @@ public class S3DAL {
 			e.printStackTrace();
 			throw e;
 		}
+		*/ 
 	}
 
 	/**
 	 * Deletes files
 	 * 
 	 * @return deleted file path list
+	 * @throws IOException 
 	 */
-	public List<String> deleteFiles() {
+	public List<String> deleteFiles() throws IOException {
 
 		List<String> deletedFiles = new ArrayList<>();
 
@@ -633,8 +675,9 @@ public class S3DAL {
 	 * Deletes bucket
 	 * 
 	 * @param bucketName bucket name
+	 * @throws IOException 
 	 */
-	public void deleteBucket(String bucketName) {
+	public void deleteBucket(String bucketName) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteBucket({})", bucketName);

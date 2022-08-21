@@ -87,29 +87,32 @@ public interface Storage {
 	 * @param prefix prefix (folder) for search in storage
 	 * @return list of files with given prefix
 	 */
-	public List<String> getRelativeFiles(String prefix);
+	public List<String> getRelativeFiles(String prefix) throws IOException;
 
 	/**
 	 * Gets all files (relative paths) from storage
 	 * 
 	 * @return list of all files from storage
+	 * @throws IOException 
 	 */
-	public List<String> getRelativeFiles();
+	public List<String> getRelativeFiles() throws IOException;
 	
 	/**
 	 * Gets files (absolute paths) from storage with given prefix (folder)
 	 * 
 	 * @param prefix prefix (folder) for search in storage
 	 * @return list of files with given prefix
+	 * @throws IOException 
 	 */
-	public List<String> getAbsoluteFiles(String prefix);
+	public List<String> getAbsoluteFiles(String prefix) throws IOException;
 
 	/**
 	 * Gets all files (absolute paths) from storage
 	 * 
 	 * @return list of all files from storage
+	 * @throws IOException 
 	 */
-	public List<String> getAbsoluteFiles();
+	public List<String> getAbsoluteFiles() throws IOException;
 	
 	/**
 	 * Gets relative path from absolute path
@@ -156,7 +159,7 @@ public interface Storage {
 	 * 
 	 * @return list of storage files
 	 */
-	public List<StorageFile> getStorageFiles();
+	public List<StorageFile> getStorageFiles() throws IOException;
 
 	/**
 	 * Creates physically storage file
@@ -172,32 +175,36 @@ public interface Storage {
 	 * 
 	 * @param storageFile Storage File to check
 	 * @return true if file exists physically
+	 * @throws IOException 
 	 */
-	public boolean fileExists(StorageFile storageFile);
+	public boolean fileExists(StorageFile storageFile) throws IOException;
 
 	/**
 	 * Checks if Storage file or directory is file (no slash at the end of the path)
 	 * 
 	 * @param storageFileOrDir storage file or directory
 	 * @return true if storage file is file
+	 * @throws IOException 
 	 */
-	public boolean isFile(StorageFile storageFileOrDir);
+	public boolean isFile(StorageFile storageFileOrDir) throws IOException;
 
 	/**
 	 * Checks if storage file or directory is directory
 	 * 
 	 * @param storageFileOrDir storage file or directory
 	 * @return true if storage file is file
+	 * @throws IOException 
 	 */
-	public boolean isDirectory(StorageFile storageFileOrDir);
+	public boolean isDirectory(StorageFile storageFileOrDir) throws IOException;
 
 	/**
 	 * Gets the file size
 	 * 
 	 * @param storageFile Storage file
 	 * @return the file size of the storage file
+	 * @throws IOException 
 	 */
-	public long getFileSize(StorageFile storageFile);
+	public long getFileSize(StorageFile storageFile) throws IOException;
 	
 	/**
 	 * Gets file content

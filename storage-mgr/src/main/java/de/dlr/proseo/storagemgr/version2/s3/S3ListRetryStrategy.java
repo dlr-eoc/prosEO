@@ -34,10 +34,12 @@ public class S3ListRetryStrategy {
 	 * @param atomicListCommand atomic list command
 	 * @param maxAttempts maximal attempts
 	 */
-	public S3ListRetryStrategy(AtomicListCommand atomicListCommand, int maxAttempts) {
+	public S3ListRetryStrategy(AtomicListCommand atomicListCommand, int maxAttempts, long waitTime) {
 		
 		this.atomicListCommand = atomicListCommand; 
 		this.maxAttempts = maxAttempts; 
+		this.waitTime = waitTime;
+
 	}
 	
 	/**

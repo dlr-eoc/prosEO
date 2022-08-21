@@ -29,6 +29,8 @@ public class S3Storage implements Storage {
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3Storage.class);
+	
+	
 
 	/**
 	 * Constructor with bucket, access keys, region and end point
@@ -131,7 +133,7 @@ public class S3Storage implements Storage {
 	 * @throws IOException if bucket cannot be deleted
 	 */
 	@Override
-	public void deleteBucket(String bucketName) {
+	public void deleteBucket(String bucketName) throws IOException {
 		s3DAL.deleteBucket(bucketName);
 	}
 
@@ -140,9 +142,10 @@ public class S3Storage implements Storage {
 	 * 
 	 * @param prefix prefix (folder) for search in storage
 	 * @return list of files with given prefix
+	 * @throws IOException 
 	 */
 	@Override
-	public List<String> getRelativeFiles(String folder) {
+	public List<String> getRelativeFiles(String folder) throws IOException {
 
 		return s3DAL.getFiles(folder);
 	}
@@ -151,19 +154,21 @@ public class S3Storage implements Storage {
 	 * Gets all files from storage
 	 * 
 	 * @return list of all files from storage
+	 * @throws IOException 
 	 */
 	@Override
-	public List<String> getRelativeFiles() {
+	public List<String> getRelativeFiles() throws IOException {
 		return s3DAL.getFiles();
-	}
+	}	
 
 	/**
 	 * Gets files (absolute paths) from storage with given prefix (folder)
 	 * 
 	 * @param prefix prefix (relative path) for search in storage
 	 * @return list of files with given prefix
+	 * @throws IOException 
 	 */
-	public List<String> getAbsoluteFiles(String relativePath) {
+	public List<String> getAbsoluteFiles(String relativePath) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getAbsoluteFiles({})", relativePath);
@@ -177,8 +182,9 @@ public class S3Storage implements Storage {
 	 * Gets all files (absolute paths) from storage
 	 * 
 	 * @return list of all files from storage
+	 * @throws IOException 
 	 */
-	public List<String> getAbsoluteFiles() {
+	public List<String> getAbsoluteFiles() throws IOException {
 		return getAbsolutePath(s3DAL.getFiles(s3DAL.getConfiguration().getBasePath()));
 	}
 
@@ -268,9 +274,10 @@ public class S3Storage implements Storage {
 	 * Gets storage files
 	 * 
 	 * @return list of storage files
+	 * @throws IOException 
 	 */
 	@Override
-	public List<StorageFile> getStorageFiles() {
+	public List<StorageFile> getStorageFiles() throws IOException {
 
 		List<String> files = s3DAL.getFiles();
 		List<StorageFile> storageFiles = new ArrayList<StorageFile>();
@@ -323,9 +330,10 @@ public class S3Storage implements Storage {
 	 * 
 	 * @param storageFile Storage File to check
 	 * @return true if file exists physically
+	 * @throws IOException 
 	 */
 	@Override
-	public boolean fileExists(StorageFile storageFile) {
+	public boolean fileExists(StorageFile storageFile) throws IOException {
 		return s3DAL.fileExists(storageFile.getRelativePath());
 	}
 
@@ -334,9 +342,10 @@ public class S3Storage implements Storage {
 	 * 
 	 * @param storageFileOrDir storage file or directory
 	 * @return true if storage file is file
+	 * @throws IOException 
 	 */
 	@Override
-	public boolean isFile(StorageFile storageFileOrDir) {
+	public boolean isFile(StorageFile storageFileOrDir) throws IOException {
 		return s3DAL.fileExists(storageFileOrDir.getRelativePath());
 	}
 
@@ -345,9 +354,10 @@ public class S3Storage implements Storage {
 	 * 
 	 * @param storageFileOrDir storage file or directory
 	 * @return true if storage file is file
+	 * @throws IOException 
 	 */
 	@Override
-	public boolean isDirectory(StorageFile storageFileOrDir) {
+	public boolean isDirectory(StorageFile storageFileOrDir) throws IOException {
 		return !isFile(storageFileOrDir);
 	}
 
@@ -356,9 +366,10 @@ public class S3Storage implements Storage {
 	 * 
 	 * @param storageFile Storage file
 	 * @return the file size of the storage file
+	 * @throws IOException 
 	 */
 	@Override
-	public long getFileSize(StorageFile storageFile) {
+	public long getFileSize(StorageFile storageFile) throws IOException {
 		return s3DAL.getFileSize(storageFile.getRelativePath());
 	}
 
