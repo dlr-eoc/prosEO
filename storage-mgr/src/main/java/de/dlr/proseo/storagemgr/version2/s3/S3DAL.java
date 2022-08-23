@@ -1,10 +1,7 @@
 package de.dlr.proseo.storagemgr.version2.s3;
 
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.io.File;
 import java.util.ArrayList;
@@ -15,7 +12,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.dlr.proseo.storagemgr.version2.FileUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.model.AtomicCommand;
 import de.dlr.proseo.storagemgr.version2.model.AtomicListCommand;
@@ -31,24 +27,17 @@ import software.amazon.awssdk.services.s3.model.DeleteBucketRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
 import software.amazon.awssdk.services.s3.model.DeletedObject;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 import software.amazon.awssdk.services.s3.model.HeadBucketResponse;
-import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
-import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 
 import software.amazon.awssdk.services.s3.model.ListBucketsResponse;
-import software.amazon.awssdk.services.s3.model.ListObjectsRequest;
-import software.amazon.awssdk.services.s3.model.ListObjectsResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.S3Exception;
-import software.amazon.awssdk.services.s3.model.S3Object;
+
 import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
 import software.amazon.awssdk.services.s3.waiters.S3Waiter;
 import software.amazon.awssdk.core.waiters.WaiterResponse;
-import software.amazon.awssdk.core.ResponseInputStream;
 
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 import software.amazon.awssdk.transfer.s3.FileDownload;
@@ -141,24 +130,16 @@ public class S3DAL {
 	 * Gets all files from current bucket
 	 *
 	 * @return list of all files
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public List<String> getFiles() throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFiles()");
-		
+
 		AtomicListCommand fileGetter = new S3AtomicFileGetter(s3Client, cfg.getBucket());
-		
-		return new S3ListRetryStrategy(fileGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
-					.execute();		
 
-		/*
-		ListObjectsRequest request = ListObjectsRequest.builder().bucket(cfg.getBucket()).build();
-
-		ListObjectsResponse response = s3Client.listObjects(request);
-		return toStringFiles(response.contents());
-		*/
+		return new S3ListRetryStrategy(fileGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
@@ -166,24 +147,16 @@ public class S3DAL {
 	 * 
 	 * @param path path (prefix)
 	 * @return list if files
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public List<String> getFiles(String folder) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFiles({})", folder);
-		
+
 		AtomicListCommand fileGetter = new S3AtomicFileGetter(s3Client, cfg.getBucket(), folder);
-		
-		return new S3ListRetryStrategy(fileGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
-					.execute();		
 
-		/*
-		ListObjectsRequest request = ListObjectsRequest.builder().bucket(cfg.getBucket()).prefix(folder).build();
-
-		ListObjectsResponse response = s3Client.listObjects(request);
-		return toStringFiles(response.contents());
-		*/
+		return new S3ListRetryStrategy(fileGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
@@ -191,28 +164,19 @@ public class S3DAL {
 	 * 
 	 * @param filePath file path
 	 * @return
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public boolean fileExists(String filePath) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> fileExists({},{})", filePath);
-		
-		AtomicCommand fileExistsGetter = new S3AtomicFileExistsGetter(s3Client, cfg.getBucket(), filePath);
-		
-		String fileExists = new S3DefaultRetryStrategy(fileExistsGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
-					.execute();
-		
-		return Boolean.valueOf(fileExists);		
 
-		/*
-		try {
-			s3Client.headObject(HeadObjectRequest.builder().bucket(cfg.getBucket()).key(filePath).build());
-			return true;
-		} catch (Exception e) {
-			return false;
-		}
-		*/
+		AtomicCommand fileExistsGetter = new S3AtomicFileExistsGetter(s3Client, cfg.getBucket(), filePath);
+
+		String fileExists = new S3DefaultRetryStrategy(fileExistsGetter, cfg.getMaxUploadAttempts(),
+				cfg.getFileCheckWaitTime()).execute();
+
+		return Boolean.valueOf(fileExists);
 	}
 
 	/**
@@ -240,26 +204,19 @@ public class S3DAL {
 	 * 
 	 * @param filePath file path
 	 * @return file size in bytes
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public long getFileSize(String filePath) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFileSize({})", filePath);
-		
-		AtomicCommand fileSizesGetter = new S3AtomicFileExistsGetter(s3Client, cfg.getBucket(), filePath);
-		
-		String fileExists = new S3DefaultRetryStrategy(fileSizesGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
-					.execute();
-		
-		return Long.valueOf(fileExists);		
-		
-		/*
-		HeadObjectRequest headObjectRequest = HeadObjectRequest.builder().bucket(cfg.getBucket()).key(filePath).build();
-		HeadObjectResponse headObjectResponse = s3Client.headObject(headObjectRequest);
 
-		return headObjectResponse.contentLength();
-		*/
+		AtomicCommand fileSizeGetter = new S3AtomicFileSizeGetter(s3Client, cfg.getBucket(), filePath);
+
+		String fileSize = new S3DefaultRetryStrategy(fileSizeGetter, cfg.getMaxUploadAttempts(),
+				cfg.getFileCheckWaitTime()).execute();
+
+		return Long.valueOf(fileSize);
 	}
 
 	/**
@@ -269,26 +226,11 @@ public class S3DAL {
 	 * @return file content
 	 */
 	public String getFileContent(String filePath) throws IOException {
-		
-		AtomicCommand fileSizesGetter = new S3AtomicFileExistsGetter(s3Client, cfg.getBucket(), filePath);
-		
-		return new S3DefaultRetryStrategy(fileSizesGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
-					.execute();
-		
-		/*
-		GetObjectRequest getObjectRequest = GetObjectRequest.builder().bucket(cfg.getBucket()).key(filePath).build();
 
-		ResponseInputStream<GetObjectResponse> responseInputStream = s3Client.getObject(getObjectRequest);
+		AtomicCommand fileContentGetter = new S3AtomicFileContentGetter(s3Client, cfg.getBucket(), filePath);
 
-		// InputStream stream = new
-		// ByteArrayInputStream(responseInputStream.readAllBytes());
-
-		String content = new String(responseInputStream.readAllBytes(), StandardCharsets.UTF_8);
-
-		System.out.println("Content :" + content);
-
-		return content;
-		*/ 
+		return new S3DefaultRetryStrategy(fileContentGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
+				.execute();
 	}
 
 	/**
@@ -306,9 +248,9 @@ public class S3DAL {
 			logger.trace(">>> uploadFile({},{})", sourceFile, targetFileOrDir);
 
 		AtomicCommand fileUploader = new S3AtomicFileUploader(s3Client, cfg.getBucket(), sourceFile, targetFileOrDir);
-		
+
 		return new S3DefaultRetryStrategy(fileUploader, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
-					.execute();
+				.execute();
 	}
 
 	/**
@@ -389,7 +331,7 @@ public class S3DAL {
 		AtomicCommand fileDownloader = new S3AtomicFileDownloader(s3Client, cfg.getBucket(), sourceFile,
 				targetFileOrDir);
 		return new S3DefaultRetryStrategy(fileDownloader, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
-					.execute();		
+				.execute();
 	}
 
 	/**
@@ -462,44 +404,24 @@ public class S3DAL {
 	 * 
 	 * @param filepath file path
 	 * @return deleted file path
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public String deleteFile(String filepath) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> delete({})", filepath);
-		
+
 		AtomicCommand fileDeleter = new S3AtomicFileDeleter(s3Client, cfg.getBucket(), filepath);
-		
+
 		return new S3DefaultRetryStrategy(fileDeleter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
-					.execute();		
-		
-		/*
-		ArrayList<ObjectIdentifier> toDelete = new ArrayList<ObjectIdentifier>();
-		toDelete.add(ObjectIdentifier.builder().key(filepath).build());
-
-		try {
-			DeleteObjectsRequest dor = DeleteObjectsRequest.builder().bucket(cfg.getBucket())
-					.delete(Delete.builder().objects(toDelete).build()).build();
-			s3Client.deleteObjects(dor);
-			System.out.println("Successfully deleted object " + filepath);
-
-			DeleteObjectsResponse deleteResponse = s3Client.deleteObjects(dor);
-			return toStringDeletedObject(deleteResponse.deleted());
-
-		} catch (S3Exception e) {
-			System.err.println(e.awsErrorDetails().errorMessage());
-			e.printStackTrace();
-			throw e;
-		}
-		*/ 
+				.execute();
 	}
 
 	/**
 	 * Deletes files
 	 * 
 	 * @return deleted file path list
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public List<String> deleteFiles() throws IOException {
 
@@ -675,7 +597,7 @@ public class S3DAL {
 	 * Deletes bucket
 	 * 
 	 * @param bucketName bucket name
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public void deleteBucket(String bucketName) throws IOException {
 
@@ -803,23 +725,6 @@ public class S3DAL {
 	}
 
 	/**
-	 * Converts s3 object file list to file string list
-	 * 
-	 * @param files s3 object file list
-	 * @return file string list
-	 */
-	private List<String> toStringFiles(List<S3Object> files) {
-
-		List<String> fileNames = new ArrayList<String>();
-
-		for (S3Object f : files) {
-			fileNames.add(f.key());
-		}
-
-		return fileNames;
-	}
-
-	/**
 	 * Converts deleted object file list to deleted file string list
 	 * 
 	 * @param files deleted object file list
@@ -834,26 +739,5 @@ public class S3DAL {
 		}
 
 		return fileNames;
-	}
-
-	/**
-	 * Converts deleted object file to deleted file string
-	 * 
-	 * @param files files
-	 * @return deleted storage file path
-	 */
-	private String toStringDeletedObject(List<DeletedObject> files) {
-
-		List<String> fileNames = new ArrayList<String>();
-
-		for (DeletedObject f : files) {
-			fileNames.add(f.key());
-		}
-
-		if (fileNames.size() > 1) {
-			System.out.println("Expected 1 s3 object to delete. Deleted:" + fileNames.size());
-		}
-
-		return fileNames.get(0);
 	}
 }
