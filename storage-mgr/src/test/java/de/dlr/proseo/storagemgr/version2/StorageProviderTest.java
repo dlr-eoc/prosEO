@@ -54,7 +54,7 @@ public class StorageProviderTest {
 	}
 
 	@Test
-	public void testPosixPosixProvider() {
+	public void testPosixPosixProvider() throws IOException {
 
 		TestUtils.printMethodName(this, testName);
 		TestUtils.createEmptyStorageDirectories();

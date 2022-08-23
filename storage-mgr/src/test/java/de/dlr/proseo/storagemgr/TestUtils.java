@@ -435,22 +435,25 @@ public class TestUtils {
 	}
 	
 	/**
+	 * @throws IOException 
 	 */
-	public void deleteFilesinS3Storage() {
+	public void deleteFilesinS3Storage() throws IOException {
 		
 		deleteFilesInStorage(StorageType.S3); 
 	}
 	
 	/**
+	 * @throws IOException 
 	 */
-	public void deleteFilesinPosixStorage() {
+	public void deleteFilesinPosixStorage() throws IOException {
 		
 		deleteFilesInStorage(StorageType.POSIX); 
 	}
 	
 	/**
+	 * @throws IOException 
 	 */
-	private void deleteFilesInStorage(StorageType storageType) {
+	private void deleteFilesInStorage(StorageType storageType) throws IOException {
 		
 		File file = new File(getStoragePath());
 

@@ -62,15 +62,25 @@ public class StorageTestUtils extends BaseStorageTestUtils {
 	
 	public static void printStorageFiles(String message, Storage storage) {
 		
-		List<String> storageFiles = storage.getRelativeFiles();
-		String storageType = storage.getStorageType().toString();
-		TestUtils.printList(message + ". Storage " + storageType + " files || " + storage.getAbsoluteBasePath(), storageFiles);
+		List<String> storageFiles;
+		try {
+			storageFiles = storage.getRelativeFiles();	
+			String storageType = storage.getStorageType().toString();
+			TestUtils.printList(message + ". Storage " + storageType + " files || " + storage.getAbsoluteBasePath(), storageFiles);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public static void printStorageFilesWithPrefix(String message, Storage storage, String prefix) {
 		
-		List<String> storageFiles = storage.getRelativeFiles(prefix);
-		String storageType = storage.getStorageType().toString();
-		TestUtils.printList(message + ". Storage " + storageType + " files || Prefix: " + prefix + " || " + storage.getAbsoluteBasePath(), storageFiles);
+		List<String> storageFiles;
+		try {
+			storageFiles = storage.getRelativeFiles(prefix);	
+			String storageType = storage.getStorageType().toString();
+			TestUtils.printList(message + ". Storage " + storageType + " files || Prefix: " + prefix + " || " + storage.getAbsoluteBasePath(), storageFiles);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

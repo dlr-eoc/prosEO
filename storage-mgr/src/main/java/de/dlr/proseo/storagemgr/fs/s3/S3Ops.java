@@ -105,9 +105,10 @@ public class S3Ops {
 	 * @return the keys contained in the bucket
 	 * @throws SdkClientException if any error occurred in the communication with
 	 *                            the S3 backend storage
+	 * @throws IOException 
 	 */
 	public static List<String> listObjectsInBucket(AmazonS3 s3, String bucketName, String prefix)
-			throws SdkClientException {
+			throws SdkClientException, IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> listObjectsInBucket({}, {}, {})", s3, bucketName, prefix);
@@ -789,6 +790,7 @@ public class S3Ops {
 	 * @param key        the object key
 	 * @return the length of the object or zero, if no object metadata could be
 	 *         retrieved
+	 * @throws IOException 
 	 */
 	public static long getLength(AmazonS3 client, String bucketName, String key) {
 
@@ -800,7 +802,12 @@ public class S3Ops {
 		// original block
 		if (StorageProvider.getInstance().activatedStorageProviderforV1()) {
 			StorageFile storageFile = StorageProvider.getInstance().getStorage().getStorageFile(key);
-			return StorageProvider.getInstance().getStorage().getFileSize(storageFile);
+			try {
+				return StorageProvider.getInstance().getStorage().getFileSize(storageFile);
+			} catch (IOException e) {
+				e.printStackTrace();
+				return -1; 
+			}
 		} else { // begin original code
 
 			ObjectMetadata md;
