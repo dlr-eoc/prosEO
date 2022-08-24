@@ -24,7 +24,7 @@ public class S3AtomicBucketGetter implements AtomicListCommand {
 	private static final String INFO = "S3 ATOMIC Bucket Getter";
 	
 	/** Completed Info */
-	private static final String COMPLETED = "GOT";
+	private static final String COMPLETED = "Buckets GOT";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3AtomicBucketGetter.class);
@@ -44,7 +44,6 @@ public class S3AtomicBucketGetter implements AtomicListCommand {
 		this.s3Client = s3Client; 
 	}
 	
-	
 	/**
 	 * Executes s3 get buckets
 	 * 
@@ -57,7 +56,13 @@ public class S3AtomicBucketGetter implements AtomicListCommand {
 
 		try {
 			ListBucketsResponse listBucketsResponse = s3Client.listBuckets();
-			return toStringBuckets(listBucketsResponse.buckets());
+			
+			List<String> stringBuckets = toStringBuckets(listBucketsResponse.buckets());
+			
+			if (logger.isTraceEnabled())
+				logger.trace(">>>>> " + getCompletedInfo() + " - Buckets Amount: " + stringBuckets.size());
+			
+			return stringBuckets;
 
 		} catch (Exception e) {
 			logger.warn(e.getMessage());

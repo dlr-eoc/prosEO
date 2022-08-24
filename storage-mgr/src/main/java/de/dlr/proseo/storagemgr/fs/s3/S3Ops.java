@@ -177,8 +177,13 @@ public class S3Ops {
 		// original block
 		if (StorageProvider.getInstance().activatedStorageProviderforV1()) {
 
-			ArrayList<String> buckets = (ArrayList<String>) StorageProvider.getInstance()
-					.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.S3).getBuckets();
+			ArrayList<String> buckets = null;
+			try {
+				buckets = (ArrayList<String>) StorageProvider.getInstance()
+						.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.S3).getBuckets();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			return buckets;
 		} else { // begin original code
 

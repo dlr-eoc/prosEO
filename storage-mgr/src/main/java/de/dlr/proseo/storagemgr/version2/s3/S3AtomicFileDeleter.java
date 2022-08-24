@@ -8,17 +8,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.storagemgr.version2.model.AtomicCommand;
-import de.dlr.proseo.storagemgr.version2.model.AtomicListCommand;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
 import software.amazon.awssdk.services.s3.model.DeletedObject;
-import software.amazon.awssdk.services.s3.model.ListObjectsRequest;
-import software.amazon.awssdk.services.s3.model.ListObjectsResponse;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
-import software.amazon.awssdk.services.s3.model.S3Exception;
-import software.amazon.awssdk.services.s3.model.S3Object;
 
 /**
  * S3 Atomic File Getter

@@ -15,29 +15,22 @@ import org.slf4j.LoggerFactory;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.model.AtomicCommand;
 import de.dlr.proseo.storagemgr.version2.model.AtomicListCommand;
+
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.Bucket;
-import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+
 import software.amazon.awssdk.services.s3.model.Delete;
-import software.amazon.awssdk.services.s3.model.DeleteBucketRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
 import software.amazon.awssdk.services.s3.model.DeletedObject;
-import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
-import software.amazon.awssdk.services.s3.model.HeadBucketResponse;
-
-import software.amazon.awssdk.services.s3.model.ListBucketsResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
-import software.amazon.awssdk.services.s3.waiters.S3Waiter;
-import software.amazon.awssdk.core.waiters.WaiterResponse;
 
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 import software.amazon.awssdk.transfer.s3.FileDownload;
@@ -73,8 +66,9 @@ public class S3DAL {
 	 * Constructor
 	 * 
 	 * @param cfg s3Configuration
+	 * @throws IOException 
 	 */
-	public S3DAL(S3Configuration cfg) {
+	public S3DAL(S3Configuration cfg) throws IOException {
 
 		this.cfg = cfg;
 
@@ -97,8 +91,9 @@ public class S3DAL {
 
 	/**
 	 * Initialization of s3 client
+	 * @throws IOException 
 	 */
-	public void initS3Client() {
+	public void initS3Client() throws IOException {
 
 		Region s3Region = Region.EU_CENTRAL_1;
 
@@ -113,8 +108,9 @@ public class S3DAL {
 
 	/**
 	 * Initialization of s3 client with region
+	 * @throws IOException 
 	 */
-	public void initS3ClientWithRegion() {
+	public void initS3ClientWithRegion() throws IOException {
 
 		initCredentials(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
 		initTransferManager(Region.of(cfg.getS3Region()));
@@ -365,7 +361,7 @@ public class S3DAL {
 	 * 
 	 * @param prefixFileOrDir prefix file or directory
 	 * @return downloaded file path list
-	 * @throws IOException if file or directorz cannot be downloaded
+	 * @throws IOException if file or directory cannot be downloaded
 	 */
 	public List<String> download(String prefixFileOrDir) throws IOException {
 
@@ -532,8 +528,9 @@ public class S3DAL {
 	 * Sets bucket
 	 * 
 	 * @param bucket bucket
+	 * @throws IOException 
 	 */
-	public void setBucket(String bucket) {
+	public void setBucket(String bucket) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> setBucket({})", bucket);
@@ -558,17 +555,16 @@ public class S3DAL {
 	 * Gets buckets
 	 * 
 	 * @return list of buckets
+	 * @throws IOException 
 	 */
-	public List<String> getBuckets() {
+	public List<String> getBuckets() throws IOException {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getBuckets()");
+		
+		AtomicListCommand bucketGetter = new S3AtomicBucketGetter(s3Client);
 
-		try {
-			ListBucketsResponse listBucketsResponse = s3Client.listBuckets();
-			return toStringBuckets(listBucketsResponse.buckets());
-		} catch (Exception e) {
-			System.out.println("Cannot get s3 buckets " + e.getMessage());
-			e.printStackTrace();
-			throw e;
-		}
+		return new S3ListRetryStrategy(bucketGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
@@ -576,8 +572,9 @@ public class S3DAL {
 	 * 
 	 * @param bucketName bucket name
 	 * @return true if bucket exists
+	 * @throws IOException 
 	 */
-	public boolean bucketExists(String bucketName) {
+	public boolean bucketExists(String bucketName) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> bucketExists({})", bucketName);
@@ -664,64 +661,36 @@ public class S3DAL {
 	 * Creates bucket
 	 * 
 	 * @param bucketName bucket name
-	 * @return true if bucket has been created
+	 * @return bucket name if bucket has been created
+	 * @throws IOException 
 	 */
-	private boolean createBucket(String bucketName) {
+	private String createBucket(String bucketName) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createBucket({})", bucketName);
-
-		try {
-			S3Waiter s3Waiter = s3Client.waiter();
-			CreateBucketRequest bucketRequest = CreateBucketRequest.builder().bucket(bucketName).build();
-
-			s3Client.createBucket(bucketRequest);
-			HeadBucketRequest bucketRequestWait = HeadBucketRequest.builder().bucket(bucketName).build();
-
-			// Wait until the bucket is created and print out the response
-			WaiterResponse<HeadBucketResponse> waiterResponse = s3Waiter.waitUntilBucketExists(bucketRequestWait);
-			waiterResponse.matched().response().ifPresent(System.out::println);
-			System.out.println("Bucket " + bucketName + " has been created");
-
-			return true;
-
-		} catch (Exception e) {
-			System.err.println(e.getMessage());
-			logger.error(e.getMessage());
-			e.printStackTrace();
-			return false;
-		}
+		
+		AtomicCommand bucketCreator = new S3AtomicBucketCreator(s3Client, cfg.getBucket());
+		
+		return new S3DefaultRetryStrategy(bucketCreator, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
+				.execute();
 	}
 
 	/**
 	 * Deletes empty bucket
 	 * 
 	 * @param bucketName bucket name
+	 * @return deleted bucket name
+	 * @throws IOException 
 	 */
-	private void deleteEmptyBucket(String bucketName) {
+	private String deleteEmptyBucket(String bucketName) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteEmptyBucket({})", bucketName);
-
-		DeleteBucketRequest deleteBucketRequest = DeleteBucketRequest.builder().bucket(bucketName).build();
-		s3Client.deleteBucket(deleteBucketRequest);
-	}
-
-	/**
-	 * Converts bucket object list in bucket string list
-	 * 
-	 * @param buckets bucket object list
-	 * @return bucket string list
-	 */
-	private List<String> toStringBuckets(List<Bucket> buckets) {
-
-		List<String> bucketNames = new ArrayList<String>();
-
-		for (Bucket bucket : buckets) {
-			bucketNames.add(bucket.name());
-		}
-
-		return bucketNames;
+		
+		AtomicCommand bucketDeleter = new S3AtomicBucketDeleter(s3Client, cfg.getBucket());
+		
+		return new S3DefaultRetryStrategy(bucketDeleter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
+				.execute();
 	}
 
 	/**

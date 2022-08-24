@@ -84,9 +84,10 @@ public class StorageProvider {
 
 	/**
 	 * Initializes storage(s) from Application.yml
+	 * @throws IOException 
 	 */
 	@PostConstruct
-	private void init() {
+	private void init() throws IOException {
 
 		theStorageProvider = this;
 		storage = createStorage(StorageType.valueOf(cfg.getDefaultStorageType()), cfg.getPosixBackendPath());
@@ -179,8 +180,9 @@ public class StorageProvider {
 	 * 
 	 * @param storageType storage type
 	 * @return storage storage
+	 * @throws IOException 
 	 */
-	public Storage getStorage(StorageType storageType) {
+	public Storage getStorage(StorageType storageType) throws IOException {
 		return createStorage(storageType, storagePath);
 	}
 
@@ -189,8 +191,9 @@ public class StorageProvider {
 	 * 
 	 * @param storageType storage
 	 * @return storage, which was set
+	 * @throws IOException 
 	 */
-	public Storage setStorage(StorageType storageType) {
+	public Storage setStorage(StorageType storageType) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> setStorage({})", storageType.toString());
@@ -330,8 +333,9 @@ public class StorageProvider {
 	 * @param storagePath base path of posix storage, for s3 will be used for
 	 *                    temporary files
 	 * @return created storage
+	 * @throws IOException 
 	 */
-	private Storage createStorage(StorageType storageType, String storagePath) {
+	private Storage createStorage(StorageType storageType, String storagePath) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createStorage({}, {})", storageType.toString(), storagePath);
@@ -480,8 +484,9 @@ public class StorageProvider {
 	 * 
 	 * @param absolutePath absolute path
 	 * @return relative path
+	 * @throws IOException 
 	 */
-	public String getRelativePath(String absolutePath) {
+	public String getRelativePath(String absolutePath) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRelativePath({})", absolutePath);

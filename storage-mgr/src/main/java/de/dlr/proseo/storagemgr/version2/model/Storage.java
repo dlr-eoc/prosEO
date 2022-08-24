@@ -48,8 +48,9 @@ public interface Storage {
 	 * Sets the bucket
 	 * 
 	 * @param bucket bucket to set
+	 * @throws IOException 
 	 */
-	public void setBucket(String bucket);
+	public void setBucket(String bucket) throws IOException;
 
 	/**
 	 * Gets the current bucket
@@ -62,16 +63,18 @@ public interface Storage {
 	 * Gets buckets from storage
 	 * 
 	 * @return list of buckets
+	 * @throws IOException 
 	 */
-	public List<String> getBuckets();
+	public List<String> getBuckets() throws IOException;
 
 	/**
 	 * Checks if the bucket exists
 	 * 
 	 * @param bucketName the name of the bucket
 	 * @return true if the bucket exists
+	 * @throws IOException 
 	 */
-	public boolean bucketExists(String bucketName);
+	public boolean bucketExists(String bucketName) throws IOException;
 
 	/**
 	 * Deletes bucket in storage

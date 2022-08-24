@@ -36,8 +36,9 @@ public class S3Storage implements Storage {
 	 * Constructor with bucket, access keys, region and end point
 	 * 
 	 * @param cfg s3 configuration
+	 * @throws IOException 
 	 */
-	public S3Storage(S3Configuration cfg) {
+	public S3Storage(S3Configuration cfg) throws IOException {
 		s3DAL = new S3DAL(cfg);
 	}
 
@@ -89,9 +90,10 @@ public class S3Storage implements Storage {
 	 * Sets the bucket
 	 * 
 	 * @param bucket bucket to set
+	 * @throws IOException 
 	 */
 	@Override
-	public void setBucket(String bucket) {
+	public void setBucket(String bucket) throws IOException {
 		s3DAL.setBucket(bucket);
 	}
 
@@ -109,9 +111,10 @@ public class S3Storage implements Storage {
 	 * Gets buckets from storage
 	 * 
 	 * @return list of buckets
+	 * @throws IOException 
 	 */
 	@Override
-	public List<String> getBuckets() {
+	public List<String> getBuckets() throws IOException {
 		return s3DAL.getBuckets();
 	}
 
@@ -120,9 +123,10 @@ public class S3Storage implements Storage {
 	 * 
 	 * @param bucketName the name of the bucket
 	 * @return true if the bucket exists
+	 * @throws IOException 
 	 */
 	@Override
-	public boolean bucketExists(String bucketName) {
+	public boolean bucketExists(String bucketName) throws IOException {
 		return s3DAL.bucketExists(bucketName);
 	}
 
