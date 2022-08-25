@@ -137,7 +137,7 @@ public class OrderService {
 
 	}
 	
-	public Mono<ClientResponse> getJobsOfOrder(String id,Long from, Long to) {
+	public Mono<ClientResponse> getJobsOfOrder(String id,Long from, Long to, String states) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
 		String uri = config.getOrderManager() + "/orderjobs";
@@ -157,6 +157,13 @@ public class OrderService {
 		}
 		uri += divider + "logs=false";
 		divider ="&";
+		if (states != null && !states.isEmpty()) {
+			String [] pcs = states.split(":");
+			for (String pc : pcs) {
+				uri += divider + "state=" + pc;
+				divider ="&";
+			}
+		}
 		uri += divider + "orderBy=startTime ASC";
 		logger.trace("URI " + uri);
 		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(

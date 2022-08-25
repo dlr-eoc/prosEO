@@ -54,10 +54,10 @@ public class OrderjobControllerImpl implements OrderjobController {
      */
 	@Override
 	@Transactional(readOnly = true)
-    public ResponseEntity<List<RestJob>> getJobs(String state, Long orderId,
-			Long recordFrom, Long recordTo, Boolean logs, String[] orderBy) {
+    public ResponseEntity<List<RestJob>> getJobs(Long orderId,
+			Long recordFrom, Long recordTo, Boolean logs, String[] states, String[] orderBy) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getJobs({}, {}, {}, {}, {}, {})",
-				state, orderId, recordFrom, recordTo, (null == orderBy ? "null" : Arrays.asList(orderBy)));
+				states, orderId, recordFrom, recordTo, (null == orderBy ? "null" : Arrays.asList(orderBy)));
 		
 		try {
 			if (logs == null) {
@@ -65,7 +65,7 @@ public class OrderjobControllerImpl implements OrderjobController {
 			}
 			List<RestJob> resultList = new ArrayList<>();
 
-			Query query = createJobsQuery(state, orderId, recordFrom, recordTo, orderBy, false);
+			Query query = createJobsQuery(states, orderId, recordFrom, recordTo, orderBy, false);
 			
 			for (Object resultObject: query.getResultList()) {
 				if (resultObject instanceof Job) {
@@ -99,12 +99,12 @@ public class OrderjobControllerImpl implements OrderjobController {
      */
 	@Transactional(readOnly = true)
 	@Override
-    public ResponseEntity<String> countJobs(String state, Long orderId) {
-		if (logger.isTraceEnabled()) logger.trace(">>> countJobs({}, {})", state, orderId);
+    public ResponseEntity<String> countJobs(String[] states, Long orderId) {
+		if (logger.isTraceEnabled()) logger.trace(">>> countJobs({}, {})", states, orderId);
 		
 		try {
 			// Find using search parameters
-			Query query = createJobsQuery(state, orderId, null, null, null, true);
+			Query query = createJobsQuery(states, orderId, null, null, null, true);
 			Object resultObject = query.getSingleResult();
 
 			Messages.JOBCOUNT_RETRIEVED.log(logger, orderId);
@@ -199,10 +199,10 @@ public class OrderjobControllerImpl implements OrderjobController {
 	 * @param count indicates whether just a count of the orders shall be retrieved or the orders as such
 	 * @return a JPQL query object
 	 */
-	private Query createJobsQuery(String state, Long orderId,
+	private Query createJobsQuery(String[] states, Long orderId,
 			Long recordFrom, Long recordTo, String[] orderBy, Boolean count) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsQuery({}, {}, {}, {}, {}, {}, count: {})",
-				state, orderId, recordFrom, recordTo, (null == orderBy ? "null" : Arrays.asList(orderBy)), count);
+				states, orderId, recordFrom, recordTo, (null == orderBy ? "null" : Arrays.asList(orderBy)), count);
 		
 		// Find using search parameters
 		String jpqlQuery = null;
@@ -212,8 +212,12 @@ public class OrderjobControllerImpl implements OrderjobController {
 			jpqlQuery = "select x from Job x";
 		}
 		jpqlQuery += " where x.processingOrder.mission.code = :missionCode";
-		if (null != state) {
-			jpqlQuery += " and x.jobState = :state";
+		if (null != states && states.length == 1) {
+			if (states[0].equalsIgnoreCase("COMPLETED")) {
+				jpqlQuery += " and x.jobState = 'COMPLETED'";
+			} else if (states[0].equalsIgnoreCase("COMPLETED")) {
+				jpqlQuery += " and x.jobState <> 'COMPLETED'";
+			}
 		}
 		if (null != orderId) {
 			jpqlQuery += " and x.processingOrder.id = :orderId";
@@ -231,9 +235,6 @@ public class OrderjobControllerImpl implements OrderjobController {
 		Query query = em.createQuery(jpqlQuery);
 
 		query.setParameter("missionCode", securityService.getMission());
-		if (null != state) {
-			query.setParameter("state", JobStepState.valueOf(state));
-		}
 		if (null != orderId) {
 			query.setParameter("orderId", orderId);
 		}

@@ -188,7 +188,6 @@ resourceTypes:
     description: Get order jobs by state
     displayName: getJobs
     queryParameters:
-      state?: string
       orderid?: 
         type: integer
         format: long
@@ -196,6 +195,7 @@ resourceTypes:
       recordFrom?: integer
       recordTo?: integer
       logs?: boolean
+      state?: string[]
       orderBy?:
         type: string[]
         description: an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
@@ -211,7 +211,7 @@ resourceTypes:
       description: Get number of jobs, possibly filtered by state and processing order 
       displayName: countJobs
       queryParameters:
-        state?: string
+        state?: string[]
         orderid?: 
           type: integer
           format: long

@@ -647,6 +647,7 @@ public class GUIOrderController extends GUIBaseController {
 			@RequestParam(required = false, value = "recordTo") Long toIndex,
 			@RequestParam(required = false, value = "job") String jobId,
 			@RequestParam(required = false, value = "jobStep") String jobStepId,
+			@RequestParam(required = false, value = "jobstates") String states,
 			Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getId({}, model)", id);
@@ -662,7 +663,7 @@ public class GUIOrderController extends GUIBaseController {
 				calcPage = true;
 			}
 		}
-		Long count = countJobs(id);
+		Long count = countJobs(id, states);
 		if (toIndex != null && from != null && toIndex > from) {
 			to = toIndex;
 		} else if (from != null) {
@@ -674,11 +675,12 @@ public class GUIOrderController extends GUIBaseController {
 			from = page * pageSize;
 			to = from + pageSize;
 		}
-		Long deltaPage = (long) ((count % pageSize)==0?0:1);
-		Long pages = (count / pageSize) + deltaPage;
-		Long page = (from / pageSize) + 1;
+		
+		Long deltaPage = pageSize == 0L ? 0L : ((long) ((count % pageSize)==0?0:1));
+		Long pages = pageSize == 0L ? 0L : ((count / pageSize) + deltaPage);
+		Long page = pageSize == 0L ? 0L : ((from / pageSize) + 1);
 		// TODO use jobId to find page of job 
-		Mono<ClientResponse> mono = orderService.getJobsOfOrder(id, from, to);
+		Mono<ClientResponse> mono = orderService.getJobsOfOrder(id, from, to, states);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> jobs = new ArrayList<>();
 		mono.doOnError(e -> {
@@ -967,13 +969,20 @@ public class GUIOrderController extends GUIBaseController {
      * @param id The order id
      * @return The number of jobs
      */
-    private Long countJobs(String id)  {	    	
+    private Long countJobs(String id, String states)  {	    	
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String uri = "/orderjobs/count";
 		String divider = "?";
 		if (id != null) {
 			uri += divider + "orderid=" + id;
 			divider ="&";
+		}
+		if (states != null && !states.isEmpty()) {
+			String [] pcs = states.split(":");
+			for (String pc : pcs) {
+				uri += divider + "state=" + pc;
+				divider ="&";
+			}
 		}
 		Long result = (long) -1;
 		try {
@@ -1211,6 +1220,13 @@ public class GUIOrderController extends GUIBaseController {
 				logger.error(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			}
 			divider ="&";
+		}
+		if (states != null && !states.isEmpty()) {
+			String [] pcs = states.split(":");
+			for (String pc : pcs) {
+				uri += divider + "state=" + pc;
+				divider ="&";
+			}
 		}
 
 		if (states != null && !states.isEmpty()) {
