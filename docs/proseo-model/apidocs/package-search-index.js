@@ -1,1 +1,1 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"de.dlr.proseo.model"},{"l":"de.dlr.proseo.model.dao"},{"l":"de.dlr.proseo.model.service"},{"l":"de.dlr.proseo.model.util"}];updateSearchResults();
+packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"l":"de.dlr.proseo.model"},{"l":"de.dlr.proseo.model.dao"},{"l":"de.dlr.proseo.model.service"},{"l":"de.dlr.proseo.model.util"}]

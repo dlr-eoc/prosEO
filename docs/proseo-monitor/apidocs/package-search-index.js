@@ -1,1 +1,1 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"de.dlr.proseo.monitor"},{"l":"de.dlr.proseo.monitor.microservice"},{"l":"de.dlr.proseo.monitor.order"},{"l":"de.dlr.proseo.monitor.product"},{"l":"de.dlr.proseo.monitor.rest"}];updateSearchResults();
+packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"l":"de.dlr.proseo.monitor"},{"l":"de.dlr.proseo.monitor.microservice"},{"l":"de.dlr.proseo.monitor.order"},{"l":"de.dlr.proseo.monitor.product"},{"l":"de.dlr.proseo.monitor.rest"}]

@@ -1,0 +1,11 @@
+version: '2.0'
+services:
+  ui:
+    image: joxit/docker-registry-ui:latest
+    ports:
+      - 7080:80
+    environment:
+      - REGISTRY_TITLE=Local Private Docker Registry
+      - NGINX_PROXY_PASS_URL=http://host.docker.internal:5000
+      - DELETE_IMAGES=true
+      - SINGLE_REGISTRY=true

@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo-samples</artifactId>
-		<version>0.9.0-HOTFIX</version>
+		<version>0.9.1-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>proseo-sample-wrapper</artifactId>
@@ -20,7 +20,7 @@
 	</organization>
 
 	<properties>
-		<module.version>0.9.0</module.version>
+		<module.version>0.9.1-SNAPSHOT</module.version>
 		<!-- dropwizard downgrade hack ~ https://github.com/doanduyhai/Achilles/issues/353#issuecomment-456735770 -->
 		<dropwizard-metrics.version>3.2.6</dropwizard-metrics.version>
 	</properties>
@@ -34,7 +34,7 @@
 		<dependency>
 			<groupId>de.dlr.proseo</groupId>
 			<artifactId>proseo-base-wrapper</artifactId>
-			<version>0.9.0</version>
+			<version>0.9.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 
