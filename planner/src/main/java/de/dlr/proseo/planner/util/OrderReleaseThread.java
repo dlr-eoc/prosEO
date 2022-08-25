@@ -192,51 +192,59 @@ public class OrderReleaseThread extends Thread {
 			try {
 				while (curJList.get(0) < jCount) {
 					releasedJobs.clear();
-					productionPlanner.acquireThreadSemaphore("releaseOrder");	
-					if (logger.isTraceEnabled()) logger.trace(">>> releaseJobBlock({})", curJList.get(0));
-					Object answer1 = transactionTemplate.execute((status) -> {
-						curJSList.set(0, 0);
-						Messages locAnswer = Messages.TRUE;
-						while (curJList.get(0) < jCount && curJSList.get(0) < packetSize) {
-							if (this.isInterrupted()) {
-								return new Message(Messages.ORDER_RELEASING_INTERRUPTED);
+					try {
+						productionPlanner.acquireThreadSemaphore("releaseOrder");	
+						if (logger.isTraceEnabled()) logger.trace(">>> releaseJobBlock({})", curJList.get(0));
+						Object answer1 = transactionTemplate.execute((status) -> {
+							curJSList.set(0, 0);
+							Messages locAnswer = Messages.TRUE;
+							while (curJList.get(0) < jCount && curJSList.get(0) < packetSize) {
+								if (this.isInterrupted()) {
+									return new Message(Messages.ORDER_RELEASING_INTERRUPTED);
+								}
+								if (jobList.get(curJList.get(0)).getJobState() == JobState.PLANNED) {
+									Job locJob = RepositoryService.getJobRepository().getOne(jobList.get(curJList.get(0)).getId());
+									locAnswer = jobUtil.resume(locJob);
+									releasedJobs.add(locJob);
+									curJSList.set(0, curJSList.get(0) + locJob.getJobSteps().size());
+								}
+								curJList.set(0, curJList.get(0) + 1);		
 							}
-							if (jobList.get(curJList.get(0)).getJobState() == JobState.PLANNED) {
-								Job locJob = RepositoryService.getJobRepository().getOne(jobList.get(curJList.get(0)).getId());
-								locAnswer = jobUtil.resume(locJob);
-								releasedJobs.add(locJob);
-								curJSList.set(0, curJSList.get(0) + locJob.getJobSteps().size());
+							return locAnswer;					
+						});
+						if(answer1 instanceof Message) {
+							answer = (Message)answer1;
+							if (answer.getMessage().getCode() == (Messages.ORDER_RELEASING_INTERRUPTED).getCode()) {
+								break;
 							}
-							curJList.set(0, curJList.get(0) + 1);		
 						}
-						return locAnswer;					
-					});
-					productionPlanner.releaseThreadSemaphore("releaseOrder");
-					if(answer1 instanceof Message) {
-						answer = (Message)answer1;
-						if (answer.getMessage().getCode() == (Messages.ORDER_RELEASING_INTERRUPTED).getCode()) {
-							break;
-						}
+					} catch (Exception e) {	
+						throw e;
+					} finally {
+						productionPlanner.releaseThreadSemaphore("releaseOrder");
 					}
-					@SuppressWarnings("unused")
-					Object answer2 = transactionTemplate.execute((status) -> {
-						for (Job j : releasedJobs) {
-							try {
-								productionPlanner.acquireThreadSemaphore("releaseOrder2");	
-								Job locJob = RepositoryService.getJobRepository().getOne(j.getId());
-								KubeConfig kc = productionPlanner.getKubeConfig(locJob.getProcessingFacility().getName());
-								UtilService.getJobStepUtil().checkJobToRun(kc, locJob.getId());
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							} finally {
-								productionPlanner.releaseThreadSemaphore("releaseOrder2");
+					try {
+						productionPlanner.acquireThreadSemaphore("releaseOrder2");	
+						@SuppressWarnings("unused")
+						Object answer2 = transactionTemplate.execute((status) -> {
+							for (Job j : releasedJobs) {
+								try {
+									Job locJob = RepositoryService.getJobRepository().getOne(j.getId());
+									KubeConfig kc = productionPlanner.getKubeConfig(locJob.getProcessingFacility().getName());
+									UtilService.getJobStepUtil().checkJobToRun(kc, locJob.getId());
+								} catch (InterruptedException e) {
+									e.printStackTrace();
+								} 
 							}
-						}
-						return null;					
-					});
+							return null;					
+						});
+					} catch (Exception e) {	
+						throw e;
+					} finally {
+						productionPlanner.releaseThreadSemaphore("releaseOrder2");
+					}
 				}
 			} catch (Exception e) {	
-				productionPlanner.releaseThreadSemaphore("releaseOrder");
 				throw e;
 			}
 			if (this.isInterrupted()) {
