@@ -189,7 +189,7 @@ public class JobstepControllerImpl implements JobstepController {
 
 			JobStep js = this.findJobStepByNameOrId(jobstepId);
 			if (js != null) {
-				Messages msg = null;
+				List<Messages> msg = new ArrayList<Messages>();
 				try {
 					productionPlanner.acquireThreadSemaphore("resumeJobStep");
 					final ResponseEntity<RestJobStep> msgF = transactionTemplate.execute((status) -> {
@@ -201,14 +201,14 @@ public class JobstepControllerImpl implements JobstepController {
 
 							return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
 						} else {
+							msg.add(jobStepUtil.resume(jsx, true));	
 							return null;
 						}
 					});
+					productionPlanner.releaseThreadSemaphore("resumeJobStep");
 					if (msgF != null) {
 						return msgF;
 					}
-					msg = jobStepUtil.resume(js.getId(), true);	
-					productionPlanner.releaseThreadSemaphore("resumeJobStep");
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("resumeJobStep");	
 					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
@@ -216,7 +216,7 @@ public class JobstepControllerImpl implements JobstepController {
 				}
 				// Already logged
 				
-				if (msg.isTrue()) {
+				if (msg.get(0).isTrue()) {
 					final ResponseEntity<RestJobStep> msgS = transactionTemplate.execute((status) -> {
 						JobStep jsx = this.findJobStepByNameOrId(jobstepId);
 						Job job = jsx.getJob();
@@ -243,7 +243,7 @@ public class JobstepControllerImpl implements JobstepController {
 					return msgS;
 				} else {
 					// illegal state for resume
-					String message = msg.format(jobstepId);
+					String message = msg.get(0).format(jobstepId);
 
 					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}

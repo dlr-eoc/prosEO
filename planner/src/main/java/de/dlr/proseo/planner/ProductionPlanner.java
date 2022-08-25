@@ -413,22 +413,29 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * Collect the orders in state SUSPENDING, RELEASING and PLANNING, store their ids
 	 * and restart the first.
 	 */
-	private void checkForRestart() {
+	private void checkForRestartSuspend() {
 		// collect orders in ...ING state	
 		List<ProcessingOrder> orders = RepositoryService.getOrderRepository().findByOrderState(OrderState.SUSPENDING);
 		for (ProcessingOrder order : orders) {
 			// resume the order
 			suspendingOrders.add(order.getId());
+			if (logger.isTraceEnabled()) logger.trace(">>> suspending order found ({})", order.getId());
 		}
-		orders = RepositoryService.getOrderRepository().findByOrderState(OrderState.RELEASING);
+		UtilService.getOrderUtil().checkNextForRestart();
+	}
+
+	private void checkForRestart() {
+		List<ProcessingOrder> orders = RepositoryService.getOrderRepository().findByOrderState(OrderState.RELEASING);
 		for (ProcessingOrder order : orders) {
 			// resume the order
 			releasingOrders.add(order.getId());
+			if (logger.isTraceEnabled()) logger.trace(">>> releasing order found ({})", order.getId());
 		}
 		orders = RepositoryService.getOrderRepository().findByOrderState(OrderState.PLANNING);
 		for (ProcessingOrder order : orders) {
 			// resume the order
 			planningOrders.add(order.getId());
+			if (logger.isTraceEnabled()) logger.trace(">>> planning order found ({})", order.getId());
 		}		
 		UtilService.getOrderUtil().checkNextForRestart();
 	}
@@ -474,6 +481,8 @@ public class ProductionPlanner implements CommandLineRunner {
 		} catch (TransactionException e) {
 			e.printStackTrace();
 		}
+		// continue suspend first
+		checkForRestartSuspend();
 		
 		this.startDispatcher();
 		

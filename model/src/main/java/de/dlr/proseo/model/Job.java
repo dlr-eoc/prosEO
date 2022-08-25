@@ -55,7 +55,7 @@ public class Job extends PersistentObject {
 	private JobState jobState;
 	
 	/** The orbit this job relates to (if any) */
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private Orbit orbit;
 	
 	/** 
@@ -81,7 +81,7 @@ public class Job extends PersistentObject {
 	private Boolean hasFailedJobSteps = false;
 	
 	/** The processing facility this job runs on */
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private ProcessingFacility processingFacility;
 	
 	/** The job steps for this job */

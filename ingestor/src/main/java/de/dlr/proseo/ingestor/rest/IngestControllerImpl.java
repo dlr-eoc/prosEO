@@ -177,7 +177,6 @@ public class IngestControllerImpl implements IngestController {
 	 * @param password The password
 	 * @return true after semaphore was available 
 	 */
-	@SuppressWarnings("unused")
 	private Boolean acquireSemaphore(String user, String password) {
 		if (logger.isTraceEnabled()) logger.trace(">>> acquireSemaphore({}, PWD)", user);
 		
@@ -201,7 +200,6 @@ public class IngestControllerImpl implements IngestController {
 	 * @param password The password
 	 * @return true after semaphore was released 
 	 */
-	@SuppressWarnings("unused")
 	private Boolean releaseSemaphore(String user, String password) {
 		if (logger.isTraceEnabled()) logger.trace(">>> releaseSemaphore({}, PWD)", user);
 		
@@ -265,7 +263,7 @@ public class IngestControllerImpl implements IngestController {
 		for (IngestorProduct ingestorProduct: ingestorProducts) {
 			try {
 				// TODO Thoroughly test semaphore acquisition/release --> blocks Planner unnecessarily
-				// productIngestor.acquireSemaphore(userPassword[0], userPassword[1]);
+				acquireSemaphore(userPassword[0], userPassword[1]);
 				RestProduct restProduct = productIngestor.ingestProduct(facility, copyFiles, ingestorProduct, userPassword[0], userPassword[1]);
 				result.add(restProduct);
 				ingestorProduct.setId(restProduct.getId());
@@ -277,7 +275,7 @@ public class IngestControllerImpl implements IngestController {
 			} catch (SecurityException e) {
 				return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 			} finally {
-				// productIngestor.releaseSemaphore(userPassword[0], userPassword[1]);
+				releaseSemaphore(userPassword[0], userPassword[1]);
 			}
 			
 			try {
@@ -375,7 +373,7 @@ public class IngestControllerImpl implements IngestController {
 		RestProductFile restProductFile = null;
 		try {
 			// TODO Thoroughly test semaphore acquisition/release --> blocks Planner unnecessarily
-			// productIngestor.acquireSemaphore(userPassword[0], userPassword[1]);
+			acquireSemaphore(userPassword[0], userPassword[1]);
 			restProductFile = productIngestor.ingestProductFile(
 						productId, facility, productFile, userPassword[0], userPassword[1]);
 		} catch (ProcessingException e) {
@@ -388,7 +386,7 @@ public class IngestControllerImpl implements IngestController {
 			e.printStackTrace();
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		} finally {
-			// productIngestor.releaseSemaphore(userPassword[0], userPassword[1]);
+			releaseSemaphore(userPassword[0], userPassword[1]);
 		}
 		
 		try {

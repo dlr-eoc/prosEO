@@ -22,6 +22,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.JobStep;
+import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -114,10 +115,22 @@ public class JobUtil {
 	 * @param job The job
 	 * @return Result message
 	 */
-	@Transactional
-	public Messages close(Job job) {
-		if (logger.isTraceEnabled()) logger.trace(">>> close({})", (null == job ? "null" : job.getId()));
+	public Messages close(Long id) {
+		if (logger.isTraceEnabled()) logger.trace(">>> close({})", (null == id ? "null" : id));
 
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		List<Long> jobStepIds = new ArrayList<Long>();
+		
+		final Job job = transactionTemplate.execute((status) -> {
+			Optional<Job> jobOpt = RepositoryService.getJobRepository().findById(id);
+			if (jobOpt.isPresent()) {
+				for (JobStep js : jobOpt.get().getJobSteps()) {
+					jobStepIds.add(js.getId());
+				}
+				return jobOpt.get();
+			}
+			return null;
+		});
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
 		if (job != null) {
@@ -131,15 +144,20 @@ public class JobUtil {
 				break;
 			case COMPLETED:
 			case FAILED:
-				job.setJobState(JobState.CLOSED);
-				for (JobStep js : job.getJobSteps()) {
-					if (js.getJobStepState() != JobStepState.CLOSED) {
-						UtilService.getJobStepUtil().close(js);
-					}
+				for (Long jsId : jobStepIds) {
+					UtilService.getJobStepUtil().close(jsId);
 				}		
-				job.incrementVersion();
-				RepositoryService.getJobRepository().save(job);
-				em.merge(job);
+				final Object dummy = transactionTemplate.execute((status) -> {
+					Optional<Job> jobOpt = RepositoryService.getJobRepository().findById(id);
+					if (jobOpt.isPresent()) {
+						Job locJob = jobOpt.get();
+						locJob.setJobState(JobState.CLOSED);
+						locJob.incrementVersion();
+						RepositoryService.getJobRepository().save(locJob);
+						em.merge(locJob);
+					}
+					return null;
+				});
 				answer = Messages.JOB_CLOSED;
 				break;
 			case CLOSED:
@@ -292,26 +310,26 @@ public class JobUtil {
 	 * @param jobId The job id
 	 * @return Result message
 	 */
-	public Messages resume(long jobId) {
-		if (logger.isTraceEnabled()) logger.trace(">>> resume({})", jobId);
+	public Messages resume(Job job) {
+		if (logger.isTraceEnabled()) logger.trace(">>> resume({})", job.getId());
 
 		Messages answer = Messages.FALSE;
-		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
-
-		final Job job = transactionTemplate.execute((status) -> {
-			Optional<Job> opt = RepositoryService.getJobRepository().findById(jobId);
-			if (opt.isPresent()) {
-				if (opt.get().getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
-					Messages.FACILITY_NOT_AVAILABLE.log(logger, opt.get().getProcessingFacility().getName(),
-							opt.get().getProcessingFacility().getFacilityState().toString());
-
-			    	return null;
-				} else {
-					return opt.get();
-				}
-			}
-			return null;
-		});
+//		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+//
+//		final Job job = transactionTemplate.execute((status) -> {
+//			Optional<Job> opt = RepositoryService.getJobRepository().findById(jobId);
+//			if (opt.isPresent()) {
+//				if (opt.get().getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
+//					Messages.FACILITY_NOT_AVAILABLE.log(logger, opt.get().getProcessingFacility().getName(),
+//							opt.get().getProcessingFacility().getFacilityState().toString());
+//
+//			    	return null;
+//				} else {
+//					return opt.get();
+//				}
+//			}
+//			return null;
+//		});
 
 		// check current state for possibility to be suspended
 		if (job != null) {
@@ -321,31 +339,17 @@ public class JobUtil {
 				break;
 			case PLANNED:
 				try {
-					productionPlanner.acquireThreadSemaphore("resume");	
-					final List<Long> jobSteps = new ArrayList<Long>();
-					@SuppressWarnings("unused")
-					String dummy = transactionTemplate.execute((status) -> {
-						Optional<Job> opt = RepositoryService.getJobRepository().findById(jobId);
-						if (opt.isPresent()) {
-							Job jobLoc = opt.get();
-							jobLoc.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
-							jobLoc.incrementVersion();
-							RepositoryService.getJobRepository().save(jobLoc);
-							for (JobStep js : jobLoc.getJobSteps()) {
-								jobSteps.add(js.getId());
-							}
-						}
-						return null;
-					});
+					job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
+					job.incrementVersion();
+					RepositoryService.getJobRepository().save(job);
 
-					for (Long jsId : jobSteps) {
-						UtilService.getJobStepUtil().resume(jsId, false);
+
+					for (JobStep js : job.getJobSteps()) {
+						UtilService.getJobStepUtil().resume(js, false);
 					}
 					answer = Messages.JOB_RELEASED;
 				} catch (Exception e) {
 					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-				} finally {
-					productionPlanner.releaseThreadSemaphore("resume");					
 				}
 				break;
 			case RELEASED:
@@ -448,6 +452,7 @@ public class JobUtil {
 				List<JobStep> toRem = new ArrayList<JobStep>();
 				for (JobStep js : job.getJobSteps()) {
 					if (UtilService.getJobStepUtil().delete(js)) {
+						js.setJob(null);
 						toRem.add(js);
 					} else {
 						js.setJob(null);
@@ -497,6 +502,7 @@ public class JobUtil {
 				List<JobStep> toRem = new ArrayList<JobStep>();
 				for (JobStep js : job.getJobSteps()) {
 					if (UtilService.getJobStepUtil().deleteForced(js)) {
+						js.setJob(null);
 						toRem.add(js);
 					} else {
 						js.setJob(null);

@@ -23,6 +23,7 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.Index;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
@@ -55,6 +56,7 @@ import de.dlr.proseo.model.enums.ProductionType;
 		@Index(unique = false, columnList = "product_class_id, sensing_stop_time"), 
 		@Index(unique = false, columnList = "product_class_id, generation_time"), 
 		@Index(unique = false, columnList = "eviction_time") })
+// TODO add index on "enclosing_product_id"
 public class Product extends PersistentObject {
 	
 	private static final String MSG_FILENAME_TEMPLATE_NOT_FOUND = "Product filename template for mission not found";
@@ -66,7 +68,7 @@ public class Product extends PersistentObject {
 	private UUID uuid;
 	
 	/** Product class this products instantiates */
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private ProductClass productClass;
 	
 	/** One of the file classes defined for the mission (Ground Segment FIle Format Standard, sec. 4.1.2) */
@@ -130,7 +132,7 @@ public class Product extends PersistentObject {
 	private Set<Product> componentProducts = new HashSet<>();
 	
 	/** Product for which this product is a component */
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private Product enclosingProduct;
 	
 	/**
@@ -140,7 +142,7 @@ public class Product extends PersistentObject {
 	 * must not extend further than into the following orbit (e. g. a near-realtime time slice beginning in one orbit, but also 
 	 * including some data from the subsequent orbit).
 	 */
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private Orbit orbit;
 	
 	/** Product files for this product */
@@ -152,11 +154,11 @@ public class Product extends PersistentObject {
 	private Set<ProductQuery> satisfiedProductQueries = new HashSet<>();
 	
 	/** Job step that produced this product (if any) */
-	@OneToOne
+	@OneToOne(fetch = FetchType.LAZY)
 	private JobStep jobStep;
 	
 	/** Processor configuration used for processing this product */
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private ConfiguredProcessor configuredProcessor;
 	
 	/**

@@ -17,6 +17,7 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -40,7 +41,7 @@ public class JobStep extends PersistentObject {
 	private static final String MSG_ILLEGAL_STATE_TRANSITION = "Illegal job step state transition from %s to %s";
 
 	/** The job this job step belongs to */
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private Job job;
 	
 	/**
@@ -63,7 +64,7 @@ public class JobStep extends PersistentObject {
 	private Set<ProductQuery> inputProductQueries = new HashSet<>();
 	
 	/** The output product of this job step */
-	@OneToOne(mappedBy = "jobStep")
+	@OneToOne(mappedBy = "jobStep", fetch = FetchType.LAZY)
 	private Product outputProduct;
 	
 	/** The start time of the processing job */

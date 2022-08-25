@@ -163,7 +163,7 @@ public enum Messages {
 	FACILITY_NOT_AVAILABLE			(false, MessageType.W, "Processing facility %s not available (cause: %s)"),
 	RUNTIME_EXCEPTION				(false, MessageType.E, "Exception encountered: %s"),
 	
-	DUMMY							(true, MessageType.I, "(%d)")
+	DUMMY							(true, MessageType.I, "(%d)"), 
 	;
 	
 	public enum MessageType {
