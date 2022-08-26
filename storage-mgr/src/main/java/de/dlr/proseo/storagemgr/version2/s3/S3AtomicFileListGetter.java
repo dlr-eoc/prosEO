@@ -19,7 +19,7 @@ import software.amazon.awssdk.services.s3.model.S3Object;
  * @author Denys Chaykovskiy
  *
  */
-public class S3AtomicFileGetter implements AtomicListCommand {
+public class S3AtomicFileListGetter implements AtomicListCommand {
 	
 	/** Info */
 	private static final String INFO = "S3 ATOMIC File Getter";
@@ -28,7 +28,7 @@ public class S3AtomicFileGetter implements AtomicListCommand {
 	private static final String COMPLETED = "files GOT";
 
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(S3AtomicFileGetter.class);
+	private static Logger logger = LoggerFactory.getLogger(S3AtomicFileListGetter.class);
 	
 	/** All files, no prefix */
 	private static final String ALL_FILES = "";
@@ -49,7 +49,7 @@ public class S3AtomicFileGetter implements AtomicListCommand {
 	 * @param bucket bucket
 	 * @param directory directory
 	 */
-	public S3AtomicFileGetter(S3Client s3Client, String bucket, String directory) {
+	public S3AtomicFileListGetter(S3Client s3Client, String bucket, String directory) {
 		
 		this.s3Client = s3Client; 
 		this.bucket = bucket; 
@@ -63,7 +63,7 @@ public class S3AtomicFileGetter implements AtomicListCommand {
 	 * @param bucket bucket
 	 * @param directory directory
 	 */
-	public S3AtomicFileGetter(S3Client s3Client, String bucket) {
+	public S3AtomicFileListGetter(S3Client s3Client, String bucket) {
 		
 		this.s3Client = s3Client; 
 		this.bucket = bucket; 

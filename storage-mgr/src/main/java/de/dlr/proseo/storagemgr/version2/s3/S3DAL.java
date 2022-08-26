@@ -133,7 +133,7 @@ public class S3DAL {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFiles()");
 
-		AtomicListCommand fileGetter = new S3AtomicFileGetter(s3Client, cfg.getBucket());
+		AtomicListCommand fileGetter = new S3AtomicFileListGetter(s3Client, cfg.getBucket());
 
 		return new S3ListRetryStrategy(fileGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
@@ -150,7 +150,7 @@ public class S3DAL {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFiles({})", folder);
 
-		AtomicListCommand fileGetter = new S3AtomicFileGetter(s3Client, cfg.getBucket(), folder);
+		AtomicListCommand fileGetter = new S3AtomicFileListGetter(s3Client, cfg.getBucket(), folder);
 
 		return new S3ListRetryStrategy(fileGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
@@ -562,7 +562,7 @@ public class S3DAL {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getBuckets()");
 		
-		AtomicListCommand bucketGetter = new S3AtomicBucketGetter(s3Client);
+		AtomicListCommand bucketGetter = new S3AtomicBucketListGetter(s3Client);
 
 		return new S3ListRetryStrategy(bucketGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}

@@ -18,7 +18,7 @@ import software.amazon.awssdk.services.s3.model.ListBucketsResponse;
  * @author Denys Chaykovskiy
  *
  */
-public class S3AtomicBucketGetter implements AtomicListCommand {
+public class S3AtomicBucketListGetter implements AtomicListCommand {
 	
 	/** Info */
 	private static final String INFO = "S3 ATOMIC Bucket Getter";
@@ -27,7 +27,7 @@ public class S3AtomicBucketGetter implements AtomicListCommand {
 	private static final String COMPLETED = "Buckets GOT";
 
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(S3AtomicBucketGetter.class);
+	private static Logger logger = LoggerFactory.getLogger(S3AtomicBucketListGetter.class);
 		
 	/** S3 Client */
 	private S3Client s3Client;
@@ -39,7 +39,7 @@ public class S3AtomicBucketGetter implements AtomicListCommand {
 	 * @param bucket bucket
 	 * @param directory directory
 	 */
-	public S3AtomicBucketGetter(S3Client s3Client) {
+	public S3AtomicBucketListGetter(S3Client s3Client) {
 		
 		this.s3Client = s3Client; 
 	}
