@@ -386,13 +386,17 @@ public class S3DAL {
 	 * 
 	 * @param fileOrDir file or directory
 	 * @return deleted file path list
+	 * @throws IOException 
 	 */
-	public List<String> delete(String fileOrDir) {
+	public List<String> delete(String fileOrDir) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> delete({})", fileOrDir);
+		
+		
+		AtomicListCommand fileListDeleter = new S3AtomicFileListDeleter(s3Client, cfg.getBucket(), fileOrDir);
 
-		return deleteS3Data(s3Client, cfg.getBucket(), fileOrDir);
+		return new S3ListRetryStrategy(fileListDeleter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
@@ -630,31 +634,6 @@ public class S3DAL {
 				.s3ClientConfiguration(cfg -> cfg.credentialsProvider(credentialsProvider).region(region)
 						.targetThroughputInGbps(20.0).minimumPartSizeInBytes((long) (10 * 1024 * 1024)))
 				.build();
-	}
-
-	/**
-	 * Deletes S3 file or directory which matches prefix
-	 * 
-	 * @param s3Client s3 client
-	 * @param bucket   bucket
-	 * @param prefix   prefix
-	 * @return deleted file path list
-	 */
-	private List<String> deleteS3Data(S3Client s3Client, String bucket, String prefix) {
-
-		ListObjectsV2Request request = ListObjectsV2Request.builder().bucket(bucket).prefix(prefix).build();
-		ListObjectsV2Iterable list = s3Client.listObjectsV2Paginator(request);
-
-		List<ObjectIdentifier> objectIdentifiers = list.stream().flatMap(r -> r.contents().stream())
-				.map(o -> ObjectIdentifier.builder().key(o.key()).build()).collect(Collectors.toList());
-
-		if (objectIdentifiers.isEmpty())
-			return new ArrayList<String>();
-		DeleteObjectsRequest deleteObjectsRequest = DeleteObjectsRequest.builder().bucket(bucket)
-				.delete(Delete.builder().objects(objectIdentifiers).build()).build();
-
-		DeleteObjectsResponse deleteResponse = s3Client.deleteObjects(deleteObjectsRequest);
-		return toStringDeletedObjects(deleteResponse.deleted());
 	}
 
 	/**

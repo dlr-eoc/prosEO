@@ -543,7 +543,7 @@ public class S3Storage implements Storage {
 	 * @throws IOException if file or directory cannot be deleted
 	 */
 	@Override
-	public List<String> delete(StorageFile storageFileOrDir) {
+	public List<String> delete(StorageFile storageFileOrDir) throws IOException {
 
 		return s3DAL.delete(storageFileOrDir.getRelativePath());
 	}
