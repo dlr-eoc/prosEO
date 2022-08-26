@@ -25,7 +25,7 @@ public class S3AtomicFileGetter implements AtomicListCommand {
 	private static final String INFO = "S3 ATOMIC File Getter";
 	
 	/** Completed Info */
-	private static final String COMPLETED = "GOT";
+	private static final String COMPLETED = "files GOT";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3AtomicFileGetter.class);
@@ -78,7 +78,7 @@ public class S3AtomicFileGetter implements AtomicListCommand {
 	public List<String> execute() throws IOException {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> execute() - getFiles({})", directory);
+			logger.trace(">>> execute() - get files({})", directory);
 
 		try {
 			ListObjectsRequest request; 
@@ -91,6 +91,10 @@ public class S3AtomicFileGetter implements AtomicListCommand {
 			}
 			
 			ListObjectsResponse response = s3Client.listObjects(request);
+			
+			if (logger.isTraceEnabled())
+				logger.trace(">>>>> " + getCompletedInfo() + " - amount: " + response.contents().size());
+			
 			return toStringFiles(response.contents());
 
 		} catch (Exception e) {

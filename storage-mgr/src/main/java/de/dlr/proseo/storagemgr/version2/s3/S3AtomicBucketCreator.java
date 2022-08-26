@@ -25,7 +25,7 @@ public class S3AtomicBucketCreator implements AtomicCommand {
 	private static final String INFO = "S3 ATOMIC Bucket creator";
 
 	/** Completed Info */
-	private static final String COMPLETED = "bucket created";
+	private static final String COMPLETED = "bucket CREATED";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3AtomicBucketCreator.class);

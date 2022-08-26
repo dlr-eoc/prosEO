@@ -52,7 +52,7 @@ public class S3AtomicBucketGetter implements AtomicListCommand {
 	public List<String> execute() throws IOException {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> execute() - getBuckets()");
+			logger.trace(">>> execute() - get buckets");
 
 		try {
 			ListBucketsResponse listBucketsResponse = s3Client.listBuckets();

@@ -24,12 +24,11 @@ public class S3AtomicFileContentGetter implements AtomicCommand {
 	private static final String INFO = "S3 ATOMIC File Content Getter";
 	
 	/** Completed Info */
-	private static final String COMPLETED = "GOT";
+	private static final String COMPLETED = "file content GOT";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3AtomicFileContentGetter.class);
 	
-
 	/** path */
 	private String path; 
 	
@@ -70,6 +69,9 @@ public class S3AtomicFileContentGetter implements AtomicCommand {
 
 			// InputStream stream = new
 			// ByteArrayInputStream(responseInputStream.readAllBytes());
+			
+			if (logger.isTraceEnabled())
+				logger.trace(">>>>> " + getCompletedInfo());
 
 			return new String(responseInputStream.readAllBytes(), StandardCharsets.UTF_8);
 

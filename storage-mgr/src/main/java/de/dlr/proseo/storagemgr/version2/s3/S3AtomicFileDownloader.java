@@ -29,7 +29,7 @@ public class S3AtomicFileDownloader implements AtomicCommand {
 	private static final String INFO = "S3 ATOMIC File Downloader";
 
 	/** Completed Info */
-	private static final String COMPLETED = "DOWNLOADED";
+	private static final String COMPLETED = "file DOWNLOADED";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3AtomicFileDownloader.class);

@@ -27,7 +27,7 @@ public class S3AtomicFileDeleter implements AtomicCommand {
 	private static final String INFO = "S3 ATOMIC File Deleter";
 
 	/** Completed Info */
-	private static final String COMPLETED = "GOT";
+	private static final String COMPLETED = "file DELETED";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3AtomicFileDeleter.class);
@@ -75,8 +75,9 @@ public class S3AtomicFileDeleter implements AtomicCommand {
 
 			DeleteObjectsResponse deleteResponse = s3Client.deleteObjects(dor);
 			
-			System.out.println("Successfully deleted object " + path);
-
+			if (logger.isTraceEnabled())
+				logger.trace(">>>>> " + getCompletedInfo() + " - " + path);
+			
 			return toStringDeletedObject(deleteResponse.deleted());
 
 		} catch (Exception e) {

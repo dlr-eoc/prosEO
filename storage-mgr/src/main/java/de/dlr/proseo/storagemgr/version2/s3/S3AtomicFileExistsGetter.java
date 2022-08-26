@@ -22,7 +22,7 @@ public class S3AtomicFileExistsGetter implements AtomicCommand {
 	private static final String INFO = "S3 ATOMIC File Exists Getter";
 
 	/** Completed Info */
-	private static final String COMPLETED = "GOT";
+	private static final String COMPLETED = "file existence GOT";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3AtomicFileExistsGetter.class);
@@ -62,9 +62,17 @@ public class S3AtomicFileExistsGetter implements AtomicCommand {
 
 		try {
 			s3Client.headObject(HeadObjectRequest.builder().bucket(bucket).key(path).build());
+			
+			if (logger.isTraceEnabled())
+				logger.trace(">>>>> " + getCompletedInfo() + " - exists");
+			
 			return String.valueOf(true);
 
 		} catch (NoSuchKeyException e) {
+			
+			if (logger.isTraceEnabled())
+				logger.trace(">>>>> " + getCompletedInfo() + " - not exists");
+			
 			return String.valueOf(false);
 
 		} catch (Exception e) {

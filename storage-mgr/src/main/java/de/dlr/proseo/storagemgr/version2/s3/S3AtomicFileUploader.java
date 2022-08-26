@@ -29,7 +29,7 @@ public class S3AtomicFileUploader implements AtomicCommand {
 	private static final String INFO = "S3 ATOMIC File Uploader";
 	
 	/** Completed Info */
-	private static final String COMPLETED = "UPLOADED";
+	private static final String COMPLETED = "file UPLOADED";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3AtomicFileUploader.class);

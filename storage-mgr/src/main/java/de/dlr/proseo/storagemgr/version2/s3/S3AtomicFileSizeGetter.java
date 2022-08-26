@@ -22,7 +22,7 @@ public class S3AtomicFileSizeGetter implements AtomicCommand {
 	private static final String INFO = "S3 ATOMIC File Size Getter";
 	
 	/** Completed Info */
-	private static final String COMPLETED = "GOT";
+	private static final String COMPLETED = "file size GOT";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3AtomicFileSizeGetter.class);
@@ -64,8 +64,13 @@ public class S3AtomicFileSizeGetter implements AtomicCommand {
 		try {
 			HeadObjectRequest headObjectRequest = HeadObjectRequest.builder().bucket(bucket).key(path).build();
 			HeadObjectResponse headObjectResponse = s3Client.headObject(headObjectRequest);
+			
+			Long fileSize = headObjectResponse.contentLength();
+			
+			if (logger.isTraceEnabled())
+				logger.trace(">>>>> " + getCompletedInfo() + " - size: " + fileSize.toString());
 
-			return headObjectResponse.contentLength().toString();
+			return fileSize.toString();
 
 		} catch (Exception e) {
 			logger.warn(e.getMessage());
