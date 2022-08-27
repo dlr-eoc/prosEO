@@ -215,7 +215,7 @@ public class OrderjobControllerImpl implements OrderjobController {
 		if (null != states && states.length == 1) {
 			if (states[0].equalsIgnoreCase("COMPLETED")) {
 				jpqlQuery += " and x.jobState = 'COMPLETED'";
-			} else if (states[0].equalsIgnoreCase("COMPLETED")) {
+			} else if (states[0].equalsIgnoreCase("NON-COMPLETED")) {
 				jpqlQuery += " and x.jobState <> 'COMPLETED'";
 			}
 		}

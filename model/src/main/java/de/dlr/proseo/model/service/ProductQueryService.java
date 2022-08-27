@@ -205,9 +205,8 @@ public class ProductQueryService {
 			for (Object selectedItem: selectedItems) {
 				if (selectedItem instanceof Product) {
 					Product product = (Product) selectedItem;
-					if (logger.isTraceEnabled()) logger.trace("... before adding product query to list of satisfied product queries");
-					product.getSatisfiedProductQueries().add(productQuery);
-					if (logger.isTraceEnabled()) logger.trace("... after adding product query to list of satisfied product queries");
+					// we do not need to save the product in this transaction
+					// only the satisfied product queries are updated but this relation is also saved by the product query
 					productQuery.getSatisfyingProducts().add(product);
 				}
 			}

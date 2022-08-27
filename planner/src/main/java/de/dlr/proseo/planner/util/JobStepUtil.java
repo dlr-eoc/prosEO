@@ -796,9 +796,11 @@ public class JobStepUtil {
 					if (!pq.isSatisfied()) {
 						if (productQueryService.executeQuery(pq, false)) {
 							RepositoryService.getProductQueryRepository().save(pq);
-							for (Product p: pq.getSatisfyingProducts()) {
-								RepositoryService.getProductRepository().save(p);
-							}
+							// we do not need to save the product in this transaction
+							// only the satisfied product queries are updated but this relation is also saved by the product query
+							// for (Product p: pq.getSatisfyingProducts()) {
+							// 	 RepositoryService.getProductRepository().save(p);
+							// }
 							// The following removed - it is the *input* product queries that matter!
 							//							jsx.getOutputProduct().getSatisfiedProductQueries().add(pq);
 							//							RepositoryService.getProductRepository().save(jsx.getOutputProduct());
