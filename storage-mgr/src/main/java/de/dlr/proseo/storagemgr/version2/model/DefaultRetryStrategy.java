@@ -1,11 +1,11 @@
-package de.dlr.proseo.storagemgr.version2.s3;
+package de.dlr.proseo.storagemgr.version2.model;
 
 import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.dlr.proseo.storagemgr.version2.model.AtomicCommand;
+import de.dlr.proseo.storagemgr.version2.s3.S3AtomicFileUploader;
 
 /**
  * S3 Default Retry Strategy for atomic operations 
@@ -13,10 +13,10 @@ import de.dlr.proseo.storagemgr.version2.model.AtomicCommand;
  * @author Denys Chaykovskiy
  *
  */
-public class S3DefaultRetryStrategy<T> {
+public class DefaultRetryStrategy<T> {
 	
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(S3AtomicFileUploader.class);
+	private static Logger logger = LoggerFactory.getLogger(DefaultRetryStrategy.class);
 	
 	/** Atom command object */
 	private AtomicCommand<T> atomicCommand; 
@@ -33,7 +33,7 @@ public class S3DefaultRetryStrategy<T> {
 	 * @param atomicCommand atomic command
 	 * @param maxAttempts maximal attempts
 	 */
-	public S3DefaultRetryStrategy(AtomicCommand<T> atomicCommand, int maxAttempts, long waitTime) {
+	public DefaultRetryStrategy(AtomicCommand<T> atomicCommand, int maxAttempts, long waitTime) {
 		
 		this.atomicCommand = atomicCommand; 
 		this.maxAttempts = maxAttempts; 

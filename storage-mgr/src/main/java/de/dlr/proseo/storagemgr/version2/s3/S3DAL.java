@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.model.AtomicCommand;
-
+import de.dlr.proseo.storagemgr.version2.model.DefaultRetryStrategy;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -130,7 +130,7 @@ public class S3DAL {
 
 		AtomicCommand<List<String>> fileGetter = new S3AtomicFileListGetter(s3Client, cfg.getBucket());
 
-		return new S3DefaultRetryStrategy<List<String>>(fileGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime()).execute();
+		return new DefaultRetryStrategy<List<String>>(fileGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
@@ -147,7 +147,7 @@ public class S3DAL {
 
 		AtomicCommand<List<String>> fileGetter = new S3AtomicFileListGetter(s3Client, cfg.getBucket(), folder);
 
-		return new S3DefaultRetryStrategy<List<String>>(fileGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime()).execute();
+		return new DefaultRetryStrategy<List<String>>(fileGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
@@ -164,7 +164,7 @@ public class S3DAL {
 
 		AtomicCommand<String> fileExistsGetter = new S3AtomicFileExistsGetter(s3Client, cfg.getBucket(), filePath);
 
-		String fileExists = new S3DefaultRetryStrategy<String>(fileExistsGetter, cfg.getMaxUploadAttempts(),
+		String fileExists = new DefaultRetryStrategy<String>(fileExistsGetter, cfg.getMaxUploadAttempts(),
 				cfg.getFileCheckWaitTime()).execute();
 
 		return Boolean.valueOf(fileExists);
@@ -204,7 +204,7 @@ public class S3DAL {
 
 		AtomicCommand<String> fileSizeGetter = new S3AtomicFileSizeGetter(s3Client, cfg.getBucket(), filePath);
 
-		String fileSize = new S3DefaultRetryStrategy<String>(fileSizeGetter, cfg.getMaxUploadAttempts(),
+		String fileSize = new DefaultRetryStrategy<String>(fileSizeGetter, cfg.getMaxUploadAttempts(),
 				cfg.getFileCheckWaitTime()).execute();
 
 		return Long.valueOf(fileSize);
@@ -220,7 +220,7 @@ public class S3DAL {
 
 		AtomicCommand<String> fileContentGetter = new S3AtomicFileContentGetter(s3Client, cfg.getBucket(), filePath);
 
-		return new S3DefaultRetryStrategy<String>(fileContentGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
+		return new DefaultRetryStrategy<String>(fileContentGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
 				.execute();
 	}
 
@@ -240,7 +240,7 @@ public class S3DAL {
 
 		AtomicCommand<String> fileUploader = new S3AtomicFileUploader(s3Client, cfg.getBucket(), sourceFile, targetFileOrDir);
 
-		return new S3DefaultRetryStrategy<String>(fileUploader, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
+		return new DefaultRetryStrategy<String>(fileUploader, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
 				.execute();
 	}
 
@@ -321,7 +321,7 @@ public class S3DAL {
 
 		AtomicCommand<String> fileDownloader = new S3AtomicFileDownloader(s3Client, cfg.getBucket(), sourceFile,
 				targetFileOrDir);
-		return new S3DefaultRetryStrategy<String>(fileDownloader, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
+		return new DefaultRetryStrategy<String>(fileDownloader, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
 				.execute();
 	}
 
@@ -391,7 +391,7 @@ public class S3DAL {
 		
 		AtomicCommand<List<String>> fileListDeleter = new S3AtomicFileListDeleter(s3Client, cfg.getBucket(), fileOrDir);
 
-		return new S3DefaultRetryStrategy<List<String>>(fileListDeleter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime()).execute();
+		return new DefaultRetryStrategy<List<String>>(fileListDeleter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
@@ -408,7 +408,7 @@ public class S3DAL {
 
 		AtomicCommand<String> fileDeleter = new S3AtomicFileDeleter(s3Client, cfg.getBucket(), filepath);
 
-		return new S3DefaultRetryStrategy<String>(fileDeleter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
+		return new DefaultRetryStrategy<String>(fileDeleter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
 				.execute();
 	}
 
@@ -563,7 +563,7 @@ public class S3DAL {
 		
 		AtomicCommand<List<String>> bucketGetter = new S3AtomicBucketListGetter(s3Client);
 
-		return new S3DefaultRetryStrategy<List<String>>(bucketGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime()).execute();
+		return new DefaultRetryStrategy<List<String>>(bucketGetter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
@@ -645,7 +645,7 @@ public class S3DAL {
 		
 		AtomicCommand<String> bucketCreator = new S3AtomicBucketCreator(s3Client, cfg.getBucket());
 		
-		return new S3DefaultRetryStrategy<String>(bucketCreator, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
+		return new DefaultRetryStrategy<String>(bucketCreator, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
 				.execute();
 	}
 
@@ -663,7 +663,7 @@ public class S3DAL {
 		
 		AtomicCommand<String> bucketDeleter = new S3AtomicBucketDeleter(s3Client, cfg.getBucket());
 		
-		return new S3DefaultRetryStrategy<String>(bucketDeleter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
+		return new DefaultRetryStrategy<String>(bucketDeleter, cfg.getMaxUploadAttempts(), cfg.getFileCheckWaitTime())
 				.execute();
 	}
 
