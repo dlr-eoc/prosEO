@@ -71,13 +71,14 @@ public class S3AtomicFileExistsGetter implements AtomicCommand<String> {
 		} catch (NoSuchKeyException e) {
 			
 			if (logger.isTraceEnabled())
-				logger.trace(">>>>> " + getCompletedInfo() + " - not exists");
+				logger.trace("... " + getCompletedInfo() + " - not exists");
 			
 			return String.valueOf(false);
 
 		} catch (Exception e) {
-			logger.warn(e.getMessage());
-			throw e;
+			if (logger.isTraceEnabled())
+				logger.trace(e.getMessage());
+			throw new IOException(e);
 		}
 	}
 

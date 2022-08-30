@@ -60,13 +60,14 @@ public class S3AtomicBucketListGetter implements AtomicCommand<List<String>> {
 			List<String> stringBuckets = toStringBuckets(listBucketsResponse.buckets());
 			
 			if (logger.isTraceEnabled())
-				logger.trace(">>>>> " + getCompletedInfo() + " - Buckets Amount: " + stringBuckets.size());
+				logger.trace("... " + getCompletedInfo() + " - Buckets Amount: " + stringBuckets.size());
 			
 			return stringBuckets;
 
 		} catch (Exception e) {
-			logger.warn(e.getMessage());
-			throw e;
+			if (logger.isTraceEnabled())
+				logger.trace(e.getMessage());
+			throw new IOException(e);
 		}
 	}
 	

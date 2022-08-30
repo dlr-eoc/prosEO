@@ -91,13 +91,14 @@ public class S3AtomicFileUploader implements AtomicCommand<String> {
 			waiterResponse.matched().response().ifPresent(System.out::println);
 
 			if (logger.isTraceEnabled())
-				logger.trace(">>>>> " + getCompletedInfo() + " - " + targetFile);
+				logger.trace("... " + getCompletedInfo() + " - " + targetFile);
 
 			return targetFile;
 
 		} catch (Exception e) {
-			logger.warn(e.getMessage());
-			throw e;
+			if (logger.isTraceEnabled())
+				logger.trace(e.getMessage());
+			throw new IOException(e);
 		}
 	}
 	

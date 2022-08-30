@@ -76,13 +76,14 @@ public class S3AtomicFileDeleter implements AtomicCommand<String> {
 			DeleteObjectsResponse deleteResponse = s3Client.deleteObjects(dor);
 			
 			if (logger.isTraceEnabled())
-				logger.trace(">>>>> " + getCompletedInfo() + " - " + path);
+				logger.trace("... " + getCompletedInfo() + " - " + path);
 			
 			return toStringDeletedObject(deleteResponse.deleted());
 
 		} catch (Exception e) {
-			logger.warn(e.getMessage());
-			throw e;
+			if (logger.isTraceEnabled())
+				logger.trace(e.getMessage());
+			throw new IOException(e);
 		}
 	}
 

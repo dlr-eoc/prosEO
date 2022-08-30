@@ -11,7 +11,7 @@ import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 
 /**
- * S3 Atomic File Exists Getter
+ * S3 Atomic File Size Getter
  * 
  * @author Denys Chaykovskiy
  *
@@ -68,13 +68,14 @@ public class S3AtomicFileSizeGetter implements AtomicCommand<String> {
 			Long fileSize = headObjectResponse.contentLength();
 			
 			if (logger.isTraceEnabled())
-				logger.trace(">>>>> " + getCompletedInfo() + " - size: " + fileSize.toString());
+				logger.trace("... " + getCompletedInfo() + " - size: " + fileSize.toString());
 
 			return fileSize.toString();
 
 		} catch (Exception e) {
-			logger.warn(e.getMessage());
-			throw e;
+			if (logger.isTraceEnabled())
+				logger.trace(e.getMessage());
+			throw new IOException(e);
 		}
 	}
 	

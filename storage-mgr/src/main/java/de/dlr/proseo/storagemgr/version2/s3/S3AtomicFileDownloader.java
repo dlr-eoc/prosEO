@@ -89,6 +89,7 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 		ResponseInputStream<GetObjectResponse> response = s3Client.getObject(request);
 		BufferedOutputStream outputStream;
 
+		// temporary download filename, after download will be renamed
 		String temporaryTargetPosixFile = getTemporaryFilePath(targetPosixFile);
 		try {
 
@@ -111,14 +112,15 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 			}
 
 			if (logger.isTraceEnabled())
-				logger.trace(">>>>> " + getCompletedInfo() + " - " + targetPosixFile);
+				logger.trace("... " + getCompletedInfo() + " - " + targetPosixFile);
 
 			return targetPosixFile;
 
 		} catch (IOException e) {
-			logger.warn(e.getMessage());
+			if (logger.isTraceEnabled())
+				logger.trace(e.getMessage());
 			new File(temporaryTargetPosixFile).delete();
-			throw e;
+			throw new IOException(e);
 		}
 	}
 

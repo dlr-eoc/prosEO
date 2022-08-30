@@ -93,13 +93,14 @@ public class S3AtomicFileListGetter implements AtomicCommand<List<String>> {
 			ListObjectsResponse response = s3Client.listObjects(request);
 			
 			if (logger.isTraceEnabled())
-				logger.trace(">>>>> " + getCompletedInfo() + " - amount: " + response.contents().size());
+				logger.trace("... " + getCompletedInfo() + " - amount: " + response.contents().size());
 			
 			return toStringFiles(response.contents());
 
 		} catch (Exception e) {
-			logger.warn(e.getMessage());
-			throw e;
+			if (logger.isTraceEnabled())
+				logger.trace(e.getMessage());
+			throw new IOException(e);
 		}
 	}
 	

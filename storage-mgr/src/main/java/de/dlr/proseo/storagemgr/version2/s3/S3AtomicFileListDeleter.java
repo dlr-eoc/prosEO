@@ -84,13 +84,14 @@ public class S3AtomicFileListDeleter implements AtomicCommand<List<String>> {
 			DeleteObjectsResponse deleteResponse = s3Client.deleteObjects(deleteObjectsRequest);
 
 			if (logger.isTraceEnabled())
-				logger.trace(">>>>> " + getCompletedInfo() + " - amount: " + deleteResponse.deleted().size());
+				logger.trace("... " + getCompletedInfo() + " - amount: " + deleteResponse.deleted().size());
 
 			return toStringDeletedObjects(deleteResponse.deleted());
 
 		} catch (Exception e) {
-			logger.warn(e.getMessage());
-			throw e;
+			if (logger.isTraceEnabled())
+				logger.trace(e.getMessage());
+			throw new IOException(e);
 		}
 	}
 

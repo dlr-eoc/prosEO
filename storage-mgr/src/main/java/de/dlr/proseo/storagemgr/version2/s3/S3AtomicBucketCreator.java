@@ -70,13 +70,14 @@ public class S3AtomicBucketCreator implements AtomicCommand<String> {
 			waiterResponse.matched().response().ifPresent(System.out::println);
 
 			if (logger.isTraceEnabled())
-				logger.trace(">>>>> " + getCompletedInfo() + " - " + bucket);
+				logger.trace("... " + getCompletedInfo() + " - " + bucket);
 
 			return bucket;
 
 		} catch (Exception e) {
-			logger.warn(e.getMessage());
-			throw e;
+			if (logger.isTraceEnabled())
+				logger.trace(e.getMessage());
+			throw new IOException(e);
 		}
 	}
 

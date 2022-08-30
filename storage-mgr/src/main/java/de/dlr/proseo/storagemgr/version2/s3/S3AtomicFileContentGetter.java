@@ -71,13 +71,14 @@ public class S3AtomicFileContentGetter implements AtomicCommand<String> {
 			// ByteArrayInputStream(responseInputStream.readAllBytes());
 			
 			if (logger.isTraceEnabled())
-				logger.trace(">>>>> " + getCompletedInfo());
+				logger.trace("... " + getCompletedInfo());
 
 			return new String(responseInputStream.readAllBytes(), StandardCharsets.UTF_8);
 
 		} catch (Exception e) {
-			logger.warn(e.getMessage());
-			throw e;
+			if (logger.isTraceEnabled())
+				logger.trace(e.getMessage());
+			throw new IOException(e);
 		}
 	}
 	
