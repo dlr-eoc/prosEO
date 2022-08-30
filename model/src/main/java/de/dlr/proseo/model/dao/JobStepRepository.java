@@ -36,7 +36,7 @@ public interface JobStepRepository extends JpaRepository<JobStep, Long> {
 	@Query("select js from JobStep js where js.jobStepState = ?1 and js.job.processingOrder.mission.code = ?2 order by js.processingCompletionTime desc")
 	public List<JobStep> findAllByJobStepStateAndMissionOrderByDate(JobStepState jobStepState, String mission);
 
-	@Query("select js from JobStep js where js.jobStepState = ?1 and js.job.processingOrder.id = ?2 order by js.processingCompletionTime desc")
+	@Query("select js from JobStep js where js.jobStepState = ?1 and js.job.processingOrder.id = ?2 order by js.job.startTime, js.id")
 	public List<JobStep> findAllByJobStepStateAndOrderIdByDate(JobStepState jobStepState, long orderId);
 
 	@Query("SELECT COUNT(*) FROM JobStep js WHERE js.job.id = ?1 AND  js.jobStepState NOT IN ('COMPLETED', 'FAILED')")
