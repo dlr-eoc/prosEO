@@ -7,7 +7,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.dlr.proseo.storagemgr.version2.model.AtomicListCommand;
+import de.dlr.proseo.storagemgr.version2.model.AtomicCommand;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Bucket;
 import software.amazon.awssdk.services.s3.model.ListBucketsResponse;
@@ -18,7 +18,7 @@ import software.amazon.awssdk.services.s3.model.ListBucketsResponse;
  * @author Denys Chaykovskiy
  *
  */
-public class S3AtomicBucketListGetter implements AtomicListCommand {
+public class S3AtomicBucketListGetter implements AtomicCommand<List<String>> {
 	
 	/** Info */
 	private static final String INFO = "S3 ATOMIC Bucket Getter";

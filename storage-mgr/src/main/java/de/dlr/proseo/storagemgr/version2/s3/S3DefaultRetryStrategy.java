@@ -13,13 +13,13 @@ import de.dlr.proseo.storagemgr.version2.model.AtomicCommand;
  * @author Denys Chaykovskiy
  *
  */
-public class S3DefaultRetryStrategy {
+public class S3DefaultRetryStrategy<T> {
 	
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3AtomicFileUploader.class);
 	
 	/** Atom command object */
-	private AtomicCommand atomicCommand; 
+	private AtomicCommand<T> atomicCommand; 
 
 	/** Max attempts */
 	private int maxAttempts; 
@@ -33,7 +33,7 @@ public class S3DefaultRetryStrategy {
 	 * @param atomicCommand atomic command
 	 * @param maxAttempts maximal attempts
 	 */
-	public S3DefaultRetryStrategy(AtomicCommand atomicCommand, int maxAttempts, long waitTime) {
+	public S3DefaultRetryStrategy(AtomicCommand<T> atomicCommand, int maxAttempts, long waitTime) {
 		
 		this.atomicCommand = atomicCommand; 
 		this.maxAttempts = maxAttempts; 
@@ -46,7 +46,7 @@ public class S3DefaultRetryStrategy {
 	 * @return string with result of strategy execution
 	 * @throws exception if atom command was not successful maxAttempts times 
 	 */
-	public String execute() throws IOException {
+	public T execute() throws IOException {
 		
 		if (logger.isTraceEnabled())
 			logger.trace(">>> execute() - S3 Retry Strategy({},{})", atomicCommand.getInfo(), maxAttempts);

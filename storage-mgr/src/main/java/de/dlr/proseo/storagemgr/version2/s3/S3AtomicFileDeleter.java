@@ -21,7 +21,7 @@ import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
  * @author Denys Chaykovskiy
  *
  */
-public class S3AtomicFileDeleter implements AtomicCommand {
+public class S3AtomicFileDeleter implements AtomicCommand<String> {
 
 	/** Info */
 	private static final String INFO = "S3 ATOMIC File Deleter";

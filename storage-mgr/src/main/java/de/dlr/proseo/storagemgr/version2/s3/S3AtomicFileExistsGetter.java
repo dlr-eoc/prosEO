@@ -16,7 +16,7 @@ import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
  * @author Denys Chaykovskiy
  *
  */
-public class S3AtomicFileExistsGetter implements AtomicCommand {
+public class S3AtomicFileExistsGetter implements AtomicCommand<String> {
 
 	/** Info */
 	private static final String INFO = "S3 ATOMIC File Exists Getter";

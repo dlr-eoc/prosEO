@@ -23,7 +23,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse;
  * @author Denys Chaykovskiy
  *
  */
-public class S3AtomicFileDownloader implements AtomicCommand {
+public class S3AtomicFileDownloader implements AtomicCommand<String> {
 
 	/** Info */
 	private static final String INFO = "S3 ATOMIC File Downloader";

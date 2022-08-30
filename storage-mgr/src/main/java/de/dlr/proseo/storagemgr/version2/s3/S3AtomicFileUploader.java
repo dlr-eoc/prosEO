@@ -23,7 +23,7 @@ import software.amazon.awssdk.services.s3.waiters.S3Waiter;
  * @author Denys Chaykovskiy
  *
  */
-public class S3AtomicFileUploader implements AtomicCommand {
+public class S3AtomicFileUploader implements AtomicCommand<String> {
 	
 	/** Info */
 	private static final String INFO = "S3 ATOMIC File Uploader";

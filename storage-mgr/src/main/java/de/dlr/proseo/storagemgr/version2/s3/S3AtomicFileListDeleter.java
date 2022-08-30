@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.dlr.proseo.storagemgr.version2.model.AtomicListCommand;
+import de.dlr.proseo.storagemgr.version2.model.AtomicCommand;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
@@ -24,7 +24,7 @@ import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
  * @author Denys Chaykovskiy
  *
  */
-public class S3AtomicFileListDeleter implements AtomicListCommand {
+public class S3AtomicFileListDeleter implements AtomicCommand<List<String>> {
 
 	/** Info */
 	private static final String INFO = "S3 ATOMIC File List Deleter";

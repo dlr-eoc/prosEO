@@ -15,7 +15,7 @@ import software.amazon.awssdk.services.s3.model.DeleteBucketRequest;
  * @author Denys Chaykovskiy
  *
  */
-public class S3AtomicBucketDeleter implements AtomicCommand {
+public class S3AtomicBucketDeleter implements AtomicCommand<String> {
 
 	/** Info */
 	private static final String INFO = "S3 ATOMIC Empty Bucket Deleter";

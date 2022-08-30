@@ -8,7 +8,7 @@ import java.io.IOException;
  * @author Denys Chaykovskiy
  *
  */
-public interface AtomicCommand {
+public interface AtomicCommand <T> {
 	
 	/**
 	 * Executes atomic command
@@ -16,7 +16,7 @@ public interface AtomicCommand {
 	 * @return string with result of command execution
 	 * @throws exception if atomic command was not successful 
 	 */
-	public String execute() throws IOException;
+	public T execute() throws IOException;
 	
 	/**
 	 * Gets Information about atomic command (mostly for logs)
