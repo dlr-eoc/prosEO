@@ -19,6 +19,8 @@ import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.SimplePolicy;
 import de.dlr.proseo.model.Job.JobState;
+import de.dlr.proseo.model.JobStep;
+import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Message;
@@ -188,10 +190,8 @@ public class OrderReleaseThread extends Thread {
 			curJList.add(0);
 			List<Integer> curJSList = new ArrayList<Integer>();
 			curJSList.add(0);
-			List<Job> releasedJobs = new ArrayList<Job>();
 			try {
 				while (curJList.get(0) < jCount) {
-					releasedJobs.clear();
 					try {
 						productionPlanner.acquireThreadSemaphore("releaseOrder");	
 						if (logger.isTraceEnabled()) logger.trace(">>> releaseJobBlock({})", curJList.get(0));
@@ -205,7 +205,6 @@ public class OrderReleaseThread extends Thread {
 								if (jobList.get(curJList.get(0)).getJobState() == JobState.PLANNED) {
 									Job locJob = RepositoryService.getJobRepository().getOne(jobList.get(curJList.get(0)).getId());
 									locAnswer = jobUtil.resume(locJob);
-									releasedJobs.add(locJob);
 									curJSList.set(0, curJSList.get(0) + locJob.getJobSteps().size());
 								}
 								curJList.set(0, curJList.get(0) + 1);		
@@ -227,12 +226,17 @@ public class OrderReleaseThread extends Thread {
 						productionPlanner.acquireThreadSemaphore("releaseOrder2");	
 						@SuppressWarnings("unused")
 						Object answer2 = transactionTemplate.execute((status) -> {
-							for (Job j : releasedJobs) {
+							List<JobStep> jsToRelease = RepositoryService.getJobStepRepository()
+									.findAllByJobStepStateAndOrderIdByDate(JobStepState.READY, orderId);
+							for (JobStep js : jsToRelease) {
 								try {
-									Job locJob = RepositoryService.getJobRepository().getOne(j.getId());
+									Job locJob = RepositoryService.getJobRepository().getOne(js.getJob().getId());
 									KubeConfig kc = productionPlanner.getKubeConfig(locJob.getProcessingFacility().getName());
-									UtilService.getJobStepUtil().checkJobToRun(kc, locJob.getId());
-								} catch (InterruptedException e) {
+									if (!kc.couldJobRun()) {
+										break;
+									}
+									UtilService.getJobStepUtil().checkJobStepToRun(kc, js.getId());
+								} catch (Exception e) {
 									e.printStackTrace();
 								} 
 							}

@@ -105,13 +105,15 @@ public class KubeDispatcher extends Thread {
     				while (!this.isInterrupted()) {
     					// look for job steps to run
     					Messages.KUBEDISPATCHER_CYCLE.log(logger);
-    					try {
-    						productionPlanner.acquireThreadSemaphore("run");
-    						UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, onlyRun, true);
-    						productionPlanner.releaseThreadSemaphore("run");		
-    					} catch (Exception e) {
-    						productionPlanner.releaseThreadSemaphore("run");		
-    						Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+    					if (productionPlanner.getReleaseThreads().size() == 0) {
+    						try {
+    							productionPlanner.acquireThreadSemaphore("run");
+    							UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, onlyRun, true);
+    							productionPlanner.releaseThreadSemaphore("run");		
+    						} catch (Exception e) {
+    							productionPlanner.releaseThreadSemaphore("run");		
+    							Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+    						}
     					}
     					try {
         					Messages.KUBEDISPATCHER_SLEEP.log(logger, wait);

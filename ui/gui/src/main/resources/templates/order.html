@@ -257,7 +257,7 @@
               <thead class="thead-proseo-order" id="jthead" hidden>
                 <tr class="th-row">
                   <th colspan="2"><span th:text="#{jobs}">jobs</span></th>
-                  <th><span th:text="#{state}">state</span>
+                  <th style="width:242px"><span th:text="#{state}">state</span>
                     <select name="jobstates" id="jobstates" multiple="multiple" th:page="${page}" th:pagesize="${pageSize}">
                       <option>COMPLETED</option>
                       <option>NON-COMPLETED</option>
@@ -739,7 +739,7 @@ function retrieveJobs(id, from, to, aJob, aJobStep) {
                     $("#jobscontent").html(res);
                     document.getElementById('jthead').hidden = false;
                     $('#jobstates').multiselect({
-                        buttonWidth : '60%',
+                        buttonWidth : '184px',
                         enableFiltering : false,
                         numberDisplayed : 0,
                         maxHeight : 200,
