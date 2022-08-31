@@ -30,7 +30,7 @@ public interface JobStepRepository extends JpaRepository<JobStep, Long> {
 	@Query("select js from JobStep js where js.job.processingFacility.id = ?1 and js.jobStepState in ?2")
 	public List<JobStep> findAllByProcessingFacilityAndJobStepStateIn(long id, List<JobStepState> jobStepStates);
 
-	@Query("select js from JobStep js where js.job.processingFacility.id = ?1 and js.jobStepState in ?2 order by js.job.startTime")
+	@Query("select js from JobStep js where js.job.processingFacility.id = ?1 and js.jobStepState in ?2 order by js.job.startTime, js.id")
 	public List<JobStep> findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(long id, List<JobStepState> jobStepStates);
 
 	@Query("select js from JobStep js where js.jobStepState = ?1 and js.job.processingOrder.mission.code = ?2 order by js.processingCompletionTime desc")

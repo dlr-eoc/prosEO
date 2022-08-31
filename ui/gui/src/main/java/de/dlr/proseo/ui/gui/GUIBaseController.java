@@ -11,10 +11,14 @@ import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_PROCESSINGMODES_FOUN
 import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_SPACECRAFTS_FOUND;
 import static de.dlr.proseo.ui.backend.UIMessages.uiMsg;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -90,8 +94,28 @@ public class GUIBaseController {
 	 */
 	private List<String> visibilities = null;
 			
+	private String version = null;
+	
 	public GUIBaseController() {
 		// TODO Auto-generated constructor stub
+	}
+
+    @ModelAttribute("proseoversion")
+	public String proseoversion() {
+		if (version == null) {
+			String res = "META-INF/maven/de.dlr.proseo/proseo-ui-gui/pom.properties";
+			Properties props = new Properties();;          
+			ClassLoader loader = Thread.currentThread().getContextClassLoader();   
+			InputStream stream = loader.getResourceAsStream(res);
+			try {
+				props.load(stream);
+				version = props.getProperty("version");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return version;
 	}
 
     /**
