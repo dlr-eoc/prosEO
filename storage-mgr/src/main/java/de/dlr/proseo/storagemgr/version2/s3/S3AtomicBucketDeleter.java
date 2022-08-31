@@ -23,6 +23,9 @@ public class S3AtomicBucketDeleter implements AtomicCommand<String> {
 	/** Completed Info */
 	private static final String COMPLETED = "Bucket DELETED";
 
+	/** Failed Info */
+	private static final String FAILED = "bucket deletion FAILED";
+
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3AtomicBucketDeleter.class);
 
@@ -65,26 +68,35 @@ public class S3AtomicBucketDeleter implements AtomicCommand<String> {
 
 		} catch (Exception e) {
 			if (logger.isTraceEnabled())
-				logger.trace(e.getMessage());
+				logger.trace(getFailedInfo() + e.getMessage());
 			throw new IOException(e);
 		}
 	}
-
+	
 	/**
 	 * Gets Information about atomic command (mostly for logs)
 	 * 
 	 * @return Information about atomic command
 	 */
-	public String getInfo() {
-		return INFO;
+	public String getInfo() {	
+		return INFO + " ";
 	}
-
+	
 	/**
 	 * Gets Information about completed atomic command (mostly for logs)
 	 * 
 	 * @return Information about completed atomic command
 	 */
-	public String getCompletedInfo() {
-		return INFO + ": " + COMPLETED;
+	public String getCompletedInfo() {	
+		return INFO + ": " + COMPLETED + " ";
+	}
+	
+	/**
+	 * Gets Information about failed atomic command (mostly for logs)
+	 * 
+	 * @return Information about failed atomic command
+	 */
+	public String getFailedInfo() {
+		return INFO + ": " + FAILED + " ";
 	}
 }

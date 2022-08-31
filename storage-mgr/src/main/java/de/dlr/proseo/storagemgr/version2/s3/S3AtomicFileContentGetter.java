@@ -25,6 +25,9 @@ public class S3AtomicFileContentGetter implements AtomicCommand<String> {
 	
 	/** Completed Info */
 	private static final String COMPLETED = "file content GOT";
+	
+	/** Failed Info */
+	private static final String FAILED = "file content receiving FAILED";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3AtomicFileContentGetter.class);
@@ -77,7 +80,7 @@ public class S3AtomicFileContentGetter implements AtomicCommand<String> {
 
 		} catch (Exception e) {
 			if (logger.isTraceEnabled())
-				logger.trace(e.getMessage());
+				logger.trace(getFailedInfo() + e.getMessage());
 			throw new IOException(e);
 		}
 	}
@@ -88,7 +91,7 @@ public class S3AtomicFileContentGetter implements AtomicCommand<String> {
 	 * @return Information about atomic command
 	 */
 	public String getInfo() {	
-		return INFO;
+		return INFO + " ";
 	}
 	
 	/**
@@ -97,6 +100,15 @@ public class S3AtomicFileContentGetter implements AtomicCommand<String> {
 	 * @return Information about completed atomic command
 	 */
 	public String getCompletedInfo() {	
-		return INFO + ": " + COMPLETED;
+		return INFO + ": " + COMPLETED + " ";
+	}
+	
+	/**
+	 * Gets Information about failed atomic command (mostly for logs)
+	 * 
+	 * @return Information about failed atomic command
+	 */
+	public String getFailedInfo() {
+		return INFO + ": " + FAILED + " ";
 	}
 }

@@ -60,7 +60,7 @@ public class DefaultRetryStrategy<T> {
 				exception = e;
 
 				if (logger.isTraceEnabled())
-					logger.trace("Attempt " + i + " was not successful: " + atomicCommand.getInfo() + e.getMessage());
+					logger.trace("Attempt " + i + " was not successful: " + atomicCommand.getFailedInfo() + e.getMessage());
 
 				threadSleep();
 			}

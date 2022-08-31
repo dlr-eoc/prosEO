@@ -13,7 +13,7 @@ import software.amazon.awssdk.services.s3.model.Bucket;
 import software.amazon.awssdk.services.s3.model.ListBucketsResponse;
 
 /**
- * S3 Atomic Bucket Getter
+ * S3 Atomic Bucket List Getter
  * 
  * @author Denys Chaykovskiy
  *
@@ -25,6 +25,9 @@ public class S3AtomicBucketListGetter implements AtomicCommand<List<String>> {
 	
 	/** Completed Info */
 	private static final String COMPLETED = "Buckets GOT";
+	
+	/** Failed Info */
+	private static final String FAILED = "bucket list receiving FAILED";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3AtomicBucketListGetter.class);
@@ -66,7 +69,7 @@ public class S3AtomicBucketListGetter implements AtomicCommand<List<String>> {
 
 		} catch (Exception e) {
 			if (logger.isTraceEnabled())
-				logger.trace(e.getMessage());
+				logger.trace(getFailedInfo() + e.getMessage());
 			throw new IOException(e);
 		}
 	}
@@ -77,7 +80,7 @@ public class S3AtomicBucketListGetter implements AtomicCommand<List<String>> {
 	 * @return Information about atomic command
 	 */
 	public String getInfo() {	
-		return INFO;
+		return INFO + " ";
 	}
 	
 	/**
@@ -86,7 +89,16 @@ public class S3AtomicBucketListGetter implements AtomicCommand<List<String>> {
 	 * @return Information about completed atomic command
 	 */
 	public String getCompletedInfo() {	
-		return INFO + ": " + COMPLETED;
+		return INFO + ": " + COMPLETED + " ";
+	}
+	
+	/**
+	 * Gets Information about failed atomic command (mostly for logs)
+	 * 
+	 * @return Information about failed atomic command
+	 */
+	public String getFailedInfo() {
+		return INFO + ": " + FAILED + " ";
 	}
 	
 	/**

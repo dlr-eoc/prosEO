@@ -31,4 +31,11 @@ public interface AtomicCommand <T> {
 	 * @return Information about completed atomic command
 	 */
 	public String getCompletedInfo(); 
+	
+	/**
+	 * Gets Information about failed atomic command (mostly for logs)
+	 * 
+	 * @return Information about failed atomic command
+	 */
+	public String getFailedInfo(); 
 }

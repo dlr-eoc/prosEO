@@ -30,6 +30,10 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 
 	/** Completed Info */
 	private static final String COMPLETED = "file DOWNLOADED";
+	
+	/** Failed Info */
+	private static final String FAILED = "file download FAILED";
+
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3AtomicFileDownloader.class);
@@ -118,30 +122,39 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 
 		} catch (IOException e) {
 			if (logger.isTraceEnabled())
-				logger.trace(e.getMessage());
+				logger.trace(getFailedInfo() + e.getMessage());
 			new File(temporaryTargetPosixFile).delete();
 			throw new IOException(e);
 		}
 	}
-
+	
 	/**
 	 * Gets Information about atomic command (mostly for logs)
 	 * 
 	 * @return Information about atomic command
 	 */
-	public String getInfo() {
-		return INFO;
+	public String getInfo() {	
+		return INFO + " ";
 	}
-
+	
 	/**
 	 * Gets Information about completed atomic command (mostly for logs)
 	 * 
 	 * @return Information about completed atomic command
 	 */
-	public String getCompletedInfo() {
-		return INFO + ": " + COMPLETED;
+	public String getCompletedInfo() {	
+		return INFO + ": " + COMPLETED + " ";
 	}
-
+	
+	/**
+	 * Gets Information about failed atomic command (mostly for logs)
+	 * 
+	 * @return Information about failed atomic command
+	 */
+	public String getFailedInfo() {
+		return INFO + ": " + FAILED + " ";
+	}
+	
 	/**
 	 * Gets file name
 	 * 
