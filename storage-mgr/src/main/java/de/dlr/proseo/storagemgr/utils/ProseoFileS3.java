@@ -317,6 +317,7 @@ public class ProseoFileS3 extends ProseoFile {
 								break; // No exception and a valid result
 							}
 						} catch (Exception e) {
+							proFile.delete();
 							if (retryCount >= maxRetry) {
 								throw e;
 							} // else try again, see below

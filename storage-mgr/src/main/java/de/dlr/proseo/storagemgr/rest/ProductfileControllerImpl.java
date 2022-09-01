@@ -3,6 +3,8 @@ package de.dlr.proseo.storagemgr.rest;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -39,7 +41,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 	private static final String MSG_FILE_COPIED = "(I%d) Requested object %s copied to target path %s";
 	private static final String MSG_TARGET_PATH_MISSING = "(E%d) No target path given";
 	private static final String MSG_FILES_UPDATED = "(I%d) Product file %s uploaded for product ID %d";
-	private static final String MSG_READ_TIMEOUT = "(E%d) Read for file %s timed out after %s seconds";
+	private static final String MSG_READ_TIMEOUT = "(E%d) Read for file %s timed out after %d seconds";
 
 	private static final int MSG_ID_EXCEPTION_THROWN = 4051;
 	private static final int MSG_ID_FILE_COPIED = 4052;
@@ -97,9 +99,11 @@ public class ProductfileControllerImpl implements ProductfileController {
 		ProseoFile targetFile = ProseoFile.fromPathInfo(cfg.getPosixCachePath() + "/" + sourceFile.getRelPathAndFile(), cfg);
 		
 		// Acquire lock on requested product file
+		Instant lockRequestStartTime = Instant.now();
+		Instant lockRequestTimeOut = lockRequestStartTime.plusMillis(cfg.getFileCheckMaxCycles() * cfg.getFileCheckWaitTime());
 		try {
 			int i = 0;
-			for (; i < cfg.getFileCheckMaxCycles(); ++i) {
+			for (; i < cfg.getFileCheckMaxCycles() && Instant.now().isBefore(lockRequestTimeOut); ++i) {
 				synchronized(productLockSet) {
 					if (!productLockSet.contains(sourceFile.getFileName())) {
 						productLockSet.add(sourceFile.getFileName());
@@ -114,7 +118,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 				return new ResponseEntity<>(
 						errorHeaders(StorageLogger.logError(
 								logger, MSG_READ_TIMEOUT, MSG_ID_READ_TIMEOUT, sourceFile.getFileName(),
-								cfg.getFileCheckMaxCycles() * cfg.getFileCheckWaitTime() / 1000)),
+								Duration.between(lockRequestStartTime, Instant.now()).getSeconds())),
 						HttpStatus.SERVICE_UNAVAILABLE);
 			}
 		} catch (InterruptedException e) {
