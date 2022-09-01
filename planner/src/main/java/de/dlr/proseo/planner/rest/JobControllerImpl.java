@@ -461,19 +461,25 @@ public class JobControllerImpl implements JobController {
 	}
 
 	private RestJob getRestJob(long id, Boolean logs) {
-		productionPlanner.acquireThreadSemaphore("getRestJob");
-		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
-		RestJob answer = transactionTemplate.execute((status) -> {
-			RestJob rj = null;
-			Job job = null;
-			Optional<Job> opt = RepositoryService.getJobRepository().findById(id);
-			if (opt.isPresent()) {
-				job = opt.get();
-				rj = RestUtil.createRestJob(job, logs);
-			}
-			return rj;
-		});
-		productionPlanner.releaseThreadSemaphore("getRestJob");
+		RestJob answer = null;
+		try {
+			productionPlanner.acquireThreadSemaphore("getRestJob");
+			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+			answer = transactionTemplate.execute((status) -> {
+				RestJob rj = null;
+				Job job = null;
+				Optional<Job> opt = RepositoryService.getJobRepository().findById(id);
+				if (opt.isPresent()) {
+					job = opt.get();
+					rj = RestUtil.createRestJob(job, logs);
+				}
+				return rj;
+			});
+		} catch (Exception e) {
+			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());	
+		} finally {
+			productionPlanner.releaseThreadSemaphore("getRestJob");
+		}
 		return answer;
 	}
 	/* 

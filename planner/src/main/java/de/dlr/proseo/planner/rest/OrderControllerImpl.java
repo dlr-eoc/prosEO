@@ -611,30 +611,36 @@ public class OrderControllerImpl implements OrderController {
 		if (logger.isTraceEnabled()) logger.trace(">>> findOrder({})", orderId);
 		ProcessingOrder order = null;
 		try {
-			productionPlanner.acquireThreadSemaphore("approveOrder");
+			productionPlanner.acquireThreadSemaphore("findOrder");
 			order = this.findOrderPrim(orderId);
-			productionPlanner.releaseThreadSemaphore("approveOrder");	
+			productionPlanner.releaseThreadSemaphore("findOrder");	
 		} catch (Exception e) {
-			productionPlanner.releaseThreadSemaphore("approveOrder");	
+			productionPlanner.releaseThreadSemaphore("findOrder");	
 			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());	
 		}
 		return order;
 	}
 	
 	private RestOrder getRestOrder(long id) {
-		productionPlanner.acquireThreadSemaphore("getRestOrder");
-		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
-		RestOrder answer = transactionTemplate.execute((status) -> {
-			RestOrder ro = null;
-			ProcessingOrder order = null;
-			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
-			if (orderOpt.isPresent()) {
-				order = orderOpt.get();
-			}
-			ro = RestUtil.createRestOrder(order);
-			return ro;
-		});
-		productionPlanner.releaseThreadSemaphore("getRestOrder");
+		RestOrder answer = null;
+		try {
+			productionPlanner.acquireThreadSemaphore("getRestOrder");
+			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+			answer = transactionTemplate.execute((status) -> {
+				RestOrder ro = null;
+				ProcessingOrder order = null;
+				Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+				if (orderOpt.isPresent()) {
+					order = orderOpt.get();
+				}
+				ro = RestUtil.createRestOrder(order);
+				return ro;
+			});
+		} catch (Exception e) {
+			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());	
+		} finally {
+			productionPlanner.releaseThreadSemaphore("getRestOrder");
+		}
 		return answer;
 	}
 

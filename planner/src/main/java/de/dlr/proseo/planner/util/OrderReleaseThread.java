@@ -134,7 +134,7 @@ public class OrderReleaseThread extends Thread {
 					lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 					return null;
 				});
-				productionPlanner.releaseThreadSemaphore("runRelease1");
+				productionPlanner.releaseThreadSemaphore("runRelease2");
 			}
 		}
 		productionPlanner.getReleaseThreads().remove(this.getName());
@@ -258,21 +258,39 @@ public class OrderReleaseThread extends Thread {
 			}
 			final Messages finalAnswer = releaseAnswer;
 			try {
-			productionPlanner.acquireThreadSemaphore("releaseOrder3");	
-			answer = transactionTemplate.execute((status) -> {
-				ProcessingOrder lambdaOrder = null;
-				Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
-				if (orderOpt.isPresent()) {
-					lambdaOrder = orderOpt.get();
-				}
-				Message lambdaAnswer = new Message(Messages.FALSE);
-				if (finalAnswer.isTrue() || finalAnswer.getCode() == Messages.JOB_ALREADY_COMPLETED.getCode()) {
-					if (lambdaOrder.getJobs().isEmpty()) {
-						lambdaOrder.setOrderState(OrderState.COMPLETED);
-						UtilService.getOrderUtil().checkAutoClose(lambdaOrder);
-						lambdaAnswer = new Message(Messages.ORDER_PRODUCT_EXIST);
+				productionPlanner.acquireThreadSemaphore("releaseOrder3");	
+				answer = transactionTemplate.execute((status) -> {
+					ProcessingOrder lambdaOrder = null;
+					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+					if (orderOpt.isPresent()) {
+						lambdaOrder = orderOpt.get();
+					}
+					Message lambdaAnswer = new Message(Messages.FALSE);
+					if (finalAnswer.isTrue() || finalAnswer.getCode() == Messages.JOB_ALREADY_COMPLETED.getCode()) {
+						if (lambdaOrder.getJobs().isEmpty()) {
+							lambdaOrder.setOrderState(OrderState.COMPLETED);
+							UtilService.getOrderUtil().checkAutoClose(lambdaOrder);
+							lambdaAnswer = new Message(Messages.ORDER_PRODUCT_EXIST);
+						} else {
+							// check whether order is already running
+							Boolean running = false;
+							for (Job j : lambdaOrder.getJobs()) {
+								if (RepositoryService.getJobStepRepository().countJobStepRunningByJobId(j.getId()) > 0) {
+									running = true;
+									break;
+								}
+							}
+							lambdaOrder.setOrderState(OrderState.RELEASED);
+							if (running) {
+								lambdaOrder.setOrderState(OrderState.RUNNING);
+							} 
+							lambdaAnswer = new Message(Messages.ORDER_RELEASED);
+						}
+						lambdaAnswer.log(logger, lambdaOrder.getIdentifier());
+						lambdaOrder.incrementVersion();
+						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 					} else {
-						// check whether order is already running
+						// the order is also released
 						Boolean running = false;
 						for (Job j : lambdaOrder.getJobs()) {
 							if (RepositoryService.getJobStepRepository().countJobStepRunningByJobId(j.getId()) > 0) {
@@ -283,31 +301,13 @@ public class OrderReleaseThread extends Thread {
 						lambdaOrder.setOrderState(OrderState.RELEASED);
 						if (running) {
 							lambdaOrder.setOrderState(OrderState.RUNNING);
-						} 
-						lambdaAnswer = new Message(Messages.ORDER_RELEASED);
-					}
-					lambdaAnswer.log(logger, lambdaOrder.getIdentifier());
-					lambdaOrder.incrementVersion();
-					lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
-				} else {
-					// the order is also released
-					Boolean running = false;
-					for (Job j : lambdaOrder.getJobs()) {
-						if (RepositoryService.getJobStepRepository().countJobStepRunningByJobId(j.getId()) > 0) {
-							running = true;
-							break;
 						}
+						lambdaAnswer = new Message(Messages.ORDER_RELEASED);
+						lambdaAnswer.log(logger, lambdaOrder.getIdentifier(), this.getName());
+						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 					}
-					lambdaOrder.setOrderState(OrderState.RELEASED);
-					if (running) {
-						lambdaOrder.setOrderState(OrderState.RUNNING);
-					}
-					lambdaAnswer = new Message(Messages.ORDER_RELEASED);
-					lambdaAnswer.log(logger, lambdaOrder.getIdentifier(), this.getName());
-					lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
-				}
-				return lambdaAnswer;
-			});
+					return lambdaAnswer;
+				});
 
 			} catch (Exception e) {	
 				throw e;

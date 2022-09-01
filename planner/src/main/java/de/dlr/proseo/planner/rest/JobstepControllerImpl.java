@@ -448,19 +448,25 @@ public class JobstepControllerImpl implements JobstepController {
 	}
 
 	private RestJobStep getRestJobStep(long id, Boolean logs) {
-		productionPlanner.acquireThreadSemaphore("getRestJobStep");
-		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
-		RestJobStep answer = transactionTemplate.execute((status) -> {
-			RestJobStep rj = null;
-			JobStep js = null;
-			Optional<JobStep> opt = RepositoryService.getJobStepRepository().findById(id);
-			if (opt.isPresent()) {
-				js = opt.get();
-				rj = RestUtil.createRestJobStep(js, logs);
-			}
-			return rj;
-		});
-		productionPlanner.releaseThreadSemaphore("getRestJobStep");
+		RestJobStep answer = null;
+		try {
+			productionPlanner.acquireThreadSemaphore("getRestJobStep");
+			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+			answer = transactionTemplate.execute((status) -> {
+				RestJobStep rj = null;
+				JobStep js = null;
+				Optional<JobStep> opt = RepositoryService.getJobStepRepository().findById(id);
+				if (opt.isPresent()) {
+					js = opt.get();
+					rj = RestUtil.createRestJobStep(js, logs);
+				}
+				return rj;
+			});
+		} catch (Exception e) {
+			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());	
+		} finally {
+			productionPlanner.releaseThreadSemaphore("getRestJobStep");
+		}
 		return answer;
 	}
     /**

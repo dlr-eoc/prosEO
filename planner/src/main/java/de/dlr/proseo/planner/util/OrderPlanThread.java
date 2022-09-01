@@ -176,36 +176,42 @@ public class OrderPlanThread extends Thread {
 			} catch (InterruptedException e) {
 				throw e;
 			}
-			productionPlanner.acquireThreadSemaphore("OrderPlanThread.plan");
-			final Message finalAnswer = publishAnswer;
-			answer = transactionTemplate.execute((status) -> {
-				ProcessingOrder lambdaOrder = null;
-				Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
-				if (orderOpt.isPresent()) {
-					lambdaOrder = orderOpt.get();
-				}
-				Message lambdaAnswer = new Message(Messages.FALSE);
-				if (finalAnswer.isTrue()) {
-					if (lambdaOrder.getJobs().isEmpty()) {
-						lambdaOrder.setOrderState(OrderState.COMPLETED);
-						UtilService.getOrderUtil().checkAutoClose(lambdaOrder);
-						lambdaAnswer = new Message(Messages.ORDER_PRODUCT_EXIST);
-					} else {
-						lambdaOrder.setOrderState(OrderState.PLANNED);
-						lambdaAnswer = new Message(Messages.ORDER_PLANNED);
+			try {
+				productionPlanner.acquireThreadSemaphore("OrderPlanThread.plan");
+				final Message finalAnswer = publishAnswer;
+				answer = transactionTemplate.execute((status) -> {
+					ProcessingOrder lambdaOrder = null;
+					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+					if (orderOpt.isPresent()) {
+						lambdaOrder = orderOpt.get();
 					}
-					lambdaAnswer.log(logger, lambdaOrder.getIdentifier());
-					lambdaOrder.incrementVersion();
-					lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
-				} else {
-					lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
-					lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
-					lambdaAnswer = new Message(Messages.ORDER_PLANNING_FAILED);
-					lambdaAnswer.log(logger, lambdaOrder.getIdentifier(), this.getName());
-				}
-				return lambdaAnswer;
-			});
-			productionPlanner.releaseThreadSemaphore("OrderPlanThread.plan");
+					Message lambdaAnswer = new Message(Messages.FALSE);
+					if (finalAnswer.isTrue()) {
+						if (lambdaOrder.getJobs().isEmpty()) {
+							lambdaOrder.setOrderState(OrderState.COMPLETED);
+							UtilService.getOrderUtil().checkAutoClose(lambdaOrder);
+							lambdaAnswer = new Message(Messages.ORDER_PRODUCT_EXIST);
+						} else {
+							lambdaOrder.setOrderState(OrderState.PLANNED);
+							lambdaAnswer = new Message(Messages.ORDER_PLANNED);
+						}
+						lambdaAnswer.log(logger, lambdaOrder.getIdentifier());
+						lambdaOrder.incrementVersion();
+						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
+					} else {
+						lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
+						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
+						lambdaAnswer = new Message(Messages.ORDER_PLANNING_FAILED);
+						lambdaAnswer.log(logger, lambdaOrder.getIdentifier(), this.getName());
+					}
+					return lambdaAnswer;
+				});
+			} catch (Exception e) {
+				answer = new Message(Messages.RUNTIME_EXCEPTION);
+				answer.log(logger, e.getMessage());
+			} finally {
+				productionPlanner.releaseThreadSemaphore("OrderPlanThread.plan");
+			}
 		}
 		
 		return answer;
