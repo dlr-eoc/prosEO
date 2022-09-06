@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.dlr.proseo.storagemgr.version2.StorageManagerException;
 import de.dlr.proseo.storagemgr.version2.model.AtomicCommand;
 import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -80,7 +81,10 @@ public class S3AtomicBucketCreator implements AtomicCommand<String> {
 		} catch (Exception e) {
 			if (logger.isTraceEnabled())
 				logger.trace(getFailedInfo() + e.getMessage());
-			throw new IOException(e);
+						
+			throw new BucketCreationException(new IOException(e), "Bucket:" + bucket);
+			
+			// throw new StorageManagerException(new IOException(e), StorageManagerException.ExceptionType.NO_BUCKET_EXCEPTION, "Bucket:" + bucket);
 		}
 	}
 	

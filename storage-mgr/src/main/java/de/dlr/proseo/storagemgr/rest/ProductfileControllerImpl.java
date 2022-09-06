@@ -20,6 +20,7 @@ import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.cache.FileCache;
 import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
 import de.dlr.proseo.storagemgr.utils.StorageType;
+import de.dlr.proseo.storagemgr.version2.StorageManagerException;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
 import de.dlr.proseo.storagemgr.version2.model.Storage;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
@@ -121,6 +122,16 @@ public class ProductfileControllerImpl implements ProductfileController {
 				return HttpResponses.createOk(restFileInfo);
 
 			} catch (Exception e) {
+				
+				
+				// TODO: remove after presentation (method also)
+				/*
+				if (((StorageManagerException) e).getProseoExceptionId() == StorageManagerException.ExceptionType.NO_BUCKET_EXCEPTION ) {
+					
+					return getNoBucketHttpResponse(); 
+				}
+				*/
+				
 				return HttpResponses.createError("Cannot download file", e);
 			}
 		}
@@ -193,6 +204,11 @@ public class ProductfileControllerImpl implements ProductfileController {
 		} finally {
 			productLockSet.remove(sourceFile.getFileName());
 		}
+	}
+
+	private ResponseEntity<RestFileInfo> getNoBucketHttpResponse() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	/**
