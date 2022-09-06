@@ -49,7 +49,6 @@ import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.enums.ParameterType;
-import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.ClassOutputParameter;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
@@ -642,31 +641,15 @@ public class ProcessingOrderMgr {
 		}
 		if (!modelOrder.getOrderState().equals(changedOrder.getOrderState())) {
 			orderChanged = true;
+
 			// Check whether the requested state change (if any) is allowed and the user is authorized for it
+			if (OrderState.APPROVED.equals(changedOrder.getOrderState()) && !securityService.hasRole(UserRole.ORDER_APPROVER)) {
+				throw new SecurityException(logError(MSG_STATE_TRANSITION_FORBIDDEN, MSG_ID_STATE_TRANSITION_FORBIDDEN,
+						modelOrder.getOrderState().toString(), changedOrder.getOrderState().toString(), securityService.getUser()));			
+			}
+
 			try {
 				modelOrder.setOrderState(changedOrder.getOrderState());
-				
-				if (OrderState.APPROVED.equals(changedOrder.getOrderState()) && !securityService.hasRole(UserRole.ORDER_APPROVER) ||
-					(OrderState.PLANNED.equals(changedOrder.getOrderState()) ||
-						OrderState.RELEASED.equals(changedOrder.getOrderState()) ||
-						OrderState.SUSPENDING.equals(changedOrder.getOrderState()) ||
-						OrderState.FAILED.equals(changedOrder.getOrderState())     ||
-						OrderState.INITIAL.equals(changedOrder.getOrderState())) && !securityService.hasRole(UserRole.ORDER_PLANNER) ||
-					(OrderState.RUNNING.equals(changedOrder.getOrderState())   ||
-						OrderState.COMPLETED.equals(changedOrder.getOrderState())  ||
-						OrderState.FAILED.equals(changedOrder.getOrderState())) && !securityService.hasRole(UserRole.JOBSTEP_PROCESSOR) ||
-					OrderState.CLOSED.equals(changedOrder.getOrderState()) && !securityService.hasRole(UserRole.ORDER_MGR)
-				) {
-					throw new SecurityException(logError(MSG_STATE_TRANSITION_FORBIDDEN, MSG_ID_STATE_TRANSITION_FORBIDDEN,
-							modelOrder.getOrderState().toString(), changedOrder.getOrderState().toString(), securityService.getUser()));			
-				}
-
-				if (OrderState.CLOSED.equals(modelOrder.getOrderState())) {
-					Duration retPeriod = modelOrder.getMission().getOrderRetentionPeriod();
-					if (retPeriod != null && modelOrder.getProductionType() == ProductionType.SYSTEMATIC) {
-						modelOrder.setEvictionTime(Instant.now().plus(retPeriod));
-					} 
-				}
 			} catch (IllegalStateException e) {
 				throw new IllegalArgumentException(logError(MSG_ILLEGAL_STATE_TRANSITION, MSG_ID_ILLEGAL_STATE_TRANSITION,
 						modelOrder.getOrderState().toString(), changedOrder.getOrderState().toString()));
