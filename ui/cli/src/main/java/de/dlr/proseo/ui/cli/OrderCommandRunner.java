@@ -93,6 +93,7 @@ public class OrderCommandRunner {
 	private static final String URI_PATH_ORDER_CANCEL = "/orders/cancel";
 	private static final String URI_PATH_ORDER_RETRY = "/orders/retry";
 	private static final String URI_PATH_ORDER_RESET = "/orders/reset";
+	private static final String URI_PATH_ORDER_CLOSE = "/orders/close";
 	private static final String URI_PATH_JOBS = "/jobs";
 	
 	private static final String ORDERS = "orders";
@@ -1276,7 +1277,8 @@ public class OrderCommandRunner {
 		/* Update order state to "APPROVED" using Order Manager service */
 		restOrder.setOrderState(OrderState.CLOSED.toString());
 		try {
-			restOrder = serviceConnection.patchToService(serviceConfig.getOrderManagerUrl(), URI_PATH_ORDERS + "/" + restOrder.getId(),
+			restOrder = serviceConnection.patchToService(serviceConfig.getProductionPlannerUrl(),
+					URI_PATH_ORDER_CLOSE + "/" + restOrder.getId(),
 					restOrder, RestOrder.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());

@@ -393,7 +393,6 @@ public class ProcessingOrderMgr {
 	
 		// Everything OK, store new order in database
 		modelOrder = RepositoryService.getOrderRepository().save(modelOrder);
-		logOrderState(modelOrder);
 		logInfo(MSG_ORDER_CREATED, MSG_ID_ORDER_CREATED, order.getIdentifier(), order.getMissionCode());
 		
 		return OrderUtil.toRestOrder(modelOrder);
@@ -589,7 +588,10 @@ public class ProcessingOrderMgr {
 	}
 	
 	/**
-	 * Update the order with the given ID with the attribute values of the given Json object. 	 * 
+	 * Update the order with the given ID with the attribute values of the given Json object.
+	 * Orders may only be changed while they are in state "INITIAL". The only state modification
+	 * allowed here is from INITIAL to APPROVED.
+	 * 
 	 * @param id the ID of the product to update
 	 * @param order a Json object containing the modified (and unmodified) attributes
 	 * @return a Json object corresponding to the product after modification (with ID and version for all contained objects)
@@ -620,6 +622,11 @@ public class ProcessingOrderMgr {
 		ProcessingOrder modelOrder = optModelOrder.get();
 		Mission mission = modelOrder.getMission();
 		logger.info("Model order missioncode: " + mission.getCode());
+		
+		// Make sure order is in INITIAL state
+		if (!OrderState.INITIAL.equals(modelOrder.getOrderState()))	{
+			throw new IllegalArgumentException(logError(MSG_ILLEGAL_ORDER_STATE, MSG_ID_ILLEGAL_ORDER_STATE));
+		}
 		
 		// Update modified attributes
 		boolean orderChanged = false;
@@ -1018,11 +1025,7 @@ public class ProcessingOrderMgr {
 		
 		// Check for forbidden order data modifications
 		if (orderChanged && !stateChangeOnly) {
-			if (modelOrder.getOrderState().equals(OrderState.INITIAL) && securityService.hasRole(UserRole.ORDER_MGR)) {
-				// OK, allowed
-			} else if (securityService.hasRole(UserRole.ORDER_MGR)) {
-				throw new IllegalArgumentException(logError(MSG_ILLEGAL_ORDER_STATE, MSG_ID_ILLEGAL_ORDER_STATE));			
-			} else {
+			if (!securityService.hasRole(UserRole.ORDER_MGR)) {
 				throw new SecurityException(logError(MSG_ORDER_MODIFICATION_FORBIDDEN, MSG_ID_ORDER_MODIFICATION_FORBIDDEN,
 						securityService.getUser()));			
 			}
@@ -1148,80 +1151,6 @@ public class ProcessingOrderMgr {
 		logInfo(MSG_ORDER_LIST_RETRIEVED, MSG_ID_ORDER_LIST_RETRIEVED, result.size(), mission, identifier, startTimeFrom, startTimeTo);
 		return result;
 
-	}
-
-	/**
-	 * Write a monitoring entry for an order state change
-	 * 
-	 * @param order the order, for which the state changed
-	 */
-	private void logOrderState(ProcessingOrder order) {
-		if (logger.isTraceEnabled()) logger.trace(">>> logOrderState({})", order.getId());
-		// TODO monitoring
-		/*
-		// No logging, if monitoring host is not set
-		if (null == config.getLogHost()) {
-			return;
-		}
-
-		// calculate necessary data
-		// get all job steps
-		List<JobStep> jobSteps = new ArrayList<JobStep>();
-		for (Job job : order.getJobs()) {
-			jobSteps.addAll(job.getJobSteps());
-		}
-		Integer runningJobSteps = 0;
-		Integer completedJobSteps = 0;
-		Integer failedJobSteps = 0;
-		Integer allJobSteps = jobSteps.size();
-
-		for (JobStep jobStep : jobSteps) {
-			switch (jobStep.getJobStepState()) {
-			case PLANNED:
-				break;
-			case WAITING_INPUT:
-				break;
-			case READY:
-				break;
-			case RUNNING:
-				runningJobSteps++;
-				break;
-			case COMPLETED:
-				completedJobSteps++;
-				break;
-			case FAILED:
-				failedJobSteps++;
-				break;
-			default:
-				break;
-			}
-		}
-
-
-		String token = config.getLogToken();
-		String bucket = config.getLogBucket();
-		String org = "proseo";
-		
-		InfluxDBClient client = InfluxDBClientFactory.create(config.getLogHost(), token.toCharArray());
-
-		// Use a Data Point to write data
-
-		Point point = Point.measurement("progress")
-		.addField("name", order.getIdentifier())
-		.addField("state", order.getOrderState().toString())
-		.addField("failed_job_steps", allJobSteps == 0 ? 0 : failedJobSteps * 100 / allJobSteps)
-		.addField("completed_job_steps", allJobSteps == 0 ? 0 : completedJobSteps * 100 / allJobSteps)
-		.addField("running_job_steps", allJobSteps == 0 ? 0 : runningJobSteps * 100 / allJobSteps)
-		.addField("finished_job_steps", allJobSteps == 0 ? 0 : (failedJobSteps + completedJobSteps) * 100 / allJobSteps)
-		.addField("all_job_steps", allJobSteps)
-		.time(Instant.now(), WritePrecision.NS);
-
-		try (WriteApi writeApi = client.getWriteApi()) {
-			writeApi.writePoint(bucket, org, point);
-		}
-		
-		if (logger.isTraceEnabled()) logger.trace(point.toLineProtocol());
-		*/
 	}
 
 	/**
