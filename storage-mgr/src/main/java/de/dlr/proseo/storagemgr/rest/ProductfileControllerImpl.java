@@ -123,15 +123,6 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 			} catch (Exception e) {
 				
-				
-				// TODO: remove after presentation (method also)
-				/*
-				if (((StorageManagerException) e).getProseoExceptionId() == StorageManagerException.ExceptionType.NO_BUCKET_EXCEPTION ) {
-					
-					return getNoBucketHttpResponse(); 
-				}
-				*/
-				
 				return HttpResponses.createError("Cannot download file", e);
 			}
 		}
