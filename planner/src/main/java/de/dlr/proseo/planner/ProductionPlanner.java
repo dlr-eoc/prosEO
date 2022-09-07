@@ -38,6 +38,7 @@ import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
+import de.dlr.proseo.planner.kubernetes.KubeJobFinish;
 import de.dlr.proseo.planner.util.OrderPlanThread;
 import de.dlr.proseo.planner.util.OrderReleaseThread;
 import de.dlr.proseo.planner.util.UtilService;
@@ -96,11 +97,16 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * password cache for orders (used to set user/pw in wrapper call)
 	 */
 	private Map<Long, Map<String, String>> orderPwCache = new HashMap<>();
-	
+
 	/**
 	 * Current running order planning threads
 	 */
 	private Map<String, OrderPlanThread> planThreads = new HashMap<>();
+
+	/**
+	 * Current running order planning threads
+	 */
+	private Map<String, KubeJobFinish> finishThreads = new HashMap<>();
 
 	/**
 	 * Current running order release threads
@@ -139,6 +145,13 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * Collect at planner start all orders of state PLANNING
 	 */
 	private List<Long> planningOrders = new ArrayList<Long>();
+
+	/**
+	 * @return the finishThreads
+	 */
+	public Map<String, KubeJobFinish> getFinishThreads() {
+		return finishThreads;
+	}
 
 	/**
 	 * @return the suspendingOrders

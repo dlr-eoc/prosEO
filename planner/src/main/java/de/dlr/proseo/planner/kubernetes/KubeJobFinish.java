@@ -132,6 +132,7 @@ public class KubeJobFinish extends Thread {
     			catch(InterruptedException e) {
     			}
     		}
+			planner.getFinishThreads().remove(this.jobName);
     	}
     }  
 

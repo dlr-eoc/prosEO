@@ -160,8 +160,10 @@ public class OrderService {
 		if (states != null && !states.isEmpty()) {
 			String [] pcs = states.split(":");
 			for (String pc : pcs) {
-				uri += divider + "state=" + pc;
-				divider ="&";
+				if (!pc.equalsIgnoreCase("ALL")) {
+					uri += divider + "state=" + pc;
+					divider ="&";
+				}
 			}
 		}
 		uri += divider + "orderBy=startTime ASC";

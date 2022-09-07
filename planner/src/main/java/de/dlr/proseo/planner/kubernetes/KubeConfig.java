@@ -523,7 +523,7 @@ public class KubeConfig {
 		for (V1Job aJob : k8sJobList.getItems()) {
 			String kName = aJob.getMetadata().getName();
 			KubeJob kj = kubeJobList.get(kName);
-			if (kj != null) {
+			if (kj != null && !getProductionPlanner().getFinishThreads().containsKey(kName)) {
 				if (kj.updateFinishInfoAndDelete(kName)) {
 
 				}	

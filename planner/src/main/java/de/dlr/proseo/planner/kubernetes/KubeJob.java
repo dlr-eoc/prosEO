@@ -629,6 +629,7 @@ public class KubeJob {
 				aKubeConfig.getProductionPlanner().releaseThreadSemaphore("finish");					
 			}
 			KubeJobFinish toFini = new KubeJobFinish(this, aKubeConfig.getProductionPlanner(), jobname);
+			aKubeConfig.getProductionPlanner().getFinishThreads().put(jobname, toFini);
 			toFini.start();
 		}
 	}	
