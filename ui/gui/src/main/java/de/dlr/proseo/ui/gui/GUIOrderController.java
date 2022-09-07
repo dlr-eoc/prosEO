@@ -659,9 +659,9 @@ public class GUIOrderController extends GUIBaseController {
 			from = fromIndex;
 		} else {
 			from = (long) 0;
-			if (jobId != null || jobStepId != null) {
-				calcPage = true;
-			}
+		}
+		if (jobId != null || jobStepId != null) {
+			calcPage = true;
 		}
 		Long count = countJobs(id, states);
 		if (toIndex != null && from != null && toIndex > from) {
