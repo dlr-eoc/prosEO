@@ -51,10 +51,17 @@ public class ClassOutputParameter extends PersistentObject {
 
 	@Override
 	public boolean equals(Object obj) {
+		// Object identity
 		if (this == obj)
 			return true;
+		
+		// Same database object
+		if (super.equals(obj))
+			return true;
+		
 		if (!(obj instanceof ClassOutputParameter))
 			return false;
+		
 		ClassOutputParameter other = (ClassOutputParameter) obj;
 		return Objects.equals(outputParameters, other.outputParameters);
 	}

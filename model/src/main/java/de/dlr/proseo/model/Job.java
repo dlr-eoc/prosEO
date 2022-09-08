@@ -414,10 +414,14 @@ public class Job extends PersistentObject {
 
 	@Override
 	public boolean equals(Object obj) {
+		// Object identity
 		if (this == obj)
 			return true;
+		
+		// Same database object
 		if (super.equals(obj))
 			return true;
+		
 		if (!(obj instanceof Job))
 			return false;
 		Job other = (Job) obj;

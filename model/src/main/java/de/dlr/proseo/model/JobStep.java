@@ -410,10 +410,14 @@ public class JobStep extends PersistentObject {
 
 	@Override
 	public boolean equals(Object obj) {
+		// Object identity
 		if (this == obj)
 			return true;
+		
+		// Same database object
 		if (super.equals(obj))
 			return true;
+		
 		if (!(obj instanceof JobStep))
 			return false;
 		JobStep other = (JobStep) obj;

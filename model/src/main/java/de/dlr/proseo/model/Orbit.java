@@ -127,10 +127,14 @@ public class Orbit extends PersistentObject {
 
 	@Override
 	public boolean equals(Object obj) {
+		// Object identity
 		if (this == obj)
 			return true;
-		if (!super.equals(obj))
-			return false;
+		
+		// Same database object
+		if (super.equals(obj))
+			return true;
+		
 		if (!(obj instanceof Orbit))
 			return false;
 		Orbit other = (Orbit) obj;

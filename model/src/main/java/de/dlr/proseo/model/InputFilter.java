@@ -54,8 +54,14 @@ public class InputFilter extends PersistentObject {
 
 	@Override
 	public boolean equals(Object obj) {
+		// Object identity
 		if (this == obj)
 			return true;
+		
+		// Same database object
+		if (super.equals(obj))
+			return true;
+		
 		if (!(obj instanceof InputFilter))
 			return false;
 		InputFilter other = (InputFilter) obj;

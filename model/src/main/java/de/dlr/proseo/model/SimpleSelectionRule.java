@@ -664,10 +664,14 @@ public class SimpleSelectionRule extends PersistentObject {
 	 */
 	@Override
 	public boolean equals(Object obj) {
+		// Object identity
 		if (this == obj)
 			return true;
-		if (!super.equals(obj))
-			return false;
+		
+		// Same database object
+		if (super.equals(obj))
+			return true;
+		
 		if (!(obj instanceof SimpleSelectionRule))
 			return false;
 		SimpleSelectionRule other = (SimpleSelectionRule) obj;

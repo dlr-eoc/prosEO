@@ -150,10 +150,14 @@ public class ConfiguredProcessor extends PersistentObject {
 
 	@Override
 	public boolean equals(Object obj) {
+		// Object identity
 		if (this == obj)
 			return true;
+		
+		// Same database object
 		if (super.equals(obj))
 			return true;
+		
 		if (!(obj instanceof ConfiguredProcessor))
 			return false;
 		ConfiguredProcessor other = (ConfiguredProcessor) obj;
