@@ -659,9 +659,9 @@ public class GUIOrderController extends GUIBaseController {
 			from = fromIndex;
 		} else {
 			from = (long) 0;
-			if (jobId != null || jobStepId != null) {
-				calcPage = true;
-			}
+		}
+		if (jobId != null || jobStepId != null) {
+			calcPage = true;
 		}
 		Long count = countJobs(id, states);
 		if (toIndex != null && from != null && toIndex > from) {
@@ -980,8 +980,10 @@ public class GUIOrderController extends GUIBaseController {
 		if (states != null && !states.isEmpty()) {
 			String [] pcs = states.split(":");
 			for (String pc : pcs) {
-				uri += divider + "state=" + pc;
-				divider ="&";
+				if (!pc.equalsIgnoreCase("ALL")) {
+					uri += divider + "state=" + pc;
+					divider ="&";
+				}
 			}
 		}
 		Long result = (long) -1;

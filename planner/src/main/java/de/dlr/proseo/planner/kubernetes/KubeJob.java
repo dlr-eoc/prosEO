@@ -516,6 +516,9 @@ public class KubeJob {
 			RepositoryService.getJobStepRepository().save(jobStep);
 		} catch (ApiException e1) {
 			logger.error("Kubernetes API exception creating job for job step {}: {}", jobStep.getId(), e1.getMessage());
+			logger.error("  Status code: " + e1.getCode());
+			logger.error("  Reason: " + e1.getResponseBody());
+			logger.error("  Response headers: " + e1.getResponseHeaders());
 			throw e1;
 		} catch (Exception e) {
 			logger.error("General exception creating job for job step {}: {}", jobStep.getId(), e.getMessage());
@@ -629,6 +632,7 @@ public class KubeJob {
 				aKubeConfig.getProductionPlanner().releaseThreadSemaphore("finish");					
 			}
 			KubeJobFinish toFini = new KubeJobFinish(this, aKubeConfig.getProductionPlanner(), jobname);
+			aKubeConfig.getProductionPlanner().getFinishThreads().put(jobname, toFini);
 			toFini.start();
 		}
 	}	

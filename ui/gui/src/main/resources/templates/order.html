@@ -257,8 +257,9 @@
               <thead class="thead-proseo-order" id="jthead" hidden>
                 <tr class="th-row">
                   <th colspan="2"><span th:text="#{jobs}">jobs</span></th>
-                  <th style="width:242px"><span th:text="#{state}">state</span>
-                    <select name="jobstates" id="jobstates" multiple="multiple" th:page="${page}" th:pagesize="${pageSize}">
+                  <th ><span th:text="#{state}">state</span>
+                    <select name="jobstates" id="jobstates" th:page="${page}" th:pagesize="${pageSize}" size="1">
+                      <option>ALL</option>
                       <option>COMPLETED</option>
                       <option>NON-COMPLETED</option>
                     </select></th>
@@ -698,6 +699,27 @@ function retrieveDataPage(from, to) {
     retrieveJobs(myid, from, to, null);
 }
 
+function setJobState() {
+	var jobstateMenu =  document.getElementById('jobstates');
+    var loc = location.search.slice(0);
+    var search = location.search.slice(1);
+    var paramString = search;
+    search = removeURLKeyPrim('jobstates', search);
+    var jsval = jobstateMenu.options[jobstateMenu.selectedIndex].value;
+    
+    var searchTmp = addURLParamValuePrim('jobstates', jsval, search);
+    if (searchTmp != null) {search = searchTmp};
+    if (search != loc) {
+        if (search == '') {
+          search = '?';
+        }
+        history.pushState({}, null, search);
+    }
+    var from = getFromTo('x');
+    var to = getFromTo('y');
+    retrieveDataPage(0, to - from);
+}
+
 function retrieveJobs(id, from, to, aJob, aJobStep) {
     if ([[${hasroleorderreader}]]) {
         showLoader();
@@ -738,35 +760,22 @@ function retrieveJobs(id, from, to, aJob, aJobStep) {
                 success : function(res, textStatus, jqXHR) {
                     $("#jobscontent").html(res);
                     document.getElementById('jthead').hidden = false;
-                    $('#jobstates').multiselect({
-                        buttonWidth : '184px',
-                        enableFiltering : false,
-                        numberDisplayed : 0,
-                        maxHeight : 200,
-                        enableCaseInsensitiveFiltering : false,
-                        nonSelectedText : '',            
-                        onDropdownHidden: function(event) {
-                            var loc = location.search.slice(0);
-                            var search = location.search.slice(1);
-                            var paramString = search;
-                            search = removeURLKeyPrim('jobstates', search);
-                            var searchTmp = addURLParamValuesPrim('jobstates', $('#jobstates').val(), search);
-                            if (searchTmp != null) {search = searchTmp};
-                            if (search != loc) {
-                                if (search == '') {
-                                  search = '?';
-                                }
-                                history.pushState({}, null, search);
-                            }
-                            var from = getFromTo('x');
-                            var to = getFromTo('y');
-                            retrieveDataPage(0, to - from);
-                        }
-                    });
-                    jobstates = getURLParams('jobstates');
-                    if (jobstates != null && jobstates.length > 0) {
-                        $('#jobstates').multiselect('select', jobstates);
-                      }
+                    document.getElementById('jobstates').addEventListener('change', setJobState);
+
+                    jobstates = getURLParam('jobstates');
+                    if (jobstates != null) {
+                    	var menu = document.getElementById('jobstates');
+                    	if (jobstates == 'COMPLETED') {
+                    		menu.options[1].selected = true;
+                    		menu.selectedIndex = 1;
+                    	} else if (jobstates == 'NON-COMPLETED') {
+                    		menu.options[2].selected = true;
+                    		menu.selectedIndex = 2;
+                      } else {
+                    	  menu.options[0].selected = true;
+                    	  menu.selectedIndex = 0;
+                       }
+                    }
                     hideLoader();
                     var eleshow = document.getElementById("jobsshow");
                     var elehide = document.getElementById("jobshide");
