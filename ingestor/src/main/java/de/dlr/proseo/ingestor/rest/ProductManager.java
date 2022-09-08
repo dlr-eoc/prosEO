@@ -360,7 +360,10 @@ public class ProductManager {
 			throw new NoResultException(logError(MSG_PRODUCT_LIST_EMPTY, MSG_ID_PRODUCT_LIST_EMPTY));
 		}
 		
-		logInfo(MSG_PRODUCT_LIST_RETRIEVED, MSG_ID_PRODUCT_LIST_RETRIEVED, result.size(), mission, productClass, startTimeFrom, startTimeTo);
+		// TODO: Restrict number of products retrieved (like in PRIP API)
+		
+		logInfo(MSG_PRODUCT_LIST_RETRIEVED, MSG_ID_PRODUCT_LIST_RETRIEVED, result.size(), mission,
+				Arrays.asList(productClass).toString(), startTimeFrom, startTimeTo);
 		
 		return result;
 	}

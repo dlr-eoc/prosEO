@@ -1,4 +1,4 @@
-FROM localhost:5000/proseo-sample-processor:0.9.2-SNAPSHOT
+FROM localhost:5000/proseo-sample-processor:0.9.2
 WORKDIR /usr/share/proseo-sample-wrapper
 
 ADD target/proseo-sample-wrapper-jar-with-dependencies.jar proseo-sample-wrapper.jar
