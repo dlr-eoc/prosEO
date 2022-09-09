@@ -7,12 +7,19 @@
 
 package de.dlr.proseo.planner.util;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.Job;
@@ -51,6 +58,10 @@ public class OrderReleaseThread extends Thread {
 	 * The processing order to plan.
 	 */
 	private ProcessingOrder order;
+	
+	/** JPA entity manager */
+	@PersistenceContext
+	private EntityManager em;
 
 	/**
 	 * Create new thread
@@ -60,9 +71,10 @@ public class OrderReleaseThread extends Thread {
 	 * @param order The processing order to plan
 	 * @param name The thread name
 	 */
-	public OrderReleaseThread(ProductionPlanner productionPlanner, JobUtil jobUtil, ProcessingOrder order, String name) {
+	public OrderReleaseThread(ProductionPlanner productionPlanner, EntityManager em, JobUtil jobUtil, ProcessingOrder order, String name) {
 		super(name);
 		this.productionPlanner = productionPlanner;
+		this.em = em;
 		this.jobUtil = jobUtil;
 		this.order = order;
 	}
@@ -226,19 +238,42 @@ public class OrderReleaseThread extends Thread {
 						productionPlanner.acquireThreadSemaphore("releaseOrder2");	
 						@SuppressWarnings("unused")
 						Object answer2 = transactionTemplate.execute((status) -> {
-							List<JobStep> jsToRelease = RepositoryService.getJobStepRepository()
-									.findAllByJobStepStateAndOrderIdByDate(JobStepState.READY, orderId);
-							for (JobStep js : jsToRelease) {
-								try {
-									Job locJob = RepositoryService.getJobRepository().getOne(js.getJob().getId());
-									KubeConfig kc = productionPlanner.getKubeConfig(locJob.getProcessingFacility().getName());
-									if (!kc.couldJobRun()) {
-										break;
+
+							String jpqlQuery = null;
+							jpqlQuery = "select id from JobStep js";
+							jpqlQuery += " where js.job.processingOrder.id = :orderId";
+							jpqlQuery += " and js.jobStepState = :state";
+							jpqlQuery += " order by js.job.startTime, js.id";
+
+							Query query = em.createQuery(jpqlQuery);
+
+							query.setParameter("state", JobStepState.READY);
+							query.setParameter("orderId", orderId);
+							
+							List<?> jsToRelease = query.getResultList();
+
+							for (Object o : jsToRelease) {
+								if (o instanceof Long) {
+									Long jsId = (Long)o;
+
+									jpqlQuery = "select js.job.processingFacility.name from JobStep js";
+									jpqlQuery += " where js.id = :jsId";
+									query = em.createQuery(jpqlQuery);
+									query.setParameter("jsId", jsId);
+									Object oName = query.getSingleResult();
+									if (oName instanceof String) {
+										String name = (String)oName;
+										try {
+											KubeConfig kc = productionPlanner.getKubeConfig(name);
+											if (!kc.couldJobRun()) {
+												break;
+											}
+											UtilService.getJobStepUtil().checkJobStepToRun(kc, jsId);
+										} catch (Exception e) {
+											e.printStackTrace();
+										} 
 									}
-									UtilService.getJobStepUtil().checkJobStepToRun(kc, js.getId());
-								} catch (Exception e) {
-									e.printStackTrace();
-								} 
+								}
 							}
 							return null;					
 						});

@@ -534,7 +534,7 @@ public class OrderUtil {
 						if (ordery != null) {
 							String threadName = ProductionPlanner.RELEASE_THREAD_PREFIX + ordery.getId();
 							if (!productionPlanner.getReleaseThreads().containsKey(threadName)) {
-								OrderReleaseThread rt = new OrderReleaseThread(productionPlanner, jobUtil, ordery, threadName);
+								OrderReleaseThread rt = new OrderReleaseThread(productionPlanner, em, jobUtil, ordery, threadName);
 								productionPlanner.getReleaseThreads().put(threadName, rt);
 								rt.start();
 							}
