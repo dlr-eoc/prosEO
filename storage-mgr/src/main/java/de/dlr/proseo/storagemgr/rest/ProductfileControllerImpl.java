@@ -20,7 +20,9 @@ import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.cache.FileCache;
 import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
 import de.dlr.proseo.storagemgr.utils.StorageType;
+import de.dlr.proseo.storagemgr.version2.StorageFileLocker;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
+import de.dlr.proseo.storagemgr.version2.Exceptions.FileLockedAfterMaxCyclesException;
 import de.dlr.proseo.storagemgr.version2.model.Storage;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.utils.ProseoFile;
@@ -94,14 +96,18 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRestFileInfoByPathInfo({})", pathInfo);
-	
-		// pathInfo is absolute path s3://bucket/.. or /storagePath/.. DOWNLOAD Storage -> Cache
+
+		// pathInfo is absolute path s3://bucket/.. or /storagePath/.. DOWNLOAD Storage
+		// -> Cache
 		if (storageProvider.isVersion2()) {
+
+			// TODO: read from cfg
+			StorageFileLocker fileLocker = new StorageFileLocker(pathInfo, 500, 600);
 
 			try {
 				// relative path depends on path, not on actual storage
-				String relativePath = storageProvider.getRelativePath(pathInfo); 
-				
+				String relativePath = storageProvider.getRelativePath(pathInfo);
+
 				StorageFile sourceFile = storageProvider.getStorageFile(relativePath);
 				StorageFile targetFile = storageProvider.getCacheFile(sourceFile.getRelativePath());
 
@@ -109,20 +115,35 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 				if (!cache.containsKey(targetFile.getFullPath())) {
 
+					fileLocker.lock();
+
 					storageProvider.getStorage().downloadFile(sourceFile, targetFile);
 					cache.put(targetFile.getFullPath());
 				}
 
 				RestFileInfo restFileInfo = ControllerUtils.convertToRestFileInfo(targetFile,
 						storageProvider.getCacheFileSize(sourceFile.getRelativePath()));
-				
+
 				System.out.println("Downloaded file: " + targetFile.getFullPath());
-				
+
 				return HttpResponses.createOk(restFileInfo);
 
-			} catch (Exception e) {
+			} catch (FileLockedAfterMaxCyclesException e) {
+
+				return getServiceUnavailableHttpResponse(e);
+
+			} catch (InterruptedException e) {
+
+				return getInternalServerErrorHttpResponse(e);
 				
+			} catch (IOException e) {
+
 				return HttpResponses.createError("Cannot download file", e);
+			}
+
+			finally {
+				
+				fileLocker.unlock();
 			}
 		}
 
@@ -196,9 +217,20 @@ public class ProductfileControllerImpl implements ProductfileController {
 		}
 	}
 
-	private ResponseEntity<RestFileInfo> getNoBucketHttpResponse() {
-		// TODO Auto-generated method stub
-		return null;
+	private ResponseEntity<RestFileInfo> getInternalServerErrorHttpResponse(InterruptedException e) {
+		
+		return new ResponseEntity<>(errorHeaders(StorageLogger.logError(logger, MSG_EXCEPTION_THROWN,
+				MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage())),
+				HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+	private ResponseEntity<RestFileInfo> getServiceUnavailableHttpResponse(FileLockedAfterMaxCyclesException e) {
+		
+		return new ResponseEntity<>(
+				errorHeaders(StorageLogger.logError(logger, MSG_READ_TIMEOUT, MSG_ID_READ_TIMEOUT,
+						e.getLocalizedMessage(),
+						cfg.getFileCheckMaxCycles() * cfg.getFileCheckWaitTime() / 1000)),
+				HttpStatus.SERVICE_UNAVAILABLE);
 	}
 
 	/**
