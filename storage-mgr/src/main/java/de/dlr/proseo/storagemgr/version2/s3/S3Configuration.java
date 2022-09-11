@@ -29,12 +29,6 @@ public class S3Configuration {
 	/** source path */
 	private String sourcePath;
 
-	/** max upload attempts */
-	private int maxUploadAttempts;
-
-	/** max download attempts */
-	private int maxDownloadAttempts;
-
 	/** max request attempts */
 	private int maxRequestAttempts;
 	
@@ -122,22 +116,6 @@ public class S3Configuration {
 
 	public void setSourcePath(String sourcePath) {
 		this.sourcePath = sourcePath;
-	}
-
-	public int getMaxUploadAttempts() {
-		return maxUploadAttempts;
-	}
-
-	public void setMaxUploadAttempts(int maxUploadAttempts) {
-		this.maxUploadAttempts = maxUploadAttempts;
-	}
-
-	public int getMaxDownloadAttempts() {
-		return maxDownloadAttempts;
-	}
-
-	public void setMaxDownloadAttempts(int maxDownloadAttempts) {
-		this.maxDownloadAttempts = maxDownloadAttempts;
 	}
 
 	public int getMaxRequestAttempts() {
