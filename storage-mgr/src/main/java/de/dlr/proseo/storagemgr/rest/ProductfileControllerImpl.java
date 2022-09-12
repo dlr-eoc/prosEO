@@ -72,19 +72,6 @@ public class ProductfileControllerImpl implements ProductfileController {
 	private StorageProvider storageProvider;
 
 	/**
-	 * Create an HTTP "Warning" header with the given text message
-	 * 
-	 * @param message the message text
-	 * @return an HttpHeaders object with a warning message
-	 */
-	private HttpHeaders errorHeaders(String message) {
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING,
-				HTTP_MSG_PREFIX + (null == message ? "null" : message.replaceAll("\n", " ")));
-		return responseHeaders;
-	}
-
-	/**
 	 * Copy source file named pathInfo to file cache used by processors. The local
 	 * file name is: posixWorkerMountPoint + relative source file path
 	 * 
@@ -135,14 +122,14 @@ public class ProductfileControllerImpl implements ProductfileController {
 			} catch (InterruptedException e) {
 
 				return getInternalServerErrorHttpResponse(e);
-				
+
 			} catch (IOException e) {
 
 				return HttpResponses.createError("Cannot download file", e);
 			}
 
 			finally {
-				
+
 				fileLocker.unlock();
 			}
 		}
@@ -216,23 +203,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 			productLockSet.remove(sourceFile.getFileName());
 		}
 	}
-
-	private ResponseEntity<RestFileInfo> getInternalServerErrorHttpResponse(InterruptedException e) {
-		
-		return new ResponseEntity<>(errorHeaders(StorageLogger.logError(logger, MSG_EXCEPTION_THROWN,
-				MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage())),
-				HttpStatus.INTERNAL_SERVER_ERROR);
-	}
-
-	private ResponseEntity<RestFileInfo> getServiceUnavailableHttpResponse(FileLockedAfterMaxCyclesException e) {
-		
-		return new ResponseEntity<>(
-				errorHeaders(StorageLogger.logError(logger, MSG_READ_TIMEOUT, MSG_ID_READ_TIMEOUT,
-						e.getLocalizedMessage(),
-						cfg.getFileCheckMaxCycles() * cfg.getFileCheckWaitTime() / 1000)),
-				HttpStatus.SERVICE_UNAVAILABLE);
-	}
-
+	
 	/**
 	 * Copy local file named pathInfo to storage manager. The target file path is:
 	 * default mount point + productId + relative source file path
@@ -240,6 +211,9 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 * @param pathInfo  Source file name
 	 * @param productId Product id
 	 * @return Target file name
+	 */
+	/**
+	 *
 	 */
 	@Override
 	public ResponseEntity<RestFileInfo> updateProductfiles(String pathInfo, Long productId, Long fileSize) {
@@ -331,5 +305,46 @@ public class ProductfileControllerImpl implements ProductfileController {
 			}
 		}
 		return new ResponseEntity<RestFileInfo>(response, HttpStatus.NOT_FOUND);
+	}
+
+	/**
+	 * Gets internal server error http response
+	 * 
+	 * @param e Interrupted Exception
+	 * @return internal server error http response
+	 */
+	private ResponseEntity<RestFileInfo> getInternalServerErrorHttpResponse(InterruptedException e) {
+
+		String errorString = StorageLogger.logError(logger, MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
+				e.getClass().toString() + ": " + e.getMessage());
+
+		return new ResponseEntity<>(errorHeaders(errorString), HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+	/**
+	 * Gets service unavailable http response
+	 * 
+	 * @param e File locked after max cycles exception
+	 * @return service unavailable http response
+	 */
+	private ResponseEntity<RestFileInfo> getServiceUnavailableHttpResponse(FileLockedAfterMaxCyclesException e) {
+
+		String errorString = StorageLogger.logError(logger, MSG_READ_TIMEOUT, MSG_ID_READ_TIMEOUT,
+				e.getLocalizedMessage(), cfg.getFileCheckMaxCycles() * cfg.getFileCheckWaitTime() / 1000);
+
+		return new ResponseEntity<>(errorHeaders(errorString), HttpStatus.SERVICE_UNAVAILABLE);
+	}	
+
+	/**
+	 * Create an HTTP "Warning" header with the given text message
+	 * 
+	 * @param message the message text
+	 * @return an HttpHeaders object with a warning message
+	 */
+	private HttpHeaders errorHeaders(String message) {
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.set(HTTP_HEADER_WARNING,
+				HTTP_MSG_PREFIX + (null == message ? "null" : message.replaceAll("\n", " ")));
+		return responseHeaders;
 	}
 }
