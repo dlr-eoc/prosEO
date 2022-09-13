@@ -319,7 +319,7 @@ public class ProductFile extends PersistentObject {
 		if (!(obj instanceof ProductFile))
 			return false;
 		ProductFile other = (ProductFile) obj;
-		return Objects.equals(processingFacility, other.processingFacility) && Objects.equals(product, other.product);
+		return Objects.equals(processingFacility, other.getProcessingFacility()) && Objects.equals(product, other.getProduct());
 	}
 
 	@Override

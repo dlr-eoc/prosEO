@@ -675,9 +675,9 @@ public class SimpleSelectionRule extends PersistentObject {
 		if (!(obj instanceof SimpleSelectionRule))
 			return false;
 		SimpleSelectionRule other = (SimpleSelectionRule) obj;
-		return Objects.equals(sourceProductClass, other.sourceProductClass)
-				&& Objects.equals(targetProductClass, other.targetProductClass)
-				&& Objects.equals(mode, other.mode);
+		return Objects.equals(sourceProductClass, other.getSourceProductClass())
+				&& Objects.equals(targetProductClass, other.getTargetProductClass())
+				&& Objects.equals(mode, other.getMode());
 	}
 
 }

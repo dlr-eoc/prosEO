@@ -10,6 +10,7 @@ import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
+import java.util.Objects;
 
 import javax.persistence.Basic;
 import javax.persistence.Embeddable;
@@ -296,12 +297,7 @@ public class Parameter {
 		Parameter other = (Parameter) obj;
 		if (parameterType != other.parameterType)
 			return false;
-		if (parameterValue == null) {
-			if (other.parameterValue != null)
-				return false;
-		} else if (!parameterValue.equals(other.parameterValue))
-			return false;
-		return true;
+		return Objects.equals(this.getParameterValue(), other.getParameterValue());
 	}
 
 	@Override

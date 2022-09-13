@@ -355,7 +355,7 @@ public class ProductClass extends PersistentObject {
 		if (!(obj instanceof ProductClass))
 			return false;
 		ProductClass other = (ProductClass) obj;
-		return Objects.equals(mission, other.mission) && Objects.equals(productType, other.productType);
+		return Objects.equals(productType, other.getProductType()) && Objects.equals(mission, other.getMission());
 	}
 
 	@Override

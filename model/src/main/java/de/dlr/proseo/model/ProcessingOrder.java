@@ -827,7 +827,7 @@ public class ProcessingOrder extends PersistentObject {
 		if (!(obj instanceof ProcessingOrder))
 			return false;
 		ProcessingOrder other = (ProcessingOrder) obj;
-		return Objects.equals(identifier, other.identifier) && Objects.equals(mission, other.mission);
+		return Objects.equals(identifier, other.getIdentifier()) && Objects.equals(mission, other.getMission());
 	}
 
 	@Override

@@ -1044,7 +1044,7 @@ public class SimplePolicy extends PersistentObject {
 		if (!(obj instanceof SimplePolicy))
 			return false;
 		SimplePolicy other = (SimplePolicy) obj;
-		return Objects.equals(deltaTimes, other.deltaTimes) && policyType == other.policyType;
+		return Objects.equals(deltaTimes, other.getDeltaTimes()) && policyType == other.getPolicyType();
 	}
 
 }

@@ -241,8 +241,9 @@ public class Task extends PersistentObject {
 		if (!(obj instanceof Task))
 			return false;
 		Task other = (Task) obj;
-		return Objects.equals(processor, other.processor) && Objects.equals(taskName, other.taskName)
-				&& Objects.equals(taskVersion, other.taskVersion);
+		return Objects.equals(taskName, other.getTaskName())
+				&& Objects.equals(taskVersion, other.getTaskVersion())
+				&& Objects.equals(processor, other.getProcessor());
 	}
 
 	@Override
