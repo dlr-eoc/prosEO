@@ -331,7 +331,8 @@ public class ProductManager {
 	public List<RestProduct> getProducts(String mission, String[] productClass, String mode, String fileClass, String quality, 
 			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo,
 			Long recordFrom, Long recordTo, Long jobStepId, String[] orderBy) throws NoResultException, SecurityException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, productClass,
+		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, 
+				(null == productClass ? "null" : Arrays.asList(productClass).toString()),
 				mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo, recordFrom, recordTo, orderBy);
 		
 		if (null == mission) {
@@ -363,7 +364,7 @@ public class ProductManager {
 		// TODO: Restrict number of products retrieved (like in PRIP API)
 		
 		logInfo(MSG_PRODUCT_LIST_RETRIEVED, MSG_ID_PRODUCT_LIST_RETRIEVED, result.size(), mission,
-				Arrays.asList(productClass).toString(), startTimeFrom, startTimeTo);
+				(null == productClass ? "null" : Arrays.asList(productClass).toString()), startTimeFrom, startTimeTo);
 		
 		return result;
 	}
