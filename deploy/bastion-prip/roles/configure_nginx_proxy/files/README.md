@@ -3,6 +3,6 @@ Populate this directory with valid server certificates named `servercert.pem` an
 openssl req -x509 -newkey rsa:4096 -keyout serverkey.pem -out servercert.pem -days 3650 -nodes
 ```
 
-
-(Note that for a deployment with LetsEncrypt these are only dummies, which will be replaced by the Certbot.
-For other deployments this should be valid server certificates.)
+Note that for a deployment with LetsEncrypt these are only dummies, which will be replaced by the Certbot.
+For other deployments this should be valid server certificates. Where intermediate certificates are required, these must be 
+concatenated with the server certificate into a single file named `servercert.pem`.

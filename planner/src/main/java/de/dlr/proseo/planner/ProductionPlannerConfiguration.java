@@ -38,9 +38,17 @@ public class ProductionPlannerConfiguration {
 	@Value("${proseo.ingestor.url}")
 	private String ingestorUrl;
 	
+	/** A host alias to forward to the pods for use in the Planner and Ingestor URLs */
+	@Value("${proseo.wrapper.hostalias:}")
+	private String hostAlias;
+	
 	/** Wait time for K8s job finish cycle in milliseconds */
 	@Value("${proseo.productionPlanner.cyclewaittime}")
 	private Integer productionPlannerCycleWaitTime;
+
+	/** Wait time for K8s pod created in milliseconds */
+	@Value("${proseo.productionPlanner.jobcreatedwaittime}")
+	private Integer productionPlannerJobCreatedWaitTime;
 	
 	/** Kubernetes configuration file name */
 	@Value("${proseo.productionPlanner.kubeconfig}")
@@ -62,9 +70,66 @@ public class ProductionPlannerConfiguration {
 	@Value("${proseo.productionPlanner.filecheckwaittime}")
 	private Integer productionPlannerFileCheckWaitTime;
 
+	/** Check for further job steps after one had finished */
+	@Value("${proseo.productionPlanner.checkForFurtherJobStepsToRun}")
+	private Boolean checkForFurtherJobStepsToRun;
+
 	/** Mount point for wrapper */
 	@Value("${proseo.posix.workerMountPoint}")
 	private String posixWorkerMountPoint;
+
+	/** Wait time for file size check cycle in milliseconds */
+	@Value("${proseo.productionPlanner.planningbatchsize}")
+	private Integer planningBatchSize;
+
+
+	/**
+	 * @return the checkForFurtherJobStepsToRun
+	 */
+	public Boolean getCheckForFurtherJobStepsToRun() {
+		if (checkForFurtherJobStepsToRun == null) {
+			checkForFurtherJobStepsToRun = true;
+		}
+		return checkForFurtherJobStepsToRun;
+	}
+
+	/**
+	 * @param checkForFurtherJobStepsToRun the checkForFurtherJobStepsToRun to set
+	 */
+	public void setCheckForFurtherJobStepsToRun(Boolean checkForFurtherJobStepsToRun) {
+		this.checkForFurtherJobStepsToRun = checkForFurtherJobStepsToRun;
+	}
+
+	/**
+	 * @return the planningBatchSize
+	 */
+	public Integer getPlanningBatchSize() {
+		if (planningBatchSize == null || planningBatchSize < 1) {
+			planningBatchSize = 1;
+		}
+		return planningBatchSize;
+	}
+
+	/**
+	 * @param planningBatchSize the planningBatchSize to set
+	 */
+	public void setPlanningBatchSize(Integer planningBatchSize) {
+		this.planningBatchSize = planningBatchSize;
+	}
+
+	/**
+	 * @return the productionPlannerJobCreatedWaitTime
+	 */
+	public Integer getProductionPlannerJobCreatedWaitTime() {
+		return productionPlannerJobCreatedWaitTime;
+	}
+
+	/**
+	 * @param productionPlannerJobCreatedWaitTime the productionPlannerJobCreatedWaitTime to set
+	 */
+	public void setProductionPlannerJobCreatedWaitTime(Integer productionPlannerJobCreatedWaitTime) {
+		this.productionPlannerJobCreatedWaitTime = productionPlannerJobCreatedWaitTime;
+	}
 
 	/**
 	 * @return the productionPlannerFileCheckMaxCycles
@@ -147,6 +212,17 @@ public class ProductionPlannerConfiguration {
 	 */
 	public String getIngestorUrl() {
 		return ingestorUrl;
+	}
+
+	/**
+	 * @return the host alias entry (or null, if no entry was given and the default has been set)
+	 */
+	public String getHostAlias() {
+		if (hostAlias.isBlank()) {
+			return null;
+		} else {
+			return hostAlias;		
+		}
 	}
 
 }

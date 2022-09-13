@@ -4,7 +4,7 @@
         "version": 1,
         "name": "proseojob23785527",
         "jobId": 23785526,
-        "jobStepState": "INITIAL",
+        "jobStepState": "PLANNED",
         "outputParameters": [],
         "processingMode": "OFFL",
         "inputProductClasses": [ "L1B" ],
@@ -12,7 +12,8 @@
         "outputProduct": 1234,
         "configuredProcessor": "confProc",
         "stdoutLogLevel": "INFO",
-        "stderrLogLevel": "INFO"
+        "stderrLogLevel": "INFO",
+        "isFailed": false
     },
     {
         "id": 23785538,
@@ -26,6 +27,7 @@
         "outputProduct": 1234,
         "configuredProcessor": "confProc",
         "stdoutLogLevel": "INFO",
-        "stderrLogLevel": "INFO"
+        "stderrLogLevel": "INFO",
+        "isFailed": false
     }
 ]

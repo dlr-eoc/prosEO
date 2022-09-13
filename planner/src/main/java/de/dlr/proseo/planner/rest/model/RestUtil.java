@@ -65,7 +65,7 @@ public class RestUtil {
 	 * @return RestJob
 	 */
 	@Transactional
-	public static RestJob createRestJob(Job job) {
+	public static RestJob createRestJob(Job job, Boolean logs) {
 		RestJob rj = new RestJob();
 		if (job != null) {
 			rj.setId(Long.valueOf(job.getId()));
@@ -75,7 +75,7 @@ public class RestUtil {
 			rj.setOrbit(RestUtil.createRestOrbit(job.getOrbit()));
 			List<RestJobStep> jobSteps = new ArrayList<RestJobStep>();
 			for (JobStep js : job.getJobSteps()) {
-				jobSteps.add(RestUtil.createRestJobStep(js));
+				jobSteps.add(RestUtil.createRestJobStep(js, logs));
 			}
 			rj.setJobSteps(jobSteps);
 			if (job.getPriority() != null) {
@@ -159,7 +159,7 @@ public class RestUtil {
 	 * @return RestJobStep
 	 */
 	@Transactional
-	public static RestJobStep createRestJobStep(JobStep js) {
+	public static RestJobStep createRestJobStep(JobStep js, Boolean logs) {
 		RestJobStep pjs = new RestJobStep();
 		if (js != null) {
 			pjs.setId(Long.valueOf(js.getId()));
@@ -177,10 +177,10 @@ public class RestUtil {
 				pjs.setProcessingCompletionTime(Date.from(js.getProcessingCompletionTime()));
 			}
 
-			if (js.getProcessingStdOut() != null) {
+			if (logs && js.getProcessingStdOut() != null) {
 				pjs.setProcessingStdOut(js.getProcessingStdOut());
 			}
-			if (js.getProcessingStdErr() != null) {
+			if (logs && js.getProcessingStdErr() != null) {
 				pjs.setProcessingStdErr(js.getProcessingStdErr());
 			}
 			if (js.getJobOrderFilename() != null) {
@@ -188,6 +188,7 @@ public class RestUtil {
 			}
 			pjs.setStderrLogLevel(StderrLogLevel.fromValue(js.getStderrLogLevel().toString()));
 			pjs.setStdoutLogLevel(StdoutLogLevel.fromValue(js.getStdoutLogLevel().toString()));
+			pjs.setIsFailed(js.getIsFailed() == null ? false : js.getIsFailed());
 			pjs.setJobId(js.getJob() == null ? null : js.getJob().getId());
 			if (js.getOutputProduct() != null && js.getOutputProduct().getProductClass() != null && js.getOutputProduct().getProductClass().getProductType() != null) {
 				pjs.setOutputProductClass(js.getOutputProduct().getProductClass().getProductType());

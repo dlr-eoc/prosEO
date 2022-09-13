@@ -163,7 +163,6 @@ public class ProseoFileS3 extends ProseoFile {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getDataAsInputStream()");
 
-		S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getS3Region());
 		InputStream inputStream = null;
 		try {
 			boolean success = false;
@@ -171,6 +170,7 @@ public class ProseoFileS3 extends ProseoFile {
 			long retryCount = 0, maxRetry = 3, retryInterval = 5000 /* ms */;
 			while (retryCount <= maxRetry && !success) {
 				try {
+					S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getS3Region());
 					inputStream = S3Ops.v2FetchStream(s3, getFullPath());
 					if (null != inputStream) {
 						break; // No exception and a valid result
@@ -298,24 +298,35 @@ public class ProseoFileS3 extends ProseoFile {
 																					// (targetFile.exists())
 					result.add(proFile.getFullPath());
 				} else {
-					S3Client s3c = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),
-							cfg.getS3Region());
-					boolean success = false;
 					// *** HACK FOR DDS3 - TODO Replace constants by configurable values !!! ***
 					long retryCount = 0, maxRetry = 3, retryInterval = 5000 /* ms */;
-					while (retryCount <= maxRetry && !(success = S3Ops.v2FetchFile(
-							// the client
-							s3c,
-							// the source S3-Bucket
-							this.getFullPath(),
-							// the final prefix including productId pattern
-							// of the file or directory
-							proFile.getFullPath()))) {
+					boolean success = false;
+					while (retryCount <= maxRetry ) {
+						try {
+							S3Client s3c = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),
+									cfg.getS3Region());
+							if (S3Ops.v2FetchFile(
+									// the client
+									s3c,
+									// the source S3-Bucket
+									this.getFullPath(),
+									// the final prefix including productId pattern
+									// of the file or directory
+									proFile.getFullPath())) {
+								success = true;
+								break; // No exception and a valid result
+							}
+						} catch (Exception e) {
+							proFile.delete();
+							if (retryCount >= maxRetry) {
+								throw e;
+							} // else try again, see below
+						}
 						++retryCount;
-						StorageLogger.logInfo(logger, MSG_S3_REQUEST_FAILED_RETRYING, MSG_ID_S3_REQUEST_FAILED_RETRYING, 
+						StorageLogger.logInfo(logger, MSG_S3_REQUEST_FAILED_RETRYING, MSG_ID_S3_REQUEST_FAILED_RETRYING,
 								retryInterval, retryCount, maxRetry);
 						Thread.sleep(retryInterval);
-					};
+					}
 					if (success) {
 						targetFile.setWritable(true, false);
 						FileCache.getInstance().put(proFile.getFullPath());

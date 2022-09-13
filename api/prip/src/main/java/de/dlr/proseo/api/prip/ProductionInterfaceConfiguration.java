@@ -33,6 +33,10 @@ public class ProductionInterfaceConfiguration {
 	@Value("${proseo.token.expiration}")
 	private Long tokenExpirationPeriod;
 	
+	/** Maximum number of products to retrieve in a single query */
+	@Value("${proseo.quota}")
+	private Long quota;
+	
 	/**
 	 * Gets the URL of the prosEO User Manager component
 	 * 
@@ -58,6 +62,15 @@ public class ProductionInterfaceConfiguration {
 	 */
 	public Long getTokenExpirationPeriod() {
 		return tokenExpirationPeriod;
+	}
+
+	/**
+	 * Gets the maximum number of products to retrieve in a single query
+	 * 
+	 * @return the quota
+	 */
+	public Long getQuota() {
+		return quota;
 	}
 
 }

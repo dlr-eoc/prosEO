@@ -3,9 +3,12 @@ spring:
         database-platform: org.hibernate.dialect.PostgreSQLDialect
         hibernate.ddl-auto: update
     datasource:
-        url: jdbc:postgresql://proseo-db:5432/proseo
+        url: jdbc:postgresql://10.x.x.c:5432/proseo
         username: postgres
         password: somepwd
+server:
+    # Tomcat UI session timeout (default 30 min)
+    #servlet.session.timeout: 120m
 logging:
     file: /proseo/log/proseo-ui-gui.log
     level:

@@ -68,16 +68,16 @@ public class SimpleSelectionRuleTest {
 	
 	private static final String[] expectedJpqlQueries = {
 			"select p from Product p where (p.productClass.id = 4711 and "
-				+ "p.sensingStartTime <= '" + EXPECTED_STOP_TIME + "' and "
-				+ "p.sensingStopTime >= '" + EXPECTED_START_TIME + "')",
+				+ "p.sensingStartTime < '" + EXPECTED_STOP_TIME + "' and "
+				+ "p.sensingStopTime > '" + EXPECTED_START_TIME + "')",
 			"select p from Product p where (p.productClass.id = 4711 and "
-				+ "p.sensingStartTime <= '" + EXPECTED_STOP_TIME + "' and "
-				+ "p.sensingStopTime >= '" + EXPECTED_START_TIME + "' and "
+				+ "p.sensingStartTime < '" + EXPECTED_STOP_TIME + "' and "
+				+ "p.sensingStopTime > '" + EXPECTED_START_TIME + "' and "
 				+ "p.generationTime >= "
 					+ "(select max(p2.generationTime) from Product p2 where "
 					+ "p2.productClass.id = 4711 and "
-					+ "p2.sensingStartTime <= '" + EXPECTED_STOP_TIME + "' and "
-					+ "p2.sensingStopTime >= '" + EXPECTED_START_TIME + "'))",
+					+ "p2.sensingStartTime < '" + EXPECTED_STOP_TIME + "' and "
+					+ "p2.sensingStopTime > '" + EXPECTED_START_TIME + "'))",
 			"select p from Product p "
 				+ "join p.parameters pp0 "
 				+ "where (p.productClass.id = 815 and "
@@ -91,24 +91,24 @@ public class SimpleSelectionRuleTest {
 				+ "p.fileClass = 'UVN' and "
 				+ "key(pp0) = 'revision' and pp0.parameterValue = '2.0')",
 			"select p from Product p where (p.productClass.id = 4711 and "
-				+ "(p.sensingStartTime <= '" + EXPECTED_STOP_TIME + "' and "
-				+ "p.sensingStopTime >= '" + EXPECTED_START_TIME + "' or "
+				+ "(p.sensingStartTime < '" + EXPECTED_STOP_TIME + "' and "
+				+ "p.sensingStopTime > '" + EXPECTED_START_TIME + "' or "
 				+ "p.sensingStartTime >= "
 					+ "(select max(p2.sensingStartTime) from Product p2 "
 					+ "where p2.productClass.id = 4711)))",
 			"select p from Product p "
 				+ "join p.parameters pp0 "
 				+ "where (p.productClass.id = 815 and "
-				+ "(p.sensingStartTime <= '" + EXPECTED_STOP_TIME + "' and "
-				+ "p.sensingStopTime >= '" + EXPECTED_START_TIME + "' or "
-				+ "p.sensingStartTime <= '" + EXPECTED_STOP_TIME + "' and "
-				+ "p.sensingStopTime >= '" + EXPECTED_START_TIME + "' and "
+				+ "(p.sensingStartTime < '" + EXPECTED_STOP_TIME + "' and "
+				+ "p.sensingStopTime > '" + EXPECTED_START_TIME + "' or "
+				+ "p.sensingStartTime < '" + EXPECTED_STOP_TIME + "' and "
+				+ "p.sensingStopTime > '" + EXPECTED_START_TIME + "' and "
 				+ "p.generationTime >= "
 					+ "(select max(p2.generationTime) from Product p2 "
 					+ "join p2.parameters pp20 "
 					+ "where p2.productClass.id = 815 and "
-					+ "p2.sensingStartTime <= '" + EXPECTED_STOP_TIME + "' and "
-					+ "p2.sensingStopTime >= '" + EXPECTED_START_TIME + "' and "
+					+ "p2.sensingStartTime < '" + EXPECTED_STOP_TIME + "' and "
+					+ "p2.sensingStopTime > '" + EXPECTED_START_TIME + "' and "
 					+ "p2.fileClass = 'UVN' and "
 					+ "key(pp20) = 'revision' and pp20.parameterValue = '2.0')) "
 				+ "and "
@@ -119,7 +119,7 @@ public class SimpleSelectionRuleTest {
 				+ "p.sensingStartTime >= (select max(p2.sensingStartTime) from Product p2 where p2.productClass.id = 4711 and "
 				+ "p2.sensingStartTime <= '" + EXPECTED_CENTRE_TIME + "') or "
 				+ "p.sensingStartTime > '" + EXPECTED_CENTRE_TIME + "' and "
-				+ "p.sensingStartTime < "
+				+ "p.sensingStartTime <= "
 					+ "(select min(p2.sensingStartTime) from Product p2 "
 					+ "where p2.productClass.id = 4711 and "
 					+ "p2.sensingStartTime > '" + EXPECTED_CENTRE_TIME + "')))",
@@ -138,7 +138,7 @@ public class SimpleSelectionRuleTest {
 					+ "p2.sensingStartTime <= '" + EXPECTED_CENTRE_TIME + "') "
 				+ "or "
 				+ "p.sensingStartTime > '" + EXPECTED_CENTRE_TIME + "' and "
-				+ "p.sensingStartTime < "
+				+ "p.sensingStartTime <= "
 					+ "(select min(p2.sensingStartTime) from Product p2 where p2.productClass.id = 4711 and "
 					+ "p2.sensingStartTime > '" + EXPECTED_CENTRE_TIME + "')))",
 			"select p from Product p where (p.productClass.id = 4711 and "
@@ -148,7 +148,7 @@ public class SimpleSelectionRuleTest {
 					+ "p2.sensingStopTime <= '" + EXPECTED_CENTRE_TIME + "') "
 				+ "or "
 				+ "p.sensingStopTime > '" + EXPECTED_CENTRE_TIME + "' and "
-				+ "p.sensingStopTime < "
+				+ "p.sensingStopTime <= "
 					+ "(select min(p2.sensingStopTime) from Product p2 where p2.productClass.id = 4711 and "
 					+ "p2.sensingStopTime > '" + EXPECTED_CENTRE_TIME + "')))",
 			"select p from Product p "
@@ -176,8 +176,8 @@ public class SimpleSelectionRuleTest {
 				+ "p.fileClass = 'UVN' and "
 				+ "key(pp0) = 'revision' and pp0.parameterValue = '2.0')",
 			"select p from Product p where (p.productClass.id = 4711 and "
-				+ "p.sensingStartTime <= '" + EXPECTED_STOP_TIME + "' and "
-				+ "p.sensingStopTime >= '" + EXPECTED_START_TIME + "')",
+				+ "p.sensingStartTime < '" + EXPECTED_STOP_TIME + "' and "
+				+ "p.sensingStopTime > '" + EXPECTED_START_TIME + "')",
 			"select p from Product p "
 				+ "join p.parameters pp0 "
 				+ "where (p.productClass.id = 815 and "
@@ -194,16 +194,16 @@ public class SimpleSelectionRuleTest {
 
 	private static final String[] expectedSqlQueries = {
 			"SELECT * FROM product p WHERE (p.product_class_id = 4711 AND "
-				+ "p.sensing_start_time <= '" + EXPECTED_STOP_TIME + "' AND "
-				+ "p.sensing_stop_time >= '" + EXPECTED_START_TIME + "')",
+				+ "p.sensing_start_time < '" + EXPECTED_STOP_TIME + "' AND "
+				+ "p.sensing_stop_time > '" + EXPECTED_START_TIME + "')",
 			"SELECT * FROM product p WHERE (p.product_class_id = 4711 AND "
-				+ "p.sensing_start_time <= '" + EXPECTED_STOP_TIME + "' AND "
-				+ "p.sensing_stop_time >= '" + EXPECTED_START_TIME + "' AND "
+				+ "p.sensing_start_time < '" + EXPECTED_STOP_TIME + "' AND "
+				+ "p.sensing_stop_time > '" + EXPECTED_START_TIME + "' AND "
 				+ "p.generation_time >= "
 					+ "(SELECT MAX(p2.generation_time) FROM product p2 WHERE "
 					+ "p2.product_class_id = 4711 AND "
-					+ "p2.sensing_start_time <= '" + EXPECTED_STOP_TIME + "' AND "
-					+ "p2.sensing_stop_time >= '" + EXPECTED_START_TIME + "'))",
+					+ "p2.sensing_start_time < '" + EXPECTED_STOP_TIME + "' AND "
+					+ "p2.sensing_stop_time > '" + EXPECTED_START_TIME + "'))",
 			"SELECT * FROM product p "
 				+ "JOIN product_parameters pp0 ON p.id = pp0.product_id "
 				+ "WHERE (p.product_class_id = 815 AND "
@@ -217,24 +217,24 @@ public class SimpleSelectionRuleTest {
 				+ "p.file_class = 'UVN' AND "
 				+ "pp0.parameters_key = 'revision' AND pp0.parameter_value = '2.0')",
 			"SELECT * FROM product p WHERE (p.product_class_id = 4711 AND "
-				+ "(p.sensing_start_time <= '" + EXPECTED_STOP_TIME + "' AND "
-				+ "p.sensing_stop_time >= '" + EXPECTED_START_TIME + "' OR "
+				+ "(p.sensing_start_time < '" + EXPECTED_STOP_TIME + "' AND "
+				+ "p.sensing_stop_time > '" + EXPECTED_START_TIME + "' OR "
 				+ "p.sensing_start_time >= "
 					+ "(SELECT MAX(p2.sensing_start_time) FROM product p2 WHERE "
 					+ "p2.product_class_id = 4711)))",
 			"SELECT * FROM product p "
 				+ "JOIN product_parameters pp0 ON p.id = pp0.product_id "
 				+ "WHERE (p.product_class_id = 815 AND "
-				+ "(p.sensing_start_time <= '" + EXPECTED_STOP_TIME + "' AND "
-				+ "p.sensing_stop_time >= '" + EXPECTED_START_TIME + "' OR "
-				+ "p.sensing_start_time <= '" + EXPECTED_STOP_TIME + "' AND "
-				+ "p.sensing_stop_time >= '" + EXPECTED_START_TIME + "' AND "
+				+ "(p.sensing_start_time < '" + EXPECTED_STOP_TIME + "' AND "
+				+ "p.sensing_stop_time > '" + EXPECTED_START_TIME + "' OR "
+				+ "p.sensing_start_time < '" + EXPECTED_STOP_TIME + "' AND "
+				+ "p.sensing_stop_time > '" + EXPECTED_START_TIME + "' AND "
 				+ "p.generation_time >= "
 					+ "(SELECT MAX(p2.generation_time) FROM product p2 "
 					+ "JOIN product_parameters pp20 ON p2.id = pp20.product_id "
 					+ "WHERE p2.product_class_id = 815 AND "
-					+ "p2.sensing_start_time <= '" + EXPECTED_STOP_TIME + "' AND "
-					+ "p2.sensing_stop_time >= '" + EXPECTED_START_TIME + "' AND "
+					+ "p2.sensing_start_time < '" + EXPECTED_STOP_TIME + "' AND "
+					+ "p2.sensing_stop_time > '" + EXPECTED_START_TIME + "' AND "
 					+ "p2.file_class = 'UVN' AND "
 					+ "pp20.parameters_key = 'revision' AND pp20.parameter_value = '2.0')) "
 				+ "AND "
@@ -247,7 +247,7 @@ public class SimpleSelectionRuleTest {
 					+ "p2.sensing_start_time <= '" + EXPECTED_CENTRE_TIME + "') "
 				+ "OR "
 				+ "p.sensing_start_time > '" + EXPECTED_CENTRE_TIME + "' AND "
-				+ "p.sensing_start_time < "
+				+ "p.sensing_start_time <= "
 					+ "(SELECT MIN(p2.sensing_start_time) FROM product p2 WHERE p2.product_class_id = 4711 AND "
 					+ "p2.sensing_start_time > '" + EXPECTED_CENTRE_TIME + "')))",
 			"SELECT * FROM product p WHERE (p.product_class_id = 4711 AND "
@@ -265,7 +265,7 @@ public class SimpleSelectionRuleTest {
 					+ "p2.sensing_start_time <= '" + EXPECTED_CENTRE_TIME + "') "
 				+ "OR "
 				+ "p.sensing_start_time > '" + EXPECTED_CENTRE_TIME + "' AND "
-				+ "p.sensing_start_time < "
+				+ "p.sensing_start_time <= "
 					+ "(SELECT MIN(p2.sensing_start_time) FROM product p2 WHERE p2.product_class_id = 4711 AND "
 					+ "p2.sensing_start_time > '" + EXPECTED_CENTRE_TIME + "')))",
 			"SELECT * FROM product p WHERE (p.product_class_id = 4711 AND "
@@ -275,7 +275,7 @@ public class SimpleSelectionRuleTest {
 					+ "p2.sensing_stop_time <= '" + EXPECTED_CENTRE_TIME + "') "
 				+ "OR "
 				+ "p.sensing_stop_time > '" + EXPECTED_CENTRE_TIME + "' AND "
-				+ "p.sensing_stop_time < "
+				+ "p.sensing_stop_time <= "
 					+ "(SELECT MIN(p2.sensing_stop_time) FROM product p2 WHERE p2.product_class_id = 4711 AND "
 					+ "p2.sensing_stop_time > '" + EXPECTED_CENTRE_TIME + "')))",
 			"SELECT * FROM product p "
@@ -303,8 +303,8 @@ public class SimpleSelectionRuleTest {
 				+ "p.file_class = 'UVN' AND "
 				+ "pp0.parameters_key = 'revision' AND pp0.parameter_value = '2.0')",
 			"SELECT * FROM product p WHERE (p.product_class_id = 4711 AND "
-				+ "p.sensing_start_time <= '" + EXPECTED_STOP_TIME + "' AND "
-				+ "p.sensing_stop_time >= '" + EXPECTED_START_TIME + "')",
+				+ "p.sensing_start_time < '" + EXPECTED_STOP_TIME + "' AND "
+				+ "p.sensing_stop_time > '" + EXPECTED_START_TIME + "')",
 			"SELECT * FROM product p "
 				+ "JOIN product_parameters pp0 ON p.id = pp0.product_id "
 				+ "WHERE (p.product_class_id = 815 AND "

@@ -29,6 +29,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import com.amazonaws.services.s3.Headers;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -487,14 +488,14 @@ public class ProductControllerImpl implements ProductController {
 				return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND,
 						pathInfo), HttpStatus.NOT_FOUND);
 			}
-			Long len = sourceFile.getLength();
+			Long fileSize = sourceFile.getLength();
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentDispositionFormData("attachment", sourceFile.getFileName());
+			Long len = fileSize;
 			long from = 0;
 			long to = len - 1;
 			HttpStatus status = HttpStatus.OK;
 			if (fromByte != null || toByte != null) {
-				List<HttpRange> ranges = new ArrayList<HttpRange>();
 				if (fromByte != null) {
 					from = fromByte;
 					stream.skip(from);
@@ -503,14 +504,13 @@ public class ProductControllerImpl implements ProductController {
 					to = Math.min(toByte, len - 1);
 				}
 				len = to - from + 1;
-				HttpRange range = HttpRange.createByteRange(from, to);
-				ranges.add(range);
-				headers.setRange(ranges);
-				headers.setContentType(new MediaType("multipart", "byteranges"));
+				headers.add(Headers.CONTENT_RANGE, String.format("bytes %d-%d/%d", from, to, fileSize));
 				status = HttpStatus.PARTIAL_CONTENT;
-			} else {
-				headers.setContentType(new MediaType("application", sourceFile.getExtension()));
 			}
+			// TODO The media type is not fully correct: It's OK for "application/zip", but e.g. for NetCDF (.nc) "application/netcdf" would be more appropriate
+			// headers.setContentType(new MediaType("application", sourceFile.getExtension()));
+			// PRIP always returns "application/octet-stream" in the metadata, so probably it's best to stay consistent here
+			headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 			headers.setContentLength(len);
 			InputStreamResource fsr = new InputStreamResource(stream);
 			if (fsr != null) {

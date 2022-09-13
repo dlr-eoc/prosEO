@@ -33,6 +33,15 @@ brain:
     # Disk size in GB
     disk: 100
     
+# Database server configuration:
+dbhost:
+    # Number of cores (vCPUs = 2 x cores)
+    cores: 4
+    # RAM in MiB
+    ram: 12288
+    # Disk size in GB
+    disk: 100
+    
 # NFS server configuration:
 nfs:
     # Number of cores (vCPUs = 2 x cores)

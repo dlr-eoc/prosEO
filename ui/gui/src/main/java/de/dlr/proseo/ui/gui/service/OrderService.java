@@ -5,6 +5,7 @@ import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NOT_AUTHORIZED;
 import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_MISSIONS_FOUND;
 import static de.dlr.proseo.ui.backend.UIMessages.uiMsg;
 
+import java.time.Duration;
 import java.util.HashMap;
 
 import org.slf4j.Logger;
@@ -23,7 +24,10 @@ import org.springframework.web.reactive.function.client.WebClient.Builder;
 import de.dlr.proseo.ui.backend.ServiceConnection;
 import de.dlr.proseo.ui.gui.GUIAuthenticationToken;
 import de.dlr.proseo.ui.gui.GUIConfiguration;
+import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
@@ -133,10 +137,10 @@ public class OrderService {
 
 	}
 	
-	public Mono<ClientResponse> getJobsOfOrder(String id,Long from, Long to) {
+	public Mono<ClientResponse> getJobsOfOrder(String id,Long from, Long to, String states) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
-		String uri = config.getProductionPlanner() + "/jobs";
+		String uri = config.getOrderManager() + "/orderjobs";
 		// get one order identified by id.
 		String divider = "?";
 		if(null != id && !id.trim().isEmpty()) {
@@ -150,6 +154,17 @@ public class OrderService {
 		if (to != null) {
 			uri += divider + "recordTo=" + to;
 			divider ="&";
+		}
+		uri += divider + "logs=false";
+		divider ="&";
+		if (states != null && !states.isEmpty()) {
+			String [] pcs = states.split(":");
+			for (String pc : pcs) {
+				if (!pc.equalsIgnoreCase("ALL")) {
+					uri += divider + "state=" + pc;
+					divider ="&";
+				}
+			}
 		}
 		uri += divider + "orderBy=startTime ASC";
 		logger.trace("URI " + uri);
@@ -250,23 +265,42 @@ public class OrderService {
 			method = "delete";
 		} 
 			
+		// Timeouts: Neither configuring timeouts in tcpConfiguration() nor using the timeout() method on the returned Mono
+		// keeps the application from timing out after 30 s sharp
 		logger.trace("URI " + uri);
 		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(
 				HttpClient.create().followRedirect((req, res) -> {
 					logger.trace("response:{}", res.status());
 					return HttpResponseStatus.FOUND.equals(res.status());
 				})
+				.tcpConfiguration(client -> client
+                	.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.getTimeout().intValue())
+                	.doOnConnected(conn -> conn
+                        .addHandlerLast(new ReadTimeoutHandler((int)(config.getTimeout() / 1000)))
+                        .addHandlerLast(new WriteTimeoutHandler((int)(config.getTimeout() / 1000)))))
 			));
 		logger.trace("Found authentication: " + auth);
 		logger.trace("... with username " + auth.getName());
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]" ) );
 		Mono<ClientResponse> answer = null;
 		if (method.equals("patch")) {
-			answer = webclient.build().patch().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
+			answer = webclient.build().patch().uri(uri)
+					.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
+					.accept(MediaType.APPLICATION_JSON)
+					.exchange()
+					.timeout(Duration.ofMillis(config.getTimeout()));
 		} else if (method.equals("put")) {
-			answer = webclient.build().put().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
+			answer = webclient.build().put().uri(uri)
+					.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
+					.accept(MediaType.APPLICATION_JSON)
+					.exchange()
+					.timeout(Duration.ofMillis(config.getTimeout()));
 		} else if (method.equals("delete")) {
-			answer = webclient.build().delete().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
+			answer = webclient.build().delete().uri(uri)
+					.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
+					.accept(MediaType.APPLICATION_JSON)
+					.exchange()
+					.timeout(Duration.ofMillis(config.getTimeout()));
 		}
 		return answer;
 	}

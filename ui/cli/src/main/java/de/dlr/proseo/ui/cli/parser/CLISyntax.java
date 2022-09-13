@@ -24,6 +24,7 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.error.YAMLException;
 
+
 /**
  * Representation of the prosEO Command Line Interface syntax
  * 
@@ -316,4 +317,48 @@ public class CLISyntax {
 		return "CLISyntax [\n  title=" + title + ",\n  version=" + version + ",\n  description=" + description + ",\n  globalOptions="
 				+ globalOptions + ",\n  options=" + options + ",\n  commands=" + commands + "\n]";
 	}
+	
+	/**
+	 * Generates a StringBuilder, appends it with HTML code that prints a title and
+	 * description, calls the respective printHTML() methods for all global options,
+	 * options and commands from the respective Documentation class fields.
+	 * 
+	 * @return StringBuilder
+	 */
+	public StringBuilder printHTML() {
+
+		StringBuilder htmlDoc = new StringBuilder();
+
+		htmlDoc.append("<!DOCTYPE html><html><head>" + "<title>ProsEO CLI DOcumentation</title>"
+				+ "<link rel=\"stylesheet\" href=\"css/syntax.css\">" + "</head>").append("<body>");
+
+		// Title and descriptions:
+		htmlDoc.append("<h1 id=\"Header\">" + this.title).append(" (" + this.version + ")</h1>")
+				.append("<p>" + this.description.replace("\n\n", "</p><p>") + "</p>");
+
+		// Global options:
+		htmlDoc.append("<h2>Global Options</h2>");
+
+		for (CLIOption globalOption : this.globalOptions) {
+			globalOption.printHTML(htmlDoc);
+		}
+
+		// Options:
+		htmlDoc.append("<h2>Options</h2>");
+
+		for (CLIOption option : this.options) {
+			option.printHTML(htmlDoc);
+		}
+
+		// Commands:
+		htmlDoc.append("<h2>Commands</h2>");
+
+		for (CLICommand command : this.commands) {
+			command.printHTML(htmlDoc);
+		}
+
+		htmlDoc.append("</body></html>");
+		return htmlDoc;
+	}
+
 }

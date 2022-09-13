@@ -5,7 +5,7 @@ spring:
         open-in-view: false
         properties.hibernate.jdbc.time_zone: UTC
     datasource:
-        url: jdbc:postgresql://proseo-db:5432/proseo
+        url: jdbc:postgresql://10.x.x.c:5432/proseo
         username: <db_user>
         password: <db_pwd>
 logging:
@@ -17,3 +17,7 @@ logging:
 proseo:
     userManager.url: http://proseo-user-mgr:8080/proseo/user-mgr/v0.1
     ingestor.url: http://proseo-ingestor:8080/proseo/ingestor/v0.1
+    # Expiration time for OAuth2 tokens in seconds
+    token.expiration: 3600
+    # Maximum number of products to retrieve in a single query
+    quota: 5000

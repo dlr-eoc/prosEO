@@ -1,5 +1,5 @@
-CProS Kubernetes Cluster Deployment
-===================================
+prosEO Kubernetes Cluster Deployment
+====================================
 
 
 # Prerequisites
@@ -53,8 +53,26 @@ After generating the cluster, a file called `kubeadm_certificate_key.creds` will
 `inventory/proseo/credentials`. This file is implementation-specific, therefore the whole `credentials` folder
 has been excluded from management by Git.
 
-To update deployments use the `scale.yml` and `remove-node.yml`. For further instructions see
-(https://kubespray.io/#/docs/nodes).
+
+# Kubernetes Infrastructure Changes
+
+## Adding or removing nodes
+
+To update deployments use the `scale.yml` and `remove-node.yml`. `scale.yml` can be used much like `cluster.yml`.
+Removing one or several nodes is a bit more tricky. `remove-node.yml` can be executed with
+the additional specification of the node(s) to remove on the command line using the option `-e "node=<nodename>,<nodename2>"` 
+and optionally (if the node is unreachable and/or will be removed completely from the infrastructure) 
+`-e reset_nodes=false -e allow_ungraceful_removal=true`.
+
+To generate a large list of worker node names the following may help:
+```
+rm -f workers.txt ; for i in 05 06 07 08 09 {10..48} ; do echo -n "worker${i}," >>workers.txt ; done ; cat workers.txt ; echo " "
+```
+
+For further instructions see (https://kubespray.io/#/docs/nodes).
+
+
+## Changing node resources
 
 If a worker node was changed in terms of CPU and memory resources available, `kubectl` must be restarted. First drain the
 worker node:
@@ -70,11 +88,49 @@ Reactivate the worker node in Kubernetes:
 kubectl uncordon <worker node>
 ```
 
+While CPU and RAM changes can be done on the fly for Linux worker nodes, extending the disk size requires more manual work (not
+to mention shrinking the disk size, which is out of scope of this document). First drain the node as above:
+```
+kubectl drain <worker node> --ignore-daemonsets --delete-emptydir-data"
+```
+
+Then login to the worker node and perform the disk extension (a very good guide is at
+`https://devops.ionos.com/tutorials/increase-the-size-of-a-linux-root-partition-without-rebooting/`):
+```
+# Check whether /dev/vda is indeed the current root partition
+df -h | grep vda
+
+# Update the partition table as described in the guide
+fdisk /dev/vda
+partprobe
+
+# Resize/recreate the file systems
+resize2fs /dev/vda1
+mkswap /dev/vda2
+
+# At this point DO NOT activate the swap (conflicts with kubelet!) and DO NOT update /etc/fstab as recommended in the guide
+
+# Confirm that the change was effective
+df -h | grep vda
+
+# Restart and check kubelet
+systemctl restart kubelet
+systemctl status kubelet
+```
+
+Finally confirm that the changes are visible to Kubernetes, and reactivate the node:
+```
+kubectl describe <worker node>
+kubectl uncordon <worker node>
+```
+
 
 # Configure Kubernetes
 
 As an optional preparation for the following steps, configure your local `kubectl` (on the deployment controller) to access
-the Kubernetes instance using the file `/root/.kube/config` found on the Kubernetes master node.
+the Kubernetes instance using the file `/root/.kube/config` found on the Kubernetes master node. Note that the following steps
+require prior setup of the kubectl proxy on the bastion-control host.
+
 
 ## Configure access to the Kubernetes Dashboard
 

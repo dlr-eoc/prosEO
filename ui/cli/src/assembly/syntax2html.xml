@@ -1,0 +1,32 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.1.0 http://maven.apache.org/xsd/assembly-2.1.0.xsd">
+	<id>syntax2html</id>
+	<baseDirectory>/</baseDirectory>
+	<formats>
+		<format>jar</format>
+	</formats>
+		<fileSets>
+		<fileSet>
+			<outputDirectory>/</outputDirectory>
+            <directory>target/classes</directory>
+			<includes>
+				<include>de/dlr/proseo/ui/cli/parser/CLIOption*</include>
+				<include>de/dlr/proseo/ui/cli/parser/CLIParameter*</include>
+				<include>de/dlr/proseo/ui/cli/parser/CLISyntax*</include>
+				<include>de/dlr/proseo/ui/cli/parser/CLICommand*</include>
+				<include>de/dlr/proseo/ui/cli/syntax2html/**</include>
+			</includes>
+		</fileSet>
+	</fileSets>
+	<dependencySets>
+		<dependencySet>
+		<unpack>true</unpack>
+			<includes>
+				<include>ch.qos.logback:logback-classic</include>
+				<include>ch.qos.logback:logback-core</include>
+				<include>org.slf4j:slf4j-api</include>
+				<include>org.yaml:snakeyaml</include>
+				<include>de.dlr.proseo:proseo-ui-backend</include>
+			</includes>
+		</dependencySet>
+	</dependencySets>
+</assembly>

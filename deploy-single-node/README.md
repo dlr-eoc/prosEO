@@ -21,19 +21,24 @@ Install and run Docker Desktop and activate Kubernetes as described here:
   1) Install and run: <https://docs.docker.com/docker-for-windows/install/>
   2) Activate Kubernetes: <https://docs.docker.com/docker-for-windows/>
 
-Deploy and run a Kubernetes dashboard without requiring a login:
-1) Download the recommended dashboard configuration from <https://raw.githubusercontent.com/kubernetes/dashboard/v2.3.1/aio/deploy/recommended.yaml>
-2) Copy the recommended configuration to a new file `kubernetes/kubernetes-dashboard.yaml`.
-3) Edit `kubernetes/kubernetes-dashboard.yaml`:
-   a) Locate the deployment entry for `kubernetes-dashboard` (around line 170)
-   b) Locate the subsection `spec.template.spec.containers.args` and add entries for
-      `--enable-skip-login` and `--disable-settings-authorizer`
-4) Run the dashboard:
+Deploy and run a Kubernetes dashboard:
+1) Download the recommended dashboard configuration from 
+   <https://raw.githubusercontent.com/kubernetes/dashboard/v2.3.1/aio/deploy/recommended.yaml> 
+   to a new file `kubernetes/kubernetes-dashboard.yaml` (a copy may already be provided in the `kubernetes` directory).
+2) Run the dashboard:
    ```
    kubectl apply -f kubernetes/kubernetes-dashboard.yaml
    nohup kubectl proxy --accept-hosts='.*' &
    ```
-5) Access the dashboard at http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/.
+3) Create a user with administrative privileges for the dashboard as per
+   <https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md> (you may use the
+   configuration provided in the file `kubernetes/kube-admin.yaml`).
+4) Retrieve the secret token for this user:
+   ```
+   kubectl describe secret/$(kubectl get secrets --namespace kube-system | grep admin-user | cut -d ' ' -f 1) --namespace kube-system
+   ```
+5) Access the dashboard at <http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/>
+   using the token retrieved in step 4.
 
 
 ## Step 2: Build the prosEO Control Instance
@@ -54,7 +59,7 @@ When all `application.yml` files have been created, for each component a configu
 file) must be created and pushed to the Docker registry to be used:
 ```
 export REGISTRY_URL=<your preferred prosEO repository, e. g. localhost:5000>
-export VERSION=<the prosEO version to install, e. g. 0.8.2>
+export VERSION=<the prosEO version to install, e. g. 0.9.2>
 
 cd proseo-images/proseo-components
 
@@ -75,12 +80,13 @@ The `proseo-images` directory may be populated with convenience scripts for thes
 
 ## Step 3: Deploy the prosEO Control Instance
 
-Create the prosEO Control Instance from a `docker-compose.yml` file like the following:
+Create the prosEO Control Instance from a `docker-compose.yml` file. A `docker-compose.yml.template`
+file is provided in the `proseo-images` directory, a simplified file would look something like the following:
 ```yaml
 version: '3'
 services:
   proseo-db:
-    image: postgres:11
+    image: ${REGISTRY_URL}/postgres:11-proseo
     environment:
       - POSTGRES_DB=proseo
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -175,11 +181,10 @@ docker-compose -p proseo up -d
 ```
 
 The `proseo-images` directory may be populated with convenience scripts for these steps (see `proseo-images/README.md`).
-A template for the `docker-compose.yml` file can be found at `<project root>/deploy/brain/prepare_proseo/files`.
 
 After starting the prosEO control instance two SQL scripts need to be executed. First login to the proseo-db container:
 ```
-docker exec -it proseo_proseo-db_1 /bin/bash -c 'su - postgres'
+docker exec -it proseo-proseo-db-1 su - postgres
 ```
 From within the container (which should now show a prompt like `postgres@...:~$ `) execute the SQL command files provided:
 ```
@@ -188,40 +193,7 @@ psql proseo </proseo/populate_mon_service_state.sql
 ```
 
 
-# Step 4: Setup the Kubernetes Cluster with Storage Manager and File System Cache
-
-For the single-node installation we will use POSIX as the default file system, thereby
-avoiding the overhead of running an S3 object storage provider. We will not make Alluxio
-available either. This does not place any functional constraints on prosEO, since these
-storage options are meant for externally provided installations only, where online storage
-is expensive (a multi-TB USB-3 disk on a laptop is not).
-
-This step requires configuring a "host path" file server to serve the common storage area
-to both the Storage Manager and the Processing Engine. Assuming a configuration as in the files
-given in the current (example) directory, the following commands must be issued
-(also available as part of the script `ptm-config/create_data_local.sh`):
-```sh
-# Define actual path to storage area
-SHARED_STORAGE_PATH=<path on Docker Desktop host>
-
-# Update the path in the Persistent Volume configuration
-sed "s|%SHARED_STORAGE_PATH%|${SHARED_STORAGE_PATH}|" <nfs-pv.yaml.template >nfs-pv.yaml
-
-# Create the Persistent Volumes
-kubectl apply -f nfs-pv.yaml
-
-# Create the export directories
-mkdir -p ${SHARED_STORAGE_PATH}/proseodata ${SHARED_STORAGE_PATH}/transfer
-```
-
-Locate the file `storage-mgr.yaml` and edit the image reference (around line 20) to point
-to your preferred prosEO repository, then create the Storage Manager:
-```
-kubectl apply -f storage-mgr-local.yaml
-```
-
-
-# Step 5: Install and Run the prosEO Command Line Interface
+# Step 4: Install and Run the prosEO Command Line Interface
 
 A build of prosEO will create the JAR file for the Command Line Interface in `<project root>/ui/cli/target`. A sample
 `application.yml` file can be found at `<project root>/ui/cli/src/main/resources`. In this file the hostnames point to
@@ -234,12 +206,13 @@ To initialize the prosEO instance, run the following CLI commands:
 ```
 login
 # at the prompt enter the username and password as given above
-user update sysadm password=<new password>
-create mission PTM 'name=prosEO Test Mission'
+password
+# at the prompts enter and repeat the new password for the user
+exit
 ```
 
 
-# Step 6: Create a Planner Account
+# Step 5: Create a Planner Account
 
 For the Production Planner, an account with access to the Kubernetes API is required. The account must be able to read general
 information about the Kubernetes cluster (health state, node list) and to fully manage jobs and pods (create, update, list, delete).
@@ -281,13 +254,65 @@ subjects:
 
 Create the account, role and role binding, and retrieve the authentication token for the new account:
 ```bash
-kubectl apply -f kubernetes/planner-account.yaml
+kubectl apply -f ../deploy/hands/kubernetes/planner-account.yaml
 kubectl describe secret/$(kubectl get secrets | grep proseo-planner | cut -d ' ' -f 1)
 ```
 
-# Step 7: Configure the prosEO Processing Facility
 
-Create a JSON file `facility.json` describing the local processing facility:
+# Step 6: Configure a prosEO Mission
+
+You are now ready to configure your first mission. See `<project root>/samples/testdata` for
+an example, which works with the prosEO Sample Processor. Test input data and processing orders
+can be generated as described below using the script `deploy-single-node/ptm-config/create_data_local.sh`.
+Note that this script deliberately creates an order set, which does not result in a fully completed
+processing (one job will remain in `RELEASED` state due to missing input, this requires generation
+of an additional order to process from L0 to L2A/B data - this is left as an exercise to the reader ;-) ).
+
+
+# Step 7: Setup the Kubernetes Cluster with Storage Manager and File System Cache
+
+For the single-node installation we will use POSIX as the default file system, thereby
+avoiding the overhead of running an S3 object storage provider. We will not make Alluxio
+available either. This does not place any functional constraints on prosEO, since these
+storage options are meant for externally provided installations only, where online storage
+is expensive (a multi-TB USB-3 disk on a laptop is not).
+
+This step requires configuring a "host path" file server to serve the common storage area
+to both the Storage Manager and the Processing Engine. Note that Docker Desktop imposes certain
+*restrictions on the location of the data:*
+- On macOS, the directory must be located below any of the paths available for sharing *by default* (e. g. `/Users`),
+  using other paths (e. g. `/opt`) does not work, even if they are declared as sharable in the Docker Desktop
+  preferences.
+- On Windows it appears that the paths to use are somewhat weird, see for example this discussion: 
+  <https://stackoverflow.com/questions/54073794/kubernetes-persistent-volume-on-docker-desktop-windows>
+  (However this has not been verified by the author of this documentation)
+
+Assuming a configuration as in the files given in the current (example) directory, the following commands must be issued
+(also available as part of the script `ptm-config/create_data_local.sh`):
+```sh
+# Define actual path to storage area
+SHARED_STORAGE_PATH=<path on Docker Desktop host>
+
+# Update the path in the Persistent Volume configuration
+sed "s|%SHARED_STORAGE_PATH%|${SHARED_STORAGE_PATH}|" <nfs-pv.yaml.template >nfs-pv.yaml
+
+# Create the Persistent Volumes
+kubectl apply -f nfs-pv.yaml
+
+# Create the export directories
+mkdir -p ${SHARED_STORAGE_PATH}/proseodata ${SHARED_STORAGE_PATH}/transfer
+```
+
+Locate the file `storage-mgr.yaml` and edit the image reference (around line 20) to point
+to your preferred prosEO repository, then create the Storage Manager:
+```
+kubectl apply -f storage-mgr-local.yaml
+```
+
+
+# Step 8: Configure the prosEO Processing Facility
+
+Unless the configuration script was used create a JSON file `facility.json` describing the local processing facility:
 ```
 {
   "name" : "localhost",
@@ -307,17 +332,17 @@ On the prosEO CLI issue the following commands:
 login PTM
 # at the prompt enter your username and password
 facility create --file=facility.json
+```
+
+If the facility was already created using the configuration script, the authentication token must be updated:
+```
+facility update localhost processingEngineToken=<authentication token from step 5>
+```
+
+In any case the processing facility will be in DISABLED state, so it must be "started" to be available for use:
+
+```
 facility update localhost facilityState=STOPPED
 facility update localhost facilityState=STARTING
 facility update localhost facilityState=RUNNING
 ```
-
-
-# Step 8: Configure a prosEO Mission
-
-You are now ready to configure your first mission. See <https://github.com/dlr-eoc/prosEO/tree/master/samples/testdata> for
-an example, which works with the prosEO Sample Processor. Test input data and processing orders
-can be generated with the above mentioned script `deploy-single-node/ptm-config/create_data_local.sh`.
-Note that this script deliberately creates an order set, which does not result in a fully completed
-processing (one job will remain in `RELEASED` state due to missing input, this requires generation
-of an additional order to process from L0 to L2A/B data - this is left as an exercise to the reader ;-) ).

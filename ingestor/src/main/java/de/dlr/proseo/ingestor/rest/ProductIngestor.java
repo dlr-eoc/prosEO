@@ -5,7 +5,6 @@
  */
 package de.dlr.proseo.ingestor.rest;
 
-import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -17,8 +16,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
 import javax.ws.rs.ProcessingException;
 
 import org.slf4j.Logger;
@@ -82,7 +83,7 @@ public class ProductIngestor {
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2069;
 	private static final int MSG_ID_ERROR_DELETING_PRODUCT = 2070;
 	private static final int MSG_ID_PRODUCT_QUERY_EXISTS = 2071;
-	private static final int MSG_ID_NUMBER_PRODUCT_FILES_DELETED = 2068;
+	private static final int MSG_ID_NUMBER_PRODUCT_FILES_DELETED = 2072;	
 
 	// Same as in ProductManager
 	private static final int MSG_ID_PRODUCT_CLASS_INVALID = 2012;
@@ -141,6 +142,10 @@ public class ProductIngestor {
 	/** Product Manager */
 	@Autowired
 	ProductManager productManager;
+	
+	/** JPA entity manager */
+	@PersistenceContext
+	private EntityManager em;
 	
 	/**
 	 * Create and log a formatted informational message
@@ -217,6 +222,8 @@ public class ProductIngestor {
      * @throws ProcessingException if the communication with the Storage Manager fails
      * @throws SecurityException if a cross-mission data access was attempted
 	 */
+
+	@Transactional
 	public RestProduct ingestProduct(ProcessingFacility facility, Boolean copyFiles, IngestorProduct ingestorProduct, String user, String password)
 			throws IllegalArgumentException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> ingestProduct({}, {}, {}, PWD)", facility.getName(), ingestorProduct.getProductClass(), user);
@@ -423,11 +430,12 @@ public class ProductIngestor {
 
 		// Find the product with the given ID
 		Optional<Product> product = RepositoryService.getProductRepository().findById(productId);
+		
 		if (product.isEmpty()) {
 			throw new IllegalArgumentException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, productId));
 		}
 		Product modelProduct = product.get();
-		
+
 		// Ensure user is authorized for the product's mission
 		if (!securityService.isAuthorizedForMission(modelProduct.getProductClass().getMission().getCode())) {
 			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
@@ -736,9 +744,15 @@ public class ProductIngestor {
 	 * @throws ProcessingException if the communication with the Production Planner fails
      * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public void notifyPlanner(String user, String password, IngestorProduct ingestorProduct)
+	public void notifyPlanner(String user, String password, IngestorProduct ingestorProduct, long facilityId)
 			throws IllegalArgumentException, RestClientException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> notifyPlanner({}, PWD, {})", user, ingestorProduct.getProductClass());
+		
+		// Check whether Planner notification is desirable at all
+		if (!ingestorConfig.getNotifyPlanner()) {
+			if (logger.isDebugEnabled()) logger.debug("... skipping Planner notification due to configuration setting");
+			return;
+		}
 
 		// Ensure user is authorized for the product's mission
 		if (!securityService.isAuthorizedForMission(ingestorProduct.getMissionCode())) {
@@ -760,7 +774,7 @@ public class ProductIngestor {
 		if (!productQueries.isEmpty()) {
 			// If so, inform the production planner of the new product
 			String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl() + String.format(URL_PLANNER_NOTIFY, ingestorProduct.getId());
-
+			productionPlannerUrl += "?facility=" + facilityId;
 			
 			RestTemplate restTemplate = rtb
 					.setConnectTimeout(Duration.ofMillis(ingestorConfig.getProductionPlannerTimeout()))
@@ -785,7 +799,7 @@ public class ProductIngestor {
 	 * @throws ProcessingException if the communication with the Production Planner fails
      * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public void notifyPlanner(String user, String password, RestProductFile restProductFile)
+	public void notifyPlanner(String user, String password, RestProductFile restProductFile, long facilityId)
 			throws IllegalArgumentException, RestClientException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> notifyPlanner({}, PWD, {})", user, restProductFile.getProductFileName());
 
@@ -808,7 +822,7 @@ public class ProductIngestor {
 		ingestorProduct.setProductClass(modelProduct.get().getProductClass().getProductType());
 		
 		// Notify planner
-		notifyPlanner(user, password, ingestorProduct);
+		notifyPlanner(user, password, ingestorProduct, facilityId);
 	}
 
 }

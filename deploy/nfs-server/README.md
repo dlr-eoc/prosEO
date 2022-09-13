@@ -1,5 +1,5 @@
-CProS NFS Server Configuration
-==============================
+prosEO NFS Server Configuration
+===============================
 
 The NFS Server provides shared storage to the prosEO Storage Manager and the Kubernetes worker nodes, whereby the Storage Manager
 runs locally on this machine.

@@ -31,8 +31,11 @@ To build prosEO from source code, the following prerequisites must be met:
        --name registry \
        registry:2
   ```
-  (The `-e` and `-v` options are recommended for better maintenance of the local registry.)
-- Add the following your Maven settings file (usually at `$HOME/.m2/settings.xml`):
+  The `-e` and `-v` options are recommended for better maintenance of the local registry. For the management of the registry
+  we recommend using a GUI tool, e. g. Joxit (<https://joxit.dev/docker-registry-ui/>). Sample (!) files for running the docker
+  registry and the Joxit GUI are included in the `src/docker` directory.
+  
+- Add the following to your Maven settings file (usually at `$HOME/.m2/settings.xml`):
   ```
   <settings>
     <profiles>

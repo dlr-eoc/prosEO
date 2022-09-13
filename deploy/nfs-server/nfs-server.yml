@@ -1,5 +1,5 @@
 ---
-# Configure S1B Control Instance ("brain")
+# Configure prosEO NFS Server ("nfs-server")
 
 - hosts: nfsserver
   become: true

@@ -17,15 +17,15 @@ import javax.persistence.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.Job;
-import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.Job.JobState;
+import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.rest.JobController;
 import de.dlr.proseo.model.rest.model.RestJob;
 import de.dlr.proseo.model.rest.model.RestJobGraph;
@@ -82,11 +82,14 @@ public class JobControllerImpl implements JobController {
 	@Transactional
 	@Override
     public ResponseEntity<List<RestJob>> getJobs(String state, Long orderId,
-			Long recordFrom, Long recordTo, String[] orderBy) {
+			Long recordFrom, Long recordTo, Boolean logs, String[] orderBy) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getJobs({}, {}, {}, {}, {}, {})",
 				state, orderId, recordFrom, recordTo, (null == orderBy ? "null" : Arrays.asList(orderBy)));
 		
 		try {
+			if (logs == null) {
+				logs = true;
+			}
 			List<RestJob> resultList = new ArrayList<>();
 
 			Query query = createJobsQuery(state, orderId, recordFrom, recordTo, orderBy, false);
@@ -94,7 +97,7 @@ public class JobControllerImpl implements JobController {
 			for (Object resultObject: query.getResultList()) {
 				if (resultObject instanceof Job) {
 					Job job = (Job) resultObject;					
-					resultList.add(RestUtil.createRestJob(job));
+					resultList.add(RestUtil.createRestJob(job, logs));
 				}
 			}		
 
@@ -160,7 +163,7 @@ public class JobControllerImpl implements JobController {
 		try {
 			Job job = this.findJobById(jobId);
 			if (job != null) {
-				RestJob rj = RestUtil.createRestJob(job);
+				RestJob rj = getRestJob(job.getId(), true);
 
 				Messages.JOB_RETRIEVED.log(logger, jobId);
 
@@ -211,34 +214,61 @@ public class JobControllerImpl implements JobController {
 	 * 
 	 * @param jobId
 	 */
-	@Transactional
 	@Override 
 	public ResponseEntity<RestJob> resumeJob(String jobId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> resumeJob({})", jobId);
 		
 		try {
+			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+
 			Job job = this.findJobById(jobId);
 			if (job != null) {
-				if (job.getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
-					String message = Messages.FACILITY_NOT_AVAILABLE.log(logger, job.getProcessingFacility().getName(),
-							job.getProcessingFacility().getFacilityState().toString());
 
-			    	return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+				Messages msg = null;
+				try {
+					productionPlanner.acquireThreadSemaphore("resumeJob");
+					final ResponseEntity<RestJob> answer = transactionTemplate.execute((status) -> {
+						Job jobx = this.findJobByIdPrim(jobId);
+						if (jobx.getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
+							String message = Messages.FACILITY_NOT_AVAILABLE.log(logger, jobx.getProcessingFacility().getName(),
+									jobx.getProcessingFacility().getFacilityState().toString());
+
+							return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+						}
+						jobUtil.resume(jobx);
+						return null;
+					});
+					if (answer != null) {
+						productionPlanner.releaseThreadSemaphore("resumeJob");	
+						return answer;
+					}
+
+					productionPlanner.releaseThreadSemaphore("resumeJob");	
+				} catch (Exception e) {
+					productionPlanner.releaseThreadSemaphore("resumeJob");	
+					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
+					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
-
-				Messages msg = jobUtil.resume(job);
-				// Already logged
-				
 				if (msg.isTrue()) {
-					UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
-					if (job.getProcessingFacility() != null) {
-						KubeConfig kc = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
-						if (kc != null) {
-							UtilService.getJobStepUtil().checkJobToRun(kc, job);
+					final KubeConfig kc = transactionTemplate.execute((status) -> {
+						if (job.getProcessingFacility() != null) {
+							return productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
+						} else {
+							return null;
+						}
+					});
+					if (kc != null) {
+						try {
+							productionPlanner.acquireThreadSemaphore("resumeJob2");
+							UtilService.getJobStepUtil().checkJobToRun(kc, job.getId());
+							productionPlanner.releaseThreadSemaphore("resumeJob2");	
+						} catch (Exception e) {
+							productionPlanner.releaseThreadSemaphore("resumeJob2");	
+							String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
+							return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 						}
 					}
-					RestJob rj = RestUtil.createRestJob(job);
-
+					RestJob rj = getRestJob(job.getId(), false);
 					return new ResponseEntity<>(rj, HttpStatus.OK);
 				} else {
 					String message = msg.format(jobId);
@@ -261,7 +291,6 @@ public class JobControllerImpl implements JobController {
 	 * 
 	 * @param jobId
 	 */
-	@Transactional
 	@Override 
 	public ResponseEntity<RestJob> cancelJob(String jobId){
 		if (logger.isTraceEnabled()) logger.trace(">>> cancelJob({})", jobId);
@@ -269,10 +298,22 @@ public class JobControllerImpl implements JobController {
 		try {
 			Job job = this.findJobById(jobId);
 			if (job != null) {
-				Messages msg = jobUtil.cancel(job);
+				Messages msg = null;
+				try {
+					productionPlanner.acquireThreadSemaphore("cancelJob");
+					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+					msg = transactionTemplate.execute((status) -> {
+						Job jobx = this.findJobByIdPrim(jobId);
+						return jobUtil.cancel(jobx);
+					});
+					productionPlanner.releaseThreadSemaphore("cancelJob");	
+				} catch (Exception e) {
+					productionPlanner.releaseThreadSemaphore("cancelJob");	
+					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
+					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+				}
 				if (msg.isTrue()) {
-					UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
-					RestJob rj = RestUtil.createRestJob(job);
+					RestJob rj = getRestJob(job.getId(), false);
 
 					return new ResponseEntity<>(rj, HttpStatus.OK);
 				} else {
@@ -297,39 +338,63 @@ public class JobControllerImpl implements JobController {
 	 * @param jobId
 	 * @param force If true, kill job, otherweise wait until end of job
 	 */
-	@Transactional
 	@Override 
-	public ResponseEntity<RestJob> suspendJob(String jobId, Boolean force) {
-		if (logger.isTraceEnabled()) logger.trace(">>> suspendJob({}, force: {})", jobId, force);
+	public ResponseEntity<RestJob> suspendJob(String jobId, Boolean forceP) {
+		if (logger.isTraceEnabled()) logger.trace(">>> suspendJob({}, force: {})", jobId, forceP);
 		
-		if (null == force) {
-			force = false;
-		}
+		final Boolean force = (null == forceP ? false : forceP);
 		
 		try {
 			Job job = this.findJobById(jobId);
+			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 			if (job != null) {
-				
-				// "Suspend force" is only allowed, if the processing facility is available
-				if (force && job.getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
-					String message = Messages.FACILITY_NOT_AVAILABLE.log(logger, job.getProcessingFacility().getName(),
-							job.getProcessingFacility().getFacilityState().toString());
 
-			    	return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+				Messages msg = null;
+				try {
+					productionPlanner.acquireThreadSemaphore("suspendJob");
+					final ResponseEntity<RestJob> answer = transactionTemplate.execute((status) -> {
+						Job jobx = this.findJobByIdPrim(jobId);
+						if (jobx.getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
+							// "Suspend force" is only allowed, if the processing facility is available
+							if (force && jobx.getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
+								String message = Messages.FACILITY_NOT_AVAILABLE.log(logger, jobx.getProcessingFacility().getName(),
+										jobx.getProcessingFacility().getFacilityState().toString());
+						    	return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+							}
+						}
+						return null;
+					});
+					if (answer != null) {
+						productionPlanner.releaseThreadSemaphore("suspendJob");	
+						return answer;
+					}
+
+					productionPlanner.releaseThreadSemaphore("suspendJob");	
+				} catch (Exception e) {
+					productionPlanner.releaseThreadSemaphore("suspendJob");	
+					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
+					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
-
-				Messages msg = jobUtil.suspend(job, force);
-				// Already logged
-				
+				try {
+					productionPlanner.acquireThreadSemaphore("suspendJob");
+					msg = transactionTemplate.execute((status) -> {
+						Job jobx = this.findJobByIdPrim(jobId);
+						return jobUtil.suspend(jobx, force);
+					});
+					productionPlanner.releaseThreadSemaphore("suspendJob");	
+				} catch (Exception e) {
+					productionPlanner.releaseThreadSemaphore("suspendJob");	
+					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
+					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+				}
 				if (msg.isTrue()) {
-					UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
-					RestJob pj = RestUtil.createRestJob(job);
+					RestJob pj = getRestJob(job.getId(), false);
 
 					return new ResponseEntity<>(pj, HttpStatus.OK);
 				} else {
 					String message = msg.format(jobId);
 
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.OK);
+					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_ACCEPTABLE);
 				}
 			}
 			String message = Messages.JOB_NOT_EXIST.log(logger, jobId);
@@ -347,42 +412,81 @@ public class JobControllerImpl implements JobController {
 	 * @param idStr
 	 * @return The job found or null
 	 */
-	@Transactional
-	private Job findJobById(String idStr) {
-		if (logger.isTraceEnabled()) logger.trace(">>> findJobById({})", idStr);
+	private Job findJobByIdPrim(String idStr) {
+		if (logger.isTraceEnabled()) logger.trace(">>> findJobByIdPrim({})", idStr);
 		
 		Job job = null;
-		Long id = null;
-		if (idStr != null) {
-			if (idStr.matches("[0-9]+")) {
-				id = Long.valueOf(idStr);
-			}
-			if (id != null) {
-				Optional<Job> jo = RepositoryService.getJobRepository().findById(id);
-				if (jo.isPresent()) {
-					job = jo.get();
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		job = transactionTemplate.execute((status) -> {
+			Job jobx = null;
+			Long id = null;
+			if (idStr != null) {
+				if (idStr.matches("[0-9]+")) {
+					id = Long.valueOf(idStr);
+				}
+				if (id != null) {
+					Optional<Job> jo = RepositoryService.getJobRepository().findById(id);
+					if (jo.isPresent()) {
+						jobx = jo.get();
+					}
 				}
 			}
-		}
 
-		if (null != job) {
-			// Ensure user is authorized for the mission of the job
-			String missionCode = securityService.getMission();
-			String orderMissionCode = job.getProcessingOrder().getMission().getCode();
-			if (!missionCode.equals(orderMissionCode)) {
-				Messages.ILLEGAL_CROSS_MISSION_ACCESS.log(logger, orderMissionCode, missionCode);
-				return null;
-			} 
-		}
+			if (null != jobx) {
+				// Ensure user is authorized for the mission of the job
+				String missionCode = securityService.getMission();
+				String orderMissionCode = jobx.getProcessingOrder().getMission().getCode();
+				if (!missionCode.equals(orderMissionCode)) {
+					Messages.ILLEGAL_CROSS_MISSION_ACCESS.log(logger, orderMissionCode, missionCode);
+					return null;
+				} 
+			}
+			return jobx;
+		});
 		return job;
 	}
-	
+
+	private Job findJobById(String nameOrId) {
+		if (logger.isTraceEnabled()) logger.trace(">>> findJobById({})", nameOrId);
+		Job j = null;
+		try {
+			productionPlanner.acquireThreadSemaphore("findJobById");
+			j = this.findJobByIdPrim(nameOrId);
+			productionPlanner.releaseThreadSemaphore("findJobById");	
+		} catch (Exception e) {
+			productionPlanner.releaseThreadSemaphore("findJobById");	
+			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());	
+		}
+		return j;
+	}
+
+	private RestJob getRestJob(long id, Boolean logs) {
+		RestJob answer = null;
+		try {
+			productionPlanner.acquireThreadSemaphore("getRestJob");
+			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+			answer = transactionTemplate.execute((status) -> {
+				RestJob rj = null;
+				Job job = null;
+				Optional<Job> opt = RepositoryService.getJobRepository().findById(id);
+				if (opt.isPresent()) {
+					job = opt.get();
+					rj = RestUtil.createRestJob(job, logs);
+				}
+				return rj;
+			});
+		} catch (Exception e) {
+			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());	
+		} finally {
+			productionPlanner.releaseThreadSemaphore("getRestJob");
+		}
+		return answer;
+	}
 	/* 
 	 * Retry a job by job id
 	 * 
 	 * @param jobId
 	 */
-	@Transactional
 	@Override
 	public ResponseEntity<RestJob> retryJob(String id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> retryJob({})", id);
@@ -390,14 +494,24 @@ public class JobControllerImpl implements JobController {
 		try {
 			Job j = this.findJobById(id);
 			if (j != null) {
-				Messages msg = jobUtil.retry(j);
-				// Already logged
-				
+				Messages msg = null;
+				try {
+					productionPlanner.acquireThreadSemaphore("retryJob");
+					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+					msg = transactionTemplate.execute((status) -> {
+						Job jobx = this.findJobByIdPrim(id);
+						return jobUtil.retry(jobx);
+					});
+					productionPlanner.releaseThreadSemaphore("retryJob");	
+				} catch (Exception e) {
+					productionPlanner.releaseThreadSemaphore("retryJob");	
+					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
+					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+				}
 				if (msg.isTrue()) {
-					UtilService.getOrderUtil().updateState(j.getProcessingOrder(), j.getJobState());
-					RestJob pj = RestUtil.createRestJob(j);
+					RestJob rj = getRestJob(j.getId(), false);
 
-					return new ResponseEntity<>(pj, HttpStatus.OK);
+					return new ResponseEntity<>(rj, HttpStatus.OK);
 				} else {
 					String message = msg.format(id);
 
@@ -458,7 +572,7 @@ public class JobControllerImpl implements JobController {
 
 		query.setParameter("missionCode", securityService.getMission());
 		if (null != state) {
-			query.setParameter("state",state);
+			query.setParameter("state", JobState.valueOf(state));
 		}
 		if (null != orderId) {
 			query.setParameter("orderId", orderId);

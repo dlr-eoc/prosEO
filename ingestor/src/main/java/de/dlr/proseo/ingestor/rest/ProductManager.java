@@ -6,7 +6,6 @@
 package de.dlr.proseo.ingestor.rest;
 
 import java.net.URISyntaxException;
-import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -105,7 +104,6 @@ public class ProductManager {
 	private static final int MSG_ID_PRODUCT_DOWNLOAD_TOKEN_REQUESTED = 2032;
 	private static final int MSG_ID_EXCEPTION = 2033;
 	private static final int MSG_ID_PRODUCTFILE_NOT_AVAILABLE = 2034;
-	private static final int MSG_ID_MONITORING_FAILED = 2035;
 
 	/* Message string constants */
 	private static final String MSG_PRODUCT_MISSING = "(E%d) Product not set";
@@ -132,11 +130,8 @@ public class ProductManager {
 	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
 	private static final String MSG_VISIBILITY_VIOLATION = "(E%d) User not authorized for read access to product class %s";
 	private static final String MSG_PRODUCT_NOT_AVAILABLE = "(E%d) Product with ID %d not available on any Processing Facility";
-	private static final String MSG_PRODUCT_DOWNLOAD_REQUESTED = "(E%d) Download link for product with ID %d provided";
-	private static final String MSG_PRODUCT_DOWNLOAD_TOKEN_REQUESTED = "(E%d) Download token for product with ID %d and file name %s provided";
 	private static final String MSG_EXCEPTION = "(E%d) Request failed (cause %s: %s)";
 	private static final String MSG_PRODUCTFILE_NOT_AVAILABLE = "(E%d) Product with ID %d has no file named %s";
-	private static final String MSG_MONITORING_FAILED = "(E%d) Error sending monitoring message for product with ID %d and file name %s (cause: %s)";
 	
 	private static final String MSG_PRODUCT_DELETED = "(I%d) Product with id %d deleted";
 	private static final String MSG_PRODUCT_LIST_RETRIEVED = "(I%d) Product list of size %d retrieved for mission '%s', product classes '%s', start time '%s', stop time '%s'";
@@ -145,6 +140,8 @@ public class ProductManager {
 	private static final String MSG_PRODUCT_MODIFIED = "(I%d) Product with id %d modified";
 	private static final String MSG_PRODUCT_NOT_MODIFIED = "(I%d) Product with id %d not modified (no changes)";
 	private static final String MSG_PRODUCT_RETRIEVED = "(I%d) Product with ID %s retrieved";
+	private static final String MSG_PRODUCT_DOWNLOAD_REQUESTED = "(I%d) Download link for product with ID %d provided";
+	private static final String MSG_PRODUCT_DOWNLOAD_TOKEN_REQUESTED = "(I%d) Download token for product with ID %d and file name %s provided";
 
 	/* Other string constants */
 	private static final String FACILITY_QUERY_SQL = "SELECT count(*) FROM product_processing_facilities ppf WHERE ppf.product_id = :product_id";
@@ -363,7 +360,10 @@ public class ProductManager {
 			throw new NoResultException(logError(MSG_PRODUCT_LIST_EMPTY, MSG_ID_PRODUCT_LIST_EMPTY));
 		}
 		
-		logInfo(MSG_PRODUCT_LIST_RETRIEVED, MSG_ID_PRODUCT_LIST_RETRIEVED, result.size(), mission, productClass, startTimeFrom, startTimeTo);
+		// TODO: Restrict number of products retrieved (like in PRIP API)
+		
+		logInfo(MSG_PRODUCT_LIST_RETRIEVED, MSG_ID_PRODUCT_LIST_RETRIEVED, result.size(), mission,
+				Arrays.asList(productClass).toString(), startTimeFrom, startTimeTo);
 		
 		return result;
 	}
@@ -654,7 +654,9 @@ public class ProductManager {
 			productChanged = true;
 			modelProduct.setRawDataAvailabilityTime(changedProduct.getRawDataAvailabilityTime());
 		}
-		if (!modelProduct.getGenerationTime().equals(changedProduct.getGenerationTime())) {
+		if (null == modelProduct.getGenerationTime() && null != changedProduct.getGenerationTime()
+				|| null != modelProduct.getGenerationTime()
+					&& !modelProduct.getGenerationTime().equals(changedProduct.getGenerationTime())) {
 			productChanged = true;
 			modelProduct.setGenerationTime(changedProduct.getGenerationTime());
 		}

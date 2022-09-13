@@ -143,7 +143,6 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      * @return a JSON object describing the processing facility that was synchronized
      */
 	@Override
-	@Transactional
 	public ResponseEntity<RestProcessingFacility> synchronizeFacility(String name) {
 		if (logger.isTraceEnabled()) logger.trace(">>> synchronizeFacility({})", name);
 		
@@ -158,7 +157,14 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 		
 		try {
 			kc.sync();
-			UtilService.getJobStepUtil().checkForJobStepsToRun(kc, null, false);
+			try {
+				productionPlanner.acquireThreadSemaphore("synchronizeFacility");
+				UtilService.getJobStepUtil().checkForJobStepsToRun(kc, 0, false, true);
+				productionPlanner.releaseThreadSemaphore("run");		
+			} catch (Exception e) {
+				productionPlanner.releaseThreadSemaphore("synchronizeFacility");		
+				Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			}
 			
 			RestProcessingFacility pf = new RestProcessingFacility(
 					kc.getLongId(),
@@ -193,7 +199,6 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      * @return a JSON object describing the finished pod (currently not implemented)
      */
 	@Override
-	@Transactional
     public ResponseEntity<PlannerPod> finishKubeJob(String podname, String name, String status) {
 		if (logger.isTraceEnabled()) logger.trace(">>> finishKubeJob({}, {}, {})", podname, name, status);
 		

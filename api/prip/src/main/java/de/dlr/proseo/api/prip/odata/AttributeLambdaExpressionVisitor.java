@@ -222,8 +222,31 @@ public class AttributeLambdaExpressionVisitor implements ExpressionVisitor<Attri
 	@Override
 	public AttributeCondition visitBinaryOperator(BinaryOperatorKind operator, AttributeCondition left,
 			List<AttributeCondition> right) throws ExpressionVisitException, ODataApplicationException {
-		throw new ODataApplicationException("Binary operators on lists are not implemented for Attribute lambda expressions", 
-				HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
+		if (logger.isTraceEnabled()) logger.trace(">>> visitBinaryOperator({}, {}, {})", operator, left, right);
+		
+		if (null == left || null == right || right.isEmpty()) {
+			throw new ODataApplicationException(
+					"Cannot compare attribute condition '" + left + "' to list of attribute conditions '" + right + "'", 
+					HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ENGLISH);
+		}
+		
+		AttributeCondition result = new AttributeCondition();
+		if (BinaryOperatorKind.IN.equals(operator)) {
+			result.setOp("IN");
+			result.setName("(" + left.toString() + ")");
+			StringBuilder rightList = new StringBuilder("(").append(right.get(0).getValue());
+			for (int i = 1; i < right.size(); ++i) {
+				rightList.append(", ").append(right.get(i).getValue());
+			}
+			rightList.append(')');
+			result.setValue(rightList.toString());
+		} else {
+			throw new ODataApplicationException("Binary operator '" + operator + "' on lists in Attribute lambda expressions is not implemented", 
+					HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
+		}
+
+		if (logger.isTraceEnabled()) logger.trace("<<< visitBinaryOperator()");
+		return result;
 	}
 
 	@Override

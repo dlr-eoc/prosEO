@@ -16,12 +16,16 @@ import de.dlr.proseo.model.dao.JobRepository;
 import de.dlr.proseo.model.dao.JobStepRepository;
 import de.dlr.proseo.model.dao.MissionRepository;
 import de.dlr.proseo.model.dao.MonExtServiceRepository;
+import de.dlr.proseo.model.dao.MonExtServiceStateOperationDayRepository;
+import de.dlr.proseo.model.dao.MonExtServiceStateOperationMonthRepository;
 import de.dlr.proseo.model.dao.MonExtServiceStateOperationRepository;
 import de.dlr.proseo.model.dao.MonOrderStateRepository;
 import de.dlr.proseo.model.dao.MonProductProductionDayRepository;
 import de.dlr.proseo.model.dao.MonProductProductionHourRepository;
 import de.dlr.proseo.model.dao.MonProductProductionMonthRepository;
 import de.dlr.proseo.model.dao.MonServiceRepository;
+import de.dlr.proseo.model.dao.MonServiceStateOperationDayRepository;
+import de.dlr.proseo.model.dao.MonServiceStateOperationMonthRepository;
 import de.dlr.proseo.model.dao.MonServiceStateOperationRepository;
 import de.dlr.proseo.model.dao.MonServiceStateRepository;
 import de.dlr.proseo.model.dao.OrbitRepository;
@@ -154,6 +158,23 @@ public class RepositoryService {
 	/** The repository for the MonProductProductionMonth class */
 	@Autowired
     private MonProductProductionMonthRepository monProductProductionMonthRepository;
+
+	/** The repository for the MonServiceStateOperationDay class */
+	@Autowired
+    private MonServiceStateOperationDayRepository monServiceStateOperationDayRepository;
+
+	/** The repository for the MonServiceStateOperationMonth class */
+	@Autowired
+    private MonServiceStateOperationMonthRepository monServiceStateOperationMonthRepository;
+
+	/** The repository for the MonExtServiceStateOperationDay class */
+	@Autowired
+    private MonExtServiceStateOperationDayRepository monExtServiceStateOperationDayRepository;
+
+	/** The repository for the MonExtServiceStateOperationMonth class */
+	@Autowired
+    private MonExtServiceStateOperationMonthRepository monExtServiceStateOperationMonthRepository;
+	
 
 	/**
 	 * Singleton constructor
@@ -400,4 +421,31 @@ public class RepositoryService {
 		return theRepositoryService.monProductProductionMonthRepository;
 	}
 
+	/**
+	 * @return the monServiceStateOperationDayRepository
+	 */
+	public static MonServiceStateOperationDayRepository getMonServiceStateOperationDayRepository() {
+		return theRepositoryService.monServiceStateOperationDayRepository;
+	}
+
+	/**
+	 * @return the monServiceStateOperationMonthRepository
+	 */
+	public static MonServiceStateOperationMonthRepository getMonServiceStateOperationMonthRepository() {
+		return theRepositoryService.monServiceStateOperationMonthRepository;
+	}
+
+	/**
+	 * @return the monExtServiceStateOperationDayRepository
+	 */
+	public static MonExtServiceStateOperationDayRepository getMonExtServiceStateOperationDayRepository() {
+		return theRepositoryService.monExtServiceStateOperationDayRepository;
+	}
+
+	/**
+	 * @return the monExtServiceStateOperationMonthRepository
+	 */
+	public static MonExtServiceStateOperationMonthRepository getMonExtServiceStateOperationMonthRepository() {
+		return theRepositoryService.monExtServiceStateOperationMonthRepository;
+	}
 }

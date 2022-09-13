@@ -61,7 +61,7 @@
           </List_of_File_Names>
         </Input>
         <Input>
-          <File_Type>L0________</File_Type>
+          <File_Type>PTM_L0</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
             <File_Name>src/test/resources/sample-product-in.txt</File_Name>
@@ -70,12 +70,12 @@
       </List_of_Inputs>
       <List_of_Outputs count="1">
         <Output>
-          <File_Type>L1B_PART1</File_Type>
+          <File_Type>PTM_L1B_P1</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <File_Name>src/test/resources/sample-product-out-1.txt</File_Name>
         </Output>
         <Output>
-          <File_Type>L1B_PART2</File_Type>
+          <File_Type>PTM_L1B_P2</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <File_Name>src/test/resources/sample-product-out-2.txt</File_Name>
         </Output>

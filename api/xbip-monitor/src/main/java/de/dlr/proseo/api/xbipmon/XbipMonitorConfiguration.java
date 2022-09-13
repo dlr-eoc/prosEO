@@ -35,6 +35,10 @@ public class XbipMonitorConfiguration {
 	@Value("${proseo.xbip.check.interval}")
 	private Long xbipCheckInterval;
 	
+	/** The Retrieval delay in milliseconds (to avoid concurrent XBIP access by multiple PDGSs, default 0) */
+	@Value("${proseo.xbip.retrieval.delay:0}")
+	private Long xbipRetrievalDelay;
+	
 	/** The path to the file for storing transfer history */
 	@Value("${proseo.xbip.history.file}")
 	private String xbipHistoryPath;
@@ -126,6 +130,15 @@ public class XbipMonitorConfiguration {
 	 */
 	public Long getXbipCheckInterval() {
 		return xbipCheckInterval;
+	}
+
+	/**
+	 * Gets the retrieval delay for the pickup point
+	 * 
+	 * @return the XBIP retrieval delay in ms
+	 */
+	public Long getXbipRetrievalDelay() {
+		return xbipRetrievalDelay;
 	}
 
 	/**

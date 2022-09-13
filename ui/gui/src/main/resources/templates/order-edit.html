@@ -1676,7 +1676,7 @@ function checkOrbitNumberFrom() {
     var from = $(this);
     var to = $('#orbitNumberTo-' + from[0].id.match(/[0-9]+/)[0]);
     var spacecraft = $('#spacecraftCode-' + from[0].id.match(/[0-9]+/)[0]);
-    if (to.val() <= from.val()) {
+    if (parseInt(to.val()) <= parseInt(from.val())) {
 	      to.val(parseInt(from.val()));
     }
     if (hasOrbits(spacecraft.val(), from.val(), to.val())) {
@@ -1692,11 +1692,11 @@ function checkOrbitNumberTo() {
 	  var to = $(this);
 	  var from = $('#orbitNumberFrom-' + to[0].id.match(/[0-9]+/)[0]);
 	  var spacecraft = $('#spacecraftCode-' + to[0].id.match(/[0-9]+/)[0]);
-	  if (to.val() < 1) {
+	  if (parseInt(to.val()) < 1) {
 		    to.val(0);
 		    from.val(0);
 	  } else {
-	      if (to.val() <= from.val()) {
+	      if (parseInt(to.val()) <= parseInt(from.val())) {
 	          from.val(parseInt(to.val()));
 	      }
 	  }

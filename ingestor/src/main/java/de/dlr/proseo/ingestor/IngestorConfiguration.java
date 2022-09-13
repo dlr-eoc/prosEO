@@ -58,10 +58,13 @@ public class IngestorConfiguration {
 	private String storageManagerValidity;
 	private Long storageManagerValidityLong = null;
 	
-
 	/** Wait time for cleanup */
 	@Value("${proseo.ingestor.cleanupCycleTime}")
 	private Integer cleanupCycleTime;
+	
+	/** Notify Production Planner upon product ingestion */
+	@Value("${proseo.ingestor.notifyPlanner:true}")
+	private Boolean notifyPlanner;
 	
 	
 	/** A logger for this class */
@@ -151,12 +154,22 @@ public class IngestorConfiguration {
 		return storageManagerValidityLong.longValue();
 	}
 
+	/**
+	 * Gets the order cleanup cycle
+	 * 
+	 * @return the order cleanup cycle (in days)
+	 */
 	public Integer getCleanupCycleTime() {
 		return cleanupCycleTime;
 	}
 
-	public void setCleanupCycleTime(Integer cleanupCycleTime) {
-		this.cleanupCycleTime = cleanupCycleTime;
+	/**
+	 * Indicates whether the Production Planner should be notified about new product ingestions
+	 * 
+	 * @return true, if Planner notification is requested, false otherwise
+	 */
+	public Boolean getNotifyPlanner() {
+		return notifyPlanner;
 	}
 
 }

@@ -226,7 +226,7 @@ public class TestSqlFilterExpressionVisitor {
 		String uriQuery = "$filter=startswith(Name,'S3B_DO_0')";
 		// TODO Implement check for ZIP files
 		// String sqlQuery = "(pf.product_file_name LIKE 'S3B_DO_0%' OR pf.zip_file_name LIKE 'S3B_DO_0%')"; 
-		String sqlQuery = "pf.product_file_name LIKE 'S3B_DO_0%'"; 
+		String sqlQuery = "pf.product_file_name LIKE 'S3B\\_DO\\_0%' ESCAPE '\\'"; 
 		
 		runTest(uriQuery, sqlQuery);
 	}
@@ -249,13 +249,27 @@ public class TestSqlFilterExpressionVisitor {
 	@Test
 	public final void testVisitEnum() {
 		String uriQuery = "$filter=PublicationDate gt 2020-04-30T12:00:00.000Z and ProductionType eq OData.CSC.ProductionType'systematic_production'";
-		String sqlQuery = "(p.generation_time > '2020-04-30 12:00:00.000000 +0000' AND p.production_type = 'SYSTEMATIC')"; 
+		String sqlQuery = "(p.publication_time > '2020-04-30 12:00:00.000000 +0000' AND p.production_type = 'SYSTEMATIC')"; 
 		
 		runTest(uriQuery, sqlQuery);
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.api.prip.odata.SqlFilterExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
+	 * Test method for {@link de.dlr.proseo.api.prip.odata.AttributeLambdaExpressionVisitor#visitBinaryOperator(
+	 * 		org.apache.olingo.server.api.uri.queryoption.expression.BinaryOperatorKind, 
+	 * 		de.dlr.proseo.api.prip.odata.AttributeLambdaExpressionVisitor.AttributeCondition, 
+	 * 		java.util.List<de.dlr.proseo.api.prip.odata.AttributeLambdaExpressionVisitorAttributeCondition>)}.
+	 */
+	@Test
+	public final void testVisitBinaryOperator() {
+		String uriQuery = "$filter=Attributes/OData.CSC.StringAttribute/any(att:att/Name eq 'productType' and att/OData.CSC.StringAttribute/Value in ('MSI_L1C_TL', 'something_weird'))";
+		String sqlQuery = "pc.product_type IN ('MSI_L1C_TL', 'something_weird')"; 
+		
+		runTest(uriQuery, sqlQuery);
+	}
+
+	/**
+	 * Test method for {@link de.dlr.proseo.api.prip.odata.AttributeLambdaExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
 	 */
 	@Test
 	public final void testVisitPrimitiveAttribute() {
@@ -271,7 +285,7 @@ public class TestSqlFilterExpressionVisitor {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.api.prip.odata.SqlFilterExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
+	 * Test method for {@link de.dlr.proseo.api.prip.odata.AttributeLambdaExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
 	 */
 	@Test
 	public final void testVisitParameterAttribute() {
@@ -282,7 +296,7 @@ public class TestSqlFilterExpressionVisitor {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.api.prip.odata.SqlFilterExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
+	 * Test method for {@link de.dlr.proseo.api.prip.odata.AttributeLambdaExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
 	 */
 	@Test
 	public final void testVisitDateAttribute() {
@@ -293,7 +307,7 @@ public class TestSqlFilterExpressionVisitor {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.api.prip.odata.SqlFilterExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
+	 * Test method for {@link de.dlr.proseo.api.prip.odata.AttributeLambdaExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
 	 */
 	@Test
 	public final void testVisitIntegerAttribute() {

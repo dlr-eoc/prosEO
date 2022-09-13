@@ -65,8 +65,8 @@ public class S3Ops {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3Ops.class);
 
-	/** Chunk size for uploads to S3 storage (5 MB) */
-	private static final Long MULTIPART_UPLOAD_PARTSIZE_BYTES = (long) (5 * 1024 * 1024);
+	/** Chunk size for uploads to S3 storage (128 MB) */
+	private static final Long MULTIPART_UPLOAD_PARTSIZE_BYTES = (long) (128 * 1024 * 1024);
 
 	/** Maximum number of retries for data uploads to S3 storage */
 	private static final int MAX_UPLOAD_RETRIES = 3;
@@ -472,8 +472,8 @@ public class S3Ops {
 				if (i >= MAX_UPLOAD_RETRIES) { // fail at the last try
 					throw e;
 				} else {
-					logger.warn("Uploading directory {} failed (cause: {}), retrying ...", sourceDirPath,
-							e.getMessage());
+					logger.warn("Uploading directory {} failed (cause: {}), retrying after 100 ms ...", sourceDirPath, e.getMessage());
+					Thread.sleep(100);
 				}
 			}
 		}
@@ -550,8 +550,8 @@ public class S3Ops {
 					if (i >= MAX_UPLOAD_RETRIES) { // fail at the last try
 						throw e;
 					} else {
-						logger.warn("Uploading file {} failed (cause: {}), retrying ...", sourceFilePath,
-								e.getMessage());
+						logger.warn("Uploading file {} failed (cause: {}), retrying after 100 ms ...", sourceFilePath, e.getMessage());
+						Thread.sleep(100);
 					}
 				}
 			}
@@ -670,8 +670,8 @@ public class S3Ops {
 						if (i >= MAX_UPLOAD_RETRIES) { // fail at the last try
 							throw e;
 						} else {
-							logger.warn("Copying s3://{}/{} failed (cause: {}), retrying ...", sourceBucketName, key,
-									e.getMessage());
+							logger.warn("Copying s3://{}/{} failed (cause: {}), retrying after 100 ms ...", sourceBucketName, key, e.getMessage());
+							Thread.sleep(100);
 						}
 					}
 				}

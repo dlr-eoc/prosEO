@@ -93,6 +93,7 @@ public class OrderCommandRunner {
 	private static final String URI_PATH_ORDER_CANCEL = "/orders/cancel";
 	private static final String URI_PATH_ORDER_RETRY = "/orders/retry";
 	private static final String URI_PATH_ORDER_RESET = "/orders/reset";
+	private static final String URI_PATH_ORDER_CLOSE = "/orders/close";
 	private static final String URI_PATH_JOBS = "/jobs";
 	
 	private static final String ORDERS = "orders";
@@ -768,9 +769,9 @@ public class OrderCommandRunner {
 			return;
 		}
 		
-		/* Delete order using Production Planner service */
+		/* Delete order using Order Manager service */
 		try {
-			serviceConnection.deleteFromService(serviceConfig.getProductionPlannerUrl(), URI_PATH_ORDERS + "/" + restOrder.getId(),
+			serviceConnection.deleteFromService(serviceConfig.getOrderManagerUrl(), URI_PATH_ORDERS + "/" + restOrder.getId(),
 						loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
@@ -889,7 +890,8 @@ public class OrderCommandRunner {
 		String processingFacility = planCommand.getParameters().get(1).getValue();
 		
 		/* Check whether (database) order is in state "APPROVED", otherwise planning not allowed */
-		if (!OrderState.APPROVED.toString().equals(restOrder.getOrderState())) {
+		if (!OrderState.APPROVED.toString().equals(restOrder.getOrderState())
+				&& !OrderState.PLANNING_FAILED.toString().equals(restOrder.getOrderState())) {
 			System.err.println(uiMsg(MSG_ID_INVALID_ORDER_STATE,
 					CMD_PLAN, restOrder.getOrderState(), OrderState.APPROVED.toString()));
 			return;
@@ -1054,7 +1056,7 @@ public class OrderCommandRunner {
 		}
 		
 		/* Report success, giving new order version */
-		String message = uiMsg(MSG_ID_ORDER_RELEASED, restOrder.getIdentifier(), restOrder.getVersion());
+		String message = uiMsg(MSG_ID_ORDER_RELEASING, restOrder.getIdentifier(), restOrder.getVersion());
 		logger.info(message);
 		System.out.println(message);
 	}
@@ -1084,6 +1086,7 @@ public class OrderCommandRunner {
 		
 		/* Check whether (database) order is in state "RELEASED" or "RUNNING", otherwise suspending not allowed */
 		if (!OrderState.RELEASED.toString().equals(restOrder.getOrderState())
+				&& !OrderState.RELEASING.toString().equals(restOrder.getOrderState())
 				&& !OrderState.RUNNING.toString().equals(restOrder.getOrderState())) {
 			System.err.println(uiMsg(MSG_ID_INVALID_ORDER_STATE,
 					CMD_SUSPEND, restOrder.getOrderState(), OrderState.RELEASED.toString() + " or " + OrderState.RUNNING.toString()));
@@ -1274,7 +1277,8 @@ public class OrderCommandRunner {
 		/* Update order state to "APPROVED" using Order Manager service */
 		restOrder.setOrderState(OrderState.CLOSED.toString());
 		try {
-			restOrder = serviceConnection.patchToService(serviceConfig.getOrderManagerUrl(), URI_PATH_ORDERS + "/" + restOrder.getId(),
+			restOrder = serviceConnection.patchToService(serviceConfig.getProductionPlannerUrl(),
+					URI_PATH_ORDER_CLOSE + "/" + restOrder.getId(),
 					restOrder, RestOrder.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
@@ -1322,7 +1326,10 @@ public class OrderCommandRunner {
 			return;
 		
 		/* Check whether (database) order is in state "APPROVED" or "PLANNED", otherwise reset not allowed */
-		if (!OrderState.APPROVED.toString().equals(restOrder.getOrderState()) && !OrderState.PLANNED.toString().equals(restOrder.getOrderState())) {
+		if (!OrderState.APPROVED.toString().equals(restOrder.getOrderState()) 
+				&& !OrderState.PLANNING.toString().equals(restOrder.getOrderState())
+				&& !OrderState.PLANNING_FAILED.toString().equals(restOrder.getOrderState())
+				&& !OrderState.PLANNED.toString().equals(restOrder.getOrderState())) {
 			System.err.println(uiMsg(MSG_ID_INVALID_ORDER_STATE,
 					CMD_RESET, restOrder.getOrderState(), OrderState.APPROVED.toString() + ", " + OrderState.PLANNED.toString()));
 			return;

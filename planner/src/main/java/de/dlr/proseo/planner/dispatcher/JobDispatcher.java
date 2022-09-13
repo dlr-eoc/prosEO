@@ -131,7 +131,7 @@ public class JobDispatcher {
 					}
 					// dynamic input files calculated by input products
 					// create IpfInput for each product class
-					Map<ProductClass, List<Product>> productClasses = new HashMap<ProductClass, List<Product>>();
+					Map<String, List<Product>> productClasses = new HashMap<String, List<Product>>();
 					for (ProductQuery pq : jobStep.getInputProductQueries()) {
 						// Replaced "getNewestSatisfyingProducts" by "getSatisfyingProducts" --> older ones are allowed!
 						// If this is a problem with some test cases, check test cases
@@ -147,7 +147,7 @@ public class JobDispatcher {
 
 			} catch (Exception e) {
 				e.printStackTrace();
-				jobOrder = null;
+				throw e;
 			}
 
 			// write a job order file for test purposes
@@ -209,12 +209,12 @@ public class JobDispatcher {
 	 * @param jobStep the job step, for which the Job Order is generated
 	 * @param useTimeIntervals if true, generates TimeInterval elements to the input definition
 	 */
-	public void addIpfIOInput(Map<ProductClass, List<Product>> productClasses, Proc proc, JobStep jobStep, Boolean useTimeintervals) {
+	public void addIpfIOInput(Map<String, List<Product>> productClasses, Proc proc, JobStep jobStep, Boolean useTimeintervals) {
 		if (logger.isTraceEnabled()) logger.trace(">>> addIpfIOInput(<...>, {}, {}, {})", proc.getTaskName(), jobStep.getId(), useTimeintervals);
 
-		for (ProductClass pc : productClasses.keySet()) {
-			InputOutput sio = new InputOutput(pc.getProductType(), InputOutput.FN_TYPE_PHYSICAL, InputOutput.IO_TYPE_INPUT, null);
-			for (Product p : productClasses.get(pc)) {
+		for (String pt : productClasses.keySet()) {
+			InputOutput sio = new InputOutput(pt, InputOutput.FN_TYPE_PHYSICAL, InputOutput.IO_TYPE_INPUT, null);
+			for (Product p : productClasses.get(pt)) {
 				if (p.getComponentProducts().isEmpty()) {
 					for (ProductFile pf : p.getProductFile()) {
 						String filePath = pf.getFilePath();
@@ -245,16 +245,16 @@ public class JobDispatcher {
 	 * @param p The Product
 	 * @param productClasses The map
 	 */
-	private void addProductToMap(Product p, Map<ProductClass, List<Product>> productClasses) {
+	private void addProductToMap(Product p, Map<String, List<Product>> productClasses) {
 		if (logger.isTraceEnabled()) logger.trace(">>> addProductToMap({}, [...])", (null == p ? "null" : p.getId()));
 
 		if (p.getComponentProducts().isEmpty()) {
-			if (productClasses.containsKey(p.getProductClass())) {
-				productClasses.get(p.getProductClass()).add(p);
+			if (productClasses.containsKey(p.getProductClass().getProductType())) {
+				productClasses.get(p.getProductClass().getProductType()).add(p);
 			} else {
 				List<Product> plist = new ArrayList<Product>();
 				plist.add(p);
-				productClasses.put(p.getProductClass(), plist);
+				productClasses.put(p.getProductClass().getProductType(), plist);
 			}
 			if (logger.isTraceEnabled()) logger.trace("... added!");
 		} else {

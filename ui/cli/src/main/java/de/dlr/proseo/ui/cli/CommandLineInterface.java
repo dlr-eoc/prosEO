@@ -266,7 +266,7 @@ public class CommandLineInterface implements CommandLineRunner {
 	 */
 	@Override
 	public void run(String... args) throws Exception {
-		if (logger.isTraceEnabled()) logger.trace(">>> run({})", (Object[]) args);
+		if (logger.isTraceEnabled()) logger.trace(">>> run({})", args.toString());
 		
 		// Initialize the CLI
 		try {
@@ -309,6 +309,7 @@ public class CommandLineInterface implements CommandLineRunner {
 					System.err.println(message);
 					return;
 				}
+				System.out.println(uiMsg(MSG_ID_LOGGING_IN, username));
 				if (!loginManager.doLogin(username, password, mission, isInteractiveMode)) {
 					// Already logged
 					return;

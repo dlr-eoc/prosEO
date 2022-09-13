@@ -63,4 +63,14 @@ public interface OrderRepository extends JpaRepository<ProcessingOrder, Long> {
 	 */
 	@Query("select p from ProcessingOrder p where p.orderState = ?1 and p.evictionTime is not null and p.evictionTime < ?2")
 	public List<ProcessingOrder> findByOrderStateAndEvictionTimeLessThan(OrderState orderState, Instant evictionTime);
+
+	/**
+	 * Get the processing order with the given order state
+	 * 
+	 * @param missionCode the mission code of the processing order
+	 * @return the unique processing order identified by the given identifier
+	 */
+	@Query("select po from ProcessingOrder po where po.orderState = ?1")
+	public List<ProcessingOrder> findByOrderState(OrderState orderState);
+	
 }

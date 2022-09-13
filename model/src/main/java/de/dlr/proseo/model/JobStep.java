@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -16,11 +17,14 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * A single processor execution to produce a defined output product based on a defined set of required input product
@@ -37,12 +41,12 @@ public class JobStep extends PersistentObject {
 	private static final String MSG_ILLEGAL_STATE_TRANSITION = "Illegal job step state transition from %s to %s";
 
 	/** The job this job step belongs to */
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private Job job;
 	
 	/**
-	 * The currenet status of the job step; job steps in status INITIAL need to be released to advance to WAITING_INPUT status,
-	 * job steps in status WAITING_INPUT and READY can be returned to INITIAL status. All other status transitions are automatic
+	 * The currenet status of the job step; job steps in status PLANNED need to be released to advance to WAITING_INPUT status,
+	 * job steps in status WAITING_INPUT and READY can be returned to PLANNED status. All other status transitions are automatic
 	 * depending on processing progress.
 	 */
 	@Enumerated(EnumType.STRING)
@@ -60,7 +64,7 @@ public class JobStep extends PersistentObject {
 	private Set<ProductQuery> inputProductQueries = new HashSet<>();
 	
 	/** The output product of this job step */
-	@OneToOne(mappedBy = "jobStep")
+	@OneToOne(mappedBy = "jobStep", fetch = FetchType.LAZY)
 	private Product outputProduct;
 	
 	/** The start time of the processing job */
@@ -91,25 +95,32 @@ public class JobStep extends PersistentObject {
 	private StdLogLevel stderrLogLevel = StdLogLevel.INFO;
 
 	/**
+	 * The failed state of job step
+	 */
+	private Boolean isFailed = false;
+
+	/**
 	 * The possible processing states for a job step
 	 */
 	public enum JobStepState {
-		INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED;
+		PLANNED, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED, CLOSED;
 		
 		public boolean isLegalTransition(JobStepState other) {
 			switch(this) {
-			case INITIAL:
+			case PLANNED:
 				return other.equals(WAITING_INPUT) || other.equals(READY) || other.equals(FAILED);
 			case COMPLETED:
-				return false; // End state
+				return other.equals(CLOSED);
 			case FAILED:
-				return other.equals(INITIAL);
+				return other.equals(PLANNED) || other.equals(CLOSED);
 			case READY:
-				return other.equals(INITIAL) || other.equals(RUNNING);
+				return other.equals(PLANNED) || other.equals(RUNNING);
 			case RUNNING:
-				return other.equals(INITIAL) || other.equals(COMPLETED) || other.equals(FAILED);
+				return other.equals(PLANNED) || other.equals(COMPLETED) || other.equals(FAILED);
 			case WAITING_INPUT:
-				return other.equals(INITIAL) || other.equals(READY);
+				return other.equals(PLANNED) || other.equals(READY);
+			case CLOSED:
+				return false; // End state
 			default:
 				return false;
 			}
@@ -150,6 +161,27 @@ public class JobStep extends PersistentObject {
 	}
 
 	/**
+	 * @return the isFailed
+	 */
+	public Boolean getIsFailed() {
+		return isFailed;
+	}
+
+	/**
+	 * @return the isFailed
+	 */
+	public Boolean isFailed() {
+		return getIsFailed();
+	}
+
+	/**
+	 * @param isFailed the isFailed to set
+	 */
+	public void setIsFailed(Boolean isFailed) {
+		this.isFailed = isFailed;
+	}
+
+	/**
 	 * Gets the enclosing job
 	 * 
 	 * @return the job
@@ -177,14 +209,32 @@ public class JobStep extends PersistentObject {
 	}
 
 	/**
-	 * Sets the state of the job step
+	 * Sets the state of the job step (and optionally its failure flag) and propagates this state to the job
 	 * 
 	 * @param jobStepState the jobStepState to set
 	 * @throws IllegalStateException if the intended job step state transition is illegal
 	 */
+	@Transactional
 	public void setJobStepState(JobStepState jobStepState) throws IllegalStateException {
-		if (null == this.jobStepState || this.jobStepState.equals(jobStepState) || this.jobStepState.isLegalTransition(jobStepState)) {
+		if (null == this.jobStepState) {
 			this.jobStepState = jobStepState;
+		} else if (this.jobStepState.equals(jobStepState)) {
+			// Do nothing
+		} else if (this.jobStepState.isLegalTransition(jobStepState)) {
+			// Update job step state
+			this.jobStepState = jobStepState;
+			
+			// Set failure flag
+			if (JobStepState.FAILED.equals(jobStepState)) {
+				this.isFailed = true;
+			} else if (!JobStepState.CLOSED.equals(jobStepState)) {
+				this.isFailed = false;
+			}
+			
+			// Propagate state change
+			if (job != null) {
+				job.checkStateChange();
+			}
 		} else {
 			throw new IllegalStateException(String.format(MSG_ILLEGAL_STATE_TRANSITION,
 					this.jobStepState.toString(), jobStepState.toString()));
@@ -354,10 +404,32 @@ public class JobStep extends PersistentObject {
 	}
 
 	@Override
+	public int hashCode() {
+		return Objects.hash(job, outputProduct);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		// Object identity
+		if (this == obj)
+			return true;
+		
+		// Same database object
+		if (super.equals(obj))
+			return true;
+		
+		if (!(obj instanceof JobStep))
+			return false;
+		JobStep other = (JobStep) obj;
+		return Objects.equals(job, other.job) && Objects.equals(outputProduct, other.outputProduct);
+	}
+
+	@Override
 	public String toString() {
 		return "JobStep [jobStepState=" + jobStepState + ", outputParameters=" + outputParameters
 				+ ", processingMode=" + processingMode + ", processingStartTime=" + processingStartTime + ", processingCompletionTime="
 				+ processingCompletionTime + ", processingStdOut=" + processingStdOut + ", processingStdErr=" + processingStdErr
+				 + ", isFailed=" + isFailed
 				+ "]";
 	}
 

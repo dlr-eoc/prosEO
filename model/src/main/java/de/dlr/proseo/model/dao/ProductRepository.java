@@ -63,7 +63,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	 */
 	
 	@Query("select p from Product p where p.productClass.mission.code = ?1 and p.productionType = ?2"
-			+ " and p.publicationTime is not null and p.publicationTime between ?3 and ?4")
+			+ " and p.publicationTime is not null and p.publicationTime between ?3 and ?4 and p.productClass.processingLevel is not null")
 	public List<Product> findByMissionCodeAndProductionTypeAndPublicatedAndPublicationTimeBetween(
 			String missionCode, ProductionType productionType, Instant publicationTimeFrom, Instant publicationTimeTo);
 	/**

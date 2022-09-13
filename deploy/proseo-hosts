@@ -18,6 +18,13 @@ ansible_ssh_common_args='-o ProxyCommand="ssh -i keys/id_rsa -W %h:%p -q proseoa
 [nat_gateway]
 10.8.212.240
 
+[dbhost]
+10.8.212.55
+
+[dbhost:vars]
+# Configure control instance bastion as proxy for brain
+ansible_ssh_common_args='-o ProxyCommand="ssh -i keys/id_rsa -W %h:%p -q proseoadmin@85.215.220.164"'
+
 [loghost]
 10.8.212.14
 

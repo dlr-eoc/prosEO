@@ -721,7 +721,7 @@ public class SimplePolicy extends PersistentObject {
 					.append(filterQuery)
 					.append(") ")
 				.append("or p.sensingStartTime > '").append(selectionCentreString)
-				.append("' and p.sensingStartTime < ")
+				.append("' and p.sensingStartTime <= ")
 					.append("(select min(p2.sensingStartTime) from Product p2 ")
 					.append(subSelectQuery)
 					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
@@ -745,7 +745,7 @@ public class SimplePolicy extends PersistentObject {
 					.append(filterQuery)
 					.append(") ")
 				.append("or p.sensingStopTime > '").append(selectionCentreString)
-				.append("' and p.sensingStopTime < ")
+				.append("' and p.sensingStopTime <= ")
 					.append("(select min(p2.sensingStopTime) from Product p2 ")
 					.append(subSelectQuery)
 					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
@@ -771,24 +771,24 @@ public class SimplePolicy extends PersistentObject {
 			break;
 		case ValIntersect:
 		case ValIntersectWithoutDuplicates:
-			simplePolicyQuery.append("p.sensingStartTime <= '")
+			simplePolicyQuery.append("p.sensingStartTime < '")
 				.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
-				.append("' and p.sensingStopTime >= '")
+				.append("' and p.sensingStopTime > '")
 				.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds())))
 				.append("'");
 			break;
 		case LatestValIntersect:
-			simplePolicyQuery.append("p.sensingStartTime <= '")
+			simplePolicyQuery.append("p.sensingStartTime < '")
 				.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
-				.append("' and p.sensingStopTime >= '")
+				.append("' and p.sensingStopTime > '")
 				.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds())))
 				.append("' and p.generationTime >= ")
 					.append("(select max(p2.generationTime) from Product p2 ")
 					.append(subSelectQuery)
 					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
-					.append(" and p2.sensingStartTime <= '")
+					.append(" and p2.sensingStartTime < '")
 					.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
-					.append("' and p2.sensingStopTime >= '")
+					.append("' and p2.sensingStopTime > '")
 					.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds()))).append("'")
 					.append(filterQuery)
 					.append(")");
@@ -907,7 +907,7 @@ public class SimplePolicy extends PersistentObject {
 					.append(facilityQuerySqlSubselect)
 				    .append(") ")
 				.append("OR p.sensing_start_time > '").append(selectionCentreString)
-				.append("' AND p.sensing_start_time < ")
+				.append("' AND p.sensing_start_time <= ")
 					.append("(SELECT MIN(p2.sensing_start_time) FROM product p2 ")
 					.append(subSelectQuery)
 					.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
@@ -933,7 +933,7 @@ public class SimplePolicy extends PersistentObject {
 					.append(facilityQuerySqlSubselect)
 					.append(") ")
 				.append("OR p.sensing_stop_time > '").append(selectionCentreString)
-				.append("' AND p.sensing_stop_time < ")
+				.append("' AND p.sensing_stop_time <= ")
 					.append("(SELECT MIN(p2.sensing_stop_time) FROM product p2 ")
 					.append(subSelectQuery)
 					.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
@@ -961,24 +961,24 @@ public class SimplePolicy extends PersistentObject {
 			break;
 		case ValIntersect:
 		case ValIntersectWithoutDuplicates:
-			simplePolicyQuery.append("p.sensing_start_time <= '")
+			simplePolicyQuery.append("p.sensing_start_time < '")
 				.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
-				.append("' AND p.sensing_stop_time >= '")
+				.append("' AND p.sensing_stop_time > '")
 				.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds())))
 				.append("'");
 			break;
 		case LatestValIntersect:
-			simplePolicyQuery.append("p.sensing_start_time <= '")
+			simplePolicyQuery.append("p.sensing_start_time < '")
 				.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
-				.append("' AND p.sensing_stop_time >= '")
+				.append("' AND p.sensing_stop_time > '")
 				.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds())))
 				.append("' AND p.generation_time >= ")
 					.append("(SELECT MAX(p2.generation_time) FROM product p2 ")
 					.append(subSelectQuery)
 					.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
-					.append(" AND p2.sensing_start_time <= '")
+					.append(" AND p2.sensing_start_time < '")
 					.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
-					.append("' AND p2.sensing_stop_time >= '")
+					.append("' AND p2.sensing_stop_time > '")
 					.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds()))).append("'")
 					.append(filterQuery)
 					.append(facilityQuerySqlSubselect)
@@ -1033,10 +1033,14 @@ public class SimplePolicy extends PersistentObject {
 	 */
 	@Override
 	public boolean equals(Object obj) {
+		// Object identity
 		if (this == obj)
 			return true;
-		if (!super.equals(obj))
-			return false;
+		
+		// Same database object
+		if (super.equals(obj))
+			return true;
+		
 		if (!(obj instanceof SimplePolicy))
 			return false;
 		SimplePolicy other = (SimplePolicy) obj;

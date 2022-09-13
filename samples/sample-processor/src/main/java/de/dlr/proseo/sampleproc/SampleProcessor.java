@@ -94,12 +94,12 @@ public class SampleProcessor {
 	
 	// Allowed product types and requested input
 	private static final String STATIC_INPUT_CONFIG = "processing_configuration";
-	private static final String PRODUCT_TYPE_L0 = "L0________";
-	private static final String PRODUCT_TYPE_L1B = "L1B_______";
-	private static final String PRODUCT_TYPE_L1B_1 = "L1B_PART1";
-	private static final String PRODUCT_TYPE_L1B_2 = "L1B_PART2";
-	private static final String PRODUCT_TYPE_L2A = "PTM_L2A";
-	private static final String PRODUCT_TYPE_L2B = "PTM_L2B";
+	private static final String PRODUCT_TYPE_L0 = "PTM_L0";
+	private static final String PRODUCT_TYPE_L1B = "PTM_L1B";
+	private static final String PRODUCT_TYPE_L1B_1 = "PTM_L1B_P1";
+	private static final String PRODUCT_TYPE_L1B_2 = "PTM_L1B_P2";
+	private static final String PRODUCT_TYPE_L2A = "PTM_L2_A";
+	private static final String PRODUCT_TYPE_L2B = "PTM_L2_B";
 	private static final String PRODUCT_TYPE_L3 = "PTM_L3";
 	
 	private static Map<String, List<String>> PRODUCT_TYPES = new HashMap<>();
@@ -553,9 +553,10 @@ public class SampleProcessor {
 		// wait ...
 		try {			
 			int i = ((int)(9.0 * Math.random())) + 1;
+			int factor = 20;
 			while (i > 0) {
-				logger.info("... wait " + ((i) * 1) + " seconds ...");
-				Thread.sleep(1000);
+				logger.info("... wait " + ((i) * 1 * factor) + " seconds ...");
+				Thread.sleep(1000 * factor);
 				i--;
 			}
 		} catch (InterruptedException e) {

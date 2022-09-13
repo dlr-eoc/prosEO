@@ -15,4 +15,3 @@
   - docker-compose.yml
   - run_control_instance.sh
   - stop_control_instance.sh
-  - stop_brain.sh

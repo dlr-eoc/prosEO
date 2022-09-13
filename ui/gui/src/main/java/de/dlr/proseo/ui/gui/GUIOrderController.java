@@ -10,19 +10,12 @@ import static de.dlr.proseo.ui.backend.UIMessages.uiMsg;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.http.HttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,30 +26,28 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.async.DeferredResult;
-import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.client.ClientResponse;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
+import de.dlr.proseo.model.rest.model.JobStepState;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestOrder;
+import de.dlr.proseo.model.rest.model.RestJobStep;
 import de.dlr.proseo.model.rest.model.RestParameter;
-import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
-import de.dlr.proseo.ui.gui.service.MapComparator;
 import de.dlr.proseo.ui.gui.service.OrderService;
 import reactor.core.publisher.Mono;
 
@@ -87,7 +78,7 @@ public class GUIOrderController extends GUIBaseController {
 	/**
 	 * Date formatter for input type date
 	 */
-	private static final SimpleDateFormat simpleDateFormatter = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);	
+//	private static final SimpleDateFormat simpleDateFormatter = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);	
 
 	private static final String HTTP_HEADER_WARNING = "Warning";
 
@@ -144,11 +135,9 @@ public class GUIOrderController extends GUIBaseController {
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getIdentifier({}, {}, model)", identifier, identifier);
-    	checkClearCache();
-		String myIdent = null;
-		if (identifier != null && identifier.indexOf("*") < 0) {
-			myIdent = identifier;
-		}
+
+		checkClearCache();
+
 		Long fromi = null;
 		Long toi = null;
 		if (recordFrom != null && recordFrom >= 0) {
@@ -639,12 +628,16 @@ public class GUIOrderController extends GUIBaseController {
 	}
 
 	/**
-	 * Retrieve all jobs of an order
+	 * Retrieve the jobs of an order filtered by following criteria
+	 * If fromIndex is not set the job or job step are used to calculate it.
 	 * 
 	 * @param id The order id
-	 * @param model The model to hold the data
-	 * 
-	 * @return The result
+	 * @param fromIndex The from index (first row)
+	 * @param toIndex The to index (last row)
+	 * @param jobId The job id 
+	 * @param jobStepId
+	 * @param model
+	 * @return The jobs found
 	 */
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/jobs/get")
@@ -653,29 +646,41 @@ public class GUIOrderController extends GUIBaseController {
 			@RequestParam(required = false, value = "recordFrom") Long fromIndex,
 			@RequestParam(required = false, value = "recordTo") Long toIndex,
 			@RequestParam(required = false, value = "job") String jobId,
+			@RequestParam(required = false, value = "jobStep") String jobStepId,
+			@RequestParam(required = false, value = "jobstates") String states,
 			Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getId({}, model)", id);
     	checkClearCache();
 		Long from = null;
 		Long to = null;
+		Boolean calcPage = false;
 		if (fromIndex != null && fromIndex >= 0) {
 			from = fromIndex;
 		} else {
 			from = (long) 0;
 		}
-		Long count = countJobs(id);
+		if (jobId != null || jobStepId != null) {
+			calcPage = true;
+		}
+		Long count = countJobs(id, states);
 		if (toIndex != null && from != null && toIndex > from) {
 			to = toIndex;
 		} else if (from != null) {
 			to = count;
 		}
 		Long pageSize = to - from;
-		Long deltaPage = (long) ((count % pageSize)==0?0:1);
-		Long pages = (count / pageSize) + deltaPage;
-		Long page = (from / pageSize) + 1;
+		if (calcPage) {
+			Long page = pageOfJob(id, jobId, jobStepId, pageSize);
+			from = page * pageSize;
+			to = from + pageSize;
+		}
+		
+		Long deltaPage = pageSize == 0L ? 0L : ((long) ((count % pageSize)==0?0:1));
+		Long pages = pageSize == 0L ? 0L : ((count / pageSize) + deltaPage);
+		Long page = pageSize == 0L ? 0L : ((from / pageSize) + 1);
 		// TODO use jobId to find page of job 
-		Mono<ClientResponse> mono = orderService.getJobsOfOrder(id, from, to);
+		Mono<ClientResponse> mono = orderService.getJobsOfOrder(id, from, to, states);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> jobs = new ArrayList<>();
 		mono.doOnError(e -> {
@@ -799,6 +804,52 @@ public class GUIOrderController extends GUIBaseController {
 		Boolean result = countOrders(identifier, id) > 0;
 	    return new ResponseEntity<>(result.toString(), HttpStatus.OK);
 	}
+	
+	@GetMapping("/jobsteplog.txt")
+	public ResponseEntity<String> jobsteplog(@RequestParam(required = true, value = "id") String id){
+
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String result = "";
+		RestJobStep js;
+
+		try {
+			js = serviceConnection.getFromService(config.getOrderManager(),
+					"/orderjobsteps/" + id, RestJobStep.class, auth.getProseoName(), auth.getPassword());
+			if (js !=  null) {
+				if (js.getJobStepState() == JobStepState.RUNNING) {
+					// update log file before, this does the planner 
+					js = serviceConnection.getFromService(config.getProductionPlanner(),
+							"/jobsteps/" + id, RestJobStep.class, auth.getProseoName(), auth.getPassword());
+				}
+			}
+			if (js !=  null) {
+				result = js.getProcessingStdOut();
+			}
+			if (result == null) {
+				result = "";
+			}
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_MISSIONS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+		}
+		MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+		map.add("Content-Type", "text/plain");
+		map.add("Content-Length", String.valueOf(result.length()));
+	    return new ResponseEntity<>(result, map, HttpStatus.OK);
+	}
 
 	private List<RestParameter> stripNullInParameterList(List<RestParameter> list) {
 		List<RestParameter> newList = new ArrayList<RestParameter>();
@@ -823,106 +874,121 @@ public class GUIOrderController extends GUIBaseController {
 	 * @param products The product class list (seperated by ':')
 	 * @return List of selected orders
 	 */
-	private List<Object> selectOrders(List<Object> orderList, String identifier, String states, String from, String to, String products) {
-		List<Object> result = new ArrayList<Object>();
-		if (orderList != null && (identifier != null || states != null || from != null || to != null || products != null)) {
-			String myident = null;
-			if (identifier != null) {
-				// at the moment only simple pattern are supported, replace '*'
-				myident = identifier.replaceAll("[*]", ".*");
-			}
-			ArrayList<String> stateArray = null;
-			if (states != null) {
-				// build array of selected states
-				stateArray = new ArrayList<String>();
-				String[] x = states.split(":");				
-				for (int i = 0; i < x.length; i++) {
-					stateArray.add(x[i]);
-				}
-			}
-			ArrayList<String> productArray = null;
-			if (products != null) {
-				productArray = new ArrayList<String>();
-				String[] x = products.split(":");		
-				for (int i = 0; i < x.length; i++) {
-					productArray.add(x[i]);
-				}
-			}
-			Date fromTime = null;
-			if (from != null) {			
-				try {
-					fromTime = simpleDateFormatter.parse(from);
-				} catch (ParseException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-			Date toTime = null;
-			if (to != null) {		
-				try {
-					toTime = simpleDateFormatter.parse(to);
-					Instant t = toTime.toInstant().plus(Duration.ofDays(1));
-					toTime = Date.from(t);
-				} catch (ParseException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-			ObjectMapper mapper = new ObjectMapper();
-			Boolean found = true;
-			for (Object o : orderList) {
-				found = true;
-				try {
-					RestOrder order =  mapper.convertValue(o, RestOrder.class);
-					if (order != null) {
-						if (found && identifier != null) {
-							if (!order.getIdentifier().matches(myident)) found = false;					
-						}
-						if (stateArray != null) {
-							if (!stateArray.contains(order.getOrderState())) found = false;
-						}
-						if (fromTime != null && order.getStartTime() != null) {
-							if (fromTime.compareTo(Date.from(Instant.from(OrbitTimeFormatter.parse(order.getStartTime())))) > 0) found = false;
-						}
-						if (toTime != null && order.getStopTime() != null) {
-							if (toTime.compareTo(Date.from(Instant.from(OrbitTimeFormatter.parse(order.getStopTime())))) < 0) found = false;
-						}
-						if (productArray != null && order.getRequestedProductClasses() != null) {
-							Boolean lfound = false;
-							for (String pc : order.getRequestedProductClasses()) {
-								if (productArray.contains(pc)) {
-									lfound = true;
-									break;
-								}
-							}
-							if (!lfound) found = false;
-						}
-					}
-					if (found) {
-						result.add(o);
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-			
-		} else {
-			return orderList;
-		}
-		return result;
-	}
+//	private List<Object> selectOrders(List<Object> orderList, String identifier, String states, String from, String to, String products) {
+//		List<Object> result = new ArrayList<Object>();
+//		if (orderList != null && (identifier != null || states != null || from != null || to != null || products != null)) {
+//			String myident = null;
+//			if (identifier != null) {
+//				// at the moment only simple pattern are supported, replace '*'
+//				myident = identifier.replaceAll("[*]", ".*");
+//			}
+//			ArrayList<String> stateArray = null;
+//			if (states != null) {
+//				// build array of selected states
+//				stateArray = new ArrayList<String>();
+//				String[] x = states.split(":");				
+//				for (int i = 0; i < x.length; i++) {
+//					stateArray.add(x[i]);
+//				}
+//			}
+//			ArrayList<String> productArray = null;
+//			if (products != null) {
+//				productArray = new ArrayList<String>();
+//				String[] x = products.split(":");		
+//				for (int i = 0; i < x.length; i++) {
+//					productArray.add(x[i]);
+//				}
+//			}
+//			Date fromTime = null;
+//			if (from != null) {			
+//				try {
+//					fromTime = simpleDateFormatter.parse(from);
+//				} catch (ParseException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//			}
+//			Date toTime = null;
+//			if (to != null) {		
+//				try {
+//					toTime = simpleDateFormatter.parse(to);
+//					Instant t = toTime.toInstant().plus(Duration.ofDays(1));
+//					toTime = Date.from(t);
+//				} catch (ParseException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//			}
+//			ObjectMapper mapper = new ObjectMapper();
+//			Boolean found = true;
+//			for (Object o : orderList) {
+//				found = true;
+//				try {
+//					RestOrder order =  mapper.convertValue(o, RestOrder.class);
+//					if (order != null) {
+//						if (found && identifier != null) {
+//							if (!order.getIdentifier().matches(myident)) found = false;					
+//						}
+//						if (stateArray != null) {
+//							if (!stateArray.contains(order.getOrderState())) found = false;
+//						}
+//						if (fromTime != null && order.getStartTime() != null) {
+//							if (fromTime.compareTo(Date.from(Instant.from(OrbitTimeFormatter.parse(order.getStartTime())))) > 0) found = false;
+//						}
+//						if (toTime != null && order.getStopTime() != null) {
+//							if (toTime.compareTo(Date.from(Instant.from(OrbitTimeFormatter.parse(order.getStopTime())))) < 0) found = false;
+//						}
+//						if (productArray != null && order.getRequestedProductClasses() != null) {
+//							Boolean lfound = false;
+//							for (String pc : order.getRequestedProductClasses()) {
+//								if (productArray.contains(pc)) {
+//									lfound = true;
+//									break;
+//								}
+//							}
+//							if (!lfound) found = false;
+//						}
+//					}
+//					if (found) {
+//						result.add(o);
+//					}
+//				} catch (Exception e) {
+//					e.printStackTrace();
+//				}
+//			}
+//			
+//		} else {
+//			return orderList;
+//		}
+//		return result;
+//	}
 
-    private Long countJobs(String id)  {	    	
+    /**
+     * Count the number of jobs in an order.
+     * 
+     * @param id The order id
+     * @return The number of jobs
+     */
+    private Long countJobs(String id, String states)  {	    	
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
-		String uri = "/jobs/count";
+		String uri = "/orderjobs/count";
 		String divider = "?";
 		if (id != null) {
 			uri += divider + "orderid=" + id;
 			divider ="&";
 		}
+		if (states != null && !states.isEmpty()) {
+			String [] pcs = states.split(":");
+			for (String pc : pcs) {
+				if (!pc.equalsIgnoreCase("ALL")) {
+					uri += divider + "state=" + pc;
+					divider ="&";
+				}
+			}
+		}
 		Long result = (long) -1;
 		try {
-			String resStr = serviceConnection.getFromService(serviceConfig.getProductionPlannerUrl(),
+			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
 					uri, String.class, auth.getProseoName(), auth.getPassword());
 
 			if (resStr != null && resStr.length() > 0) {
@@ -951,7 +1017,79 @@ public class GUIOrderController extends GUIBaseController {
         return result;
     }
     
+    /**
+     * Get the display page of a job in an order
+     * 
+     * @param orderId The order id
+     * @param jobId The job id
+     * @param jobStepId The job step id
+     * @param pageSize The page six
+     * @return The page number
+     */
+    private Long pageOfJob(String orderId, String jobId, String jobStepId, Long pageSize) {    	
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String uri = "/orderjobs/index";
+		String divider = "?";
+		if (orderId != null) {
+			uri += divider + "orderid=" + orderId;
+			divider ="&";
+		}
+		if (jobId != null) {
+			uri += divider + "jobid=" + jobId;
+			divider ="&";
+		}
+		if (jobStepId != null) {
+			uri += divider + "jobstepid=" + jobStepId;
+			divider ="&";
+		}
+		divider ="&";
+		try {
+			uri += divider + "orderBy=startTime"  + URLEncoder.encode(" ASC", "UTF-8");
+		} catch (UnsupportedEncodingException e1) {
+			// should not be, but in case of
+			e1.printStackTrace();
+		}
+		Long result = (long) 0;
+		try {
+			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
+					uri, String.class, auth.getProseoName(), auth.getPassword());
 
+			if (resStr != null && resStr.length() > 0) {
+				result = Long.valueOf(resStr);
+				// this is the row index in complete list, now calculate the page
+				result = (result) / pageSize;
+			}
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_MISSIONS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return result;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return result;
+		}
+		
+        return result;
+    }
+
+    /**
+     * Count the existing orbits of a spacecraft between from and to.
+     * 
+     * @param spacecraft The spacecraft code
+     * @param from Orbit number from
+     * @param to Orbit number to
+     * @return The orbit count
+     */
     private Long countOrbits(String spacecraft, Long from, Long to)  {	    	
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String uri = "/orbits/count";
@@ -999,6 +1137,13 @@ public class GUIOrderController extends GUIBaseController {
         return result;
     }
 
+    /**
+     * Count the number of orders
+     * 
+     * @param orderName
+     * @param nid
+     * @return The number of orbits
+     */
     public Long countOrders(String orderName, String nid) {
     	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
     	Long result = (long) -1;
@@ -1045,6 +1190,19 @@ public class GUIOrderController extends GUIBaseController {
     	return result;
     }
 
+	/** Count the orders specified by following parameters
+	 * 
+	 * @param identifier Identifier pattern
+	 * @param states The states (divided by ':')
+	 * @param products The product classes (divided by ':')
+	 * @param from The earliest start time
+	 * @param to The latest start time
+	 * @param recordFrom 
+	 * @param recordTo
+	 * @param sortCol The sort criteria
+	 * @param up Ascending if true, otherwise descending
+	 * @return The number of orders found
+	 */
 	public Long countOrdersL(String identifier, String states, String products, String from, String to, 
 			Long recordFrom, Long recordTo, String sortCol, Boolean up) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
@@ -1064,6 +1222,13 @@ public class GUIOrderController extends GUIBaseController {
 				logger.error(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			}
 			divider ="&";
+		}
+		if (states != null && !states.isEmpty()) {
+			String [] pcs = states.split(":");
+			for (String pc : pcs) {
+				uri += divider + "state=" + pc;
+				divider ="&";
+			}
 		}
 
 		if (states != null && !states.isEmpty()) {
@@ -1148,6 +1313,14 @@ public class GUIOrderController extends GUIBaseController {
 		return result;
 		
 	}
+	
+    /**
+     * Normalize the date string
+     * 
+     * @param se The input date string
+     * @param type The type of it
+     * @return The normalized date string
+     */
     private String normStartEnd(String se, String type) {
     	String val = se;
     	if (se != null) {

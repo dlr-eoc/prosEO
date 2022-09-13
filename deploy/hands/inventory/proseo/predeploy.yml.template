@@ -4,11 +4,8 @@
 - hosts: k8s_cluster
   tasks:
   
-  - name: Remove default route
-    shell: route del default
-    
   - name: Set default route
-    shell: route add default gw 10.9.42.225
+    shell: ip route replace default via 10.x.x.x
   
   - name: Set DNS resolution
     lineinfile:
@@ -22,4 +19,7 @@
       name: firewalld
       state: stopped
       enabled: no
-    
+      - name: Install NFS client
+    yum:
+      name: nfs-utils
+      state: present

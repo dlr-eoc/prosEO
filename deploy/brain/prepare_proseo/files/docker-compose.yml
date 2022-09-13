@@ -1,0 +1,135 @@
+version: '3'
+services:
+  proseo-ingestor:
+    image: ${REGISTRY_URL}/proseo-ingestor:${VERSION}-proseo
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8081:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-order-mgr:
+    image: ${REGISTRY_URL}/proseo-order-mgr:${VERSION}-proseo
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8082:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-prodplanner:
+    image: ${REGISTRY_URL}/proseo-planner:${VERSION}-proseo
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8083:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-processor-mgr:
+    image: ${REGISTRY_URL}/proseo-processor-mgr:${VERSION}-proseo
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8084:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-productclass-mgr:
+    image: ${REGISTRY_URL}/proseo-productclass-mgr:${VERSION}-proseo
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8085:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-user-mgr:
+    image: ${REGISTRY_URL}/proseo-user-mgr:${VERSION}-proseo
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8086:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-facility-mgr:
+    image: ${REGISTRY_URL}/proseo-facility-mgr:${VERSION}-proseo
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8087:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-gui:
+    image: ${REGISTRY_URL}/proseo-ui-gui:${VERSION}-proseo
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8088:8080"
+    depends_on:
+      - proseo-user-mgr
+      - proseo-ingestor
+      - proseo-prodplanner
+      - proseo-order-mgr
+      - proseo-processor-mgr
+      - proseo-productclass-mgr
+      - proseo-facility-mgr
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-api-prip:
+    image: ${REGISTRY_URL}/proseo-api-prip:${VERSION}-proseo
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8089:8080"
+    depends_on:
+      - proseo-user-mgr
+      - proseo-ingestor
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-pgadmin:
+    image: ${REGISTRY_URL}/dpage/pgadmin4:latest-proseo
+    environment:
+      - PGADMIN_ENABLE_TLS=True
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
+    volumes:
+      - "./proseo-components/proseo-pgadmin/certs/proseo-selfsigned.crt:/certs/server.cert"
+      - "./proseo-components/proseo-pgadmin/certs/proseo-selfsigned.key:/certs/server.key"
+    ports:
+      - "8443:443"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    # No automatic restart
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.177.57.0/24

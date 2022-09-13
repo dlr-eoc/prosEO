@@ -14,14 +14,20 @@ import javax.persistence.PersistenceContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.JobStep;
+import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.JobStep.JobStepState;
+import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
+import de.dlr.proseo.planner.ProductionPlanner;
 
 /**
  * Handle jobs
@@ -30,7 +36,6 @@ import de.dlr.proseo.planner.Messages;
  *
  */
 @Component
-@Transactional
 public class JobUtil {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(JobUtil.class);
@@ -38,9 +43,12 @@ public class JobUtil {
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
+
+	@Autowired
+	private ProductionPlanner productionPlanner;
 	
 	/**
-	 * Suspend the job and its job steps. If force ist true, running Kubernetes jobs of are killed.
+	 * Suspend the job and its job steps. If force is true, running Kubernetes jobs of are killed.
 	 *  
 	 * @param job The job
 	 * @param force 
@@ -52,23 +60,13 @@ public class JobUtil {
 
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
-		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
 				answer = Messages.JOB_INITIAL;
 				break;
+			case PLANNED:
 			case RELEASED:
-				// no job step is running
-				// supend all of them
-				for (JobStep js : job.getJobSteps()) {
-					UtilService.getJobStepUtil().suspend(js, force);
-				}
-				job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
-				job.incrementVersion();
-				RepositoryService.getJobRepository().save(job);
-				answer = Messages.JOB_SUSPENDED;
-				break;
 			case ON_HOLD:
 			case STARTED:
 				// try to suspend job steps not running
@@ -77,19 +75,93 @@ public class JobUtil {
 					allSuspended = UtilService.getJobStepUtil().suspend(js, force).isTrue() && allSuspended;
 				}
 				job.incrementVersion();
-				job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
-				answer = Messages.JOB_HOLD;
 				if (allSuspended) {
-					job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL); // direct transition to INITIAL not allowed
+					if (job.getJobState() == JobState.STARTED) {
+						job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
+						job.setJobState(de.dlr.proseo.model.Job.JobState.PLANNED);
+					} else if (job.getJobState() == JobState.RELEASED) {
+						job.setJobState(de.dlr.proseo.model.Job.JobState.PLANNED);
+					} else if (job.getJobState() == JobState.ON_HOLD) {
+						job.setJobState(de.dlr.proseo.model.Job.JobState.PLANNED);
+					}
 					answer = Messages.JOB_SUSPENDED;
+				} else {
+					job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
+					answer = Messages.JOB_HOLD;
 				}
 				RepositoryService.getJobRepository().save(job);
+				em.merge(job);
 				break;
 			case COMPLETED:
 				answer = Messages.JOB_ALREADY_COMPLETED;
 				break;
 			case FAILED:
 				answer = Messages.JOB_ALREADY_FAILED;
+			case CLOSED:
+				answer = Messages.JOB_ALREADY_CLOSED;
+				break;
+			default:
+				break;
+			}
+			answer.log(logger, String.valueOf(job.getId()));
+		}
+		return answer;
+	}
+
+
+	/**
+	 * Delete satisfied product queries of its job steps.
+	 * 
+	 * @param job The job
+	 * @return Result message
+	 */
+	public Messages close(Long id) {
+		if (logger.isTraceEnabled()) logger.trace(">>> close({})", (null == id ? "null" : id));
+
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		List<Long> jobStepIds = new ArrayList<Long>();
+		
+		final Job job = transactionTemplate.execute((status) -> {
+			Optional<Job> jobOpt = RepositoryService.getJobRepository().findById(id);
+			if (jobOpt.isPresent()) {
+				for (JobStep js : jobOpt.get().getJobSteps()) {
+					jobStepIds.add(js.getId());
+				}
+				return jobOpt.get();
+			}
+			return null;
+		});
+		Messages answer = Messages.FALSE;
+		// check current state for possibility to be suspended
+		if (job != null) {
+			switch (job.getJobState()) {
+			case INITIAL:
+			case PLANNED:
+			case RELEASED:
+			case STARTED:
+			case ON_HOLD:
+				answer = Messages.JOB_COULD_NOT_CLOSE;
+				break;
+			case COMPLETED:
+			case FAILED:
+				for (Long jsId : jobStepIds) {
+					UtilService.getJobStepUtil().close(jsId);
+				}		
+				final Object dummy = transactionTemplate.execute((status) -> {
+					Optional<Job> jobOpt = RepositoryService.getJobRepository().findById(id);
+					if (jobOpt.isPresent()) {
+						Job locJob = jobOpt.get();
+						locJob.setJobState(JobState.CLOSED);
+						locJob.incrementVersion();
+						RepositoryService.getJobRepository().save(locJob);
+						em.merge(locJob);
+					}
+					return null;
+				});
+				answer = Messages.JOB_CLOSED;
+				break;
+			case CLOSED:
+				answer = Messages.JOB_ALREADY_CLOSED;
 				break;
 			default:
 				break;
@@ -111,7 +183,6 @@ public class JobUtil {
 
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
-		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
@@ -121,6 +192,9 @@ public class JobUtil {
 				break;
 			case COMPLETED:
 				answer = Messages.JOB_ALREADY_COMPLETED;
+				break;
+			case PLANNED:
+				answer = Messages.JOB_RETRIED;
 				break;
 			case ON_HOLD:
 			case FAILED:
@@ -134,7 +208,7 @@ public class JobUtil {
 				Boolean all = true;
 				Boolean allCompleted = true;
 				for (JobStep js : job.getJobSteps()) {
-					if (!(   js.getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.INITIAL
+					if (!(   js.getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.PLANNED
 						  || js.getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.COMPLETED)) {
 						all = false;
 						
@@ -144,8 +218,10 @@ public class JobUtil {
 					}
 				}
 				if (all) {
-					if (allCompleted) {
-						job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
+					if (job.getJobState() == JobState.COMPLETED) {
+						answer = Messages.JOB_COMPLETED;
+					} else if (allCompleted) {
+						job.setJobState(de.dlr.proseo.model.Job.JobState.PLANNED);
 						job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
 						job.setJobState(de.dlr.proseo.model.Job.JobState.STARTED);
 						job.setJobState(de.dlr.proseo.model.Job.JobState.COMPLETED);
@@ -154,7 +230,10 @@ public class JobUtil {
 						em.merge(job);
 						answer = Messages.JOB_COMPLETED;
 					} else {
-						job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
+						if (job.getJobState() == JobState.STARTED) {
+							job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
+						}
+						job.setJobState(de.dlr.proseo.model.Job.JobState.PLANNED);
 						job.incrementVersion();
 						RepositoryService.getJobRepository().save(job);
 						em.merge(job);
@@ -163,6 +242,9 @@ public class JobUtil {
 				} else {
 					answer = Messages.JOB_COULD_NOT_RETRY;
 				}
+				break;
+			case CLOSED:
+				answer = Messages.JOB_ALREADY_CLOSED;
 				break;
 			default:
 				break;
@@ -184,10 +266,10 @@ public class JobUtil {
 
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
-		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
+			case PLANNED:
 				for (JobStep js : job.getJobSteps()) {
 					UtilService.getJobStepUtil().cancel(js);
 				}
@@ -211,6 +293,9 @@ public class JobUtil {
 			case FAILED:
 				answer = Messages.JOB_ALREADY_FAILED;
 				break;
+			case CLOSED:
+				answer = Messages.JOB_ALREADY_CLOSED;
+				break;
 			default:
 				break;
 			}
@@ -222,26 +307,50 @@ public class JobUtil {
 	/**
 	 * Resume a job and its job steps.
 	 * 
-	 * @param job The job
+	 * @param jobId The job id
 	 * @return Result message
 	 */
-	@Transactional
 	public Messages resume(Job job) {
-		if (logger.isTraceEnabled()) logger.trace(">>> resume({})", (null == job ? "null" : job.getId()));
+		if (logger.isTraceEnabled()) logger.trace(">>> resume({})", job.getId());
 
 		Messages answer = Messages.FALSE;
+//		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+//
+//		final Job job = transactionTemplate.execute((status) -> {
+//			Optional<Job> opt = RepositoryService.getJobRepository().findById(jobId);
+//			if (opt.isPresent()) {
+//				if (opt.get().getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
+//					Messages.FACILITY_NOT_AVAILABLE.log(logger, opt.get().getProcessingFacility().getName(),
+//							opt.get().getProcessingFacility().getFacilityState().toString());
+//
+//			    	return null;
+//				} else {
+//					return opt.get();
+//				}
+//			}
+//			return null;
+//		});
+
 		// check current state for possibility to be suspended
-		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
-				job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
-				job.incrementVersion();
-				RepositoryService.getJobRepository().save(job);
-				for (JobStep js : job.getJobSteps()) {
-					UtilService.getJobStepUtil().resume(js, false);
+				answer = Messages.JOB_HASTOBE_PLANNED;
+				break;
+			case PLANNED:
+				try {
+					job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
+					job.incrementVersion();
+					RepositoryService.getJobRepository().save(job);
+
+
+					for (JobStep js : job.getJobSteps()) {
+						UtilService.getJobStepUtil().resume(js, false);
+					}
+					answer = Messages.JOB_RELEASED;
+				} catch (Exception e) {
+					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 				}
-				answer = Messages.JOB_RELEASED;
 				break;
 			case RELEASED:
 				answer = Messages.JOB_RELEASED;
@@ -257,6 +366,9 @@ public class JobUtil {
 				break;
 			case FAILED:
 				answer = Messages.JOB_ALREADY_FAILED;
+				break;
+			case CLOSED:
+				answer = Messages.JOB_ALREADY_CLOSED;
 				break;
 			default:
 				break;
@@ -278,7 +390,6 @@ public class JobUtil {
 
 		Boolean answer = false;
 		// check current state for possibility to be suspended
-		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
@@ -286,6 +397,9 @@ public class JobUtil {
 				break;
 			case ON_HOLD:
 				Messages.JOB_HOLD.log(logger, String.valueOf(job.getId()));
+				break;
+			case PLANNED:
+				Messages.JOB_PLANNED.log(logger, String.valueOf(job.getId()));
 				break;
 			case RELEASED:
 				UtilService.getOrderUtil().startOrder(job.getProcessingOrder());
@@ -304,6 +418,9 @@ public class JobUtil {
 				break;
 			case FAILED:
 				Messages.JOB_ALREADY_FAILED.log(logger, String.valueOf(job.getId()));
+				break;
+			case CLOSED:
+				Messages.JOB_ALREADY_CLOSED.log(logger, String.valueOf(job.getId()));
 				break;
 			default:
 				break;
@@ -324,16 +441,18 @@ public class JobUtil {
 
 		Boolean answer = false;
 		// check current state for possibility to be suspended
-		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
+			case PLANNED:
 			case RELEASED:
 			case COMPLETED:
 			case FAILED:
+			case CLOSED:
 				List<JobStep> toRem = new ArrayList<JobStep>();
 				for (JobStep js : job.getJobSteps()) {
 					if (UtilService.getJobStepUtil().delete(js)) {
+						js.setJob(null);
 						toRem.add(js);
 					} else {
 						js.setJob(null);
@@ -371,17 +490,19 @@ public class JobUtil {
 
 		Boolean answer = false;
 		// check current state for possibility to be suspended
-		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
+			case PLANNED:
 			case RELEASED:
 			case ON_HOLD:
 			case COMPLETED:
 			case FAILED:
+			case CLOSED:
 				List<JobStep> toRem = new ArrayList<JobStep>();
 				for (JobStep js : job.getJobSteps()) {
 					if (UtilService.getJobStepUtil().deleteForced(js)) {
+						js.setJob(null);
 						toRem.add(js);
 					} else {
 						js.setJob(null);
@@ -423,18 +544,18 @@ public class JobUtil {
 			job = oJob.get();
 		}
 		// check current state for possibility to be suspended
-		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
 			case RELEASED:
+			case PLANNED:
 				break;
 			case ON_HOLD:
 				Boolean running = RepositoryService.getJobStepRepository().countJobStepRunningByJobId(job.getId()) > 0;
 				if (!running) {
 					Boolean all = RepositoryService.getJobStepRepository().countJobStepNotFinishedByJobId(job.getId()) == 0;
 					if (!all) {
-						job.setJobState(JobState.INITIAL);
+						job.setJobState(JobState.PLANNED);
 						RepositoryService.getJobRepository().save(job);
 						em.merge(job);
 						hasChanged = true;
@@ -449,7 +570,7 @@ public class JobUtil {
 				if (all) {
 					Boolean completed = RepositoryService.getJobStepRepository().countJobStepFailedByJobId(job.getId()) == 0;
 					if (job.getJobState() == JobState.ON_HOLD) {
-						job.setJobState(JobState.INITIAL);
+						job.setJobState(JobState.PLANNED);
 						job.setJobState(JobState.RELEASED);
 						job.setJobState(JobState.STARTED);
 					}
@@ -466,7 +587,10 @@ public class JobUtil {
 				answer = true;
 				break;
 			case COMPLETED:
+				UtilService.getOrderUtil().checkFinish(job.getProcessingOrder().getId());	
+				answer = true;
 			case FAILED:
+			case CLOSED:
 				answer = true;
 				break;
 			default:
@@ -496,7 +620,7 @@ public class JobUtil {
 				}
 				if (allHasFinished) {
 					if (job.getJobState() == JobState.ON_HOLD) {
-						job.setJobState(JobState.INITIAL);
+						job.setJobState(JobState.PLANNED);
 						job.setJobState(JobState.RELEASED);
 						job.setJobState(JobState.STARTED);
 					}
@@ -520,140 +644,6 @@ public class JobUtil {
 			}
 		}
  		return answer;
-	}
-	
-	/**
-	 * Update the job state depending on job step state
-	 * TODO
-	 * 
-	 * @param job The job
-	 * @param jsState The job step state
-	 */
-	@Transactional
-	public void updateState(Job jobOrig, JobStepState jsState) {
-		if (logger.isTraceEnabled()) logger.trace(">>> updateState({}, {})", (null == jobOrig ? "null" : jobOrig.getId()), jsState);
-
-		Job job = null;
-		Optional<Job> oJob = RepositoryService.getJobRepository().findById(jobOrig.getId());
-		if (oJob.isPresent()) {
-			job = oJob.get();
-		}
-		// first implementation for retry
-		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
-		if (job != null) {
-			switch (job.getJobState()) {
-			case INITIAL:
-				if (jsState == JobStepState.READY || jsState == JobStepState.WAITING_INPUT) {
-					job.setJobState(JobState.RELEASED);
-					job.incrementVersion();
-					RepositoryService.getJobRepository().save(job);
-					em.merge(job);
-				} else if (jsState == JobStepState.FAILED) {
-					Boolean allState = true;
-					this.setHasFailedJobSteps(job,  true);
-					for (JobStep js : job.getJobSteps()) {
-						if (js.getJobStepState() != JobStepState.FAILED && js.getJobStepState() != JobStepState.COMPLETED) {
-							allState = false;
-							break;
-						}
-					}
-					if (allState) {
-						job.setJobState(JobState.FAILED);
-						job.incrementVersion();
-						RepositoryService.getJobRepository().save(job);
-						em.merge(job);
-					}
-				}
-				break;
-			case RELEASED:
-				if (jsState == JobStepState.RUNNING) {
-					job.setJobState(JobState.STARTED);
-					job.incrementVersion();
-					RepositoryService.getJobRepository().save(job);
-					em.merge(job);
-				}
-				break;
-			case STARTED:
-				// fall through intended
-			case ON_HOLD:
-				if (jsState == JobStepState.INITIAL) {
-					Boolean allState = true;
-					for (JobStep js : job.getJobSteps()) {
-						if (js.getJobStepState() != JobStepState.INITIAL) {
-							allState = false;
-							break;
-						}
-					}
-					if (allState) {
-						job.setJobState(JobState.INITIAL);
-						job.setHasFailedJobSteps(false);
-						job.incrementVersion();
-						RepositoryService.getJobRepository().save(job);
-						em.merge(job);
-					}
-				} else if (jsState == JobStepState.FAILED) {
-					Boolean allState = true;
-					this.setHasFailedJobSteps(job,  true);
-					for (JobStep js : job.getJobSteps()) {
-						if (js.getJobStepState() != JobStepState.FAILED && js.getJobStepState() != JobStepState.COMPLETED) {
-							allState = false;
-							break;
-						}
-					}
-					if (allState) {
-						job.setJobState(JobState.FAILED);
-						job.incrementVersion();
-						RepositoryService.getJobRepository().save(job);
-						em.merge(job);
-					}
-				}
-				break;
-			case COMPLETED:
-				break;
-			case FAILED:
-				if (jsState == JobStepState.INITIAL || jsState == JobStepState.WAITING_INPUT) {
-					job.setJobState(JobState.INITIAL);
-					job.incrementVersion();
-					RepositoryService.getJobRepository().save(job);
-					em.merge(job);
-				}
-				break;
-			default:
-				break;
-			}	
-			Boolean hasFailed = false;
-			for (JobStep js : job.getJobSteps()) {
-				if (js.getJobStepState() == JobStepState.FAILED) {
-					hasFailed = true;
-					break;
-				}
-			}
-			job.setHasFailedJobSteps(hasFailed);
-			// check the states of job steps and update job state
-			Boolean allHasFinished = true;
-			for (JobStep js : job.getJobSteps()) {
-				if (js.getJobStepState() != JobStepState.FAILED && js.getJobStepState() != JobStepState.COMPLETED) {
-					allHasFinished = false;
-					break;
-				}
-			}
-			if (allHasFinished) {
-				if (hasFailed) {
-					job.setJobState(JobState.FAILED);
-				} else {
-					if (job.getJobState() == JobState.FAILED) {
-						job.setJobState(JobState.INITIAL);
-						job.setJobState(JobState.RELEASED);
-						job.setJobState(JobState.STARTED);
-					}
-					job.setJobState(JobState.COMPLETED);
-				}
-				job.incrementVersion();
-				RepositoryService.getJobRepository().save(job);
-				em.merge(job);
-			}
-			UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
-		}
 	}
 	
 	/**

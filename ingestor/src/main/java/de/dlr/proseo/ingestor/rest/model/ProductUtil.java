@@ -287,6 +287,7 @@ public class ProductUtil {
 				case STRING:	modelParameter.setStringValue(restParameter.getParameterValue()); break;
 				case BOOLEAN:	modelParameter.setBooleanValue(Boolean.parseBoolean(restParameter.getParameterValue())); break;
 				case DOUBLE:	modelParameter.setDoubleValue(Double.parseDouble(restParameter.getParameterValue())); break;
+				case INSTANT:	modelParameter.setInstantValue(OrbitTimeFormatter.parseDateTime(restParameter.getParameterValue())); break;
 				}
 			} catch (Exception e) {
 				throw new IllegalArgumentException(logError(MSG_INVALID_PARAMETER_VALUE, MSG_ID_INVALID_PARAMETER_VALUE,

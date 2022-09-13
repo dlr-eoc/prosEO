@@ -1,5 +1,6 @@
 /proseo-ui-cli.*
 /testfiles
+/testproducts
 /configure_proseo_test_mission.pl
 /cli_*.txt
 /*.cred

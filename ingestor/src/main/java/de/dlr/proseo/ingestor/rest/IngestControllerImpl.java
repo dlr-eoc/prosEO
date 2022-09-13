@@ -7,6 +7,7 @@ package de.dlr.proseo.ingestor.rest;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -17,20 +18,24 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.validation.Valid;
 import javax.ws.rs.ProcessingException;
+
+import org.hibernate.exception.LockAcquisitionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
 import de.dlr.proseo.ingestor.IngestorConfiguration;
 import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.ingestor.rest.model.RestProductFile;
 import de.dlr.proseo.model.ProcessingFacility;
-import de.dlr.proseo.model.service.RepositoryService;
 
 /**
  * Spring MVC controller for the prosEO Ingestor; implements the services required to ingest
@@ -46,7 +51,9 @@ public class IngestControllerImpl implements IngestController {
 	private static final int MSG_ID_INVALID_FACILITY = 2051;
 	private static final int MSG_ID_PRODUCTS_INGESTED = 2058;
 	private static final int MSG_ID_AUTH_MISSING_OR_INVALID = 2056;
-	private static final int MSG_ID_NOTIFICATION_FAILED = 2071;
+	private static final int MSG_ID_NOTIFICATION_FAILED = 2091;
+	private static final int MSG_ID_ERROR_ACQUIRE_SEMAPHORE = 2092;
+	private static final int MSG_ID_ERROR_RELEASE_SEMAPHORE = 2093;
 	// private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	private static final int MSG_ID_EXCEPTION_THROWN = 9001;
 	
@@ -55,6 +62,8 @@ public class IngestControllerImpl implements IngestController {
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
 	private static final String MSG_AUTH_MISSING_OR_INVALID = "(E%d) Basic authentication missing or invalid: %s";
 	private static final String MSG_NOTIFICATION_FAILED = "(E%d) Notification of Production Planner failed (cause: %s)";
+	private static final String MSG_ERROR_ACQUIRE_SEMAPHORE = "(E%d) Error to acquire semaphore from prosEO Production Planner (cause: %s)";
+	private static final String MSG_ERROR_RELEASE_SEMAPHORE = "(E%d) Error to release semaphore from prosEO Production Planner (cause: %s)";
 
 	private static final String MSG_PRODUCTS_INGESTED = "(I%d) %d products ingested in processing facility %s";
 	
@@ -64,6 +73,10 @@ public class IngestControllerImpl implements IngestController {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(IngestControllerImpl.class);
 	
+	/** REST template builder */
+	@Autowired
+	RestTemplateBuilder rtb;
+
 	/** Ingestor configuration */
 	@Autowired
 	IngestorConfiguration ingestorConfig;
@@ -157,7 +170,53 @@ public class IngestControllerImpl implements IngestController {
 		return userPassword;
 	}
 
-    /**
+	/**
+	 * Ask production planner for a slot to manipulate product(s)
+	 * 
+	 * @param user The user
+	 * @param password The password
+	 * @return true after semaphore was available 
+	 */
+	private Boolean acquireSemaphore(String user, String password) {
+		if (logger.isTraceEnabled()) logger.trace(">>> acquireSemaphore({}, PWD)", user);
+		
+		String url = ingestorConfig.getProductionPlannerUrl() + "/semaphore/acquire";
+		RestTemplate restTemplate = rtb
+				.setConnectTimeout(Duration.ofMillis(ingestorConfig.getProductionPlannerTimeout()))
+				.basicAuthentication(user, password)
+				.build();
+		ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+		if (!HttpStatus.OK.equals(response.getStatusCode())) {
+			throw new ProcessingException(logError(MSG_ERROR_ACQUIRE_SEMAPHORE, MSG_ID_ERROR_ACQUIRE_SEMAPHORE,
+					response.getStatusCode().toString()));
+		}
+		return true;
+	}
+
+	/**
+	 * Release semaphore of production planner
+	 * 
+	 * @param user The user
+	 * @param password The password
+	 * @return true after semaphore was released 
+	 */
+	private Boolean releaseSemaphore(String user, String password) {
+		if (logger.isTraceEnabled()) logger.trace(">>> releaseSemaphore({}, PWD)", user);
+		
+		String url = ingestorConfig.getProductionPlannerUrl() + "/semaphore/release";
+		RestTemplate restTemplate = rtb
+				.setConnectTimeout(Duration.ofMillis(ingestorConfig.getProductionPlannerTimeout()))
+				.basicAuthentication(user, password)
+				.build();
+		ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+		if (!HttpStatus.OK.equals(response.getStatusCode())) {
+			throw new ProcessingException(logError(MSG_ERROR_RELEASE_SEMAPHORE, MSG_ID_ERROR_RELEASE_SEMAPHORE,
+					response.getStatusCode().toString()));
+		}
+		return true;
+	}
+
+	/**
      * Ingest all given products into the storage manager of the given processing facility. If the ID of a product to ingest
      * is null or 0 (zero), then the product will be created, otherwise a matching product will be looked up and updated.
      * 
@@ -203,6 +262,8 @@ public class IngestControllerImpl implements IngestController {
 
 		for (IngestorProduct ingestorProduct: ingestorProducts) {
 			try {
+				// TODO Thoroughly test semaphore acquisition/release --> blocks Planner unnecessarily
+				acquireSemaphore(userPassword[0], userPassword[1]);
 				RestProduct restProduct = productIngestor.ingestProduct(facility, copyFiles, ingestorProduct, userPassword[0], userPassword[1]);
 				result.add(restProduct);
 				ingestorProduct.setId(restProduct.getId());
@@ -213,9 +274,12 @@ public class IngestControllerImpl implements IngestController {
 				return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 			} catch (SecurityException e) {
 				return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+			} finally {
+				releaseSemaphore(userPassword[0], userPassword[1]);
 			}
+			
 			try {
-				productIngestor.notifyPlanner(userPassword[0], userPassword[1], ingestorProduct);
+				productIngestor.notifyPlanner(userPassword[0], userPassword[1], ingestorProduct, facility.getId());
 				if (logger.isTraceEnabled()) logger.trace("... planner notification successful");
 			} catch (Exception e) {
 				// If notification fails, log warning, but otherwise ignore
@@ -308,6 +372,8 @@ public class IngestControllerImpl implements IngestController {
 		
 		RestProductFile restProductFile = null;
 		try {
+			// TODO Thoroughly test semaphore acquisition/release --> blocks Planner unnecessarily
+			acquireSemaphore(userPassword[0], userPassword[1]);
 			restProductFile = productIngestor.ingestProductFile(
 						productId, facility, productFile, userPassword[0], userPassword[1]);
 		} catch (ProcessingException e) {
@@ -316,10 +382,15 @@ public class IngestControllerImpl implements IngestController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		} catch (LockAcquisitionException e) {
+			e.printStackTrace();
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		} finally {
+			releaseSemaphore(userPassword[0], userPassword[1]);
 		}
 		
 		try {
-			productIngestor.notifyPlanner(userPassword[0], userPassword[1], restProductFile);
+			productIngestor.notifyPlanner(userPassword[0], userPassword[1], restProductFile, facility.getId());
 		} catch (Exception e) {
 			// If notification fails, log warning, but otherwise ignore
 			log(Level.WARN, MSG_NOTIFICATION_FAILED, MSG_ID_NOTIFICATION_FAILED, e.getMessage());
