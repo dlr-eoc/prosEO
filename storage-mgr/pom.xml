@@ -214,8 +214,7 @@
 				</executions>
 				<configuration>
 					<executable>raml2html</executable>
-					<commandlineArgs>-i ${raml-path} -o
-						src/site/resources/${project.artifactId}.html</commandlineArgs>
+					<commandlineArgs>-i ${raml-path} -o src/site/resources/${project.artifactId}.html</commandlineArgs>
 				</configuration>
 			</plugin>
 
