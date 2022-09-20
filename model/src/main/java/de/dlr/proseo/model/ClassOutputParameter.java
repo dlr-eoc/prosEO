@@ -63,6 +63,6 @@ public class ClassOutputParameter extends PersistentObject {
 			return false;
 		
 		ClassOutputParameter other = (ClassOutputParameter) obj;
-		return Objects.equals(outputParameters, other.outputParameters);
+		return Objects.equals(outputParameters, other.getOutputParameters());
 	}
 }

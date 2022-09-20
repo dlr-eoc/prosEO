@@ -7,6 +7,7 @@ package de.dlr.proseo.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.CascadeType;
 import javax.persistence.ElementCollection;
@@ -153,17 +154,7 @@ public class Spacecraft extends PersistentObject {
 		if (!(obj instanceof Spacecraft))
 			return false;
 		Spacecraft other = (Spacecraft) obj;
-		if (code == null) {
-			if (other.code != null)
-				return false;
-		} else if (!code.equals(other.code))
-			return false;
-		if (mission == null) {
-			if (other.mission != null)
-				return false;
-		} else if (!mission.equals(other.mission))
-			return false;
-		return true;
+		return Objects.equals(code, other.getCode()) && Objects.equals(mission, other.getMission());
 	}
 
 	@Override

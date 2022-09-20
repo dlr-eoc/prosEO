@@ -104,7 +104,7 @@ abstract public class PersistentObject {
 		if (!(obj instanceof PersistentObject))
 			return false;
 		PersistentObject other = (PersistentObject) obj;
-		return Objects.equals(id, other.id);
+		return Objects.equals(id, other.getId());
 	}
 
 }

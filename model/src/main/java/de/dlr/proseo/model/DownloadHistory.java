@@ -150,8 +150,8 @@ public class DownloadHistory {
 		if (!(obj instanceof DownloadHistory))
 			return false;
 		DownloadHistory other = (DownloadHistory) obj;
-		return Objects.equals(dateTime, other.dateTime) && Objects.equals(productFileName, other.productFileName)
-				&& Objects.equals(productFileSize, other.productFileSize) && Objects.equals(username, other.username);
+		return Objects.equals(dateTime, other.getDateTime()) && Objects.equals(productFileName, other.getProductFileName())
+				&& Objects.equals(productFileSize, other.getProductFileSize()) && Objects.equals(username, other.getUsername());
 	}
 
 	@Override

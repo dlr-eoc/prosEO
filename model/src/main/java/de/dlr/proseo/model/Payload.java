@@ -72,7 +72,7 @@ public class Payload {
 		if (!(obj instanceof Payload))
 			return false;
 		Payload other = (Payload) obj;
-		return Objects.equals(name, other.name);
+		return Objects.equals(name, other.getName());
 	}
 
 }

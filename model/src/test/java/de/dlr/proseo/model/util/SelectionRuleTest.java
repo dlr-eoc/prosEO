@@ -22,10 +22,13 @@ import java.util.TimeZone;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimpleSelectionRule;
+import de.dlr.proseo.model.SimpleSelectionRuleTest;
 
 /**
  * Unit test class for SelectionRule using various valid and invalid rules and various sensing time intervals.
@@ -34,10 +37,14 @@ import de.dlr.proseo.model.SimpleSelectionRule;
  *
  */
 public class SelectionRuleTest {
+    private static final Long TEST_MISSION_ID = 1L;
 	private static final String TEST_MISSION_CODE = "S5P";
 	private static final String TEST_PRODUCT_TYPE = "AUX_CH4";
+	private static final Long TEST_PRODUCT_CLASS_ID = 4711L;
 	private static final String TEST_PRODUCT_TYPE_IR = "L1B_IR/category:UVN,revision:2.0";
+	private static final Long TEST_PRODUCT_CLASS_IR_ID = 815L;
 	private static final String TEST_PRODUCT_TYPE_ECMWF = "AUX_ECMWF48";
+	private static final Long TEST_PRODUCT_CLASS_ECMWF_ID = 333L;
 	private static String[] itemObjects = {
 			TEST_PRODUCT_TYPE + " Item 0", TEST_PRODUCT_TYPE + " Item 1", TEST_PRODUCT_TYPE + " Item 2", TEST_PRODUCT_TYPE + " Item 3",
 			TEST_PRODUCT_TYPE + " Item 4", TEST_PRODUCT_TYPE + " Item 5", TEST_PRODUCT_TYPE + " Item 6", TEST_PRODUCT_TYPE + " Item 7",
@@ -91,6 +98,9 @@ public class SelectionRuleTest {
 	private ProductClass productClassECMWF = new ProductClass();
 	private ProductClass targetProductClass = productClassCH4;
 
+	/** The logger for this class */
+	private static final Logger logger = LoggerFactory.getLogger(SelectionRuleTest.class);
+	
 	/**
 	 * Ensure that the time-based classes in Java handle leap seconds (e. g. 2015-06-30 23:59:60) in a graceful way
 	 * (i. e. without breaking the surrounding code by exceptions and such).
@@ -139,17 +149,23 @@ public class SelectionRuleTest {
 	@Before
 	public void setUp() throws Exception {
 		// Create required mission and product classes
+		mission.setId(TEST_MISSION_ID);
 		mission.setCode(TEST_MISSION_CODE);
-		mission.getProductClasses().addAll(Arrays.asList(productClassCH4, productClassIR, productClassECMWF));
 
+		productClassCH4.setId(TEST_PRODUCT_CLASS_ID);
 		productClassCH4.setProductType(TEST_PRODUCT_TYPE);
 		productClassCH4.setMission(mission);
 
+		productClassIR.setId(TEST_PRODUCT_CLASS_IR_ID);
 		productClassIR.setProductType(TEST_PRODUCT_TYPE_IR.split("/")[0]);
 		productClassIR.setMission(mission);
 		
+		productClassECMWF.setId(TEST_PRODUCT_CLASS_ECMWF_ID);
 		productClassECMWF.setProductType(TEST_PRODUCT_TYPE_ECMWF);
 		productClassECMWF.setMission(mission);
+		
+		mission.getProductClasses().addAll(Arrays.asList(productClassCH4, productClassIR, productClassECMWF));
+		logger.debug("Set of product classes {} set up for mission {}", mission.getProductClasses(), mission.getCode());
 	}
 
 //	/**

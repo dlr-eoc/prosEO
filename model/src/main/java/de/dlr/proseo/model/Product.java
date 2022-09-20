@@ -757,31 +757,38 @@ public class Product extends PersistentObject {
 		if (super.equals(obj))
 			return true;
 		
-		// Same UUIDs or at least one UUID is null
 		if (!(obj instanceof Product))
 			return false;
 		Product other = (Product) obj;
-		if (uuid.equals(other.uuid))
-			return true;
-		if (null != uuid && null != other.uuid) // both UUIDs set, and they are different
-			return false;
+		
+		// Same UUIDs or at least one UUID is null
+		if (null != uuid) {
+			if (uuid.equals(other.getUuid())) {
+				return true;
+			}
+			else if (null != other.getUuid()) {
+				// both UUIDs set, and they are different
+				return false;
+			}
+		}
+		// At least one UUID is null, so compare attributes
 		
 		// Overlapping parameters are the same (mandatory, but not sufficient)
 		for (String key: parameters.keySet()) {
-			if (other.parameters.containsKey(key) && !parameters.get(key).equals(other.parameters.get(key))) {
+			if (other.getParameters().containsKey(key) && !parameters.get(key).equals(other.getParameters().get(key))) {
 				return false;
 			}
 		}
 		
 		// All other attributes mentioned above are the same (mandatory and sufficient)
-		return Objects.equals(configuredProcessor, other.configuredProcessor)
-				&& Objects.equals(fileClass, other.fileClass)
-				&& Objects.equals(mode, other.mode)
-				&& Objects.equals(productClass, other.productClass)
-				&& productQuality == other.productQuality
-				&& productionType == other.productionType
-				&& Objects.equals(sensingStartTime, other.sensingStartTime)
-				&& Objects.equals(sensingStopTime, other.sensingStopTime);
+		return Objects.equals(configuredProcessor, other.getConfiguredProcessor())
+				&& Objects.equals(fileClass, other.getFileClass())
+				&& Objects.equals(mode, other.getMode())
+				&& Objects.equals(productClass, other.getProductClass())
+				&& productQuality == other.getProductQuality()
+				&& productionType == other.getProductionType()
+				&& Objects.equals(sensingStartTime, other.getSensingStartTime())
+				&& Objects.equals(sensingStopTime, other.getSensingStopTime());
 	}
 
 }

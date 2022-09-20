@@ -261,8 +261,8 @@ public class Configuration extends PersistentObject {
 		if (!(obj instanceof Configuration))
 			return false;
 		Configuration other = (Configuration) obj;
-		return Objects.equals(configurationVersion, other.configurationVersion)
-				&& Objects.equals(processorClass, other.processorClass);
+		return Objects.equals(configurationVersion, other.getConfigurationVersion())
+				&& Objects.equals(processorClass, other.getProcessorClass());
 	}
 
 	@Override
