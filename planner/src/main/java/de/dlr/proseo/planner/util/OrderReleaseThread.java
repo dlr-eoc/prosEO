@@ -9,6 +9,7 @@ package de.dlr.proseo.planner.util;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -238,7 +239,50 @@ public class OrderReleaseThread extends Thread {
 						productionPlanner.acquireThreadSemaphore("releaseOrder2");	
 						@SuppressWarnings("unused")
 						Object answer2 = transactionTemplate.execute((status) -> {
-
+							
+							String nativeQuery = "SELECT j.start_time, js.id, pf.name "
+									+ "FROM processing_order o "
+									+ "JOIN job j ON o.id = j.processing_order_id "
+									+ "JOIN job_step js ON j.id = js.job_id "
+									+ "JOIN processing_facility pf ON j.processing_facility_id = pf.id "
+									+ "WHERE o.id = :orderId "
+									+ "AND js.job_step_state = :jsState "
+									+ "ORDER BY j.start_time, js.id";
+							
+							List<?> jobStepList = em.createNativeQuery(nativeQuery)
+									.setParameter("orderId", orderId)
+									.setParameter("jsState", JobStepState.READY.toString())
+									.getResultList();
+							
+							for (Object jobStepObject: jobStepList) {
+								if (jobStepObject instanceof Object[]) {
+									
+									Object[] jobStep = (Object[]) jobStepObject;
+									Long jsId = jobStep[1] instanceof Long ? (Long) jobStep[0] : null;
+									String pfName = jobStep[2] instanceof String ? (String) jobStep[1] : null;
+									if (null == jsId || null == pfName) {
+										logger.error("Invalid query result {}", Arrays.asList(jobStep));
+										throw new RuntimeException("Invalid query result");
+									}
+									
+									try {
+										KubeConfig kc = productionPlanner.getKubeConfig(pfName);
+										if (!kc.couldJobRun()) {
+											break;
+										}
+										UtilService.getJobStepUtil().checkJobStepToRun(kc, jsId);
+									} catch (Exception e) {
+										logger.error("Exception during job step release", e);
+										throw e;
+									} 
+									
+								} else {
+									logger.error("Invalid query result {}", jobStepObject);
+									throw new RuntimeException("Invalid query result");
+								}
+							}
+							
+							/*
 							String jpqlQuery = null;
 							jpqlQuery = "select id from JobStep js";
 							jpqlQuery += " where js.job.processingOrder.id = :orderId";
@@ -271,10 +315,13 @@ public class OrderReleaseThread extends Thread {
 											UtilService.getJobStepUtil().checkJobStepToRun(kc, jsId);
 										} catch (Exception e) {
 											e.printStackTrace();
+											throw e;
 										} 
 									}
 								}
 							}
+							*/
+							
 							return null;					
 						});
 					} catch (Exception e) {	

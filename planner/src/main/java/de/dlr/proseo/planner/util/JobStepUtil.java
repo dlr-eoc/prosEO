@@ -906,6 +906,48 @@ public class JobStepUtil {
 						}
 						@SuppressWarnings("unused")
 						String dummy = transactionTemplate.execute((status) -> {
+							
+							String nativeQuery = "SELECT j.start_time, js.id "
+									+ "FROM processing_order o "
+									+ "JOIN job j ON o.id = j.processing_order_id "
+									+ "JOIN job_step js ON j.id = js.job_id "
+									+ "WHERE j.processing_facility_id = :pfId "
+									+ "AND js.job_step_state = :jsStateReady "
+									+ "AND o.order_state != :oStateSuspending "
+									+ "AND o.order_state != :oStatePlanned "
+									+ "AND ("
+									    + "j.job_state = :jStateReleased OR j.job_state = :jStateStarted"
+									+ ")"
+									+ "ORDER BY j.start_time";
+							List<?> jobStepList = em.createNativeQuery(nativeQuery)
+									.setParameter("pfId", kc.getLongId())
+									.setParameter("jsStateReady", JobStepState.READY)
+									.setParameter("oStateSuspending", OrderState.SUSPENDING)
+									.setParameter("oStatePlanned", OrderState.PLANNED)
+									.setParameter("jStateReleases", JobState.RELEASED)
+									.setParameter("jStateStarted", JobState.STARTED)
+									.getResultList();
+							
+							for (Object jobStepObject: jobStepList) {
+								if (jobStepObject instanceof Object[]) {
+									
+									Object[] jobStep = (Object[]) jobStepObject;
+									Long jsId = jobStep[1] instanceof Long ? (Long) jobStep[0] : null;
+									
+									if (kc.couldJobRun()) {
+										kc.createJob(String.valueOf(jsId), null, null);
+									} else {
+										// at the moment no further job could be started
+										break;
+									}
+									
+								} else {
+									logger.error("Invalid query result {}", jobStepObject);
+									throw new RuntimeException("Invalid query result");
+								}
+							}
+							
+							/*
 							List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(kc.getLongId(), states);
 							for (JobStep js : jobSteps) {
 								if ((js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)
@@ -919,6 +961,8 @@ public class JobStepUtil {
 									}
 								}
 							}
+							*/
+							
 							return null;
 						});
 					} 
