@@ -17,6 +17,14 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
  *
  */
 public class ProseoHttp {
+	
+	private final ProseoLogger logger;
+	private final HttpPrefix prefix;
+		
+	public ProseoHttp(ProseoLogger logger, HttpPrefix prefix) {
+		this.logger = logger;
+		this.prefix = prefix;
+	}
 
 	// prosEO message format, e. g. "199 proseo-processor-mgr (E2205) Product type
 	// L2________ invalid for mission NM4T"
@@ -30,7 +38,7 @@ public class ProseoHttp {
 	 * @param message the message text
 	 * @return an HttpHeaders object with a warning message
 	 */
-	public static HttpHeaders errorHeaders(String loggedMessage, HttpPrefix prefix) {
+	public HttpHeaders errorHeaders(String loggedMessage) {
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HttpHeaders.WARNING, prefix.getPrefix() + (null == loggedMessage ? "null" : loggedMessage));
 		return responseHeaders;
@@ -43,7 +51,7 @@ public class ProseoHttp {
 	 * @param warningHeader the warning header to check (may be null)
 	 * @return the prosEO-compliant message, if there is one, or null otherwise
 	 */
-	public static String extractProseoMessage(ProseoLogger logger, String warningHeader) {
+	public String extractProseoMessage(String warningHeader) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> extractProseoMessage({})", warningHeader);
 
