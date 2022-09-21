@@ -5,8 +5,18 @@
 		<artifactId>proseo</artifactId>
 		<version>0.9.2</version>
 	</parent>
-	<artifactId>logging</artifactId>
+	
+	<artifactId>proseo-logging</artifactId>
+	<name>prosEO Logging</name>
+	<description>
+		prosEO Logging - Provides a central logging mechanism to be used throughout prosEO
+	</description>
 
+	<url>https://github.com/dlr-eoc/prosEO/logging</url>
+	<organization>
+		<name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
+		<url>http://www.dlr.de</url>
+	</organization>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
