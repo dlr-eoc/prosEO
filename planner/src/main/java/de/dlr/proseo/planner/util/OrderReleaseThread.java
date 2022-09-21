@@ -16,18 +16,13 @@ import java.util.Optional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.ProcessingOrder;
-import de.dlr.proseo.model.SimplePolicy;
 import de.dlr.proseo.model.Job.JobState;
-import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -258,10 +253,18 @@ public class OrderReleaseThread extends Thread {
 								if (jobStepObject instanceof Object[]) {
 									
 									Object[] jobStep = (Object[]) jobStepObject;
-									Long jsId = jobStep[1] instanceof Long ? (Long) jobStep[0] : null;
-									String pfName = jobStep[2] instanceof String ? (String) jobStep[1] : null;
+									
+									if (logger.isTraceEnabled()) logger.trace("... found job step info {}", Arrays.asList(jobStep));
+									
+									// jobStep[0] is only used for ordering the result list
+									Object jsIdObject = jobStep[1];
+									Object pfNameObject = jobStep[2];
+									
+									Long jsId = jsIdObject instanceof BigInteger ? ((BigInteger) jsIdObject).longValue() : null;
+									String pfName = pfNameObject instanceof String ? (String) pfNameObject : null;
+									
 									if (null == jsId || null == pfName) {
-										logger.error("Invalid query result {}", Arrays.asList(jobStep));
+										Messages.RUNTIME_EXCEPTION.log(logger, "Invalid query result: " + Arrays.asList(jobStep));
 										throw new RuntimeException("Invalid query result");
 									}
 									
@@ -272,65 +275,26 @@ public class OrderReleaseThread extends Thread {
 										}
 										UtilService.getJobStepUtil().checkJobStepToRun(kc, jsId);
 									} catch (Exception e) {
-										logger.error("Exception during job step release", e);
+										Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 										throw e;
 									} 
 									
 								} else {
-									logger.error("Invalid query result {}", jobStepObject);
+									Messages.RUNTIME_EXCEPTION.log(logger, "Invalid query result: " + jobStepObject);
 									throw new RuntimeException("Invalid query result");
 								}
 							}
 							
-							/*
-							String jpqlQuery = null;
-							jpqlQuery = "select id from JobStep js";
-							jpqlQuery += " where js.job.processingOrder.id = :orderId";
-							jpqlQuery += " and js.jobStepState = :state";
-							jpqlQuery += " order by js.job.startTime, js.id";
-
-							Query query = em.createQuery(jpqlQuery);
-
-							query.setParameter("state", JobStepState.READY);
-							query.setParameter("orderId", orderId);
-							
-							List<?> jsToRelease = query.getResultList();
-
-							for (Object o : jsToRelease) {
-								if (o instanceof Long) {
-									Long jsId = (Long)o;
-
-									jpqlQuery = "select js.job.processingFacility.name from JobStep js";
-									jpqlQuery += " where js.id = :jsId";
-									query = em.createQuery(jpqlQuery);
-									query.setParameter("jsId", jsId);
-									Object oName = query.getSingleResult();
-									if (oName instanceof String) {
-										String name = (String)oName;
-										try {
-											KubeConfig kc = productionPlanner.getKubeConfig(name);
-											if (!kc.couldJobRun()) {
-												break;
-											}
-											UtilService.getJobStepUtil().checkJobStepToRun(kc, jsId);
-										} catch (Exception e) {
-											e.printStackTrace();
-											throw e;
-										} 
-									}
-								}
-							}
-							*/
-							
 							return null;					
 						});
-					} catch (Exception e) {	
+					} catch (Exception e) {
 						throw e;
 					} finally {
 						productionPlanner.releaseThreadSemaphore("releaseOrder2");
 					}
 				}
 			} catch (Exception e) {	
+				Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 				throw e;
 			}
 			if (this.isInterrupted()) {
@@ -392,6 +356,7 @@ public class OrderReleaseThread extends Thread {
 				});
 
 			} catch (Exception e) {	
+				Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 				throw e;
 			} finally {
 				productionPlanner.releaseThreadSemaphore("releaseOrder3");

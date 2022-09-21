@@ -7,6 +7,7 @@ package de.dlr.proseo.planner.util;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -16,7 +17,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
-import javax.persistence.LockModeType;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -358,7 +358,6 @@ public class JobStepUtil {
 		if (logger.isTraceEnabled()) logger.trace(">>> close({})", (null == id ? "null" : id));
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
-		List<Long> jobStepIds = new ArrayList<Long>();
 		
 		final JobStep js = transactionTemplate.execute((status) -> {
 			Optional<JobStep> jsOpt = RepositoryService.getJobStepRepository().findById(id);
@@ -379,7 +378,7 @@ public class JobStepUtil {
 				break;
 			case COMPLETED:
 			case FAILED:
-				final Object dummy = transactionTemplate.execute((status) -> {
+				transactionTemplate.execute((status) -> {
 					Optional<JobStep> jsOpt = RepositoryService.getJobStepRepository().findById(id);
 					if (jsOpt.isPresent()) {
 						JobStep locJobStep= jsOpt.get();
@@ -591,7 +590,7 @@ public class JobStepUtil {
 				// delete from product_query_filter_conditions where product_query_id = pqid
 				
 
-				final Object dummy = transactionTemplate.execute((status) -> {
+				transactionTemplate.execute((status) -> {
 					String sqlQuery = "select id from product_query where job_step_id = " + jsId + ";";
 					Query query = em.createNativeQuery(sqlQuery);
 					List<?> pqIds = query.getResultList();
@@ -889,9 +888,6 @@ public class JobStepUtil {
 			if (kc != null) {
 				try {
 					productionPlanner.acquireReleaseSemaphore("checkForJobStepsToRun");
-					List<JobStepState> states = new ArrayList<JobStepState>();
-					states.add(JobStepState.READY);
-
 
 					final ProcessingFacility pfo = transactionTemplate.execute((status) -> {
 						Optional<ProcessingFacility> opt = RepositoryService.getFacilityRepository().findById(kc.getLongId());
@@ -904,9 +900,8 @@ public class JobStepUtil {
 						if (!onlyRun) {
 							this.searchForJobStepsToRun(kc.getLongId(), pcId, onlyWaiting);
 						}
-						@SuppressWarnings("unused")
-						String dummy = transactionTemplate.execute((status) -> {
-							
+						transactionTemplate.execute((status) -> {
+
 							String nativeQuery = "SELECT j.start_time, js.id "
 									+ "FROM processing_order o "
 									+ "JOIN job j ON o.id = j.processing_order_id "
@@ -916,53 +911,44 @@ public class JobStepUtil {
 									+ "AND o.order_state != :oStateSuspending "
 									+ "AND o.order_state != :oStatePlanned "
 									+ "AND ("
-									    + "j.job_state = :jStateReleased OR j.job_state = :jStateStarted"
+									+ "j.job_state = :jStateReleased OR j.job_state = :jStateStarted"
 									+ ")"
 									+ "ORDER BY j.start_time";
 							List<?> jobStepList = em.createNativeQuery(nativeQuery)
 									.setParameter("pfId", kc.getLongId())
-									.setParameter("jsStateReady", JobStepState.READY)
-									.setParameter("oStateSuspending", OrderState.SUSPENDING)
-									.setParameter("oStatePlanned", OrderState.PLANNED)
-									.setParameter("jStateReleases", JobState.RELEASED)
-									.setParameter("jStateStarted", JobState.STARTED)
+									.setParameter("jsStateReady", JobStepState.READY.toString())
+									.setParameter("oStateSuspending", OrderState.SUSPENDING.toString())
+									.setParameter("oStatePlanned", OrderState.PLANNED.toString())
+									.setParameter("jStateReleased", JobState.RELEASED.toString())
+									.setParameter("jStateStarted", JobState.STARTED.toString())
 									.getResultList();
-							
+
 							for (Object jobStepObject: jobStepList) {
 								if (jobStepObject instanceof Object[]) {
-									
+
 									Object[] jobStep = (Object[]) jobStepObject;
-									Long jsId = jobStep[1] instanceof Long ? (Long) jobStep[0] : null;
-									
+
+									if (logger.isTraceEnabled()) logger.trace("... found job step info {}", Arrays.asList(jobStep));
+
+									// jobStep[0] is only used for ordering the result list
+									Long jsId = jobStep[1] instanceof BigInteger ? ((BigInteger) jobStep[1]).longValue() : null;
+
+									if (null == jsId) {
+										throw new RuntimeException("Invalid query result: " + Arrays.asList(jobStep));
+									}
+
 									if (kc.couldJobRun()) {
 										kc.createJob(String.valueOf(jsId), null, null);
 									} else {
 										// at the moment no further job could be started
 										break;
 									}
-									
+
 								} else {
-									logger.error("Invalid query result {}", jobStepObject);
-									throw new RuntimeException("Invalid query result");
+									throw new RuntimeException("Invalid query result: " + jobStepObject);
 								}
 							}
-							
-							/*
-							List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(kc.getLongId(), states);
-							for (JobStep js : jobSteps) {
-								if ((js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)
-										&& js.getJob().getProcessingOrder().getOrderState() != OrderState.SUSPENDING
-										&& js.getJob().getProcessingOrder().getOrderState() != OrderState.PLANNED) {
-									if (kc.couldJobRun()) {
-										kc.createJob(String.valueOf(js.getId()), null, null);
-									} else {
-										// at the moment no further job could be started
-										break;
-									}
-								}
-							}
-							*/
-							
+
 							return null;
 						});
 					} 
@@ -972,10 +958,10 @@ public class JobStepUtil {
 					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
 				} 
 			} else {
-				String dummy = transactionTemplate.execute((status) -> {
+				transactionTemplate.execute((status) -> {
 					checkForJobStepsToRun();
 					return null;
-			});
+				});
 			}
 		}
 		if (logger.isTraceEnabled()) logger.trace("<<< checkForJobStepsToRun({}, {}, {})",

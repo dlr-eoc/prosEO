@@ -1,0 +1,17 @@
+de/dlr/proseo/logging/messages/SamplesMessage.class
+de/dlr/proseo/logging/messages/ProcessorMgrMessage.class
+de/dlr/proseo/logging/messages/IngestorMessage.class
+de/dlr/proseo/logging/messages/OrderMgrMessage.class
+de/dlr/proseo/logging/messages/StorageMgrMessage.class
+de/dlr/proseo/logging/messages/ProseoMessage.class
+de/dlr/proseo/logging/messages/ModelMessage.class
+de/dlr/proseo/logging/messages/UserMgrMessage.class
+de/dlr/proseo/logging/documentation/LoggingDocumentation.class
+de/dlr/proseo/logging/messages/UIMessage.class
+de/dlr/proseo/logging/http/HttpPrefix.class
+de/dlr/proseo/logging/messages/FacilityMgrMessage.class
+de/dlr/proseo/logging/logger/ProseoLogger.class
+de/dlr/proseo/logging/messages/PlannerMessage.class
+de/dlr/proseo/logging/http/ProseoHttp.class
+de/dlr/proseo/logging/messages/GeneralMessage.class
+de/dlr/proseo/logging/logger/ProseoLogger$1.class
