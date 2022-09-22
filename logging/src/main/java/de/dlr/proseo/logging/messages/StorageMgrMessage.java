@@ -14,7 +14,8 @@ import org.slf4j.event.Level;
  */
 public enum StorageMgrMessage implements ProseoMessage {
 
-
+	TEST_TO_BE_REPLACED	(0000, Level.WARN, "to be replaced", "")
+	
 	;
 
 	private final int code;
