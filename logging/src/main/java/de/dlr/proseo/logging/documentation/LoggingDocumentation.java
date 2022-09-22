@@ -101,30 +101,6 @@ public class LoggingDocumentation {
 		return messages.toString();
 	}
 
-	/*
-	private static String addService(String service) throws ClassNotFoundException {
-				
-		StringBuilder messages = new StringBuilder();
-		
-		@SuppressWarnings("unchecked")
-		Class<? extends ProseoMessage> clazz = (Class<? extends ProseoMessage>) Class.forName(service);
-
-		ProseoMessage[] pm = clazz.getEnumConstants();
-		Arrays.sort(pm, (a, b) -> a.getCode() - b.getCode());
-
-		messages.append("<table>");
-
-		for (ProseoMessage m : pm) {
-			messages.append("<tr>").append("<td>" + m.getCode() + "</td>").append("<td>" + m.getLevel() + "</td>")
-					.append("<td>" + m + "</td>").append("<td>" + m.getMessage() + "</td>")
-					.append("<td>" + m.getDescription() + "</td>").append("</tr>");
-		}
-
-		messages.append("</table>");
-
-		return messages.toString();
-	}
-*/	
 	private static String addService(Class<? extends ProseoMessage> clazz) {
 		
 		StringBuilder messages = new StringBuilder();
