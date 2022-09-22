@@ -77,4 +77,12 @@ public enum GeneralMessage implements ProseoMessage {
 		return description;
 	}
 	
+	/**
+	 * Get the message's success.
+	 * 
+	 * @return The message's success.
+	 */
+	public boolean getSuccess() {
+		return success;
+	}
 }
