@@ -12,9 +12,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.IngestorMessage;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.DownloadHistory;
 import de.dlr.proseo.model.Product;
@@ -30,54 +29,10 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
  * @author Dr. Thomas Bassler
  */
 public class ProductUtil {
-
-	/* Message ID constants */
-	private static final int MSG_ID_PRODUCT_UUID_INVALID = 2021;
-	private static final int MSG_ID_INVALID_PARAMETER_VALUE = 2049;
-	private static final int MSG_ID_INVALID_PARAMETER_TYPE = 2048;
-	private static final int MSG_ID_INVALID_PRODUCT_GENERATION_TIME = 2047;
-	private static final int MSG_ID_INVALID_SENSING_STOP_TIME = 2046;
-	private static final int MSG_ID_INVALID_SENSING_START_TIME = 2045;
-	private static final int MSG_ID_INVALID_PRODUCTION_TYPE = 2050;
-	private static final int MSG_ID_INVALID_RAW_DATA_AVAILABILITY_TIME = 2072;
-	private static final int MSG_ID_INVALID_PUBLICATION_TIME = 2073;
-	private static final int MSG_ID_INVALID_EVICTION_TIME = 2074;
-
-	/* Message string constants */
-	private static final String MSG_PRODUCT_UUID_INVALID = "(E%d) Product UUID %s invalid";
-	private static final String MSG_INVALID_PARAMETER_VALUE = "(E%d) Invalid parameter value '%s' for type '%s'";
-	private static final String MSG_INVALID_PARAMETER_TYPE = "(E%d) Invalid parameter type '%s'";
-	private static final String MSG_INVALID_PRODUCT_GENERATION_TIME = "(E%d) Invalid product generation time '%s'";
-	private static final String MSG_INVALID_SENSING_STOP_TIME = "(E%d) Invalid sensing stop time '%s'";
-	private static final String MSG_INVALID_SENSING_START_TIME = "(E%d) Invalid sensing start time '%s'";
-	private static final String MSG_INVALID_PRODUCTION_TYPE = "(E%d) Invalid production type '%s'";
-	private static final String MSG_INVALID_RAW_DATA_AVAILABILITY_TIME = "(E%d) Invalid raw data availability time '%s'";
-	private static final String MSG_INVALID_PUBLICATION_TIME = "(E%d) Invalid publication time '%s'";
-	private static final String MSG_INVALID_EVICTION_TIME = "(E%d) Invalid eviction time '%s'";
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProductUtil.class);
-	
-	/**
-	 * Create and log a formatted error message
-	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted error message
-	 */
-	private static String logError(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
+	private static ProseoLogger logger = new ProseoLogger(ProductUtil.class);
 		
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		logger.error(message);
-		
-		return message;
-	}
-	
 	/**
 	 * Convert a prosEO model product into a REST product
 	 * 
@@ -205,7 +160,7 @@ public class ProductUtil {
 				modelProduct.setUuid(UUID.fromString(restProduct.getUuid()));
 			} catch (IllegalArgumentException e) {
 				throw new IllegalArgumentException(
-						logError(MSG_PRODUCT_UUID_INVALID, MSG_ID_PRODUCT_UUID_INVALID, restProduct.getUuid()));
+						logger.log(IngestorMessage.PRODUCT_UUID_INVALID, restProduct.getUuid()));
 			} 
 		}
 		modelProduct.setFileClass(restProduct.getFileClass());
@@ -214,17 +169,16 @@ public class ProductUtil {
 			modelProduct.setProductQuality(ProductQuality.valueOf(restProduct.getProductQuality()));
 		}
 		try {
-			modelProduct.setSensingStartTime(
-					Instant.from(OrbitTimeFormatter.parse(restProduct.getSensingStartTime())));
+			modelProduct.setSensingStartTime(Instant.from(OrbitTimeFormatter.parse(restProduct.getSensingStartTime())));
 		} catch (DateTimeException e) {
-			throw new IllegalArgumentException(logError(MSG_INVALID_SENSING_START_TIME, MSG_ID_INVALID_SENSING_START_TIME,
-					restProduct.getSensingStartTime()));
+			throw new IllegalArgumentException(
+					logger.log(IngestorMessage.INVALID_SENSING_START_TIME, restProduct.getSensingStartTime()));
 		}
 		try {
 			modelProduct.setSensingStopTime(Instant.from(OrbitTimeFormatter.parse(restProduct.getSensingStopTime())));
 		} catch (DateTimeException e) {
-			throw new IllegalArgumentException(logError(MSG_INVALID_SENSING_STOP_TIME, MSG_ID_INVALID_SENSING_STOP_TIME,
-					restProduct.getSensingStartTime()));
+			throw new IllegalArgumentException(
+					logger.log(IngestorMessage.INVALID_SENSING_STOP_TIME, restProduct.getSensingStartTime()));
 		}
 		if (null == restProduct.getRawDataAvailabilityTime()) {
 			modelProduct.setRawDataAvailabilityTime(null);
@@ -233,15 +187,15 @@ public class ProductUtil {
 				modelProduct.setRawDataAvailabilityTime(
 						Instant.from(OrbitTimeFormatter.parse(restProduct.getRawDataAvailabilityTime())));
 			} catch (DateTimeException e) {
-				throw new IllegalArgumentException(logError(MSG_INVALID_RAW_DATA_AVAILABILITY_TIME,
-						MSG_ID_INVALID_RAW_DATA_AVAILABILITY_TIME, restProduct.getRawDataAvailabilityTime()));
-			} 
+				throw new IllegalArgumentException(logger.log(IngestorMessage.INVALID_RAW_DATA_AVAILABILITY_TIME,
+						restProduct.getRawDataAvailabilityTime()));
+			}
 		}
 		try {
 			modelProduct.setGenerationTime(Instant.from(OrbitTimeFormatter.parse(restProduct.getGenerationTime())));
 		} catch (DateTimeException e) {
-			throw new IllegalArgumentException(logError(MSG_INVALID_PRODUCT_GENERATION_TIME, MSG_ID_INVALID_PRODUCT_GENERATION_TIME,
-					restProduct.getGenerationTime()));
+			throw new IllegalArgumentException(
+					logger.log(IngestorMessage.INVALID_PRODUCT_GENERATION_TIME, restProduct.getGenerationTime()));
 		}
 		if (null == restProduct.getPublicationTime()) {
 			modelProduct.setPublicationTime(null);
@@ -250,8 +204,8 @@ public class ProductUtil {
 				modelProduct.setPublicationTime(Instant.from(OrbitTimeFormatter.parse(restProduct.getPublicationTime())));
 			} catch (DateTimeException e) {
 				throw new IllegalArgumentException(
-						logError(MSG_INVALID_PUBLICATION_TIME, MSG_ID_INVALID_PUBLICATION_TIME, restProduct.getPublicationTime()));
-			} 
+						logger.log(IngestorMessage.INVALID_PUBLICATION_TIME, restProduct.getPublicationTime()));
+			}
 		}
 		if (null == restProduct.getEvictionTime()) {
 			modelProduct.setEvictionTime(null);
@@ -260,8 +214,8 @@ public class ProductUtil {
 				modelProduct.setEvictionTime(Instant.from(OrbitTimeFormatter.parse(restProduct.getEvictionTime())));
 			} catch (DateTimeException e) {
 				throw new IllegalArgumentException(
-						logError(MSG_INVALID_EVICTION_TIME, MSG_ID_INVALID_EVICTION_TIME, restProduct.getEvictionTime()));
-			} 
+						logger.log(IngestorMessage.INVALID_EVICTION_TIME, restProduct.getEvictionTime()));
+			}
 		}
 		if (null == restProduct.getProductionType()) {
 			modelProduct.setProductionType(null);
@@ -269,8 +223,8 @@ public class ProductUtil {
 			try {
 				modelProduct.setProductionType(ProductionType.valueOf(restProduct.getProductionType()));
 			} catch (IllegalArgumentException e) {
-				throw new IllegalArgumentException(logError(MSG_INVALID_PRODUCTION_TYPE, MSG_ID_INVALID_PRODUCTION_TYPE,
-						restProduct.getProductionType()));
+				throw new IllegalArgumentException(
+						logger.log(IngestorMessage.INVALID_PRODUCTION_TYPE, restProduct.getProductionType()));
 			}
 		}
 		for (RestParameter restParameter: restProduct.getParameters()) {
@@ -278,8 +232,8 @@ public class ProductUtil {
 			try {
 				modelParameter.setParameterType(ParameterType.valueOf(restParameter.getParameterType()));
 			} catch (Exception e) {
-				throw new IllegalArgumentException(logError(MSG_INVALID_PARAMETER_TYPE, MSG_ID_INVALID_PARAMETER_TYPE,
-						restParameter.getParameterType()));
+				throw new IllegalArgumentException(
+						logger.log(IngestorMessage.INVALID_PARAMETER_TYPE, restParameter.getParameterType()));
 			}
 			try {
 				switch (modelParameter.getParameterType()) {
@@ -290,7 +244,7 @@ public class ProductUtil {
 				case INSTANT:	modelParameter.setInstantValue(OrbitTimeFormatter.parseDateTime(restParameter.getParameterValue())); break;
 				}
 			} catch (Exception e) {
-				throw new IllegalArgumentException(logError(MSG_INVALID_PARAMETER_VALUE, MSG_ID_INVALID_PARAMETER_VALUE,
+				throw new IllegalArgumentException(logger.log(IngestorMessage.INVALID_PARAMETER_VALUE,
 						restParameter.getParameterValue(), restParameter.getParameterType()));
 			}
 			modelProduct.getParameters().put(restParameter.getKey(), modelParameter);
