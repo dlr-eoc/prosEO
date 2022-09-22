@@ -38,6 +38,9 @@ public final class ProseoLogger {
 	 * @return Returns the logged message.
 	 */
 	public String log(ProseoMessage type, Object... msgParameters) {
+		if (type == null) {
+			throw new IllegalArgumentException("Please specify the type of the message.");
+		} 
 		String logged = "";
 		switch (type.getLevel()) {
 		case INFO:
