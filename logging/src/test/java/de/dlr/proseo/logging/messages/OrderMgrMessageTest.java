@@ -45,7 +45,7 @@ public class OrderMgrMessageTest {
 	@Test
 	public final void testGetMessage() {
 		String result = OrderMgrMessage.JOB_NOT_EXIST.getMessage();
-		String expected = "Job '{0}' does not exist";
+		String expected = "Job {0} does not exist";
 		assertEquals(expected, result);
 	}
 

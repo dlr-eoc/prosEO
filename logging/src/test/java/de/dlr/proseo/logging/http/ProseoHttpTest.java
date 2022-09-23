@@ -7,10 +7,6 @@ package de.dlr.proseo.logging.http;
 
 import static org.junit.Assert.*;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.event.Level;
 
