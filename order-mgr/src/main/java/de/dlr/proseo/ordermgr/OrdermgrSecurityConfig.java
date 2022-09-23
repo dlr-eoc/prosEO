@@ -22,6 +22,8 @@ import org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.OrderMgrMessage;
 import de.dlr.proseo.model.enums.UserRole;
 
 /**
@@ -38,7 +40,7 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 	private DataSource dataSource;
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(OrdermgrSecurityConfig.class);
+	private static ProseoLogger logger = new ProseoLogger(OrdermgrSecurityConfig.class);
 	
 	/**
 	 * Set the Ordermgr security options
@@ -79,7 +81,7 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 	 */
 	@Autowired
 	public void initialize(AuthenticationManagerBuilder builder) throws Exception {
-		logger.info("Initializing authentication from user details service ");
+		logger.log(OrderMgrMessage.INITIALIZING_AUTHENTICATION);
 
 		builder.userDetailsService(userDetailsService());
 	}
@@ -101,7 +103,7 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 	 */
 	@Bean
 	public UserDetailsService userDetailsService() {
-		logger.info("Initializing user details service from datasource " + dataSource);
+		logger.log(OrderMgrMessage.INITIALIZING_USER_DETAILS_SERVICE, dataSource);
 
 		JdbcDaoImpl jdbcDaoImpl = new JdbcDaoImpl();
 		jdbcDaoImpl.setDataSource(dataSource);
