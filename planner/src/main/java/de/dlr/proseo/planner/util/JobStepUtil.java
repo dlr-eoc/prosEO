@@ -110,6 +110,8 @@ public class JobStepUtil {
 	// @Transactional
 	public void searchForJobStepsToRun(long pfId, long pcId, boolean onlyWaiting) {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		
+		// TODO Replace findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime() by native SQL query
 
 		final ProcessingFacility processingFacility = transactionTemplate.execute((status) -> {
 			Optional<ProcessingFacility> opt = RepositoryService.getFacilityRepository().findById(pfId);
@@ -131,15 +133,15 @@ public class JobStepUtil {
 				onlyWaiting);
 
 		// Search for all job steps on processingFacility with states PLANNED, WAITING_INPUT
-		List<de.dlr.proseo.model.JobStep.JobStepState> jobStepStates = new ArrayList<>();
+		List<String> jobStepStates = new ArrayList<>();
 		if (!onlyWaiting) {
-			jobStepStates.add(de.dlr.proseo.model.JobStep.JobStepState.PLANNED);
+			jobStepStates.add(JobStep.JobStepState.PLANNED.toString());
 		}
-		jobStepStates.add(de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT);
-		List<JobStep> allJobSteps = null;
+		jobStepStates.add(JobStepState.WAITING_INPUT.toString());
+		//List<JobStep> allJobSteps = null;
 
-		allJobSteps = transactionTemplate.execute((status) -> {
-			List<JobStep> jobSteps = null;
+		List<Long> allJobSteps = transactionTemplate.execute((status) -> {
+			List<Long> jobSteps = null;
 			if (processingFacility == null) {
 				jobSteps = new ArrayList<>();
 				if (pc != null) {
@@ -148,15 +150,16 @@ public class JobStepUtil {
 					for (ProductQuery pq : productQueries) {
 						if (pq.getJobStep().getJobStepState().equals(JobStepState.WAITING_INPUT)
 								&& pq.getJobStep().getJob().getJobState() != JobState.ON_HOLD) {
-							jobSteps.add(pq.getJobStep());
+							jobSteps.add(pq.getJobStep().getId());
 						} else if (!onlyWaiting && pq.getJobStep().getJobStepState().equals(JobStepState.PLANNED)
 								&& pq.getJobStep().getJob().getJobState() != JobState.ON_HOLD) {
-							jobSteps.add(pq.getJobStep());
+							jobSteps.add(pq.getJobStep().getId());
 						}
 					}
 				} else {
 					for (ProcessingFacility pf : RepositoryService.getFacilityRepository().findAll()) {
-						jobSteps.addAll(RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(pf.getId(), jobStepStates));
+						//jobSteps.addAll(RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(pf.getId(), jobStepStates));
+						jobSteps.addAll(findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(pf.getId(), jobStepStates));
 					}
 				}
 			} else {
@@ -168,29 +171,79 @@ public class JobStepUtil {
 						if (pq.getJobStep().getJob().getProcessingFacility().getId() == pfId) {
 							if (pq.getJobStep().getJobStepState().equals(JobStepState.WAITING_INPUT)
 									&& pq.getJobStep().getJob().getJobState() != JobState.ON_HOLD) {
-								jobSteps.add(pq.getJobStep());
+								jobSteps.add(pq.getJobStep().getId());
 							} else if (!onlyWaiting && pq.getJobStep().getJobStepState().equals(JobStepState.PLANNED)
 									&& pq.getJobStep().getJob().getJobState() != JobState.ON_HOLD) {
-								jobSteps.add(pq.getJobStep());
+								jobSteps.add(pq.getJobStep().getId());
 							}
 						}
 					}
 				} else {
-					jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(pfId, jobStepStates);
+					//jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(pfId, jobStepStates);
+					jobSteps = findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(pfId, jobStepStates);
 				}
 			}
 			return jobSteps;
 		});
-		for (JobStep js : allJobSteps) {
+		for (Long jsId : allJobSteps) {
 			@SuppressWarnings("unused")
 			final Object dummy = transactionTemplate.execute((status) -> {
-				Optional<JobStep> opt = RepositoryService.getJobStepRepository().findById(js.getId());
+				Optional<JobStep> opt = RepositoryService.getJobStepRepository().findById(jsId);
 				if (opt.isPresent()) {
 					checkJobStepQueries(opt.get(), false);
 				}
 				return null;
 			});
 		}
+	}
+
+	/**
+	 * Find all job steps in the given states to be executed in the given processing facility
+	 * 
+	 * @param processingFacilityId the database ID of the processing facility
+	 * @param jobStepStates a list of job step state names
+	 * @return
+	 */
+	private List<Long> findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(long processingFacilityId,
+			List<String> jobStepStates) {
+		if (logger.isTraceEnabled()) logger.trace(">>> findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime({}, {})",
+				processingFacilityId, jobStepStates);
+
+		String nativeQuery = "SELECT j.start_time, js.id "
+				+ "FROM job j "
+				+ "JOIN job_step js ON j.id = js.job_id "
+				+ "WHERE j.processing_facility_id = :pfId "
+				+ "AND js.job_step_state IN :jsStates "
+				+ "ORDER BY j.start_time, js.id";
+		List<?> jobStepList = em.createNativeQuery(nativeQuery)
+				.setParameter("pfId", processingFacilityId)
+				.setParameter("jsStates", jobStepStates)
+				.getResultList();
+
+		List<Long> resultList = new ArrayList<>();
+		
+		for (Object jobStepObject: jobStepList) {
+			if (jobStepObject instanceof Object[]) {
+
+				Object[] jobStep = (Object[]) jobStepObject;
+
+				if (logger.isTraceEnabled()) logger.trace("... found job step info {}", Arrays.asList(jobStep));
+
+				// jobStep[0] is only used for ordering the result list
+				Long jsId = jobStep[1] instanceof BigInteger ? ((BigInteger) jobStep[1]).longValue() : null;
+
+				if (null == jsId) {
+					throw new RuntimeException("Invalid query result: " + Arrays.asList(jobStep));
+				}
+
+				resultList.add(jsId);
+
+			} else {
+				throw new RuntimeException("Invalid query result: " + jobStepObject);
+			}
+		}
+		
+		return resultList;
 	}
 
 	/**
