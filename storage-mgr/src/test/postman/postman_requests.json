@@ -2,11 +2,12 @@
 	"info": {
 		"_postman_id": "9878e9e4-f89e-466e-92dd-d6070b984c22",
 		"name": "prosEO",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15713574"
 	},
 	"item": [
 		{
-			"name": "Storage Manager",
+			"name": "Storage Manager - Docker",
 			"item": [
 				{
 					"name": "products",
@@ -17,7 +18,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "http://localhost:8080/proseo/storage-mgr/x/products?storageType=POSIX&prefix=\"\"",
+									"raw": "http://localhost:8080/proseo/storage-mgr/x/products?storageType=S3&prefix=\"\"",
 									"protocol": "http",
 									"host": [
 										"localhost"
@@ -32,7 +33,7 @@
 									"query": [
 										{
 											"key": "storageType",
-											"value": "POSIX"
+											"value": "S3"
 										},
 										{
 											"key": "prefix",
@@ -113,16 +114,23 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "http://localhost:8080/proseo/storage-mgr/x/productfiles?pathInfo=/..",
+									"raw": "http://localhost:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/productfiles?pathInfo=/..",
 									"protocol": "http",
 									"host": [
 										"localhost"
 									],
-									"port": "8080",
+									"port": "8001",
 									"path": [
+										"api",
+										"v1",
+										"namespaces",
+										"default",
+										"services",
+										"storage-mgr-service:service",
+										"proxy",
 										"proseo",
 										"storage-mgr",
-										"x",
+										"v1",
 										"productfiles"
 									],
 									"query": [
@@ -138,10 +146,10 @@
 						{
 							"name": "productfiles - Push file from local POSIX file system to Storage Manager",
 							"request": {
-								"method": "POST",
+								"method": "PUT",
 								"header": [],
 								"url": {
-									"raw": "http://localhost:8080/proseo/storage-mgr/x/productfiles?pathInfo=/..&productId=123&fileSize=234",
+									"raw": "http://localhost:8080/proseo/storage-mgr/x/productfiles?pathInfo=/Users/dchaykovskiy/git/prosEO/storage-mgr/target/testdata/sourcedata/test.txt&productId=123&fileSize=10",
 									"protocol": "http",
 									"host": [
 										"localhost"
@@ -156,7 +164,7 @@
 									"query": [
 										{
 											"key": "pathInfo",
-											"value": "/.."
+											"value": "/Users/dchaykovskiy/git/prosEO/storage-mgr/target/testdata/sourcedata/test.txt"
 										},
 										{
 											"key": "productId",
@@ -164,7 +172,7 @@
 										},
 										{
 											"key": "fileSize",
-											"value": "234"
+											"value": "10"
 										}
 									]
 								}
@@ -256,6 +264,309 @@
 										"proseo",
 										"storage-mgr",
 										"x",
+										"joborders"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Storage Manager - Kubernetes",
+			"item": [
+				{
+					"name": "products",
+					"item": [
+						{
+							"name": "products - Get products with directory prefix",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/products?storageType=POSIX&prefix=\"\"",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8001",
+									"path": [
+										"api",
+										"v1",
+										"namespaces",
+										"default",
+										"services",
+										"storage-mgr-service:service",
+										"proxy",
+										"proseo",
+										"storage-mgr",
+										"v1",
+										"products"
+									],
+									"query": [
+										{
+											"key": "storageType",
+											"value": "POSIX"
+										},
+										{
+											"key": "prefix",
+											"value": "\"\""
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "products - Register products/files/dirs from unstructered storage in prosEO-storage",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"address\": \"colombo\",\r\n    \"productId\": \"productId\",\r\n    \"sourceStorageType\": \"sourceStorageType\",\r\n    \"sourceFilePaths\": \"sourceFilePaths\", \r\n    \"targetStorageId\": \"targetStorageId\",\r\n    \"targetStorageType\": \"targetStorageType\",\r\n    \"registeredFilePath\": \"registeredFilePath\",\r\n    \"registered\": \"registered\",\r\n    \"registeredFilesCount\": \"registeredFilesCount\",\r\n    \"registeredFilesList\": \"registeredFilesList\",\r\n    \"deleted\": \"deleted\",\r\n    \"message\": \"message\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8080/proseo/storage-mgr/x/products",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"proseo",
+										"storage-mgr",
+										"x",
+										"products"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "products - Delete product by product path info from prosEO storage",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/products?pathInfo=/path",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8001",
+									"path": [
+										"api",
+										"v1",
+										"namespaces",
+										"default",
+										"services",
+										"storage-mgr-service:service",
+										"proxy",
+										"proseo",
+										"storage-mgr",
+										"v1",
+										"products"
+									],
+									"query": [
+										{
+											"key": "pathInfo",
+											"value": "/path"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "productfiles",
+					"item": [
+						{
+							"name": "productfiles - Retrieve file from Storage Manager into locally accessible file system",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/productfiles?pathInfo=/..",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8001",
+									"path": [
+										"api",
+										"v1",
+										"namespaces",
+										"default",
+										"services",
+										"storage-mgr-service:service",
+										"proxy",
+										"proseo",
+										"storage-mgr",
+										"v1",
+										"productfiles"
+									],
+									"query": [
+										{
+											"key": "pathInfo",
+											"value": "/.."
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "productfiles - Push file from local POSIX file system to Storage Manager",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8080/proseo/storage-mgr/x/productfiles?pathInfo=/Users/dchaykovskiy/git/prosEO/storage-mgr/target/testdata/sourcedata/test.txt&productId=123&fileSize=10",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"proseo",
+										"storage-mgr",
+										"x",
+										"productfiles"
+									],
+									"query": [
+										{
+											"key": "pathInfo",
+											"value": "/Users/dchaykovskiy/git/prosEO/storage-mgr/target/testdata/sourcedata/test.txt"
+										},
+										{
+											"key": "productId",
+											"value": "123"
+										},
+										{
+											"key": "fileSize",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "info",
+					"item": [
+						{
+							"name": "info -  Gets info for the storage-manager",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/info",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8001",
+									"path": [
+										"api",
+										"v1",
+										"namespaces",
+										"default",
+										"services",
+										"storage-mgr-service:service",
+										"proxy",
+										"proseo",
+										"storage-mgr",
+										"v1",
+										"info"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "joborders",
+					"item": [
+						{
+							"name": "joborders - Download Job Order File as string",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/joborders?pathInfo=/..",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8001",
+									"path": [
+										"api",
+										"v1",
+										"namespaces",
+										"default",
+										"services",
+										"storage-mgr-service:service",
+										"proxy",
+										"proseo",
+										"storage-mgr",
+										"v1",
+										"joborders"
+									],
+									"query": [
+										{
+											"key": "pathInfo",
+											"value": "/.."
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "joborders - Upload Job Order File in a job",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"jobOrderStringBase64\": \"jobOrderStringBase64\", \r\n    \"uploaded\": \"uploaded\", \r\n    \"fsType\": \"fsType\", \r\n    \"pathInfo\": \"pathInfo\", \r\n    \"message\": \"message\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/joborders",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8001",
+									"path": [
+										"api",
+										"v1",
+										"namespaces",
+										"default",
+										"services",
+										"storage-mgr-service:service",
+										"proxy",
+										"proseo",
+										"storage-mgr",
+										"v1",
 										"joborders"
 									]
 								}
