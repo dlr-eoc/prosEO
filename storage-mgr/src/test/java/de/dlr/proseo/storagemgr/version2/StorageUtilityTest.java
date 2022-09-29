@@ -67,13 +67,21 @@ public class StorageUtilityTest {
 		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 		
-		Storage storage = storageProvider.getStorage(); 
+		Storage storage = storageProvider.getStorage();
+		Storage posixStorage = storageProvider.getStorage(StorageType.POSIX);
+		Storage s3Storage = storageProvider.getStorage(StorageType.S3);
 		
-		// show buckets
-		TestUtils.printList("Buckets:", storage.getBuckets());
-	
-		// show storage files 
-		// StorageTestUtils.printStorageFiles("Before Action", storage);
+		// show s3 buckets
+		TestUtils.printList("S3 Buckets:", s3Storage.getBuckets());
+		
+		// show default storage files 
+		StorageTestUtils.printStorageFiles("Default Storage Before Action", storage);
+		
+		// show s3 storage files 
+		StorageTestUtils.printStorageFiles("S3 Before Action", s3Storage);
+		
+		// show posix storage files 
+		StorageTestUtils.printStorageFiles("POSIX Before Action", posixStorage);
 		
 		// action 
 		// storage.delete("/Users");
