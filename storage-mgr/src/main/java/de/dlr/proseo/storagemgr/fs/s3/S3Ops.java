@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,9 +29,9 @@ import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.transfer.Download;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
-import alluxio.exception.FileAlreadyExistsException;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -313,6 +314,66 @@ public class S3Ops {
 			logger.error("Security exception accessing S3 object {} (cause: {})", s3Object, e.getMessage());
 			return false;
 		}
+	}
+
+	/**
+	 * Fetch file from S3 to local file using AWS S3 SDK V1 TransferManager
+	 * 
+	 * @param s3Client      a given instantiated V1 S3 client
+	 * @param s3Bucket      S3 bucket name
+	 * @param s3Key 		S3 object key (without bucket)
+	 * @param targetFile	local (POSIX) target file path
+	 * @return true, if the operation succeeded, false otherwise
+	 */
+	public static Boolean v1FetchFile(AmazonS3 s3Client, String s3Bucket, String s3Key, File targetFile) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> v1FetchFile({}, {}, {})",
+				s3Client, s3Bucket, targetFile);
+		
+		// Make sure target file is not already present
+		if (targetFile.exists()) {
+			targetFile.delete();
+		}
+		
+		// Download using TransferManager as per
+		// https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/examples-s3-transfermanager.html#transfermanager-downloading
+		TransferManager transferManager = TransferManagerBuilder.standard()
+				.withMultipartCopyPartSize(MULTIPART_UPLOAD_PARTSIZE_BYTES).withS3Client(s3Client).build();
+		
+		try {
+			Download download = transferManager.download(s3Bucket, s3Key, targetFile);
+			
+			download.waitForCompletion();
+			
+			// TODO This may not apply to the TransferManager any more (it did for V2 getObject() and Files.copy())
+			// Unfortunately returning from waitForCompletion() may not mean the file is fully written to disk!
+			Long contentLength = download.getObjectMetadata().getContentLength();
+			int i = 0;
+			long maxCycles = StorageManagerConfiguration.getConfiguration().getFileCheckMaxCycles();
+			long waitTime = StorageManagerConfiguration.getConfiguration().getFileCheckWaitTime();
+			while (Files.size(targetFile.toPath()) < contentLength && i < maxCycles) {
+				logger.info("... waiting to complete writing of {}", targetFile);
+				Thread.sleep(waitTime);
+			}
+			if (maxCycles <= i) {
+				throw new IOException("Read timed out after " + (maxCycles * waitTime) + " ms");
+			}
+
+			return true;
+		} catch (InterruptedException e) {
+			logger.error("Interrupted while copying S3 object s3:/{}/{} to file {} (cause: {})", s3Bucket, s3Key, targetFile, e.getMessage());
+			return false;
+		} catch (AmazonServiceException e) {
+			logger.error("Failed to copy S3 object s3:/{}/{} to file {} (cause: {})", s3Bucket, s3Key, targetFile, e.getErrorMessage());
+			return null;
+		} catch (IOException | AmazonClientException e) {
+			logger.error("Failed to copy S3 object s3:/{}/{} to file {} (cause: {})", s3Bucket, s3Key, targetFile, e.getMessage());
+			return null;
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			return false;
+		}
+
 	}
 
 	/**

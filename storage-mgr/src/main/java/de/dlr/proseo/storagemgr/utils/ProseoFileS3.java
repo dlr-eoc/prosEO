@@ -303,16 +303,27 @@ public class ProseoFileS3 extends ProseoFile {
 					boolean success = false;
 					while (retryCount <= maxRetry ) {
 						try {
-							S3Client s3c = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),
+//							S3Client s3c = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),
+//									cfg.getS3Region());
+							AmazonS3 s3c = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),
 									cfg.getS3Region());
-							if (S3Ops.v2FetchFile(
+							/*if (S3Ops.v2FetchFile(
 									// the client
 									s3c,
 									// the source S3-Bucket
 									this.getFullPath(),
 									// the final prefix including productId pattern
 									// of the file or directory
-									proFile.getFullPath())) {
+									proFile.getFullPath())) {*/
+							if (S3Ops.v1FetchFile(
+									// the client
+									s3c,
+									// the source S3-Bucket
+									this.getBasePath(),
+									// the source S3 object key
+									this.getRelPathAndFile(),
+									// the target path on POSIX file system
+									targetFile)) {
 								success = true;
 								break; // No exception and a valid result
 							}
