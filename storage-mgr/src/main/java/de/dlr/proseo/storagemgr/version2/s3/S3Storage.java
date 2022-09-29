@@ -177,7 +177,7 @@ public class S3Storage implements Storage {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getAbsoluteFiles({})", relativePath);
 
-		String path = new PathConverter(s3DAL.getConfiguration().getBasePath(), relativePath).getPath();
+		String path = new PathConverter("", relativePath).getPath();
 
 		return getAbsolutePath(s3DAL.getFiles(path));
 	}
@@ -189,7 +189,7 @@ public class S3Storage implements Storage {
 	 * @throws IOException 
 	 */
 	public List<String> getAbsoluteFiles() throws IOException {
-		return getAbsolutePath(s3DAL.getFiles(s3DAL.getConfiguration().getBasePath()));
+		return getAbsolutePath(s3DAL.getFiles());
 	}
 
 	/**
