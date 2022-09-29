@@ -66,7 +66,7 @@ public class S3StorageTest {
 		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 
-		String prefix = "files/";
+		String prefix = "s3-storage-test/";
 
 		List<String> pathes = new ArrayList<>();
 		pathes.add(prefix + "file1.txt");
@@ -95,16 +95,8 @@ public class S3StorageTest {
 			TestUtils.printList("S3 Storage files after upload:", storage.getRelativeFiles());
 			TestUtils.printList("Response uploaded pathes:", uploadedPathes);
 			
-			List<String> deletedPathes = new ArrayList<>();
-			for (String path : pathes) {
-				StorageFile storageFile = storage.getStorageFile(path);
-				String deletedFile = storage.deleteFile(storageFile);
-				deletedPathes.add(deletedFile);
-			}
+			storage.delete(prefix);
 			
-			// storage.deleteBucket(storage.getBucket());
-			
-			TestUtils.printList("Deleted storage pathes:", deletedPathes);
 			TestUtils.printList("S3 Storage files after delete:", storage.getRelativeFiles());
 			
 
