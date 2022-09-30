@@ -59,11 +59,9 @@ public class StorageUtilityTest {
 	public void testUtility() throws IOException {
 
 		TestUtils.printMethodName(this, testName);
-		
-		TestUtils.createEmptyStorageDirectories();
-		
+				
 		// change type to show another storage
-		StorageType storageType = StorageType.S3; 
+		StorageType storageType = StorageType.POSIX; 
 		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 		
@@ -74,19 +72,35 @@ public class StorageUtilityTest {
 		// show s3 buckets
 		TestUtils.printList("S3 Buckets:", s3Storage.getBuckets());
 		
-		// show default storage files 
-		StorageTestUtils.printStorageFiles("Default Storage Before Action", storage);
-		
 		// show s3 storage files 
-		StorageTestUtils.printStorageFiles("S3 Before Action", s3Storage);
+		StorageTestUtils.printStorageFiles("S3 before Action", s3Storage);
 		
 		// show posix storage files 
-		StorageTestUtils.printStorageFiles("POSIX Before Action", posixStorage);
+		StorageTestUtils.printStorageFiles("POSIX before Action", posixStorage);
 		
-		// action 
-		// storage.delete("/Users");
+		// show default storage files 
+		StorageTestUtils.printStorageFiles("Default Storage BEFORE Action", storage);
+
 		
+		// ACTIONS // 		
+		String path = "test-utility-POSIX-upload/dir/ut2-upload.txt";
+
+		// UPLOAD 
+		storageTestUtils.createSourceFile(path);
+		storage.uploadSourceFile(path);
+		
+		// DOWNLOAD 
+		// StorageFile sourceFile = storageProvider.getStorageFile(path);
+		// StorageFile destFile = storageProvider.getCacheFile(path);
+	    // storage.downloadFile(sourceFile, destFile);
+
 		// show storage files 
 		// StorageTestUtils.printStorageFiles("After Action", storage);		
+		
+		// DELETE
+		// storage.delete(path);
+		
+		// show default storage files 
+		StorageTestUtils.printStorageFiles("Default Storage AFTER Action", storage);
 	}
-}
+} 
