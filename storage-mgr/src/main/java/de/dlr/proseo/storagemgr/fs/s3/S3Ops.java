@@ -365,13 +365,15 @@ public class S3Ops {
 			return false;
 		} catch (AmazonServiceException e) {
 			logger.error("Failed to copy S3 object s3:/{}/{} to file {} (cause: {})", s3Bucket, s3Key, targetFile, e.getErrorMessage());
-			return null;
+			return false;
 		} catch (IOException | AmazonClientException e) {
 			logger.error("Failed to copy S3 object s3:/{}/{} to file {} (cause: {})", s3Bucket, s3Key, targetFile, e.getMessage());
-			return null;
+			return false;
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			return false;
+		} finally {
+			transferManager.shutdownNow(false);
 		}
 
 	}
@@ -441,6 +443,7 @@ public class S3Ops {
 				break;
 			} catch (Exception e) {
 				if (i >= MAX_UPLOAD_RETRIES) { // fail at the last try
+					transferManager.shutdownNow(false);
 					throw e;
 				} else {
 					logger.warn("Uploading directory {} failed (cause: {}), retrying after 100 ms ...", sourceDirPath, e.getMessage());
@@ -507,6 +510,7 @@ public class S3Ops {
 					break;
 				} catch (Exception e) {
 					if (i >= MAX_UPLOAD_RETRIES) { // fail at the last try
+						transferManager.shutdownNow(false);
 						throw e;
 					} else {
 						logger.warn("Uploading file {} failed (cause: {}), retrying after 100 ms ...", sourceFilePath, e.getMessage());
@@ -616,6 +620,7 @@ public class S3Ops {
 						break;
 					} catch (Exception e) {
 						if (i >= MAX_UPLOAD_RETRIES) { // fail at the last try
+							transferManager.shutdownNow(false);
 							throw e;
 						} else {
 							logger.warn("Copying s3://{}/{} failed (cause: {}), retrying after 100 ms ...", sourceBucketName, key, e.getMessage());
