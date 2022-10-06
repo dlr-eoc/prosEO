@@ -7,7 +7,7 @@
 import org.slf4j.event.Level;
 
 /**
- * A collection of messages needed by the facility model.
+ * A collection of messages needed by the model.
  *
  * @author Katharina Bassler
  */
