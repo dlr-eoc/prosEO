@@ -1,7 +1,6 @@
 package de.dlr.proseo.facmgr.rest.model;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.enums.StorageType;
@@ -9,7 +8,7 @@ import de.dlr.proseo.model.enums.StorageType;
 
 public class FacmgrUtil {
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(FacmgrUtil.class);
+	private static ProseoLogger logger = new ProseoLogger(FacmgrUtil.class);
 	
 	/**
 	 * Convert a prosEO model ProcessingFacility into a REST Facility
@@ -17,7 +16,7 @@ public class FacmgrUtil {
 	 * @param modelFacility the prosEO model ProcessingFacility
 	 * @return an equivalent REST processingFacility or null, if no model ProcessingFacility was given
 	 */
-
+	
 	public static RestProcessingFacility toRestFacility(ProcessingFacility modelFacility) {
 		if (logger.isTraceEnabled()) logger.trace(">>> toRestFacility({})", (null == modelFacility ? "MISSING" : modelFacility.getId()));
 		
