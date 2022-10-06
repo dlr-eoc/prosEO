@@ -40,7 +40,7 @@ public final class ProseoLogger {
 	public String log(ProseoMessage type, Object... msgParameters) {
 		if (type == null) {
 			throw new IllegalArgumentException("Please specify the type of the message.");
-		} 
+		}
 		String logged = "";
 		switch (type.getLevel()) {
 		case INFO:
@@ -59,8 +59,20 @@ public final class ProseoLogger {
 			if (logger.isErrorEnabled()) {
 				logged = MessageFormat.format("(E" + type.getCode() + ") " + type.getMessage(), msgParameters);
 				logger.error(logged);
-			}		
-		default:
+				
+			}
+			break;
+		case DEBUG:
+			if (logger.isDebugEnabled()) {
+				logged = MessageFormat.format("(D" + type.getCode() + ") " + type.getMessage(), msgParameters);
+				logger.debug(logged);
+			}
+			break;
+		case TRACE:
+			if (logger.isTraceEnabled()) {
+				logged = MessageFormat.format("(T" + type.getCode() + ") " + type.getMessage(), msgParameters);
+				logger.trace(logged);
+			}
 			break;
 		}
 		return logged;

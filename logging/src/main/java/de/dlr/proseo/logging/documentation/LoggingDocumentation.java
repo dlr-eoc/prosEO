@@ -52,7 +52,7 @@ public class LoggingDocumentation {
 		return "<!DOCTYPE html>\n"
 				+ "<html>\n"
 				+ "<head>\n"
-				+ "<title>ProsEO Messages DOcumentation\n"
+				+ "<title>ProsEO Messages Documentation\n"
 				+ "</title>\n"
 				+ "<link rel=\"stylesheet\" href=\"css/logging.css\">\n"
 				+ "</head>\n"
@@ -83,9 +83,6 @@ public class LoggingDocumentation {
 
 		messages.append("<h2 id=\"ProcessorMgrMessage\">Processor Manager Messages</h2>");
 		messages.append(addService(ProcessorMgrMessage.class));
-
-		messages.append("<h2 id=\"SamplesMessage\">Samples Messages</h2>");
-		messages.append(addService(SamplesMessage.class));
 
 		messages.append("<h2 id=\"StorageMgrMessage\">Storage Manager Messages</h2>");
 		messages.append(addService(StorageMgrMessage.class));
