@@ -223,9 +223,12 @@ public class JobOrderControllerImpl implements JoborderController {
 			} catch (Exception e) {
 
 				e.printStackTrace();
-
-				String errorString = HttpResponses.createErrorString("Cannot get job order file", e);
-				return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
+				logger.error("Cannot get job order file");		
+				
+				return new ResponseEntity<>(
+						errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
+								e.getClass().toString() + ": " + e.getMessage()),
+						HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
 		} // end version 2
