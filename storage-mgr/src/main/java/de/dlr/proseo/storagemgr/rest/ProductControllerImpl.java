@@ -173,14 +173,16 @@ public class ProductControllerImpl implements ProductController {
 						targetFolder.getFullPath() + "/", allUploaded, false,
 						"registration executed on node " + hostName);
 
+				StorageLogger.logInfo(logger, MSG_FILES_REGISTERED, MSG_ID_FILES_REGISTERED, allUploaded.toString());
+
 				return new ResponseEntity<>(response, HttpStatus.CREATED);
 
 			} catch (Exception e) {
 
 				e.printStackTrace();
 
-				String errorString = HttpResponses.createErrorString("Cannot make something", e);
-				return new ResponseEntity<>(HttpResponses.httpErrorHeaders(errorString), HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
+						e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
 		} // end version 2
@@ -258,6 +260,9 @@ public class ProductControllerImpl implements ProductController {
 
 		if (storageProvider.isVersion2()) { // begin version 2 - get product files
 
+			if (prefix == null)
+				prefix = "";
+
 			try {
 				List<String> response;
 
@@ -283,6 +288,8 @@ public class ProductControllerImpl implements ProductController {
 							.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.valueOf(storageType))
 							.addFSPrefix(response);
 				}
+
+				StorageLogger.logInfo(logger, MSG_FILES_LISTED, MSG_ID_FILES_LISTED, response.toString());
 
 				return new ResponseEntity<>(response, HttpStatus.OK);
 
@@ -489,8 +496,9 @@ public class ProductControllerImpl implements ProductController {
 
 			} catch (Exception e) {
 
-				String errorString = HttpResponses.createErrorString("Cannot get file page", e);
-				return new ResponseEntity<>(HttpResponses.httpErrorHeaders(errorString), HttpStatus.BAD_REQUEST);
+				e.printStackTrace();
+				return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
+						e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
 		} // end version 2
@@ -621,6 +629,11 @@ public class ProductControllerImpl implements ProductController {
 			logger.trace(">>> deleteProductByPathInfo({})", pathInfo);
 
 		if (storageProvider.isVersion2()) { // begin version 2 - delete files in storage
+			
+			if ((null == pathInfo) || (pathInfo == "")) {
+				return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND, pathInfo),
+						HttpStatus.NOT_FOUND);
+			}
 
 			try {
 				String storageType = storageProvider.getStorage().getStorageType().toString();
@@ -629,12 +642,14 @@ public class ProductControllerImpl implements ProductController {
 				List<String> deletedFilesOrDir = storageProvider.getStorage().delete(relativePath);
 				RestProductFS response = createRestProductFilesDeleted(deletedFilesOrDir, storageType);
 
+				StorageLogger.logInfo(logger, MSG_FILE_DELETED, MSG_ID_FILE_DELETED, pathInfo);
+				
 				return new ResponseEntity<>(response, HttpStatus.OK);
 
 			} catch (Exception e) {
 				e.printStackTrace();
-				String errorString = HttpResponses.createErrorString("Cannot delete file(s)", e);
-				return new ResponseEntity<>(HttpResponses.httpErrorHeaders(errorString), HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
+						e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
 		} // end version 2
