@@ -1,7 +1,5 @@
 package de.dlr.proseo.geotools.rest;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +8,7 @@ import org.springframework.stereotype.Component;
 import de.dlr.proseo.geotools.GeotoolsConfiguration;
 import de.dlr.proseo.geotools.rest.model.RestPoint;
 import de.dlr.proseo.geotools.rest.model.RestPolygon;
+import de.dlr.proseo.logging.logger.ProseoLogger;
 
 // TODO Return meaningful error messages according to prosEO standard
 
@@ -25,7 +24,7 @@ public class ContainControllerImpl implements ContainController {
 	/**
 	 * Logger of this class
 	 */
-	private static Logger logger = LoggerFactory.getLogger(InfoControllerImpl.class);
+	private static ProseoLogger logger = new ProseoLogger(InfoControllerImpl.class);
 
 	/** Geotools configuration */
 	@Autowired
