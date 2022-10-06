@@ -23,7 +23,10 @@ public enum ModelMessage implements ProseoMessage {
 	FILENAME_TEMPLATE_NOT_FOUND			(0000, Level.ERROR, "Product filename template for mission not found", ""),
 	INVALID_PARAMETER_VALUE_FOR_TYPE	(0000, Level.ERROR, "Invalid parameter value {0} for type {1}", ""),
 	PARAMETER_CANNOT_BE_CONVERTED		(0000, Level.ERROR, "Parameter of type {0} cannot be converted to {1}", ""),
-
+	PROPERTY_COLUMNS_FOUND				(0000, Level.WARN, "Found {0} columns for property {1}", ""),
+	ATTRIBUTE_COLUMN_MAP_NOT_GENERATED	(0000, Level.ERROR, "Cannot generate attribute/column map (cause: {0})", ""),
+	INCOMPLETE_PRODUCT_QUERY			(0000, Level.ERROR, "Incomplete product query {0}", ""),
+	
 	;
 
 	private final int code;
