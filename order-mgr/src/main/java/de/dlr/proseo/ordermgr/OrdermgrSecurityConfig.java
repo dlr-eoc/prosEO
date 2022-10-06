@@ -23,6 +23,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.OrderMgrMessage;
 import de.dlr.proseo.model.enums.UserRole;
 
@@ -81,7 +82,7 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 	 */
 	@Autowired
 	public void initialize(AuthenticationManagerBuilder builder) throws Exception {
-		logger.log(OrderMgrMessage.INITIALIZING_AUTHENTICATION);
+		logger.log(GeneralMessage.INITIALIZING_AUTHENTICATION);
 
 		builder.userDetailsService(userDetailsService());
 	}
@@ -103,7 +104,7 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 	 */
 	@Bean
 	public UserDetailsService userDetailsService() {
-		logger.log(OrderMgrMessage.INITIALIZING_USER_DETAILS_SERVICE, dataSource);
+		logger.log(GeneralMessage.INITIALIZING_USER_DETAILS_SERVICE, dataSource);
 
 		JdbcDaoImpl jdbcDaoImpl = new JdbcDaoImpl();
 		jdbcDaoImpl.setDataSource(dataSource);

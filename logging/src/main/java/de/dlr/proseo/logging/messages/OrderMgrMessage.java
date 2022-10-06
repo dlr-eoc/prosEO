@@ -87,8 +87,6 @@ public enum OrderMgrMessage implements ProseoMessage {
 	JOF_DELETED							(1133, Level.INFO, true, "Job Order File {0} deleted from processing facility {1}", ""),
 	JOF_DELETING_ERROR					(1134, Level.ERROR, false, "Error deleting Job Order File {0} from processing facility {1} (cause: {2})", ""),
 	MODEL_ORDER_MISSIONCODE				(1135, Level.INFO, true, "Model order missioncode {0}", ""),
-	INITIALIZING_AUTHENTICATION			(1136, Level.INFO, true, "Initializing authentication from user details service", ""),
-	INITIALIZING_USER_DETAILS_SERVICE	(1137, Level.INFO, true, "Initializing user details service from datasource ", "")
 	
 	;
 

@@ -24,7 +24,10 @@ public enum GeneralMessage implements ProseoMessage {
 	ILLEGAL_ORDER_STATE_TRANSITION 		(9007, Level.ERROR, false, "Illegal order state transition from {0} to {1}", ""),
 	ILLEGAL_JOB_STATE_TRANSITION 		(9008, Level.ERROR, false, "Illegal job state transition from {0} to {1}", ""),
 	ILLEGAL_FACILITY_STATE_TRANSITION 	(9009, Level.ERROR, false, "Illegal facility state transition from {0} to {1}", ""),
-	INVALID_PROCESSING_MODE 			(9010, Level.ERROR, false, "Processing mode {0} not defined for mission {1}", "")
+	INVALID_PROCESSING_MODE 			(9010, Level.ERROR, false, "Processing mode {0} not defined for mission {1}", ""),
+	INITIALIZING_AUTHENTICATION			(1136, Level.INFO, true, "Initializing authentication from user details service", ""),
+	INITIALIZING_USER_DETAILS_SERVICE	(1137, Level.INFO, true, "Initializing user details service from datasource {0}", "")
+
 	;
 
 	private final int code;
