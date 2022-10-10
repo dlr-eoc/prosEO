@@ -1,12 +1,11 @@
 package de.dlr.proseo.planner.rest;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.rest.AcquireController;
 import de.dlr.proseo.planner.ProductionPlanner;
 
@@ -16,7 +15,7 @@ public class AcquireControllerImpl implements AcquireController {
 	/**
 	 * Logger of this class
 	 */
-	private static Logger logger = LoggerFactory.getLogger(AcquireControllerImpl.class);
+	private static ProseoLogger logger = new ProseoLogger(AcquireControllerImpl.class);
 
 	/** The Production Planner instance */
     @Autowired

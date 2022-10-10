@@ -23,6 +23,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.ProseoMessage;
+import de.dlr.proseo.logging.messages.PlannerMessage;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
@@ -31,7 +35,6 @@ import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 
@@ -44,7 +47,7 @@ import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 @Component
 public class OrderUtil {
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(OrderUtil.class);
+	private static ProseoLogger logger = new ProseoLogger(OrderUtil.class);
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -74,15 +77,15 @@ public class OrderUtil {
 	 * @return Result message
 	 */
 	@Transactional
-	public Messages cancel(ProcessingOrder order) {
+	public ProseoMessage cancel(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> cancel({})", (null == order ? "null" : order.getId()));
 		
-		Messages answer = Messages.FALSE;
+		ProseoMessage answer = GeneralMessage.FALSE;
 		if (order != null) {
 			switch (order.getOrderState()) {
 			case INITIAL:
 			case APPROVED:
-				answer = Messages.ORDER_HASTOBE_PLANNED;
+				answer = PlannerMessage.ORDER_HASTOBE_PLANNED;
 				break;
 			case PLANNED:
 				for (Job job : order.getJobs()) {
@@ -92,33 +95,33 @@ public class OrderUtil {
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				logOrderState(order);
-				answer = Messages.ORDER_CANCELED;
+				answer = PlannerMessage.ORDER_CANCELED;
 				break;	
 			case RELEASED:
-				answer = Messages.ORDER_ALREADY_RELEASED;
+				answer = PlannerMessage.ORDER_ALREADY_RELEASED;
 				break;
 			case RELEASING:
-				answer = Messages.ORDER_ALREADY_RELEASING;
+				answer = PlannerMessage.ORDER_ALREADY_RELEASING;
 				break;
 			case RUNNING:
-				answer = Messages.ORDER_ALREADY_RUNNING;
+				answer = PlannerMessage.ORDER_ALREADY_RUNNING;
 				break;
 			case SUSPENDING:
-				answer = Messages.ORDER_ALREADY_SUSPENDING;
+				answer = PlannerMessage.ORDER_ALREADY_SUSPENDING;
 				break;
 			case COMPLETED:
-				answer = Messages.ORDER_ALREADY_COMPLETED;
+				answer = PlannerMessage.ORDER_ALREADY_COMPLETED;
 				break;
 			case FAILED:
-				answer = Messages.ORDER_ALREADY_FAILED;
+				answer = PlannerMessage.ORDER_ALREADY_FAILED;
 				break;
 			case CLOSED:
-				answer = Messages.ORDER_ALREADY_CLOSED;
+				answer = PlannerMessage.ORDER_ALREADY_CLOSED;
 				break;
 			default:
 				break;
 			}
-			answer.log(logger, order.getIdentifier());
+			logger.log(answer, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -129,15 +132,15 @@ public class OrderUtil {
 	 * @param order The processing Order
 	 * @return Result message
 	 */
-	public Messages reset(ProcessingOrder order) {
+	public ProseoMessage reset(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> reset({})", (null == order ? "null" : order.getId()));
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		
-		Messages answer = Messages.FALSE;
+		ProseoMessage answer = GeneralMessage.FALSE;
 		if (order != null) {
 			switch (order.getOrderState()) {
 			case INITIAL:
-				answer = Messages.ORDER_RESET;
+				answer = PlannerMessage.ORDER_RESET;
 				break;
 			case PLANNING:
 				// look for plan thread and interrupt it
@@ -171,12 +174,12 @@ public class OrderUtil {
 						return null;
 					});
 				} catch (Exception e) {
-					answer = Messages.RUNTIME_EXCEPTION;
-					answer.log(logger, e.getMessage());
+					answer = GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED;
+					logger.log(answer, e.getMessage());
 				} finally {
 					productionPlanner.releaseThreadSemaphore("OrderUtil.reset");
 				}
-				answer = Messages.ORDER_RESET;
+				answer = PlannerMessage.ORDER_RESET;
 				break;	
 			case PLANNING_FAILED:
 				// jobs are in initial state, no change
@@ -195,12 +198,12 @@ public class OrderUtil {
 						return null;
 					});
 				} catch (Exception e) {
-					answer = Messages.RUNTIME_EXCEPTION;
-					answer.log(logger, e.getMessage());
+					answer = GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED;
+					logger.log(answer, e.getMessage());
 				} finally {
 					productionPlanner.releaseThreadSemaphore("OrderUtil.reset");
 				}
-				answer = Messages.ORDER_RESET;
+				answer = PlannerMessage.ORDER_RESET;
 				break;			
 			case APPROVED:		
 			case RELEASED:		
@@ -237,35 +240,35 @@ public class OrderUtil {
 						return null;
 					});
 				} catch (Exception e) {
-					answer = Messages.RUNTIME_EXCEPTION;
-					answer.log(logger, e.getMessage());
+					answer = GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED;
+					logger.log(answer, e.getMessage());
 				} finally {
 					productionPlanner.releaseThreadSemaphore("OrderUtil.reset");
 				}
-				answer = Messages.ORDER_RESET;
+				answer = PlannerMessage.ORDER_RESET;
 				break;	
 			case RELEASING:
-				answer = Messages.ORDER_ALREADY_RELEASING;
+				answer = PlannerMessage.ORDER_ALREADY_RELEASING;
 				break;
 			case RUNNING:
-				answer = Messages.ORDER_ALREADY_RUNNING;
+				answer = PlannerMessage.ORDER_ALREADY_RUNNING;
 				break;
 			case SUSPENDING:
-				answer = Messages.ORDER_ALREADY_SUSPENDING;
+				answer = PlannerMessage.ORDER_ALREADY_SUSPENDING;
 				break;
 			case COMPLETED:
-				answer = Messages.ORDER_ALREADY_COMPLETED;
+				answer = PlannerMessage.ORDER_ALREADY_COMPLETED;
 				break;
 			case FAILED:
-				answer = Messages.ORDER_ALREADY_FAILED;
+				answer = PlannerMessage.ORDER_ALREADY_FAILED;
 				break;
 			case CLOSED:
-				answer = Messages.ORDER_ALREADY_CLOSED;
+				answer = PlannerMessage.ORDER_ALREADY_CLOSED;
 				break;
 			default:
 				break;
 			}
-			answer.log(logger, order.getIdentifier());
+			logger.log(answer, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -277,17 +280,17 @@ public class OrderUtil {
 	 * @return Result message
 	 */
 	@Transactional
-	public Messages delete(ProcessingOrder order) {
+	public ProseoMessage delete(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> delete({})", (null == order ? "null" : order.getId()));
 		
-		Messages answer = Messages.FALSE;
+		ProseoMessage answer = GeneralMessage.FALSE;
 		if (order != null) {
 			switch (order.getOrderState()) {
 			case INITIAL:
 			case APPROVED:
 				// jobs are in initial state, no change
 				RepositoryService.getOrderRepository().delete(order);
-				answer = Messages.ORDER_DELETED;
+				answer = PlannerMessage.ORDER_DELETED;
 				break;				
 			case PLANNED:
 			case COMPLETED:
@@ -312,24 +315,24 @@ public class OrderUtil {
 					}
 				}
 				RepositoryService.getOrderRepository().delete(order);
-				answer = Messages.ORDER_DELETED;
+				answer = PlannerMessage.ORDER_DELETED;
 				break;
 			case RELEASING:
-				answer = Messages.ORDER_ALREADY_RELEASING;
+				answer = PlannerMessage.ORDER_ALREADY_RELEASING;
 				break;	
 			case RELEASED:
-				answer = Messages.ORDER_ALREADY_RELEASED;
+				answer = PlannerMessage.ORDER_ALREADY_RELEASED;
 				break;
 			case RUNNING:
-				answer = Messages.ORDER_ALREADY_RUNNING;
+				answer = PlannerMessage.ORDER_ALREADY_RUNNING;
 				break;
 			case SUSPENDING:
-				answer = Messages.ORDER_ALREADY_SUSPENDING;
+				answer = PlannerMessage.ORDER_ALREADY_SUSPENDING;
 				break;
 			default:
 				break;
 			}
-			answer.log(logger, order.getIdentifier());
+			logger.log(answer, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -341,10 +344,10 @@ public class OrderUtil {
 	 * @return Result message
 	 */
 	@Transactional
-	public Messages approve(ProcessingOrder order) {
+	public ProseoMessage approve(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> approve({})", (null == order ? "null" : order.getId()));
 		
-		Messages answer = Messages.ORDER_ALREADY_APPROVED;
+		ProseoMessage answer = PlannerMessage.ORDER_ALREADY_APPROVED;
 		if (order != null) {
 			switch (order.getOrderState()) {
 			case INITIAL:
@@ -353,39 +356,39 @@ public class OrderUtil {
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				logOrderState(order);
-				answer = Messages.ORDER_APPROVED;
+				answer = PlannerMessage.ORDER_APPROVED;
 				break;			
 			case APPROVED:
-				answer = Messages.ORDER_ALREADY_APPROVED;
+				answer = PlannerMessage.ORDER_ALREADY_APPROVED;
 				break;
 			case PLANNED:	
-				answer = Messages.ORDER_ALREADY_PLANNED;
+				answer = PlannerMessage.ORDER_ALREADY_PLANNED;
 				break;
 			case RELEASING:
-				answer = Messages.ORDER_ALREADY_RELEASING;
+				answer = PlannerMessage.ORDER_ALREADY_RELEASING;
 				break;
 			case RELEASED:
-				answer = Messages.ORDER_ALREADY_RELEASED;
+				answer = PlannerMessage.ORDER_ALREADY_RELEASED;
 				break;
 			case RUNNING:
-				answer = Messages.ORDER_ALREADY_RUNNING;
+				answer = PlannerMessage.ORDER_ALREADY_RUNNING;
 				break;
 			case SUSPENDING:
-				answer = Messages.ORDER_ALREADY_SUSPENDING;
+				answer = PlannerMessage.ORDER_ALREADY_SUSPENDING;
 				break;
 			case COMPLETED:
-				answer = Messages.ORDER_ALREADY_COMPLETED;
+				answer = PlannerMessage.ORDER_ALREADY_COMPLETED;
 				break;
 			case FAILED:
-				answer = Messages.ORDER_ALREADY_FAILED;
+				answer = PlannerMessage.ORDER_ALREADY_FAILED;
 				break;
 			case CLOSED:
-				answer = Messages.ORDER_ALREADY_CLOSED;
+				answer = PlannerMessage.ORDER_ALREADY_CLOSED;
 				break;
 			default:
 				break;
 			}
-			answer.log(logger, order.getIdentifier());
+			logger.log(answer, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -397,7 +400,7 @@ public class OrderUtil {
 	 * @param procFacility The processing facility to run the order
 	 * @return Result message
 	 */
-	public Messages plan(long id,  ProcessingFacility procFacility) {
+	public ProseoMessage plan(long id,  ProcessingFacility procFacility) {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 
 		final ProcessingOrder order = transactionTemplate.execute((status) -> {
@@ -410,11 +413,11 @@ public class OrderUtil {
 		if (logger.isTraceEnabled()) logger.trace(">>> plan({}, {})", (null == order ? "null" : order.getId()),
 				(null == procFacility ? "null" : procFacility.getName()));
 		
-		Messages answer = Messages.FALSE;
+		ProseoMessage answer = GeneralMessage.FALSE;
 		if (order != null && procFacility != null) {
 			switch (order.getOrderState()) {
 			case INITIAL:
-				answer = Messages.ORDER_HASTOBE_APPROVED;
+				answer = PlannerMessage.ORDER_HASTOBE_APPROVED;
 				break;
 			case APPROVED:
 			case PLANNING:
@@ -422,24 +425,24 @@ public class OrderUtil {
 				try {
 					productionPlanner.acquireThreadSemaphore("plan");
 					answer = transactionTemplate.execute((status) -> {
-						Messages answerx = Messages.FALSE;
+						ProseoMessage answerx = GeneralMessage.FALSE;
 						Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
 						if (orderOpt.isPresent()) {
 							orderOpt.get().setOrderState(OrderState.PLANNING);
 							orderOpt.get().incrementVersion();
 							RepositoryService.getOrderRepository().save(orderOpt.get());
-							answerx = Messages.ORDER_PLANNING;
+							answerx = PlannerMessage.ORDER_PLANNING;
 						} else {
-							answerx = Messages.ORDER_PLANNING_FAILED;
+							answerx = PlannerMessage.ORDER_PLANNING_FAILED;
 						}
 						return answerx;
 					});
 				} catch (Exception e) {
-					answer = Messages.RUNTIME_EXCEPTION;
+					answer = GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED;
 				} finally {
 					productionPlanner.releaseThreadSemaphore("plan");
 				}
-				if (answer.isTrue()) {
+				if (answer.getSuccess()) {
 					String threadName = ProductionPlanner.PLAN_THREAD_PREFIX + order.getId();
 					if (!productionPlanner.getPlanThreads().containsKey(threadName)) {
 						OrderPlanThread pt = new OrderPlanThread(productionPlanner, orderDispatcher, id, procFacility, threadName);
@@ -449,33 +452,33 @@ public class OrderUtil {
 				}
 				break;	
 			case PLANNED:	
-				answer = Messages.ORDER_ALREADY_PLANNED;
+				answer = PlannerMessage.ORDER_ALREADY_PLANNED;
 				break;
 			case RELEASING:
-				answer = Messages.ORDER_ALREADY_RELEASING;
+				answer = PlannerMessage.ORDER_ALREADY_RELEASING;
 				break;
 			case RELEASED:
-				answer = Messages.ORDER_ALREADY_RELEASED;
+				answer = PlannerMessage.ORDER_ALREADY_RELEASED;
 				break;
 			case RUNNING:
-				answer = Messages.ORDER_ALREADY_RUNNING;
+				answer = PlannerMessage.ORDER_ALREADY_RUNNING;
 				break;
 			case SUSPENDING:
-				answer = Messages.ORDER_ALREADY_SUSPENDING;
+				answer = PlannerMessage.ORDER_ALREADY_SUSPENDING;
 				break;
 			case COMPLETED:
-				answer = Messages.ORDER_ALREADY_COMPLETED;
+				answer = PlannerMessage.ORDER_ALREADY_COMPLETED;
 				break;
 			case FAILED:
-				answer = Messages.ORDER_ALREADY_FAILED;
+				answer = PlannerMessage.ORDER_ALREADY_FAILED;
 				break;
 			case CLOSED:
-				answer = Messages.ORDER_ALREADY_CLOSED;
+				answer = PlannerMessage.ORDER_ALREADY_CLOSED;
 				break;
 			default:
 				break;
 			}
-			answer.log(logger, order.getIdentifier());
+			logger.log(answer, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -486,18 +489,18 @@ public class OrderUtil {
 	 * @param order The processing Order
 	 * @return Result message
 	 */
-	public Messages resume(ProcessingOrder order) {
+	public ProseoMessage resume(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> resume({})", (null == order ? "null" : order.getId()));
 		
-		Messages answer = Messages.FALSE;
+		ProseoMessage answer = GeneralMessage.FALSE;
 		if (order != null) {
 			switch (order.getOrderState()) {
 			case INITIAL:
-				answer = Messages.ORDER_HASTOBE_APPROVED;
+				answer = PlannerMessage.ORDER_HASTOBE_APPROVED;
 				break;
 			case APPROVED:
 			case PLANNING:
-				answer = Messages.ORDER_HASTOBE_PLANNED;
+				answer = PlannerMessage.ORDER_HASTOBE_PLANNED;
 				break;
 			case PLANNED:
 			case RELEASING:
@@ -517,7 +520,7 @@ public class OrderUtil {
 						return false;
 					});
 				} catch (Exception e) {
-					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 				} finally {
 					productionPlanner.releaseThreadSemaphore("resume");					
 				}
@@ -539,37 +542,37 @@ public class OrderUtil {
 								rt.start();
 							}
 							logOrderState(order);
-							answer = Messages.ORDER_RELEASING;
+							answer = PlannerMessage.ORDER_RELEASING;
 						}
 					} catch (Exception e) {
-						Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+						logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 					} finally {
 						productionPlanner.releaseThreadSemaphore("resume");					
 					}
 				}
 				break;	
 			case RELEASED:
-				answer = Messages.ORDER_ALREADY_RELEASED;
+				answer = PlannerMessage.ORDER_ALREADY_RELEASED;
 				break;
 			case RUNNING:
-				answer = Messages.ORDER_ALREADY_RUNNING;
+				answer = PlannerMessage.ORDER_ALREADY_RUNNING;
 				break;
 			case SUSPENDING:
-				answer = Messages.ORDER_ALREADY_SUSPENDING;
+				answer = PlannerMessage.ORDER_ALREADY_SUSPENDING;
 				break;
 			case COMPLETED:
-				answer = Messages.ORDER_ALREADY_COMPLETED;
+				answer = PlannerMessage.ORDER_ALREADY_COMPLETED;
 				break;
 			case FAILED:
-				answer = Messages.ORDER_ALREADY_FAILED;
+				answer = PlannerMessage.ORDER_ALREADY_FAILED;
 				break;
 			case CLOSED:
-				answer = Messages.ORDER_ALREADY_CLOSED;
+				answer = PlannerMessage.ORDER_ALREADY_CLOSED;
 				break;
 			default:
 				break;
 			}
-			answer.log(logger, order.getIdentifier());
+			logger.log(answer, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -581,50 +584,50 @@ public class OrderUtil {
 	 * @return Result message
 	 */
 	@Transactional
-	public Messages startOrder(ProcessingOrder order) {
+	public ProseoMessage startOrder(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> startOrder({})", (null == order ? "null" : order.getId()));
 		
-		Messages answer = Messages.FALSE;
+		ProseoMessage answer = GeneralMessage.FALSE;
 		if (order != null) {
 			switch (order.getOrderState()) {
 			case INITIAL:
-				answer = Messages.ORDER_HASTOBE_APPROVED;
+				answer = PlannerMessage.ORDER_HASTOBE_APPROVED;
 				break;
 			case APPROVED:
-				answer = Messages.ORDER_HASTOBE_PLANNED;
+				answer = PlannerMessage.ORDER_HASTOBE_PLANNED;
 				break;
 			case PLANNED:
-				answer = Messages.ORDER_HASTOBE_RELEASED;
+				answer = PlannerMessage.ORDER_HASTOBE_RELEASED;
 				break;	
 			case RELEASING:
-				answer = Messages.ORDER_ALREADY_RELEASING;	
+				answer = PlannerMessage.ORDER_ALREADY_RELEASING;	
 				break;		
 			case RELEASED:
 				order.setOrderState(OrderState.RUNNING);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				logOrderState(order);
-				answer = Messages.ORDER_RUNNING;
+				answer = PlannerMessage.ORDER_RUNNING;
 				break;				
 			case RUNNING:
-				answer = Messages.ORDER_RUNNING;
+				answer = PlannerMessage.ORDER_RUNNING;
 				break;	
 			case SUSPENDING:
-				answer = Messages.ORDER_ALREADY_SUSPENDING;
+				answer = PlannerMessage.ORDER_ALREADY_SUSPENDING;
 				break;
 			case COMPLETED:
-				answer = Messages.ORDER_ALREADY_COMPLETED;
+				answer = PlannerMessage.ORDER_ALREADY_COMPLETED;
 				break;
 			case FAILED:
-				answer = Messages.ORDER_ALREADY_FAILED;
+				answer = PlannerMessage.ORDER_ALREADY_FAILED;
 				break;
 			case CLOSED:
-				answer = Messages.ORDER_ALREADY_CLOSED;
+				answer = PlannerMessage.ORDER_ALREADY_CLOSED;
 				break;
 			default:
 				break;
 			}
-			answer.log(logger, order.getIdentifier());
+			logger.log(answer, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -636,7 +639,7 @@ public class OrderUtil {
 	 * @param force The flag to force kill of currently running job steps on processing facility
 	 * @return Result message
 	 */
-	public Messages suspend(long id, Boolean force) {
+	public ProseoMessage suspend(long id, Boolean force) {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 
 		final ProcessingOrder order = transactionTemplate.execute((status) -> {
@@ -647,17 +650,17 @@ public class OrderUtil {
 			return null;
 		});
 		if (logger.isTraceEnabled()) logger.trace(">>> suspend({}, {})", (null == order ? "null" : order.getId()), force);
-		Messages answer = Messages.FALSE;
+		ProseoMessage answer = GeneralMessage.FALSE;
 		if (order != null) {
 			switch (order.getOrderState()) {
 			case INITIAL:
-				answer = Messages.ORDER_SUSPENDED;
+				answer = PlannerMessage.ORDER_SUSPENDED;
 				break;
 			case APPROVED:
-				answer = Messages.ORDER_SUSPENDED;
+				answer = PlannerMessage.ORDER_SUSPENDED;
 				break;
 			case PLANNED:	
-				answer = Messages.ORDER_SUSPENDED;
+				answer = PlannerMessage.ORDER_SUSPENDED;
 				break;
 			case RELEASING:
 			case RUNNING:
@@ -706,7 +709,7 @@ public class OrderUtil {
 							orderz = orderOpt.get();
 						}
 						if (orderz == null) {
-							return Messages.ORDER_NOT_EXIST;
+							return PlannerMessage.ORDER_NOT_EXIST;
 						}
 						for (Job job : orderz.getJobs()) {
 							jobUtil.suspend(job, force);
@@ -729,23 +732,23 @@ public class OrderUtil {
 							orderz.setOrderState(OrderState.SUSPENDING);
 							RepositoryService.getOrderRepository().save(orderz);
 							logOrderState(orderz);		
-							return Messages.ORDER_SUSPENDED;
+							return PlannerMessage.ORDER_SUSPENDED;
 						} else if (allFinished) {
 							// check whether some jobs are already finished
 							orderz.setOrderState(OrderState.COMPLETED);
 							checkAutoClose(order);
 							RepositoryService.getOrderRepository().save(orderz);
 							logOrderState(orderz);			
-							return  Messages.ORDER_COMPLETED;
+							return  PlannerMessage.ORDER_COMPLETED;
 						} else {
 							orderz.setOrderState(OrderState.PLANNED);
 							RepositoryService.getOrderRepository().save(orderz);
 							logOrderState(orderz);			
-							return  Messages.ORDER_SUSPENDED;
+							return  PlannerMessage.ORDER_SUSPENDED;
 						}
 					});
 				} catch (Exception e) {
-					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 				} finally {
 					productionPlanner.releaseThreadSemaphore("suspend");
 					productionPlanner.checkNextForRestart();					
@@ -761,7 +764,7 @@ public class OrderUtil {
 							orderz = orderOpt.get();
 						}
 						if (orderz == null) {
-							return Messages.ORDER_NOT_EXIST;
+							return PlannerMessage.ORDER_NOT_EXIST;
 						}
 						for (Job job : orderz.getJobs()) {
 							jobUtil.suspend(job, force);
@@ -776,28 +779,28 @@ public class OrderUtil {
 						orderz.incrementVersion();
 						RepositoryService.getOrderRepository().save(orderz);
 						logOrderState(orderz);
-						return Messages.ORDER_SUSPENDED;
+						return PlannerMessage.ORDER_SUSPENDED;
 					});
 				} catch (Exception e) {
-					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 				} finally {
 					productionPlanner.releaseThreadSemaphore("suspend");	
 					productionPlanner.checkNextForRestart();				
 				}
 				break;			
 			case COMPLETED:
-				answer = Messages.ORDER_ALREADY_COMPLETED;
+				answer = PlannerMessage.ORDER_ALREADY_COMPLETED;
 				break;
 			case FAILED:
-				answer = Messages.ORDER_ALREADY_FAILED;
+				answer = PlannerMessage.ORDER_ALREADY_FAILED;
 				break;
 			case CLOSED:
-				answer = Messages.ORDER_ALREADY_CLOSED;
+				answer = PlannerMessage.ORDER_ALREADY_CLOSED;
 				break;
 			default:
 				break;
 			}
-			answer.log(logger, order.getIdentifier());
+			logger.log(answer, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -810,7 +813,7 @@ public class OrderUtil {
 	 * @param force The flag to force kill of currently running job steps on processing facility
 	 * @return Result message
 	 */
-	public Messages prepareSuspend(long id, Boolean force) {
+	public ProseoMessage prepareSuspend(long id, Boolean force) {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		final ProcessingOrder order = transactionTemplate.execute((status) -> {
 			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
@@ -820,24 +823,24 @@ public class OrderUtil {
 			return null;
 		});
 		if (logger.isTraceEnabled()) logger.trace(">>> prepareSuspend({}, {})", (null == order ? "null" : order.getId()), force);
-		Messages answer = Messages.FALSE;
+		ProseoMessage answer = GeneralMessage.FALSE;
 		if (order != null) {
 			switch (order.getOrderState()) {
 			case INITIAL:
-				answer = Messages.ORDER_SUSPENDED;
+				answer = PlannerMessage.ORDER_SUSPENDED;
 				break;
 			case APPROVED:
-				answer = Messages.ORDER_SUSPENDED;
+				answer = PlannerMessage.ORDER_SUSPENDED;
 				break;
 			case PLANNED:	
-				answer = Messages.ORDER_SUSPENDED;
+				answer = PlannerMessage.ORDER_SUSPENDED;
 				break;
 			case RELEASING:
 			case RELEASED:
 			case RUNNING:
 			case SUSPENDING:
 				// look for plan thread and interrupt it
-				answer = Messages.TRUE;
+				answer = GeneralMessage.TRUE;
 				OrderReleaseThread rt = productionPlanner.getReleaseThreads().get(ProductionPlanner.RELEASE_THREAD_PREFIX + order.getId());
 				if (rt != null) {
 					rt.interrupt();
@@ -854,10 +857,10 @@ public class OrderUtil {
 						}
 					}
 					if (rt.isAlive()) {
-						answer = Messages.ORDER_COULD_NOT_INTERRUPT;
+						answer = PlannerMessage.ORDER_COULD_NOT_INTERRUPT;
 					}
 				}
-				if (answer.isTrue()) {
+				if (answer.getSuccess()) {
 					try {
 						productionPlanner.acquireThreadSemaphore("prepareSuspend");	
 						transactionTemplate.execute((status) -> {
@@ -898,27 +901,27 @@ public class OrderUtil {
 							}
 							return null;
 						});
-						answer = Messages.ORDER_SUSPEND_PREPARED;
+						answer = PlannerMessage.ORDER_SUSPEND_PREPARED;
 					} catch (Exception e) {
-						Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+						logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 					} finally {
 						productionPlanner.releaseThreadSemaphore("prepareSuspend");					
 					}
 				}
 				break;	
 			case COMPLETED:
-				answer = Messages.ORDER_ALREADY_COMPLETED;
+				answer = PlannerMessage.ORDER_ALREADY_COMPLETED;
 				break;
 			case FAILED:
-				answer = Messages.ORDER_ALREADY_FAILED;
+				answer = PlannerMessage.ORDER_ALREADY_FAILED;
 				break;
 			case CLOSED:
-				answer = Messages.ORDER_ALREADY_CLOSED;
+				answer = PlannerMessage.ORDER_ALREADY_CLOSED;
 				break;
 			default:
 				break;
 			}
-			answer.log(logger, order.getIdentifier());
+			logger.log(answer, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -930,10 +933,10 @@ public class OrderUtil {
 	 * @return Result message
 	 */
 	@Transactional
-	public Messages retry(ProcessingOrder order) {
+	public ProseoMessage retry(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> retry({})", (null == order ? "null" : order.getId()));
 		
-		Messages answer = Messages.FALSE;
+		ProseoMessage answer = GeneralMessage.FALSE;
 		if (order != null) {
 			switch (order.getOrderState()) {
 			case INITIAL:
@@ -944,7 +947,7 @@ public class OrderUtil {
 			case RUNNING:
 			case SUSPENDING:
 			case COMPLETED:
-				answer = Messages.ORDER_COULD_NOT_RETRY;
+				answer = PlannerMessage.ORDER_COULD_NOT_RETRY;
 				break;
 			case FAILED:
 				Boolean all = true;
@@ -966,7 +969,7 @@ public class OrderUtil {
 				}
 				if (all) {
 					if (order.getOrderState() == OrderState.COMPLETED) {
-						answer = Messages.ORDER_COMPLETED;
+						answer = PlannerMessage.ORDER_COMPLETED;
 					} else if (allCompleted) {
 						if (order.getOrderState() != OrderState.RUNNING) {
 							order.setOrderState(OrderState.PLANNED);
@@ -977,7 +980,7 @@ public class OrderUtil {
 						checkAutoClose(order);
 						order.incrementVersion();
 						RepositoryService.getOrderRepository().save(order);
-						answer = Messages.ORDER_COMPLETED;
+						answer = PlannerMessage.ORDER_COMPLETED;
 					} else {
 						if (order.getOrderState() == OrderState.RUNNING) {
 							order.setOrderState(OrderState.SUSPENDING);
@@ -985,20 +988,20 @@ public class OrderUtil {
 						order.setOrderState(OrderState.PLANNED);
 						order.incrementVersion();
 						RepositoryService.getOrderRepository().save(order);
-						answer = Messages.ORDER_RETRIED;
+						answer = PlannerMessage.ORDER_RETRIED;
 					}
 					logOrderState(order);
 				} else {
-					answer = Messages.ORDER_COULD_NOT_RETRY;
+					answer = PlannerMessage.ORDER_COULD_NOT_RETRY;
 				}
 				break;
 			case CLOSED:
-				answer = Messages.ORDER_ALREADY_CLOSED;
+				answer = PlannerMessage.ORDER_ALREADY_CLOSED;
 				break;
 			default:
 				break;
 			}
-			answer.log(logger, order.getIdentifier());
+			logger.log(answer, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -1009,7 +1012,7 @@ public class OrderUtil {
 	 * @param order The processing Order
 	 * @return Result message
 	 */
-	public Messages close(Long orderId) {
+	public ProseoMessage close(Long orderId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> close({})", (null == orderId ? "null" : orderId));
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -1025,7 +1028,7 @@ public class OrderUtil {
 			}
 			return null;
 		});
-		Messages answer = Messages.FALSE;
+		ProseoMessage answer = GeneralMessage.FALSE;
 		if (order != null) {
 			switch (order.getOrderState()) {
 			case INITIAL:
@@ -1035,7 +1038,7 @@ public class OrderUtil {
 			case RELEASED:
 			case RUNNING:
 			case SUSPENDING:
-				answer = Messages.ORDER_HASTOBE_FINISHED;
+				answer = PlannerMessage.ORDER_HASTOBE_FINISHED;
 				break;
 			case COMPLETED:
 			case FAILED:
@@ -1061,16 +1064,16 @@ public class OrderUtil {
 					}
 					return null;
 				});
-				answer = Messages.ORDER_CLOSED;
+				answer = PlannerMessage.ORDER_CLOSED;
 				break;			
 			case CLOSED:
-				answer = Messages.ORDER_CLOSED;
+				answer = PlannerMessage.ORDER_CLOSED;
 				break;
 			default:
 				break;
 			}
 			// don't log here, it is done by the caller
-			// answer.log(logger, order.getIdentifier());
+			// logger.log(answer, order.getIdentifier());
 		}
 		return answer;
 	}

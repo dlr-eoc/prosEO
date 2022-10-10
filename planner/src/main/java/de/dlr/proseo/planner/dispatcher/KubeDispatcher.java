@@ -5,11 +5,11 @@
  */
 package de.dlr.proseo.planner.dispatcher;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.dlr.proseo.planner.Messages;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.util.UtilService;
@@ -26,7 +26,7 @@ public class KubeDispatcher extends Thread {
 	/**
 	 * Logger for this class
 	 */
-	private static Logger logger = LoggerFactory.getLogger(KubeDispatcher.class);
+	private static ProseoLogger logger = new ProseoLogger(KubeDispatcher.class);
 	
 	/**
 	 * The planner instance 
@@ -76,7 +76,7 @@ public class KubeDispatcher extends Thread {
     	int wait = ProductionPlanner.config.getProductionPlannerDispatcherWaitTime();
 
     	if (runOnce) {
-			Messages.KUBEDISPATCHER_RUN_ONCE.log(logger);
+			logger.log(PlannerMessage.KUBEDISPATCHER_RUN_ONCE);
     		if (kubeConfig != null) {
 				try {
 					kubeConfig.getProductionPlanner().acquireThreadSemaphore("run");
@@ -84,27 +84,27 @@ public class KubeDispatcher extends Thread {
 					kubeConfig.getProductionPlanner().releaseThreadSemaphore("run");		
 				} catch (Exception e) {
 					kubeConfig.getProductionPlanner().releaseThreadSemaphore("run");		
-					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 				}
     		} else {
-    			Messages.KUBEDISPATCHER_CONFIG_NOT_SET.log(logger);
+    			logger.log(PlannerMessage.KUBEDISPATCHER_CONFIG_NOT_SET);
     		}
     	} else {
     		if (productionPlanner != null) {
     			if (wait <= 0) {
-					Messages.KUBEDISPATCHER_RUN_ONCE.log(logger);
+					logger.log(PlannerMessage.KUBEDISPATCHER_RUN_ONCE);
 					try {
 						productionPlanner.acquireThreadSemaphore("run");
 						UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, onlyRun, true);
 						productionPlanner.releaseThreadSemaphore("run");		
 					} catch (Exception e) {
 						productionPlanner.releaseThreadSemaphore("run");		
-						Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+						logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 					}
     			} else {
     				while (!this.isInterrupted()) {
     					// look for job steps to run
-    					Messages.KUBEDISPATCHER_CYCLE.log(logger);
+    					logger.log(PlannerMessage.KUBEDISPATCHER_CYCLE);
     					if (productionPlanner.getReleaseThreads().size() == 0) {
     						try {
     							productionPlanner.acquireThreadSemaphore("run");
@@ -112,21 +112,21 @@ public class KubeDispatcher extends Thread {
     							productionPlanner.releaseThreadSemaphore("run");		
     						} catch (Exception e) {
     							productionPlanner.releaseThreadSemaphore("run");		
-    							Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+    							logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
     						}
     					}
     					try {
-        					Messages.KUBEDISPATCHER_SLEEP.log(logger, wait);
+        					logger.log(PlannerMessage.KUBEDISPATCHER_SLEEP, wait);
     						sleep(wait);
     					}
     					catch(InterruptedException e) {
-    						Messages.KUBEDISPATCHER_INTERRUPT.log(logger);
+    						logger.log(PlannerMessage.KUBEDISPATCHER_INTERRUPT);
     						this.interrupt();
     					}
     				}
     			}
     		} else {
-    			Messages.KUBEDISPATCHER_PLANNER_NOT_SET.log(logger);
+    			logger.log(PlannerMessage.KUBEDISPATCHER_PLANNER_NOT_SET);
     		}
     	}
     }   
