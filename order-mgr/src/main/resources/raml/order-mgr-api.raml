@@ -238,6 +238,9 @@ resourceTypes:
           type: integer
           format: long
           description: The persistent id of the job step to show
+        state?: 
+          type: string[]
+          description: The state group of job (COMPLETED, NON-COMPLETED)
         orderBy?:
           type: string[]
           description: an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
