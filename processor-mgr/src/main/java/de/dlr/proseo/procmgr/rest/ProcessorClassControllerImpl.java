@@ -12,14 +12,15 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.validation.Valid;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.logging.http.HttpPrefix;
+import de.dlr.proseo.logging.http.ProseoHttp;
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.procmgr.rest.model.RestConfiguredProcessor;
 import de.dlr.proseo.procmgr.rest.model.RestProcessorClass;
 
@@ -31,32 +32,14 @@ import de.dlr.proseo.procmgr.rest.model.RestProcessorClass;
  */
 @Component
 public class ProcessorClassControllerImpl implements ProcessorclassController {
-	
-	/* Message ID constants */
-//	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
-	
-	/* Message string constants */
-	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String HTTP_MSG_PREFIX = "199 proseo-processor-mgr ";
 
 	/** The processor class manager */
 	@Autowired
 	private ProcessorClassManager processorClassManager;
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProcessorClassControllerImpl.class);
-
-	/**
-	 * Create an HTTP "Warning" header with the given text message
-	 * 
-	 * @param message the message text
-	 * @return an HttpHeaders object with a warning message
-	 */
-	private HttpHeaders errorHeaders(String message) {
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + (null == message ? "null" : message.replaceAll("\n", " ")));
-		return responseHeaders;
-	}
+	private static ProseoLogger logger = new ProseoLogger(ProcessorClassControllerImpl.class);
+	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.PROCESSOR_MGR);
 	
 	/**
 	 * Get processor classes by mission and name
@@ -74,9 +57,9 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 		try {
 			return new ResponseEntity<>(processorClassManager.getProcessorClasses(mission, processorName), HttpStatus.OK);
 		} catch (NoResultException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -96,9 +79,9 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 		try {
 			return new ResponseEntity<>(processorClassManager.createProcessorClass(processorClass), HttpStatus.CREATED);
 		} catch (IllegalArgumentException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (SecurityException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -118,11 +101,11 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 		try {
 			return new ResponseEntity<>(processorClassManager.getProcessorClassById(id), HttpStatus.OK);
 		} catch (NoResultException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (SecurityException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -148,13 +131,13 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 			HttpStatus httpStatus = (processorClass.getVersion() == changedProcessorClass.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
 			return new ResponseEntity<>(changedProcessorClass, httpStatus);
 		} catch (EntityNotFoundException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (SecurityException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		} catch (ConcurrentModificationException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
 		}
 	}
 
@@ -176,13 +159,13 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 			processorClassManager.deleteProcessorClassById(id);
 			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
 		} catch (EntityNotFoundException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (SecurityException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		} catch (RuntimeException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}
 	}
 
