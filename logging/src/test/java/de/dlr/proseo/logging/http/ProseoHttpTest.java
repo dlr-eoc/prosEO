@@ -51,18 +51,20 @@ public class ProseoHttpTest {
 }
 
 enum TestMessage implements ProseoMessage {
-	ERROR_TEST(1, Level.ERROR, "Insert: {0}", ""),
+	ERROR_TEST(1, Level.ERROR, false, "Insert: {0}", ""),
 
 	;
 
 	private final int code;
 	private final Level level;
+	private final boolean success;
 	private final String message;
 	private final String description;
 
-	private TestMessage(int code, Level level, String message, String description) {
+	private TestMessage(int code, Level level, boolean success, String message, String description) {
 		this.level = level;
 		this.code = code;
+		this.success = success;
 		this.message = message;
 		this.description = description;
 	}
@@ -81,6 +83,11 @@ enum TestMessage implements ProseoMessage {
 
 	public String getDescription() {
 		return description;
+	}
+
+	@Override
+	public boolean getSuccess() {
+		return success;
 	}
 
 }

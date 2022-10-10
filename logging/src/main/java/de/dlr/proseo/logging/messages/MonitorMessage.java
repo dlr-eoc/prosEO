@@ -13,22 +13,24 @@ import org.slf4j.event.Level;
  */
 public enum MonitorMessage implements ProseoMessage {
 
-	ILLEGAL_CONFIG_VALUE		(0000, Level.WARN, "Illegal config value productAggregationStart: {0}", ""),
-	DUPLICATE_ENTRIES			(0000, Level.WARN, "Duplicate entries in {0} at {1}", ""),
-	WRONG_PRODUCTION_LATENCY	(0000, Level.ERROR, "productionLatencyAvg: {0} >= Integer.MAX_VALUE", ""),
-	WRONG_TOTAL_LATENCY			(0000, Level.ERROR, "totalLatencyAvg: {0} >= Integer.MAX_VALUE", ""),
-	WRONG_DOWNLOAD_SIZE			(0000, Level.ERROR, "downloadSize: {0} >= Integer.MAX_VALUE", ""),
+	ILLEGAL_CONFIG_VALUE		(0000, Level.WARN, true, "Illegal config value productAggregationStart: {0}", ""),
+	DUPLICATE_ENTRIES			(0000, Level.WARN, true, "Duplicate entries in {0} at {1}", ""),
+	WRONG_PRODUCTION_LATENCY	(0000, Level.ERROR, false, "productionLatencyAvg: {0} >= Integer.MAX_VALUE", ""),
+	WRONG_TOTAL_LATENCY			(0000, Level.ERROR, false, "totalLatencyAvg: {0} >= Integer.MAX_VALUE", ""),
+	WRONG_DOWNLOAD_SIZE			(0000, Level.ERROR, false, "downloadSize: {0} >= Integer.MAX_VALUE", ""),
 	
 	;
 
 	private final int code;
 	private final Level level;
+	private final boolean success;
 	private final String message;
 	private final String description;
 
-	private MonitorMessage(int code, Level level, String message, String description) {
+	private MonitorMessage(int code, Level level, boolean success, String message, String description) {
 		this.level = level;
 		this.code = code;
+		this.success = success;
 		this.message = message;
 		this.description = description;
 	}
@@ -67,5 +69,14 @@ public enum MonitorMessage implements ProseoMessage {
 	 */
 	public String getDescription() {
 		return description;
+	}
+	
+	/**
+	 * Get the message's success.
+	 * 
+	 * @return The message's success.
+	 */
+	public boolean getSuccess() {
+		return success;
 	}
 }

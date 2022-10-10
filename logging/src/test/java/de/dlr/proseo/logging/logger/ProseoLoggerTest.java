@@ -157,20 +157,22 @@ public class ProseoLoggerTest {
 }
 
 enum TestMessage implements ProseoMessage {
-	ERROR_TEST(1, Level.ERROR, "Insert: {0}", ""), 
-	WARN_TEST(2, Level.WARN, "Insert: {0}", ""),
-	INFO_TEST(3, Level.INFO, "Insert: {0}, {1}", "")
+	ERROR_TEST(1, Level.ERROR, false, "Insert: {0}", ""),
+	WARN_TEST(2, Level.WARN, true, "Insert: {0}", ""),
+	INFO_TEST(3, Level.INFO, true, "Insert: {0}, {1}", "")
 
 	;
 
 	private final int code;
 	private final Level level;
+	private final boolean success;
 	private final String message;
 	private final String description;
 
-	private TestMessage(int code, Level level, String message, String description) {
+	private TestMessage(int code, Level level, boolean success, String message, String description) {
 		this.level = level;
 		this.code = code;
+		this.success = success;
 		this.message = message;
 		this.description = description;
 	}
@@ -189,6 +191,11 @@ enum TestMessage implements ProseoMessage {
 
 	public String getDescription() {
 		return description;
+	}
+
+	@Override
+	public boolean getSuccess() {
+		return success;
 	}
 
 }

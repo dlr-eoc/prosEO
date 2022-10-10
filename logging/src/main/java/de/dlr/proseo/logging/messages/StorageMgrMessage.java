@@ -8,24 +8,26 @@ package de.dlr.proseo.logging.messages;
 import org.slf4j.event.Level;
 
 /**
- * A collection of messages needed by the ingestor.
+ * A collection of messages needed by the storage manager.
  *
  * @author Katharina Bassler
  */
 public enum StorageMgrMessage implements ProseoMessage {
 
-	TEST_TO_BE_REPLACED	(0000, Level.WARN, "to be replaced", "")
+	TEST_TO_BE_REPLACED	(0000, Level.WARN, true, "to be replaced", "")
 	
 	;
 
 	private final int code;
 	private final Level level;
+	private final boolean success;
 	private final String message;
 	private final String description;
 
-	private StorageMgrMessage(int code, Level level, String message, String description) {
+	private StorageMgrMessage(int code, Level level, boolean success, String message, String description) {
 		this.level = level;
 		this.code = code;
+		this.success = success;
 		this.message = message;
 		this.description = description;
 	}
@@ -66,4 +68,12 @@ public enum StorageMgrMessage implements ProseoMessage {
 		return description;
 	}
 
+	/**
+	 * Get the message's success.
+	 * 
+	 * @return The message's success.
+	 */
+	public boolean getSuccess() {
+		return success;
+	}
 }

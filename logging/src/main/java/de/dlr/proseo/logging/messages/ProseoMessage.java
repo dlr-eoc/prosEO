@@ -41,5 +41,12 @@ public interface ProseoMessage {
 	 * @return A description of the message.
 	 */
 	public String getDescription();
+	
+	/**
+	 * In most cases, a message is considered successful unless its level is error.
+	 * 
+	 * @return The message success.
+	 */
+	public boolean getSuccess();
 		
 }
