@@ -819,12 +819,11 @@ public class GUIOrderController extends GUIBaseController {
 			if (js !=  null) {
 				if (js.getJobStepState() == JobStepState.RUNNING) {
 					// update log file before, this does the planner 
-					js = serviceConnection.getFromService(config.getProductionPlanner(),
-							"/jobsteps/" + id, RestJobStep.class, auth.getProseoName(), auth.getPassword());
+					result = serviceConnection.getFromService(config.getProductionPlanner(),
+							"/jobsteps/log/" + id, String.class, auth.getProseoName(), auth.getPassword());
+				} else {
+					result = js.getProcessingStdOut();
 				}
-			}
-			if (js !=  null) {
-				result = js.getProcessingStdOut();
 			}
 			if (result == null) {
 				result = "";
