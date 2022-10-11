@@ -82,6 +82,7 @@ kubectl drain <worker node> --ignore-daemonsets --delete-emptydir-data
 Log in to the worker node and restart `kubectl`:
 ```
 systemctl restart kubelet
+# After a CPU change: reboot
 ```
 Reactivate the worker node in Kubernetes:
 ```
