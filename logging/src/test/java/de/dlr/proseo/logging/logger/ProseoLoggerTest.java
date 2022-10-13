@@ -45,6 +45,29 @@ public class ProseoLoggerTest {
 
 	/**
 	 * Test method for
+	 * {@link de.dlr.proseo.logging.logger.ProseoLogger#format(de.dlr.proseo.logging.messages.ProseoMessage, java.lang.Object[])}.
+	 */
+	@Test
+	public final void testFormat() {
+		String expected0 = "(E1) Insert: java.lang.Exception";
+		String result0 = logger.log(TestMessage.ERROR_TEST, new Exception());
+		assertEquals(expected0, result0);
+		
+		String expected1 = "(W2) Insert: test";
+		String result1 = logger.log(TestMessage.WARN_TEST, "test");
+		assertEquals(expected1, result1);
+		
+		String expected2 = "(I3) Insert: test, 1";
+		String result2 = logger.log(TestMessage.INFO_TEST, "test", 1);
+		assertEquals(expected2, result2);
+		
+		Assert.assertThrows("Please specify the type of the message.", 
+				IllegalArgumentException.class, () -> {logger.log(null);});	
+	}
+
+
+	/**
+	 * Test method for
 	 * {@link de.dlr.proseo.logging.logger.ProseoLogger#debug(java.lang.String)}.
 	 */
 	@Test

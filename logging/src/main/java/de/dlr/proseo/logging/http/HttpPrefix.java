@@ -20,8 +20,8 @@ public enum HttpPrefix {
 	PROCESSOR_MGR	("199 proseo-processor-mgr "),
 	PRODUCTCLASS_MGR("199 proseo-productclass-mgr "),
 	SAMPLES			("199 proseo-samples "),
-	STORAGE_MGR		("199 proseo-storage-mgr"),
-	UI				("199 proseo-ui"),
+	STORAGE_MGR		("199 proseo-storage-mgr "),
+	UI				("199 proseo-ui "),
 	USER_MGR		("199 proseo-user-mgr "),
 
 	;

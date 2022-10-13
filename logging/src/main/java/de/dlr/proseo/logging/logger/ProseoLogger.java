@@ -30,8 +30,7 @@ public final class ProseoLogger {
 	}
 
 	/**
-	 * Logging for levels info, warn, and error with automatic formatting including
-	 * level, code, and message.
+	 * Logging with automatic formatting including level, code, and message.
 	 * 
 	 * @param type          The enum specifying the type of the message.
 	 * @param msgParameters The message's parameters.
@@ -41,41 +40,71 @@ public final class ProseoLogger {
 		if (type == null) {
 			throw new IllegalArgumentException("Please specify the type of the message.");
 		}
-		String logged = "";
+		
+		String logged = format(type, msgParameters);
+		
 		switch (type.getLevel()) {
 		case INFO:
-			if (logger.isInfoEnabled()) {
-				logged = MessageFormat.format("(I" + type.getCode() + ") " + type.getMessage(), msgParameters);
+			if (logger.isInfoEnabled())
 				logger.info(logged);
-			}
 			break;
 		case WARN:
-			if (logger.isWarnEnabled()) {
-				logged = MessageFormat.format("(W" + type.getCode() + ") " + type.getMessage(), msgParameters);
+			if (logger.isWarnEnabled())
 				logger.warn(logged);
-			}
 			break;
 		case ERROR:
-			if (logger.isErrorEnabled()) {
-				logged = MessageFormat.format("(E" + type.getCode() + ") " + type.getMessage(), msgParameters);
+			if (logger.isErrorEnabled())
 				logger.error(logged);
-				
-			}
 			break;
 		case DEBUG:
-			if (logger.isDebugEnabled()) {
-				logged = MessageFormat.format("(D" + type.getCode() + ") " + type.getMessage(), msgParameters);
+			if (logger.isDebugEnabled())
 				logger.debug(logged);
-			}
 			break;
 		case TRACE:
-			if (logger.isTraceEnabled()) {
-				logged = MessageFormat.format("(T" + type.getCode() + ") " + type.getMessage(), msgParameters);
+			if (logger.isTraceEnabled())
 				logger.trace(logged);
-			}
 			break;
 		}
 		return logged;
+	}
+
+	/**
+	 * Automatic formatting including level, code, and message.
+	 * 
+	 * @param type          The enum specifying the type of the message.
+	 * @param msgParameters The message's parameters.
+	 * @return Returns the logged message.
+	 */
+	public String format(ProseoMessage type, Object... msgParameters) {
+		if (type == null) {
+			throw new IllegalArgumentException("Please specify the type of the message.");
+		}
+		
+		String formatted = "";
+		
+		switch (type.getLevel()) {
+		case INFO:
+			if (logger.isInfoEnabled())
+				formatted = MessageFormat.format("(I" + type.getCode() + ") " + type.getMessage(), msgParameters);
+			break;
+		case WARN:
+			if (logger.isWarnEnabled())
+				formatted = MessageFormat.format("(W" + type.getCode() + ") " + type.getMessage(), msgParameters);
+			break;
+		case ERROR:
+			if (logger.isErrorEnabled())
+				formatted = MessageFormat.format("(E" + type.getCode() + ") " + type.getMessage(), msgParameters);
+			break;
+		case DEBUG:
+			if (logger.isDebugEnabled())
+				formatted = MessageFormat.format("(D" + type.getCode() + ") " + type.getMessage(), msgParameters);
+			break;
+		case TRACE:
+			if (logger.isTraceEnabled())
+				formatted = MessageFormat.format("(T" + type.getCode() + ") " + type.getMessage(), msgParameters);
+			break;
+		}
+		return formatted;
 	}
 
 	/**
