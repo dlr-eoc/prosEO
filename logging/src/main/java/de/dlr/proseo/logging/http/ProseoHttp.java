@@ -5,7 +5,6 @@
  */
 package de.dlr.proseo.logging.http;
 
-import java.text.MessageFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -103,10 +102,8 @@ public class ProseoHttp {
 		String warningMessage = extractProseoMessage(warningHeader);
 
 		return (null == warningMessage
-				? MessageFormat.format(
-						"(E" + UIMessage.SERVICE_REQUEST_FAILED.getCode() + ") "
-								+ UIMessage.SERVICE_REQUEST_FAILED.getMessage(),
-						httpStatus.value(), httpStatus.toString(), warningHeader)
+				? ProseoLogger.format(UIMessage.SERVICE_REQUEST_FAILED, httpStatus.value(), httpStatus.toString(),
+						warningHeader)
 				: warningMessage);
 	}
 }

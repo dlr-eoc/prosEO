@@ -75,7 +75,7 @@ public final class ProseoLogger {
 	 * @param msgParameters The message's parameters.
 	 * @return Returns the logged message.
 	 */
-	public String format(ProseoMessage type, Object... msgParameters) {
+	public static String format(ProseoMessage type, Object... msgParameters) {
 		if (type == null) {
 			throw new IllegalArgumentException("Please specify the type of the message.");
 		}
@@ -84,23 +84,18 @@ public final class ProseoLogger {
 		
 		switch (type.getLevel()) {
 		case INFO:
-			if (logger.isInfoEnabled())
 				formatted = MessageFormat.format("(I" + type.getCode() + ") " + type.getMessage(), msgParameters);
 			break;
 		case WARN:
-			if (logger.isWarnEnabled())
 				formatted = MessageFormat.format("(W" + type.getCode() + ") " + type.getMessage(), msgParameters);
 			break;
 		case ERROR:
-			if (logger.isErrorEnabled())
 				formatted = MessageFormat.format("(E" + type.getCode() + ") " + type.getMessage(), msgParameters);
 			break;
 		case DEBUG:
-			if (logger.isDebugEnabled())
 				formatted = MessageFormat.format("(D" + type.getCode() + ") " + type.getMessage(), msgParameters);
 			break;
 		case TRACE:
-			if (logger.isTraceEnabled())
 				formatted = MessageFormat.format("(T" + type.getCode() + ") " + type.getMessage(), msgParameters);
 			break;
 		}
