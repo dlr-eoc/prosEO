@@ -5,19 +5,18 @@
  */
 package de.dlr.proseo.ui.backend;
 
-import static de.dlr.proseo.ui.backend.UIMessages.*;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.enums.UserRole;
 
 /**
@@ -59,7 +58,7 @@ public class LoginManager {
 	private ServiceConnection backendConnector;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(LoginManager.class);
+	private static ProseoLogger logger = new ProseoLogger(LoginManager.class);
 	
 	/**
 	 * Login to prosEO for the given mission with the given username and password
@@ -84,12 +83,14 @@ public class LoginManager {
 				}
 			};
 		} catch (RestClientResponseException e) {
-			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
-			if (!(HttpStatus.NOT_FOUND.value() == e.getRawStatusCode()) && !(HttpStatus.UNAUTHORIZED.value() == e.getRawStatusCode())) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			if (logger.isTraceEnabled())
+				logger.trace("Caught HttpClientErrorException " + e.getMessage());
+			if (!(HttpStatus.NOT_FOUND.value() == e.getRawStatusCode())
+					&& !(HttpStatus.UNAUTHORIZED.value() == e.getRawStatusCode())) {
+				System.err.println(logger.format(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage()));
 			}
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_HTTP_CONNECTION_FAILURE, e.getMessage()));
+			System.err.println(logger.format(UIMessage.HTTP_CONNECTION_FAILURE, e.getMessage()));
 		}
 		
 		return authorities;
@@ -109,8 +110,7 @@ public class LoginManager {
 		
 		// Catch missing arguments in non-interactive mode
 		if (null == System.console() && (null == username || username.isBlank() || null == password || password.isBlank())) {
-			String message = uiMsg(MSG_ID_INSUFFICIENT_CREDENTIALS);
-			logger.error(message);
+			String message = logger.log(UIMessage.INSUFFICIENT_CREDENTIALS);
 			System.err.println(message);
 			if (logger.isTraceEnabled()) logger.trace("<<< doLogin()");
 			return false;
@@ -122,7 +122,12 @@ public class LoginManager {
 			username = new String(System.console().readLine());
 		}
 		if (null == username || username.isBlank()) {
-			System.err.println(uiMsg(MSG_ID_LOGIN_CANCELLED));
+			
+			String message = "(E" + UIMessage.LOGIN_CANCELLED.getCode() + ") "
+					+ UIMessage.LOGIN_CANCELLED.getMessage();
+			
+			System.err.println(message);
+
 			return false;
 		}
 		
@@ -137,10 +142,11 @@ public class LoginManager {
 		List<String> grantedAuthorities = login(missionUsername, password, mission);
 		if (grantedAuthorities.isEmpty()) {
 			// Report failure
-			String message = null == mission ? 
-					uiMsg(MSG_ID_LOGIN_WITHOUT_MISSION_FAILED, username) : 
-					uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_MISSION, username, mission);
-			logger.error(message);
+			String message = null;
+			if (message == mission)
+				message = logger.log(UIMessage.LOGIN_WITHOUT_MISSION_FAILED, username);
+			else
+				message = logger.log(UIMessage.NOT_AUTHORIZED_FOR_MISSION, username, mission);
 			System.err.println(message);
 			if (logger.isTraceEnabled()) logger.trace("<<< doLogin()");
 			return false;
@@ -151,8 +157,7 @@ public class LoginManager {
 			this.mission.set(mission);
 			this.authorities.set(grantedAuthorities);
 			// Report success
-			String message = uiMsg(MSG_ID_LOGGED_IN, username);
-			logger.info(message);
+			String message = logger.log(UIMessage.LOGGED_IN, username);
 			if (logger.isDebugEnabled()) logger.debug("... with authorities: " + Arrays.toString(grantedAuthorities.toArray()));
 			if (showLoginMessage) {
 				System.out.println(message);
@@ -176,8 +181,10 @@ public class LoginManager {
 		mission.remove();
 		authorities.remove();
 		
-		String message = (null == oldUser ? uiMsg(MSG_ID_USER_NOT_LOGGED_IN) : uiMsg(MSG_ID_LOGGED_OUT, oldUser));
-		logger.info(message);
+		String message = null;
+		if (message == oldUser) 
+			logger.log(UIMessage.USER_NOT_LOGGED_IN);
+			else logger.log(UIMessage.LOGGED_OUT, oldUser);
 		System.out.println(message);
 		if (logger.isTraceEnabled()) logger.trace("<<< doLogout()");
 	}
@@ -289,9 +296,8 @@ public class LoginManager {
 		
 		// Log and (in interactive mode) print error message, if strength check failed
 		if (!ok) {
-			String message = uiMsg(MSG_ID_PASSWORD_STRENGTH_INSUFFICIENT,
+			String message = logger.log(UIMessage.PASSWORD_STRENGTH_INSUFFICIENT, 
 					passwordMinLength, passwordMinElements, passwordSpecialChars);
-			logger.error(message);
 			if (null != System.console()) System.err.println(message);
 		}
 		return ok;

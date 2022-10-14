@@ -5,8 +5,6 @@
  */
 package de.dlr.proseo.ui.cli.parser;
 
-import static de.dlr.proseo.ui.backend.UIMessages.*;
-
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -17,12 +15,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.error.YAMLException;
+
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.UIMessage;
 
 
 /**
@@ -61,7 +60,7 @@ public class CLISyntax {
 	/* package */ static CLISyntax inputSyntax;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(CLISyntax.class);
+	private static ProseoLogger logger = new ProseoLogger(CLISyntax.class);
 	
 	/** Allowed type names in syntax file */
 	/* package */ static final Set<String> allowedTypes = new HashSet<>(Arrays.asList("string", "integer", "datetime", "boolean"));
@@ -279,7 +278,7 @@ public class CLISyntax {
 	    // TODO
 	    
 	    // Return parsed syntax object
-	    logger.info(uiMsg(MSG_ID_SYNTAX_LOADED, syntaxFileName));
+	    logger.log(UIMessage.SYNTAX_LOADED, syntaxFileName);
 		//if (logger.isDebugEnabled()) logger.debug("Syntax definition: " + inputSyntax);
 		
 		return inputSyntax;

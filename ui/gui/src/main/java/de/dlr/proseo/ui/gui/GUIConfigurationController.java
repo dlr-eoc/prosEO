@@ -3,8 +3,6 @@ package de.dlr.proseo.ui.gui;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -19,6 +17,7 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Mono;
@@ -27,7 +26,7 @@ import reactor.netty.http.client.HttpClient;
 public class GUIConfigurationController extends GUIBaseController {
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(GUIConfigurationController.class);
+	private static ProseoLogger logger = new ProseoLogger(GUIConfigurationController.class);
 	
 	/** The configuration object for the prosEO backend services */
 	@Autowired

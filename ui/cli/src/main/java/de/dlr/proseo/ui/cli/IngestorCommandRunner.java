@@ -5,8 +5,6 @@
  */
 package de.dlr.proseo.ui.cli;
 
-import static de.dlr.proseo.ui.backend.UIMessages.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -19,8 +17,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
@@ -28,6 +24,8 @@ import org.springframework.web.util.UriUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.rest.model.RestProduct;
 import de.dlr.proseo.model.rest.model.RestProductFile;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
@@ -92,7 +90,7 @@ public class IngestorCommandRunner {
 	private ServiceConnection serviceConnection;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(IngestorCommandRunner.class);
+	private static ProseoLogger logger = new ProseoLogger(IngestorCommandRunner.class);
 
 	/**
 	 * Create a new product; if the input is not from a file, the user will be prompted for mandatory attributes
@@ -125,7 +123,7 @@ public class IngestorCommandRunner {
 			try {
 				restProduct = CLIUtil.parseObjectFile(productFile, productFileFormat, RestProduct.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -141,7 +139,7 @@ public class IngestorCommandRunner {
 				try {
 					CLIUtil.setAttribute(restProduct, param.getValue());
 				} catch (Exception e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -158,7 +156,7 @@ public class IngestorCommandRunner {
 			System.out.print(PROMPT_PRODUCT_CLASS);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restProduct.setProductClass(response);
@@ -167,7 +165,7 @@ public class IngestorCommandRunner {
 			System.out.print(PROMPT_FILE_CLASS);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restProduct.setFileClass(response);
@@ -176,52 +174,52 @@ public class IngestorCommandRunner {
 			System.out.print(PROMPT_START_TIME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			try {
 				restProduct.setSensingStartTime(OrbitTimeFormatter.format(CLIUtil.parseDateTime(response))); // no time zone in input expected
 			} catch (DateTimeException e) {
-				System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
+				System.err.println(ProseoLogger.format(UIMessage.INVALID_TIME, response));
 			}
 		}
 		while (null == restProduct.getSensingStopTime() || 0 == restProduct.getSensingStopTime().length()) {
 			System.out.print(PROMPT_STOP_TIME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			try {
 				restProduct.setSensingStopTime(OrbitTimeFormatter.format(CLIUtil.parseDateTime(response))); // no time zone in input expected
 			} catch (DateTimeException e) {
-				System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
+				System.err.println(ProseoLogger.format(UIMessage.INVALID_TIME, response));
 			}
 		}
 		while (null == restProduct.getSensingStopTime() || 0 == restProduct.getSensingStopTime().length()) {
 			System.out.print(PROMPT_START_TIME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			try {
 				restProduct.setSensingStopTime(OrbitTimeFormatter.format(CLIUtil.parseDateTime(response))); // no time zone in input expected
 			} catch (DateTimeException e) {
-				System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
+				System.err.println(ProseoLogger.format(UIMessage.INVALID_TIME, response));
 			}
 		}
 		while (null == restProduct.getGenerationTime() || 0 == restProduct.getGenerationTime().length()) {
 			System.out.print(PROMPT_GENERATION_TIME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			try {
 				restProduct.setGenerationTime(OrbitTimeFormatter.format(CLIUtil.parseDateTime(response))); // no time zone in input expected
 			} catch (DateTimeException e) {
-				System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
+				System.err.println(ProseoLogger.format(UIMessage.INVALID_TIME, response));
 			}
 		}
 		
@@ -233,28 +231,27 @@ public class IngestorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_PRODUCT_DATA_INVALID, e.getStatusText());
+				message = ProseoLogger.format(UIMessage.PRODUCT_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 
 		/* Report success, giving newly assigned product ID and UUID */
-		String message = uiMsg(MSG_ID_PRODUCT_CREATED,
+		String message = logger.log(UIMessage.PRODUCT_CREATED,
 				restProduct.getProductClass(), restProduct.getId(), restProduct.getUuid());
-		logger.info(message);
 		System.out.println(message);
 	}
 	
@@ -298,7 +295,7 @@ public class IngestorCommandRunner {
 						requestURI += "&startTimeTo=" + formatter.format(startTimeTo);
 					}
 				} catch (DateTimeException e) {
-					System.err.println(uiMsg(MSG_ID_INVALID_TIME, option.getValue()));
+					System.err.println(ProseoLogger.format(UIMessage.INVALID_TIME, option.getValue()));
 					return;
 				}
 			}
@@ -308,7 +305,7 @@ public class IngestorCommandRunner {
 			try {
 				Long.parseLong(productId);
 			} catch (NumberFormatException e) {
-				System.err.println(uiMsg(MSG_ID_INVALID_DATABASE_ID, productId));
+				System.err.println(ProseoLogger.format(UIMessage.INVALID_DATABASE_ID, productId));
 				return;
 			}
 			requestURI += "/" + productId;
@@ -325,7 +322,7 @@ public class IngestorCommandRunner {
 				RestProduct restProduct = serviceConnection.getFromService(serviceConfig.getIngestorUrl(), requestURI,
 						RestProduct.class, loginManager.getUser(), loginManager.getPassword());
 				if (!restProduct.getProductClass().equals(showCommand.getParameters().get(0).getValue())) {
-					System.err.println(uiMsg(MSG_ID_PRODUCT_CLASS_MISMATCH, restProduct.getId(),
+					System.err.println(ProseoLogger.format(UIMessage.PRODUCT_CLASS_MISMATCH, restProduct.getId(),
 							showCommand.getParameters().get(0).getValue()));
 					return;
 				}
@@ -335,21 +332,21 @@ public class IngestorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_PRODUCTS_FOUND);
+				message = ProseoLogger.format(UIMessage.NO_PRODUCTS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
@@ -361,7 +358,7 @@ public class IngestorCommandRunner {
 				System.err.println(e.getMessage());
 				return;
 			} catch (IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			} 
 		} else {
@@ -417,7 +414,7 @@ public class IngestorCommandRunner {
 			try {
 				updatedProduct = CLIUtil.parseObjectFile(productFile, productFileFormat, RestProduct.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -430,7 +427,7 @@ public class IngestorCommandRunner {
 				try {
 					updatedProduct.setId(Long.parseLong(param.getValue()));
 				} catch (NumberFormatException e) {
-					System.err.println(uiMsg(MSG_ID_INVALID_DATABASE_ID, param.getValue()));
+					System.err.println(ProseoLogger.format(UIMessage.INVALID_DATABASE_ID, param.getValue()));
 					return;
 				}
 			} else {
@@ -438,7 +435,7 @@ public class IngestorCommandRunner {
 				try {
 					CLIUtil.setAttribute(updatedProduct, param.getValue());
 				} catch (Exception e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -448,7 +445,7 @@ public class IngestorCommandRunner {
 		RestProduct restProduct = null;
 		if (null == updatedProduct.getId() || 0 == updatedProduct.getId().longValue()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PRODUCT_DBID_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_PRODUCT_DBID_GIVEN));
 			return;
 		}
 		try {
@@ -459,21 +456,21 @@ public class IngestorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, updatedProduct.getId());
+				message = ProseoLogger.format(UIMessage.PRODUCT_NOT_FOUND, updatedProduct.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 
@@ -533,33 +530,32 @@ public class IngestorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, restProduct.getId());
+				message = ProseoLogger.format(UIMessage.PRODUCT_NOT_FOUND, restProduct.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_PRODUCT_DATA_INVALID,  e.getStatusText());
+				message = ProseoLogger.format(UIMessage.PRODUCT_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
 		/* Report success, giving new product version */
-		String message = uiMsg(MSG_ID_PRODUCT_UPDATED, restProduct.getId(), restProduct.getVersion());
-		logger.info(message);
+		String message = logger.log(UIMessage.PRODUCT_UPDATED, restProduct.getId(), restProduct.getVersion());
 		System.out.println(message);
 	}
 	
@@ -574,7 +570,7 @@ public class IngestorCommandRunner {
 		/* Get product database ID from command parameters */
 		if (deleteCommand.getParameters().isEmpty()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PRODUCT_DBID_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_PRODUCT_DBID_GIVEN));
 			return;
 		}
 		String productIdString = deleteCommand.getParameters().get(0).getValue();
@@ -582,7 +578,7 @@ public class IngestorCommandRunner {
 		try {
 			productId = Long.parseLong(productIdString);
 		} catch (NumberFormatException e) {
-			System.err.println(uiMsg(MSG_ID_INVALID_DATABASE_ID, productIdString));
+			System.err.println(ProseoLogger.format(UIMessage.INVALID_DATABASE_ID, productIdString));
 			return;
 		}
 		
@@ -594,27 +590,26 @@ public class IngestorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, productId);
+				message = ProseoLogger.format(UIMessage.PRODUCT_NOT_FOUND, productId);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (Exception e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
 		/* Report success */
-		String message = uiMsg(MSG_ID_PRODUCT_DELETED, productId);
-		logger.info(message);
+		String message = logger.log(UIMessage.PRODUCT_DELETED, productId);
 		System.out.println(message);
 	}
 	
@@ -644,13 +639,13 @@ public class IngestorCommandRunner {
 			}
 		}
 		if (null == productFile) {
-			System.err.println(uiMsg(MSG_ID_INGESTION_FILE_MISSING));
+			System.err.println(ProseoLogger.format(UIMessage.INGESTION_FILE_MISSING));
 			return;
 		}
 		
 		/* Get processing facility from command parameters */
 		if (ingestCommand.getParameters().isEmpty()) {
-			System.err.println(uiMsg(MSG_ID_PROCESSING_FACILITY_MISSING));
+			System.err.println(ProseoLogger.format(UIMessage.PROCESSING_FACILITY_MISSING));
 			return;
 		}
 		String processingFacility = ingestCommand.getParameters().get(0).getValue();
@@ -676,22 +671,21 @@ public class IngestorCommandRunner {
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
 		/* Report success */
-		String message = uiMsg(MSG_ID_PRODUCTS_INGESTED, ingestedProducts.size(), processingFacility);
-		logger.info(message);
+		String message = logger.log(UIMessage.PRODUCTS_INGESTED, ingestedProducts.size(), processingFacility);
 		System.out.println(message);
 	}
 	
@@ -727,7 +721,7 @@ public class IngestorCommandRunner {
 				try {
 					productId = Long.parseLong(param.getValue());
 				} catch (NumberFormatException e) {
-					System.err.println(uiMsg(MSG_ID_INVALID_DATABASE_ID, param.getValue()));
+					System.err.println(ProseoLogger.format(UIMessage.INVALID_DATABASE_ID, param.getValue()));
 					return;
 				}
 			} else {
@@ -749,21 +743,21 @@ public class IngestorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, productId);
+				message = ProseoLogger.format(UIMessage.PRODUCT_NOT_FOUND, productId);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTFILES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PRODUCTFILES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
@@ -780,9 +774,9 @@ public class IngestorCommandRunner {
 		}
 		if (resultList.isEmpty()) {
 			if (null == facilityName) {
-				System.err.println(uiMsg(MSG_ID_PRODUCT_HAS_NO_FILES, productId));
+				System.err.println(ProseoLogger.format(UIMessage.PRODUCT_HAS_NO_FILES, productId));
 			} else {
-				System.err.println(uiMsg(MSG_ID_PRODUCTFILE_NOT_FOUND, productId, facilityName));
+				System.err.println(ProseoLogger.format(UIMessage.PRODUCTFILE_NOT_FOUND, productId, facilityName));
 			}
 			return;
 		}
@@ -795,7 +789,7 @@ public class IngestorCommandRunner {
 				System.err.println(e.getMessage());
 				return;
 			} catch (IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			} 
 		} else {
@@ -829,7 +823,7 @@ public class IngestorCommandRunner {
 		/* Get product database ID and processing facility from command parameters */
 		if (2 > deleteCommand.getParameters().size()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_PRODUCT_ID_OR_FACILITY_MISSING));
+			System.err.println(ProseoLogger.format(UIMessage.PRODUCT_ID_OR_FACILITY_MISSING));
 			return;
 		}
 		String productIdString = deleteCommand.getParameters().get(0).getValue();
@@ -837,7 +831,7 @@ public class IngestorCommandRunner {
 		try {
 			productId = Long.parseLong(productIdString);
 		} catch (NumberFormatException e) {
-			System.err.println(uiMsg(MSG_ID_INVALID_DATABASE_ID, productIdString));
+			System.err.println(ProseoLogger.format(UIMessage.INVALID_DATABASE_ID, productIdString));
 			return;
 		}
 		String facilityName = deleteCommand.getParameters().get(1).getValue();
@@ -852,27 +846,26 @@ public class IngestorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_PRODUCTFILE_NOT_FOUND, productId, facilityName);
+				message = ProseoLogger.format(UIMessage.PRODUCTFILE_NOT_FOUND, productId, facilityName);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTFILES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PRODUCTFILES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (Exception e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
 		/* Report success */
-		String message = uiMsg(MSG_ID_PRODUCTFILE_DELETED, productId, facilityName);
-		logger.info(message);
+		String message = logger.log(UIMessage.PRODUCTFILE_DELETED, productId, facilityName);
 		System.out.println(message);
 	}
 	
@@ -886,17 +879,17 @@ public class IngestorCommandRunner {
 		
 		/* Check that user is logged in */
 		if (null == loginManager.getUser()) {
-			System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN, command.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.USER_NOT_LOGGED_IN, command.getName()));
 			return;
 		}
 		if (null == loginManager.getMission()) {
-			System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN_TO_MISSION, command.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.USER_NOT_LOGGED_IN_TO_MISSION, command.getName()));
 			return;
 		}
 		
 		/* Check argument */
 		if (!CMD_PRODUCT.equals(command.getName()) && !CMD_INGEST.equals(command.getName())) {
-			System.err.println(uiMsg(MSG_ID_INVALID_COMMAND_NAME, command.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.INVALID_COMMAND_NAME, command.getName()));
 			return;
 		}
 		
@@ -904,7 +897,7 @@ public class IngestorCommandRunner {
 		ParsedCommand subcommand = command.getSubcommand();
 
 		if (CMD_PRODUCT.equals(command.getName()) && (null == subcommand || null == subcommand.getName())) {
-			System.err.println(uiMsg(MSG_ID_SUBCOMMAND_MISSING, command.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.SUBCOMMAND_MISSING, command.getName()));
 			return;
 		}
 		
@@ -930,7 +923,7 @@ public class IngestorCommandRunner {
 		ParsedCommand subsubcommand = subcommand.getSubcommand();
 		if ((CMD_PRODUCT.equals(subcommand.getName()) || CMD_FILE.equals(subcommand.getName()))
 				&& null == subcommand.getSubcommand()) {
-			System.err.println(uiMsg(MSG_ID_SUBCOMMAND_MISSING, subcommand.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.SUBCOMMAND_MISSING, subcommand.getName()));
 			return;
 		}
 
@@ -953,12 +946,12 @@ public class IngestorCommandRunner {
 			case CMD_SHOW:		showProductFile(subsubcommand); break COMMAND;
 			case CMD_DELETE:	deleteProductFile(subsubcommand); break COMMAND;
 			default:
-				System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, 
+				System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, 
 						command.getName() + " " + subcommand.getName() + " " + subsubcommand.getName()));
 				return;
 			}
 		default:
-			System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 			return;
 		}
 	}

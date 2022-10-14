@@ -5,8 +5,6 @@
  */
 package de.dlr.proseo.ui.cli;
 
-import static de.dlr.proseo.ui.backend.UIMessages.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -14,14 +12,14 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.rest.model.RestProcessingFacility;
 import de.dlr.proseo.ui.backend.LoginManager;
@@ -81,7 +79,7 @@ public class FacilityCommandRunner {
 	private ServiceConnection serviceConnection;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(FacilityCommandRunner.class);
+	private static ProseoLogger logger = new ProseoLogger(FacilityCommandRunner.class);
 
 	/**
 	 * Retrieve the processing facility with the given name, notifying the user of any errors occurring
@@ -95,8 +93,7 @@ public class FacilityCommandRunner {
 			resultList = serviceConnection.getFromService(serviceConfig.getFacilityManagerUrl(),
 					URI_PATH_FACILITIES + "?name=" + URLEncoder.encode(facilityName, Charset.defaultCharset()), List.class, loginManager.getUser(), loginManager.getPassword());
 			if (resultList.isEmpty()) {
-				String message = uiMsg(MSG_ID_FACILITY_NOT_FOUND, facilityName);
-				logger.error(message);
+				String message = logger.log(UIMessage.FACILITY_NOT_FOUND, facilityName);
 				System.err.println(message);
 				return null;
 			} else {
@@ -104,8 +101,7 @@ public class FacilityCommandRunner {
 				try {
 					return mapper.convertValue(resultList.get(0), RestProcessingFacility.class);
 				} catch (Exception e) {
-					String message = uiMsg(MSG_ID_FACILITY_NOT_READABLE, facilityName, e.getMessage());
-					logger.error(message);
+					String message = logger.log(UIMessage.FACILITY_NOT_READABLE, facilityName, e.getMessage());
 					System.err.println(message);
 					return null;
 				}
@@ -114,23 +110,21 @@ public class FacilityCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_FACILITY_NOT_FOUND, facilityName);
+				message = logger.log(UIMessage.FACILITY_NOT_FOUND, facilityName);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), FACILITIES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), FACILITIES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, "(" + e.getRawStatusCode() + ") " + e.getMessage());
+				message = logger.log(UIMessage.EXCEPTION, "(" + e.getRawStatusCode() + ") " + e.getMessage());
 			}
-			logger.error(message);
 			System.err.println(message);
 			return null;
 		} catch (RuntimeException e) {
-			String message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
-			logger.error(message);
+			String message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 			System.err.println(message);
 			e.printStackTrace(System.err);
 			return null;
@@ -168,7 +162,7 @@ public class FacilityCommandRunner {
 			try {
 				restFacility = CLIUtil.parseObjectFile(facilityFile, facilityFileFormat, RestProcessingFacility.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -184,7 +178,7 @@ public class FacilityCommandRunner {
 				try {
 					CLIUtil.setAttribute(restFacility, param.getValue());
 				} catch (Exception e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -201,7 +195,7 @@ public class FacilityCommandRunner {
 			System.out.print(PROMPT_FACILITY_NAME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restFacility.setName(response);
@@ -210,7 +204,7 @@ public class FacilityCommandRunner {
 			System.out.print(PROMPT_PROCENG_URL);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restFacility.setProcessingEngineUrl(response);
@@ -219,7 +213,7 @@ public class FacilityCommandRunner {
 			System.out.print(PROMPT_STORAGEMGR_URL);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restFacility.setStorageManagerUrl(response);
@@ -228,7 +222,7 @@ public class FacilityCommandRunner {
 			System.out.print(PROMPT_EXTERNAL_STORAGEMGR_URL);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restFacility.setStorageManagerUrl(response);
@@ -237,7 +231,7 @@ public class FacilityCommandRunner {
 			System.out.print(PROMPT_STORAGEMGR_USER);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restFacility.setStorageManagerUser(response);
@@ -246,7 +240,7 @@ public class FacilityCommandRunner {
 			System.out.print(PROMPT_STORAGEMGR_PASSWD);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restFacility.setStorageManagerPassword(response);
@@ -255,7 +249,7 @@ public class FacilityCommandRunner {
 			System.out.print(PROMPT_LOCAL_STORAGEMGR_URL);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restFacility.setLocalStorageManagerUrl(response);
@@ -264,7 +258,7 @@ public class FacilityCommandRunner {
 			System.out.print(PROMPT_STORAGE_TYPE);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restFacility.setDefaultStorageType(response);
@@ -278,28 +272,27 @@ public class FacilityCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_FACILITY_DATA_INVALID, e.getStatusText());
+				message = logger.log(UIMessage.FACILITY_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), FACILITIES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), FACILITIES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 
 		/* Report success, giving newly assigned processing facility ID */
-		String message = uiMsg(MSG_ID_FACILITY_CREATED,
+		String message = logger.log(UIMessage.FACILITY_CREATED,
 				restFacility.getName(), restFacility.getId());
-		logger.info(message);
 		System.out.println(message);
 	}
 	
@@ -339,7 +332,7 @@ public class FacilityCommandRunner {
 				} catch (IllegalArgumentException e) {
 					System.err.println(e.getMessage());
 				} catch (IOException e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				}
 			}
 			return;
@@ -357,21 +350,21 @@ public class FacilityCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_FACILITIES_FOUND);
+				message = logger.log(UIMessage.NO_FACILITIES_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), FACILITIES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), FACILITIES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
@@ -395,7 +388,7 @@ public class FacilityCommandRunner {
 				System.err.println(e.getMessage());
 				return;
 			} catch (IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			} 
 		} else {
@@ -443,7 +436,7 @@ public class FacilityCommandRunner {
 			try {
 				updatedFacility = CLIUtil.parseObjectFile(facilityFile, facilityFileFormat, RestProcessingFacility.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -459,7 +452,7 @@ public class FacilityCommandRunner {
 				try {
 					CLIUtil.setAttribute(updatedFacility, param.getValue());
 				} catch (Exception e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -468,7 +461,7 @@ public class FacilityCommandRunner {
 		/* Read original facility from Facility Manager service */
 		if (null == updatedFacility.getName() || 0 == updatedFacility.getName().length()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_FACILITY_NAME_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_FACILITY_NAME_GIVEN));
 			return;
 		}
 		RestProcessingFacility restFacility = retrieveFacilityByName(updatedFacility.getName());
@@ -528,33 +521,32 @@ public class FacilityCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_FACILITY_NOT_FOUND_BY_ID, restFacility.getId());
+				message = logger.log(UIMessage.FACILITY_NOT_FOUND_BY_ID, restFacility.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_FACILITY_DATA_INVALID, e.getStatusText());
+				message = logger.log(UIMessage.FACILITY_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), FACILITIES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), FACILITIES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
 		/* Report success, giving new processor class version */
-		String message = uiMsg(MSG_ID_FACILITY_UPDATED, restFacility.getId(), restFacility.getVersion());
-		logger.info(message);
+		String message = logger.log(UIMessage.FACILITY_UPDATED, restFacility.getId(), restFacility.getVersion());
 		System.out.println(message);
 	}
 
@@ -569,7 +561,7 @@ public class FacilityCommandRunner {
 		/* Get processing facility name from command parameters */
 		if (1 > deleteCommand.getParameters().size()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_FACILITY_NAME_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_FACILITY_NAME_GIVEN));
 			return;
 		}
 		String facilityName = deleteCommand.getParameters().get(0).getValue();
@@ -589,29 +581,28 @@ public class FacilityCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_FACILITY_NOT_FOUND_BY_ID, restFacility.getId());
+				message = logger.log(UIMessage.FACILITY_NOT_FOUND_BY_ID, restFacility.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), FACILITIES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), FACILITIES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				message = uiMsg(MSG_ID_FACILITY_DELETE_FAILED, facilityName, e.getMessage());
+				message = logger.log(UIMessage.FACILITY_DELETE_FAILED, facilityName, e.getMessage());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (Exception e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
 		/* Report success */
-		String message = uiMsg(MSG_ID_FACILITY_DELETED, restFacility.getId());
-		logger.info(message);
+		String message = logger.log(UIMessage.FACILITY_DELETED, restFacility.getId());
 		System.out.println(message);
 	}
 	
@@ -625,13 +616,13 @@ public class FacilityCommandRunner {
 		
 		/* Check that user is logged in */
 		if (null == loginManager.getUser()) {
-			System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN, command.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.USER_NOT_LOGGED_IN, command.getName()));
 			return;
 		}
 		
 		/* Check argument */
 		if (!CMD_FACILITY.equals(command.getName())) {
-			System.err.println(uiMsg(MSG_ID_INVALID_COMMAND_NAME, command.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.INVALID_COMMAND_NAME, command.getName()));
 			return;
 		}
 		
@@ -639,7 +630,7 @@ public class FacilityCommandRunner {
 		ParsedCommand subcommand = command.getSubcommand();
 
 		if (null == subcommand) {
-			System.err.println(uiMsg(MSG_ID_SUBCOMMAND_MISSING, command.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.SUBCOMMAND_MISSING, command.getName()));
 			return;
 		}
 
@@ -656,7 +647,7 @@ public class FacilityCommandRunner {
 		case CMD_UPDATE:	updateFacility(subcommand); break;
 		case CMD_DELETE:	deleteFacility(subcommand); break;
 		default:
-			System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 			return;
 		}
 	}

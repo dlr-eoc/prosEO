@@ -24,12 +24,16 @@ public enum UIMessage implements ProseoMessage {
 	EXCEPTION(2806, Level.ERROR, false, "Command failed (cause: {0})", ""),
 	INVALID_TIME(2805, Level.ERROR, false, "Time format {0} not parseable", ""),
 	MANDATORY_ATTRIBUTE_MISSING(2809, Level.ERROR, false, "Mandatory attribute '{0}' missing", ""),
+	INVALID_USERNAME(2997, Level.ERROR, false, "Invalid Username (mission missing?): {0} {1} {2} {3} ...",""),
+	EXTRACTED_MESSAGE(2998, Level.ERROR, false, "Extraced message: {0}", ""),
 	COMMAND_NOT_IMPLEMENTED(2999, Level.ERROR, false, "Command {0} not implemented", ""),
-		
+	WEBCLIENT_ERROR(2996, Level.ERROR, false, "Error from WebClient - Status {0}, Body {1}, Exception {2}", ""),
+	
 	// Login Manager
 	HTTP_CONNECTION_FAILURE(2820, Level.ERROR, false, "HTTP connection failure (cause: {0})", ""),
 	MISSION_NOT_FOUND(2825, Level.ERROR, false, "Mission {0} not found", ""),
 	LOGIN_FAILED(2822, Level.ERROR, false, "Login for user {0} failed", ""),
+	UNKNOWN_AUTHENTICATION_TYPE(2823, Level.ERROR, false, "Unknown authentication type: {0}", ""),
 	NOT_AUTHORIZED_FOR_MISSION(2826, Level.ERROR, false, "User {0} not authorized for mission {1}", ""),
 	INSUFFICIENT_CREDENTIALS(2827, Level.ERROR, false, "Insufficient credentials given for non-interactive login", ""),
 	LOGIN_WITHOUT_MISSION_FAILED(2828, Level.ERROR, false, "User {0} not authorized to login without a mission", ""),
@@ -326,6 +330,10 @@ public enum UIMessage implements ProseoMessage {
 	NO_PROCESSINGMODES_FOUND(2771, Level.ERROR, false, "No processing modes found for given search criteria", ""),
 	NO_SPACECRAFTS_FOUND(2771, Level.ERROR, false, "No spacecrafts found for given search criteria", ""),
 
+	
+	WARN_CREDENTIALS_INSECURE(2816, Level.WARN, false, "Credential file {0} ignored, because it is insecure (group or world readable)", ""),
+	WARN_UNEXPECTED_STATUS(2815, Level.WARN, false, "Unexpected HTTP status {0} received", ""),
+	
 	
 	;
 
