@@ -56,7 +56,9 @@ public enum UserMgrMessage implements ProseoMessage {
 	GROUP_MEMBERS_RETRIEVED		(2789, Level.INFO, true, "Members for user group with ID {0} retrieved", ""),
 	GROUP_MEMBER_ADDED			(2790, Level.INFO, true, "Member {0} added to user group with ID {1}", ""),
 	GROUP_MEMBER_REMOVED		(2792, Level.INFO, true, "Member {0} removed from user group with ID {1}", ""),
-		
+	CREATE_BOOTSTRAP_USER		(2793, Level.INFO, true, "Creating bootstrap user", ""),
+	CREATE_BOOTSTRAP_FAILED		(2794, Level.INFO, true, "Creation of bootstrap user failed, cause: {0}", ""),
+
 	;
 	
 	private final int code;
