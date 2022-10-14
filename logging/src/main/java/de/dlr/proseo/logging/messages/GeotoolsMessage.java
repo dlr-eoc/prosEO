@@ -14,14 +14,14 @@ import org.slf4j.event.Level;
  */
 public enum GeotoolsMessage implements ProseoMessage {
 
-	SHAPE_FILE_INITIALIZED		(0000, Level.INFO, true, "Shape file {0} for type {1} initialized", ""),
-	NO_SHAPE_FILES_FOUND		(0000, Level.ERROR, false, "No shape files found for type {0}. Known types: {1}",""),
-	POINT_INSIDE_AREAS			(0000, Level.INFO, true, "Point {0}/{1} is inside areas {2}", ""),
-	POINT_NOT_INSIDE_AREAS		(0000, Level.INFO, true, "Point {0}/{1} is NOT inside areas {2}", ""),
-	POLYGON_INSIDE_AREAS		(0000, Level.INFO, true, "Polygon {0} is inside areas {1}", ""),
-	POLYGON_NOT_INSIDE_AREAS	(0000, Level.INFO, true, "Polygon {0} is NOT inside areas {1}", ""),
-	POLYGON_OVERLAPS			(0000, Level.INFO, true, "Polygon {0} overlaps areas {1}", ""),
-	POLYGON_NO_OVERLAP			(0000, Level.INFO, true, "Polygon {0} does NOT overlap areas {1}", ""),
+	SHAPE_FILE_INITIALIZED		(1500, Level.INFO, true, "Shape file {0} for type {1} initialized", ""),
+	NO_SHAPE_FILES_FOUND		(1501, Level.ERROR, false, "No shape files found for type {0}. Known types: {1}",""),
+	POINT_INSIDE_AREAS			(1502, Level.INFO, true, "Point {0}/{1} is inside areas {2}", ""),
+	POINT_NOT_INSIDE_AREAS		(1503, Level.INFO, true, "Point {0}/{1} is NOT inside areas {2}", ""),
+	POLYGON_INSIDE_AREAS		(1504, Level.INFO, true, "Polygon {0} is inside areas {1}", ""),
+	POLYGON_NOT_INSIDE_AREAS	(1505, Level.INFO, true, "Polygon {0} is NOT inside areas {1}", ""),
+	POLYGON_OVERLAPS			(1506, Level.INFO, true, "Polygon {0} overlaps areas {1}", ""),
+	POLYGON_NO_OVERLAP			(1507, Level.INFO, true, "Polygon {0} does NOT overlap areas {1}", ""),
 	
 	;
 

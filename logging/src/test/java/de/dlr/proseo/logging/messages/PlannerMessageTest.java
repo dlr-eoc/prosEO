@@ -23,7 +23,7 @@ public class PlannerMessageTest {
 	@Test
 	public final void testGetCode() {
 		int result = PlannerMessage.ORDERS_RETRIEVED.getCode();
-		int expected = 3000;
+		int expected = 4000;
 		assertEquals(expected, result);
 	}
 

@@ -14,29 +14,29 @@ import org.slf4j.event.Level;
  */
 public enum GeneralMessage implements ProseoMessage {
 	
-	TRUE								(9000, Level.INFO, true, "true", ""),
-	FALSE								(9001, Level.ERROR, false, "false", ""),
-	OK									(9002, Level.INFO, true, "Okay", ""),
-	UNDEFINED							(9003, Level.ERROR, false, "An unknown error occured.", ""),
+	EXCEPTION_ENCOUNTERED				(9001, Level.ERROR, false, "Exception encountered: {0}", ""),
+	FACILITY_NOT_AVAILABLE				(9002, Level.WARN, true, "Processing facility {0} not available (cause: {1})", ""),
+	FALSE								(9003, Level.ERROR, false, "false", ""),
 	ILLEGAL_CROSS_MISSION_ACCESS		(9004, Level.ERROR, false, "Illegal cross-mission access to mission {0} (logged in to {1})", ""),
-	EXCEPTION_ENCOUNTERED				(9005, Level.ERROR, false, "Exception encountered: {0}", ""),
-	RUNTIME_EXCEPTION_ENCOUNTERED		(9006, Level.WARN, true, "Exception encountered: {0}", ""),
+	ILLEGAL_FACILITY_STATE_TRANSITION 	(9005, Level.ERROR, false, "Illegal facility state transition from {0} to {1}", ""),
+	ILLEGAL_JOB_STATE_TRANSITION 		(9006, Level.ERROR, false, "Illegal job state transition from {0} to {1}", ""),
 	ILLEGAL_ORDER_STATE_TRANSITION 		(9007, Level.ERROR, false, "Illegal order state transition from {0} to {1}", ""),
-	ILLEGAL_JOB_STATE_TRANSITION 		(9008, Level.ERROR, false, "Illegal job state transition from {0} to {1}", ""),
-	ILLEGAL_FACILITY_STATE_TRANSITION 	(9009, Level.ERROR, false, "Illegal facility state transition from {0} to {1}", ""),
+	INITIALIZING_AUTHENTICATION			(9008, Level.INFO, true, "Initializing authentication from user details service", ""),
+	INITIALIZING_USER_DETAILS_SERVICE	(9009, Level.INFO, true, "Initializing user details service from datasource {0}", ""),
 	INVALID_PROCESSING_MODE 			(9010, Level.ERROR, false, "Processing mode {0} not defined for mission {1}", ""),
-	INITIALIZING_AUTHENTICATION			(1136, Level.INFO, true, "Initializing authentication from user details service", ""),
-	INITIALIZING_USER_DETAILS_SERVICE	(1137, Level.INFO, true, "Initializing user details service from datasource {0}", ""),
-	FACILITY_NOT_AVAILABLE				(0000, Level.WARN, true, "Processing facility {0} not available (cause: {1})", ""),
+	OK									(9011, Level.INFO, true, "Okay", ""),
+	RUNTIME_EXCEPTION_ENCOUNTERED		(9012, Level.WARN, true, "Exception encountered: {0}", ""),
+	TRUE								(9013, Level.INFO, true, "true", ""),
+	UNDEFINED							(9014, Level.ERROR, false, "An unknown error occured.", ""),
 
 	
 	;
 
 	private final int code;
-	private final Level level;
-	public final boolean success;
-	private final String message;
 	private final String description;
+	private final Level level;
+	private final String message;
+	public final boolean success;
 
 	private GeneralMessage(int code, Level level, boolean success, String message, String description) {
 		this.level = level;
@@ -56,6 +56,15 @@ public enum GeneralMessage implements ProseoMessage {
 	}
 
 	/**
+	 * Get a more detailed description of the message's purpose.
+	 * 
+	 * @return A description of the message.
+	 */
+	public String getDescription() {
+		return description;
+	}
+
+	/**
 	 * Get the message's level.
 	 * 
 	 * @return The message level.
@@ -71,15 +80,6 @@ public enum GeneralMessage implements ProseoMessage {
 	 */
 	public String getMessage() {
 		return message;
-	}
-
-	/**
-	 * Get a more detailed description of the message's purpose.
-	 * 
-	 * @return A description of the message.
-	 */
-	public String getDescription() {
-		return description;
 	}
 	
 	/**

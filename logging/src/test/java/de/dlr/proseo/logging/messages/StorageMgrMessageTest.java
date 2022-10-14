@@ -23,7 +23,7 @@ public class StorageMgrMessageTest {
 	@Test
 	public final void testGetCode() {
 		int result = StorageMgrMessage.TEST_TO_BE_REPLACED.getCode();
-		int expected = 0;
+		int expected = 5500;
 		assertEquals(expected, result);
 	}
 

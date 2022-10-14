@@ -23,7 +23,7 @@ public class UIMessageTest {
 	@Test
 	public final void testGetCode() {
 		int result = UIMessage.INVALID_COMMAND_NAME.getCode();
-		int expected = 2800;
+		int expected = 6064;
 		assertEquals(expected, result);
 	}
 

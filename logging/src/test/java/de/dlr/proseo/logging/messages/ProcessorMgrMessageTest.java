@@ -23,7 +23,7 @@ public class ProcessorMgrMessageTest {
 	@Test
 	public final void testGetCode() {
 		int result = ProcessorMgrMessage.CONCURRENT_UPDATE.getCode();
-		int expected = 2301;
+		int expected = 4501;
 		assertEquals(expected, result);
 	}
 

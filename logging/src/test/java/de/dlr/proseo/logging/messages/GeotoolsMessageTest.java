@@ -23,7 +23,7 @@ public class GeotoolsMessageTest {
 	@Test
 	public final void testGetCode() {
 		int result = GeotoolsMessage.SHAPE_FILE_INITIALIZED.getCode();
-		int expected = 0;
+		int expected = 1500;
 		assertEquals(expected, result);
 	}
 

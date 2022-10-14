@@ -68,7 +68,7 @@ public class ProseoHttpTest {
 		String expected = "(E1) Insert: test";
 
 		String result1 = http.createMessageFromHeaders(status, header1);
-		String expected1 = "(E2811) Service request failed with status 500 (500 INTERNAL_SERVER_ERROR), cause: empty";
+		String expected1 = "(E6232) Service request failed with status 500 (500 INTERNAL_SERVER_ERROR), cause: empty";
 		
 		assertEquals(expected, result);
 		assertEquals(expected1, result1);

@@ -23,7 +23,7 @@ public class ModelMessageTest {
 	@Test
 	public final void testGetCode() {
 		int result = ModelMessage.NO_ITEM_FOUND.getCode();
-		int expected = 0;
+		int expected = 2502;
 		assertEquals(expected, result);
 	}
 

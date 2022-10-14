@@ -23,7 +23,7 @@ public class ProductClassMessageTest {
 	@Test
 	public final void testGetCode() {
 		int result = ProductClassMgrMessage.CONCURRENT_UPDATE.getCode();
-		int expected = 2103;
+		int expected = 5003;
 		assertEquals(expected, result);
 	}
 

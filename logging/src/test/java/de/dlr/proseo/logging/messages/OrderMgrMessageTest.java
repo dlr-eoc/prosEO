@@ -23,7 +23,7 @@ public class OrderMgrMessageTest {
 	@Test
 	public final void testGetCode() {
 		int result = OrderMgrMessage.JOB_NOT_EXIST.getCode();
-		int expected = 1068;
+		int expected = 3516;
 		assertEquals(expected, result);
 	}
 

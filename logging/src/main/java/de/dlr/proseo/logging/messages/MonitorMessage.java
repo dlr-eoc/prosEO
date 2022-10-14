@@ -13,11 +13,11 @@ import org.slf4j.event.Level;
  */
 public enum MonitorMessage implements ProseoMessage {
 
-	ILLEGAL_CONFIG_VALUE		(0000, Level.WARN, true, "Illegal config value productAggregationStart: {0}", ""),
-	DUPLICATE_ENTRIES			(0000, Level.WARN, true, "Duplicate entries in {0} at {1}", ""),
-	WRONG_PRODUCTION_LATENCY	(0000, Level.ERROR, false, "productionLatencyAvg: {0} >= Integer.MAX_VALUE", ""),
-	WRONG_TOTAL_LATENCY			(0000, Level.ERROR, false, "totalLatencyAvg: {0} >= Integer.MAX_VALUE", ""),
-	WRONG_DOWNLOAD_SIZE			(0000, Level.ERROR, false, "downloadSize: {0} >= Integer.MAX_VALUE", ""),
+	ILLEGAL_CONFIG_VALUE		(3000, Level.WARN, true, "Illegal config value productAggregationStart: {0}", ""),
+	DUPLICATE_ENTRIES			(3001, Level.WARN, true, "Duplicate entries in {0} at {1}", ""),
+	WRONG_PRODUCTION_LATENCY	(3002, Level.ERROR, false, "productionLatencyAvg: {0} >= Integer.MAX_VALUE", ""),
+	WRONG_TOTAL_LATENCY			(3003, Level.ERROR, false, "totalLatencyAvg: {0} >= Integer.MAX_VALUE", ""),
+	WRONG_DOWNLOAD_SIZE			(3004, Level.ERROR, false, "downloadSize: {0} >= Integer.MAX_VALUE", ""),
 	
 	;
 

@@ -68,12 +68,18 @@ public class LoggingDocumentation {
 
 		messages.append("<h2 id=\"FacilityMgrMessage\">Facility Manager Messages</h2>");
 		messages.append(addService(FacilityMgrMessage.class));
+		
+		messages.append("<h2 id=\"GeotoolsMessage\">Geotools Messages</h2>");
+		messages.append(addService(GeotoolsMessage.class));
 
 		messages.append("<h2 id=\"IngestorMessage\">Ingestor Messages</h2>");
 		messages.append(addService(IngestorMessage.class));
 
 		messages.append("<h2 id=\"ModelMessage\">Model Messages</h2>");
 		messages.append(addService(ModelMessage.class));
+		
+		messages.append("<h2 id=\"MonitorMessage\">Monitor Messages</h2>");
+		messages.append(addService(MonitorMessage.class));
 
 		messages.append("<h2 id=\"OrderMgrMessage\">Order Manager Messages</h2>");
 		messages.append(addService(OrderMgrMessage.class));
@@ -83,6 +89,9 @@ public class LoggingDocumentation {
 
 		messages.append("<h2 id=\"ProcessorMgrMessage\">Processor Manager Messages</h2>");
 		messages.append(addService(ProcessorMgrMessage.class));
+		
+		messages.append("<h2 id=\"ProductClassMgrMessage\">Product Class Manager Messages</h2>");
+		messages.append(addService(ProductClassMgrMessage.class));
 
 		messages.append("<h2 id=\"StorageMgrMessage\">Storage Manager Messages</h2>");
 		messages.append(addService(StorageMgrMessage.class));

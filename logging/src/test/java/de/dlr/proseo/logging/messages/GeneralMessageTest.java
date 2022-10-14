@@ -23,7 +23,7 @@ public class GeneralMessageTest {
 	@Test
 	public final void testGetCode() {
 		int result = GeneralMessage.EXCEPTION_ENCOUNTERED.getCode();
-		int expected = 9005;
+		int expected = 9001;
 		assertEquals(expected, result);
 	}
 

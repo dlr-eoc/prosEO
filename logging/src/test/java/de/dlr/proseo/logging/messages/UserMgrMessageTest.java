@@ -23,7 +23,7 @@ public class UserMgrMessageTest {
 	@Test
 	public final void testGetCode() {
 		int result = UserMgrMessage.MISSION_MISSING.getCode();
-		int expected = 2702;
+		int expected = 6502;
 		assertEquals(expected, result);
 	}
 

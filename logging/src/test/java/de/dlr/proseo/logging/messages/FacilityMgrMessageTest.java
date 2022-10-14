@@ -23,7 +23,7 @@ public class FacilityMgrMessageTest {
 	@Test
 	public final void testGetCode() {
 		int result = FacilityMgrMessage.FACILITY_NOT_FOUND.getCode();
-		int expected = 1014;
+		int expected = 1010;
 		assertEquals(expected, result);
 	}
 

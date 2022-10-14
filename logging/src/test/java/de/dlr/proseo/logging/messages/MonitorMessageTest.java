@@ -23,7 +23,7 @@ public class MonitorMessageTest {
 	@Test
 	public final void testGetCode() {
 		int result = MonitorMessage.ILLEGAL_CONFIG_VALUE.getCode();
-		int expected = 0;
+		int expected = 3000;
 		assertEquals(expected, result);
 	}
 

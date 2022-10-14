@@ -23,7 +23,7 @@ public class IngestorMessageTest {
 	@Test
 	public final void testGetCode() {
 		int result = IngestorMessage.INVALID_FACILITY.getCode();
-		int expected = 2051;
+		int expected = 2018;
 		assertEquals(expected, result);
 	}
 
