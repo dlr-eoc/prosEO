@@ -895,50 +895,56 @@ public class KubeJob {
 	private void updateJobLog(JobStep js) {
 		if (js != null && !podNames.isEmpty()) {
 			// Check conditions
-			String podMessages = "";
 			V1Pod aPod = kubeConfig.getV1Pod(podNames.get(podNames.size()-1));
-			if (aPod != null && aPod.getStatus().getConditions() != null) {
-				podMessages += "Job Step Conditions (Type - Status):\n";
-				List<V1PodCondition> pobCondList = aPod.getStatus().getConditions();
-				for (V1PodCondition pc : pobCondList) {
-					podMessages += "  " + pc.getType() + " - " + pc.getStatus() + "\n";
-				}
-				String fieldSelector = "involvedObject.name==" + aPod.getMetadata().getName();
-				CoreV1EventList el = null;
-				try {
-					el = kubeConfig.getApiV1().listEventForAllNamespaces(false, null, fieldSelector, null, 30, null, null, null, null, null);
-					if (el != null) {
-						podMessages += "Job Step Events (Type - Reason - Count - Message):\n";
-						for (CoreV1Event ev : el.getItems()) {
-							podMessages += "  " + ev.getType() + " - " + ev.getReason() + " - " + ev.getCount() + " - " + ev.getMessage()  + "\n";
-						}
-						podMessages += "\n\n";
-					}
-				} catch (ApiException e) {
-					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
-				}
-			}
+			String log = getJobStepLogPrim(aPod);
 
-			String cn = this.getContainerName();
-			String log = "";
-			if (cn != null) {
-				try {
-					log = kubeConfig.getApiV1().readNamespacedPodLog(podNames.get(podNames.size()-1), kubeConfig.getNamespace(), cn, null, null, null, null, null, null, null, null);
-				} catch (ApiException e1) {
-					// ignore, normally the pod has no log
-					if (logger.isTraceEnabled()) logger.trace("    updateInfo: ApiException ignore, normally the pod has no log");
-				} catch (Exception e) {
-					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
-				}
-			} else {
-				if (logger.isTraceEnabled()) logger.trace("    updateJobLog: container not found");
-			}
-
-			if (log != null && !log.isBlank()) {
-				js.setProcessingStdOut(podMessages + log);
-			} else if (js.getProcessingStdOut() == null || js.getProcessingStdOut().isBlank()) {
-				js.setProcessingStdOut(podMessages);
-			}
+			js.setProcessingStdOut(log);
 		}
 	}
+	
+	public String getJobStepLogPrim(V1Pod aPod) {
+		String podMessages = "";
+		if (aPod != null && aPod.getStatus().getConditions() != null) {
+			podMessages += "Job Step Conditions (Type - Status):\n";
+			List<V1PodCondition> pobCondList = aPod.getStatus().getConditions();
+			for (V1PodCondition pc : pobCondList) {
+				podMessages += "  " + pc.getType() + " - " + pc.getStatus() + "\n";
+			}
+			String fieldSelector = "involvedObject.name==" + aPod.getMetadata().getName();
+			CoreV1EventList el = null;
+			try {
+				el = kubeConfig.getApiV1().listEventForAllNamespaces(false, null, fieldSelector, null, 30, null, null, null, null, null);
+				if (el != null) {
+					podMessages += "Job Step Events (Type - Reason - Count - Message):\n";
+					for (CoreV1Event ev : el.getItems()) {
+						podMessages += "  " + ev.getType() + " - " + ev.getReason() + " - " + ev.getCount() + " - " + ev.getMessage()  + "\n";
+					}
+					podMessages += "\n\n";
+				}
+			} catch (ApiException e) {
+				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
+			}
+		}
+
+		String cn = this.getContainerName();
+		String log = "";
+		if (cn != null) {
+			try {
+				log = kubeConfig.getApiV1().readNamespacedPodLog(podNames.get(podNames.size()-1), kubeConfig.getNamespace(), cn, null, null, null, null, null, null, null, null);
+			} catch (ApiException e1) {
+				// ignore, normally the pod has no log
+				if (logger.isTraceEnabled()) logger.trace("    updateInfo: ApiException ignore, normally the pod has no log");
+			} catch (Exception e) {
+				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
+			}
+		} else {
+			if (logger.isTraceEnabled()) logger.trace("    updateJobLog: container not found");
+		}
+		if (log != null && !log.isBlank()) {
+			return podMessages + log;
+		} else {
+			return podMessages;
+		}
+	}
+
 }

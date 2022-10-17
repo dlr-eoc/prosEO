@@ -136,7 +136,7 @@ public class OrderjobControllerImpl implements OrderjobController {
      */
 	@Transactional(readOnly = true)
 	@Override
-    public ResponseEntity<String> indexOfJob(Long orderId, Long jobId, Long jobStepId, String[] orderBy) {
+    public ResponseEntity<String> indexOfJob(Long orderId, Long jobId, Long jobStepId, String[] states, String[] orderBy) {
 		if (logger.isTraceEnabled()) logger.trace(">>> indexOfJob({}, {}, {})", orderId, jobId, jobStepId);
 		
 		try {
@@ -151,6 +151,13 @@ public class OrderjobControllerImpl implements OrderjobController {
 				jpqlQuery += "select js.job.processingOrder.id from JobStep js where js.id = " + jobStepId;
 			} else {
 				return new ResponseEntity<>("0", HttpStatus.OK);
+			}
+			if (null != states && states.length == 1) {
+				if (states[0].equalsIgnoreCase("COMPLETED")) {
+					jpqlQuery += " and j.jobState in ('COMPLETED', 'CLOSED')";
+				} else if (states[0].equalsIgnoreCase("NON-COMPLETED")) {
+					jpqlQuery += " and j.jobState not in ('COMPLETED', 'CLOSED')";
+				}
 			}
 			// order by
 			if (null != orderBy && 0 < orderBy.length) {
@@ -215,9 +222,9 @@ public class OrderjobControllerImpl implements OrderjobController {
 		jpqlQuery += " where x.processingOrder.mission.code = :missionCode";
 		if (null != states && states.length == 1) {
 			if (states[0].equalsIgnoreCase("COMPLETED")) {
-				jpqlQuery += " and x.jobState = 'COMPLETED'";
+				jpqlQuery += " and x.jobState in ('COMPLETED', 'CLOSED')";
 			} else if (states[0].equalsIgnoreCase("NON-COMPLETED")) {
-				jpqlQuery += " and x.jobState <> 'COMPLETED'";
+				jpqlQuery += " and x.jobState not in ('COMPLETED', 'CLOSED')";
 			}
 		}
 		if (null != orderId) {

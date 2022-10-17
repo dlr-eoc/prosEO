@@ -640,6 +640,7 @@ public class GUIOrderController extends GUIBaseController {
 			@RequestParam(required = false, value = "job") String jobId,
 			@RequestParam(required = false, value = "jobStep") String jobStepId,
 			@RequestParam(required = false, value = "jobstates") String states,
+			@RequestParam(required = false, value = "calcPage") Boolean calcP,
 			Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getId({}, model)", id);
@@ -652,7 +653,7 @@ public class GUIOrderController extends GUIBaseController {
 		} else {
 			from = (long) 0;
 		}
-		if (jobId != null || jobStepId != null) {
+		if ((jobId != null || jobStepId != null) && calcP != null && calcP) {
 			calcPage = true;
 		}
 		Long count = countJobs(id, states);
@@ -663,7 +664,7 @@ public class GUIOrderController extends GUIBaseController {
 		}
 		Long pageSize = to - from;
 		if (calcPage) {
-			Long page = pageOfJob(id, jobId, jobStepId, pageSize);
+			Long page = pageOfJob(id, jobId, jobStepId, pageSize, states);
 			from = page * pageSize;
 			to = from + pageSize;
 		}
@@ -810,12 +811,11 @@ public class GUIOrderController extends GUIBaseController {
 			if (js !=  null) {
 				if (js.getJobStepState() == JobStepState.RUNNING) {
 					// update log file before, this does the planner 
-					js = serviceConnection.getFromService(config.getProductionPlanner(),
-							"/jobsteps/" + id, RestJobStep.class, auth.getProseoName(), auth.getPassword());
+					result = serviceConnection.getFromService(config.getProductionPlanner(),
+							"/jobsteps/log/" + id, String.class, auth.getProseoName(), auth.getPassword());
+				} else {
+					result = js.getProcessingStdOut();
 				}
-			}
-			if (js !=  null) {
-				result = js.getProcessingStdOut();
 			}
 			if (result == null) {
 				result = "";
@@ -1018,7 +1018,7 @@ public class GUIOrderController extends GUIBaseController {
      * @param pageSize The page six
      * @return The page number
      */
-    private Long pageOfJob(String orderId, String jobId, String jobStepId, Long pageSize) {    	
+    private Long pageOfJob(String orderId, String jobId, String jobStepId, Long pageSize, String states) {    	
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String uri = "/orderjobs/index";
 		String divider = "?";
@@ -1033,6 +1033,15 @@ public class GUIOrderController extends GUIBaseController {
 		if (jobStepId != null) {
 			uri += divider + "jobstepid=" + jobStepId;
 			divider ="&";
+		}
+		if (states != null && !states.isEmpty()) {
+			String [] pcs = states.split(":");
+			for (String pc : pcs) {
+				if (!pc.equalsIgnoreCase("ALL")) {
+					uri += divider + "state=" + pc;
+					divider ="&";
+				}
+			}
 		}
 		divider ="&";
 		try {

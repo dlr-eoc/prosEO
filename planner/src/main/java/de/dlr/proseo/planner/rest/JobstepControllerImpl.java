@@ -39,6 +39,8 @@ import de.dlr.proseo.planner.kubernetes.KubeJob;
 import de.dlr.proseo.planner.rest.model.RestUtil;
 import de.dlr.proseo.planner.util.JobStepUtil;
 import de.dlr.proseo.planner.util.UtilService;
+import io.kubernetes.client.openapi.models.V1Job;
+import io.kubernetes.client.openapi.models.V1Pod;
 
 
 /**
@@ -175,6 +177,61 @@ public class JobstepControllerImpl implements JobstepController {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+	}
+
+    /**
+     * Get production planner job step log string by name or id
+     * 
+     */
+	@Override
+	public ResponseEntity<String> getJobStepLog(String name) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getJobStep({})", name);
+		try {
+			JobStep js = this.findJobStepByNameOrIdPrim(name);
+			if (js != null) {
+				String logx = null;
+				Messages msg = null;
+				try {
+					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+					logx = transactionTemplate.execute((status) -> {
+						String log = null;
+						JobStep jsx = this.findJobStepByNameOrIdPrim(name);
+						Job job = jsx.getJob();
+						if (jsx.getJobStepState() == JobStepState.RUNNING && job != null) {
+							if (job.getProcessingFacility() != null) {
+								KubeConfig kc = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
+								if (kc != null && kc.isConnected()) {
+									KubeJob kj = kc.getKubeJob(ProductionPlanner.jobNamePrefix + jsx.getId());
+									if (kj != null) {
+										V1Pod aPod = kc.getV1Pod(kj.getPodNames().get(kj.getPodNames().size()-1));
+										log = kj.getJobStepLogPrim(aPod);
+									}
+								}
+							}
+						} else {
+							log = jsx.getProcessingStdOut();
+						}
+						return log;
+					});
+				} catch (Exception e) {
+					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
+					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+				}
+				if (logx == null) {
+					return new ResponseEntity<>("", HttpStatus.OK);
+				}else {
+					return new ResponseEntity<>(logx, HttpStatus.OK);
+				}
+			}
+			String message = Messages.JOBSTEP_NOT_EXIST.log(logger, name);
+
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
 	}
