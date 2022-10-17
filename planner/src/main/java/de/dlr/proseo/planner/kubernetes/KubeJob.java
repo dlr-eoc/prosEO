@@ -20,14 +20,15 @@ import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
 
 import org.hibernate.exception.LockAcquisitionException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
@@ -38,7 +39,6 @@ import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.enums.JobOrderVersion;
 import de.dlr.proseo.model.joborder.JobOrder;
-import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.JobDispatcher;
 import de.dlr.proseo.planner.util.UtilService;
@@ -73,7 +73,7 @@ public class KubeJob {
 	/**
 	 * Logger of this class
 	 */
-	private static Logger logger = LoggerFactory.getLogger(KubeJob.class);
+	private static ProseoLogger logger = new ProseoLogger(KubeJob.class);
 	
 	/**
 	 * The job id of DB
@@ -288,14 +288,14 @@ public class KubeJob {
 		kubeConfig = aKubeConfig;
 		JobOrder jobOrder = null;
 		if (!aKubeConfig.isConnected()) {
-			Messages.KUBERNETES_NOT_CONNECTED.log(logger, aKubeConfig.getProcessingFacility().toString());
+			logger.log(PlannerMessage.KUBERNETES_NOT_CONNECTED, aKubeConfig.getProcessingFacility().toString());
 			return null;
 		}
 		
 		EntityManager em = kubeConfig.getProductionPlanner().getEm();
 		Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(this.getJobId());
 		if (js.isEmpty()) {
-			Messages.JOB_STEP_NOT_FOUND.log(logger, this.getJobId());
+			logger.log(PlannerMessage.JOB_STEP_NOT_FOUND, this.getJobId());
 			return null;
 		}
 		
@@ -303,7 +303,7 @@ public class KubeJob {
 		
 		ConfiguredProcessor configuredProcessor = jobStep.getOutputProduct().getConfiguredProcessor();
 		if (null == configuredProcessor || !configuredProcessor.getEnabled()) {
-			Messages.CONFIG_PROC_DISABLED.log(logger, jobStep.getOutputProduct().getConfiguredProcessor().getIdentifier());
+			logger.log(PlannerMessage.CONFIG_PROC_DISABLED, jobStep.getOutputProduct().getConfiguredProcessor().getIdentifier());
 			return null;
 		}
 		Instant execTime = jobStep.getJob().getProcessingOrder().getExecutionTime();
@@ -333,28 +333,23 @@ public class KubeJob {
 		try {
 			jobOrder = jd.createJobOrder(jobStep);
 		} catch (Exception e) {
-			String errStr = String.format("Exception: creation of job order for job step %d failed", jobStep.getId());
-			errStr += "\n";
-			errStr += e.getMessage();
-			logger.error(errStr);
+			logger.log(PlannerMessage.JOB_STEP_CREATION_FAILED_EXCEPTION, jobStep.getId(), e.getMessage());
+			
 			jobStep.setProcessingStartTime(genTime);
-			jobStep.setProcessingStdOut(errStr);
+			jobStep.setProcessingStdOut(String.format("Exception: creation of job order for job step %d failed", jobStep.getId())
+					+ "\n" + e.getMessage());
 			jobStep.setJobStepState(JobStepState.RUNNING);
 			jobStep.setJobStepState(JobStepState.FAILED);
 			RepositoryService.getJobStepRepository().save(jobStep);
 			return null;
 		}
 		if (jobOrder == null) {
-			String errStr = String.format("Creation of job order for job step %d failed", jobStep.getId());
-			logger.error(errStr);
-			throw new Exception(errStr);
+			throw new Exception(logger.log(PlannerMessage.JOB_STEP_CREATION_FAILED, jobStep.getId()));
 		}
 		JobOrderVersion joVersion = configuredProcessor.getProcessor().getJobOrderVersion();
 		jobOrder = jd.sendJobOrderToStorageManager(kubeConfig, jobOrder, joVersion);
 		if (jobOrder == null) {
-			String errStr = String.format("Sending of job order to Storage Manager failed for job step %d", jobStep.getId());
-			logger.error(errStr);
-			throw new Exception(errStr);
+			throw new Exception(logger.log(PlannerMessage.SENDING_JOB_STEP_FAILED, jobStep.getId()));
 		}
 		jobStep.setJobOrderFilename(jobOrder.getFileName());
 		// wrapper user and PW
@@ -393,7 +388,7 @@ public class KubeJob {
 		if (null != ProductionPlanner.config.getHostAlias()) {
 			String[] hostAliasParts = ProductionPlanner.config.getHostAlias().split(":");
 			if (2 != hostAliasParts.length) {
-				logger.warn("Found malformed host alias parameter {}", ProductionPlanner.config.getHostAlias());
+				logger.log(PlannerMessage.MALFORMED_HOST_ALIAS, ProductionPlanner.config.getHostAlias());
 			} else {
 				V1HostAlias hostAlias = new V1HostAlias()
 						.ip(hostAliasParts[0])
@@ -503,9 +498,9 @@ public class KubeJob {
 			}
 			jobStep.setProcessingStartTime(genTime);
 			job = aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
-			logger.info("Job {} created with status {}", job.getMetadata().getName(), job.getStatus().toString());
+			logger.log(PlannerMessage.JOB_CREATED, job.getMetadata().getName(), job.getStatus().toString());
 			UtilService.getJobStepUtil().startJobStep(jobStep);
-			Messages.KUBEJOB_CREATED.log(logger, kubeConfig.getId(), jobName);
+			logger.log(PlannerMessage.KUBEJOB_CREATED, kubeConfig.getId(), jobName);
 			Integer cycle = ProductionPlanner.config.getProductionPlannerJobCreatedWaitTime();
 			if (cycle == null) {
 				cycle = 2000;
@@ -515,13 +510,10 @@ public class KubeJob {
 			updateJobLog(jobStep);
 			RepositoryService.getJobStepRepository().save(jobStep);
 		} catch (ApiException e1) {
-			logger.error("Kubernetes API exception creating job for job step {}: {}", jobStep.getId(), e1.getMessage());
-			logger.error("  Status code: " + e1.getCode());
-			logger.error("  Reason: " + e1.getResponseBody());
-			logger.error("  Response headers: " + e1.getResponseHeaders());
+			logger.log(PlannerMessage.KUBERNETES_API_EXCEPTION, jobStep.getId(), e1.getMessage(), e1.getCode(), e1.getResponseBody(), e1.getResponseHeaders());
 			throw e1;
 		} catch (Exception e) {
-			logger.error("General exception creating job for job step {}: {}", jobStep.getId(), e.getMessage());
+			logger.log(PlannerMessage.JOB_STEP_CREATION_EXCEPTION, jobStep.getId(), e.getMessage());
 			throw e;
 		}
 		if (logger.isTraceEnabled()) logger.trace("<<< createJob finished successful");
@@ -555,7 +547,7 @@ public class KubeJob {
 					}
 				}
 			} catch (ApiException e) {
-				logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
 			}
 		}
 		if (logger.isTraceEnabled()) logger.trace("<<< searchPod()");
@@ -625,9 +617,9 @@ public class KubeJob {
 					return null;
 				});
 			} catch (LockAcquisitionException e) {
-				Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			} catch (Exception e) {
-				Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			} finally {
 				aKubeConfig.getProductionPlanner().releaseThreadSemaphore("finish");					
 			}
@@ -818,7 +810,7 @@ public class KubeJob {
 		if (!success.equals(UpdateInfoResult.FALSE)) {
 			// delete kube job
 			kubeConfig.deleteJob(aJobName);
-			Messages.KUBEJOB_FINISHED.log(logger, kubeConfig.getId(), aJobName);
+			logger.log(PlannerMessage.KUBEJOB_FINISHED, kubeConfig.getId(), aJobName);
 		}
 		return !success.equals(UpdateInfoResult.FALSE);
 	}
@@ -923,7 +915,7 @@ public class KubeJob {
 						podMessages += "\n\n";
 					}
 				} catch (ApiException e) {
-					logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
 				}
 			}
 
@@ -936,7 +928,7 @@ public class KubeJob {
 					// ignore, normally the pod has no log
 					if (logger.isTraceEnabled()) logger.trace("    updateInfo: ApiException ignore, normally the pod has no log");
 				} catch (Exception e) {
-					logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
 				}
 			} else {
 				if (logger.isTraceEnabled()) logger.trace("    updateJobLog: container not found");

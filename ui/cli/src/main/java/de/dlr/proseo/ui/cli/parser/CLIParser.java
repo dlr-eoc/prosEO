@@ -5,8 +5,6 @@
  */
 package de.dlr.proseo.ui.cli.parser;
 
-import static de.dlr.proseo.ui.backend.UIMessages.*;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StreamTokenizer;
@@ -16,12 +14,12 @@ import java.time.DateTimeException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.yaml.snakeyaml.error.YAMLException;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.ui.cli.CLIConfiguration;
 import de.dlr.proseo.ui.cli.CLIUtil;
 
@@ -47,7 +45,7 @@ public class CLIParser {
 	private CLISyntax syntax;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(CLIParser.class);
+	private static ProseoLogger logger = new ProseoLogger(CLIParser.class);
 	
 	/**
 	 * Load the command line syntax from the configured syntax file
@@ -216,7 +214,7 @@ public class CLIParser {
 		
 		// Check for existence of option name
 		if (null == optionLongForm && null == optionShortForm) {
-			throw new ParseException(uiMsg(MSG_ID_INVALID_COMMAND_OPTION, optionString), 0);
+			throw new ParseException(ProseoLogger.format(UIMessage.INVALID_COMMAND_OPTION, optionString), 0);
 		}
 		
 		// Check whether this option is allowed for the current command
@@ -231,13 +229,13 @@ public class CLIParser {
 			}
 		}
 		if (null == currentSyntaxOption) {
-			throw new ParseException(uiMsg(MSG_ID_ILLEGAL_OPTION, optionString, 
+			throw new ParseException(ProseoLogger.format(UIMessage.ILLEGAL_OPTION, optionString, 
 					(null == syntaxCommand ? TOP_LEVEL_COMMAND_NAME : syntaxCommand.getName())), 0);
 		}
 
 		// Check the type conformity of the option value
 		if (!isTypeOK(currentSyntaxOption.getType(), optionValue)) {
-			throw new ParseException(uiMsg(MSG_ID_ILLEGAL_OPTION_VALUE, optionValue,
+			throw new ParseException(ProseoLogger.format(UIMessage.ILLEGAL_OPTION_VALUE, optionValue,
 					currentSyntaxOption.getName(), currentSyntaxOption.getType()), 0);
 		}
 		
@@ -275,7 +273,8 @@ public class CLIParser {
 			if (-1 < maxParam && syntaxParameters.get(maxParam).getRepeatable()) {
 				syntaxParameter = syntaxParameters.get(maxParam);
 			} else {
-				throw new ParseException(uiMsg(MSG_ID_TOO_MANY_PARAMETERS, syntaxCommand.getName()), 0);
+				throw new ParseException(ProseoLogger.format(UIMessage.TOO_MANY_PARAMETERS, 
+						syntaxCommand.getName()), 0);
 			}
 		} else {
 			// Use parameter at given position
@@ -285,11 +284,11 @@ public class CLIParser {
 		// Check, whether parameter value conforms to the expected parameter type
 		boolean isAttribute = "attribute".equals(syntaxParameter.getName());
 		if (isAttribute && !parameterString.contains("=")) {
-			throw new ParseException(uiMsg(MSG_ID_ATTRIBUTE_PARAMETER_EXPECTED, parameterPosition, syntaxCommand.getName()), 0);
+			throw new ParseException(ProseoLogger.format(UIMessage.ATTRIBUTE_PARAMETER_EXPECTED, parameterPosition, syntaxCommand.getName()), 0);
 		}
 		String parameterValue = (isAttribute ? parameterString.split("=", 2)[1] : parameterString ); // 2-argument split to enable empty strings as attribute value
 		if (!isTypeOK(syntaxParameter.getType(), parameterValue)) {
-			throw new ParseException(uiMsg(MSG_ID_PARAMETER_TYPE_MISMATCH, syntaxParameter.getType(), parameterPosition, syntaxCommand.getName()), 0);
+			throw new ParseException(ProseoLogger.format(UIMessage.PARAMETER_TYPE_MISMATCH, syntaxParameter.getType(), parameterPosition, syntaxCommand.getName()), 0);
 		}
 		
 		// Prepare and return parsed parameter
@@ -338,7 +337,7 @@ public class CLIParser {
 				// Handle token as option
 				if (parameterFound) {
 					// Option not allowed after parameters
-					throw new ParseException(uiMsg(MSG_ID_OPTION_NOT_ALLOWED, token), 0);
+					throw new ParseException(ProseoLogger.format(UIMessage.OPTION_NOT_ALLOWED, token), 0);
 				}
 				optionFound = true;
 				currentCommand.getOptions().addAll(parseOption(token, currentSyntaxCommand));
@@ -381,10 +380,10 @@ public class CLIParser {
 					currentCommand.setSyntaxCommand(currentSyntaxCommand);
 				} else if (null == currentSyntaxCommand) {
 					// Illegal command (because no parameters are expected without a command)
-					throw new ParseException(uiMsg(MSG_ID_ILLEGAL_COMMAND, token), 0);
+					throw new ParseException(ProseoLogger.format(UIMessage.ILLEGAL_COMMAND, token), 0);
 				} else if (currentSyntaxCommand.getParameters().isEmpty()) {
 					// Illegal command (because no parameters are expected without a command)
-					throw new ParseException(uiMsg(MSG_ID_ILLEGAL_SUBCOMMAND, token), 0);
+					throw new ParseException(ProseoLogger.format(UIMessage.ILLEGAL_SUBCOMMAND, token), 0);
 				} else {
 					// Handle token as parameter (no more commands or options allowed)
 					optionFound = true;
@@ -407,7 +406,7 @@ public class CLIParser {
 					}
 				}
 				// Required parameter not found
-				throw new ParseException(uiMsg(MSG_ID_PARAMETER_MISSING, syntaxParameter.getName(), currentCommand.getName()), 0);
+				throw new ParseException(ProseoLogger.format(UIMessage.PARAMETER_MISSING, syntaxParameter.getName(), currentCommand.getName()), 0);
 			} 
 		}
 		if (logger.isTraceEnabled()) logger.trace("<<< parse()");

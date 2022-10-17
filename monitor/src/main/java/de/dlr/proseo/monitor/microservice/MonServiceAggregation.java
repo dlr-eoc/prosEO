@@ -12,13 +12,14 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.MonitorMessage;
 import de.dlr.proseo.model.MonExtService;
 import de.dlr.proseo.model.MonExtServiceStateOperationDay;
 import de.dlr.proseo.model.MonExtServiceStateOperationMonth;
@@ -37,7 +38,7 @@ import de.dlr.proseo.monitor.MonitorConfiguration;
  */
 @Transactional
 public class MonServiceAggregation extends Thread {
-	private static Logger logger = LoggerFactory.getLogger(MonServiceAggregation.class);	
+	private static ProseoLogger logger = new ProseoLogger(MonServiceAggregation.class);	
 
 	/** Transaction manager for transaction control */
 
@@ -243,7 +244,7 @@ public class MonServiceAggregation extends Thread {
 				try {
 					timeFrom = Instant.parse(config.getAggregationStart()).truncatedTo(ChronoUnit.DAYS);
 				} catch (DateTimeParseException ex) {
-					logger.warn("Illegal config value productAggregationStart; {}", config.getAggregationStart());
+					logger.log(MonitorMessage.ILLEGAL_CONFIG_VALUE, config.getAggregationStart());
 				}
 			} 
 		} else {
@@ -277,13 +278,13 @@ public class MonServiceAggregation extends Thread {
     				return null;
     			});
     		} catch (NoResultException e) {
-    			logger.error(e.getMessage());
+    			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
     		} catch (IllegalArgumentException e) {
-    			logger.error(e.getMessage());
+    			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
     		} catch (TransactionException e) {
-    			logger.error(e.getMessage());
+    			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
     		} catch (RuntimeException e) {
-    			logger.error(e.getMessage(), e);
+    			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
     		}
     		try {
     			sleep(wait);

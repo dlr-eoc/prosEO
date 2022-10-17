@@ -11,13 +11,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
@@ -25,7 +26,6 @@ import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.rest.model.PodKube;
 import de.dlr.proseo.planner.util.UtilService;
@@ -59,7 +59,7 @@ public class KubeConfig {
 	/**
 	 * Logger of this class 
 	 */
-	private static Logger logger = LoggerFactory.getLogger(KubeConfig.class);
+	private static ProseoLogger logger = new ProseoLogger(KubeConfig.class);
 
 	/**
 	 * The production planner instance
@@ -400,7 +400,7 @@ public class KubeConfig {
 						 processingEngineToken, 
 						 false);
 				} catch (Exception ex) {
-					logger.info(ex.getMessage());
+					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, ex.getMessage());
 				}
 			}
 			if (client == null) {
@@ -412,14 +412,14 @@ public class KubeConfig {
                 	}
                     client = Config.fromConfig(kconf);
                 } catch (IOException e) {
-                    logger.info("Cannot access Kubernetes Configuration file: " + e.getMessage());
+                	logger.log(PlannerMessage.CONFIGURATION_ACCESS_FAILED, e.getMessage());
                 }
                 if (client == null) {
                     client = Config.fromUrl(url, false);
                 }
 			}
 			if (client == null) {
-				logger.error("Could not connect with facility " + url);
+				logger.log(PlannerMessage.FACILITY_CONNECTION_FAILED, url);
 			}
 			if (logger.isTraceEnabled()) {
 				client.setDebugging(true);
@@ -491,7 +491,7 @@ public class KubeConfig {
 		try {
 			k8sJobList = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
 		} catch (ApiException e) {
-			logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
 			return;
 		}
 		// update kubeJob list
@@ -582,7 +582,7 @@ public class KubeConfig {
 		try {
 			list = apiV1.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
 		} catch (ApiException e) {
-			logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
 			return null;
 		}
 		return list;
@@ -599,7 +599,7 @@ public class KubeConfig {
 			list =  batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
 			
 		} catch (ApiException e) {
-			logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
 			return null;
 		}
 		return list;
@@ -621,7 +621,7 @@ public class KubeConfig {
 		} catch (Exception e) {
 			if (e instanceof RuntimeException) {
 				// We did not throw this one!
-				logger.error("Job creation failed with exception: " + e.getMessage(), e);
+				logger.log(PlannerMessage.JOB_CREATION_FAILED, e);
 			}
 			aJob = null;
 		}
@@ -723,10 +723,10 @@ public class KubeConfig {
 		} catch (ApiException e) {
 			if (e.getCode() == 404) {
 				// do nothing
-				Messages.KUBECONFIG_JOB_NOT_FOUND.log(logger, name);
+				logger.log(PlannerMessage.KUBECONFIG_JOB_NOT_FOUND, name);
 				return null;			
 			} else {
-				logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
 				return null;				
 			}
 		} catch (Exception e) {
@@ -734,7 +734,7 @@ public class KubeConfig {
 				// nothing to do 
 				// cause there is a bug in Kubernetes API
 			} else {
-				logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
 				return null;
 			}
 		}
@@ -760,7 +760,7 @@ public class KubeConfig {
 				// pod not found
 				return null;
 			} else {
-				logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
 				return null;
 			}
 		}
@@ -901,7 +901,7 @@ public class KubeConfig {
 				}						
 			}
 		} catch (ApiException e) {
-			logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
 			return false;
 		}
 		

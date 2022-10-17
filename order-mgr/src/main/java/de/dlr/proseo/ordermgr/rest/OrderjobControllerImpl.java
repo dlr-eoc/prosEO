@@ -16,12 +16,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.logging.http.HttpPrefix;
+import de.dlr.proseo.logging.http.ProseoHttp;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.OrderMgrMessage;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.rest.OrderjobController;
 import de.dlr.proseo.model.rest.model.RestJob;
 import de.dlr.proseo.model.service.SecurityService;
-import de.dlr.proseo.ordermgr.Messages;
 import de.dlr.proseo.ordermgr.rest.model.RestUtil;
 
 /**
@@ -32,7 +36,8 @@ import de.dlr.proseo.ordermgr.rest.model.RestUtil;
  */
 @Component
 public class OrderjobControllerImpl implements OrderjobController {
-	private static Logger logger = LoggerFactory.getLogger(OrderjobControllerImpl.class);
+	private static ProseoLogger logger = new ProseoLogger(OrderjobControllerImpl.class);
+	private static ProseoHttp http = new ProseoHttp(logger,HttpPrefix.ORDER_MGR);
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -75,18 +80,16 @@ public class OrderjobControllerImpl implements OrderjobController {
 			}		
 
 			if (resultList.isEmpty()) {
-				String message = Messages.JOBS_FOR_ORDER_NOT_EXIST.log(logger, String.valueOf(orderId));
-
-				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+				String message = logger.log(OrderMgrMessage.JOBS_FOR_ORDER_NOT_EXIST, String.valueOf(orderId));
+				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 			}
 			
-			Messages.JOBS_RETRIEVED.log(logger, orderId);
+			logger.log(OrderMgrMessage.JOBS_RETRIEVED, orderId);
 
 			return new ResponseEntity<>(resultList, HttpStatus.OK);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			String message = logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e); 
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -107,7 +110,7 @@ public class OrderjobControllerImpl implements OrderjobController {
 			Query query = createJobsQuery(states, orderId, null, null, null, true);
 			Object resultObject = query.getSingleResult();
 
-			Messages.JOBCOUNT_RETRIEVED.log(logger, orderId);
+			logger.log(OrderMgrMessage.JOBCOUNT_RETRIEVED, orderId);
 
 			if (resultObject instanceof Long) {
 				return new ResponseEntity<>(((Long)resultObject).toString(), HttpStatus.OK);	
@@ -117,9 +120,7 @@ public class OrderjobControllerImpl implements OrderjobController {
 			}
 			return new ResponseEntity<>("0", HttpStatus.OK);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e)), HttpStatus.INTERNAL_SERVER_ERROR);
 		}	
 	}
 	
@@ -172,7 +173,7 @@ public class OrderjobControllerImpl implements OrderjobController {
 			
 			Object resultObject = (long) em.createQuery(jpqlQuery).getResultList().indexOf(jobId);
 
-			Messages.JOBINDEX_RETRIEVED.log(logger, orderId);
+			logger.log(OrderMgrMessage.JOBINDEX_RETRIEVED, orderId);
 
 			if (resultObject instanceof Long) {
 				return new ResponseEntity<>(((Long)resultObject).toString(), HttpStatus.OK);	
@@ -182,9 +183,9 @@ public class OrderjobControllerImpl implements OrderjobController {
 			}
 			return new ResponseEntity<>("0", HttpStatus.OK);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			String message = logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}	
 	}
 

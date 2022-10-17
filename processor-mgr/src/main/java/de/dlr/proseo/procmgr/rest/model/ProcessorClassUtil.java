@@ -5,9 +5,7 @@
  */
 package de.dlr.proseo.procmgr.rest.model;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.ProductClass;
 
@@ -19,7 +17,7 @@ import de.dlr.proseo.model.ProductClass;
 public class ProcessorClassUtil {
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProcessorClassUtil.class);
+	private static ProseoLogger logger = new ProseoLogger(ProcessorClassUtil.class);
 	
 	/**
 	 * Convert a prosEO model processor class into a REST processor class

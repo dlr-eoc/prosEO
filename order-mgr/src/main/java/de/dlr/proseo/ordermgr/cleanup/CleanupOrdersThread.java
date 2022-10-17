@@ -4,6 +4,8 @@ import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
+
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.ordermgr.OrderManager;
 
 /**
@@ -17,8 +19,8 @@ public class CleanupOrdersThread  extends Thread {
 	/**
 	 * Logger for this class
 	 */
-	private static Logger logger = LoggerFactory.getLogger(CleanupOrdersThread.class);
-	
+	private static ProseoLogger logger = new ProseoLogger(CleanupOrdersThread.class);
+
 	/**
 	 * The order manager instance
 	 */

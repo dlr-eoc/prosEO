@@ -18,6 +18,14 @@
 		<module>backend</module>
 	</modules>
 
+	<dependencies>
+		<dependency>
+			<groupId>de.dlr.proseo</groupId>
+			<artifactId>proseo-logging</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+	</dependencies>
+	
 	<url>https://github.com/dlr-eoc/prosEO/ui</url>
 	<organization>
 		<name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>

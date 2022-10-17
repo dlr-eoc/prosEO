@@ -5,8 +5,6 @@
  */
 package de.dlr.proseo.ui.cli;
 
-import static de.dlr.proseo.ui.backend.UIMessages.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.time.DateTimeException;
@@ -14,14 +12,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.rest.model.RestMission;
 import de.dlr.proseo.model.rest.model.RestOrbit;
 import de.dlr.proseo.model.rest.model.RestSpacecraft;
@@ -91,7 +89,7 @@ public class MissionCommandRunner {
 	private ServiceConnection serviceConnection;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(MissionCommandRunner.class);
+	private static ProseoLogger logger = new ProseoLogger(MissionCommandRunner.class);
 
 	/**
 	 * Retrieve the mission with the given code, notifying the user of any errors occurring
@@ -111,38 +109,34 @@ public class MissionCommandRunner {
 					try {
 						return mapper.convertValue(result, RestMission.class);
 					} catch (Exception e) {
-						String message = uiMsg(MSG_ID_MISSION_NOT_READABLE, loginManager.getMission(), e.getMessage());
-						logger.error(message);
+						String message = logger.log(UIMessage.MISSION_NOT_READABLE, loginManager.getMission(), e.getMessage());
 						System.err.println(message);
 						return null;
 					}
 				}
 			}
-			String message = uiMsg(MSG_ID_MISSION_NOT_FOUND, missionCode);
-			logger.error(message);
+			String message = logger.log(UIMessage.MISSION_NOT_FOUND, missionCode);
 			System.err.println(message);
 			return null;
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_MISSION_NOT_FOUND, loginManager.getMission());
+				message = logger.log(UIMessage.MISSION_NOT_FOUND, loginManager.getMission());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
+						logger.log(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, "(" + e.getRawStatusCode() + ") " + e.getMessage());
+				message = logger.log(UIMessage.EXCEPTION, "(" + e.getRawStatusCode() + ") " + e.getMessage());
 			}
-			logger.error(message);
 			System.err.println(message);
 			return null;
 		} catch (RuntimeException e) {
-			String message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
-			logger.error(message);
+			String message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 			System.err.println(message);
 			e.printStackTrace(System.err);
 			return null;
@@ -160,7 +154,7 @@ public class MissionCommandRunner {
 		
 		/* Only allowed when not logged in to a mission! */
 		if (null != loginManager.getMission()) {
-			System.err.println(uiMsg(MSG_ID_LOGGED_IN_TO_MISSION, loginManager.getMission()));
+			System.err.println(ProseoLogger.format(UIMessage.LOGGED_IN_TO_MISSION, loginManager.getMission()));
 			return;
 		}
 		
@@ -186,7 +180,7 @@ public class MissionCommandRunner {
 			try {
 				restMission = CLIUtil.parseObjectFile(missionFile, missionFileFormat, RestMission.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -202,7 +196,7 @@ public class MissionCommandRunner {
 				try {
 					CLIUtil.setAttribute(restMission, param.getValue());
 				} catch (Exception e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -214,7 +208,7 @@ public class MissionCommandRunner {
 			System.out.print(PROMPT_MISSION_CODE);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restMission.setCode(response);
@@ -223,7 +217,7 @@ public class MissionCommandRunner {
 			System.out.print(PROMPT_MISSION_NAME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restMission.setName(response);
@@ -232,7 +226,7 @@ public class MissionCommandRunner {
 			System.out.print(PROMPT_FILE_TEMPLATE);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restMission.setProductFileTemplate(response);
@@ -246,28 +240,27 @@ public class MissionCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getStatusText());
+				message = logger.log(UIMessage.MISSION_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 
 		/* Report success, giving newly assigned processor class ID */
-		String message = uiMsg(MSG_ID_MISSION_CREATED,
+		String message = logger.log(UIMessage.MISSION_CREATED,
 				restMission.getCode(), restMission.getId());
-		logger.info(message);
 		System.out.println(message);
 	}
 	
@@ -303,7 +296,7 @@ public class MissionCommandRunner {
 				} catch (IllegalArgumentException e) {
 					System.err.println(e.getMessage());
 				} catch (IOException e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				}
 			}
 			return;
@@ -321,21 +314,21 @@ public class MissionCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_MISSIONS_FOUND);
+				message = logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
@@ -347,7 +340,7 @@ public class MissionCommandRunner {
 				System.err.println(e.getMessage());
 				return;
 			} catch (IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			} 
 		} else {
@@ -397,7 +390,7 @@ public class MissionCommandRunner {
 			try {
 				updatedMission = CLIUtil.parseObjectFile(missionFile, missionFileFormat, RestMission.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -409,7 +402,7 @@ public class MissionCommandRunner {
 			try {
 				CLIUtil.setAttribute(updatedMission, param.getValue());
 			} catch (Exception e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -450,33 +443,32 @@ public class MissionCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_MISSION_NOT_FOUND_BY_ID, restMission.getId());
+				message = logger.log(UIMessage.MISSION_NOT_FOUND_BY_ID, restMission.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getStatusText());
+				message = logger.log(UIMessage.MISSION_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
 		/* Report success, giving new processor class version */
-		String message = uiMsg(MSG_ID_MISSION_UPDATED, restMission.getId(), restMission.getVersion());
-		logger.info(message);
+		String message = logger.log(UIMessage.MISSION_UPDATED, restMission.getId(), restMission.getVersion());
 		System.out.println(message);
 	}
 
@@ -490,7 +482,7 @@ public class MissionCommandRunner {
 
 		/* Only allowed when not logged in to a mission! */
 		if (null != loginManager.getMission()) {
-			System.err.println(uiMsg(MSG_ID_LOGGED_IN_TO_MISSION, loginManager.getMission()));
+			System.err.println(ProseoLogger.format(UIMessage.LOGGED_IN_TO_MISSION, loginManager.getMission()));
 			return;
 		}
 		
@@ -509,14 +501,14 @@ public class MissionCommandRunner {
 		}
 		if (deleteProducts && !forcedDelete) {
 			// "delete-products" only allowed with "force" to avoid unintentional data loss
-			System.err.println(uiMsg(MSG_ID_DELETE_PRODUCTS_WITHOUT_FORCE));
+			System.err.println(ProseoLogger.format(UIMessage.DELETE_PRODUCTS_WITHOUT_FORCE));
 			return;
 		}
 		
 		/* Get mission code from command parameters */
 		if (deleteCommand.getParameters().isEmpty()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_MISSION_CODE_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_MISSION_CODE_GIVEN));
 			return;
 		}
 		String missionCode = deleteCommand.getParameters().get(0).getValue();
@@ -538,29 +530,28 @@ public class MissionCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_MISSION_NOT_FOUND, missionCode);
+				message = logger.log(UIMessage.MISSION_NOT_FOUND, missionCode);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				message = uiMsg(MSG_ID_MISSION_DELETE_FAILED, missionCode, e.getMessage());
+				message = logger.log(UIMessage.MISSION_DELETE_FAILED, missionCode, e.getMessage());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (Exception e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
 		/* Report success */
-		String message = uiMsg(MSG_ID_MISSION_DELETED, missionCode);
-		logger.info(message);
+		String message = logger.log(UIMessage.MISSION_DELETED, missionCode);
 		System.out.println(message);
 	}
 	
@@ -595,7 +586,7 @@ public class MissionCommandRunner {
 			try {
 				restSpacecraft = CLIUtil.parseObjectFile(processorFile, processorFileFormat, RestSpacecraft.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -611,7 +602,7 @@ public class MissionCommandRunner {
 				try {
 					CLIUtil.setAttribute(restSpacecraft, param.getValue());
 				} catch (Exception e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -623,7 +614,7 @@ public class MissionCommandRunner {
 			System.out.print(PROMPT_SPACECRAFT_CODE);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restSpacecraft.setCode(response);
@@ -632,7 +623,7 @@ public class MissionCommandRunner {
 			System.out.print(PROMPT_SPACECRAFT_NAME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restSpacecraft.setName(response);
@@ -647,9 +638,8 @@ public class MissionCommandRunner {
 		
 		for (RestSpacecraft oldSpacecraft: restMission.getSpacecrafts()) {
 			if (restSpacecraft.getCode().equals(oldSpacecraft.getCode())) {
-				String message = uiMsg(MSG_ID_SPACECRAFT_EXISTS,
+				String message = logger.log(UIMessage.SPACECRAFT_EXISTS,
 						restSpacecraft.getCode(), loginManager.getMission());
-				logger.error(message);
 				System.err.println(message);
 				return;
 			}
@@ -665,25 +655,24 @@ public class MissionCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_MISSION_NOT_FOUND_BY_ID, restMission.getId());
+				message = logger.log(UIMessage.MISSION_NOT_FOUND_BY_ID, restMission.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getStatusText());
+				message = logger.log(UIMessage.MISSION_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
+						logger.log(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, "(" + e.getRawStatusCode() + ") " + e.getMessage());
+				message = logger.log(UIMessage.EXCEPTION, "(" + e.getRawStatusCode() + ") " + e.getMessage());
 			}
-			logger.error(message);
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			e.printStackTrace(System.err);
 			return;
 		}
@@ -691,9 +680,8 @@ public class MissionCommandRunner {
 		/* Report success, giving newly assigned processor ID and version */
 		for (RestSpacecraft missionSpacecraft: restMission.getSpacecrafts()) {
 			if (restSpacecraft.getCode().equals(missionSpacecraft.getCode())) {
-				String message = uiMsg(MSG_ID_SPACECRAFT_ADDED,
+				String message = logger.log(UIMessage.SPACECRAFT_ADDED,
 						missionSpacecraft.getCode(), missionSpacecraft.getId());
-				logger.info(message);
 				System.out.println(message);
 				break;
 			}
@@ -711,7 +699,7 @@ public class MissionCommandRunner {
 		/* Get spacecraft code from command parameters */
 		if (1 > removeCommand.getParameters().size()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_SPACECRAFT_CODE_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_SPACECRAFT_CODE_GIVEN));
 			return;
 		}
 		String spacecraftCode = removeCommand.getParameters().get(0).getValue();
@@ -731,8 +719,7 @@ public class MissionCommandRunner {
 			}
 		}
 		if (null == spacecraftToDelete) {
-			String message = uiMsg(MSG_ID_SPACECRAFT_NOT_FOUND, spacecraftCode, loginManager.getMission());
-			logger.info(message);
+			String message = logger.log(UIMessage.SPACECRAFT_NOT_FOUND, spacecraftCode, loginManager.getMission());
 			System.err.println(message);
 			return;
 		}
@@ -747,30 +734,29 @@ public class MissionCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_MISSION_NOT_FOUND_BY_ID, restMission.getId());
+				message = logger.log(UIMessage.MISSION_NOT_FOUND_BY_ID, restMission.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getStatusText());
+				message = logger.log(UIMessage.MISSION_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 
 		/* Report success, giving newly assigned processor ID and version */
-		String message = uiMsg(MSG_ID_SPACECRAFT_REMOVED, spacecraftCode, restMission.getCode());
-		logger.info(message);
+		String message = logger.log(UIMessage.SPACECRAFT_REMOVED, spacecraftCode, restMission.getCode());
 		System.out.println(message);
 	}
 	
@@ -806,7 +792,7 @@ public class MissionCommandRunner {
 			try {
 				orbitList = CLIUtil.parseObjectFile(orbitFile, orbitFileFormat, List.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -833,7 +819,7 @@ public class MissionCommandRunner {
 					// First parameter is spacecraft code
 					String spacecraftCode = param.getValue();
 					if (!validSpacecraftCodes.contains(spacecraftCode)) {
-						System.err.println(uiMsg(MSG_ID_SPACECRAFT_NOT_FOUND, spacecraftCode, loginManager.getMission()));
+						System.err.println(ProseoLogger.format(UIMessage.SPACECRAFT_NOT_FOUND, spacecraftCode, loginManager.getMission()));
 						return;
 					}
 					restOrbit.setSpacecraftCode(spacecraftCode);
@@ -842,7 +828,7 @@ public class MissionCommandRunner {
 					try {
 						CLIUtil.setAttribute(restOrbit, param.getValue());
 					} catch (Exception e) {
-						System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+						System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 						return;
 					}
 				}
@@ -853,11 +839,11 @@ public class MissionCommandRunner {
 				System.out.print(PROMPT_SPACECRAFT_CODE);
 				String response = System.console().readLine();
 				if (response.isBlank()) {
-					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+					System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 					return;
 				}
 				if (!validSpacecraftCodes.contains(response)) {
-					System.err.println(uiMsg(MSG_ID_SPACECRAFT_NOT_FOUND, response, loginManager.getMission()));
+					System.err.println(ProseoLogger.format(UIMessage.SPACECRAFT_NOT_FOUND, response, loginManager.getMission()));
 					continue;
 				}
 				restOrbit.setSpacecraftCode(response);
@@ -866,39 +852,39 @@ public class MissionCommandRunner {
 				System.out.print(PROMPT_ORBIT_NUMBER);
 				String response = System.console().readLine();
 				if (response.isBlank()) {
-					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+					System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 					return;
 				}
 				try {
 					restOrbit.setOrbitNumber(Long.parseLong(response));
 				} catch (NumberFormatException e) {
-					System.err.println(uiMsg(MSG_ID_ORBIT_NUMBER_INVALID, response));
+					System.err.println(ProseoLogger.format(UIMessage.ORBIT_NUMBER_INVALID, response));
 				}
 			}
 			while (null == restOrbit.getStartTime() || restOrbit.getStartTime().isBlank()) {
 				System.out.print(PROMPT_START_TIME);
 				String response = System.console().readLine();
 				if (response.isBlank()) {
-					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+					System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 					return;
 				}
 				try {
 					restOrbit.setStartTime(OrbitTimeFormatter.format(CLIUtil.parseDateTime(response))); // no time zone in input expected
 				} catch (DateTimeException e) {
-					System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
+					System.err.println(ProseoLogger.format(UIMessage.INVALID_TIME, response));
 				}
 			}
 			while (null == restOrbit.getStopTime() || restOrbit.getStopTime().isBlank()) {
 				System.out.print(PROMPT_STOP_TIME);
 				String response = System.console().readLine();
 				if (response.isBlank()) {
-					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+					System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 					return;
 				}
 				try {
 					restOrbit.setStopTime(OrbitTimeFormatter.format(CLIUtil.parseDateTime(response))); // no time zone in input expected
 				} catch (DateTimeException e) {
-					System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
+					System.err.println(ProseoLogger.format(UIMessage.INVALID_TIME, response));
 				}
 			}
 			orbitList.add(restOrbit);
@@ -912,27 +898,26 @@ public class MissionCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_ORBIT_DATA_INVALID, e.getStatusText());
+				message = logger.log(UIMessage.ORBIT_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 
 		/* Report success, giving number of orbits created */
-		String message = uiMsg(MSG_ID_ORBITS_CREATED, orbitList.size());
-		logger.info(message);
+		String message = logger.log(UIMessage.ORBITS_CREATED, orbitList.size());
 		System.out.println(message);
 	}
 	
@@ -980,13 +965,13 @@ public class MissionCommandRunner {
 		// First parameter is spacecraft code
 		String spacecraftCode = showCommand.getParameters().get(0).getValue();
 		if (!validSpacecraftCodes.contains(spacecraftCode)) {
-			System.err.println(uiMsg(MSG_ID_SPACECRAFT_NOT_FOUND, spacecraftCode, loginManager.getMission()));
+			System.err.println(ProseoLogger.format(UIMessage.SPACECRAFT_NOT_FOUND, spacecraftCode, loginManager.getMission()));
 			return;
 		}
 
 		/* Prepare request URI */
 		if (1 > showCommand.getParameters().size()) {
-			System.err.println(uiMsg(MSG_ID_NO_SPACECRAFT_CODE_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_SPACECRAFT_CODE_GIVEN));
 			return;
 		}
 		String requestURI = URI_PATH_ORBITS + "?spacecraftCode=" + spacecraftCode;
@@ -1006,21 +991,21 @@ public class MissionCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_ORBITS_FOUND);
+				message = logger.log(UIMessage.NO_ORBITS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
@@ -1032,7 +1017,7 @@ public class MissionCommandRunner {
 				System.err.println(e.getMessage());
 				return;
 			} catch (IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			} 
 		} else {
@@ -1080,7 +1065,7 @@ public class MissionCommandRunner {
 			try {
 				orbitList = CLIUtil.parseObjectFile(orbitFile, orbitFileFormat, List.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -1107,7 +1092,7 @@ public class MissionCommandRunner {
 					// First parameter is spacecraft code
 					String spacecraftCode = param.getValue();
 					if (!validSpacecraftCodes.contains(spacecraftCode)) {
-						System.err.println(uiMsg(MSG_ID_SPACECRAFT_NOT_FOUND, spacecraftCode, loginManager.getMission()));
+						System.err.println(ProseoLogger.format(UIMessage.SPACECRAFT_NOT_FOUND, spacecraftCode, loginManager.getMission()));
 						return;
 					}
 					restOrbit.setSpacecraftCode(spacecraftCode);
@@ -1116,7 +1101,7 @@ public class MissionCommandRunner {
 					try {
 						restOrbit.setOrbitNumber(Long.parseLong(param.getValue()));
 					} catch (NumberFormatException e) {
-						System.err.println(uiMsg(MSG_ID_ORBIT_NUMBER_INVALID, param.getValue()));
+						System.err.println(ProseoLogger.format(UIMessage.ORBIT_NUMBER_INVALID, param.getValue()));
 						return;
 					}
 					;
@@ -1125,7 +1110,7 @@ public class MissionCommandRunner {
 					try {
 						CLIUtil.setAttribute(restOrbit, param.getValue());
 					} catch (Exception e) {
-						System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+						System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 						return;
 					}
 				}
@@ -1143,11 +1128,11 @@ public class MissionCommandRunner {
 				// No database ID given, check for natural keys
 				if (null == updatedOrbit.getSpacecraftCode() || updatedOrbit.getSpacecraftCode().isBlank()) {
 					// No spacecraft code given
-					System.err.println(uiMsg(MSG_ID_NO_SPACECRAFT_CODE_GIVEN));
+					System.err.println(ProseoLogger.format(UIMessage.NO_SPACECRAFT_CODE_GIVEN));
 					return;
 				} else if (null == updatedOrbit.getOrbitNumber() || 0 == updatedOrbit.getOrbitNumber().longValue()) {
 					// No orbit number given
-					System.err.println(uiMsg(MSG_ID_NO_ORBIT_NUMBER_GIVEN));
+					System.err.println(ProseoLogger.format(UIMessage.NO_ORBIT_NUMBER_GIVEN));
 					return;
 				}
 			}
@@ -1161,9 +1146,8 @@ public class MissionCommandRunner {
 								+ "&orbitNumberTo=" + updatedOrbit.getOrbitNumber(),
 							List.class, loginManager.getUser(), loginManager.getPassword());
 					if (resultList.isEmpty()) {
-						String message = uiMsg(MSG_ID_ORBIT_NOT_FOUND,
+						String message = logger.log(UIMessage.ORBIT_NOT_FOUND,
 								updatedOrbit.getOrbitNumber(), updatedOrbit.getSpacecraftCode());
-						logger.error(message);
 						System.err.println(message);
 						return;
 					}
@@ -1177,24 +1161,22 @@ public class MissionCommandRunner {
 				String message = null;
 				switch (e.getRawStatusCode()) {
 				case org.apache.http.HttpStatus.SC_NOT_FOUND:
-					message = uiMsg(MSG_ID_ORBIT_NOT_FOUND,
+					message = logger.log(UIMessage.ORBIT_NOT_FOUND,
 							updatedOrbit.getOrbitNumber(), updatedOrbit.getSpacecraftCode());
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				case org.apache.http.HttpStatus.SC_FORBIDDEN:
 					message = (null == e.getStatusText() ?
-							uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission()) :
+							logger.log(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission()) :
 							e.getStatusText());
 					break;
 				default:
-					message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+					message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 				}
-				logger.error(message);
 				System.err.println(message);
 				return;
 			} catch (RuntimeException e) {
-				String message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
-				logger.error(message);
+				String message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 				System.err.println(message);
 				return;
 			}
@@ -1217,34 +1199,33 @@ public class MissionCommandRunner {
 				String message = null;
 				switch (e.getRawStatusCode()) {
 				case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-					System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+					System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 					return;
 				case org.apache.http.HttpStatus.SC_NOT_FOUND:
-					message = uiMsg(MSG_ID_ORBIT_NOT_FOUND_BY_ID, restOrbit.getId());
+					message = logger.log(UIMessage.ORBIT_NOT_FOUND_BY_ID, restOrbit.getId());
 					break;
 				case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-					message = uiMsg(MSG_ID_ORBIT_DATA_INVALID, e.getStatusText());
+					message = logger.log(UIMessage.ORBIT_DATA_INVALID, e.getStatusText());
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				case org.apache.http.HttpStatus.SC_FORBIDDEN:
 					message = (null == e.getStatusText() ?
-							uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission()) :
+							ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission()) :
 							e.getStatusText());
 					break;
 				default:
-					message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+					message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 				}
 				System.err.println(message);
 				return;
 			} catch (RuntimeException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			} 
 		}
 		
 		/* Report success, giving number of orbits updated */
-		String message = uiMsg(MSG_ID_ORBITS_UPDATED, orbitList.size());
-		logger.info(message);
+		String message = logger.log(UIMessage.ORBITS_UPDATED, orbitList.size());
 		System.out.println(message);
 	}
 	
@@ -1258,7 +1239,7 @@ public class MissionCommandRunner {
 
 		/* Get spacecraft code from command parameters */
 		if (1 > deleteCommand.getParameters().size()) {
-			System.err.println(uiMsg(MSG_ID_NO_SPACECRAFT_CODE_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_SPACECRAFT_CODE_GIVEN));
 			return;
 		}
 
@@ -1276,13 +1257,13 @@ public class MissionCommandRunner {
 		// First parameter is spacecraft code
 		String spacecraftCode = deleteCommand.getParameters().get(0).getValue();
 		if (!validSpacecraftCodes.contains(spacecraftCode)) {
-			System.err.println(uiMsg(MSG_ID_SPACECRAFT_NOT_FOUND, spacecraftCode, loginManager.getMission()));
+			System.err.println(ProseoLogger.format(UIMessage.SPACECRAFT_NOT_FOUND, spacecraftCode, loginManager.getMission()));
 			return;
 		}
 
 		/* Get "from" orbit from command parameters */
 		if (2 > deleteCommand.getParameters().size()) {
-			System.err.println(uiMsg(MSG_ID_NO_ORBIT_NUMBER_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_ORBIT_NUMBER_GIVEN));
 			return;
 		}
 		Integer fromOrbit = Integer.parseInt(deleteCommand.getParameters().get(1).getValue());
@@ -1304,26 +1285,25 @@ public class MissionCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_ORBITS_FOUND);
+				message = logger.log(UIMessage.NO_ORBITS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (Exception e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		if (resultList.isEmpty()) {
-			String message = uiMsg(MSG_ID_NO_ORBITS_FOUND);
-			logger.error(message);
+			String message = logger.log(UIMessage.NO_ORBITS_FOUND);
 			System.err.println(message);
 			return;
 		}
@@ -1340,29 +1320,28 @@ public class MissionCommandRunner {
 				String message = null;
 				switch (e.getRawStatusCode()) {
 				case org.apache.http.HttpStatus.SC_NOT_FOUND:
-					message = uiMsg(MSG_ID_ORBIT_NOT_FOUND_BY_ID, restOrbit.getId());
+					message = logger.log(UIMessage.ORBIT_NOT_FOUND_BY_ID, restOrbit.getId());
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 					message = (null == e.getStatusText() ?
-							uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission()) :
+							ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission()) :
 							e.getStatusText());
 					break;
 				case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-					message = uiMsg(MSG_ID_ORBIT_DELETE_FAILED, restOrbit.getOrbitNumber(), spacecraftCode, e.getMessage());
+					message = logger.log(UIMessage.ORBIT_DELETE_FAILED, restOrbit.getOrbitNumber(), spacecraftCode, e.getMessage());
 					break;
 				default:
-					message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+					message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 				}
 				System.err.println(message);
 				return;
 			} catch (Exception e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			} 
 		}
 		/* Report success */
-		String message = uiMsg(MSG_ID_ORBITS_DELETED, resultList.size());
-		logger.info(message);
+		String message = logger.log(UIMessage.ORBITS_DELETED, resultList.size());
 		System.out.println(message);
 	}
 	
@@ -1379,7 +1358,7 @@ public class MissionCommandRunner {
 			if (CMD_MISSION.equals(command.getName()) && null != command.getSubcommand() && CMD_SHOW.equals(command.getSubcommand().getName()) ) {
 				// OK, "mission show" allowed without login
 			} else {
-				System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN, command.getName()));
+				System.err.println(ProseoLogger.format(UIMessage.USER_NOT_LOGGED_IN, command.getName()));
 				return;
 			}
 		}
@@ -1389,14 +1368,14 @@ public class MissionCommandRunner {
 							|| CMD_DELETE.equals(command.getSubcommand().getName())) ) {
 				// OK, "mission show", "mission create" and "mission delete" allowed without login to a specific mission
 			} else {
-				System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN_TO_MISSION, command.getName()));
+				System.err.println(ProseoLogger.format(UIMessage.USER_NOT_LOGGED_IN_TO_MISSION, command.getName()));
 				return;
 			}
 		}
 		
 		/* Check argument */
 		if (!CMD_MISSION.equals(command.getName()) && !CMD_ORBIT.equals(command.getName())) {
-			System.err.println(uiMsg(MSG_ID_INVALID_COMMAND_NAME, command.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.INVALID_COMMAND_NAME, command.getName()));
 			return;
 		}
 		
@@ -1404,7 +1383,7 @@ public class MissionCommandRunner {
 		ParsedCommand subcommand = command.getSubcommand();
 
 		if (null == subcommand) {
-			System.err.println(uiMsg(MSG_ID_SUBCOMMAND_MISSING, command.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.SUBCOMMAND_MISSING, command.getName()));
 			return;
 		}
 
@@ -1417,7 +1396,7 @@ public class MissionCommandRunner {
 		/* Make sure a sub-subcommand is given for "spacecraft" */
 		ParsedCommand subsubcommand = subcommand.getSubcommand();
 		if (CMD_SPACECRAFT.equals(subcommand.getName()) && null == subcommand.getSubcommand()) {
-			System.err.println(uiMsg(MSG_ID_SUBCOMMAND_MISSING, subcommand.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.SUBCOMMAND_MISSING, subcommand.getName()));
 			return;
 		}
 
@@ -1438,7 +1417,7 @@ public class MissionCommandRunner {
 				case CMD_ADD:		addSpacecraft(subsubcommand); break COMMAND;
 				case CMD_REMOVE:	removeSpacecraft(subsubcommand); break COMMAND;
 				default:
-					System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, 
+					System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, 
 							command.getName() + " " + subcommand.getName() + " " + subsubcommand.getName()));
 					return;
 				}
@@ -1448,7 +1427,7 @@ public class MissionCommandRunner {
 			case CMD_UPDATE:	updateMission(subcommand); break COMMAND;
 			case CMD_DELETE:	deleteMission(subcommand); break COMMAND;
 			default:
-				System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
+				System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 				return;
 			}
 		case CMD_ORBIT:
@@ -1459,7 +1438,7 @@ public class MissionCommandRunner {
 			case CMD_UPDATE:	updateOrbit(subcommand); break COMMAND;
 			case CMD_DELETE:	deleteOrbit(subcommand); break COMMAND;
 			default:
-				System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
+				System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 				return;
 			}
 		}

@@ -327,18 +327,28 @@ public class S3Ops {
 	 */
 	public static Boolean v1FetchFile(AmazonS3 s3Client, String s3Bucket, String s3Key, File targetFile) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> v1FetchFile({}, {}, {})",
-				s3Client, s3Bucket, targetFile);
-		
-		// Make sure target file is not already present
-		if (targetFile.exists()) {
-			targetFile.delete();
-		}
+		if (logger.isTraceEnabled()) logger.trace(">>> v1FetchFile({}, {}, {}, {})",
+				s3Client, s3Bucket, s3Key, targetFile);
 		
 		// Download using TransferManager as per
-		// https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/examples-s3-transfermanager.html#transfermanager-downloading
-		TransferManager transferManager = TransferManagerBuilder.standard()
-				.withMultipartCopyPartSize(MULTIPART_UPLOAD_PARTSIZE_BYTES).withS3Client(s3Client).build();
+				// https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/examples-s3-transfermanager.html#transfermanager-downloading
+		TransferManager transferManager;
+		try {
+			// Make sure target file is not already present
+			if (targetFile.exists()) {
+				targetFile.delete();
+			}
+			
+			transferManager = TransferManagerBuilder.standard()
+					.withMultipartCopyPartSize(MULTIPART_UPLOAD_PARTSIZE_BYTES).withS3Client(s3Client).build();
+			if (null == transferManager) {
+				logger.error("Unable to create Transfer Manager");
+				return false;
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			return false;
+		}
 		
 		try {
 			Download download = transferManager.download(s3Bucket, s3Key, targetFile);

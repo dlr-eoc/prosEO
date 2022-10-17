@@ -31,14 +31,13 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.expression.EvaluationException;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.ParseException;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.enums.ProductQuality;
 import de.dlr.proseo.model.enums.ProductionType;
 
@@ -168,7 +167,7 @@ public class Product extends PersistentObject {
 	private Map<String, Parameter> parameters = new HashMap<>();
 	
 	/** The logger for this class */
-	private static final Logger logger = LoggerFactory.getLogger(Product.class);
+	private static final ProseoLogger logger = new ProseoLogger(Product.class);
 	
 	/**
 	 * Gets the universally unique product identifier

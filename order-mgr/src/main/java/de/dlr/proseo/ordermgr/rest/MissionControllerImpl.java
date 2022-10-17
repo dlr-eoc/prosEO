@@ -35,6 +35,11 @@ import de.dlr.proseo.model.rest.model.RestPayload;
 import de.dlr.proseo.model.rest.model.RestSpacecraft;
 import de.dlr.proseo.ordermgr.OrdermgrConfiguration;
 import de.dlr.proseo.ordermgr.rest.model.MissionUtil;
+import de.dlr.proseo.logging.http.HttpPrefix;
+import de.dlr.proseo.logging.http.ProseoHttp;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.OrderMgrMessage;
 import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Mission;
@@ -59,52 +64,6 @@ import de.dlr.proseo.model.service.SecurityService;
  */
 @Component
 public class MissionControllerImpl implements MissionController {
-
-	/* Message ID constants */
-	private static final int MSG_ID_MISSION_NOT_FOUND = 1001;
-	private static final int MSG_ID_NO_MISSIONS_FOUND = 1002;
-	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 1004;
-	private static final int MSG_ID_DELETE_PRODUCTS_WITHOUT_FORCE = 1005;
-	private static final int MSG_ID_PRODUCTS_EXIST = 1006;
-	private static final int MSG_ID_PRODUCTCLASSES_EXIST = 1007;
-	private static final int MSG_ID_PROCESSORCLASSES_EXIST = 1008;
-	private static final int MSG_ID_MISSION_DELETED = 1010;
-	private static final int MSG_ID_MISSION_UPDATED = 1011;
-	private static final int MSG_ID_MISSION_RETRIEVED = 1012;
-	private static final int MSG_ID_MISSION_CREATED = 1013;
-	private static final int MSG_ID_MISSIONS_RETRIEVED = 1014;
-	private static final int MSG_ID_MISSION_EXISTS = 1015;
-	private static final int MSG_ID_SPACECRAFT_EXISTS = 1016;
-	private static final int MSG_ID_MISSION_CODE_MISSING = 1017;
-	private static final int MSG_ID_MISSION_NOT_MODIFIED = 1018;
-
-	// Same as in other services
-	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
-
-	/* Message string constants */
-	private static final String MSG_NO_MISSIONS_FOUND = "(E%d) No missions found";
-	private static final String MSG_MISSION_NOT_FOUND = "(E%d) No mission found for ID %d";
-	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Mission deletion unsuccessful for ID %d";
-	private static final String MSG_DELETE_PRODUCTS_WITHOUT_FORCE = "(E%d) Option 'delete-products' not valid without option 'force'";
-	private static final String MSG_PRODUCTS_EXIST = "(E%d) Cannot delete mission %s due to existing products";
-	private static final String MSG_PRODUCTCLASSES_EXIST = "(E%d) Cannot delete mission %s due to existing product classes";
-	private static final String MSG_PROCESSORCLASSES_EXIST = "(E%d) Cannot delete mission %s due to existing processor classes";
-	private static final String MSG_MISSION_EXISTS = "(E%d) Mission with mission code %s already exists";
-	private static final String MSG_SPACECRAFT_EXISTS = "(E%d) Spacecraft with spacecraft code %s already exists for mission %s";
-	private static final String MSG_MISSION_CODE_MISSING = "(E%d) No mission code given";
-
-	private static final String MSG_MISSION_DELETED = "(I%d) Mission with database ID %d deleted";
-	private static final String MSG_MISSION_UPDATED = "(I%d) Mission %s updated";
-	private static final String MSG_MISSION_RETRIEVED = "(I%d) Mission %s retrieved";
-	private static final String MSG_MISSION_CREATED = "(I%d) Mission %s created";
-	private static final String MSG_MISSIONS_RETRIEVED = "(I%d) All missions retrieved";
-	private static final String MSG_MISSION_NOT_MODIFIED = "(I%d) Mission with id %d not modified (no changes)";
-
-	// Same as in other services
-	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
-	
-	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String MSG_PREFIX = "199 proseo-ordermgr-missioncontroller ";
 	
 	/** The Order Manager configuration */
 	@Autowired
@@ -127,19 +86,8 @@ public class MissionControllerImpl implements MissionController {
 	private EntityManager em;
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(MissionControllerImpl.class);
-
-	/**
-	 * Create an HTTP "Warning" header with the given text message
-	 * 
-	 * @param message the message text
-	 * @return an HttpHeaders object with a warning message
-	 */
-	private HttpHeaders errorHeaders(String message) {
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, MSG_PREFIX + message.replaceAll("\n", " "));
-		return responseHeaders;
-	}
+	private static ProseoLogger logger = new ProseoLogger(MissionControllerImpl.class);
+	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.ORDER_MGR);
 
 	/**
 	 * List of all missions with no search criteria
@@ -159,7 +107,7 @@ public class MissionControllerImpl implements MissionController {
 				if (code != null) {
 					Mission mission = RepositoryService.getMissionRepository().findByCode(code);
 					if (mission == null) {
-						throw new NoResultException(String.format(MSG_MISSION_NOT_FOUND, MSG_ID_MISSION_NOT_FOUND, code));
+						throw new NoResultException(logger.log(OrderMgrMessage.MISSION_NOT_FOUND, code));
 					}
 
 					if (logger.isDebugEnabled()) logger.debug("Found mission with ID {}", mission.getId());
@@ -170,7 +118,7 @@ public class MissionControllerImpl implements MissionController {
 					List<Mission> modelMissions = RepositoryService.getMissionRepository().findAll();
 
 					if(modelMissions.isEmpty()) {
-						throw new NoResultException(String.format(MSG_NO_MISSIONS_FOUND, MSG_ID_NO_MISSIONS_FOUND));
+						throw new NoResultException(logger.log(OrderMgrMessage.NO_MISSIONS_FOUND));
 					}
 
 					// Simple case: no search criteria set
@@ -185,14 +133,12 @@ public class MissionControllerImpl implements MissionController {
 				return resultList;
 			});
 		} catch (NoResultException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (TransactionException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
-		logger.info(String.format(MSG_MISSIONS_RETRIEVED, MSG_ID_MISSIONS_RETRIEVED));
+		logger.log(OrderMgrMessage.MISSIONS_RETRIEVED);
 		
 		return new ResponseEntity<>(result, HttpStatus.OK);
 	}
@@ -211,7 +157,7 @@ public class MissionControllerImpl implements MissionController {
 		
 		// Check valid mission code
 		if (null == mission.getCode() || mission.getCode().isBlank()) {
-			throw new IllegalArgumentException(String.format(MSG_MISSION_CODE_MISSING, MSG_ID_MISSION_CODE_MISSING, mission.getCode()));
+			throw new IllegalArgumentException(logger.log(OrderMgrMessage.MISSION_CODE_MISSING, mission.getCode()));
 		}
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
@@ -223,7 +169,7 @@ public class MissionControllerImpl implements MissionController {
 
 				// Check, whether mission exists already
 				if (null != RepositoryService.getMissionRepository().findByCode(mission.getCode())) {
-					throw new IllegalArgumentException(String.format(MSG_MISSION_EXISTS, MSG_ID_MISSION_EXISTS, mission.getCode()));
+					throw new IllegalArgumentException(logger.log(OrderMgrMessage.MISSION_EXISTS, mission.getCode()));
 				}
 
 				modelMission = RepositoryService.getMissionRepository().save(modelMission);
@@ -233,7 +179,7 @@ public class MissionControllerImpl implements MissionController {
 				for (RestSpacecraft restSpacecraft : mission.getSpacecrafts()) {
 					Spacecraft modelSpacecraft = new Spacecraft();
 					if (null != RepositoryService.getSpacecraftRepository().findByMissionAndCode(mission.getCode(), restSpacecraft.getCode())) {
-						throw new IllegalArgumentException(String.format(MSG_SPACECRAFT_EXISTS, MSG_ID_SPACECRAFT_EXISTS, 
+						throw new IllegalArgumentException(logger.log(OrderMgrMessage.SPACECRAFT_EXISTS, 
 								restSpacecraft.getCode(), mission.getCode()));
 					}
 
@@ -257,14 +203,12 @@ public class MissionControllerImpl implements MissionController {
 				return MissionUtil.toRestMission(modelMission);
 			});
 		} catch (IllegalArgumentException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (TransactionException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
-		logger.info(String.format(MSG_MISSION_CREATED, MSG_ID_MISSION_CREATED, restMission.getCode()));
+		logger.log(OrderMgrMessage.MISSION_CREATED, restMission.getCode());
 		
 		return new ResponseEntity<>(restMission, HttpStatus.CREATED);
 
@@ -289,20 +233,18 @@ public class MissionControllerImpl implements MissionController {
 				Optional<Mission> modelMission = RepositoryService.getMissionRepository().findById(id);
 
 				if (modelMission.isEmpty()) {
-					throw new NoResultException(String.format(MSG_MISSION_NOT_FOUND, MSG_ID_MISSION_NOT_FOUND, id));
+					throw new NoResultException(logger.log(OrderMgrMessage.MISSION_NOT_FOUND, id));
 				}
 
 				return MissionUtil.toRestMission(modelMission.get());
 			});
 		} catch (NoResultException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (TransactionException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
-		logger.info(String.format(MSG_MISSION_RETRIEVED, MSG_ID_MISSION_RETRIEVED, restMission.getCode()));
+		logger.log(OrderMgrMessage.MISSION_RETRIEVED, restMission.getCode());
 		
 		return new ResponseEntity<>(restMission, HttpStatus.OK);
 	}
@@ -324,10 +266,9 @@ public class MissionControllerImpl implements MissionController {
 
 		// Ensure user is authorized for the mission to update
 		if (!securityService.isAuthorizedForMission(mission.getCode())) {
-			String message = String.format(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
-					mission.getCode(), securityService.getMission());			
-			logger.error(message);
-			return new ResponseEntity<>(errorHeaders(message), HttpStatus.FORBIDDEN);
+			String message = logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
+					mission.getCode(), securityService.getMission());
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.FORBIDDEN);
 		}
 		
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
@@ -339,7 +280,7 @@ public class MissionControllerImpl implements MissionController {
 				Optional<Mission> optModelMission = RepositoryService.getMissionRepository().findById(id);
 
 				if (optModelMission.isEmpty()) {
-					throw new NoResultException(String.format(MSG_MISSION_NOT_FOUND, MSG_ID_MISSION_NOT_FOUND, id));
+					throw new NoResultException(logger.log(OrderMgrMessage.MISSION_NOT_FOUND, id));
 				}
 				Mission modelMission = optModelMission.get();
 
@@ -447,19 +388,17 @@ public class MissionControllerImpl implements MissionController {
 				return MissionUtil.toRestMission(modelMission);
 			});
 		} catch (NoResultException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (TransactionException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
 		HttpStatus httpStatus = HttpStatus.OK;
 		if (mission.getVersion() == restMission.getVersion()) {
 			httpStatus = HttpStatus.NOT_MODIFIED;
-			logger.info(String.format(MSG_MISSION_NOT_MODIFIED, MSG_ID_MISSION_NOT_MODIFIED, id));
+			logger.log(OrderMgrMessage.MISSION_NOT_MODIFIED, id);
 		} else {
-			logger.info(String.format(MSG_MISSION_UPDATED, MSG_ID_MISSION_UPDATED, restMission.getCode()));
+			logger.log(OrderMgrMessage.MISSION_UPDATED, restMission.getCode());
 		}
 		
 		return new ResponseEntity<>(restMission, httpStatus);
@@ -523,13 +462,13 @@ public class MissionControllerImpl implements MissionController {
 				// Test whether the mission id is valid
 				Optional<de.dlr.proseo.model.Mission> modelMission = RepositoryService.getMissionRepository().findById(id);
 				if (modelMission.isEmpty()) {
-					throw new NoResultException(String.format(MSG_MISSION_NOT_FOUND, MSG_ID_MISSION_NOT_FOUND, id));
+					throw new NoResultException(logger.log(OrderMgrMessage.MISSION_NOT_FOUND, id));
 				}
 				Mission mission = modelMission.get();
 				
 				// Check execution options
 				if (deleteProducts && !force) {
-					throw new IllegalArgumentException(String.format(MSG_DELETE_PRODUCTS_WITHOUT_FORCE, MSG_ID_DELETE_PRODUCTS_WITHOUT_FORCE));
+					throw new IllegalArgumentException(logger.log(OrderMgrMessage.DELETE_PRODUCTS_WITHOUT_FORCE));
 				}
 				
 				// Do not delete missions with products without "deleteProducts"
@@ -540,7 +479,7 @@ public class MissionControllerImpl implements MissionController {
 					Object result = query.getSingleResult();
 					if (result instanceof Long) {
 						if (0 != ((Long) result)) {
-							throw new IllegalArgumentException(String.format(MSG_PRODUCTS_EXIST, MSG_ID_PRODUCTS_EXIST, mission.getCode()));
+							throw new IllegalArgumentException(logger.log(OrderMgrMessage.PRODUCTS_EXIST, mission.getCode()));
 						}
 					}
 				}
@@ -554,7 +493,7 @@ public class MissionControllerImpl implements MissionController {
 					Object result = query.getSingleResult();
 					if (result instanceof Long) {
 						if (0 != ((Long) result)) {
-							throw new IllegalArgumentException(String.format(MSG_PRODUCTCLASSES_EXIST, MSG_ID_PRODUCTCLASSES_EXIST, mission.getCode()));
+							throw new IllegalArgumentException(logger.log(OrderMgrMessage.PRODUCTCLASSES_EXIST, mission.getCode()));
 						}
 					}
 					// Check processor classes (processors, configurations etc. are configured with reference to processor classes)
@@ -564,7 +503,7 @@ public class MissionControllerImpl implements MissionController {
 					result = query.getSingleResult();
 					if (result instanceof Long) {
 						if (0 != ((Long) result)) {
-							throw new IllegalArgumentException(String.format(MSG_PROCESSORCLASSES_EXIST, MSG_ID_PROCESSORCLASSES_EXIST,  mission.getCode()));
+							throw new IllegalArgumentException(logger.log(OrderMgrMessage.PROCESSORCLASSES_EXIST,  mission.getCode()));
 						}
 					}
 				}
@@ -577,26 +516,23 @@ public class MissionControllerImpl implements MissionController {
 
 				// Test whether the deletion was successful
 				if (!RepositoryService.getMissionRepository().findById(id).isEmpty()) {
-					throw new RuntimeException(String.format(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id));
+					throw new RuntimeException(logger.log(OrderMgrMessage.MISSION_DELETION_UNSUCCESSFUL, id));
 				}
 
 				return null;
 			});
 		} catch (NoResultException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (TransactionException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		} catch (RuntimeException e) {
-			logger.error(e.getMessage(), e);
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
+			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}
 
-		logger.info(String.format(MSG_MISSION_DELETED, MSG_ID_MISSION_DELETED, id));
+		logger.log(OrderMgrMessage.MISSION_DELETED, id);
 		
 		HttpHeaders responseHeaders = new HttpHeaders();
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NO_CONTENT);

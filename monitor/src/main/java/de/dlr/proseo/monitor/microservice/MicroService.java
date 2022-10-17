@@ -4,8 +4,6 @@ import java.util.Optional;
 import java.time.Instant;
 import java.time.Duration;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +13,8 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.interfaces.rest.model.RestHealth;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.model.MonExtServiceStateOperation;
 import de.dlr.proseo.model.MonServiceState;
 import de.dlr.proseo.model.MonServiceStateOperation;
@@ -33,7 +33,7 @@ import de.dlr.proseo.model.util.MonServiceStates;
 @Transactional
 public class MicroService {
 
-	private static Logger logger = LoggerFactory.getLogger(MicroService.class);
+	private static ProseoLogger logger = new ProseoLogger(MicroService.class);
 
 	/**
 	 * The service caption
@@ -172,16 +172,16 @@ public class MicroService {
 						}
 					}
 				} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
-					logger.error(e.getMessage());
+					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
 					// TODO
 				} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
-					logger.error(e.getMessage());
+					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
 					// TODO
 				} catch (RestClientException e) {
-					logger.error(e.getMessage());
+					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
 					// TODO
 				} catch (Exception e) {
-					logger.error(e.getMessage());
+					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
 					// TODO
 				}
 			} else {
@@ -202,7 +202,7 @@ public class MicroService {
 						return;
 					}
 				} catch (HttpClientErrorException.NotFound e) {
-					logger.error(e.getMessage());
+					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
 					// TODO
 				} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
 					// We got an answer and assume the service is running
@@ -210,13 +210,13 @@ public class MicroService {
 					createEntry(monitor);
 					return;
 				} catch (RestClientResponseException e) {				
-					logger.error(e.getMessage());
+					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
 					// TODO
 				} catch (RestClientException e) {
-					logger.error(e.getMessage());
+					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
 					// TODO
 				} catch (Exception e) {
-					logger.error(e.getMessage());
+					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
 					// TODO
 				}
 			}

@@ -59,6 +59,7 @@
 		<module>common</module>
 		<module>monitor</module>
 		<module>geotools</module>
+		<module>logging</module>
 	</modules>
 
 	<dependencyManagement>

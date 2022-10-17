@@ -10,18 +10,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.logging.http.HttpPrefix;
+import de.dlr.proseo.logging.http.ProseoHttp;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.model.rest.ProcessingfacilityController;
 import de.dlr.proseo.model.rest.model.PlannerPod;
 import de.dlr.proseo.model.rest.model.RestProcessingFacility;
-import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.util.UtilService;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
@@ -39,7 +41,8 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 	/**
 	 * Logger of this class
 	 */
-	private static Logger logger = LoggerFactory.getLogger(ProcessingfacilityController.class);
+	private static ProseoLogger logger = new ProseoLogger(ProcessingfacilityController.class);
+	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.PLANNER);
 
 	/** The Production Planner instance */
     @Autowired
@@ -60,9 +63,9 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			Collection<KubeConfig> kubeConfigs = productionPlanner.getKubeConfigs();
 			
 			if (null == kubeConfigs) {
-				String message = Messages.FACILITY_NOT_DEFINED.log(logger);
+				String message = logger.log(PlannerMessage.FACILITY_NOT_DEFINED);
 
-		    	return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+		    	return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 			}
 
 			List<RestProcessingFacility> l = new ArrayList<RestProcessingFacility>();
@@ -87,9 +90,9 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 
 			return new ResponseEntity<>(l, HttpStatus.OK);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -107,9 +110,9 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 		de.dlr.proseo.planner.kubernetes.KubeConfig kc = productionPlanner.getKubeConfig(name);
 		
 		if (null == kc) {
-			String message = Messages.FACILITY_NOT_EXIST.log(logger, name);
+			String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, name);
 
-	    	return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+	    	return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		}
 		
 		try {
@@ -131,9 +134,9 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 
 			return new ResponseEntity<>(pf, HttpStatus.OK);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
     /**
@@ -150,9 +153,9 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 		de.dlr.proseo.planner.kubernetes.KubeConfig kc = productionPlanner.getKubeConfig(name);
 		
 		if (null == kc) {
-			String message = Messages.FACILITY_NOT_EXIST.log(logger, name);
+			String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, name);
 
-	    	return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+	    	return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		}
 		
 		try {
@@ -163,7 +166,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 				productionPlanner.releaseThreadSemaphore("run");		
 			} catch (Exception e) {
 				productionPlanner.releaseThreadSemaphore("synchronizeFacility");		
-				Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			}
 			
 			RestProcessingFacility pf = new RestProcessingFacility(
@@ -184,9 +187,9 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 
 			return new ResponseEntity<>(pf, HttpStatus.OK);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 	
@@ -205,9 +208,9 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 		de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = productionPlanner.getKubeConfig(name);
 		
 		if (null == aKubeConfig) {
-			String message = Messages.FACILITY_NOT_AVAILABLE.log(logger, "for job " + name, "Not connected");
+			String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, "for job " + name, "Not connected");
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		}
 		
 		try {
@@ -225,13 +228,13 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			
 			// TODO Correctly fill return entity PlannerPod
 			
-			String message = Messages.KUBEJOB_FINISH_TRIGGERED.log(logger, aKubeConfig.getId(), kj.getJobName());
+			String message = logger.log(PlannerMessage.KUBEJOB_FINISH_TRIGGERED, aKubeConfig.getId(), kj.getJobName());
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.OK);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.OK);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
 	}

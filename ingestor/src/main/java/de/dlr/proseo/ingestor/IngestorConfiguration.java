@@ -7,12 +7,13 @@ package de.dlr.proseo.ingestor;
 
 import java.util.Arrays;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.IngestorMessage;
 
 /**
  * Configuration class for the prosEO Ingestor component
@@ -24,11 +25,6 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix="proseo")
 @EntityScan(basePackages = "de.dlr.proseo.model")
 public class IngestorConfiguration {
-	
-	private static final int MSG_ID_INVALID_TIMEOUT = 2079;
-	private static final int MSG_ID_INVALID_VALIDITY = 2080;
-	private static final String MSG_INVALID_TIMEOUT = "(W%d) Invalid timeout value %s found in configuration, using default %d";
-	private static final String MSG_INVALID_VALIDITY = "(W%d) Invalid token validity value %s found in configuration, using default %d";
 	
 	// Default connection timeout is 30 s
 	private static final Long DEFAULT_TIMEOUT = 30000L;
@@ -68,7 +64,7 @@ public class IngestorConfiguration {
 	
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(IngestorConfiguration.class);
+	private static ProseoLogger logger = new ProseoLogger(IngestorConfiguration.class);
 	
 	/**
 	 * Gets the URL of the prosEO Production Planner component
@@ -92,7 +88,7 @@ public class IngestorConfiguration {
 				try {
 					productionPlannerTimeoutLong = Long.parseLong(productionPlannerTimeout);
 				} catch (NumberFormatException e) {
-					logger.warn(String.format(MSG_INVALID_TIMEOUT, MSG_ID_INVALID_TIMEOUT, productionPlannerTimeout, DEFAULT_TIMEOUT));
+					logger.log(IngestorMessage.INVALID_TIMEOUT, productionPlannerTimeout, DEFAULT_TIMEOUT);
 					productionPlannerTimeoutLong = DEFAULT_TIMEOUT;
 				} 
 			}
@@ -113,7 +109,7 @@ public class IngestorConfiguration {
 				try {
 					storageManagerTimeoutLong = Long.parseLong(storageManagerTimeout);
 				} catch (NumberFormatException e) {
-					logger.warn(String.format(MSG_INVALID_TIMEOUT, MSG_ID_INVALID_TIMEOUT, storageManagerTimeout, DEFAULT_TIMEOUT));
+					logger.log(IngestorMessage.INVALID_TIMEOUT, storageManagerTimeout, DEFAULT_TIMEOUT);
 					storageManagerTimeoutLong = DEFAULT_TIMEOUT;
 				} 
 			}
@@ -146,7 +142,7 @@ public class IngestorConfiguration {
 				try {
 					storageManagerValidityLong = Long.parseLong(storageManagerValidity);
 				} catch (NumberFormatException e) {
-					logger.warn(String.format(MSG_INVALID_VALIDITY, MSG_ID_INVALID_VALIDITY, storageManagerValidity, DEFAULT_VALIDITY));
+					logger.log(IngestorMessage.INVALID_VALIDITY, storageManagerValidity, DEFAULT_VALIDITY);
 					storageManagerValidityLong = DEFAULT_VALIDITY;
 				} 
 			}

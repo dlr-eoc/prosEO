@@ -19,11 +19,11 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.UserMgrMessage;
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.usermgr.dao.GroupMemberRepository;
 import de.dlr.proseo.usermgr.dao.GroupRepository;
@@ -45,63 +45,6 @@ import de.dlr.proseo.usermgr.rest.model.RestUser;
 @Transactional
 public class GroupManager {
 
-	/* Message ID constants */
-	private static final int MSG_ID_GROUP_NOT_FOUND = 2770;
-	private static final int MSG_ID_GROUP_LIST_RETRIEVED = 2771;
-	private static final int MSG_ID_GROUP_RETRIEVED = 2772;
-	private static final int MSG_ID_GROUP_MISSING = 2773;
-	private static final int MSG_ID_GROUP_CREATED = 2775;
-	private static final int MSG_ID_GROUPNAME_MISSING = 2776;
-	private static final int MSG_ID_GROUPNAME_NOT_FOUND = 2777;
-	private static final int MSG_ID_GROUP_DATA_MISSING = 2778;
-	private static final int MSG_ID_GROUP_MODIFIED = 2779;
-	private static final int MSG_ID_GROUP_NOT_MODIFIED = 2780;
-	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2781;
-	private static final int MSG_ID_GROUP_DELETED = 2782;
-	private static final int MSG_ID_DELETE_FAILURE = 2784;
-	private static final int MSG_ID_MISSION_MISSING = 2785;
-	private static final int MSG_ID_GROUP_ID_MISSING = 2786;
-	private static final int MSG_ID_GROUP_ID_NOT_FOUND = 2787;
-	private static final int MSG_ID_GROUP_EMPTY = 2788;
-	private static final int MSG_ID_GROUP_MEMBERS_RETRIEVED = 2789;
-	private static final int MSG_ID_GROUP_MEMBER_ADDED = 2790;
-//	private static final int MSG_ID_FREE = 2791;
-	private static final int MSG_ID_GROUP_MEMBER_REMOVED = 2792;
-	
-	// The following IDs identical to UserManager
-	private static final int MSG_ID_USERNAME_MISSING = 2756;
-	private static final int MSG_ID_USERNAME_NOT_FOUND = 2757;
-	private static final int MSG_ID_DUPLICATE_GROUP = 2758;
-	private static final int MSG_ID_ILLEGAL_AUTHORITY = 2769;
-//	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
-	
-	/* Message string constants */
-	private static final String MSG_GROUP_NOT_FOUND = "(E%d) No user group found for mission %s";
-	private static final String MSG_GROUP_MISSING = "(E%d) User group not set";
-	private static final String MSG_GROUPNAME_MISSING = "(E%d) User group name not set";
-	private static final String MSG_GROUP_ID_MISSING = "(E%d) User group ID not set";
-	private static final String MSG_GROUPNAME_NOT_FOUND = "(E%d) User group %s not found";
-	private static final String MSG_GROUP_ID_NOT_FOUND = "(E%d) User group with ID %d not found";
-	private static final String MSG_GROUP_DATA_MISSING = "(E%d) User group data not set";
-	private static final String MSG_DELETE_FAILURE = "(E%d) Deletion failed for user group %s (cause: %s)";
-	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Deletion unsuccessful for user group %s";
-	private static final String MSG_MISSION_MISSING = "(E%d) Mission not set";
-	private static final String MSG_GROUP_EMPTY = "(E%d) Group with ID %d has no members";
-	private static final String MSG_USERNAME_MISSING = "(E%d) User name not set";
-	private static final String MSG_USERNAME_NOT_FOUND = "(E%d) User %s not found";
-	private static final String MSG_DUPLICATE_GROUP = "(E%d) Duplicate user group %s";
-	private static final String MSG_ILLEGAL_AUTHORITY = "(E%d) Illegal authority value %s";
-	
-	private static final String MSG_GROUP_LIST_RETRIEVED = "(I%d) User(s) for mission %s retrieved";
-	private static final String MSG_GROUP_RETRIEVED = "(I%d) User group %s retrieved";
-	private static final String MSG_GROUP_CREATED = "(I%d) User group %s created";
-	private static final String MSG_GROUP_MODIFIED = "(I%d) User group %s modified";
-	private static final String MSG_GROUP_NOT_MODIFIED = "(I%d) User group %s not modified (no changes)";
-	private static final String MSG_GROUP_DELETED = "(I%d) User group %s deleted";
-	private static final String MSG_GROUP_MEMBERS_RETRIEVED = "(I%d) Members for user group with ID %d retrieved";
-	private static final String MSG_GROUP_MEMBER_ADDED = "(I%d) Member %s added to user group with ID %d";
-	private static final String MSG_GROUP_MEMBER_REMOVED = "(I%d) Member %s removed from user group with ID %d";
-
 	/** Repository for User group objects */
 	@Autowired
 	GroupRepository groupRepository;
@@ -119,7 +62,7 @@ public class GroupManager {
 	private EntityManager em;
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(GroupManager.class);
+	private static ProseoLogger logger = new ProseoLogger(GroupManager.class);
 
 	/**
 	 * Exception to indicate unmodified data to caller
@@ -131,46 +74,6 @@ public class GroupManager {
 		public NotModifiedException(String message) {
 			super(message);
 		}
-	}
-
-	/**
-	 * Create and log a formatted informational message
-	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted info mesage
-	 */
-	private static String logInfo(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-		
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		logger.info(message);
-		
-		return message;
-	}
-	
-	/**
-	 * Create and log a formatted error message
-	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted error message
-	 */
-	private static String logError(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-		
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		logger.error(message);
-		
-		return message;
 	}
 	
 	/**
@@ -193,7 +96,7 @@ public class GroupManager {
 			try {
 				UserRole.asRole(restAuthority);
 			} catch (IllegalArgumentException e) {
-				throw new IllegalArgumentException(logError(MSG_ILLEGAL_AUTHORITY, MSG_ID_ILLEGAL_AUTHORITY, restAuthority));
+				throw new IllegalArgumentException(logger.log(UserMgrMessage.ILLEGAL_AUTHORITY, restAuthority));
 			}
 			
 			GroupAuthority modelAuthority = new GroupAuthority();
@@ -236,21 +139,21 @@ public class GroupManager {
 		
 		// Check parameter
 		if (null == restGroup) {
-			throw new IllegalArgumentException(logError(MSG_GROUP_MISSING, MSG_ID_GROUP_MISSING));
+			throw new IllegalArgumentException(logger.log(UserMgrMessage.GROUP_MISSING));
 		}
 		if (null == restGroup.getGroupname() || restGroup.getGroupname().isBlank()) {
-			throw new IllegalArgumentException(logError(MSG_GROUPNAME_MISSING, MSG_ID_GROUPNAME_MISSING));
+			throw new IllegalArgumentException(logger.log(UserMgrMessage.GROUPNAME_MISSING));
 		}
 		
 		// Make sure the group does not exist already
 		if (null != groupRepository.findByGroupName(restGroup.getGroupname())) {
-			throw new IllegalArgumentException(logError(MSG_DUPLICATE_GROUP, MSG_ID_DUPLICATE_GROUP, restGroup.getGroupname()));
+			throw new IllegalArgumentException(logger.log(UserMgrMessage.DUPLICATE_GROUP, restGroup.getGroupname()));
 		}
 		
 		// Create user group
 		Group modelGroup = groupRepository.save(toModelGroup(restGroup));
 		
-		logInfo(MSG_GROUP_CREATED, MSG_ID_GROUP_CREATED, modelGroup.getGroupName());
+		logger.log(UserMgrMessage.GROUP_CREATED, modelGroup.getGroupName());
 		
 		return toRestGroup(modelGroup);
 	}
@@ -268,7 +171,7 @@ public class GroupManager {
 		
 		// Check parameter
 		if (null == mission || mission.isBlank()) {
-			throw new IllegalArgumentException(logError(MSG_MISSION_MISSING, MSG_ID_MISSION_MISSING));
+			throw new IllegalArgumentException(logger.log(UserMgrMessage.MISSION_MISSING));
 		}
 		
 		// Collect all user groups for the mission
@@ -284,10 +187,10 @@ public class GroupManager {
 			}
 		}
 		if (result.isEmpty()) {
-			throw new NoResultException(logError(MSG_GROUP_NOT_FOUND, MSG_ID_GROUP_NOT_FOUND, mission));
+			throw new NoResultException(logger.log(UserMgrMessage.GROUP_NOT_FOUND, mission));
 		}
 		
-		logInfo(MSG_GROUP_LIST_RETRIEVED, MSG_ID_GROUP_LIST_RETRIEVED, mission);
+		logger.log(UserMgrMessage.GROUP_LIST_RETRIEVED, mission);
 		
 		return result;
 	}
@@ -304,16 +207,16 @@ public class GroupManager {
 		if (logger.isTraceEnabled()) logger.trace(">>> getGroupById({})", id);
 		
 		if (null == id || 0 == id) {
-			throw new IllegalArgumentException(logError(MSG_GROUP_ID_MISSING, MSG_ID_GROUP_ID_MISSING));
+			throw new IllegalArgumentException(logger.log(UserMgrMessage.GROUP_ID_MISSING));
 		}
 		
 		Optional<Group> modelGroup = groupRepository.findById(id);
 		
 		if (modelGroup.isEmpty()) {
-			throw new NoResultException(logError(MSG_GROUPNAME_NOT_FOUND, MSG_ID_GROUPNAME_NOT_FOUND, id));
+			throw new NoResultException(logger.log(UserMgrMessage.GROUPNAME_NOT_FOUND, id));
 		}
 				
-		logInfo(MSG_GROUP_RETRIEVED, MSG_ID_GROUP_RETRIEVED, id);
+		logger.log(UserMgrMessage.GROUP_RETRIEVED, id);
 		
 		return toRestGroup(modelGroup.get());
 	}
@@ -329,14 +232,14 @@ public class GroupManager {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteGroupById({})", id);
 		
 		if (null == id || 0 == id) {
-			throw new IllegalArgumentException(logError(MSG_GROUP_ID_MISSING, MSG_ID_GROUP_ID_MISSING));
+			throw new IllegalArgumentException(logger.log(UserMgrMessage.GROUP_ID_MISSING));
 		}
 		
 		// Test whether the user group name is valid
 		Optional<Group> modelGroup = groupRepository.findById(id);
 		
 		if (modelGroup.isEmpty()) {
-			throw new NoResultException(logError(MSG_GROUP_ID_NOT_FOUND, MSG_ID_GROUP_ID_NOT_FOUND, id));
+			throw new NoResultException(logger.log(UserMgrMessage.GROUP_ID_NOT_FOUND, id));
 		}
 		
 		// Delete the user group
@@ -345,17 +248,17 @@ public class GroupManager {
 			groupRepository.save(modelGroup.get());
 			groupRepository.delete(modelGroup.get());
 		} catch (Exception e) {
-			throw new RuntimeException(logError(MSG_DELETE_FAILURE, MSG_ID_DELETE_FAILURE, id, e.getMessage()));
+			throw new RuntimeException(logger.log(UserMgrMessage.DELETE_FAILURE, id, e.getMessage()));
 		}
 		
 		// Test whether the deletion was successful
 		modelGroup = groupRepository.findById(id);
 		
 		if (!modelGroup.isEmpty()) {
-			throw new RuntimeException(logError(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id));
+			throw new RuntimeException(logger.log(UserMgrMessage.DELETION_UNSUCCESSFUL, id));
 		}
 		
-		logInfo(MSG_GROUP_DELETED, MSG_ID_GROUP_DELETED, id);
+		logger.log(UserMgrMessage.GROUP_DELETED, id);
 	}
 
 	/**
@@ -374,17 +277,17 @@ public class GroupManager {
 		
 		// Check arguments
 		if (null == id || 0 == id) {
-			throw new IllegalArgumentException(logError(MSG_GROUPNAME_MISSING, MSG_ID_GROUPNAME_MISSING));
+			throw new IllegalArgumentException(logger.log(UserMgrMessage.GROUPNAME_MISSING));
 		}
 		if (null == restGroup) {
-			throw new IllegalArgumentException(logError(MSG_GROUP_DATA_MISSING, MSG_ID_GROUP_DATA_MISSING));
+			throw new IllegalArgumentException(logger.log(UserMgrMessage.GROUP_DATA_MISSING));
 		}
 		
 		// Get the user group to modify
 		Optional<Group> optionalGroup = groupRepository.findById(id);
 		
 		if (optionalGroup.isEmpty()) {
-			throw new NoResultException(logError(MSG_GROUPNAME_NOT_FOUND, MSG_ID_GROUPNAME_NOT_FOUND, id));
+			throw new NoResultException(logger.log(UserMgrMessage.GROUPNAME_NOT_FOUND, id));
 		}
 		Group modelGroup = optionalGroup.get();
 		
@@ -434,9 +337,9 @@ public class GroupManager {
 		// Save user group only if anything was actually changed
 		if (groupChanged) {
 			modelGroup = groupRepository.save(modelGroup);
-			logInfo(MSG_GROUP_MODIFIED, MSG_ID_GROUP_MODIFIED, id);
+			logger.log(UserMgrMessage.GROUP_MODIFIED, id);
 		} else {
-			throw new NotModifiedException(logInfo(MSG_GROUP_NOT_MODIFIED, MSG_ID_GROUP_NOT_MODIFIED, id));
+			throw new NotModifiedException(logger.log(UserMgrMessage.GROUP_NOT_MODIFIED, id));
 		}
 		
 		// Return the changed user group
@@ -455,19 +358,19 @@ public class GroupManager {
 		
 		// Check parameter
 		if (null == id || 0 == id) {
-			throw new IllegalArgumentException(logError(MSG_GROUP_ID_MISSING, MSG_ID_GROUP_ID_MISSING));
+			throw new IllegalArgumentException(logger.log(UserMgrMessage.GROUP_ID_MISSING));
 		}
 		
 		// Get the user group to modify
 		Optional<Group> optionalGroup = groupRepository.findById(id);
 		
 		if (optionalGroup.isEmpty()) {
-			throw new NoResultException(logError(MSG_GROUPNAME_NOT_FOUND, MSG_ID_GROUPNAME_NOT_FOUND, id));
+			throw new NoResultException(logger.log(UserMgrMessage.GROUPNAME_NOT_FOUND, id));
 		}
 		Group modelGroup = optionalGroup.get();
 		
 		if (modelGroup.getGroupMembers().isEmpty()) {
-			throw new NoResultException(logError(MSG_GROUP_EMPTY, MSG_ID_GROUP_EMPTY, id));
+			throw new NoResultException(logger.log(UserMgrMessage.GROUP_EMPTY, id));
 		}
 		
 		// Create a list of all users in the group
@@ -476,7 +379,7 @@ public class GroupManager {
 			result.add(UserManager.toRestUser(member.getUser()));
 		}
 		
-		logInfo(MSG_GROUP_MEMBERS_RETRIEVED, MSG_ID_GROUP_MEMBERS_RETRIEVED, id);
+		logger.log(UserMgrMessage.GROUP_MEMBERS_RETRIEVED, id);
 		
 		return result;
 	}
@@ -496,17 +399,17 @@ public class GroupManager {
 		
 		// Check parameter
 		if (null == id || 0 == id) {
-			throw new IllegalArgumentException(logError(MSG_GROUP_ID_MISSING, MSG_ID_GROUP_ID_MISSING));
+			throw new IllegalArgumentException(logger.log(UserMgrMessage.GROUP_ID_MISSING));
 		}
 		if (null == username || username.isBlank()) {
-			throw new IllegalArgumentException(logError(MSG_USERNAME_MISSING, MSG_ID_USERNAME_MISSING));
+			throw new IllegalArgumentException(logger.log(UserMgrMessage.USERNAME_MISSING));
 		}
 		
 		// Get the user group to modify
 		Optional<Group> optionalGroup = groupRepository.findById(id);
 		
 		if (optionalGroup.isEmpty()) {
-			throw new NoResultException(logError(MSG_GROUPNAME_NOT_FOUND, MSG_ID_GROUPNAME_NOT_FOUND, id));
+			throw new NoResultException(logger.log(UserMgrMessage.GROUPNAME_NOT_FOUND, id));
 		}
 		Group modelGroup = optionalGroup.get();
 		
@@ -514,7 +417,7 @@ public class GroupManager {
 		User modelUser = userRepository.findByUsername(username);
 		
 		if (null == modelUser) {
-			throw new NoResultException(logError(MSG_USERNAME_NOT_FOUND, MSG_ID_USERNAME_NOT_FOUND, username));
+			throw new NoResultException(logger.log(UserMgrMessage.USERNAME_NOT_FOUND, username));
 		}
 		
 		// Add the user to the user group
@@ -523,7 +426,7 @@ public class GroupManager {
 		newMember.setUser(modelUser);
 		
 		if (modelGroup.getGroupMembers().contains(newMember)) {
-			throw new NotModifiedException(logInfo(MSG_GROUP_NOT_MODIFIED, MSG_ID_GROUP_NOT_MODIFIED, id));
+			throw new NotModifiedException(logger.log(UserMgrMessage.GROUP_NOT_MODIFIED, id));
 		}
 		
 		newMember = groupMemberRepository.save(newMember);
@@ -537,7 +440,7 @@ public class GroupManager {
 			result.add(UserManager.toRestUser(member.getUser()));
 		}
 		
-		logInfo(MSG_GROUP_MEMBER_ADDED, MSG_ID_GROUP_MEMBER_ADDED, username, id);
+		logger.log(UserMgrMessage.GROUP_MEMBER_ADDED, username, id);
 		
 		return result;
 	}
@@ -556,17 +459,17 @@ public class GroupManager {
 		
 		// Check parameter
 		if (null == id || 0 == id) {
-			throw new IllegalArgumentException(logError(MSG_GROUP_ID_MISSING, MSG_ID_GROUP_ID_MISSING));
+			throw new IllegalArgumentException(logger.log(UserMgrMessage.GROUP_ID_MISSING));
 		}
 		if (null == username || username.isBlank()) {
-			throw new IllegalArgumentException(logError(MSG_USERNAME_MISSING, MSG_ID_USERNAME_MISSING));
+			throw new IllegalArgumentException(logger.log(UserMgrMessage.USERNAME_MISSING));
 		}
 		
 		// Get the user group to modify
 		Optional<Group> optionalGroup = groupRepository.findById(id);
 		
 		if (optionalGroup.isEmpty()) {
-			throw new NoResultException(logError(MSG_GROUPNAME_NOT_FOUND, MSG_ID_GROUPNAME_NOT_FOUND, id));
+			throw new NoResultException(logger.log(UserMgrMessage.GROUPNAME_NOT_FOUND, id));
 		}
 		Group modelGroup = optionalGroup.get();
 		
@@ -586,10 +489,10 @@ public class GroupManager {
 		}
 		
 		if (!memberFound) {
-			throw new NotModifiedException(logInfo(MSG_GROUP_NOT_MODIFIED, MSG_ID_GROUP_NOT_MODIFIED, id));
+			throw new NotModifiedException(logger.log(UserMgrMessage.GROUP_NOT_MODIFIED, id));
 		}
 		
-		logInfo(MSG_GROUP_MEMBER_REMOVED, MSG_ID_GROUP_MEMBER_REMOVED, username, id);
+		logger.log(UserMgrMessage.GROUP_MEMBER_REMOVED, username, id);
 	}
 
 }

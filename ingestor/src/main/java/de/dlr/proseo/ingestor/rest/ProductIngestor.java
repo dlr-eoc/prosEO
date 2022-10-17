@@ -22,8 +22,6 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.ws.rs.ProcessingException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpStatus;
@@ -34,6 +32,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.net.HttpHeaders;
 
 import de.dlr.proseo.ingestor.IngestorConfiguration;
 import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
@@ -42,6 +41,9 @@ import de.dlr.proseo.ingestor.rest.model.ProductUtil;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.ingestor.rest.model.RestProductFile;
 import de.dlr.proseo.interfaces.rest.model.RestProductFS;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.IngestorMessage;
 import de.dlr.proseo.model.DownloadHistory;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
@@ -63,69 +65,13 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
 @Transactional
 public class ProductIngestor {
 
-	/* Message ID constants */
-	private static final int MSG_ID_PRODUCT_NOT_FOUND = 2001; // Same as in ProductManager
-	private static final int MSG_ID_ERROR_STORING_PRODUCT = 2052;
-	private static final int MSG_ID_NEW_PRODUCT_ADDED = 2053;
-	private static final int MSG_ID_ERROR_NOTIFYING_PLANNER = 2054;
-	private static final int MSG_ID_PRODUCT_INGESTION_FAILED = 2055;
-	private static final int MSG_ID_UNEXPECTED_NUMBER_OF_FILE_PATHS = 2057;
-	private static final int MSG_ID_PRODUCT_FILE_RETRIEVED = 2059;
-	private static final int MSG_ID_NO_PRODUCT_FILES = 2060;
-	private static final int MSG_ID_NO_PRODUCT_FILES_AT_FACILITY = 2061;
-	private static final int MSG_ID_PRODUCT_FILE_EXISTS = 2062;
-	private static final int MSG_ID_PRODUCT_FILE_INGESTED = 2063;
-	private static final int MSG_ID_PRODUCT_FILE_NOT_FOUND = 2064;
-	private static final int MSG_ID_CONCURRENT_UPDATE = 2065;
-	private static final int MSG_ID_PRODUCT_FILE_MODIFIED = 2066;
-	private static final int MSG_ID_PRODUCT_FILE_NOT_MODIFIED = 2067;
-	private static final int MSG_ID_PRODUCT_FILE_DELETED = 2068;
-	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2069;
-	private static final int MSG_ID_ERROR_DELETING_PRODUCT = 2070;
-	private static final int MSG_ID_PRODUCT_QUERY_EXISTS = 2071;
-	private static final int MSG_ID_NUMBER_PRODUCT_FILES_DELETED = 2072;	
-
-	// Same as in ProductManager
-	private static final int MSG_ID_PRODUCT_CLASS_INVALID = 2012;
-	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
-	
-//	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
-	
-	/* Message string constants */
-	private static final String MSG_PRODUCT_NOT_FOUND = "(E%d) No product found for ID %d";
-	private static final String MSG_ERROR_STORING_PRODUCT = "(E%d) Error storing product of class %s at processing facility %s (Storage Manager cause: %s)";
-	private static final String MSG_PRODUCT_FILE_EXISTS = "(E%d) Product file for processing facility %s exists";
-	private static final String MSG_ERROR_NOTIFYING_PLANNER = "(E%d) Error notifying prosEO Production Planner of new product %d of type %s (Production Planner cause: %s)";
-	private static final String MSG_PRODUCT_INGESTION_FAILED = "(E%d) Product ingestion failed (cause: %s)";
-	private static final String MSG_UNEXPECTED_NUMBER_OF_FILE_PATHS = "(E%d) Unexpected number of file paths (%d, expected: %d) received from Storage Manager at %s";
-	private static final String MSG_NO_PRODUCT_FILES = "(E%d) No product files found for product ID %d";
-	private static final String MSG_NO_PRODUCT_FILES_AT_FACILITY = "(E%d) No product file found for product ID %d at processing facility %s";
-	private static final String MSG_PRODUCT_FILE_NOT_FOUND = "(E%d) Product file for processing facility %s not found";
-	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The product file for product ID %d and processing facility %s has been modified since retrieval by the client";
-	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Deletion unsuccessful for product file %s in product with ID %d";
-	private static final String MSG_ERROR_DELETING_PRODUCT = "(E%d) Error deleting product with ID %d from processing facility %s (cause: %s)";
-	private static final String MSG_PRODUCT_QUERY_EXISTS = "(E%d) Product with ID %d is required for at least one job step on processing facility %s";
-
-	// Same as in ProductManager
-	private static final String MSG_PRODUCT_CLASS_INVALID = "(E%d) Product type %s invalid";
-	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
-
-	private static final String MSG_NEW_PRODUCT_ADDED = "(I%d) New product with ID %d and product type %s added to database";
-	private static final String MSG_PRODUCT_FILE_RETRIEVED = "(I%d) Product file retrieved for product ID %d at processing facility %s";
-	private static final String MSG_PRODUCT_FILE_INGESTED = "(I%d) Product file %s ingested for product ID %d at processing facility %s";
-	private static final String MSG_PRODUCT_FILE_MODIFIED = "(I%d) Product file %s for product with id %d modified";
-	private static final String MSG_PRODUCT_FILE_NOT_MODIFIED = "(I%d) Product file %s for product with id %d not modified (no changes)";
-	private static final String MSG_PRODUCT_FILE_DELETED = "(I%d) Product file %s for product with id %d deleted";
-	private static final String MSG_NUMBER_PRODUCT_FILES_DELETED = "(I%d) %d product files deleted";
-
 	/* URLs for Storage Manager and Production Planner */
 	private static final String URL_PLANNER_NOTIFY = "/product/%d";
 	private static final String URL_STORAGE_MANAGER_REGISTER = "/products";
 	private static final String URL_STORAGE_MANAGER_DELETE = "/products?pathInfo=%s";
-	private static final String HTTP_HEADER_WARNING = "Warning";
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProductIngestor.class);
+	private static ProseoLogger logger = new ProseoLogger(ProductIngestor.class);
 	
 	/** REST template builder */
 	@Autowired
@@ -148,54 +94,6 @@ public class ProductIngestor {
 	private EntityManager em;
 	
 	/**
-	 * Create and log a formatted informational message
-	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted info mesage
-	 */
-	private String logInfo(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-		
-		// Log the error message
-		String message = null;
-		try {
-			message = String.format(messageFormat, messageParamList.toArray());
-		} catch (IllegalFormatException e) {
-			message = messageFormat + " (insufficient parameters)";
-		}
-		logger.info(message);
-		
-		return message;
-	}
-	
-	/**
-	 * Create and log a formatted error message
-	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted error message
-	 */
-	private String logError(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-		
-		// Log the error message
-		String message = null;
-		try {
-			message = String.format(messageFormat, messageParamList.toArray());
-		} catch (IllegalFormatException e) {
-			message = messageFormat + " (insufficient parameters)";
-		}
-		logger.error(message);
-		
-		return message;
-	}
 	
 	/**
 	 * Find a processing facility by name (transaction wrapper for repository method)
@@ -230,7 +128,7 @@ public class ProductIngestor {
 		
 		// Ensure user is authorized for the product's mission
 		if (!securityService.isAuthorizedForMission(ingestorProduct.getMissionCode())) {
-			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					ingestorProduct.getMissionCode(), securityService.getMission()));			
 		}
 		
@@ -252,7 +150,7 @@ public class ProductIngestor {
 				newProduct = productManager.getProductById(ingestorProduct.getId());
 			}
 		} catch (Exception e) {
-			throw new IllegalArgumentException(logError(MSG_PRODUCT_INGESTION_FAILED, MSG_ID_PRODUCT_INGESTION_FAILED, e.getMessage()));
+			throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_INGESTION_FAILED, e.getMessage()));
 		}
 		
 		// Create product file object in database for the stored files
@@ -293,7 +191,7 @@ public class ProductIngestor {
 		newModelProduct = RepositoryService.getProductRepository().save(newModelProduct);
 		
 		// Product ingestion successful
-		logInfo(MSG_NEW_PRODUCT_ADDED, MSG_ID_NEW_PRODUCT_ADDED, newModelProduct.getId(), newModelProduct.getProductClass().getProductType());
+		logger.log(IngestorMessage.NEW_PRODUCT_ADDED, newModelProduct.getId(), newModelProduct.getProductClass().getProductType());
 
 		return ProductUtil.toRestProduct(newModelProduct);
 	}
@@ -339,13 +237,13 @@ public class ProductIngestor {
 			responseEntity = restTemplate.postForEntity(storageManagerUrl, postData, Map.class);
 		} catch (RestClientException e) {
 			String message = (null == responseEntity ? e.getMessage() : 
-				responseEntity.getStatusCode().toString() + ": " + responseEntity.getHeaders().getFirst(HTTP_HEADER_WARNING));
-			throw new ProcessingException(logError(MSG_ERROR_STORING_PRODUCT, MSG_ID_ERROR_STORING_PRODUCT,
+				responseEntity.getStatusCode().toString() + ": " + responseEntity.getHeaders().getFirst(HttpHeaders.WARNING));
+			throw new ProcessingException(logger.log(IngestorMessage.ERROR_STORING_PRODUCT,
 					ingestorProduct.getProductClass(), facility.getName(),
 					message));
 		}
 		if (!HttpStatus.CREATED.equals(responseEntity.getStatusCode())) {
-			throw new ProcessingException(logError(MSG_ERROR_STORING_PRODUCT, MSG_ID_ERROR_STORING_PRODUCT,
+			throw new ProcessingException(logger.log(IngestorMessage.ERROR_STORING_PRODUCT,
 					ingestorProduct.getProductClass(), facility.getName(), responseEntity.getStatusCode().toString()));
 		}
 		if (logger.isTraceEnabled()) logger.trace("... Call to Storage Manager successful");
@@ -356,7 +254,7 @@ public class ProductIngestor {
 
 		List<String> responseFilePaths = restProductFs.getRegisteredFilesList();
 		if (null == responseFilePaths || responseFilePaths.size() != filePaths.size()) {
-			throw new ProcessingException(logError(MSG_UNEXPECTED_NUMBER_OF_FILE_PATHS, MSG_ID_UNEXPECTED_NUMBER_OF_FILE_PATHS,
+			throw new ProcessingException(logger.log(IngestorMessage.UNEXPECTED_NUMBER_OF_FILE_PATHS,
 					(null == responseFilePaths ? 0 : responseFilePaths.size()), filePaths.size(), facility.getName()));
 		}
 		String s = responseFilePaths.get(0);
@@ -382,7 +280,7 @@ public class ProductIngestor {
 		// Find the product files for the given product ID
 		List<ProductFile> productFiles = RepositoryService.getProductFileRepository().findByProductId(productId);
 		if (productFiles.isEmpty()) {
-			throw new NoResultException(logError(MSG_NO_PRODUCT_FILES, MSG_ID_NO_PRODUCT_FILES, productId));
+			throw new NoResultException(logger.log(IngestorMessage.NO_PRODUCT_FILES, productId));
 		}
 		
 		// Find the correct product file for the processing facility
@@ -395,17 +293,17 @@ public class ProductIngestor {
 			}
 		}
 		if (null == productFile) {
-			throw new NoResultException(logError(MSG_NO_PRODUCT_FILES_AT_FACILITY, MSG_ID_NO_PRODUCT_FILES_AT_FACILITY, 
+			throw new NoResultException(logger.log(IngestorMessage.NO_PRODUCT_FILES_AT_FACILITY, 
 					productId, facility));
 		}
 		
 		// Ensure user is authorized for the product file's mission
 		if (!securityService.isAuthorizedForMission(productFile.getProduct().getProductClass().getMission().getCode())) {
-			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					productFile.getProduct().getProductClass().getMission().getCode(), securityService.getMission()));			
 		}
 		
-		logInfo(MSG_PRODUCT_FILE_RETRIEVED, MSG_ID_PRODUCT_FILE_RETRIEVED, productId, facility.getName());
+		logger.log(IngestorMessage.PRODUCT_FILE_RETRIEVED, productId, facility.getName());
 
 		return ProductFileUtil.toRestProductFile(productFile);
 	}
@@ -432,20 +330,20 @@ public class ProductIngestor {
 		Optional<Product> product = RepositoryService.getProductRepository().findById(productId);
 		
 		if (product.isEmpty()) {
-			throw new IllegalArgumentException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, productId));
+			throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_NOT_FOUND, productId));
 		}
 		Product modelProduct = product.get();
 
 		// Ensure user is authorized for the product's mission
 		if (!securityService.isAuthorizedForMission(modelProduct.getProductClass().getMission().getCode())) {
-			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					modelProduct.getProductClass().getMission().getCode(), securityService.getMission()));			
 		}
 		
 		// Error, if a database product file for the given facility exists already
 		for (ProductFile modelProductFile: modelProduct.getProductFile()) {
 			if (facility.equals(modelProductFile.getProcessingFacility())) {
-				throw new IllegalArgumentException(logError(MSG_PRODUCT_FILE_EXISTS, MSG_ID_PRODUCT_FILE_EXISTS, facility));
+				throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_FILE_EXISTS, facility));
 			}
 		}
 		// OK, not found!
@@ -463,7 +361,7 @@ public class ProductIngestor {
 		modelProduct.getProductFile().add(modelProductFile);  // Autosave with commit
 
 		// Return the updated REST product file
-		logInfo(MSG_PRODUCT_FILE_INGESTED, MSG_ID_PRODUCT_FILE_INGESTED, productFile.getProductFileName(), productId, facility.getName());
+		logger.log(IngestorMessage.PRODUCT_FILE_INGESTED, productFile.getProductFileName(), productId, facility.getName());
 
 		return ProductFileUtil.toRestProductFile(modelProductFile);
 	}
@@ -492,12 +390,12 @@ public class ProductIngestor {
 		// Find the product with the given ID
 		Optional<Product> product = RepositoryService.getProductRepository().findById(productId);
 		if (product.isEmpty()) {
-			throw new EntityNotFoundException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, productId));
+			throw new EntityNotFoundException(logger.log(IngestorMessage.PRODUCT_NOT_FOUND, productId));
 		}
 		
 		// Ensure user is authorized for the product's mission
 		if (!securityService.isAuthorizedForMission(product.get().getProductClass().getMission().getCode())) {
-			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					product.get().getProductClass().getMission().getCode(), securityService.getMission()));			
 		}
 		deleteProductFile(product.get(), facility, eraseFiles);
@@ -528,13 +426,13 @@ public class ProductIngestor {
 			}
 		}
 		if (null == modelProductFile) {
-			throw new EntityNotFoundException(logError(MSG_PRODUCT_FILE_NOT_FOUND, MSG_ID_PRODUCT_FILE_NOT_FOUND, facility.getName()));
+			throw new EntityNotFoundException(logger.log(IngestorMessage.PRODUCT_FILE_NOT_FOUND, facility.getName()));
 		}
 		
 		// Do not delete product file, if the product is currently satisfying some product query for the same processing facility
 		for (ProductQuery productQuery: product.getSatisfiedProductQueries()) {
 			if (productQuery.getJobStep().getJob().getProcessingFacility().equals(facility)) {
-				throw new IllegalArgumentException(logError(MSG_PRODUCT_QUERY_EXISTS, MSG_ID_PRODUCT_QUERY_EXISTS,
+				throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_QUERY_EXISTS,
 						product.getId(), facility.getName()));
 			}
 		}
@@ -555,7 +453,7 @@ public class ProductIngestor {
 				try {
 					restTemplate.delete(storageManagerUrl);
 				} catch (RestClientException e) {
-					throw new ProcessingException(logError(MSG_ERROR_DELETING_PRODUCT, MSG_ID_ERROR_DELETING_PRODUCT,
+					throw new ProcessingException(logger.log(IngestorMessage.ERROR_DELETING_PRODUCT,
 							product.getId(), facility.getName(), e.getMessage()));
 				}
 			} 
@@ -577,10 +475,10 @@ public class ProductIngestor {
 
 		// Test whether the deletion was successful
 		if (!RepositoryService.getProductFileRepository().findById(modelProductFile.getId()).isEmpty()) {
-			throw new RuntimeException(logError(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, modelProductFile.getProductFileName(), product.getId()));
+			throw new RuntimeException(logger.log(IngestorMessage.DELETION_UNSUCCESSFUL, modelProductFile.getProductFileName(), product.getId()));
 		}
 		
-		logInfo(MSG_PRODUCT_FILE_DELETED, MSG_ID_PRODUCT_FILE_DELETED, modelProductFile.getProductFileName(), product.getId());
+		logger.log(IngestorMessage.PRODUCT_FILE_DELETED, modelProductFile.getProductFileName(), product.getId());
 	}
 
 	/**
@@ -605,7 +503,7 @@ public class ProductIngestor {
 				productFilesDeleted++;
 			}
 		}
-		logInfo(MSG_NUMBER_PRODUCT_FILES_DELETED, MSG_ID_NUMBER_PRODUCT_FILES_DELETED, productFilesDeleted);
+		logger.log(IngestorMessage.NUMBER_PRODUCT_FILES_DELETED, productFilesDeleted);
 	}
     /**
      * Update the product file metadata for a product at a given processing facility
@@ -626,12 +524,12 @@ public class ProductIngestor {
 		// Find the product with the given ID
 		Optional<Product> product = RepositoryService.getProductRepository().findById(productId);
 		if (product.isEmpty()) {
-			throw new IllegalArgumentException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, productId));
+			throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_NOT_FOUND, productId));
 		}
 		
 		// Ensure user is authorized for the product's mission
 		if (!securityService.isAuthorizedForMission(product.get().getProductClass().getMission().getCode())) {
-			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					product.get().getProductClass().getMission().getCode(), securityService.getMission()));			
 		}
 		
@@ -643,12 +541,12 @@ public class ProductIngestor {
 			}
 		}
 		if (null == modelProductFile) {
-			throw new IllegalArgumentException(logError(MSG_PRODUCT_FILE_NOT_FOUND, MSG_ID_PRODUCT_FILE_NOT_FOUND, facility));
+			throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_FILE_NOT_FOUND, facility));
 		}
 
 		// Make sure we are allowed to change the product file (no intermediate update)
 		if (modelProductFile.getVersion() != productFile.getVersion().intValue()) {
-			throw new ConcurrentModificationException(logError(MSG_CONCURRENT_UPDATE, MSG_ID_CONCURRENT_UPDATE, productId, facility.getName()));
+			throw new ConcurrentModificationException(logger.log(IngestorMessage.CONCURRENT_UPDATE, productId, facility.getName()));
 		}
 		
 		// Add object links (these cannot have changed, since they were the search criteria)
@@ -724,9 +622,9 @@ public class ProductIngestor {
 		if (productFileChanged) {
 			modelProductFile.incrementVersion();
 			modelProductFile = RepositoryService.getProductFileRepository().save(modelProductFile);
-			logInfo(MSG_PRODUCT_FILE_MODIFIED, MSG_ID_PRODUCT_FILE_MODIFIED, modelProductFile.getProductFileName(), productId);
+			logger.log(IngestorMessage.PRODUCT_FILE_MODIFIED, modelProductFile.getProductFileName(), productId);
 		} else {
-			logInfo(MSG_PRODUCT_FILE_NOT_MODIFIED, MSG_ID_PRODUCT_FILE_NOT_MODIFIED, modelProductFile.getProductFileName(), productId);
+			logger.log(IngestorMessage.PRODUCT_FILE_NOT_MODIFIED, modelProductFile.getProductFileName(), productId);
 		}
 		
 		// Return the updated REST product file
@@ -756,7 +654,7 @@ public class ProductIngestor {
 
 		// Ensure user is authorized for the product's mission
 		if (!securityService.isAuthorizedForMission(ingestorProduct.getMissionCode())) {
-			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					ingestorProduct.getMissionCode(), securityService.getMission()));			
 		}
 		
@@ -764,7 +662,7 @@ public class ProductIngestor {
 		ProductClass modelProductClass = RepositoryService.getProductClassRepository()
 				.findByMissionCodeAndProductType(ingestorProduct.getMissionCode(), ingestorProduct.getProductClass());
 		if (null == modelProductClass) {
-			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_INVALID, MSG_ID_PRODUCT_CLASS_INVALID, 
+			throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_CLASS_INVALID, 
 					ingestorProduct.getProductClass()));
 		}
 		
@@ -782,7 +680,7 @@ public class ProductIngestor {
 					.build();
 			ResponseEntity<String> response = restTemplate.getForEntity(productionPlannerUrl, String.class);
 			if (!HttpStatus.OK.equals(response.getStatusCode())) {
-				throw new ProcessingException(logError(MSG_ERROR_NOTIFYING_PLANNER, MSG_ID_ERROR_NOTIFYING_PLANNER,
+				throw new ProcessingException(logger.log(IngestorMessage.ERROR_NOTIFYING_PLANNER,
 						ingestorProduct.getId(), ingestorProduct.getProductClass(), response.getStatusCode().toString()));
 			}
 		}
@@ -806,12 +704,12 @@ public class ProductIngestor {
 		// Retrieve the product for the given product file
 		Optional<Product> modelProduct = RepositoryService.getProductRepository().findById(restProductFile.getProductId());
 		if (modelProduct.isEmpty()) {
-			throw new IllegalArgumentException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, restProductFile.getProductId()));
+			throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_NOT_FOUND, restProductFile.getProductId()));
 		}
 		
 		// Ensure user is authorized for the product's mission
 		if (!securityService.isAuthorizedForMission(modelProduct.get().getProductClass().getMission().getCode())) {
-			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					modelProduct.get().getProductClass().getMission().getCode(), securityService.getMission()));			
 		}
 		

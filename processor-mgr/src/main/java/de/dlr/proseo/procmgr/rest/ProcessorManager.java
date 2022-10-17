@@ -19,12 +19,13 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.validation.Valid;
 
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.ProcessorMgrMessage;
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.Task;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -44,56 +45,6 @@ import de.dlr.proseo.procmgr.rest.model.TaskUtil;
 @Transactional
 public class ProcessorManager {
 	
-	/* Message ID constants */
-	private static final int MSG_ID_PROCESSOR_NOT_FOUND = 2250;
-	private static final int MSG_ID_PROCESSOR_LIST_RETRIEVED = 2251;
-	private static final int MSG_ID_PROCESSOR_RETRIEVED = 2252;
-	private static final int MSG_ID_PROCESSOR_MISSING = 2253;
-	private static final int MSG_ID_PROCESSOR_CLASS_INVALID = 2254;
-	private static final int MSG_ID_PROCESSOR_CREATED = 2255;
-	private static final int MSG_ID_PROCESSOR_ID_MISSING = 2256;
-	private static final int MSG_ID_PROCESSOR_ID_NOT_FOUND = 2257;
-	private static final int MSG_ID_PROCESSOR_DATA_MISSING = 2258;
-	private static final int MSG_ID_PROCESSOR_MODIFIED = 2259;
-	private static final int MSG_ID_PROCESSOR_NOT_MODIFIED = 2260;
-	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2261;
-	private static final int MSG_ID_PROCESSOR_DELETED = 2262;
-	private static final int MSG_ID_CONCURRENT_UPDATE = 2263;
-	private static final int MSG_ID_DELETE_FAILURE = 2264;
-	private static final int MSG_ID_DUPLICATE_PROCESSOR = 2265;
-	private static final int MSG_ID_PROCESSOR_HAS_CONFIG = 2266;
-	private static final int MSG_ID_PROCESSOR_NAME_MISSING = 2267;
-	private static final int MSG_ID_CRITICALITY_LEVEL_MISSING = 2268;
-	
-	// Same as in other services
-	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
-	//private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
-	
-	/* Message string constants */
-	private static final String MSG_PROCESSOR_NOT_FOUND = "(E%d) No processor found for mission %s, processor name %s and processor version %s";
-	private static final String MSG_PROCESSOR_MISSING = "(E%d) Processor not set";
-	private static final String MSG_PROCESSOR_ID_MISSING = "(E%d) Processor ID not set";
-	private static final String MSG_PROCESSOR_ID_NOT_FOUND = "(E%d) No processor found with ID %d";
-	private static final String MSG_PROCESSOR_NAME_MISSING = "(E%d) Processor name not set";
-	private static final String MSG_PROCESSOR_CLASS_INVALID = "(E%d) Processor class %s invalid for mission %s";
-	private static final String MSG_PROCESSOR_DATA_MISSING = "(E%d) Processor data not set";
-	private static final String MSG_DELETE_FAILURE = "(E%d) Processor deletion failed for ID %d (cause: %s)";
-	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Processor deletion unsuccessful for ID %d";
-	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The processor with ID %d has been modified since retrieval by the client";
-	private static final String MSG_DUPLICATE_PROCESSOR = "(E%d) Duplicate processor for mission %s, processor name %s and processor version %s";
-	private static final String MSG_PROCESSOR_HAS_CONFIG = "(E%d) Processor for mission %s with processor name %s and processor version %s cannot be deleted, because it has configured processors";
-	private static final String MSG_CRITICALITY_LEVEL_MISSING = "(E%d) Task %s defined as critical, but no criticality level given";
-
-	private static final String MSG_PROCESSOR_LIST_RETRIEVED = "(I%d) Processor(s) for mission %s, processor name %s and processor version %s retrieved";
-	private static final String MSG_PROCESSOR_RETRIEVED = "(I%d) Processor with ID %d retrieved";
-	private static final String MSG_PROCESSOR_CREATED = "(I%d) Processor %s, version %s created for mission %s";
-	private static final String MSG_PROCESSOR_MODIFIED = "(I%d) Processor with id %d modified";
-	private static final String MSG_PROCESSOR_NOT_MODIFIED = "(I%d) Processor with id %d not modified (no changes)";
-	private static final String MSG_PROCESSOR_DELETED = "(I%d) Processor with id %d deleted";
-
-	// Same as in other services
-	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
-	
 	/** Utility class for user authorizations */
 	@Autowired
 	private SecurityService securityService;
@@ -103,47 +54,7 @@ public class ProcessorManager {
 	private EntityManager em;
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProcessorManager.class);
-
-	/**
-	 * Create and log a formatted informational message
-	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted info mesage
-	 */
-	private String logInfo(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-		
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		logger.info(message);
-		
-		return message;
-	}
-	
-	/**
-	 * Create and log a formatted error message
-	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted error message
-	 */
-	private String logError(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-		
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		logger.error(message);
-		
-		return message;
-	}
+	private static ProseoLogger logger = new ProseoLogger(ProcessorManager.class);
 	
 	/**
 	 * Create a new processor (version)
@@ -157,17 +68,17 @@ public class ProcessorManager {
 		if (logger.isTraceEnabled()) logger.trace(">>> createProcessor({})", (null == processor ? "MISSING" : processor.getProcessorName()));
 
 		if (null == processor) {
-			throw new IllegalArgumentException(logError(MSG_PROCESSOR_MISSING, MSG_ID_PROCESSOR_MISSING));
+			throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.PROCESSOR_MISSING));
 		}
 		
 		// Make sure processor class name is set
 		if (null == processor.getProcessorName() || processor.getProcessorName().isBlank()) {
-			throw new IllegalArgumentException(logError(MSG_PROCESSOR_NAME_MISSING, MSG_ID_PROCESSOR_NAME_MISSING));
+			throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.PROCESSOR_NAME_MISSING));
 		}
 		
 		// Ensure user is authorized for the mission of the processor
 		if (!securityService.isAuthorizedForMission(processor.getMissionCode())) {
-			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					processor.getMissionCode(), securityService.getMission()));			
 		}
 		
@@ -176,7 +87,7 @@ public class ProcessorManager {
 		// Make sure a processor with the same processor class name and processor version does not yet exist
 		if (null != RepositoryService.getProcessorRepository().findByMissionCodeAndProcessorNameAndProcessorVersion(
 				processor.getMissionCode(), processor.getProcessorName(), processor.getProcessorVersion())) {
-			throw new IllegalArgumentException(logError(MSG_DUPLICATE_PROCESSOR, MSG_ID_DUPLICATE_PROCESSOR,
+			throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.DUPLICATE_PROCESSOR,
 					processor.getMissionCode(),
 					processor.getProcessorName(),
 					processor.getProcessorVersion()));
@@ -185,7 +96,7 @@ public class ProcessorManager {
 		modelProcessor.setProcessorClass(RepositoryService.getProcessorClassRepository()
 				.findByMissionCodeAndProcessorName(processor.getMissionCode(), processor.getProcessorName()));
 		if (null == modelProcessor.getProcessorClass()) {
-			throw new IllegalArgumentException(logError(MSG_PROCESSOR_CLASS_INVALID, MSG_ID_PROCESSOR_CLASS_INVALID,
+			throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.PROCESSOR_CLASS_INVALID,
 							processor.getProcessorName(), processor.getMissionCode()));
 		}
 		
@@ -194,13 +105,13 @@ public class ProcessorManager {
 		for (RestTask task: processor.getTasks()) {
 			Task modelTask = TaskUtil.toModelTask(task);
 			if (modelTask.getIsCritical() && null == modelTask.getCriticalityLevel()) {
-				throw new IllegalArgumentException(logError(MSG_CRITICALITY_LEVEL_MISSING, MSG_ID_CRITICALITY_LEVEL_MISSING, modelTask.getTaskName()));
+				throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.CRITICALITY_LEVEL_MISSING, modelTask.getTaskName()));
 			}
 			modelTask.setProcessor(modelProcessor);
 			modelTask = RepositoryService.getTaskRepository().save(modelTask);
 		}
 
-		logInfo(MSG_PROCESSOR_CREATED, MSG_ID_PROCESSOR_CREATED, 
+		logger.log(ProcessorMgrMessage.PROCESSOR_CREATED, 
 				modelProcessor.getProcessorClass().getProcessorName(),
 				modelProcessor.getProcessorVersion(), 
 				modelProcessor.getProcessorClass().getMission().getCode());
@@ -227,7 +138,7 @@ public class ProcessorManager {
 		} else {
 			// Ensure user is authorized for the requested mission
 			if (!securityService.isAuthorizedForMission(mission)) {
-				throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+				throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 						mission, securityService.getMission()));
 			} 
 		}
@@ -255,11 +166,11 @@ public class ProcessorManager {
 			}
 		}
 		if (result.isEmpty()) {
-			throw new NoResultException(logError(MSG_PROCESSOR_NOT_FOUND, MSG_ID_PROCESSOR_NOT_FOUND,
+			throw new NoResultException(logger.log(ProcessorMgrMessage.PROCESSOR_NOT_FOUND,
 					mission, processorName, processorVersion));
 		}
 
-		logInfo(MSG_PROCESSOR_LIST_RETRIEVED, MSG_ID_PROCESSOR_LIST_RETRIEVED, mission, processorName, processorVersion);
+		logger.log(ProcessorMgrMessage.PROCESSOR_LIST_RETRIEVED, mission, processorName, processorVersion);
 		
 		return result;
 	}
@@ -277,22 +188,22 @@ public class ProcessorManager {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProcessorById({})", id);
 		
 		if (null == id || 0 == id) {
-			throw new IllegalArgumentException(logError(MSG_PROCESSOR_ID_MISSING, MSG_ID_PROCESSOR_ID_MISSING, id));
+			throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.PROCESSOR_ID_MISSING, id));
 		}
 		
 		Optional<Processor> modelProcessor = RepositoryService.getProcessorRepository().findById(id);
 		
 		if (modelProcessor.isEmpty()) {
-			throw new NoResultException(logError(MSG_PROCESSOR_ID_NOT_FOUND, MSG_ID_PROCESSOR_ID_NOT_FOUND, id));
+			throw new NoResultException(logger.log(ProcessorMgrMessage.PROCESSOR_ID_NOT_FOUND, id));
 		}
 
 		// Ensure user is authorized for the mission of the processor
 		if (!securityService.isAuthorizedForMission(modelProcessor.get().getProcessorClass().getMission().getCode())) {
-			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					modelProcessor.get().getProcessorClass().getMission().getCode(), securityService.getMission()));			
 		}
 		
-		logInfo(MSG_PROCESSOR_RETRIEVED, MSG_ID_PROCESSOR_RETRIEVED, id);
+		logger.log(ProcessorMgrMessage.PROCESSOR_RETRIEVED, id);
 		
 		return ProcessorUtil.toRestProcessor(modelProcessor.get());
 	}
@@ -315,28 +226,28 @@ public class ProcessorManager {
 
 		// Check arguments
 		if (null == id || 0 == id) {
-			throw new IllegalArgumentException(logError(MSG_PROCESSOR_ID_MISSING, MSG_ID_PROCESSOR_ID_MISSING));
+			throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.PROCESSOR_ID_MISSING));
 		}
 		if (null == processor) {
-			throw new IllegalArgumentException(logError(MSG_PROCESSOR_DATA_MISSING, MSG_ID_PROCESSOR_DATA_MISSING));
+			throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.PROCESSOR_DATA_MISSING));
 		}
 		
 		// Ensure user is authorized for the mission of the processor
 		if (!securityService.isAuthorizedForMission(processor.getMissionCode())) {
-			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					processor.getMissionCode(), securityService.getMission()));			
 		}
 		
 		Optional<Processor> optProcessor = RepositoryService.getProcessorRepository().findById(id);
 		
 		if (optProcessor.isEmpty()) {
-			throw new EntityNotFoundException(logError(MSG_PROCESSOR_ID_NOT_FOUND, MSG_ID_PROCESSOR_ID_NOT_FOUND, id));
+			throw new EntityNotFoundException(logger.log(ProcessorMgrMessage.PROCESSOR_ID_NOT_FOUND, id));
 		}
 		Processor modelProcessor = optProcessor.get();
 		
 		// Make sure we are allowed to change the processor (no intermediate update)
 		if (modelProcessor.getVersion() != processor.getVersion().intValue()) {
-			throw new ConcurrentModificationException(logError(MSG_CONCURRENT_UPDATE, MSG_ID_CONCURRENT_UPDATE, id));
+			throw new ConcurrentModificationException(logger.log(ProcessorMgrMessage.CONCURRENT_UPDATE, id));
 		}
 		
 		// Apply changed attributes
@@ -418,7 +329,7 @@ public class ProcessorManager {
 					modelTask.setCriticalityLevel(changedTask.getCriticalityLevel());
 				}
 				if (modelTask.getIsCritical() && null == modelTask.getCriticalityLevel()) {
-					throw new IllegalArgumentException(logError(MSG_CRITICALITY_LEVEL_MISSING, MSG_ID_CRITICALITY_LEVEL_MISSING, modelTask.getTaskName()));
+					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.CRITICALITY_LEVEL_MISSING, modelTask.getTaskName()));
 				}
 				
 				if (!Objects.equals(modelTask.getNumberOfCpus(), changedTask.getNumberOfCpus())) {
@@ -451,9 +362,9 @@ public class ProcessorManager {
 			modelProcessor.getTasks().clear();
 			modelProcessor.getTasks().addAll(newTasks);
 			modelProcessor = RepositoryService.getProcessorRepository().save(modelProcessor);
-			logInfo(MSG_PROCESSOR_MODIFIED, MSG_ID_PROCESSOR_MODIFIED, id);
+			logger.log(ProcessorMgrMessage.PROCESSOR_MODIFIED, id);
 		} else {
-			logInfo(MSG_PROCESSOR_NOT_MODIFIED, MSG_ID_PROCESSOR_NOT_MODIFIED, id);
+			logger.log(ProcessorMgrMessage.PROCESSOR_NOT_MODIFIED, id);
 		}
 		
 		return ProcessorUtil.toRestProcessor(modelProcessor);
@@ -473,24 +384,24 @@ public class ProcessorManager {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProcessorById({})", id);
 		
 		if (null == id || 0 == id) {
-			throw new IllegalArgumentException(logError(MSG_PROCESSOR_ID_MISSING, MSG_ID_PROCESSOR_ID_MISSING));
+			throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.PROCESSOR_ID_MISSING));
 		}
 		
 		// Test whether the processor id is valid
 		Optional<Processor> modelProcessor = RepositoryService.getProcessorRepository().findById(id);
 		if (modelProcessor.isEmpty()) {
-			throw new EntityNotFoundException(logError(MSG_PROCESSOR_ID_NOT_FOUND, MSG_ID_PROCESSOR_ID_NOT_FOUND, id));
+			throw new EntityNotFoundException(logger.log(ProcessorMgrMessage.PROCESSOR_ID_NOT_FOUND, id));
 		}
 		
 		// Ensure user is authorized for the mission of the processor
 		if (!securityService.isAuthorizedForMission(modelProcessor.get().getProcessorClass().getMission().getCode())) {
-			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					modelProcessor.get().getProcessorClass().getMission().getCode(), securityService.getMission()));			
 		}
 		
 		// Check whether there are configured processors for this processor
 		if (!modelProcessor.get().getConfiguredProcessors().isEmpty()) {
-			throw new IllegalArgumentException(logError(MSG_PROCESSOR_HAS_CONFIG, MSG_ID_PROCESSOR_HAS_CONFIG,
+			throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.PROCESSOR_HAS_CONFIG,
 					modelProcessor.get().getProcessorClass().getMission().getCode(),
 					modelProcessor.get().getProcessorClass().getProcessorName(),
 					modelProcessor.get().getProcessorVersion()));
@@ -503,16 +414,16 @@ public class ProcessorManager {
 		try {
 			RepositoryService.getProcessorRepository().deleteById(id);
 		} catch (Exception e) {
-			throw new RuntimeException(logError(MSG_DELETE_FAILURE, MSG_ID_DELETE_FAILURE, id, e.getMessage()));
+			throw new RuntimeException(logger.log(ProcessorMgrMessage.DELETE_FAILURE, id, e.getMessage()));
 		}
 
 		// Test whether the deletion was successful
 		modelProcessor = RepositoryService.getProcessorRepository().findById(id);
 		if (!modelProcessor.isEmpty()) {
-			throw new RuntimeException(logError(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id));
+			throw new RuntimeException(logger.log(ProcessorMgrMessage.DELETION_UNSUCCESSFUL, id));
 		}
 		
-		logInfo(MSG_PROCESSOR_DELETED, MSG_ID_PROCESSOR_DELETED, id);
+		logger.log(ProcessorMgrMessage.PROCESSOR_DELETED, id);
 	}
 
 }

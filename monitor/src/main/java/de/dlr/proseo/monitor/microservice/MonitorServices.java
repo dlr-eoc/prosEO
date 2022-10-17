@@ -5,10 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.MonExtService;
 import de.dlr.proseo.model.MonService;
 import de.dlr.proseo.model.MonServiceState;
@@ -19,7 +18,7 @@ import de.dlr.proseo.monitor.MonitorConfiguration;
 @Transactional
 public class MonitorServices extends Thread {
 
-	private static Logger logger = LoggerFactory.getLogger(MonitorServices.class);
+	private static ProseoLogger logger = new ProseoLogger(MonitorServices.class);
 	private List<MicroService> services;
 	private Map<String, DockerService> dockers;
 	private Map<String, MonService> monServices;

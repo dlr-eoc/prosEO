@@ -14,8 +14,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
@@ -39,6 +37,8 @@ import de.dlr.proseo.model.joborder.SensingTime;
 import de.dlr.proseo.model.joborder.TimeInterval;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.interfaces.rest.model.RestJoborder;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.model.enums.JobOrderVersion;
 import de.dlr.proseo.model.enums.StorageType;
 
@@ -55,7 +55,7 @@ import de.dlr.proseo.model.enums.StorageType;
  */
 public class JobDispatcher {
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(JobDispatcher.class);
+	private static ProseoLogger logger =new ProseoLogger(JobDispatcher.class);
 	private static DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("uuuuMMdd'_'HHmmssSSSSSS").withZone(ZoneId.of("UTC"));
 	
 	/**
@@ -314,7 +314,7 @@ public class JobDispatcher {
 		String storageManagerUrl = kubeConfig.getStorageManagerUrl();
 		
 		if (null == storageManagerUrl || null == jobOrder) {
-			logger.error("Insufficient data for sending job order to Storage Manager");
+			logger.log(PlannerMessage.INSUFFICIENT_ORDER_DATA);
 			return null;
 		}
 		
@@ -337,11 +337,11 @@ public class JobDispatcher {
 			}
 			
 			jo.setJobOrderStringBase64(b64String);
-			logger.info("HTTP Request: " + storageManagerUrl + restUrl);
+			logger.log(PlannerMessage.HTTP_REQUEST, storageManagerUrl + restUrl);
 			
 			ResponseEntity<RestJoborder> response = restTemplate.postForEntity(storageManagerUrl + restUrl, jo, RestJoborder.class);
 
-			logger.info("... response is {}", response.getStatusCode());
+			logger.log(PlannerMessage.HTTP_RESPONSE, response.getStatusCode());
 
 			if (response != null && response.getBody() != null && response.getBody().getUploaded()) {
 				jobOrder.setFileName(response.getBody().getPathInfo());
@@ -349,7 +349,8 @@ public class JobDispatcher {
 				return null;
 			}		
 		} catch (Exception e) {
-			logger.error("Exception sending job order to Storage Manager: {}", e.getMessage());
+			
+			logger.log(PlannerMessage.SENDING_JOB_EXCEPTION, e.getMessage());
 			e.printStackTrace();
 			return null;
 		}

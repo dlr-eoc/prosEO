@@ -9,13 +9,13 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.model.MonOrderProgress;
 import de.dlr.proseo.model.MonOrderState;
 import de.dlr.proseo.model.ProcessingOrder;
@@ -30,7 +30,7 @@ import de.dlr.proseo.monitor.MonitorConfiguration;
  */
 @Transactional
 public class MonitorOrders extends Thread {
-	private static Logger logger = LoggerFactory.getLogger(MonitorOrders.class);	
+	private static ProseoLogger logger = new ProseoLogger(MonitorOrders.class);	
 
 	/** Transaction manager for transaction control */
 
@@ -134,13 +134,13 @@ public class MonitorOrders extends Thread {
     				return null;
     			});
     		} catch (NoResultException e) {
-    			logger.error(e.getMessage());
+    			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
     		} catch (IllegalArgumentException e) {
-    			logger.error(e.getMessage());
+    			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
     		} catch (TransactionException e) {
-    			logger.error(e.getMessage());
+    			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
     		} catch (RuntimeException e) {
-    			logger.error(e.getMessage(), e);
+    			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
     		}
     		try {
     			sleep(wait);
