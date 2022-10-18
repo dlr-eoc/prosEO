@@ -3,8 +3,6 @@ package de.dlr.proseo.ui.gui;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -16,6 +14,8 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.ui.gui.service.MapComparator;
 import de.dlr.proseo.ui.gui.service.ProcessorService;
 import reactor.core.publisher.Mono;
@@ -23,7 +23,7 @@ import reactor.core.publisher.Mono;
 @Controller
 public class GUIProcessorClassController extends GUIBaseController {
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(GUIProcessorClassController.class);
+	private static ProseoLogger logger = new ProseoLogger(GUIProcessorClassController.class);
 
 	/** WebClient-Service-Builder */
 	@Autowired
@@ -96,7 +96,7 @@ public class GUIProcessorClassController extends GUIBaseController {
 	 */
 	@ExceptionHandler(WebClientResponseException.class)
 	public ResponseEntity<String> handleWebClientResponseException(WebClientResponseException ex) {
-		logger.error("Error from WebClient - Status {}, Body {}", ex.getRawStatusCode(), ex.getResponseBodyAsString(),
+		logger.log(UIMessage.WEBCLIENT_ERROR, ex.getRawStatusCode(), ex.getResponseBodyAsString(),
 				ex);
 		return ResponseEntity.status(ex.getRawStatusCode()).body(ex.getResponseBodyAsString());
 	}

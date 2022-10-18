@@ -8,13 +8,11 @@ package de.dlr.proseo.procmgr.rest.model;
 import java.util.ArrayList;
 import java.util.Map.Entry;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.enums.ProductQuality;
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.ConfigurationFile;
 import de.dlr.proseo.model.ConfigurationInputFile;
@@ -27,7 +25,7 @@ import de.dlr.proseo.model.ConfigurationInputFile;
 public class ConfigurationUtil {
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ConfigurationUtil.class);
+	private static ProseoLogger logger = new ProseoLogger(ConfigurationUtil.class);
 	
 	/**
 	 * Convert a prosEO model configuration into a REST configuration

@@ -7,8 +7,6 @@ package de.dlr.proseo.usermgr;
 
 import javax.sql.DataSource;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,6 +23,9 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.usermgr.rest.model.RestUser;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.UserMgrMessage;
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.usermgr.rest.UserManager;
 
@@ -54,7 +55,7 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 	private PlatformTransactionManager txManager;
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(UsermgrSecurityConfig.class);
+	private static ProseoLogger logger = new ProseoLogger(UsermgrSecurityConfig.class);
 
 	/**
 	 * Set the User Manager security options
@@ -84,7 +85,7 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 	 */
 	@Autowired
 	public void initialize(AuthenticationManagerBuilder builder) throws Exception {
-		logger.info("Initializing authentication from user details service ");
+		logger.log(GeneralMessage.INITIALIZING_AUTHENTICATION);
 
 		builder.userDetailsService(userDetailsService());
 	}
@@ -106,7 +107,7 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 	 */
 	@Bean
 	public UserDetailsService userDetailsService() {
-		logger.info("Initializing user details service from datasource " + dataSource);
+		logger.log(GeneralMessage.INITIALIZING_USER_DETAILS_SERVICE, dataSource);
 
 		JdbcDaoImpl jdbcDaoImpl = new JdbcDaoImpl();
 		jdbcDaoImpl.setDataSource(dataSource);
@@ -116,7 +117,7 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 		try {
 			jdbcDaoImpl.loadUserByUsername(config.getDefaultUserName());
 		} catch (UsernameNotFoundException e) {
-			logger.info("Creating bootstrap user");
+			logger.log(UserMgrMessage.CREATE_BOOTSTRAP_USER);
 			RestUser restUser = new RestUser();
 			restUser.setUsername(config.getDefaultUserName());
 			restUser.setPassword(passwordEncoder().encode(config.getDefaultUserPassword()));
@@ -131,7 +132,7 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 					return userManager.createUser(transactionalRestUser);
 				});
 			} catch (Exception e1) {
-				logger.error("Creation of bootstrap user failed (cause: " + e1.getMessage() + ")", e1);
+				logger.log(UserMgrMessage.CREATE_BOOTSTRAP_FAILED, e1);
 			}
 		}
 		

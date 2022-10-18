@@ -10,10 +10,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -22,6 +19,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.logging.http.HttpPrefix;
+import de.dlr.proseo.logging.http.ProseoHttp;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.UserMgrMessage;
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.usermgr.rest.model.RestUser;
 
@@ -33,20 +34,6 @@ import de.dlr.proseo.usermgr.rest.model.RestUser;
 @Component
 public class LoginControllerImpl implements LoginController {
 
-	/* Message ID constants */
-	private static final int MSG_ID_USER_NOT_AUTHORIZED = 2701;
-	private static final int MSG_ID_MISSION_MISSING = 2702;
-	private static final int MSG_ID_ACCOUNT_EXPIRED = 2703;
-	private static final int MSG_ID_PASSWORD_EXPIRED = 2704;
-	
-	/* Message string constants */
-	private static final String MSG_USER_NOT_AUTHORIZED = "(E%d) User %s has no authorities for mission %s";
-	private static final String MSG_MISSION_MISSING = "(E%d) No mission given for login";
-	private static final String MSG_ACCOUNT_EXPIRED = "(E%d) Account expired for user %s";
-	private static final String MSG_PASSWORD_EXPIRED = "(E%d) Password expired for user %s";
-	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String HTTP_MSG_PREFIX = "199 proseo-user-mgr ";
-
 	/* Other string constants */
 	private static final String ROLE_ROOT = UserRole.ROOT.asRoleString();
 	
@@ -55,20 +42,9 @@ public class LoginControllerImpl implements LoginController {
 	private UserManager userManager;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(LoginControllerImpl.class);
+	private static ProseoLogger logger = new ProseoLogger(LoginControllerImpl.class);
+	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.USER_MGR);
 
-	/**
-	 * Create an HTTP "Warning" header with the given text message
-	 * 
-	 * @param message the message text
-	 * @return an HttpHeaders object with a warning message
-	 */
-	private HttpHeaders errorHeaders(String message) {
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + (null == message ? "null" : message.replaceAll("\n", " ")));
-		return responseHeaders;
-	}
-	
 	/**
 	 * Let a user log in to a specific mission (the user is retrieved from the basic authentication information)
 	 * 
@@ -104,32 +80,28 @@ public class LoginControllerImpl implements LoginController {
 		
 		// Check whether mission is set
 		if (!isRootUser && (null == mission || mission.isBlank())) {
-			String message = String.format(MSG_MISSION_MISSING, MSG_ID_MISSION_MISSING);
-			logger.error(message);
-			return new ResponseEntity<>(errorHeaders(message), HttpStatus.BAD_REQUEST);
+			String message = logger.log(UserMgrMessage.MISSION_MISSING);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 		}
 		
 		// Check whether user is authorized for this mission
 		if (!isRootUser && !username.startsWith(mission + "-")) {
-			String message = String.format(MSG_USER_NOT_AUTHORIZED, MSG_ID_USER_NOT_AUTHORIZED, username, mission);
-			logger.error(message);
-			return new ResponseEntity<>(errorHeaders(message), HttpStatus.UNAUTHORIZED);
+			String message = logger.log(UserMgrMessage.USER_NOT_AUTHORIZED, username, mission);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.UNAUTHORIZED);
 		}
 		
 		// Check account expiration
 		RestUser loginUser = userManager.getUserByName(username);
 		Date now = new Date();
 		if (loginUser.getExpirationDate().before(now)) {
-			String message = String.format(MSG_ACCOUNT_EXPIRED, MSG_ID_ACCOUNT_EXPIRED, username);
-			logger.error(message);
-			return new ResponseEntity<>(errorHeaders(message), HttpStatus.UNAUTHORIZED);
+			String message = logger.log(UserMgrMessage.ACCOUNT_EXPIRED, username);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.UNAUTHORIZED);
 		}
 		
 		// Check password expiration
 		if (loginUser.getPasswordExpirationDate().before(now)) {
-			String message = String.format(MSG_PASSWORD_EXPIRED, MSG_ID_PASSWORD_EXPIRED, username);
-			logger.error(message);
-			return new ResponseEntity<>(errorHeaders(message), HttpStatus.UNAUTHORIZED);
+			String message = logger.log(UserMgrMessage.PASSWORD_EXPIRED, username);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.UNAUTHORIZED);
 		}
 		
 		return new ResponseEntity<>(authoritiesFound, HttpStatus.OK);

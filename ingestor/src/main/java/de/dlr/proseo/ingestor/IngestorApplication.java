@@ -6,8 +6,6 @@
 
 package de.dlr.proseo.ingestor;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -18,6 +16,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import de.dlr.proseo.ingestor.cleanup.CleanupProductThread;
 import de.dlr.proseo.ingestor.rest.ProductIngestor;
+import de.dlr.proseo.logging.logger.ProseoLogger;
 
 /**
  * prosEO Ingestor application
@@ -30,7 +29,7 @@ import de.dlr.proseo.ingestor.rest.ProductIngestor;
 @ComponentScan(basePackages={"de.dlr.proseo"})
 @EnableJpaRepositories(basePackages = { "de.dlr.proseo.model.dao" })
 public class IngestorApplication  implements CommandLineRunner {
-	private static Logger logger = LoggerFactory.getLogger(IngestorApplication.class);
+	private static ProseoLogger logger = new ProseoLogger(IngestorApplication.class);
 
 	/** Ingestor configuration */
 	@Autowired

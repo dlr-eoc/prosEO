@@ -14,8 +14,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +21,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import de.dlr.proseo.logging.http.HttpPrefix;
+import de.dlr.proseo.logging.http.ProseoHttp;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.PlannerMessage;
+import de.dlr.proseo.logging.messages.ProseoMessage;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.enums.FacilityState;
@@ -31,7 +35,6 @@ import de.dlr.proseo.model.rest.model.RestJob;
 import de.dlr.proseo.model.rest.model.RestJobGraph;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
-import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.rest.model.RestUtil;
@@ -51,7 +54,8 @@ public class JobControllerImpl implements JobController {
 	/**
 	 * Logger of this class
 	 */
-	private static Logger logger = LoggerFactory.getLogger(JobControllerImpl.class);
+	private static ProseoLogger logger = new ProseoLogger(JobControllerImpl.class);
+	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.PLANNER);
 	
 	/** Utility class for user authorizations */
 	@Autowired
@@ -102,18 +106,18 @@ public class JobControllerImpl implements JobController {
 			}		
 
 			if (resultList.isEmpty()) {
-				String message = Messages.JOBS_FOR_ORDER_NOT_EXIST.log(logger, String.valueOf(orderId));
+				String message = logger.log(PlannerMessage.JOBS_FOR_ORDER_NOT_EXIST, String.valueOf(orderId));
 
-				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 			}
 			
-			Messages.JOBS_RETRIEVED.log(logger, orderId);
+			logger.log(PlannerMessage.JOBS_RETRIEVED, orderId);
 
 			return new ResponseEntity<>(resultList, HttpStatus.OK);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -134,7 +138,7 @@ public class JobControllerImpl implements JobController {
 			Query query = createJobsQuery(state, orderId, null, null, null, true);
 			Object resultObject = query.getSingleResult();
 
-			Messages.JOBCOUNT_RETRIEVED.log(logger, orderId);
+			logger.log(PlannerMessage.JOBCOUNT_RETRIEVED, orderId);
 
 			if (resultObject instanceof Long) {
 				return new ResponseEntity<>(((Long)resultObject).toString(), HttpStatus.OK);	
@@ -144,9 +148,9 @@ public class JobControllerImpl implements JobController {
 			}
 			return new ResponseEntity<>("0", HttpStatus.OK);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}	
 	}
 	
@@ -165,17 +169,17 @@ public class JobControllerImpl implements JobController {
 			if (job != null) {
 				RestJob rj = getRestJob(job.getId(), true);
 
-				Messages.JOB_RETRIEVED.log(logger, jobId);
+				logger.log(PlannerMessage.JOB_RETRIEVED, jobId);
 
 				return new ResponseEntity<>(rj, HttpStatus.OK);
 			}
-			String message = Messages.JOB_NOT_EXIST.log(logger, jobId);
+			String message = logger.log(PlannerMessage.JOB_NOT_EXIST, jobId);
 
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 	
@@ -195,17 +199,17 @@ public class JobControllerImpl implements JobController {
 				RestJobGraph rj = null;
 				rj = RestUtil.createRestJobGraph(job);
 
-				Messages.JOBGRAPH_RETRIEVED.log(logger, jobId);
+				logger.log(PlannerMessage.JOBGRAPH_RETRIEVED, jobId);
 
 				return new ResponseEntity<>(rj, HttpStatus.OK);
 			}
-			String message = Messages.JOB_NOT_EXIST.log(logger, jobId);
+			String message = logger.log(PlannerMessage.JOB_NOT_EXIST, jobId);
 
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -224,16 +228,16 @@ public class JobControllerImpl implements JobController {
 			Job job = this.findJobById(jobId);
 			if (job != null) {
 
-				Messages msg = null;
+				ProseoMessage msg = null;
 				try {
 					productionPlanner.acquireThreadSemaphore("resumeJob");
 					final ResponseEntity<RestJob> answer = transactionTemplate.execute((status) -> {
 						Job jobx = this.findJobByIdPrim(jobId);
 						if (jobx.getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
-							String message = Messages.FACILITY_NOT_AVAILABLE.log(logger, jobx.getProcessingFacility().getName(),
+							String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, jobx.getProcessingFacility().getName(),
 									jobx.getProcessingFacility().getFacilityState().toString());
 
-							return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+							return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 						}
 						jobUtil.resume(jobx);
 						return null;
@@ -246,10 +250,10 @@ public class JobControllerImpl implements JobController {
 					productionPlanner.releaseThreadSemaphore("resumeJob");	
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("resumeJob");	
-					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
-				if (msg.isTrue()) {
+				if (msg.getSuccess()) {
 					final KubeConfig kc = transactionTemplate.execute((status) -> {
 						if (job.getProcessingFacility() != null) {
 							return productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
@@ -264,25 +268,24 @@ public class JobControllerImpl implements JobController {
 							productionPlanner.releaseThreadSemaphore("resumeJob2");	
 						} catch (Exception e) {
 							productionPlanner.releaseThreadSemaphore("resumeJob2");	
-							String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
-							return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+							String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+							return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 						}
 					}
 					RestJob rj = getRestJob(job.getId(), false);
 					return new ResponseEntity<>(rj, HttpStatus.OK);
 				} else {
-					String message = msg.format(jobId);
-
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+					String message = logger.log(msg, jobId);
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}
 			}
-			String message = Messages.JOB_NOT_EXIST.log(logger, jobId);
+			String message = logger.log(PlannerMessage.JOB_NOT_EXIST, jobId);
 
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -298,7 +301,7 @@ public class JobControllerImpl implements JobController {
 		try {
 			Job job = this.findJobById(jobId);
 			if (job != null) {
-				Messages msg = null;
+				ProseoMessage msg = null;
 				try {
 					productionPlanner.acquireThreadSemaphore("cancelJob");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -309,26 +312,25 @@ public class JobControllerImpl implements JobController {
 					productionPlanner.releaseThreadSemaphore("cancelJob");	
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("cancelJob");	
-					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
-				if (msg.isTrue()) {
+				if (msg.getSuccess()) {
 					RestJob rj = getRestJob(job.getId(), false);
 
 					return new ResponseEntity<>(rj, HttpStatus.OK);
 				} else {
-					String message = msg.format(jobId);
-
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+					String message = logger.log(msg, jobId);
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}
 			}
-			String message = Messages.JOB_NOT_EXIST.log(logger, jobId);
+			String message = logger.log(PlannerMessage.JOB_NOT_EXIST, jobId);
 
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -349,7 +351,7 @@ public class JobControllerImpl implements JobController {
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 			if (job != null) {
 
-				Messages msg = null;
+				ProseoMessage msg = null;
 				try {
 					productionPlanner.acquireThreadSemaphore("suspendJob");
 					final ResponseEntity<RestJob> answer = transactionTemplate.execute((status) -> {
@@ -357,9 +359,9 @@ public class JobControllerImpl implements JobController {
 						if (jobx.getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
 							// "Suspend force" is only allowed, if the processing facility is available
 							if (force && jobx.getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
-								String message = Messages.FACILITY_NOT_AVAILABLE.log(logger, jobx.getProcessingFacility().getName(),
+								String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, jobx.getProcessingFacility().getName(),
 										jobx.getProcessingFacility().getFacilityState().toString());
-						    	return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+						    	return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 							}
 						}
 						return null;
@@ -372,8 +374,8 @@ public class JobControllerImpl implements JobController {
 					productionPlanner.releaseThreadSemaphore("suspendJob");	
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("suspendJob");	
-					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 				try {
 					productionPlanner.acquireThreadSemaphore("suspendJob");
@@ -384,26 +386,26 @@ public class JobControllerImpl implements JobController {
 					productionPlanner.releaseThreadSemaphore("suspendJob");	
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("suspendJob");	
-					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
-				if (msg.isTrue()) {
+				if (msg.getSuccess()) {
 					RestJob pj = getRestJob(job.getId(), false);
 
 					return new ResponseEntity<>(pj, HttpStatus.OK);
 				} else {
-					String message = msg.format(jobId);
+					String message = logger.log(msg, jobId);
 
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_ACCEPTABLE);
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_ACCEPTABLE);
 				}
 			}
-			String message = Messages.JOB_NOT_EXIST.log(logger, jobId);
+			String message = logger.log(PlannerMessage.JOB_NOT_EXIST, jobId);
 
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -437,7 +439,7 @@ public class JobControllerImpl implements JobController {
 				String missionCode = securityService.getMission();
 				String orderMissionCode = jobx.getProcessingOrder().getMission().getCode();
 				if (!missionCode.equals(orderMissionCode)) {
-					Messages.ILLEGAL_CROSS_MISSION_ACCESS.log(logger, orderMissionCode, missionCode);
+					logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, orderMissionCode, missionCode);
 					return null;
 				} 
 			}
@@ -455,7 +457,7 @@ public class JobControllerImpl implements JobController {
 			productionPlanner.releaseThreadSemaphore("findJobById");	
 		} catch (Exception e) {
 			productionPlanner.releaseThreadSemaphore("findJobById");	
-			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());	
+			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());	
 		}
 		return j;
 	}
@@ -476,7 +478,7 @@ public class JobControllerImpl implements JobController {
 				return rj;
 			});
 		} catch (Exception e) {
-			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());	
+			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());	
 		} finally {
 			productionPlanner.releaseThreadSemaphore("getRestJob");
 		}
@@ -494,7 +496,7 @@ public class JobControllerImpl implements JobController {
 		try {
 			Job j = this.findJobById(id);
 			if (j != null) {
-				Messages msg = null;
+				ProseoMessage msg = null;
 				try {
 					productionPlanner.acquireThreadSemaphore("retryJob");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -505,26 +507,26 @@ public class JobControllerImpl implements JobController {
 					productionPlanner.releaseThreadSemaphore("retryJob");	
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("retryJob");	
-					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
-				if (msg.isTrue()) {
+				if (msg.getSuccess()) {
 					RestJob rj = getRestJob(j.getId(), false);
 
 					return new ResponseEntity<>(rj, HttpStatus.OK);
 				} else {
-					String message = msg.format(id);
+					String message = logger.log(msg, id);
 
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}
 			}
-			String message = Messages.JOB_NOT_EXIST.log(logger, id);
+			String message = logger.log(PlannerMessage.JOB_NOT_EXIST, id);
 
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 

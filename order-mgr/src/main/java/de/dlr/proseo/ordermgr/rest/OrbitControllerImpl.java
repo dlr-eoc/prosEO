@@ -16,8 +16,6 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.validation.Valid;
 
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -28,6 +26,11 @@ import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import de.dlr.proseo.logging.http.HttpPrefix;
+import de.dlr.proseo.logging.http.ProseoHttp;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.OrderMgrMessage;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -98,7 +101,8 @@ public class OrbitControllerImpl implements OrbitController {
 	private EntityManager em;
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(OrbitControllerImpl.class);
+	private static ProseoLogger logger = new ProseoLogger(OrbitControllerImpl.class);
+	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.ORDER_MGR);
 
 	/**
 	 * List of all orbits filtered by mission, spacecraft, start time range , orbit number range
@@ -111,56 +115,7 @@ public class OrbitControllerImpl implements OrbitController {
 	 * @param orbitNumberTo included orbits end
 	 * @return a response entity with either a list of products and HTTP status OK or an error message and an HTTP status indicating failure
 	 */
-	
-//	/**
-//	 * Log an informational message with the prosEO message prefix
-//	 * 
-//	 * @param messageFormat the message text with parameter placeholders in String.format() style
-//	 * @param messageId a (unique) message id
-//	 * @param messageParameters the message parameters (optional, depending on the message format)
-//	 */
-//	private void logInfo(String messageFormat, int messageId, Object... messageParameters) {
-//		// Prepend message ID to parameter list
-//		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-//		messageParamList.add(0, messageId);
-//		
-//		// Log the error message
-//		logger.info(String.format(messageFormat, messageParamList.toArray()));
-//	}
-	
-	/**
-	 * Create an HTTP "Warning" header with the given text message
-	 * 
-	 * @param message the message text
-	 * @return an HttpHeaders object with a warning message
-	 */
-	private HttpHeaders errorHeaders(String message) {
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, MSG_PREFIX + message.replaceAll("\n", " "));
-		return responseHeaders;
-	}
-
-	/**
-	 * Log an error and return the corresponding HTTP message header
-	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return an HttpHeaders object with a formatted error message
-	 */
-	private HttpHeaders errorHeaders(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-		
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		logger.error(message);
-		
-		// Create an HTTP "Warning" header
-		return errorHeaders(message);
-	}
-	
+			
 	/**
 	 * List of all orbits filtered by spacecraft code, orbit number range, starttime range
 	 * 
@@ -189,7 +144,7 @@ public class OrbitControllerImpl implements OrbitController {
 		/* Check arguments */
 		if (null == spacecraftCode || "".equals(spacecraftCode)) {
 			return new ResponseEntity<>(
-					errorHeaders(MSG_ORBIT_INCOMPLETE, MSG_ID_ORBIT_INCOMPLETE), HttpStatus.BAD_REQUEST);
+					http.errorHeaders(logger.log(OrderMgrMessage.ORBIT_INCOMPLETE)), HttpStatus.BAD_REQUEST);
 		}
 
 		List<RestOrbit> resultList = new ArrayList<RestOrbit>();
@@ -211,13 +166,11 @@ public class OrbitControllerImpl implements OrbitController {
 		
 		// Ensure user is authorized for the mission to read
 		if (!securityService.isAuthorizedForMission(resultList.get(0).getMissionCode())) {
-			String message = String.format(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
-					resultList.get(0).getMissionCode(), securityService.getMission());			
-			logger.error(message);
-			return new ResponseEntity<>(errorHeaders(message), HttpStatus.FORBIDDEN);
+			String message = logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, resultList.get(0).getMissionCode(), securityService.getMission());
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.FORBIDDEN);
 		}
 		
-		logger.info(String.format(MSG_ORBITS_RETRIEVED, MSG_ID_ORBITS_RETRIEVED, resultList.size()));
+		logger.log(OrderMgrMessage.ORBITS_RETRIEVED, resultList.size());
 		
 		return new ResponseEntity<>(resultList, HttpStatus.OK);								
 	}
@@ -247,7 +200,7 @@ public class OrbitControllerImpl implements OrbitController {
 		/* Check arguments */
 		if (null == spacecraftCode || "".equals(spacecraftCode)) {
 			return new ResponseEntity<>(
-					errorHeaders(MSG_ORBIT_INCOMPLETE, MSG_ID_ORBIT_INCOMPLETE), HttpStatus.BAD_REQUEST);
+					http.errorHeaders(logger.log(OrderMgrMessage.ORBIT_INCOMPLETE)), HttpStatus.BAD_REQUEST);
 		}
 
 		// Find using search parameters
@@ -281,7 +234,7 @@ public class OrbitControllerImpl implements OrbitController {
 		/* Check argument */
 		if (null == orbit || orbit.isEmpty()) {
 			return new ResponseEntity<>(
-					errorHeaders(MSG_ORBIT_MISSING, MSG_ID_ORBIT_MISSING), HttpStatus.BAD_REQUEST);
+					http.errorHeaders(logger.log(OrderMgrMessage.ORBIT_MISSING)), HttpStatus.BAD_REQUEST);
 		}
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
@@ -302,8 +255,7 @@ public class OrbitControllerImpl implements OrbitController {
 						Spacecraft spacecraft = RepositoryService.getSpacecraftRepository()
 								.findByMissionAndCode(tomodelOrbit.getMissionCode(), tomodelOrbit.getSpacecraftCode());
 						if (null == spacecraft) {
-							throw new IllegalArgumentException(String.format(
-									MSG_SPACECRAFT_NOT_FOUND, MSG_ID_SPACECRAFT_NOT_FOUND,
+							throw new IllegalArgumentException(logger.log(OrderMgrMessage.SPACECRAFT_NOT_FOUND,
 									tomodelOrbit.getSpacecraftCode(), tomodelOrbit.getMissionCode()));
 						}
 						modelOrbit.setSpacecraft(spacecraft);
@@ -315,7 +267,7 @@ public class OrbitControllerImpl implements OrbitController {
 					
 					// Ensure user is authorized for the mission to update
 					if (!securityService.isAuthorizedForMission(modelOrbit.getSpacecraft().getMission().getCode())) {
-						throw new SecurityException(String.format(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+						throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 								modelOrbit.getSpacecraft().getMission().getCode(), securityService.getMission()));			
 					}
 					
@@ -326,17 +278,14 @@ public class OrbitControllerImpl implements OrbitController {
 				return restOrbits;
 			});
 		} catch (IllegalArgumentException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (TransactionException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		} catch (SecurityException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 		
-		logger.info(String.format(MSG_ORBITS_CREATED, MSG_ID_ORBITS_CREATED, restOrbitList.size()));
+		logger.log(OrderMgrMessage.ORBITS_CREATED, restOrbitList.size());
 		
 		return new ResponseEntity<>(restOrbitList, HttpStatus.CREATED);
 	}
@@ -363,28 +312,25 @@ public class OrbitControllerImpl implements OrbitController {
 				Optional<Orbit> modelOrbit = RepositoryService.getOrbitRepository().findById(id);
 				
 				if (modelOrbit.isEmpty()) {
-					throw new NoResultException(String.format(MSG_ORBIT_NOT_FOUND, MSG_ID_ORBIT_NOT_FOUND, id));
+					throw new NoResultException(logger.log(OrderMgrMessage.ORBIT_NOT_FOUND, id));
 				}
 				
 				return OrbitUtil.toRestOrbit(modelOrbit.get());
 			});
 		} catch (NoResultException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (TransactionException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
 		// Ensure user is authorized for the mission to read
 		if (!securityService.isAuthorizedForMission(restOrbit.getMissionCode())) {
-			String message = String.format(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
-					restOrbit.getMissionCode(), securityService.getMission());			
-			logger.error(message);
-			return new ResponseEntity<>(errorHeaders(message), HttpStatus.FORBIDDEN);
+			String message = logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
+					restOrbit.getMissionCode(), securityService.getMission());
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.FORBIDDEN);
 		}
 		
-		logger.info(String.format(MSG_ORBIT_RETRIEVED, MSG_ID_ORBIT_RETRIEVED, restOrbit.getOrbitNumber()));
+		logger.log(OrderMgrMessage.ORBIT_RETRIEVED, restOrbit.getOrbitNumber());
 		
 		return new ResponseEntity<>(restOrbit, HttpStatus.OK);
 	
@@ -410,7 +356,7 @@ public class OrbitControllerImpl implements OrbitController {
 				Optional<Orbit> optModelOrbit = RepositoryService.getOrbitRepository().findById(id);
 				
 				if (optModelOrbit.isEmpty()) {
-					throw new NoResultException(String.format(MSG_ORBIT_NOT_FOUND, MSG_ID_ORBIT_NOT_FOUND, id));
+					throw new NoResultException(logger.log(OrderMgrMessage.ORBIT_NOT_FOUND, id));
 				}
 				Orbit modelOrbit = optModelOrbit.get();
 				
@@ -422,14 +368,13 @@ public class OrbitControllerImpl implements OrbitController {
 				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository()
 						.findByMissionAndCode(orbit.getMissionCode(), orbit.getSpacecraftCode());
 				if (null == spacecraft) {
-					throw new IllegalArgumentException(String.format(
-							MSG_SPACECRAFT_NOT_FOUND, MSG_ID_SPACECRAFT_NOT_FOUND, orbit.getSpacecraftCode()));
+					throw new IllegalArgumentException(logger.log(OrderMgrMessage.SPACECRAFT_NOT_FOUND, orbit.getSpacecraftCode()));
 				}
 				changedOrbit.setSpacecraft(spacecraft);
 				
 				// Ensure user is authorized for the mission to update
 				if (!securityService.isAuthorizedForMission(spacecraft.getMission().getCode())) {
-					throw new SecurityException(String.format(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 							spacecraft.getMission().getCode(), securityService.getMission()));			
 				}
 				
@@ -462,22 +407,19 @@ public class OrbitControllerImpl implements OrbitController {
 				return OrbitUtil.toRestOrbit(modelOrbit);
 			});
 		} catch (NoResultException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (TransactionException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		} catch (SecurityException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 		
 		HttpStatus httpStatus = HttpStatus.OK;
 		if (orbit.getVersion() == restOrbit.getVersion()) {
 			httpStatus = HttpStatus.NOT_MODIFIED;
-			logger.info(String.format(MSG_ORBIT_NOT_MODIFIED, MSG_ID_ORBIT_NOT_MODIFIED, id));
+			logger.log(OrderMgrMessage.ORBIT_NOT_MODIFIED, id);
 		} else {
-			logger.info(String.format(MSG_ORBIT_UPDATED, MSG_ID_ORBIT_UPDATED, restOrbit.getOrbitNumber()));
+			logger.log(OrderMgrMessage.ORBIT_UPDATED, restOrbit.getOrbitNumber());
 		}
 		
 		return new ResponseEntity<>(restOrbit, httpStatus);
@@ -503,12 +445,12 @@ public class OrbitControllerImpl implements OrbitController {
 				// Test whether the orbit id is valid
 				Optional<Orbit> modelOrbit = RepositoryService.getOrbitRepository().findById(id);
 				if (modelOrbit.isEmpty()) {
-					throw new NoResultException(String.format(MSG_ORBIT_NOT_FOUND, MSG_ID_ORBIT_NOT_FOUND, id));
+					throw new NoResultException(logger.log(OrderMgrMessage.ORBIT_NOT_FOUND, id));
 				}		
 
 				// Ensure user is authorized for the mission to update
 				if (!securityService.isAuthorizedForMission(modelOrbit.get().getSpacecraft().getMission().getCode())) {
-					throw new SecurityException(String.format(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 							modelOrbit.get().getSpacecraft().getMission().getCode(), securityService.getMission()));			
 				}
 				
@@ -518,26 +460,22 @@ public class OrbitControllerImpl implements OrbitController {
 				// Test whether the deletion was successful
 				modelOrbit = RepositoryService.getOrbitRepository().findById(id);
 				if (!modelOrbit.isEmpty()) {
-					throw new RuntimeException(String.format(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id));
+					throw new RuntimeException(logger.log(OrderMgrMessage.ORBIT_DELETION_UNSUCCESSFUL, id));
 				}
 				
 				return null;
 			});
 		} catch (NoResultException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (TransactionException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		} catch (SecurityException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		} catch (RuntimeException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}
 		
-		logger.info(String.format(MSG_ORBIT_DELETED, MSG_ID_ORBIT_DELETED, id));
+		logger.log(OrderMgrMessage.ORBIT_DELETED, id);
 		
 		HttpHeaders responseHeaders = new HttpHeaders();
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NO_CONTENT);

@@ -5,7 +5,8 @@
  */
 package de.dlr.proseo.ui.cli.parser;
 
-import static de.dlr.proseo.ui.backend.UIMessages.*;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.UIMessage;
 
 /**
  * Class representing a parsed command parameter
@@ -48,7 +49,8 @@ public class ParsedParameter {
 		if (CLISyntax.allowedTypes.contains(type)) {
 			this.type = type;
 		} else {
-			throw new IllegalArgumentException(uiMsg(MSG_ID_ILLEGAL_PARAMETER_TYPE, type, CLISyntax.allowedTypes.toString()));
+			throw new IllegalArgumentException(ProseoLogger.format(
+				UIMessage.ILLEGAL_PARAMETER_TYPE, type, CLISyntax.allowedTypes.toString()));
 		}
 	}
 	/**

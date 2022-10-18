@@ -15,21 +15,21 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.ui.gui.GUIAuthenticationToken;
 import de.dlr.proseo.ui.gui.GUIConfiguration;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 @Service
 public class ProcessorService {
-	private static Logger logger = LoggerFactory.getLogger(ProcessorService.class);
+	private static ProseoLogger logger = new ProseoLogger(ProcessorService.class);
 	/** The GUI configuration */
 	@Autowired
 	private GUIConfiguration config;

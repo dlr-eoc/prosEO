@@ -69,6 +69,11 @@
       <artifactId>proseo-planner</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>de.dlr.proseo</groupId>
+      <artifactId>proseo-logging</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 		<dependency>
 			<groupId>com.phoenixnap.oss</groupId>
 			<artifactId>springmvc-raml-plugin</artifactId>

@@ -12,13 +12,14 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.MonitorMessage;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.MonProductProductionDay;
 import de.dlr.proseo.model.MonProductProductionHour;
@@ -37,7 +38,7 @@ import de.dlr.proseo.monitor.MonitorConfiguration;
  */
 @Transactional
 public class MonitorProducts extends Thread {
-	private static Logger logger = LoggerFactory.getLogger(MonitorProducts.class);	
+	private static ProseoLogger logger = new ProseoLogger(MonitorProducts.class);	
 
 	/** Transaction manager for transaction control */
 
@@ -80,7 +81,7 @@ public class MonitorProducts extends Thread {
 				try {
 					timeFrom = Instant.parse(config.getAggregationStart()).truncatedTo(ChronoUnit.HOURS);
 				} catch (DateTimeParseException ex) {
-					logger.warn("Illegal config value productAggregationStart; {}", config.getAggregationStart());
+					logger.log(MonitorMessage.ILLEGAL_CONFIG_VALUE, config.getAggregationStart());
 				}
 			} 
 		} else {
@@ -111,7 +112,7 @@ public class MonitorProducts extends Thread {
 					} else if (mppdList.size() > 1) {
 						// should not be
 						// create a warning
-						logger.warn("Duplicate entries in MonProductProductionHour at {}", timeFrom);
+						logger.log(MonitorMessage.DUPLICATE_ENTRIES, "MonProductProductionHour", timeFrom);
 						mppd = mppdList.get(0);
 					} else {
 						mppd = mppdList.get(0);
@@ -162,16 +163,16 @@ public class MonitorProducts extends Thread {
 					if (count > 0) {
 						BigInteger bix = productionLatencySum.divide(BigInteger.valueOf(count));
 						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
-							logger.error("productionLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+							logger.log(MonitorMessage.WRONG_PRODUCTION_LATENCY, bix.toString());
 						}
 						productionLatencyAvg = bix.intValue();
 						bix = totalLatencySum.divide(BigInteger.valueOf(count));
 						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
-							logger.error("totalLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+							logger.log(MonitorMessage.WRONG_TOTAL_LATENCY, bix.toString());
 						}
 						totalLatencyAvg = bix.intValue();
 						if (fileSize.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0) {
-							logger.error("downloadSize: {} >= Long.MAX_VALUE", fileSize.toString());
+							logger.log(MonitorMessage.WRONG_DOWNLOAD_SIZE, fileSize.toString());
 						}
 						mppd.setCount(count);
 						mppd.setFileSize(fileSize.longValue());
@@ -198,7 +199,7 @@ public class MonitorProducts extends Thread {
 				try {
 					timeFrom = Instant.parse(config.getAggregationStart()).truncatedTo(ChronoUnit.DAYS);
 				} catch (DateTimeParseException ex) {
-					logger.warn("Illegal config value productAggregationStart; {}", config.getAggregationStart());
+					logger.log(MonitorMessage.ILLEGAL_CONFIG_VALUE, config.getAggregationStart());
 				}
 			} 
 		} else {
@@ -231,7 +232,7 @@ public class MonitorProducts extends Thread {
 					} else if (mppdList.size() > 1) {
 						// should not be
 						// create a warning
-						logger.warn("Duplicate entries in MonProductProductionDay at {}", timeFrom);
+						logger.log(MonitorMessage.DUPLICATE_ENTRIES, "MonProductProductionDay", timeFrom);
 						mppd = mppdList.get(0);
 					} else {
 						mppd = mppdList.get(0);
@@ -279,16 +280,16 @@ public class MonitorProducts extends Thread {
 					if (count > 0) {
 						BigInteger bix = productionLatencySum.divide(BigInteger.valueOf(count));
 						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
-							logger.error("productionLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+							logger.log(MonitorMessage.WRONG_PRODUCTION_LATENCY, bix.toString());
 						}
 						productionLatencyAvg = bix.intValue();
 						bix = totalLatencySum.divide(BigInteger.valueOf(count));
 						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
-							logger.error("totalLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+							logger.log(MonitorMessage.WRONG_TOTAL_LATENCY, bix.toString());
 						}
 						totalLatencyAvg = bix.intValue();
 						if (fileSize.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0) {
-							logger.error("downloadSize: {} >= Long.MAX_VALUE", fileSize.toString());
+							logger.log(MonitorMessage.WRONG_DOWNLOAD_SIZE, fileSize.toString());
 						}
 						mppd.setCount(count);
 						mppd.setFileSize(fileSize.longValue());
@@ -315,7 +316,7 @@ public class MonitorProducts extends Thread {
 				try {
 					timeFrom = Instant.parse(config.getAggregationStart()).truncatedTo(ChronoUnit.DAYS);
 				} catch (DateTimeParseException ex) {
-					logger.warn("Illegal config value productAggregationStart; {}", config.getAggregationStart());
+					logger.log(MonitorMessage.ILLEGAL_CONFIG_VALUE, config.getAggregationStart());
 				}
 			} 
 		} else {
@@ -353,7 +354,7 @@ public class MonitorProducts extends Thread {
 					} else if (mppdList.size() > 1) {
 						// should not be
 						// create a warning
-						logger.warn("Duplicate entries in MonProductProductionDay at {}", timeFrom);
+						logger.log(MonitorMessage.DUPLICATE_ENTRIES, "MonProductProductionDay", timeFrom);
 						mppd = mppdList.get(0);
 					} else {
 						mppd = mppdList.get(0);
@@ -401,16 +402,16 @@ public class MonitorProducts extends Thread {
 					if (count > 0) {
 						BigInteger bix = productionLatencySum.divide(BigInteger.valueOf(count));
 						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
-							logger.error("productionLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+							logger.log(MonitorMessage.WRONG_PRODUCTION_LATENCY, bix.toString());
 						}
 						productionLatencyAvg = bix.intValue();
 						bix = totalLatencySum.divide(BigInteger.valueOf(count));
 						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
-							logger.error("totalLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+							logger.log(MonitorMessage.WRONG_TOTAL_LATENCY, bix.toString());
 						}
 						totalLatencyAvg = bix.intValue();
 						if (fileSize.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0) {
-							logger.error("downloadSize: {} >= Long.MAX_VALUE", fileSize.toString());
+							logger.log(MonitorMessage.WRONG_DOWNLOAD_SIZE, fileSize.toString());
 						}
 						mppd.setCount(count);
 						mppd.setFileSize(fileSize.longValue());
@@ -457,13 +458,13 @@ public class MonitorProducts extends Thread {
     				return null;
     			});
     		} catch (NoResultException e) {
-    			logger.error(e.getMessage());
+    			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
     		} catch (IllegalArgumentException e) {
-    			logger.error(e.getMessage());
+    			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
     		} catch (TransactionException e) {
-    			logger.error(e.getMessage());
+    			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
     		} catch (RuntimeException e) {
-    			logger.error(e.getMessage(), e);
+    			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
     		}
     		try {
     			sleep(wait);

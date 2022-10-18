@@ -13,13 +13,14 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.facmgr.rest.model.FacmgrUtil;
 import de.dlr.proseo.facmgr.rest.model.RestProcessingFacility;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.FacilityMgrMessage;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.service.RepositoryService;
 
@@ -33,104 +34,31 @@ import de.dlr.proseo.model.service.RepositoryService;
 @Component
 @Transactional
 public class FacmgrManager {
-	/* Message ID constants */
-	private static final int MSG_ID_FACILITY_NOT_FOUND = 1014;
-	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 1015;
-	//private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
-	private static final int MSG_ID_FACILITY_MISSING = 1016;
-	private static final int MSG_ID_FACILITY_DELETED = 1017;
-	private static final int MSG_ID_FACILITY_RETRIEVED = 1018;
-	private static final int MSG_ID_FACILITY_MODIFIED = 1019;
-	private static final int MSG_ID_FACILITY_NOT_MODIFIED = 1020;
-	private static final int MSG_ID_FACILITY_CREATED = 1021;
-	private static final int MSG_ID_FACILITY_LIST_EMPTY = 1022;
-	private static final int MSG_ID_FACILITY_LIST_RETRIEVED = 1023;
-	private static final int MSG_ID_DUPLICATE_FACILITY = 1024;
-	private static final int MSG_ID_FACILITY_HAS_PRODUCTS = 1025;
-
-	// Same as in other services
-	private static final int MSG_ID_ILLEGAL_STATE_TRANSITION = 1129;
-
-	/* Message string constants */
-	private static final String MSG_FACILITY_NOT_FOUND = "(E%d) No facility found for ID %d";
-	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Facility deletion unsuccessful for ID %d";
-	private static final String MSG_FACILITY_LIST_EMPTY = "(E%d) No facilities found for search criteria";
-	private static final String MSG_FACILITY_MISSING = "(E%d) Facility not set";
-	private static final String MSG_FACILITY_DELETED = "(I%d) Facility with id %d deleted";
-	private static final String MSG_FACILITY_ID_MISSING = "(E%d) Facility ID not set";
-	private static final String MSG_DUPLICATE_FACILITY = "(E%d) Facility %s exists already";
-	private static final String MSG_FACILITY_HAS_PRODUCTS = "(E%d) Cannot delete facility %s due to existing products";
-	private static final String MSG_ILLEGAL_STATE_TRANSITION = "(E%d) Illegal order state transition from %s to %s";
-
-	private static final String MSG_FACILITY_RETRIEVED = "(I%d) Facility with ID %s retrieved";
-	private static final String MSG_FACILITY_NOT_MODIFIED = "(I%d) Facility with id %d not modified (no changes)";
-	private static final String MSG_FACILITY_MODIFIED = "(I%d) Facility with id %d modified";
-	private static final String MSG_FACILITY_CREATED = "(I%d) Facility with identifier %s created";
-	private static final String MSG_FACILITY_LIST_RETRIEVED = "(I%d) Facility list of size %d retrieved for facility '%s'";
 
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(FacmgrManager.class);
+	private static ProseoLogger logger = new ProseoLogger(FacmgrManager.class);
 	
-	/**
-	 * Create and log a formatted informational message
-	 * 
-	 * @param messageFormat the message text with parameter placeholder in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted info message
-	 */
-	private String logInfo(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-		
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		logger.info(message);
-		
-		return message;
-	}
-	/**
-	 * Create and log a formatted error message
-	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted error message
-	 */
-	private String logError(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-		
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		logger.error(message);
-		
-		return message;
-	}
-
 	public RestProcessingFacility createFacility(RestProcessingFacility facility) throws IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createFacility({})", (null == facility ? "MISSING" : facility.getName()));
 		
 		if (null == facility) {
-			throw new IllegalArgumentException(logError(MSG_FACILITY_MISSING, MSG_ID_FACILITY_MISSING));
+			throw new IllegalArgumentException(logger.log(FacilityMgrMessage.FACILITY_MISSING));
 		}
 		
 		// Make sure the facility does not yet exist
 		ProcessingFacility modelFacility = RepositoryService.getFacilityRepository().findByName(facility.getName());
 		if (null != modelFacility) {
-			throw new IllegalArgumentException(logError(MSG_DUPLICATE_FACILITY, MSG_ID_DUPLICATE_FACILITY, facility.getName()));
+			throw new IllegalArgumentException(logger.log(FacilityMgrMessage.DUPLICATE_FACILITY, facility.getName()));
 		}
 		
 		modelFacility = FacmgrUtil.toModelFacility(facility);
 		
 		modelFacility = RepositoryService.getFacilityRepository().save(modelFacility);
-		logInfo(MSG_FACILITY_CREATED, MSG_ID_FACILITY_CREATED, facility.getName());
+		logger.log(FacilityMgrMessage.FACILITY_CREATED, facility.getName());
 		return FacmgrUtil.toRestFacility(modelFacility);
 	}
 	/**
@@ -172,10 +100,10 @@ public class FacmgrManager {
 
 		}
 		if (result.isEmpty()) {
-			throw new NoResultException(logError(MSG_FACILITY_LIST_EMPTY, MSG_ID_FACILITY_LIST_EMPTY));
+			throw new NoResultException(logger.log(FacilityMgrMessage.FACILITY_LIST_EMPTY));
 			
 		}
-		logInfo(MSG_FACILITY_LIST_RETRIEVED, MSG_ID_FACILITY_LIST_RETRIEVED, result.size(), name);
+		logger.log(FacilityMgrMessage.FACILITY_LIST_RETRIEVED, result.size(), name);
 
 		return result;
 	}
@@ -193,14 +121,14 @@ public class FacmgrManager {
 		if (logger.isTraceEnabled()) logger.trace(">>> getFacilityById({})", id);
 		
 		if (null == id) {
-			throw new IllegalArgumentException(logError(MSG_FACILITY_ID_MISSING, MSG_ID_FACILITY_MISSING, id));
+			throw new IllegalArgumentException(logger.log(FacilityMgrMessage.FACILITY_MISSING, id));
 		}	
 		Optional<ProcessingFacility> modelFacility = RepositoryService.getFacilityRepository().findById(id);
 		
 		if (modelFacility.isEmpty()) {
-			throw new NoResultException(logError(MSG_FACILITY_NOT_FOUND, MSG_ID_FACILITY_NOT_FOUND, id));
+			throw new NoResultException(logger.log(FacilityMgrMessage.FACILITY_NOT_FOUND, id));
 		}		
-		logInfo(MSG_FACILITY_RETRIEVED, MSG_ID_FACILITY_RETRIEVED, id);
+		logger.log(FacilityMgrMessage.FACILITY_RETRIEVED, id);
 		
 		return FacmgrUtil.toRestFacility(modelFacility.get());
 		
@@ -219,13 +147,13 @@ public class FacmgrManager {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyFacility({})", id);
 		
 		if (null == id) {
-			throw new IllegalArgumentException(logError(MSG_FACILITY_ID_MISSING, MSG_ID_FACILITY_MISSING, id));
+			throw new IllegalArgumentException(logger.log(FacilityMgrMessage.FACILITY_MISSING, id));
 		}
 		
 		Optional<ProcessingFacility> optModelFacility = RepositoryService.getFacilityRepository().findById(id);
 				
 		if (optModelFacility.isEmpty()) {
-			throw new EntityNotFoundException(logError(MSG_FACILITY_NOT_FOUND, MSG_ID_FACILITY_NOT_FOUND, id));
+			throw new EntityNotFoundException(logger.log(FacilityMgrMessage.FACILITY_NOT_FOUND, id));
 		}
 		ProcessingFacility modelFacility = optModelFacility.get();
 		
@@ -260,7 +188,7 @@ public class FacmgrManager {
 			try {
 				modelFacility.setFacilityState(changedFacility.getFacilityState());
 			} catch (IllegalStateException e) {
-				throw new IllegalArgumentException(logError(MSG_ILLEGAL_STATE_TRANSITION, MSG_ID_ILLEGAL_STATE_TRANSITION,
+				throw new IllegalArgumentException(logger.log(GeneralMessage.ILLEGAL_ORDER_STATE_TRANSITION,
 						modelFacility.getFacilityState().toString(), changedFacility.getFacilityState().toString()));
 			}
 		}	
@@ -332,9 +260,9 @@ public class FacmgrManager {
 		if (facilityChanged)	{
 			modelFacility.incrementVersion();
 			modelFacility = RepositoryService.getFacilityRepository().save(modelFacility);
-			logInfo(MSG_FACILITY_MODIFIED, MSG_ID_FACILITY_MODIFIED, id);
+			logger.log(FacilityMgrMessage.FACILITY_MODIFIED, id);
 		} else {
-			logInfo(MSG_FACILITY_NOT_MODIFIED, MSG_ID_FACILITY_NOT_MODIFIED, id);
+			logger.log(FacilityMgrMessage.FACILITY_NOT_MODIFIED, id);
 		}
 		return FacmgrUtil.toRestFacility(modelFacility);
 	}
@@ -353,13 +281,13 @@ public class FacmgrManager {
 		// Test whether the facility id is valid
 		Optional<ProcessingFacility> modelFacility = RepositoryService.getFacilityRepository().findById(id);
 		if (modelFacility.isEmpty()) {
-			throw new EntityNotFoundException(logError(MSG_FACILITY_NOT_FOUND, MSG_ID_FACILITY_NOT_FOUND));
+			throw new EntityNotFoundException(logger.log(FacilityMgrMessage.FACILITY_NOT_FOUND));
 		}
 		
 		// Test whether the facility still has stored products
 		if (!RepositoryService.getProductFileRepository().findByProcessingFacilityId(modelFacility.get().getId()).isEmpty()) {
 			throw new IllegalArgumentException(
-					logError(MSG_FACILITY_HAS_PRODUCTS, MSG_ID_FACILITY_HAS_PRODUCTS, modelFacility.get().getName()));
+					logger.log(FacilityMgrMessage.FACILITY_HAS_PRODUCTS, modelFacility.get().getName()));
 		};
 		
 		// Delete the facility
@@ -368,10 +296,10 @@ public class FacmgrManager {
 		// Test whether the deletion was successful
 		modelFacility = RepositoryService.getFacilityRepository().findById(id);
 		if (!modelFacility.isEmpty()) {
-			throw new RuntimeException(logError(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id));
+			throw new RuntimeException(logger.log(FacilityMgrMessage.DELETION_UNSUCCESSFUL, id));
 		}
 		
-		logInfo(MSG_FACILITY_DELETED, MSG_ID_FACILITY_DELETED, id);
+		logger.log(FacilityMgrMessage.FACILITY_DELETED, id);
 		
 	}
 	

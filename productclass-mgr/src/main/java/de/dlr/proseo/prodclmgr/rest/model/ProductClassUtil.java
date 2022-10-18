@@ -7,9 +7,7 @@ package de.dlr.proseo.prodclmgr.rest.model;
 
 import java.time.Duration;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimplePolicy;
@@ -26,7 +24,7 @@ import de.dlr.proseo.model.enums.ProductVisibility;
 public class ProductClassUtil {
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProductClassUtil.class);
+	private static ProseoLogger logger = new ProseoLogger(ProductClassUtil.class);
 	
 	/**
 	 * Convert a prosEO model product class into a REST product class

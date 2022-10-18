@@ -1,15 +1,8 @@
 package de.dlr.proseo.ui.gui.service;
 
-import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_EXCEPTION;
-import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NOT_AUTHORIZED;
-import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_MISSIONS_FOUND;
-import static de.dlr.proseo.ui.backend.UIMessages.uiMsg;
-
 import java.time.Duration;
 import java.util.HashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -21,6 +14,8 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.ui.backend.ServiceConnection;
 import de.dlr.proseo.ui.gui.GUIAuthenticationToken;
 import de.dlr.proseo.ui.gui.GUIConfiguration;
@@ -33,7 +28,7 @@ import reactor.netty.http.client.HttpClient;
 
 @Service
 public class OrderService {
-	private static Logger logger = LoggerFactory.getLogger(OrderService.class);
+	private static ProseoLogger logger = new ProseoLogger(OrderService.class);
 	/** The GUI configuration */
 	@Autowired
 	private GUIConfiguration config;
@@ -214,19 +209,19 @@ public class OrderService {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_MISSIONS_FOUND);
+				message = ProseoLogger.format(UIMessage.NO_MISSIONS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return result;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return result;
 		}
 

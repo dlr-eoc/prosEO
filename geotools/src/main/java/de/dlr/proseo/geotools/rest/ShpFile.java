@@ -11,15 +11,13 @@ import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.geotools.data.simple.SimpleFeatureSource;
 
-
-
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.geotools.util.factory.GeoTools;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.opengis.filter.FilterFactory2;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import de.dlr.proseo.logging.logger.ProseoLogger;
 
 /**
  * Hold a shape file and initialized data like feature source, filter, geometry, ...
@@ -28,7 +26,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ShpFile {
 
-	private static Logger logger = LoggerFactory.getLogger(ShpFile.class);
+	private static ProseoLogger logger = new ProseoLogger(ShpFile.class);
 	
 	static public enum GeoFileType {
 		SHP, KML, GEOJSON

@@ -27,10 +27,8 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.OrderColumn;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import de.dlr.proseo.model.util.SelectionRule;
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.util.SelectionItem;
 
 /**
@@ -85,7 +83,7 @@ public class SimplePolicy extends PersistentObject {
     private static final DateTimeFormatter DATEFORMAT_SQL = DateTimeFormatter.ofPattern("yyyy'-'MM'-'dd' 'HH:mm:ss.SSSSSS").withZone(ZoneId.of("UTC"));
 	
 	/** The static class logger */
-	private static final Logger logger = LoggerFactory.getLogger(SelectionRule.class);
+	private static final ProseoLogger logger = new ProseoLogger(SelectionRule.class);
 	
 	/**
 	 * Class representing a single overlapping time period

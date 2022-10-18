@@ -13,6 +13,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import de.dlr.proseo.logging.http.HttpPrefix;
+import de.dlr.proseo.logging.http.ProseoHttp;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.OrderMgrMessage;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.rest.OrderjobstepController;
@@ -20,7 +26,6 @@ import de.dlr.proseo.model.rest.model.RestJobStep;
 import de.dlr.proseo.model.rest.model.Status;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
-import de.dlr.proseo.ordermgr.Messages;
 import de.dlr.proseo.ordermgr.OrderManager;
 import de.dlr.proseo.ordermgr.rest.model.RestUtil;
 
@@ -35,7 +40,8 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 	/**
 	 * Logger of this class
 	 */
-	private static Logger logger = LoggerFactory.getLogger(OrderjobstepControllerImpl.class);
+	private static ProseoLogger logger = new ProseoLogger(OrderjobstepControllerImpl.class);
+	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.ORDER_MGR);
 
 	/** Utility class for user authorizations */
 	@Autowired
@@ -57,8 +63,8 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 		if (null == mission || mission.isBlank()) {
 			mission = securityService.getMission();
 		} else if (!mission.equals(securityService.getMission())) {
-			String message = Messages.ILLEGAL_CROSS_MISSION_ACCESS.log(logger, mission, securityService.getMission());
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.FORBIDDEN);
+			String message = logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, mission, securityService.getMission());
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.FORBIDDEN);
 		}
 		
 		try {
@@ -91,13 +97,13 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 				list.add(pjs);			
 			}
 			
-			Messages.JOBSTEPS_RETRIEVED.log(logger, status, mission);
+			logger.log(OrderMgrMessage.JOBSTEPS_RETRIEVED, status, mission);
 
 			return new ResponseEntity<>(list, HttpStatus.OK);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			String message = logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -115,17 +121,15 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 			if (js != null) {
 				RestJobStep pjs = getRestJobStep(js.getId(), true);
 
-				Messages.JOBSTEP_RETRIEVED.log(logger, name);
+				logger.log(OrderMgrMessage.JOBSTEP_RETRIEVED, name);
 
 				return new ResponseEntity<>(pjs, HttpStatus.OK);
 			}
-			String message = Messages.JOBSTEP_NOT_EXIST.log(logger, name);
-
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+			String message = logger.log(OrderMgrMessage.JOBSTEP_NOT_EXIST, name);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			String message = logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
 	}
@@ -161,7 +165,7 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 			String missionCode = securityService.getMission();
 			String orderMissionCode = jsx.getJob().getProcessingOrder().getMission().getCode();
 			if (!missionCode.equals(orderMissionCode)) {
-				Messages.ILLEGAL_CROSS_MISSION_ACCESS.log(logger, orderMissionCode, missionCode);
+				logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, orderMissionCode, missionCode);
 				return null;
 			} 
 		}
@@ -174,7 +178,7 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 		try {
 			js = this.findJobStepByNameOrIdPrim(nameOrId);
 		} catch (Exception e) {
-			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());	
+			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);	
 		}
 		return js;
 	}

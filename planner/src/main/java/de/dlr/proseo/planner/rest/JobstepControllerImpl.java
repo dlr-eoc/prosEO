@@ -9,8 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +18,12 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
+import de.dlr.proseo.logging.http.HttpPrefix;
+import de.dlr.proseo.logging.http.ProseoHttp;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.PlannerMessage;
+import de.dlr.proseo.logging.messages.ProseoMessage;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingOrder;
@@ -29,7 +33,6 @@ import de.dlr.proseo.model.rest.JobstepController;
 import de.dlr.proseo.model.rest.model.RestJob;
 import de.dlr.proseo.model.rest.model.RestJobStep;
 import de.dlr.proseo.model.rest.model.Status;
-import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.kubernetes.KubeJob;
@@ -53,7 +56,8 @@ public class JobstepControllerImpl implements JobstepController {
 	/**
 	 * Logger of this class
 	 */
-	private static Logger logger = LoggerFactory.getLogger(JobstepControllerImpl.class);
+	private static ProseoLogger logger = new ProseoLogger(JobstepControllerImpl.class);
+	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.PLANNER);
 
 	/** Utility class for user authorizations */
 	@Autowired
@@ -79,8 +83,8 @@ public class JobstepControllerImpl implements JobstepController {
 		if (null == mission || mission.isBlank()) {
 			mission = securityService.getMission();
 		} else if (!mission.equals(securityService.getMission())) {
-			String message = Messages.ILLEGAL_CROSS_MISSION_ACCESS.log(logger, mission, securityService.getMission());
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.FORBIDDEN);
+			String message = logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, mission, securityService.getMission());
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.FORBIDDEN);
 		}
 		
 		try {
@@ -113,13 +117,13 @@ public class JobstepControllerImpl implements JobstepController {
 				list.add(pjs);			
 			}
 			
-			Messages.JOBSTEPS_RETRIEVED.log(logger, status, mission);
+			logger.log(PlannerMessage.JOBSTEPS_RETRIEVED, status, mission);
 
 			return new ResponseEntity<>(list, HttpStatus.OK);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -134,7 +138,7 @@ public class JobstepControllerImpl implements JobstepController {
 		try {
 			JobStep js = this.findJobStepByNameOrId(name);
 			if (js != null) {
-				Messages msg = null;
+				ProseoMessage msg = null;
 				try {
 					productionPlanner.acquireThreadSemaphore("getJobStep");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -157,22 +161,22 @@ public class JobstepControllerImpl implements JobstepController {
 					productionPlanner.releaseThreadSemaphore("getJobStep");	
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("getJobStep");	
-					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 				RestJobStep pjs = getRestJobStep(js.getId(), true);
 
-				Messages.JOBSTEP_RETRIEVED.log(logger, name);
+				logger.log(PlannerMessage.JOBSTEP_RETRIEVED, name);
 
 				return new ResponseEntity<>(pjs, HttpStatus.OK);
 			}
-			String message = Messages.JOBSTEP_NOT_EXIST.log(logger, name);
+			String message = logger.log(PlannerMessage.JOBSTEP_NOT_EXIST, name);
 
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
 	}
@@ -246,17 +250,17 @@ public class JobstepControllerImpl implements JobstepController {
 
 			JobStep js = this.findJobStepByNameOrId(jobstepId);
 			if (js != null) {
-				List<Messages> msg = new ArrayList<Messages>();
+				List<ProseoMessage> msg = new ArrayList<ProseoMessage>();
 				try {
 					productionPlanner.acquireThreadSemaphore("resumeJobStep");
 					final ResponseEntity<RestJobStep> msgF = transactionTemplate.execute((status) -> {
 						JobStep jsx = this.findJobStepByNameOrIdPrim(jobstepId);
 						Job job = jsx.getJob();
 						if (job.getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
-							String message = Messages.FACILITY_NOT_AVAILABLE.log(logger, job.getProcessingFacility().getName(),
+							String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, job.getProcessingFacility().getName(),
 									job.getProcessingFacility().getFacilityState().toString());
 
-							return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+							return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 						} else {
 							msg.add(jobStepUtil.resume(jsx, true));	
 							return null;
@@ -268,12 +272,12 @@ public class JobstepControllerImpl implements JobstepController {
 					}
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("resumeJobStep");	
-					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 				// Already logged
 				
-				if (msg.get(0).isTrue()) {
+				if (msg.get(0).getSuccess()) {
 					final ResponseEntity<RestJobStep> msgS = transactionTemplate.execute((status) -> {
 						JobStep jsx = this.findJobStepByNameOrId(jobstepId);
 						Job job = jsx.getJob();
@@ -285,9 +289,9 @@ public class JobstepControllerImpl implements JobstepController {
 									UtilService.getJobStepUtil().checkJobStepToRun(kc, jsx.getId());
 									productionPlanner.releaseThreadSemaphore("resumeJobStep");
 								} catch (Exception e) {
-									String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+									String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 									productionPlanner.releaseThreadSemaphore("resumeJobStep");
-									return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+									return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 								}
 							}
 						}
@@ -300,16 +304,16 @@ public class JobstepControllerImpl implements JobstepController {
 					return msgS;
 				} else {
 					// illegal state for resume
-					String message = msg.get(0).format(jobstepId);
+					String message = logger.log(msg.get(0), jobstepId);
 
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}
 			}
-			String message =  Messages.JOBSTEP_NOT_EXIST.log(logger, jobstepId);
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+			String message = logger.log(PlannerMessage.JOBSTEP_NOT_EXIST, jobstepId);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -326,7 +330,7 @@ public class JobstepControllerImpl implements JobstepController {
 			JobStep js = this.findJobStepByNameOrId(jobstepId);
 			if (js != null) {
 				Job job = js.getJob();
-				Messages msg = null;
+				ProseoMessage msg = null;
 				try {
 					productionPlanner.acquireThreadSemaphore("cancelJobStep");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -337,10 +341,10 @@ public class JobstepControllerImpl implements JobstepController {
 					productionPlanner.releaseThreadSemaphore("cancelJobStep");	
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("cancelJobStep");	
-					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
-				if (msg.isTrue()) {
+				if (msg.getSuccess()) {
 					if (job != null && job.getProcessingFacility() != null) {
 						KubeConfig kc = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
 						if (kc != null) {
@@ -349,9 +353,9 @@ public class JobstepControllerImpl implements JobstepController {
 								UtilService.getJobStepUtil().checkJobStepToRun(kc, js.getId());
 								productionPlanner.releaseThreadSemaphore("cancelJobStep");
 							} catch (Exception e) {
-								String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+								String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 								productionPlanner.releaseThreadSemaphore("cancelJobStep");
-								return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+								return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 							}
 						}
 					}
@@ -361,16 +365,16 @@ public class JobstepControllerImpl implements JobstepController {
 					return new ResponseEntity<>(pjs, HttpStatus.OK);
 				} else {
 					// illegal state for cancel
-					String message = msg.format(jobstepId);
+					String message = logger.log(msg, jobstepId);
 
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}
 			}
-			String message =  Messages.JOBSTEP_NOT_EXIST.log(logger, jobstepId);
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+			String message = logger.log(PlannerMessage.JOBSTEP_NOT_EXIST, jobstepId);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -395,10 +399,10 @@ public class JobstepControllerImpl implements JobstepController {
 						JobStep jsx = this.findJobStepByNameOrIdPrim(jobstepId);
 						Job job = jsx.getJob();
 						if (job.getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
-							String message = Messages.FACILITY_NOT_AVAILABLE.log(logger, job.getProcessingFacility().getName(),
+							String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, job.getProcessingFacility().getName(),
 									job.getProcessingFacility().getFacilityState().toString());
 
-							return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+							return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 						} else {
 							return null;
 						}
@@ -410,10 +414,10 @@ public class JobstepControllerImpl implements JobstepController {
 
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("suspendJobStep");	
-					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
-				Messages msg = Messages.FALSE; 
+				ProseoMessage msg = GeneralMessage.FALSE; 
 				try {
 					productionPlanner.acquireThreadSemaphore("suspendJobStep");
 					msg = transactionTemplate.execute((status) -> {
@@ -422,30 +426,30 @@ public class JobstepControllerImpl implements JobstepController {
 					});
 					productionPlanner.releaseThreadSemaphore("suspendJobStep");
 				} catch (Exception e) {
-					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 					productionPlanner.releaseThreadSemaphore("suspendJobStep");
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
-				if (msg.isTrue()) {
+				if (msg.getSuccess()) {
 					// suspended
 					RestJobStep pjs = getRestJobStep(js.getId(), false);
 
 					return new ResponseEntity<>(pjs, HttpStatus.OK);
 				} else {
 					// illegal state for suspend
-					String message = msg.format(jobstepId);
+					String message = logger.log(msg, jobstepId);
 
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}
 			}
-			String message =  Messages.JOBSTEP_NOT_EXIST.log(logger, jobstepId);
+			String message = logger.log(PlannerMessage.JOBSTEP_NOT_EXIST, jobstepId);
 
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
 			e.printStackTrace();
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -481,7 +485,7 @@ public class JobstepControllerImpl implements JobstepController {
 				String missionCode = securityService.getMission();
 				String orderMissionCode = jsx.getJob().getProcessingOrder().getMission().getCode();
 				if (!missionCode.equals(orderMissionCode)) {
-					Messages.ILLEGAL_CROSS_MISSION_ACCESS.log(logger, orderMissionCode, missionCode);
+					logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, orderMissionCode, missionCode);
 					return null;
 				} 
 			}
@@ -499,7 +503,7 @@ public class JobstepControllerImpl implements JobstepController {
 			productionPlanner.releaseThreadSemaphore("findJobStepByNameOrId");	
 		} catch (Exception e) {
 			productionPlanner.releaseThreadSemaphore("findJobStepByNameOrId");	
-			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());	
+			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());	
 		}
 		return js;
 	}
@@ -520,7 +524,7 @@ public class JobstepControllerImpl implements JobstepController {
 				return rj;
 			});
 		} catch (Exception e) {
-			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());	
+			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());	
 		} finally {
 			productionPlanner.releaseThreadSemaphore("getRestJobStep");
 		}
@@ -537,7 +541,7 @@ public class JobstepControllerImpl implements JobstepController {
 		try {
 			JobStep js = this.findJobStepByNameOrId(jobstepId);
 			if (js != null) {
-				Messages msg = null;
+				ProseoMessage msg = null;
 				try {
 					productionPlanner.acquireThreadSemaphore("retryJobStep");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -548,27 +552,27 @@ public class JobstepControllerImpl implements JobstepController {
 					productionPlanner.releaseThreadSemaphore("retryJobStep");	
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("retryJobStep");	
-					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 				
-				if (msg.isTrue()) {
+				if (msg.getSuccess()) {
 					RestJobStep pjs = getRestJobStep(js.getId(), false);
 
 					return new ResponseEntity<>(pjs, HttpStatus.OK);
 				} else {
-					String message = msg.format(jobstepId);
+					String message = logger.log(msg, jobstepId);
 
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}
 			}
-			String message =  Messages.JOBSTEP_NOT_EXIST.log(logger, jobstepId);
+			String message = logger.log(PlannerMessage.JOBSTEP_NOT_EXIST, jobstepId);
 
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 

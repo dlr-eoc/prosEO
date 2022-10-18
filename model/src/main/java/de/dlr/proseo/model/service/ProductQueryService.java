@@ -26,6 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.ModelMessage;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
@@ -54,7 +56,7 @@ public class ProductQueryService {
 	private EntityManager em;
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProductQueryService.class);
+	private static ProseoLogger logger = new ProseoLogger(ProductQueryService.class);
 	
 	/**
 	 * When creating the ProductQueryService, fill the mapping of Product attributes to SQL column names
@@ -75,7 +77,7 @@ public class ProductQueryService {
 					if (aep.getPropertyType(propertyNames[i]) instanceof BasicType) {
 						String[] columnNames = aep.getPropertyColumnNames(propertyNames[i]);
 						if (1 != columnNames.length) {
-							logger.warn("Found {} columns for property {}", columnNames.length, propertyNames[i]);
+							logger.log(ModelMessage.PROPERTY_COLUMNS_FOUND, columnNames.length, propertyNames[i]);
 						}
 						if (logger.isTraceEnabled()) logger.trace("... mapping Product attribute {} to SQL column {}",
 								propertyNames[i], columnNames[0]);
@@ -85,10 +87,10 @@ public class ProductQueryService {
 					}
 				}
 			} else {
-				logger.error("Cannot generate attribute/column map: 'persister' is not an AbstractEntityPersister");
+				logger.log(ModelMessage.ATTRIBUTE_COLUMN_MAP_NOT_GENERATED, "'persister' is not an AbstractEntityPersister");
 			}
 		} else {
-			logger.error("Cannot generate attribute/column map: 'metamodel' is not a MetamodelImplementor");
+			logger.log(ModelMessage.ATTRIBUTE_COLUMN_MAP_NOT_GENERATED, "'metamodel' is not a MetamodelImplementor");
 		}
 	}
 	
@@ -134,9 +136,7 @@ public class ProductQueryService {
 		
 		// Check arguments
 		if (null == productQuery || null == productQuery.getGeneratingRule() || null == productQuery.getSqlQueryCondition()) {
-			String message = String.format("Incomplete product query %s", null == productQuery ? "null" : productQuery.toString());
-			logger.error(message);
-			throw new IllegalArgumentException(message);
+			throw new IllegalArgumentException(logger.log(ModelMessage.INCOMPLETE_PRODUCT_QUERY, null == productQuery ? "null" : productQuery.toString()));
 		}
 
 		// Determine the requested processing facility
