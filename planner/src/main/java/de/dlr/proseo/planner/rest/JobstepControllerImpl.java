@@ -26,11 +26,9 @@ import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.logging.messages.ProseoMessage;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
-import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.rest.JobstepController;
-import de.dlr.proseo.model.rest.model.RestJob;
 import de.dlr.proseo.model.rest.model.RestJobStep;
 import de.dlr.proseo.model.rest.model.Status;
 import de.dlr.proseo.planner.ProductionPlanner;
@@ -39,7 +37,6 @@ import de.dlr.proseo.planner.kubernetes.KubeJob;
 import de.dlr.proseo.planner.rest.model.RestUtil;
 import de.dlr.proseo.planner.util.JobStepUtil;
 import de.dlr.proseo.planner.util.UtilService;
-import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1Pod;
 
 
@@ -138,7 +135,6 @@ public class JobstepControllerImpl implements JobstepController {
 		try {
 			JobStep js = this.findJobStepByNameOrId(name);
 			if (js != null) {
-				ProseoMessage msg = null;
 				try {
 					productionPlanner.acquireThreadSemaphore("getJobStep");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -192,7 +188,6 @@ public class JobstepControllerImpl implements JobstepController {
 			JobStep js = this.findJobStepByNameOrIdPrim(name);
 			if (js != null) {
 				String logx = null;
-				Messages msg = null;
 				try {
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 					logx = transactionTemplate.execute((status) -> {
@@ -216,8 +211,8 @@ public class JobstepControllerImpl implements JobstepController {
 						return log;
 					});
 				} catch (Exception e) {
-					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 				if (logx == null) {
 					return new ResponseEntity<>("", HttpStatus.OK);
@@ -225,13 +220,13 @@ public class JobstepControllerImpl implements JobstepController {
 					return new ResponseEntity<>(logx, HttpStatus.OK);
 				}
 			}
-			String message = Messages.JOBSTEP_NOT_EXIST.log(logger, name);
+			String message = logger.log(PlannerMessage.JOBSTEP_NOT_EXIST, name);
 
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
 	}
