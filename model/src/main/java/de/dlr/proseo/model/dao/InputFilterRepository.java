@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import de.dlr.proseo.model.InputFilter;
 
 /**
- * Data Access Object for the Task class
+ * Data Access Object for the InputFilter class
  * 
  * @author Dr. Thomas Bassler
  *

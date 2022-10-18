@@ -52,6 +52,11 @@ public class JobStep extends PersistentObject {
 	@Enumerated(EnumType.STRING)
 	private JobStepState jobStepState;
 	
+	/**
+	 * A processing priority (lower numbers indicate lower priority, higher numbers higher priority; propagated from Job).
+	 */
+	private Integer priority;
+	
 	/** Additional parameter to set in the output products */
 	@ElementCollection
 	private Map<String, Parameter> outputParameters = new HashMap<>();
@@ -239,6 +244,24 @@ public class JobStep extends PersistentObject {
 			throw new IllegalStateException(String.format(MSG_ILLEGAL_STATE_TRANSITION,
 					this.jobStepState.toString(), jobStepState.toString()));
 		}
+	}
+
+	/**
+	 * Gets the processing priority
+	 * 
+	 * @return the priority
+	 */
+	public Integer getPriority() {
+		return priority;
+	}
+
+	/**
+	 * Sets the processing priority
+	 * 
+	 * @param priority the priority to set
+	 */
+	public void setPriority(Integer priority) {
+		this.priority = priority;
 	}
 
 	/**
