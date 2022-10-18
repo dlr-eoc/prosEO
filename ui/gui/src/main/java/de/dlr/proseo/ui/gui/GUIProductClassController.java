@@ -258,7 +258,8 @@ public class GUIProductClassController extends GUIBaseController {
 			if (productclasses != null) {
 				for(Object o1 : productclasses) {
 					if (o1 instanceof HashMap) {
-						HashMap<String, HashMap<String, Object>> sortedList = new HashMap<String, HashMap<String, Object>>();
+						HashMap<String, HashMap<String, Object>> sortedModeList = new HashMap<String, HashMap<String, Object>>();
+						HashMap<String, HashMap<String, Object>> sortedProcessorsList = new HashMap<String, HashMap<String, Object>>();
 						HashMap<String, Object> h1 = (HashMap<String, Object>) o1;
 						Object sro = h1.get("selectionRule");
 						if (sro instanceof List) {
@@ -266,14 +267,19 @@ public class GUIProductClassController extends GUIBaseController {
 							for (Object o2 : srl) {
 								if (o2 instanceof HashMap) {
 									HashMap<?, ?> sr = (HashMap<?, ?>) o2;
-									// now we have a selection rule
-									// collect all modes in a new hash map
-									String mode = (String)sr.get("mode");
-									if (!sortedList.containsKey(mode)) {
-										HashMap<String, Object> localList = new HashMap<String, Object>();
-										localList.put("mode", mode);
-										localList.put("selRules", new ArrayList<Object>());
-										sortedList.put(mode, localList);
+									// collect all applicableConfiguredProcessors
+									List<String> procs = (List<String>)sr.get("applicableConfiguredProcessors");
+									if (procs == null) {
+										procs = new ArrayList<String>();
+										procs.add("");
+									}
+									for (String proc : procs) {
+										if (!sortedProcessorsList.containsKey(proc)) {
+											HashMap<String, Object> localList = new HashMap<String, Object>();
+											localList.put("applicableConfiguredProcessor", proc);
+											localList.put("selRules", new ArrayList<Object>());
+											sortedProcessorsList.put(proc, localList);
+										}
 									}
 								}
 							}
@@ -282,11 +288,41 @@ public class GUIProductClassController extends GUIBaseController {
 									HashMap<?, ?> sr = (HashMap<?, ?>) o2;
 									// now we have a selection rule
 									// collect all modes in a new hash map
-									String mode = (String)sr.get("mode");								
-									((List<Object>)sortedList.get(mode).get("selRules")).add(sr);
+									String mode = (String)sr.get("mode");
+									if (mode == null) {
+										mode = "";
+									}
+									for (String acp : sortedProcessorsList.keySet()) {
+										if (!sortedModeList.containsKey(mode + acp)) {
+											HashMap<String, Object> localList = new HashMap<String, Object>();
+											localList.put("mode", mode);
+											localList.put("applicableConfiguredProcessor", acp);
+											localList.put("selRules", new ArrayList<Object>());
+											sortedModeList.put(mode + acp, localList);
+										}
+									}
 								}
 							}
-							for (HashMap<String, Object> modeList : sortedList.values()) {
+							for (Object o2 : srl) {
+								if (o2 instanceof HashMap) {
+									HashMap<?, ?> sr = (HashMap<?, ?>) o2;
+									// now we have a selection rule
+									// collect all modes in a new hash map
+									String mode = (String)sr.get("mode");		
+									if (mode == null) {
+										mode = "";
+									}				
+									List<String> procs = (List<String>)sr.get("applicableConfiguredProcessors");
+									if (procs == null) {
+										procs = new ArrayList<String>();
+										procs.add("");
+									}		
+									for (String acp : procs) {
+										((List<Object>)sortedModeList.get(mode + acp).get("selRules")).add(sr);
+									}
+								}
+							}
+							for (HashMap<String, Object> modeList : sortedModeList.values()) {
 								Object listObj = modeList.get("selRules");
 								if (listObj instanceof List ) {
 									List<Object> list = (List<Object>)listObj;
@@ -294,8 +330,8 @@ public class GUIProductClassController extends GUIBaseController {
 									list.sort(oc);
 								}
 							}	
-							MapComparator mlc = new MapComparator("mode", true);
-							Collection<HashMap<String, Object>> mList = sortedList.values();
+							MapComparator mlc = new MapComparator("mode", "applicableConfiguredProcessor", true);
+							Collection<HashMap<String, Object>> mList = sortedModeList.values();
 							List<Object> cList = new ArrayList<Object>();
 							cList.addAll(mList);
 							cList.sort(mlc);

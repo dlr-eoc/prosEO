@@ -199,32 +199,28 @@
 											<thead>
 												<tr class="th-row">
 													<th><span th:text="#{mode}">mode</span></th>
+													<th><span th:text="#{configuredprocessor}">configuredprocessor</span></th>
 													<th><span th:text="#{selectionrules}">selectionrules</span></th>
-													<th><span th:text="#{configuredprocessors}">configuredprocessors</span></th>
 												</tr>
 											</thead>
 											<div th:each="modeRules : ${class?.sortedSelectionRules}">
 												<tbody th:each="rule,iterStat : ${modeRules?.selRules}">
 													<tr>
-														<td th:if="${iterStat.first} == true"
+														<td th:if="${iterStat.first} == true" 
 															th:text="${modeRules?.mode}"></td>
 														<td th:if="${iterStat.first} == false" class="tr-rowspan"><span>&nbsp;</span></td>
+														
+                            <td th:if="${iterStat.first} == true"><a
+                              th:href="'/configured-processor-show?cp=' + ${modeRules?.applicableConfiguredProcessor}">
+                              <span th:text="${modeRules?.applicableConfiguredProcessor}"></span></a></td>
+                            <td th:if="${iterStat.first} == false" class="tr-rowspan"><span>&nbsp;</span></td>
+                            
 														<td><span class="no-wrap"
 															th:each="word,i : ${#strings.arraySplit(rule?.ruleString,' ')}"><span
 																th:if="${i.first} == false">&nbsp;</span><span
 																th:if="${i.count} != 2" class="code" th:text="${word}"></span><a
 																th:if="${i.count} == 2" th:href="'/productclass-show?productClass=' + ${word}"><span
 																	class="code" th:text="${word}"></span></a></span></td>
-														<td><a
-														  th:if="${hasroleprocessorreader}"
-															th:each="acp : ${rule?.applicableConfiguredProcessors}"
-															class="proseo-list-item"
-															th:href="'/configured-processor-show?cp=' + ${acp}"
-															th:text="${acp}"></a><span
-                              th:unless="${hasroleprocessorreader}"
-                              th:each="acp : ${rule?.applicableConfiguredProcessors}"
-                              class="proseo-list-item"
-                              th:text="${acp}"></span></td>
 													</tr>
 												</tbody>
 											</div>

@@ -8,6 +8,7 @@ public class MapComparator implements Comparator<Object> {
 	private static final String MAPKEY_ID = "id";
 
 	String key = MAPKEY_ID;
+	String key2 = null;
 	
 	Boolean up = true;
 	
@@ -20,6 +21,11 @@ public class MapComparator implements Comparator<Object> {
 		this.key = key;
 		this.up = up;
 	}
+	public MapComparator(String key, String key2, Boolean up) {
+		this.key = key;
+		this.key2 = key2;
+		this.up = up;
+	}
 
 	@Override
 	public int compare(Object o1, Object o2) {
@@ -30,6 +36,10 @@ public class MapComparator implements Comparator<Object> {
 				if (h1.get(key) instanceof Integer) {
 					Integer v1 = (Integer) h1.get(key);
 					Integer v2 = (Integer) h2.get(key);
+					if (key2 != null) {
+						v1 += (Integer) h1.get(key2);
+						v2 += (Integer) h2.get(key2);
+					}
 					if (up) {
 						return Integer.compare(v1, v2);
 					} else {
@@ -37,7 +47,13 @@ public class MapComparator implements Comparator<Object> {
 					}
 				} else if (h1.get(key) instanceof String) {
 					String v1 = (String) h1.get(key);
+					if (v1 == null) v1 = "";
 					String v2 = (String) h2.get(key);
+					if (v2 == null) v2 = "";
+					if (key2 != null) {
+						v1 += (String) h1.get(key2);
+						v2 += (String) h2.get(key2);
+					}
 					if (up) {
 						return v1.compareToIgnoreCase(v2);
 					} else {
