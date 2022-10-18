@@ -20,7 +20,7 @@
 		<module>edip-monitor</module>
 		<module>auxip-monitor</module>
 		<module>odip</module>
-		<module>aip-retrieval</module>
+		<module>aip-client</module>
 	</modules>
 
 	<url>https://github.com/dlr-eoc/prosEO/api</url>

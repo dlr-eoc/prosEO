@@ -5,7 +5,7 @@
     <artifactId>proseo-api</artifactId>
     <version>0.9.3-SNAPSHOT</version>
   </parent>
-  <artifactId>aip-retrieval</artifactId>
+  <artifactId>aip-client</artifactId>
   <name>Archive Interface Delivery Point Client</name>
   <description>prosEO client to retrieve products via ESA's Archive Interface Delivery Point API (ESA-EOPG-EOPGC-IF-2)</description>
 </project>
