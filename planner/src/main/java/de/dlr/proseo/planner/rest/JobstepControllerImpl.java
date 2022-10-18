@@ -192,7 +192,6 @@ public class JobstepControllerImpl implements JobstepController {
 			JobStep js = this.findJobStepByNameOrIdPrim(name);
 			if (js != null) {
 				String logx = null;
-				Messages msg = null;
 				try {
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 					logx = transactionTemplate.execute((status) -> {
@@ -216,8 +215,8 @@ public class JobstepControllerImpl implements JobstepController {
 						return log;
 					});
 				} catch (Exception e) {
-					String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());			
-					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 				if (logx == null) {
 					return new ResponseEntity<>("", HttpStatus.OK);
@@ -225,13 +224,13 @@ public class JobstepControllerImpl implements JobstepController {
 					return new ResponseEntity<>(logx, HttpStatus.OK);
 				}
 			}
-			String message = Messages.JOBSTEP_NOT_EXIST.log(logger, name);
+			String message = logger.log(PlannerMessage.JOBSTEP_NOT_EXIST, name);
 
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
-			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
-			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
 	}
