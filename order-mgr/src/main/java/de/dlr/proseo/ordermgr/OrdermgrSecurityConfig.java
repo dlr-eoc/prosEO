@@ -7,8 +7,6 @@ package de.dlr.proseo.ordermgr;
 
 import javax.sql.DataSource;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,7 +22,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
-import de.dlr.proseo.logging.messages.OrderMgrMessage;
 import de.dlr.proseo.model.enums.UserRole;
 
 /**

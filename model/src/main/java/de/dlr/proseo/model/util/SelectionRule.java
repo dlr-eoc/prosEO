@@ -18,9 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimplePolicy;
@@ -178,7 +176,7 @@ public class SelectionRule {
 	private static final String MSG_WRONG_ITEM_CLASS = "Unexpected item class ";
 	
 	/** The logger for this class */
-	private static final Logger logger = LoggerFactory.getLogger(SelectionRule.class);
+	private static final ProseoLogger logger = new ProseoLogger(SelectionRule.class);
 	
 	/** The simple selection rules making up this rule, mapped to (aux) product types */
 	private Map<String, SimpleSelectionRule> simpleRules = new LinkedHashMap<String, SimpleSelectionRule>();

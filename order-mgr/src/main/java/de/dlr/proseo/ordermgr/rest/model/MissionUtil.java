@@ -2,10 +2,9 @@ package de.dlr.proseo.ordermgr.rest.model;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.util.List;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Payload;
 import de.dlr.proseo.model.Spacecraft;
@@ -15,7 +14,7 @@ import de.dlr.proseo.model.rest.model.RestSpacecraft;
 
 public class MissionUtil {
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(MissionUtil.class);
+	private static ProseoLogger logger = new ProseoLogger(MissionUtil.class);
 
 	/**
 	 * Convert a prosEO model Mission into a REST Mission
