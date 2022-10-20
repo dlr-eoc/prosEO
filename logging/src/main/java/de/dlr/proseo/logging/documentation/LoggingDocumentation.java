@@ -66,6 +66,9 @@ public class LoggingDocumentation {
 		messages.append("<h2 id=\"GeneralMessage\">General Messages</h2>");
 		messages.append(addService(GeneralMessage.class));
 
+		messages.append("<h2 id=\"ApiMonitorMessage\">ESA API Monitor Messages</h2>");
+		messages.append(addService(ApiMonitorMessage.class));
+		
 		messages.append("<h2 id=\"FacilityMgrMessage\">Facility Manager Messages</h2>");
 		messages.append(addService(FacilityMgrMessage.class));
 		
