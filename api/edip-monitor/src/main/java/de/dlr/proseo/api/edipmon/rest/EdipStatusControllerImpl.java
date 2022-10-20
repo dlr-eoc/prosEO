@@ -24,6 +24,10 @@ import org.springframework.stereotype.Component;
 import de.dlr.proseo.api.edipmon.EdipMonitor;
 import de.dlr.proseo.api.edipmon.EdipMonitorConfiguration;
 import de.dlr.proseo.api.edipmon.rest.model.RestInterfaceStatus;
+import de.dlr.proseo.logging.http.HttpPrefix;
+import de.dlr.proseo.logging.http.ProseoHttp;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.ApiMonitorMessage;
 
 /**
  * Spring MVC controller for the prosEO EDIP Monitor; implements the services required to inquire about the interface status
@@ -33,16 +37,6 @@ import de.dlr.proseo.api.edipmon.rest.model.RestInterfaceStatus;
 @Component
 public class EdipStatusControllerImpl implements StatusController {
 
-	/* Message ID constants */
-	private static final int MSG_ID_INVALID_EDIP_ID = 2051;
-
-	/* Message string constants */
-	private static final String MSG_INVALID_EDIP_ID = "(E%d) Invalid EDIP Monitor identifier %s passed";
-	
-	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String HTTP_MSG_PREFIX = "199 proseo-ingestor ";
-
-	
 	/** The EDIP Monitor configuration to use */
 	@Autowired
 	private EdipMonitorConfiguration config;
@@ -52,59 +46,9 @@ public class EdipStatusControllerImpl implements StatusController {
 	private EdipMonitor monitor;
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(EdipStatusControllerImpl.class);
-	
-	/**
-	 * Create and log a formatted message at the given level
-	 * 
-	 * @param level the logging level to use
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted info mesage
-	 */
-	private String log(Level level, String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		if (Level.ERROR.equals(level)) {
-			logger.error(message);
-		} else if (Level.WARN.equals(level)) {
-			logger.warn(message);
-		} else {
-			logger.info(message);
-		}
-
-		return message;
-	}
-
-	/**
-	 * Create and log a formatted error message
-	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted error message
-	 */
-	private String logError(String messageFormat, int messageId, Object... messageParameters) {
-		return log(Level.ERROR, messageFormat, messageId, messageParameters);
-	}
-	
-	/**
-	 * Create an HTTP "Warning" header with the given text message
-	 * 
-	 * @param message the message text
-	 * @return an HttpHeaders object with a warning message
-	 */
-	private HttpHeaders errorHeaders(String message) {
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + (null == message ? "null" : message.replaceAll("\n", " ")));
-		return responseHeaders;
-	}
-	
+	private static ProseoLogger logger = new ProseoLogger(EdipStatusControllerImpl.class);
+	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.EDIP_MONITOR);
+		
     /**
      * Get the interface status for the given EDIP Monitor
      * 
@@ -118,7 +62,7 @@ public class EdipStatusControllerImpl implements StatusController {
 		if (logger.isTraceEnabled()) logger.trace(">>> getRestInterfaceStatusByEdipid({})", edipid);
 		
 		if (!config.getEdipId().equals(edipid)) {
-			return new ResponseEntity<>(errorHeaders(logError(MSG_INVALID_EDIP_ID, MSG_ID_INVALID_EDIP_ID, edipid)), HttpStatus.FORBIDDEN);
+			return new ResponseEntity<>(http.errorHeaders(logger.log(ApiMonitorMessage.INVALID_EDIP_ID, edipid)), HttpStatus.FORBIDDEN);
 		}
 
 		RestInterfaceStatus restInterfaceStatus = new RestInterfaceStatus();

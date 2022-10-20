@@ -12,6 +12,8 @@ package de.dlr.proseo.logging.http;
  */
 public enum HttpPrefix {
 	
+	AUXIP_MONITOR 	("199 proseo-auxip-monitor "),
+	EDIP_MONITOR 	("199 proseo-edip-monitor "),
 	FACILTY_MGR 	("199 proseo-facmgr "),
 	MODEL			("199 proseo-model "),
 	INGESTOR		("199 proseo-ingestor "),
@@ -23,6 +25,7 @@ public enum HttpPrefix {
 	STORAGE_MGR		("199 proseo-storage-mgr "),
 	UI				("199 proseo-ui "),
 	USER_MGR		("199 proseo-user-mgr "),
+	XBIP_MONITOR 	("199 proseo-xbip-monitor "),
 
 	;
 

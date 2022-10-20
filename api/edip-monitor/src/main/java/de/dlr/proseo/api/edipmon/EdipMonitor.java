@@ -23,8 +23,6 @@ import java.util.concurrent.Semaphore;
 
 import javax.annotation.PostConstruct;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -33,7 +31,8 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 import de.dlr.proseo.api.basemon.BaseMonitor;
 import de.dlr.proseo.api.basemon.TransferObject;
-import de.dlr.proseo.api.basemon.BaseMonitor.TransferControl;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.ApiMonitorMessage;
 
 /**
  * Monitor for EDRS Interface Points
@@ -84,51 +83,8 @@ public class EdipMonitor extends BaseMonitor {
 	@Autowired
 	private EdipMonitorConfiguration config;
 
-	/* Message ID constants */
-	private static final int MSG_ID_EDIP_NOT_READABLE = 5330;
-	private static final int MSG_ID_EDIP_ENTRY_MALFORMED = 5331;
-	
-	/* Same as XBIP Monitor */
-	private static final int MSG_ID_AVAILABLE_DOWNLOADS_FOUND = 5302;
-	private static final int MSG_ID_TRANSFER_OBJECT_IS_NULL = 5303;
-	private static final int MSG_ID_INVALID_TRANSFER_OBJECT_TYPE = 5304;
-	private static final int MSG_ID_CANNOT_CREATE_TARGET_DIR = 5305;
-	private static final int MSG_ID_COPY_FAILED = 5306;
-	/* package */ static final int MSG_ID_COPY_FILE_FAILED = 5307;
-	private static final int MSG_ID_COPY_INTERRUPTED = 5307;
-	private static final int MSG_ID_COMMAND_START_FAILED = 5308;
-	private static final int MSG_ID_SESSION_TRANSFER_INCOMPLETE = 5309;
-	private static final int MSG_ID_SESSION_TRANSFER_COMPLETED = 5310;
-	private static final int MSG_ID_FOLLOW_ON_ACTION_STARTED = 5311;
-	private static final int MSG_ID_CANNOT_READ_DSIB_FILE = 5312;
-	private static final int MSG_ID_DATA_SIZE_MISMATCH = 5313;
-	private static final int MSG_ID_COPY_TIMEOUT = 5314;
-	private static final int MSG_ID_SKIPPING_SESSION_DIRECTORY = 5315;
-
-	/* Message string constants */
-	private static final String MSG_EDIP_NOT_READABLE = "(E%d) EDIP directory %s not readable (cause: %s)";
-	private static final String MSG_TRANSFER_OBJECT_IS_NULL = "(E%d) Transfer object is null - skipped";
-	private static final String MSG_INVALID_TRANSFER_OBJECT_TYPE = "(E%d) Transfer object %s of invalid type found - skipped";
-	private static final String MSG_CANNOT_CREATE_TARGET_DIR = "(E%d) Cannot create channel directory in target directory %s - skipped";
-	private static final String MSG_COPY_FAILED = "(E%d) Copying of session directory %s failed (cause: %s)";
-	/* package */ static final String MSG_COPY_FILE_FAILED = "(E%d) Copying of session data file %s failed (cause: %s)";
-	private static final String MSG_COPY_INTERRUPTED = "(E%d) Copying of session directory %s failed due to interrupt";
-	private static final String MSG_COMMAND_START_FAILED = "(E%d) Start of L0 processing command '%s' failed (cause: %s)";
-	private static final String MSG_CANNOT_READ_DSIB_FILE = "(E%d) Cannot read DSIB file %s (cause: %s)";
-	private static final String MSG_DATA_SIZE_MISMATCH = "(E%d) Data size mismatch copying session directory %s: "
-			+ "expected size %d, actual size %d";
-	private static final String MSG_COPY_TIMEOUT = "(E%d) Timeout after %s s during wait for download of file %s, download cancelled";
-
-	private static final String MSG_EDIP_ENTRY_MALFORMED = "(W%d) Malformed EDIP directory entry %s found - skipped";
-	private static final String MSG_SKIPPING_SESSION_DIRECTORY = "(W%d) Skipping inaccessible session directory %s";
-
-	private static final String MSG_AVAILABLE_DOWNLOADS_FOUND = "(I%d) %d session entries found for download (unfiltered)";
-	private static final String MSG_SESSION_TRANSFER_INCOMPLETE = "(I%d) Transfer for session %s still incomplete - skipped";
-	private static final String MSG_SESSION_TRANSFER_COMPLETED = "(I%d) Transfer for session %s completed with result %s";
-	private static final String MSG_FOLLOW_ON_ACTION_STARTED = "(I%d) Follow-on action for session %s started with command %s";
-
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(EdipMonitorConfiguration.class);
+	private static ProseoLogger logger = new ProseoLogger(EdipMonitorConfiguration.class);
 	
 	/**
 	 * Class describing a download session
@@ -273,21 +229,10 @@ public class EdipMonitor extends BaseMonitor {
 		caduDirectoryPath = Paths.get(config.getL0CaduDirectoryPath());
 		l0ProcessorCommand = config.getL0Command();
 		
-		logger.info("------  Starting EDIP Monitor  ------");
-		logger.info("EDIP directory . . . . . . : " + edipDirectory);
-		logger.info("Satellite  . . . . . . . . : " + satelliteIdentifier);
-		logger.info("Transfer history file  . . : " + this.getTransferHistoryFile());
-		logger.info("EDIP check interval  . . . : " + this.getCheckInterval());
-		logger.info("History truncation interval: " + this.getTruncateInterval());
-		logger.info("History retention period . : " + this.getHistoryRetentionDuration());
-		logger.info("CADU target directory  . . : " + caduDirectoryPath);
-		logger.info("L0 processor command . . . : " + l0ProcessorCommand);
-		logger.info("Max. transfer sessions . . : " + this.getMaxDownloadThreads());
-		logger.info("Transfer session wait time : " + this.getTaskWaitInterval());
-		logger.info("Max. session wait cycles . : " + this.getMaxWaitCycles());
-		logger.info("Max. file download threads : " + this.getMaxFileDownloadThreads());
-		logger.info("File download wait time  . : " + this.getFileWaitInterval());
-		logger.info("Max. file wait cycles  . . : " + this.getMaxFileWaitCycles());
+		logger.log(ApiMonitorMessage.EDIP_START_MESSAGE, edipDirectory, satelliteIdentifier, getTransferHistoryFile(),
+				getCheckInterval(), getTruncateInterval(), getHistoryRetentionDuration(), caduDirectoryPath,
+				l0ProcessorCommand, getMaxDownloadThreads(), getTaskWaitInterval(), getMaxWaitCycles(),
+				getMaxFileDownloadThreads(), getFileWaitInterval(), getMaxFileWaitCycles());
 		
 	}
 	
@@ -402,7 +347,7 @@ public class EdipMonitor extends BaseMonitor {
 					String[] sessionEntryParts = sessionEntry.getFileName().toString().split("_");
 					
 					if (4 != sessionEntryParts.length) {
-						logger.warn(String.format(MSG_EDIP_ENTRY_MALFORMED, MSG_ID_EDIP_ENTRY_MALFORMED, sessionEntry.getFileName().toString()));
+						logger.log(ApiMonitorMessage.EDIP_ENTRY_MALFORMED, sessionEntry.getFileName().toString());
 						return;
 					}
 						
@@ -411,13 +356,11 @@ public class EdipMonitor extends BaseMonitor {
 					
 					String[] channelEntries = sessionEntry.toFile().list();
 					if (null == channelEntries) {
-						logger.warn(String.format(MSG_SKIPPING_SESSION_DIRECTORY, MSG_ID_SKIPPING_SESSION_DIRECTORY,
-								sessionEntry.getFileName().toString()));
+						logger.log(ApiMonitorMessage.SKIPPING_SESSION_DIRECTORY, sessionEntry.getFileName().toString());
 						return;
 					}
 					if (0 == channelEntries.length) {
-						logger.info(String.format(MSG_SESSION_TRANSFER_INCOMPLETE, MSG_ID_SESSION_TRANSFER_INCOMPLETE,
-								sessionEntry.getFileName().toString()));
+						logger.log(ApiMonitorMessage.SESSION_TRANSFER_INCOMPLETE, sessionEntry.getFileName().toString());
 						return;
 					}
 					for (String channelEntry: channelEntries) {
@@ -426,7 +369,7 @@ public class EdipMonitor extends BaseMonitor {
 						
 						String[] channelEntryParts = channelEntry.split("_");
 						if (2 != channelEntryParts.length) {
-							logger.warn(String.format(MSG_EDIP_ENTRY_MALFORMED, MSG_ID_EDIP_ENTRY_MALFORMED, channelEntry));
+							logger.log(ApiMonitorMessage.EDIP_ENTRY_MALFORMED, channelEntry);
 							return;
 						}
 						String dsibFileName = sessionEntry.getFileName().toString()
@@ -435,8 +378,7 @@ public class EdipMonitor extends BaseMonitor {
 						if (logger.isTraceEnabled()) logger.trace("... checking existence of DSIB file " + dsibFilePath);
 						if (!Files.exists(dsibFilePath)) {
 							// Session transfer incomplete, skip
-							logger.info(String.format(MSG_SESSION_TRANSFER_INCOMPLETE, MSG_ID_SESSION_TRANSFER_INCOMPLETE,
-									sessionEntry.getFileName().toString()));
+							logger.log(ApiMonitorMessage.SESSION_TRANSFER_INCOMPLETE, sessionEntry.getFileName().toString());
 							return;
 						}
 						dsibFilePaths.add(dsibFilePath);
@@ -455,13 +397,13 @@ public class EdipMonitor extends BaseMonitor {
 					
 				});
 			} catch (IOException e) {
-				logger.error(String.format(MSG_EDIP_NOT_READABLE, MSG_ID_EDIP_NOT_READABLE, edipDirectory.toString(), e.getMessage()));
+				logger.log(ApiMonitorMessage.EDIP_NOT_READABLE, edipDirectory.toString(), e.getMessage());
 			}
 		} else {
-			logger.error(String.format(MSG_EDIP_NOT_READABLE, MSG_ID_EDIP_NOT_READABLE, edipDirectory.toString(), "Not a readable directory"));
+			logger.log(ApiMonitorMessage.EDIP_NOT_READABLE, edipDirectory.toString(), "Not a readable directory");
 		}
 		
-		logger.info(String.format(MSG_AVAILABLE_DOWNLOADS_FOUND, MSG_ID_AVAILABLE_DOWNLOADS_FOUND, transferControl.transferObjects.size()));
+		logger.log(ApiMonitorMessage.AVAILABLE_DOWNLOADS_FOUND, transferControl.transferObjects.size());
 		
 		return transferControl;
 	}
@@ -474,7 +416,7 @@ public class EdipMonitor extends BaseMonitor {
 		if (logger.isTraceEnabled()) logger.trace(">>> transferToTargetDir({})", null == object ? "null" : object.getIdentifier());
 		
 		if (null == object) {
-			logger.error(String.format(MSG_TRANSFER_OBJECT_IS_NULL, MSG_ID_TRANSFER_OBJECT_IS_NULL));
+			logger.log(ApiMonitorMessage.TRANSFER_OBJECT_IS_NULL);
 			return false;
 		}
 		
@@ -511,8 +453,7 @@ public class EdipMonitor extends BaseMonitor {
 				try {
 					dsib = (new XmlMapper()).readValue(dsibFilePath.toFile(), DataSessionInformationBlock.class);
 				} catch (IOException e) {
-					logger.error(String.format(
-							MSG_CANNOT_READ_DSIB_FILE, MSG_ID_CANNOT_READ_DSIB_FILE, dsibFilePath.toString(), e.getMessage()));
+					logger.log(ApiMonitorMessage.CANNOT_READ_DSIB_FILE, dsibFilePath.toString(), e.getMessage());
 					return false;
 				}
 				if (logger.isDebugEnabled())
@@ -524,8 +465,7 @@ public class EdipMonitor extends BaseMonitor {
 				try {
 					Files.createDirectories(caduChannelDirectory);
 				} catch (IOException e) {
-					logger.error(String.format(
-							MSG_CANNOT_CREATE_TARGET_DIR, MSG_ID_CANNOT_CREATE_TARGET_DIR, caduDirectory.toString()));
+					logger.log(ApiMonitorMessage.CANNOT_CREATE_TARGET_DIR, caduDirectory.toString());
 					return false;
 				}
 				
@@ -546,7 +486,7 @@ public class EdipMonitor extends BaseMonitor {
 										logger.debug("... file download semaphore acquired, {} permits remaining",
 												semaphore.availablePermits());
 								} catch (InterruptedException e) {
-									logger.error(String.format(MSG_ABORTING_TASK, MSG_ID_ABORTING_TASK, e.getMessage()));
+									logger.log(ApiMonitorMessage.ABORTING_TASK, e.getMessage());
 									return;
 								}
 								
@@ -580,8 +520,7 @@ public class EdipMonitor extends BaseMonitor {
 										logger.trace("... Copying of file {} complete, duration {}, speed {} MiB/s",
 												sessionChannelFile, copyDuration, copyPerformance);
 								} catch (IOException e) {
-									logger.error(String.format(MSG_COPY_FILE_FAILED, MSG_ID_COPY_FILE_FAILED,
-											sessionChannelFile.toString(), e.getMessage()));
+									logger.log(ApiMonitorMessage.COPY_FILE_FAILED, sessionChannelFile.toString(), e.getMessage());
 									copySuccess.put(transferSession.getIdentifier(), false);
 								}
 
@@ -599,7 +538,7 @@ public class EdipMonitor extends BaseMonitor {
 						copyTask.start();
 					});
 				} catch (IOException e) {
-					logger.error(String.format(MSG_COPY_FAILED, MSG_ID_COPY_FAILED, sessionChannelDirectory.toString()));
+					logger.log(ApiMonitorMessage.COPY_FAILED, sessionChannelDirectory.toString());
 					return false;
 				}
 			}
@@ -612,7 +551,7 @@ public class EdipMonitor extends BaseMonitor {
 				try {
 						Thread.sleep(fileWaitInterval);
 				} catch (InterruptedException e) {
-					logger.error(String.format(MSG_COPY_INTERRUPTED, MSG_ID_COPY_INTERRUPTED, transferSession.sessionPath.toString()));
+					logger.log(ApiMonitorMessage.COPY_INTERRUPTED, transferSession.sessionPath.toString());
 					return false;
 				}
 					++k;
@@ -620,15 +559,15 @@ public class EdipMonitor extends BaseMonitor {
 				if (k == maxFileWaitCycles) {
 					// Timeout reached --> kill download and report error
 					copyTask.interrupt();
-					logger.error(MSG_COPY_TIMEOUT, MSG_ID_COPY_TIMEOUT, (maxFileWaitCycles * fileWaitInterval) / 1000,
+					logger.log(ApiMonitorMessage.COPY_TIMEOUT, (maxFileWaitCycles * fileWaitInterval) / 1000,
 							transferSession.sessionPath.toString());
 				}
 			}
 			
 			// Check the total session data size
 			if (expectedSessionDataSize != sessionDataSizes.get(transferSession.getIdentifier())) {
-				logger.error(String.format(MSG_DATA_SIZE_MISMATCH, MSG_ID_DATA_SIZE_MISMATCH,
-						transferSession.sessionPath.toString(), expectedSessionDataSize, sessionDataSizes.get(transferSession.getIdentifier())));
+				logger.log(ApiMonitorMessage.DATA_SIZE_MISMATCH, transferSession.sessionPath.toString(), expectedSessionDataSize,
+						sessionDataSizes.get(transferSession.getIdentifier()));
 				copySuccess.put(transferSession.getIdentifier(), false);
 			} else {
 				if (logger.isTraceEnabled()) logger.trace("... total session data size is as expected: " + expectedSessionDataSize);
@@ -639,12 +578,13 @@ public class EdipMonitor extends BaseMonitor {
 			Boolean myCopySuccess = copySuccess.get(transferSession.getIdentifier());
 			copySuccess.remove(transferSession.getIdentifier());
 			
-			logger.info(String.format(MSG_SESSION_TRANSFER_COMPLETED, MSG_ID_SESSION_TRANSFER_COMPLETED, transferSession.getIdentifier(), (myCopySuccess ? "SUCCESS" : "FAILURE")));
+			logger.log(ApiMonitorMessage.SESSION_TRANSFER_COMPLETED, transferSession.getIdentifier(),
+					(myCopySuccess ? "SUCCESS" : "FAILURE"));
 			
 			return myCopySuccess;
 
 		} else {
-			logger.error(String.format(MSG_INVALID_TRANSFER_OBJECT_TYPE, MSG_ID_INVALID_TRANSFER_OBJECT_TYPE, object.getIdentifier()));
+			logger.log(ApiMonitorMessage.INVALID_TRANSFER_OBJECT_TYPE, object.getIdentifier());
 			return false;
 		}
 	}
@@ -659,7 +599,7 @@ public class EdipMonitor extends BaseMonitor {
 				null == transferObject ? "null" : transferObject.getIdentifier());
 
 		if (null == transferObject) {
-			logger.error(String.format(MSG_TRANSFER_OBJECT_IS_NULL, MSG_ID_TRANSFER_OBJECT_IS_NULL));
+			logger.log(ApiMonitorMessage.TRANSFER_OBJECT_IS_NULL);
 			return false;
 		}
 		
@@ -676,8 +616,7 @@ public class EdipMonitor extends BaseMonitor {
 			try {
 				dsib = (new XmlMapper()).readValue(dsibFilePath.toFile(), DataSessionInformationBlock.class);
 			} catch (IOException e) {
-				logger.error(String.format(
-						MSG_CANNOT_READ_DSIB_FILE, MSG_ID_CANNOT_READ_DSIB_FILE, dsibFilePath.toString(), e.getMessage()));
+				logger.log(ApiMonitorMessage.CANNOT_READ_DSIB_FILE, dsibFilePath.toString(), e.getMessage());
 				return false;
 			}
 
@@ -694,15 +633,15 @@ public class EdipMonitor extends BaseMonitor {
 				
 				processBuilder.start();
 				
-				logger.info(String.format(MSG_FOLLOW_ON_ACTION_STARTED, MSG_ID_FOLLOW_ON_ACTION_STARTED, transferSession.getIdentifier(), command));
+				logger.log(ApiMonitorMessage.FOLLOW_ON_ACTION_STARTED, transferSession.getIdentifier(), command);
 				
 			} catch (IOException e) {
-				logger.error(String.format(MSG_COMMAND_START_FAILED, MSG_ID_COMMAND_START_FAILED, command, e.getMessage()));
+				logger.log(ApiMonitorMessage.COMMAND_START_FAILED, command, e.getMessage());
 				return false;
 			}
 
 		} else {
-			logger.error(String.format(MSG_INVALID_TRANSFER_OBJECT_TYPE, MSG_ID_INVALID_TRANSFER_OBJECT_TYPE, transferObject.getIdentifier()));
+			logger.log(ApiMonitorMessage.INVALID_TRANSFER_OBJECT_TYPE, transferObject.getIdentifier());
 			return false;
 		}
 
