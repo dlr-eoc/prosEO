@@ -27,10 +27,10 @@ import org.apache.olingo.commons.api.edm.geo.Geospatial;
 import org.apache.olingo.commons.api.edm.geo.LineString;
 import org.apache.olingo.commons.api.edm.geo.Point;
 import org.apache.olingo.commons.api.edm.geo.Polygon;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.PripMessage;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Product;
@@ -50,7 +50,7 @@ public class ProductUtil {
 	private static final Date END_OF_MISSION = Date.from(Instant.parse("9999-12-31T23:59:59.999Z"));
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProductUtil.class);
+	private static ProseoLogger logger = new ProseoLogger(ProductUtil.class);
 	
 	/**
 	 * Create a PRIP interface product from a prosEO interface product; when setting PRIP product attributes the product
@@ -146,7 +146,7 @@ public class ProductUtil {
 				product.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_FOOTPRINT, ValueType.PRIMITIVE, footprint));
 			} catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
 				// Log warning, otherwise ignore
-				logger.warn("Cannot convert coordinate string '{}' to footprint",
+				logger.log(PripMessage.MSG_CANNOT_CONVERT_COORD,
 						footprintParameter.getStringValue());
 			}
 		}

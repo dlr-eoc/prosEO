@@ -46,10 +46,8 @@ import org.apache.olingo.server.api.uri.queryoption.expression.Literal;
 import org.apache.olingo.server.api.uri.queryoption.expression.Member;
 import org.apache.olingo.server.api.uri.queryoption.expression.MethodKind;
 import org.apache.olingo.server.api.uri.queryoption.expression.UnaryOperatorKind;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import de.dlr.proseo.api.prip.odata.AttributeLambdaExpressionVisitor.AttributeCondition;
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
@@ -111,7 +109,7 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 			DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS Z").withZone(ZoneId.of("UTC"));
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(SqlFilterExpressionVisitor.class);
+	private static ProseoLogger logger = new ProseoLogger(SqlFilterExpressionVisitor.class);
 
 	/* Initialize OData-to-SQL name mapping */
 	{

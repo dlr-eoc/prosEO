@@ -46,14 +46,14 @@ import org.apache.olingo.server.api.uri.queryoption.SkipOption;
 import org.apache.olingo.server.api.uri.queryoption.TopOption;
 import org.apache.olingo.server.api.uri.queryoption.expression.Expression;
 import org.apache.olingo.server.api.uri.queryoption.expression.ExpressionVisitException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.api.prip.ProductionInterfaceConfiguration;
 import de.dlr.proseo.api.prip.ProductionInterfaceSecurity;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.PripMessage;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.enums.ProductVisibility;
 import de.dlr.proseo.model.enums.UserRole;
@@ -69,24 +69,6 @@ import de.dlr.proseo.model.enums.UserRole;
 @Component
 @Transactional
 public class ProductEntityCollectionProcessor implements EntityCollectionProcessor {
-
-	/* Message ID constants */
-	private static final int MSG_ID_INVALID_ENTITY_TYPE = 5001;
-	private static final int MSG_ID_URI_GENERATION_FAILED = 5002;
-	private static final int MSG_ID_UNSUPPORTED_FORMAT = 5008;
-	private static final int MSG_ID_EXCEPTION = 5009;
-	private static final int MSG_ID_INVALID_FILTER_CONDITION = 5010;
-	private static final int MSG_ID_INVALID_QUERY_RESULT = 5011;
-	private static final int MSG_ID_QUOTA_EXCEEDED = 5012;
-
-	/* Message string constants */
-	private static final String MSG_INVALID_ENTITY_TYPE = "(E%d) Invalid entity type %s referenced in service request";
-	private static final String MSG_URI_GENERATION_FAILED = "(E%d) URI generation from product UUID failed (cause: %s)";
-	private static final String MSG_EXCEPTION = "(E%d) Request failed (cause %s: %s)";
-	private static final String MSG_INVALID_QUERY_CONDITION = "(E%d) Invalid query condition (cause: %s)";
-	private static final String MSG_UNSUPPORTED_FORMAT = "(E%d) Unsupported response format %s";
-	private static final String MSG_INVALID_QUERY_RESULT = "(E%d) Invalid result for 'count(*)' query: %s";
-	private static final String MSG_QUOTA_EXCEEDED = "(E%d) Result set exceeds maximum quota of %d products";
 
 	/* Other string constants */
 	private static final String HTTP_HEADER_WARNING = "Warning";
@@ -111,8 +93,10 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	@Autowired
 	private ProductionInterfaceSecurity securityConfig;
 	
-	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProductEntityCollectionProcessor.class);
+	/**
+	 * Logger of this class
+	 */
+	private static ProseoLogger logger = new ProseoLogger(ProductEntityCollectionProcessor.class);
 	
 	/**
 	 * Inner class denoting that a retrieval request exceeded the configured quota
@@ -123,18 +107,6 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		public QuotaExceededException(String message) {
 			super(message);
 		}
-	}
-
-	/**
-	 * Create and log a formatted error message
-	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted error message
-	 */
-	private String logError(String messageFormat, int messageId, Object... messageParameters) {
-		return LogUtil.logError(logger, messageFormat, messageId, messageParameters);
 	}
 
 	/**
@@ -286,7 +258,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		
 		// Check quota
 		if (resultList.size() > config.getQuota()) {
-			String message = logError(MSG_QUOTA_EXCEEDED, MSG_ID_QUOTA_EXCEEDED, config.getQuota());
+			String message = logger.log(PripMessage.MSG_QUOTA_EXCEEDED, config.getQuota());
 			throw new QuotaExceededException(message);
 		}
 		
@@ -313,7 +285,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 			try {
 				collectionSize = Integer.parseInt(queryResult);
 			} catch (NumberFormatException e) {
-				logError(MSG_INVALID_QUERY_RESULT, MSG_ID_INVALID_QUERY_RESULT, queryResult);
+				logger.log(PripMessage.MSG_INVALID_QUERY_RESULT, queryResult);
 			}
 			
 		    if (logger.isTraceEnabled()) logger.trace("... returning collection size {} due to $count option", collectionSize);
@@ -354,7 +326,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 				// Query the backend services for the requested products, passing on user, password and mission
 				entityCollection = queryProducts(uriInfo);
 			} catch (URISyntaxException e) {
-				String message = logError(MSG_URI_GENERATION_FAILED, MSG_ID_URI_GENERATION_FAILED, e.getMessage());
+				String message = logger.log(PripMessage.MSG_URI_GENERATION_FAILED, e.getMessage());
 				response.setContent(serializer.error(
 						LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), message)).getContent());
 				response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
@@ -367,14 +339,14 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 				response.setHeader(HTTP_HEADER_WARNING, e.getMessage());
 				return;
 			} catch (ODataApplicationException e) {
-				String message = logError(MSG_INVALID_QUERY_CONDITION, MSG_ID_INVALID_FILTER_CONDITION, e.getMessage());
+				String message = logger.log(PripMessage.MSG_INVALID_QUERY_CONDITION, e.getMessage());
 				response.setContent(serializer.error(
 						LogUtil.oDataServerError(e.getStatusCode(), message)).getContent());
 				response.setStatusCode(e.getStatusCode());
 				response.setHeader(HTTP_HEADER_WARNING, message);
 				return;
 			} catch (Exception e) {
-				String message = logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
+				String message = logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
 				e.printStackTrace();
 				response.setContent(serializer.error(
 						LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message)).getContent());
@@ -383,7 +355,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 				return;
 			}
 		} else {
-			String message = logError(MSG_INVALID_ENTITY_TYPE, MSG_ID_INVALID_ENTITY_TYPE, edmEntitySet.getEntityType().getFullQualifiedName());
+			String message = logger.log(PripMessage.MSG_INVALID_ENTITY_TYPE, edmEntitySet.getEntityType().getFullQualifiedName());
 			response.setContent(serializer.error(
 					LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), message)).getContent());
 			response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
@@ -403,7 +375,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 			// [4] Create a serializer based on the requested format (json)
 			if (!ContentType.APPLICATION_JSON.isCompatible(responseFormat)) {
 				// Any other format currently throws an exception (see Github issue #122)
-				String message = logError(MSG_UNSUPPORTED_FORMAT, MSG_ID_UNSUPPORTED_FORMAT, responseFormat.toContentTypeString());
+				String message = logger.log(PripMessage.MSG_UNSUPPORTED_FORMAT, responseFormat.toContentTypeString());
 				response.setContent(serializer.error(
 						LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), message)).getContent());
 				response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
@@ -432,7 +404,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 			SerializerResult serializerResult = serializer.entityCollection(serviceMetadata, edmEntityType, entityCollection, opts);
 			serializedContent = serializerResult.getContent();
 		} catch (Exception e) {
-			String message = logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
+			String message = logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
 			e.printStackTrace();
 			response.setContent(serializer.error(
 					LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message)).getContent());

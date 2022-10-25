@@ -26,9 +26,9 @@ import org.apache.olingo.commons.api.edm.provider.CsdlProperty;
 import org.apache.olingo.commons.api.edm.provider.CsdlPropertyRef;
 import org.apache.olingo.commons.api.edm.provider.CsdlSchema;
 import org.apache.olingo.commons.api.ex.ODataException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+
+import de.dlr.proseo.logging.logger.ProseoLogger;
 
 /**
  * A provider for the Product entity data model (as defined in Production Interface Delivery Point Specification,
@@ -127,7 +127,7 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 	public static final String CT_TIMERANGE_PROP_END = "End";
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProductEdmProvider.class);
+	private static ProseoLogger logger = new ProseoLogger(ProductEdmProvider.class);
 
 	@Override
 	public CsdlEntityContainer getEntityContainer() throws ODataException {

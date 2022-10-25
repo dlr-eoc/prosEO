@@ -36,10 +36,9 @@ import org.apache.olingo.server.api.uri.queryoption.expression.Literal;
 import org.apache.olingo.server.api.uri.queryoption.expression.Member;
 import org.apache.olingo.server.api.uri.queryoption.expression.MethodKind;
 import org.apache.olingo.server.api.uri.queryoption.expression.UnaryOperatorKind;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import de.dlr.proseo.api.prip.odata.AttributeLambdaExpressionVisitor.AttributeCondition;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.PripMessage;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
@@ -55,7 +54,7 @@ public class AttributeLambdaExpressionVisitor implements ExpressionVisitor<Attri
 			DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS Z").withZone(ZoneId.of("UTC"));
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(SqlFilterExpressionVisitor.class);
+	private static ProseoLogger logger = new ProseoLogger(AttributeLambdaExpressionVisitor.class);
 
 	/**
 	 * Structured representation of selection conditions for Product attributes
@@ -116,8 +115,7 @@ public class AttributeLambdaExpressionVisitor implements ExpressionVisitor<Attri
 		
 		// Evaluate operands
 		if (!(left instanceof AttributeCondition && right instanceof AttributeCondition)) {
-			String message = "Both operands for binary operator must be AttributeCondition objects in Attribute lambda expression";
-			logger.error(message);
+			String message = logger.log(PripMessage.MSG_INVALID_OPERAND_TYPE);
 			throw new ODataApplicationException(message, HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
 		}
 		
@@ -144,8 +142,7 @@ public class AttributeLambdaExpressionVisitor implements ExpressionVisitor<Attri
 			// Evaluate a comparison operation
 			if (ProductEdmProvider.GENERIC_PROP_NAME.equals(leftOperand.getName())) {
 				if (!BinaryOperatorKind.EQ.equals(operator)) {
-					String message = "Only binary operator 'eq' allowed for 'Name' in Attribute lambda expression";
-					logger.error(message);
+					String message = logger.log(PripMessage.MSG_INVALID_OPERATOR_TYPE);
 					throw new ODataApplicationException(message, HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
 				}
 				result.setName(rightOperand.getValue());
@@ -176,8 +173,7 @@ public class AttributeLambdaExpressionVisitor implements ExpressionVisitor<Attri
 				result.setValue(rightOperand.getValue());
 			} else if (ProductEdmProvider.GENERIC_PROP_NAME.equals(rightOperand.getName())) {
 				if (!BinaryOperatorKind.EQ.equals(operator)) {
-					String message = "Only binary operator 'eq' allowed for 'Name' in Attribute lambda expression";
-					logger.error(message);
+					String message = logger.log(PripMessage.MSG_INVALID_OPERATOR_TYPE);
 					throw new ODataApplicationException(message, HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
 				}
 				result.setName(leftOperand.getValue());
@@ -207,9 +203,9 @@ public class AttributeLambdaExpressionVisitor implements ExpressionVisitor<Attri
 							HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
 				}
 				result.setValue(leftOperand.getValue());
-			} else {
-				String message = "One operand for binary operator must be named in Attribute lambda expression ('Name' and 'Value' allowed)";
-				logger.error(message);
+			} else {					
+				String message = logger.log(PripMessage.MSG_MISSING_OPERAND_NAME);
+
 				throw new ODataApplicationException(message, HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
 			} 
 		}
@@ -325,16 +321,14 @@ public class AttributeLambdaExpressionVisitor implements ExpressionVisitor<Attri
 
 		// We expect the first uriResource to be the lambda variable this visitor works on
 		if (! (uriResource instanceof UriResourceLambdaVariable)) {
-			String message = "Unexpected URI resource of kind " + uriResource.getKind() + " in Attribute lambda expression (only lambda variable allowed)";
-			logger.error(message);
+			String message = logger.log(PripMessage.MSG_UNEXPECTED_URI, uriResource.getKind());
 			throw new ODataApplicationException(message, HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
 		}
 		
 		// Check that the correct lambda variable is referenced
 		String uriVariableName = ((UriResourceLambdaVariable) uriResource).getVariableName();
 		if (!uriVariableName.equals(lambdaVariable)) {
-			String message = "Lambda variable " + uriVariableName + " not allowed in Attribute lambda expression for " + lambdaVariable;
-			logger.error(message);
+			String message = logger.log(PripMessage.MSG_UNEXPECTED_URI_VAR, uriVariableName, lambdaVariable);
 			throw new ODataApplicationException(message, HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
 		}
 		
@@ -342,15 +336,13 @@ public class AttributeLambdaExpressionVisitor implements ExpressionVisitor<Attri
 		uriResource = uriResourceIter.next();
 		
 		if (! (uriResource instanceof UriResourcePrimitiveProperty)) {
-			String message = "Unexpected URI sub-resource of kind " + uriResource.getKind() + " in Attribute lambda expression (only primitive property allowed)";
-			logger.error(message);
+			String message = logger.log(PripMessage.MSG_UNEXPECTED_SUB_URI, uriResource.getKind());
 			throw new ODataApplicationException(message, HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
 		}
 		String propertyName = ((UriResourcePrimitiveProperty) uriResource).getProperty().getName();
 		
 		if (!ProductEdmProvider.GENERIC_PROP_NAME.equals(propertyName) && !ProductEdmProvider.GENERIC_PROP_VALUE.equals(propertyName)) {
-			String message = "Unexpected property " + propertyName + " in Attribute lambda expression (only 'Name' and 'Value' allowed)";
-			logger.error(message);
+			String message = logger.log(PripMessage.MSG_UNEXPECTED_PROPERTY, propertyName);
 			throw new ODataApplicationException(message, HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
 		}
 		
