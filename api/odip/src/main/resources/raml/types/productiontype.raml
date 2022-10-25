@@ -1,0 +1,7 @@
+#%RAML 1.0 DataType
+#  CscProductionType:
+    enum: ["systematic_production", "on-demand:default", "on-demand:non-default"]
+    description: Type of production process where
+                    systematic_production means that standard systematic production has been applied
+                    on-demand:default means that the production is the result of an on-demand processing request with default workflow options applied. 
+                    on-demand:non-default means that the production is the result of an on-demand processing request with non-default workflow options applied

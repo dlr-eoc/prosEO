@@ -1,0 +1,510 @@
+{
+	"info": {
+		"_postman_id": "ddb2fc01-3698-4c93-824d-e87217bccdd2",
+		"name": "PRIP Minimum Compliance",
+		"description": "The PRIP minimum compliance consists of a set of queries to illustrate a basic implementation of the PRIP ICD and the ability to download products via the PRIP",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "PRIP Minimum Compliance",
+			"item": [
+				{
+					"name": "Product List Query",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Test OData products context\", function () {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"// test that the correct odata context is returned",
+									"    pm.expect(jsonData['@odata.context']).to.eql(\"$metadata#Products\");",
+									"    ",
+									"// set global variable for the length of the results array",
+									"    pm.globals.set(\"ProductListLength\", jsonData.value.length);",
+									"    var n = pm.globals.get(\"ProductListLength\") - 1; ",
+									"    ",
+									"// extract the product name, id and sensing date from the last result in the array for the next subsequent tests",
+									"    pm.expect(jsonData.value[n].Id);",
+									"    pm.globals.set(\"ProductId\", jsonData.value[n].Id);",
+									"    pm.expect(jsonData.value[n].Start);",
+									"    pm.globals.set(\"Start\", jsonData.value[n].ContentDate.Start);",
+									"    pm.expect(jsonData.value[n].End)",
+									"    pm.globals.set(\"End\", jsonData.value[n].ContentDate.End);",
+									"    pm.expect(jsonData.value[n].Footprint);",
+									"});",
+									"pm.test(\"Response time is less than 4000ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(4000);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{username}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{password}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{service-root-uri}}/odata/v1/Products",
+							"host": [
+								"{{service-root-uri}}"
+							],
+							"path": [
+								"odata",
+								"v1",
+								"Products"
+							]
+						},
+						"description": "Product query without filter to request basic product listing"
+					},
+					"response": []
+				},
+				{
+					"name": "Product Query by Name (+top 1000)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Test product filter name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.value.length).to.be.above(1);",
+									"});",
+									"pm.test(\"Filename contains correct string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"EW_RAW__0\");",
+									"});",
+									"pm.test(\"Response time is less than 4000ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(4000);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{username}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{service-root-uri}}/odata/v1/Products?$filter=startswith(Name,'S1B_EW_RAW__0')&$top=1000",
+							"host": [
+								"{{service-root-uri}}"
+							],
+							"path": [
+								"odata",
+								"v1",
+								"Products"
+							],
+							"query": [
+								{
+									"key": "$filter",
+									"value": "startswith(Name,'S1B_EW_RAW__0')"
+								},
+								{
+									"key": "$top",
+									"value": "1000"
+								}
+							]
+						},
+						"description": "Product query with a filter to return the first 1000 products based on the filter parameters"
+					},
+					"response": []
+				},
+				{
+					"name": "Product Query by Name (+skip 10)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Test product filter name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.value.length).to.be.above(1);",
+									"});",
+									"pm.test(\"Filename contains correct string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"EW_RAW__0\");",
+									"});",
+									"pm.test(\"Response time is less than 4000ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(4000);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{username}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{service-root-uri}}/odata/v1/Products?$filter=startswith(Name,'S1B_EW_RAW__0')&$skip=10",
+							"host": [
+								"{{service-root-uri}}"
+							],
+							"path": [
+								"odata",
+								"v1",
+								"Products"
+							],
+							"query": [
+								{
+									"key": "$filter",
+									"value": "startswith(Name,'S1B_EW_RAW__0')"
+								},
+								{
+									"key": "$skip",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Product query to return products based on the filter parameters, skipping the first 10 results"
+					},
+					"response": []
+				},
+				{
+					"name": "Product Query by Sensing Date",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Test product filter sensing date\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.value.length).to.be.above(0);",
+									"});",
+									"pm.test(\"Response time is less than 4000ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(4000);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{username}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{service-root-uri}}/odata/v1/Products?$filter=ContentDate/Start ge {{Start}} and ContentDate/End le {{End}}",
+							"host": [
+								"{{service-root-uri}}"
+							],
+							"path": [
+								"odata",
+								"v1",
+								"Products"
+							],
+							"query": [
+								{
+									"key": "$filter",
+									"value": "ContentDate/Start ge {{Start}} and ContentDate/End le {{End}}"
+								}
+							]
+						},
+						"description": "Product query with a filter to match product(s) by Content Date (sensing time)."
+					},
+					"response": []
+				},
+				{
+					"name": "Product Query by Publication Date",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Test product filter publication date\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.value.length).to.be.above(1);",
+									"});",
+									"pm.test(\"Response time is less than 4000ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(4000);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{username}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{service-root-uri}}/odata/v1/Products?$filter=PublicationDate gt 2020-04-30T12:00:00.000Z and ProductionType eq OData.CSC.ProductionType'systematic_production'",
+							"host": [
+								"{{service-root-uri}}"
+							],
+							"path": [
+								"odata",
+								"v1",
+								"Products"
+							],
+							"query": [
+								{
+									"key": "$filter",
+									"value": "PublicationDate gt 2020-04-30T12:00:00.000Z and ProductionType eq OData.CSC.ProductionType'systematic_production'"
+								}
+							]
+						},
+						"description": "Product query with a filter to match product(s) by Publication Date"
+					},
+					"response": []
+				},
+				{
+					"name": "Product Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Test odata product entity details\", function () {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"// test that the correct odata context is returned",
+									"    pm.expect(jsonData['@odata.context']).to.eql(\"$metadata#Products/$entity\");",
+									"    ",
+									"// check the product status",
+									"    console.log(\"Product :\"+jsonData.Name+\" Online=\"+jsonData.Online);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{username}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{service-root-uri}}/odata/v1/Products({{ProductId}})",
+							"host": [
+								"{{service-root-uri}}"
+							],
+							"path": [
+								"odata",
+								"v1",
+								"Products({{ProductId}})"
+							]
+						},
+						"description": "Details of the product returned from the query"
+					},
+					"response": []
+				},
+				{
+					"name": "Product Download",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Test product download\", function () {\r",
+									"pm.response.to.have.status(206);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{username}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Range",
+								"value": "bytes=0-1023",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{service-root-uri}}/odata/v1/Products({{ProductId}})/$value",
+							"host": [
+								"{{service-root-uri}}"
+							],
+							"path": [
+								"odata",
+								"v1",
+								"Products({{ProductId}})",
+								"$value"
+							]
+						},
+						"description": "Request the product download"
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "basic",
+				"basic": [
+					{
+						"key": "password",
+						"value": "fxvuDi6iwGJzuy3f",
+						"type": "string"
+					},
+					{
+						"key": "username",
+						"value": "S5P\\esaprip",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "basic",
+		"basic": [
+			{
+				"key": "password",
+				"value": "{{password}}",
+				"type": "string"
+			},
+			{
+				"key": "username",
+				"value": "{{username}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

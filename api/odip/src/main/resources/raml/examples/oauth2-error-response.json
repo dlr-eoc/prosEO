@@ -1,0 +1,4 @@
+{
+	"error": "unauthorized_client",
+	"error_description": "(E5008) User S5P\\odipuser not authorized for ODIP API"
+}

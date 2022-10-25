@@ -1,0 +1,71 @@
+#%RAML 1.0
+title: prosEO On-Demand Production Interface Delivery Point (ODIP) REST Services API
+version: v1
+protocols: [ HTTPS ] 
+baseUri: /proseo/odip/odata/{version}
+mediaType: application/json
+
+securitySchemes:
+  basicAuth:
+    description: Each request must contain the headers necessary for
+                 basic authentication
+    type: Basic Authentication
+    describedBy:
+      headers:
+        Authorization:
+          description: Used to send the Base64-encoded "username:password"
+                       credentials
+          type: string
+      responses:
+        401:
+          description: |
+            Unauthorized. Either the provided username and password
+            combination is invalid, or the user is not allowed to access
+            the content provided by the requested URL.
+
+types:
+  CscChecksum: !include types/checksum.raml
+  CscTimeRange: !include types/timerange.raml
+  CscAttribute: !include types/attribute.raml
+  CscProductionType: !include types/productiontype.raml
+  CscProduct: !include types/product.raml
+
+/Products:
+  description: Methods for querying the product catalogue according to ESA's On-Demand Production Interface Delivery Point (ODIP) API
+  get:
+    description: Query the products catalogue
+    displayName: getProducts
+    queryParameters:
+      $filter?:
+        type: string
+        description: Filter query string as defined by the ODATA specification
+      $orderby?:
+        type: string
+        description: An ordering string as defined by the ODATA specification, default is ascending order
+      $count?:
+        type: boolean
+        description: Flag indicating whether the number of products found shall be included with the result
+      $expand?:
+        type: string
+        description: List of attributes to expand in product catalogue style
+    responses:
+      200:
+        description: The request was successfully completed (the result may be an empty list, though)
+        body:
+          application/json:
+            type: CscProduct[]
+            example: !include examples/product-list.json
+      400:
+        description: |
+          The request sent to the server contains data which is not as expected e.g. invalid query parameters
+        headers:
+          Warning: !include types/error.raml
+      401:
+        description: |
+          The requesting user is unauthorised to submit the product query
+      404:
+        description: |
+          The requested resource was not found (i. e. the URI does not exist; not synonymous to "no data found")
+        headers:
+          Warning: !include types/error.raml
+            
