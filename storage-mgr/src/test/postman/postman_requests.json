@@ -2,8 +2,7 @@
 	"info": {
 		"_postman_id": "9878e9e4-f89e-466e-92dd-d6070b984c22",
 		"name": "prosEO",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "15713574"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{

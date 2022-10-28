@@ -86,6 +86,12 @@ public class ProductfileControllerImpl implements ProductfileController {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRestFileInfoByPathInfo({})", pathInfo);
 
+		if (null == pathInfo || pathInfo.isBlank()) {
+			return new ResponseEntity<>(
+					errorHeaders(StorageLogger.logError(logger, MSG_TARGET_PATH_MISSING, MSG_ID_TARGET_PATH_MISSING)),
+					HttpStatus.BAD_REQUEST);
+		}
+
 		// pathInfo is absolute path s3://bucket/.. or /storagePath/.. DOWNLOAD Storage
 		// -> Cache
 		if (storageProvider.isVersion2()) {
@@ -128,6 +134,12 @@ public class ProductfileControllerImpl implements ProductfileController {
 			} catch (IOException e) {
 
 				return HttpResponses.createError("Cannot download file", e);
+
+			} catch (Exception e) {
+
+				return new ResponseEntity<>(errorHeaders(StorageLogger.logError(logger, MSG_EXCEPTION_THROWN,
+						MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage())),
+						HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
 			finally {
@@ -150,7 +162,8 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		// Acquire lock on requested product file
 		Instant lockRequestStartTime = Instant.now();
-		Instant lockRequestTimeOut = lockRequestStartTime.plusMillis(cfg.getFileCheckMaxCycles() * cfg.getFileCheckWaitTime());
+		Instant lockRequestTimeOut = lockRequestStartTime
+				.plusMillis(cfg.getFileCheckMaxCycles() * cfg.getFileCheckWaitTime());
 		try {
 			int i = 0;
 			for (; i < cfg.getFileCheckMaxCycles() && Instant.now().isBefore(lockRequestTimeOut); ++i) {
@@ -207,7 +220,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 			productLockSet.remove(sourceFile.getFileName());
 		}
 	}
-	
+
 	/**
 	 * Copy local file named pathInfo to storage manager. The target file path is:
 	 * default mount point + productId + relative source file path
@@ -228,6 +241,10 @@ public class ProductfileControllerImpl implements ProductfileController {
 		// pathInfo absolute path, UPLOAD absolute file -> storage
 		if (storageProvider.isVersion2()) {
 
+			if (pathInfo != null) {
+				return new ResponseEntity<RestFileInfo>(new RestFileInfo(), HttpStatus.BAD_REQUEST);
+			}
+
 			try {
 				Storage storage = storageProvider.getStorage();
 				String absolutePath = pathInfo;
@@ -242,10 +259,16 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 				RestFileInfo restFileInfo = ControllerUtils.convertToRestFileInfo(targetFile,
 						storage.getFileSize(targetFile));
-				return HttpResponses.createCreated(restFileInfo);
+
+				StorageLogger.logInfo(logger, MSG_FILES_UPDATED, MSG_ID_FILES_UPDATED, pathInfo, productId);
+
+				return new ResponseEntity<>(restFileInfo, HttpStatus.CREATED);
 
 			} catch (Exception e) {
-				return HttpResponses.createError("Cannot upload file", e);
+
+				return new ResponseEntity<>(errorHeaders(StorageLogger.logError(logger, MSG_EXCEPTION_THROWN,
+						MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage())),
+						HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 		}
 
@@ -337,7 +360,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 				e.getLocalizedMessage(), cfg.getFileCheckMaxCycles() * cfg.getFileCheckWaitTime() / 1000);
 
 		return new ResponseEntity<>(errorHeaders(errorString), HttpStatus.SERVICE_UNAVAILABLE);
-	}	
+	}
 
 	/**
 	 * Create an HTTP "Warning" header with the given text message
