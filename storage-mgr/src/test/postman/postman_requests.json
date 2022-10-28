@@ -13,7 +13,7 @@
 					"name": "products",
 					"item": [
 						{
-							"name": "products - Get products with directory prefix",
+							"name": "products - Get all",
 							"request": {
 								"method": "GET",
 								"header": [],
@@ -38,6 +38,70 @@
 										{
 											"key": "prefix",
 											"value": "\"\""
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "products - Get S3",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8080/proseo/storage-mgr/x/products?storageType=S3&prefix=\"\"",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"proseo",
+										"storage-mgr",
+										"x",
+										"products"
+									],
+									"query": [
+										{
+											"key": "storageType",
+											"value": "S3"
+										},
+										{
+											"key": "prefix",
+											"value": "\"\""
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "products - Get prefix",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8080/proseo/storage-mgr/x/products?storageType=S3&prefix=test-utility",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"proseo",
+										"storage-mgr",
+										"x",
+										"products"
+									],
+									"query": [
+										{
+											"key": "storageType",
+											"value": "S3"
+										},
+										{
+											"key": "prefix",
+											"value": "test-utility"
 										}
 									]
 								}
@@ -286,7 +350,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "http://localhost:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/products?storageType=POSIX&prefix=\"\"",
+									"raw": "http://localhost:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/products?storageType=S3&prefix=",
 									"protocol": "http",
 									"host": [
 										"localhost"
@@ -308,11 +372,11 @@
 									"query": [
 										{
 											"key": "storageType",
-											"value": "POSIX"
+											"value": "S3"
 										},
 										{
 											"key": "prefix",
-											"value": "\"\""
+											"value": ""
 										}
 									]
 								}
@@ -587,6 +651,96 @@
 						"header": []
 					},
 					"response": []
+				}
+			]
+		},
+		{
+			"name": "PRIP API",
+			"item": [
+				{
+					"name": "Request product list",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8089/proseo/prip/odata/v1/Products",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8089",
+							"path": [
+								"proseo",
+								"prip",
+								"odata",
+								"v1",
+								"Products"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Download product",
+					"protocolProfileBehavior": {
+						"followRedirects": false
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8089/proseo/prip/odata/v1/Products(a2d5b997-8d10-43ba-b65b-9ffb367f5ac8)/$value",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8089",
+							"path": [
+								"proseo",
+								"prip",
+								"odata",
+								"v1",
+								"Products(a2d5b997-8d10-43ba-b65b-9ffb367f5ac8)",
+								"$value"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "basic",
+				"basic": [
+					{
+						"key": "password",
+						"value": "esaPrip.012",
+						"type": "string"
+					},
+					{
+						"key": "username",
+						"value": "PTM\\esaprip",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
 				}
 			]
 		}
