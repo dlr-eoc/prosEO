@@ -421,7 +421,7 @@ public class JobStep extends PersistentObject {
 		if (!(obj instanceof JobStep))
 			return false;
 		JobStep other = (JobStep) obj;
-		return Objects.equals(job, other.job) && Objects.equals(outputProduct, other.outputProduct);
+		return Objects.equals(job, other.getJob()) && Objects.equals(outputProduct, other.getOutputProduct());
 	}
 
 	@Override

@@ -8,8 +8,6 @@ package de.dlr.proseo.planner.rest;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,10 +15,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.rest.ProductController;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.util.UtilService;
 /**
@@ -35,7 +35,7 @@ public class ProductControllerImpl implements ProductController {
 	/**
 	 * Logger of this class
 	 */
-	private static Logger logger = LoggerFactory.getLogger(ProductControllerImpl.class);
+	private static ProseoLogger logger = new ProseoLogger(ProductControllerImpl.class);
 
 	/** The Production Planner instance */
     @Autowired
@@ -78,14 +78,14 @@ public class ProductControllerImpl implements ProductController {
 					UtilService.getJobStepUtil().searchForJobStepsToRun(facilityId, pcId, true);
 					return null;
 				});	
-				Messages.PLANNING_CHECK_COMPLETE.log(logger, Long.valueOf(productid));
+				logger.log(PlannerMessage.PLANNING_CHECK_COMPLETE, Long.valueOf(productid));
 			}
 			productionPlanner.releaseThreadSemaphore("getObjectByProductidAndFacilityId");
 			productionPlanner.releaseReleaseSemaphore("getObjectByProductidAndFacilityId");	
 		} catch (Exception e) {
 			productionPlanner.releaseThreadSemaphore("getObjectByProductidAndFacilityId");	
 			productionPlanner.releaseReleaseSemaphore("getObjectByProductidAndFacilityId");	
-			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 		}
 		return new ResponseEntity<>("Checked", HttpStatus.OK);
 	}

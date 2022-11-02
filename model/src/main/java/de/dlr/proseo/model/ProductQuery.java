@@ -406,7 +406,7 @@ public class ProductQuery extends PersistentObject {
 		if (!(obj instanceof ProductQuery))
 			return false;
 		ProductQuery other = (ProductQuery) obj;
-		return Objects.equals(jobStep, other.jobStep) && Objects.equals(requestedProductClass, other.requestedProductClass);
+		return Objects.equals(jobStep, other.getJobStep()) && Objects.equals(requestedProductClass, other.getRequestedProductClass());
 	}
 
 	@Override

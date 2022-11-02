@@ -2,8 +2,6 @@ package de.dlr.proseo.monitor;
 
 import javax.sql.DataSource;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,6 +15,8 @@ import org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.model.enums.UserRole;
 
 /**
@@ -33,7 +33,7 @@ public class MonitorSecurityConfig extends WebSecurityConfigurerAdapter {
 	private DataSource dataSource;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(MonitorSecurityConfig.class);
+	private static ProseoLogger logger = new ProseoLogger(MonitorSecurityConfig.class);
 	
 	/**
 	 * Set the Ingestor security options
@@ -58,7 +58,7 @@ public class MonitorSecurityConfig extends WebSecurityConfigurerAdapter {
 	 */
 	@Autowired
 	public void initialize(AuthenticationManagerBuilder builder) throws Exception {
-		logger.info("Initializing authentication from user details service ");
+		logger.log(GeneralMessage.INITIALIZING_AUTHENTICATION);
 
 		builder.userDetailsService(userDetailsService());
 	}
@@ -80,7 +80,7 @@ public class MonitorSecurityConfig extends WebSecurityConfigurerAdapter {
 	 */
 	@Bean
 	public UserDetailsService userDetailsService() {
-		logger.info("Initializing user details service from datasource " + dataSource);
+		logger.log(GeneralMessage.INITIALIZING_USER_DETAILS_SERVICE, dataSource);
 
 		JdbcDaoImpl jdbcDaoImpl = new JdbcDaoImpl();
 		jdbcDaoImpl.setDataSource(dataSource);

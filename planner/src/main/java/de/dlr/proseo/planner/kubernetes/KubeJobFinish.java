@@ -9,18 +9,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.ProductionPlannerConfiguration;
 import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
@@ -38,7 +37,7 @@ public class KubeJobFinish extends Thread {
 	/**
 	 * Logger of this class
 	 */
-	private static Logger logger = LoggerFactory.getLogger(KubeJobFinish.class);
+	private static ProseoLogger logger = new ProseoLogger(KubeJobFinish.class);
 	 	 
 	private ProductionPlanner planner;
 	
@@ -125,8 +124,8 @@ public class KubeJobFinish extends Thread {
     						planner.releaseThreadSemaphore("KubeJobFinish.run");
     					}
     				} catch (Exception e) {
-    					planner.releaseThreadSemaphore("KubeJobFinish.run");					
-    					Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+    					planner.releaseThreadSemaphore("KubeJobFinish.run");
+    					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
     				}
     			}
     			catch(InterruptedException e) {

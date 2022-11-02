@@ -22,8 +22,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.ApiMonitorMessage;
 
 /**
  * Base class for implementing monitors on pickup points ("interface points" in the ESA Ground Segment Framework architecture).
@@ -64,42 +64,8 @@ public abstract class BaseMonitor extends Thread {
 	/** Maximum number of wait cycles for task completion checks (default 3600 = total timeout of 30 min) */
 	private int maxWaitCycles = 3600;
 	
-	/* Message ID constants */
-	private static final int MSG_ID_INTERRUPTED = 5200;
-	private static final int MSG_ID_TRANSFER_FAILED = 5201;
-	private static final int MSG_ID_FOLLOW_ON_ACTION_FAILED = 5202;
-	private static final int MSG_ID_HISTORY_READ_FAILED = 5203;
-	private static final int MSG_ID_HISTORY_WRITE_FAILED = 5204;
-	private static final int MSG_ID_ABORTING_MONITOR = 5205;
-	private static final int MSG_ID_ILLEGAL_HISTORY_ENTRY_FORMAT = 5206;
-	private static final int MSG_ID_ILLEGAL_HISTORY_ENTRY_DATE = 5207;
-	private static final int MSG_ID_HISTORY_ENTRIES_READ = 5208;
-	private static final int MSG_ID_HISTORY_ENTRIES_TRUNCATED = 5209;
-	private static final int MSG_ID_TASK_WAIT_INTERRUPTED = 5209;
-	private static final int MSG_ID_SUBTASK_TIMEOUT = 5210;
-	protected static final int MSG_ID_ABORTING_TASK = 5211;
-	private static final int MSG_ID_EXCEPTION_CHECKING_DOWNLOADS = 5212;
-	private static final int MSG_ID_EXCEPTION_IN_TRANSFER_OR_ACTION = 5213;
-	
-	/* Message string constants */
-	private static final String MSG_INTERRUPTED = "(I%d) Interrupt received while waiting for next check of pickup point";
-	private static final String MSG_TRANSFER_FAILED = "(E%d) Transfer of object %s failed";
-	private static final String MSG_FOLLOW_ON_ACTION_FAILED = "(E%d) Follow-on action for object %s failed";
-	private static final String MSG_HISTORY_READ_FAILED = "(E%d) Failed to read transfer history file %s (cause: %s)";
-	private static final String MSG_HISTORY_WRITE_FAILED = "(E%d) Failed to write transfer history file %s (cause: %s)";
-	private static final String MSG_ABORTING_MONITOR = "(E%d) Aborting monitor due to IOException (cause: %s)";
-	private static final String MSG_ILLEGAL_HISTORY_ENTRY_FORMAT = "(E%d) Transfer history entry '%s' has illegal format";
-	private static final String MSG_ILLEGAL_HISTORY_ENTRY_DATE = "(E%d) Transfer history entry date '%s' has illegal format";
-	private static final String MSG_HISTORY_ENTRIES_READ = "(I%d) %d history entries read from history file %s, reference time for next pickup point lookup is %s";
-	private static final String MSG_HISTORY_ENTRIES_TRUNCATED = "(I%d) %d entries truncated from transfer history file %s";
-	private static final String MSG_TASK_WAIT_INTERRUPTED = "(E%d) Wait for task completion interrupted, monitoring loop aborted";
-	private static final String MSG_SUBTASK_TIMEOUT = "(E%d) Timeout after %s s during wait for task completion, task cancelled";
-	protected static final String MSG_ABORTING_TASK = "(E%d) Aborting download task due to exception (cause: %s)";
-	private static final String MSG_EXCEPTION_CHECKING_DOWNLOADS = "(E%d) Exception during check for available downloads (cause: %s / %s)";
-	private static final String MSG_EXCEPTION_IN_TRANSFER_OR_ACTION = "(E%d) Exception during data transfer or follow-on action (cause: %s / %s)";
-
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(BaseMonitor.class);
+	private static ProseoLogger logger = new ProseoLogger(BaseMonitor.class);
 	
 	/**
 	 * Structure for controlling the transfer process
@@ -258,7 +224,7 @@ public abstract class BaseMonitor extends Thread {
 					// Analyse entry: Consists of <check date>;<transfer object id>
 					String[] historyEntryParts = historyFile.readLine().split(";", 2);
 					if (2 != historyEntryParts.length) {
-						logger.error(String.format(MSG_ILLEGAL_HISTORY_ENTRY_FORMAT, MSG_ID_ILLEGAL_HISTORY_ENTRY_FORMAT, historyEntryParts.toString()));
+						logger.log(ApiMonitorMessage.ILLEGAL_HISTORY_ENTRY_FORMAT, historyEntryParts.toString());
 						throw new IllegalArgumentException();
 					}
 					
@@ -269,7 +235,7 @@ public abstract class BaseMonitor extends Thread {
 							referenceTimeStamp = entryDate;
 						}
 					} catch (DateTimeParseException e) {
-						logger.error(String.format(MSG_ILLEGAL_HISTORY_ENTRY_DATE, MSG_ID_ILLEGAL_HISTORY_ENTRY_DATE, historyEntryParts[0]));
+						logger.log(ApiMonitorMessage.ILLEGAL_HISTORY_ENTRY_DATE, historyEntryParts[0]);
 						throw new IllegalArgumentException();
 					}
 					
@@ -279,9 +245,7 @@ public abstract class BaseMonitor extends Thread {
 				}
 				
 			} catch (IOException e) {
-				String message = String.format(MSG_HISTORY_READ_FAILED, MSG_ID_HISTORY_READ_FAILED, transferHistoryFile.toString(),
-						e.getMessage());
-				logger.error(message);
+				String message = logger.log(ApiMonitorMessage.HISTORY_READ_FAILED, transferHistoryFile.toString(), e.getMessage());
 				throw new IOException(message, e);
 			} catch (IllegalArgumentException e) {
 				// Do nothing: Already logged, and entry can be ignored; might result in double transfer of object
@@ -289,8 +253,8 @@ public abstract class BaseMonitor extends Thread {
 			
 		}
 		
-		logger.info(String.format(MSG_HISTORY_ENTRIES_READ, MSG_ID_HISTORY_ENTRIES_READ,
-				transferHistory.size(), transferHistoryFile, referenceTimeStamp.toString()));
+		logger.log(
+			ApiMonitorMessage.HISTORY_ENTRIES_READ,transferHistory.size(), transferHistoryFile, referenceTimeStamp.toString());
 		
 		return transferHistory;
 	}
@@ -322,9 +286,7 @@ public abstract class BaseMonitor extends Thread {
 			historyFile.write(transferObjectIdentifier);
 			historyFile.newLine();
 		} catch (IOException e) {
-			String message = String.format(MSG_HISTORY_WRITE_FAILED, MSG_ID_HISTORY_WRITE_FAILED,
-					transferHistoryFile.toString(), e.getMessage());
-			logger.error(message);
+			String message = logger.log(ApiMonitorMessage.HISTORY_WRITE_FAILED, transferHistoryFile.toString(), e.getMessage());
 			throw new IOException(message, e);
 		}
 	}
@@ -357,7 +319,7 @@ public abstract class BaseMonitor extends Thread {
 					// Analyse entry: Consists of <check date>;<transfer object id>
 					String[] historyEntryParts = oldHistoryEntry.split(";", 2);
 					if (2 != historyEntryParts.length) {
-						logger.error(String.format(MSG_ILLEGAL_HISTORY_ENTRY_FORMAT, MSG_ID_ILLEGAL_HISTORY_ENTRY_FORMAT, historyEntryParts.toString()));
+						logger.log(ApiMonitorMessage.ILLEGAL_HISTORY_ENTRY_FORMAT, historyEntryParts.toString());
 						throw new IllegalArgumentException();
 					}
 					
@@ -371,7 +333,7 @@ public abstract class BaseMonitor extends Thread {
 							++truncatedCount;
 						}
 					} catch (DateTimeParseException e) {
-						logger.error(String.format(MSG_ILLEGAL_HISTORY_ENTRY_DATE, MSG_ID_ILLEGAL_HISTORY_ENTRY_DATE, historyEntryParts[0]));
+						logger.log(ApiMonitorMessage.ILLEGAL_HISTORY_ENTRY_DATE, historyEntryParts[0]);
 						throw new IllegalArgumentException();
 					}
 					
@@ -381,8 +343,7 @@ public abstract class BaseMonitor extends Thread {
 			
 			Files.delete(tempFilePath);
 			
-			logger.info(String.format(MSG_HISTORY_ENTRIES_TRUNCATED, MSG_ID_HISTORY_ENTRIES_TRUNCATED,
-					truncatedCount, transferHistoryFile.toString()));
+			logger.log(ApiMonitorMessage.HISTORY_ENTRIES_TRUNCATED, truncatedCount, transferHistoryFile.toString());
 			
 		}
 		
@@ -480,7 +441,7 @@ public abstract class BaseMonitor extends Thread {
 		try {
 			transferHistory = readTransferHistory(); // Sets the reference time stamp as a side effect
 		} catch (IOException e) {
-			logger.error(String.format(MSG_ABORTING_MONITOR, MSG_ID_ABORTING_MONITOR, e.getMessage()));
+			logger.log(ApiMonitorMessage.ABORTING_MONITOR, e.getMessage());
 			return;
 		}
 
@@ -494,7 +455,7 @@ public abstract class BaseMonitor extends Thread {
 				try {
 					truncateTransferHistory();
 				} catch (IOException e) {
-					logger.error(String.format(MSG_ABORTING_MONITOR, MSG_ID_ABORTING_MONITOR, e.getMessage()));
+					logger.log(ApiMonitorMessage.ABORTING_MONITOR, e.getMessage());
 					return;
 				}
 			}
@@ -504,8 +465,8 @@ public abstract class BaseMonitor extends Thread {
 			try {
 				transferControl = checkAvailableDownloads(referenceTimeStamp);
 			} catch (Exception e) {
-				logger.error(String.format(MSG_EXCEPTION_CHECKING_DOWNLOADS, MSG_ID_EXCEPTION_CHECKING_DOWNLOADS,
-						e.getClass().getName(), e.getMessage()), e);
+				logger.log(ApiMonitorMessage.EXCEPTION_CHECKING_DOWNLOADS, e.getClass().getName(), e.getMessage());
+				logger.debug("Exception Stack Trace:", e);
 				continue;
 			}
 			
@@ -528,7 +489,7 @@ public abstract class BaseMonitor extends Thread {
 							semaphore.acquire();
 							if (logger.isDebugEnabled()) logger.debug("... task semaphore acquired, {} permits remaining", semaphore.availablePermits());
 						} catch (InterruptedException e) {
-							logger.error(String.format(MSG_ABORTING_TASK, MSG_ID_ABORTING_TASK, e.toString()));
+							logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString());
 							return;
 						}
 						
@@ -540,21 +501,21 @@ public abstract class BaseMonitor extends Thread {
 								try {
 									recordTransfer(objectToTransfer);
 								} catch (IOException e) {
-									logger.error(String.format(MSG_ABORTING_TASK, MSG_ID_ABORTING_TASK, e.toString()));
+									logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString());
 									return;
 								}
 								
 								// Trigger follow-on action
 								if (!triggerFollowOnAction(objectToTransfer)) {
-									logger.error(String.format(MSG_FOLLOW_ON_ACTION_FAILED, MSG_ID_FOLLOW_ON_ACTION_FAILED, objectToTransfer.getIdentifier()));
+									logger.log(ApiMonitorMessage.FOLLOW_ON_ACTION_FAILED, objectToTransfer.getIdentifier());
 								}
 								
 							} else {
-								logger.error(String.format(MSG_TRANSFER_FAILED, MSG_ID_TRANSFER_FAILED, objectToTransfer.getIdentifier()));
+								logger.log(ApiMonitorMessage.TRANSFER_FAILED, objectToTransfer.getIdentifier());
 							}
 						} catch (Exception e) {
-							logger.error(String.format(MSG_EXCEPTION_IN_TRANSFER_OR_ACTION, MSG_ID_EXCEPTION_IN_TRANSFER_OR_ACTION,
-									e.getClass().getName(), e.getMessage()), e);
+							logger.log(ApiMonitorMessage.EXCEPTION_IN_TRANSFER_OR_ACTION, e.getClass().getName(), e.getMessage());
+							logger.debug("Exception Stack Trace:", e);
 							// continue, releasing semaphore
 						}
 
@@ -576,7 +537,7 @@ public abstract class BaseMonitor extends Thread {
 					try {
 						Thread.sleep(taskWaitInterval);
 					} catch (InterruptedException e) {
-						logger.error(String.format(MSG_TASK_WAIT_INTERRUPTED, MSG_ID_TASK_WAIT_INTERRUPTED));
+						logger.log(ApiMonitorMessage.TASK_WAIT_INTERRUPTED);
 						return;
 					}
 					++k;
@@ -584,7 +545,7 @@ public abstract class BaseMonitor extends Thread {
 				if (k == maxWaitCycles) {
 					// Timeout reached --> kill task and report error
 					transferTask.interrupt();
-					logger.error(String.format(MSG_SUBTASK_TIMEOUT, MSG_ID_SUBTASK_TIMEOUT, (maxWaitCycles * taskWaitInterval) / 1000));
+					logger.log(ApiMonitorMessage.SUBTASK_TIMEOUT, (maxWaitCycles * taskWaitInterval) / 1000);
 				}
 			}
 						
@@ -594,7 +555,7 @@ public abstract class BaseMonitor extends Thread {
 				Thread.sleep(checkInterval);
 			} catch (InterruptedException e) {
 				// On interrupt leave monitoring loop
-				logger.info(String.format(MSG_INTERRUPTED, MSG_ID_INTERRUPTED));
+				logger.log(ApiMonitorMessage.INTERRUPTED);
 				break;
 			}
 			
@@ -606,7 +567,7 @@ public abstract class BaseMonitor extends Thread {
 			try {
 				transferHistory = readTransferHistory(); // Sets the reference time stamp as a side effect
 			} catch (IOException e) {
-				logger.error(String.format(MSG_ABORTING_MONITOR, MSG_ID_ABORTING_MONITOR, e.getMessage()));
+				logger.log(ApiMonitorMessage.ABORTING_MONITOR, e.getMessage());
 				return;
 			}
 		}

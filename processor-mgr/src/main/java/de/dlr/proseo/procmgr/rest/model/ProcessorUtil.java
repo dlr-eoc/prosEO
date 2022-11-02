@@ -7,9 +7,7 @@ package de.dlr.proseo.procmgr.rest.model;
 
 import java.util.Map.Entry;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.Task;
@@ -23,7 +21,7 @@ import de.dlr.proseo.model.enums.JobOrderVersion;
 public class ProcessorUtil {
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProcessorUtil.class);
+	private static ProseoLogger logger = new ProseoLogger(ProcessorUtil.class);
 	
 	/**
 	 * Convert a prosEO model processor into a REST processor

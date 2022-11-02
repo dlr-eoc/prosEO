@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo</artifactId>
-		<version>0.9.2</version>
+		<version>0.9.3-SNAPSHOT</version>
 	</parent>
 
 
@@ -20,14 +20,17 @@
 	</organization>
 
 	<properties>
-		<module.version>0.9.2</module.version>
+		<module.version>0.9.3</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/storage-mgr-api.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.storagemgr.rest</raml-base-package>
-		<nimbus.jwt.version>9.10</nimbus.jwt.version>
-		<awssdk1.version>1.11.799</awssdk1.version>
-		<awssdk2.version>2.17.123</awssdk2.version>
-		<alluxio.version>2.2.1</alluxio.version>
+
+        <nimbus.jwt.version>9.10</nimbus.jwt.version>
+        <!-- <awssdk1.version>1.11.799</awssdk1.version> -->
+        <awssdk1.version>1.12.311</awssdk1.version>
+        <!-- <awssdk2.version>2.13.30</awssdk2.version> -->
+        <awssdk2.version>2.17.282</awssdk2.version>
+        <!-- <alluxio.version>2.2.1</alluxio.version> -->
 	</properties>
 
 
@@ -128,7 +131,7 @@
 
 
 		<!-- Alluxio -->
-
+		<!-- 
 		<dependency>
 			<groupId>org.alluxio</groupId>
 			<artifactId>alluxio-core-client-fs</artifactId>
@@ -144,13 +147,13 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-
-
+        -->
 		<dependency>
 			<groupId>com.phoenixnap.oss</groupId>
 			<artifactId>springmvc-raml-plugin</artifactId>
 			<type>maven-plugin</type>
 		</dependency>
+
 	</dependencies>
 
 	<build>

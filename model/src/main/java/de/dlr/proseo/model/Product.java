@@ -31,14 +31,13 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.expression.EvaluationException;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.ParseException;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.enums.ProductQuality;
 import de.dlr.proseo.model.enums.ProductionType;
 
@@ -168,7 +167,7 @@ public class Product extends PersistentObject {
 	private Map<String, Parameter> parameters = new HashMap<>();
 	
 	/** The logger for this class */
-	private static final Logger logger = LoggerFactory.getLogger(Product.class);
+	private static final ProseoLogger logger = new ProseoLogger(Product.class);
 	
 	/**
 	 * Gets the universally unique product identifier
@@ -757,31 +756,38 @@ public class Product extends PersistentObject {
 		if (super.equals(obj))
 			return true;
 		
-		// Same UUIDs or at least one UUID is null
 		if (!(obj instanceof Product))
 			return false;
 		Product other = (Product) obj;
-		if (uuid.equals(other.uuid))
-			return true;
-		if (null != uuid && null != other.uuid) // both UUIDs set, and they are different
-			return false;
+		
+		// Same UUIDs or at least one UUID is null
+		if (null != uuid) {
+			if (uuid.equals(other.getUuid())) {
+				return true;
+			}
+			else if (null != other.getUuid()) {
+				// both UUIDs set, and they are different
+				return false;
+			}
+		}
+		// At least one UUID is null, so compare attributes
 		
 		// Overlapping parameters are the same (mandatory, but not sufficient)
 		for (String key: parameters.keySet()) {
-			if (other.parameters.containsKey(key) && !parameters.get(key).equals(other.parameters.get(key))) {
+			if (other.getParameters().containsKey(key) && !parameters.get(key).equals(other.getParameters().get(key))) {
 				return false;
 			}
 		}
 		
 		// All other attributes mentioned above are the same (mandatory and sufficient)
-		return Objects.equals(configuredProcessor, other.configuredProcessor)
-				&& Objects.equals(fileClass, other.fileClass)
-				&& Objects.equals(mode, other.mode)
-				&& Objects.equals(productClass, other.productClass)
-				&& productQuality == other.productQuality
-				&& productionType == other.productionType
-				&& Objects.equals(sensingStartTime, other.sensingStartTime)
-				&& Objects.equals(sensingStopTime, other.sensingStopTime);
+		return Objects.equals(configuredProcessor, other.getConfiguredProcessor())
+				&& Objects.equals(fileClass, other.getFileClass())
+				&& Objects.equals(mode, other.getMode())
+				&& Objects.equals(productClass, other.getProductClass())
+				&& productQuality == other.getProductQuality()
+				&& productionType == other.getProductionType()
+				&& Objects.equals(sensingStartTime, other.getSensingStartTime())
+				&& Objects.equals(sensingStopTime, other.getSensingStopTime());
 	}
 
 }

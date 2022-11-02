@@ -7,24 +7,27 @@
 
 package de.dlr.proseo.planner.util;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.PlannerMessage;
+import de.dlr.proseo.logging.messages.ProseoMessage;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.ProcessingOrder;
-import de.dlr.proseo.model.SimplePolicy;
 import de.dlr.proseo.model.Job.JobState;
-import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.planner.Message;
-import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 
@@ -37,7 +40,7 @@ public class OrderReleaseThread extends Thread {
 	/**
 	 * Logger of this class
 	 */
-	private static Logger logger = LoggerFactory.getLogger(OrderReleaseThread.class);
+	private static ProseoLogger logger = new ProseoLogger(OrderReleaseThread.class);
     
 	/**
 	 * The job utility instance 
@@ -51,6 +54,10 @@ public class OrderReleaseThread extends Thread {
 	 * The processing order to plan.
 	 */
 	private ProcessingOrder order;
+	
+	/** JPA entity manager */
+	@PersistenceContext
+	private EntityManager em;
 
 	/**
 	 * Create new thread
@@ -60,9 +67,10 @@ public class OrderReleaseThread extends Thread {
 	 * @param order The processing order to plan
 	 * @param name The thread name
 	 */
-	public OrderReleaseThread(ProductionPlanner productionPlanner, JobUtil jobUtil, ProcessingOrder order, String name) {
+	public OrderReleaseThread(ProductionPlanner productionPlanner, EntityManager em, JobUtil jobUtil, ProcessingOrder order, String name) {
 		super(name);
 		this.productionPlanner = productionPlanner;
+		this.em = em;
 		this.jobUtil = jobUtil;
 		this.order = order;
 	}
@@ -75,20 +83,20 @@ public class OrderReleaseThread extends Thread {
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		
-		Message answer = new Message(Messages.FALSE);
+		ProseoMessage answer = GeneralMessage.FALSE;
 		if (order != null && productionPlanner != null && jobUtil != null) {
-			answer = new Message(Messages.TRUE);
+			answer = GeneralMessage.TRUE;
 			final long orderId = order.getId();
 			try {
-				if (answer.isTrue()) {
+				if (answer.getSuccess()) {
 					answer = release(order.getId());
 				}
-				if (!answer.isTrue()) {
+				if (!answer.getSuccess()) {
 					// nothing to do here, order state already set in release
 				}
 			}
 			catch(InterruptedException e) {
-				Messages.ORDER_RELEASING_INTERRUPTED.format(this.getName(), order.getIdentifier());
+				logger.log(PlannerMessage.ORDER_RELEASING_INTERRUPTED, this.getName(), order.getIdentifier());
 			} 
 			catch(IllegalStateException e) {
 				final ProcessingOrder order = transactionTemplate.execute((status) -> {
@@ -101,8 +109,8 @@ public class OrderReleaseThread extends Thread {
 				if (order.getOrderState().equals(OrderState.RUNNING) || order.getOrderState().equals(OrderState.RELEASED)) {
 					// order already set to RELEASED or RUNNING, nothing to do					
 				} else {
-					Messages.ORDER_RELEASING_EXCEPTION.format(this.getName(), order.getIdentifier());
-					logger.error(e.getMessage());
+					logger.log(PlannerMessage.ORDER_RELEASING_EXCEPTION, this.getName(), order.getIdentifier());
+					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage());
 					productionPlanner.acquireThreadSemaphore("runRelease1");	
 					@SuppressWarnings("unused")
 					Object dummy = transactionTemplate.execute((status) -> {
@@ -120,8 +128,8 @@ public class OrderReleaseThread extends Thread {
 				}
 			}
 			catch(Exception e) {
-				Messages.ORDER_RELEASING_EXCEPTION.format(this.getName(), order.getIdentifier());
-				logger.error(e.getMessage());
+				logger.log(PlannerMessage.ORDER_RELEASING_EXCEPTION, this.getName(), order.getIdentifier());
+				logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage());
 				productionPlanner.acquireThreadSemaphore("runRelease2");
 				@SuppressWarnings("unused")
 				Object dummy = transactionTemplate.execute((status) -> {
@@ -150,7 +158,7 @@ public class OrderReleaseThread extends Thread {
      * @return The result message
      * @throws InterruptedException
      */
-    public Message release(long orderId) throws InterruptedException {
+    public ProseoMessage release(long orderId) throws InterruptedException {
 		ProcessingOrder order = null;
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -173,13 +181,13 @@ public class OrderReleaseThread extends Thread {
 				return null;
 			});
 		} catch (Exception e) {
-			Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 		} finally {
 			productionPlanner.releaseThreadSemaphore("release1");					
 		}
 		if (logger.isTraceEnabled()) logger.trace(">>> release({})", (null == order ? "null" : order.getId()));
-		Message answer = new Message(Messages.FALSE);
-		Messages releaseAnswer = Messages.FALSE;
+		ProseoMessage answer = GeneralMessage.FALSE;
+		ProseoMessage releaseAnswer = GeneralMessage.FALSE;
 		if (order != null && 
 				(order.getOrderState() == OrderState.RELEASING || order.getOrderState() == OrderState.PLANNED)) {
 			
@@ -197,10 +205,10 @@ public class OrderReleaseThread extends Thread {
 						if (logger.isTraceEnabled()) logger.trace(">>> releaseJobBlock({})", curJList.get(0));
 						Object answer1 = transactionTemplate.execute((status) -> {
 							curJSList.set(0, 0);
-							Messages locAnswer = Messages.TRUE;
+							ProseoMessage locAnswer = GeneralMessage.TRUE;
 							while (curJList.get(0) < jCount && curJSList.get(0) < packetSize) {
 								if (this.isInterrupted()) {
-									return new Message(Messages.ORDER_RELEASING_INTERRUPTED);
+									return PlannerMessage.ORDER_RELEASING_INTERRUPTED;
 								}
 								if (jobList.get(curJList.get(0)).getJobState() == JobState.PLANNED) {
 									Job locJob = RepositoryService.getJobRepository().getOne(jobList.get(curJList.get(0)).getId());
@@ -211,9 +219,9 @@ public class OrderReleaseThread extends Thread {
 							}
 							return locAnswer;					
 						});
-						if(answer1 instanceof Message) {
-							answer = (Message)answer1;
-							if (answer.getMessage().getCode() == (Messages.ORDER_RELEASING_INTERRUPTED).getCode()) {
+						if(answer1 instanceof ProseoMessage) {
+							answer = (ProseoMessage) answer1;
+							if (answer.getCode() == PlannerMessage.ORDER_RELEASING_INTERRUPTED.getCode()) {
 								break;
 							}
 						}
@@ -226,37 +234,75 @@ public class OrderReleaseThread extends Thread {
 						productionPlanner.acquireThreadSemaphore("releaseOrder2");	
 						@SuppressWarnings("unused")
 						Object answer2 = transactionTemplate.execute((status) -> {
-							List<JobStep> jsToRelease = RepositoryService.getJobStepRepository()
-									.findAllByJobStepStateAndOrderIdByDate(JobStepState.READY, orderId);
-							for (JobStep js : jsToRelease) {
-								try {
-									Job locJob = RepositoryService.getJobRepository().getOne(js.getJob().getId());
-									KubeConfig kc = productionPlanner.getKubeConfig(locJob.getProcessingFacility().getName());
-									if (!kc.couldJobRun()) {
-										break;
+							
+							String nativeQuery = "SELECT j.start_time, js.id, pf.name "
+									+ "FROM processing_order o "
+									+ "JOIN job j ON o.id = j.processing_order_id "
+									+ "JOIN job_step js ON j.id = js.job_id "
+									+ "JOIN processing_facility pf ON j.processing_facility_id = pf.id "
+									+ "WHERE o.id = :orderId "
+									+ "AND js.job_step_state = :jsState "
+									+ "ORDER BY j.start_time, js.id";
+							
+							List<?> jobStepList = em.createNativeQuery(nativeQuery)
+									.setParameter("orderId", orderId)
+									.setParameter("jsState", JobStepState.READY.toString())
+									.getResultList();
+							
+							for (Object jobStepObject: jobStepList) {
+								if (jobStepObject instanceof Object[]) {
+									
+									Object[] jobStep = (Object[]) jobStepObject;
+									
+									if (logger.isTraceEnabled()) logger.trace("... found job step info {}", Arrays.asList(jobStep));
+									
+									// jobStep[0] is only used for ordering the result list
+									Object jsIdObject = jobStep[1];
+									Object pfNameObject = jobStep[2];
+									
+									Long jsId = jsIdObject instanceof BigInteger ? ((BigInteger) jsIdObject).longValue() : null;
+									String pfName = pfNameObject instanceof String ? (String) pfNameObject : null;
+									
+									if (null == jsId || null == pfName) {
+										logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, "Invalid query result: " + Arrays.asList(jobStep));
+										throw new RuntimeException("Invalid query result");
 									}
-									UtilService.getJobStepUtil().checkJobStepToRun(kc, js.getId());
-								} catch (Exception e) {
-									e.printStackTrace();
-								} 
+									
+									try {
+										KubeConfig kc = productionPlanner.getKubeConfig(pfName);
+										if (!kc.couldJobRun()) {
+											break;
+										}
+										UtilService.getJobStepUtil().checkJobStepToRun(kc, jsId);
+									} catch (Exception e) {
+										logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+										throw e;
+									} 
+									
+								} else {
+									logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, "Invalid query result: " + jobStepObject);
+									throw new RuntimeException("Invalid query result");
+								}
 							}
+							
 							return null;					
 						});
-					} catch (Exception e) {	
+					} catch (Exception e) {
 						throw e;
 					} finally {
 						productionPlanner.releaseThreadSemaphore("releaseOrder2");
 					}
 				}
 			} catch (Exception e) {	
+				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 				throw e;
 			}
 			if (this.isInterrupted()) {
-				answer = new Message(Messages.ORDER_RELEASING_INTERRUPTED);
-				logger.warn(Messages.ORDER_RELEASING_INTERRUPTED.format(this.getName(), order.getIdentifier()));
+				answer = PlannerMessage.ORDER_RELEASING_INTERRUPTED;
+				logger.log(answer, this.getName(), order.getIdentifier());
 				throw new InterruptedException();
 			}
-			final Messages finalAnswer = releaseAnswer;
+			final ProseoMessage finalAnswer = releaseAnswer;
 			try {
 				productionPlanner.acquireThreadSemaphore("releaseOrder3");	
 				answer = transactionTemplate.execute((status) -> {
@@ -265,12 +311,12 @@ public class OrderReleaseThread extends Thread {
 					if (orderOpt.isPresent()) {
 						lambdaOrder = orderOpt.get();
 					}
-					Message lambdaAnswer = new Message(Messages.FALSE);
-					if (finalAnswer.isTrue() || finalAnswer.getCode() == Messages.JOB_ALREADY_COMPLETED.getCode()) {
+					ProseoMessage lambdaAnswer = GeneralMessage.FALSE;
+					if (finalAnswer.getSuccess() || finalAnswer.getCode() == PlannerMessage.JOB_ALREADY_COMPLETED.getCode()) {
 						if (lambdaOrder.getJobs().isEmpty()) {
 							lambdaOrder.setOrderState(OrderState.COMPLETED);
 							UtilService.getOrderUtil().checkAutoClose(lambdaOrder);
-							lambdaAnswer = new Message(Messages.ORDER_PRODUCT_EXIST);
+							lambdaAnswer = PlannerMessage.ORDER_PRODUCT_EXIST;
 						} else {
 							// check whether order is already running
 							Boolean running = false;
@@ -284,9 +330,9 @@ public class OrderReleaseThread extends Thread {
 							if (running) {
 								lambdaOrder.setOrderState(OrderState.RUNNING);
 							} 
-							lambdaAnswer = new Message(Messages.ORDER_RELEASED);
+							lambdaAnswer = PlannerMessage.ORDER_RELEASED;
 						}
-						lambdaAnswer.log(logger, lambdaOrder.getIdentifier());
+						logger.log(lambdaAnswer, lambdaOrder.getIdentifier());
 						lambdaOrder.incrementVersion();
 						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 					} else {
@@ -302,14 +348,15 @@ public class OrderReleaseThread extends Thread {
 						if (running) {
 							lambdaOrder.setOrderState(OrderState.RUNNING);
 						}
-						lambdaAnswer = new Message(Messages.ORDER_RELEASED);
-						lambdaAnswer.log(logger, lambdaOrder.getIdentifier(), this.getName());
+						lambdaAnswer = PlannerMessage.ORDER_RELEASED;
+						logger.log(lambdaAnswer, lambdaOrder.getIdentifier(), this.getName());
 						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 					}
 					return lambdaAnswer;
 				});
 
 			} catch (Exception e) {	
+				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 				throw e;
 			} finally {
 				productionPlanner.releaseThreadSemaphore("releaseOrder3");

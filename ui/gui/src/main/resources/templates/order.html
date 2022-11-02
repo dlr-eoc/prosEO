@@ -676,11 +676,14 @@ function retrieveData(id) {
                     if (jsh.length > 0) {
                         aJobStep = jsh[0];
                     }
-                    
+                    var calcPage = false;
+                    if (getURLParam('x') == null && getURLParam('y') == null) {
+                    	calcPage = true;
+                    }
                     var from = getFromTo('x');
                     var to = getFromTo('y');
                     setFromTo(from, to);
-                    retrieveJobs(id, from, to, aJob, aJobStep); 
+                    retrieveJobs(id, from, to, aJob, aJobStep, calcPage); 
                 },
                 error : function(jqXHR, textStatus, errorThrown) {
                     hideLoader();
@@ -695,8 +698,12 @@ function retrieveData(id) {
 
 function retrieveDataPage(from, to) {
     var myid = getURLParam('id');
+    var calcPage = false;
+    if (from == null && to == null) {
+      calcPage = true;
+    }
     setFromTo(from, to);
-    retrieveJobs(myid, from, to, null);
+    retrieveJobs(myid, from, to, null, calcPage);
 }
 
 function setJobState() {
@@ -720,7 +727,7 @@ function setJobState() {
     retrieveDataPage(0, to - from);
 }
 
-function retrieveJobs(id, from, to, aJob, aJobStep) {
+function retrieveJobs(id, from, to, aJob, aJobStep, calcPage) {
     if ([[${hasroleorderreader}]]) {
         showLoader();
         var tableRows = $("jobs").rows;
@@ -748,6 +755,9 @@ function retrieveJobs(id, from, to, aJob, aJobStep) {
             if (aJobStep != null) {
                 url = url + divider + "jobStep=" + aJobStep;
             }
+            if (calcPage != null) {
+                url = url + divider + "calcPage=" + calcPage;
+            }
             if (jobstates != null && jobstates.length > 0) {
                 url = url + divider + "jobstates=" + jobstates;
                 divider = "&";
@@ -761,7 +771,16 @@ function retrieveJobs(id, from, to, aJob, aJobStep) {
                     $("#jobscontent").html(res);
                     document.getElementById('jthead').hidden = false;
                     document.getElementById('jobstates').addEventListener('change', setJobState);
-
+                    var nav = document.getElementById('pagenav');
+                    if (nav != null) {
+	                    var page =  nav.getAttribute('data-page');
+	                    var pageSize = nav.getAttribute('data-page-size');
+	                    var from = (page - 1) * pageSize;
+	                    var to = page * pageSize;
+	                    if (getURLParam('x') != from || getURLParam('y') != to) {
+	                    	setFromTo(from, to);
+	                    }
+                    }
                     jobstates = getURLParam('jobstates');
                     if (jobstates != null) {
                     	var menu = document.getElementById('jobstates');

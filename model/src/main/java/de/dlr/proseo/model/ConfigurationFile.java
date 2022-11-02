@@ -87,7 +87,7 @@ public class ConfigurationFile {
 		if (!(obj instanceof ConfigurationFile))
 			return false;
 		ConfigurationFile other = (ConfigurationFile) obj;
-		return Objects.equals(fileName, other.fileName) && Objects.equals(fileVersion, other.fileVersion);
+		return Objects.equals(fileName, other.getFileName()) && Objects.equals(fileVersion, other.getFileVersion());
 	}
 
 	@Override

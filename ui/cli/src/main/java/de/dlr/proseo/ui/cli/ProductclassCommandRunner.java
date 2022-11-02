@@ -5,8 +5,6 @@
  */
 package de.dlr.proseo.ui.cli;
 
-import static de.dlr.proseo.ui.backend.UIMessages.*;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -21,8 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
@@ -30,6 +26,8 @@ import org.springframework.web.client.RestClientResponseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.interfaces.rest.model.SelectionRuleString;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.ProductVisibility;
 import de.dlr.proseo.model.rest.model.RestProductClass;
@@ -86,7 +84,7 @@ public class ProductclassCommandRunner {
 	private ServiceConnection serviceConnection;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProcessorCommandRunner.class);
+	private static ProseoLogger logger = new ProseoLogger(ProcessorCommandRunner.class);
 
 	/**
 	 * Read several lines of text (until EOF/^D) from the console
@@ -103,7 +101,7 @@ public class ProductclassCommandRunner {
 				response.append(inputBuffer, 0, numChars);
 			}
 		} catch (IOException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			// return string so far
 		}
 		return response.toString();
@@ -129,26 +127,25 @@ public class ProductclassCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_PRODUCTCLASS_NOT_FOUND, productType);
+				message = ProseoLogger.format(UIMessage.PRODUCTCLASS_NOT_FOUND, productType);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return null;
 		} catch (Exception e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return null;
 		}
 		if (resultList.isEmpty()) {
-			String message = uiMsg(MSG_ID_PRODUCTCLASS_NOT_FOUND, productType);
-			logger.error(message);
+			String message = logger.log(UIMessage.PRODUCTCLASS_NOT_FOUND, productType);
 			System.err.println(message);
 			return null;
 		}
@@ -213,7 +210,7 @@ public class ProductclassCommandRunner {
 			try {
 				restProductClass = CLIUtil.parseObjectFile(productClassFile, productClassFileFormat, RestProductClass.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -229,7 +226,7 @@ public class ProductclassCommandRunner {
 				try {
 					CLIUtil.setAttribute(restProductClass, param.getValue());
 				} catch (Exception e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -246,7 +243,7 @@ public class ProductclassCommandRunner {
 			System.out.print(PROMPT_PRODUCT_TYPE);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restProductClass.setProductType(response);
@@ -261,10 +258,10 @@ public class ProductclassCommandRunner {
 			case "R":	restProductClass.setVisibility(ProductVisibility.RESTRICTED.toString()); break;
 			case "P":	restProductClass.setVisibility(ProductVisibility.PUBLIC.toString()); break;
 			case "":
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			default:
-				System.err.println(uiMsg(MSG_ID_INVALID_VISIBILITY, response));
+				System.err.println(ProseoLogger.format(UIMessage.INVALID_VISIBILITY, response));
 			}
 		}
 		
@@ -276,28 +273,27 @@ public class ProductclassCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_PRODUCTCLASS_DATA_INVALID, e.getStatusText());
+				message = ProseoLogger.format(UIMessage.PRODUCTCLASS_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 
 		/* Report success, giving newly assigned product class ID */
-		String message = uiMsg(MSG_ID_PRODUCTCLASS_CREATED,
+		String message = logger.log(UIMessage.PRODUCTCLASS_CREATED,
 				restProductClass.getProductType(), restProductClass.getId());
-		logger.info(message);
 		System.out.println(message);
 	}
 	
@@ -340,21 +336,21 @@ public class ProductclassCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_PRODUCTCLASSES_FOUND);
+				message = ProseoLogger.format(UIMessage.NO_PRODUCTCLASSES_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
@@ -366,7 +362,7 @@ public class ProductclassCommandRunner {
 				System.err.println(e.getMessage());
 				return;
 			} catch (IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			} 
 		} else {
@@ -414,7 +410,7 @@ public class ProductclassCommandRunner {
 			try {
 				updatedProductClass = CLIUtil.parseObjectFile(productClassFile, productClassFileFormat, RestProductClass.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -430,7 +426,7 @@ public class ProductclassCommandRunner {
 				try {
 					CLIUtil.setAttribute(updatedProductClass, param.getValue());
 				} catch (Exception e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -439,7 +435,7 @@ public class ProductclassCommandRunner {
 		/* Read original product class from Product Manager service */
 		if (null == updatedProductClass.getProductType() || 0 == updatedProductClass.getProductType().length()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_NAME_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_PRODCLASS_NAME_GIVEN));
 			return;
 		}
 		RestProductClass restProductClass = retrieveProductClassByType(updatedProductClass.getProductType());
@@ -492,33 +488,32 @@ public class ProductclassCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_PRODUCTCLASS_NOT_FOUND_BY_ID, restProductClass.getId());
+				message = ProseoLogger.format(UIMessage.PRODUCTCLASS_NOT_FOUND_BY_ID, restProductClass.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_PROCESSORCLASS_DATA_INVALID, e.getStatusText());
+				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
 		/* Report success, giving new product class version */
-		String message = uiMsg(MSG_ID_PRODUCTCLASS_UPDATED, restProductClass.getId(), restProductClass.getVersion());
-		logger.info(message);
+		String message = logger.log(UIMessage.PRODUCTCLASS_UPDATED, restProductClass.getId(), restProductClass.getVersion());
 		System.out.println(message);
 	}
 	
@@ -533,7 +528,7 @@ public class ProductclassCommandRunner {
 		/* Get product class name from command parameters */
 		if (deleteCommand.getParameters().isEmpty()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_NAME_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_PRODCLASS_NAME_GIVEN));
 			return;
 		}
 		String productType = deleteCommand.getParameters().get(0).getValue();
@@ -554,30 +549,29 @@ public class ProductclassCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_PRODUCTCLASS_NOT_FOUND_BY_ID, restProductClass.getId());
+				message = ProseoLogger.format(UIMessage.PRODUCTCLASS_NOT_FOUND_BY_ID, restProductClass.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				message = uiMsg(MSG_ID_PRODUCTCLASS_DELETE_FAILED, productType, e.getMessage());
+				message = ProseoLogger.format(UIMessage.PRODUCTCLASS_DELETE_FAILED, productType, e.getMessage());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (Exception e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
 		/* Report success */
-		String message = uiMsg(MSG_ID_PRODUCTCLASS_DELETED, restProductClass.getId());
-		logger.info(message);
+		String message = logger.log(UIMessage.PRODUCTCLASS_DELETED, restProductClass.getId());
 		System.out.println(message);
 	}
 
@@ -617,21 +611,19 @@ public class ProductclassCommandRunner {
 				SelectionRuleString restSelectionRule = readPlainSelectionRule(selectionRuleFile);
 				selectionRuleList.add(restSelectionRule);
 			} catch (FileNotFoundException e) {
-				String message = uiMsg(MSG_ID_FILE_NOT_FOUND, selectionRuleFile);
-				logger.error(message);
-				System.err.println(message);
+				String message = logger.log(UIMessage.FILE_NOT_FOUND, selectionRuleFile);
+					System.err.println(message);
 				return;
 			} catch (IOException e) {
-				String message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
-				logger.error(message);
-				System.err.println(message);
+				String message = logger.log(UIMessage.EXCEPTION, e.getMessage());
+					System.err.println(message);
 				return;
 			}
 		} else {
 			try {
 				selectionRuleList.addAll(CLIUtil.parseObjectFile(selectionRuleFile, selectionRuleFileFormat, List.class));
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -653,7 +645,7 @@ public class ProductclassCommandRunner {
 		/* Read original product class from Product Manager service */
 		if (null == targetClass || 0 == targetClass.length()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_NAME_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_PRODCLASS_NAME_GIVEN));
 			return;
 		}
 		RestProductClass restProductClass = retrieveProductClassByType(targetClass);
@@ -673,7 +665,7 @@ public class ProductclassCommandRunner {
 				try {
 					CLIUtil.setAttribute(restSelectionRule, attributeParam);
 				} catch (Exception e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -687,7 +679,7 @@ public class ProductclassCommandRunner {
 				System.out.println(PROMPT_SELECTION_RULE);
 				String response = readTextFromConsole();
 				if (response.isBlank()) {
-					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+					System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 					return;
 				}
 				restSelectionRule.setSelectionRule(response);
@@ -703,27 +695,26 @@ public class ProductclassCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_SELECTION_RULE_DATA_INVALID, e.getStatusText());
+				message = ProseoLogger.format(UIMessage.SELECTION_RULE_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 
 		/* Report success */
-		String message = uiMsg(MSG_ID_SELECTION_RULES_CREATED, selectionRuleList.size(), targetClass);
-		logger.info(message);
+		String message = logger.log(UIMessage.SELECTION_RULES_CREATED, selectionRuleList.size(), targetClass);
 		System.out.println(message);
 	}
 
@@ -751,7 +742,7 @@ public class ProductclassCommandRunner {
 		/* Get product class name from command parameters */
 		if (showCommand.getParameters().isEmpty()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_NAME_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_PRODCLASS_NAME_GIVEN));
 			return;
 		}
 		String targetClass = showCommand.getParameters().get(0).getValue();
@@ -780,22 +771,22 @@ public class ProductclassCommandRunner {
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = null == sourceClass ?
-						uiMsg(MSG_ID_NO_SELECTION_RULES_FOUND, targetClass) :
-						uiMsg(MSG_ID_NO_SELECTION_RULES_FOUND_FOR_SOURCE, targetClass, sourceClass);
+						ProseoLogger.format(UIMessage.NO_SELECTION_RULES_FOUND, targetClass) :
+						ProseoLogger.format(UIMessage.NO_SELECTION_RULES_FOUND_FOR_SOURCE, targetClass, sourceClass);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
@@ -815,7 +806,7 @@ public class ProductclassCommandRunner {
 				System.err.println(e.getMessage());
 				return;
 			} catch (IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -856,21 +847,19 @@ public class ProductclassCommandRunner {
 			try {
 				updatedSelectionRule = readPlainSelectionRule(selectionRuleFile);
 			} catch (FileNotFoundException e) {
-				String message = uiMsg(MSG_ID_FILE_NOT_FOUND, selectionRuleFile);
-				logger.error(message);
-				System.err.println(message);
+				String message = logger.log(UIMessage.FILE_NOT_FOUND, selectionRuleFile);
+					System.err.println(message);
 				return;
 			} catch (IOException e) {
-				String message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
-				logger.error(message);
-				System.err.println(message);
+				String message = logger.log(UIMessage.EXCEPTION, e.getMessage());
+					System.err.println(message);
 				return;
 			}
 		} else {
 			try {
 				updatedSelectionRule = CLIUtil.parseObjectFile(selectionRuleFile, selectionRuleFileFormat, SelectionRuleString.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -887,7 +876,7 @@ public class ProductclassCommandRunner {
 				try {
 					CLIUtil.setAttribute(updatedSelectionRule, param.getValue());
 				} catch (Exception e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -896,7 +885,7 @@ public class ProductclassCommandRunner {
 		/* Retrieve the product class using Product Class Manager service */
 		if (null == targetClass || 0 == targetClass.length()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_NAME_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_PRODCLASS_NAME_GIVEN));
 			return;
 		}
 		RestProductClass restProductClass = retrieveProductClassByType(targetClass);
@@ -915,26 +904,25 @@ public class ProductclassCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_SELECTION_RULES_FOUND, targetClass);
+				message = ProseoLogger.format(UIMessage.NO_SELECTION_RULES_FOUND, targetClass);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		if (resultList.isEmpty()) {
-			String message = uiMsg(MSG_ID_NO_SELECTION_RULES_FOUND, targetClass);
-			logger.error(message);
+			String message = logger.log(UIMessage.NO_SELECTION_RULES_FOUND, targetClass);
 			System.err.println(message);
 			return;
 		}
@@ -955,18 +943,18 @@ public class ProductclassCommandRunner {
 				System.out.print("Select rule (empty field cancels): ");
 				String response = System.console().readLine();
 				if (response.isBlank()) {
-					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+					System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 					return;
 				}
 				try {
 					Integer selectedIndex = Integer.parseInt(response);
 					if (1 > selectedIndex || resultList.size() < selectedIndex) {
-						System.err.println(uiMsg(MSG_ID_INPUT_OUT_OF_BOUNDS, selectedIndex, 1, resultList.size()));
+						System.err.println(ProseoLogger.format(UIMessage.INPUT_OUT_OF_BOUNDS, selectedIndex, 1, resultList.size()));
 					} else {
 						restSelectionRule = mapper.convertValue(resultList.get(selectedIndex - 1), SelectionRuleString.class);
 					}
 				} catch (NumberFormatException e) {
-					System.err.println(uiMsg(MSG_ID_INPUT_NOT_NUMERIC, response));
+					System.err.println(ProseoLogger.format(UIMessage.INPUT_NOT_NUMERIC, response));
 					continue;
 				}
 			}
@@ -989,7 +977,7 @@ public class ProductclassCommandRunner {
 			System.out.println(PROMPT_SELECTION_RULE);
 			String response = readTextFromConsole();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restSelectionRule.setSelectionRule(response);
@@ -1005,33 +993,32 @@ public class ProductclassCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_SELECTION_RULE_NOT_FOUND_BY_ID, restSelectionRule.getId());
+				message = ProseoLogger.format(UIMessage.SELECTION_RULE_NOT_FOUND_BY_ID, restSelectionRule.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_SELECTION_RULE_DATA_INVALID,  e.getStatusText());
+				message = ProseoLogger.format(UIMessage.SELECTION_RULE_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
 		/* Report success, giving new selection rule version */
-		String message = uiMsg(MSG_ID_SELECTION_RULE_UPDATED, restSelectionRule.getId(), restSelectionRule.getVersion());
-		logger.info(message);
+		String message = logger.log(UIMessage.SELECTION_RULE_UPDATED, restSelectionRule.getId(), restSelectionRule.getVersion());
 		System.out.println(message);
 	}
 	
@@ -1046,12 +1033,12 @@ public class ProductclassCommandRunner {
 		/* Get processor name from command parameters */
 		if (1 > deleteCommand.getParameters().size()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_NAME_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_PRODCLASS_NAME_GIVEN));
 			return;
 		}
 		if (2 > deleteCommand.getParameters().size()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_RULEID_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_RULEID_GIVEN));
 			return;
 		}
 		String targetClass = deleteCommand.getParameters().get(0).getValue();
@@ -1059,7 +1046,7 @@ public class ProductclassCommandRunner {
 		try {
 			ruleId = Long.parseLong(deleteCommand.getParameters().get(1).getValue());
 		} catch (NumberFormatException e1) {
-			System.err.println(uiMsg(MSG_ID_RULEID_NOT_NUMERIC, deleteCommand.getParameters().get(1).getValue()));
+			System.err.println(ProseoLogger.format(UIMessage.RULEID_NOT_NUMERIC, deleteCommand.getParameters().get(1).getValue()));
 			return;
 		}
 		
@@ -1080,30 +1067,29 @@ public class ProductclassCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_SELECTION_RULE_NOT_FOUND_BY_ID, ruleId);
+				message = ProseoLogger.format(UIMessage.SELECTION_RULE_NOT_FOUND_BY_ID, ruleId);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				message = uiMsg(MSG_ID_SELECTION_RULE_DELETE_FAILED, ruleId, targetClass, e.getMessage());
+				message = ProseoLogger.format(UIMessage.SELECTION_RULE_DELETE_FAILED, ruleId, targetClass, e.getMessage());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (Exception e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
 		/* Report success */
-		String message = uiMsg(MSG_ID_SELECTION_RULE_DELETED, ruleId);
-		logger.info(message);
+		String message = logger.log(UIMessage.SELECTION_RULE_DELETED, ruleId);
 		System.out.println(message);
 	}
 	
@@ -1117,17 +1103,17 @@ public class ProductclassCommandRunner {
 		
 		/* Check that user is logged in */
 		if (null == loginManager.getUser()) {
-			System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN, command.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.USER_NOT_LOGGED_IN, command.getName()));
 			return;
 		}
 		if (null == loginManager.getMission()) {
-			System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN_TO_MISSION, command.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.USER_NOT_LOGGED_IN_TO_MISSION, command.getName()));
 			return;
 		}
 		
 		/* Check argument */
 		if (!CMD_PRODUCTCLASS.equals(command.getName())) {
-			System.err.println(uiMsg(MSG_ID_INVALID_COMMAND_NAME, command.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.INVALID_COMMAND_NAME, command.getName()));
 			return;
 		}
 		
@@ -1135,7 +1121,7 @@ public class ProductclassCommandRunner {
 		ParsedCommand subcommand = command.getSubcommand();
 
 		if (null == subcommand) {
-			System.err.println(uiMsg(MSG_ID_SUBCOMMAND_MISSING, command.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.SUBCOMMAND_MISSING, command.getName()));
 			return;
 		}
 
@@ -1148,7 +1134,7 @@ public class ProductclassCommandRunner {
 		/* Make sure a sub-subcommand is given for "rule" */
 		ParsedCommand subsubcommand = subcommand.getSubcommand();
 		if (CMD_RULE.equals(subcommand.getName()) && null == subcommand.getSubcommand()) {
-			System.err.println(uiMsg(MSG_ID_SUBCOMMAND_MISSING, subcommand.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.SUBCOMMAND_MISSING, subcommand.getName()));
 			return;
 		}
 
@@ -1173,13 +1159,13 @@ public class ProductclassCommandRunner {
 			case CMD_UPDATE:	updateSelectionRule(subsubcommand); break;
 			case CMD_DELETE:	deleteSelectionRule(subsubcommand); break;
 			default:
-				System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, 
+				System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, 
 						command.getName() + " " + subcommand.getName() + " " + subsubcommand.getName()));
 				return;
 			}
 			break;
 		default:
-			System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 			return;
 		}
 	}

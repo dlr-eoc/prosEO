@@ -305,7 +305,7 @@ public class ProcessingFacility extends PersistentObject {
 		if (!(obj instanceof ProcessingFacility))
 			return false;
 		ProcessingFacility other = (ProcessingFacility) obj;
-		return Objects.equals(name, other.name);
+		return Objects.equals(name, other.getName());
 	}
 
 	@Override

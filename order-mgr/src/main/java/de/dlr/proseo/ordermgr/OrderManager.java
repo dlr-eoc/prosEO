@@ -6,8 +6,6 @@
 
 package de.dlr.proseo.ordermgr;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -16,6 +14,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.ordermgr.cleanup.CleanupOrdersThread;
 import de.dlr.proseo.ordermgr.rest.ProcessingOrderMgr;
 
@@ -31,7 +30,7 @@ import de.dlr.proseo.ordermgr.rest.ProcessingOrderMgr;
 @EnableJpaRepositories(basePackages = { "de.dlr.proseo.model.dao" })
 public class OrderManager implements CommandLineRunner{
 	
-	private static Logger logger = LoggerFactory.getLogger(OrderManager.class);
+	private static ProseoLogger logger = new ProseoLogger(OrderManager.class);
 	
 	/** The Order Manager configuration */
 	@Autowired

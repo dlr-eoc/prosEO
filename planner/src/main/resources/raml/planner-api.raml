@@ -312,6 +312,15 @@ resourceTypes:
             application/json:
               type: RestJobStep
               example: !include ../../../../../model/src/main/resources/raml/examples/jobstep.json
+  /log:
+    /{name}:
+      get:
+        description: Get the jobstep log text
+        displayName: getJobStepLog
+        responses:
+          200:
+            body:
+              text/plain:
   /resume:
     /{id}:
       patch:

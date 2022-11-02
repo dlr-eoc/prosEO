@@ -1,16 +1,5 @@
 package de.dlr.proseo.ui.gui;
 
-import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_EXCEPTION;
-import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NOT_AUTHORIZED;
-import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_MISSIONS_FOUND;
-import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_PRODUCTCLASSES_FOUND;
-import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_PROCESSORCLASSES_FOUND;
-import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_CONFIGUREDPROCESSORS_FOUND;
-import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_FILECLASSES_FOUND;
-import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_PROCESSINGMODES_FOUND;
-import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_SPACECRAFTS_FOUND;
-import static de.dlr.proseo.ui.backend.UIMessages.uiMsg;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -22,8 +11,6 @@ import java.util.Properties;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -36,6 +23,8 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.enums.ProcessingLevel;
@@ -55,7 +44,7 @@ import de.dlr.proseo.ui.backend.ServiceConnection;
 public class GUIBaseController {
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(GUIBaseController.class);
+	private static ProseoLogger logger = new ProseoLogger(GUIBaseController.class);
 
 	/** The connector service to the prosEO backend services */
 	@Autowired
@@ -143,19 +132,19 @@ public class GUIBaseController {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_MISSIONS_FOUND);
+				message = ProseoLogger.format(UIMessage.NO_MISSIONS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return auth.getDataCache().getFacilities();
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return auth.getDataCache().getFacilities();
 		}
 		
@@ -197,19 +186,19 @@ public class GUIBaseController {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_PRODUCTCLASSES_FOUND);
+				message = ProseoLogger.format(UIMessage.NO_PRODUCTCLASSES_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return auth.getDataCache().getProductclasses();
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return auth.getDataCache().getProductclasses();
 		}
 		
@@ -248,19 +237,19 @@ public class GUIBaseController {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_PROCESSORCLASSES_FOUND);
+				message = ProseoLogger.format(UIMessage.NO_PROCESSORCLASSES_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return auth.getDataCache().getProcessorclasses();
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return auth.getDataCache().getProcessorclasses();
 		}
 		
@@ -301,19 +290,19 @@ public class GUIBaseController {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_CONFIGUREDPROCESSORS_FOUND);
+				message = ProseoLogger.format(UIMessage.NO_CONFIGUREDPROCESSORS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return auth.getDataCache().getConfiguredProcessors();
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return auth.getDataCache().getConfiguredProcessors();
 		}
 		
@@ -351,19 +340,19 @@ public class GUIBaseController {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_FILECLASSES_FOUND);
+				message = ProseoLogger.format(UIMessage.NO_FILECLASSES_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return auth.getDataCache().getFileClasses();
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return auth.getDataCache().getFileClasses();
 		}
 		
@@ -404,19 +393,19 @@ public class GUIBaseController {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_PROCESSINGMODES_FOUND);
+				message = ProseoLogger.format(UIMessage.NO_PROCESSINGMODES_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return auth.getDataCache().getProcessingModes();
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return auth.getDataCache().getProcessingModes();
 		}
 		
@@ -457,19 +446,19 @@ public class GUIBaseController {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_SPACECRAFTS_FOUND);
+				message = ProseoLogger.format(UIMessage.NO_SPACECRAFTS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return auth.getDataCache().getSpaceCrafts();
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return auth.getDataCache().getSpaceCrafts();
 		}
 		

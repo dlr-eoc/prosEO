@@ -19,6 +19,7 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -336,17 +337,23 @@ public class Processor extends PersistentObject {
 	@Override
 	public boolean equals(Object obj) {
 		// Object identity
-		if (this == obj)
+		if (this == obj) {
+			System.out.println("--- OK: identical Processor objects ---");
 			return true;
+		}
 		
 		// Same database object
-		if (super.equals(obj))
+		if (super.equals(obj)) {
+			System.out.println("--- OK: same Processor database objects ---");
 			return true;
+		}
 		
-		if (!(obj instanceof Processor))
+		if (!(obj instanceof Processor)) {
+			System.out.println("--- FAIL: other is not a Processor ---");
 			return false;
+		}
 		Processor other = (Processor) obj;
-		return Objects.equals(processorClass, other.processorClass) && Objects.equals(processorVersion, other.processorVersion);
+		return Objects.equals(processorVersion, other.getProcessorVersion()) && Objects.equals(processorClass, other.getProcessorClass());
 	}
 
 	@Override

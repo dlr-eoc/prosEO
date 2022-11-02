@@ -18,8 +18,6 @@ import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.filter.Filter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -27,13 +25,15 @@ import de.dlr.proseo.geotools.GeotoolsConfiguration;
 import de.dlr.proseo.geotools.GeotoolsConfiguration.Shapefile;
 import de.dlr.proseo.geotools.rest.model.RestPoint;
 import de.dlr.proseo.geotools.rest.model.RestPolygon;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeotoolsMessage;
 
 // TODO Add file and class comment, format messages according to prosEO standard
 
 @Component
 public class GeotoolsUtil {
 	
-	private static Logger logger = LoggerFactory.getLogger(GeotoolsUtil.class);
+	private static ProseoLogger logger = new ProseoLogger(GeotoolsUtil.class);
 	
 	/** Geotools configuration */
 	@Autowired
@@ -84,7 +84,7 @@ public class GeotoolsUtil {
 						}
 
 					addShapeFile(shpFile, sf.getShapeType());
-					logger.info("Shape file '{}' for type '{}' initialized", sf.getPath(), sf.getShapeType());
+					logger.log(GeotoolsMessage.SHAPE_FILE_INITIALIZED, sf.getPath(), sf.getShapeType());
 				}
 			}
 			initialized = true;
@@ -119,17 +119,18 @@ public class GeotoolsUtil {
 		}
 		for (String type : types) {
 			if (shapeMap.get(type) == null || shapeMap.get(type).isEmpty()) {
-				logger.error("No shape files found for type '{}'. Known types: {}", type, shapeMap.keySet().toString());
+				logger.log(GeotoolsMessage.NO_SHAPE_FILES_FOUND, type, shapeMap.keySet().toString());
 			} else {
 				for (ShpFile sf : shapeMap.get(type)) {
 					if (isPointInside(latitude, longitude, sf)) {
-						logger.info("Point {}/{} is inside areas {}", latitude, longitude, Arrays.asList(types));
+						logger.log(GeotoolsMessage.POINT_INSIDE_AREAS, latitude, longitude, Arrays.asList(types));
 						return true;
 					}
 				}
 			} 
 		}
-		logger.info("Point {}/{} is NOT inside areas {}", latitude, longitude, Arrays.asList(types));
+		
+		logger.log(GeotoolsMessage.POINT_NOT_INSIDE_AREAS, latitude, longitude, Arrays.asList(types));
 		return false;
 	}
 
@@ -186,18 +187,18 @@ public class GeotoolsUtil {
 			for (String type : types) {
 				if (logger.isTraceEnabled()) logger.trace("... checking type: {}", type);
 				if (shapeMap.get(type) == null || shapeMap.get(type).isEmpty()) {
-					logger.error("No shape files found for type '{}'. Known types: {}", type, shapeMap.keySet().toString());
+					logger.log(GeotoolsMessage.NO_SHAPE_FILES_FOUND, type, shapeMap.keySet().toString());
 				} else {
 					for (ShpFile sf : shapeMap.get(type)) {
 						if (isPolyInside(coords, sf)) {
-							logger.info("Polygon {} is inside areas {}", poly, Arrays.asList(types));
+							logger.log(GeotoolsMessage.POLYGON_INSIDE_AREAS, poly, Arrays.asList(types));
 							return true;
 						}
 					}
 				}
 			}
 		}
-		logger.info("Polygon {} is NOT inside areas {}", poly, Arrays.asList(types));
+		logger.log(GeotoolsMessage.POLYGON_NOT_INSIDE_AREAS, poly, Arrays.asList(types));
 		return false;
 	}
 
@@ -301,18 +302,18 @@ public class GeotoolsUtil {
 			}
 			for (String type : types) {
 				if (shapeMap.get(type) == null || shapeMap.get(type).isEmpty()) {
-					logger.error("No shape files found for type '{}'. Known types: {}", type, shapeMap.keySet().toString());
+					logger.log(GeotoolsMessage.NO_SHAPE_FILES_FOUND, type, shapeMap.keySet().toString());
 				} else {
 					for (ShpFile sf : shapeMap.get(type)) {
 						if (isPolyOverlap(coords, sf)) {
-							logger.info("Polygon {} overlaps areas {}", poly, Arrays.asList(types));
+							logger.log(GeotoolsMessage.POLYGON_OVERLAPS, poly, Arrays.asList(types));
 							return true;
 						}
 					}
 				}
 			}
 		}
-		logger.info("Polygon {} does NOT overlap areas {}", poly, Arrays.asList(types));
+		logger.log(GeotoolsMessage.POLYGON_NO_OVERLAP, poly, Arrays.asList(types));
 		return false;
 	}
 

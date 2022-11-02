@@ -1,10 +1,9 @@
 package de.dlr.proseo.ingestor.cleanup;
 
 import java.time.Instant;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.ingestor.IngestorApplication;
+import de.dlr.proseo.logging.logger.ProseoLogger;
 
 /**
  * Thread to look for deletable product files 
@@ -17,7 +16,7 @@ public class CleanupProductThread extends Thread {
 	/**
 	 * Logger for this class
 	 */
-	private static Logger logger = LoggerFactory.getLogger(CleanupProductThread.class);
+	private static ProseoLogger logger = new ProseoLogger(CleanupProductThread.class);
 	
 	/**
 	 * The ingestor instance

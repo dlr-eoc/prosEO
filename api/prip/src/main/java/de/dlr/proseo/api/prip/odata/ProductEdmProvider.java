@@ -77,18 +77,23 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 	
 	public static final String ET_STRINGATTRIBUTE_NAME = "StringAttribute";
 	public static final FullQualifiedName ET_STRINGATTRIBUTE_FQN = new FullQualifiedName(NAMESPACE, ET_STRINGATTRIBUTE_NAME);
+	public static final String ET_STRINGATTRIBUTE_VALUETYPE = "String";
 	
 	public static final String ET_DATEATTRIBUTE_NAME = "DateTimeOffsetAttribute";
 	public static final FullQualifiedName ET_DATEATTRIBUTE_FQN = new FullQualifiedName(NAMESPACE, ET_DATEATTRIBUTE_NAME);
+	public static final String ET_DATEATTRIBUTE_VALUETYPE = "DateTimeOffset";
 	
 	public static final String ET_INTEGERATTRIBUTE_NAME = "IntegerAttribute";
 	public static final FullQualifiedName ET_INTEGERATTRIBUTE_FQN = new FullQualifiedName(NAMESPACE, ET_INTEGERATTRIBUTE_NAME);
+	public static final String ET_INTEGERATTRIBUTE_VALUETYPE = "Integer";
 
 	public static final String ET_DOUBLEATTRIBUTE_NAME = "DoubleAttribute";
 	public static final FullQualifiedName ET_DOUBLEATTRIBUTE_FQN = new FullQualifiedName(NAMESPACE, ET_DOUBLEATTRIBUTE_NAME);
+	public static final String ET_DOUBLEATTRIBUTE_VALUETYPE = "Double";
 
 	public static final String ET_BOOLEANATTRIBUTE_NAME = "BooleanAttribute";
 	public static final FullQualifiedName ET_BOOLEANATTRIBUTE_FQN = new FullQualifiedName(NAMESPACE, ET_BOOLEANATTRIBUTE_NAME);
+	public static final String ET_BOOLEANATTRIBUTE_VALUETYPE = "Boolean";
 
 	// Entity Sets
 	public static final String ES_PRODUCTS_NAME = "Products";

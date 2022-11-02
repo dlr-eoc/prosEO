@@ -65,6 +65,6 @@ public class InputFilter extends PersistentObject {
 		if (!(obj instanceof InputFilter))
 			return false;
 		InputFilter other = (InputFilter) obj;
-		return Objects.equals(filterConditions, other.filterConditions);
+		return Objects.equals(filterConditions, other.getFilterConditions());
 	}
 }

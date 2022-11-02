@@ -340,7 +340,7 @@ public class Mission extends PersistentObject {
 		if (!(obj instanceof Mission))
 			return false;
 		Mission other = (Mission) obj;
-		return Objects.equals(code, other.code);
+		return Objects.equals(code, other.getCode());
 	}
 
 	@Override

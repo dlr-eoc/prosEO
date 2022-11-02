@@ -425,8 +425,9 @@ public class Job extends PersistentObject {
 		if (!(obj instanceof Job))
 			return false;
 		Job other = (Job) obj;
-		return Objects.equals(processingOrder, other.processingOrder) && Objects.equals(startTime, other.startTime)
-				&& Objects.equals(stopTime, other.stopTime);
+		return Objects.equals(startTime, other.getStartTime())
+				&& Objects.equals(stopTime, other.getStopTime())
+				&& Objects.equals(processingOrder, other.getProcessingOrder());
 	}
 
 	@Override

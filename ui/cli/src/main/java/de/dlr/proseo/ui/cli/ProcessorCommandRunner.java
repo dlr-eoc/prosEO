@@ -5,8 +5,6 @@
  */
 package de.dlr.proseo.ui.cli;
 
-import static de.dlr.proseo.ui.backend.UIMessages.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -14,14 +12,14 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.rest.model.RestConfiguration;
 import de.dlr.proseo.model.rest.model.RestConfiguredProcessor;
 import de.dlr.proseo.model.rest.model.RestProcessor;
@@ -90,7 +88,7 @@ public class ProcessorCommandRunner {
 	private ServiceConnection serviceConnection;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProcessorCommandRunner.class);
+	private static ProseoLogger logger = new ProseoLogger(ProcessorCommandRunner.class);
 
 	/**
 	 * Create a new processor class; if the input is not from a file, the user will be prompted for mandatory attributes
@@ -123,7 +121,7 @@ public class ProcessorCommandRunner {
 			try {
 				restProcessorClass = CLIUtil.parseObjectFile(processorClassFile, processorClassFileFormat, RestProcessorClass.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -139,7 +137,7 @@ public class ProcessorCommandRunner {
 				try {
 					CLIUtil.setAttribute(restProcessorClass, param.getValue());
 				} catch (Exception e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -156,7 +154,7 @@ public class ProcessorCommandRunner {
 			System.out.print(PROMPT_PROCESSOR_NAME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restProcessorClass.setProcessorName(response);
@@ -170,28 +168,27 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_PROCESSORCLASS_DATA_INVALID, e.getStatusText());
+				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 
 		/* Report success, giving newly assigned processor class ID */
-		String message = uiMsg(MSG_ID_PROCESSORCLASS_CREATED,
+		String message = logger.log(UIMessage.PROCESSORCLASS_CREATED,
 				restProcessorClass.getProcessorName(), restProcessorClass.getId());
-		logger.info(message);
 		System.out.println(message);
 	}
 	
@@ -234,21 +231,21 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_PROCESSORCLASSES_FOUND);
+				message = ProseoLogger.format(UIMessage.NO_PROCESSORCLASSES_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
@@ -260,7 +257,7 @@ public class ProcessorCommandRunner {
 				System.err.println(e.getMessage());
 				return;
 			} catch (IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			} 
 		} else {
@@ -304,7 +301,7 @@ public class ProcessorCommandRunner {
 			try {
 				updatedProcessorClass = CLIUtil.parseObjectFile(processorClassFile, processorClassFileFormat, RestProcessorClass.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -320,7 +317,7 @@ public class ProcessorCommandRunner {
 				try {
 					CLIUtil.setAttribute(updatedProcessorClass, param.getValue());
 				} catch (Exception e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -329,7 +326,7 @@ public class ProcessorCommandRunner {
 		/* Read original processor class from Processor Manager service */
 		if (null == updatedProcessorClass.getProcessorName() || 0 == updatedProcessorClass.getProcessorName().length()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PROCCLASS_IDENTIFIER_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_PROCCLASS_IDENTIFIER_GIVEN));
 			return;
 		}
 		List<?> resultList = null;
@@ -342,26 +339,25 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_PROCESSORCLASS_NOT_FOUND, updatedProcessorClass.getProcessorName());
+				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_NOT_FOUND, updatedProcessorClass.getProcessorName());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		if (resultList.isEmpty()) {
-			String message = uiMsg(MSG_ID_PROCESSORCLASS_NOT_FOUND, updatedProcessorClass.getProcessorName());
-			logger.error(message);
+			String message = logger.log(UIMessage.PROCESSORCLASS_NOT_FOUND, updatedProcessorClass.getProcessorName());
 			System.err.println(message);
 			return;
 		}
@@ -383,33 +379,32 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_PROCESSORCLASS_NOT_FOUND_BY_ID, restProcessorClass.getId());
+				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_NOT_FOUND_BY_ID, restProcessorClass.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_PROCESSORCLASS_DATA_INVALID, e.getStatusText());
+				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
 		/* Report success, giving new processor class version */
-		String message = uiMsg(MSG_ID_PROCESSORCLASS_UPDATED, restProcessorClass.getId(), restProcessorClass.getVersion());
-		logger.info(message);
+		String message = logger.log(UIMessage.PROCESSORCLASS_UPDATED, restProcessorClass.getId(), restProcessorClass.getVersion());
 		System.out.println(message);
 	}
 	
@@ -424,7 +419,7 @@ public class ProcessorCommandRunner {
 		/* Get processor class name from command parameters */
 		if (deleteCommand.getParameters().isEmpty()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PROCCLASS_IDENTIFIER_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_PROCCLASS_IDENTIFIER_GIVEN));
 			return;
 		}
 		String processorName = deleteCommand.getParameters().get(0).getValue();
@@ -440,26 +435,25 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_PROCESSORCLASS_NOT_FOUND, processorName);
+				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_NOT_FOUND, processorName);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (Exception e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		if (resultList.isEmpty()) {
-			String message = uiMsg(MSG_ID_PROCESSORCLASS_NOT_FOUND, processorName);
-			logger.error(message);
+			String message = logger.log(UIMessage.PROCESSORCLASS_NOT_FOUND, processorName);
 			System.err.println(message);
 			return;
 		}
@@ -475,29 +469,28 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_PROCESSORCLASS_NOT_FOUND_BY_ID, restProcessorClass.getId());
+				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_NOT_FOUND_BY_ID, restProcessorClass.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				message = uiMsg(MSG_ID_PROCESSORCLASS_DELETE_FAILED, processorName, e.getMessage());
+				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_DELETE_FAILED, processorName, e.getMessage());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (Exception e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
 		/* Report success */
-		String message = uiMsg(MSG_ID_PROCESSORCLASS_DELETED, restProcessorClass.getId());
-		logger.info(message);
+		String message = logger.log(UIMessage.PROCESSORCLASS_DELETED, restProcessorClass.getId());
 		System.out.println(message);
 	}
 	
@@ -532,7 +525,7 @@ public class ProcessorCommandRunner {
 			try {
 				restProcessor = CLIUtil.parseObjectFile(processorFile, processorFileFormat, RestProcessor.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -551,7 +544,7 @@ public class ProcessorCommandRunner {
 				try {
 					CLIUtil.setAttribute(restProcessor, param.getValue());
 				} catch (Exception e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -568,7 +561,7 @@ public class ProcessorCommandRunner {
 			System.out.print(PROMPT_PROCESSOR_NAME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restProcessor.setProcessorName(response);
@@ -577,7 +570,7 @@ public class ProcessorCommandRunner {
 			System.out.print(PROMPT_PROCESSOR_VERSION);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restProcessor.setProcessorVersion(response);
@@ -586,7 +579,7 @@ public class ProcessorCommandRunner {
 			System.out.print(PROMPT_TASKS);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			String[] tasks = response.split(",");
@@ -597,7 +590,7 @@ public class ProcessorCommandRunner {
 				System.out.print(String.format(PROMPT_TASK_VERSION, task));
 				response = System.console().readLine();
 				if (response.isBlank()) {
-					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+					System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 					return;
 				}
 				restTask.setTaskVersion(response);
@@ -606,17 +599,17 @@ public class ProcessorCommandRunner {
 						System.out.print(String.format(PROMPT_CRITICALITY_LEVEL, task));
 						response = System.console().readLine();
 						if (response.isBlank()) {
-							System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+							System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 							return;
 						}
 						try {
 							restTask.setCriticalityLevel(Long.parseLong(response));
 						} catch (NumberFormatException e) {
-							System.err.println(uiMsg(MSG_ID_INVALID_CRITICALITY_LEVEL, response));
+							System.err.println(ProseoLogger.format(UIMessage.INVALID_CRITICALITY_LEVEL, response));
 							continue;
 						}
 						if (2 > restTask.getCriticalityLevel()) {
-							System.err.println(uiMsg(MSG_ID_INVALID_CRITICALITY_LEVEL, response));
+							System.err.println(ProseoLogger.format(UIMessage.INVALID_CRITICALITY_LEVEL, response));
 							restTask.setCriticalityLevel(null);
 							continue;
 						}
@@ -628,7 +621,7 @@ public class ProcessorCommandRunner {
 			System.out.print(PROMPT_DOCKER_IMAGE);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restProcessor.setDockerImage(response);
@@ -642,28 +635,27 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_PROCESSOR_DATA_INVALID, e.getStatusText());
+				message = ProseoLogger.format(UIMessage.PROCESSOR_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 
 		/* Report success, giving newly assigned processor ID and version */
-		String message = uiMsg(MSG_ID_PROCESSOR_CREATED,
+		String message = logger.log(UIMessage.PROCESSOR_CREATED,
 				restProcessor.getProcessorName(), restProcessor.getProcessorVersion(), restProcessor.getId());
-		logger.info(message);
 		System.out.println(message);
 	}
 	
@@ -712,21 +704,21 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_PROCESSORS_FOUND);
+				message = ProseoLogger.format(UIMessage.NO_PROCESSORS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
@@ -738,7 +730,7 @@ public class ProcessorCommandRunner {
 				System.err.println(e.getMessage());
 				return;
 			} catch (IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			} 
 		} else {
@@ -788,7 +780,7 @@ public class ProcessorCommandRunner {
 			try {
 				updatedProcessor = CLIUtil.parseObjectFile(processorFile, processorFileFormat, RestProcessor.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -807,7 +799,7 @@ public class ProcessorCommandRunner {
 				try {
 					CLIUtil.setAttribute(updatedProcessor, param.getValue());
 				} catch (Exception e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -817,7 +809,7 @@ public class ProcessorCommandRunner {
 		if (null == updatedProcessor.getProcessorName() || 0 == updatedProcessor.getProcessorName().length()
 				|| null == updatedProcessor.getProcessorVersion() || 0 == updatedProcessor.getProcessorVersion().length()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PROCESSOR_IDENTIFIER_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_PROCESSOR_IDENTIFIER_GIVEN));
 			return;
 		}
 		List<?> resultList = null;
@@ -831,28 +823,27 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND, 
+				message = ProseoLogger.format(UIMessage.PROCESSOR_NOT_FOUND, 
 						updatedProcessor.getProcessorName(), updatedProcessor.getProcessorVersion());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		if (resultList.isEmpty()) {
-			String message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND, 
+			String message = logger.log(UIMessage.PROCESSOR_NOT_FOUND, 
 					updatedProcessor.getProcessorName(), updatedProcessor.getProcessorVersion());
-			logger.error(message);
 			System.err.println(message);
 			return;
 		}
@@ -899,33 +890,32 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND_BY_ID, restProcessor.getId());
+				message = ProseoLogger.format(UIMessage.PROCESSOR_NOT_FOUND_BY_ID, restProcessor.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_PROCESSOR_DATA_INVALID,  e.getStatusText());
+				message = ProseoLogger.format(UIMessage.PROCESSOR_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
 		/* Report success, giving new processor version */
-		String message = uiMsg(MSG_ID_PROCESSOR_UPDATED, restProcessor.getId(), restProcessor.getVersion());
-		logger.info(message);
+		String message = logger.log(UIMessage.PROCESSOR_UPDATED, restProcessor.getId(), restProcessor.getVersion());
 		System.out.println(message);
 	}
 	
@@ -940,7 +930,7 @@ public class ProcessorCommandRunner {
 		/* Get processor name from command parameters */
 		if (2 > deleteCommand.getParameters().size()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PROCESSOR_IDENTIFIER_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_PROCESSOR_IDENTIFIER_GIVEN));
 			return;
 		}
 		String processorName = deleteCommand.getParameters().get(0).getValue();
@@ -958,26 +948,25 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND, processorName, processorVersion);
+				message = ProseoLogger.format(UIMessage.PROCESSOR_NOT_FOUND, processorName, processorVersion);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (Exception e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		if (resultList.isEmpty()) {
-			String message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND, processorName, processorVersion);
-			logger.error(message);
+			String message = logger.log(UIMessage.PROCESSOR_NOT_FOUND, processorName, processorVersion);
 			System.err.println(message);
 			return;
 		}
@@ -993,29 +982,28 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND_BY_ID, restProcessor.getId());
+				message = ProseoLogger.format(UIMessage.PROCESSOR_NOT_FOUND_BY_ID, restProcessor.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				message = uiMsg(MSG_ID_PROCESSOR_DELETE_FAILED, processorName, processorVersion, e.getMessage());
+				message = ProseoLogger.format(UIMessage.PROCESSOR_DELETE_FAILED, processorName, processorVersion, e.getMessage());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (Exception e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
 		/* Report success */
-		String message = uiMsg(MSG_ID_PROCESSOR_DELETED, restProcessor.getId());
-		logger.info(message);
+		String message = logger.log(UIMessage.PROCESSOR_DELETED, restProcessor.getId());
 		System.out.println(message);
 	}
 	
@@ -1050,7 +1038,7 @@ public class ProcessorCommandRunner {
 			try {
 				restConfiguration = CLIUtil.parseObjectFile(configurationFile, configurationFileFormat, RestConfiguration.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -1069,7 +1057,7 @@ public class ProcessorCommandRunner {
 				try {
 					CLIUtil.setAttribute(restConfiguration, param.getValue());
 				} catch (Exception e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -1086,7 +1074,7 @@ public class ProcessorCommandRunner {
 			System.out.print(PROMPT_PROCESSOR_NAME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restConfiguration.setProcessorName(response);
@@ -1095,7 +1083,7 @@ public class ProcessorCommandRunner {
 			System.out.print(PROMPT_CONFIGURATION_VERSION);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restConfiguration.setConfigurationVersion(response);
@@ -1109,28 +1097,27 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_CONFIGURATION_DATA_INVALID, e.getStatusText());
+				message = ProseoLogger.format(UIMessage.CONFIGURATION_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 
 		/* Report success, giving newly assigned configuration ID and version */
-		String message = uiMsg(MSG_ID_CONFIGURATION_CREATED,
+		String message = logger.log(UIMessage.CONFIGURATION_CREATED,
 				restConfiguration.getProcessorName(), restConfiguration.getConfigurationVersion(), restConfiguration.getId());
-		logger.info(message);
 		System.out.println(message);
 	}
 	
@@ -1179,21 +1166,21 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_CONFIGURATIONS_FOUND);
+				message = ProseoLogger.format(UIMessage.NO_CONFIGURATIONS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
@@ -1205,7 +1192,7 @@ public class ProcessorCommandRunner {
 				System.err.println(e.getMessage());
 				return;
 			} catch (IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			} 
 		} else {
@@ -1255,7 +1242,7 @@ public class ProcessorCommandRunner {
 			try {
 				updatedConfiguration = CLIUtil.parseObjectFile(configurationFile, configurationFileFormat, RestConfiguration.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -1274,7 +1261,7 @@ public class ProcessorCommandRunner {
 				try {
 					CLIUtil.setAttribute(updatedConfiguration, param.getValue());
 				} catch (Exception e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -1284,7 +1271,7 @@ public class ProcessorCommandRunner {
 		if (null == updatedConfiguration.getProcessorName() || 0 == updatedConfiguration.getProcessorName().length()
 				|| null == updatedConfiguration.getConfigurationVersion() || 0 == updatedConfiguration.getConfigurationVersion().length()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_CONFIGURATION_IDENTIFIER_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_CONFIGURATION_IDENTIFIER_GIVEN));
 			return;
 		}
 		List<?> resultList = null;
@@ -1298,28 +1285,27 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_CONFIGURATION_NOT_FOUND, 
+				message = ProseoLogger.format(UIMessage.CONFIGURATION_NOT_FOUND, 
 						updatedConfiguration.getProcessorName(), updatedConfiguration.getConfigurationVersion());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		if (resultList.isEmpty()) {
-			String message = uiMsg(MSG_ID_CONFIGURATION_NOT_FOUND, 
+			String message = logger.log(UIMessage.CONFIGURATION_NOT_FOUND, 
 					updatedConfiguration.getProcessorName(), updatedConfiguration.getConfigurationVersion());
-			logger.error(message);
 			System.err.println(message);
 			return;
 		}
@@ -1359,33 +1345,32 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_CONFIGURATION_NOT_FOUND_BY_ID, restConfiguration.getId());
+				message = ProseoLogger.format(UIMessage.CONFIGURATION_NOT_FOUND_BY_ID, restConfiguration.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_CONFIGURATION_DATA_INVALID,  e.getStatusText());
+				message = ProseoLogger.format(UIMessage.CONFIGURATION_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
 		/* Report success, giving new configuration version */
-		String message = uiMsg(MSG_ID_CONFIGURATION_UPDATED, restConfiguration.getId(), restConfiguration.getVersion());
-		logger.info(message);
+		String message = logger.log(UIMessage.CONFIGURATION_UPDATED, restConfiguration.getId(), restConfiguration.getVersion());
 		System.out.println(message);
 	}
 	
@@ -1400,7 +1385,7 @@ public class ProcessorCommandRunner {
 		/* Get processor name and configuration version from command parameters */
 		if (2 > deleteCommand.getParameters().size()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PROCESSOR_IDENTIFIER_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_PROCESSOR_IDENTIFIER_GIVEN));
 			return;
 		}
 		String processorName = deleteCommand.getParameters().get(0).getValue();
@@ -1418,26 +1403,25 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_CONFIGURATION_NOT_FOUND, processorName, configurationVersion);
+				message = ProseoLogger.format(UIMessage.CONFIGURATION_NOT_FOUND, processorName, configurationVersion);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (Exception e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		if (resultList.isEmpty()) {
-			String message = uiMsg(MSG_ID_CONFIGURATION_NOT_FOUND, processorName, configurationVersion);
-			logger.error(message);
+			String message = logger.log(UIMessage.CONFIGURATION_NOT_FOUND, processorName, configurationVersion);
 			System.err.println(message);
 			return;
 		}
@@ -1453,29 +1437,28 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_CONFIGURATION_NOT_FOUND_BY_ID, restConfiguration.getId());
+				message = ProseoLogger.format(UIMessage.CONFIGURATION_NOT_FOUND_BY_ID, restConfiguration.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				message = uiMsg(MSG_ID_CONFIGURATION_DELETE_FAILED, processorName, configurationVersion, e.getMessage());
+				message = ProseoLogger.format(UIMessage.CONFIGURATION_DELETE_FAILED, processorName, configurationVersion, e.getMessage());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (Exception e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
 		/* Report success */
-		String message = uiMsg(MSG_ID_CONFIGURATION_DELETED, restConfiguration.getId());
-		logger.info(message);
+		String message = logger.log(UIMessage.CONFIGURATION_DELETED, restConfiguration.getId());
 		System.out.println(message);
 	}
 	
@@ -1510,7 +1493,7 @@ public class ProcessorCommandRunner {
 			try {
 				restConfiguredProcessor = CLIUtil.parseObjectFile(configuredProcessorFile, configuredProcessorFileFormat, RestConfiguredProcessor.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -1540,7 +1523,7 @@ public class ProcessorCommandRunner {
 				try {
 					CLIUtil.setAttribute(restConfiguredProcessor, param.getValue());
 				} catch (Exception e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -1557,7 +1540,7 @@ public class ProcessorCommandRunner {
 			System.out.print(PROMPT_CONFIGUREDPROCESSOR_IDENTIFIER);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restConfiguredProcessor.setIdentifier(response);
@@ -1566,7 +1549,7 @@ public class ProcessorCommandRunner {
 			System.out.print(PROMPT_PROCESSOR_NAME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restConfiguredProcessor.setProcessorName(response);
@@ -1575,7 +1558,7 @@ public class ProcessorCommandRunner {
 			System.out.print(PROMPT_PROCESSOR_VERSION);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restConfiguredProcessor.setProcessorVersion(response);
@@ -1584,7 +1567,7 @@ public class ProcessorCommandRunner {
 			System.out.print(PROMPT_CONFIGURATION_VERSION);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
 			restConfiguredProcessor.setConfigurationVersion(response);
@@ -1598,32 +1581,31 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_DATA_INVALID, e.getStatusText());
+				message = ProseoLogger.format(UIMessage.CONFIGUREDPROCESSOR_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 
 		/* Report success, giving newly assigned configured processor ID and version */
-		String message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_CREATED,
+		String message = logger.log(UIMessage.CONFIGUREDPROCESSOR_CREATED,
 				restConfiguredProcessor.getIdentifier(),
 				restConfiguredProcessor.getProcessorName(),
 				restConfiguredProcessor.getProcessorVersion(),
 				restConfiguredProcessor.getConfigurationVersion(),
 				restConfiguredProcessor.getId());
-		logger.info(message);
 		System.out.println(message);
 	}
 	
@@ -1669,21 +1651,21 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_CONFIGUREDPROCESSORS_FOUND);
+				message = ProseoLogger.format(UIMessage.NO_CONFIGUREDPROCESSORS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
@@ -1695,7 +1677,7 @@ public class ProcessorCommandRunner {
 				System.err.println(e.getMessage());
 				return;
 			} catch (IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			} 
 		} else {
@@ -1747,7 +1729,7 @@ public class ProcessorCommandRunner {
 			try {
 				updatedConfiguredProcessor = CLIUtil.parseObjectFile(configuredProcessorFile, configuredProcessorFileFormat, RestConfiguredProcessor.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -1763,7 +1745,7 @@ public class ProcessorCommandRunner {
 				try {
 					CLIUtil.setAttribute(updatedConfiguredProcessor, param.getValue());
 				} catch (Exception e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -1772,7 +1754,7 @@ public class ProcessorCommandRunner {
 		/* Read original configured processor from Processor Manager service */
 		if (null == updatedConfiguredProcessor.getIdentifier() || 0 == updatedConfiguredProcessor.getIdentifier().length()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_CONFIGUREDPROCESSOR_IDENTIFIER_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_CONFIGUREDPROCESSOR_IDENTIFIER_GIVEN));
 			return;
 		}
 		List<?> resultList = null;
@@ -1785,28 +1767,27 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND, 
+				message = ProseoLogger.format(UIMessage.CONFIGUREDPROCESSOR_NOT_FOUND, 
 						updatedConfiguredProcessor.getIdentifier(), updatedConfiguredProcessor.getProcessorName());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		if (resultList.isEmpty()) {
-			String message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND, 
+			String message = logger.log(UIMessage.CONFIGUREDPROCESSOR_NOT_FOUND, 
 					updatedConfiguredProcessor.getIdentifier(), updatedConfiguredProcessor.getProcessorName());
-			logger.error(message);
 			System.err.println(message);
 			return;
 		}
@@ -1837,33 +1818,32 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND_BY_ID, restConfiguredProcessor.getId());
+				message = ProseoLogger.format(UIMessage.CONFIGUREDPROCESSOR_NOT_FOUND_BY_ID, restConfiguredProcessor.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_DATA_INVALID,  e.getStatusText());
+				message = ProseoLogger.format(UIMessage.CONFIGUREDPROCESSOR_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
 		/* Report success, giving new configured processor version */
-		String message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_UPDATED, restConfiguredProcessor.getId(), restConfiguredProcessor.getVersion());
-		logger.info(message);
+		String message = logger.log(UIMessage.CONFIGUREDPROCESSOR_UPDATED, restConfiguredProcessor.getId(), restConfiguredProcessor.getVersion());
 		System.out.println(message);
 	}
 	
@@ -1878,7 +1858,7 @@ public class ProcessorCommandRunner {
 		/* Get configured processor identifier from command parameters */
 		if (1 > deleteCommand.getParameters().size()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_CONFIGUREDPROCESSOR_IDENTIFIER_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_CONFIGUREDPROCESSOR_IDENTIFIER_GIVEN));
 			return;
 		}
 		String identifier = deleteCommand.getParameters().get(0).getValue();
@@ -1894,26 +1874,25 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND, identifier);
+				message = ProseoLogger.format(UIMessage.CONFIGUREDPROCESSOR_NOT_FOUND, identifier);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (Exception e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		if (resultList.isEmpty()) {
-			String message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND, identifier);
-			logger.error(message);
+			String message = logger.log(UIMessage.CONFIGUREDPROCESSOR_NOT_FOUND, identifier);
 			System.err.println(message);
 			return;
 		}
@@ -1929,29 +1908,28 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND_BY_ID, restConfiguredProcessor.getId());
+				message = ProseoLogger.format(UIMessage.CONFIGUREDPROCESSOR_NOT_FOUND_BY_ID, restConfiguredProcessor.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				message = (null == e.getStatusText() ?
-						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission()) :
+						ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission()) :
 						e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_DELETE_FAILED, identifier, e.getMessage());
+				message = ProseoLogger.format(UIMessage.CONFIGUREDPROCESSOR_DELETE_FAILED, identifier, e.getMessage());
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (Exception e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
 		
 		/* Report success */
-		String message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_DELETED, restConfiguredProcessor.getId());
-		logger.info(message);
+		String message = logger.log(UIMessage.CONFIGUREDPROCESSOR_DELETED, restConfiguredProcessor.getId());
 		System.out.println(message);
 	}
 	
@@ -1965,17 +1943,17 @@ public class ProcessorCommandRunner {
 		
 		/* Check that user is logged in */
 		if (null == loginManager.getUser()) {
-			System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN, command.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.USER_NOT_LOGGED_IN, command.getName()));
 			return;
 		}
 		if (null == loginManager.getMission()) {
-			System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN_TO_MISSION, command.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.USER_NOT_LOGGED_IN_TO_MISSION, command.getName()));
 			return;
 		}
 		
 		/* Check argument */
 		if (!CMD_PROCESSOR.equals(command.getName()) && !CMD_CONFIGURATION.equals(command.getName())) {
-			System.err.println(uiMsg(MSG_ID_INVALID_COMMAND_NAME, command.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.INVALID_COMMAND_NAME, command.getName()));
 			return;
 		}
 
@@ -1983,7 +1961,7 @@ public class ProcessorCommandRunner {
 		ParsedCommand subcommand = command.getSubcommand();
 
 		if (null == subcommand) {
-			System.err.println(uiMsg(MSG_ID_SUBCOMMAND_MISSING, command.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.SUBCOMMAND_MISSING, command.getName()));
 			return;
 		}
 
@@ -1997,7 +1975,7 @@ public class ProcessorCommandRunner {
 		ParsedCommand subsubcommand = subcommand.getSubcommand();
 		if ((CMD_CLASS.equals(subcommand.getName()) || CMD_CONFIGURATION.equals(subcommand.getName()))
 				&& null == subcommand.getSubcommand()) {
-			System.err.println(uiMsg(MSG_ID_SUBCOMMAND_MISSING, subcommand.getName()));
+			System.err.println(ProseoLogger.format(UIMessage.SUBCOMMAND_MISSING, subcommand.getName()));
 			return;
 		}
 
@@ -2020,7 +1998,7 @@ public class ProcessorCommandRunner {
 				case CMD_UPDATE:	updateProcessorClass(subsubcommand); break COMMAND;
 				case CMD_DELETE:	deleteProcessorClass(subsubcommand); break COMMAND;
 				default:
-					System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, 
+					System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, 
 							command.getName() + " " + subcommand.getName() + " " + subsubcommand.getName()));
 					return;
 				}
@@ -2032,7 +2010,7 @@ public class ProcessorCommandRunner {
 				case CMD_UPDATE:	updateConfiguredProcessor(subsubcommand); break COMMAND;
 				case CMD_DELETE:	deleteConfiguredProcessor(subsubcommand); break COMMAND;
 				default:
-					System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, 
+					System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, 
 							command.getName() + " " + subcommand.getName() + " " + subsubcommand.getName()));
 					return;
 				}
@@ -2042,7 +2020,7 @@ public class ProcessorCommandRunner {
 			case CMD_UPDATE:	updateProcessor(subcommand); break COMMAND;
 			case CMD_DELETE:	deleteProcessor(subcommand); break COMMAND;
 			default:
-				System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
+				System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 				return;
 			}
 		case CMD_CONFIGURATION:
@@ -2053,7 +2031,7 @@ public class ProcessorCommandRunner {
 			case CMD_UPDATE:	updateConfiguration(subcommand); break COMMAND;
 			case CMD_DELETE:	deleteConfiguration(subcommand); break COMMAND;
 			default:
-				System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
+				System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 				return;
 			}
 		}

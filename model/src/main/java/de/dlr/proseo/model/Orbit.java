@@ -6,6 +6,8 @@
 package de.dlr.proseo.model;
 
 import java.time.Instant;
+import java.util.Objects;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Index;
@@ -138,22 +140,11 @@ public class Orbit extends PersistentObject {
 		if (!(obj instanceof Orbit))
 			return false;
 		Orbit other = (Orbit) obj;
-		if (spacecraft == null) {
-			if (other.spacecraft != null)
-				return false;
-		} else if (!spacecraft.equals(other.spacecraft))
-			return false;
-		if (startTime == null) {
-			if (other.startTime != null)
-				return false;
-		} else if (!startTime.equals(other.startTime))
-			return false;
-		if (stopTime == null) {
-			if (other.stopTime != null)
-				return false;
-		} else if (!stopTime.equals(other.stopTime))
-			return false;
-		return true;
+		
+		return Objects.equals(startTime, other.getStartTime())
+				&& Objects.equals(stopTime, other.getStopTime())
+				&& Objects.equals(orbitNumber, other.getOrbitNumber())
+				&& Objects.equals(spacecraft, other.getSpacecraft());
 	}
 
 	@Override

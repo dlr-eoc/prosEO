@@ -161,7 +161,7 @@ public class ConfiguredProcessor extends PersistentObject {
 		if (!(obj instanceof ConfiguredProcessor))
 			return false;
 		ConfiguredProcessor other = (ConfiguredProcessor) obj;
-		return Objects.equals(identifier, other.identifier);
+		return Objects.equals(identifier, other.getIdentifier());
 	}
 
 	@Override

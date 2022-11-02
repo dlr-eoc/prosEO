@@ -38,6 +38,7 @@ public class SimpleSelectionRuleTest {
     private static final DateTimeFormatter DATEFORMAT_SQL = DateTimeFormatter.ofPattern("yyyy'-'MM'-'dd' 'HH:mm:ss.SSSSSS").withZone(ZoneId.of("UTC"));
 	
 	/* Static test data */
+    private static final Long TEST_MISSION_ID = 1L;
 	private static final String TEST_MISSION_CODE = "S5P";
 	private static final String TEST_PRODUCT_TYPE = "AUX_CH4";
 	private static final Long TEST_PRODUCT_CLASS_ID = 4711L;
@@ -353,8 +354,8 @@ public class SimpleSelectionRuleTest {
 	@Before
 	public void setUp() throws Exception {
 		// Create required mission and product classes
+		mission.setId(TEST_MISSION_ID);
 		mission.setCode(TEST_MISSION_CODE);
-		mission.getProductClasses().addAll(Arrays.asList(productClassCH4, productClassIR));
 
 		productClassCH4.setId(TEST_PRODUCT_CLASS_ID);
 		productClassCH4.setProductType(TEST_PRODUCT_TYPE);
@@ -363,6 +364,9 @@ public class SimpleSelectionRuleTest {
 		productClassIR.setId(TEST_PRODUCT_CLASS_IR_ID);
 		productClassIR.setProductType(TEST_PRODUCT_TYPE_IR.split("/")[0]);
 		productClassIR.setMission(mission);
+
+		mission.getProductClasses().addAll(Arrays.asList(productClassCH4, productClassIR));
+		logger.debug("Set of product classes {} set up for mission {}", mission.getProductClasses(), mission.getCode());
 	}
 
 	/**

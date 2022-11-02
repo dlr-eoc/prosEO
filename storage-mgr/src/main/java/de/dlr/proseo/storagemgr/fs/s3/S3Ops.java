@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,9 +30,9 @@ import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.transfer.Download;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
-import alluxio.exception.FileAlreadyExistsException;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
@@ -402,6 +403,78 @@ public class S3Ops {
 	}
 
 	/**
+	 * Fetch file from S3 to local file using AWS S3 SDK V1 TransferManager
+	 * 
+	 * @param s3Client      a given instantiated V1 S3 client
+	 * @param s3Bucket      S3 bucket name
+	 * @param s3Key 		S3 object key (without bucket)
+	 * @param targetFile	local (POSIX) target file path
+	 * @return true, if the operation succeeded, false otherwise
+	 */
+	public static Boolean v1FetchFile(AmazonS3 s3Client, String s3Bucket, String s3Key, File targetFile) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> v1FetchFile({}, {}, {}, {})",
+				s3Client, s3Bucket, s3Key, targetFile);
+		
+		// Download using TransferManager as per
+				// https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/examples-s3-transfermanager.html#transfermanager-downloading
+		TransferManager transferManager;
+		try {
+			// Make sure target file is not already present
+			if (targetFile.exists()) {
+				targetFile.delete();
+			}
+			
+			transferManager = TransferManagerBuilder.standard()
+					.withMultipartCopyPartSize(MULTIPART_UPLOAD_PARTSIZE_BYTES).withS3Client(s3Client).build();
+			if (null == transferManager) {
+				logger.error("Unable to create Transfer Manager");
+				return false;
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			return false;
+		}
+		
+		try {
+			Download download = transferManager.download(s3Bucket, s3Key, targetFile);
+			
+			download.waitForCompletion();
+			
+			// TODO This may not apply to the TransferManager any more (it did for V2 getObject() and Files.copy())
+			// Unfortunately returning from waitForCompletion() may not mean the file is fully written to disk!
+			Long contentLength = download.getObjectMetadata().getContentLength();
+			int i = 0;
+			long maxCycles = StorageManagerConfiguration.getConfiguration().getFileCheckMaxCycles();
+			long waitTime = StorageManagerConfiguration.getConfiguration().getFileCheckWaitTime();
+			while (Files.size(targetFile.toPath()) < contentLength && i < maxCycles) {
+				logger.info("... waiting to complete writing of {}", targetFile);
+				Thread.sleep(waitTime);
+			}
+			if (maxCycles <= i) {
+				throw new IOException("Read timed out after " + (maxCycles * waitTime) + " ms");
+			}
+
+			return true;
+		} catch (InterruptedException e) {
+			logger.error("Interrupted while copying S3 object s3:/{}/{} to file {} (cause: {})", s3Bucket, s3Key, targetFile, e.getMessage());
+			return false;
+		} catch (AmazonServiceException e) {
+			logger.error("Failed to copy S3 object s3:/{}/{} to file {} (cause: {})", s3Bucket, s3Key, targetFile, e.getErrorMessage());
+			return false;
+		} catch (IOException | AmazonClientException e) {
+			logger.error("Failed to copy S3 object s3:/{}/{} to file {} (cause: {})", s3Bucket, s3Key, targetFile, e.getMessage());
+			return false;
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			return false;
+		} finally {
+			transferManager.shutdownNow(false);
+		}
+
+	}
+
+	/**
 	 * Fetch file from S3 as input stream
 	 * 
 	 * @param s3       a given instantiated S3Client
@@ -470,6 +543,7 @@ public class S3Ops {
 				break;
 			} catch (Exception e) {
 				if (i >= MAX_UPLOAD_RETRIES) { // fail at the last try
+					transferManager.shutdownNow(false);
 					throw e;
 				} else {
 					logger.warn("Uploading directory {} failed (cause: {}), retrying after 100 ms ...", sourceDirPath, e.getMessage());
@@ -548,6 +622,7 @@ public class S3Ops {
 					break;
 				} catch (Exception e) {
 					if (i >= MAX_UPLOAD_RETRIES) { // fail at the last try
+						transferManager.shutdownNow(false);
 						throw e;
 					} else {
 						logger.warn("Uploading file {} failed (cause: {}), retrying after 100 ms ...", sourceFilePath, e.getMessage());
@@ -668,6 +743,7 @@ public class S3Ops {
 						break;
 					} catch (Exception e) {
 						if (i >= MAX_UPLOAD_RETRIES) { // fail at the last try
+							transferManager.shutdownNow(false);
 							throw e;
 						} else {
 							logger.warn("Copying s3://{}/{} failed (cause: {}), retrying after 100 ms ...", sourceBucketName, key, e.getMessage());

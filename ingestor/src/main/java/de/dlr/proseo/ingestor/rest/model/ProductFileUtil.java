@@ -7,9 +7,7 @@ package de.dlr.proseo.ingestor.rest.model;
 
 import java.time.Instant;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
@@ -23,7 +21,7 @@ public class ProductFileUtil {
 
 	private static final String MSG_ZIP_ARCHIVE_ATTRIBUTES_INCOMPLETE = "ZIP archive attributes incomplete";
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProductFileUtil.class);
+	private static ProseoLogger logger = new ProseoLogger(ProductFileUtil.class);
 	
 	/**
 	 * Convert a prosEO model product file into a REST product file
@@ -33,7 +31,7 @@ public class ProductFileUtil {
 	 */
 	public static RestProductFile toRestProductFile(ProductFile modelProductFile) {
 		if (logger.isTraceEnabled()) logger.trace(">>> toRestProductFile({})", (null == modelProductFile ? "MISSING" : modelProductFile.getId()));
-
+		
 		if (null == modelProductFile)
 			return null;
 		

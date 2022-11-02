@@ -81,7 +81,8 @@ ansible-playbook proseo-server-update.yml
 As above, remove the environment variables after completing the infrastructure change.
 
 Whenever the CPU and memory resources of a Kubernetes worker node are updated, the `kubelet` on the worker node needs to be
-restarted (for details see `../hands/README.md`).
+restarted (for details see `../hands/README.md`). In the case of a change to the number of the CPUs, a full reboot of the node
+is required!
 
 
 # Adding and removing processing nodes

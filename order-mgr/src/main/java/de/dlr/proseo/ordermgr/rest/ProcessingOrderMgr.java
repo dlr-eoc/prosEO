@@ -49,6 +49,9 @@ import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.enums.ParameterType;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.OrderMgrMessage;
 import de.dlr.proseo.model.ClassOutputParameter;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
@@ -75,88 +78,6 @@ import de.dlr.proseo.model.rest.model.RestParameter;
 @Transactional
 public class ProcessingOrderMgr {
 	
-	/* Message ID constants */
-	private static final int MSG_ID_ORDER_NOT_FOUND = 1107;
-	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 1104;
-	private static final int MSG_ID_ORDER_MISSING = 1108;
-	private static final int MSG_ID_ORDER_DELETED = 1109;
-	private static final int MSG_ID_ORDER_RETRIEVED = 1110;
-	private static final int MSG_ID_ORDER_MODIFIED = 1111;
-	private static final int MSG_ID_ORDER_NOT_MODIFIED = 1112;
-	private static final int MSG_ID_ORDER_CREATED = 1113;
-	private static final int MSG_ID_DUPLICATE_ORDER_UUID = 1114;
-	private static final int MSG_ID_INVALID_REQUESTED_CLASS = 1115;
-	private static final int MSG_ID_INVALID_INPUT_CLASS = 1116;
-	private static final int MSG_ID_INVALID_FILE_CLASS = 1117;
-	private static final int MSG_ID_INVALID_PROCESSING_MODE = 1118;
-	private static final int MSG_ID_INVALID_CONFIGURED_PROCESSOR = 1119;
-	private static final int MSG_ID_INVALID_ORBIT_RANGE = 1120;
-	private static final int MSG_ID_ORDER_IDENTIFIER_MISSING = 1121;
-	private static final int MSG_ID_DUPLICATE_ORDER_IDENTIFIER = 1122;
-	private static final int MSG_ID_ORDER_TIME_INTERVAL_MISSING = 1123;
-	private static final int MSG_ID_REQUESTED_PRODUCTCLASSES_MISSING = 1124;
-	private static final int MSG_ID_ORDER_LIST_EMPTY = 1125;
-	private static final int MSG_ID_ORDER_LIST_RETRIEVED = 1126;
-	private static final int MSG_ID_INVALID_MISSION_CODE = 1127;
-	private static final int MSG_ID_INVALID_OUTPUT_CLASS = 1128;
-	private static final int MSG_ID_ILLEGAL_STATE_TRANSITION = 1129;
-	private static final int MSG_ID_STATE_TRANSITION_FORBIDDEN = 1130;
-	private static final int MSG_ID_ORDER_MODIFICATION_FORBIDDEN = 1131;
-	private static final int MSG_ID_ILLEGAL_ORDER_STATE = 1132;
-	private static final int MSG_ID_ILLEGAL_CREATION_STATE = 1133;
-	private static final int MSG_ID_SLICE_DURATION_MISSING = 1134;
-	private static final int MSG_ID_INVALID_SLICE_OVERLAP = 1135;
-	private static final int MSG_ID_NEGATIVE_DURATION = 1136;
-	private static final int MSG_ID_NUMBER_ORDERS_DELETED = 1137;
-	private static final int MSG_ID_JOF_DELETED = 1138;
-	private static final int MSG_ID_JOF_DELETING_ERROR = 1139;
-	
-	// Same as in other services
-	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
-	//private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
-
-	/* Message string constants */
-	private static final String MSG_ORDER_NOT_FOUND = "(E%d) No order found for ID %d";
-	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Order deletion unsuccessful for ID %d";
-	private static final String MSG_ORDER_MISSING = "(E%d) Order not set";
-	private static final String MSG_ORDER_ID_MISSING = "(E%d) Order ID not set";
-	private static final String MSG_DUPLICATE_ORDER_UUID = "(E%d) Order UUID %s already exists";
-	private static final String MSG_INVALID_REQUESTED_CLASS = "(E%d) Requested product class %s is not defined for mission %s";
-	private static final String MSG_INVALID_INPUT_CLASS = "(E%d) Input product class %s is not defined for mission %s";
-	private static final String MSG_INVALID_FILE_CLASS = "(E%d) Output file class %s is not defined for mission %s";
-	private static final String MSG_INVALID_PROCESSING_MODE = "(E%d) Processing mode %s is not defined for mission %s";
-	private static final String MSG_INVALID_CONFIGURED_PROCESSOR = "(E%d) Configured processor %s not found";
-	private static final String MSG_INVALID_ORBIT_RANGE = "(E%d) No orbits defined between orbit number %d and %d for spacecraft %s";
-	private static final String MSG_ORDER_IDENTIFIER_MISSING = "(E%d) Order identifier not set";
-	private static final String MSG_DUPLICATE_ORDER_IDENTIFIER = "(E%d) Order identifier %s already exists within mission %s";
-	private static final String MSG_ORDER_TIME_INTERVAL_MISSING = "(E%d) Time interval (orbit or time range) missing for order %s";
-	private static final String MSG_REQUESTED_PRODUCTCLASSES_MISSING = "(E%d) Requested product classes missing for order %s";
-	private static final String MSG_ORDER_LIST_EMPTY = "(E%d) No processing order found for search criteria";
-	private static final String MSG_INVALID_MISSION_CODE = "(E%d) No mission found for mission code %s";
-	private static final String MSG_INVALID_OUTPUT_CLASS = "(E%d) Output product class %s is not defined for mission %s";
-	private static final String MSG_ILLEGAL_STATE_TRANSITION = "(E%d) Illegal order state transition from %s to %s";
-	private static final String MSG_STATE_TRANSITION_FORBIDDEN = "(E%d) Order state transition from %s to %s not allowed for user %s";
-	private static final String MSG_ORDER_MODIFICATION_FORBIDDEN = "(E%d) Order modification other than state change not allowed for user %s";
-	private static final String MSG_ILLEGAL_ORDER_STATE = "(E%d) Order update only allowed in INITIAL state";
-	private static final String MSG_ILLEGAL_CREATION_STATE = "(E%d) Orders must be created in INITIAL state (found state %s)";
-	private static final String MSG_SLICE_DURATION_MISSING = "(E%d) Time slice duration missing for order %s of slicing type TIME_SLICE";
-	private static final String MSG_INVALID_SLICE_OVERLAP = "(E%d) Order %s with slicing type NONE has invalid slice overlap %s (no overlap allowed)";
-	private static final String MSG_NEGATIVE_DURATION = "(E%d) Order %s has start time %s after stop time %s";
-
-	private static final String MSG_ORDER_LIST_RETRIEVED = "(I%d) Order list of size %d retrieved for mission '%s', order '%s', start time '%s', stop time '%s'";
-	private static final String MSG_ORDER_RETRIEVED = "(I%d) Order with ID %s retrieved";
-	private static final String MSG_ORDER_MODIFIED = "(I%d) Order with id %d modified";
-	private static final String MSG_ORDER_CREATED = "(I%d) Order with identifier %s created for mission %s";
-	private static final String MSG_ORDER_DELETED = "(I%d) Order with id %d deleted";
-	private static final String MSG_NUMBER_ORDERS_DELETED = "(I%d) %d orders deleted";
-	private static final String MSG_ORDER_NOT_MODIFIED = "(I%d) Order with id %d not modified (no changes)";
-
-	private static final String MSG_JOF_DELETED = "(I%d) Job Order File '%s' deleted from processing facility '%s'";
-	private static final String MSG_JOF_DELETING_ERROR = "(E%d) Error deleting Job Order File '%s' from processing facility '%s' (cause: %s)";
-	
-	// Same as in other services
-	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
-	
 	/** Utility class for user authorizations */
 	@Autowired
 	private SecurityService securityService;
@@ -170,46 +91,8 @@ public class ProcessingOrderMgr {
 	RestTemplateBuilder rtb;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProcessingOrderMgr.class);
-	
-	/**
-	 * Create and log a formatted informational message
-	 * 
-	 * @param messageFormat the message text with parameter placeholder in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted info message
-	 */
-	private String logInfo(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-		
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		logger.info(message);
-		
-		return message;
-	}
-	/**
-	 * Create and log a formatted error message
-	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted error message
-	 */
-	private String logError(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-		
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		logger.error(message);
-		
-		return message;
-	}
+	private static ProseoLogger logger = new ProseoLogger(ProcessingOrderMgr.class);
+
 	/**
 	 * Create an order from the given Json object 
 	 * 
@@ -222,12 +105,12 @@ public class ProcessingOrderMgr {
 		if (logger.isTraceEnabled()) logger.trace(">>> createOrder({})", (null == order ? "MISSING" : order.getIdentifier()));
 		
 		if (null == order) {
-			throw new IllegalArgumentException(logError(MSG_ORDER_MISSING, MSG_ID_ORDER_MISSING));
+			throw new IllegalArgumentException(logger.log(OrderMgrMessage.ORDER_MISSING));
 		}
 		
 		// Ensure user is authorized for the order mission
 		if (!securityService.isAuthorizedForMission(order.getMissionCode())) {
-			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					order.getMissionCode(), securityService.getMission()));			
 		}
 		
@@ -238,50 +121,50 @@ public class ProcessingOrderMgr {
 		} else {
 			// Test if given UUID is not yet in use
 			if (null != RepositoryService.getOrderRepository().findByUuid(modelOrder.getUuid())) {
-				throw new IllegalArgumentException(logError(MSG_DUPLICATE_ORDER_UUID, MSG_ID_DUPLICATE_ORDER_UUID, 
+				throw new IllegalArgumentException(logger.log(OrderMgrMessage.DUPLICATE_ORDER_UUID, 
 						modelOrder.getUuid()));
 			}
 		}
 		
 		// Make sure order has a non-blank identifier, which is not yet in use
 		if (null == modelOrder.getIdentifier() || modelOrder.getIdentifier().isBlank()) {
-			throw new IllegalArgumentException(logError(MSG_ORDER_IDENTIFIER_MISSING, MSG_ID_ORDER_IDENTIFIER_MISSING));
+			throw new IllegalArgumentException(logger.log(OrderMgrMessage.ORDER_IDENTIFIER_MISSING));
 		}
 		if (null != RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(order.getMissionCode(), modelOrder.getIdentifier())) {
-			throw new IllegalArgumentException(logError(MSG_DUPLICATE_ORDER_IDENTIFIER, MSG_ID_DUPLICATE_ORDER_IDENTIFIER, 
+			throw new IllegalArgumentException(logger.log(OrderMgrMessage.DUPLICATE_ORDER_IDENTIFIER, 
 					modelOrder.getIdentifier(), order.getMissionCode()));
 		}
 		
 		// Orders must always created in state INITIAL
 		if (!OrderState.INITIAL.equals(modelOrder.getOrderState())) {
-			throw new IllegalArgumentException(logError(MSG_ILLEGAL_CREATION_STATE, MSG_ID_ILLEGAL_CREATION_STATE,
+			throw new IllegalArgumentException(logger.log(OrderMgrMessage.ILLEGAL_CREATION_STATE,
 					modelOrder.getOrderState().toString()));
 		}
 		
 		//Find the  mission for the mission code given in the rest Order
 		Mission mission = RepositoryService.getMissionRepository().findByCode(order.getMissionCode());
 		if (null == mission) {
-			throw new IllegalArgumentException(logError(MSG_INVALID_MISSION_CODE, MSG_ID_INVALID_MISSION_CODE, order.getMissionCode()));
+			throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_MISSION_CODE, order.getMissionCode()));
 		}
 		modelOrder.setMission(mission);	
 		
 		// Identify the order time interval, either by orbit range queries if given, or by start and stop time
 		if (order.getOrbits().isEmpty()) {
 			if (null == modelOrder.getStartTime() || null == modelOrder.getStopTime()) {
-				throw new IllegalArgumentException(logError(MSG_ORDER_TIME_INTERVAL_MISSING, MSG_ID_ORDER_TIME_INTERVAL_MISSING, modelOrder.getIdentifier()));
+				throw new IllegalArgumentException(logger.log(OrderMgrMessage.ORDER_TIME_INTERVAL_MISSING, modelOrder.getIdentifier()));
 			}
 			// Ensure stop time is not before start time
 			if (modelOrder.getStopTime().isBefore(modelOrder.getStartTime())) {
-				throw new IllegalArgumentException(logError(MSG_NEGATIVE_DURATION, MSG_ID_NEGATIVE_DURATION, modelOrder.getIdentifier(),
+				throw new IllegalArgumentException(logger.log(OrderMgrMessage.NEGATIVE_DURATION, modelOrder.getIdentifier(),
 						OrbitTimeFormatter.format(modelOrder.getStartTime()), OrbitTimeFormatter.format(modelOrder.getStopTime())));
 			}
 			// Ensure slice duration is given for slicing type TIME_SLICE
 			if (OrderSlicingType.TIME_SLICE.equals(modelOrder.getSlicingType()) && null == modelOrder.getSliceDuration()) {
-				throw new IllegalArgumentException(logError(MSG_SLICE_DURATION_MISSING, MSG_ID_SLICE_DURATION_MISSING, modelOrder.getIdentifier()));
+				throw new IllegalArgumentException(logger.log(OrderMgrMessage.SLICE_DURATION_MISSING, modelOrder.getIdentifier()));
 			}
 			// Ensure no slice overlap (or 0) is set for slicing type NONE
 			if (OrderSlicingType.NONE.equals(modelOrder.getSlicingType()) && !Duration.ZERO.equals(modelOrder.getSliceOverlap()) ) {
-				throw new IllegalArgumentException(logError(MSG_INVALID_SLICE_OVERLAP, MSG_ID_INVALID_SLICE_OVERLAP, modelOrder.getIdentifier(), modelOrder.getSliceOverlap().toString()));
+				throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_SLICE_OVERLAP, modelOrder.getIdentifier(), modelOrder.getSliceOverlap().toString()));
 			}
 		} else {
 			// Find all requested orbit ranges
@@ -293,7 +176,7 @@ public class ProcessingOrderMgr {
 						orbitQuery.getOrbitNumberFrom().intValue(),
 						orbitQuery.getOrbitNumberTo().intValue());
 				if (orbit.isEmpty()) {
-					throw new IllegalArgumentException(logError(MSG_INVALID_ORBIT_RANGE, MSG_ID_INVALID_ORBIT_RANGE,
+					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_ORBIT_RANGE,
 							orbitQuery.getOrbitNumberFrom(),
 							orbitQuery.getOrbitNumberTo(),
 							orbitQuery.getSpacecraftCode()));
@@ -321,7 +204,7 @@ public class ProcessingOrderMgr {
 			ProductClass productClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
 					mission.getCode(), restInputFilter.getProductClass());
 			if (null == productClass) {
-				throw new IllegalArgumentException(logError(MSG_INVALID_INPUT_CLASS, MSG_ID_INVALID_INPUT_CLASS, 
+				throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_INPUT_CLASS, 
 						restInputFilter.getProductClass(), mission.getCode()));
 			}
 			modelOrder.getInputFilters().put(productClass, inputFilter);
@@ -338,7 +221,7 @@ public class ProcessingOrderMgr {
 			ProductClass productClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
 					mission.getCode(), restClassOutputParameter.getProductClass());
 			if (null == productClass) {
-				throw new IllegalArgumentException(logError(MSG_INVALID_OUTPUT_CLASS, MSG_ID_INVALID_OUTPUT_CLASS, 
+				throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_OUTPUT_CLASS, 
 						restClassOutputParameter.getProductClass(), mission.getCode()));
 			}
 			modelOrder.getClassOutputParameters().put(productClass, classOutputParameter);
@@ -346,14 +229,14 @@ public class ProcessingOrderMgr {
 		
 		// Make sure requested product classes are set (mandatory)
 		if (order.getRequestedProductClasses().isEmpty()) {
-			throw new IllegalArgumentException(logError(MSG_REQUESTED_PRODUCTCLASSES_MISSING, MSG_ID_REQUESTED_PRODUCTCLASSES_MISSING, modelOrder.getIdentifier()));
+			throw new IllegalArgumentException(logger.log(OrderMgrMessage.REQUESTED_PRODUCTCLASSES_MISSING, modelOrder.getIdentifier()));
 		} else {
 			modelOrder.getRequestedProductClasses().clear();
 			for (String productType: order.getRequestedProductClasses()) {
 				ProductClass productClass = RepositoryService.getProductClassRepository()
 						.findByMissionCodeAndProductType(mission.getCode(), productType);
 				if (null == productClass) {
-					throw new IllegalArgumentException(logError(MSG_INVALID_REQUESTED_CLASS, MSG_ID_INVALID_REQUESTED_CLASS,
+					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_REQUESTED_CLASS,
 							productType, mission.getCode()));
 				}
 				modelOrder.getRequestedProductClasses().add(productClass);
@@ -364,7 +247,7 @@ public class ProcessingOrderMgr {
 			ProductClass productClass = RepositoryService.getProductClassRepository()
 					.findByMissionCodeAndProductType(mission.getCode(), productType);
 			if (null == productClass) {
-				throw new IllegalArgumentException(logError(MSG_INVALID_INPUT_CLASS, MSG_ID_INVALID_INPUT_CLASS,
+				throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_INPUT_CLASS,
 						productType, mission.getCode()));
 			}
 			modelOrder.getInputProductClasses().add(productClass);
@@ -374,7 +257,7 @@ public class ProcessingOrderMgr {
 			ConfiguredProcessor configuredProcessor = 
 					RepositoryService.getConfiguredProcessorRepository().findByMissionCodeAndIdentifier(order.getMissionCode(), identifier);
 			if (null == configuredProcessor) {
-				throw new IllegalArgumentException(logError(MSG_INVALID_CONFIGURED_PROCESSOR, MSG_ID_INVALID_CONFIGURED_PROCESSOR,
+				throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_CONFIGURED_PROCESSOR,
 						identifier));
 			}
 			modelOrder.getRequestedConfiguredProcessors().add(configuredProcessor);
@@ -382,17 +265,17 @@ public class ProcessingOrderMgr {
 		
 		// Make sure processing mode and file class are OK
 		if (!mission.getProcessingModes().contains(order.getProcessingMode())) {
-			throw new IllegalArgumentException(logError(MSG_INVALID_PROCESSING_MODE, MSG_ID_INVALID_PROCESSING_MODE,
+			throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_PROCESSING_MODE,
 					order.getProcessingMode(), mission.getCode()));
 		}
 		if (!mission.getFileClasses().contains(order.getOutputFileClass())) {
-			throw new IllegalArgumentException(logError(MSG_INVALID_FILE_CLASS, MSG_ID_INVALID_FILE_CLASS,
+			throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_FILE_CLASS,
 					order.getOutputFileClass(), mission.getCode()));
 		}
 	
 		// Everything OK, store new order in database
 		modelOrder = RepositoryService.getOrderRepository().save(modelOrder);
-		logInfo(MSG_ORDER_CREATED, MSG_ID_ORDER_CREATED, order.getIdentifier(), order.getMissionCode());
+		logger.log(OrderMgrMessage.ORDER_CREATED, order.getIdentifier(), order.getMissionCode());
 		
 		return OrderUtil.toRestOrder(modelOrder);
 
@@ -415,12 +298,12 @@ public class ProcessingOrderMgr {
 		// Test whether the order id is valid
 		Optional<ProcessingOrder> modelOrder = RepositoryService.getOrderRepository().findById(id);
 		if (modelOrder.isEmpty()) {
-			throw new EntityNotFoundException(logError(MSG_ORDER_NOT_FOUND, MSG_ID_ORDER_NOT_FOUND));
+			throw new EntityNotFoundException(logger.log(OrderMgrMessage.ORDER_NOT_FOUND));
 		}
 		
 		// Ensure user is authorized for the order mission
 		if (!securityService.isAuthorizedForMission(modelOrder.get().getMission().getCode())) {
-			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					modelOrder.get().getMission().getCode(), securityService.getMission()));			
 		}
 		deleteOrder(modelOrder.get());
@@ -443,10 +326,10 @@ public class ProcessingOrderMgr {
 		// Test whether the deletion was successful
 		Optional<ProcessingOrder> modelOrder = RepositoryService.getOrderRepository().findById(id);
 		if (!modelOrder.isEmpty()) {
-			throw new RuntimeException(logError(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id));
+			throw new RuntimeException(logger.log(OrderMgrMessage.DELETION_UNSUCCESSFUL, id));
 		}
 		
-		logInfo(MSG_ORDER_DELETED, MSG_ID_ORDER_DELETED, id);
+		logger.log(OrderMgrMessage.ORDER_DELETED, id);
 	}
 	
 	/**
@@ -469,7 +352,7 @@ public class ProcessingOrderMgr {
 			catch (RuntimeException e) {break;};
 			ordersDeleted++;
 		}
-		logInfo(MSG_NUMBER_ORDERS_DELETED, MSG_ID_NUMBER_ORDERS_DELETED, ordersDeleted);
+		logger.log(OrderMgrMessage.NUMBER_ORDERS_DELETED, ordersDeleted);
 	}
 	
 	/** 
@@ -518,10 +401,10 @@ public class ProcessingOrderMgr {
 					.build();
 			try {
 				restTemplate.delete(storageManagerUrl);
-				logInfo(MSG_JOF_DELETED, MSG_ID_JOF_DELETED, js.getJobOrderFilename(), facility.getName());
+				logger.log(OrderMgrMessage.JOF_DELETED, js.getJobOrderFilename(), facility.getName());
 				return true;
 			} catch (RestClientException e) {
-				logError(MSG_JOF_DELETING_ERROR, MSG_ID_JOF_DELETING_ERROR, js.getJobOrderFilename(), facility.getName(), e.getMessage());
+				logger.log(OrderMgrMessage.JOF_DELETING_ERROR, js.getJobOrderFilename(), facility.getName(), e.getMessage());
 				return false;
 			} 
 		} else {
@@ -542,7 +425,7 @@ public class ProcessingOrderMgr {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrderById({})", id);
 		
 		if (null == id) {
-			throw new IllegalArgumentException(logError(MSG_ORDER_ID_MISSING, MSG_ID_ORDER_MISSING, id));
+			throw new IllegalArgumentException(logger.log(OrderMgrMessage.ORDER_MISSING, id));
 		}
 		if (id == 0) {
 			// new order from "scratch", used at least if GUI
@@ -571,16 +454,16 @@ public class ProcessingOrderMgr {
 			Optional<ProcessingOrder> modelOrder = RepositoryService.getOrderRepository().findById(id);
 
 			if (modelOrder.isEmpty()) {
-				throw new NoResultException(logError(MSG_ORDER_NOT_FOUND, MSG_ID_ORDER_NOT_FOUND, id));
+				throw new NoResultException(logger.log(OrderMgrMessage.ORDER_NOT_FOUND, id));
 			}
 
 			// Ensure user is authorized for the order mission
 			if (!securityService.isAuthorizedForMission(modelOrder.get().getMission().getCode())) {
-				throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+				throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 						modelOrder.get().getMission().getCode(), securityService.getMission()));			
 			}
 
-			logInfo(MSG_ORDER_RETRIEVED, MSG_ID_ORDER_RETRIEVED, id);
+			logger.log(OrderMgrMessage.ORDER_RETRIEVED, id);
 
 			return OrderUtil.toRestOrder(modelOrder.get());
 		}
@@ -604,27 +487,27 @@ public class ProcessingOrderMgr {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyOrder({})", id);
 		
 		if (null == id) {
-			throw new IllegalArgumentException(logError(MSG_ORDER_ID_MISSING, MSG_ID_ORDER_MISSING, id));
+			throw new IllegalArgumentException(logger.log(OrderMgrMessage.ORDER_MISSING, id));
 		}
 		
 		// Ensure user is authorized for the order mission
 		if (!securityService.isAuthorizedForMission(order.getMissionCode())) {
-			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					order.getMissionCode(), securityService.getMission()));			
 		}
 		
 		Optional<ProcessingOrder> optModelOrder = RepositoryService.getOrderRepository().findById(id);
 				
 		if (optModelOrder.isEmpty()) {
-			throw new EntityNotFoundException(logError(MSG_ORDER_NOT_FOUND, MSG_ID_ORDER_NOT_FOUND, id));
+			throw new EntityNotFoundException(logger.log(OrderMgrMessage.ORDER_NOT_FOUND, id));
 		}
 		ProcessingOrder modelOrder = optModelOrder.get();
 		Mission mission = modelOrder.getMission();
-		logger.info("Model order missioncode: " + mission.getCode());
+		logger.log(OrderMgrMessage.MODEL_ORDER_MISSIONCODE, mission.getCode());
 		
 		// Make sure order is in INITIAL state
 		if (!OrderState.INITIAL.equals(modelOrder.getOrderState()))	{
-			throw new IllegalArgumentException(logError(MSG_ILLEGAL_ORDER_STATE, MSG_ID_ILLEGAL_ORDER_STATE));
+			throw new IllegalArgumentException(logger.log(OrderMgrMessage.ILLEGAL_ORDER_STATE));
 		}
 		
 		// Update modified attributes
@@ -644,14 +527,14 @@ public class ProcessingOrderMgr {
 
 			// Check whether the requested state change (if any) is allowed and the user is authorized for it
 			if (OrderState.APPROVED.equals(changedOrder.getOrderState()) && !securityService.hasRole(UserRole.ORDER_APPROVER)) {
-				throw new SecurityException(logError(MSG_STATE_TRANSITION_FORBIDDEN, MSG_ID_STATE_TRANSITION_FORBIDDEN,
+				throw new SecurityException(logger.log(OrderMgrMessage.STATE_TRANSITION_FORBIDDEN,
 						modelOrder.getOrderState().toString(), changedOrder.getOrderState().toString(), securityService.getUser()));			
 			}
 
 			try {
 				modelOrder.setOrderState(changedOrder.getOrderState());
 			} catch (IllegalStateException e) {
-				throw new IllegalArgumentException(logError(MSG_ILLEGAL_STATE_TRANSITION, MSG_ID_ILLEGAL_STATE_TRANSITION,
+				throw new IllegalArgumentException(logger.log(OrderMgrMessage.ILLEGAL_STATE_TRANSITION,
 						modelOrder.getOrderState().toString(), changedOrder.getOrderState().toString()));
 			}
 		}
@@ -697,7 +580,7 @@ public class ProcessingOrderMgr {
 			}
 			// Ensure stop time is not before start time
 			if (modelOrder.getStopTime().isBefore(modelOrder.getStartTime())) {
-				throw new IllegalArgumentException(logError(MSG_NEGATIVE_DURATION, MSG_ID_NEGATIVE_DURATION, modelOrder.getIdentifier(),
+				throw new IllegalArgumentException(logger.log(OrderMgrMessage.NEGATIVE_DURATION, modelOrder.getIdentifier(),
 						OrbitTimeFormatter.format(modelOrder.getStartTime()), OrbitTimeFormatter.format(modelOrder.getStopTime())));
 			}
 		}
@@ -710,7 +593,7 @@ public class ProcessingOrderMgr {
 				|| null != modelOrder.getSliceDuration() && !modelOrder.getSliceDuration().equals(changedOrder.getSliceDuration())) {
 			// Ensure slice duration is given for slicing type TIME_SLICE
 			if (OrderSlicingType.TIME_SLICE.equals(modelOrder.getSlicingType()) && null == changedOrder.getSliceDuration()) {
-				throw new IllegalArgumentException(logError(MSG_SLICE_DURATION_MISSING, MSG_ID_SLICE_DURATION_MISSING, modelOrder.getIdentifier()));
+				throw new IllegalArgumentException(logger.log(OrderMgrMessage.SLICE_DURATION_MISSING, modelOrder.getIdentifier()));
 			}
 			orderChanged = true;
 			stateChangeOnly = false;
@@ -719,7 +602,7 @@ public class ProcessingOrderMgr {
 		if (!modelOrder.getSliceOverlap().equals(changedOrder.getSliceOverlap())) {
 			// Ensure no slice overlap (or 0) is set for slicing type NONE
 			if (OrderSlicingType.NONE.equals(modelOrder.getSlicingType()) && !Duration.ZERO.equals(changedOrder.getSliceOverlap()) ) {
-				throw new IllegalArgumentException(logError(MSG_INVALID_SLICE_OVERLAP, MSG_ID_INVALID_SLICE_OVERLAP, modelOrder.getIdentifier(), changedOrder.getSliceOverlap().toString()));
+				throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_SLICE_OVERLAP, modelOrder.getIdentifier(), changedOrder.getSliceOverlap().toString()));
 			}
 			orderChanged = true;
 			stateChangeOnly = false;
@@ -761,7 +644,7 @@ public class ProcessingOrderMgr {
 					ProductClass productClass = RepositoryService.getProductClassRepository()
 							.findByMissionCodeAndProductType(mission.getCode(), restInputFilter.getProductClass());
 					if (null == productClass) {
-						throw new IllegalArgumentException(logError(MSG_INVALID_INPUT_CLASS, MSG_ID_INVALID_INPUT_CLASS,
+						throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_INPUT_CLASS,
 								restInputFilter.getProductClass(), mission.getCode()));
 					}
 					if (inputFilter.equals(modelOrder.getInputFilters().get(productClass))) {
@@ -798,7 +681,7 @@ public class ProcessingOrderMgr {
 				ProductClass productClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
 						mission.getCode(), restClassOutputParameter.getProductClass());
 				if (null == productClass) {
-					throw new IllegalArgumentException(logError(MSG_INVALID_OUTPUT_CLASS, MSG_ID_INVALID_OUTPUT_CLASS, 
+					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_OUTPUT_CLASS, 
 							restClassOutputParameter.getProductClass(), mission.getCode()));
 				}
 				if (classOutputParameter.equals(modelOrder.getClassOutputParameters().get(productClass))) {
@@ -835,7 +718,7 @@ public class ProcessingOrderMgr {
 				stateChangeOnly = false;
 				ProductClass newRequestedClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(order.getMissionCode(), requestedProductClass);
 				if (null == newRequestedClass) {
-					throw new IllegalArgumentException(logError(MSG_INVALID_REQUESTED_CLASS, MSG_ID_INVALID_REQUESTED_CLASS,
+					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_REQUESTED_CLASS,
 							requestedProductClass, order.getMissionCode()));
 				}
 				newRequestedProductClasses.add(newRequestedClass);
@@ -879,7 +762,7 @@ public class ProcessingOrderMgr {
 				stateChangeOnly = false;
 				ProductClass newInputClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(order.getMissionCode(), inputProductClass);
 				if (null == newInputClass) {
-					throw new IllegalArgumentException(logError(MSG_INVALID_INPUT_CLASS, MSG_ID_INVALID_INPUT_CLASS,
+					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_INPUT_CLASS,
 							inputProductClass, order.getMissionCode()));
 				}
 				newInputProductClasses.add(newInputClass);
@@ -896,7 +779,7 @@ public class ProcessingOrderMgr {
 
 		if (!modelOrder.getOutputFileClass().equals(changedOrder.getOutputFileClass())) {
 			if (!mission.getFileClasses().contains(changedOrder.getOutputFileClass())) {
-				throw new IllegalArgumentException(logError(MSG_INVALID_FILE_CLASS, MSG_ID_INVALID_FILE_CLASS,
+				throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_FILE_CLASS,
 						changedOrder.getOutputFileClass(), order.getMissionCode()));
 			}
 			orderChanged = true;
@@ -905,7 +788,7 @@ public class ProcessingOrderMgr {
 		}		
 		if (!modelOrder.getProcessingMode().equals(changedOrder.getProcessingMode())) {
 			if (!mission.getProcessingModes().contains(changedOrder.getProcessingMode())) {
-				throw new IllegalArgumentException(logError(MSG_INVALID_PROCESSING_MODE, MSG_ID_INVALID_PROCESSING_MODE,
+				throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_PROCESSING_MODE,
 						changedOrder.getProcessingMode(), order.getMissionCode()));
 			}
 			orderChanged = true;
@@ -931,7 +814,7 @@ public class ProcessingOrderMgr {
 				ConfiguredProcessor newConfiguredProcessor = RepositoryService.getConfiguredProcessorRepository()
 						.findByMissionCodeAndIdentifier(order.getMissionCode(), changedConfiguredProcessor);
 				if (null == newConfiguredProcessor) {
-					throw new IllegalArgumentException(logError(MSG_INVALID_CONFIGURED_PROCESSOR, MSG_ID_INVALID_CONFIGURED_PROCESSOR,
+					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_CONFIGURED_PROCESSOR,
 							changedConfiguredProcessor));
 				}
 				newConfiguredProcessors.add(newConfiguredProcessor);
@@ -956,7 +839,7 @@ public class ProcessingOrderMgr {
 						changedOrbitQuery.getOrbitNumberFrom().intValue(),
 						changedOrbitQuery.getOrbitNumberTo().intValue());
 				if (changedRequestedOrbits.isEmpty()) {
-					throw new IllegalArgumentException(logError(MSG_INVALID_ORBIT_RANGE, MSG_ID_INVALID_ORBIT_RANGE,
+					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_ORBIT_RANGE,
 							changedOrbitQuery.getOrbitNumberFrom(),
 							changedOrbitQuery.getOrbitNumberTo(),
 							changedOrbitQuery.getSpacecraftCode()));
@@ -1009,7 +892,7 @@ public class ProcessingOrderMgr {
 		// Check for forbidden order data modifications
 		if (orderChanged && !stateChangeOnly) {
 			if (!securityService.hasRole(UserRole.ORDER_MGR)) {
-				throw new SecurityException(logError(MSG_ORDER_MODIFICATION_FORBIDDEN, MSG_ID_ORDER_MODIFICATION_FORBIDDEN,
+				throw new SecurityException(logger.log(OrderMgrMessage.ORDER_MODIFICATION_FORBIDDEN,
 						securityService.getUser()));			
 			}
 		}
@@ -1034,9 +917,9 @@ public class ProcessingOrderMgr {
 			
 			// Persist the modified order
 			modelOrder = RepositoryService.getOrderRepository().save(modelOrder);
-			logInfo(MSG_ORDER_MODIFIED, MSG_ID_ORDER_MODIFIED, id);
+			logger.log(OrderMgrMessage.ORDER_MODIFIED, id);
 		} else {
-			logInfo(MSG_ORDER_NOT_MODIFIED, MSG_ID_ORDER_NOT_MODIFIED, id);
+			logger.log(OrderMgrMessage.ORDER_NOT_MODIFIED, id);
 		}
 		return OrderUtil.toRestOrder(modelOrder);
 
@@ -1067,7 +950,7 @@ public class ProcessingOrderMgr {
 		} else {
 			// Ensure user is authorized for the requested mission
 			if (!securityService.isAuthorizedForMission(mission)) {
-				throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+				throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 						mission, securityService.getMission()));
 			} 
 		}
@@ -1128,10 +1011,10 @@ public class ProcessingOrderMgr {
 		}
 
 		if (result.isEmpty()) {
-			throw new NoResultException(logError(MSG_ORDER_LIST_EMPTY, MSG_ID_ORDER_LIST_EMPTY));
+			throw new NoResultException(logger.log(OrderMgrMessage.ORDER_LIST_EMPTY));
 			
 		}
-		logInfo(MSG_ORDER_LIST_RETRIEVED, MSG_ID_ORDER_LIST_RETRIEVED, result.size(), mission, identifier, startTimeFrom, startTimeTo);
+		logger.log(OrderMgrMessage.ORDER_LIST_RETRIEVED, result.size(), mission, identifier, startTimeFrom, startTimeTo);
 		return result;
 
 	}

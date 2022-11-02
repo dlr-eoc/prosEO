@@ -5,8 +5,6 @@
  */
 package de.dlr.proseo.ui.cli;
 
-import static de.dlr.proseo.ui.backend.UIMessages.*;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -21,8 +19,6 @@ import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
@@ -33,6 +29,9 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 import java.util.Date;
@@ -55,7 +54,7 @@ public class CLIUtil {
 	public static final String FILE_FORMAT_XML = "XML";
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(CLIUtil.class);
+	private static ProseoLogger logger = new ProseoLogger(CLIUtil.class);
 	
 	/**
 	 * Helper class to return username and password from a method
@@ -92,24 +91,20 @@ public class CLIUtil {
 			mapper = new ObjectMapper(new YAMLFactory());
 			break;
 		default:
-			String message = uiMsg(MSG_ID_INVALID_FILE_TYPE, fileFormat);
-			logger.error(message);
+			String message = logger.log(UIMessage.INVALID_FILE_TYPE, fileFormat);
 			throw new IllegalArgumentException(message);
 		}
 		
 		try {
 			return mapper.readValue(objectFile, clazz);
 		} catch (JsonParseException e) {
-			String message = uiMsg(MSG_ID_INVALID_FILE_SYNTAX, objectFile.toString(), fileFormat, e.getMessage());
-			logger.error(message);
+			String message = logger.log(UIMessage.INVALID_FILE_SYNTAX, objectFile.toString(), fileFormat, e.getMessage());
 			throw new IllegalArgumentException(message, e);
 		} catch (JsonMappingException e) {
-			String message = uiMsg(MSG_ID_INVALID_FILE_STRUCTURE, fileFormat, objectFile.toString(), e.getMessage());
-			logger.error(message);
+			String message = logger.log(UIMessage.INVALID_FILE_STRUCTURE, fileFormat, objectFile.toString(), e.getMessage());
 			throw new IllegalArgumentException(message, e);
 		} catch (IOException e) {
-			String message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
-			logger.error(message);
+			String message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 			throw new IOException(message, e);
 		}
 	}
@@ -140,8 +135,7 @@ public class CLIUtil {
 			mapper = new ObjectMapper(new YAMLFactory());
 			break;
 		default:
-			String message = uiMsg(MSG_ID_INVALID_FILE_TYPE, fileFormat);
-			logger.error(message);
+			String message = logger.log(UIMessage.INVALID_FILE_TYPE, fileFormat);
 			throw new IllegalArgumentException(message);
 		}
 		mapper.enable(SerializationFeature.INDENT_OUTPUT);
@@ -155,15 +149,13 @@ public class CLIUtil {
 			}
 			out.println(mapper.writeValueAsString(objectToPrint));
 		} catch (JsonGenerationException e) {
-			String message = uiMsg(MSG_ID_GENERATION_EXCEPTION, object, fileFormat, e.getMessage());
-			logger.error(message);
+			String message = logger.log(UIMessage.GENERATION_EXCEPTION, object, fileFormat, e.getMessage());
 			throw new IllegalArgumentException(message, e);
 		} catch (JsonMappingException e) {
-			String message = uiMsg(MSG_ID_MAPPING_EXCEPTION, object, fileFormat, e.getMessage());
-			logger.error(message);
+			String message = logger.log(UIMessage.MAPPING_EXCEPTION, object, fileFormat, e.getMessage());
 			throw new IllegalArgumentException(message, e);
 		} catch (IOException e) {
-			logger.error(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage());
 			throw e;
 		}
 	}
@@ -185,8 +177,7 @@ public class CLIUtil {
 		try {
 			attributeField = restObject.getClass().getDeclaredField(paramParts[0]);
 		} catch (Exception e) {
-			String message = (uiMsg(MSG_ID_INVALID_ATTRIBUTE_NAME, paramParts[0]));
-			logger.error(message);
+			String message = logger.log(UIMessage.INVALID_ATTRIBUTE_NAME, paramParts[0]);
 			throw new IllegalArgumentException(message);
 		}
 		try {
@@ -211,8 +202,7 @@ public class CLIUtil {
 				attributeField.set(restObject, paramParts[1]);
 			} else {
 				// Attribute type not supported
-				String message = uiMsg(MSG_ID_INVALID_ATTRIBUTE_TYPE, paramParts[0], attributeField.getType().toString());
-				logger.error(message);
+				String message = logger.log(UIMessage.INVALID_ATTRIBUTE_TYPE, paramParts[0], attributeField.getType().toString());
 				if (null != System.console()) System.err.println(message);
 				throw new ClassCastException(message);
 			}
@@ -220,13 +210,11 @@ public class CLIUtil {
 			// Already formatted, rethrow
 			throw e;
 		} catch (IllegalArgumentException | DateTimeException e) {
-			String message = uiMsg(MSG_ID_INVALID_ATTRIBUTE_TYPE, paramParts[0], attributeField.getType().toString());
-			logger.error(message);
+			String message = logger.log(UIMessage.INVALID_ATTRIBUTE_TYPE, paramParts[0], attributeField.getType().toString());
 			if (null != System.console()) System.err.println(message);
 			throw new ClassCastException(message);
 		} catch (Exception e) {
-			String message = uiMsg(MSG_ID_REFLECTION_EXCEPTION, paramParts[0], e.getMessage());
-			logger.error(message);
+			String message = logger.log(UIMessage.REFLECTION_EXCEPTION, paramParts[0], e.getMessage());
 			if (null != System.console()) System.err.println(message);
 			throw new RuntimeException(message, e);
 		}
@@ -288,21 +276,18 @@ public class CLIUtil {
 					permissions = Files.getPosixFilePermissions(filePath);
 				} catch (UnsupportedOperationException e) {
 					// On file systems not supporting POSIX permissions (e. g. Windows FAT) we shrug and just log a warning
-					String message = uiMsg(MSG_ID_CREDENTIALS_INSECURE, filePathString);
-					logger.warn(message);
+					String message = logger.log(UIMessage.WARN_CREDENTIALS_INSECURE, filePathString);
 					permissions = null;
 				}
 				if (null != permissions && 
 						(permissions.contains(PosixFilePermission.GROUP_READ) 
 					  || permissions.contains(PosixFilePermission.OTHERS_READ))) {
-					String message = uiMsg(MSG_ID_CREDENTIALS_INSECURE, filePathString);
-					logger.error(message);
+					String message = logger.log(UIMessage.CREDENTIALS_INSECURE, filePathString);
 					System.err.println(message);
 					throw new SecurityException(message);
 				}
 			} else {
-				String message = uiMsg(MSG_ID_CREDENTIALS_NOT_FOUND, filePathString);
-				logger.error(message);
+				String message = logger.log(UIMessage.CREDENTIALS_NOT_FOUND, filePathString);
 				System.err.println(message);
 				throw new FileNotFoundException(message);
 			}
@@ -311,8 +296,7 @@ public class CLIUtil {
 			BufferedReader credentialFile = new BufferedReader(new FileReader(filePathString));
 			credentials.username = credentialFile.readLine();
 			if (null == credentials.username || credentials.username.isBlank()) {
-				String message = uiMsg(MSG_ID_INVALID_IDENT_FILE, filePathString);
-				logger.error(message);
+				String message = logger.log(UIMessage.INVALID_IDENT_FILE, filePathString);
 				System.err.println(message);
 				credentialFile.close();
 				throw new SecurityException(message);
@@ -320,16 +304,14 @@ public class CLIUtil {
 			credentials.password = credentialFile.readLine();
 			credentialFile.close();
 			if (null == credentials.password || credentials.password.isBlank()) {
-				String message = uiMsg(MSG_ID_INVALID_IDENT_FILE, filePathString);
-				logger.error(message);
+				String message = logger.log(UIMessage.INVALID_IDENT_FILE, filePathString);
 				System.err.println(message);
 				throw new SecurityException(message);
 			}
 		} catch (IOException e) {
 			if (e instanceof FileNotFoundException) throw e;
 			
-			String message = uiMsg(MSG_ID_CREDENTIALS_NOT_READABLE, filePathString, e.getMessage());
-			logger.error(message);
+			String message = logger.log(UIMessage.CREDENTIALS_NOT_READABLE, filePathString, e.getMessage());
 			System.err.println(message);
 			throw new IOException(message, e);
 		}

@@ -30,10 +30,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
@@ -58,7 +57,7 @@ public class ProcessingOrder extends PersistentObject {
 	/**
 	 * Logger of this class
 	 */
-	private static Logger logger = LoggerFactory.getLogger(ProcessingOrder.class);
+	private static ProseoLogger logger = new ProseoLogger(ProcessingOrder.class);
 	
 	private static final String MSG_ILLEGAL_STATE_TRANSITION = "Illegal order state transition from %s to %s";
 
@@ -827,7 +826,7 @@ public class ProcessingOrder extends PersistentObject {
 		if (!(obj instanceof ProcessingOrder))
 			return false;
 		ProcessingOrder other = (ProcessingOrder) obj;
-		return Objects.equals(identifier, other.identifier) && Objects.equals(mission, other.mission);
+		return Objects.equals(identifier, other.getIdentifier()) && Objects.equals(mission, other.getMission());
 	}
 
 	@Override

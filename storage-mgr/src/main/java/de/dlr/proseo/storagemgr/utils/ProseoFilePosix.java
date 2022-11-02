@@ -336,7 +336,7 @@ public class ProseoFilePosix extends ProseoFile {
 		        }
 		    }
 			result.add(getFullPath());
-		} else {
+		} else if (srcFile.exists()) {
 			srcFile.delete();
 			result.add(getFullPath());
 		}

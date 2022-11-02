@@ -16,10 +16,10 @@
 -docencoding
 'UTF-8'
 -doctitle
-'prosEO Storage Manager 0.9.2 API'
+'prosEO Storage Manager 0.9.3-SNAPSHOT API'
 -linkoffline
 'https://docs.oracle.com/en/java/javase/11/docs/api' '/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/storage-mgr/target/javadoc-bundle-options'
 -use
 -version
 -windowtitle
-'prosEO Storage Manager 0.9.2 API'
+'prosEO Storage Manager 0.9.3-SNAPSHOT API'

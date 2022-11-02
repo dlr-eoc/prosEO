@@ -6,8 +6,6 @@
 
 package de.dlr.proseo.monitor;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -24,6 +22,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.monitor.microservice.MonServiceAggregation;
 import de.dlr.proseo.monitor.microservice.MonitorServices;
 import de.dlr.proseo.monitor.order.MonitorOrders;
@@ -41,7 +40,7 @@ import de.dlr.proseo.monitor.product.MonitorProducts;
 @EnableJpaRepositories("de.dlr.proseo.model.dao")
 public class MonitorApplication implements CommandLineRunner {
 
-	private static Logger logger = LoggerFactory.getLogger(MonitorApplication.class);
+	private static ProseoLogger logger = new ProseoLogger(MonitorApplication.class);
 
 	/**
 	 * Some constant definition for public use.
