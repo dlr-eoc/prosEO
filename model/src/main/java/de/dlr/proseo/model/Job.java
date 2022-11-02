@@ -52,7 +52,7 @@ public class Job extends PersistentObject {
 	 * those in status RUNNING, COMPLETED, FAILED and CLOSED).
 	 */
 	@Enumerated(EnumType.STRING)
-	private JobState jobState;
+	private JobState jobState = JobState.INITIAL;
 	
 	/** The orbit this job relates to (if any) */
 	@ManyToOne(fetch = FetchType.LAZY)

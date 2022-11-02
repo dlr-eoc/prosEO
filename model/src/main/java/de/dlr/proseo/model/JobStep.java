@@ -50,7 +50,7 @@ public class JobStep extends PersistentObject {
 	 * depending on processing progress.
 	 */
 	@Enumerated(EnumType.STRING)
-	private JobStepState jobStepState;
+	private JobStepState jobStepState = JobStepState.PLANNED;
 	
 	/** Additional parameter to set in the output products */
 	@ElementCollection
