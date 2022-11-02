@@ -5,8 +5,6 @@
  */
 package de.dlr.proseo.api.prip.rest;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -21,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.dlr.proseo.api.prip.OAuth2TokenManager;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.PripMessage;
 
 /**
  * Spring MVC controller for requesting an access token for the prosEO PRIP API; implements the services required to provide a RESTful API
@@ -43,7 +43,6 @@ public class OAuth2TokenController {
 	private static final String ERROR_RESPONSE_FORMAT = "{ \"error\" : \"%s\", \"error_description\" : \"%s\" }";
 	
 	/* Message string constants */
-	private static final String MSG_EXCEPTION = "Exception in OAuth2TokenController::getToken";
 	private static final String HTTP_MSG_PREFIX = "199 proseo-api-prip ";
 	
 	/** The OAuth2 token manager */
@@ -51,7 +50,7 @@ public class OAuth2TokenController {
 	private OAuth2TokenManager tokenManager;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(OAuth2TokenController.class);
+	private static ProseoLogger logger = new ProseoLogger(OAuth2TokenController.class);
 	
 	/**
 	 * Create an HTTP "Warning" header with the given text message
@@ -102,7 +101,7 @@ public class OAuth2TokenController {
 			
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).headers(errorHeaders(e.getMessage())).body(errorString);
 		} catch (Exception e) {
-			logger.error(MSG_EXCEPTION, e);
+			logger.log(PripMessage.MSG_EXCEPTION, e.getMessage(), e);
 			
 			String errorCode = null;
 			HttpStatus httpStatus = HttpStatus.BAD_REQUEST;

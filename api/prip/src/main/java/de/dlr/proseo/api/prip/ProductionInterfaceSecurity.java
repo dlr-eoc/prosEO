@@ -6,15 +6,11 @@
 package de.dlr.proseo.api.prip;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.event.Level;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpHeaders;
@@ -25,7 +21,8 @@ import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.api.prip.OAuth2TokenManager.UserInfo;
 import de.dlr.proseo.model.enums.UserRole;
-import de.dlr.proseo.api.prip.odata.LogUtil;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.PripMessage;
 
 /**
  * Security utility methods for PRIP API
@@ -37,15 +34,6 @@ public class ProductionInterfaceSecurity {
 
 	private static final String AUTH_TYPE_BASIC = "Basic";
 	private static final String AUTH_TYPE_BEARER = "Bearer";
-	// Message IDs
-	private static final int MSG_ID_HTTP_REQUEST_FAILED = 5003;
-	private static final int MSG_ID_AUTH_MISSING_OR_INVALID = 5050;
-	private static final int MSG_ID_NOT_AUTHORIZED_FOR_PRIP = 5051;
-	
-	// Message strings
-	private static final String MSG_HTTP_REQUEST_FAILED = "(E%d) HTTP request failed (cause: %s)";
-	private static final String MSG_AUTH_MISSING_OR_INVALID = "(E%d) Basic authentication missing or invalid: %s";
-	private static final String MSG_NOT_AUTHORIZED_FOR_PRIP = "(E%d) User %s\\%s not authorized for PRIP API";
 	
 	/** Information about the current user in this thread */
 	private ThreadLocal<UserInfo> userInfo = new ThreadLocal<>();
@@ -63,46 +51,7 @@ public class ProductionInterfaceSecurity {
 	private OAuth2TokenManager tokenManager;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProductionInterfaceSecurity.class);
-
-	/**
-	 * Create and log a formatted message at the given level
-	 * 
-	 * @param level the logging level to use
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted info message
-	 */
-	private String log(Level level, String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		if (Level.ERROR.equals(level)) {
-			logger.error(message);
-		} else if (Level.WARN.equals(level)) {
-			logger.warn(message);
-		} else {
-			logger.info(message);
-		}
-
-		return message;
-	}
-
-	/**
-	 * Create and log a formatted error message
-	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted error message
-	 */
-	private String logError(String messageFormat, int messageId, Object... messageParameters) {
-		return log(Level.ERROR, messageFormat, messageId, messageParameters);
-	}
+	private static ProseoLogger logger = new ProseoLogger(ProductionInterfaceSecurity.class);
 
 	/**
 	 * Parse an HTTP authentication header into mission, username and password and set the respective thread-local attributes
@@ -114,17 +63,17 @@ public class ProductionInterfaceSecurity {
 		if (logger.isTraceEnabled()) logger.trace(">>> parseAuthenticationHeader({})", authHeader);
 
 		if (null == authHeader) {
-			String message = LogUtil.logError(logger, MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
+			String message = logger.log(PripMessage.MSG_AUTH_MISSING_OR_INVALID, authHeader);
 			throw new IllegalArgumentException(message);
 		}
 		String[] authParts = authHeader.split(" ");
 		if (2 != authParts.length || !AUTH_TYPE_BASIC.equals(authParts[0])) {
-			String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
+			String message = logger.log(PripMessage.MSG_AUTH_MISSING_OR_INVALID, authHeader);
 			throw new IllegalArgumentException(message);
 		}
 		String[] missionUserPassword = (new String(Base64.getDecoder().decode(authParts[1]))).split("\\\\"); // --> regex "\\" --> matches "\"
 		if (2 != missionUserPassword.length) {
-			String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
+			String message = logger.log(PripMessage.MSG_AUTH_MISSING_OR_INVALID, authHeader);
 			throw new IllegalArgumentException(message);
 		}
 		String[] userPassword = missionUserPassword[1].split(":"); // guaranteed to work as per BasicAuth specification
@@ -148,7 +97,7 @@ public class ProductionInterfaceSecurity {
 		String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 		
 		if (null == authHeader) {
-			String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
+			String message = logger.log(PripMessage.MSG_AUTH_MISSING_OR_INVALID, authHeader);
 			throw new SecurityException(message);
 		}
 		
@@ -188,12 +137,10 @@ public class ProductionInterfaceSecurity {
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
 			entity = restTemplate.getForEntity(requestUrl, List.class);
 		} catch (HttpClientErrorException.Unauthorized e) {
-			String message = String.format(MSG_NOT_AUTHORIZED_FOR_PRIP, MSG_ID_NOT_AUTHORIZED_FOR_PRIP, userInfo.missionCode, userInfo.username);
-			logger.error(message);
+			String message = logger.log(PripMessage.MSG_NOT_AUTHORIZED_FOR_PRIP, userInfo.missionCode, userInfo.username);
 			throw new SecurityException(message);
 		} catch (Exception e) {
-			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
-			logger.error(message, e);
+			String message = logger.log(PripMessage.MSG_HTTP_REQUEST_FAILED, e.getMessage());
 			throw new SecurityException(message);
 		}
 		if (logger.isTraceEnabled()) logger.trace("... Authentication succeeded for user " + userInfo.missionCode + "\\" + userInfo.username);
@@ -207,8 +154,7 @@ public class ProductionInterfaceSecurity {
 		
 		// Check whether user is authorized to use the PRIP API
 		if (!userInfo.authorities.contains(UserRole.PRIP_USER.asRoleString())) {
-			String message = String.format(MSG_NOT_AUTHORIZED_FOR_PRIP, MSG_ID_NOT_AUTHORIZED_FOR_PRIP, userInfo.missionCode, userInfo.username);
-			logger.error(message);
+			String message = logger.log(PripMessage.MSG_NOT_AUTHORIZED_FOR_PRIP, userInfo.missionCode, userInfo.username);
 			throw new SecurityException(message);
 		}
 		

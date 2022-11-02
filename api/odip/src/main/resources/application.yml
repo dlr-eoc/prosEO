@@ -1,0 +1,23 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+        open-in-view: false
+        properties.hibernate.jdbc.time_zone: UTC
+    datasource:
+        url: jdbc:postgresql://proseo-db:5432/proseo
+        username: <db_user>
+        password: <db_pwd>
+logging:
+    file: /proseo/log/proseo-api-odip.log
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE
+        org.hibernate.engine.jdbc.env.internal: WARN
+proseo:
+    userManager.url: http://localhost:8086/proseo/user-mgr/v0.1
+    ingestor.url: http://localhost:8081/proseo/ingestor/v0.1
+    # Expiration time for OAuth2 tokens in seconds
+    token.expiration: 3600
+    # Maximum number of products to retrieve in a single query
+    quota: 5000

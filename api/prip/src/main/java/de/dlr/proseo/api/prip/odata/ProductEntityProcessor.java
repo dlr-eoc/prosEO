@@ -42,9 +42,6 @@ import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
 import org.apache.olingo.server.api.uri.queryoption.ExpandOption;
 import org.apache.olingo.server.api.uri.queryoption.SelectOption;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.event.Level;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpHeaders;
@@ -58,6 +55,8 @@ import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.api.prip.ProductionInterfaceConfiguration;
 import de.dlr.proseo.api.prip.ProductionInterfaceSecurity;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.PripMessage;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.enums.UserRole;
@@ -74,38 +73,6 @@ import de.dlr.proseo.model.enums.UserRole;
 @Transactional
 public class ProductEntityProcessor implements EntityProcessor, MediaEntityProcessor {
 
-	/* Message ID constants */
-	private static final int MSG_ID_INVALID_ENTITY_TYPE = 5001;
-	private static final int MSG_ID_URI_GENERATION_FAILED = 5002;
-	private static final int MSG_ID_HTTP_REQUEST_FAILED = 5003;
-	private static final int MSG_ID_SERVICE_REQUEST_FAILED = 5004;
-	private static final int MSG_ID_NOT_AUTHORIZED_FOR_SERVICE = 5005;
-	private static final int MSG_ID_PRODUCT_NOT_FOUND = 5006;
-	private static final int MSG_ID_NOT_AUTHORIZED_FOR_PRODUCT = 5007;
-	private static final int MSG_ID_UNSUPPORTED_FORMAT = 5008;
-	private static final int MSG_ID_EXCEPTION = 5009;
-	private static final int MSG_ID_FORBIDDEN = 5100;
-	private static final int MSG_ID_PRODUCT_NOT_AVAILABLE = 5101;
-	private static final int MSG_ID_INVALID_RANGE_HEADER = 5102;
-	private static final int MSG_ID_REDIRECT = 5104;
-
-	/* Message string constants */
-	private static final String MSG_INVALID_ENTITY_TYPE = "(E%d) Invalid entity type %s referenced in service request";
-	private static final String MSG_URI_GENERATION_FAILED = "(E%d) URI generation from product UUID failed (cause: %s)";
-	private static final String MSG_HTTP_REQUEST_FAILED = "(E%d) HTTP request failed (cause: %s)";
-	private static final String MSG_SERVICE_REQUEST_FAILED = "(E%d) Service request failed with status %d (%s), cause: %s";
-	private static final String MSG_NOT_AUTHORIZED_FOR_SERVICE = "(E%d) User %s not authorized for requested service";
-	private static final String MSG_PRODUCT_NOT_FOUND = "(E%d) No product found with UUID %s";
-	private static final String MSG_NOT_AUTHORIZED_FOR_PRODUCT = "(E%d) User %s not authorized to access requested product %s";
-	private static final String MSG_EXCEPTION = "(E%d) Request failed (cause %s: %s)";
-	private static final String MSG_FORBIDDEN = "(E%d) Creation, update and deletion of products not allowed through PRIP";
-	private static final String MSG_PRODUCT_NOT_AVAILABLE = "(E%d) Product %s not available on any Processing Facility";
-	private static final String MSG_UNSUPPORTED_FORMAT = "(E%d) Unsupported response format %s";
-
-	private static final String MSG_INVALID_RANGE_HEADER = "(W%d) Ignoring invalid HTTP range header %s";
-
-	private static final String MSG_REDIRECT = "(I%d) Redirecting download request to Storage Manger URL %s";
-	
 	/* Other string constants */
 	private static final String HTTP_HEADER_WARNING = "Warning";
 
@@ -131,19 +98,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	private ProductionInterfaceSecurity securityConfig;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProductEntityProcessor.class);
-
-	/**
-	 * Create and log a formatted error message
-	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted error message
-	 */
-	private String logError(String messageFormat, int messageId, Object... messageParameters) {
-		return LogUtil.logError(logger, messageFormat, messageId, messageParameters);
-	}
+	private static ProseoLogger logger = new ProseoLogger(ProductEntityProcessor.class);
 
 	/**
 	 * Initializes the processor for each HTTP request - response cycle
@@ -182,16 +137,14 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 				throw new NoResultException();
 			}
 		} catch (NoResultException e) {
-			String message = String.format(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, productUuid);
-			logger.error(message);
+			String message = logger.log(PripMessage.MSG_PRODUCT_NOT_FOUND, productUuid);
 			throw new NoResultException(message);
 		}
 		Product modelProduct = (Product) resultObject;
 		
 		// Check mission
 		if (!securityConfig.getMission().equals(modelProduct.getProductClass().getMission().getCode())) {
-			String message = String.format(MSG_NOT_AUTHORIZED_FOR_PRODUCT, MSG_ID_NOT_AUTHORIZED_FOR_PRODUCT, productUuid);
-			logger.error(message);
+			String message = logger.log(PripMessage.MSG_NOT_AUTHORIZED_FOR_PRODUCT, productUuid);
 			throw new SecurityException(message);
 		}
 		
@@ -209,9 +162,8 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			if (securityConfig.hasRole(UserRole.PRODUCT_READER_ALL)) {
 				break;
 			}
-			String message = String.format(MSG_NOT_AUTHORIZED_FOR_PRODUCT, MSG_ID_NOT_AUTHORIZED_FOR_PRODUCT,
+			String message = logger.log(PripMessage.MSG_NOT_AUTHORIZED_FOR_PRODUCT, 
 					securityConfig.getMission() + "\\" + securityConfig.getUser(), productUuid);
-			logger.error(message);
 			throw new SecurityException(message);
 		}
 		
@@ -270,27 +222,24 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
 			entity = restTemplate.getForEntity(requestUrl, String.class);
 		} catch (HttpClientErrorException.Unauthorized e) {
-			String message = String.format(MSG_NOT_AUTHORIZED_FOR_SERVICE, MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, securityConfig.getUser());
-			logger.error(message);
+			String message = logger.log(PripMessage.MSG_NOT_AUTHORIZED_FOR_SERVICE, securityConfig.getUser());
 			throw new SecurityException(message);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
-			logger.error(String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED,
-					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING)));
+			logger.log(PripMessage.MSG_SERVICE_REQUEST_FAILED, 
+					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING));
 			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING));
 		} catch (RestClientException e) {
-			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
-			logger.error(message, e);
+			String message = logger.log(PripMessage.MSG_HTTP_REQUEST_FAILED, e.getMessage());
 			throw new RestClientException(message, e);
 		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
+			logger.log(PripMessage.MSG_EXCEPTION, e.getMessage(), e);
 			throw new RuntimeException(e);
 		}
 		
 		// All GET requests should return HTTP status OK
 		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
-			String message = String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED, 
+			String message = logger.log(PripMessage.MSG_SERVICE_REQUEST_FAILED,  
 					entity.getStatusCodeValue(), entity.getStatusCode().toString(), entity.getHeaders().getFirst(HTTP_HEADER_WARNING));
-			logger.error(message);
 			throw new RuntimeException(message);
 		}
 		
@@ -336,7 +285,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 				response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 				return;
 			} catch (URISyntaxException e) {
-				String message = logError(MSG_URI_GENERATION_FAILED, MSG_ID_URI_GENERATION_FAILED, e.getMessage());
+				String message = logger.log(PripMessage.MSG_URI_GENERATION_FAILED, e.getMessage());
 				response.setContent(serializer.error(
 						LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), message)).getContent());
 				response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
@@ -355,7 +304,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 				response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 				return;
 			} catch (Exception e) {
-				String message = logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
+				String message = logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
 				e.printStackTrace();
 				response.setContent(serializer.error(
 						LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message)).getContent());
@@ -364,7 +313,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 				return;
 			}
 		} else {
-			String message = logError(MSG_INVALID_ENTITY_TYPE, MSG_ID_INVALID_ENTITY_TYPE, edmEntitySet.getEntityType().getFullQualifiedName());
+			String message = logger.log(PripMessage.MSG_INVALID_ENTITY_TYPE, edmEntitySet.getEntityType().getFullQualifiedName());
 			response.setContent(serializer.error(
 					LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), message)).getContent());
 			response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
@@ -381,7 +330,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		// [4] Create a serializer based on the requested format (json)
 		if (!ContentType.APPLICATION_JSON.isCompatible(responseFormat)) {
 			// Any other format currently throws an exception (see Github issue #122)
-			String message = logError(MSG_UNSUPPORTED_FORMAT, MSG_ID_UNSUPPORTED_FORMAT, responseFormat.toContentTypeString());
+			String message = logger.log(PripMessage.MSG_UNSUPPORTED_FORMAT, responseFormat.toContentTypeString());
 			response.setContent(serializer.error(
 					LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), message)).getContent());
 			response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
@@ -454,7 +403,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 			return;
 		} catch (Exception e) {
-			String message = logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
+			String message = logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
 			e.printStackTrace();
 			response.setContent(serializer.error(
 					LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message)).getContent());
@@ -465,7 +414,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		
 		// Check whether the product is actually available on some processing facility
 		if (modelProduct.getProductFile().isEmpty()) {
-			String message = logError(MSG_PRODUCT_NOT_AVAILABLE, MSG_ID_PRODUCT_NOT_AVAILABLE, keyPredicates.get(0).getText());
+			String message = logger.log(PripMessage.MSG_PRODUCT_NOT_AVAILABLE, keyPredicates.get(0).getText());
 			response.setContent(serializer.error(
 					LogUtil.oDataServerError(HttpStatusCode.NOT_FOUND.getStatusCode(), message)).getContent());
 			response.setStatusCode(HttpStatusCode.NOT_FOUND.getStatusCode());
@@ -499,7 +448,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 			return;
 		} catch (Exception e) {
-			String message = logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
+			String message = logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
 			e.printStackTrace();
 			response.setContent(serializer.error(
 					LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message)).getContent());
@@ -518,7 +467,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			uriBuilder.addParameter("pathInfo", productFile.getFilePath() + "/" + productFileName);
 			uriBuilder.addParameter("token", downloadToken);
 		} catch (URISyntaxException e) {
-			String message = logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
+			String message = logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
 			e.printStackTrace();
 			response.setContent(serializer.error(
 					LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message)).getContent());
@@ -539,7 +488,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 					try {
 						if (rangeParts[0].isBlank()) {
 							if (rangeParts[1].isBlank()) {
-								LogUtil.log(logger, Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
+								logger.log(PripMessage.MSG_INVALID_RANGE_HEADER, rangeHeader);
 							} else {
 								// Range header format "bytes=-nnnn", i. e. last nnnn bytes to transfer
 								fromByte = toByte - Integer.parseInt(rangeParts[1]);
@@ -555,17 +504,17 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 						uriBuilder.addParameter("fromByte", String.valueOf(fromByte));
 						uriBuilder.addParameter("toByte", String.valueOf(toByte));
 					} catch (NumberFormatException e) {
-						LogUtil.log(logger, Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
+						logger.log(PripMessage.MSG_INVALID_RANGE_HEADER, rangeHeader);
 					}
 				} else {
-					LogUtil.log(logger, Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
+					logger.log(PripMessage.MSG_INVALID_RANGE_HEADER, rangeHeader);
 				}
 			} else {
-				LogUtil.log(logger, Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
+				logger.log(PripMessage.MSG_INVALID_RANGE_HEADER, rangeHeader);
 			} 
 		}
 		// Redirect the request to the download URI
-		LogUtil.log(logger, Level.INFO, MSG_REDIRECT, MSG_ID_REDIRECT, uriBuilder.toString());
+		logger.log(PripMessage.MSG_REDIRECT, uriBuilder.toString());
 		response.setStatusCode(HttpStatusCode.TEMPORARY_REDIRECT.getStatusCode());
 		response.setHeader(HttpHeader.LOCATION, uriBuilder.toString());
 		response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
@@ -583,7 +532,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		if (logger.isTraceEnabled()) logger.trace(">>> createEntity({}, {}, {}, {}, {})", request, response, uriInfo, requestFormat, responseFormat);
 		
 		response.setStatusCode(HttpStatusCode.FORBIDDEN.getStatusCode());
-		response.setHeader(HTTP_HEADER_WARNING, logError(MSG_FORBIDDEN, MSG_ID_FORBIDDEN));
+		response.setHeader(HTTP_HEADER_WARNING, logger.log(PripMessage.MSG_FORBIDDEN));
 	}
 
 	@Override
@@ -592,7 +541,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteEntity({}, {}, {})", request, response, uriInfo);
 		
 		response.setStatusCode(HttpStatusCode.FORBIDDEN.getStatusCode());
-		response.setHeader(HTTP_HEADER_WARNING, logError(MSG_FORBIDDEN, MSG_ID_FORBIDDEN));
+		response.setHeader(HTTP_HEADER_WARNING, logger.log(PripMessage.MSG_FORBIDDEN));
 	}
 
 	@Override
@@ -601,7 +550,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		if (logger.isTraceEnabled()) logger.trace(">>> updateEntity({}, {}, {}, {}, {})", request, response, uriInfo, requestFormat, responseFormat);
 		
 		response.setStatusCode(HttpStatusCode.FORBIDDEN.getStatusCode());
-		response.setHeader(HTTP_HEADER_WARNING, logError(MSG_FORBIDDEN, MSG_ID_FORBIDDEN));
+		response.setHeader(HTTP_HEADER_WARNING, logger.log(PripMessage.MSG_FORBIDDEN));
 	}
 
 	@Override
@@ -610,7 +559,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		if (logger.isTraceEnabled()) logger.trace(">>> createMediaEntity({}, {}, {}, {}, {})", request, response, uriInfo, requestFormat, responseFormat);
 		
 		response.setStatusCode(HttpStatusCode.FORBIDDEN.getStatusCode());
-		response.setHeader(HTTP_HEADER_WARNING, logError(MSG_FORBIDDEN, MSG_ID_FORBIDDEN));
+		response.setHeader(HTTP_HEADER_WARNING, logger.log(PripMessage.MSG_FORBIDDEN));
 	}
 
 	@Override
@@ -619,7 +568,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteMediaEntity({}, {}, {})", request, response, uriInfo);
 		
 		response.setStatusCode(HttpStatusCode.FORBIDDEN.getStatusCode());
-		response.setHeader(HTTP_HEADER_WARNING, logError(MSG_FORBIDDEN, MSG_ID_FORBIDDEN));
+		response.setHeader(HTTP_HEADER_WARNING, logger.log(PripMessage.MSG_FORBIDDEN));
 	}
 
 	@Override
@@ -628,7 +577,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		if (logger.isTraceEnabled()) logger.trace(">>> updateMediaEntity({}, {}, {}, {}, {})", request, response, uriInfo, requestFormat, responseFormat);
 		
 		response.setStatusCode(HttpStatusCode.FORBIDDEN.getStatusCode());
-		response.setHeader(HTTP_HEADER_WARNING, logError(MSG_FORBIDDEN, MSG_ID_FORBIDDEN));
+		response.setHeader(HTTP_HEADER_WARNING, logger.log(PripMessage.MSG_FORBIDDEN));
 	}
 
 }

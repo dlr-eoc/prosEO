@@ -1,0 +1,14 @@
+#%RAML 1.0 DataType
+#  CscChecksum:
+    type: object
+    properties:
+      Algorithm:
+        type: string
+        description: The checksum algorithm (e. g. MD5)
+      Value:
+        type: string
+        description: The checksum value
+      ChecksumDate:
+        type: string
+        description: Date and time the checksum was computed
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{3}Z$

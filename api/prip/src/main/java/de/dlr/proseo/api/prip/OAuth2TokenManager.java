@@ -13,8 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
@@ -31,8 +29,9 @@ import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
-import de.dlr.proseo.api.prip.odata.LogUtil;
 import de.dlr.proseo.api.prip.rest.model.OAuth2Response;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.PripMessage;
 
 /**
  * Class for managing OAuth2 tokens and to access user information based on OAuth2 tokens
@@ -44,25 +43,6 @@ public class OAuth2TokenManager {
 
 	private static final String GRANT_TYPE_CLIENT_CREDENTIALS = "client_credentials";
 	private static final String GRANT_TYPE_PASSWORD = "password";
-	/* Message ID constants */
-	private static final int MSG_ID_TOKEN_CREATED = 5200;
-	private static final int MSG_ID_TOKEN_INVALID = 5201;
-	private static final int MSG_ID_TOKEN_EXPIRED = 5202;
-	private static final int MSG_ID_GRANT_TYPE_INVALID = 5203;
-	private static final int MSG_ID_USERNAME_INVALID = 5204;
-	private static final int MSG_ID_CREDENTIAL_MISMATCH = 5205;
-	private static final int MSG_ID_SUPERFLUOUS_PARAMETERS = 5206;
-	private static final int MSG_ID_EXCEPTION = 5009;
-	
-	/* Message string constants */
-	private static final String MSG_TOKEN_CREATED = "(I%d) OAuth2 token created for user %s";
-	private static final String MSG_TOKEN_INVALID = "(E%d) Authentication token %s invalid (cause: %s)";
-	private static final String MSG_TOKEN_EXPIRED = "(E%d) Authentication token expired at %s";
-	private static final String MSG_GRANT_TYPE_INVALID = "(E%d) Invalid grant type %s";
-	private static final String MSG_USERNAME_INVALID = "(E%d) Invalid username parameter %s";
-	private static final String MSG_CREDENTIAL_MISMATCH = "(E%d) Username and password do not match Authorization header";
-	private static final String MSG_SUPERFLUOUS_PARAMETERS = "(E%d) Superfluous query parameter(s) found (no credentials allowed for 'client_credentials' flow)";
-	private static final String MSG_EXCEPTION = "(E%d) Request failed (cause %s: %s)";
 	
 	/* Submessages for token evaluation */
 	private static final String MSG_TOKEN_PAYLOAD_INVALID = "The payload of the JWT doesn't represent a valid JSON object and a JWT claims set";
@@ -93,7 +73,7 @@ public class OAuth2TokenManager {
 	private ProductionInterfaceSecurity securityConfig;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(OAuth2TokenManager.class);
+	private static ProseoLogger logger = new ProseoLogger(OAuth2TokenManager.class);
 	
 	/**
 	 * Information about a user including cached password for authentication with prosEO backend services and authorities
@@ -164,14 +144,14 @@ public class OAuth2TokenManager {
 			// We need exactly 256 bits (32 bytes) of key length, so a shorter key will be filled with blanks, a longer key will be truncated
 			signer = new MACSigner(TOKEN_SECRET);
 		} catch (KeyLengthException e) {
-			throw new RuntimeException(LogUtil.logError(logger, MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage()));
+			throw new RuntimeException(logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage()));
 		}
 		
 		SignedJWT signedJWT = new SignedJWT(header, claims);
 		try {
 			signedJWT.sign(signer);
 		} catch (JOSEException e) {
-			throw new RuntimeException(LogUtil.logError(logger, MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage()));
+			throw new RuntimeException(logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage()));
 		}
 		
 		// Everything OK, save the user info
@@ -211,20 +191,20 @@ public class OAuth2TokenManager {
 			// Split username parameter into mission code and actual user name
 			String[] usernameParts = username.split("\\\\");
 			if (2 != usernameParts.length) {
-				throw new IllegalArgumentException(LogUtil.logError(logger, MSG_USERNAME_INVALID, MSG_ID_USERNAME_INVALID, username));
+				throw new IllegalArgumentException(logger.log(PripMessage.MSG_USERNAME_INVALID, username));
 			}
 			// User name and password must match information from Authorization header
 			if (!userInfo.missionCode.equals(usernameParts[0]) || !userInfo.username.equals(usernameParts[1]) || !userInfo.password.equals(password)) {
-				throw new IllegalArgumentException(LogUtil.logError(logger, MSG_CREDENTIAL_MISMATCH, MSG_ID_CREDENTIAL_MISMATCH, username));
+				throw new IllegalArgumentException(logger.log(PripMessage.MSG_CREDENTIAL_MISMATCH, username));
 			}
 			break;
 		case GRANT_TYPE_CLIENT_CREDENTIALS:
 			if (null != username || null != password) {
-				throw new IllegalArgumentException(LogUtil.logError(logger, MSG_SUPERFLUOUS_PARAMETERS, MSG_ID_SUPERFLUOUS_PARAMETERS));
+				throw new IllegalArgumentException(logger.log(PripMessage.MSG_SUPERFLUOUS_PARAMETERS));
 			}
 			break;
 		default:
-			throw new UnsupportedOperationException(LogUtil.logError(logger, MSG_GRANT_TYPE_INVALID, MSG_ID_GRANT_TYPE_INVALID, grantType));
+			throw new UnsupportedOperationException(logger.log(PripMessage.MSG_GRANT_TYPE_INVALID, grantType));
 		}
 		
 		// Create token
@@ -235,7 +215,7 @@ public class OAuth2TokenManager {
 		response.setExpiresIn(config.getTokenExpirationPeriod());
 		response.setTokenType("bearer");
 		
-		LogUtil.logInfo(logger, MSG_TOKEN_CREATED, MSG_ID_TOKEN_CREATED, username);
+		logger.log(PripMessage.MSG_TOKEN_CREATED, username);
 		
 		return response;
 	}
@@ -255,25 +235,25 @@ public class OAuth2TokenManager {
 		try {
 			signedJWT = SignedJWT.parse(token);
 		} catch (ParseException e) {
-			throw new SecurityException(LogUtil.logError(logger, MSG_TOKEN_INVALID, MSG_ID_TOKEN_INVALID, token, MSG_TOKEN_NOT_PARSEABLE));
+			throw new SecurityException(logger.log(PripMessage.MSG_TOKEN_INVALID, token, MSG_TOKEN_NOT_PARSEABLE));
 		}
 		
 		JWSVerifier verifier = null;
 		try {
 			verifier = new MACVerifier(TOKEN_SECRET);
 		} catch (JOSEException e) {
-			throw new RuntimeException(LogUtil.logError(logger, MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage()));
+			throw new RuntimeException(logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage()));
 		}
 
 		try {
 			if (!signedJWT.verify(verifier)) {
-				throw new SecurityException(LogUtil.logError(logger, MSG_TOKEN_INVALID, MSG_ID_TOKEN_INVALID, token, MSG_TOKEN_VERIFICATION_FAILED));
+				throw new SecurityException(logger.log(PripMessage.MSG_TOKEN_INVALID, token, MSG_TOKEN_VERIFICATION_FAILED));
 			};
 		} catch (IllegalStateException e) {
-			throw new SecurityException(LogUtil.logError(logger, MSG_TOKEN_INVALID, MSG_ID_TOKEN_INVALID, token, 
+			throw new SecurityException(logger.log(PripMessage.MSG_TOKEN_INVALID, token, 
 					MSG_TOKEN_STATE_INVALID + signedJWT.getState()));
 		} catch (JOSEException e) {
-			throw new SecurityException(LogUtil.logError(logger, MSG_TOKEN_INVALID, MSG_ID_TOKEN_INVALID, token, MSG_TOKEN_NOT_VERIFIABLE));
+			throw new SecurityException(logger.log(PripMessage.MSG_TOKEN_INVALID, token, MSG_TOKEN_NOT_VERIFIABLE));
 		}
 		
 		// Retrieve / verify the JWT claims according to the app requirements
@@ -281,21 +261,21 @@ public class OAuth2TokenManager {
 		try {
 			claimsSet = signedJWT.getJWTClaimsSet();
 		} catch (ParseException e) {
-			throw new SecurityException(LogUtil.logError(logger, MSG_TOKEN_INVALID, MSG_ID_TOKEN_INVALID, token, MSG_TOKEN_PAYLOAD_INVALID));
+			throw new SecurityException(logger.log(PripMessage.MSG_TOKEN_INVALID, token, MSG_TOKEN_PAYLOAD_INVALID));
 		}
 		if (null == claimsSet.getSubject() || null == claimsSet.getExpirationTime()) {
-			throw new SecurityException(LogUtil.logError(logger, MSG_TOKEN_INVALID, MSG_ID_TOKEN_INVALID, token, MSG_TOKEN_PAYLOAD_INCOMPLETE));
+			throw new SecurityException(logger.log(PripMessage.MSG_TOKEN_INVALID, token, MSG_TOKEN_PAYLOAD_INCOMPLETE));
 		}
 		
 		// Check token payload (user and expiration time)
 		UserInfo userInfo = getUser(claimsSet.getSubject());
 		if (null == userInfo) {
-			throw new SecurityException(LogUtil.logError(logger, MSG_TOKEN_INVALID, MSG_ID_TOKEN_INVALID, token,
+			throw new SecurityException(logger.log(PripMessage.MSG_TOKEN_INVALID, token,
 					MSG_USER_INVALID + claimsSet.getSubject()));
 		}
 		
 		if ((new Date()).after(claimsSet.getExpirationTime())) {
-			throw new SecurityException(LogUtil.logError(logger, MSG_TOKEN_EXPIRED, MSG_ID_TOKEN_EXPIRED, claimsSet.getExpirationTime()));
+			throw new SecurityException(logger.log(PripMessage.MSG_TOKEN_EXPIRED, claimsSet.getExpirationTime()));
 		}
 		
 		return userInfo;

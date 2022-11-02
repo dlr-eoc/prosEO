@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -28,7 +29,7 @@ import javax.persistence.Table;
 @Table(indexes = {
 		@Index(unique = true, columnList = "workflow_id, name") 
 	})
-public class WorkflowOption {
+public class WorkflowOption extends PersistentObject {
 	
 	/** The owning workflow */
 	@ManyToOne
@@ -48,6 +49,7 @@ public class WorkflowOption {
 	private String defaultValue;
 	
 	/** List of all possible values of the option (if any are given, the list is considered exhaustive) */
+	@ElementCollection
 	private List<String> valueRange = new ArrayList<>();
 	
 	/**

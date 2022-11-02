@@ -5,14 +5,11 @@
  */
 package de.dlr.proseo.api.prip.rest;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
-import org.slf4j.LoggerFactory;
 import org.apache.olingo.commons.api.edmx.EdmxReference;
 import org.apache.olingo.commons.api.format.ContentType;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
@@ -22,8 +19,6 @@ import org.apache.olingo.server.api.ServiceMetadata;
 import org.apache.olingo.server.api.debug.DebugSupport;
 import org.apache.olingo.server.api.debug.DefaultDebugSupport;
 import org.apache.olingo.server.api.serializer.ODataSerializer;
-import org.apache.olingo.server.api.serializer.SerializerException;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,6 +29,8 @@ import de.dlr.proseo.api.prip.odata.LogUtil;
 import de.dlr.proseo.api.prip.odata.ProductEdmProvider;
 import de.dlr.proseo.api.prip.odata.ProductEntityCollectionProcessor;
 import de.dlr.proseo.api.prip.odata.ProductEntityProcessor;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.PripMessage;
 
 /**
  * Spring MVC controller for the prosEO PRIP API; implements the services required to provide a RESTful API
@@ -46,12 +43,7 @@ import de.dlr.proseo.api.prip.odata.ProductEntityProcessor;
 @Validated
 @RequestMapping(value = ProductQueryController.URI, produces = {"application/json", "application/octet-stream"})
 public class ProductQueryController {
-
-	/* Message ID constants */
-	private static final int MSG_ID_USER_LOGGED_IN = 5099;
-	
 	/* Message string constants */
-	private static final String MSG_USER_LOGGED_IN = "(I%d) User %s\\%s logged in to PRIP API";
 	private static final String HTTP_HEADER_WARNING = "Warning";
 //	private static final String HTTP_MSG_PREFIX = "199 proseo-api-prip ";
 
@@ -75,7 +67,7 @@ public class ProductQueryController {
 	private ProductEntityProcessor entityProcessor;
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProductQueryController.class);
+	private static ProseoLogger logger = new ProseoLogger(ProductQueryController.class);
 
 	/**
 	 * Process the PRIP request.
@@ -113,16 +105,16 @@ public class ProductQueryController {
 				response.getWriter().print(message);
 			} catch (Exception e1) {
 				// Log to Standard Error, but otherwise ignore (we just don't have a response body then)
-				logger.error("Exception setting response content: ", e1);
+				logger.log(PripMessage.MSG_EXCEPTION_SET_RESP, e1.getMessage(), e1);
 			}
 			response.setStatus(HttpStatusCode.UNAUTHORIZED.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 			return;
 		} catch (RuntimeException e) {
-			logger.error("Server Error occurred in ProductionInterfaceSecurity", e);
+			logger.log(PripMessage.MSG_EXCEPTION_PIS, e.getMessage(), e);
 			throw new ServletException(e);
 		}
-		LogUtil.logInfo(logger, MSG_USER_LOGGED_IN, MSG_ID_USER_LOGGED_IN, securityConfig.getMission(), securityConfig.getUser());
+		logger.log(PripMessage.MSG_USER_LOGGED_IN, securityConfig.getMission(), securityConfig.getUser());
 		
 		// Execute the request
 		try {
@@ -137,7 +129,7 @@ public class ProductQueryController {
 			}, response);
 			if (logger.isTraceEnabled()) logger.trace("... after processing request, returning response code: " + response.getStatus());
 		} catch (Exception e) {
-			logger.error("Server Error occurred in ProductQueryController", e);
+			logger.log(PripMessage.MSG_EXCEPTION_PQC, e.getMessage(), e);
 			throw new ServletException(e);
 		}
 	}
