@@ -5,9 +5,11 @@
       id?:
         type: integer
         format: long
+        default: 0
         description: The persistent id of this object
       version?:
         type: integer
+        default: 1
         description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
       missionCode:
         type: string
@@ -20,6 +22,7 @@
         description: Version identification of the processor executable (Docker image)
       jobOrderVersion?:
         type: string
+        default: MMFI_1_8
         description: Version identification of the Job Order file specification (allowed values MMFI_1_8 [default], GMES_1_1)
       useInputFileTimeIntervals?:
         type: boolean

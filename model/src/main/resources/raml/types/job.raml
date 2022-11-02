@@ -5,6 +5,7 @@
       id?:
         type: integer
         format: long
+        default: 0
         description: The persistent id of this object
       version?:
         type: integer
@@ -14,6 +15,7 @@
         description: User-defined order identifier
       jobState:
         enum: [ INITIAL, PLANNED, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED, CLOSED ]
+        default: INITIAL
         description: Status of the whole job
       orbit?:
         type: RestOrbit
@@ -26,7 +28,8 @@
         description: The end time of the time interval to process
       priority:
         type: integer
-        description: A processing priority (lower numbers indicate lower priority, higher numbers higher priority; the default value is 0)
+        default: 50
+        description: A processing priority (lower numbers indicate lower priority, higher numbers higher priority; default is 50)
       hasFailedJobSteps?:
         type: boolean
         description: Indicates whether at least one of the job steps for this job is in state FAILED

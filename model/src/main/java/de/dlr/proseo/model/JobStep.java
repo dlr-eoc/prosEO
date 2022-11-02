@@ -50,7 +50,7 @@ public class JobStep extends PersistentObject {
 	 * depending on processing progress.
 	 */
 	@Enumerated(EnumType.STRING)
-	private JobStepState jobStepState;
+	private JobStepState jobStepState = JobStepState.PLANNED;
 	
 	/**
 	 * A processing priority (lower numbers indicate lower priority, higher numbers higher priority; propagated from Job).

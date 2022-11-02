@@ -5,9 +5,11 @@
       id?:
         type: integer
         format: long
+        default: 0
         description: The persistent id of this object
       version?:
         type: integer
+        default: 1
         description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
       missionCode:
         type: string
@@ -21,6 +23,7 @@
         pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$
       orderState:
         type: string
+        default: INITIAL
         description: State of the processing order; one of { INITIAL, APPROVED, RELEASING, RELEASED, PLANNING, PLANNING_FAILED, PLANNED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED }
       executionTime?:
         type: datetime-only
@@ -40,12 +43,14 @@
         pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(.\d{1,6})?$
       slicingType:
         type: string
+        default: NONE
         description: One of { "ORBIT", "CALENDAR_DAY", "CALENDAR_MONTH", "CALENDAR_YEAR", "TIME_SLICE", "NONE" }
       sliceDuration?:
         type: integer
         description: Duration of a slice in seconds (only for slicingType TIME_SLICE)
       sliceOverlap?:
         type: integer
+        default: 0
         description: Overlap between adjacent slices in seconds (applicable for all slicingTypes except NONE, default 0)
       inputFilters?:
         type: RestInputFilter[]

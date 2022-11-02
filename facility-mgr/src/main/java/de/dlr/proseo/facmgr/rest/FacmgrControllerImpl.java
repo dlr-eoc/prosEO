@@ -14,7 +14,6 @@ import de.dlr.proseo.facmgr.rest.model.RestProcessingFacility;
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.logging.messages.FacilityMgrMessage;
 
 
 /**
