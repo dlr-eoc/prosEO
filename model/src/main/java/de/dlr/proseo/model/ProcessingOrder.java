@@ -223,6 +223,10 @@ public class ProcessingOrder extends PersistentObject {
 	/** Indicates whether at least one of the job steps for this order is in state FAILED */
 	private Boolean hasFailedJobSteps = false;
 	
+	/** The workflow applicable for this processing order (only for orders created through the On-Demand Interface Point API */
+	@ManyToOne
+	private Workflow workflow;
+	
 	/** The processor configurations for processing the products */
 	@ManyToMany
 	private Set<ConfiguredProcessor> requestedConfiguredProcessors = new HashSet<>();

@@ -1,0 +1,15 @@
+#%RAML 1.0 DataType
+#  RestNotificationEndpoint:
+    type: object
+    properties:
+      uri:
+        type: string
+        description: The URI used to notify the ProcessingOrder originator of the order completion
+      username?:
+        type: string
+        description: The username to authenticate with (using Basic Authentication)
+      password?:
+        type: string
+        description: |
+          The password to authenticate with, mandatory if username is given;
+          may be set to replacement value (e. g. asterisks) on data retrieval requests

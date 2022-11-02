@@ -1,5 +1,4 @@
 de.dlr.proseo.planner
-de.dlr.proseo.planner
 de.dlr.proseo.planner.util
 de.dlr.proseo.planner.util
 de.dlr.proseo.planner.util
@@ -10,7 +9,6 @@ de.dlr.proseo.planner
 de.dlr.proseo.planner.dispatcher
 de.dlr.proseo.planner.dispatcher
 de.dlr.proseo.planner.dispatcher
-de.dlr.proseo.planner
 de.dlr.proseo.planner.kubernetes
 de.dlr.proseo.planner.kubernetes
 de.dlr.proseo.planner.kubernetes

@@ -25,9 +25,28 @@
         type: string
         default: INITIAL
         description: State of the processing order; one of { INITIAL, APPROVED, RELEASING, RELEASED, PLANNING, PLANNING_FAILED, PLANNED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED }
+      stateMessage?:
+        type: string
+        description: Explanatory message describing the reason for the latest state change (mandatory for ProcessingOrders created via the ODIP)
+      submissionTime?:
+        type: datetime-only
+        description: Date and time at which the ProcessingOrder was received (mandatory for ProcessingOrders created via the ODIP)
       executionTime?:
         type: datetime-only
         description: Expected execution time (optional, used for scheduling)
+      releaseTime?:
+        type: datetime-only
+        description: Date and time at which the ProcessingOrder was received (mandatory for ProcessingOrders created via the ODIP)
+      estimatedCompletionTime?:
+        type: datetime-only
+        description: |
+          Estimated date and time when the output product(s) will be available for download from the (OD)PRIP
+          (mandatory for ProcessingOrders created via the ODIP)
+      actualCompletionTime?:
+        type: datetime-only
+        description: |
+          Date and time when the output product(s) was/were available for download from the (OD)PRIP
+          (mandatory for ProcessingOrders created via the ODIP, once they are in state "COMPLETED")
       evictionTime?:
         type: datetime-only
         description: Eviction time (optional, used for automatic order deletion)
@@ -52,15 +71,30 @@
         type: integer
         default: 0
         description: Overlap between adjacent slices in seconds (applicable for all slicingTypes except NONE, default 0)
+      inputProductReference?:
+        type: RestInputReference
+        description: Identification of the input product to use for On-Demand Production
       inputFilters?:
         type: RestInputFilter[]
         description: Filter conditions to apply to input products
+      dynamicProcessingParameters?:
+        type: RestParameter[]
+        description: |
+          Processing option settings (for on-demand processing called "WorkflowOptions" in the ICD); these options will be passed
+          to the data processors in the "Dynamic Processing Parameter" section of the Job Order file
       classOutputParameters?:
         type: RestClassOutputParameter[]
         description: Set of parameters to apply to a generated product of the referenced product class replacing the general output parameters
       outputParameters:
         type: RestParameter[]
         description: Parameters to set for the generated products
+      workflowUuid?:
+        type: string
+        description: Universally unique workflow identifier (only for orders generated through ODIP)
+        pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$
+      workflowName?:
+        type: string
+        description: Unique short name of the applicable workflow (only for orders generated through ODIP)
       configuredProcessors:
         type: string[]
         description: List of identifiers of the configured processors
@@ -82,6 +116,9 @@
       productionType?:
         type: string
         description: Production type context, in which the order is running (SYSTEMATIC, ON_DEMAND_DEFAULT, ON_DEMAND_NON_DEFAULT)
+      notificationEndpoint?:
+        type: RestNotificationEndpoint
+        description: The endpoint to send order completion notifications to
       productRetentionPeriod?:
         type: integer
         format: long

@@ -1,0 +1,199 @@
+<!DOCTYPE HTML><html><head><title>prosEO On-Demand Production Interface Delivery Point (ODIP) REST Services API API documentation</title><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="generator" content="https://github.com/raml2html/raml2html 7.5.0"><link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"><script type="text/javascript" src="https://code.jquery.com/jquery-1.11.0.min.js"></script><script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script><script type="text/javascript">
+      $(document).ready(function() {
+  $('.page-header pre code, .top-resource-description pre code, .modal-body pre code').each(function(i, block) {
+    hljs.highlightBlock(block);
+  });
+
+  $('[data-toggle]').click(function() {
+    var selector = $(this).data('target') + ' pre code';
+    $(selector).each(function(i, block) {
+      hljs.highlightBlock(block);
+    });
+  });
+
+  // open modal on hashes like #_action_get
+  $(window).bind('hashchange', function(e) {
+    var anchor_id = document.location.hash.substr(1); //strip #
+    var element = $('#' + anchor_id);
+
+    // do we have such element + is it a modal?  --> show it
+    if (element.length && element.hasClass('modal')) {
+      element.modal('show');
+    }
+  });
+
+  // execute hashchange on first page load
+  $(window).trigger('hashchange');
+
+  // remove url fragment on modal hide
+  $('.modal').on('hidden.bs.modal', function() {
+    try {
+      if (history && history.replaceState) {
+          history.replaceState({}, '', '#');
+      }
+    } catch(e) {}
+  });
+});
+    </script><style>
+      .hljs {
+  background: transparent;
+}
+.parent {
+  color: #999;
+}
+.list-group-item > .badge {
+  float: none;
+  margin-right: 6px;
+}
+.panel-title > .methods {
+  float: right;
+}
+.badge {
+  border-radius: 0;
+  text-transform: uppercase;
+  width: 70px;
+  font-weight: normal;
+  color: #f3f3f6;
+  line-height: normal;
+}
+.badge_get {
+  background-color: #63a8e2;
+}
+.badge_post {
+  background-color: #6cbd7d;
+}
+.badge_put {
+  background-color: #22bac4;
+}
+.badge_delete {
+  background-color: #d26460;
+}
+.badge_patch {
+  background-color: #ccc444;
+}
+.list-group,
+.panel-group {
+  margin-bottom: 0;
+}
+.panel-group .panel+.panel-white {
+  margin-top: 0;
+}
+.panel-group .panel-white {
+  border-bottom: 1px solid #F5F5F5;
+  border-radius: 0;
+}
+.panel-white:last-child {
+  border-bottom-color: white;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
+.panel-white .panel-heading {
+  background: white;
+}
+.tab-pane ul {
+  padding-left: 2em;
+}
+.tab-pane h1 {
+  font-size: 1.3em;
+}
+.tab-pane h2 {
+  font-size: 1.2em;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #ddd;
+}
+.tab-pane h3 {
+  font-size: 1.1em;
+}
+.tab-content {
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  padding: 10px;
+}
+#sidebar {
+  margin-top: 30px;
+  padding-right: 5px;
+  overflow: auto;
+  height: 90%;
+}
+.top-resource-description {
+  border-bottom: 1px solid #ddd;
+  background: #fcfcfc;
+  padding: 15px 15px 0 15px;
+  margin: -15px -15px 10px -15px;
+}
+.resource-description {
+  border-bottom: 1px solid #fcfcfc;
+  background: #fcfcfc;
+  padding: 15px 15px 0 15px;
+  margin: -15px -15px 10px -15px;
+}
+.resource-description p:last-child {
+  margin: 0;
+}
+.list-group .badge {
+  float: left;
+}
+.method_description {
+  margin-left: 85px;
+}
+.method_description p:last-child {
+  margin: 0;
+}
+.list-group-item {
+  cursor: pointer;
+}
+.list-group-item:hover {
+  background-color: #f5f5f5;
+}
+pre code {
+  overflow: auto;
+  word-wrap: normal;
+  white-space: pre;
+}
+.items {
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 9.5px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.42857143;
+}
+.examples {
+  margin-left: 0.5em;
+}
+.resource-modal li > ul {
+  margin-bottom: 1em;
+}
+.required {
+  color: #f00;
+}
+    </style></head><body data-spy="scroll" data-target="#sidebar"><div class="container"><div class="row"><div class="col-md-9" role="main"><div class="page-header"><h1>prosEO On-Demand Production Interface Delivery Point (ODIP) REST Services API API documentation <small>version v1</small></h1><p>/proseo/odip/odata/{version}</p><ul><li><strong>version</strong>: <em><span class="required">required</span>(v1)</em></li></ul></div><div class="panel panel-default"><div class="panel-heading"><h3 id="products" class="panel-title">/Products</h3></div><div class="panel-body"><div class="top-resource-description"><p>Methods for querying the product catalogue according to ESA&#39;s On-Demand Production Interface Delivery Point (ODIP) API</p></div><div class="panel-group"><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_products"><span class="parent"></span>/Products</a> <span class="methods"><a href="#products_get"><span class="badge badge_get">get</span></a></span></h4></div><div id="panel_products" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#products_get'" class="list-group-item"><span class="badge badge_get">get</span><div class="method_description"><p>Query the products catalogue</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="products_get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get</span> <span class="parent"></span>/Products</h4></div><div class="modal-body"><div class="alert alert-info"><p>Query the products catalogue</p></div><ul class="nav nav-tabs"><li class="active"><a href="#products_get_request" data-toggle="tab">Request</a></li><li><a href="#products_get_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="products_get_request"><h3>Query Parameters</h3><ul><li><strong>$filter</strong>: <em>(string)</em><p>Filter query string as defined by the ODATA specification</p></li><li><strong>$orderby</strong>: <em>(string)</em><p>An ordering string as defined by the ODATA specification, default is ascending order</p></li><li><strong>$count</strong>: <em>(boolean)</em><p>Flag indicating whether the number of products found shall be included with the result</p></li><li><strong>$expand</strong>: <em>(string)</em><p>List of attributes to expand in product catalogue style</p></li></ul></div><div class="tab-pane" id="products_get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><p>The request was successfully completed (the result may be an empty list, though)</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: array of object</p><p><strong>Items</strong>: CscProduct</p><div class="items"><ul><li><strong>Id</strong>: <em><span class="required">required</span>(string - pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$)</em><p>Universally unique product identifier</p></li><li><strong>Name</strong>: <em><span class="required">required</span>(string)</em><p>Data file name</p></li><li><strong>ContentType</strong>: <em><span class="required">required</span>(string)</em><p>The MIME type of the product (typically application/octet-stream)</p></li><li><strong>ContentLength</strong>: <em><span class="required">required</span>(integer)</em><p>Actual size in bytes of the downloadable file</p></li><li><strong>CreationDate</strong>: <em><span class="required">required</span>(string - pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{3}Z$)</em><p>Publication date and time of the data file (time at which the file becomes visible to the user) in UTC</p></li><li><strong>EvictionDate</strong>: <em><span class="required">required</span>(string - pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{3}Z$)</em><p>Date when the data file will be removed from the rolling archive in UTC</p></li><li><strong>Checksums</strong>: <em><span class="required">required</span>(array of CscChecksum)</em><p>Represents the known checksums for the product’s physical date, providing a unique value for supporting download integrity check. At least MD5 checksum is mandatory. It is noted that checksums are computed for the actual downloaded product file, i.e. the package used for dissemination</p><p><strong>Items</strong>: CscChecksum</p><div class="items"><ul><li><strong>Algorithm</strong>: <em><span class="required">required</span>(string)</em><p>The checksum algorithm (e. g. MD5)</p></li><li><strong>Value</strong>: <em><span class="required">required</span>(string)</em><p>The checksum value</p></li><li><strong>ChecksumDate</strong>: <em><span class="required">required</span>(string - pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{3}Z$)</em><p>Date and time the checksum was computed</p></li></ul></div></li><li><strong>ContentDate</strong>: <em><span class="required">required</span>(object)</em><p>The sensing range period. Start and end times in UTC</p><ul><li><strong>Start</strong>: <em><span class="required">required</span>(string - pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{3}Z$)</em><p>Sensing start time in UTC</p></li><li><strong>End</strong>: <em><span class="required">required</span>(string - pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{3}Z$)</em><p>Sensing end time in UTC</p></li></ul></li><li><strong>ProductionType</strong>: <em><span class="required">required</span>(one of systematic_production, on-demand:default, on-demand:non-default)</em><p>The type of production process applied</p></li><li><strong>Attributes</strong>: <em>(array of CscAttribute)</em><p>The variable attributes of the product (as requested by the $expand option)</p><p><strong>Items</strong>: CscAttribute</p><div class="items"><ul><li><strong>Id</strong>: <em><span class="required">required</span>(string)</em><p>String identifier of the attribute</p></li><li><strong>ContentType</strong>: <em><span class="required">required</span>(string)</em><p>The MIME type of the attribute</p></li><li><strong>ContentLength</strong>: <em><span class="required">required</span>(integer)</em><p>Actual size in bytes of the attribute</p></li><li><strong>StringValue</strong>: <em>(string)</em><p>The attribute value, if it is a string attribute</p></li><li><strong>DateValue</strong>: <em>(string - pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{3}Z$)</em><p>The attribute value in UTC, if it is a string attribute</p></li><li><strong>IntegerValue</strong>: <em>(integer)</em><p>The attribute value, if it is an integer attribute</p></li></ul></div></li></ul></div><p><strong>Example</strong>:</p><div class="examples"><pre><code>[
+    {
+      "@odata.context":            "$metadata#Products/$entity", 
+      "@odata.mediaContentType":   "application/octet-stream", 
+      "Id":                        "e872683a-ea5b-455d-bfb2-fb304cbfbacb",
+      "Name":                      "S1A_EW_OCN__2SDH_20171231T194900_20171231T194913_019951_021F8C_5392.zip", 
+      "ContentType":               "application/octet-stream", 
+      "ContentLength":             4063869137, 
+      "CreationDate":              "2016-12-25T13:18:00.048Z", 
+      "EvictionDate":              "2016-12-28T13:18:00.048Z", 
+      "Checksums":
+      [
+          { 
+            "Algorithm":    "MD5", 
+            "Value":        "E8A303BF3D85200514F727DB60E7DB65",
+            "ChecksumDate": "2016-12-28T13:18:00.048Z"
+          } 
+      ],
+      "ContentDate":
+      {
+        "Start":            "2016-01-17T10:34:51.922Z",
+        "End":              "2016-01-17T10:35:18.872Z"
+      },
+      "ProductionType":           "systematic_production"
+    }
+]
+    </code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/400" target="_blank">400</a></h2><p>The request sent to the server contains data which is not as expected e.g. invalid query parameters</p><h3>Headers</h3><ul><li><strong>Warning</strong>: <em><span class="required">required</span>(string - pattern: ^\d{3} proseo-api-odip \([EW]\d+\) .+$)</em><p>An error code and a plain text error message</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>199 proseo-api-odip (E4711) &#39;creation-date &gt; today()&#39; is not a valid query filter</code></pre></div></li></ul><h2>HTTP status code <a href="http://httpstatus.es/401" target="_blank">401</a></h2><p>The requesting user is unauthorised to submit the product query</p><h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2><p>The requested resource was not found (i. e. the URI does not exist; not synonymous to "no data found")</p><h3>Headers</h3><ul><li><strong>Warning</strong>: <em><span class="required">required</span>(string - pattern: ^\d{3} proseo-api-odip \([EW]\d+\) .+$)</em><p>An error code and a plain text error message</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>199 proseo-api-odip (E4711) &#39;creation-date &gt; today()&#39; is not a valid query filter</code></pre></div></li></ul></div></div></div></div></div></div></div></div></div></div></div><div class="col-md-3"><div id="sidebar" class="hidden-print affix" role="complementary"><ul class="nav nav-pills nav-stacked"><li><a href="#products">/Products</a></li></ul></div></div></div></div></body></html>

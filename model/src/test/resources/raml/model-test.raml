@@ -35,9 +35,11 @@ types:
   RestDownloadHistory: !include ../../../../../model/src/main/resources/raml/types/downloadhistory.raml
   RestGroup: !include ../../../../../model/src/main/resources/raml/types/group.raml
   RestInputFilter: !include ../../../../../model/src/main/resources/raml/types/inputfilter.raml
+  RestInputReference: !include ../../../../../model/src/main/resources/raml/types/inputreference.raml
   RestJob: !include ../../../../../model/src/main/resources/raml/types/job.raml
   RestJobStep: !include ../../../../../model/src/main/resources/raml/types/jobstep.raml
   RestMission: !include ../../../../../model/src/main/resources/raml/types/mission.raml
+  RestNotificationEndpoint: !include ../../../../../model/src/main/resources/raml/types/notificationendpoint.raml
   RestOrbit: !include ../../../../../model/src/main/resources/raml/types/orbit.raml
   RestOrbitQuery: !include ../../../../../model/src/main/resources/raml/types/orbitquery.raml
   RestOrder: !include ../../../../../model/src/main/resources/raml/types/order.raml
@@ -57,6 +59,8 @@ types:
   RestStringParameter: !include ../../../../../model/src/main/resources/raml/types/stringparameter.raml
   RestTask: !include ../../../../../model/src/main/resources/raml/types/task.raml
   RestUser: !include ../../../../../model/src/main/resources/raml/types/user.raml
+  RestWorkflow: !include ../../../../../model/src/main/resources/raml/types/workflow.raml
+  RestWorkflowOption: !include ../../../../../model/src/main/resources/raml/types/workflowoption.raml
 
 resourceTypes:
   standard:
@@ -177,6 +181,16 @@ resourceTypes:
           type: RestOrder
           example:  !include ../../../../../model/src/main/resources/raml/examples/order.json
 
+  /workflows:
+    type: standard
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestWorkflow
+              example:  !include ../../../../../model/src/main/resources/raml/examples/workflow.json
+              
   /processingfacilities:
     type: standard
     get:
