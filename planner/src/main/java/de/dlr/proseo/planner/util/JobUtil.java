@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -149,14 +150,13 @@ public class JobUtil {
 					UtilService.getJobStepUtil().close(jsId);
 				}		
 				final Object dummy = transactionTemplate.execute((status) -> {
-					Optional<Job> jobOpt = RepositoryService.getJobRepository().findById(id);
-					if (jobOpt.isPresent()) {
-						Job locJob = jobOpt.get();
-						locJob.setJobState(JobState.CLOSED);
-						locJob.incrementVersion();
-						RepositoryService.getJobRepository().save(locJob);
-						em.merge(locJob);
-					}
+					String sqlQuery = "select version from job where id = " + id + ";";
+					Query query = em.createNativeQuery(sqlQuery);
+					Object o = query.getSingleResult();
+					Integer version = (Integer)o;
+					sqlQuery = "update job set job_state = 'CLOSED', version = " + (version + 1) + " where id = " + id + ";";
+					query = em.createNativeQuery(sqlQuery);
+					query.executeUpdate();
 					return null;
 				});
 				answer = PlannerMessage.JOB_CLOSED;
