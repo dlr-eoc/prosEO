@@ -48,45 +48,6 @@ import de.dlr.proseo.ordermgr.rest.model.OrbitUtil;
  */
 @Component
 public class OrbitControllerImpl implements OrbitController {
-		
-	/* Message ID constants */
-	private static final int MSG_ID_ORBIT_NOT_FOUND = 1050;
-	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 1051;
-	private static final int MSG_ID_ORBIT_MISSING = 1052;
-	private static final int MSG_ID_ORBIT_INCOMPLETE = 1053;
-	private static final int MSG_ID_NO_ORBITS_FOUND = 1054;
-	private static final int MSG_ID_SPACECRAFT_NOT_FOUND = 1055;
-	private static final int MSG_ID_ORBITS_RETRIEVED = 1056;
-	private static final int MSG_ID_ORBITS_CREATED = 1057;
-	private static final int MSG_ID_ORBIT_RETRIEVED = 1058;
-	private static final int MSG_ID_ORBIT_UPDATED = 1059;
-	private static final int MSG_ID_ORBIT_DELETED = 1060;
-	private static final int MSG_ID_ORBIT_NOT_MODIFIED = 1061;
-
-	// Same as in other services
-	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
-	// private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
-
-	/* Message string constants */
-	private static final String MSG_ORBIT_NOT_FOUND = "(E%d) No orbit found for ID %d";
-	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Orbit deletion unsuccessful for ID %d";
-	private static final String MSG_ORBIT_MISSING = "(E%d) Orbit not set";
-	private static final String MSG_ORBIT_INCOMPLETE = "(E%d) Spacecraft code not set in the search";
-	private static final String MSG_NO_ORBITS_FOUND = "(E%d) No orbits found for given search criteria";
-	private static final String MSG_SPACECRAFT_NOT_FOUND = "(E%d) Spacecraft %s not found in mission %s";
-
-	private static final String MSG_ORBITS_RETRIEVED = "(I%d) %d orbits retrieved";
-	private static final String MSG_ORBITS_CREATED = "(I%d) %d orbits created or updated";
-	private static final String MSG_ORBIT_RETRIEVED = "(I%d) Orbit %d retrieved";
-	private static final String MSG_ORBIT_UPDATED = "(I%d) Orbit %d updated";
-	private static final String MSG_ORBIT_DELETED = "(I%d) Orbit %d deleted";
-	private static final String MSG_ORBIT_NOT_MODIFIED = "(I%d) Mission with id %d not modified (no changes)";
-
-	// Same as in other services
-	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
-	
-	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String MSG_PREFIX = "199 proseo-ordermgr-orbitcontroller ";
 
 	/** Utility class for user authorizations */
 	@Autowired
