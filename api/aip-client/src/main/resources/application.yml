@@ -1,0 +1,21 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+        open-in-view: false
+        properties.hibernate.jdbc.time_zone: UTC
+    datasource:
+        url: jdbc:postgresql://proseo-db:5432/proseo
+        username: <db_user>
+        password: <db_pwd>
+logging:
+    file: /proseo/log/proseo-api-aipclient.log
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE
+proseo:
+    ingestor:
+        # URL of the Ingestor Service
+        url: http://proseo-ingestor:8080/proseo/ingestor/v0.1
+    ltas:
+        # TODO
