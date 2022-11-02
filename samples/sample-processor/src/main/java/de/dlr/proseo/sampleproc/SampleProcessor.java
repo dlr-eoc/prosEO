@@ -553,7 +553,7 @@ public class SampleProcessor {
 		// wait ...
 		try {			
 			int i = ((int)(9.0 * Math.random())) + 1;
-			int factor = 20;
+			int factor = 1;
 			while (i > 0) {
 				logger.info("... wait " + ((i) * 1 * factor) + " seconds ...");
 				Thread.sleep(1000 * factor);

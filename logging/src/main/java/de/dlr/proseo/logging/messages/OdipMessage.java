@@ -33,21 +33,21 @@ public enum OdipMessage implements ProseoMessage {
 	MSG_GRANT_TYPE_INVALID 			(5217, Level.ERROR, false, "Invalid grant type {0}", ""),
 	MSG_USERNAME_INVALID 			(5218, Level.ERROR, false, "Invalid username parameter {0}", ""),
 	MSG_CREDENTIAL_MISMATCH 		(5219, Level.ERROR, false, "Username and password do not match Authorization header", ""),
-	MSG_SUPERFLUOUS_PARAMETERS 		(5220, Level.ERROR, false, "Superfluous query parameter(s) found (no credentials allowed for 'client_credentials' flow)", ""),
+	MSG_SUPERFLUOUS_PARAMETERS 		(5220, Level.ERROR, false, "Superfluous query parameter(s) found (no credentials allowed for ''client_credentials'' flow)", ""),
 	MSG_INVALID_QUERY_CONDITION 	(5221, Level.ERROR, false, "Invalid query condition (cause: {0})", ""),
-	MSG_INVALID_QUERY_RESULT 		(5222, Level.ERROR, false, "Invalid result for 'count(*)' query: {0}", ""),
+	MSG_INVALID_QUERY_RESULT 		(5222, Level.ERROR, false, "Invalid result for ''count(*)'' query: {0}", ""),
 	MSG_QUOTA_EXCEEDED 				(5223, Level.ERROR, false, "Result set exceeds maximum quota of {0} products", ""),
 	MSG_USER_LOGGED_IN 				(5224, Level.INFO, false, "User {0}\\{1} logged in to PRIP API", ""),
 	MSG_AUTH_MISSING_OR_INVALID 	(5225, Level.ERROR, false, "Basic authentication missing or invalid: {0}", ""),
 	MSG_NOT_AUTHORIZED_FOR_PRIP 	(5226, Level.ERROR, false, "User {0}\\{1} not authorized for PRIP API", ""),
 	MSG_INVALID_OPERAND_TYPE	 	(5227, Level.ERROR, false, "Both operands for binary operator must be AttributeCondition objects in Attribute lambda expression", ""),
-	MSG_INVALID_OPERATOR_TYPE	 	(5228, Level.ERROR, false, "Only binary operator 'eq' allowed for 'Name' in Attribute lambda expression", ""),
-	MSG_MISSING_OPERAND_NAME	 	(5229, Level.ERROR, false, "One operand for binary operator must be named in Attribute lambda expression ('Name' and 'Value' allowed)", ""),
+	MSG_INVALID_OPERATOR_TYPE	 	(5228, Level.ERROR, false, "Only binary operator ''eq'' allowed for ''Name'' in Attribute lambda expression", ""),
+	MSG_MISSING_OPERAND_NAME	 	(5229, Level.ERROR, false, "One operand for binary operator must be named in Attribute lambda expression (''Name'' and ''Value'' allowed)", ""),
 	MSG_UNEXPECTED_URI			 	(5230, Level.ERROR, false, "Unexpected URI resource of kind {0} in Attribute lambda expression (only lambda variable allowed)", ""),
 	MSG_UNEXPECTED_URI_VAR		 	(5231, Level.ERROR, false, "Lambda variable {0} not allowed in Attribute lambda expression for {1}", ""),
 	MSG_UNEXPECTED_SUB_URI			(5232, Level.ERROR, false, "Unexpected URI sub-resource of kind {0} in Attribute lambda expression (only primitive property allowed)", ""),
-	MSG_UNEXPECTED_PROPERTY		 	(5233, Level.ERROR, false, "Unexpected property {0} in Attribute lambda expression (only 'Name' and 'Value' allowed)", ""),
-	MSG_CANNOT_CONVERT_COORD 		(5234, Level.WARN, 	true, "Cannot convert coordinate string '{}' to footprint", ""),
+	MSG_UNEXPECTED_PROPERTY		 	(5233, Level.ERROR, false, "Unexpected property {0} in Attribute lambda expression (only ''Name'' and ''Value'' allowed)", ""),
+	MSG_CANNOT_CONVERT_COORD 		(5234, Level.WARN, 	true, "Cannot convert coordinate string ''{}'' to footprint", ""),
 	MSG_EXCEPTION_SET_RESP			(5235, Level.ERROR, false, "Exception setting response content (cause {0}: {1})", ""),
 	MSG_EXCEPTION_PIS				(5236, Level.ERROR, false, "Server Error occurred in ProductionInterfaceSecurity (cause {0}: {1})", ""),
 	MSG_EXCEPTION_PQC				(5237, Level.ERROR, false, "Server Error occurred in ProductQueryController (cause {0}: {1})", ""),
@@ -105,7 +105,7 @@ public enum OdipMessage implements ProseoMessage {
 	}
 
 	/**
-	 * Get the message's success.
+	 * Get the message''s success.
 	 * 
 	 * @return The message's success.
 	 */
