@@ -2,7 +2,9 @@
 #  RestParameter:
     type: object
     properties:
-      key: string
+      key:
+        type: string
+        description: The parameter name
       parameterType:
         type: string
         description: The type of the parameter for deserialization (one of { "STRING", "INTEGER", "BOOLEAN", "DOUBLE", "INSTANT" } )

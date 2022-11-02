@@ -5,9 +5,11 @@
       id?:
         type: integer
         format: long
+        default: 0
         description: The persistent id of this object
       version?:
         type: integer
+        default: 1
         description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
       name?:
         type: string
@@ -18,6 +20,7 @@
         description: The persistend id of the job this job step belongs to
       jobStepState:
         enum: [ PLANNED, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED, CLOSED ]
+        default: PLANNED
         description: The currenet status of the job step
       outputParameters:
         type: RestParameter[]
@@ -45,9 +48,11 @@
         description: The completion time of the processing job
       stdoutLogLevel?:
         enum: [ DEBUG, INFO, PROGRESS, WARNING, ERROR ]
+        default: INFO
         description: The log level of stdout 
       stderrLogLevel?:
         enum: [ DEBUG, INFO, PROGRESS, WARNING, ERROR ]
+        default: INFO
         description: The log level of stderr 
       processingStdOut?:
         type: string
