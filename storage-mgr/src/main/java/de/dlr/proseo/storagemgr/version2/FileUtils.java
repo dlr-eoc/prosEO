@@ -209,19 +209,30 @@ public class FileUtils {
 
 		try {
 			String folder = new File(sourceFile).getParent();
-			boolean fileDeleted = new File(sourceFile).delete();
-
-			if (fileDeleted) {
-				deleteEmptyDirectoriesToTop(folder);
-				return sourceFile;
-			} else {
-				throw new IOException("Cannot delete file: " + sourceFile);
+			
+			if (folder == null) {
+				throw new IOException("Cannot delete file - no parent folder: " + sourceFile);		
 			}
+			
+			File file = new File(sourceFile);
+			
+			if (!file.exists()) {
+				throw new IOException("Cannot delete file - file does not exist: " + sourceFile);			
+			}
+			
+			boolean fileDeleted = file.delete();
+
+			if (!fileDeleted) {
+				throw new IOException("File was not deleted: " + sourceFile);
+			}
+
+			deleteEmptyDirectoriesToTop(folder);
+			return sourceFile;			
 
 		} catch (Exception e) {
 			e.printStackTrace();
 			if (logger.isTraceEnabled())
-				logger.error("Cannot download file: " + sourceFile, e.getMessage());
+				logger.error("Cannot delete file: " + sourceFile, e.getMessage());
 			throw e;
 		}
 	}
