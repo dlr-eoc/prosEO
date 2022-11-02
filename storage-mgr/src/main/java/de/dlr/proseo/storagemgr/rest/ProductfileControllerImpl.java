@@ -241,7 +241,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 		// pathInfo absolute path, UPLOAD absolute file -> storage
 		if (storageProvider.isVersion2()) {
 
-			if (pathInfo != null) {
+			if (pathInfo == null) {
 				return new ResponseEntity<RestFileInfo>(new RestFileInfo(), HttpStatus.BAD_REQUEST);
 			}
 
