@@ -5,6 +5,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.io.File;
+
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Rule;
 import org.junit.Test;
@@ -71,7 +73,7 @@ public class ProductfileControllerImplTest_download {
 		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
 
-		download();
+		download("v1Posix");
 		
 		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
@@ -85,7 +87,7 @@ public class ProductfileControllerImplTest_download {
 		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 
-		download();
+		download("v2Posix");
 		
 		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
@@ -100,7 +102,7 @@ public class ProductfileControllerImplTest_download {
 		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
 
-		download();
+		download("v1S3");
 		
 		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
@@ -114,7 +116,7 @@ public class ProductfileControllerImplTest_download {
 		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 
-		download();
+		download("v2S3");
 		
 		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
@@ -136,7 +138,7 @@ public class ProductfileControllerImplTest_download {
 	 * 
 	 * Posix only (cache):  /<cachePath>/<relativePath>
 	 */
-	private void download() throws Exception {
+	private void download(String testID) throws Exception {
 		
 		TestUtils.printMethodName(this, testName);
 		
@@ -145,7 +147,7 @@ public class ProductfileControllerImplTest_download {
 		// call http-download 
 		// check results (download in cache)
 		
-		String relativePath = "product/productFileDownload.txt";
+		String relativePath = "product/productFileDownload" + testID + ".txt";
 		relativePath = new PathConverter(relativePath).getPath();
 	
 		// create file in source 
@@ -184,6 +186,9 @@ public class ProductfileControllerImplTest_download {
 		System.out.println("Expected cache path: " + expectedAbsoluteCachePath);
 		assertTrue("Real cache path: " + realAbsoluteCachePath + " expected cache path: " + expectedAbsoluteCachePath, 
 				realAbsoluteCachePath.equals(expectedAbsoluteCachePath));
+		
+		assertTrue("Downloaded file from storage to cache does not exist: " + realAbsoluteCachePath, 
+				new File(realAbsoluteCachePath).exists());
 		
 		// delete files with empty folders
 		new FileUtils(absoluteSourcePath).deleteFile(); // source
