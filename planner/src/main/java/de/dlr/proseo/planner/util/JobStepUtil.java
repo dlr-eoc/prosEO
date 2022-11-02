@@ -432,6 +432,7 @@ public class JobStepUtil {
 				break;
 			case COMPLETED:
 			case FAILED:
+				UtilService.getJobStepUtil().deleteSatisfiedProductQueries(id);	
 				transactionTemplate.execute((status) -> {
 					Optional<JobStep> jsOpt = RepositoryService.getJobStepRepository().findById(id);
 					if (jsOpt.isPresent()) {
@@ -442,8 +443,7 @@ public class JobStepUtil {
 						em.merge(locJobStep);
 					}
 					return null;
-				});
-				UtilService.getJobStepUtil().deleteSatisfiedProductQueries(id);			
+				});		
 				answer = PlannerMessage.JOBSTEP_CLOSED;
 				break;
 			case CLOSED:
