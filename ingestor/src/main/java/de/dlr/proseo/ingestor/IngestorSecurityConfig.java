@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.ingestor;
 
+import java.util.Base64;
+
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +42,28 @@ public class IngestorSecurityConfig extends WebSecurityConfigurerAdapter {
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(IngestorSecurityConfig.class);
 		
+	/**
+	 * Parse an HTTP authentication header into username and password
+	 * @param authHeader the authentication header to parse
+	 * @return a string array containing the username and the password
+	 * @throws IllegalArgumentException if the authentication header cannot be parsed
+	 */
+	public String[] parseAuthenticationHeader(String authHeader) throws IllegalArgumentException {
+		if (logger.isTraceEnabled()) logger.trace(">>> parseAuthenticationHeader({})", authHeader);
+
+		if (null == authHeader) {
+			String message = logger.log(IngestorMessage.AUTH_MISSING_OR_INVALID, authHeader);
+			throw new IllegalArgumentException (message);
+		}
+		String[] authParts = authHeader.split(" ");
+		if (2 != authParts.length || !"Basic".equals(authParts[0])) {
+			String message = logger.log(IngestorMessage.AUTH_MISSING_OR_INVALID, authHeader);
+			throw new IllegalArgumentException (message);
+		}
+		String[] userPassword = (new String(Base64.getDecoder().decode(authParts[1]))).split(":"); // guaranteed to work as per BasicAuth specification
+		return userPassword;
+	}
+
 	/**
 	 * Set the Ingestor security options
 	 * 
