@@ -1,0 +1,48 @@
+body {
+    font-family: arial, helvetica, sans-serif;
+    font-size: 14px;
+    margin: 20px;
+}
+
+
+strong {
+	font-weight: bold;
+	font-style: normal;
+}
+
+em {
+	font-style: italic;
+}
+
+table {
+	width: 100%;
+	border: 1px solid;
+	vertical-align: top;
+	border-collapse: collapse;
+}
+
+th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+tr:nth-child(even) {
+	background-color: #f2f2f2;
+}
+
+tr td:first-child {
+	width: 3em;
+	min-width: 3em;
+	max-width: 3em;
+}
+
+tr td:nth-child(2) {
+	width: 5em;
+	min-width: 5em;
+	max-width: 5em;
+}
+
+tr td:nth-child(3) {
+	width: 30em;
+	min-width: 22em;
+}

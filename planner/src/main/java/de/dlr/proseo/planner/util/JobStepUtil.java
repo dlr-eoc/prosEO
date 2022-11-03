@@ -432,18 +432,17 @@ public class JobStepUtil {
 				break;
 			case COMPLETED:
 			case FAILED:
+				UtilService.getJobStepUtil().deleteSatisfiedProductQueries(id);	
 				transactionTemplate.execute((status) -> {
-					Optional<JobStep> jsOpt = RepositoryService.getJobStepRepository().findById(id);
-					if (jsOpt.isPresent()) {
-						JobStep locJobStep= jsOpt.get();
-						locJobStep.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.CLOSED);	
-						locJobStep.incrementVersion();
-						RepositoryService.getJobStepRepository().save(locJobStep);
-						em.merge(locJobStep);
-					}
+					String sqlQuery = "select version from job_step where id = " + id + ";";
+					Query query = em.createNativeQuery(sqlQuery);
+					Object o = query.getSingleResult();
+					Integer version = (Integer)o;
+					sqlQuery = "update job_step set job_step_state = 'CLOSED', version = " + (version + 1) + " where id = " + id + ";";
+					query = em.createNativeQuery(sqlQuery);
+					query.executeUpdate();
 					return null;
-				});
-				UtilService.getJobStepUtil().deleteSatisfiedProductQueries(id);			
+				});		
 				answer = PlannerMessage.JOBSTEP_CLOSED;
 				break;
 			case CLOSED:

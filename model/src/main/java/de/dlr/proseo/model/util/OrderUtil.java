@@ -10,9 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.Orbit;
@@ -32,7 +30,7 @@ import de.dlr.proseo.model.ProductClass;
 
 public class OrderUtil {
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(OrderUtil.class);
+	private static ProseoLogger logger = new ProseoLogger(OrderUtil.class);
 	
 	/**
 	 * Convert a prosEO model ProcessingOrder into a REST Order

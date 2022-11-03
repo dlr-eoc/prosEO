@@ -50,7 +50,7 @@ public class SimpleSelectionRule extends PersistentObject {
 	 * Indicates whether the required source product is mandatory for the production of the target product
 	 * (level 7 "Mandatory" from Generic IPF Interface Specifications, sec. 4.1.3)
 	 */
-	private Boolean isMandatory;
+	private Boolean isMandatory = true;
 	
 	/**
 	 * Minimum percentage of coverage of the desired validity period for fulfilment of this rule (default 0)

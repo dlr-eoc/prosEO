@@ -17,6 +17,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+
+import de.dlr.proseo.ingestor.IngestorSecurityConfig;
+import de.dlr.proseo.ingestor.PlannerSemaphoreClient;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
@@ -31,6 +34,14 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 @Component
 public class ProductControllerImpl implements ProductController {
 		
+	/** Client to request/release semaphores from Production Planner */
+	@Autowired
+	private PlannerSemaphoreClient semaphoreClient;
+
+	/** Security configuration for Ingestor */
+	@Autowired
+	private IngestorSecurityConfig securityConfig;
+			
 	/** The product manager */
 	@Autowired
 	private ProductManager productManager;
@@ -189,7 +200,11 @@ public class ProductControllerImpl implements ProductController {
 	public ResponseEntity<RestProduct> modifyProduct(Long id, RestProduct product, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyProduct({})", id);
 		
+		// Get username and password from HTTP Authentication header for authentication with Production Planner
+		String[] userPassword = securityConfig.parseAuthenticationHeader(httpHeaders.getFirst(HttpHeaders.AUTHORIZATION));
+		
 		try {
+			semaphoreClient.acquireSemaphore(userPassword[0], userPassword[1]);
 			RestProduct changedProduct = productManager.modifyProduct(id, product);
 			HttpStatus httpStatus = (product.getVersion() == changedProduct.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
 			return new ResponseEntity<>(changedProduct, httpStatus);
@@ -201,6 +216,8 @@ public class ProductControllerImpl implements ProductController {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		} finally {
+			semaphoreClient.releaseSemaphore(userPassword[0], userPassword[1]);
 		}
 	}
 

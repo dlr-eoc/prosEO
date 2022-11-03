@@ -29,9 +29,9 @@ abstract public class PersistentObject {
 	private long id;
 	
 	/**
-	 * A version identifier to track updates to the object (especially to detect concurrent update attempts).
+	 * A version identifier to track updates to the object (especially to detect concurrent update attempts), default 1.
 	 */
-	private int version;
+	private int version = 1;
 	
 	/**
 	 * Get the next available object id
@@ -42,12 +42,11 @@ abstract public class PersistentObject {
 	}
 
 	/**
-	 * No-argument constructor that assigns the object id and initializes the version number
+	 * No-argument constructor that assigns the object id
 	 */
 	public PersistentObject() {
 		super();
 		id = getNextId();
-		version = 1;
 	}
 
 	/**

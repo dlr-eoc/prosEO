@@ -3,16 +3,14 @@ package de.dlr.proseo.ordermgr.rest.model;
 import java.time.DateTimeException;
 import java.time.Instant;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.rest.model.RestOrbit;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 public class OrbitUtil {
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(OrbitUtil.class);
+	private static ProseoLogger logger = new ProseoLogger(OrbitUtil.class);
 
 	
 	/**

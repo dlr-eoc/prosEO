@@ -26,8 +26,6 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.ws.rs.ProcessingException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -428,7 +426,10 @@ public class ProcessingOrderMgr {
 			throw new IllegalArgumentException(logger.log(OrderMgrMessage.ORDER_MISSING, id));
 		}
 		if (id == 0) {
-			// new order from "scratch", used at least if GUI
+			// new order from "scratch", used at least if GUI 
+			// TODO Check if this should be moved to GUI (at least partially) or removed altogether
+			//      Having id == 0 is contrary to the interface contract, which requires a valid object database ID
+			//      Furthermore default values shall not deviate from the default values given in the UML model
 			RestOrder newOrder = new RestOrder();
 			newOrder.setIdentifier("New");
 			newOrder.setId((long) 0);

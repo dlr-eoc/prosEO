@@ -7,7 +7,6 @@ package de.dlr.proseo.ingestor.rest;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.ConcurrentModificationException;
@@ -20,14 +19,12 @@ import javax.ws.rs.ProcessingException;
 
 import org.hibernate.exception.LockAcquisitionException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
-
-import de.dlr.proseo.ingestor.IngestorConfiguration;
+import de.dlr.proseo.ingestor.IngestorSecurityConfig;
+import de.dlr.proseo.ingestor.PlannerSemaphoreClient;
 import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.ingestor.rest.model.RestProductFile;
@@ -50,86 +47,18 @@ public class IngestControllerImpl implements IngestController {
 	private static ProseoLogger logger = new ProseoLogger(IngestControllerImpl.class);
 	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.INGESTOR);
 	
-	/** REST template builder */
+	/** Client to request/release semaphores from Production Planner */
 	@Autowired
-	RestTemplateBuilder rtb;
+	private PlannerSemaphoreClient semaphoreClient;
 
-	/** Ingestor configuration */
-	@Autowired
-	IngestorConfiguration ingestorConfig;
-	
 	/** Product ingestor */
 	@Autowired
-	ProductIngestor productIngestor;
+	private ProductIngestor productIngestor;
+	
+	/** Security configuration for Ingestor */
+	@Autowired
+	private IngestorSecurityConfig securityConfig;
 			
-	/**
-	 * Parse an HTTP authentication header into username and password
-	 * @param authHeader the authentication header to parse
-	 * @return a string array containing the username and the password
-	 * @throws IllegalArgumentException if the authentication header cannot be parsed
-	 */
-	private String[] parseAuthenticationHeader(String authHeader) throws IllegalArgumentException {
-		if (logger.isTraceEnabled()) logger.trace(">>> parseAuthenticationHeader({})", authHeader);
-
-		if (null == authHeader) {
-			String message = logger.log(IngestorMessage.AUTH_MISSING_OR_INVALID, authHeader);
-			throw new IllegalArgumentException (message);
-		}
-		String[] authParts = authHeader.split(" ");
-		if (2 != authParts.length || !"Basic".equals(authParts[0])) {
-			String message = logger.log(IngestorMessage.AUTH_MISSING_OR_INVALID, authHeader);
-			throw new IllegalArgumentException (message);
-		}
-		String[] userPassword = (new String(Base64.getDecoder().decode(authParts[1]))).split(":"); // guaranteed to work as per BasicAuth specification
-		return userPassword;
-	}
-
-	/**
-	 * Ask production planner for a slot to manipulate product(s)
-	 * 
-	 * @param user The user
-	 * @param password The password
-	 * @return true after semaphore was available 
-	 */
-	private Boolean acquireSemaphore(String user, String password) {
-		if (logger.isTraceEnabled()) logger.trace(">>> acquireSemaphore({}, PWD)", user);
-		
-		String url = ingestorConfig.getProductionPlannerUrl() + "/semaphore/acquire";
-		RestTemplate restTemplate = rtb
-				.setConnectTimeout(Duration.ofMillis(ingestorConfig.getProductionPlannerTimeout()))
-				.basicAuthentication(user, password)
-				.build();
-		ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-		if (!HttpStatus.OK.equals(response.getStatusCode())) {
-			throw new ProcessingException(
-					logger.log(IngestorMessage.ERROR_ACQUIRE_SEMAPHORE, response.getStatusCode().toString()));
-		}
-		return true;
-	}
-
-	/**
-	 * Release semaphore of production planner
-	 * 
-	 * @param user The user
-	 * @param password The password
-	 * @return true after semaphore was released 
-	 */
-	private Boolean releaseSemaphore(String user, String password) {
-		if (logger.isTraceEnabled()) logger.trace(">>> releaseSemaphore({}, PWD)", user);
-		
-		String url = ingestorConfig.getProductionPlannerUrl() + "/semaphore/release";
-		RestTemplate restTemplate = rtb
-				.setConnectTimeout(Duration.ofMillis(ingestorConfig.getProductionPlannerTimeout()))
-				.basicAuthentication(user, password)
-				.build();
-		ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-		if (!HttpStatus.OK.equals(response.getStatusCode())) {
-			throw new ProcessingException(
-					logger.log(IngestorMessage.ERROR_RELEASE_SEMAPHORE, response.getStatusCode().toString()));
-		}
-		return true;
-	}
-
 	/**
      * Ingest all given products into the storage manager of the given processing facility. If the ID of a product to ingest
      * is null or 0 (zero), then the product will be created, otherwise a matching product will be looked up and updated.
@@ -169,15 +98,14 @@ public class IngestControllerImpl implements IngestController {
 		}
 		
 		// Get username and password from HTTP Authentication header for authentication with Production Planner
-		String[] userPassword = parseAuthenticationHeader(httpHeaders.getFirst(HttpHeaders.AUTHORIZATION));
+		String[] userPassword = securityConfig.parseAuthenticationHeader(httpHeaders.getFirst(HttpHeaders.AUTHORIZATION));
 		
 		// Loop over all products to ingest
 		List<RestProduct> result = new ArrayList<>();
 
 		for (IngestorProduct ingestorProduct: ingestorProducts) {
 			try {
-				// TODO Thoroughly test semaphore acquisition/release --> blocks Planner unnecessarily
-				acquireSemaphore(userPassword[0], userPassword[1]);
+				semaphoreClient.acquireSemaphore(userPassword[0], userPassword[1]);
 				RestProduct restProduct = productIngestor.ingestProduct(facility, copyFiles, ingestorProduct, userPassword[0], userPassword[1]);
 				result.add(restProduct);
 				ingestorProduct.setId(restProduct.getId());
@@ -189,7 +117,7 @@ public class IngestControllerImpl implements IngestController {
 			} catch (SecurityException e) {
 				return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 			} finally {
-				releaseSemaphore(userPassword[0], userPassword[1]);
+				semaphoreClient.releaseSemaphore(userPassword[0], userPassword[1]);
 			}
 			
 			try {
@@ -283,12 +211,11 @@ public class IngestControllerImpl implements IngestController {
 		}
 		
 		// Get username and password from HTTP Authentication header for authentication with Production Planner
-		String[] userPassword = parseAuthenticationHeader(httpHeaders.getFirst(HttpHeaders.AUTHORIZATION));
+		String[] userPassword = securityConfig.parseAuthenticationHeader(httpHeaders.getFirst(HttpHeaders.AUTHORIZATION));
 		
 		RestProductFile restProductFile = null;
 		try {
-			// TODO Thoroughly test semaphore acquisition/release --> blocks Planner unnecessarily
-			acquireSemaphore(userPassword[0], userPassword[1]);
+			semaphoreClient.acquireSemaphore(userPassword[0], userPassword[1]);
 			restProductFile = productIngestor.ingestProductFile(
 						productId, facility, productFile, userPassword[0], userPassword[1]);
 		} catch (ProcessingException e) {
@@ -301,7 +228,7 @@ public class IngestControllerImpl implements IngestController {
 			e.printStackTrace();
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		} finally {
-			releaseSemaphore(userPassword[0], userPassword[1]);
+			semaphoreClient.releaseSemaphore(userPassword[0], userPassword[1]);
 		}
 		
 		try {
