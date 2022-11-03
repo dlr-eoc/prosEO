@@ -158,7 +158,7 @@ my @processors = (
     	tasks => [ 
     	   { taskName => 'ptm_l01b', taskVersion => '0.1.0' }
     	],
-    	dockerImage => 'localhost:5000/proseo-sample-wrapper:0.9.3-SNAPSHOT'
+    	dockerImage => 'localhost:5000/proseo-sample-wrapper:0.9.3'
     },
     {
         processorName => 'PTML2', 
@@ -167,7 +167,7 @@ my @processors = (
         tasks => [ 
            { taskName => 'ptm_l2', taskVersion => '0.1.0' }
         ],
-        dockerImage => 'localhost:5000/proseo-sample-wrapper:0.9.3-SNAPSHOT'
+        dockerImage => 'localhost:5000/proseo-sample-wrapper:0.9.3'
     },
     {
         processorName => 'PTML3', 
@@ -176,7 +176,7 @@ my @processors = (
         tasks => [ 
            { taskName => 'ptm_l3', taskVersion => '0.1.0' }
         ],
-        dockerImage => 'localhost:5000/proseo-sample-wrapper:0.9.3-SNAPSHOT'
+        dockerImage => 'localhost:5000/proseo-sample-wrapper:0.9.3'
     }
 );
 my @configurations = (

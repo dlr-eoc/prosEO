@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo</artifactId>
-		<version>0.9.3-SNAPSHOT</version>
+		<version>0.9.3</version>
 	</parent>
 
 	<artifactId>proseo-api</artifactId>
@@ -19,8 +19,10 @@
 		<module>xbip-monitor</module>
 		<module>edip-monitor</module>
 		<module>auxip-monitor</module>
+		<!-- 
 		<module>odip</module>
 		<module>aip-client</module>
+		-->
 	</modules>
 
 	<url>https://github.com/dlr-eoc/prosEO/api</url>

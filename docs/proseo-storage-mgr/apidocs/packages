@@ -12,7 +12,6 @@ de.dlr.proseo.storagemgr.utils
 de.dlr.proseo.storagemgr.utils
 de.dlr.proseo.storagemgr.utils
 de.dlr.proseo.storagemgr.fs.s3
-de.dlr.proseo.storagemgr.fs.alluxio
 de.dlr.proseo.storagemgr.rest
 de.dlr.proseo.storagemgr.rest
 de.dlr.proseo.storagemgr.rest
