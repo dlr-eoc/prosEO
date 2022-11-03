@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Build-Jdk-Spec: 14
+Implementation-Title: Archive Interface Delivery Point Client
+Implementation-Version: 0.9.3
+Implementation-Vendor: DLR - Deutsches Zentrum für Luft- und Raumfahrt 
+ e. V.
+Created-By: Maven Integration for Eclipse
+
