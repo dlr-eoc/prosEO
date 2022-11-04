@@ -328,7 +328,7 @@ public class CLISyntax {
 
 		StringBuilder htmlDoc = new StringBuilder();
 
-		htmlDoc.append("<!DOCTYPE html><html><head>" + "<title>ProsEO CLI DOcumentation</title>"
+		htmlDoc.append("<!DOCTYPE html><html><head>" + "<title>ProsEO CLI Documentation</title>"
 				+ "<link rel=\"stylesheet\" href=\"css/syntax.css\">" + "</head>").append("<body>");
 
 		// Title and descriptions:
