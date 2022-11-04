@@ -11,9 +11,11 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
@@ -48,7 +50,7 @@ public class S3DAL {
 
 	/** S3 Client for v2 */
 	private S3Client s3ClientV2;
-	
+
 	/** S3 Client for v1 */
 	private AmazonS3 s3ClientV1;
 
@@ -71,19 +73,14 @@ public class S3DAL {
 	 * Constructor
 	 * 
 	 * @param cfg s3Configuration
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public S3DAL(S3Configuration cfg) throws IOException {
 
 		this.cfg = cfg;
 
-		if (cfg.isDefaultRegion()) {
-			initS3ClientV2();
-		} else {
-			initS3ClientWithRegionV2();
-		}
-		
-		initS3ClientV1();
+		initS3ClientV2();
+		initS3ClientV1(); // for transfer manager only
 	}
 
 	/**
@@ -95,57 +92,54 @@ public class S3DAL {
 
 		return cfg;
 	}
-	
+
 	/**
 	 * Initialization of s3 client v1
-	 * @throws IOException 
+	 * 
+	 * @throws IOException
 	 */
 	public void initS3ClientV1() throws IOException {
-		
-		AWSCredentials awsCredentialsV1 = new BasicAWSCredentials(
-				cfg.getS3AccessKey(), cfg.getS3SecretAccessKey()
-				);
-		
+
+		AWSCredentials awsCredentialsV1 = new BasicAWSCredentials(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
+
 		Regions region = Regions.fromName(cfg.getS3Region());
-		
-		s3ClientV1 = AmazonS3ClientBuilder
-				  .standard()
-				  .withCredentials(new AWSStaticCredentialsProvider(awsCredentialsV1))
-				  .withRegion(region)
-				  .build();
+
+		if (cfg.isDefaultEndPoint()) {
+			s3ClientV1 = AmazonS3ClientBuilder.standard()
+				.withCredentials(new AWSStaticCredentialsProvider(awsCredentialsV1)).withRegion(region).build();
+		}
+		else {
+			ClientConfiguration clientConfiguration = new ClientConfiguration();
+			clientConfiguration.setSignerOverride("AWSS3V4SignerType");
+			String s3EndPoint = cfg.getS3EndPoint();
+			
+			s3ClientV1 = AmazonS3ClientBuilder.standard()
+					.withEndpointConfiguration(
+							new AwsClientBuilder.EndpointConfiguration(s3EndPoint, Region.of(region.name()).id()))
+					.withPathStyleAccessEnabled(true).withClientConfiguration(clientConfiguration)
+					.withCredentials(new AWSStaticCredentialsProvider(awsCredentialsV1)).build();
+		}
 	}
 
 	/**
 	 * Initialization of s3 client v2
-	 * @throws IOException 
+	 * 
+	 * @throws IOException
 	 */
 	public void initS3ClientV2() throws IOException {
 
-		// Region s3Region = Region.EU_CENTRAL_1;
-		
-		Region s3Region = Region.of(cfg.getS3Region());
+		Region s3Region = Region.of(cfg.getS3Region()); // Region.EU_CENTRAL_1;
 
 		initCredentials(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
 		initTransferManager(s3Region);
 
-		s3ClientV2 = S3Client.builder().region(s3Region)
-				.credentialsProvider(StaticCredentialsProvider.create(credentials)).build();
-
-		setBucket(cfg.getBucket());
-	}
-
-	/**
-	 * Initialization of s3 client v2 with region
-	 * @throws IOException 
-	 */
-	public void initS3ClientWithRegionV2() throws IOException {
-
-		initCredentials(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
-		initTransferManager(Region.of(cfg.getS3Region()));
-
-		s3ClientV2 = S3Client.builder().region(Region.of(cfg.getS3Region()))
-				.endpointOverride(URI.create(cfg.getS3EndPoint()))
-				.credentialsProvider(StaticCredentialsProvider.create(credentials)).build();
+		if (cfg.isDefaultEndPoint()) {
+			s3ClientV2 = S3Client.builder().region(s3Region)
+					.credentialsProvider(StaticCredentialsProvider.create(credentials)).build();
+		} else {
+			s3ClientV2 = S3Client.builder().region(s3Region).endpointOverride(URI.create(cfg.getS3EndPoint()))
+					.credentialsProvider(StaticCredentialsProvider.create(credentials)).build();
+		}
 
 		setBucket(cfg.getBucket());
 	}
@@ -163,7 +157,8 @@ public class S3DAL {
 
 		AtomicCommand<List<String>> fileGetter = new S3AtomicFileListGetter(s3ClientV2, cfg.getBucket());
 
-		return new DefaultRetryStrategy<List<String>>(fileGetter, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
+		return new DefaultRetryStrategy<List<String>>(fileGetter, cfg.getMaxRequestAttempts(),
+				cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
@@ -180,7 +175,8 @@ public class S3DAL {
 
 		AtomicCommand<List<String>> fileGetter = new S3AtomicFileListGetter(s3ClientV2, cfg.getBucket(), folder);
 
-		return new DefaultRetryStrategy<List<String>>(fileGetter, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
+		return new DefaultRetryStrategy<List<String>>(fileGetter, cfg.getMaxRequestAttempts(),
+				cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
@@ -253,8 +249,8 @@ public class S3DAL {
 
 		AtomicCommand<String> fileContentGetter = new S3AtomicFileContentGetter(s3ClientV2, cfg.getBucket(), filePath);
 
-		return new DefaultRetryStrategy<String>(fileContentGetter, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime())
-				.execute();
+		return new DefaultRetryStrategy<String>(fileContentGetter, cfg.getMaxRequestAttempts(),
+				cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
@@ -271,7 +267,8 @@ public class S3DAL {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> uploadFile({},{})", sourceFile, targetFileOrDir);
 
-		AtomicCommand<String> fileUploader = new S3AtomicFileUploader(s3ClientV2, cfg.getBucket(), sourceFile, targetFileOrDir);
+		AtomicCommand<String> fileUploader = new S3AtomicFileUploader(s3ClientV2, cfg.getBucket(), sourceFile,
+				targetFileOrDir);
 
 		return new DefaultRetryStrategy<String>(fileUploader, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime())
 				.execute();
@@ -414,16 +411,18 @@ public class S3DAL {
 	 * 
 	 * @param fileOrDir file or directory
 	 * @return deleted file path list
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public List<String> delete(String fileOrDir) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> delete({})", fileOrDir);
-		
-		AtomicCommand<List<String>> fileListDeleter = new S3AtomicFileListDeleter(s3ClientV2, cfg.getBucket(), fileOrDir);
 
-		return new DefaultRetryStrategy<List<String>>(fileListDeleter, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
+		AtomicCommand<List<String>> fileListDeleter = new S3AtomicFileListDeleter(s3ClientV2, cfg.getBucket(),
+				fileOrDir);
+
+		return new DefaultRetryStrategy<List<String>>(fileListDeleter, cfg.getMaxRequestAttempts(),
+				cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
@@ -559,7 +558,7 @@ public class S3DAL {
 	 * Sets bucket
 	 * 
 	 * @param bucket bucket
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public void setBucket(String bucket) throws IOException {
 
@@ -586,16 +585,17 @@ public class S3DAL {
 	 * Gets buckets
 	 * 
 	 * @return list of buckets
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public List<String> getBuckets() throws IOException {
-		
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getBuckets()");
-		
+
 		AtomicCommand<List<String>> bucketGetter = new S3AtomicBucketListGetter(s3ClientV2);
 
-		return new DefaultRetryStrategy<List<String>>(bucketGetter, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
+		return new DefaultRetryStrategy<List<String>>(bucketGetter, cfg.getMaxRequestAttempts(),
+				cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
@@ -603,7 +603,7 @@ public class S3DAL {
 	 * 
 	 * @param bucketName bucket name
 	 * @return true if bucket exists
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public boolean bucketExists(String bucketName) throws IOException {
 
@@ -668,15 +668,15 @@ public class S3DAL {
 	 * 
 	 * @param bucketName bucket name
 	 * @return bucket name if bucket has been created
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	private String createBucket(String bucketName) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createBucket({})", bucketName);
-		
+
 		AtomicCommand<String> bucketCreator = new S3AtomicBucketCreator(s3ClientV2, cfg.getBucket());
-		
+
 		return new DefaultRetryStrategy<String>(bucketCreator, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime())
 				.execute();
 	}
@@ -686,15 +686,15 @@ public class S3DAL {
 	 * 
 	 * @param bucketName bucket name
 	 * @return deleted bucket name
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	private String deleteEmptyBucket(String bucketName) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteEmptyBucket({})", bucketName);
-		
+
 		AtomicCommand<String> bucketDeleter = new S3AtomicBucketDeleter(s3ClientV2, cfg.getBucket());
-		
+
 		return new DefaultRetryStrategy<String>(bucketDeleter, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime())
 				.execute();
 	}
