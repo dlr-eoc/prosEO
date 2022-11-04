@@ -26,6 +26,7 @@
 				<include>org.slf4j:slf4j-api</include>
 				<include>org.yaml:snakeyaml</include>
 				<include>de.dlr.proseo:proseo-ui-backend</include>
+				<include>de.dlr.proseo:proseo-logging</include>
 			</includes>
 		</dependencySet>
 	</dependencySets>

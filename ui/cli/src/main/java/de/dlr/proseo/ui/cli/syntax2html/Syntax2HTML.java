@@ -1,57 +1,62 @@
+/**
+ * Syntax2HTML.java
+ * 
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ui.cli.syntax2html;
 
 import de.dlr.proseo.ui.cli.parser.CLISyntax;
-import java.io.InputStream;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
+
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.constructor.BaseConstructor;
 
 /**
  * 
- * Converts Yaml input to HTML output.
+ * Converts YAML syntax file to HTML for documentation purposes.
+ *
+ * @author Katharina Bassler
  *
  */
 public class Syntax2HTML {
-
+	
 	/**
 	 * @param args source_file target_file
 	 */
-	public static void main(String[] args) {
+	public static void main(String... args) {
 
 		if (args.length != 2) {
 			System.out.println("usage: Syntax2HTML source_file target_file");
 			System.exit(1);
 		}
+
+		Path source = Paths.get(args[0]);
+		Path target = Paths.get(args[1]);
 		
-		File syntaxFile = new File(args[0]);
-		File htmlDocFile = new File(args[1]);
-						
-		try {
+		if (!Files.exists(source))
+			throw new IllegalArgumentException("source must point to the YAML syntax file");
 
-			// Read CLI Syntax file (YAML)
-			InputStream inputStream = new FileInputStream(syntaxFile);
+		try (InputStream inputStream = new BufferedInputStream(Files.newInputStream(source))) {
 
-			// Parse YAML document to Java object of type Documentation
+			// Parse YAML source file with syntax to Java object of type CLISyntax
 			Yaml yaml = new Yaml(new Constructor(CLISyntax.class));
-			CLISyntax newDoc = yaml.load(inputStream);
+			CLISyntax syntax = yaml.load(inputStream);
 
-			// Generate StringBuilder with HTML code
-			StringBuilder htmlDoc = newDoc.printHTML();
-
-			// Write HTML-StringBuilder to HTML file
-			BufferedWriter htmlWriter = new BufferedWriter(new FileWriter(htmlDocFile));
-			htmlWriter.write(htmlDoc.toString());
-			htmlWriter.close();
-
+			// Generate HTML documentation
+			StringBuilder htmlDoc = syntax.printHTML();
+				
+			// Write HTML documentation to target file
+			Files.writeString(target, htmlDoc);
+			
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-		
+		} 
 	}
 
 }
