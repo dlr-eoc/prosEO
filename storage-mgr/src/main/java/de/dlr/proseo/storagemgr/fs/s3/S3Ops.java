@@ -106,7 +106,7 @@ public class S3Ops {
 	 * @return the keys contained in the bucket
 	 * @throws SdkClientException if any error occurred in the communication with
 	 *                            the S3 backend storage
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public static List<String> listObjectsInBucket(AmazonS3 s3, String bucketName, String prefix)
 			throws SdkClientException, IOException {
@@ -276,21 +276,24 @@ public class S3Ops {
 			ClientConfiguration clientConfiguration = new ClientConfiguration();
 			clientConfiguration.setSignerOverride("AWSS3V4SignerType");
 
-			AmazonS3 amazonS3 = AmazonS3ClientBuilder.standard()
-					.withEndpointConfiguration(
-							new AwsClientBuilder.EndpointConfiguration(s3Endpoint, Region.of(region).id()))
-					.withPathStyleAccessEnabled(true).withClientConfiguration(clientConfiguration)
-					.withCredentials(new AWSStaticCredentialsProvider(awsCreds)).build();
+			AmazonS3 amazonS3;
 
-			/*
-			 * AmazonS3 amazonS3 = AmazonS3ClientBuilder.standard() .withCredentials(new
-			 * AWSStaticCredentialsProvider(new BasicAWSCredentials(s3AccessKey,
-			 * secretAccessKey))) .withClientConfiguration(clientConfiguration)
-			 * .withEndpointConfiguration(new
-			 * AwsClientBuilder.EndpointConfiguration(s3Endpoint, region)).build();
-			 */
+			if (StorageProvider.getInstance().getS3ConfigurationFromFile().isDefaultEndPoint()) {
+				
+				amazonS3 = AmazonS3ClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(awsCreds))
+						.withRegion(region).build();
+			} 
+			else {
+
+				amazonS3 = AmazonS3ClientBuilder.standard()
+						.withEndpointConfiguration(
+								new AwsClientBuilder.EndpointConfiguration(s3Endpoint, Region.of(region).id()))
+						.withPathStyleAccessEnabled(true).withClientConfiguration(clientConfiguration)
+						.withCredentials(new AWSStaticCredentialsProvider(awsCreds)).build();
+			}
 
 			return amazonS3;
+
 		} catch (AmazonServiceException e) {
 			logger.error(e.getMessage());
 			return null;
@@ -405,26 +408,26 @@ public class S3Ops {
 	/**
 	 * Fetch file from S3 to local file using AWS S3 SDK V1 TransferManager
 	 * 
-	 * @param s3Client      a given instantiated V1 S3 client
-	 * @param s3Bucket      S3 bucket name
-	 * @param s3Key 		S3 object key (without bucket)
-	 * @param targetFile	local (POSIX) target file path
+	 * @param s3Client   a given instantiated V1 S3 client
+	 * @param s3Bucket   S3 bucket name
+	 * @param s3Key      S3 object key (without bucket)
+	 * @param targetFile local (POSIX) target file path
 	 * @return true, if the operation succeeded, false otherwise
 	 */
 	public static Boolean v1FetchFile(AmazonS3 s3Client, String s3Bucket, String s3Key, File targetFile) {
-		
-		if (logger.isTraceEnabled()) logger.trace(">>> v1FetchFile({}, {}, {}, {})",
-				s3Client, s3Bucket, s3Key, targetFile);
-		
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> v1FetchFile({}, {}, {}, {})", s3Client, s3Bucket, s3Key, targetFile);
+
 		// Download using TransferManager as per
-				// https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/examples-s3-transfermanager.html#transfermanager-downloading
+		// https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/examples-s3-transfermanager.html#transfermanager-downloading
 		TransferManager transferManager;
 		try {
 			// Make sure target file is not already present
 			if (targetFile.exists()) {
 				targetFile.delete();
 			}
-			
+
 			transferManager = TransferManagerBuilder.standard()
 					.withMultipartCopyPartSize(MULTIPART_UPLOAD_PARTSIZE_BYTES).withS3Client(s3Client).build();
 			if (null == transferManager) {
@@ -435,14 +438,16 @@ public class S3Ops {
 			logger.error(e.getMessage(), e);
 			return false;
 		}
-		
+
 		try {
 			Download download = transferManager.download(s3Bucket, s3Key, targetFile);
-			
+
 			download.waitForCompletion();
-			
-			// TODO This may not apply to the TransferManager any more (it did for V2 getObject() and Files.copy())
-			// Unfortunately returning from waitForCompletion() may not mean the file is fully written to disk!
+
+			// TODO This may not apply to the TransferManager any more (it did for V2
+			// getObject() and Files.copy())
+			// Unfortunately returning from waitForCompletion() may not mean the file is
+			// fully written to disk!
 			Long contentLength = download.getObjectMetadata().getContentLength();
 			int i = 0;
 			long maxCycles = StorageManagerConfiguration.getConfiguration().getFileCheckMaxCycles();
@@ -457,13 +462,16 @@ public class S3Ops {
 
 			return true;
 		} catch (InterruptedException e) {
-			logger.error("Interrupted while copying S3 object s3:/{}/{} to file {} (cause: {})", s3Bucket, s3Key, targetFile, e.getMessage());
+			logger.error("Interrupted while copying S3 object s3:/{}/{} to file {} (cause: {})", s3Bucket, s3Key,
+					targetFile, e.getMessage());
 			return false;
 		} catch (AmazonServiceException e) {
-			logger.error("Failed to copy S3 object s3:/{}/{} to file {} (cause: {})", s3Bucket, s3Key, targetFile, e.getErrorMessage());
+			logger.error("Failed to copy S3 object s3:/{}/{} to file {} (cause: {})", s3Bucket, s3Key, targetFile,
+					e.getErrorMessage());
 			return false;
 		} catch (IOException | AmazonClientException e) {
-			logger.error("Failed to copy S3 object s3:/{}/{} to file {} (cause: {})", s3Bucket, s3Key, targetFile, e.getMessage());
+			logger.error("Failed to copy S3 object s3:/{}/{} to file {} (cause: {})", s3Bucket, s3Key, targetFile,
+					e.getMessage());
 			return false;
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
@@ -546,7 +554,8 @@ public class S3Ops {
 					transferManager.shutdownNow(false);
 					throw e;
 				} else {
-					logger.warn("Uploading directory {} failed (cause: {}), retrying after 100 ms ...", sourceDirPath, e.getMessage());
+					logger.warn("Uploading directory {} failed (cause: {}), retrying after 100 ms ...", sourceDirPath,
+							e.getMessage());
 					Thread.sleep(100);
 				}
 			}
@@ -625,7 +634,8 @@ public class S3Ops {
 						transferManager.shutdownNow(false);
 						throw e;
 					} else {
-						logger.warn("Uploading file {} failed (cause: {}), retrying after 100 ms ...", sourceFilePath, e.getMessage());
+						logger.warn("Uploading file {} failed (cause: {}), retrying after 100 ms ...", sourceFilePath,
+								e.getMessage());
 						Thread.sleep(100);
 					}
 				}
@@ -746,7 +756,8 @@ public class S3Ops {
 							transferManager.shutdownNow(false);
 							throw e;
 						} else {
-							logger.warn("Copying s3://{}/{} failed (cause: {}), retrying after 100 ms ...", sourceBucketName, key, e.getMessage());
+							logger.warn("Copying s3://{}/{} failed (cause: {}), retrying after 100 ms ...",
+									sourceBucketName, key, e.getMessage());
 							Thread.sleep(100);
 						}
 					}
@@ -871,7 +882,7 @@ public class S3Ops {
 	 * @param key        the object key
 	 * @return the length of the object or zero, if no object metadata could be
 	 *         retrieved
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public static long getLength(AmazonS3 client, String bucketName, String key) {
 
@@ -887,7 +898,7 @@ public class S3Ops {
 				return StorageProvider.getInstance().getStorage().getFileSize(storageFile);
 			} catch (IOException e) {
 				e.printStackTrace();
-				return -1; 
+				return -1;
 			}
 		} else { // begin original code
 
