@@ -1,21 +1,25 @@
 package de.dlr.proseo.storagemgr.version2.s3;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.AmazonServiceException;
+
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.transfer.Download;
+import com.amazonaws.services.s3.transfer.TransferManager;
+import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
+
+import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.version2.FileUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.model.AtomicCommand;
-import software.amazon.awssdk.core.ResponseInputStream;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 /**
  * S3 Atomic File Downloader
@@ -30,10 +34,9 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 
 	/** Completed Info */
 	private static final String COMPLETED = "file DOWNLOADED";
-	
+
 	/** Failed Info */
 	private static final String FAILED = "file download FAILED";
-
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3AtomicFileDownloader.class);
@@ -41,14 +44,17 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 	/** Prefix for temporary files */
 	private static final String TEMPORARY_PREFIX = "temporary-";
 
+	/** Chunk size for uploads to S3 storage (128 MB) */
+	private static final Long MULTIPART_UPLOAD_PARTSIZE_BYTES = (long) (128 * 1024 * 1024);
+
 	/** source file */
 	private String sourceFile;
 
 	/** target file or dir */
 	private String targetFileOrDir;
 
-	/** S3 Client */
-	private S3Client s3Client;
+	/** S3 Client v1 */
+	private AmazonS3 s3ClientV1;
 
 	/** Bucket */
 	private String bucket;
@@ -56,14 +62,14 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 	/**
 	 * Constructor
 	 * 
-	 * @param s3Client        s3 client
+	 * @param s3ClientV1        s3 client v1
 	 * @param bucket          bucket
 	 * @param sourceFile      sourceFile
 	 * @param targetFileOrDir target file or directory
 	 */
-	public S3AtomicFileDownloader(S3Client s3Client, String bucket, String sourceFile, String targetFileOrDir) {
+	public S3AtomicFileDownloader(AmazonS3 s3ClientV1, String bucket, String sourceFile, String targetFileOrDir) {
 
-		this.s3Client = s3Client;
+		this.s3ClientV1 = s3ClientV1;
 		this.bucket = bucket;
 		this.sourceFile = sourceFile;
 		this.targetFileOrDir = targetFileOrDir;
@@ -89,27 +95,12 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 		targetPosixFile = new PathConverter(targetPosixFile).s3ToPosixPath().convertToSlash().getPath();
 		new FileUtils(targetPosixFile).createParentDirectories();
 
-		GetObjectRequest request = GetObjectRequest.builder().bucket(bucket).key(sourceS3File).build();
-		ResponseInputStream<GetObjectResponse> response = s3Client.getObject(request);
-		BufferedOutputStream outputStream;
-
 		// temporary download filename, after download will be renamed
 		String temporaryTargetPosixFile = getTemporaryFilePath(targetPosixFile);
-		try {
+		try {		
+			downloadWithTransferManagerV1(sourceS3File, temporaryTargetPosixFile);
 
-			outputStream = new BufferedOutputStream(new FileOutputStream(temporaryTargetPosixFile));
-			byte[] buffer = new byte[4096];
-			int bytesRead = -1;
-
-			// download
-			while ((bytesRead = response.read(buffer)) != -1) {
-				outputStream.write(buffer, 0, bytesRead);
-			}
-
-			response.close();
-			outputStream.close();
-
-			// rename temporary file if the file downloaded successfully to cache 
+			// rename temporary file if the file downloaded successfully to cache
 			if (!renameFile(temporaryTargetPosixFile, targetPosixFile)) {
 				throw new IOException("Cannot rename file after download to cache " + temporaryTargetPosixFile + " to "
 						+ targetPosixFile);
@@ -127,25 +118,25 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 			throw new IOException(e);
 		}
 	}
-	
+
 	/**
 	 * Gets Information about atomic command (mostly for logs)
 	 * 
 	 * @return Information about atomic command
 	 */
-	public String getInfo() {	
+	public String getInfo() {
 		return INFO + " ";
 	}
-	
+
 	/**
 	 * Gets Information about completed atomic command (mostly for logs)
 	 * 
 	 * @return Information about completed atomic command
 	 */
-	public String getCompletedInfo() {	
+	public String getCompletedInfo() {
 		return INFO + ": " + COMPLETED + " ";
 	}
-	
+
 	/**
 	 * Gets Information about failed atomic command (mostly for logs)
 	 * 
@@ -154,7 +145,7 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 	public String getFailedInfo() {
 		return INFO + ": " + FAILED + " ";
 	}
-	
+
 	/**
 	 * Gets file name
 	 * 
@@ -186,6 +177,9 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 	 * @return true if the file has been renamed successfully
 	 */
 	private boolean renameFile(String oldName, String newName) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> renameFile({}, {})", oldName, newName);	
 
 		File oldFile = new File(oldName);
 		File newFile = new File(newName);
@@ -194,5 +188,79 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 			newFile.delete();
 
 		return oldFile.renameTo(newFile);
+	}
+
+	private void downloadWithTransferManagerV1(String s3Key, String targetPath) throws IOException {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> downloadWithTransferManagerV1({}, {}, {})", bucket, s3Key, targetPath);	
+		
+		File targetFile = new File(targetPath);
+
+		// Download using TransferManager as per https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/examples-s3-transfermanager.html#transfermanager-downloading
+		TransferManager transferManager;
+		try {
+			if (targetFile.exists()) {
+				targetFile.delete();
+			}
+
+			transferManager = TransferManagerBuilder.standard()
+					.withMultipartCopyPartSize(MULTIPART_UPLOAD_PARTSIZE_BYTES).withS3Client(s3ClientV1).build();
+			
+			if (null == transferManager) {
+				throw new IOException("Unable to create Transfer Manager");
+			}
+			
+		} catch (Exception e) {
+			
+			logger.error(e.getMessage(), e);
+			throw new IOException(e);
+		}
+
+		try {
+			Download download = transferManager.download(bucket, s3Key, targetFile);
+
+			download.waitForCompletion();
+
+			// TODO This may not apply to the TransferManager any more (it did for V2
+			// getObject() and Files.copy())
+			// Unfortunately returning from waitForCompletion() may not mean the file is
+			// fully written to disk!
+			Long contentLength = download.getObjectMetadata().getContentLength();
+			int i = 0;
+			long maxCycles = StorageManagerConfiguration.getConfiguration().getFileCheckMaxCycles();
+			long waitTime = StorageManagerConfiguration.getConfiguration().getFileCheckWaitTime();
+			
+			while (Files.size(targetFile.toPath()) < contentLength && i < maxCycles) {
+				logger.info("... waiting to complete writing of {}", targetFile);
+				Thread.sleep(waitTime);
+			}
+			
+			if (maxCycles <= i) {
+				throw new IOException("Read timed out after " + (maxCycles * waitTime) + " ms");
+			}
+
+		} catch (InterruptedException e) {
+			logger.error("Interrupted while copying S3 object s3:/{}/{} to file {} (cause: {})", bucket, s3Key,
+					targetFile, e.getMessage());
+			throw new IOException(e);
+			
+		} catch (AmazonServiceException e) {
+			logger.error("Failed to copy S3 object s3:/{}/{} to file {} (cause: {})", bucket, s3Key, targetFile,
+					e.getErrorMessage());
+			throw new IOException(e);
+			
+		} catch (IOException | AmazonClientException e) {
+			logger.error("Failed to copy S3 object s3:/{}/{} to file {} (cause: {})", bucket, s3Key, targetFile,
+					e.getMessage());
+			throw new IOException(e);
+			
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw new IOException(e);
+			
+		} finally {
+			transferManager.shutdownNow(false);
+		}
 	}
 }
