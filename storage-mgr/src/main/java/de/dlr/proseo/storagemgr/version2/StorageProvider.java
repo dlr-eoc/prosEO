@@ -538,7 +538,7 @@ public class StorageProvider {
 		
 		s3Configuration.setFileCheckWaitTime(cfg.getFileCheckWaitTime());
 		
-		s3Configuration.setDefaultRegion(Boolean.parseBoolean(cfg.getS3DefaultRegion()));
+		s3Configuration.setDefaultEndPoint(Boolean.parseBoolean(cfg.getS3DefaultEndPoint()));
 		s3Configuration.setFileTransferManager(Boolean.parseBoolean(cfg.getS3FileTransferManager()));
 		
 		return s3Configuration;

@@ -36,14 +36,14 @@ public class S3Configuration {
 	private long fileCheckWaitTime;
 	
 	/** default region */
-	private boolean defaultRegion;
+	private boolean defaultEndPoint;
 	
-	public boolean isDefaultRegion() {
-		return defaultRegion;
+	public boolean isDefaultEndPoint() {
+		return defaultEndPoint;
 	}
 
-	public void setDefaultRegion(boolean defaultRegion) {
-		this.defaultRegion = defaultRegion;
+	public void setDefaultEndPoint(boolean defaultEndPoint) {
+		this.defaultEndPoint = defaultEndPoint;
 	}
 
 	public boolean isFileTransferManager() {

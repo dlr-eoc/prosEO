@@ -72,8 +72,8 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.s3.s3MaxRequestAttempts}")
 	private Integer s3MaxRequestAttempts;
 	   
-	@Value("${proseo.s3.s3DefaultRegion}")
-	private String s3DefaultRegion;
+	@Value("${proseo.s3.s3DefaultEndPoint}")
+	private String s3DefaultEndPoint;
     
 	@Value("${proseo.s3.s3FileTransferManager}")
 	private String s3FileTransferManager;
@@ -335,10 +335,10 @@ public class StorageManagerConfiguration {
 	}
 	
 	/**
-	 * @return the s3DefaultRegion
+	 * @return the s3DefaultEndPoint
 	 */
-	public String getS3DefaultRegion() {
-		return s3DefaultRegion;
+	public String getS3DefaultEndPoint() {
+		return s3DefaultEndPoint;
 	}
 	
 	/**
