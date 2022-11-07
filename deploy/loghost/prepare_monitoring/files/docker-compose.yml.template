@@ -19,7 +19,7 @@ services:
 
   monitor:
     hostname: monitor
-    image: proseo-registry.eoc.dlr.de/proseo-monitor:0.9.3-SNAPSHOT-proseo
+    image: proseo-registry.eoc.dlr.de/proseo-monitor:0.9.3-ODIP-proseo
     ports:
       - 8080:8080
     volumes:

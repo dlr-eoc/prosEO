@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo</artifactId>
-		<version>0.9.3-SNAPSHOT</version>
+		<version>0.9.3-ODIP</version>
 	</parent>
 
 	<artifactId>proseo-planner</artifactId>
@@ -23,7 +23,7 @@
 	</organization>
 
 	<properties>
-		<module.version>0.9.3</module.version>
+		<module.version>0.9.3-ODIP</module.version>
 		<kubernetes.client.version>12.0.1</kubernetes.client.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/planner-api.raml</raml-path>

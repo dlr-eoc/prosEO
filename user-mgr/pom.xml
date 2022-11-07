@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo</artifactId>
-		<version>0.9.3-SNAPSHOT</version>
+		<version>0.9.3-ODIP</version>
 	</parent>
 
 	<artifactId>proseo-user-mgr</artifactId>
@@ -18,7 +18,7 @@
 	</organization>
 
 	<properties>
-		<module.version>0.9.3-SNAPSHOT</module.version>
+		<module.version>0.9.3-ODIP</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/user-mgr-api.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.usermgr.rest</raml-base-package>
