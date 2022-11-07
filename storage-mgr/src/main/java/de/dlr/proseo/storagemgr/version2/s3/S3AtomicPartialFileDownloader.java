@@ -28,7 +28,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
  * @author Denys Chaykovskiy
  *
  */
-public class S3AtomicPartialFileDownloader implements AtomicCommand<String> {
+public class S3AtomicPartialFileDownloader implements AtomicCommand<HttpHeaders> {
 
 	/** Info */
 	private static final String INFO = "S3 ATOMIC Partial File Downloader";
@@ -56,31 +56,43 @@ public class S3AtomicPartialFileDownloader implements AtomicCommand<String> {
 
 	/** Bucket */
 	private String bucket;
-	
+
+	/** From byte */
+	private Long fromByte;
+
+	/** To byte */
+	private Long toByte;
+
 	/** Max request attempts */
 	private int maxRequestAttempts;
-	
+
 	/** Wait time */
 	private int waitTime;
 
 	/**
 	 * Constructor
 	 * 
-	 * @param s3Client       s3 client
-	 * @param bucket          bucket
-	 * @param sourceFile      sourceFile
-	 * @param targetFileOrDir target file or directory
+	 * @param s3Client           s3 client
+	 * @param bucket             bucket
+	 * @param sourceFile         sourceFile
+	 * @param targetFileOrDir    target file or directory
+	 * @param fromByte           from byte
+	 * @param toByte             toByte
 	 * @param maxRequestAttempts max request attempts
-	 * @param waitTime waitTime
+	 * @param waitTime           waitTime
 	 */
-	public S3AtomicPartialFileDownloader(S3Client s3Client, String bucket, String sourceFile, String targetFileOrDir, int maxRequestAttempts, int waitTime) {
+	public S3AtomicPartialFileDownloader(S3Client s3Client, String bucket, String sourceFile, String targetFileOrDir,
+			Long fromByte, Long toByte, int maxRequestAttempts, int waitTime) {
 
 		this.s3Client = s3Client;
 		this.bucket = bucket;
 		this.sourceFile = sourceFile;
 		this.targetFileOrDir = targetFileOrDir;
-		this.maxRequestAttempts = maxRequestAttempts; 
-		this.waitTime = waitTime;	
+
+		this.fromByte = fromByte;
+		this.toByte = toByte;
+		this.maxRequestAttempts = maxRequestAttempts;
+		this.waitTime = waitTime;
 	}
 
 	/**
@@ -88,7 +100,7 @@ public class S3AtomicPartialFileDownloader implements AtomicCommand<String> {
 	 * 
 	 * @return downloaded file name
 	 */
-	public String execute() throws IOException {
+	public HttpHeaders execute() throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> execute() - downloadPartialFile({},{})", sourceFile, targetFileOrDir);
@@ -104,25 +116,28 @@ public class S3AtomicPartialFileDownloader implements AtomicCommand<String> {
 		new FileUtils(targetPosixFile).createParentDirectories();
 
 		// temporary download filename, after download will be renamed
-		String temporaryTargetPosixFile = getTemporaryFilePath(targetPosixFile);
-		try {		
-			downloadPartialFile(sourceS3File, temporaryTargetPosixFile);
+		// String temporaryTargetPosixFile = getTemporaryFilePath(targetPosixFile);
+		try {
+			InputStream stream = getInputStream(sourceS3File, targetPosixFile);
+
+			HttpHeaders headers = getFilePage(stream, fromByte, toByte);
 
 			// rename temporary file if the file downloaded successfully to cache
-			if (!renameFile(temporaryTargetPosixFile, targetPosixFile)) {
-				throw new IOException("Cannot rename partial file after download " + temporaryTargetPosixFile + " to "
-						+ targetPosixFile);
-			}
+			/*
+			 * if (!renameFile(temporaryTargetPosixFile, targetPosixFile)) { throw new
+			 * IOException("Cannot rename partial file after download " +
+			 * temporaryTargetPosixFile + " to " + targetPosixFile); }
+			 */
 
 			if (logger.isTraceEnabled())
 				logger.trace("... " + getCompletedInfo() + " - " + targetPosixFile);
 
-			return targetPosixFile;
+			return headers;
 
 		} catch (IOException e) {
 			if (logger.isTraceEnabled())
 				logger.trace(getFailedInfo() + e.getMessage());
-			new File(temporaryTargetPosixFile).delete();
+			// new File(temporaryTargetPosixFile).delete();
 			throw new IOException(e);
 		}
 	}
@@ -185,9 +200,9 @@ public class S3AtomicPartialFileDownloader implements AtomicCommand<String> {
 	 * @return true if the file has been renamed successfully
 	 */
 	private boolean renameFile(String oldName, String newName) {
-		
+
 		if (logger.isTraceEnabled())
-			logger.trace(">>> renameFile({}, {})", oldName, newName);	
+			logger.trace(">>> renameFile({}, {})", oldName, newName);
 
 		File oldFile = new File(oldName);
 		File newFile = new File(newName);
@@ -201,44 +216,47 @@ public class S3AtomicPartialFileDownloader implements AtomicCommand<String> {
 	/**
 	 * Downloads partial file
 	 * 
-	 * @param s3Key s3 key
+	 * @param s3Key      s3 key
 	 * @param targetPath target path
 	 * @throws IOException IO Exception
 	 */
-	private void downloadPartialFile(String s3Key, String targetPath) throws IOException {
-		
+	private InputStream getInputStream(String s3Key, String targetPath) throws IOException {
+
 		if (logger.isTraceEnabled())
-			logger.trace(">>> downloadPartialFile({}, {}, {})", bucket, s3Key, targetPath);	
-		
-		InputStream stream;
+			logger.trace(">>> downloadPartialFile({}, {}, {})", bucket, s3Key, targetPath);
+
 		try {
-			stream = s3Client.getObject(GetObjectRequest.builder().bucket(bucket).key(s3Key).build(),
+			InputStream stream = s3Client.getObject(GetObjectRequest.builder().bucket(bucket).key(s3Key).build(),
 					ResponseTransformer.toInputStream());
-			
-			if (stream == null) 
+
+			if (stream == null)
 				throw new IOException("Cannot create stream for download partial file");
-					
+
+			return stream;
+
 		} catch (Exception e) {
-			
+
 			logger.error(e.getMessage(), e);
 			throw new IOException(e);
 		}
 	}
-	
+
 	/**
-	 * @param sourceFile
+	 * @param relativePath
 	 * @param stream
 	 * @param fromByte
 	 * @param toByte
 	 * @return
 	 * @throws IOException
 	 */
-	private HttpHeaders getFilePage(StorageFile sourceFile, InputStream stream, Long fromByte, Long toByte)
-			throws IOException {
+	private HttpHeaders getFilePage(InputStream stream, Long fromByte, Long toByte) throws IOException {
 
-		Long len = storageProvider.getStorage().getFileSize(sourceFile);
+		StorageFile storageFile = new S3StorageFile(bucket, sourceFile);
+
+		Long len = getFileSize(storageFile.getRelativePath());
+
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentDispositionFormData("attachment", sourceFile.getFileName());
+		headers.setContentDispositionFormData("attachment", storageFile.getFileName());
 		long from = 0;
 		long to = len - 1;
 
@@ -262,14 +280,13 @@ public class S3AtomicPartialFileDownloader implements AtomicCommand<String> {
 			headers.setContentType(new MediaType("multipart", "byteranges"));
 
 		} else {
-			headers.setContentType(new MediaType("application", sourceFile.getExtension()));
+			headers.setContentType(new MediaType("application", storageFile.getExtension()));
 		}
 		headers.setContentLength(len);
 
 		return headers;
 	}
-	
-	
+
 	/**
 	 * Gets file size
 	 * 
@@ -284,8 +301,7 @@ public class S3AtomicPartialFileDownloader implements AtomicCommand<String> {
 
 		AtomicCommand<String> fileSizeGetter = new S3AtomicFileSizeGetter(s3Client, bucket, filePath);
 
-		String fileSize = new DefaultRetryStrategy<String>(fileSizeGetter, maxRequestAttempts,
-				waitTime).execute();
+		String fileSize = new DefaultRetryStrategy<String>(fileSizeGetter, maxRequestAttempts, waitTime).execute();
 
 		return Long.valueOf(fileSize);
 	}
