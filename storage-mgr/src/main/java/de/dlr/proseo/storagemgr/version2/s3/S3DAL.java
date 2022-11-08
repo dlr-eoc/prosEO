@@ -1,6 +1,7 @@
 package de.dlr.proseo.storagemgr.version2.s3;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Paths;
 import java.io.File;
@@ -714,5 +715,25 @@ public class S3DAL {
 		}
 
 		return fileNames;
+	}
+	
+	
+	/**
+	 * Gets input stream from the file
+	 * 
+	 * @param relativePath
+	 * @return InputStream input stream
+	 * @throws IOException
+
+	 */
+	public InputStream getInputStream(String relativePath) throws IOException {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getInputStream({})", relativePath);
+
+		AtomicCommand<InputStream> inputStream = new S3AtomicInputStreamGetter(s3ClientV2, cfg.getBucket(), relativePath);
+
+		return new DefaultRetryStrategy<InputStream>(inputStream, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime())
+				.execute();
 	}
 }
