@@ -952,6 +952,20 @@ public class ProcessingOrder extends PersistentObject {
 		this.hasFailedJobSteps = hasFailedJobSteps;
 	}
 
+	/** Get the workflow
+	 * @return the workflow
+	 */
+	public Workflow getWorkflow() {
+		return workflow;
+	}
+
+	/** Set the workflow
+	 * @param workflow the workflow to set
+	 */
+	public void setWorkflow(Workflow workflow) {
+		this.workflow = workflow;
+	}
+
 	/**
 	 * Gets the requested configured processors
 	 * 
