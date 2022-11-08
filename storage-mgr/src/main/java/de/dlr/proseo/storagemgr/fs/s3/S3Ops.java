@@ -243,14 +243,25 @@ public class S3Ops {
 			logger.trace(">>> v2S3Client({}, {}, {}, {}))", "***", "***", s3Endpoint, region);
 
 		try {
-
 			AwsBasicCredentials creds = AwsBasicCredentials.create(s3AccessKey, secretAccessKey);
-			S3Client s3 = S3Client.builder().region(Region.of(region)).endpointOverride(URI.create(s3Endpoint))
+			
+			S3Client s3;
+			
+			if (StorageProvider.getInstance().getS3ConfigurationFromFile().isDefaultEndPoint()) {
+				s3 = S3Client.builder().region(Region.of(region))
 					.credentialsProvider(StaticCredentialsProvider.create(creds)).build();
+			}
+			else {
+				s3 = S3Client.builder().region(Region.of(region)).endpointOverride(URI.create(s3Endpoint))
+						.credentialsProvider(StaticCredentialsProvider.create(creds)).build();
+			}
+			
 			return s3;
+			
 		} catch (software.amazon.awssdk.core.exception.SdkClientException e) {
 			logger.error(e.getMessage());
 			return null;
+			
 		} catch (java.lang.NullPointerException e1) {
 			logger.error(e1.getMessage());
 			return null;
