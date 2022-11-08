@@ -447,7 +447,8 @@ public class ProductControllerImpl implements ProductController {
 		if (null == token) {
 			return new ResponseEntity<>(errorHeaders(MSG_TOKEN_MISSING, MSG_ID_TOKEN_MISSING), HttpStatus.UNAUTHORIZED);
 		}
-
+		
+		// token check begin
 		// Check authentication token
 		JWTClaimsSet claimsSet = null;
 		try {
@@ -461,24 +462,29 @@ public class ProductControllerImpl implements ProductController {
 					errorHeaders(MSG_TOKEN_EXPIRED, MSG_ID_TOKEN_EXPIRED, claimsSet.getExpirationTime().toString()),
 					HttpStatus.UNAUTHORIZED);
 		}
-
+		// token check end
+		
 		if (storageProvider.isVersion2()) { // begin version 2 - storage file -> byte page
 
-			try {
-				StorageFile sourceFile = storageProvider.getAbsoluteFile(pathInfo);
+			try {				
+				String relativePath = storageProvider.getRelativePath(pathInfo);
+				StorageFile sourceFile = storageProvider.getStorageFile(relativePath);
+				Long fileSize = storageProvider.getStorage().getFileSize(sourceFile);
 
 				if (sourceFile == null) {
 					return new ResponseEntity<>(errorHeaders(MSG_INVALID_PATH, MSG_ID_INVALID_PATH, pathInfo),
 							HttpStatus.BAD_REQUEST);
 				}
-
+				
+				// token check begin
 				if (!sourceFile.getFileName().equals(claimsSet.getSubject())) {
 					return new ResponseEntity<>(
 							errorHeaders(MSG_TOKEN_MISMATCH, MSG_ID_TOKEN_MISMATCH, sourceFile.getFileName()),
 							HttpStatus.UNAUTHORIZED);
 				}
-
-				InputStream stream = StorageFileConverter.convertToInputStream(sourceFile);
+				// token check end 
+				
+				InputStream stream = storageProvider.getStorage().getInputStream(sourceFile);
 				if (stream == null) {
 					return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND, pathInfo),
 							HttpStatus.NOT_FOUND);
@@ -489,8 +495,8 @@ public class ProductControllerImpl implements ProductController {
 
 				InputStreamResource fsr = new InputStreamResource(stream);
 				if (fsr != null) {
-					StorageLogger.logInfo(logger, MSG_FILE_RETRIEVED, MSG_ID_FILE_RETRIEVED, pathInfo, fromByte,
-							toByte);
+					StorageLogger.logInfo(logger, MSG_FILE_RETRIEVED, MSG_ID_FILE_RETRIEVED, pathInfo, fromByte, toByte, fileSize);
+
 					return new ResponseEntity<>(fsr, headers, status);
 				}
 
@@ -511,11 +517,15 @@ public class ProductControllerImpl implements ProductController {
 				return new ResponseEntity<>(errorHeaders(MSG_INVALID_PATH, MSG_ID_INVALID_PATH, pathInfo),
 						HttpStatus.BAD_REQUEST);
 			}
+			
+			// token check begin
 			if (!sourceFile.getFileName().equals(claimsSet.getSubject())) {
 				return new ResponseEntity<>(
 						errorHeaders(MSG_TOKEN_MISMATCH, MSG_ID_TOKEN_MISMATCH, sourceFile.getFileName()),
 						HttpStatus.UNAUTHORIZED);
 			}
+			// token check end
+			
 			InputStream stream = sourceFile.getDataAsInputStream();
 			if (stream == null) {
 				return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND, pathInfo),
