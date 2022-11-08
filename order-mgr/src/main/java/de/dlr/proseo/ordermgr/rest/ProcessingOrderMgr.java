@@ -36,6 +36,7 @@ import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.InputFilter;
+import de.dlr.proseo.model.InputProductReference;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.Mission;
@@ -46,6 +47,7 @@ import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductQuery;
+import de.dlr.proseo.model.Workflow;
 import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
@@ -60,6 +62,7 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.util.OrderUtil;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestInputFilter;
+import de.dlr.proseo.model.rest.model.RestInputReference;
 import de.dlr.proseo.model.rest.model.RestOrbitQuery;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestParameter;
@@ -208,6 +211,47 @@ public class ProcessingOrderMgr {
 			modelOrder.getInputFilters().put(productClass, inputFilter);
 		}
 		
+		// Set only if either file name or start and stop time are not null, ensure that stop is after start time 
+		RestInputReference restInputReference = order.getInputProductReference();
+		InputProductReference inputProductReference = new InputProductReference();
+		if (null != restInputReference) {
+			if (null != restInputReference.getInputFileName()) {
+				inputProductReference.setInputFileName(restInputReference.getInputFileName());
+			} else if (null != restInputReference.getSensingStartTime() && null != restInputReference.getSensingStopTime()) {
+				if (Instant.parse(restInputReference.getSensingStartTime())
+						.isAfter(Instant.parse(restInputReference.getSensingStopTime())))
+					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_INPUT_REFERENCE));
+				inputProductReference.setSensingStartTime(Instant.parse(restInputReference.getSensingStartTime()));
+				inputProductReference.setSensingStopTime(Instant.parse(restInputReference.getSensingStopTime()));
+			}
+			modelOrder.setInputProductReference(inputProductReference);
+		}
+		
+		// Retrieve workflow if specified and check consistency if over-specified
+		Workflow workflowFromName = null;
+		Workflow workflowFromUuid = null;
+		if (null != order.getWorkflowName()) {			
+			workflowFromName = RepositoryService.getWorkflowRepository().findByName(order.getWorkflowName());			
+			if (null == workflowFromName) 
+				throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_WORKFLOW_NAME, order.getWorkflowName()));
+		} 		
+		if (null != order.getUuid()) {
+			workflowFromUuid = RepositoryService.getWorkflowRepository().findByUuid(UUID.fromString(order.getWorkflowUuid()));
+			if (null == workflowFromUuid)
+				throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_WORKFLOW_UUID, order.getWorkflowUuid()));
+		}
+		if (null != workflowFromName && null == workflowFromUuid) {
+			modelOrder.setWorkflow(workflowFromName);
+		}
+		if (null != workflowFromUuid && null == workflowFromName) {
+			modelOrder.setWorkflow(workflowFromUuid);
+		}
+		if (null != workflowFromName && null == workflowFromUuid) {
+			if (workflowFromName.equals(workflowFromUuid))
+				modelOrder.setWorkflow(workflowFromUuid);
+			else throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_WORKFLOW_SPECIFICATION, order.getWorkflowName(), order.getWorkflowUuid()));
+		}
+					
 		for (RestClassOutputParameter restClassOutputParameter: order.getClassOutputParameters()) {
 			ClassOutputParameter classOutputParameter = new ClassOutputParameter();
 			classOutputParameter = RepositoryService.getClassOutputParameterRepository().save(classOutputParameter);
@@ -426,25 +470,15 @@ public class ProcessingOrderMgr {
 			throw new IllegalArgumentException(logger.log(OrderMgrMessage.ORDER_MISSING, id));
 		}
 		if (id == 0) {
-			// new order from "scratch", used at least if GUI 
-			// TODO Check if this should be moved to GUI (at least partially) or removed altogether
-			//      Having id == 0 is contrary to the interface contract, which requires a valid object database ID
-			//      Furthermore default values shall not deviate from the default values given in the UML model
+			// new order from "scratch", used at least if GUI
+			// TODO Check if this should be moved to GUI (at least partially) or removed
+			// altogether
+			// Having id == 0 is contrary to the interface contract, which requires a valid
+			// object database ID
+			// Furthermore default values shall not deviate from the default values given in
+			// the UML model
 			RestOrder newOrder = new RestOrder();
 			newOrder.setIdentifier("New");
-			newOrder.setId((long) 0);
-			newOrder.setConfiguredProcessors(new ArrayList<>());
-			newOrder.setClassOutputParameters(new ArrayList<>());
-			newOrder.setInputFilters(new ArrayList<>());
-			newOrder.setInputProductClasses(new ArrayList<>());
-			newOrder.setOrbits(new ArrayList<>());
-			newOrder.setOutputParameters(new ArrayList<>());
-			newOrder.setRequestedProductClasses(new ArrayList<>());
-			newOrder.setVersion((long) 0);		
-			newOrder.setSliceDuration((long) 1);
-			newOrder.setSliceOverlap((long) 0);			
-			newOrder.setOrderState(OrderState.INITIAL.toString());
-			newOrder.setSlicingType(OrderSlicingType.TIME_SLICE.toString());
 			ZonedDateTime zdt = ZonedDateTime.ofInstant(Instant.now(), ZoneId.of("UTC"));
 			Calendar cal = GregorianCalendar.from(zdt);
 			newOrder.setStartTime(OrbitTimeFormatter.format(cal.toInstant()));
@@ -890,7 +924,34 @@ public class ProcessingOrderMgr {
 			}
 		}
 		
+		// Check for changes in dynamicProcessingParameters
+		if (!modelOrder.getDynamicProcessingParameters().equals(changedOrder.getDynamicProcessingParameters())) {
+			orderChanged = true;
+			stateChangeOnly = false;
+			modelOrder.setDynamicProcessingParameters(changedOrder.getDynamicProcessingParameters());
+			}
+		
+		// Check for changes in priority
+		if (!modelOrder.getPriority().equals(changedOrder.getPriority())) {
+			orderChanged = true;
+			stateChangeOnly = false;	
+			changedOrder.setPriority(changedOrder.getPriority());
+		}
+	
+		// Check for changes in notificationEndpoint
+		if (!modelOrder.getNotificationEndpoint().equals(changedOrder.getNotificationEndpoint())) {
+			orderChanged = true;
+			stateChangeOnly = false;	
+			changedOrder.setNotificationEndpoint(changedOrder.getNotificationEndpoint());
+		}
+		
 		// Check for forbidden order data modifications
+		if (!modelOrder.getInputProductReference().equals(changedOrder.getInputProductReference()))
+			throw new IllegalArgumentException(logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "input product reference"));
+			
+		if (!modelOrder.getWorkflow().equals(changedOrder.getWorkflow()))
+			throw new IllegalArgumentException(logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "workflow"));
+			
 		if (orderChanged && !stateChangeOnly) {
 			if (!securityService.hasRole(UserRole.ORDER_MGR)) {
 				throw new SecurityException(logger.log(OrderMgrMessage.ORDER_MODIFICATION_FORBIDDEN,

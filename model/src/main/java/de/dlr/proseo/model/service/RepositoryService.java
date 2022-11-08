@@ -39,6 +39,8 @@ import de.dlr.proseo.model.dao.ProductQueryRepository;
 import de.dlr.proseo.model.dao.ProductRepository;
 import de.dlr.proseo.model.dao.SpacecraftRepository;
 import de.dlr.proseo.model.dao.TaskRepository;
+import de.dlr.proseo.model.dao.WorkflowOptionRepository;
+import de.dlr.proseo.model.dao.WorkflowRepository;
 
 /**
  * This class autowires all available repositories and makes them accessible throughout prosEO by static methods.
@@ -175,7 +177,14 @@ public class RepositoryService {
 	@Autowired
     private MonExtServiceStateOperationMonthRepository monExtServiceStateOperationMonthRepository;
 	
-
+	/** The repository for the Workflow class */
+	@Autowired
+    private WorkflowRepository workflowRepository;
+	
+	/** The repository for the WorkflowOption class */
+	@Autowired
+    private WorkflowOptionRepository workflowOptionRepository;
+	
 	/**
 	 * Singleton constructor
 	 */
@@ -448,4 +457,19 @@ public class RepositoryService {
 	public static MonExtServiceStateOperationMonthRepository getMonExtServiceStateOperationMonthRepository() {
 		return theRepositoryService.monExtServiceStateOperationMonthRepository;
 	}
+
+	/**
+	 * @return the workflowRepository
+	 */
+	public static WorkflowRepository getWorkflowRepository() {
+		return theRepositoryService.workflowRepository;
+	}
+
+	/**
+	 * @return the workflowOptionRepository
+	 */
+	public static WorkflowOptionRepository getWorkflowOptionRepository() {
+		return theRepositoryService.workflowOptionRepository;
+	}
+
 }
