@@ -53,24 +53,37 @@ public class BaseStorageTestUtils {
 	/**
 	 * Creates file in source and returns absolute path of created file
 	 * 
-	 * @param message
-	 * @param arrayList
+	 * @param relativePath
+	 * @return absolute path of created file
 	 */
 	public String createSourceFile(String relativePath) {
+		
+		String testFileContent = "some text inside file";		
+		return createSourceFile(relativePath, testFileContent);
+	}
+	
+	/**
+	 * Creates file in source and returns absolute path of created file
+	 * 
+	 * @param relativePath
+	 * @param fileContent
+	 * @return absolute path of created file
+	 */
+	public String createSourceFile(String relativePath, String fileContent) {
 
-		String testFileContent = "some text inside file";
+		String testFileContent = fileContent;
 		String path = Paths.get(sourcePath, relativePath).toString();
 		String sourceFilePath = new PathConverter(path).convertToSlash().getPath();
 
 		TestUtils.createFile(sourceFilePath, testFileContent);
 
-		assertTrue("File for upload has not been created: " + sourceFilePath, TestUtils.fileExists(sourceFilePath));
+		assertTrue("File for upload in Source has not been created: " + sourceFilePath, TestUtils.fileExists(sourceFilePath));
 
 		System.out.println("File " + relativePath + " successfully created in Source");
 
 		return sourceFilePath;
 	}
-
+	
 	public String getAbsoluteSourcePath(String relativePath) {
 
 		String path = Paths.get(sourcePath, relativePath).toString();
