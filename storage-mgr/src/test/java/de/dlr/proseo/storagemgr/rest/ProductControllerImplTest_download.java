@@ -185,9 +185,10 @@ public class ProductControllerImplTest_download {
 		String prefix = "prodDownloadPrefix";
 
 		String relativePath = new PathConverter(prefix, "productDownloadDir/productDownload3.txt").getPath();
-
+		String fileContent = "some content";
+		
 		// create file in source
-		storageTestUtils.createSourceFile(relativePath);
+		storageTestUtils.createSourceFile(relativePath, fileContent);
 
 		// upload file to storage from source
 		StorageFile sourceFile = storageProvider.getSourceFile(relativePath);
@@ -197,19 +198,18 @@ public class ProductControllerImplTest_download {
 		storage.uploadFile(sourceFile, targetFile);
 
 		String absoluteStoragePath = storage.getAbsolutePath(relativePath);
-		// absoluteStoragePath = storage.addFSPrefix(absoluteStoragePath);
 
 		String token = "token";
-		String fromByte = Long.toString(1);
-		String toByte = Long.toString(3);
+		Long fromByte = 2l;
+		Long toByte = 7l;
 
 		// show storage files
 		StorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
 
 		// HTTP Download files from storage
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
-				.param("pathInfo", absoluteStoragePath).param("token", token).param("fromByte", fromByte)
-				.param("toByte", toByte);
+				.param("pathInfo", absoluteStoragePath).param("token", token).param("fromByte", Long.toString(fromByte))
+				.param("toByte", Long.toString(toByte));
 
 		MvcResult mvcResult = mockMvc.perform(request).andExpect(status().isPartialContent()).andReturn();
 
@@ -217,16 +217,14 @@ public class ProductControllerImplTest_download {
 		TestUtils.printMvcResult(REQUEST_STRING, mvcResult);
 
 		// check real with expected absolute storage paths
-		String json = mvcResult.getResponse().getContentAsString();
+		String realFileContent = mvcResult.getResponse().getContentAsString();
+		String expectedFileContent = fileContent.substring(Math.toIntExact(fromByte));
 
-		String realAbsoluteStoragePath = "";
-		String expectedAbsoluteStoragePath = "";
+		System.out.println("Real      " + realFileContent);
+		System.out.println("Expected: " + expectedFileContent);
 
-		System.out.println("Real      " + realAbsoluteStoragePath);
-		System.out.println("Expected: " + expectedAbsoluteStoragePath);
-
-		assertTrue("Real path: " + realAbsoluteStoragePath + " Expected  path: " + expectedAbsoluteStoragePath,
-				realAbsoluteStoragePath.equals(expectedAbsoluteStoragePath));
+		assertTrue("Real path: " + realFileContent + " Expected  path: " + expectedFileContent,
+				realFileContent.equals(expectedFileContent));
 
 		// delete storage files with prefix
 		storageProvider.getStorage().delete(prefix);
