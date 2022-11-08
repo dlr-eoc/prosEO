@@ -1,7 +1,10 @@
 package de.dlr.proseo.storagemgr.version2.s3;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -607,5 +610,20 @@ public class S3Storage implements Storage {
 		}
 
 		return pathsWithPrefix;
+	}
+	
+	/**
+	 * Gets input stream from file
+	 * 
+	 * @param storageFile storage file
+	 * @return input stream from file
+	 */
+	@Override
+	public InputStream getInputStream(StorageFile storageFile) throws IOException {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getInputStream({})", storageFile.getFullPath());
+
+		return s3DAL.getInputStream(storageFile.getRelativePath());
 	}
 }

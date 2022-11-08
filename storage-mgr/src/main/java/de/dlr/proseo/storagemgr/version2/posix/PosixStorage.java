@@ -1,7 +1,10 @@
 package de.dlr.proseo.storagemgr.version2.posix;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -621,6 +624,26 @@ public class PosixStorage implements Storage {
 		}
 
 		return pathsWithPrefix;
+	}
+	
+	/**
+	 * Gets input stream from file
+	 * 
+	 * @param storageFile storage file
+	 * @return input stream from file
+	 */
+	@Override
+	public InputStream getInputStream(StorageFile storageFile) throws IOException {
+		
+		String fullpath = storageFile.getFullPath();
+
+		try {
+			return new FileInputStream(fullpath);
+
+		} catch (FileNotFoundException e) {
+			logger.error("Requested POSIX file {} not found", fullpath);
+			throw e;
+		}
 	}
 
 	/**

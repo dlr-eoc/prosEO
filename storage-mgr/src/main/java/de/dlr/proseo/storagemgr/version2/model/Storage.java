@@ -1,6 +1,7 @@
 package de.dlr.proseo.storagemgr.version2.model;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -335,4 +336,12 @@ public interface Storage {
 	 * @return list of file system prefix + path
 	 */
 	public List<String> addFSPrefix(List<String> paths);
+	
+	/**
+	 * Gets input stream from file
+	 * 
+	 * @param storageFile storage file
+	 * @return input stream from file
+	 */
+	public InputStream getInputStream(StorageFile storageFile) throws IOException;
 }
