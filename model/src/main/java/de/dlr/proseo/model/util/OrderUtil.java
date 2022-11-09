@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.OrderMgrMessage;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.InputProductReference;
 import de.dlr.proseo.model.Job.JobState;
@@ -203,6 +204,21 @@ public class OrderUtil {
 			restNotificationEndpoint.setUri(notificationEndpoint.getUri());
 			restNotificationEndpoint.setUsername(notificationEndpoint.getUsername());
 			restOrder.setNotificationEndpoint(restNotificationEndpoint);
+		}
+		
+		if (null != processingOrder.getInputProductReference()) {
+			InputProductReference inputProductReference = processingOrder.getInputProductReference();
+			RestInputReference restInputReference = new RestInputReference();
+			if (null != inputProductReference.getInputFileName()) {
+				restInputReference.setInputFileName(inputProductReference.getInputFileName());
+			} else if (null != inputProductReference.getSensingStartTime()
+					&& null != inputProductReference.getSensingStopTime()) {
+				if (inputProductReference.getSensingStartTime().isAfter(inputProductReference.getSensingStopTime()))
+					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_INPUT_REFERENCE));
+				restInputReference.setSensingStartTime(inputProductReference.getSensingStartTime().toString());
+				restInputReference.setSensingStopTime(inputProductReference.getSensingStopTime().toString());
+			}
+			restOrder.setInputProductReference(restInputReference);
 		}
 		
 		// Create orbit ranges from orbits with contiguous orbit numbers
@@ -422,6 +438,22 @@ public class OrderUtil {
 			notificationEndpoint.setUri(restNotificationEndpoint.getUri());
 			notificationEndpoint.setUsername(restNotificationEndpoint.getUsername());
 			processingOrder.setNotificationEndpoint(notificationEndpoint);
+		}
+		
+		// Set only if either file name or start and stop time are not null, ensure that stop is after start time 
+		RestInputReference restInputReference = restOrder.getInputProductReference();
+		InputProductReference inputProductReference = new InputProductReference();
+		if (null != restInputReference) {
+			if (null != restInputReference.getInputFileName()) {
+				inputProductReference.setInputFileName(restInputReference.getInputFileName());
+			} else if (null != restInputReference.getSensingStartTime() && null != restInputReference.getSensingStopTime()) {
+				if (Instant.parse(restInputReference.getSensingStartTime())
+						.isAfter(Instant.parse(restInputReference.getSensingStopTime())))
+					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_INPUT_REFERENCE));
+				inputProductReference.setSensingStartTime(Instant.parse(restInputReference.getSensingStartTime()));
+				inputProductReference.setSensingStopTime(Instant.parse(restInputReference.getSensingStopTime()));
+			}
+			processingOrder.setInputProductReference(inputProductReference);
 		}
 		
 		return processingOrder;

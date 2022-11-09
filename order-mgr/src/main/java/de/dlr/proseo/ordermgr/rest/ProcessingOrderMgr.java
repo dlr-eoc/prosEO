@@ -211,22 +211,6 @@ public class ProcessingOrderMgr {
 			modelOrder.getInputFilters().put(productClass, inputFilter);
 		}
 		
-		// Set only if either file name or start and stop time are not null, ensure that stop is after start time 
-		RestInputReference restInputReference = order.getInputProductReference();
-		InputProductReference inputProductReference = new InputProductReference();
-		if (null != restInputReference) {
-			if (null != restInputReference.getInputFileName()) {
-				inputProductReference.setInputFileName(restInputReference.getInputFileName());
-			} else if (null != restInputReference.getSensingStartTime() && null != restInputReference.getSensingStopTime()) {
-				if (Instant.parse(restInputReference.getSensingStartTime())
-						.isAfter(Instant.parse(restInputReference.getSensingStopTime())))
-					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_INPUT_REFERENCE));
-				inputProductReference.setSensingStartTime(Instant.parse(restInputReference.getSensingStartTime()));
-				inputProductReference.setSensingStopTime(Instant.parse(restInputReference.getSensingStopTime()));
-			}
-			modelOrder.setInputProductReference(inputProductReference);
-		}
-		
 		// Retrieve workflow if specified and check consistency if over-specified
 		Workflow workflowFromName = null;
 		Workflow workflowFromUuid = null;
