@@ -44,8 +44,8 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 	/** Prefix for temporary files */
 	private static final String TEMPORARY_PREFIX = "temporary-";
 
-	/** Chunk size for uploads to S3 storage (128 MB) */
-	private static final Long MULTIPART_UPLOAD_PARTSIZE_BYTES = (long) (128 * 1024 * 1024);
+	/** Chunk size for downloads to S3 storage (128 MB) */
+	private static final Long MULTIPART_DOWNLOAD_PARTSIZE_BYTES = (long) (128 * 1024 * 1024);
 
 	/** source file */
 	private String sourceFile;
@@ -205,7 +205,7 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 			}
 
 			transferManager = TransferManagerBuilder.standard()
-					.withMultipartCopyPartSize(MULTIPART_UPLOAD_PARTSIZE_BYTES).withS3Client(s3ClientV1).build();
+					.withMultipartCopyPartSize(MULTIPART_DOWNLOAD_PARTSIZE_BYTES).withS3Client(s3ClientV1).build();
 			
 			if (null == transferManager) {
 				throw new IOException("Unable to create Transfer Manager");
