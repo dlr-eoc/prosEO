@@ -5,10 +5,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -45,7 +41,8 @@ import de.dlr.proseo.storagemgr.version2.model.StorageType;
 @AutoConfigureMockMvc
 public class ProductControllerImplTest_download {
 
-	private static final boolean TESTS_ENABLED = true;
+	/** tests are working if token check in controller is deactivated */
+	private static final boolean TESTS_ENABLED = false;
 
 	@Autowired
 	private MockMvc mockMvc;
