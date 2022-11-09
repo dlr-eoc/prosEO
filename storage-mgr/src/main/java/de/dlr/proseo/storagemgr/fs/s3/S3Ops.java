@@ -114,22 +114,6 @@ public class S3Ops {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> listObjectsInBucket({}, {}, {})", s3, bucketName, prefix);
 
-		// S3Client problems, that's why this change.
-		// To rollback delete everything before the next comment block and uncomment the
-		// original block
-		if (StorageProvider.getInstance().activatedStorageProviderforV1()) {
-
-			List<String> response;
-			Storage storage = StorageProvider.getInstance()
-					.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.S3);
-
-			response = storage.getRelativeFiles(prefix);
-			response = storage.getAbsolutePath(response);
-
-			return response;
-
-		} else { // begin original code
-
 			Boolean isTopLevel = false;
 			String delimiter = "/";
 			if (prefix == "" || prefix == "/") {
@@ -158,9 +142,7 @@ public class S3Ops {
 				}
 			}
 			return folderLike;
-
-		} // end original code
-	}
+		} 
 
 	/**
 	 * List all buckets; passes all exceptions on to the caller
@@ -173,21 +155,6 @@ public class S3Ops {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> listBuckets({})", s3);
 
-		// S3Client problems, that's why this change.
-		// To rollback delete everything before the next comment block and uncomment the
-		// original block
-		if (StorageProvider.getInstance().activatedStorageProviderforV1()) {
-
-			ArrayList<String> buckets = null;
-			try {
-				buckets = (ArrayList<String>) StorageProvider.getInstance()
-						.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.S3).getBuckets();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			return buckets;
-		} else { // begin original code
-
 			ArrayList<String> buckets = new ArrayList<String>();
 			ListBucketsRequest listBucketsRequest = ListBucketsRequest.builder().build();
 			ListBucketsResponse listBucketsResponse = null;
@@ -199,9 +166,7 @@ public class S3Ops {
 			}
 			listBucketsResponse.buckets().stream().forEach(x -> buckets.add(x.name()));
 			return buckets;
-
-		} // end original code
-	}
+	} 
 
 	/**
 	 * Creates a new S3 bucket
@@ -332,27 +297,6 @@ public class S3Ops {
 			logger.trace(">>> v2FetchFile({}, {}, {})", (null == s3 ? "MISSING" : s3.serviceName()), s3Object,
 					containerPath);
 
-		// S3Client problems, that's why this change.
-		// To rollback delete everything before the next comment block and uncomment the
-		// original block
-		if (StorageProvider.getInstance().activatedStorageProviderforV1()) {
-			StorageProvider storageProvider = StorageProvider.getInstance();
-			String relativePath = new PathConverter(s3Object).removeFsPrefix().removeBucket().removeLeftSlash()
-					.getPath();
-			StorageFile storageFile = storageProvider.getStorageFile(relativePath);
-			StorageFile targetFile = storageProvider.getAbsoluteFile(containerPath);
-
-			try {
-				storageProvider.getStorage().download(storageFile, targetFile);
-				return true;
-			} catch (IOException e1) {
-				logger.error("Cannot download S3 object {}, {}", relativePath, containerPath);
-				e1.printStackTrace();
-				return false;
-			}
-
-		} else { // begin original code
-
 			try {
 				Path targetPath = Paths.get(containerPath);
 				File subdirs = targetPath.getParent().toFile();
@@ -413,8 +357,7 @@ public class S3Ops {
 				logger.error("Security exception accessing S3 object {} (cause: {})", s3Object, e.getMessage());
 				return false;
 			}
-		} // end original code
-	}
+		}
 
 	/**
 	 * Fetch file from S3 to local file using AWS S3 SDK V1 TransferManager
@@ -490,7 +433,6 @@ public class S3Ops {
 		} finally {
 			transferManager.shutdownNow(false);
 		}
-
 	}
 
 	/**
@@ -625,6 +567,7 @@ public class S3Ops {
 			for (int i = 1; i <= MAX_UPLOAD_RETRIES; ++i) {
 				try {
 
+					/*
 					// S3Client problems, that's why this change.
 					// To rollback delete everything before the next comment block and uncomment the
 					// original block
@@ -634,9 +577,9 @@ public class S3Ops {
 
 						StorageProvider.getInstance().getStorage().uploadFile(sourceFile, targetFile);
 
-					} else { // begin original code
+					} else { // begin original code */
 						transferManager.upload(bucket, targetKeyName, f).waitForCompletion();
-					} // end original block
+					/* } // end original block */
 
 					// Success, so no retry required
 					break;
