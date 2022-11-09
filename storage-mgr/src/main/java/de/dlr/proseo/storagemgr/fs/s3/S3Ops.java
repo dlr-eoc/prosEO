@@ -566,20 +566,7 @@ public class S3Ops {
 
 			for (int i = 1; i <= MAX_UPLOAD_RETRIES; ++i) {
 				try {
-
-					/*
-					// S3Client problems, that's why this change.
-					// To rollback delete everything before the next comment block and uncomment the
-					// original block
-					if (StorageProvider.getInstance().activatedStorageProviderforV1()) {
-						StorageFile sourceFile = StorageProvider.getInstance().getAbsoluteFile(sourceFilePath);
-						StorageFile targetFile = StorageProvider.getInstance().getStorageFile(targetKeyName);
-
-						StorageProvider.getInstance().getStorage().uploadFile(sourceFile, targetFile);
-
-					} else { // begin original code */
 						transferManager.upload(bucket, targetKeyName, f).waitForCompletion();
-					/* } // end original block */
 
 					// Success, so no retry required
 					break;
@@ -789,19 +776,6 @@ public class S3Ops {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteDirectory({}, {}, {})", client, bucketName, prefix);
 
-		// S3Client problems, that's why this change.
-		// To rollback delete everything before the next comment block and uncomment the
-		// original block
-		if (StorageProvider.getInstance().activatedStorageProviderforV1()) {
-			try {
-				StorageProvider.getInstance().getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.S3)
-						.delete(prefix);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		} else { // begin original code
-
 			try {
 				ObjectListing objectList = client.listObjects(bucketName, prefix);
 				List<S3ObjectSummary> objectSummeryList = objectList.getObjectSummaries();
@@ -824,8 +798,6 @@ public class S3Ops {
 				logger.error(e.getMessage());
 				throw e;
 			}
-
-		} // end original code
 	}
 
 	/**
@@ -843,19 +815,6 @@ public class S3Ops {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getLength({}, {}, {})", client, bucketName, key);
 
-		// S3Client problems, that's why this change.
-		// To rollback delete everything before the next comment block and uncomment the
-		// original block
-		if (StorageProvider.getInstance().activatedStorageProviderforV1()) {
-			StorageFile storageFile = StorageProvider.getInstance().getStorage().getStorageFile(key);
-			try {
-				return StorageProvider.getInstance().getStorage().getFileSize(storageFile);
-			} catch (IOException e) {
-				e.printStackTrace();
-				return -1;
-			}
-		} else { // begin original code
-
 			ObjectMetadata md;
 			try {
 				md = client.getObjectMetadata(bucketName, key);
@@ -871,6 +830,5 @@ public class S3Ops {
 			}
 			return 0;
 
-		} // end original code
-	}
+		} 
 }
