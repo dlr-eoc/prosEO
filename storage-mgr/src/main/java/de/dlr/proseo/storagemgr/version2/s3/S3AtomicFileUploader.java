@@ -7,6 +7,10 @@ import java.nio.file.Paths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.transfer.TransferManager;
+import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
+
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.model.AtomicCommand;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -37,6 +41,9 @@ public class S3AtomicFileUploader implements AtomicCommand<String> {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3AtomicFileUploader.class);
 	
+	/** Chunk size for uploads to S3 storage (128 MB) */
+	private static final Long MULTIPART_UPLOAD_PARTSIZE_BYTES = (long) (128 * 1024 * 1024);
+	
 	/** source file */
 	private String sourceFile; 
 	
@@ -44,7 +51,7 @@ public class S3AtomicFileUploader implements AtomicCommand<String> {
 	private String targetFileOrDir; 
 	
 	/** S3 Client */
-	private S3Client s3Client;
+	private AmazonS3 s3ClientV1;
 
 	/** Bucket */
 	private String bucket;
@@ -52,14 +59,14 @@ public class S3AtomicFileUploader implements AtomicCommand<String> {
 	/**
 	 * Constructor
 	 * 
-	 * @param s3Client s3 client
+	 * @param s3ClientV1 s3 client
 	 * @param bucket bucket
 	 * @param sourceFile sourceFile
 	 * @param targetFileOrDir target file or directory
 	 */
-	public S3AtomicFileUploader(S3Client s3Client, String bucket, String sourceFile, String targetFileOrDir) {
+	public S3AtomicFileUploader(AmazonS3 s3ClientV1, String bucket, String sourceFile, String targetFileOrDir) {
 		
-		this.s3Client = s3Client; 
+		this.s3ClientV1 = s3ClientV1; 
 		this.bucket = bucket; 
 		this.sourceFile = sourceFile; 
 		this.targetFileOrDir = targetFileOrDir;  
@@ -81,17 +88,26 @@ public class S3AtomicFileUploader implements AtomicCommand<String> {
 			targetFile = Paths.get(targetFileOrDir, getFileName(sourceFile)).toString();
 			targetFile = new PathConverter(targetFile).posixToS3Path().convertToSlash().getPath();
 		}
+		
+		File f = new File(sourceFile);
+		
+		if (f == null || !f.isFile()) {
+			throw new IOException("Cannot upload to s3, source file does not exist: " + sourceFile);	
+		}
 
-		try {
-			PutObjectRequest request = PutObjectRequest.builder().bucket(bucket).key(targetFile).build();
-
-			s3Client.putObject(request, RequestBody.fromFile(new File(sourceFile)));
-
-			S3Waiter waiter = s3Client.waiter();
-			HeadObjectRequest requestWait = HeadObjectRequest.builder().bucket(bucket).key(targetFile).build();
-
-			WaiterResponse<HeadObjectResponse> waiterResponse = waiter.waitUntilObjectExists(requestWait);
-			waiterResponse.matched().response().ifPresent(System.out::println);
+		TransferManager transferManager;
+		try {		
+			transferManager = TransferManagerBuilder.standard()
+					.withMultipartCopyPartSize(MULTIPART_UPLOAD_PARTSIZE_BYTES).withS3Client(s3ClientV1).build();
+			
+		} catch (Exception e) {
+			if (logger.isTraceEnabled())
+				logger.trace(getFailedInfo() + e.getMessage());
+			throw new IOException(e);
+		} 
+					
+		try {		
+			transferManager.upload(bucket, targetFile, f).waitForCompletion();
 
 			if (logger.isTraceEnabled())
 				logger.trace("... " + getCompletedInfo() + " - " + targetFile);
@@ -102,6 +118,8 @@ public class S3AtomicFileUploader implements AtomicCommand<String> {
 			if (logger.isTraceEnabled())
 				logger.trace(getFailedInfo() + e.getMessage());
 			throw new IOException(e);
+		} finally {
+			transferManager.shutdownNow(false);
 		}
 	}
 	

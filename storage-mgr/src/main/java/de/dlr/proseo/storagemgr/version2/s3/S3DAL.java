@@ -268,7 +268,7 @@ public class S3DAL {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> uploadFile({},{})", sourceFile, targetFileOrDir);
 
-		AtomicCommand<String> fileUploader = new S3AtomicFileUploader(s3ClientV2, cfg.getBucket(), sourceFile,
+		AtomicCommand<String> fileUploader = new S3AtomicFileUploader(s3ClientV1, cfg.getBucket(), sourceFile,
 				targetFileOrDir);
 
 		return new DefaultRetryStrategy<String>(fileUploader, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime())
