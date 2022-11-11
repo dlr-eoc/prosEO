@@ -36,12 +36,6 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.s3.s3EndPoint}")
 	private String s3EndPoint;
 
-	@Value("${proseo.alluxio.alluxioUnderFsS3Bucket}")
-	private String alluxioUnderFsS3Bucket;
-
-	@Value("${proseo.alluxio.alluxioUnderFsS3BucketPrefix}")
-	private String alluxioUnderFsS3BucketPrefix;
-
 	@Value("${proseo.joborder.bucket}")
 	private String joborderBucket;
 
@@ -59,33 +53,21 @@ public class StorageManagerConfiguration {
 
 	@Value("${proseo.global.storageManagerVersion2}")
 	private String storageManagerVersion2;
-	
-	@Value("${proseo.global.storageProviderForVersion1}")
-	private String storageProviderForVersion1;
 
 	@Value("${proseo.global.sourcePath}")
 	private String sourcePath;
 
 	@Value("${proseo.s3.s3DefaultBucket}")
 	private String s3DefaultBucket;
-		
-	@Value("${proseo.s3.s3MaxRequestAttempts}")
-	private Integer s3MaxRequestAttempts;
 	   
 	@Value("${proseo.s3.s3DefaultEndPoint}")
 	private String s3DefaultEndPoint;
-    
-	@Value("${proseo.s3.s3FileTransferManager}")
-	private String s3FileTransferManager;
 
 	@Value("${proseo.posix.backendPath}")
 	private String posixBackendPath;
 
 	@Value("${proseo.posix.cachePath}")
 	private String posixCachePath;
-	
-	@Value("${proseo.posix.posixMaxRequestAttempts}")
-	private Integer posixMaxRequestAttempts;
 
 	@Value("${proseo.storageManager.defaultStorageType}")
 	private String defaultStorageType;
@@ -112,6 +94,10 @@ public class StorageManagerConfiguration {
 	/** Wait time for file size check cycle in milliseconds */
 	@Value("${proseo.storageManager.filecheck.waittime}")
 	private Long fileCheckWaitTime;
+	
+	/** Maximum request attempts */
+	@Value("${proseo.storageManager.filecheck.maxRequestAttempts}")
+	private Integer maxRequestAttempts;
 
 	/** Mounted default storage type to change it with storage set property */
 	String mountedDefaultStorageType = "";
@@ -141,13 +127,6 @@ public class StorageManagerConfiguration {
 	 */
 	public String getStorageManagerVersion2() {
 		return storageManagerVersion2;
-	}
-	
-	/**
-	 * @return the storageProviderForVersion1
-	 */
-	public String getStorageProviderForVersion1() {
-		return storageProviderForVersion1;
 	}
 
 	/**
@@ -186,12 +165,19 @@ public class StorageManagerConfiguration {
 	public Long getFileCheckMaxCycles() {
 		return fileCheckMaxCycles;
 	}
-
+	
 	/**
 	 * @return the fileCheckWaitTime
 	 */
 	public Long getFileCheckWaitTime() {
 		return fileCheckWaitTime;
+	}
+	
+	/**
+	 * @return the maxRequestAttempts
+	 */
+	public int getMaxRequestAttempts() {
+		return maxRequestAttempts;
 	}
 
 	/**
@@ -222,13 +208,6 @@ public class StorageManagerConfiguration {
 	}
 
 	/**
-	 * @return the alluxioUnderFsDefaultPrefix
-	 */
-//	public String getAlluxioUnderFsDefaultPrefix() {
-//		return alluxioUnderFsDefaultPrefix;
-//	}
-
-	/**
 	 * @return the s3DefaultBucket
 	 */
 	public String getS3DefaultBucket() {
@@ -249,14 +228,6 @@ public class StorageManagerConfiguration {
 		return s3Region;
 	}
 
-//	public String getAlluxioK8sMountPointCache() {
-//		return alluxioK8sMountPointCache;
-//	}
-//
-//	public String getAlluxioK8sMountPointFuse() {
-//		return alluxioK8sMountPointFuse;
-//	}
-
 	/**
 	 * @return the joborderPrefix
 	 */
@@ -269,34 +240,6 @@ public class StorageManagerConfiguration {
 	 */
 	public String getJoborderBucket() {
 		return joborderBucket;
-	}
-
-	/**
-	 * @return the alluxioUnderFsMaxPrefixes
-	 */
-//	public int getAlluxioUnderFsMaxPrefixes() {
-//		return alluxioUnderFsMaxPrefixes;
-//	}
-
-	/**
-	 * @return the alluxioUnderFsS3Bucket
-	 */
-	public String getAlluxioUnderFsS3Bucket() {
-		return alluxioUnderFsS3Bucket;
-	}
-
-	/**
-	 * @return the alluxioUnderFsS3BucketEndPoint
-	 */
-//	public String getAlluxioUnderFsS3BucketEndPoint() {
-//		return alluxioUnderFsS3BucketEndPoint;
-//	}
-
-	/**
-	 * @return the alluxioUnderFsS3BucketPrefix
-	 */
-	public String getAlluxioUnderFsS3BucketPrefix() {
-		return alluxioUnderFsS3BucketPrefix;
 	}
 
 	/**
@@ -327,32 +270,12 @@ public class StorageManagerConfiguration {
 		return s3EndPoint;
 	}
 	
-	/**
-	 * @return the s3MaxRequestAttempts
-	 */
-	public int getS3MaxRequestAttempts() {
-		return s3MaxRequestAttempts;
-	}
 	
 	/**
 	 * @return the s3DefaultEndPoint
 	 */
 	public String getS3DefaultEndPoint() {
 		return s3DefaultEndPoint;
-	}
-	
-	/**
-	 * @return the s3FileTransferManager
-	 */
-	public String getS3FileTransferManager() {
-		return s3FileTransferManager;
-	}
-	
-	/**
-	 * @return the posixMaxRequestAttempts
-	 */
-	public int getPosixMaxRequestAttempts() {
-		return posixMaxRequestAttempts;
 	}
 	
 	/**
