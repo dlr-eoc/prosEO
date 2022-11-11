@@ -155,27 +155,6 @@ public class JobOrderControllerImpl implements JoborderController {
 			ProseoFile proFile = ProseoFile.fromType(StorageType.valueOf(joborder.getFsType()), objKey, cfg);
 			if (proFile != null) {
 
-				// S3Client problems, that's why this change.
-				// To rollback delete everything before the next comment block and uncomment the
-				// original block
-				/*
-				if (storageProvider.activatedStorageProviderforV1()) {
-
-					String jobOrder64 = joborder.getJobOrderStringBase64();
-
-					if (!StorageFileConverter.isStringBase64(jobOrder64)) {
-
-						String msg = "Attribute jobOrderStringBase64 is not Base64-encoded";
-						return new ResponseEntity<>(createBadResponse(msg, jobOrder64), HttpStatus.FORBIDDEN);
-					}
-
-					String relativePath = getJobOrderRelativePath(cfg.getJoborderPrefix());
-
-					StorageFile targetFile = storageProvider.createStorageFile(relativePath, jobOrder64);
-					return new ResponseEntity<>(createOkResponse(targetFile, jobOrder64), HttpStatus.CREATED);
-
-				} else { // begin original v1 code */
-
 					if (proFile.writeBytes(bytes)) {
 						response.setFsType(proFile.getFsType().toString());
 						response.setPathInfo(proFile.getFullPath());
@@ -184,7 +163,6 @@ public class JobOrderControllerImpl implements JoborderController {
 						logger.info("Received & Uploaded joborder-file: {}", response.getPathInfo());
 						return new ResponseEntity<>(response, HttpStatus.CREATED);
 					}
-				/* } // end original v1 code */
 			}
 		} catch (Exception e) {
 			return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
@@ -215,8 +193,6 @@ public class JobOrderControllerImpl implements JoborderController {
 				String relativePath = storageProvider.getRelativePath(pathInfo);
 				StorageFile storageFile = storageProvider.getStorageFile(relativePath);
 
-				// String response = StorageFileConverter.convertToString(sourceFile);
-
 				String response = storageProvider.getStorage().getFileContent(storageFile);
 
 				return new ResponseEntity<>(response, HttpStatus.OK);
@@ -243,31 +219,6 @@ public class JobOrderControllerImpl implements JoborderController {
 				return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 			}
 
-			/*
-			// S3Client problems, that's why this change.
-			// To rollback delete everything before the next comment block and uncomment the
-			// original block
-			if (storageProvider.activatedStorageProviderforV1()) {
-				try {
-
-					String relativePath = storageProvider.getRelativePath(pathInfo);
-					StorageFile storageFile = storageProvider.getStorageFile(relativePath);
-
-					// String response = StorageFileConverter.convertToString(sourceFile);
-
-					response = storageProvider.getStorage().getFileContent(storageFile);
-
-					return new ResponseEntity<>(response, HttpStatus.OK);
-
-				} catch (Exception e) {
-
-					e.printStackTrace();
-
-					String errorString = HttpResponses.createErrorString("Cannot get job order file", e);
-					return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
-				}
-			} else { // begin original code */
-
 				InputStream jofStream = proFile.getDataAsInputStream();
 				if (jofStream != null) {
 					byte[] bytes = null;
@@ -289,7 +240,6 @@ public class JobOrderControllerImpl implements JoborderController {
 					}
 					return new ResponseEntity<>(response, HttpStatus.OK);
 				}
-			/* } // end original code */
 		}
 		return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 	}
