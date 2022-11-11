@@ -158,6 +158,7 @@ public class JobOrderControllerImpl implements JoborderController {
 				// S3Client problems, that's why this change.
 				// To rollback delete everything before the next comment block and uncomment the
 				// original block
+				/*
 				if (storageProvider.activatedStorageProviderforV1()) {
 
 					String jobOrder64 = joborder.getJobOrderStringBase64();
@@ -173,7 +174,7 @@ public class JobOrderControllerImpl implements JoborderController {
 					StorageFile targetFile = storageProvider.createStorageFile(relativePath, jobOrder64);
 					return new ResponseEntity<>(createOkResponse(targetFile, jobOrder64), HttpStatus.CREATED);
 
-				} else { // begin original v1 code
+				} else { // begin original v1 code */
 
 					if (proFile.writeBytes(bytes)) {
 						response.setFsType(proFile.getFsType().toString());
@@ -183,7 +184,7 @@ public class JobOrderControllerImpl implements JoborderController {
 						logger.info("Received & Uploaded joborder-file: {}", response.getPathInfo());
 						return new ResponseEntity<>(response, HttpStatus.CREATED);
 					}
-				} // end original v1 code
+				/* } // end original v1 code */
 			}
 		} catch (Exception e) {
 			return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
@@ -242,6 +243,7 @@ public class JobOrderControllerImpl implements JoborderController {
 				return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 			}
 
+			/*
 			// S3Client problems, that's why this change.
 			// To rollback delete everything before the next comment block and uncomment the
 			// original block
@@ -264,7 +266,7 @@ public class JobOrderControllerImpl implements JoborderController {
 					String errorString = HttpResponses.createErrorString("Cannot get job order file", e);
 					return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
 				}
-			} else { // begin original code
+			} else { // begin original code */
 
 				InputStream jofStream = proFile.getDataAsInputStream();
 				if (jofStream != null) {
@@ -287,7 +289,7 @@ public class JobOrderControllerImpl implements JoborderController {
 					}
 					return new ResponseEntity<>(response, HttpStatus.OK);
 				}
-			} // end original code
+			/* } // end original code */
 		}
 		return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 	}
