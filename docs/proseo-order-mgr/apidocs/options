@@ -16,7 +16,7 @@
 -docencoding
 'UTF-8'
 -doctitle
-'prosEO Order Manager 0.9.3 API'
+'prosEO Order Manager 0.9.4-SNAPSHOT API'
 -linkoffline
 'https://docs.oracle.com/en/java/javase/11/docs/api' '/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/order-mgr/target/javadoc-bundle-options'
 -linkoffline
@@ -28,4 +28,4 @@
 -use
 -version
 -windowtitle
-'prosEO Order Manager 0.9.3 API'
+'prosEO Order Manager 0.9.4-SNAPSHOT API'
