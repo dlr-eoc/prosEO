@@ -5,9 +5,6 @@
  */
 package de.dlr.proseo.api.aipclient.rest;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-
 import javax.persistence.NoResultException;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +18,6 @@ import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
-import de.dlr.proseo.logging.messages.IngestorMessage;
-import de.dlr.proseo.model.ProcessingFacility;
 
 /**
  * Retrieve a single product from a remote Long-term Archive by file name
@@ -39,11 +34,7 @@ public class BynameControllerImpl implements BynameController {
 	/** AIP Client configuration */
 	@Autowired
 	AipClientConfiguration config;
-	
-	/** Facility Manager */
-	@Autowired
-	ProcessingFacilityManager processingFacilityManager;
-			
+				
 	/** Download Manager */
 	@Autowired
 	DownloadManager downloadManager;
@@ -56,36 +47,26 @@ public class BynameControllerImpl implements BynameController {
      * 
      * @param filename The (unique) product file name to search for
      * @param facility The processing facility to use
-     * @return HTTP status "OK" and a Json representation of the product provided or
+     * @return HTTP status "CREATED" and a Json representation of the product provided or
      *         HTTP status "BAD_REQUEST", if an invalid processing facility was given, or
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
-     *         HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Ingestor failed
+     *         HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Ingestor failed or an unexpected exception occurred
      */
 	@Override
 	public ResponseEntity<RestProduct> downloadByName(String filename, String facility) {
 		if (logger.isTraceEnabled()) logger.trace(">>> downloadByName({}, {})", filename, facility);
 		
-		// Check whether the given processing facility is valid
 		try {
-			facility = URLDecoder.decode(facility, "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			return new ResponseEntity<>(
-					http.errorHeaders(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e)), 
-					HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-		final ProcessingFacility processingFacility = processingFacilityManager.getFacilityByName(facility);
-		if (null == processingFacility) {
-			return new ResponseEntity<>(
-					http.errorHeaders(logger.log(IngestorMessage.INVALID_FACILITY, processingFacility)), 
-					HttpStatus.BAD_REQUEST);
-		}
-		
-		try {
-			return new ResponseEntity<>(downloadManager.downloadByName(filename, processingFacility), HttpStatus.OK);
+			return new ResponseEntity<>(downloadManager.downloadByName(filename, facility), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		} catch (Exception e) {
+			return new ResponseEntity<>(http.errorHeaders(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage())),
+					HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
