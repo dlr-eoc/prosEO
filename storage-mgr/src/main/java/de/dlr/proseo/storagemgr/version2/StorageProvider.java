@@ -1,6 +1,7 @@
 package de.dlr.proseo.storagemgr.version2;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -44,7 +45,7 @@ public class StorageProvider {
 
 	/** For smooth integration only, will be removed */
 	private boolean version2;
-	
+
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(StorageProvider.class);
 
@@ -81,7 +82,8 @@ public class StorageProvider {
 
 	/**
 	 * Initializes storage(s) from Application.yml
-	 * @throws IOException 
+	 * 
+	 * @throws IOException
 	 */
 	@PostConstruct
 	private void init() throws IOException {
@@ -170,16 +172,34 @@ public class StorageProvider {
 	public Storage getStorage() {
 		return storage;
 	}
-	
+
 	/**
 	 * Gets desired storage
 	 * 
 	 * @param storageType storage type
 	 * @return storage storage
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public Storage getStorage(StorageType storageType) throws IOException {
 		return createStorage(storageType, storagePath);
+	}
+
+	/**
+	 * Gets storage according to absolute path
+	 * 
+	 * @param absolutePath absolute path
+	 * @return storage
+	 * @throws IOException
+	 */
+	public Storage getStorage(String absolutePath) throws IOException {
+
+		if (new PathConverter(absolutePath).isS3Path()) {
+
+			return getStorage(StorageType.S3);
+		} else {
+
+			return getStorage(StorageType.POSIX);
+		}
 	}
 
 	/**
@@ -187,7 +207,7 @@ public class StorageProvider {
 	 * 
 	 * @param storageType storage
 	 * @return storage, which was set
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public Storage setStorage(StorageType storageType) throws IOException {
 
@@ -210,7 +230,8 @@ public class StorageProvider {
 		return basePaths;
 	}
 
-	// all ..version.. methods will be removed in release, for smooth integration only
+	// all ..version.. methods will be removed in release, for smooth integration
+	// only
 
 	/**
 	 * Loads version 1 of storage manager (currently used)
@@ -297,7 +318,7 @@ public class StorageProvider {
 	 * @param storagePath base path of posix storage, for s3 will be used for
 	 *                    temporary files
 	 * @return created storage
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	private Storage createStorage(StorageType storageType, String storagePath) throws IOException {
 
@@ -308,8 +329,7 @@ public class StorageProvider {
 			return new PosixStorage(storagePath, sourcePath);
 
 		} else if (storageType == StorageType.S3) {
-			
-			// init with default region in DAL
+
 			return new S3Storage(getS3ConfigurationFromFile());
 		}
 
@@ -382,6 +402,48 @@ public class StorageProvider {
 	}
 
 	/**
+	 * Gets storage file size from StorageFile
+	 * 
+	 * @param storageFile Storage File
+	 * @return file size
+	 * @throws IOException
+	 */
+	public Long getFileSize(StorageFile storageFile) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getFileSize({})", storageFile.getFullPath());
+
+		if (new PathConverter(storageFile.getFullPath()).isS3Path()) {
+
+			return getStorage(StorageType.S3).getFileSize(storageFile);
+		} else {
+
+			return getStorage(StorageType.POSIX).getFileSize(storageFile);
+		}
+	}
+
+	/**
+	 * Gets input stream from StorageFile
+	 * 
+	 * @param storageFile Storage File
+	 * @return input stream
+	 * @throws IOException
+	 */
+	public InputStream getInputStream(StorageFile storageFile) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getInputStream({})", storageFile.getFullPath());
+
+		if (new PathConverter(storageFile.getFullPath()).isS3Path()) {
+
+			return getStorage(StorageType.S3).getInputStream(storageFile);
+		} else {
+
+			return getStorage(StorageType.POSIX).getInputStream(storageFile);
+		}
+	}
+
+	/**
 	 * Gets a file as StorageFile from absolute path. Path to file can be virtual
 	 * 
 	 * @param relativePath
@@ -448,20 +510,19 @@ public class StorageProvider {
 	 * 
 	 * @param absolutePath absolute path
 	 * @return relative path
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public String getRelativePath(String absolutePath) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRelativePath({})", absolutePath);
-		
+
 		if (new PathConverter(absolutePath).isS3Path()) {
-			
+
 			return getStorage(StorageType.S3).getRelativePath(absolutePath);
-		}
-		else {
-			
-			return getStorage(StorageType.POSIX).getRelativePath(absolutePath);	
+		} else {
+
+			return getStorage(StorageType.POSIX).getRelativePath(absolutePath);
 		}
 	}
 
@@ -479,16 +540,16 @@ public class StorageProvider {
 
 		return storage.createStorageFile(relativePath, content);
 	}
-	
+
 	/**
 	 * Gets S3 Configuration from file
 	 * 
-	 * @return s3 configuration 
+	 * @return s3 configuration
 	 */
 	public S3Configuration getS3ConfigurationFromFile() {
 
-		S3Configuration s3Configuration = new S3Configuration(); 
-		
+		S3Configuration s3Configuration = new S3Configuration();
+
 		s3Configuration.setS3AccessKey(cfg.getS3AccessKey());
 		s3Configuration.setS3SecretAccessKey(cfg.getS3SecretAccessKey());
 		s3Configuration.setS3Region(cfg.getS3Region());
@@ -499,11 +560,11 @@ public class StorageProvider {
 		s3Configuration.setSourcePath(cfg.getPosixSourcePath());
 
 		s3Configuration.setMaxRequestAttempts(cfg.getMaxRequestAttempts());
-		
+
 		s3Configuration.setFileCheckWaitTime(cfg.getFileCheckWaitTime());
-		
+
 		s3Configuration.setDefaultEndPoint(Boolean.parseBoolean(cfg.getS3DefaultEndPoint()));
-		
+
 		return s3Configuration;
 	}
 }
