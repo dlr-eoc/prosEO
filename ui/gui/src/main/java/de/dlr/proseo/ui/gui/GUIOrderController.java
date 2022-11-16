@@ -672,6 +672,9 @@ public class GUIOrderController extends GUIBaseController {
 		Long deltaPage = pageSize == 0L ? 0L : ((long) ((count % pageSize)==0?0:1));
 		Long pages = pageSize == 0L ? 0L : ((count / pageSize) + deltaPage);
 		Long page = pageSize == 0L ? 0L : ((from / pageSize) + 1);
+		
+		String orderState = orderService.getOrderState(id);
+		
 		// TODO use jobId to find page of job 
 		Mono<ClientResponse> mono = orderService.getJobsOfOrder(id, from, to, states);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
@@ -704,6 +707,8 @@ public class GUIOrderController extends GUIBaseController {
 					model.addAttribute("pageSize", pageSize);
 					model.addAttribute("pageCount", pages);
 					model.addAttribute("page", page);
+ 					model.addAttribute("orderState", orderState);
+					
 					List<Long> showPages = new ArrayList<Long>();
 					Long start = Math.max(page - 4, 1);
 					Long end = Math.min(page + 4, pages);
