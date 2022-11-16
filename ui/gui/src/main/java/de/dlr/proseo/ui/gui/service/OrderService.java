@@ -228,6 +228,43 @@ public class OrderService {
 		return result;
 	}
 
+	@SuppressWarnings("unchecked")
+	public String getOrderState(String id) {
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String uri = "/orders";
+		// get one order identified by id.
+		if(null != id && !id.trim().isEmpty()) {
+			uri += "/" + id.trim();
+		} else {
+			uri += "/0";
+		}
+		
+		HashMap<String, Object> result = null;
+		try {
+			result = serviceConnection.getFromService(config.getOrderManager(),
+					uri, HashMap.class,  auth.getProseoName(), auth.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = ProseoLogger.format(UIMessage.NO_MISSIONS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return (String) result.get("orderState");
+		} catch (RuntimeException e) {
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
+			return (String) result.get("orderState");
+		}
+
+		return (String) result.get("orderState");
+	}
 	public Mono<ClientResponse> setState(String orderId, String state, String facility) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
