@@ -39,6 +39,7 @@ import com.nimbusds.jwt.SignedJWT;
 import de.dlr.proseo.storagemgr.utils.StorageType;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
+import de.dlr.proseo.storagemgr.version2.model.Storage;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.rest.model.RestProductFS;
@@ -466,15 +467,18 @@ public class ProductControllerImpl implements ProductController {
 		
 		if (storageProvider.isVersion2()) { // begin version 2 - storage file -> byte page
 
-			try {				
-				String relativePath = storageProvider.getRelativePath(pathInfo);
-				StorageFile sourceFile = storageProvider.getStorageFile(relativePath);
-				Long fileSize = storageProvider.getStorage().getFileSize(sourceFile);
-
+			try {	
+				Storage storage = storageProvider.getStorage(pathInfo); 
+				
+				String relativePath = storage.getRelativePath(pathInfo);
+				
+				StorageFile sourceFile = storage.getStorageFile(relativePath);
 				if (sourceFile == null) {
 					return new ResponseEntity<>(errorHeaders(MSG_INVALID_PATH, MSG_ID_INVALID_PATH, pathInfo),
 							HttpStatus.BAD_REQUEST);
 				}
+				
+				Long fileSize = storage.getFileSize(sourceFile);
 				
 				// token check begin
 				if (!sourceFile.getFileName().equals(claimsSet.getSubject())) {
@@ -484,7 +488,7 @@ public class ProductControllerImpl implements ProductController {
 				}
 				// token check end 
 				
-				InputStream stream = storageProvider.getStorage().getInputStream(sourceFile);
+				InputStream stream = storage.getInputStream(sourceFile);
 				if (stream == null) {
 					return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND, pathInfo),
 							HttpStatus.NOT_FOUND);
@@ -589,8 +593,13 @@ public class ProductControllerImpl implements ProductController {
 
 	private HttpHeaders getFilePage(StorageFile sourceFile, InputStream stream, Long fromByte, Long toByte)
 			throws IOException {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getFilePage({}, {}, {}, {})", sourceFile.getFullPath(), stream, fromByte, toByte);
+		
+		Storage storage = storageProvider.getStorage(sourceFile.getFullPath()); 	
 
-		Long len = storageProvider.getStorage().getFileSize(sourceFile);
+		Long len = storage.getFileSize(sourceFile);
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentDispositionFormData("attachment", sourceFile.getFileName());
 		long from = 0;
