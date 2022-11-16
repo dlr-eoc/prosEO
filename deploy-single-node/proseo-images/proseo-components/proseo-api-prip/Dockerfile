@@ -1,4 +1,4 @@
-FROM localhost:5000/proseo-api-prip:0.9.3
+FROM localhost:5000/proseo-api-prip:0.9.4-SNAPSHOT
 ADD application.yml /usr/share/api/prip/application.yml
 WORKDIR /usr/share/api/prip
 

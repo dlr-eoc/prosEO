@@ -1,9 +1,0 @@
-Manifest-Version: 1.0
-Build-Jdk-Spec: 14
-Implementation-Title: prosEO On-demand Production Interface Delivery Poi
- nt API
-Implementation-Version: 0.9.3
-Implementation-Vendor: DLR - Deutsches Zentrum für Luft- und Raumfahrt 
- e. V.
-Created-By: Maven Integration for Eclipse
-
