@@ -203,7 +203,10 @@ public class ProductControllerImplTest_download {
 		// show storage files
 		StorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
 
-		// HTTP Download files from storage
+		// TEST PARTIAL CONTENT
+		// HTTP Download files (partial content) from storage
+		System.out.println("TEST PARTIAL CONTENT BEGIN - BEFORE HTTP CALL ");
+
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
 				.param("pathInfo", absoluteStoragePath).param("token", token).param("fromByte", Long.toString(fromByte))
 				.param("toByte", Long.toString(toByte));
@@ -222,7 +225,31 @@ public class ProductControllerImplTest_download {
 
 		assertTrue("Real path: " + realFileContent + " Expected  path: " + expectedFileContent,
 				realFileContent.equals(expectedFileContent));
+		System.out.println("TEST PARTIAL CONTENT END");
 
+		// TEST FULL CONTENT
+		// HTTP Download files (FULL CONTENT) from storage
+		System.out.println("TEST FULL CONTENT BEGIN - BEFORE HTTP CALL ");
+
+		request = MockMvcRequestBuilders.get(REQUEST_STRING)
+				.param("pathInfo", absoluteStoragePath).param("token", token);
+
+		mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
+
+		// show results of http-download
+		TestUtils.printMvcResult(REQUEST_STRING, mvcResult);
+
+		// check real with expected absolute storage paths
+		realFileContent = mvcResult.getResponse().getContentAsString();
+		expectedFileContent = fileContent;
+
+		System.out.println("Real      " + realFileContent);
+		System.out.println("Expected: " + expectedFileContent);
+
+		assertTrue("Real path: " + realFileContent + " Expected  path: " + expectedFileContent,
+				realFileContent.equals(expectedFileContent));
+		System.out.println("TEST FULL CONTENT END");
+		
 		// delete storage files with prefix
 		storageProvider.getStorage().delete(prefix);
 
