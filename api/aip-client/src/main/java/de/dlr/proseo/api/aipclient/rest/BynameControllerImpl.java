@@ -12,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import de.dlr.proseo.api.aipclient.AipClientConfiguration;
 import de.dlr.proseo.api.aipclient.rest.model.RestProduct;
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
@@ -31,13 +30,9 @@ public class BynameControllerImpl implements BynameController {
 	private static ProseoLogger logger = new ProseoLogger(BynameControllerImpl.class);
 	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.INGESTOR);
 	
-	/** AIP Client configuration */
-	@Autowired
-	AipClientConfiguration config;
-				
 	/** Download Manager */
 	@Autowired
-	DownloadManager downloadManager;
+	private DownloadManager downloadManager;
 			
     /**
      * Provide the product with the given file name at the given processing facility. If it already is available there, do
@@ -49,7 +44,6 @@ public class BynameControllerImpl implements BynameController {
      * @param facility The processing facility to use
      * @return HTTP status "CREATED" and a Json representation of the product provided or
      *         HTTP status "BAD_REQUEST", if an invalid processing facility was given, or
-	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
      *         HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Ingestor failed or an unexpected exception occurred
      */
 	@Override
@@ -62,8 +56,6 @@ public class BynameControllerImpl implements BynameController {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
-		} catch (SecurityException e) {
-			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		} catch (Exception e) {
 			return new ResponseEntity<>(http.errorHeaders(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage())),
 					HttpStatus.INTERNAL_SERVER_ERROR);

@@ -12,8 +12,10 @@ import java.util.List;
 import javax.persistence.NoResultException;
 import javax.transaction.Transactional;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.api.aipclient.AipClientConfiguration;
 import de.dlr.proseo.api.aipclient.rest.model.RestProduct;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
@@ -29,6 +31,10 @@ import de.dlr.proseo.model.service.RepositoryService;
 @Component
 @Transactional
 public class DownloadManager {
+	
+	/** AIP Client configuration */
+	@Autowired
+	private AipClientConfiguration config;
 	
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(DownloadManager.class);
@@ -52,7 +58,7 @@ public class DownloadManager {
 		
 		final ProcessingFacility processingFacility = RepositoryService.getFacilityRepository().findByName(facility);
 		if (null == processingFacility) {
-			throw new IllegalArgumentException(logger.log(IngestorMessage.INVALID_FACILITY, processingFacility));
+			throw new IllegalArgumentException(logger.log(IngestorMessage.INVALID_FACILITY, facility));
 		}
 		return processingFacility;
 	}
@@ -68,10 +74,9 @@ public class DownloadManager {
      * @return the product provided
      * @throws NoResultException if no products matching the given selection criteria were found
      * @throws IllegalArgumentException if an invalid processing facility name was given
-	 * @throws SecurityException if a cross-mission data access was attempted
      * @throws RuntimeException if the communication to the Ingestor failed TODO Check whether needed!
      */
-	public RestProduct downloadByName(String filename, String facility) {
+	public RestProduct downloadByName(String filename, String facility) throws NoResultException, IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> downloadByName({}, {})", filename, facility);
 
 		final ProcessingFacility processingFacility = readProcessingFacility(facility);
@@ -96,11 +101,11 @@ public class DownloadManager {
      * @param facility The processing facility to use
      * @return the product provided
      * @throws NoResultException if no products matching the given selection criteria were found
-     * @throws IllegalArgumentException if an invalid processing facility name was given
-	 * @throws SecurityException if a cross-mission data access was attempted
+     * @throws IllegalArgumentException if an invalid facility name, product type or sensing time was given
      * @throws RuntimeException if the communication to the Ingestor failed TODO Check whether needed!
      */
-	public RestProduct downloadBySensingTime(String productType, String startTime, String stopTime, String facility) {
+	public RestProduct downloadBySensingTime(String productType, String startTime, String stopTime, String facility)
+			throws NoResultException, IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> downloadBySensingTime({}, {}, {})", startTime, stopTime, facility);
 
 		final ProcessingFacility processingFacility = readProcessingFacility(facility);
@@ -122,12 +127,11 @@ public class DownloadManager {
      * @param facility The processing facility to use
      * @return a list of the products provided from the LTA
      * @throws NoResultException if no products matching the given selection criteria were found
-     * @throws IllegalArgumentException if an invalid processing facility name was given
-	 * @throws SecurityException if a cross-mission data access was attempted
+     * @throws IllegalArgumentException if an invalid facility name, product type or sensing time was given
      * @throws RuntimeException if the communication to the Ingestor failed TODO Check whether needed!
      */
-	public List<RestProduct> downloadAllBySensingTime(String productType, String startTime, String stopTime,
-			String facility) throws NoResultException, IllegalArgumentException, SecurityException {
+	public List<RestProduct> downloadAllBySensingTime(String productType, String startTime, String stopTime, String facility)
+			throws NoResultException, IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> downloadAllBySensingTime({}, {}, {}, {})", 
 				productType, startTime, stopTime, facility);
 

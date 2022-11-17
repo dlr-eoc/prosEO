@@ -14,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import de.dlr.proseo.api.aipclient.AipClientConfiguration;
 import de.dlr.proseo.api.aipclient.rest.model.RestProduct;
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
@@ -33,13 +32,9 @@ public class AllbytimeControllerImpl implements AllbytimeController {
 	private static ProseoLogger logger = new ProseoLogger(AllbytimeControllerImpl.class);
 	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.INGESTOR);
 	
-	/** AIP Client configuration */
-	@Autowired
-	AipClientConfiguration config;
-	
 	/** Download Manager */
 	@Autowired
-	DownloadManager downloadManager;
+	private DownloadManager downloadManager;
 			
     /**
      * Provide all products with the given product type at the given processing facility, whose sensing times intersect with 
@@ -54,8 +49,7 @@ public class AllbytimeControllerImpl implements AllbytimeController {
      * @param facility The processing facility to use
      * @return HTTP status "CREATED" and a list of Json representations of the products provided or
      *         HTTP status "NOT_FOUND", if no products matching the given selection criteria were found, or
-     *         HTTP status "BAD_REQUEST", if an invalid processing facility name was given, or
-	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
+     *         HTTP status "BAD_REQUEST", if an invalid facility name, product type or sensing time was given, or
      *         HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Ingestor failed or an unexpected exception occurred
      */
 	@Override
@@ -71,8 +65,6 @@ public class AllbytimeControllerImpl implements AllbytimeController {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
-		} catch (SecurityException e) {
-			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		} catch (Exception e) {
 			return new ResponseEntity<>(http.errorHeaders(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage())),
 					HttpStatus.INTERNAL_SERVER_ERROR);
