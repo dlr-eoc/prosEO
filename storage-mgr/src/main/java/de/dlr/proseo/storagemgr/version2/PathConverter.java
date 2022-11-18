@@ -8,6 +8,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.dlr.proseo.storagemgr.version2.model.StorageType;
+
 /**
  * Path Converter
  * 
@@ -455,5 +457,20 @@ public class PathConverter {
 	public String getFileName() {
 		
 		return new File(p).getName();
+	}
+
+	/**
+	 * Gets storage type from path
+	 * 
+	 * @return storageType
+	 */
+	public StorageType getStorageType() {
+		
+		if (isS3Path()) {
+			return StorageType.S3;
+		}
+		else {
+			return StorageType.POSIX;
+		}
 	}
 }
