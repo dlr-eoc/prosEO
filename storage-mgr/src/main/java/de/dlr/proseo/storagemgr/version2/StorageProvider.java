@@ -192,14 +192,9 @@ public class StorageProvider {
 	 * @throws IOException
 	 */
 	public Storage getStorage(String absolutePath) throws IOException {
-
-		if (new PathConverter(absolutePath).isS3Path()) {
-
-			return getStorage(StorageType.S3);
-		} else {
-
-			return getStorage(StorageType.POSIX);
-		}
+		
+		StorageType storageType = new PathConverter(absolutePath).getStorageType();
+		return getStorage(storageType);
 	}
 
 	/**
@@ -412,14 +407,9 @@ public class StorageProvider {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFileSize({})", storageFile.getFullPath());
-
-		if (new PathConverter(storageFile.getFullPath()).isS3Path()) {
-
-			return getStorage(StorageType.S3).getFileSize(storageFile);
-		} else {
-
-			return getStorage(StorageType.POSIX).getFileSize(storageFile);
-		}
+		
+		StorageType storageType = new PathConverter(storageFile.getFullPath()).getStorageType();	
+		return getStorage(storageType).getFileSize(storageFile);
 	}
 
 	/**
@@ -433,14 +423,9 @@ public class StorageProvider {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getInputStream({})", storageFile.getFullPath());
-
-		if (new PathConverter(storageFile.getFullPath()).isS3Path()) {
-
-			return getStorage(StorageType.S3).getInputStream(storageFile);
-		} else {
-
-			return getStorage(StorageType.POSIX).getInputStream(storageFile);
-		}
+		
+		StorageType storageType = new PathConverter(storageFile.getFullPath()).getStorageType();	
+		return getStorage(storageType).getInputStream(storageFile);
 	}
 
 	/**
@@ -516,14 +501,9 @@ public class StorageProvider {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRelativePath({})", absolutePath);
-
-		if (new PathConverter(absolutePath).isS3Path()) {
-
-			return getStorage(StorageType.S3).getRelativePath(absolutePath);
-		} else {
-
-			return getStorage(StorageType.POSIX).getRelativePath(absolutePath);
-		}
+		
+		StorageType storageType = new PathConverter(absolutePath).getStorageType();	
+		return getStorage(storageType).getRelativePath(absolutePath);
 	}
 
 	/**
