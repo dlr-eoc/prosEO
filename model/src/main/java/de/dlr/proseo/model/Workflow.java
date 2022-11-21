@@ -6,8 +6,10 @@
 package de.dlr.proseo.model;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.persistence.CascadeType;
@@ -72,8 +74,8 @@ public class Workflow extends PersistentObject {
 	
 	/** Options, which can be set as "Dynamic Processing Parameters" in Job Orders generated from this workflow */
 	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY, mappedBy = "workflow")
-	private List<WorkflowOption> workflowOptions = new ArrayList<>();
-
+	private Set<WorkflowOption> workflowOptions = new HashSet<>();
+	
 	/**
 	 * Gets the workflow UUID
 	 * 
@@ -205,7 +207,7 @@ public class Workflow extends PersistentObject {
 	 * 
 	 * @return the workflow options
 	 */
-	public List<WorkflowOption> getWorkflowOptions() {
+	public Set<WorkflowOption> getWorkflowOptions() {
 		return workflowOptions;
 	}
 
@@ -214,7 +216,7 @@ public class Workflow extends PersistentObject {
 	 * 
 	 * @param workflowOptions the workflow options to set
 	 */
-	public void setWorkflowOptions(List<WorkflowOption> workflowOptions) {
+	public void setWorkflowOptions(Set<WorkflowOption> workflowOptions) {
 		this.workflowOptions = workflowOptions;
 	}
 

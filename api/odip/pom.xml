@@ -22,7 +22,6 @@
 		<module.version>0.9.3-SNAPSHOT</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path-query>src/main/resources/raml/odip-query.raml</raml-path-query>
-		<raml-path-download>src/main/resources/raml/odip-download.raml</raml-path-download>
         <raml-path-oauth2>src/main/resources/raml/odip-oauth2.raml</raml-path-oauth2>
 		<raml-base-package>de.dlr.proseo.api.odip.rest</raml-base-package>
         <nimbus.jwt.version>9.10</nimbus.jwt.version>
@@ -173,16 +172,6 @@
 							<goal>generate-springmvc-endpoints</goal>
 						</goals>
 					</execution>
-					<execution>
-						<id>generate-springmvc-download</id>
-						<phase>generate-sources</phase>
-						<configuration>
-							<ramlPath>${raml-path-download}</ramlPath>
-						</configuration>
-						<goals>
-							<goal>generate-springmvc-endpoints</goal>
-						</goals>
-					</execution>
                     <execution>
                         <id>generate-springmvc-oauth2</id>
                         <phase>generate-sources</phase>
@@ -210,17 +199,6 @@
 						<configuration>
 							<executable>raml2html</executable>
 							<commandlineArgs>-i ${raml-path-query} -o src/site/resources/${project.artifactId}-query.html</commandlineArgs>
-						</configuration>
-					</execution>
-					<execution>
-						<id>generate-html-download</id>
-						<phase>package</phase>
-						<goals>
-							<goal>exec</goal>
-						</goals>
-						<configuration>
-							<executable>raml2html</executable>
-							<commandlineArgs>-i ${raml-path-download} -o src/site/resources/${project.artifactId}-download.html</commandlineArgs>
 						</configuration>
 					</execution>
                     <execution>

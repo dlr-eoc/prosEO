@@ -27,36 +27,36 @@ public enum CscAttributeName {
 	INSTRUMENT_SHORT_NAME("instrumentShortName"),
 	/** Processing level */
 	PROCESSING_LEVEL("processingLevel"),
-	/** Product validity start time */
-	BEGINNING_DATE_TIME("beginningDateTime"),
-	/** Product validity end time */
-	ENDING_DATE_TIME("endingDateTime"),
-	/** Processing center */
-	PROCESSING_CENTER("processingCenter"),
-	/** Processing date (L1 and above only) */
-	PROCESSING_DATE("processingDate"),
-	/** Processor name */
-	PROCESSOR_NAME("processorName"),
-	/** Processor version */
-	PROCESSOR_VERSION("processorVersion"),
-	/** Orbit number */
-	ORBIT_NUMBER("orbitNumber"),
-	/** Product type */
-	PRODUCT_TYPE("productType"),
-	/** Geographic coordinates (String with blank-separated list of coordinate values) */
-	COORDINATES("coordinates"),
-	/** Product identifier (L1 only) */
-	PRODUCT_IDENTIFIER("identifier"),
-	/** DOI  (L2 only) */
-	PRODUCT_DOI("doi"),
+	/** JobStatus value  */
+	STATUS("Status"),
+	/** Text message providing additional information on the returned status */
+	STATUS_MESSAGE("StatusMessage"),
+	/** Actual size in bytes (B) of the output Product composing the Order */
+	ORDER_OUTPUT_SIZE("OrderOutputSize"),
+	/** Date and time at which the ProductionOrder was received by the  ODPRIP */
+	SUBMISSION_DATE("SubmissionDate"),
+	/** Estimated date and time when the product will be available for download from the ODPRIP */
+	ESTIMATED_DATE("EstimatedDate"),
+	/** Date and time when the product was available for download from the ODPRIP */
+	COMPLETED_DATE("CompletedDate"),
+	/** Date when the Product related to the order will be removed from the ODPRIP */
+	EVICTION_DATE("EvictionDate"),
+	/** Priority of the ProductionOrder. It is an integer from 1-100, default 50. */
+	PRIORITY("Priority"),
+	/** Complex type used to unambiguously identify the input product */
+	INPUT_PRODUCT_REFERENCE("InputProductReference"),
+	/** The Id is a local unique identifier for the Workflow instance within the ODPRIP which is applicable to the ProductionOrder */
+	WORKFLOW_ID("WorkflowId"),
+	/** Short name of the workflow */
+	WORKFLOW_NAME("WorkflowName"),
 	/** Parent product identifier (L1 and above only) */
-	PARENT_IDENTIFIER("parentIdentifier"),
-	/** Acquisition type (L1 only) */
-	ACQUISITION_TYPE("acquisitionType"),
-	/** Processing mode (L1 and above only) */
-	PROCESSING_MODE("processingMode"),
-	/** Quality status (L2 and above only) */
-	QUALITY_STATUS("qualityStatus"),
+	WORK_FLOW_OPTIONS("WorkflowOptions"),
+	/** Selection of applicable options from the Workflow */
+	NOTIFICATION_ENDPOINT("NotificationEndpoint"),
+	/** The username associated with the EndPoint URI provided */
+	NOTIFICATION_EPUSERNAME("NotificationEpUsername"),
+	/** The password associated with the EndPoint URI provided */
+	NOTIFICATION_EPPASSWORD("NotificationEpPassword"),
 	/** Product (file) class */
 	PRODUCT_CLASS("productClass"),
 	

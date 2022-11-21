@@ -48,6 +48,7 @@ import org.apache.olingo.server.api.uri.queryoption.expression.MethodKind;
 import org.apache.olingo.server.api.uri.queryoption.expression.UnaryOperatorKind;
 import de.dlr.proseo.api.odip.odata.AttributeLambdaExpressionVisitor.AttributeCondition;
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
@@ -64,45 +65,36 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 	/** SQL command parts */
 	private static final String SELECT_CLAUSE = "SELECT DISTINCT p.* ";
 	private static final String SELECT_COUNT_CLAUSE = "SELECT count(DISTINCT p.*) ";
-	private static final String FROM_CLAUSE = "FROM product p\n" +
-			"JOIN product_file pf ON p.id = pf.product_id\n" +
-			"JOIN product_class pc ON p.product_class_id = pc.id\n" +
-			"JOIN mission m ON pc.mission_id = m.id\n" +
-			"LEFT OUTER JOIN orbit o ON p.orbit_id = o.id\n" +
-			"LEFT OUTER JOIN configured_processor cp ON p.configured_processor_id = cp.id\n" +
-			"LEFT OUTER JOIN processor pr ON cp.processor_id = pr.id\n" +
-			"LEFT OUTER JOIN processor_class prc ON pr.processor_class_id = prc.id\n";
-	private static final String PARAMETER_JOIN_TEMPLATE = "LEFT OUTER JOIN product_parameters pp%d ON p.id = pp%d.product_id\n";
+	private static final String FROM_CLAUSE = "FROM processing_order p\n" +
+			"JOIN mission m ON p.mission_id = m.id\n" +
+			"JOIN workflow wf ON p.workflow_id = wf.id\n";
+	private static final String WORKFLOW_FROM_CLAUSE = "FROM workflow p\n" +
+			"JOIN workflow_option wo ON wo.workflow_id = p.id\n" +
+			"LEFT OUTER JOIN product_class ipc ON p.input_product_class_id = ipc.id\n" +
+			"LEFT OUTER JOIN product_class opc ON p.output_product_class_id = opc.id\n";
+			// "LEFT OUTER JOIN workflow_option_value_range wovr ON wo.id = wovr.workflow_option_id\n";
+	private static final String PARAMETER_JOIN_TEMPLATE = "LEFT OUTER JOIN processing_order_dynamic_processing_parameters pp%d ON p.id = pp%d.processing_order_id\n";
 	private static final String WHERE_CLAUSE = "WHERE ";
 	private static final String PARAMETER_WHERE_TEMPLATE = "(pp%d.parameters_key = '%s' AND pp%d.parameter_value %s %s)";
 	
 	/** Mapping from OData member names to SQL schema names */
 	private static Map<String, String> oDataToSqlMap = new HashMap<>();
 	private static final String[][] ODATA_TO_SQL_MAPPING = {
-			{ ProductEdmProvider.GENERIC_PROP_ID, "p.uuid" },
-			{ ProductEdmProvider.GENERIC_PROP_NAME, "pf.product_file_name" }, // TODO Find way to also check for ZIP files
-			{ ProductEdmProvider.GENERIC_PROP_CONTENT_TYPE, null }, // not part of data model
-			{ ProductEdmProvider.GENERIC_PROP_CONTENT_LENGTH, "pf.file_size" },
-			{ ProductEdmProvider.ET_PRODUCT_PROP_ORIGIN_DATE, "p.raw_data_availability_time" },
-			{ ProductEdmProvider.ET_PRODUCT_PROP_PUBLICATION_DATE, "p.publication_time" },
-			{ ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUM, "pf.checksum" },
-			{ ProductEdmProvider.ET_PRODUCT_PROP_PRODUCTION_TYPE, "p.production_type" },
-			{ ProductEdmProvider.ET_PRODUCT_PROP_CONTENT_DATE + "/" + ProductEdmProvider.CT_TIMERANGE_PROP_START, "p.sensing_start_time" },
-			{ ProductEdmProvider.ET_PRODUCT_PROP_CONTENT_DATE + "/" + ProductEdmProvider.CT_TIMERANGE_PROP_END, "p.sensing_stop_time" },
-			{ ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUM + "/" + ProductEdmProvider.CT_CHECKSUM_PROP_ALGORITHM, null },
-			{ ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUM + "/" + ProductEdmProvider.CT_CHECKSUM_PROP_VALUE, "pf.checksum" },
-			{ ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUM + "/" + ProductEdmProvider.CT_CHECKSUM_PROP_CHECKSUM_DATE, "pf.checksum_time" },
-			{ CscAttributeName.BEGINNING_DATE_TIME.getValue(), "p.sensing_start_time" },
-			{ CscAttributeName.ENDING_DATE_TIME.getValue(), "p.sensing_stop_time" },
-			{ CscAttributeName.PLATFORM_SHORT_NAME.getValue(), "m.name" },
-			{ CscAttributeName.INSTRUMENT_SHORT_NAME.getValue(), "TRUE" }, // Actually we cannot select by instrument short name, it's not in the data model yet
-			{ CscAttributeName.ORBIT_NUMBER.getValue(), "o.orbit_number" },
-			{ CscAttributeName.PROCESSOR_NAME.getValue(), "prc.processor_name" },
-			{ CscAttributeName.PROCESSOR_VERSION.getValue(), "pr.processor_version" },
-			{ CscAttributeName.PROCESSING_LEVEL.getValue(), "pc.processing_level" },
-			{ CscAttributeName.PROCESSING_MODE.getValue(), "p.mode" },
-			{ CscAttributeName.PRODUCT_CLASS.getValue(), "p.file_class" },
-			{ CscAttributeName.PRODUCT_TYPE.getValue(), "pc.product_type" }
+			{ OdipEdmProvider.GENERIC_PROP_ID, "p.uuid" },
+			{ OdipEdmProvider.GENERIC_PROP_NAME, "pf.product_file_name" }, // TODO Find way to also check for ZIP files
+			{ OdipEdmProvider.GENERIC_PROP_CONTENT_TYPE, null }, // not part of data model
+			{ OdipEdmProvider.GENERIC_PROP_CONTENT_LENGTH, "pf.file_size" },
+			{ CscAttributeName.STATUS.getValue(), "p.order_state" },
+			{ CscAttributeName.SUBMISSION_DATE.getValue(), "p.submission_time" },
+			{ CscAttributeName.ESTIMATED_DATE.getValue(), "p.estimated_completion_time" },
+			{ CscAttributeName.COMPLETED_DATE.getValue(), "p.actual_completion_time" },
+			{ CscAttributeName.EVICTION_DATE.getValue(), "p.eviction_time" }, 
+			{ CscAttributeName.WORKFLOW_ID.getValue(), "wf.uuid" },
+			{ CscAttributeName.WORKFLOW_NAME.getValue(), "wf.name" },
+			{ CscAttributeName.NOTIFICATION_ENDPOINT.getValue(), "p.endpoint_uri" },
+			{ CscAttributeName.NOTIFICATION_EPUSERNAME.getValue(), "p.endpoint_username" },
+			{ CscAttributeName.NOTIFICATION_EPPASSWORD.getValue(), "p.endpoint_password" },
+			{ CscAttributeName.WORKFLOW_NAME.getValue(), "p.name" }
 	};
 	
 	private static final DateTimeFormatter sqlTimestampFormatter =
@@ -128,6 +120,7 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 	 * 
 	 * @return a partial SQL command string
 	 */
+	
 	public String getSqlCommand(boolean countOnly) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getSqlCommand()");
 		
@@ -142,7 +135,27 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 		
 		return result.toString();
 	}
-	
+
+	/**
+	 * Get the applicable SQL command up to and including the 'WHERE' keyword (the remainder has been created by the
+	 * visit* methods).
+	 * 
+	 * Make sure this SqlFilterExpressionVisitor was subject to an "accept" call before calling this method!
+	 * 
+	 * @param countOnly create a command, which only counts the requested products, but does not return them
+	 * 
+	 * @return a partial SQL command string
+	 */
+	public String getWorkflowSqlCommand(boolean countOnly) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getSqlCommand()");
+		
+		StringBuilder result = new StringBuilder(countOnly ? SELECT_COUNT_CLAUSE : SELECT_CLAUSE);
+		result.append(WORKFLOW_FROM_CLAUSE);
+				
+		result.append(WHERE_CLAUSE);
+		
+		return result.toString();
+	}
 	@Override
 	public String visitMember(final Member member) throws ExpressionVisitException, ODataApplicationException {
 		if (logger.isTraceEnabled()) logger.trace(">>> visitMember({})", member);
@@ -319,10 +332,18 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 			break;
 		// Comparison operators
 		case EQ:
-			result = "" + left + " = " + right;
+			if (right.contains(", ")) {
+				result = "" + left + " IN (" + right + ")";
+			} else {
+				result = "" + left + " = " + right;
+			}
 			break;
 		case NE:
-			result = "" + left + " <> " + right;
+			if (right.contains(", ")) {
+				result = "" + left + " NOT IN (" + right + ")";
+			} else {
+				result = "" + left + " <> " + right;
+			}
 			break;
 		case GE:
 			result = "" + left + " >= " + right;
@@ -451,8 +472,26 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 				result.append(", ");
 			}
 			switch (type.getName()) {
-			case ProductEdmProvider.EN_PRODUCTIONTYPE_NAME:
+			case OdipEdmProvider.EN_PRODUCTIONTYPE_NAME:
 				result.append("'").append(ProductionType.get(enumValue).toString()).append("'");
+				break;
+			case OdipEdmProvider.EN_PRODUCTIONORDERSTATE_NAME:
+				if (enumValue.equals(OdipEdmProvider.ENEN_PRODUCTIONORDERSTATE_QUEUED)) {
+					result.append("'").append(OrderState.INITIAL.toString()).append("', ");
+					result.append("'").append(OrderState.APPROVED.toString()).append("', ");
+					result.append("'").append(OrderState.PLANNING.toString()).append("', ");
+					result.append("'").append(OrderState.PLANNED.toString()).append("'");
+				} else if (enumValue.equals(OdipEdmProvider.ENEN_PRODUCTIONORDERSTATE_IN_PROGRESS)) {
+					result.append("'").append(OrderState.RELEASING.toString()).append("', ");
+					result.append("'").append(OrderState.RELEASED.toString()).append("', ");
+					result.append("'").append(OrderState.RUNNING.toString()).append("'");
+				} else if (enumValue.equals(OdipEdmProvider.ENEN_PRODUCTIONORDERSTATE_COMPLETED)) {
+					result.append("'").append(OrderState.COMPLETED.toString()).append("'");
+				} else if (enumValue.equals(OdipEdmProvider.ENEN_PRODUCTIONORDERSTATE_FAILED)) {
+					result.append("'").append(OrderState.FAILED.toString()).append("'");
+				} else if (enumValue.equals(OdipEdmProvider.ENEN_PRODUCTIONORDERSTATE_CANCELLED)) {
+					result.append("'").append(OrderState.SUSPENDING.toString()).append("'");
+				}
 				break;
 			default: 
 				throw new ODataApplicationException("Enum conversion failed for enum value " + enumValue, 

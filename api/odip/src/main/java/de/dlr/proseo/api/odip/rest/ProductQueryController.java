@@ -22,13 +22,14 @@ import org.apache.olingo.server.api.serializer.ODataSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.dlr.proseo.api.odip.ProductionInterfaceSecurity;
 import de.dlr.proseo.api.odip.odata.LogUtil;
-import de.dlr.proseo.api.odip.odata.ProductEdmProvider;
-import de.dlr.proseo.api.odip.odata.ProductEntityCollectionProcessor;
-import de.dlr.proseo.api.odip.odata.ProductEntityProcessor;
+import de.dlr.proseo.api.odip.odata.OdipEdmProvider;
+import de.dlr.proseo.api.odip.odata.OdipEntityCollectionProcessor;
+import de.dlr.proseo.api.odip.odata.OdipEntityProcessor;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.OdipMessage;
 
@@ -56,15 +57,15 @@ public class ProductQueryController {
 	
 	/** The EDM provider for products */
 	@Autowired
-	private ProductEdmProvider edmProvider;
+	private OdipEdmProvider edmProvider;
 	
 	/** The entity collection processor for products */
 	@Autowired
-	private ProductEntityCollectionProcessor entityCollectionProcessor;
+	private OdipEntityCollectionProcessor entityCollectionProcessor;
 
 	/** The entity processor for products */
 	@Autowired
-	private ProductEntityProcessor entityProcessor;
+	private OdipEntityProcessor entityProcessor;
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductQueryController.class);

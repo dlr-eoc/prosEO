@@ -24,17 +24,18 @@ securitySchemes:
             the content provided by the requested URL.
 
 types:
-  CscChecksum: !include types/checksum.raml
-  CscTimeRange: !include types/timerange.raml
-  CscAttribute: !include types/attribute.raml
-  CscProductionType: !include types/productiontype.raml
-  CscProduct: !include types/product.raml
+  CscOutputProduct: !include types/outputproduct.raml
+  CscProductionOrder: !include types/productionorder.raml
+  CscInputProductReference: !include types/inputproductreference.raml
+  CscContentDate: !include types/contentdate.raml
+  CscWorkflow: !include types/workflow.raml
+  CscWorkflowOption: !include types/workflowoption.raml
 
-/Products:
-  description: Methods for querying the product catalogue according to ESA's On-Demand Production Interface Delivery Point (ODIP) API
+/Workflows:
+  description: Methods for querying the workflows according to ESA's On-Demand Production Interface Delivery Point (ODIP) API
   get:
-    description: Query the products catalogue
-    displayName: getProducts
+    description: Query the workflows
+    displayName: getWorkflows
     queryParameters:
       $filter?:
         type: string
@@ -53,8 +54,8 @@ types:
         description: The request was successfully completed (the result may be an empty list, though)
         body:
           application/json:
-            type: CscProduct[]
-            example: !include examples/product-list.json
+            type: CscWorkflow[]
+            example: !include examples/workflow-list.json
       400:
         description: |
           The request sent to the server contains data which is not as expected e.g. invalid query parameters
@@ -68,4 +69,86 @@ types:
           The requested resource was not found (i. e. the URI does not exist; not synonymous to "no data found")
         headers:
           Warning: !include types/error.raml
-            
+/ProductionOrder:
+  description: ProductionOrder submission according to ESA's On-Demand Production Interface Delivery Point (ODIP) API
+  post:
+    description: Create a new production order
+    displayName: createProductionOrder
+    body:
+      application/json:
+        type: CscProductionOrder
+        example: !include examples/productionorder.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: CscProductionOrder
+            example: !include examples/productionorder.json
+/ProductionOrders:
+  description: Methods for production orders according to ESA's On-Demand Production Interface Delivery Point (ODIP) API
+  get:
+    description: Query the production orders
+    displayName: getProductionOrders
+    queryParameters:
+      $filter?:
+        type: string
+        description: Filter query string as defined by the ODATA specification
+      $orderby?:
+        type: string
+        description: An ordering string as defined by the ODATA specification, default is ascending order
+      $count?:
+        type: boolean
+        description: Flag indicating whether the number of products found shall be included with the result
+      $expand?:
+        type: string
+        description: List of attributes to expand in product catalogue style
+    responses:
+      200:
+        description: The request was successfully completed (the result may be an empty list, though)
+        body:
+          application/json:
+            type: CscProductionOrder[]
+            example: !include examples/productionorder-list.json
+      400:
+        description: |
+          The request sent to the server contains data which is not as expected e.g. invalid query parameters
+        headers:
+          Warning: !include types/error.raml
+      401:
+        description: |
+          The requesting user is unauthorised to submit the product query
+      404:
+        description: |
+          The requested resource was not found (i. e. the URI does not exist; not synonymous to "no data found")
+        headers:
+          Warning: !include types/error.raml
+/ProductionOrders('{Id}'):
+  description: Methods for production orders according to ESA's On-Demand Production Interface Delivery Point (ODIP) API
+  displayName: getProductionOrderById
+  uriParameters:
+    Id:
+      type: string
+      description: Universally unique product identifier
+      pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$
+  get:
+    description: Query the production orders by id
+    responses:
+      200:
+        description: The request was successfully completed
+        body:
+          application/json:
+            type: CscProductionOrder
+            example: !include examples/productionorder.json
+      400:
+        description: |
+          The request sent to the server contains data which is not as expected e.g. invalid URI parameters
+        headers:
+          Warning: !include types/error.raml
+      401:
+        description: |
+          The requesting user is unauthorised to download the product
+      404:
+        description: |
+          The requested resource was not found (i. e. the product does not exist or is not available any more)
+        headers:
+          Warning: !include types/error.raml

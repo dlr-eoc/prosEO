@@ -143,13 +143,13 @@ public class AttributeLambdaExpressionVisitor implements ExpressionVisitor<Attri
 			}
 		} else {
 			// Evaluate a comparison operation
-			if (ProductEdmProvider.GENERIC_PROP_NAME.equals(leftOperand.getName())) {
+			if (OdipEdmProvider.GENERIC_PROP_NAME.equals(leftOperand.getName())) {
 				if (!BinaryOperatorKind.EQ.equals(operator)) {
 					String message = logger.log(OdipMessage.MSG_INVALID_OPERATOR_TYPE);
 					throw new ODataApplicationException(message, HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
 				}
 				result.setName(rightOperand.getValue());
-			} else if (ProductEdmProvider.GENERIC_PROP_VALUE.equals(leftOperand.getName())) {
+			} else if (OdipEdmProvider.GENERIC_PROP_VALUE.equals(leftOperand.getName())) {
 				switch (operator) {
 				case EQ:
 					result.setOp("=");;
@@ -174,13 +174,13 @@ public class AttributeLambdaExpressionVisitor implements ExpressionVisitor<Attri
 							HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
 				}
 				result.setValue(rightOperand.getValue());
-			} else if (ProductEdmProvider.GENERIC_PROP_NAME.equals(rightOperand.getName())) {
+			} else if (OdipEdmProvider.GENERIC_PROP_NAME.equals(rightOperand.getName())) {
 				if (!BinaryOperatorKind.EQ.equals(operator)) {
 					String message = logger.log(OdipMessage.MSG_INVALID_OPERATOR_TYPE);
 					throw new ODataApplicationException(message, HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
 				}
 				result.setName(leftOperand.getValue());
-			} else if (ProductEdmProvider.GENERIC_PROP_VALUE.equals(rightOperand.getName())) {
+			} else if (OdipEdmProvider.GENERIC_PROP_VALUE.equals(rightOperand.getName())) {
 				// Swap '>' and '<', because left and right sides will be swapped!
 				switch (operator) {
 				case EQ:
@@ -344,7 +344,7 @@ public class AttributeLambdaExpressionVisitor implements ExpressionVisitor<Attri
 		}
 		String propertyName = ((UriResourcePrimitiveProperty) uriResource).getProperty().getName();
 		
-		if (!ProductEdmProvider.GENERIC_PROP_NAME.equals(propertyName) && !ProductEdmProvider.GENERIC_PROP_VALUE.equals(propertyName)) {
+		if (!OdipEdmProvider.GENERIC_PROP_NAME.equals(propertyName) && !OdipEdmProvider.GENERIC_PROP_VALUE.equals(propertyName)) {
 			String message = logger.log(OdipMessage.MSG_UNEXPECTED_PROPERTY, propertyName);
 			throw new ODataApplicationException(message, HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
 		}
