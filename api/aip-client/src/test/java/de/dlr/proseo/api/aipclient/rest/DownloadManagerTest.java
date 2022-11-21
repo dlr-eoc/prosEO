@@ -6,11 +6,14 @@
 package de.dlr.proseo.api.aipclient.rest;
 
 import static org.junit.Assert.*;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
+import java.net.URI;
 import java.util.List;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 
@@ -25,9 +28,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.web.client.ExpectedCount;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.api.aipclient.AipClientApplication;
 import de.dlr.proseo.api.aipclient.AipClientTestConfiguration;
@@ -37,8 +46,12 @@ import de.dlr.proseo.model.service.RepositoryService;
 
 /**
  * Test product downloads from remote Long-term Archives
+ * <br>
+ * Inspiration for REST service mocking from:
+ * https://www.baeldung.com/spring-mock-rest-template#using-spring-test
  * 
  * @author Dr. Thomas Bassler
+ * 
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = AipClientApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -66,7 +79,13 @@ public class DownloadManagerTest {
 	@PersistenceContext
 	private EntityManager em;
 	
-	
+	/** The REST Template object to intercept */
+    @Autowired
+    private RestTemplate restTemplate;
+
+    /** A mock LTA service */
+    private MockRestServiceServer mockLtaService;
+    
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(DownloadManagerTest.class);
 	
@@ -77,8 +96,6 @@ public class DownloadManagerTest {
 	public static void setUpBeforeClass() throws Exception {
 		if (logger.isTraceEnabled()) logger.trace(">>> setUpBeforeClass()");
 		
-		// Set up mock LTA for external product "download"
-
 	}
 
 	/**
@@ -91,7 +108,9 @@ public class DownloadManagerTest {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * Set up test data and mock LTA service
+	 * 
+	 * @throws java.lang.Exception if any error condition arises
 	 */
 	@Before
 	public void setUp() throws Exception {
@@ -111,7 +130,17 @@ public class DownloadManagerTest {
 		
 		// TODO
 				
-	}
+		// Set up mock LTA for external product "download"
+		mockLtaService = MockRestServiceServer.createServer(restTemplate);
+		
+		mockLtaService.expect(ExpectedCount.manyTimes(), 
+                requestTo(new URI("http://localhost:9090/info")))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(TEST_PRODUCT_TYPE)
+              );                                   
+    }
 
 	/**
 	 * @throws java.lang.Exception
@@ -235,6 +264,15 @@ public class DownloadManagerTest {
 		facility = TEST_FACILITY;
 		
 		
+		// --- Test REST service stub ---
+		try {
+			RestProduct product = downloadManager.downloadBySensingTime(productType, sensingStartTime, sensingStopTime, facility);
+			assertEquals("Unexpected product class when testing REST service stub:", TEST_PRODUCT_TYPE, product.getProductClass());
+		} catch (Exception e) {
+			fail("Unexpected exception when testing REST service stub: " + e.getClass().getName() + "/" + e.getMessage());
+		}
+		
+		
 		// Test invalid sensing start time
 		sensingStartTime = "illegal-start-time";
 		
@@ -270,11 +308,11 @@ public class DownloadManagerTest {
 		
 		try {
 			downloadManager.downloadBySensingTime(productType, sensingStartTime, sensingStopTime, facility);
-			fail("Non-existent filename not detected");
+			fail("Non-existent product type not detected");
 		} catch (IllegalArgumentException e) {
-			logger.info("IllegalArgumentException received as expected for non-existent filename");
+			logger.info("IllegalArgumentException received as expected for non-existent product type");
 		} catch (Exception e) {
-			fail("Unexpected exception when testing non-existent filename: " + e.getClass().getName() + "/" + e.getMessage());
+			fail("Unexpected exception when testing non-existent product type: " + e.getClass().getName() + "/" + e.getMessage());
 		}
 		productType = TEST_PRODUCT_TYPE;
 		

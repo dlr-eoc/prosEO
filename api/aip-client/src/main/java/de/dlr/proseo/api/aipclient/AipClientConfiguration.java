@@ -11,7 +11,9 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * Configuration class for the prosEO AIP Client component
@@ -316,4 +318,13 @@ public class AipClientConfiguration {
 		return auxipDirectoryPath;
 	}
 
+	/**
+	 * Provide a common REST template instance for production code and test code
+	 * 
+	 * @return a REST template
+	 */
+	@Bean
+	public RestTemplate restTemplate() {
+	    return new RestTemplate();
+	}	
 }

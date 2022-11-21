@@ -14,6 +14,7 @@ import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.api.aipclient.AipClientConfiguration;
 import de.dlr.proseo.api.aipclient.rest.model.RestProduct;
@@ -35,6 +36,10 @@ public class DownloadManager {
 	/** AIP Client configuration */
 	@Autowired
 	private AipClientConfiguration config;
+	
+	/** RestTemplate for calling the LTA */
+	@Autowired
+	RestTemplate restTemplate;
 	
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(DownloadManager.class);
@@ -110,8 +115,17 @@ public class DownloadManager {
 
 		final ProcessingFacility processingFacility = readProcessingFacility(facility);
 		
+		// --- Test REST service stub ---
+		
+		String response = restTemplate.getForObject("http://localhost:9090/info", String.class);
+		RestProduct result = new RestProduct();
+		result.setProductClass(response);
+		
+		// --- End Test REST service stub ---
+		
+		
 		// TODO Auto-generated method stub
-		return null;
+		return result;
 	}
 
     /**
