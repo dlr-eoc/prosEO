@@ -16,7 +16,7 @@
 -docencoding
 'UTF-8'
 -doctitle
-'prosEO Data Model 0.9.3-SNAPSHOT API'
+'prosEO Data Model 0.9.4-ODIP API'
 -linkoffline
 'https://docs.oracle.com/en/java/javase/11/docs/api' '/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/model/target/javadoc-bundle-options'
 -linkoffline
@@ -26,4 +26,4 @@
 -use
 -version
 -windowtitle
-'prosEO Data Model 0.9.3-SNAPSHOT API'
+'prosEO Data Model 0.9.4-ODIP API'
