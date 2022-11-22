@@ -1,0 +1,27 @@
+{ 
+  "InputProductReference": 
+    { 
+      "Reference": "S2B_MSIL1C_20191025T085939_N0208_R007_T37VCC_20191025T112031.zip", 
+      "ContentDate": { 
+        "Start": "2016-01-17T10:34:51.922Z", 
+        "End": "2016-01-17T10:35:18:872Z" 
+      }
+    },
+  "Priority": 50, 
+  "WorkflowId": "6c18b57d-fgk4-1236-b539-12h305c26z89", 
+  "WorkflowName": "S2_L1C_L2A", 
+  "WorkflowOptions": 
+    [ 
+      { 
+        "Name": "ImageFormat", 
+        "Value": 
+          [
+            "JPG"
+          ] 
+      } 
+    ],
+  "NotificationEndpoint": "https://myservice/notification", 
+  "NotificationEpUsername": "myserviceuser", 
+  "NotificationEpPassword": "*********" 
+}
+   

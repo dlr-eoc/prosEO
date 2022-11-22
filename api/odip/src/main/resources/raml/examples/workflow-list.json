@@ -1,0 +1,26 @@
+[
+  { 
+    "@odata.context": "$metadata#Workflows/$entity", 
+    "Id": "2b17b57d-fff4-4645-b539-91f305c83b91", 
+    "Name": "S2_L1C_L2A", 
+    "Description": "Product processing from Sentinel-2 L1C to L2A. Processor V2.3.6", 
+    "InputProductType": "S2MSILC", 
+    "OutputProductType": "S2MSI2A", 
+    "WorkflowVersion": "1.2", 
+    "WorkflowOptions": 
+      [ 
+        { 
+          "Name": "ImageFormat", 
+          "Description": "Image Format option for the production output: GEOTIFF, JPG", 
+          "Type": "String", 
+          "Default": "GEOTIFF", 
+          "Value": 
+            [ 
+              "GEOTIFF", 
+              "JPG" 
+            ]
+        } 
+      ] 
+  } 
+]
+    

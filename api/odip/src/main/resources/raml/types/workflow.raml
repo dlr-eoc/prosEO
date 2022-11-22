@@ -1,0 +1,26 @@
+#%RAML 1.0 DataType
+#  CscWorkflow:
+    type: object
+    properties:
+      Id:
+        type: string
+        description: Universally unique product identifier
+        pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$
+      Name:
+        type: string
+        description: Short name of the workflow
+      Description:
+        type: string
+        description: Textual description of the workflow, including details of the processor version and configuration applicable
+      InputProductType:
+        type: string
+        description: Product Type of the Input Product
+      OutputProductType:
+        type: string
+        description: Product Type of the Output Product
+      WorkflowVersion:
+        type: string
+        description: Version number applicable to the workflow
+      WorkflowOptions:
+        type: CscWorkflowOption[]
+        description: The workflow options of the workflow
