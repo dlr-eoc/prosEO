@@ -351,7 +351,7 @@ public class S3DAL {
 			logger.trace(">>> downloadFile({},{})", sourceFile, targetFileOrDir);
 
 		AtomicCommand<String> fileDownloader = new S3AtomicFileDownloader(s3ClientV1, cfg.getBucket(), sourceFile,
-				targetFileOrDir);
+				targetFileOrDir, cfg.getFileCheckWaitTime(), cfg.getMaxRequestAttempts());
 		return new DefaultRetryStrategy<String>(fileDownloader, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime())
 				.execute();
 	}
