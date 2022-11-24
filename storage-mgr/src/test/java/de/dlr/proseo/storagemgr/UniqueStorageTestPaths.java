@@ -1,6 +1,5 @@
 package de.dlr.proseo.storagemgr;
 
-import java.io.File;
 import java.nio.file.Paths;
 
 import org.junit.rules.TestName;

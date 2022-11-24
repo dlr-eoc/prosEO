@@ -7,13 +7,14 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import de.dlr.proseo.storagemgr.version2.PathConverter;
-import de.dlr.proseo.storagemgr.version2.model.Storage;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
-import de.dlr.proseo.storagemgr.version2.model.StorageType;
 import de.dlr.proseo.storagemgr.version2.posix.PosixDAL;
 import de.dlr.proseo.storagemgr.version2.posix.PosixStorageFile;
-import de.dlr.proseo.storagemgr.version2.s3.S3StorageFile;
 
+/**
+ * @author Denys Chaykovskiy
+ *
+ */
 public class BaseStorageTestUtils {
 
 	protected String sourcePath;

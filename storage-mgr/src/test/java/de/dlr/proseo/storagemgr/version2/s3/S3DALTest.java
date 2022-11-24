@@ -41,9 +41,6 @@ public class S3DALTest {
 	private StorageProvider storageProvider;
 
 	@Autowired
-	private StorageManagerConfiguration cfg;
-
-	@Autowired
 	private StorageTestUtils storageTestUtils;
 
 	@Rule
