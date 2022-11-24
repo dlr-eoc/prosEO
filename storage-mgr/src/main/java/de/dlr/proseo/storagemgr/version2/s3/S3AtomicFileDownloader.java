@@ -16,7 +16,6 @@ import com.amazonaws.services.s3.transfer.Download;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 
-import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.version2.FileUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.model.AtomicCommand;
@@ -58,6 +57,12 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 
 	/** Bucket */
 	private String bucket;
+	
+	/** Max cycles */
+	private long maxCycles;
+	
+	/** Wait time */
+	private long waitTime;
 
 	/**
 	 * Constructor
@@ -67,12 +72,16 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 	 * @param sourceFile      sourceFile
 	 * @param targetFileOrDir target file or directory
 	 */
-	public S3AtomicFileDownloader(AmazonS3 s3ClientV1, String bucket, String sourceFile, String targetFileOrDir) {
+	public S3AtomicFileDownloader(AmazonS3 s3ClientV1, String bucket, String sourceFile, String targetFileOrDir, long maxCycles, long waitTime) {
 
 		this.s3ClientV1 = s3ClientV1;
+		
 		this.bucket = bucket;
 		this.sourceFile = sourceFile;
 		this.targetFileOrDir = targetFileOrDir;
+		
+		this.maxCycles = maxCycles; 
+		this.waitTime = waitTime; 
 	}
 
 	/**
@@ -228,8 +237,6 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 			// fully written to disk!
 			Long contentLength = download.getObjectMetadata().getContentLength();
 			int i = 0;
-			long maxCycles = StorageManagerConfiguration.getConfiguration().getFileCheckMaxCycles();
-			long waitTime = StorageManagerConfiguration.getConfiguration().getFileCheckWaitTime();
 			
 			while (Files.size(targetFile.toPath()) < contentLength && i < maxCycles) {
 				logger.info("... waiting to complete writing of {}", targetFile);
