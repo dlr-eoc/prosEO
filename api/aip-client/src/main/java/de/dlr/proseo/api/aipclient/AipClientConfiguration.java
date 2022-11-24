@@ -30,6 +30,10 @@ public class AipClientConfiguration {
 	@Value("${proseo.ingestor.url}")
 	private String ingestorUrl;
 	
+	/** Source directory for uploads by the prosEO Ingestor */
+	@Value("${proseo.ingestor.sourcedir}")
+	private String ingestorSourceDir;
+	
 	/** The AUXIP Monitor identifier */
 	@Value("${proseo.auxip.id}")
 	private String auxipId;
@@ -114,6 +118,24 @@ public class AipClientConfiguration {
 	@Value("${proseo.auxip.directory}")
 	private String auxipDirectoryPath;
 	
+	/**
+	 * Gets the URL of the prosEO Ingestor
+	 * 
+	 * @return the Ingestor URL
+	 */
+	public String getIngestorUrl() {
+		return ingestorUrl;
+	}
+
+	/**
+	 * Gets the source directory for uploads by the prosEO Ingestor
+	 * 
+	 * @return the Ingestor source directory
+	 */
+	public String getIngestorSourceDir() {
+		return ingestorSourceDir;
+	}
+
 	/**
 	 * Gets the AUXIP Monitor identifier
 	 * 

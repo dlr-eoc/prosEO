@@ -22,6 +22,8 @@ proseo:
     ingestor:
         # URL of the Ingestor Service
         url: http://localhost:8080/proseo/ingestor/v0.1
+        # The directory for the Ingestor Service to upload from
+        sourcedir: target/test/downloads
     ltas:
         # TODO
 
