@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.planner.util;
 
+import java.math.BigInteger;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -1016,19 +1018,26 @@ public class OrderUtil {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		List<Long> jobIds = new ArrayList<Long>();
 		
-		final ProcessingOrder order = transactionTemplate.execute((status) -> {
-			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
-			if (orderOpt.isPresent()) {
-				for (Job j : orderOpt.get().getJobs()) {
-					jobIds.add(j.getId());
+		final OrderState orderState = transactionTemplate.execute((status) -> {
+			String sqlQuery = "select order_state from processing_order where id = " + orderId + ";";
+			Query query = em.createNativeQuery(sqlQuery);
+			Object o = query.getSingleResult();
+			return OrderState.valueOf((String)o);			
+		});
+		final Object dummy = transactionTemplate.execute((status) -> {
+			String sqlQuery = "select id from job where processing_order_id = " + orderId + ";";
+			Query query = em.createNativeQuery(sqlQuery);
+			List<?> ol = query.getResultList();
+			for (Object o : ol) {
+				if (o instanceof BigInteger) {
+					jobIds.add(((BigInteger)o).longValue());
 				}
-				return orderOpt.get();
 			}
 			return null;
 		});
 		ProseoMessage answer = GeneralMessage.FALSE;
-		if (order != null) {
-			switch (order.getOrderState()) {
+		if (orderId != null) {
+			switch (orderState) {
 			case INITIAL:
 			case APPROVED:
 			case PLANNED:	
@@ -1044,7 +1053,7 @@ public class OrderUtil {
 				for (Long jobId : jobIds) {
 					jobUtil.close(jobId);
 				}
-				final Object dummy = transactionTemplate.execute((status) -> {
+				final Object dummy2 = transactionTemplate.execute((status) -> {
 					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
 					if (orderOpt.isPresent()) {
 						ProcessingOrder locOrder = orderOpt.get();
