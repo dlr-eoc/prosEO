@@ -413,17 +413,16 @@ public class JobStepUtil {
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		
-		final JobStep js = transactionTemplate.execute((status) -> {
-			Optional<JobStep> jsOpt = RepositoryService.getJobStepRepository().findById(id);
-			if (jsOpt.isPresent()) {
-				return jsOpt.get();
-			}
-			return null;
+		final JobStepState jobStepState = transactionTemplate.execute((status) -> {
+			String sqlQuery = "select job_step_state from job_step where id = " + id + ";";
+			Query query = em.createNativeQuery(sqlQuery);
+			Object o = query.getSingleResult();
+			return JobStepState.valueOf((String)o);			
 		});
 		ProseoMessage answer = GeneralMessage.FALSE;
 		// check current state for possibility to be suspended
-		if (js != null) {
-			switch (js.getJobStepState()) {
+		if (id != null) {
+			switch (jobStepState) {
 			case PLANNED:
 			case READY:
 			case WAITING_INPUT:
@@ -451,7 +450,7 @@ public class JobStepUtil {
 			default:
 				break;
 			}
-			logger.log(answer, js.getId());
+			logger.log(answer, id);
 		}
 		return answer;
 	}

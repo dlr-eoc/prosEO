@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.planner.util;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -122,21 +123,28 @@ public class JobUtil {
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		List<Long> jobStepIds = new ArrayList<Long>();
-		
-		final Job job = transactionTemplate.execute((status) -> {
-			Optional<Job> jobOpt = RepositoryService.getJobRepository().findById(id);
-			if (jobOpt.isPresent()) {
-				for (JobStep js : jobOpt.get().getJobSteps()) {
-					jobStepIds.add(js.getId());
+
+		final JobState jobState = transactionTemplate.execute((status) -> {
+			String sqlQuery = "select job_state from job where id = " + id + ";";
+			Query query = em.createNativeQuery(sqlQuery);
+			Object o = query.getSingleResult();
+			return JobState.valueOf((String)o);			
+		});
+		final Object dummy = transactionTemplate.execute((status) -> {
+			String sqlQuery = "select id from job_step where job_id = " + id + ";";
+			Query query = em.createNativeQuery(sqlQuery);
+			List<?> ol = query.getResultList();
+			for (Object o : ol) {
+				if (o instanceof BigInteger) {
+					jobStepIds.add(((BigInteger)o).longValue());
 				}
-				return jobOpt.get();
 			}
 			return null;
 		});
 		ProseoMessage answer = GeneralMessage.FALSE;
 		// check current state for possibility to be suspended
-		if (job != null) {
-			switch (job.getJobState()) {
+		if (id != null) {
+			switch (jobState) {
 			case INITIAL:
 			case PLANNED:
 			case RELEASED:
@@ -149,7 +157,7 @@ public class JobUtil {
 				for (Long jsId : jobStepIds) {
 					UtilService.getJobStepUtil().close(jsId);
 				}		
-				final Object dummy = transactionTemplate.execute((status) -> {
+				final Object dummy2 = transactionTemplate.execute((status) -> {
 					String sqlQuery = "select version from job where id = " + id + ";";
 					Query query = em.createNativeQuery(sqlQuery);
 					Object o = query.getSingleResult();
@@ -167,7 +175,7 @@ public class JobUtil {
 			default:
 				break;
 			}
-			logger.log(answer, job.getId());
+			logger.log(answer, id);
 		}
 		return answer;
 	}
