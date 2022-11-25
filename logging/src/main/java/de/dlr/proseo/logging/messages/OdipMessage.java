@@ -53,6 +53,7 @@ public enum OdipMessage implements ProseoMessage {
 	MSG_EXCEPTION_SET_RESP			(5235, Level.ERROR, false, "Exception setting response content (cause {0}: {1})", ""),
 	MSG_EXCEPTION_PIS				(5236, Level.ERROR, false, "Server Error occurred in ProductionInterfaceSecurity (cause {0}: {1})", ""),
 	MSG_EXCEPTION_PQC				(5237, Level.ERROR, false, "Server Error occurred in ProductQueryController (cause {0}: {1})", ""),
+	MSG_JSON_PARSE_ERROR			(5238, Level.ERROR, false, "JSON parse error: {0}", ""),
 	
 	;
 

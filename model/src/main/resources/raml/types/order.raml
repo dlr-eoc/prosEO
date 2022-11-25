@@ -116,6 +116,9 @@
       productionType?:
         type: string
         description: Production type context, in which the order is running (SYSTEMATIC, ON_DEMAND_DEFAULT, ON_DEMAND_NON_DEFAULT)
+      priority?:
+        type: integer
+        description: The execution priority (1...100)
       notificationEndpoint?:
         type: RestNotificationEndpoint
         description: The endpoint to send order completion notifications to

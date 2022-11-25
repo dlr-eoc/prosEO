@@ -217,20 +217,21 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 		if (logger.isTraceEnabled()) logger.trace(">>> getEntitySet({}, {})", entityContainer, entitySetName);
 		
 		if(entityContainer.equals(CONTAINER)){
-			if(entitySetName.equals(ES_PRODUCTIONORDER_NAME)){
-				CsdlEntitySet entitySet = new CsdlEntitySet();
-				entitySet.setName(ES_PRODUCTIONORDER_NAME);
-				entitySet.setType(ET_PRODUCTIONORDER_FQN);
-				
-			    CsdlNavigationPropertyBinding navAttributesBinding = new CsdlNavigationPropertyBinding();
-			    navAttributesBinding.setPath(ET_ATTRIBUTE_NAME); 
-			    navAttributesBinding.setTarget(ES_ATTRIBUTES_NAME); //target entitySet, where the nav prop points to
-
-			    entitySet.setNavigationPropertyBindings(Arrays.asList(navAttributesBinding));
-				
-				if (logger.isTraceEnabled()) logger.trace("<<< getEntitySet({}, {})", entityContainer, entitySetName);
-				return entitySet;
-			} else if(entitySetName.equals(ES_PRODUCTIONORDERS_NAME)){
+//			if(entitySetName.equals(ES_PRODUCTIONORDER_NAME)){
+//				CsdlEntitySet entitySet = new CsdlEntitySet();
+//				entitySet.setName(ES_PRODUCTIONORDER_NAME);
+//				entitySet.setType(ET_PRODUCTIONORDER_FQN);
+//				
+//			    CsdlNavigationPropertyBinding navAttributesBinding = new CsdlNavigationPropertyBinding();
+//			    navAttributesBinding.setPath(ET_ATTRIBUTE_NAME); 
+//			    navAttributesBinding.setTarget(ES_ATTRIBUTES_NAME); //target entitySet, where the nav prop points to
+//
+//			    entitySet.setNavigationPropertyBindings(Arrays.asList(navAttributesBinding));
+//				
+//				if (logger.isTraceEnabled()) logger.trace("<<< getEntitySet({}, {})", entityContainer, entitySetName);
+//				return entitySet;
+//			} else 
+			if(entitySetName.equals(ES_PRODUCTIONORDERS_NAME)){
 				CsdlEntitySet entitySet = new CsdlEntitySet();
 				entitySet.setName(ES_PRODUCTIONORDERS_NAME);
 				entitySet.setType(ET_PRODUCTIONORDER_FQN);
@@ -517,7 +518,6 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 //			productType.setNavigationProperties(Arrays.asList(attributes, stringAttributes, intAttributes, doubleAttributes, 
 //					boolAttributes, dateAttributes));
 			productType.setKey(Collections.singletonList(idRef));
-			productType.setHasStream(true);
 
 			if (logger.isTraceEnabled()) logger.trace("<<< getEntityType({})", entityTypeName);
 			return productType;
@@ -563,7 +563,6 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 //			productType.setNavigationProperties(Arrays.asList(attributes, stringAttributes, intAttributes, doubleAttributes, 
 //					boolAttributes, dateAttributes));
 			productType.setKey(Collections.singletonList(idRef));
-			productType.setHasStream(true);
 
 			if (logger.isTraceEnabled()) logger.trace("<<< getEntityType({})", entityTypeName);
 			return productType;

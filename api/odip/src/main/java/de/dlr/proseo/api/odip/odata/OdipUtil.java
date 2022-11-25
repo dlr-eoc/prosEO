@@ -6,19 +6,37 @@
 package de.dlr.proseo.api.odip.odata;
 
 import java.net.URISyntaxException;
+import java.sql.Timestamp;
+import java.text.DateFormat;
 import java.time.Instant;
-import java.util.Date;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+
 import org.apache.olingo.commons.api.data.ComplexValue;
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.Property;
 import org.apache.olingo.commons.api.data.ValueType;
+import org.apache.olingo.commons.api.edm.EdmEntitySet;
+import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
+import org.apache.olingo.commons.api.http.HttpStatusCode;
+import org.apache.olingo.server.api.ODataApplicationException;
+import org.apache.olingo.server.api.uri.UriInfoResource;
+import org.apache.olingo.server.api.uri.UriResource;
+import org.apache.olingo.server.api.uri.UriResourceEntitySet;
+import org.joda.time.DateTime;
+
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Workflow;
 import de.dlr.proseo.model.WorkflowOption;
+import de.dlr.proseo.model.rest.model.RestInputReference;
+import de.dlr.proseo.model.rest.model.RestNotificationEndpoint;
+import de.dlr.proseo.model.rest.model.RestOrder;
+import de.dlr.proseo.model.rest.model.RestParameter;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
  * Utility class to convert product objects from prosEO database model to ODIP (OData) REST API
@@ -28,13 +46,32 @@ import de.dlr.proseo.model.WorkflowOption;
  */
 public class OdipUtil {
 
-	private static final String ERR_NO_PRODUCT_FILES_FOUND = "No product files found in product ";
 	private static final Date START_OF_MISSION = Date.from(Instant.parse("1970-01-01T00:00:00.000Z"));
 	private static final Date END_OF_MISSION = Date.from(Instant.parse("9999-12-31T23:59:59.999Z"));
+
+	private static final String ORDER_PROCESSING_MODE = "OFFL";
+	private static final String ORDER_SLICING_TYPE = "NONE";
 	
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(OdipUtil.class);
+
+	public static EdmEntitySet getEdmEntitySet(UriInfoResource uriInfo) throws ODataApplicationException {
+
+		List<UriResource> resourcePaths = uriInfo.getUriResourceParts();
+		// To get the entity set we have to interpret all URI segments
+		if (!(resourcePaths.get(0) instanceof UriResourceEntitySet)) {
+			// Here we should interpret the whole URI but in this example we do not support navigation so we throw an
+			// exception
+			throw new ODataApplicationException("Invalid resource type for first segment.", HttpStatusCode.NOT_IMPLEMENTED
+					.getStatusCode(), Locale.ENGLISH);
+		}
+
+		UriResourceEntitySet uriResource = (UriResourceEntitySet) resourcePaths.get(0);
+
+		return uriResource.getEntitySet();
+	}
+
 	
 	/**
 	 * Create a ODIP interface product from a prosEO interface product; when setting ODIP product attributes the product
@@ -278,5 +315,111 @@ public class OdipUtil {
 			break;
 		}
 		return productionType;	
+	}
+	
+	public static RestOrder toModelOrder(Entity order) throws ODataApplicationException {
+		if (null == order)
+			return null;
+
+		RestOrder restOrder = new RestOrder();
+		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_INPUTPRODUCTREFERENCE) != null) {
+			if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_INPUTPRODUCTREFERENCE).getValueType() == ValueType.COMPLEX) {
+				// handle input product reference
+				// find input file
+				ComplexValue ipr = (ComplexValue)order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_INPUTPRODUCTREFERENCE).getValue();
+				String reference = null;
+				Instant start = null;
+				Instant end = null;
+				List<Property> iprProps = ipr.getValue();
+				for (Property prop : iprProps) {
+					if (prop.getName().equals(OdipEdmProvider.CT_CONTENTDATE_NAME)) {
+						// TODO
+						if (prop.getValue() instanceof ComplexValue) {
+							ComplexValue cd = (ComplexValue)prop.getValue();
+							for (Property cdprop : cd.getValue()) {
+								if (cdprop.getName().equals(OdipEdmProvider.CT_CONTENTDATE_PROP_START)) {
+									if (cdprop.getType().equals(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName().toString())) {
+										Timestamp ts = (Timestamp)(cdprop.getValue());
+										start = ts.toInstant();
+									}
+								} else if (cdprop.getName().equals(OdipEdmProvider.CT_CONTENTDATE_PROP_END)) {
+									if (cdprop.getType().equals(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName().toString())) {
+										Timestamp ts = (Timestamp)(cdprop.getValue());
+										end = ts.toInstant();
+									}
+								}
+							}
+
+						}
+					} else if (prop.getName().equals(OdipEdmProvider.CT_INPUTPRODUCTREFERENCE_PROP_REFERENCE)) {
+						reference = (String)prop.getValue();
+					}
+				}	
+				if (reference != null || (start != null && end != null)) {
+					RestInputReference inputProductReference = new RestInputReference();
+					if (reference != null) {
+						inputProductReference.setInputFileName(reference);
+					}
+					if (start != null && end != null) {
+						inputProductReference.setSensingStartTime(OrbitTimeFormatter.format(start));
+						inputProductReference.setSensingStopTime(OrbitTimeFormatter.format(end));
+					}
+					restOrder.setInputProductReference(inputProductReference);
+				}				
+			}
+		}
+		restOrder.setProcessingMode(ORDER_PROCESSING_MODE);
+		restOrder.setSlicingType(ORDER_SLICING_TYPE);
+		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWID) != null) {
+			restOrder.setWorkflowUuid((String)order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWID).getValue());
+		}
+		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWNAME) != null) {
+			restOrder.setWorkflowName((String)order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWNAME).getValue());
+		}
+		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_PRIORITY) != null) {
+			restOrder.setPriority((Long)order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_PRIORITY).getValue());
+		}
+		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONENDPOINT) != null) {
+			RestNotificationEndpoint rnep = new RestNotificationEndpoint();
+			rnep.setUri((String)order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONENDPOINT).getValue());
+			if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONEPUSERNAME) != null) {
+				rnep.setUsername((String)order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONEPUSERNAME).getValue());
+			}			
+			if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONEPPASSWORD) != null) {
+				rnep.setUsername((String)order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONEPPASSWORD).getValue());
+			}	
+			restOrder.setNotificationEndpoint(rnep);
+		}
+		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWOPTIONS) != null) {
+			List<RestParameter> workflowOptions = new ArrayList<RestParameter>();
+			if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWOPTIONS).getValueType() == ValueType.COLLECTION_COMPLEX) {
+				for (Object obj : (List)(order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWOPTIONS).getValue())) {
+					String name = null;
+					String value = null;
+					if (obj instanceof ComplexValue) {
+						ComplexValue cv = (ComplexValue) obj;
+						for (Object paramObj : (List)(cv.getValue())) {
+							Property param = (Property)paramObj;
+							if (param.getName().equals(OdipEdmProvider.ET_WORKFLOWOPTION_PROP_NAME)) {
+								name = (String)(param.getValue());
+							} else if (param.getName().equals(OdipEdmProvider.ET_WORKFLOWOPTION_PROP_VALUE)) {
+								value = (String)(param.getValue());
+							}
+						}
+					}
+					if (name != null && value != null) {
+						// find type of value
+						
+					}
+				}
+			}
+		}		
+		
+		// generate an order name
+		
+		// set the mission
+		Date d = Date.from(Instant.now());
+		restOrder.setSubmissionTime(d);
+		return restOrder;
 	}
 }
