@@ -123,8 +123,8 @@ public class OdipEntityProcessor implements EntityProcessor {
 	 * @throws NoResultException if a production order with the requested UUID could not be found in the database
 	 * @throws SecurityException if the logged in user is not authorized to access the requested production order
 	 */
-	private ProcessingOrder queryWorkflows(String productionOrderUuid) throws NoResultException, SecurityException {
-		if (logger.isTraceEnabled()) logger.trace(">>> queryWorkflows({})", productionOrderUuid);
+	private ProcessingOrder getProductionOrder(String productionOrderUuid) throws NoResultException, SecurityException {
+		if (logger.isTraceEnabled()) logger.trace(">>> getProductionOrder({})", productionOrderUuid);
 
 		// Request production order metadata from database
 		Query query = em.createQuery("select p from ProcessingOrder p where p.uuid = :uuid", ProcessingOrder.class);
