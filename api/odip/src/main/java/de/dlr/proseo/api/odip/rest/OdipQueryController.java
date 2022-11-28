@@ -1,5 +1,5 @@
 /**
- * ProductQueryController.java
+ * OdipQueryController.java
  * 
  * (C) 2020 Dr. Bassler & Co. Managementberatung GmbH
  */
@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.dlr.proseo.api.odip.ProductionInterfaceSecurity;
+import de.dlr.proseo.api.odip.OdipSecurity;
 import de.dlr.proseo.api.odip.odata.LogUtil;
 import de.dlr.proseo.api.odip.odata.OdipEdmProvider;
 import de.dlr.proseo.api.odip.odata.OdipEntityCollectionProcessor;
@@ -42,8 +42,8 @@ import de.dlr.proseo.logging.messages.OdipMessage;
  */
 @RestController
 @Validated
-@RequestMapping(value = ProductQueryController.URI, produces = {"application/json", "application/octet-stream"})
-public class ProductQueryController {
+@RequestMapping(value = OdipQueryController.URI, produces = {"application/json", "application/octet-stream"})
+public class OdipQueryController {
 	/* Message string constants */
 	private static final String HTTP_HEADER_WARNING = "Warning";
 //	private static final String HTTP_MSG_PREFIX = "199 proseo-api-odip ";
@@ -53,22 +53,22 @@ public class ProductQueryController {
 
 	/** The security utilities for the ODIP API */
 	@Autowired
-	private ProductionInterfaceSecurity securityConfig;
+	private OdipSecurity securityConfig;
 	
-	/** The EDM provider for products */
+	/** The EDM provider for objects */
 	@Autowired
 	private OdipEdmProvider edmProvider;
 	
-	/** The entity collection processor for products */
+	/** The entity collection processor for objects */
 	@Autowired
 	private OdipEntityCollectionProcessor entityCollectionProcessor;
 
-	/** The entity processor for products */
+	/** The entity processor for objects */
 	@Autowired
 	private OdipEntityProcessor entityProcessor;
 
 	/** A logger for this class */
-	private static ProseoLogger logger = new ProseoLogger(ProductQueryController.class);
+	private static ProseoLogger logger = new ProseoLogger(OdipQueryController.class);
 
 	/**
 	 * Process the ODIP request.

@@ -48,7 +48,7 @@ types:
         description: Flag indicating whether the number of products found shall be included with the result
       $expand?:
         type: string
-        description: List of attributes to expand in product catalogue style
+        description: List of attributes to expand in catalogue style
     responses:
       200:
         description: The request was successfully completed (the result may be an empty list, though)
@@ -63,7 +63,7 @@ types:
           Warning: !include types/error.raml
       401:
         description: |
-          The requesting user is unauthorised to submit the product query
+          The requesting user is unauthorised to submit the query
       404:
         description: |
           The requested resource was not found (i. e. the URI does not exist; not synonymous to "no data found")
@@ -101,7 +101,7 @@ types:
         description: Flag indicating whether the number of products found shall be included with the result
       $expand?:
         type: string
-        description: List of attributes to expand in product catalogue style
+        description: List of attributes to expand in catalogue style
     responses:
       200:
         description: The request was successfully completed (the result may be an empty list, though)
@@ -116,7 +116,7 @@ types:
           Warning: !include types/error.raml
       401:
         description: |
-          The requesting user is unauthorised to submit the product query
+          The requesting user is unauthorised to submit the query
       404:
         description: |
           The requested resource was not found (i. e. the URI does not exist; not synonymous to "no data found")
@@ -128,7 +128,7 @@ types:
   uriParameters:
     Id:
       type: string
-      description: Universally unique product identifier
+      description: Universally unique identifier
       pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$
   get:
     description: Query the production orders by id
@@ -146,9 +146,9 @@ types:
           Warning: !include types/error.raml
       401:
         description: |
-          The requesting user is unauthorised to download the product
+          The requesting user is unauthorised to download the orduction order
       404:
         description: |
-          The requested resource was not found (i. e. the product does not exist or is not available any more)
+          The requested resource was not found (i. e. the orduction order does not exist or is not available any more)
         headers:
           Warning: !include types/error.raml

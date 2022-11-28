@@ -49,9 +49,9 @@ public enum CscAttributeName {
 	WORKFLOW_ID("WorkflowId"),
 	/** Short name of the workflow */
 	WORKFLOW_NAME("WorkflowName"),
-	/** Parent product identifier (L1 and above only) */
-	WORK_FLOW_OPTIONS("WorkflowOptions"),
 	/** Selection of applicable options from the Workflow */
+	WORK_FLOW_OPTIONS("WorkflowOptions"),
+	/** URI used by the ODPRIP for product download readiness notifications, */
 	NOTIFICATION_ENDPOINT("NotificationEndpoint"),
 	/** The username associated with the EndPoint URI provided */
 	NOTIFICATION_EPUSERNAME("NotificationEpUsername"),

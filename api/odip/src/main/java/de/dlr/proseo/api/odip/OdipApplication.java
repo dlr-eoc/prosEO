@@ -1,5 +1,5 @@
 /**
- * ProductionInterfaceApplication.java
+ * OdipApplication.java
  * 
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
@@ -24,10 +24,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EnableConfigurationProperties
 @ComponentScan(basePackages={"de.dlr.proseo"})
 @EnableJpaRepositories(basePackages = { "de.dlr.proseo.model.dao" })
-public class ProductionInterfaceApplication {
+public class OdipApplication {
 
 	public static void main(String[] args) throws Exception {
-		SpringApplication.run(ProductionInterfaceApplication.class, args);
+		SpringApplication.run(OdipApplication.class, args);
 	}
 
 }

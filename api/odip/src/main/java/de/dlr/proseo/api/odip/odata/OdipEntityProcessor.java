@@ -52,8 +52,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import de.dlr.proseo.api.odip.ProductionInterfaceConfiguration;
-import de.dlr.proseo.api.odip.ProductionInterfaceSecurity;
+import de.dlr.proseo.api.odip.OdipConfiguration;
+import de.dlr.proseo.api.odip.OdipSecurity;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.OdipMessage;
 import de.dlr.proseo.model.ProcessingOrder;
@@ -63,8 +63,7 @@ import de.dlr.proseo.model.rest.model.RestOrder;
 
 
 /**
- * Retrieve product information from the prosEO metadata database (via the Ingestor component) and download product data 
- * from the prosEO Storage Manager
+ * Retrieve information from the prosEO metadata database 
  * 
  * @author Dr. Thomas Bassler
  *
@@ -91,11 +90,11 @@ public class OdipEntityProcessor implements EntityProcessor {
 	
 	/** The configuration for the PRIP API */
 	@Autowired
-	private ProductionInterfaceConfiguration config;
+	private OdipConfiguration config;
 	
 	/** The security utilities for the ODIP API */
 	@Autowired
-	private ProductionInterfaceSecurity securityConfig;
+	private OdipSecurity securityConfig;
 	
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(OdipEntityProcessor.class);
@@ -117,19 +116,19 @@ public class OdipEntityProcessor implements EntityProcessor {
 
 
 	/**
-	 * Get the metadata for a single product from the prosEO Ingestor service
-	 * @param productUuid the UUID of the product to retrieve
+	 * Get the metadata for a single production order from the prosEO Order Manager service
+	 * @param productionOrderUuid the UUID of the production order to retrieve
 	 * 
-	 * @return a product object
-	 * @throws NoResultException if a product with the requested UUID could not be found in the database
-	 * @throws SecurityException if the logged in user is not authorized to access the requested product
+	 * @return a production order object
+	 * @throws NoResultException if a production order with the requested UUID could not be found in the database
+	 * @throws SecurityException if the logged in user is not authorized to access the requested production order
 	 */
-	private ProcessingOrder getProductionOrder(String productUuid) throws NoResultException, SecurityException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProduct({})", productUuid);
+	private ProcessingOrder queryWorkflows(String productionOrderUuid) throws NoResultException, SecurityException {
+		if (logger.isTraceEnabled()) logger.trace(">>> queryWorkflows({})", productionOrderUuid);
 
-		// Request product metadata from database
+		// Request production order metadata from database
 		Query query = em.createQuery("select p from ProcessingOrder p where p.uuid = :uuid", ProcessingOrder.class);
-		query.setParameter("uuid", UUID.fromString(productUuid));
+		query.setParameter("uuid", UUID.fromString(productionOrderUuid));
 		Object resultObject;
 		try {
 			resultObject = query.getSingleResult();
@@ -137,14 +136,14 @@ public class OdipEntityProcessor implements EntityProcessor {
 				throw new NoResultException();
 			}
 		} catch (NoResultException e) {
-			String message = logger.log(OdipMessage.MSG_PRODUCTIONORDER_NOT_FOUND, productUuid);
+			String message = logger.log(OdipMessage.MSG_PRODUCTIONORDER_NOT_FOUND, productionOrderUuid);
 			throw new NoResultException(message);
 		}
 		ProcessingOrder modelOrder = (ProcessingOrder) resultObject;
 		
 		// Check mission
 		if (!securityConfig.getMission().equals(modelOrder.getMission().getCode())) {
-			String message = logger.log(OdipMessage.MSG_NOT_AUTHORIZED_FOR_PRODUCTIONORDER, productUuid);
+			String message = logger.log(OdipMessage.MSG_NOT_AUTHORIZED_FOR_PRODUCTIONORDER, productionOrderUuid);
 			throw new SecurityException(message);
 		}
 		
@@ -152,7 +151,7 @@ public class OdipEntityProcessor implements EntityProcessor {
 		if (securityConfig.hasRole(UserRole.ORDER_READER) || securityConfig.hasRole(UserRole.ORDER_MGR)) {
 		} else {
 			String message = logger.log(OdipMessage.MSG_NOT_AUTHORIZED_FOR_PRODUCTIONORDER, 
-					securityConfig.getMission() + "\\" + securityConfig.getUser(), productUuid);
+					securityConfig.getMission() + "\\" + securityConfig.getUser(), productionOrderUuid);
 			throw new SecurityException(message);
 		}
 		
@@ -161,17 +160,17 @@ public class OdipEntityProcessor implements EntityProcessor {
 	}
 
 	/**
-	 * Get the metadata for a single product from the prosEO Ingestor service
-	 * @param productUuid the UUID of the product to retrieve
+	 * Get the metadata for a single workflow from the prosEO service
+	 * @param productUuid the UUID of the workflow to retrieve
 	 * 
-	 * @return a product object
-	 * @throws NoResultException if a product with the requested UUID could not be found in the database
-	 * @throws SecurityException if the logged in user is not authorized to access the requested product
+	 * @return a workflow object
+	 * @throws NoResultException if a workflow with the requested UUID could not be found in the database
+	 * @throws SecurityException if the logged in user is not authorized to access the requested workflow
 	 */
 	private Workflow getWorkflow(String workflowUuid) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getWorkflow({})", workflowUuid);
 
-		// Request product metadata from database
+		// Request workflow metadata from database
 		Query query = em.createQuery("select p from Workflow p where p.uuid = :uuid", Workflow.class);
 		query.setParameter("uuid", UUID.fromString(workflowUuid));
 		Object resultObject;
@@ -194,53 +193,53 @@ public class OdipEntityProcessor implements EntityProcessor {
 			throw new SecurityException(message);
 		}
 		
-		if (logger.isDebugEnabled()) logger.debug("... production order found: " + modelWorkflow.getId());
+		if (logger.isDebugEnabled()) logger.debug("... workflow found: " + modelWorkflow.getId());
 		return modelWorkflow;
 	}
 
 	/**
-	 * Download the requested product from the prosEO Storage Manager
-	 * @param productUuid the UUID of the product to retrieve
+	 * Download the requested production order from the prosEO service
+	 * @param productionOrderUuid the UUID of the production order to retrieve
 	 * 
-	 * @return a binary stream containing the product data
-	 * @throws URISyntaxException if a valid URI cannot be generated from any product UUID
-	 * @throws IllegalArgumentException if mandatory information is missing from the prosEO interface product
-	 * @throws NoResultException if a product with the requested UUID could not be found in the database
-	 * @throws SecurityException if the logged in user is not authorized to access the requested product
+	 * @return a binary stream containing the production order data
+	 * @throws URISyntaxException if a valid URI cannot be generated from any production order UUID
+	 * @throws IllegalArgumentException if mandatory information is missing from the prosEO interface production order
+	 * @throws NoResultException if a production order with the requested UUID could not be found in the database
+	 * @throws SecurityException if the logged in user is not authorized to access the requested production order
 	 */
-	private Entity getProductionOrderAsEntity(String productUuid) throws URISyntaxException, IllegalArgumentException,
+	private Entity getProductionOrderAsEntity(String productionOrderUuid) throws URISyntaxException, IllegalArgumentException,
 			NoSuchElementException, SecurityException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProductAsEntity({})", productUuid);
+		if (logger.isTraceEnabled()) logger.trace(">>> getProductionOrderAsEntity({})", productionOrderUuid);
 		
-		// Get the product information from the Database
-		ProcessingOrder modelOrder = getProductionOrder(productUuid);
-		// Create output product
+		// Get the production order information from the Database
+		ProcessingOrder modelOrder = getProductionOrder(productionOrderUuid);
+		// Create output production order
 		Entity productionOrder = OdipUtil.toOdipProductionOrder(modelOrder);
 
-		if (logger.isTraceEnabled()) logger.trace("<<< getProductAsEntity()");
+		if (logger.isTraceEnabled()) logger.trace("<<< getProductionOrderAsEntity()");
 		return productionOrder;
 	}
 
 	/**
-	 * Download the requested product from the prosEO Storage Manager
-	 * @param productUuid the UUID of the product to retrieve
+	 * Download the requested workflow from the prosEO Storage Manager
+	 * @param workflowUuid the UUID of the workflow to retrieve
 	 * 
-	 * @return a binary stream containing the product data
-	 * @throws URISyntaxException if a valid URI cannot be generated from any product UUID
-	 * @throws IllegalArgumentException if mandatory information is missing from the prosEO interface product
-	 * @throws NoResultException if a product with the requested UUID could not be found in the database
-	 * @throws SecurityException if the logged in user is not authorized to access the requested product
+	 * @return a binary stream containing the workflow data
+	 * @throws URISyntaxException if a valid URI cannot be generated from any workflow UUID
+	 * @throws IllegalArgumentException if mandatory information is missing from the prosEO interface workflow
+	 * @throws NoResultException if a workflow with the requested UUID could not be found in the database
+	 * @throws SecurityException if the logged in user is not authorized to access the requested workflow
 	 */
-	private Entity getWorkflowAsEntity(String productUuid) throws URISyntaxException, IllegalArgumentException,
+	private Entity getWorkflowAsEntity(String workflowUuid) throws URISyntaxException, IllegalArgumentException,
 			NoSuchElementException, SecurityException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProductAsEntity({})", productUuid);
+		if (logger.isTraceEnabled()) logger.trace(">>> getWorkflowAsEntity({})", workflowUuid);
 		
-		// Get the product information from the Database
-		Workflow modelWorkflow = getWorkflow(productUuid);
-		// Create output product
+		// Get the workflow information from the Database
+		Workflow modelWorkflow = getWorkflow(workflowUuid);
+		// Create output workflow
 		Entity workflow = OdipUtil.toOdipWorkflow(modelWorkflow);
 
-		if (logger.isTraceEnabled()) logger.trace("<<< getProductAsEntity()");
+		if (logger.isTraceEnabled()) logger.trace("<<< getWorkflowAsEntity()");
 		return workflow;
 	}
 
@@ -326,7 +325,7 @@ public class OdipEntityProcessor implements EntityProcessor {
 		Entity entity;
 			try {
 				if (edmEntitySet.getEntityType().getFullQualifiedName().equals(OdipEdmProvider.ET_PRODUCTIONORDER_FQN)) {
-					// Query the backend services for the requested products, passing on user, password and mission
+					// Query the backend services for the requested objects, passing on user, password and mission
 					entity = getProductionOrderAsEntity(keyPredicates.get(0).getText());
 				} else if (edmEntitySet.getEntityType().getFullQualifiedName().equals(OdipEdmProvider.ET_WORKFLOW_FQN)) {
 					entity = getWorkflowAsEntity(keyPredicates.get(0).getText());

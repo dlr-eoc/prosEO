@@ -50,8 +50,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.dlr.proseo.api.odip.ProductionInterfaceConfiguration;
-import de.dlr.proseo.api.odip.ProductionInterfaceSecurity;
+import de.dlr.proseo.api.odip.OdipConfiguration;
+import de.dlr.proseo.api.odip.OdipSecurity;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.OdipMessage;
 import de.dlr.proseo.model.ProcessingOrder;
@@ -62,8 +62,7 @@ import de.dlr.proseo.model.enums.UserRole;
 
 
 /**
- * Retrieve product collections from the prosEO metadata database (via the Ingestor component) with additional information 
- * from the prosEO Storage Manager
+ * Process the entity collections of production order and workflow
  * 
  * @author Dr. Thomas Bassler
  *
@@ -75,7 +74,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 	/* Other string constants */
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	
-	/* Product retrieval quota exceeded (HTTP status 429 as per PRIP ICD) */
+	/* Retrieval quota exceeded (HTTP status 429 as per PRIP ICD) */
 	private static final int HTTP_STATUS_TOO_MANY_REQUESTS = 429;
 
 	/** The cached OData factory object */
@@ -89,11 +88,11 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 	
 	/** The configuration for the ODIP API */
 	@Autowired
-	private ProductionInterfaceConfiguration config;
+	private OdipConfiguration config;
 	
 	/** The security utilities for the ODIP API */
 	@Autowired
-	private ProductionInterfaceSecurity securityConfig;
+	private OdipSecurity securityConfig;
 	
 	/**
 	 * Logger of this class
@@ -130,7 +129,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 	 * Create an SQL command with a "WHERE" clause derived from the "$filter" query parameter in the URI
 	 * 
 	 * @param uriInfo the URI info to analyze
-	 * @param countOnly create a command, which only counts the requested products, but does not return them
+	 * @param countOnly create a command, which only counts the requested orders, but does not return them
 	 * @return a native SQL command
 	 * @throws ODataApplicationException if any error is encountered in the query options contained in the URI info object
 	 */
@@ -176,7 +175,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 	 * Create an SQL command with a "WHERE" clause derived from the "$filter" query parameter in the URI
 	 * 
 	 * @param uriInfo the URI info to analyze
-	 * @param countOnly create a command, which only counts the requested products, but does not return them
+	 * @param countOnly create a command, which only counts the requested workflows, but does not return them
 	 * @return a native SQL command
 	 * @throws ODataApplicationException if any error is encountered in the query options contained in the URI info object
 	 */
@@ -219,8 +218,8 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 	}
 
 	/**
-	 * Convert the given URI info object into a native SQL command to select the requested products. In addition to the URI info
-	 * the product class access rights of the logged in user will be respected.
+	 * Convert the given URI info object into a native SQL command to select the requested production orders. In addition to the URI info
+	 * the production order class access rights of the logged in user will be respected.
 	 * 
 	 * @param uriInfo the URI info to analyze
 	 * @return a native SQL command
@@ -261,7 +260,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 		// Test topOption
 		TopOption topOption = uriInfo.getTopOption();
 		if (null == topOption) {
-			// In any case we restrict the number of products to retrieve to the quota
+			// In any case we restrict the number of orders to retrieve to the quota
 			sqlCommand.append("\nLIMIT ").append(config.getQuota() + 1);
 		} else {
 			sqlCommand.append("\nLIMIT ").append(topOption.getValue());
@@ -277,8 +276,8 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 		return sqlCommand.toString();
 	}
 	/**
-	 * Convert the given URI info object into a native SQL command to select the requested products. In addition to the URI info
-	 * the product class access rights of the logged in user will be respected.
+	 * Convert the given URI info object into a native SQL command to select the requested workflows. In addition to the URI info
+	 * the workflow class access rights of the logged in user will be respected.
 	 * 
 	 * @param uriInfo the URI info to analyze
 	 * @return a native SQL command
@@ -319,7 +318,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 		// Test topOption
 		TopOption topOption = uriInfo.getTopOption();
 		if (null == topOption) {
-			// In any case we restrict the number of products to retrieve to the quota
+			// In any case we restrict the number of workflows to retrieve to the quota
 			sqlCommand.append("\nLIMIT ").append(config.getQuota() + 1);
 		} else {
 			sqlCommand.append("\nLIMIT ").append(topOption.getValue());
@@ -336,21 +335,21 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 	}
 	
 	/**
-	 * Read the requested products from the prosEO kernel components
+	 * Read the requested orders from the prosEO kernel components
 	 * @param uriInfo additional URI parameters to consider in the request
 	 * 
-	 * @return a collection of entities representing products
-	 * @throws URISyntaxException if a valid URI cannot be generated from any product UUID
+	 * @return a collection of entities representing orders
+	 * @throws URISyntaxException if a valid URI cannot be generated from any UUID
 	 * @throws QuotaExceededException if the result set exceeds the configured quota
 	 * @throws ODataApplicationException if an error occurs during evaluation of a filtering condition
 	 */
 	private EntityCollection queryProductionOrders(UriInfo uriInfo) throws URISyntaxException, QuotaExceededException, ODataApplicationException {
-		if (logger.isTraceEnabled()) logger.trace(">>> queryProducts({})", uriInfo);
+		if (logger.isTraceEnabled()) logger.trace(">>> queryProductionOrders({})", uriInfo);
 		
 		EntityCollection orderCollection = new EntityCollection();
 		List<Entity> orderList = new ArrayList<>();
 		
-		// Request product list from database
+		// Request production order list from database
 		String sqlCommand = createProcessingOrderSqlQuery(uriInfo);
 		
 		Query query = em.createNativeQuery(sqlCommand, ProcessingOrder.class);
@@ -364,14 +363,14 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 		
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof ProcessingOrder) {
-				// Create output product
-				Entity product = OdipUtil.toOdipProductionOrder((ProcessingOrder) resultObject);
-				orderList.add(product);
+				// Create output production order
+				Entity productionOrder = OdipUtil.toOdipProductionOrder((ProcessingOrder) resultObject);
+				orderList.add(productionOrder);
 			}
 		}		
-		if (logger.isDebugEnabled()) logger.debug("... products found: " + orderList.size());
+		if (logger.isDebugEnabled()) logger.debug("... production orders found: " + orderList.size());
 		
-		// Add the product list to the product collection
+		// Add the production order list to the production order collection
 		orderCollection.getEntities().addAll(orderList);
 		
 		// Check $count option
@@ -392,7 +391,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 		    orderCollection.setCount(collectionSize);
 		}
 
-		if (logger.isTraceEnabled()) logger.trace("... returning " + orderCollection.getEntities().size() + " product entries");
+		if (logger.isTraceEnabled()) logger.trace("... returning " + orderCollection.getEntities().size() + " production order entries");
 		return orderCollection;
 	}
 
@@ -401,12 +400,12 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 	 * @param uriInfo additional URI parameters to consider in the request
 	 * 
 	 * @return a collection of entities representing workflows
-	 * @throws URISyntaxException if a valid URI cannot be generated from any product UUID
+	 * @throws URISyntaxException if a valid URI cannot be generated from any UUID
 	 * @throws QuotaExceededException if the result set exceeds the configured quota
 	 * @throws ODataApplicationException if an error occurs during evaluation of a filtering condition
 	 */
 	private EntityCollection queryWorkflows(UriInfo uriInfo) throws URISyntaxException, QuotaExceededException, ODataApplicationException {
-		if (logger.isTraceEnabled()) logger.trace(">>> queryProducts({})", uriInfo);
+		if (logger.isTraceEnabled()) logger.trace(">>> queryWorkflows({})", uriInfo);
 		
 		EntityCollection orderCollection = new EntityCollection();
 		List<Entity> workflowList = new ArrayList<>();
@@ -425,14 +424,14 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 		
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof Workflow) {
-				// Create output product
+				// Create output workflow
 				Entity workflow = OdipUtil.toOdipWorkflow((Workflow) resultObject);
 				workflowList.add(workflow);
 			}
 		}		
-		if (logger.isDebugEnabled()) logger.debug("... products found: " + workflowList.size());
+		if (logger.isDebugEnabled()) logger.debug("... workflows found: " + workflowList.size());
 		
-		// Add the product list to the product collection
+		// Add the workflow list to the workflow collection
 		orderCollection.getEntities().addAll(workflowList);
 		
 		// Check $count option
@@ -484,7 +483,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 		EntityCollection entityCollection;
 		try {
 			if (edmEntitySet.getEntityType().getFullQualifiedName().equals(OdipEdmProvider.ET_PRODUCTIONORDER_FQN)) {
-				// Query the backend services for the requested products, passing on user, password and mission
+				// Query the backend services for the requested objects, passing on user, password and mission
 				entityCollection = queryProductionOrders(uriInfo);
 			} else if (edmEntitySet.getEntityType().getFullQualifiedName().equals(OdipEdmProvider.ET_WORKFLOW_FQN)) {
 				entityCollection = queryWorkflows(uriInfo);

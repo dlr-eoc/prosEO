@@ -66,18 +66,18 @@ public class OAuth2TokenManager {
 	
 	/** The ODIP configuration to use */
 	@Autowired
-	private ProductionInterfaceConfiguration config;
+	private OdipConfiguration config;
 	
 	/** The security configuration to use */
 	@Autowired
-	private ProductionInterfaceSecurity securityConfig;
+	private OdipSecurity securityConfig;
 	
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(OAuth2TokenManager.class);
 	
 	/**
 	 * Information about a user including cached password for authentication with prosEO backend services and authorities
-	 * to determine access rights to product classes depending on their visibility
+	 * to determine access rights to order and workflow classes depending on their visibility
 	 */
 	public static class UserInfo {
 		public String missionCode;

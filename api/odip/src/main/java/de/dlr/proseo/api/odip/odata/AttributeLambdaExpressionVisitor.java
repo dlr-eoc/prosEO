@@ -60,7 +60,7 @@ public class AttributeLambdaExpressionVisitor implements ExpressionVisitor<Attri
 	private static ProseoLogger logger = new ProseoLogger(AttributeLambdaExpressionVisitor.class);
 
 	/**
-	 * Structured representation of selection conditions for Product attributes
+	 * Structured representation of selection conditions for attributes
 	 */
 	public static class AttributeCondition {
 		/** Attribute name */

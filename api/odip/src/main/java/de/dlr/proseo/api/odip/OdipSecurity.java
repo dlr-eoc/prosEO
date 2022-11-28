@@ -1,5 +1,5 @@
 /**
- * ProductionInterfaceSecurity.java
+ * OdipSecurity.java
  * 
  * (C) 2020 Dr. Bassler & Co. Managementberatung GmbH
  */
@@ -35,7 +35,7 @@ import de.dlr.proseo.model.enums.UserRole;
  * @author Dr. Thomas Bassler
  */
 @Component
-public class ProductionInterfaceSecurity {
+public class OdipSecurity {
 
 	private static final String AUTH_TYPE_BASIC = "Basic";
 	private static final String AUTH_TYPE_BEARER = "Bearer";
@@ -49,14 +49,14 @@ public class ProductionInterfaceSecurity {
 	
 	/** The configuration for the ODIP API */
 	@Autowired
-	private ProductionInterfaceConfiguration config;
+	private OdipConfiguration config;
 	
 	/** The OAuth2 Token Manager */
 	@Autowired
 	private OAuth2TokenManager tokenManager;
 	
 	/** A logger for this class */
-	private static ProseoLogger logger = new ProseoLogger(ProductionInterfaceSecurity.class);
+	private static ProseoLogger logger = new ProseoLogger(OdipSecurity.class);
 
 	/**
 	 * Parse an HTTP authentication header into mission, username and password and set the respective thread-local attributes

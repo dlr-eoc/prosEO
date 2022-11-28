@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 
 /**
- * A provider for the Product entity data model (as defined in Production Interface Delivery Point Specification,
+ * A provider for the entity data model (as defined in On-demand Interface Delivery Point Specification,
  * ESA-EOPG-EOPGC-IF-3, issue 1.2, sec. 3.1)
  * 
  * @author Dr. Thomas Bassler
@@ -454,7 +454,7 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 		// this method is called for one of the EntityTypes that are configured in the Schema
 		if(entityTypeName.equals(ET_PRODUCTIONORDER_FQN)){
 
-			// Create Product properties
+			// Create Product order properties
 			CsdlProperty id = new CsdlProperty().setName(GENERIC_PROP_ID)
 					.setType(EdmPrimitiveTypeKind.Guid.getFullQualifiedName());
 			CsdlProperty status = new CsdlProperty().setName(ET_PRODUCTIONORDER_PROP_STATUS)
@@ -509,7 +509,7 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 			CsdlPropertyRef idRef = new CsdlPropertyRef();
 			idRef.setName(GENERIC_PROP_ID);
 
-			// Configure Product entity type
+			// Configure production order entity type
 			CsdlEntityType productType = new CsdlEntityType();
 			productType.setName(ET_PRODUCTIONORDER_NAME);
 			productType.setProperties(Arrays.asList(id, status , statusMessage, orderOutputSize, submissionDate, estimatedDate, completedDate, 
@@ -523,7 +523,7 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 			return productType;
 		} else if(entityTypeName.equals(ET_WORKFLOW_FQN)){
 
-			// Create Product properties
+			// Create workflow properties
 			CsdlProperty id = new CsdlProperty().setName(GENERIC_PROP_ID)
 					.setType(EdmPrimitiveTypeKind.Guid.getFullQualifiedName());
 			CsdlProperty name = new CsdlProperty().setName(GENERIC_PROP_NAME)
@@ -556,7 +556,7 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 			CsdlPropertyRef idRef = new CsdlPropertyRef();
 			idRef.setName(GENERIC_PROP_ID);
 
-			// Configure Product entity type
+			// Configure workflow entity type
 			CsdlEntityType productType = new CsdlEntityType();
 			productType.setName(ET_WORKFLOW_NAME);
 			productType.setProperties(Arrays.asList(id, name, desc, intype, outtype, version, workflowOptions));

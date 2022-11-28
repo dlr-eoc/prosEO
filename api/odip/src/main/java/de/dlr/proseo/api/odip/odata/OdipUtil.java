@@ -39,7 +39,7 @@ import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
- * Utility class to convert product objects from prosEO database model to ODIP (OData) REST API
+ * Utility class to convert objects from prosEO database model to ODIP (OData) REST API
  * 
  * @author Dr. Thomas Bassler
  *
@@ -74,35 +74,17 @@ public class OdipUtil {
 
 	
 	/**
-	 * Create a ODIP interface product from a prosEO interface product; when setting ODIP product attributes the product
-	 * metadata attributes are overridden by product parameters, if a product parameter with the intended attribute name exists
+	 * Create a ODIP interface production order from a prosEO interface processing order.
 	 * 
-	 * @param modelOrder the prosEO model product to convert
+	 * @param modelOrder the prosEO model order to convert
 	 * @return an OData entity object representing the prosEO interface production order
 	 * @throws IllegalArgumentException if any mandatory information is missing from the prosEO interface production order 
-	 * @throws URISyntaxException if a valid URI cannot be generated from any product UUID
+	 * @throws URISyntaxException if a valid URI cannot be generated from any production order UUID
 	 */
 	public static Entity toOdipProductionOrder(ProcessingOrder modelOrder) throws IllegalArgumentException, URISyntaxException {
-		if (logger.isTraceEnabled()) logger.trace(">>> toPripProduct({})", modelOrder.getId());
+		if (logger.isTraceEnabled()) logger.trace(">>> toOdipProductionOrder({})", modelOrder.getId());
 		
-		// Select a product file (we just take the first one, since they are assumed to be identical, even if stored on
-		// different processing facilities)
-//		if (modelProduct.getProductFile().isEmpty()) {
-//			throw new IllegalArgumentException(ERR_NO_PRODUCT_FILES_FOUND + modelOrder.getId());
-//		}
-//		ProductFile modelProductFile = modelProduct.getProductFile().iterator().next();
-//		Mission modelMission = modelProduct.getProductClass().getMission();
-//		
-//		// Determine production type
-//		ProductionType modelProductionType = modelProduct.getProductionType();
-//		int productionType = OdipEdmProvider.EN_PRODUCTIONTYPE_SYSTEMATIC_VAL; // Default, also in case of no production type
-//		if (ProductionType.ON_DEMAND_DEFAULT.equals(modelProductionType)) {
-//			productionType = OdipEdmProvider.EN_PRODUCTIONTYPE_ONDEMDEF_VAL;
-//		} else if (ProductionType.ON_DEMAND_NON_DEFAULT.equals(modelProductionType)) {
-//			productionType = OdipEdmProvider.EN_PRODUCTIONTYPE_ONDEMNODEF_VAL;
-//		}
-//		
-//		// Create product entity
+		// Create production order entity
 		Entity order = new Entity();
 		order.setType(OdipEdmProvider.ET_PRODUCTIONORDER_FQN.getFullQualifiedNameAsString());
 		order.addProperty(new Property(null, OdipEdmProvider.GENERIC_PROP_ID, ValueType.PRIMITIVE, modelOrder.getUuid()))
@@ -203,24 +185,7 @@ public class OdipUtil {
 	public static Entity toOdipWorkflow(Workflow modelWorkflow) throws IllegalArgumentException, URISyntaxException {
 		if (logger.isTraceEnabled()) logger.trace(">>> toOdipWorkflow({})", modelWorkflow.getId());
 		
-		// Select a product file (we just take the first one, since they are assumed to be identical, even if stored on
-		// different processing facilities)
-//		if (modelProduct.getProductFile().isEmpty()) {
-//			throw new IllegalArgumentException(ERR_NO_PRODUCT_FILES_FOUND + modelOrder.getId());
-//		}
-//		ProductFile modelProductFile = modelProduct.getProductFile().iterator().next();
-//		Mission modelMission = modelProduct.getProductClass().getMission();
-//		
-//		// Determine production type
-//		ProductionType modelProductionType = modelProduct.getProductionType();
-//		int productionType = OdipEdmProvider.EN_PRODUCTIONTYPE_SYSTEMATIC_VAL; // Default, also in case of no production type
-//		if (ProductionType.ON_DEMAND_DEFAULT.equals(modelProductionType)) {
-//			productionType = OdipEdmProvider.EN_PRODUCTIONTYPE_ONDEMDEF_VAL;
-//		} else if (ProductionType.ON_DEMAND_NON_DEFAULT.equals(modelProductionType)) {
-//			productionType = OdipEdmProvider.EN_PRODUCTIONTYPE_ONDEMNODEF_VAL;
-//		}
-//		
-//		// Create product entity
+		// Create w entity
 		Entity workflow = new Entity();
 		workflow.setType(OdipEdmProvider.ET_WORKFLOW_FQN.getFullQualifiedNameAsString());
 		workflow.addProperty(new Property(null, OdipEdmProvider.GENERIC_PROP_ID, ValueType.PRIMITIVE, modelWorkflow.getUuid()))
@@ -324,7 +289,7 @@ public class OdipUtil {
 		RestOrder restOrder = new RestOrder();
 		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_INPUTPRODUCTREFERENCE) != null) {
 			if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_INPUTPRODUCTREFERENCE).getValueType() == ValueType.COMPLEX) {
-				// handle input product reference
+				// handle input production order reference
 				// find input file
 				ComplexValue ipr = (ComplexValue)order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_INPUTPRODUCTREFERENCE).getValue();
 				String reference = null;

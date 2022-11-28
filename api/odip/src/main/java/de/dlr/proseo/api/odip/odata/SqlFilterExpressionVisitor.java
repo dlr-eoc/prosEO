@@ -59,7 +59,7 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
  */
 public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 	
-	/** Counter for product parameters in WHERE clause */
+	/** Counter for parameters in WHERE clause */
 	private int paramCount = 0;
 	
 	/** SQL command parts */
@@ -116,7 +116,7 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 	 * 
 	 * Make sure this SqlFilterExpressionVisitor was subject to an "accept" call before calling this method!
 	 * 
-	 * @param countOnly create a command, which only counts the requested products, but does not return them
+	 * @param countOnly create a command, which only counts the requested objects, but does not return them
 	 * 
 	 * @return a partial SQL command string
 	 */
@@ -142,7 +142,7 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 	 * 
 	 * Make sure this SqlFilterExpressionVisitor was subject to an "accept" call before calling this method!
 	 * 
-	 * @param countOnly create a command, which only counts the requested products, but does not return them
+	 * @param countOnly create a command, which only counts the requested objects, but does not return them
 	 * 
 	 * @return a partial SQL command string
 	 */
@@ -517,14 +517,14 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 		AttributeLambdaExpressionVisitor attVisitor = new AttributeLambdaExpressionVisitor(lambdaVariable);
 		AttributeCondition attCondition = expression.accept(attVisitor);
 		
-		// Replace name by Product attribute or parameter
+		// Replace name by attribute or parameter
 		if (logger.isTraceEnabled()) logger.trace("... got attribute condition: " + attCondition);
 		String mappedProperty = oDataToSqlMap.get(attCondition.getName());
 		if (logger.isTraceEnabled()) logger.trace("... mapped property: " + mappedProperty);
 		
 		String result = null;
 		if (null == mappedProperty) {
-			// Not an SQL column, check product parameter
+			// Not an SQL column, check parameter
 			if (null == CscAttributeName.get(attCondition.getName())) {
 				throw new ODataApplicationException("Invalid attribute name '" + attCondition.getName() + "' found in Attribute lambda expression", 
 						HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ENGLISH);

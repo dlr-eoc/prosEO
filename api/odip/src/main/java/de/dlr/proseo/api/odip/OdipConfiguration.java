@@ -1,5 +1,5 @@
 /**
- * ProductionInterfaceConfiguration.java
+ * OdipConfiguration.java
  * 
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties(prefix="proseo")
 @EntityScan(basePackages = "de.dlr.proseo.model")
-public class ProductionInterfaceConfiguration {
+public class OdipConfiguration {
 	
 	/** The URL of the prosEO User Manager */
 	@Value("${proseo.userManager.url}")
@@ -33,7 +33,7 @@ public class ProductionInterfaceConfiguration {
 	@Value("${proseo.token.expiration}")
 	private Long tokenExpirationPeriod;
 	
-	/** Maximum number of products to retrieve in a single query */
+	/** Maximum number of objects to retrieve in a single query */
 	@Value("${proseo.quota}")
 	private Long quota;
 	
@@ -65,7 +65,7 @@ public class ProductionInterfaceConfiguration {
 	}
 
 	/**
-	 * Gets the maximum number of products to retrieve in a single query
+	 * Gets the maximum number of objects to retrieve in a single query
 	 * 
 	 * @return the quota
 	 */
