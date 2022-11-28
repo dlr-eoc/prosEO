@@ -313,6 +313,9 @@ public class S3Ops {
 		} catch (SecurityException e) {
 			logger.error("Security exception accessing S3 object {} (cause: {})", s3Object, e.getMessage());
 			return false;
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			return false;
 		}
 	}
 

@@ -302,22 +302,13 @@ public class ProseoFileS3 extends ProseoFile {
 					long retryCount = 0, maxRetry = 3, retryInterval = 5000 /* ms */;
 					boolean success = false;
 					while (retryCount <= maxRetry ) {
-						try {
-//							S3Client s3c = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),
-//									cfg.getS3Region());
-							AmazonS3 s3c = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),
+						if (retryCount < maxRetry) {
+							// Try standard download method using AWS S3 SDK V1 Transfer Manager
+							AmazonS3 s3v1c = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),
 									cfg.getS3Region());
-							/*if (S3Ops.v2FetchFile(
-									// the client
-									s3c,
-									// the source S3-Bucket
-									this.getFullPath(),
-									// the final prefix including productId pattern
-									// of the file or directory
-									proFile.getFullPath())) {*/
 							if (S3Ops.v1FetchFile(
 									// the client
-									s3c,
+									s3v1c,
 									// the source S3-Bucket
 									this.getBasePath(),
 									// the source S3 object key
@@ -327,22 +318,35 @@ public class ProseoFileS3 extends ProseoFile {
 								success = true;
 								break; // No exception and a valid result
 							}
-						} catch (Exception e) {
-							proFile.delete();
-							if (retryCount >= maxRetry) {
-								throw e;
-							} // else try again, see below
+						} else {
+							// Last try: Use single-threaded AWS S3 SDK V2 GetObject method
+							S3Client s3v2c = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),
+							cfg.getS3Region());
+							if (S3Ops.v2FetchFile(
+									// the client
+									s3v2c,
+									// the source S3-Bucket
+									this.getFullPath(),
+									// the final prefix including productId pattern
+									// of the file or directory
+									proFile.getFullPath())) {
+								success = true;
+								break; // No exception and a valid result
+							}
 						}
 						++retryCount;
-						StorageLogger.logInfo(logger, MSG_S3_REQUEST_FAILED_RETRYING, MSG_ID_S3_REQUEST_FAILED_RETRYING,
-								retryInterval, retryCount, maxRetry);
-						Thread.sleep(retryInterval);
+						if (retryCount <= maxRetry) {
+							StorageLogger.logInfo(logger, MSG_S3_REQUEST_FAILED_RETRYING, MSG_ID_S3_REQUEST_FAILED_RETRYING,
+									retryInterval, retryCount, maxRetry);
+							Thread.sleep(retryInterval);
+						}
 					}
 					if (success) {
 						targetFile.setWritable(true, false);
 						FileCache.getInstance().put(proFile.getFullPath());
 						result.add(proFile.getFullPath());
 					} else {
+						proFile.delete();
 						throw new RuntimeException(StorageLogger.logError(
 								logger, MSG_S3_TO_POSIX_COPY_FAILED, MSG_ID_S3_TO_POSIX_COPY_FAILED,
 								this.getFullPath(), proFile.getFullPath()));
