@@ -43,11 +43,15 @@
           th:if="${hasroleorderplanner}"
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'PLANNED') ? 'enabled' : 'disabled font-italic'))"
 					th:onclick="'setState(' + ${ord?.id} + ', \'RESUME\')'" href="#"><span
-					th:text="#{resume}">resume</span></a> <a
+					th:text="#{resume}">resume</span></a>
+        <div class="dropdown-divider"></div>
+        <a
           th:if="${hasroleorderplanner}"
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'PLANNED' or ${ord?.orderState} == 'APPROVED' or ${ord?.orderState} == 'PLANNING_FAILED' or ${ord?.orderState} == 'PLANNING') ? 'enabled' : 'disabled font-italic'))"
-					th:onclick="'setState(' + ${ord?.id} + ', \'RESET\')'" href="#"><span
-					th:text="#{reset}">reset</span></a> <a
+					th:onclick="'setState(' + ${ord?.id} + ', \'RESET\')'" href="#"><span style="color:#c82f04"
+					th:text="#{reset}">reset</span></a> 
+				<div class="dropdown-divider"></div>
+        <a
           th:if="${hasroleorderplanner}"
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'PLANNED') ? 'enabled' : 'disabled font-italic'))"
 					th:onclick="'setState(' + ${ord?.id} + ', \'CANCEL\')'" href="#"><span
