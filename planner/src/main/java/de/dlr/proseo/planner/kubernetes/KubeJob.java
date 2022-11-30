@@ -758,7 +758,7 @@ public class KubeJob {
 							}
 						} catch (Exception e) {
 							e.printStackTrace();	
-							throw e;
+							throw e;					
 						}
 						updateJobLog(js.get());
 						RepositoryService.getJobStepRepository().save(js.get());

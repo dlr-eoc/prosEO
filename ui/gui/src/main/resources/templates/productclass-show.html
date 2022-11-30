@@ -205,7 +205,7 @@
 											</thead>
 											<div th:each="modeRules : ${class?.sortedSelectionRules}">
 												<tbody th:each="rule,iterStat : ${modeRules?.selRules}">
-													<tr>
+													<tr class="first-row">
 														<td th:if="${iterStat.first} == true" 
 															th:text="${modeRules?.mode}"></td>
 														<td th:if="${iterStat.first} == false" class="tr-rowspan"><span>&nbsp;</span></td>
