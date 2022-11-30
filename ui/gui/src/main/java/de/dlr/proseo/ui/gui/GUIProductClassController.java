@@ -269,7 +269,7 @@ public class GUIProductClassController extends GUIBaseController {
 									HashMap<?, ?> sr = (HashMap<?, ?>) o2;
 									// collect all applicableConfiguredProcessors
 									List<String> procs = (List<String>)sr.get("applicableConfiguredProcessors");
-									if (procs == null) {
+									if (procs == null || procs.isEmpty()) {
 										procs = new ArrayList<String>();
 										procs.add("");
 									}
@@ -313,7 +313,7 @@ public class GUIProductClassController extends GUIBaseController {
 										mode = "";
 									}				
 									List<String> procs = (List<String>)sr.get("applicableConfiguredProcessors");
-									if (procs == null) {
+									if (procs == null || procs.isEmpty()) {
 										procs = new ArrayList<String>();
 										procs.add("");
 									}		
