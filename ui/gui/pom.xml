@@ -18,7 +18,7 @@
 	</organization>
 
 	<properties>
-		<module.version>0.9.3</module.version>
+		<module.version>0.9.3-Patch20221202</module.version>
 	</properties>
 
 	<dependencies>
