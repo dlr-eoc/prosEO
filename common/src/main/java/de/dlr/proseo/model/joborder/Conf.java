@@ -42,18 +42,18 @@ public class Conf {
 	/** Job Order element Breakpoint_Enable */
 	private String breakpointEnable;
 	
-	/** Job Order element Processing_Station */
-	private String processingStation;
-	
 	/** Job Order element Acquisition_Station */
 	private String acquisitionStation;
 	
-	/** Job Order element Sensing_Time */
-	private SensingTime sensingTime;
+	/** Job Order element Processing_Station */
+	private String processingStation;
 	
 	/** Job Order elements Config_Files / Config_File_Name */
 	private List<String> configFileNames = new ArrayList<String>(); 
 
+	/** Job Order element Sensing_Time */
+	private SensingTime sensingTime;
+	
 	/** Job Order elements Dynamic_Processing_Parameters / Processing_Parameter */
 	private List<ProcessingParameter> dynamicProcessingParameters = new ArrayList<ProcessingParameter>();
 	
@@ -269,11 +269,11 @@ public class Conf {
 		this.stderrLogLevel = stderrLogLevel;
 		this.test = test;
 		this.breakpointEnable = breakpointEnable;
-		this.processingStation = processingStation;
 		this.acquisitionStation = acquisitionStation;
+		this.processingStation = processingStation;
 		this.configFileNames = new ArrayList<String>();
-		this.dynamicProcessingParameters = new ArrayList<ProcessingParameter>();
 		this.sensingTime = null;
+		this.dynamicProcessingParameters = new ArrayList<ProcessingParameter>();
 	}
 	
 	/**
@@ -313,20 +313,16 @@ public class Conf {
         breakpointEnableEle.appendChild(doc.createTextNode(breakpointEnable));
         configEle.appendChild(breakpointEnableEle);
         
-        Element processingStationEle = doc.createElement("Processing_Station");
-        processingStationEle.appendChild(doc.createTextNode(processingStation));
-        configEle.appendChild(processingStationEle);
-        
         if (acquisitionStation != null && !acquisitionStation.isBlank()) {
         	Element acquisitionStationEle = doc.createElement("Acquisition_Station");
         	acquisitionStationEle.appendChild(doc.createTextNode(acquisitionStation));
         	configEle.appendChild(acquisitionStationEle);
         }
 	    
-        if (sensingTime != null) {
-        	sensingTime.buildXML(doc, configEle, prosEOAttributes);
-        }
-
+        Element processingStationEle = doc.createElement("Processing_Station");
+        processingStationEle.appendChild(doc.createTextNode(processingStation));
+        configEle.appendChild(processingStationEle);
+        
         Element configFilesEle =
         	doc.createElement(jobOrderVersion == JobOrderVersion.MMFI_1_8 ? "Config_Files" : "List_of_Config_Files");
         configEle.appendChild(configFilesEle);
@@ -338,6 +334,11 @@ public class Conf {
         	configFileNameEle.appendChild(doc.createTextNode(item));
         	configFilesEle.appendChild(configFileNameEle);
         }
+
+        if (sensingTime != null) {
+        	sensingTime.buildXML(doc, configEle, prosEOAttributes);
+        }
+
         Element dynProcParamsEle =
         	doc.createElement(jobOrderVersion == JobOrderVersion.MMFI_1_8 ? "Dynamic_Processing_Parameters" : "List_of_Dyn_Processing_Parameters");
         configEle.appendChild(dynProcParamsEle);
