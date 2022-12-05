@@ -44,7 +44,11 @@
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'PLANNED') ? 'enabled' : 'disabled font-italic'))"
 					th:onclick="'setState(' + ${ord?.id} + ', \'RESUME\')'" href="#"><span
 					th:text="#{resume}">resume</span></a>
-        <div class="dropdown-divider"></div>
+        <div class="dropdown-divider"></div> <a
+          th:if="${hasroleorderplanner}"
+          th:class="('dropdown-item ' + ((${ord?.orderState} == 'FAILED') ? 'enabled' : 'disabled font-italic'))"
+          th:onclick="'setState(' + ${ord?.id} + ', \'RETRY\')'" href="#"><span
+          th:text="#{retry}">retry</span></a>
         <a
           th:if="${hasroleorderplanner}"
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'PLANNED' or ${ord?.orderState} == 'APPROVED' or ${ord?.orderState} == 'PLANNING_FAILED' or ${ord?.orderState} == 'PLANNING') ? 'enabled' : 'disabled font-italic'))"
@@ -56,10 +60,6 @@
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'PLANNED') ? 'enabled' : 'disabled font-italic'))"
 					th:onclick="'setState(' + ${ord?.id} + ', \'CANCEL\')'" href="#"><span
 					th:text="#{cancel}">cancel</span></a> <a
-          th:if="${hasroleorderplanner}"
-					th:class="('dropdown-item ' + ((${ord?.orderState} == 'FAILED') ? 'enabled' : 'disabled font-italic'))"
-					th:onclick="'setState(' + ${ord?.id} + ', \'RETRY\')'" href="#"><span
-					th:text="#{retry}">retry</span></a> <a
           th:if="${hasroleordermgr}"
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'COMPLETED' or ${ord?.orderState} == 'FAILED') ? 'enabled' : 'disabled font-italic'))"
 					th:onclick="'setState(' + ${ord?.id} + ', \'CLOSE\')'" href="#"><span
