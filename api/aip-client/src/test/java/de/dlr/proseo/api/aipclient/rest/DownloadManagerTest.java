@@ -36,6 +36,7 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.client.ExpectedCount;
@@ -493,6 +494,10 @@ public class DownloadManagerTest {
 		// Ensure files to download are not present
 		Files.deleteIfExists(Path.of(config.getIngestorSourceDir(), TEST_FILENAME_1));
 		Files.deleteIfExists(Path.of(config.getIngestorSourceDir(), TEST_FILENAME_2));
+		
+		// Mock authentication
+//		Authentication auth = new TestingAuthenticationToken(config.getAuxipUser(), config.getAuxipPassword());
+//		SecurityContextHolder.getContext().setAuthentication(auth);
 	}
 
 	/**
