@@ -487,10 +487,18 @@ public class OrderControllerImpl implements OrderController {
 			if (force) {
 				// "Suspend force" is only allowed, if the processing facilities are available
 				for (ProcessingFacility pf : orderUtil.getProcessingFacilities(order.getId())) {
-					if (pf.getFacilityState() != FacilityState.RUNNING) {
-						String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, pf.getName(),
-								pf.getFacilityState().toString());
-
+					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+					final String message = transactionTemplate.execute((status) -> {
+						Optional<ProcessingFacility> pfopt = RepositoryService.getFacilityRepository().findById(pf.getId());
+						if (pfopt.isPresent()) {
+							if (pfopt.get().getFacilityState() != FacilityState.RUNNING) {
+								return logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, pfopt.get().getName(),
+										pfopt.get().getFacilityState().toString());
+							}
+						}
+						return null;
+					});
+					if (message != null) {
 						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 					}
 				} 
