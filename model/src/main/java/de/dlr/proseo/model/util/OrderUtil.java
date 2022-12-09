@@ -55,7 +55,7 @@ public class OrderUtil {
 		restOrder.setId(processingOrder.getId());
 		restOrder.setVersion(Long.valueOf(processingOrder.getVersion()));
 		
-		if (null != processingOrder.getMission().getCode()) {
+		if (null != processingOrder.getMission()) {
 			restOrder.setMissionCode(processingOrder.getMission().getCode());
 
 		}	
@@ -315,6 +315,9 @@ public class OrderUtil {
 				processingOrder.incrementVersion();
 			} 
 		}
+		if (null != restOrder.getMissionCode()) {
+			processingOrder.setMission(RepositoryService.getMissionRepository().findByCode(restOrder.getMissionCode()));
+		}		
 		processingOrder.setIdentifier(restOrder.getIdentifier());
 		if (null != restOrder.getUuid()) {
 			processingOrder.setUuid(UUID.fromString(restOrder.getUuid()));

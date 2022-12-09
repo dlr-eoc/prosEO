@@ -91,7 +91,8 @@ public enum OrderMgrMessage implements ProseoMessage {
 	INVALID_WORKFLOW_NAME				(3575, Level.ERROR, false, "No workflow was found with name {0}", ""),
 	INVALID_WORKFLOW_UUID				(3575, Level.ERROR, false, "No workflow was found with UUID {0}", ""),
 	INVALID_WORKFLOW_SPECIFICATION		(3576, Level.ERROR, false, "Workflow name ({0}) and UUID ({1}) do not match", ""),
-	MODIFICATION_NOT_ALLOWED			(3577, Level.ERROR, false, "The following property may not be modified: ", ""),
+	MODIFICATION_NOT_ALLOWED			(3577, Level.ERROR, false, "The following property may not be modified: {0} (Attempt to modify order {1})", ""),
+	WARN_MODIFICATION_NOT_ALLOWED		(3577, Level.WARN, false, "The following property may not be and has not been modified: {0} (Attempt to modify order {1})", ""),
 	
 	;
 
