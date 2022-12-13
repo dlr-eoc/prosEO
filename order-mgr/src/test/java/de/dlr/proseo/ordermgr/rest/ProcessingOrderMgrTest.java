@@ -711,9 +711,8 @@ public class ProcessingOrderMgrTest {
 		po.setWorkflow(RepositoryService.getWorkflowRepository().findByName(testWorkflow[0][0]));
 		testOrder.setId(RepositoryService.getOrderRepository().save(po).getId());
 		testOrder.setWorkflowName(testWorkflow[0][0]);
-		// does not throw an exception, but logs a warning
 		testOrder.setWorkflowUuid(testWorkflow[0][1]);
-		pom.modifyOrder(testOrder.getId(), testOrder);
+		assertThrows(IllegalArgumentException.class, () -> pom.modifyOrder(testOrder.getId(), testOrder));
 	}
 
 	/**

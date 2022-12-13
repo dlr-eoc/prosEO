@@ -946,9 +946,15 @@ public class ProcessingOrderMgr {
 		if (null != modelOrder.getInputProductReference() && !modelOrder.getInputProductReference().equals(changedOrder.getInputProductReference()))
 			throw new IllegalArgumentException(logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "input product reference", modelOrder.getIdentifier()));
 		
-		if (null != order.getWorkflowName() || null != order.getWorkflowUuid())
-			logger.log(OrderMgrMessage.WARN_MODIFICATION_NOT_ALLOWED, "workflow", modelOrder.getIdentifier());
-			
+		if (null == modelOrder.getWorkflow() && ((null != order.getWorkflowName()) || (null != order.getWorkflowUuid())))
+				throw new IllegalArgumentException(
+						logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "workflow", modelOrder.getIdentifier()));
+		
+		if (null != modelOrder.getWorkflow() && (order.getWorkflowName() != modelOrder.getWorkflow().getName()
+					|| order.getWorkflowUuid() != modelOrder.getWorkflow().getUuid().toString()))
+				throw new IllegalArgumentException(
+						logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "workflow", modelOrder.getIdentifier()));
+
 		if (orderChanged && !stateChangeOnly) {
 			if (!securityService.hasRole(UserRole.ORDER_MGR)) {
 				throw new SecurityException(logger.log(OrderMgrMessage.ORDER_MODIFICATION_FORBIDDEN,
