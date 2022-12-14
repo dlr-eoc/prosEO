@@ -145,7 +145,7 @@ public class OrbitControllerImpl implements OrbitController {
 	 * @param orbitNumberTo the maximum order number requested (may be null)
 	 * @param startTimeFrom earliest sensing start time requested (may be null)
 	 * @param startTimeTo latest sensing start time requested (may be null) sort direction (ASC/DESC), separated by white space
-	 * @return HTTP status "OK" and a list of orbits or
+	 * @return HTTP status "OK" and the number of retrieved orbits or
 	 *         HTTP status "NOT_FOUND" and an error message, if no orbits matching the search criteria were found, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if the request parameters were inconsistent, or
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or

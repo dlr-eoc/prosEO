@@ -26,8 +26,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -64,6 +64,7 @@ import de.dlr.proseo.model.util.OrderUtil;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @DataJpaTest
+@AutoConfigureTestEntityManager
 public class ProcessingOrderMgrTest {
 
 	/** A logger for this class */
@@ -72,10 +73,6 @@ public class ProcessingOrderMgrTest {
 	/** The processing order manager under test */
 	@Autowired
 	ProcessingOrderMgr pom;
-
-	/** A test entity manager for this class */
-	@Autowired
-	TestEntityManager tem;
 
 	/** A REST template builder for this class */
 	@MockBean
@@ -281,7 +278,7 @@ public class ProcessingOrderMgrTest {
 
 	/**
 	 * Create a test mission and a test spacecraft in the database
-	 * 
+	 *
 	 * @param missionData    The data from which to create the mission
 	 * @param spacecraftData The data from which to create the spacecraft
 	 */
@@ -322,7 +319,7 @@ public class ProcessingOrderMgrTest {
 
 	/**
 	 * Filling the database with some initial data for testing purposes
-	 * 
+	 *
 	 * @param mission The mission that is referenced by the data filled in the
 	 *                database
 	 */
