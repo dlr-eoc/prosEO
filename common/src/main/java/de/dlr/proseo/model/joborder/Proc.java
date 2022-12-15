@@ -146,21 +146,23 @@ public class Proc {
         taskVersionEle.appendChild(doc.createTextNode(taskVersion));
         procEle.appendChild(taskVersionEle);
 
-        Element breakPointEle = doc.createElement("BreakPoint");
-        procEle.appendChild(breakPointEle);
-
-	    Element listOfBrkFilesEle = doc.createElement("List_of_Brk_Files");
-	    Attr attr = doc.createAttribute("count");
-	    attr.setValue(Integer.toString(listOfBrkFiles.size()));
-	    listOfBrkFilesEle.setAttributeNode(attr); 
-	    breakPointEle.appendChild(listOfBrkFilesEle);
+	    if (!listOfBrkFiles.isEmpty()) {
+			Element breakPointEle = doc.createElement("BreakPoint");
+			procEle.appendChild(breakPointEle);
+			
+			Element listOfBrkFilesEle = doc.createElement("List_of_Brk_Files");
+			Attr attr = doc.createAttribute("count");
+			attr.setValue(Integer.toString(listOfBrkFiles.size()));
+			listOfBrkFilesEle.setAttributeNode(attr);
+			breakPointEle.appendChild(listOfBrkFilesEle);
+			
+			for (BreakpointFile item : listOfBrkFiles) {
+				item.buildXML(doc, listOfBrkFilesEle, prosEOAttributes);
+			} 
+		}
 	    
-	    for (BreakpointFile item : listOfBrkFiles) {
-	    	item.buildXML(doc, listOfBrkFilesEle, prosEOAttributes);
-	    }
-
-	    Element listOfInputsEle = doc.createElement("List_of_Inputs");
-	    attr = doc.createAttribute("count");
+		Element listOfInputsEle = doc.createElement("List_of_Inputs");
+		Attr attr = doc.createAttribute("count");
 	    attr.setValue(Integer.toString(listOfInputs.size()));
 	    listOfInputsEle.setAttributeNode(attr); 
 	    procEle.appendChild(listOfInputsEle);

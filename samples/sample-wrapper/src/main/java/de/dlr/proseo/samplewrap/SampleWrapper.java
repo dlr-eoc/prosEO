@@ -1,8 +1,11 @@
 package de.dlr.proseo.samplewrap;
 
+import java.io.ByteArrayOutputStream;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import de.dlr.proseo.basewrap.BaseWrapper;
+import de.dlr.proseo.model.enums.JobOrderVersion;
 import de.dlr.proseo.model.joborder.JobOrder;
 
 /**
@@ -10,6 +13,10 @@ import de.dlr.proseo.model.joborder.JobOrder;
  *
  */
 public class SampleWrapper extends BaseWrapper {
+
+	// Message strings
+	private static final String MSG_UPDATED_JOB_ORDER_FILE = "Updated Job Order file:\n";
+	
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(SampleWrapper.class);
 
@@ -22,23 +29,11 @@ public class SampleWrapper extends BaseWrapper {
 	 * @throws WrapperException if some error occurred which forces wrapper termination
 	 */
 	protected void preFetchInputHook(JobOrder jobOrderDoc) throws WrapperException {	
-		super.preFetchInputHook(jobOrderDoc);
+		if (logger.isTraceEnabled()) logger.trace(">>> preFetchInputHook({})", jobOrderDoc.getFileName());
+
 		// Mission-specific modifications go here ...
 	}
 
-	/**
-	 * Creates valid container-context JobOrderFile under given path
-	 * 
-	 * @param jo JobOrder remapped JobOrder object
-	 * @param path file path of newly created JOF
-	 * @return True/False
-	 */
-	@Override
-	protected void provideContainerJOF(JobOrder jo, String path) throws WrapperException {	
-		super.provideContainerJOF(jo, path);
-		logJOF(path);
-	}
-	
 	@Override
 	/**
 	 * Sample for mission-specific modifications to the job order document after fetching input data
@@ -47,8 +42,15 @@ public class SampleWrapper extends BaseWrapper {
 	 * @throws WrapperException if some error occurred which forces wrapper termination
 	 */
 	protected void postFetchInputHook(JobOrder jobOrderDoc) throws WrapperException {
-		super.postFetchInputHook(jobOrderDoc);
+		if (logger.isTraceEnabled()) logger.trace(">>> postFetchInputHook({})", jobOrderDoc.getFileName());
+
 		// Mission-specific modifications go here ...
+		
+		// Save the final JOF in the log for post-mortem analysis
+		ByteArrayOutputStream jof = new ByteArrayOutputStream();
+		jobOrderDoc.writeXMLToStream(jof, false, JobOrderVersion.valueOf(ENV_JOBORDER_VERSION));
+		
+		logger.info(MSG_UPDATED_JOB_ORDER_FILE + jof.toString());
 	}
 
 	/**
@@ -60,7 +62,8 @@ public class SampleWrapper extends BaseWrapper {
 	 */
 	@Override
 	protected void postProcessingHook(JobOrder joWork) throws WrapperException {
-		super.postProcessingHook(joWork);
+		if (logger.isTraceEnabled()) logger.trace(">>> postProcessingHook({})", joWork.getFileName());
+
 		// Mission-specific modifications go here ...
 	}
 
