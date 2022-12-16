@@ -264,7 +264,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	public ResponseEntity<RestOrder> planOrder(String releaseId, String facility) {
+	public ResponseEntity<RestOrder> planOrder(String releaseId, String facility, Boolean wait) {
 		if (logger.isTraceEnabled()) logger.trace(">>> planOrder({}, {})", releaseId, facility);
 		
 		if (null == releaseId || null == facility) {
@@ -302,8 +302,10 @@ public class OrderControllerImpl implements OrderController {
 
 		    	return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 			}
-			
-			ProseoMessage msg = orderUtil.plan(order.getId(), pf);
+			if (wait == null) {
+				wait = false;
+			}
+			ProseoMessage msg = orderUtil.plan(order.getId(), pf, wait);
 			if (msg.getSuccess()) {
 				RestOrder ro = getRestOrder(order.getId());
 
@@ -334,7 +336,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	public ResponseEntity<RestOrder> releaseOrder(String orderId) {
+	public ResponseEntity<RestOrder> releaseOrder(String orderId, Boolean wait) {
 		if (logger.isTraceEnabled()) logger.trace(">>> releaseOrder({})", orderId);
 		
 		try {
@@ -345,8 +347,10 @@ public class OrderControllerImpl implements OrderController {
 				
 				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 			}
-			
-			ProseoMessage msg = orderUtil.resume(order);
+			if (wait == null) {
+				wait = false;
+			}
+			ProseoMessage msg = orderUtil.resume(order, wait);
 			
 			// Check whether the release triggers any job steps
 			// This is already done during RELEASING
@@ -374,10 +378,13 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	public ResponseEntity<RestOrder> resumeOrder(String orderId) {
+	public ResponseEntity<RestOrder> resumeOrder(String orderId, Boolean wait) {
 		if (logger.isTraceEnabled()) logger.trace(">>> resumeOrder({})", orderId);
 		
-		return releaseOrder(orderId);
+		if (wait == null) {
+			wait = false;
+		}
+		return releaseOrder(orderId, wait);
 	}
 
 	/**
