@@ -287,9 +287,6 @@ public class BaseWrapperTest {
 		
 		rc = (new BaseWrapper()).run(); 
 		assertEquals("Return code should be 255", 255L, (long) rc);
-		
-		(new BaseWrapper()).logJOF(JOB_ORDER_UNFORMATTED_FILE_NAME);
-		
 	}
 	
 

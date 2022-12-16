@@ -26,18 +26,27 @@ public class Proc {
 	 * The Task_Name Job Order element
 	 */
 	private String taskName;
+	
 	/**
 	 * The Task_Version Job Order element
 	 */
 	private String taskVersion;
+	
+	/**
+	 * The BreakPoint Job Order element (consisting of a list of Breakpoint Files)
+	 */
+	private List<BreakpointFile> listOfBrkFiles = new ArrayList<>();
+	
 	/**
 	 * The List_of_Inputs / Input Job Order elements
 	 */
 	private List<InputOutput> listOfInputs = new ArrayList<InputOutput>();
+	
 	/**
 	 * The List_of_Outputs / Output Job Order elements
 	 */
 	private List<InputOutput> listOfOutputs = new ArrayList<InputOutput>();
+	
 	/**
 	 * Gets the Task_Name element
 	 * @return the task name
@@ -45,6 +54,7 @@ public class Proc {
 	public String getTaskName() {
 		return taskName;
 	}
+	
 	/**
 	 * Sets the Task_Name element
 	 * @param taskName the task name to set
@@ -52,6 +62,7 @@ public class Proc {
 	public void setTaskName(String taskName) {
 		this.taskName = taskName;
 	}
+	
 	/**
 	 * Gets the Task_Version element
 	 * @return the task version
@@ -59,6 +70,7 @@ public class Proc {
 	public String getTaskVersion() {
 		return taskVersion;
 	}
+	
 	/**
 	 * Sets the Task_Version element
 	 * @param taskVersion the task version to set
@@ -66,6 +78,25 @@ public class Proc {
 	public void setTaskVersion(String taskVersion) {
 		this.taskVersion = taskVersion;
 	}
+	
+	/**
+	 * Gets the list of Breakpoint Files making up the BreakPoint element
+	 * 
+	 * @return the the list of Breakpoint Files
+	 */
+	public List<BreakpointFile> getListOfBrkFiles() {
+		return listOfBrkFiles;
+	}
+
+	/**
+	 * Sets the list of Breakpoint Files making up the BreakPoint element
+	 * 
+	 * @param listOfBrkFiles the the list of Breakpoint Files to set
+	 */
+	public void setListOfBrkFiles(List<BreakpointFile> listOfBrkFiles) {
+		this.listOfBrkFiles = listOfBrkFiles;
+	}
+
 	/**
 	 * Gets the Inputs for the List_of_Inputs element
 	 * @return the list of inputs
@@ -73,6 +104,7 @@ public class Proc {
 	public List<InputOutput> getListOfInputs() {
 		return listOfInputs;
 	}
+	
 	/**
 	 * Gets the Outputs for the List_of_Outputs element
 	 * @return the list of outputs
@@ -114,8 +146,23 @@ public class Proc {
         taskVersionEle.appendChild(doc.createTextNode(taskVersion));
         procEle.appendChild(taskVersionEle);
 
-	    Element listOfInputsEle = doc.createElement("List_of_Inputs");
-	    Attr attr = doc.createAttribute("count");
+	    if (!listOfBrkFiles.isEmpty()) {
+			Element breakPointEle = doc.createElement("BreakPoint");
+			procEle.appendChild(breakPointEle);
+			
+			Element listOfBrkFilesEle = doc.createElement("List_of_Brk_Files");
+			Attr attr = doc.createAttribute("count");
+			attr.setValue(Integer.toString(listOfBrkFiles.size()));
+			listOfBrkFilesEle.setAttributeNode(attr);
+			breakPointEle.appendChild(listOfBrkFilesEle);
+			
+			for (BreakpointFile item : listOfBrkFiles) {
+				item.buildXML(doc, listOfBrkFilesEle, prosEOAttributes);
+			} 
+		}
+	    
+		Element listOfInputsEle = doc.createElement("List_of_Inputs");
+		Attr attr = doc.createAttribute("count");
 	    attr.setValue(Integer.toString(listOfInputs.size()));
 	    listOfInputsEle.setAttributeNode(attr); 
 	    procEle.appendChild(listOfInputsEle);
@@ -151,6 +198,20 @@ public class Proc {
 					break;
 				case "task_version" : 
 					this.setTaskVersion(child.getTextContent().strip());
+					break;
+				case "breakpoint" :
+					Node listOfBrkFilesEle = child.getFirstChild();
+					if ("list_of_brk_files".equals(listOfBrkFilesEle.getNodeName().toLowerCase())) {
+						Node iele = listOfBrkFilesEle.getFirstChild();
+						while (iele != null) {
+							if (iele.getNodeName().equalsIgnoreCase("brk_file")) {
+								BreakpointFile brkFile = new BreakpointFile();
+								brkFile.read(iele);
+								this.getListOfBrkFiles().add(brkFile);
+							}
+							iele = iele.getNextSibling();
+						}						
+					}
 					break;
 				case "list_of_inputs" : 
 					Node iele = child.getFirstChild();
