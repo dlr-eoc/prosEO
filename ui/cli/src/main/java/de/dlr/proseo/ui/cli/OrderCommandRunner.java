@@ -705,6 +705,36 @@ public class OrderCommandRunner {
 		if (null != updatedOrder.getHasFailedJobSteps()) { // mandatory
 			restOrder.setHasFailedJobSteps(updatedOrder.getHasFailedJobSteps());
 		}
+		if (isDeleteAttributes || null != updatedOrder.getDynamicProcessingParameters()) {
+			restOrder.setDynamicProcessingParameters(updatedOrder.getDynamicProcessingParameters());
+		}
+		if (isDeleteAttributes || null != updatedOrder.getSubmissionTime()) {
+			restOrder.setSubmissionTime(updatedOrder.getSubmissionTime());
+			}
+		if (isDeleteAttributes || null != updatedOrder.getReleaseTime()) {
+			restOrder.setReleaseTime(updatedOrder.getReleaseTime());
+			}
+		if (isDeleteAttributes || null != updatedOrder.getEstimatedCompletionTime()) {
+			restOrder.setEstimatedCompletionTime(updatedOrder.getEstimatedCompletionTime());
+			}
+		if (isDeleteAttributes || null != updatedOrder.getActualCompletionTime()) {
+			restOrder.setActualCompletionTime(updatedOrder.getActualCompletionTime());
+			}
+		if (isDeleteAttributes || null != updatedOrder.getPriority()) {
+			restOrder.setPriority(updatedOrder.getPriority());
+			}
+		if (isDeleteAttributes || null != updatedOrder.getInputProductReference()) {
+			restOrder.setInputProductReference(updatedOrder.getInputProductReference());
+			}
+		if (isDeleteAttributes || null != updatedOrder.getNotificationEndpoint()) {
+			restOrder.setNotificationEndpoint(updatedOrder.getNotificationEndpoint());
+			}
+		if (isDeleteAttributes || null != updatedOrder.getWorkflowName()) {
+			restOrder.setWorkflowName(updatedOrder.getWorkflowName());
+			}
+		if (isDeleteAttributes || null != updatedOrder.getWorkflowUuid()) {
+			restOrder.setWorkflowUuid(updatedOrder.getWorkflowUuid());
+			}
 		
 		/* Update order using Order Manager service */
 		try {
