@@ -58,6 +58,28 @@ public class Conf {
 	private List<ProcessingParameter> dynamicProcessingParameters = new ArrayList<ProcessingParameter>();
 	
 	/**
+	 * Thrown when a request to a unique named processing parameter is executed and there is more than one parameter with the
+	 * given name.
+	 * 
+	 * The exception class name is borrowed from javax.persistence.NonUniqueResultException.
+	 */
+	public static class NonUniqueResultException extends RuntimeException {
+		private static final long serialVersionUID = -1717642966866290514L;
+
+		public NonUniqueResultException() {
+			super();
+		}
+		
+		public NonUniqueResultException(String message) {
+			super(message);
+		}
+		
+		public NonUniqueResultException(String message, Throwable cause) {
+			super(message, cause);
+		}
+	}
+	
+	/**
 	 * Gets the Processor_Name element
 	 * 
 	 * @return the processor name
@@ -242,6 +264,62 @@ public class Conf {
 	 */
 	public List<ProcessingParameter> getDynamicProcessingParameters() {
 		return dynamicProcessingParameters;
+	}
+	
+	/**
+	 * Gets the Processing_Parameter values for the given key (ignoring case)
+	 * 
+	 * @param name the key to search for
+	 * @return a list of processing parameters with the given key
+	 */
+	public List<ProcessingParameter> getProcessingParametersByName(String name) {
+		List<ProcessingParameter> result = new ArrayList<>();
+		
+		for (ProcessingParameter param: dynamicProcessingParameters) {
+			if (param.getName().equalsIgnoreCase(name)) {
+				result.add(param);
+			}
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * Gets the unique Processing_parameter for the given key (ignoring case)
+	 * 
+	 * @param name the key to search for
+	 * @return the single processing parameter matching the key, or null if no such parameter exists
+	 * @throws NonUniqueResultException if more than one parameter with the given name exists
+	 */
+	public ProcessingParameter getUniqueProcessingParameterByName(String name) throws NonUniqueResultException {
+		List<ProcessingParameter> result = getProcessingParametersByName(name);
+		
+		if (result.isEmpty()) {
+			return null;
+		} else if (1 == result.size()) {
+			return result.get(0);
+		} else {
+			throw new NonUniqueResultException("More than one processing parameter with name " + name);
+		}
+	}
+	
+	/**
+	 * Sets the unique Processing_parameter for the given key (ignoring case) to the given value (parameter will be created,
+	 * if necessary)
+	 * 
+	 * @param name the key of the parameter to set
+	 * @param value the new parameter value
+	 * @throws NonUniqueResultException if more than one parameter with the given name exists
+	 */
+	public void setProcessingParameterByName(String name, String value) throws NonUniqueResultException {
+		ProcessingParameter param = getUniqueProcessingParameterByName(name);
+		
+		if (null == param) {
+			param = new ProcessingParameter(name, value);
+			dynamicProcessingParameters.add(param);
+		} else {
+			param.setValue(value);
+		}
 	}
 	
 	/**
