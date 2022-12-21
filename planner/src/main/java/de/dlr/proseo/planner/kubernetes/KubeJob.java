@@ -757,7 +757,8 @@ public class KubeJob {
 								if (logger.isTraceEnabled()) logger.trace("    updateInfo: status not found");
 							}
 						} catch (Exception e) {
-							e.printStackTrace();						
+							e.printStackTrace();	
+							throw e;					
 						}
 						updateJobLog(js.get());
 						RepositoryService.getJobStepRepository().save(js.get());

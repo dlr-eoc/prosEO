@@ -20,6 +20,7 @@ proseo:
         # Notify Production Planner upon product ingestion? (For reprocessing it may be advisable to set this to false)
         notifyPlanner: true
     productionPlanner:
+        # URL for Production Planner (leave as empty string [""] if no Planner is installed)
         url: http://proseo-prodplanner:8080/proseo/planner/v0.1
         # Connection timeout in ms
         timeout: 10000
