@@ -22,7 +22,7 @@
 	</organization>
 
 	<properties>
-		<module.version>0.9.3</module.version>
+		<module.version>0.9.3-Patch20221220</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/ingestor-api.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.ingestor.rest</raml-base-package>
