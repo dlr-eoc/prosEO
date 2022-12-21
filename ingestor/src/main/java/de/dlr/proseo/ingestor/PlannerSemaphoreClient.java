@@ -53,6 +53,11 @@ public class PlannerSemaphoreClient {
 	public Boolean acquireSemaphore(String user, String password) {
 		if (logger.isTraceEnabled()) logger.trace(">>> acquireSemaphore({}, PWD)", user);
 		
+		// Skip if production planner is not configured
+		if (ingestorConfig.getProductionPlannerUrl().isBlank()) {
+			return true;
+		}
+		
 		String url = ingestorConfig.getProductionPlannerUrl() + "/semaphore/acquire";
 		RestTemplate restTemplate = rtb
 				.setConnectTimeout(Duration.ofMillis(ingestorConfig.getProductionPlannerTimeout()))
@@ -75,6 +80,11 @@ public class PlannerSemaphoreClient {
 	 */
 	public Boolean releaseSemaphore(String user, String password) {
 		if (logger.isTraceEnabled()) logger.trace(">>> releaseSemaphore({}, PWD)", user);
+		
+		// Skip if production planner is not configured
+		if (ingestorConfig.getProductionPlannerUrl().isBlank()) {
+			return true;
+		}
 		
 		String url = ingestorConfig.getProductionPlannerUrl() + "/semaphore/release";
 		RestTemplate restTemplate = rtb
