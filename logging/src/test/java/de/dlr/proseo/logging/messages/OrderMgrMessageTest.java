@@ -7,6 +7,9 @@ package de.dlr.proseo.logging.messages;
 
 import static org.junit.Assert.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.junit.Test;
 import org.slf4j.event.Level;
 
@@ -25,6 +28,13 @@ public class OrderMgrMessageTest {
 		int result = OrderMgrMessage.JOB_NOT_EXIST.getCode();
 		int expected = 3516;
 		assertEquals(expected, result);
+		
+		Set<Integer> codes = new HashSet<>();
+		
+		for (OrderMgrMessage m : OrderMgrMessage.values()) {
+			if (!codes.add(m.getCode()))
+				throw new RuntimeException("No duplicate codes allowed, check " + m);
+		}
 	}
 
 	/**

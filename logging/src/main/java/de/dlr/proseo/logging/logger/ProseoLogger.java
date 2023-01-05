@@ -82,6 +82,8 @@ public final class ProseoLogger {
 		
 		String formatted = "";
 		
+		try {
+		
 		switch (type.getLevel()) {
 		case INFO:
 				formatted = MessageFormat.format("(I" + type.getCode() + ") " + type.getMessage(), msgParameters);
@@ -99,6 +101,13 @@ public final class ProseoLogger {
 				formatted = MessageFormat.format("(T" + type.getCode() + ") " + type.getMessage(), msgParameters);
 			break;
 		}
+		
+		} catch (Exception e) {
+			Logger errorLogger = (Logger) LoggerFactory.getLogger(ProseoLogger.class);
+			errorLogger.error("A message format error occured with message type " + type);
+			return "A message format error occured with message type " + type;
+		}
+		
 		return formatted;
 	}
 
