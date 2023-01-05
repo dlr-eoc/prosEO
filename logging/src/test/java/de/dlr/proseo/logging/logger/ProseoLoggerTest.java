@@ -30,17 +30,18 @@ public class ProseoLoggerTest {
 		String expected0 = "(E1) Insert: java.lang.Exception";
 		String result0 = logger.log(TestMessage.ERROR_TEST, new Exception());
 		assertEquals(expected0, result0);
-		
+
 		String expected1 = "(W2) Insert: test";
 		String result1 = logger.log(TestMessage.WARN_TEST, "test");
 		assertEquals(expected1, result1);
-		
+
 		String expected2 = "(I3) Insert: test, 1";
 		String result2 = logger.log(TestMessage.INFO_TEST, "test", 1);
 		assertEquals(expected2, result2);
-		
-		Assert.assertThrows("Please specify the type of the message.", 
-				IllegalArgumentException.class, () -> {logger.log(null);});	
+
+		Assert.assertThrows("Please specify the type of the message.", IllegalArgumentException.class, () -> {
+			logger.log(null);
+		});
 	}
 
 	/**
@@ -48,23 +49,29 @@ public class ProseoLoggerTest {
 	 * {@link de.dlr.proseo.logging.logger.ProseoLogger#format(de.dlr.proseo.logging.messages.ProseoMessage, java.lang.Object[])}.
 	 */
 	@Test
-	public final void testFormat() {
+	public final void testFormat() throws Exception {
+		
 		String expected0 = "(E1) Insert: java.lang.Exception";
 		String result0 = ProseoLogger.format(TestMessage.ERROR_TEST, new Exception());
 		assertEquals(expected0, result0);
-		
+
 		String expected1 = "(W2) Insert: test";
 		String result1 = ProseoLogger.format(TestMessage.WARN_TEST, "test");
 		assertEquals(expected1, result1);
-		
+
 		String expected2 = "(I3) Insert: test, 1";
 		String result2 = ProseoLogger.format(TestMessage.INFO_TEST, "test", 1);
 		assertEquals(expected2, result2);
-		
-		Assert.assertThrows("Please specify the type of the message.", 
-				IllegalArgumentException.class, () -> {ProseoLogger.format(null);});	
-	}
 
+		String expected3 = "A message format error occured with message type " + TestMessage.ILLEGAL_FORMAT;
+		String result3 = ProseoLogger.format(TestMessage.ILLEGAL_FORMAT);
+		assertEquals(expected3, result3);
+		
+		Assert.assertThrows("Please specify the type of the message.", IllegalArgumentException.class, () -> {
+			ProseoLogger.format(null);
+		});
+		
+	}
 
 	/**
 	 * Test method for
@@ -182,8 +189,9 @@ public class ProseoLoggerTest {
 enum TestMessage implements ProseoMessage {
 	ERROR_TEST(1, Level.ERROR, false, "Insert: {0}", ""),
 	WARN_TEST(2, Level.WARN, true, "Insert: {0}", ""),
-	INFO_TEST(3, Level.INFO, true, "Insert: {0}, {1}", "")
-
+	INFO_TEST(3, Level.INFO, true, "Insert: {0}, {1}", ""),
+	ILLEGAL_FORMAT(4, Level.ERROR, true, "Illegal format {}",""),
+	
 	;
 
 	private final int code;
