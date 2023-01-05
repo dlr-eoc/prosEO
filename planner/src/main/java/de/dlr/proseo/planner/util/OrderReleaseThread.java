@@ -242,7 +242,7 @@ public class OrderReleaseThread extends Thread {
 									+ "JOIN processing_facility pf ON j.processing_facility_id = pf.id "
 									+ "WHERE o.id = :orderId "
 									+ "AND js.job_step_state = :jsState "
-									+ "ORDER BY j.start_time, js.id";
+									+ "ORDER BY js.priority desc, j.start_time, js.id";
 							
 							List<?> jobStepList = em.createNativeQuery(nativeQuery)
 									.setParameter("orderId", orderId)
@@ -326,10 +326,12 @@ public class OrderReleaseThread extends Thread {
 									break;
 								}
 							}
-							lambdaOrder.setOrderState(OrderState.RELEASED);
-							if (running) {
-								lambdaOrder.setOrderState(OrderState.RUNNING);
-							} 
+							if (!lambdaOrder.getOrderState().equals(OrderState.RUNNING)) {
+								lambdaOrder.setOrderState(OrderState.RELEASED);
+								if (running) {
+									lambdaOrder.setOrderState(OrderState.RUNNING);
+								}
+							}
 							lambdaAnswer = PlannerMessage.ORDER_RELEASED;
 						}
 						logger.log(lambdaAnswer, lambdaOrder.getIdentifier());
@@ -344,9 +346,11 @@ public class OrderReleaseThread extends Thread {
 								break;
 							}
 						}
-						lambdaOrder.setOrderState(OrderState.RELEASED);
-						if (running) {
-							lambdaOrder.setOrderState(OrderState.RUNNING);
+						if (!lambdaOrder.getOrderState().equals(OrderState.RUNNING)) {
+							lambdaOrder.setOrderState(OrderState.RELEASED);
+							if (running) {
+								lambdaOrder.setOrderState(OrderState.RUNNING);
+							}
 						}
 						lambdaAnswer = PlannerMessage.ORDER_RELEASED;
 						logger.log(lambdaAnswer, lambdaOrder.getIdentifier(), this.getName());

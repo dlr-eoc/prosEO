@@ -215,7 +215,7 @@ public class JobStepUtil {
 				+ "JOIN job_step js ON j.id = js.job_id "
 				+ "WHERE j.processing_facility_id = :pfId "
 				+ "AND js.job_step_state IN :jsStates "
-				+ "ORDER BY j.start_time, js.id";
+				+ "ORDER BY js.priority desc, j.start_time, js.id";
 		List<?> jobStepList = em.createNativeQuery(nativeQuery)
 				.setParameter("pfId", processingFacilityId)
 				.setParameter("jsStates", jobStepStates)
@@ -965,7 +965,7 @@ public class JobStepUtil {
 									+ "AND ("
 									+ "j.job_state = :jStateReleased OR j.job_state = :jStateStarted"
 									+ ")"
-									+ "ORDER BY j.start_time";
+									+ "ORDER BY js.priority desc, j.start_time, js.id";
 							List<?> jobStepList = em.createNativeQuery(nativeQuery)
 									.setParameter("pfId", kc.getLongId())
 									.setParameter("jsStateReady", JobStepState.READY.toString())

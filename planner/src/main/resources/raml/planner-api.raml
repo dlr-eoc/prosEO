@@ -94,6 +94,7 @@ resourceTypes:
         displayName: planOrder
         queryParameters:
           facility: string
+          wait?: boolean
         responses:
           200:
             body:
@@ -105,6 +106,8 @@ resourceTypes:
       patch:
         description: Release processing order of id 
         displayName: releaseOrder
+        queryParameters:
+          wait?: boolean
         responses:
           200:
             body:
@@ -116,6 +119,8 @@ resourceTypes:
       patch:
         description: Resume processing order of id 
         displayName: resumeOrder
+        queryParameters:
+          wait?: boolean
         responses:
           200:
             body:

@@ -587,6 +587,7 @@ public class OrderDispatcher {
 						stopT = orbit.getStopTime();
 					}
 					job.setStopTime(stopT);
+					job.setPriority(order.getPriority());
 					job.setProcessingOrder(order);
 					job.setProcessingFacility(pf);
 					Boolean exist = false;
@@ -916,6 +917,7 @@ public class OrderDispatcher {
 		jobStep.setIsFailed(false);
 		jobStep.setJobStepState(JobStepState.PLANNED);
 		jobStep.setProcessingMode(order.getProcessingMode());
+		jobStep.setPriority(job.getPriority());
 		jobStep.setJob(job);
 		jobStep.getOutputParameters().putAll(order.getOutputParameters(topProductClass));
 		jobStep = RepositoryService.getJobStepRepository().save(jobStep);
