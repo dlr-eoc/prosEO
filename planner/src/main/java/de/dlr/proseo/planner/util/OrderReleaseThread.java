@@ -326,10 +326,12 @@ public class OrderReleaseThread extends Thread {
 									break;
 								}
 							}
-							lambdaOrder.setOrderState(OrderState.RELEASED);
-							if (running) {
-								lambdaOrder.setOrderState(OrderState.RUNNING);
-							} 
+							if (!lambdaOrder.getOrderState().equals(OrderState.RUNNING)) {
+								lambdaOrder.setOrderState(OrderState.RELEASED);
+								if (running) {
+									lambdaOrder.setOrderState(OrderState.RUNNING);
+								}
+							}
 							lambdaAnswer = PlannerMessage.ORDER_RELEASED;
 						}
 						logger.log(lambdaAnswer, lambdaOrder.getIdentifier());
@@ -344,9 +346,11 @@ public class OrderReleaseThread extends Thread {
 								break;
 							}
 						}
-						lambdaOrder.setOrderState(OrderState.RELEASED);
-						if (running) {
-							lambdaOrder.setOrderState(OrderState.RUNNING);
+						if (!lambdaOrder.getOrderState().equals(OrderState.RUNNING)) {
+							lambdaOrder.setOrderState(OrderState.RELEASED);
+							if (running) {
+								lambdaOrder.setOrderState(OrderState.RUNNING);
+							}
 						}
 						lambdaAnswer = PlannerMessage.ORDER_RELEASED;
 						logger.log(lambdaAnswer, lambdaOrder.getIdentifier(), this.getName());
