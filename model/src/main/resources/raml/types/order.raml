@@ -21,6 +21,11 @@
         type: string
         description: Universally unique order identifier
         pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$
+      priority?:
+         type: integer
+         format: int
+         default: 50
+         description: Priority of the ProcessingOrder (lower number means lower priority; value range 1..100 is defined for the ODIP, but other values are allowed outside On-Demand Production, including negative numbers). Default value is 50.         
       orderState:
         type: string
         default: INITIAL

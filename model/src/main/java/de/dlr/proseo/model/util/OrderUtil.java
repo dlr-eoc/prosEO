@@ -11,8 +11,11 @@ import java.util.Map;
 import java.util.UUID;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.OrderMgrMessage;
 import de.dlr.proseo.model.ConfiguredProcessor;
+import de.dlr.proseo.model.InputProductReference;
 import de.dlr.proseo.model.Job.JobState;
+import de.dlr.proseo.model.NotificationEndpoint;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.enums.ParameterType;
@@ -22,6 +25,8 @@ import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestInputFilter;
+import de.dlr.proseo.model.rest.model.RestInputReference;
+import de.dlr.proseo.model.rest.model.RestNotificationEndpoint;
 import de.dlr.proseo.model.rest.model.RestOrbitQuery;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestParameter;
@@ -50,7 +55,7 @@ public class OrderUtil {
 		restOrder.setId(processingOrder.getId());
 		restOrder.setVersion(Long.valueOf(processingOrder.getVersion()));
 		
-		if (null != processingOrder.getMission().getCode()) {
+		if (null != processingOrder.getMission()) {
 			restOrder.setMissionCode(processingOrder.getMission().getCode());
 
 		}	
@@ -59,9 +64,21 @@ public class OrderUtil {
 		}	
 		if (null != processingOrder.getUuid()) {
 			restOrder.setUuid(processingOrder.getUuid().toString());
+		}
+		if (null != processingOrder.getPriority()) {
+			restOrder.setPriority(processingOrder.getPriority());
 		}	
 		if (null != processingOrder.getOrderState()) {
 			restOrder.setOrderState(processingOrder.getOrderState().toString());
+		}
+		if (null != processingOrder.getStateMessage()) {
+			restOrder.setStateMessage(processingOrder.getStateMessage());
+		}
+		if (null != processingOrder.getSubmissionTime()) {
+			restOrder.setSubmissionTime(Date.from(processingOrder.getSubmissionTime()));
+		}
+		if (null != processingOrder.getReleaseTime()) {
+			restOrder.setReleaseTime(Date.from(processingOrder.getReleaseTime()));
 		}
 		if (null != processingOrder.getStartTime()) {
 			restOrder.setStartTime(OrbitTimeFormatter.format(processingOrder.getStartTime()));
@@ -71,6 +88,12 @@ public class OrderUtil {
 		}
 		if (null != processingOrder.getExecutionTime()) {
 			restOrder.setExecutionTime(Date.from(processingOrder.getExecutionTime()));
+		}
+		if (null != processingOrder.getEstimatedCompletionTime()) {
+			restOrder.setEstimatedCompletionTime(Date.from(processingOrder.getEstimatedCompletionTime()));
+		}
+		if (null != processingOrder.getActualCompletionTime()) {
+			restOrder.setActualCompletionTime(Date.from(processingOrder.getActualCompletionTime()));
 		}
 		if (null != processingOrder.getEvictionTime()) {
 			restOrder.setEvictionTime(Date.from(processingOrder.getEvictionTime()));
@@ -84,10 +107,11 @@ public class OrderUtil {
 		restOrder.setSliceOverlap(processingOrder.getSliceOverlap().getSeconds());
 
 		if (null != processingOrder.getInputFilters()) {
-			for (ProductClass sourceClass: processingOrder.getInputFilters().keySet()) {
+			for (ProductClass sourceClass : processingOrder.getInputFilters().keySet()) {
 				RestInputFilter restInputFilter = new RestInputFilter();
 				restInputFilter.setProductClass(sourceClass.getProductType());
-				Map<String, Parameter> filterConditions = processingOrder.getInputFilters().get(sourceClass).getFilterConditions();
+				Map<String, Parameter> filterConditions = processingOrder.getInputFilters().get(sourceClass)
+						.getFilterConditions();
 				for (String paramKey : filterConditions.keySet()) {
 					restInputFilter.getFilterConditions()
 							.add(new RestParameter(paramKey,
@@ -96,14 +120,14 @@ public class OrderUtil {
 				}
 				restOrder.getInputFilters().add(restInputFilter);
 			}
-			
 		}
-		
-		if(null != processingOrder.getClassOutputParameters()) {
-			for (ProductClass targetClass: processingOrder.getClassOutputParameters().keySet()) {
+
+		if (null != processingOrder.getClassOutputParameters()) {
+			for (ProductClass targetClass : processingOrder.getClassOutputParameters().keySet()) {
 				RestClassOutputParameter restClassOutputParameter = new RestClassOutputParameter();
 				restClassOutputParameter.setProductClass(targetClass.getProductType());
-				Map<String, Parameter> outputParameters = processingOrder.getClassOutputParameters().get(targetClass).getOutputParameters();
+				Map<String, Parameter> outputParameters = processingOrder.getClassOutputParameters().get(targetClass)
+						.getOutputParameters();
 				for (String paramKey : outputParameters.keySet()) {
 					restClassOutputParameter.getOutputParameters()
 							.add(new RestParameter(paramKey,
@@ -160,6 +184,42 @@ public class OrderUtil {
 				restOrder.getConfiguredProcessors().add(toAddProcessor.getIdentifier());
 			}
 		}	
+		
+		if (null != processingOrder.getDynamicProcessingParameters()
+				& !processingOrder.getDynamicProcessingParameters().isEmpty()) {
+			List<RestParameter> dynamicProcessingParameters = new ArrayList<>();
+			for (String key : processingOrder.getDynamicProcessingParameters().keySet()) {
+				Parameter param = processingOrder.getDynamicProcessingParameters().get(key);
+				RestParameter restParam = new RestParameter(key, param.getParameterType().name(),
+						param.getStringValue());
+				dynamicProcessingParameters.add(restParam);
+			}
+			restOrder.setDynamicProcessingParameters(dynamicProcessingParameters);
+		}
+		
+		if (null != processingOrder.getNotificationEndpoint()) {
+			NotificationEndpoint notificationEndpoint = processingOrder.getNotificationEndpoint();
+			RestNotificationEndpoint restNotificationEndpoint = new RestNotificationEndpoint();
+			restNotificationEndpoint.setPassword(notificationEndpoint.getPassword());
+			restNotificationEndpoint.setUri(notificationEndpoint.getUri());
+			restNotificationEndpoint.setUsername(notificationEndpoint.getUsername());
+			restOrder.setNotificationEndpoint(restNotificationEndpoint);
+		}
+		
+		if (null != processingOrder.getInputProductReference()) {
+			InputProductReference inputProductReference = processingOrder.getInputProductReference();
+			RestInputReference restInputReference = new RestInputReference();
+			if (null != inputProductReference.getInputFileName()) {
+				restInputReference.setInputFileName(inputProductReference.getInputFileName());
+			} else if (null != inputProductReference.getSensingStartTime()
+					&& null != inputProductReference.getSensingStopTime()) {
+				if (inputProductReference.getSensingStartTime().isAfter(inputProductReference.getSensingStopTime()))
+					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_INPUT_REFERENCE));
+				restInputReference.setSensingStartTime(inputProductReference.getSensingStartTime().toString());
+				restInputReference.setSensingStopTime(inputProductReference.getSensingStopTime().toString());
+			}
+			restOrder.setInputProductReference(restInputReference);
+		}
 		
 		// Create orbit ranges from orbits with contiguous orbit numbers
 		if (null != processingOrder.getRequestedOrbits()) {
@@ -255,17 +315,37 @@ public class OrderUtil {
 				processingOrder.incrementVersion();
 			} 
 		}
+		if (null != restOrder.getMissionCode()) {
+			processingOrder.setMission(RepositoryService.getMissionRepository().findByCode(restOrder.getMissionCode()));
+		}		
 		processingOrder.setIdentifier(restOrder.getIdentifier());
 		if (null != restOrder.getUuid()) {
 			processingOrder.setUuid(UUID.fromString(restOrder.getUuid()));
 		}
+		processingOrder.setPriority(restOrder.getPriority());
 		processingOrder.setOrderState(OrderState.valueOf(restOrder.getOrderState()));
+		processingOrder.setStateMessage(restOrder.getStateMessage());
 		processingOrder.setProcessingMode(restOrder.getProcessingMode());
 
+		if (null != restOrder.getSubmissionTime()) {
+			try {
+				processingOrder.setSubmissionTime(restOrder.getSubmissionTime().toInstant());
+			} catch (DateTimeException e) {
+				throw new IllegalArgumentException(
+						String.format("Invalid execution time '%s'", restOrder.getReleaseTime()));
+			}
+		}
+		if (null != restOrder.getReleaseTime()) {
+			try {
+				processingOrder.setReleaseTime(restOrder.getReleaseTime().toInstant());
+			} catch (DateTimeException e) {
+				throw new IllegalArgumentException(
+						String.format("Invalid execution time '%s'", restOrder.getReleaseTime()));
+			}
+		}
 		if (null != restOrder.getStartTime()) {
 			try {
 				processingOrder.setStartTime(Instant.from(OrbitTimeFormatter.parse(restOrder.getStartTime())));
-
 			} catch (DateTimeException e) {
 				throw new IllegalArgumentException(String.format("Invalid sensing start time '%s'", restOrder.getStartTime()));
 			} 
@@ -283,6 +363,22 @@ public class OrderUtil {
 			} catch (DateTimeException e) {
 				throw new IllegalArgumentException(String.format("Invalid execution time '%s'", restOrder.getExecutionTime()));
 			} 
+		}
+		if (null != restOrder.getEstimatedCompletionTime()) {
+			try {
+				processingOrder.setEstimatedCompletionTime(restOrder.getEstimatedCompletionTime().toInstant());
+			} catch (DateTimeException e) {
+				throw new IllegalArgumentException(
+						String.format("Invalid execution time '%s'", restOrder.getReleaseTime()));
+			}
+		}		
+		if (null != restOrder.getActualCompletionTime()) {
+			try {
+				processingOrder.setActualCompletionTime(restOrder.getActualCompletionTime().toInstant());
+			} catch (DateTimeException e) {
+				throw new IllegalArgumentException(
+						String.format("Invalid execution time '%s'", restOrder.getReleaseTime()));
+			}
 		}
 		if (null != restOrder.getEvictionTime()) {
 			try {
@@ -327,6 +423,40 @@ public class OrderUtil {
 		}
 		if (null != restOrder.getHasFailedJobSteps()) {
 			processingOrder.setHasFailedJobSteps(restOrder.getHasFailedJobSteps());
+		}
+
+		if (null != restOrder.getDynamicProcessingParameters()
+				& !restOrder.getDynamicProcessingParameters().isEmpty()) {
+			for (RestParameter restParam : restOrder.getDynamicProcessingParameters()) {
+				Parameter modelParam = new Parameter();
+				modelParam.init(ParameterType.valueOf(restParam.getParameterType()), restParam.getParameterValue());
+				processingOrder.getDynamicProcessingParameters().put(restParam.getKey(), modelParam);
+			}
+		}
+
+		if (null != restOrder.getNotificationEndpoint()) {
+			RestNotificationEndpoint restNotificationEndpoint = restOrder.getNotificationEndpoint();
+			NotificationEndpoint notificationEndpoint = new NotificationEndpoint();
+			notificationEndpoint.setPassword(restNotificationEndpoint.getPassword());
+			notificationEndpoint.setUri(restNotificationEndpoint.getUri());
+			notificationEndpoint.setUsername(restNotificationEndpoint.getUsername());
+			processingOrder.setNotificationEndpoint(notificationEndpoint);
+		}
+		
+		// Set only if either file name or start and stop time are not null, ensure that stop is after start time 
+		RestInputReference restInputReference = restOrder.getInputProductReference();
+		InputProductReference inputProductReference = new InputProductReference();
+		if (null != restInputReference) {
+			if (null != restInputReference.getInputFileName()) {
+				inputProductReference.setInputFileName(restInputReference.getInputFileName());
+			} else if (null != restInputReference.getSensingStartTime() && null != restInputReference.getSensingStopTime()) {
+				if (Instant.parse(restInputReference.getSensingStartTime())
+						.isAfter(Instant.parse(restInputReference.getSensingStopTime())))
+					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_INPUT_REFERENCE));
+				inputProductReference.setSensingStartTime(Instant.parse(restInputReference.getSensingStartTime()));
+				inputProductReference.setSensingStopTime(Instant.parse(restInputReference.getSensingStopTime()));
+			}
+			processingOrder.setInputProductReference(inputProductReference);
 		}
 		
 		return processingOrder;

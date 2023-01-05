@@ -1,5 +1,5 @@
 /**
- * ProductUtilTest.java
+ * MissionUtilTest.java
  * 
  * (c) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
@@ -35,7 +35,7 @@ public class MissionUtilTest {
 		};
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(MissionControllerTest.class);
+	private static Logger logger = LoggerFactory.getLogger(MissionUtilTest.class);
 	
 	/**
 	 * Create a mission from a data array
