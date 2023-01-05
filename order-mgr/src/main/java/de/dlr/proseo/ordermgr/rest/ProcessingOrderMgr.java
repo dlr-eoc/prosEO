@@ -112,7 +112,11 @@ public class ProcessingOrderMgr {
 					order.getMissionCode(), securityService.getMission()));			
 		}
 		
+		// Prepare the database order, but make sure ID and version are not copied if present
+		order.setId(null);
+		order.setVersion(null);
 		ProcessingOrder modelOrder = OrderUtil.toModelOrder(order);
+		
 		// Make sure order has a UUID
 		if (null == modelOrder.getUuid() || modelOrder.getUuid().toString().isEmpty()) {
 			modelOrder.setUuid(UUID.randomUUID());

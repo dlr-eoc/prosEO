@@ -400,7 +400,7 @@ public class OrderUtil {
 	 * @param procFacility The processing facility to run the order
 	 * @return Result message
 	 */
-	public ProseoMessage plan(long id,  ProcessingFacility procFacility) {
+	public ProseoMessage plan(long id,  ProcessingFacility procFacility, Boolean wait) {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 
 		final ProcessingOrder order = transactionTemplate.execute((status) -> {
@@ -448,6 +448,13 @@ public class OrderUtil {
 						OrderPlanThread pt = new OrderPlanThread(productionPlanner, orderDispatcher, id, procFacility, threadName);
 						productionPlanner.getPlanThreads().put(threadName, pt);
 						pt.start();
+						if (wait) {
+							try {
+								pt.join();
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}
 					}
 				}
 				break;	
@@ -489,7 +496,7 @@ public class OrderUtil {
 	 * @param order The processing Order
 	 * @return Result message
 	 */
-	public ProseoMessage resume(ProcessingOrder order) {
+	public ProseoMessage resume(ProcessingOrder order, Boolean wait) {
 		if (logger.isTraceEnabled()) logger.trace(">>> resume({})", (null == order ? "null" : order.getId()));
 		
 		ProseoMessage answer = GeneralMessage.FALSE;
@@ -525,6 +532,7 @@ public class OrderUtil {
 					productionPlanner.releaseThreadSemaphore("resume");					
 				}
 				if (doIt) {
+					OrderReleaseThread rt = null; 
 					try {
 						productionPlanner.acquireThreadSemaphore("resume");	
 						final ProcessingOrder ordery = transactionTemplate.execute((status) -> {
@@ -537,9 +545,8 @@ public class OrderUtil {
 						if (ordery != null) {
 							String threadName = ProductionPlanner.RELEASE_THREAD_PREFIX + ordery.getId();
 							if (!productionPlanner.getReleaseThreads().containsKey(threadName)) {
-								OrderReleaseThread rt = new OrderReleaseThread(productionPlanner, em, jobUtil, ordery, threadName);
+								rt = new OrderReleaseThread(productionPlanner, em, jobUtil, ordery, threadName);
 								productionPlanner.getReleaseThreads().put(threadName, rt);
-								rt.start();
 							}
 							logOrderState(order);
 							answer = PlannerMessage.ORDER_RELEASING;
@@ -548,6 +555,16 @@ public class OrderUtil {
 						logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 					} finally {
 						productionPlanner.releaseThreadSemaphore("resume");					
+					}
+					if (rt != null) {
+						rt.start();
+						if (wait) {
+							try {
+								rt.join();
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}
 					}
 				}
 				break;	
@@ -1324,7 +1341,7 @@ public class OrderUtil {
 				return null;
 			});
 			if (pf != null) {
-				UtilService.getOrderUtil().plan(id, pf);
+				UtilService.getOrderUtil().plan(id, pf, false);
 			} else {
 				// no job with processing facility exist, can't plan
 				final ProcessingOrder order = transactionTemplate.execute((status) -> {
@@ -1349,7 +1366,7 @@ public class OrderUtil {
 		Optional<ProcessingOrder> order = RepositoryService.getOrderRepository().findById(id);
 		if (order.isPresent()) {
 			// resume the order
-			UtilService.getOrderUtil().resume(order.get());
+			UtilService.getOrderUtil().resume(order.get(), false);
 		}
 	}
 
