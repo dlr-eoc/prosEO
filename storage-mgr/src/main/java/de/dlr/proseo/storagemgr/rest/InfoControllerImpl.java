@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.StorageMgrMessage;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.rest.model.S3;
 import de.dlr.proseo.storagemgr.rest.model.Posix;
@@ -28,8 +30,8 @@ public class InfoControllerImpl implements InfoController {
 	@Autowired
 	private StorageManagerConfiguration cfg;
 	
-	private static Logger logger = LoggerFactory.getLogger(InfoControllerImpl.class);
-
+	/** A logger for this class */
+	private static ProseoLogger logger = new ProseoLogger(InfoControllerImpl.class);
 	
 	/**
 	 * Set information with configuration settings.
@@ -60,6 +62,9 @@ public class InfoControllerImpl implements InfoController {
 		joborder.setPrefix(cfg.getJoborderPrefix());
 
 		response.setJoborder(joborder);
+		
+		logger.log(StorageMgrMessage.REST_INFO_GOT);
+		
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
