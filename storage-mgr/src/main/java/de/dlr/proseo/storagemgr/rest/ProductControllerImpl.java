@@ -41,6 +41,8 @@ import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
 import de.dlr.proseo.storagemgr.version2.model.Storage;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.StorageMgrMessage;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.rest.model.RestProductFS;
 import de.dlr.proseo.storagemgr.utils.ProseoFile;
@@ -96,7 +98,10 @@ public class ProductControllerImpl implements ProductController {
 	private static final String HTTP_MSG_PREFIX = "199 proseo-storage-mgr ";
 
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProductControllerImpl.class);
+	private static Logger loggerLegacy = LoggerFactory.getLogger(ProductControllerImpl.class);
+	
+	/** A logger for this class */
+	private static ProseoLogger logger = new ProseoLogger(ProductControllerImpl.class);
 
 	/** Storage Manager configuration */
 	@Autowired
@@ -117,8 +122,8 @@ public class ProductControllerImpl implements ProductController {
 	 */
 	private HttpHeaders errorHeaders(String messageFormat, int messageId, Object... messageParameters) {
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> errorHeaders({}, {}, {})", messageFormat, messageId, "messageParameters");
+		if (loggerLegacy.isTraceEnabled())
+			loggerLegacy.trace(">>> errorHeaders({}, {}, {})", messageFormat, messageId, "messageParameters");
 
 		// Prepend message ID to parameter list
 		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
@@ -126,7 +131,7 @@ public class ProductControllerImpl implements ProductController {
 
 		// Log the error message
 		String message = String.format(messageFormat, messageParamList.toArray());
-		logger.error(message);
+		loggerLegacy.error(message);
 
 		// Create an HTTP "Warning" header
 		HttpHeaders responseHeaders = new HttpHeaders();
@@ -174,14 +179,20 @@ public class ProductControllerImpl implements ProductController {
 						targetFolder.getFullPath() + "/", allUploaded, false,
 						"registration executed on node " + hostName);
 
-				StorageLogger.logInfo(logger, MSG_FILES_REGISTERED, MSG_ID_FILES_REGISTERED, allUploaded.toString());
-
+				// StorageLogger.logInfo(loggerLegacy, MSG_FILES_REGISTERED, MSG_ID_FILES_REGISTERED, allUploaded.toString());
+				
+				logger.log(StorageMgrMessage.PRODUCTS_UPLOADED_TO_STORAGE, Integer.toString(allUploaded.size()));
+				
 				return new ResponseEntity<>(response, HttpStatus.CREATED);
 
 			} catch (Exception e) {
 
 				e.printStackTrace();
-
+				
+				String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
+				
+				// return new ResponseEntity<>(msg, HttpStatus.INTERNAL_SERVER_ERROR);
+				
 				return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
 						e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
@@ -199,7 +210,7 @@ public class ProductControllerImpl implements ProductController {
 
 		RestProductFS response = new RestProductFS();
 
-		logger.info(restProductFS.toString());
+		loggerLegacy.info(restProductFS.toString());
 		String pref = restProductFS.getProductId();
 		if (!pref.endsWith("/")) {
 			pref = pref + "/";
@@ -215,8 +226,8 @@ public class ProductControllerImpl implements ProductController {
 				ProseoFile sourceFile = ProseoFile
 						.fromTypeFullPath(StorageType.valueOf(restProductFS.getSourceStorageType()), fileOrDir, cfg);
 				ArrayList<String> transfered = sourceFile.copyTo(targetFile, true);
-				if (logger.isDebugEnabled())
-					logger.debug("Files transferred: {}", transfered);
+				if (loggerLegacy.isDebugEnabled())
+					loggerLegacy.debug("Files transferred: {}", transfered);
 				if (transfered != null) {
 					transferSum.addAll(transfered);
 				}
@@ -224,7 +235,7 @@ public class ProductControllerImpl implements ProductController {
 			setRestProductFS(response, restProductFS, targetFile.getBasePath(), true, targetFile.getFullPath() + "/",
 					transferSum, false, "registration executed on node " + hostName);
 
-			StorageLogger.logInfo(logger, MSG_FILES_REGISTERED, MSG_ID_FILES_REGISTERED, transferSum.toString());
+			StorageLogger.logInfo(loggerLegacy, MSG_FILES_REGISTERED, MSG_ID_FILES_REGISTERED, transferSum.toString());
 
 			return new ResponseEntity<>(response, HttpStatus.CREATED);
 		} catch (Exception e) {
@@ -289,12 +300,16 @@ public class ProductControllerImpl implements ProductController {
 							.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.valueOf(storageType))
 							.addFSPrefix(response);
 				}
-
-				StorageLogger.logInfo(logger, MSG_FILES_LISTED, MSG_ID_FILES_LISTED, response.toString());
+				
+				StorageLogger.logInfo(loggerLegacy, MSG_FILES_LISTED, MSG_ID_FILES_LISTED, response.toString());
+				
+				logger.log(StorageMgrMessage.PRODUCT_FILES_LISTED, response.toString());
 
 				return new ResponseEntity<>(response, HttpStatus.OK);
 
 			} catch (Exception e) {
+				
+				logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
 
 				e.printStackTrace();
 				return new ResponseEntity<>(
@@ -322,7 +337,7 @@ public class ProductControllerImpl implements ProductController {
 					e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
-		StorageLogger.logInfo(logger, MSG_FILES_LISTED, MSG_ID_FILES_LISTED, response.toString());
+		StorageLogger.logInfo(loggerLegacy, MSG_FILES_LISTED, MSG_ID_FILES_LISTED, response.toString());
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
@@ -437,8 +452,8 @@ public class ProductControllerImpl implements ProductController {
 	@Override
 	public ResponseEntity<?> getObject(String pathInfo, String token, Long fromByte, Long toByte) {
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> getObject({}, {}, {}, {})", pathInfo, token, fromByte, toByte);
+		if (loggerLegacy.isTraceEnabled())
+			loggerLegacy.trace(">>> getObject({}, {}, {}, {})", pathInfo, token, fromByte, toByte);
 
 		// Check parameters
 		if (null == pathInfo) {
@@ -499,7 +514,7 @@ public class ProductControllerImpl implements ProductController {
 
 				InputStreamResource fsr = new InputStreamResource(stream);
 				if (fsr != null) {
-					StorageLogger.logInfo(logger, MSG_FILE_RETRIEVED, MSG_ID_FILE_RETRIEVED, pathInfo, fromByte, toByte, fileSize);
+					StorageLogger.logInfo(loggerLegacy, MSG_FILE_RETRIEVED, MSG_ID_FILE_RETRIEVED, pathInfo, fromByte, toByte, fileSize);
 
 					return new ResponseEntity<>(fsr, headers, status);
 				}
@@ -564,7 +579,7 @@ public class ProductControllerImpl implements ProductController {
 			headers.setContentLength(len);
 			InputStreamResource fsr = new InputStreamResource(stream);
 			if (fsr != null) {
-				StorageLogger.logInfo(logger, MSG_FILE_RETRIEVED, MSG_ID_FILE_RETRIEVED, pathInfo, from, to, len);
+				StorageLogger.logInfo(loggerLegacy, MSG_FILE_RETRIEVED, MSG_ID_FILE_RETRIEVED, pathInfo, from, to, len);
 
 				return new ResponseEntity<>(fsr, headers, status);
 			}
@@ -594,8 +609,8 @@ public class ProductControllerImpl implements ProductController {
 	private HttpHeaders getFilePage(StorageFile sourceFile, InputStream stream, Long fromByte, Long toByte)
 			throws IOException {
 		
-		if (logger.isTraceEnabled())
-			logger.trace(">>> getFilePage({}, {}, {}, {})", sourceFile.getFullPath(), stream, fromByte, toByte);
+		if (loggerLegacy.isTraceEnabled())
+			loggerLegacy.trace(">>> getFilePage({}, {}, {}, {})", sourceFile.getFullPath(), stream, fromByte, toByte);
 		
 		Storage storage = storageProvider.getStorage(sourceFile.getFullPath()); 	
 
@@ -644,8 +659,8 @@ public class ProductControllerImpl implements ProductController {
 	@Override
 	public ResponseEntity<RestProductFS> deleteProductByPathInfo(String pathInfo) {
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> deleteProductByPathInfo({})", pathInfo);
+		if (loggerLegacy.isTraceEnabled())
+			loggerLegacy.trace(">>> deleteProductByPathInfo({})", pathInfo);
 
 		if (storageProvider.isVersion2()) { // begin version 2 - delete files in storage
 			
@@ -661,7 +676,7 @@ public class ProductControllerImpl implements ProductController {
 				List<String> deletedFilesOrDir = storageProvider.getStorage().delete(relativePath);
 				RestProductFS response = createRestProductFilesDeleted(deletedFilesOrDir, storageType);
 
-				StorageLogger.logInfo(logger, MSG_FILE_DELETED, MSG_ID_FILE_DELETED, pathInfo);
+				StorageLogger.logInfo(loggerLegacy, MSG_FILE_DELETED, MSG_ID_FILE_DELETED, pathInfo);
 				
 				return new ResponseEntity<>(response, HttpStatus.OK);
 
@@ -685,7 +700,7 @@ public class ProductControllerImpl implements ProductController {
 					response.setSourceFilePaths(deleted);
 					response.setSourceStorageType(sourceFile.getFsType().toString());
 
-					StorageLogger.logInfo(logger, MSG_FILE_DELETED, MSG_ID_FILE_DELETED, pathInfo);
+					StorageLogger.logInfo(loggerLegacy, MSG_FILE_DELETED, MSG_ID_FILE_DELETED, pathInfo);
 
 					return new ResponseEntity<>(response, HttpStatus.OK);
 				}
@@ -720,8 +735,8 @@ public class ProductControllerImpl implements ProductController {
 	 */
 	private void listProductFiles(StorageType st, String prefix, List<String> response) {
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> listProductFiles({}, {})", st, prefix, response.size());
+		if (loggerLegacy.isTraceEnabled())
+			loggerLegacy.trace(">>> listProductFiles({}, {})", st, prefix, response.size());
 
 		ProseoFile path = null;
 		if (prefix == null) {
@@ -753,8 +768,8 @@ public class ProductControllerImpl implements ProductController {
 	private RestProductFS setRestProductFS(RestProductFS restProductFS, String storageId, Boolean registered,
 			String registeredFilePath, List<String> registeredFiles, Boolean deleted, String msg) {
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> setRestProductFS({}, {}, {}, {}, {}, {}, {})",
+		if (loggerLegacy.isTraceEnabled())
+			loggerLegacy.trace(">>> setRestProductFS({}, {}, {}, {}, {}, {}, {})",
 					(null == restProductFS ? "MISSING" : restProductFS.getProductId()), storageId, registered,
 					registeredFilePath, registeredFiles.size(), deleted, msg);
 
@@ -774,8 +789,8 @@ public class ProductControllerImpl implements ProductController {
 			response.setMessage(msg);
 		}
 
-		if (logger.isDebugEnabled())
-			logger.debug("Response created: {}", response);
+		if (loggerLegacy.isDebugEnabled())
+			loggerLegacy.debug("Response created: {}", response);
 
 		return response;
 	}
