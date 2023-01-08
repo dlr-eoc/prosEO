@@ -17,6 +17,8 @@ public enum StorageMgrMessage implements ProseoMessage {
 	INTERNAL_ERROR (5501, Level.ERROR, false, "Internal Storage Manager  Error: {0}", ""),
 	INVALID_PATH (5502, Level.ERROR, false, "Invalid path: {0}", ""),
 	SECRET_TOO_SHORT (5503, Level.ERROR, false, "Secret length is shorter than the minimum 256-bit requirement", ""),
+	FILE_NOT_FOUND (5504, Level.ERROR, false, " File not found: {0}", ""),
+
 
 	REST_INFO_GOT (5511, Level.INFO, true, "Rest Info Information got", ""),
 	STRING_NOT_BASE64_ENCODED (5512, Level.ERROR, false, "Attribute jobOrderStringBase64 is not Base64-encoded", ""),
@@ -25,7 +27,6 @@ public enum StorageMgrMessage implements ProseoMessage {
 	JOB_ORDER_CREATION_ERROR (5522, Level.ERROR, false, "Cannot create job order file {0}. Unexpected error", ""), 
 	JOB_ORDER_FILE_CANNOT_BE_GOT (5523, Level.ERROR, false, "Cannot get job order file: {0}",  ""), 
 	JOB_ORDER_FILE_GOT ( 5524, Level.INFO, true, "Job order file got: {0}", ""),
-	JOB_ORDER_FILE_NOT_FOUND (5525, Level.ERROR, false, " Job order file not found: {0}", ""),
 	
 	TOKEN_MISSING (5531, Level.ERROR, false, "Authentication token missing: {0}", ""),
 	TOKEN_INVALID (5532, Level.ERROR, false, "Authentication token invalid: {0}", ""),
@@ -43,8 +44,12 @@ public enum StorageMgrMessage implements ProseoMessage {
 	/** Listed = got */
 	PRODUCT_FILES_LISTED (5552, Level.INFO, true, "Product files listed: {0}", ""), 
 	/** Downloaded = retrieved */
-	PRODUCT_FILE_DOWNLOADED (5553, Level.INFO, true, "File {0} retrieved from byte {1} to byte {2}, {3} bytes transferred", ""),  
-	PRODUCT_FILE_DELETED (5554, Level.INFO, true, "File deleted: {0}", ""),
+	PRODUCT_FILE_DOWNLOADED (5553, Level.INFO, true, "Product file downloaded: {0}", ""),  
+	PRODUCT_FILE_UPLOADED (5554, Level.INFO, true, "Product file {0} uploaded for product {1}", ""),  
+
+	PRODUCT_FILE_CANNOT_BE_DOWNLOADED (5555, Level.ERROR, false, "Product file cannot be downloaded: {0}", ""),  
+	PRODUCT_FILE_PARTIALLY_DOWNLOADED (5556, Level.INFO, true, "Product file {0} partially downloaded from byte {1} to byte {2}, {3} bytes transferred", ""),  
+	PRODUCT_FILE_DELETED (5557, Level.INFO, true, "File deleted: {0}", ""),
 	
 	;
 
