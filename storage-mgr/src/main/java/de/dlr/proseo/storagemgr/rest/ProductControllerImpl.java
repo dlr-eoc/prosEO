@@ -514,12 +514,17 @@ public class ProductControllerImpl implements ProductController {
 
 				InputStreamResource fsr = new InputStreamResource(stream);
 				if (fsr != null) {
-					StorageLogger.logInfo(loggerLegacy, MSG_FILE_RETRIEVED, MSG_ID_FILE_RETRIEVED, pathInfo, fromByte, toByte, fileSize);
+					
+					logger.log(StorageMgrMessage.PRODUCT_FILE_PARTIALLY_DOWNLOADED, pathInfo, fromByte, toByte, toByte -  fromByte);
+
+					// StorageLogger.logInfo(loggerLegacy, MSG_FILE_RETRIEVED, MSG_ID_FILE_RETRIEVED, pathInfo, fromByte, toByte, fileSize);
 
 					return new ResponseEntity<>(fsr, headers, status);
 				}
 
 			} catch (Exception e) {
+				
+				logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
 
 				e.printStackTrace();
 				return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
@@ -609,8 +614,8 @@ public class ProductControllerImpl implements ProductController {
 	private HttpHeaders getFilePage(StorageFile sourceFile, InputStream stream, Long fromByte, Long toByte)
 			throws IOException {
 		
-		if (loggerLegacy.isTraceEnabled())
-			loggerLegacy.trace(">>> getFilePage({}, {}, {}, {})", sourceFile.getFullPath(), stream, fromByte, toByte);
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getFilePage({}, {}, {}, {})", sourceFile.getFullPath(), stream, fromByte, toByte);
 		
 		Storage storage = storageProvider.getStorage(sourceFile.getFullPath()); 	
 
@@ -659,12 +664,13 @@ public class ProductControllerImpl implements ProductController {
 	@Override
 	public ResponseEntity<RestProductFS> deleteProductByPathInfo(String pathInfo) {
 
-		if (loggerLegacy.isTraceEnabled())
-			loggerLegacy.trace(">>> deleteProductByPathInfo({})", pathInfo);
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteProductByPathInfo({})", pathInfo);
 
 		if (storageProvider.isVersion2()) { // begin version 2 - delete files in storage
 			
 			if ((null == pathInfo) || (pathInfo == "")) {
+								
 				return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND, pathInfo),
 						HttpStatus.NOT_FOUND);
 			}
@@ -681,6 +687,9 @@ public class ProductControllerImpl implements ProductController {
 				return new ResponseEntity<>(response, HttpStatus.OK);
 
 			} catch (Exception e) {
+				
+				logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
+				
 				e.printStackTrace();
 				return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
 						e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -735,8 +744,8 @@ public class ProductControllerImpl implements ProductController {
 	 */
 	private void listProductFiles(StorageType st, String prefix, List<String> response) {
 
-		if (loggerLegacy.isTraceEnabled())
-			loggerLegacy.trace(">>> listProductFiles({}, {})", st, prefix, response.size());
+		if (logger.isTraceEnabled())
+			logger.trace(">>> listProductFiles({}, {})", st, prefix, response.size());
 
 		ProseoFile path = null;
 		if (prefix == null) {
@@ -768,8 +777,8 @@ public class ProductControllerImpl implements ProductController {
 	private RestProductFS setRestProductFS(RestProductFS restProductFS, String storageId, Boolean registered,
 			String registeredFilePath, List<String> registeredFiles, Boolean deleted, String msg) {
 
-		if (loggerLegacy.isTraceEnabled())
-			loggerLegacy.trace(">>> setRestProductFS({}, {}, {}, {}, {}, {}, {})",
+		if (logger.isTraceEnabled())
+			logger.trace(">>> setRestProductFS({}, {}, {}, {}, {}, {}, {})",
 					(null == restProductFS ? "MISSING" : restProductFS.getProductId()), storageId, registered,
 					registeredFilePath, registeredFiles.size(), deleted, msg);
 
@@ -789,8 +798,8 @@ public class ProductControllerImpl implements ProductController {
 			response.setMessage(msg);
 		}
 
-		if (loggerLegacy.isDebugEnabled())
-			loggerLegacy.debug("Response created: {}", response);
+		if (logger.isDebugEnabled())
+			logger.debug("Response created: {}", response);
 
 		return response;
 	}

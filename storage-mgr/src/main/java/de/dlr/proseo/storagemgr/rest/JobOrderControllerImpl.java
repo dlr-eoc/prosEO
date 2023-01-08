@@ -198,10 +198,7 @@ public class JobOrderControllerImpl implements JoborderController {
 
 			if ((null == pathInfo) || (pathInfo == "")) {
 				
-				String msg = logger.log(StorageMgrMessage.JOB_ORDER_FILE_NOT_FOUND, pathInfo);
-				return new ResponseEntity<>(msg, HttpStatus.NOT_FOUND);
-				
-				// return new ResponseEntity<>("File not found:" + pathInfo, HttpStatus.NOT_FOUND);
+				return new ResponseEntity<>("Whrong path", HttpStatus.NOT_FOUND);
 			}
 
 			try {
