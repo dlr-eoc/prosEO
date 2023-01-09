@@ -110,7 +110,7 @@ public class WorkflowMgr {
 		// Workflow version is mandatory.
 		if (null == restWorkflow.getWorkflowVersion()) {
 			throw new IllegalArgumentException(
-					logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For workflow creation, version"));
+					logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For workflow creation, workflow version"));
 		}
 
 		// The configured processor is mandatory and must exist in the repository.
@@ -161,7 +161,7 @@ public class WorkflowMgr {
 			}
 		}
 
-		// If provided, workflowOptions must have the mandatory fields.
+		// If provided, workflowOptions must have the mandatory fields set.
 		if (!modelWorkflow.getWorkflowOptions().isEmpty()) {
 			for (WorkflowOption option : modelWorkflow.getWorkflowOptions()) {
 				if (null == option.getName()) {
@@ -175,6 +175,10 @@ public class WorkflowMgr {
 				if (option.getValueRange().isEmpty()) {
 					throw new IllegalArgumentException(
 							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For workflowOption creation, value range"));
+				}
+				if (null != option.getDefaultValue() && !option.getValueRange().contains(option.getDefaultValue())) {
+					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.RANGE_MUST_CONTAIN_DEFAULT,
+							option.getDefaultValue(), option.getId()));
 				}
 			}
 		}
@@ -342,19 +346,33 @@ public class WorkflowMgr {
 
 		boolean workflowChanged = false;
 		boolean workflowOptionsChanged = false;
-		
+
 		String missionCode = modelWorkflow.getConfiguredProcessor().getProcessor().getProcessorClass().getMission()
 				.getCode();
 
-		if (!modelWorkflow.getName().equals(restWorkflow.getName())) {
+		// Name may not be null
+		if (null == restWorkflow.getName()) {
+			throw new IllegalArgumentException(
+					logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For workflow modification, name"));
+		} else if (!modelWorkflow.getName().equals(restWorkflow.getName())) {
 			workflowChanged = true;
 			modelWorkflow.setName(restWorkflow.getName());
 		}
-		if (!modelWorkflow.getWorkflowVersion().equals(restWorkflow.getWorkflowVersion())) {
+
+		// Workflow version may not be null
+		if (null == restWorkflow.getWorkflowVersion()) {
+			throw new IllegalArgumentException(
+					logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For workflow modification, workflow version"));
+		} else if (!modelWorkflow.getWorkflowVersion().equals(restWorkflow.getWorkflowVersion())) {
 			workflowChanged = true;
 			modelWorkflow.setWorkflowVersion(restWorkflow.getWorkflowVersion());
 		}
-		if (null != restWorkflow.getConfiguredProcessor()
+
+		// Configured processor may not be null and must exist
+		if (null == restWorkflow.getConfiguredProcessor()) {
+			throw new IllegalArgumentException(
+					logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For workflow modification, configuredProcessor"));
+		} else if (null != restWorkflow.getConfiguredProcessor()
 				&& modelWorkflow.getConfiguredProcessor().getIdentifier() != restWorkflow.getConfiguredProcessor()) {
 			workflowChanged = true;
 
@@ -368,7 +386,12 @@ public class WorkflowMgr {
 			}
 			modelWorkflow.setConfiguredProcessor(newConfiguredProcessor);
 		}
-		if (null != restWorkflow.getInputProductClass()
+
+		// Input product class may not be null and must exist
+		if (null == restWorkflow.getInputProductClass()) {
+			throw new IllegalArgumentException(
+					logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For workflow modification, inputProductClass"));
+		} else if (null != restWorkflow.getInputProductClass()
 				&& !modelWorkflow.getInputProductClass().getProductType().equals(restWorkflow.getInputProductClass())) {
 			workflowChanged = true;
 
@@ -381,8 +404,14 @@ public class WorkflowMgr {
 			}
 			modelWorkflow.setInputProductClass(newInputProductClass);
 		}
-		if (null != restWorkflow.getOutputProductClass() && !modelWorkflow.getOutputProductClass().getProductType()
-				.equals(restWorkflow.getOutputProductClass())) {
+
+		// Output product class may not be null, must exist, and must be produced by the
+		// configured processor
+		if (null == restWorkflow.getOutputProductClass()) {
+			throw new IllegalArgumentException(
+					logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For workflow creation, outputProductClass"));
+		} else if (null != restWorkflow.getOutputProductClass() && !modelWorkflow.getOutputProductClass()
+				.getProductType().equals(restWorkflow.getOutputProductClass())) {
 			workflowChanged = true;
 			ProductClass newOutputProductClass = RepositoryService.getProductClassRepository()
 					.findByMissionCodeAndProductType(missionCode, restWorkflow.getOutputProductClass());
@@ -401,13 +430,13 @@ public class WorkflowMgr {
 		if (logger.isTraceEnabled())
 			logger.trace("... scalar attributes for workflow have changed: " + workflowChanged);
 
-		// TODO inspect modification logic regarding options & dealing with option
-		// versions
+		// Check whether options were deleted entirely
 		if (restWorkflow.getWorkflowOptions().isEmpty()) {
 			workflowOptionsChanged = true;
 			modelWorkflow.getWorkflowOptions().clear();
 		}
-		
+
+		// If options were provided, replace old options
 		if (!restWorkflow.getWorkflowOptions().isEmpty()) {
 			workflowOptionsChanged = true;
 			modelWorkflow.getWorkflowOptions().clear();
@@ -427,6 +456,10 @@ public class WorkflowMgr {
 				if (newOption.getValueRange().isEmpty()) {
 					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
 							"For workflowOption modification, value range"));
+				}
+				if (null != newOption.getDefaultValue() && !newOption.getValueRange().contains(newOption.getDefaultValue())) {
+					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.RANGE_MUST_CONTAIN_DEFAULT,
+							newOption.getDefaultValue(), newOption.getId()));
 				}
 				modelWorkflow.getWorkflowOptions().add(newOption);
 			}
@@ -492,7 +525,7 @@ public class WorkflowMgr {
 		if (null != configuredProcessor) {
 			jpqlQuery += " and configuredProcessor.identifier = :configuredProcessor";
 		}
-		
+
 		Query query = em.createQuery(jpqlQuery);
 		query.setParameter("missionCode", missionCode);
 		if (null != workflowName) {
@@ -507,7 +540,7 @@ public class WorkflowMgr {
 		if (null != configuredProcessor) {
 			query.setParameter("configuredProcessor", configuredProcessor);
 		}
-		
+
 		for (Object resultObject : query.getResultList()) {
 			if (resultObject instanceof Workflow) {
 				result.add(WorkflowUtil.toRestWorkflow((Workflow) resultObject));

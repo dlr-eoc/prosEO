@@ -102,6 +102,7 @@ public enum ProcessorMgrMessage implements ProseoMessage {
 	WORKFLOW_NOT_MODIFIED							(4586, Level.INFO, true, "Workflow with id {0} not modified (no changes)", ""),
 	WORKFLOW_DATA_MISSING							(4587, Level.ERROR, false, "Workflow data not set", ""),
 	CONCURRENT_WORKFLOW_UPDATE						(4588, Level.ERROR, false, "The workflow with ID {0} has been modified since retrieval by the client", ""),
+	RANGE_MUST_CONTAIN_DEFAULT						(4589, Level.ERROR, false, "The default value \"{0}\" of workflow option {1} is not contained in the value range", ""),
 	
 	;
 

@@ -384,7 +384,14 @@ public class WorkflowMgrTest {
 		assertThrows(IllegalArgumentException.class, () -> workflowMgr.createWorkflow(testWorkflow));
 		testWorkflowOption.setValueRange(new ArrayList<String>());
 		testWorkflowOption.getValueRange().add("someValue");
-
+		
+		// If a default value is provided, it must be contained in the value range.
+		testWorkflowOption.setDefaultValue("notContained");
+		testWorkflow.getWorkflowOptions().clear();
+		testWorkflow.getWorkflowOptions().add(testWorkflowOption);
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.createWorkflow(testWorkflow));
+		testWorkflowOption.setDefaultValue(null);
+		
 		// No exception is thrown for correct input.
 		testWorkflow.getWorkflowOptions().clear();
 		testWorkflow.getWorkflowOptions().add(testWorkflowOption);
@@ -459,6 +466,8 @@ public class WorkflowMgrTest {
 				.getVersion() == 1 + originalWorkflow.getVersion());
 		testWorkflow.setVersion(testWorkflow.getVersion() + 1);
 
+		//TODO Mandatory fields may not be null
+		
 		// If changed, configured processor must be valid.
 		testWorkflow.setConfiguredProcessor("invalid");
 		assertThrows(IllegalArgumentException.class,
