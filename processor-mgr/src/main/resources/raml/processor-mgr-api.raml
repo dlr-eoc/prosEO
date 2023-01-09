@@ -33,7 +33,9 @@ types:
   RestConfigurationFile: !include ../../../../../model/src/main/resources/raml/types/configurationfile.raml
   RestConfigurationInputFile: !include ../../../../../model/src/main/resources/raml/types/configurationinputfile.raml
   RestConfiguredProcessor: !include ../../../../../model/src/main/resources/raml/types/configuredprocessor.raml
-
+  RestWorkflow: !include ../../../../../model/src/main/resources/raml/types/workflow.raml
+  RestWorkflowOption: !include ../../../../../model/src/main/resources/raml/types/workflowoption.raml
+  
 resourceTypes:
   standard:
     get?:
@@ -306,5 +308,68 @@ resourceTypes:
     delete:
       description: Delete a configured processor by ID
       displayName: deleteConfiguredProcessorById
+      responses:
+        204:
+
+/workflows:
+  type: standard
+  get:
+    description: Get workflows by mission, workflow name, workflow version, outputProductClass and configuredProcessor
+    displayName: getWorkflows
+    queryParameters:
+      mission?: string
+      workflowName?: string
+      workflowVersion?: string
+      outputProductClass?: string
+      configuredProcessor?: string
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestWorkflow[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/workflow-list.json
+  post:
+    description: Create a new workflow
+    displayName: createWorkflow
+    body:
+      application/json:
+        type: RestWorkflow
+        example: !include ../../../../../model/src/main/resources/raml/examples/workflow.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: RestWorkflow
+            example: !include ../../../../../model/src/main/resources/raml/examples/workflow.json
+  /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
+    get:
+      description: Get a workflow by ID
+      displayName: getWorkflowById
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestWorkflow
+              example: !include ../../../../../model/src/main/resources/raml/examples/workflow.json
+    patch:
+      description: Update a workflow by ID
+      displayName: modifyWorkflow
+      body:
+        application/json:
+          type: RestWorkflow
+          example: !include ../../../../../model/src/main/resources/raml/examples/workflow.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestWorkflow
+              example: !include ../../../../../model/src/main/resources/raml/examples/workflow.json
+    delete:
+      description: Delete a workflow by ID
+      displayName: deleteWorkflowById
       responses:
         204:

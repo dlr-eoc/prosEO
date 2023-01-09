@@ -81,7 +81,28 @@ public enum ProcessorMgrMessage implements ProseoMessage {
 	PROCESSOR_NOT_MODIFIED							(4565, Level.INFO, true, "Processor with id {0} not modified (no changes)", ""),
 	PROCESSOR_RETRIEVED								(4566, Level.INFO, true, "Processor with ID {0} retrieved", ""),
 	PRODUCT_CLASS_INVALID							(4567, Level.ERROR, false, "Product type {0} invalid for mission {1}", ""),
-
+	WORKFLOW_MISSING								(4568, Level.ERROR, false, "Workflow not set", ""),
+	WORKFLOW_LIST_EMPTY								(4569, Level.ERROR, false, "No workflow found for search criteria", ""),
+	WORKFLOW_LIST_RETRIEVED							(4570, Level.INFO, true, "Workflow list of size {0} retrieved for mission {1}, workflow name {2}, workflow version {3}, output product class {3}, configured processor {4}", ""),
+	MISSION_CODE_MISSING							(4571, Level.ERROR, false, "No mission code given", ""),
+	WORKFLOW_ID_MISSING								(4572, Level.ERROR, false, "Workflow ID not set", ""),
+	WORKFLOW_ID_NOT_FOUND							(4573, Level.ERROR, false, "No workflow found with ID {0}", ""),
+	WORKFLOW_DELETED								(4574, Level.INFO, true, "Workflow with id {0} deleted", ""),
+	WORKFLOW_DELETION_UNSUCCESSFUL					(4575, Level.ERROR, false, "Workflow deletion unsuccessful for ID {0}", ""),
+	WORKFLOW_RETRIEVED								(4576, Level.INFO, true, "Workflow with ID {0} retrieved", ""),
+	NO_WORKFLOW_FOUND								(4577, Level.ERROR, false, "No workflow found for mission {0}, name {1}, version {2}, output product class {3}, configured processor {4}", ""),
+	WORKFLOW_NAME_MISSING							(4578, Level.ERROR, false, "Workflow name not set", ""),
+	DUPLICATE_WORKFLOW								(4579, Level.ERROR, false, "Duplicate workflow for mission {0}, workflow name {1}, workflow version {2}, uuid {3}", ""),
+	WORKFLOW_CREATED								(4580, Level.INFO, true, "Workflow {0}, version {1} created for mission {2}", ""),
+	FIELD_NOT_SET									(4581, Level.ERROR, false, "{0} is mandatory", ""),
+	PROCESSOR_PRODUCT_MISMATCH						(4582, Level.ERROR, false, "The specified processor class must be able to produce the specified output product class", ""),
+	WORKFLOW_OPTION_MISMATCH						(4583, Level.ERROR, false, "Workflow options must match the respective workflow by mission and by workflow name", ""),
+	FIELD_MISSSPECIFIED								(4584, Level.ERROR, false, "No {0} found for mission code {1} and {0} \"{2}\"", ""),
+	WORKFLOW_MODIFIED								(4585, Level.INFO, true, "Workflow with id {0} modified", ""),
+	WORKFLOW_NOT_MODIFIED							(4586, Level.INFO, true, "Workflow with id {0} not modified (no changes)", ""),
+	WORKFLOW_DATA_MISSING							(4587, Level.ERROR, false, "Workflow data not set", ""),
+	CONCURRENT_WORKFLOW_UPDATE						(4588, Level.ERROR, false, "The workflow with ID {0} has been modified since retrieval by the client", ""),
+	
 	;
 
 	private final int code;
