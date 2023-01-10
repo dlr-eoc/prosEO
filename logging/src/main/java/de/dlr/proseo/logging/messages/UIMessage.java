@@ -276,8 +276,16 @@ public enum UIMessage implements ProseoMessage {
 	WARN_CREDENTIALS_INSECURE				(6260, Level.WARN, false, "Credential file {0} ignored, because it is insecure (group or world readable)", ""),
 	WARN_UNEXPECTED_STATUS					(6261, Level.WARN, false, "Unexpected HTTP status {0} received", ""),
 	WEBCLIENT_ERROR							(6262, Level.ERROR, false, "Error from WebClient - Status {0}, Body {1}, Exception {2}", ""),
-	
-	
+	WORKFLOW_CREATED						(6263, Level.INFO, true, "Workflow {0} with version {1} created (database ID {2})", ""),
+	WORKFLOW_DATA_INVALID					(6264, Level.ERROR, false, "Workflow data invalid (cause: {0})", ""),
+	WORKFLOW_DELETE_FAILED					(6265, Level.ERROR, false, "Deletion of workflow {0} with version {1} failed (cause: {2})", ""),
+	WORKFLOW_DELETED						(6266, Level.INFO, true, "Workflow with database ID {0} deleted", ""),
+	WORKFLOW_NOT_FOUND						(6267, Level.ERROR, false, "Workflow {0} with version {1} not found", ""),
+	WORKFLOW_NOT_FOUND_BY_ID				(6268, Level.ERROR, false, "Workflow with database ID {0} not found", ""),
+	WORKFLOW_UPDATED						(6269, Level.INFO, true, "Workflow with database ID {0} updated (new version {1})", ""),
+	NO_WORKFLOWS_FOUND						(6270, Level.ERROR, false, "No workflows found for given search criteria", ""),
+	NO_WORKFLOW_IDENTIFIER_GIVEN			(6271, Level.ERROR, false, "No workflow name and/or version given", ""),
+		
 	;
 
 	private final int code;

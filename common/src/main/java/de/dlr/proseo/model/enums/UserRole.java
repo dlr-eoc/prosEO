@@ -83,6 +83,8 @@ public enum UserRole {
 	/** Create, update and delete access to configurations and configured processors */
 	CONFIGURATION_MGR,
 	
+	/** Create, update and delete access to workflows */
+	WORKFLOW_MGR,
 	
 	// Processing facility management roles
 	

@@ -864,6 +864,101 @@ commands:
             - name: configurationVersion
               type: string
               description: The version of the configuration to delete
+    - name: workflow
+      description: Commands for managing workflowes
+      subcommands:
+        - name: show
+          description: Show all workflowes for the current mission or only the selected ones
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give workflow details, otherwise show only workflow name
+              shortForm: v
+          parameters:
+            - name: workflowName
+              type: string
+              optional: true
+              description: The name of the workflow to show
+            - name: workflowVersion
+              type: string
+              optional: true
+              description: The textual description of the workflow to show
+            - name: outputProductClass
+              type: string
+              optional: true
+              description: The output product class of the workflow to show
+            - name: configuredProcessor
+              type: string
+              optional: true
+              description: The configured processor of the workflow to show
+        - name: create
+          description: Create a new workflow for the current mission; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the workflow definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+          parameters:
+            - name: name
+              type: string
+              optional: true
+              description: The name of the workflow to create (mandatory if not read from file)
+            - name: workflow Version
+              type: string
+              optional: true
+              description: A textual description of the workflow to create (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A workflow attribute to set in the form "<attribute name>=<attribute value>"
+###
+        - name: update
+          description: Update a workflow for the current mission; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the workflow definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: delete-attributes
+              type: boolean
+              description: Delete non-mandatory attributes not given in the workflow definition file and/or the command parameters
+          parameters:
+            - name: name
+              type: string
+              optional: true
+              description: The name of the workflow to create (mandatory if not read from file)
+            - name: workflow Version
+              type: string
+              optional: true
+              description: A textual description of the workflow to create (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A workflow attribute to set in the form "<attribute name>=<attribute value>"
+        - name: delete
+          description: Delete the named workflow from the current mission
+          parameters:
+            - name: name
+              type: string
+              optional: true
+              description: The name of the workflow to create (mandatory if not read from file)
+            - name: workflow Version
+              type: string
+              optional: true
+              description: A textual description of the workflow to create (mandatory if not read from file)
                  
     # Commands for the Product Class Manager
     - name: productclass
