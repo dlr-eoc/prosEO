@@ -797,7 +797,7 @@ public class ProductclassCommandRunner {
 				SelectionRuleString selectionRule = mapper.convertValue(resultObject, SelectionRuleString.class);
 				System.out.println("ID: " + selectionRule.getId());
 				System.out.println(selectionRule.getSelectionRule());
-				System.out.println(String.format("(Mode: %s, configured processors: %s)\n", selectionRule.getMode(), selectionRule.getConfiguredProcessors().toString()));
+				System.out.println(String.format("(Mode: %s, configuredProcessors: %s)\n", selectionRule.getMode(), selectionRule.getConfiguredProcessors().toString()));
 			}
 		} else {
 			try {

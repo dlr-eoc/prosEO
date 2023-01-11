@@ -507,13 +507,13 @@ public class ProductClassManager {
 				}
 			}
 			
-			for (String configuredProcessor: rule.getApplicableConfiguredProcessors()) {
+			for (String configuredProcessor: rule.getConfiguredProcessors()) {
 				ConfiguredProcessor modelProcessor = RepositoryService.getConfiguredProcessorRepository()
 						.findByMissionCodeAndIdentifier(productClass.getMissionCode(), configuredProcessor);
 				if (null == modelProcessor) {
 					throw new IllegalArgumentException(logger.log(ProductClassMgrMessage.INVALID_PROCESSOR, configuredProcessor));
 				}
-				modelRule.getApplicableConfiguredProcessors().add(modelProcessor);
+				modelRule.getConfiguredProcessors().add(modelProcessor);
 			}
 			
 			for (RestSimplePolicy policy: rule.getSimplePolicies()) {
@@ -897,7 +897,7 @@ public class ProductClassManager {
 				restRule.setVersion(Long.valueOf(modelRule.getVersion()));
 				restRule.setMode(modelRule.getMode());
 				restRule.setSelectionRule(modelRule.toString());
-				for (ConfiguredProcessor modelProcessor: modelRule.getApplicableConfiguredProcessors()) {
+				for (ConfiguredProcessor modelProcessor: modelRule.getConfiguredProcessors()) {
 					restRule.getConfiguredProcessors().add(modelProcessor.getIdentifier());
 				}
 				result.add(restRule);
@@ -978,21 +978,21 @@ public class ProductClassManager {
 			for (SimpleSelectionRule simpleSelectionRule: selectionRule.getSimpleRules()) {
 				// Set remaining attributes
 				simpleSelectionRule.setMode(processingMode);
-				simpleSelectionRule.getApplicableConfiguredProcessors().addAll(configuredProcessors);
+				simpleSelectionRule.getConfiguredProcessors().addAll(configuredProcessors);
 				
 				// Check for duplicates
 				for (SimpleSelectionRule existingRule: productClass.getRequiredSelectionRules()) {
 					if (existingRule.getSourceProductClass().equals(simpleSelectionRule.getSourceProductClass())
 							&& Objects.equals(existingRule.getMode(), simpleSelectionRule.getMode())) {
 						// Duplicate candidate - check applicable configured processors
-						if (existingRule.getApplicableConfiguredProcessors().isEmpty() || simpleSelectionRule.getApplicableConfiguredProcessors().isEmpty()) {
+						if (existingRule.getConfiguredProcessors().isEmpty() || simpleSelectionRule.getConfiguredProcessors().isEmpty()) {
 							// At least one of the rules is applicable for all configured processors, so this is a duplicate
 							throw new IllegalArgumentException(logger.log(ProductClassMgrMessage.DUPLICATE_RULE,
 									productClass.getProductType(), existingRule.getSourceProductClass().getProductType(),
 									existingRule.getMode(), "(all)"));
 						}
-						for (ConfiguredProcessor existingProcessor: existingRule.getApplicableConfiguredProcessors()) {
-							if (simpleSelectionRule.getApplicableConfiguredProcessors().contains(existingProcessor)) {
+						for (ConfiguredProcessor existingProcessor: existingRule.getConfiguredProcessors()) {
+							if (simpleSelectionRule.getConfiguredProcessors().contains(existingProcessor)) {
 								// Overlapping set of configured processors, so this is a duplicate
 								throw new IllegalArgumentException(logger.log(ProductClassMgrMessage.DUPLICATE_RULE,
 										productClass.getProductType(), existingRule.getSourceProductClass().getProductType(),
@@ -1056,7 +1056,7 @@ public class ProductClassManager {
 				restRule.setVersion(Long.valueOf(modelRule.getVersion()));
 				restRule.setMode(modelRule.getMode());
 				restRule.setSelectionRule(modelRule.toString());
-				for (ConfiguredProcessor modelProcessor: modelRule.getApplicableConfiguredProcessors()) {
+				for (ConfiguredProcessor modelProcessor: modelRule.getConfiguredProcessors()) {
 					restRule.getConfiguredProcessors().add(modelProcessor.getIdentifier());
 				}
 				logger.log(ProductClassMgrMessage.SELECTION_RULE_RETRIEVED, ruleid, id);
@@ -1156,13 +1156,13 @@ public class ProductClassManager {
 					if (null == changedProcessor) {
 						throw new IllegalArgumentException(logger.log(ProductClassMgrMessage.INVALID_PROCESSOR, changedProcessorName));
 					}
-					if (!modelRule.getApplicableConfiguredProcessors().contains(changedProcessor)) {
+					if (!modelRule.getConfiguredProcessors().contains(changedProcessor)) {
 						ruleChanged = true;
 					}
 					newConfiguredProcessors.add(changedProcessor);
 				}
 				// Check for removed configured processors
-				for (ConfiguredProcessor oldProcessor: modelRule.getApplicableConfiguredProcessors()) {
+				for (ConfiguredProcessor oldProcessor: modelRule.getConfiguredProcessors()) {
 					if (!newConfiguredProcessors.contains(oldProcessor)) {
 						ruleChanged = true;
 					}
@@ -1171,7 +1171,7 @@ public class ProductClassManager {
 				// Save simple selection rule only if anything was actually changed
 				if (ruleChanged) {
 					modelRule.incrementVersion();
-					modelRule.setApplicableConfiguredProcessors(newConfiguredProcessors);
+					modelRule.setConfiguredProcessors(newConfiguredProcessors);
 					RepositoryService.getProductClassRepository().save(modelProductClass.get());
 				}
 				
@@ -1180,7 +1180,7 @@ public class ProductClassManager {
 				restRule.setVersion(Long.valueOf(modelRule.getVersion()));
 				restRule.setMode(modelRule.getMode());
 				restRule.setSelectionRule(modelRule.toString());
-				for (ConfiguredProcessor modelProcessor: modelRule.getApplicableConfiguredProcessors()) {
+				for (ConfiguredProcessor modelProcessor: modelRule.getConfiguredProcessors()) {
 					restRule.getConfiguredProcessors().add(modelProcessor.getIdentifier());
 				}
 				if (ruleChanged) {
@@ -1306,8 +1306,8 @@ public class ProductClassManager {
 					throw new EntityNotFoundException(logger.log(ProductClassMgrMessage.INVALID_PROCESSOR, configuredProcessor));
 				}
 				// Add the processor, if is not yet added
-				if (!modelRule.getApplicableConfiguredProcessors().contains(newProcessor)) {
-					modelRule.getApplicableConfiguredProcessors().add(newProcessor);
+				if (!modelRule.getConfiguredProcessors().contains(newProcessor)) {
+					modelRule.getConfiguredProcessors().add(newProcessor);
 					RepositoryService.getProductClassRepository().save(modelProductClass.get());
 					logger.log(ProductClassMgrMessage.PROCESSOR_ADDED, configuredProcessor, ruleid, id);
 				} else {
@@ -1320,7 +1320,7 @@ public class ProductClassManager {
 				restRule.setVersion(Long.valueOf(modelRule.getVersion()));
 				restRule.setMode(modelRule.getMode());
 				restRule.setSelectionRule(modelRule.toString());
-				for (ConfiguredProcessor modelProcessor: modelRule.getApplicableConfiguredProcessors()) {
+				for (ConfiguredProcessor modelProcessor: modelRule.getConfiguredProcessors()) {
 					restRule.getConfiguredProcessors().add(modelProcessor.getIdentifier());
 				}
 				return restRule;
@@ -1379,8 +1379,8 @@ public class ProductClassManager {
 					throw new EntityNotFoundException(logger.log(ProductClassMgrMessage.INVALID_PROCESSOR, configuredProcessor));
 				}
 				// Add the processor, if is not yet added
-				if (modelRule.getApplicableConfiguredProcessors().contains(newProcessor)) {
-					modelRule.getApplicableConfiguredProcessors().remove(newProcessor);
+				if (modelRule.getConfiguredProcessors().contains(newProcessor)) {
+					modelRule.getConfiguredProcessors().remove(newProcessor);
 					RepositoryService.getProductClassRepository().save(modelProductClass.get());
 					logger.log(ProductClassMgrMessage.PROCESSOR_REMOVED, configuredProcessor, ruleid, id);
 				} else {
@@ -1393,7 +1393,7 @@ public class ProductClassManager {
 				restRule.setVersion(Long.valueOf(modelRule.getVersion()));
 				restRule.setMode(modelRule.getMode());
 				restRule.setSelectionRule(modelRule.toString());
-				for (ConfiguredProcessor modelProcessor: modelRule.getApplicableConfiguredProcessors()) {
+				for (ConfiguredProcessor modelProcessor: modelRule.getConfiguredProcessors()) {
 					restRule.getConfiguredProcessors().add(modelProcessor.getIdentifier());
 				}
 				return restRule;

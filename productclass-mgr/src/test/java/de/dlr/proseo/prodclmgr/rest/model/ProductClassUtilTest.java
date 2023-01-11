@@ -113,7 +113,7 @@ public class ProductClassUtilTest {
 		simpleSelectionRule.setSourceProductClass(baseProductClass);
 		simpleSelectionRule.setMode(TEST_MODE);
 		simpleSelectionRule.setIsMandatory(true);
-		simpleSelectionRule.getApplicableConfiguredProcessors().add(configuredProcessor);
+		simpleSelectionRule.getConfiguredProcessors().add(configuredProcessor);
 		simpleSelectionRule.getFilterConditions().put(TEST_PARAMETER_KEY, (new Parameter()).init(ParameterType.STRING, TEST_PARAMETER_VALUE));
 		
 		SimplePolicy simplePolicy = new SimplePolicy();
@@ -150,10 +150,10 @@ public class ProductClassUtilTest {
 		assertEquals("Unexpected mode:", TEST_MODE, restSelectionRule.getMode());
 		assertEquals("Unexpected 'mandatory' value:", true, restSelectionRule.getIsMandatory());
 		
-		assertNotNull("Applicable processors missing", restSelectionRule.getApplicableConfiguredProcessors());
+		assertNotNull("Applicable processors missing", restSelectionRule.getConfiguredProcessors());
 		assertEquals("Unexpected number of applicable processors:", 
-				simpleSelectionRule.getApplicableConfiguredProcessors().size(), restSelectionRule.getApplicableConfiguredProcessors().size());
-		assertEquals("Unexpected applicable configured processor:", TEST_CONFIGURED_PROCESSOR, restSelectionRule.getApplicableConfiguredProcessors().get(0));
+				simpleSelectionRule.getConfiguredProcessors().size(), restSelectionRule.getConfiguredProcessors().size());
+		assertEquals("Unexpected applicable configured processor:", TEST_CONFIGURED_PROCESSOR, restSelectionRule.getConfiguredProcessors().get(0));
 		
 		assertNotNull("Filter conditions missing", restSelectionRule.getFilterConditions());
 		assertEquals("Unexpected number of filter conditions:", simpleSelectionRule.getFilterConditions().size(), restSelectionRule.getFilterConditions().size());
