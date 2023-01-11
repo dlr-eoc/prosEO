@@ -18,6 +18,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.logging.http.HttpPrefix;
+import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.StorageMgrMessage;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
@@ -71,6 +73,9 @@ public class ProductfileControllerImpl implements ProductfileController {
 	
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductControllerImpl.class);
+	
+	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.STORAGE_MGR);
+
 	
 	@Autowired
 	private StorageManagerConfiguration cfg;
@@ -127,9 +132,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 				
 				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED, targetFile.getFullPath());
 
-				// System.out.println("Downloaded file: " + targetFile.getFullPath());
-
-				return HttpResponses.createOk(restFileInfo);
+				return new ResponseEntity<>(restFileInfo, HttpStatus.OK);
 
 			} catch (FileLockedAfterMaxCyclesException e) {
 
@@ -142,15 +145,14 @@ public class ProductfileControllerImpl implements ProductfileController {
 			} catch (IOException e) {
 				
 				String msg = logger.log(StorageMgrMessage.PRODUCT_FILE_CANNOT_BE_DOWNLOADED, e.getMessage());
-
-				return HttpResponses.createError(msg, e);
+				
+				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);
 
 			} catch (Exception e) {
 				
 				String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
 
-				return new ResponseEntity<>(errorHeaders(msg + ": " + e.getMessage()),
-						HttpStatus.INTERNAL_SERVER_ERROR);
+				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
 			finally {
