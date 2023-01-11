@@ -122,7 +122,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 					cache.put(targetFile.getFullPath());
 				}
 
-				RestFileInfo restFileInfo = ControllerUtils.convertToRestFileInfo(targetFile,
+				RestFileInfo restFileInfo = convertToRestFileInfo(targetFile,
 						storageProvider.getCacheFileSize(sourceFile.getRelativePath()));
 				
 				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED, targetFile.getFullPath());
@@ -268,7 +268,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 				storage.uploadFile(sourceFile, targetFile);
 
-				RestFileInfo restFileInfo = ControllerUtils.convertToRestFileInfo(targetFile,
+				RestFileInfo restFileInfo = convertToRestFileInfo(targetFile,
 						storage.getFileSize(targetFile));
 
 				StorageLogger.logInfo(loggerLegacy, MSG_FILES_UPDATED, MSG_ID_FILES_UPDATED, pathInfo, productId);
@@ -387,5 +387,26 @@ public class ProductfileControllerImpl implements ProductfileController {
 		responseHeaders.set(HTTP_HEADER_WARNING,
 				HTTP_MSG_PREFIX + (null == message ? "null" : message.replaceAll("\n", " ")));
 		return responseHeaders;
+	}
+	
+	
+	/**
+	 * Converts storage file to rest file info (generated model)
+	 * 
+	 * @param storageFile storage file 
+	 * @param fileSize file size
+
+	 * @return rest file info
+	 */
+	private static RestFileInfo convertToRestFileInfo(StorageFile storageFile, long fileSize) { 
+		
+		RestFileInfo restFileInfo = new RestFileInfo();
+		
+		restFileInfo.setStorageType(storageFile.getStorageType().toString());
+		restFileInfo.setFilePath(storageFile.getFullPath());
+		restFileInfo.setFileName(storageFile.getFileName());
+		restFileInfo.setFileSize(fileSize);
+		
+		return restFileInfo;
 	}
 }
