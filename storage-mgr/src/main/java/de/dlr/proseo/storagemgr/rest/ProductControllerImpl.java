@@ -41,6 +41,8 @@ import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
 import de.dlr.proseo.storagemgr.version2.model.Storage;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
+import de.dlr.proseo.logging.http.HttpPrefix;
+import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.StorageMgrMessage;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
@@ -102,6 +104,7 @@ public class ProductControllerImpl implements ProductController {
 	
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductControllerImpl.class);
+	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.PLANNER);
 
 	/** Storage Manager configuration */
 	@Autowired
@@ -110,34 +113,7 @@ public class ProductControllerImpl implements ProductController {
 	@Autowired
 	private StorageProvider storageProvider;
 
-	/**
-	 * Log an error and return the corresponding HTTP message header
-	 * 
-	 * @param messageFormat     the message text with parameter placeholders in
-	 *                          String.format() style
-	 * @param messageId         a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the
-	 *                          message format)
-	 * @return an HttpHeaders object with a formatted error message
-	 */
-	private HttpHeaders errorHeaders(String messageFormat, int messageId, Object... messageParameters) {
 
-		if (loggerLegacy.isTraceEnabled())
-			loggerLegacy.trace(">>> errorHeaders({}, {}, {})", messageFormat, messageId, "messageParameters");
-
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		loggerLegacy.error(message);
-
-		// Create an HTTP "Warning" header
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message);
-		return responseHeaders;
-	}
 
 	/**
 	 * Copy a file from "ingest" file system to storage manager controlled prosEO
@@ -181,20 +157,15 @@ public class ProductControllerImpl implements ProductController {
 
 				// StorageLogger.logInfo(loggerLegacy, MSG_FILES_REGISTERED, MSG_ID_FILES_REGISTERED, allUploaded.toString());
 				
-				logger.log(StorageMgrMessage.PRODUCTS_UPLOADED_TO_STORAGE, Integer.toString(allUploaded.size()));
+				logger.log(StorageMgrMessage.PRODUCTS_UPLOADED_TO_STORAGE, Integer.toString(allUploaded.size()), allUploaded.toString());
 				
 				return new ResponseEntity<>(response, HttpStatus.CREATED);
 
 			} catch (Exception e) {
-
-				e.printStackTrace();
 				
 				String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
-				
-				// return new ResponseEntity<>(msg, HttpStatus.INTERNAL_SERVER_ERROR);
-				
-				return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
-						e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+								
+				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
 		} // end version 2
@@ -244,17 +215,6 @@ public class ProductControllerImpl implements ProductController {
 		}
 	}
 
-	private String getLocalHostName() {
-
-		try {
-			InetAddress iAddress = InetAddress.getLocalHost();
-			return iAddress.getHostName();
-
-		} catch (UnknownHostException e1) {
-			return "(UNKNOWN)";
-		}
-	}
-
 	/**
 	 * List the file/object contents of a repository.
 	 * 
@@ -300,21 +260,16 @@ public class ProductControllerImpl implements ProductController {
 							.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.valueOf(storageType))
 							.addFSPrefix(response);
 				}
-				
-				StorageLogger.logInfo(loggerLegacy, MSG_FILES_LISTED, MSG_ID_FILES_LISTED, response.toString());
-				
+								
 				logger.log(StorageMgrMessage.PRODUCT_FILES_LISTED, response.toString());
 
 				return new ResponseEntity<>(response, HttpStatus.OK);
 
 			} catch (Exception e) {
 				
-				logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
+				String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
 
-				e.printStackTrace();
-				return new ResponseEntity<>(
-						errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, getErrorMessage(e)),
-						HttpStatus.INTERNAL_SERVER_ERROR);
+				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
 		} // end version 2
@@ -342,98 +297,6 @@ public class ProductControllerImpl implements ProductController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	private String getErrorMessage(Exception e) {
-		return e.getClass().toString() + ": " + e.getMessage();
-	}
-
-	/**
-	 * Set the members of RestProductFS response.
-	 * 
-	 * @param response           the ingest info structure to update
-	 * @param restProductFS      the ingest info structure to copy product ID and
-	 *                           source information from
-	 * @param storageId          the ID of the storage used
-	 * @param registered         true, if the requested files have been ingested,
-	 *                           false otherwise
-	 * @param registeredFilePath common path to the ingested files
-	 * @param registeredFiles    file names after ingestion
-	 * @param deleted            true, if the files were deleted, false otherwise
-	 * @param msg                a response message text
-	 * @return the updated response object
-	 */
-	private RestProductFS setRestProductFS(RestProductFS response, RestProductFS restProductFS, String storageId,
-			Boolean registered, String registeredFilePath, List<String> registeredFiles, Boolean deleted, String msg) {
-
-		if (logger.isTraceEnabled())
-			logger.trace(">>> setRestProductFS({}, {}, {}, {}, {}, {}, {}, {})",
-					(null == response ? "MISSING" : response.getProductId()),
-					(null == restProductFS ? "MISSING" : restProductFS.getProductId()), storageId, registered,
-					registeredFilePath, registeredFiles.size(), deleted, msg);
-
-		if (response != null && restProductFS != null) {
-			response.setProductId(restProductFS.getProductId());
-			response.setTargetStorageId(storageId);
-			response.setRegistered(registered);
-			response.setRegisteredFilePath(registeredFilePath);
-			response.setSourceFilePaths(restProductFS.getSourceFilePaths());
-			response.setSourceStorageType(restProductFS.getSourceStorageType());
-			response.setTargetStorageType(restProductFS.getTargetStorageType());
-			response.setRegisteredFilesCount(Long.valueOf(registeredFiles.size()));
-			response.setRegisteredFilesList(registeredFiles);
-			response.setDeleted(deleted);
-			response.setMessage(msg);
-		}
-		if (logger.isDebugEnabled())
-			logger.debug("Response created: {}", response);
-		return response;
-	}
-
-	/**
-	 * Check the given token for formal correctness and extract its JWT claims set
-	 * 
-	 * @param token the signed JSON Web Token to check
-	 * @return the JWT claims set contained in the token
-	 * @throws IllegalArgumentException if the token cannot be analyzed
-	 */
-	private JWTClaimsSet extractJwtClaimsSet(String token) throws IllegalArgumentException {
-
-		if (logger.isTraceEnabled())
-			logger.trace(">>> extractJwtClaimsSet({})", token);
-
-		SignedJWT signedJWT = null;
-		try {
-			signedJWT = SignedJWT.parse(token);
-		} catch (ParseException e) {
-			throw new IllegalArgumentException(MSG_TOKEN_NOT_PARSEABLE);
-		}
-
-		JWSVerifier verifier = null;
-		try {
-			verifier = new MACVerifier(cfg.getStorageManagerSecret());
-		} catch (JOSEException e) {
-			throw new IllegalArgumentException(MSG_SECRET_TOO_SHORT);
-		}
-
-		try {
-			if (!signedJWT.verify(verifier)) {
-				throw new IllegalArgumentException(MSG_TOKEN_VERIFICATION_FAILED);
-			}
-			;
-		} catch (IllegalStateException e) {
-			throw new IllegalArgumentException(MSG_TOKEN_STATE_INVALID + signedJWT.getState());
-		} catch (JOSEException e) {
-			throw new IllegalArgumentException(MSG_TOKEN_NOT_VERIFIABLE);
-		}
-
-		// Retrieve / verify the JWT claims according to the app requirements
-		JWTClaimsSet claimsSet = null;
-		try {
-			claimsSet = signedJWT.getJWTClaimsSet();
-		} catch (ParseException e) {
-			throw new IllegalArgumentException(MSG_TOKEN_PAYLOAD_INVALID);
-		}
-		return claimsSet;
-	}
 
 	/**
 	 * Retrieve the byte stream for download of a file object in repository.
@@ -452,31 +315,37 @@ public class ProductControllerImpl implements ProductController {
 	@Override
 	public ResponseEntity<?> getObject(String pathInfo, String token, Long fromByte, Long toByte) {
 
-		if (loggerLegacy.isTraceEnabled())
-			loggerLegacy.trace(">>> getObject({}, {}, {}, {})", pathInfo, token, fromByte, toByte);
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getObject({}, {}, {}, {})", pathInfo, token, fromByte, toByte);
 
-		// Check parameters
 		if (null == pathInfo) {
-			return new ResponseEntity<>(errorHeaders(MSG_INVALID_PATH, MSG_ID_INVALID_PATH, pathInfo),
-					HttpStatus.BAD_REQUEST);
+			String msg = logger.log(StorageMgrMessage.PATH_IS_NULL);
+			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);
 		}
+		
 		if (null == token) {
-			return new ResponseEntity<>(errorHeaders(MSG_TOKEN_MISSING, MSG_ID_TOKEN_MISSING), HttpStatus.UNAUTHORIZED);
+			String msg = logger.log(StorageMgrMessage.TOKEN_MISSING);
+			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.UNAUTHORIZED);
 		}
 		
 		// token check begin
 		// Check authentication token
 		JWTClaimsSet claimsSet = null;
+		
 		try {
 			claimsSet = extractJwtClaimsSet(token);
+			
 		} catch (IllegalArgumentException e) {
-			return new ResponseEntity<>(errorHeaders(MSG_TOKEN_INVALID, MSG_ID_TOKEN_INVALID, token, e.getMessage()),
-					HttpStatus.UNAUTHORIZED);
+			
+			String msg = logger.log(StorageMgrMessage.TOKEN_INVALID, token, e.getMessage());
+			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.UNAUTHORIZED);
 		}
+		
 		if ((new Date()).after(claimsSet.getExpirationTime())) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_TOKEN_EXPIRED, MSG_ID_TOKEN_EXPIRED, claimsSet.getExpirationTime().toString()),
-					HttpStatus.UNAUTHORIZED);
+			
+			String msg = logger.log(StorageMgrMessage.TOKEN_EXPIRED, claimsSet.getExpirationTime().toString());
+			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.UNAUTHORIZED);
+
 		}
 		// token check end
 		
@@ -488,25 +357,26 @@ public class ProductControllerImpl implements ProductController {
 				String relativePath = storage.getRelativePath(pathInfo);
 				
 				StorageFile sourceFile = storage.getStorageFile(relativePath);
+				
 				if (sourceFile == null) {
-					return new ResponseEntity<>(errorHeaders(MSG_INVALID_PATH, MSG_ID_INVALID_PATH, pathInfo),
-							HttpStatus.BAD_REQUEST);
+					
+					String msg = logger.log(StorageMgrMessage.PATH_IS_NULL);
+					return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);
 				}
-				
-				Long fileSize = storage.getFileSize(sourceFile);
-				
+								
 				// token check begin
 				if (!sourceFile.getFileName().equals(claimsSet.getSubject())) {
-					return new ResponseEntity<>(
-							errorHeaders(MSG_TOKEN_MISMATCH, MSG_ID_TOKEN_MISMATCH, sourceFile.getFileName()),
-							HttpStatus.UNAUTHORIZED);
+					
+					String msg = logger.log(StorageMgrMessage.TOKEN_MISMATCH, sourceFile.getFileName());
+					return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.UNAUTHORIZED);
 				}
 				// token check end 
 				
 				InputStream stream = storage.getInputStream(sourceFile);
 				if (stream == null) {
-					return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND, pathInfo),
-							HttpStatus.NOT_FOUND);
+					
+					String msg = logger.log(StorageMgrMessage.FILE_NOT_FOUND, pathInfo);
+					return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.NOT_FOUND);					
 				}
 
 				HttpHeaders headers = getFilePage(sourceFile, stream, fromByte, toByte);
@@ -515,20 +385,14 @@ public class ProductControllerImpl implements ProductController {
 				InputStreamResource fsr = new InputStreamResource(stream);
 				if (fsr != null) {
 					
-					logger.log(StorageMgrMessage.PRODUCT_FILE_PARTIALLY_DOWNLOADED, pathInfo, fromByte, toByte, toByte -  fromByte);
-
-					// StorageLogger.logInfo(loggerLegacy, MSG_FILE_RETRIEVED, MSG_ID_FILE_RETRIEVED, pathInfo, fromByte, toByte, fileSize);
-
+					logger.log(StorageMgrMessage.PRODUCT_FILE_PARTIALLY_DOWNLOADED, pathInfo, Long.toString(fromByte), Long.toString(toByte), Long.toString(toByte - fromByte));
 					return new ResponseEntity<>(fsr, headers, status);
 				}
 
 			} catch (Exception e) {
 				
-				logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
-
-				e.printStackTrace();
-				return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
-						e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+				String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
+				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
 		} // end version 2
@@ -598,6 +462,84 @@ public class ProductControllerImpl implements ProductController {
 				HttpStatus.NOT_FOUND);
 	}
 
+	/**
+	 * Delete object(s)
+	 * 
+	 * @param pathInfo path to the object or directory
+	 * 
+	 * @return a response entity containing HTTP status OK and the full metadata of
+	 *         the deleted object, or HTTP status NOT_FOUND and an error message, or
+	 *         HTTP status INTERNAL_SERVER_ERROR and an error message
+	 */
+	@Override
+	public ResponseEntity<RestProductFS> deleteProductByPathInfo(String pathInfo) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteProductByPathInfo({})", pathInfo);
+
+		if (storageProvider.isVersion2()) { // begin version 2 - delete files in storage
+			
+			if (null == pathInfo)  {
+				String msg = logger.log(StorageMgrMessage.PATH_IS_NULL);
+				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.NOT_FOUND);		
+			}
+			
+			if (pathInfo == "") {			
+				String msg = logger.log(StorageMgrMessage.INVALID_PATH, pathInfo);
+				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.NOT_FOUND);					
+			}
+
+			try {
+				String storageType = storageProvider.getStorage().getStorageType().toString();
+
+				String relativePath = storageProvider.getRelativePath(pathInfo);
+				List<String> deletedFilesOrDir = storageProvider.getStorage().delete(relativePath);
+				RestProductFS response = createRestProductFilesDeleted(deletedFilesOrDir, storageType);
+				
+				logger.log(StorageMgrMessage.PRODUCT_FILE_DELETED, pathInfo);
+								
+				return new ResponseEntity<>(response, HttpStatus.OK);
+
+			} catch (Exception e) {
+				
+				String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
+				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+
+		} // end version 2
+
+		RestProductFS response = new RestProductFS();
+		if (pathInfo != null) {
+			ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
+			try {
+				ArrayList<String> deleted = sourceFile.delete();
+				if (deleted != null && !deleted.isEmpty()) {
+					response.setProductId("");
+					response.setDeleted(true);
+					response.setRegistered(false);
+					response.setSourceFilePaths(deleted);
+					response.setSourceStorageType(sourceFile.getFsType().toString());
+
+					StorageLogger.logInfo(loggerLegacy, MSG_FILE_DELETED, MSG_ID_FILE_DELETED, pathInfo);
+
+					return new ResponseEntity<>(response, HttpStatus.OK);
+				}
+			} catch (Exception e) {
+				return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
+						e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+		}
+		return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND, pathInfo),
+				HttpStatus.NOT_FOUND);
+	}
+	
+	/**
+	 * Gets OK or PARTIAL_CONTENT status
+	 * 
+	 * @param fromByte from byte
+	 * @param toByte to byte
+	 * @return http status OK or PARTIAL_CONTENT
+	 */
 	private HttpStatus getOkOrPartialStatus(Long fromByte, Long toByte) {
 
 		HttpStatus status;
@@ -611,6 +553,16 @@ public class ProductControllerImpl implements ProductController {
 		return status;
 	}
 
+	/**
+	 * Gets file page
+	 * 
+	 * @param sourceFile source file 
+	 * @param stream stream
+	 * @param fromByte from byte
+	 * @param toByte to byte
+	 * @return http header
+	 * @throws IOException
+	 */
 	private HttpHeaders getFilePage(StorageFile sourceFile, InputStream stream, Long fromByte, Long toByte)
 			throws IOException {
 		
@@ -653,75 +605,116 @@ public class ProductControllerImpl implements ProductController {
 	}
 
 	/**
-	 * Delete object(s)
+	 * Set the members of RestProductFS response.
 	 * 
-	 * @param pathInfo path to the object or directory
-	 * 
-	 * @return a response entity containing HTTP status OK and the full metadata of
-	 *         the deleted object, or HTTP status NOT_FOUND and an error message, or
-	 *         HTTP status INTERNAL_SERVER_ERROR and an error message
+	 * @param response           the ingest info structure to update
+	 * @param restProductFS      the ingest info structure to copy product ID and
+	 *                           source information from
+	 * @param storageId          the ID of the storage used
+	 * @param registered         true, if the requested files have been ingested,
+	 *                           false otherwise
+	 * @param registeredFilePath common path to the ingested files
+	 * @param registeredFiles    file names after ingestion
+	 * @param deleted            true, if the files were deleted, false otherwise
+	 * @param msg                a response message text
+	 * @return the updated response object
 	 */
-	@Override
-	public ResponseEntity<RestProductFS> deleteProductByPathInfo(String pathInfo) {
+	private RestProductFS setRestProductFS(RestProductFS response, RestProductFS restProductFS, String storageId,
+			Boolean registered, String registeredFilePath, List<String> registeredFiles, Boolean deleted, String msg) {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> deleteProductByPathInfo({})", pathInfo);
+			logger.trace(">>> setRestProductFS({}, {}, {}, {}, {}, {}, {}, {})",
+					(null == response ? "MISSING" : response.getProductId()),
+					(null == restProductFS ? "MISSING" : restProductFS.getProductId()), storageId, registered,
+					registeredFilePath, registeredFiles.size(), deleted, msg);
 
-		if (storageProvider.isVersion2()) { // begin version 2 - delete files in storage
-			
-			if ((null == pathInfo) || (pathInfo == "")) {
-								
-				return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND, pathInfo),
-						HttpStatus.NOT_FOUND);
-			}
-
-			try {
-				String storageType = storageProvider.getStorage().getStorageType().toString();
-
-				String relativePath = storageProvider.getRelativePath(pathInfo);
-				List<String> deletedFilesOrDir = storageProvider.getStorage().delete(relativePath);
-				RestProductFS response = createRestProductFilesDeleted(deletedFilesOrDir, storageType);
-
-				StorageLogger.logInfo(loggerLegacy, MSG_FILE_DELETED, MSG_ID_FILE_DELETED, pathInfo);
-				
-				return new ResponseEntity<>(response, HttpStatus.OK);
-
-			} catch (Exception e) {
-				
-				logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
-				
-				e.printStackTrace();
-				return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
-						e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
-			}
-
-		} // end version 2
-
-		RestProductFS response = new RestProductFS();
-		if (pathInfo != null) {
-			ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
-			try {
-				ArrayList<String> deleted = sourceFile.delete();
-				if (deleted != null && !deleted.isEmpty()) {
-					response.setProductId("");
-					response.setDeleted(true);
-					response.setRegistered(false);
-					response.setSourceFilePaths(deleted);
-					response.setSourceStorageType(sourceFile.getFsType().toString());
-
-					StorageLogger.logInfo(loggerLegacy, MSG_FILE_DELETED, MSG_ID_FILE_DELETED, pathInfo);
-
-					return new ResponseEntity<>(response, HttpStatus.OK);
-				}
-			} catch (Exception e) {
-				return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
-						e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
-			}
+		if (response != null && restProductFS != null) {
+			response.setProductId(restProductFS.getProductId());
+			response.setTargetStorageId(storageId);
+			response.setRegistered(registered);
+			response.setRegisteredFilePath(registeredFilePath);
+			response.setSourceFilePaths(restProductFS.getSourceFilePaths());
+			response.setSourceStorageType(restProductFS.getSourceStorageType());
+			response.setTargetStorageType(restProductFS.getTargetStorageType());
+			response.setRegisteredFilesCount(Long.valueOf(registeredFiles.size()));
+			response.setRegisteredFilesList(registeredFiles);
+			response.setDeleted(deleted);
+			response.setMessage(msg);
 		}
-		return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND, pathInfo),
-				HttpStatus.NOT_FOUND);
+		if (logger.isDebugEnabled())
+			logger.debug("Response created: {}", response);
+		return response;
 	}
 
+	/**
+	 * Check the given token for formal correctness and extract its JWT claims set
+	 * 
+	 * @param token the signed JSON Web Token to check
+	 * @return the JWT claims set contained in the token
+	 * @throws IllegalArgumentException if the token cannot be analyzed
+	 */
+	private JWTClaimsSet extractJwtClaimsSet(String token) throws IllegalArgumentException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> extractJwtClaimsSet({})", token);
+
+		SignedJWT signedJWT = null;
+		try {
+			signedJWT = SignedJWT.parse(token);
+			
+		} catch (ParseException e) {
+			
+			String msg = logger.log(StorageMgrMessage.TOKEN_NOT_PARSEABLE, e.getMessage());
+			throw new IllegalArgumentException(msg);
+		}
+
+		JWSVerifier verifier = null;
+		try {
+			verifier = new MACVerifier(cfg.getStorageManagerSecret());
+			
+		} catch (JOSEException e) {
+			
+			String msg = logger.log(StorageMgrMessage.SECRET_TOO_SHORT, e.getMessage());
+			throw new IllegalArgumentException(msg);
+		}
+
+		try {
+			if (!signedJWT.verify(verifier)) {
+				String msg = logger.log(StorageMgrMessage.TOKEN_VERIFICATION_FAILED);
+				throw new IllegalArgumentException(msg);
+			}		
+			
+		} catch (IllegalStateException e) {
+			
+			String msg = logger.log(StorageMgrMessage.TOKEN_STATE_INVALID, signedJWT.getState(), e.getMessage());
+			throw new IllegalArgumentException(msg);
+			
+		} catch (JOSEException e) {
+			
+			String msg = logger.log(StorageMgrMessage.TOKEN_NOT_VERIFIABLE, e.getMessage());
+			throw new IllegalArgumentException(msg);
+		}
+
+		// Retrieve / verify the JWT claims according to the app requirements
+		JWTClaimsSet claimsSet = null;
+		try {
+			claimsSet = signedJWT.getJWTClaimsSet();
+			
+		} catch (ParseException e) {
+			
+			String msg = logger.log(StorageMgrMessage.TOKEN_PAYLOAD_INVALID, e.getMessage());
+			throw new IllegalArgumentException(msg);
+		}
+		return claimsSet;
+	}
+
+	/**
+	 * Creates rest product files deleted
+	 * 
+	 * @param deletedFiles deleted files
+	 * @param storageType storage type
+	 * @return RestProductFS
+	 */
 	private RestProductFS createRestProductFilesDeleted(List<String> deletedFiles, String storageType) {
 
 		RestProductFS response = new RestProductFS();
@@ -802,5 +795,50 @@ public class ProductControllerImpl implements ProductController {
 			logger.debug("Response created: {}", response);
 
 		return response;
+	}
+	
+	/**
+	 * Gets Local host name 
+	 * 
+	 * @return local host name
+	 */
+	private String getLocalHostName() {
+
+		try {
+			InetAddress iAddress = InetAddress.getLocalHost();
+			return iAddress.getHostName();
+
+		} catch (UnknownHostException e1) {
+			return "(UNKNOWN)";
+		}
+	}
+	
+	/**
+	 * Log an error and return the corresponding HTTP message header
+	 * 
+	 * @param messageFormat     the message text with parameter placeholders in
+	 *                          String.format() style
+	 * @param messageId         a (unique) message id
+	 * @param messageParameters the message parameters (optional, depending on the
+	 *                          message format)
+	 * @return an HttpHeaders object with a formatted error message
+	 */
+	private HttpHeaders errorHeaders(String messageFormat, int messageId, Object... messageParameters) {
+
+		if (loggerLegacy.isTraceEnabled())
+			loggerLegacy.trace(">>> errorHeaders({}, {}, {})", messageFormat, messageId, "messageParameters");
+
+		// Prepend message ID to parameter list
+		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
+		messageParamList.add(0, messageId);
+
+		// Log the error message
+		String message = String.format(messageFormat, messageParamList.toArray());
+		loggerLegacy.error(message);
+
+		// Create an HTTP "Warning" header
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message);
+		return responseHeaders;
 	}
 }
