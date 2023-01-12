@@ -32,7 +32,6 @@ import de.dlr.proseo.storagemgr.utils.StorageType;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.logging.messages.ProcessorMgrMessage;
 import de.dlr.proseo.logging.messages.StorageMgrMessage;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.rest.model.RestJoborder;
@@ -55,43 +54,16 @@ public class JobOrderControllerImpl implements JoborderController {
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
 	private static final int MSG_ID_EXCEPTION_THROWN = 9001;
 	
-	
 	private static Logger loggerLegacy = LoggerFactory.getLogger(JoborderController.class);
 	
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(JoborderController.class);
-
+	
 	@Autowired
 	private StorageManagerConfiguration cfg;
 
 	@Autowired
 	private StorageProvider storageProvider;
-
-	/**
-	 * Log an error and return the corresponding HTTP message header
-	 * 
-	 * @param messageFormat     the message text with parameter placeholders in
-	 *                          String.format() style
-	 * @param messageId         a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the
-	 *                          message format)
-	 * @return an HttpHeaders object with a formatted error message
-	 */
-	private HttpHeaders errorHeaders(String messageFormat, int messageId, Object... messageParameters) {
-
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		loggerLegacy.error(message);
-
-		// Create an HTTP "Warning" header
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message);
-		return responseHeaders;
-	}
 
 	/**
 	 * Create a job order file with generic name out of base64 string contained in
@@ -125,8 +97,7 @@ public class JobOrderControllerImpl implements JoborderController {
 
 			} catch (Exception e) {
 
-				//String msg = "Cannot create job order file"; 
-				String msg = logger.log(StorageMgrMessage.JOB_ORDER_CREATION_ERROR, jobOrder64);
+				String msg = logger.log(StorageMgrMessage.JOB_ORDER_CREATION_ERROR, jobOrder64 + " "  + e.getMessage());
 
 				return new ResponseEntity<>(createBadResponse(msg, jobOrder64), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
@@ -195,10 +166,13 @@ public class JobOrderControllerImpl implements JoborderController {
 			logger.trace(">>> getObjectByPathInfo({})", pathInfo);
 
 		if (storageProvider.isVersion2()) { // begin version 2 StorageFile -> String
-
-			if ((null == pathInfo) || (pathInfo == "")) {
-				
-				return new ResponseEntity<>("Whrong path", HttpStatus.NOT_FOUND);
+			
+			if (null == pathInfo)  {
+				return new ResponseEntity<>(logger.log(StorageMgrMessage.PATH_IS_NULL), HttpStatus.NOT_FOUND);		
+			}
+			
+			if (pathInfo == "") {		
+				return new ResponseEntity<>(logger.log(StorageMgrMessage.INVALID_PATH, pathInfo), HttpStatus.NOT_FOUND);
 			}
 
 			try {
@@ -213,20 +187,9 @@ public class JobOrderControllerImpl implements JoborderController {
 				return new ResponseEntity<>(response, HttpStatus.OK);
 
 			} catch (Exception e) {
-
-				e.printStackTrace();
 				
-				String msg = logger.log(StorageMgrMessage.JOB_ORDER_FILE_CANNOT_BE_GOT, pathInfo);
+				String msg = logger.log(StorageMgrMessage.JOB_ORDER_FILE_CANNOT_BE_GOT, pathInfo,  e.getMessage());
 				return new ResponseEntity<>(msg, HttpStatus.INTERNAL_SERVER_ERROR);
-				
-				/*
-				loggerLegacy.error("Cannot get job order file");		
-
-				return new ResponseEntity<>(
-						errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
-								e.getClass().toString() + ": " + e.getMessage()),
-						HttpStatus.INTERNAL_SERVER_ERROR);
-						*/
 			}
 
 		} // end version 2
@@ -265,18 +228,14 @@ public class JobOrderControllerImpl implements JoborderController {
 		return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 	}
 
-	private RestJoborder createBadResponse(String message, String stringBase64) {
 
-		RestJoborder response = new RestJoborder();
 
-		response.setUploaded(false);
-		response.setJobOrderStringBase64(stringBase64);
-		response.setPathInfo("n/a");
-		response.setMessage(message);
-
-		return response;
-	}
-
+	/**
+	 * Gets job order relative path  "prefix/YYYY/MM/DD/WEEKDAY/HH/RandomUUID.xml
+	 * 
+	 * @param joborderPrefix job order prefix
+	 * @return job order relative path
+	 */
 	private String getJobOrderRelativePath(String joborderPrefix) {
 
 		String separator = File.separator;
@@ -287,6 +246,13 @@ public class JobOrderControllerImpl implements JoborderController {
 				+ UUID.randomUUID().toString() + ".xml";
 	}
 
+	/**
+	 * Creates Ok RestJobOrder response (uploaded = true)
+	 * 
+	 * @param storageFile storage file
+	 * @param stringBase64 string base 64
+	 * @return Ok RestJobOrder response 
+	 */
 	private RestJoborder createOkResponse(StorageFile storageFile, String stringBase64) {
 
 		RestJoborder response = new RestJoborder();
@@ -298,5 +264,49 @@ public class JobOrderControllerImpl implements JoborderController {
 
 		return response;
 	}
+	
+	/**
+	 * Creates Bad RestJobOrder response (uploaded = false)
+	 * 
+	 * @param message message
+	 * @param stringBase64 string base 64
+	 * @return Bad RestJobOrder response 
+	 */
+	private RestJoborder createBadResponse(String message, String stringBase64) {
 
+		RestJoborder response = new RestJoborder();
+
+		response.setUploaded(false);
+		response.setJobOrderStringBase64(stringBase64);
+		response.setPathInfo("n/a");
+		response.setMessage(message);
+
+		return response;
+	}
+	
+	/**
+	 * Log an error and return the corresponding HTTP message header
+	 * 
+	 * @param messageFormat     the message text with parameter placeholders in
+	 *                          String.format() style
+	 * @param messageId         a (unique) message id
+	 * @param messageParameters the message parameters (optional, depending on the
+	 *                          message format)
+	 * @return an HttpHeaders object with a formatted error message
+	 */
+	private HttpHeaders errorHeaders(String messageFormat, int messageId, Object... messageParameters) {
+
+		// Prepend message ID to parameter list
+		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
+		messageParamList.add(0, messageId);
+
+		// Log the error message
+		String message = String.format(messageFormat, messageParamList.toArray());
+		loggerLegacy.error(message);
+
+		// Create an HTTP "Warning" header
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message);
+		return responseHeaders;
+	}
 }
