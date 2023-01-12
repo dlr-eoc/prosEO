@@ -385,7 +385,7 @@ public class ProcessorCommandRunner {
 				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_NOT_FOUND_BY_ID, restProcessorClass.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_DATA_INVALID, e.getStatusText());
+				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -896,7 +896,7 @@ public class ProcessorCommandRunner {
 				message = ProseoLogger.format(UIMessage.PROCESSOR_NOT_FOUND_BY_ID, restProcessor.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = ProseoLogger.format(UIMessage.PROCESSOR_DATA_INVALID,  e.getStatusText());
+				message = ProseoLogger.format(UIMessage.PROCESSOR_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -1348,10 +1348,12 @@ public class ProcessorCommandRunner {
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.CONFIGURATION_NOT_FOUND_BY_ID, restConfiguration.getId());
+				// message = ProseoLogger.format(UIMessage.CONFIGURATION_NOT_FOUND_BY_ID, restConfiguration.getId());
+				// other causes possible, so forward original message
+				message = e.getMessage();
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = ProseoLogger.format(UIMessage.CONFIGURATION_DATA_INVALID,  e.getStatusText());
+				message = ProseoLogger.format(UIMessage.CONFIGURATION_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -1824,7 +1826,7 @@ public class ProcessorCommandRunner {
 				message = ProseoLogger.format(UIMessage.CONFIGUREDPROCESSOR_NOT_FOUND_BY_ID, restConfiguredProcessor.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = ProseoLogger.format(UIMessage.CONFIGUREDPROCESSOR_DATA_INVALID,  e.getStatusText());
+				message = ProseoLogger.format(UIMessage.CONFIGUREDPROCESSOR_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
