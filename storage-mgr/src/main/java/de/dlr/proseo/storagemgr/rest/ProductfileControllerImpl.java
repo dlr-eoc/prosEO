@@ -73,7 +73,6 @@ public class ProductfileControllerImpl implements ProductfileController {
 	
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductControllerImpl.class);
-	
 	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.STORAGE_MGR);
 
 	
@@ -95,12 +94,15 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRestFileInfoByPathInfo({})", pathInfo);
-
-		if (null == pathInfo || pathInfo.isBlank()) {
-						
-			return new ResponseEntity<>(
-					errorHeaders(StorageLogger.logError(loggerLegacy, MSG_TARGET_PATH_MISSING, MSG_ID_TARGET_PATH_MISSING)),
-					HttpStatus.BAD_REQUEST);
+		
+		if (null == pathInfo)  {
+			String msg = logger.log(StorageMgrMessage.PATH_IS_NULL);
+			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);		
+		}
+		
+		if (pathInfo == "" || pathInfo.isBlank()) {			
+			String msg = logger.log(StorageMgrMessage.INVALID_PATH, pathInfo);
+			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);					
 		}
 
 		// pathInfo is absolute path s3://bucket/.. or /storagePath/.. DOWNLOAD Storage
@@ -135,23 +137,20 @@ public class ProductfileControllerImpl implements ProductfileController {
 				return new ResponseEntity<>(restFileInfo, HttpStatus.OK);
 
 			} catch (FileLockedAfterMaxCyclesException e) {
+				
+				String time = String.valueOf(cfg.getFileCheckMaxCycles() * cfg.getFileCheckWaitTime() / 1000);
+				String msg = logger.log(StorageMgrMessage.READ_TIME_OUT, pathInfo, time, e.getLocalizedMessage());
 
-				return getServiceUnavailableHttpResponse(e);
-
-			} catch (InterruptedException e) {
-
-				return getInternalServerErrorHttpResponse(e);
-
+				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.SERVICE_UNAVAILABLE);
+				
 			} catch (IOException e) {
 				
-				String msg = logger.log(StorageMgrMessage.PRODUCT_FILE_CANNOT_BE_DOWNLOADED, e.getMessage());
-				
+				String msg = logger.log(StorageMgrMessage.PRODUCT_FILE_CANNOT_BE_DOWNLOADED, e.getMessage());	
 				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);
 
 			} catch (Exception e) {
 				
 				String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
-
 				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
@@ -273,8 +272,6 @@ public class ProductfileControllerImpl implements ProductfileController {
 				RestFileInfo restFileInfo = convertToRestFileInfo(targetFile,
 						storage.getFileSize(targetFile));
 
-				StorageLogger.logInfo(loggerLegacy, MSG_FILES_UPDATED, MSG_ID_FILES_UPDATED, pathInfo, productId);
-
 				logger.log(StorageMgrMessage.PRODUCT_FILE_UPLOADED, pathInfo, productId);
 				
 				return new ResponseEntity<>(restFileInfo, HttpStatus.CREATED);
@@ -282,7 +279,6 @@ public class ProductfileControllerImpl implements ProductfileController {
 			} catch (Exception e) {
 				
 				String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
-
 				return new ResponseEntity<>(errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 		} // end version 2 
@@ -350,47 +346,6 @@ public class ProductfileControllerImpl implements ProductfileController {
 		return new ResponseEntity<RestFileInfo>(response, HttpStatus.NOT_FOUND);
 	}
 
-	/**
-	 * Gets internal server error http response
-	 * 
-	 * @param e Interrupted Exception
-	 * @return internal server error http response
-	 */
-	private ResponseEntity<RestFileInfo> getInternalServerErrorHttpResponse(InterruptedException e) {
-
-		String errorString = StorageLogger.logError(loggerLegacy, MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
-				e.getClass().toString() + ": " + e.getMessage());
-
-		return new ResponseEntity<>(errorHeaders(errorString), HttpStatus.INTERNAL_SERVER_ERROR);
-	}
-
-	/**
-	 * Gets service unavailable http response
-	 * 
-	 * @param e File locked after max cycles exception
-	 * @return service unavailable http response
-	 */
-	private ResponseEntity<RestFileInfo> getServiceUnavailableHttpResponse(FileLockedAfterMaxCyclesException e) {
-
-		String errorString = StorageLogger.logError(loggerLegacy, MSG_READ_TIMEOUT, MSG_ID_READ_TIMEOUT,
-				e.getLocalizedMessage(), cfg.getFileCheckMaxCycles() * cfg.getFileCheckWaitTime() / 1000);
-
-		return new ResponseEntity<>(errorHeaders(errorString), HttpStatus.SERVICE_UNAVAILABLE);
-	}
-
-	/**
-	 * Create an HTTP "Warning" header with the given text message
-	 * 
-	 * @param message the message text
-	 * @return an HttpHeaders object with a warning message
-	 */
-	private HttpHeaders errorHeaders(String message) {
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING,
-				HTTP_MSG_PREFIX + (null == message ? "null" : message.replaceAll("\n", " ")));
-		return responseHeaders;
-	}
-	
 	
 	/**
 	 * Converts storage file to rest file info (generated model)
@@ -410,5 +365,18 @@ public class ProductfileControllerImpl implements ProductfileController {
 		restFileInfo.setFileSize(fileSize);
 		
 		return restFileInfo;
+	}
+	
+	/**
+	 * Create an HTTP "Warning" header with the given text message
+	 * 
+	 * @param message the message text
+	 * @return an HttpHeaders object with a warning message
+	 */
+	private HttpHeaders errorHeaders(String message) {
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.set(HTTP_HEADER_WARNING,
+				HTTP_MSG_PREFIX + (null == message ? "null" : message.replaceAll("\n", " ")));
+		return responseHeaders;
 	}
 }
