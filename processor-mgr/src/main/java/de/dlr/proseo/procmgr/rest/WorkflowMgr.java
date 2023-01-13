@@ -430,6 +430,8 @@ public class WorkflowMgr {
 		if (logger.isTraceEnabled())
 			logger.trace("... scalar attributes for workflow have changed: " + workflowChanged);
 
+		// TODO change modification logic regarding workflow options, or version will be
+		// incremented regardless of actual changes
 		// Check whether options were deleted entirely
 		if (restWorkflow.getWorkflowOptions().isEmpty()) {
 			workflowOptionsChanged = true;
