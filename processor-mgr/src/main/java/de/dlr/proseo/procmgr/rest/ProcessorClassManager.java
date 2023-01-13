@@ -6,7 +6,6 @@
 package de.dlr.proseo.procmgr.rest;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.HashSet;
 import java.util.List;
@@ -126,6 +125,14 @@ public class ProcessorClassManager {
 					processorClass.getMissionCode(), securityService.getMission()));			
 		}
 		
+		// Ensure mandatory attributes are set
+		if (null == processorClass.getProcessorName() || processorClass.getProcessorName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorName", "processorClass creation"));
+		}
+		if (null == processorClass.getProductClasses() || processorClass.getProductClasses().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "productClasses", "processorClass creation"));			
+		}
+		
 		ProcessorClass modelProcessorClass = ProcessorClassUtil.toModelProcessorClass(processorClass);
 		
 		// Make sure a processor class with the same name does not yet exist for the mission
@@ -234,6 +241,14 @@ public class ProcessorClassManager {
 		// Make sure we are allowed to change the processor class (no intermediate update)
 		if (modelProcessorClass.getVersion() != processorClass.getVersion().intValue()) {
 			throw new ConcurrentModificationException(logger.log(ProcessorMgrMessage.CONCURRENT_UPDATE, id));
+		}
+		
+		// Ensure mandatory attributes are set
+		if (null == processorClass.getProcessorName() || processorClass.getProcessorName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorName", "processorClass modification"));
+		}
+		if (null == processorClass.getProductClasses() || processorClass.getProductClasses().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "productClasses", "processorClass modification"));			
 		}
 		
 		// Apply changed attributes

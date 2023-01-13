@@ -7,7 +7,6 @@ package de.dlr.proseo.prodclmgr.rest;
 
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.HashSet;
 import java.util.List;
@@ -37,7 +36,6 @@ import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimpleSelectionRule;
 import de.dlr.proseo.model.enums.ParameterType;
-import de.dlr.proseo.model.enums.ProductQuality;
 import de.dlr.proseo.model.enums.ProductVisibility;
 import de.dlr.proseo.model.enums.ProcessingLevel;
 import de.dlr.proseo.model.SimplePolicy;
@@ -437,6 +435,22 @@ public class ProductClassManager {
 					productClass.getMissionCode(), securityService.getMission()));			
 		}
 		
+		// Ensure mandatory attributes are set
+		if (null == productClass.getProductType() || productClass.getProductType().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "productType", "productClass creation"));
+		}
+		if (null == productClass.getVisibility() || productClass.getVisibility().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "visibility", "productClass creation"));
+		}
+		
+		// If list attributes were explicitly set to null, initialize with empty list
+		if (null == productClass.getComponentClasses()) {
+			productClass.setComponentClasses(new ArrayList<String>());
+		}
+		if (null == productClass.getSelectionRule()) {
+			productClass.setSelectionRule(new ArrayList<RestSimpleSelectionRule>());
+		}
+		
 		// Create product class object
 		ProductClass modelProductClass = ProductClassUtil.toModelProductClass(productClass);
 		Mission mission = RepositoryService.getMissionRepository().findByCode(productClass.getMissionCode());
@@ -625,6 +639,22 @@ public class ProductClassManager {
 		// Make sure we are allowed to change the product class(no intermediate update)
 		if (modelProductClass.getVersion() != productClass.getVersion().intValue()) {
 			throw new ConcurrentModificationException(logger.log(ProductClassMgrMessage.CONCURRENT_UPDATE, id));
+		}
+		
+		// Ensure mandatory attributes are set
+		if (null == productClass.getProductType() || productClass.getProductType().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "productType", "productClass modification"));
+		}
+		if (null == productClass.getVisibility() || productClass.getVisibility().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "visibility", "productClass modification"));
+		}
+		
+		// If list attributes were explicitly set to null, initialize with empty list
+		if (null == productClass.getComponentClasses()) {
+			productClass.setComponentClasses(new ArrayList<String>());
+		}
+		if (null == productClass.getSelectionRule()) {
+			productClass.setSelectionRule(new ArrayList<RestSimpleSelectionRule>());
 		}
 		
 		// Apply changed attributes
