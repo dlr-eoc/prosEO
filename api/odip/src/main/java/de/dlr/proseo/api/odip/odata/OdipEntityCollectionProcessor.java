@@ -85,10 +85,14 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
-	
+
 	/** The configuration for the ODIP API */
 	@Autowired
 	private OdipConfiguration config;
+	
+	/** The configuration for the ODIP API */
+	@Autowired
+	private OdipUtil odipUtil;
 	
 	/** The security utilities for the ODIP API */
 	@Autowired
@@ -364,7 +368,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof ProcessingOrder) {
 				// Create output production order
-				Entity productionOrder = OdipUtil.toOdipProductionOrder((ProcessingOrder) resultObject);
+				Entity productionOrder = odipUtil.toOdipProductionOrder((ProcessingOrder) resultObject);
 				orderList.add(productionOrder);
 			}
 		}		
@@ -425,7 +429,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof Workflow) {
 				// Create output workflow
-				Entity workflow = OdipUtil.toOdipWorkflow((Workflow) resultObject);
+				Entity workflow = odipUtil.toOdipWorkflow((Workflow) resultObject);
 				workflowList.add(workflow);
 			}
 		}		

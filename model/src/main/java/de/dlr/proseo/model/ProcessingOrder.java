@@ -1038,24 +1038,6 @@ public class ProcessingOrder extends PersistentObject {
 		this.monOrderProgress = monOrderProgress;
 	}
 
-	/**
-	 * Get the order workflow
-	 * 
-	 * @return the workflow
-	 */
-	public Workflow getWorkflow() {
-		return workflow;
-	}
-
-	/**
-	 * Set the order workflow
-	 * 
-	 * @param workflow the workflow to set
-	 */
-	public void setWorkflow(Workflow workflow) {
-		this.workflow = workflow;
-	}
-
 	@Override
 	public int hashCode() {
 		return Objects.hash(identifier); // same identifier in different missions unlikely

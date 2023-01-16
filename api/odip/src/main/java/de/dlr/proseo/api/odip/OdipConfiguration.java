@@ -28,6 +28,14 @@ public class OdipConfiguration {
 	/** The URL of the prosEO Ingestor */
 	@Value("${proseo.ingestor.url}")
 	private String ingestorUrl;
+
+	/** The URL of the prosEO Production Planner */
+	@Value("${proseo.productionPlanner.url}")
+	private String productionPlannerUrl;
+
+	/** The URL of the prosEO Order Manager */
+	@Value("${proseo.orderManager.url}")
+	private String orderManagerUrl;
 	
 	/** Validity period for OAuth2 tokens */
 	@Value("${proseo.token.expiration}")
@@ -36,7 +44,43 @@ public class OdipConfiguration {
 	/** Maximum number of objects to retrieve in a single query */
 	@Value("${proseo.quota}")
 	private Long quota;
+
+	/** Timeout for HTTP connections */
+	@Value("${proseo.http.timeout}")
+	private Long httpTimeout;
+
+	/** Facility to use */
+	@Value("${proseo.odip.facility}")
+	private String facility;
 	
+	/**
+	 * @return the facility
+	 */
+	public String getFacility() {
+		return facility;
+	}
+
+	/**
+	 * @return the httpTimeout
+	 */
+	public Long getHttpTimeout() {
+		return httpTimeout;
+	}
+
+	/**
+	 * @return the productionPlannerUrl
+	 */
+	public String getProductionPlannerUrl() {
+		return productionPlannerUrl;
+	}
+
+	/**
+	 * @return the orderManagerUrl
+	 */
+	public String getOrderManagerUrl() {
+		return orderManagerUrl;
+	}
+
 	/**
 	 * Gets the URL of the prosEO User Manager component
 	 * 

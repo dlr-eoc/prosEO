@@ -7,12 +7,21 @@ package de.dlr.proseo.api.odip.odata;
 
 import java.net.URISyntaxException;
 import java.sql.Timestamp;
-import java.text.DateFormat;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.apache.olingo.commons.api.data.ComplexValue;
 import org.apache.olingo.commons.api.data.Entity;
@@ -25,17 +34,31 @@ import org.apache.olingo.server.api.ODataApplicationException;
 import org.apache.olingo.server.api.uri.UriInfoResource;
 import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
-import org.joda.time.DateTime;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClientResponseException;
 
+import de.dlr.proseo.api.odip.OdipConfiguration;
+import de.dlr.proseo.api.odip.OdipSecurity;
+import de.dlr.proseo.api.odip.service.ServiceConnection;
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.OdipMessage;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProcessingOrder;
+import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.Workflow;
 import de.dlr.proseo.model.WorkflowOption;
+import de.dlr.proseo.model.WorkflowOption.WorkflowOptionType;
+import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.OrderState;
+import de.dlr.proseo.model.enums.ParameterType;
+import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.rest.model.RestInputReference;
 import de.dlr.proseo.model.rest.model.RestNotificationEndpoint;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestParameter;
+import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
@@ -44,19 +67,82 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
  * @author Dr. Thomas Bassler
  *
  */
+@Component
 public class OdipUtil {
 
-	private static final Date START_OF_MISSION = Date.from(Instant.parse("1970-01-01T00:00:00.000Z"));
-	private static final Date END_OF_MISSION = Date.from(Instant.parse("9999-12-31T23:59:59.999Z"));
+	private final Date START_OF_MISSION = Date.from(Instant.parse("1970-01-01T00:00:00.000Z"));
+	private final Date END_OF_MISSION = Date.from(Instant.parse("9999-12-31T23:59:59.999Z"));
 
-	private static final String ORDER_PROCESSING_MODE = "OFFL";
-	private static final String ORDER_SLICING_TYPE = "NONE";
+	// TODO where to get the settings?
+	private final String ORDER_PROCESSING_MODE = "OFFL";
+	private final String ORDER_OUTPUT_FILE_CLASS = "OPER";
+	private final String ORDER_SLICING_TYPE = "NONE";
+
+	private final String URI_PATH_ORBITS = "/orbits";
+	private final String ORBITS = "orbits";
+
+	private final String URI_PATH_ORDERS = "/orders";
+	private final String ORDERS = "orders";
+
+	private final String URI_PATH_ORDERS_APPROVE = "/orders/approve";
+	private final String URI_PATH_ORDERS_PLAN = "/orders/plan";
+	private final String URI_PATH_ORDERS_RESUME = "/orders/resume";
+
+	/**
+	 * MonitorServices configuration
+	 */
+	@Autowired
+	OdipConfiguration config;
+
+	/** The connector service to the prosEO backend services */
+	@Autowired
+	private ServiceConnection serviceConnection;
+
+	/** The security utilities for the ODIP API */
+	@Autowired
+	private OdipSecurity securityConfig;
 	
+	/** JPA entity manager */
+	@PersistenceContext
+	private EntityManager em;
 
 	/** A logger for this class */
-	private static ProseoLogger logger = new ProseoLogger(OdipUtil.class);
+	private ProseoLogger logger = new ProseoLogger(OdipUtil.class);
+	
+	private final DateTimeFormatter instantFormatter =
+			DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm:ss.SSSSSS").withZone(ZoneId.of("UTC"));
+	/**
+	 * Exception for unrecoverable errors during generation of processing orders
+	 */
+	public class OdipException extends Exception {
+		private final long serialVersionUID = 4396477286380050214L;
 
-	public static EdmEntitySet getEdmEntitySet(UriInfoResource uriInfo) throws ODataApplicationException {
+		private HttpStatusCode httpStatus = null;
+		
+		/**
+		 * @return the httpStatus
+		 */
+		public HttpStatusCode getHttpStatus() {
+			return httpStatus;
+		}
+
+		public OdipException(String message) {
+			super(message);
+		}
+		
+		public OdipException(String message, HttpStatusCode status) {
+			super(message);
+			httpStatus = status;
+		}
+
+		public OdipException(String message, Exception e, HttpStatusCode status) {
+			super(message, e);
+			httpStatus = status;
+		}
+
+	}
+	
+	public EdmEntitySet getEdmEntitySet(UriInfoResource uriInfo) throws ODataApplicationException {
 
 		List<UriResource> resourcePaths = uriInfo.getUriResourceParts();
 		// To get the entity set we have to interpret all URI segments
@@ -81,7 +167,7 @@ public class OdipUtil {
 	 * @throws IllegalArgumentException if any mandatory information is missing from the prosEO interface production order 
 	 * @throws URISyntaxException if a valid URI cannot be generated from any production order UUID
 	 */
-	public static Entity toOdipProductionOrder(ProcessingOrder modelOrder) throws IllegalArgumentException, URISyntaxException {
+	public Entity toOdipProductionOrder(ProcessingOrder modelOrder) throws IllegalArgumentException, URISyntaxException {
 		if (logger.isTraceEnabled()) logger.trace(">>> toOdipProductionOrder({})", modelOrder.getId());
 		
 		// Create production order entity
@@ -89,7 +175,7 @@ public class OdipUtil {
 		order.setType(OdipEdmProvider.ET_PRODUCTIONORDER_FQN.getFullQualifiedNameAsString());
 		order.addProperty(new Property(null, OdipEdmProvider.GENERIC_PROP_ID, ValueType.PRIMITIVE, modelOrder.getUuid()))
 			.addProperty(new Property(null, OdipEdmProvider.ET_PRODUCTIONORDER_PROP_STATUS, ValueType.ENUM, 
-				(OdipUtil.getProductionOrderStateFrom(modelOrder))))
+				(this.getProductionOrderStateFrom(modelOrder))))
 			.addProperty(new Property(null, OdipEdmProvider.ET_PRODUCTIONORDER_PROP_STATUSMESSAGE, ValueType.PRIMITIVE,
 				modelOrder.getStateMessage()));
 			// TODO
@@ -151,8 +237,6 @@ public class OdipUtil {
 	
 		// workflow options
 		// use dynamic processing parameters
-		// TODO shall missing options added using options in workflow?
-
 		List<ComplexValue> workflowOptions = new ArrayList<>();
 		for (String paramName : modelOrder.getDynamicProcessingParameters().keySet()) {
 			ComplexValue workflowOption = new ComplexValue();
@@ -181,8 +265,114 @@ public class OdipUtil {
 		}
 		return order;
 	}
+	
+	/**
+	 * Create a ODIP interface production order from a prosEO interface processing order.
+	 * 
+	 * @param restOrder the prosEO model order to convert
+	 * @return an OData entity object representing the prosEO interface production order
+	 * @throws IllegalArgumentException if any mandatory information is missing from the prosEO interface production order 
+	 * @throws URISyntaxException if a valid URI cannot be generated from any production order UUID
+	 */
+	public Entity toOdipProductionOrder(RestOrder restOrder) throws IllegalArgumentException, URISyntaxException {
+		if (logger.isTraceEnabled()) logger.trace(">>> toOdipProductionOrder({})", restOrder.getId());
+		
+		// Create production order entity
+		Entity order = new Entity();
+		order.setType(OdipEdmProvider.ET_PRODUCTIONORDER_FQN.getFullQualifiedNameAsString());
+		order.addProperty(new Property(null, OdipEdmProvider.GENERIC_PROP_ID, ValueType.PRIMITIVE, UUID.fromString(restOrder.getUuid())))
+			.addProperty(new Property(null, OdipEdmProvider.ET_PRODUCTIONORDER_PROP_STATUS, ValueType.ENUM, 
+				(this.getProductionOrderStateFrom(restOrder))))
+			.addProperty(new Property(null, OdipEdmProvider.ET_PRODUCTIONORDER_PROP_STATUSMESSAGE, ValueType.PRIMITIVE,
+				restOrder.getStateMessage()));
+			// TODO
+		order.addProperty(new Property(null, OdipEdmProvider.ET_PRODUCTIONORDER_PROP_ORDEROUTPUTSIZE, ValueType.PRIMITIVE,
+				0));
+		if (restOrder.getEstimatedCompletionTime() != null) {
+			order.addProperty(new Property(null, OdipEdmProvider.ET_PRODUCTIONORDER_PROP_ESTIMATEDDATE, ValueType.PRIMITIVE,
+					restOrder.getEstimatedCompletionTime()));
+		}
+		if (restOrder.getSubmissionTime() != null) {
+			order.addProperty(new Property(null, OdipEdmProvider.ET_PRODUCTIONORDER_PROP_SUBMISSIONDATE, ValueType.PRIMITIVE,
+					restOrder.getSubmissionTime()));
+		}
+		if (restOrder.getActualCompletionTime() != null) {
+			order.addProperty(new Property(null, OdipEdmProvider.ET_PRODUCTIONORDER_PROP_COMPLETEDDATE, ValueType.PRIMITIVE,
+					restOrder.getActualCompletionTime()));
+		}
+		if (restOrder.getEvictionTime() != null) {
+			order.addProperty(new Property(null, OdipEdmProvider.ET_PRODUCTIONORDER_PROP_EVICTIONDATE, ValueType.PRIMITIVE,
+					restOrder.getEvictionTime()));
+		}
+		if (restOrder.getPriority() != null) {
+			order.addProperty(new Property(null, OdipEdmProvider.ET_PRODUCTIONORDER_PROP_PRIORITY, ValueType.PRIMITIVE,
+					restOrder.getPriority()));
+		}
 
-	public static Entity toOdipWorkflow(Workflow modelWorkflow) throws IllegalArgumentException, URISyntaxException {
+		ComplexValue inputProductReference = new ComplexValue();
+		inputProductReference.getValue().add(new Property(null, OdipEdmProvider.CT_INPUTPRODUCTREFERENCE_PROP_REFERENCE, ValueType.PRIMITIVE,
+				(restOrder.getInputProductReference() != null && restOrder.getInputProductReference().getInputFileName() != null) 
+				? restOrder.getInputProductReference().getInputFileName() : "null"));
+
+		if (restOrder.getInputProductReference() != null && (
+				restOrder.getInputProductReference().getSensingStartTime() != null && 
+				restOrder.getInputProductReference().getSensingStopTime() != null
+				)
+				) {
+			ComplexValue contentDate = new ComplexValue();
+			if (restOrder.getInputProductReference().getSensingStartTime() != null) {
+				contentDate.getValue().add(new Property(null, OdipEdmProvider.CT_CONTENTDATE_PROP_START, ValueType.PRIMITIVE,
+						Date.from(Instant.from(OrbitTimeFormatter.parse(restOrder.getInputProductReference().getSensingStartTime())))));
+			}
+			if (restOrder.getInputProductReference().getSensingStopTime() != null) {
+				contentDate.getValue().add(new Property(null, OdipEdmProvider.CT_CONTENTDATE_PROP_END, ValueType.PRIMITIVE,
+						Date.from(Instant.from(OrbitTimeFormatter.parse(restOrder.getInputProductReference().getSensingStopTime())))));
+			}
+			inputProductReference.getValue().add(new Property(null, OdipEdmProvider.CT_CONTENTDATE_NAME, ValueType.COMPLEX, 
+					contentDate));
+		}
+
+		order.addProperty(new Property(null, OdipEdmProvider.ET_PRODUCTIONORDER_PROP_INPUTPRODUCTREFERENCE, ValueType.COMPLEX, 
+				inputProductReference));
+
+		order.addProperty(new Property(null, OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWID, ValueType.PRIMITIVE,
+				(restOrder.getWorkflowUuid() != null ) ? restOrder.getWorkflowUuid() : "00000000-0000-0000-0000-000000000000"));
+
+		order.addProperty(new Property(null, OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWNAME, ValueType.PRIMITIVE,
+				(restOrder.getWorkflowName() != null) ? restOrder.getWorkflowName() : "null"));
+
+	
+		// workflow options
+		// use dynamic processing parameters
+		List<ComplexValue> workflowOptions = new ArrayList<>();
+		for (RestParameter restParam : restOrder.getDynamicProcessingParameters()) {
+			ComplexValue workflowOption = new ComplexValue();
+			workflowOption.getValue().add(new Property(null, OdipEdmProvider.CT_WORKFLOWOPTION_PROP_NAME, ValueType.PRIMITIVE,
+					restParam.getKey()));
+			workflowOption.getValue().add(new Property(null, OdipEdmProvider.CT_WORKFLOWOPTION_PROP_VALUE, ValueType.PRIMITIVE,
+					restParam.getParameterValue()));
+			workflowOptions.add(workflowOption);
+		}
+		order.addProperty(new Property(null, OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWOPTIONS, ValueType.COLLECTION_COMPLEX, 
+				workflowOptions));
+		if (restOrder.getNotificationEndpoint() != null) {
+			if (restOrder.getNotificationEndpoint().getUri() != null) {
+			order.addProperty(new Property(null, OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONENDPOINT, ValueType.PRIMITIVE,
+					restOrder.getNotificationEndpoint().getUri()));
+			}
+			if (restOrder.getNotificationEndpoint().getUsername() != null) {
+			order.addProperty(new Property(null, OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONEPUSERNAME, ValueType.PRIMITIVE,
+					restOrder.getNotificationEndpoint().getUsername()));
+			}
+			if (restOrder.getNotificationEndpoint().getPassword() != null) {
+			order.addProperty(new Property(null, OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONEPPASSWORD, ValueType.PRIMITIVE,
+					restOrder.getNotificationEndpoint().getPassword()));
+			}
+		}
+		return order;
+	}
+
+	public Entity toOdipWorkflow(Workflow modelWorkflow) throws IllegalArgumentException, URISyntaxException {
 		if (logger.isTraceEnabled()) logger.trace(">>> toOdipWorkflow({})", modelWorkflow.getId());
 		
 		// Create w entity
@@ -210,7 +400,6 @@ public class OdipUtil {
 	
 		// workflow options
 		// use dynamic processing parameters
-		// TODO shall missing options added using options in workflow?
 
 		List<ComplexValue> workflowOptions = new ArrayList<>();
 		for (WorkflowOption opt : modelWorkflow.getWorkflowOptions()) {
@@ -244,8 +433,8 @@ public class OdipUtil {
 				workflowOptions));
 		return workflow;
 	}
-	
-	public static int getProductionOrderStateFrom(ProcessingOrder order) {
+
+	public int getProductionOrderStateFrom(ProcessingOrder order) {
 		// States are
 		//INITIAL, APPROVED, PLANNING, PLANNING_FAILED, PLANNED, RELEASING, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
 
@@ -281,8 +470,46 @@ public class OdipUtil {
 		}
 		return productionType;	
 	}
+
+	public int getProductionOrderStateFrom(RestOrder order) {
+		// States are
+		//INITIAL, APPROVED, PLANNING, PLANNING_FAILED, PLANNED, RELEASING, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
+
+		int productionType = OdipEdmProvider.ENEN_PRODUCTIONORDERSTATE_QUEUED_VAL; // Default
+		switch (OrderState.valueOf(order.getOrderState())) { 
+		case INITIAL:
+		case APPROVED:
+		case PLANNING:
+		case PLANNED:
+			productionType = OdipEdmProvider.ENEN_PRODUCTIONORDERSTATE_QUEUED_VAL;
+			break;
+		case RELEASING:
+		case RELEASED:
+		case RUNNING:
+			productionType = OdipEdmProvider.ENEN_PRODUCTIONORDERSTATE_IN_PROGRESS_VAL;
+			break;
+		case COMPLETED:
+			productionType = OdipEdmProvider.ENEN_PRODUCTIONORDERSTATE_COMPLETED_VAL;
+			break;
+		case FAILED:
+			productionType = OdipEdmProvider.ENEN_PRODUCTIONORDERSTATE_FAILED_VAL;
+			break;
+		case CLOSED:
+			if (order.getHasFailedJobSteps()) {
+				productionType = OdipEdmProvider.ENEN_PRODUCTIONORDERSTATE_FAILED_VAL;
+			} else {
+				productionType = OdipEdmProvider.ENEN_PRODUCTIONORDERSTATE_COMPLETED_VAL;
+			}
+			break;
+		default:
+			productionType = OdipEdmProvider.ENEN_PRODUCTIONORDERSTATE_CANCELLED_VAL;
+			break;
+		}
+		return productionType;	
+	}
 	
-	public static RestOrder toModelOrder(Entity order) throws ODataApplicationException {
+	@Transactional
+	public RestOrder toModelOrder(Entity order) throws ODataApplicationException, OdipException {
 		if (null == order)
 			return null;
 
@@ -330,6 +557,29 @@ public class OdipUtil {
 						inputProductReference.setSensingStopTime(OrbitTimeFormatter.format(end));
 					}
 					restOrder.setInputProductReference(inputProductReference);
+					
+					// TODO ensure start and stop are set from reference or start/stop of input product reference
+					if ((start == null || end == null) && reference != null) {
+						// search referenced product
+						List<ProductFile> files = RepositoryService.getProductFileRepository().findByFileName(reference);
+						if (files.isEmpty()) {
+							// error
+						} else {
+							start = files.get(0).getProduct().getSensingStartTime();
+							end = files.get(0).getProduct().getSensingStopTime();
+						}
+					}
+					if ((start == null || end == null) && reference == null) {
+						String message = logger.log(OdipMessage.MSG_INPUTREF_INVALID);
+						throw new OdipException(message);
+					}
+					if (start == null || end == null) {
+						String message = logger.log(OdipMessage.MSG_STARTSTOP_MISSING);
+						throw new OdipException(message);
+					}
+					restOrder.setSlicingType(OrderSlicingType.NONE.toString());
+					restOrder.setStartTime(OrbitTimeFormatter.format(start));
+					restOrder.setStopTime(OrbitTimeFormatter.format(end));
 				}				
 			}
 		}
@@ -341,8 +591,32 @@ public class OdipUtil {
 		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWNAME) != null) {
 			restOrder.setWorkflowName((String)order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWNAME).getValue());
 		}
+		// get the workflow
+		if (restOrder.getWorkflowUuid() == null && restOrder.getWorkflowName() == null) {
+			// no workflow reference, return error
+			String message = logger.log(OdipMessage.MSG_WORKFLOW_REFERENCE_MISSING);
+			throw new OdipException(message);
+		}
+		Workflow workflow = null;
 		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_PRIORITY) != null) {
-			restOrder.setPriority((Long)order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_PRIORITY).getValue());
+			restOrder.setPriority(((Long)(order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_PRIORITY).getValue())).intValue());
+		}
+		if (restOrder.getWorkflowUuid() != null && restOrder.getWorkflowName() != null) {
+			workflow = RepositoryService.getWorkflowRepository().findByUuid(UUID.fromString(restOrder.getWorkflowUuid()));
+			if (workflow != null) {
+				if (!workflow.getName().equals(restOrder.getWorkflowName())) {
+					workflow = null;
+				}
+			}
+		} else if (restOrder.getWorkflowUuid() != null) {
+			workflow = RepositoryService.getWorkflowRepository().findByUuid(UUID.fromString(restOrder.getWorkflowUuid()));
+		} else {
+			workflow = RepositoryService.getWorkflowRepository().findByName(restOrder.getWorkflowName());
+		}
+		if (workflow == null) {
+			// no workflow reference, return error
+			String message = logger.log(OdipMessage.MSG_WORKFLOW_REF_NOT_FOUND, restOrder.getWorkflowUuid(), restOrder.getWorkflowName());
+			throw new OdipException(message);
 		}
 		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONENDPOINT) != null) {
 			RestNotificationEndpoint rnep = new RestNotificationEndpoint();
@@ -351,12 +625,17 @@ public class OdipUtil {
 				rnep.setUsername((String)order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONEPUSERNAME).getValue());
 			}			
 			if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONEPPASSWORD) != null) {
-				rnep.setUsername((String)order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONEPPASSWORD).getValue());
+				rnep.setPassword((String)order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONEPPASSWORD).getValue());
 			}	
 			restOrder.setNotificationEndpoint(rnep);
 		}
+		Map<String, WorkflowOption> workflowOptions = new HashMap<String, WorkflowOption>();
+
+		for (WorkflowOption wo : workflow.getWorkflowOptions()) {
+			workflowOptions.put(wo.getName(), wo);
+		}
+		List<String> definedOptionName = new ArrayList<String>();
 		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWOPTIONS) != null) {
-			List<RestParameter> workflowOptions = new ArrayList<RestParameter>();
 			if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWOPTIONS).getValueType() == ValueType.COLLECTION_COMPLEX) {
 				for (Object obj : (List)(order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWOPTIONS).getValue())) {
 					String name = null;
@@ -373,18 +652,277 @@ public class OdipUtil {
 						}
 					}
 					if (name != null && value != null) {
-						// find type of value
-						
+						RestParameter param = new RestParameter();
+						// is option defined in workflow
+						WorkflowOption wo = workflowOptions.get(name);
+						if (wo == null) {
+							// option not defined -> error
+							String message = logger.log(OdipMessage.MSG_WORKFLOW_OPTION_NOT_DEF, name, workflow.getName());
+							throw new OdipException(message);							
+						}
+						switch (wo.getType()) {
+						case NUMBER: {
+							// check for number type
+							try {
+								Integer.parseInt(value);
+								param.setParameterType(ParameterType.INTEGER.toString());
+							} catch (NumberFormatException e) {
+								// try double
+								try {
+									Double.parseDouble(value);
+									param.setParameterType(ParameterType.DOUBLE.toString());
+								} catch (NumberFormatException ex) {
+									// error, value string is not a number
+									String message = logger.log(OdipMessage.MSG_WORKFLOW_OPTION_NO_TYPE_MATCH, name, wo.getType(), value);
+									throw new OdipException(message);		
+								}
+							}
+							break;
+						}
+						case DATENUMBER: {
+							/** Assumption is that this type means the day of year, i. e. it must be an integer number in the range 1..366 */
+							try {
+								Integer dn = Integer.parseInt(value);
+								if (dn < 1 || dn > 366) {
+									String message = logger.log(OdipMessage.MSG_WORKFLOW_OPTION_NO_TYPE_MATCH, name, wo.getType(), value);
+									throw new OdipException(message);	
+								}	
+								param.setParameterType(ParameterType.INTEGER.toString());
+							} catch (NumberFormatException e) {
+								String message = logger.log(OdipMessage.MSG_WORKFLOW_OPTION_NO_TYPE_MATCH, name, wo.getType(), value);
+								throw new OdipException(message);	
+							}
+							break;
+						}
+						default: {
+							// all others are strings
+							param.setParameterType(ParameterType.STRING.toString());
+							break;
+						}
+						}
+						// check whether the value is in the value range
+						if (wo.getValueRange() != null && !wo.getValueRange().isEmpty()) {
+							if (!wo.getValueRange().contains(value)) {
+								String message = logger.log(OdipMessage.MSG_WORKFLOW_OPTION_VALUE_NOT_IN_RANGE, name, value);
+								throw new OdipException(message);	
+							}
+						}
+						param.setKey(name);
+						param.setParameterValue(value);
+						restOrder.getDynamicProcessingParameters().add(param);	
+						definedOptionName.add(name);
 					}
 				}
 			}
-		}		
-		
-		// generate an order name
-		
+		}	
+		for (WorkflowOption wo : workflowOptions.values()) {
+			if (!definedOptionName.contains(wo.getName())) {
+				if (wo.getDefaultValue() != null) {
+					RestParameter param = new RestParameter();
+					if (wo.getType().equals(WorkflowOptionType.NUMBER)) {
+						// check for number type
+						try {
+							Integer.parseInt(wo.getDefaultValue());
+							param.setParameterType(ParameterType.INTEGER.toString());
+						} catch (NumberFormatException e) {
+							// try double
+							try {
+								Double.parseDouble(wo.getDefaultValue());
+								param.setParameterType(ParameterType.DOUBLE.toString());
+							} catch (NumberFormatException ex) {
+								// error, value string is not a number
+								String message = logger.log(OdipMessage.MSG_WORKFLOW_OPTION_NO_TYPE_MATCH, wo.getName(), wo.getType(), wo.getDefaultValue());
+								throw new OdipException(message);		
+							}
+						}
+
+					} else if (wo.getType().equals(WorkflowOptionType.DATENUMBER)) {
+						/** Assumption is that this type means the day of year, i. e. it must be an integer number in the range 1..366 */
+						try {
+							Integer dn = Integer.parseInt(wo.getDefaultValue());
+							if (dn < 1 || dn > 366) {
+								String message = logger.log(OdipMessage.MSG_WORKFLOW_OPTION_NO_TYPE_MATCH, wo.getName(), wo.getType(), wo.getDefaultValue());
+								throw new OdipException(message);	
+							}	
+							param.setParameterType(ParameterType.INTEGER.toString());
+						} catch (NumberFormatException e) {
+							String message = logger.log(OdipMessage.MSG_WORKFLOW_OPTION_NO_TYPE_MATCH, wo.getName(), wo.getType(), wo.getDefaultValue());
+							throw new OdipException(message);	
+						}
+					} else {
+						// all others are strings
+						param.setParameterType(ParameterType.STRING.toString());
+					}
+					param.setKey(wo.getName());
+					param.setParameterValue(wo.getDefaultValue());
+					restOrder.getDynamicProcessingParameters().add(param);	
+				}
+			}
+		}
+		List<String> requestedProductClasses = new ArrayList<String>();
+		requestedProductClasses.add(workflow.getOutputProductClass().getProductType());
+		restOrder.setRequestedProductClasses(requestedProductClasses);
+		restOrder.setOutputFileClass(ORDER_OUTPUT_FILE_CLASS);
+		List<String> confProcs = new ArrayList<String>();
+		if (workflow.getConfiguredProcessor() != null) {
+			confProcs.add(workflow.getConfiguredProcessor().getIdentifier());
+		}
+		restOrder.setMissionCode(securityConfig.getMission());
+		restOrder.setConfiguredProcessors(confProcs);
+		// generate an order name using workflow name and current time
+		String name = workflow.getName() + "_";
+		Instant now = Instant.now();
+		name += instantFormatter.format(now);
+		restOrder.setIdentifier(name);
 		// set the mission
-		Date d = Date.from(Instant.now());
+		Date d = Date.from(now);
 		restOrder.setSubmissionTime(d);
 		return restOrder;
+	}
+	
+	/**
+	 * Send the new order to order manager, then approve, plan and release the new order.
+	 * Plan and release is done in sequence by the planner.
+	 * 
+	 * @param order the new order
+	 * @return 
+	 * @throws OdipException 
+	 */
+	@Transactional 
+	public RestOrder sendAndReleaseOrder(RestOrder order) throws OdipException {
+		RestOrder createdOrder = null;
+		if (order != null) {
+			if (logger.isTraceEnabled()) logger.trace(">>> sendAndReleaseOrder({})", order.getIdentifier());
+			// send order to order manager
+			Integer i = 0;
+			while (3 > i++) {
+				try {
+					createdOrder = serviceConnection.postToService(config.getOrderManagerUrl(), URI_PATH_ORDERS, 
+							order, RestOrder.class, securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword());
+					break;
+				} catch (RestClientResponseException e) {
+					String message = null;
+					HttpStatusCode status = HttpStatusCode.INTERNAL_SERVER_ERROR;
+					switch (e.getRawStatusCode()) {
+					case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+						status = HttpStatusCode.BAD_REQUEST;
+						message = logger.log(OdipMessage.ORDER_DATA_INVALID, e.getStatusText());
+						break;
+					case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+					case org.apache.http.HttpStatus.SC_FORBIDDEN:
+						status = HttpStatusCode.UNAUTHORIZED;
+						message = (null == e.getStatusText() ?
+								ProseoLogger.format(OdipMessage.NOT_AUTHORIZED, securityConfig.getUser(), ORDERS, securityConfig.getMission()) :
+									e.getStatusText());
+						break;
+					default:
+						message = logger.log(OdipMessage.EXCEPTION, e.getMessage());
+					}
+					throw new OdipException(message, status);
+				} catch (RuntimeException e) {
+					String message = ProseoLogger.format(OdipMessage.EXCEPTION, e.getMessage());
+					throw new OdipException(message, HttpStatusCode.INTERNAL_SERVER_ERROR);
+				}
+			}
+	// TODO change to > 2
+			if (i > 0) {
+				return createdOrder;
+			}
+			// approve, plan, release the order
+			i = 0;
+			while (3 > i++) {
+				try {
+					createdOrder = serviceConnection.patchToService(config.getProductionPlannerUrl(), URI_PATH_ORDERS_APPROVE + "/" + createdOrder.getId(), 
+							createdOrder, RestOrder.class, securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword());
+					break;
+				} catch (RestClientResponseException e) {
+					HttpStatusCode status = HttpStatusCode.INTERNAL_SERVER_ERROR;
+					String message = null;
+					switch (e.getRawStatusCode()) {
+					case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+						message = logger.log(OdipMessage.ORDER_DATA_INVALID, e.getStatusText());
+						break;
+					case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+					case org.apache.http.HttpStatus.SC_FORBIDDEN:
+						message = (null == e.getStatusText() ?
+								ProseoLogger.format(OdipMessage.NOT_AUTHORIZED, securityConfig.getUser(), ORDERS, securityConfig.getMission()) :
+									e.getStatusText());
+						break;
+					default:
+						message = logger.log(OdipMessage.EXCEPTION, e.getMessage());
+					}
+					throw new OdipException(message, status);
+				} catch (RuntimeException e) {
+					String message = ProseoLogger.format(OdipMessage.EXCEPTION, e.getMessage());
+					throw new OdipException(message, HttpStatusCode.INTERNAL_SERVER_ERROR);
+				}
+			}
+			if (i > 2) {
+				return createdOrder;
+			}
+			i = 0;
+			while (3 > i++) {
+				try {
+					createdOrder = serviceConnection.putToService(config.getProductionPlannerUrl(), URI_PATH_ORDERS_PLAN + "/" + createdOrder.getId() 
+					+ "?facility=" + config.getFacility() + "&wait=true", 
+					RestOrder.class, securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword());
+					break;
+				} catch (RestClientResponseException e) {
+					HttpStatusCode status = HttpStatusCode.INTERNAL_SERVER_ERROR;
+					String message = null;
+					switch (e.getRawStatusCode()) {
+					case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+						message = logger.log(OdipMessage.ORDER_DATA_INVALID, e.getStatusText());
+						break;
+					case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+					case org.apache.http.HttpStatus.SC_FORBIDDEN:
+						message = (null == e.getStatusText() ?
+								ProseoLogger.format(OdipMessage.NOT_AUTHORIZED, securityConfig.getUser(), ORDERS, securityConfig.getMission()) :
+									e.getStatusText());
+						break;
+					default:
+						message = logger.log(OdipMessage.EXCEPTION, e.getMessage());
+					}
+					throw new OdipException(message, status);
+				} catch (RuntimeException e) {
+					String message = ProseoLogger.format(OdipMessage.EXCEPTION, e.getMessage());
+					throw new OdipException(message, HttpStatusCode.INTERNAL_SERVER_ERROR);
+				}
+			}
+			if (i > 2) {
+				return createdOrder;
+			}
+			i = 0;
+			while (3 > i++) {
+				try {
+					createdOrder = serviceConnection.patchToService(config.getProductionPlannerUrl(), URI_PATH_ORDERS_RESUME + "/" + createdOrder.getId()
+					+ "?wait=true", 
+					createdOrder, RestOrder.class, securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword());
+					break;
+				} catch (RestClientResponseException e) {
+					HttpStatusCode status = HttpStatusCode.INTERNAL_SERVER_ERROR;
+					String message = null;
+					switch (e.getRawStatusCode()) {
+					case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+						message = logger.log(OdipMessage.ORDER_DATA_INVALID, e.getStatusText());
+						break;
+					case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+					case org.apache.http.HttpStatus.SC_FORBIDDEN:
+						message = (null == e.getStatusText() ?
+								ProseoLogger.format(OdipMessage.NOT_AUTHORIZED, securityConfig.getUser(), ORDERS, securityConfig.getMission()) :
+									e.getStatusText());
+						break;
+					default:
+						message = logger.log(OdipMessage.EXCEPTION, e.getMessage());
+					}
+					System.err.println(message);
+					throw new OdipException(message, status);
+				} catch (RuntimeException e) {
+					String message = ProseoLogger.format(OdipMessage.EXCEPTION, e.getMessage());
+					throw new OdipException(message, HttpStatusCode.INTERNAL_SERVER_ERROR);
+				}
+			}
+		}
+		return createdOrder;
 	}
 }

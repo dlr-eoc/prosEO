@@ -211,7 +211,8 @@ public class OrderUtil {
 			RestInputReference restInputReference = new RestInputReference();
 			if (null != inputProductReference.getInputFileName()) {
 				restInputReference.setInputFileName(inputProductReference.getInputFileName());
-			} else if (null != inputProductReference.getSensingStartTime()
+			}
+			if (null != inputProductReference.getSensingStartTime()
 					&& null != inputProductReference.getSensingStopTime()) {
 				if (inputProductReference.getSensingStartTime().isAfter(inputProductReference.getSensingStopTime()))
 					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_INPUT_REFERENCE));
@@ -248,6 +249,10 @@ public class OrderUtil {
 			}
 
 			restOrder.setOrbits(orbitQueries);
+		}
+		if (null != processingOrder.getWorkflow()) {
+			restOrder.setWorkflowName(processingOrder.getWorkflow().getName());
+			restOrder.setWorkflowUuid(processingOrder.getWorkflow().getUuid().toString());
 		}
 		// Get the list of job step states
 		// this is much faster than iterating over jobs and job steps
@@ -332,7 +337,7 @@ public class OrderUtil {
 				processingOrder.setSubmissionTime(restOrder.getSubmissionTime().toInstant());
 			} catch (DateTimeException e) {
 				throw new IllegalArgumentException(
-						String.format("Invalid execution time '%s'", restOrder.getReleaseTime()));
+						String.format("Invalid submission time '%s'", restOrder.getReleaseTime()));
 			}
 		}
 		if (null != restOrder.getReleaseTime()) {
@@ -340,7 +345,7 @@ public class OrderUtil {
 				processingOrder.setReleaseTime(restOrder.getReleaseTime().toInstant());
 			} catch (DateTimeException e) {
 				throw new IllegalArgumentException(
-						String.format("Invalid execution time '%s'", restOrder.getReleaseTime()));
+						String.format("Invalid release time '%s'", restOrder.getReleaseTime()));
 			}
 		}
 		if (null != restOrder.getStartTime()) {
@@ -369,7 +374,7 @@ public class OrderUtil {
 				processingOrder.setEstimatedCompletionTime(restOrder.getEstimatedCompletionTime().toInstant());
 			} catch (DateTimeException e) {
 				throw new IllegalArgumentException(
-						String.format("Invalid execution time '%s'", restOrder.getReleaseTime()));
+						String.format("Invalid estimated completion time '%s'", restOrder.getReleaseTime()));
 			}
 		}		
 		if (null != restOrder.getActualCompletionTime()) {
@@ -377,7 +382,7 @@ public class OrderUtil {
 				processingOrder.setActualCompletionTime(restOrder.getActualCompletionTime().toInstant());
 			} catch (DateTimeException e) {
 				throw new IllegalArgumentException(
-						String.format("Invalid execution time '%s'", restOrder.getReleaseTime()));
+						String.format("Invalid actual completion time '%s'", restOrder.getReleaseTime()));
 			}
 		}
 		if (null != restOrder.getEvictionTime()) {
@@ -449,12 +454,13 @@ public class OrderUtil {
 		if (null != restInputReference) {
 			if (null != restInputReference.getInputFileName()) {
 				inputProductReference.setInputFileName(restInputReference.getInputFileName());
-			} else if (null != restInputReference.getSensingStartTime() && null != restInputReference.getSensingStopTime()) {
-				if (Instant.parse(restInputReference.getSensingStartTime())
-						.isAfter(Instant.parse(restInputReference.getSensingStopTime())))
+			} 
+			if (null != restInputReference.getSensingStartTime() && null != restInputReference.getSensingStopTime()) {
+				if (Instant.from(OrbitTimeFormatter.parse(restInputReference.getSensingStartTime()))
+						.isAfter(Instant.from(OrbitTimeFormatter.parse(restInputReference.getSensingStopTime()))))
 					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_INPUT_REFERENCE));
-				inputProductReference.setSensingStartTime(Instant.parse(restInputReference.getSensingStartTime()));
-				inputProductReference.setSensingStopTime(Instant.parse(restInputReference.getSensingStopTime()));
+				inputProductReference.setSensingStartTime(Instant.from(OrbitTimeFormatter.parse(restInputReference.getSensingStartTime())));
+				inputProductReference.setSensingStopTime(Instant.from(OrbitTimeFormatter.parse(restInputReference.getSensingStopTime())));
 			}
 			processingOrder.setInputProductReference(inputProductReference);
 		}
