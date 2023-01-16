@@ -4,8 +4,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
+
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
@@ -49,7 +53,11 @@ public class RestOps {
 		int retry = 0;
 		while (retry < MAX_RETRIES) {
 			try {
-				Client client =  javax.ws.rs.client.ClientBuilder.newClient().register(new RestAuth(user, pw));
+				ClientConfig configuration = new ClientConfig();
+				configuration.property(ClientProperties.CONNECT_TIMEOUT, 60000);
+				configuration.property(ClientProperties.READ_TIMEOUT, 60000);
+				Client client = ClientBuilder.newClient(configuration);
+				client.register(new RestAuth(user, pw));
 				WebTarget webTarget = client.target(endPoint).path(endPointPath);
 				if (queryParams != null) {
 					for (Entry<String, String> queryParam : queryParams.entrySet()) {
