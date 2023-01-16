@@ -55,6 +55,7 @@ public class ProcessorManagerSecurityConfig extends WebSecurityConfigurerAdapter
 				.antMatchers(HttpMethod.GET).hasAnyRole(UserRole.PROCESSOR_READER.toString())
 				.antMatchers("/**/processorclasses", "/**/processors").hasAnyRole(UserRole.PROCESSORCLASS_MGR.toString())
 				.antMatchers("/**/configurations", "/**/configuredprocessors").hasAnyRole(UserRole.CONFIGURATION_MGR.toString())
+				.antMatchers("/**/workflows").hasAnyRole(UserRole.WORKFLOW_MGR.toString())
 				.anyRequest().hasAnyRole(UserRole.PROCESSORCLASS_MGR.toString())
 				.and()
 			.csrf().disable(); // Required for POST requests (or configure CSRF)
