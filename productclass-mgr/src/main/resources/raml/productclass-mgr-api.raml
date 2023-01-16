@@ -145,12 +145,6 @@ resourceTypes:
             application/json:
               type: RestProductClass
               example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
-      responses:
-        304:
-          body:
-            application/json:
-              type: RestProductClass
-              example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
     delete:
       description: Delete a product class by ID (with all its selection rules)
       responses:
