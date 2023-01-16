@@ -181,7 +181,9 @@ public class ProductClassControllerImpl implements ProductclassController {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyRestProductClass({}, {})", id, (null == productClass ? "MISSING" : productClass.getProductType()));
 		
 		try {
-			return new ResponseEntity<>(productClassManager.modifyRestProductClass(id, productClass), HttpStatus.OK);
+			RestProductClass changedProductClass = productClassManager.modifyRestProductClass(id, productClass); 
+			HttpStatus httpStatus = (productClass.getVersion() == changedProductClass.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
+			return new ResponseEntity<>(changedProductClass, httpStatus);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
@@ -308,7 +310,9 @@ public class ProductClassControllerImpl implements ProductclassController {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifySelectionRuleString({}, {}, {})", ruleid, id, selectionRuleString);
 		
 		try {
-			return new ResponseEntity<>(productClassManager.modifySelectionRuleString(ruleid, id, selectionRuleString), HttpStatus.OK);
+			SelectionRuleString changedSelectionRuleString = productClassManager.modifySelectionRuleString(ruleid, id, selectionRuleString); 
+			HttpStatus httpStatus = (selectionRuleString.getVersion() == changedSelectionRuleString.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
+			return new ResponseEntity<>(changedSelectionRuleString, httpStatus);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {

@@ -119,6 +119,12 @@ resourceTypes:
             application/json:
               type: RestProcessorClass
               example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
+      responses:
+        304:
+          body:
+            application/json:
+              type: RestProcessorClass
+              example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
     delete:
       description: Delete a processor class by ID
       displayName: deleteProcessorClassById
@@ -180,6 +186,12 @@ resourceTypes:
             application/json:
               type: RestProcessor
               example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
+      responses:
+        304:
+          body:
+            application/json:
+              type: RestProcessor
+              example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
     delete:
       description: Delete a processor class by ID
       displayName: deleteProcessorById
@@ -237,6 +249,12 @@ resourceTypes:
           example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
       responses:
         200:
+          body:
+            application/json:
+              type: RestConfiguration
+              example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
+      responses:
+        304:
           body:
             application/json:
               type: RestConfiguration
@@ -305,6 +323,12 @@ resourceTypes:
             application/json:
               type: RestConfiguredProcessor
               example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
+      responses:
+        304:
+          body:
+            application/json:
+              type: RestConfiguredProcessor
+              example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
     delete:
       description: Delete a configured processor by ID
       displayName: deleteConfiguredProcessorById
@@ -364,6 +388,12 @@ resourceTypes:
           example: !include ../../../../../model/src/main/resources/raml/examples/workflow.json
       responses:
         200:
+          body:
+            application/json:
+              type: RestWorkflow
+              example: !include ../../../../../model/src/main/resources/raml/examples/workflow.json
+      responses:
+        304:
           body:
             application/json:
               type: RestWorkflow

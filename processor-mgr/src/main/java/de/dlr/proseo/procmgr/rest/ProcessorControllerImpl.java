@@ -126,7 +126,9 @@ public class ProcessorControllerImpl implements ProcessorController {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyProcessor({}, {})", id, (null == processor ? "MISSING" : processor.getProcessorName()));
 		
 		try {
-			return new ResponseEntity<>(processorManager.modifyProcessor(id, processor), HttpStatus.OK);
+			RestProcessor changedProcessor = processorManager.modifyProcessor(id, processor); 
+			HttpStatus httpStatus = (processor.getVersion() == changedProcessor.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
+			return new ResponseEntity<>(changedProcessor, httpStatus);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
