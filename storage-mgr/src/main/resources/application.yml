@@ -15,7 +15,7 @@ proseo:
       s3AccessKey: short_access_key
       s3SecretAccessKey: short_secret_key
       s3EndPoint: http://192.168.20.191:9000
-      s3Region: eu-de
+      s3Region: eu-central-1
       s3MaxNumberOfBuckets: 50
       s3DefaultBucket: proseo-data-001
       s3DefaultEndPoint: false
