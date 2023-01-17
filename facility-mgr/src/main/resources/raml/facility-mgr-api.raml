@@ -108,6 +108,11 @@ resourceTypes:
             application/json:
               type: RestProcessingFacility
               example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
+        304:
+          body:
+            application/json:
+              type: RestProcessingFacility
+              example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
     delete:
       description: Delete a processing facility by ID
       displayName: deleteFacilityById

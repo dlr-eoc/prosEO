@@ -175,6 +175,11 @@ resourceTypes:
             application/json:
               type: RestProduct
               example: !include ../../../../../model/src/main/resources/raml/examples/product.json
+        304:
+          body:
+            application/json:
+              type: RestProduct
+              example: !include ../../../../../model/src/main/resources/raml/examples/product.json
     delete:
       description: Delete a product by ID
       responses:
