@@ -9,6 +9,7 @@
 		<version>0.9.4-ODIP</version>
 	</parent>
 
+
 	<artifactId>proseo-storage-mgr</artifactId>
 	<name>prosEO Storage Manager</name>
 	<description>prosEO Storage Manager – Abstraction layer for provider-specific object storage systems</description>
@@ -23,6 +24,7 @@
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/storage-mgr-api.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.storagemgr.rest</raml-base-package>
+
         <nimbus.jwt.version>9.10</nimbus.jwt.version>
         <!-- <awssdk1.version>1.11.799</awssdk1.version> -->
         <awssdk1.version>1.12.311</awssdk1.version>
@@ -31,12 +33,26 @@
         <!-- <alluxio.version>2.2.1</alluxio.version> -->
 	</properties>
 
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>software.amazon.awssdk</groupId>
+				<artifactId>bom</artifactId>
+				<version>2.17.123</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+
 	<dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-configuration-processor</artifactId>
-            <optional>true</optional>
-        </dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-configuration-processor</artifactId>
+			<optional>true</optional>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
@@ -45,70 +61,106 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.nimbusds</groupId>
-            <artifactId>nimbus-jose-jwt</artifactId>
-            <version>${nimbus.jwt.version}</version>
-        </dependency>
-        <!-- AWS S3 SDK 2 -->
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>s3</artifactId>
-            <version>${awssdk2.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>log4j</groupId>
-                    <artifactId>log4j</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <!-- AWS S3 SDK 1 -->
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-s3</artifactId>
-            <version>${awssdk1.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>log4j</groupId>
-                    <artifactId>log4j</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <!-- Alluxio -->
-        <!--
-        <dependency>
-            <groupId>org.alluxio</groupId>
-            <artifactId>alluxio-core-client-fs</artifactId>
-            <version>${alluxio.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>log4j</groupId>
-                    <artifactId>log4j</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.nimbusds</groupId>
+			<artifactId>nimbus-jose-jwt</artifactId>
+			<version>${nimbus.jwt.version}</version>
+		</dependency>
+
+
+		<!-- AWS S3 SDK 2 -->
+
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>aws-sdk-java</artifactId>
+			<version>${awssdk2.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+
+		<!-- <dependency> <groupId>software.amazon.awssdk</groupId> <artifactId>aws-crt-client</artifactId> 
+			<version>2.17.123-PREVIEW</version> </dependency> -->
+
+
+		<!-- https://mvnrepository.com/artifact/software.amazon.awssdk.crt/aws-crt -->
+		<dependency>
+			<groupId>software.amazon.awssdk.crt</groupId>
+			<artifactId>aws-crt</artifactId>
+			<version>0.16.6</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>s3-transfer-manager</artifactId>
+			<version>2.17.123-PREVIEW</version>
+		</dependency>
+
+		<!-- AWS S3 SDK 1 -->
+
+
+		<dependency>
+			<groupId>com.amazonaws</groupId>
+			<artifactId>aws-java-sdk-s3</artifactId>
+			<version>${awssdk1.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+
+		<!-- Alluxio -->
+		<!-- 
+		<dependency>
+			<groupId>org.alluxio</groupId>
+			<artifactId>alluxio-core-client-fs</artifactId>
+			<version>${alluxio.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
         -->
+        
         <dependency>
-            <groupId>com.phoenixnap.oss</groupId>
-            <artifactId>springmvc-raml-plugin</artifactId>
-            <type>maven-plugin</type>
-        </dependency>
+			<groupId>de.dlr.proseo</groupId>
+			<artifactId>proseo-logging</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.phoenixnap.oss</groupId>
+			<artifactId>springmvc-raml-plugin</artifactId>
+			<type>maven-plugin</type>
+		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -158,23 +210,23 @@
 				</executions>
 			</plugin>
 
-            <!-- Create HTML documentation from RAML files -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <executable>raml2html</executable>
-                    <commandlineArgs>-i ${raml-path} -o src/site/resources/${project.artifactId}.html</commandlineArgs>
-                </configuration>
-            </plugin>
+			<!-- Create HTML documentation from RAML files -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<executable>raml2html</executable>
+					<commandlineArgs>-i ${raml-path} -o src/site/resources/${project.artifactId}.html</commandlineArgs>
+				</configuration>
+			</plugin>
 
 			<!-- Build Docker image -->
             <plugin>
