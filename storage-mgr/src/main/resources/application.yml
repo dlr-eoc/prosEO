@@ -8,6 +8,8 @@ logging:
 proseo:
     global:
       storageIdPrefix: proseo
+      storageManagerVersion2: true
+      sourcePath: default
 
     s3:
       s3AccessKey: short_access_key
@@ -16,15 +18,7 @@ proseo:
       s3Region: eu-de
       s3MaxNumberOfBuckets: 50
       s3DefaultBucket: proseo-data-001
-
-    alluxio:
-      alluxioUnderFsS3Bucket: internal
-      alluxioUnderFsS3BucketPrefix: underfs
-
-      # Alluxio configuration values currently not in use       
-#      alluxioUnderFsDefaultPrefix: proseo-alluxio-cache
-#      alluxioUnderFsS3BucketEndPoint: http://192.168.20.191:9000
-#      alluxioUnderFsMaxPrefixes: 500
+      s3DefaultEndPoint: false
 
     posix:
       # Mount point for backend storage (must be different from cachePath)
@@ -46,6 +40,8 @@ proseo:
         waittime: 500
         # Maximum number of checks
         maxcycles: 600
+        # Maximum request attempts
+        maxRequestAttempts: 3 
         
       # Shared secret for download token
       secret: MyVeryLongSecretMustBeAtLeast32Bytes
@@ -56,11 +52,3 @@ proseo:
         expectedUsage: 75
         # Maximum cache usage (percentage of file system size)
         maximumUsage: 85
-
-    # Alluxio configuration values currently not in use       
-#    mountpoints:
-#     #ALLUXIO-properties are only used for answering GET-requests on endpoint /info
-#      alluxio:
-#        k8sNode:
-#          alluxioCache: /mnt/alluxio
-#          alluxioFuse: /alluxio-fuse

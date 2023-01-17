@@ -55,7 +55,7 @@ public class ProseoFileAlluxio extends ProseoFile {
 				aPath = aPath.substring(1);			
 			}
 			relPath = aPath;
-			basePath = cfg.getAlluxioUnderFsS3Bucket();
+			//basePath = cfg.getAlluxioUnderFsS3Bucket();
 		}
 		pathInfo = getFullPath();			
 		
