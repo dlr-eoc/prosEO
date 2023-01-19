@@ -87,7 +87,7 @@ public class WorkflowControllerTest {
 
 	/**
 	 *
-	 * Create a test mission, a test spacecraft and test orders in the database.
+	 * Create a test mission, a test spacecraft and test workflows in the database.
 	 *
 	 * @throws java.lang.Exception
 	 */

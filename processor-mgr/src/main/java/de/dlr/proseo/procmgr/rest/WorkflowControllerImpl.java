@@ -61,7 +61,7 @@ public class WorkflowControllerImpl implements WorkflowController {
 	 *         access was attempted
 	 */
 	@Override
-	public ResponseEntity<?> countWorkflows(String missionCode, String workflowName, String workflowVersion,
+	public ResponseEntity<String> countWorkflows(String missionCode, String workflowName, String workflowVersion,
 			String outputProductClass, String configuredProcessor) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> countWorkflows({}, {}, {}, {}, {})", missionCode, workflowName, workflowVersion,
