@@ -19,6 +19,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
@@ -47,6 +48,34 @@ public class WorkflowControllerImpl implements WorkflowController {
 	private EntityManager em;
 
 	/**
+	 * Count the workflows matching the specified workflowName, workflowVersion,
+	 * outputProductClass, or configured processor.
+	 * 
+	 * @param missionCode         the mission code
+	 * @param workflowName        the workflow name
+	 * @param workflowVersion     the workflow version
+	 * @param outputProductClass  the output product class
+	 * @param configuredProcessor the configured processor
+	 * @return the number of matching workflows as a String (may be zero) or HTTP
+	 *         status "FORBIDDEN" and an error message, if a cross-mission data
+	 *         access was attempted
+	 */
+	@Override
+	public ResponseEntity<?> countWorkflows(String missionCode, String workflowName, String workflowVersion,
+			String outputProductClass, String configuredProcessor) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> countWorkflows({}, {}, {}, {}, {})", missionCode, workflowName, workflowVersion,
+					outputProductClass, configuredProcessor);
+
+		try {
+			return new ResponseEntity<>(workflowManager.countWorkflows(missionCode, workflowName, workflowVersion,
+					outputProductClass, configuredProcessor), HttpStatus.OK);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		}
+	}
+	
+	/**
 	 * Get a list of all workflows with the specified mission, workflow name,
 	 * workflow version, output product class and configured processor
 	 *
@@ -58,22 +87,25 @@ public class WorkflowControllerImpl implements WorkflowController {
 	 * @return HTTP status "OK" and a list of workflows or HTTP status "NOT_FOUND"
 	 *         and an error message, if no workflows match the search criteria, or
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data
-	 *         access was attempted
+	 *         access was attempted, or HTTP status "TOO MANY REQUESTS" if the result
+	 *         list exceeds a configured maximum
 	 */
 	@Override
 	public ResponseEntity<List<RestWorkflow>> getWorkflows(String missionCode, String workflowName,
-			String workflowVersion, String outputProductClass, String configuredProcessor) {
+			String workflowVersion, String outputProductClass, String configuredProcessor, Integer recordFrom, Integer recordTo) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getWorkflows({}, {}, {}, {}, {})", missionCode, workflowName, workflowVersion,
 					outputProductClass, configuredProcessor);
 
 		try {
 			return new ResponseEntity<>(workflowManager.getWorkflows(missionCode, workflowName, workflowVersion,
-					outputProductClass, configuredProcessor), HttpStatus.OK);
+					outputProductClass, configuredProcessor, recordFrom, recordTo), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		} catch (HttpClientErrorException.TooManyRequests e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.TOO_MANY_REQUESTS);
 		}
 	}
 

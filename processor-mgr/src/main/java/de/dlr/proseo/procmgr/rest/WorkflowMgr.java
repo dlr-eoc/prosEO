@@ -19,8 +19,10 @@ import javax.persistence.Query;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
@@ -31,6 +33,7 @@ import de.dlr.proseo.model.Workflow;
 import de.dlr.proseo.model.WorkflowOption;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
+import de.dlr.proseo.procmgr.ProcessorManagerConfiguration;
 import de.dlr.proseo.procmgr.rest.model.RestWorkflow;
 import de.dlr.proseo.procmgr.rest.model.WorkflowUtil;
 
@@ -56,9 +59,50 @@ public class WorkflowMgr {
 	@Autowired
 	RestTemplateBuilder rtb;
 
+	/** The processor manager configuration */
+	@Autowired
+	ProcessorManagerConfiguration config; 
+	
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(WorkflowMgr.class);
 
+	/**
+	 * Count the workflows matching the specified workflowName, workflowVersion,
+	 * outputProductClass, or configured processor.
+	 * 
+	 * @param missionCode         the mission code
+	 * @param workflowName        the workflow name
+	 * @param workflowVersion     the workflow version
+	 * @param outputProductClass  the output product class
+	 * @param configuredProcessor the configured processor
+	 * @return the number of workflows found as string
+	 * @throws SecurityException if a cross-mission data access was attempted
+	 */
+	public String countWorkflows(String missionCode, String workflowName, String workflowVersion,
+			String outputProductClass, String configuredProcessor) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> countWorkflows({}, {}, {}, {}, {})", missionCode, workflowName, workflowVersion,
+					outputProductClass, configuredProcessor);
+
+		if (null == missionCode) {
+			missionCode = securityService.getMission();
+		} else {
+			// Ensure user is authorized for the requested mission
+			if (!securityService.isAuthorizedForMission(missionCode)) {
+				throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, missionCode,
+						securityService.getMission()));
+			}
+		}
+
+		Long result = RepositoryService.getWorkflowRepository().countByFields(workflowName, workflowVersion,
+				configuredProcessor, outputProductClass);
+
+		logger.log(ProcessorMgrMessage.WORKFLOWS_COUNTED, result, missionCode, workflowName,
+				workflowVersion, outputProductClass, configuredProcessor);
+		
+		return result.toString();
+	}
+	
 	/**
 	 * Create a new workflow
 	 * 
@@ -490,6 +534,8 @@ public class WorkflowMgr {
 	 * @param missionCode     the mission code
 	 * @param workflowName    the name of the workflow (class)
 	 * @param workflowVersion the workflow version
+	 * @param recordFrom      first record of filtered and ordered result to return
+	 * @param recordTo        last record of filtered and ordered result to return
 	 * @return a list of Json objects representing workflows satisfying the search
 	 *         criteria
 	 * @throws NoResultException if no workflows matching the given search criteria
@@ -497,7 +543,7 @@ public class WorkflowMgr {
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public List<RestWorkflow> getWorkflows(String missionCode, String workflowName, String workflowVersion,
-			String outputProductClass, String configuredProcessor) throws NoResultException, SecurityException {
+			String outputProductClass, String configuredProcessor, Integer recordFrom, Integer recordTo) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getWorkflows({}, {}, {}, {}, {})", missionCode, workflowName, workflowVersion,
 					outputProductClass, configuredProcessor);
@@ -509,9 +555,22 @@ public class WorkflowMgr {
 			if (!securityService.isAuthorizedForMission(missionCode)) {
 				throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, missionCode,
 						securityService.getMission()));
-			}
+			}		
+		}
+		
+		if (recordFrom == null) {
+			recordFrom = 0;
+		}
+		if (recordTo == null) {
+			recordTo = Integer.MAX_VALUE;
 		}
 
+		Long numberOfResults = Long.parseLong(this.countWorkflows(missionCode, workflowName, workflowVersion, outputProductClass, configuredProcessor));
+		Integer maxResults = config.getMaxResults();
+		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults && (numberOfResults - recordFrom) > maxResults) {
+			throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS, logger.log(GeneralMessage.TOO_MANY_RESULTS, "workflows", numberOfResults, config.getMaxResults()));
+		}
+		
 		List<RestWorkflow> result = new ArrayList<>();
 
 		String jpqlQuery = "select w from Workflow w where configuredProcessor.processor.processorClass.mission.code = :missionCode";
@@ -527,6 +586,7 @@ public class WorkflowMgr {
 		if (null != configuredProcessor) {
 			jpqlQuery += " and configuredProcessor.identifier = :configuredProcessor";
 		}
+		jpqlQuery += " ORDER BY w.id";
 
 		Query query = em.createQuery(jpqlQuery);
 		query.setParameter("missionCode", missionCode);
@@ -542,17 +602,20 @@ public class WorkflowMgr {
 		if (null != configuredProcessor) {
 			query.setParameter("configuredProcessor", configuredProcessor);
 		}
+		query.setFirstResult(recordFrom);
+		query.setMaxResults(recordTo - recordFrom);
 
 		for (Object resultObject : query.getResultList()) {
 			if (resultObject instanceof Workflow) {
 				result.add(WorkflowUtil.toRestWorkflow((Workflow) resultObject));
 			}
 		}
+		
 		if (result.isEmpty()) {
 			throw new NoResultException(logger.log(ProcessorMgrMessage.NO_WORKFLOW_FOUND, missionCode, workflowName,
 					workflowVersion, outputProductClass, configuredProcessor));
 		}
-
+		
 		logger.log(ProcessorMgrMessage.WORKFLOW_LIST_RETRIEVED, result.size(), missionCode, workflowName,
 				workflowVersion, outputProductClass, configuredProcessor);
 

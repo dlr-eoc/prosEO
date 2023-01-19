@@ -297,7 +297,7 @@ public class WorkflowControllerTest {
 		// retrieve all workflows with the same mission as the test workflows from the
 		// database via the workflow controller
 		ResponseEntity<List<RestWorkflow>> retrievedWorkflows = wci.getWorkflows(testMissionData[0], null, null, null,
-				null);
+				null, null, null);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedWorkflows.getStatusCode());
 		assertTrue("Wrong number of workflows retrieved.",
 				expectedWorkflows.size() == retrievedWorkflows.getBody().size());

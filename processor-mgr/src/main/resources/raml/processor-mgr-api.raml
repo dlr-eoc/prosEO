@@ -342,6 +342,12 @@ resourceTypes:
       workflowVersion?: string
       outputProductClass?: string
       configuredProcessor?: string
+      recordFrom?: 
+        type: integer
+        format: int32
+      recordTo?:
+        type: integer
+        format: int32
     responses:
       200:
         body:
@@ -361,6 +367,20 @@ resourceTypes:
           application/json:
             type: RestWorkflow
             example: !include ../../../../../model/src/main/resources/raml/examples/workflow.json
+  /count:
+    get:
+      description: Count the workflows with the given mission, workflow name, workflow version, outputProductClass or configuredProcessor
+      displayName: countWorkflows
+      queryParameters:
+        mission?: string
+        workflowName?: string
+        workflowVersion?: string
+        outputProductClass?: string
+        configuredProcessor?: string
+      responses:
+        200:
+          body:
+            text/plain:
   /{id}:
     uriParameters:
       id:
