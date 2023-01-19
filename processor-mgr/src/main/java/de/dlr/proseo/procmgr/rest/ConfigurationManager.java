@@ -24,8 +24,10 @@ import javax.persistence.Query;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
@@ -36,6 +38,7 @@ import de.dlr.proseo.model.ConfigurationInputFile;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
+import de.dlr.proseo.procmgr.ProcessorManagerConfiguration;
 import de.dlr.proseo.procmgr.rest.model.ConfigurationUtil;
 import de.dlr.proseo.procmgr.rest.model.RestConfiguration;
 import de.dlr.proseo.procmgr.rest.model.RestConfigurationInputFile;
@@ -60,6 +63,10 @@ public class ConfigurationManager {
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
+	
+	/** The processor manager configuration */
+	@Autowired
+	ProcessorManagerConfiguration config; 
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ConfigurationManager.class);
@@ -75,7 +82,7 @@ public class ConfigurationManager {
      * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public List<RestConfiguration> getConfigurations(String mission, String processorName,
-			String configurationVersion) throws NoResultException, SecurityException {
+			String configurationVersion, Integer recordFrom, Integer recordTo) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getConfigurations({}, {}, {})", mission, processorName, configurationVersion);
 		
 		if (null == mission) {
@@ -88,8 +95,23 @@ public class ConfigurationManager {
 			} 
 		}
 		
+		if (recordFrom == null) {
+			recordFrom = 0;
+		}
+		if (recordTo == null) {
+			recordTo = Integer.MAX_VALUE;
+		}
+
+		Long numberOfResults = Long.parseLong(this.countConfigurations(mission, processorName, configurationVersion));
+		Integer maxResults = config.getMaxResults();
+		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults
+				&& (numberOfResults - recordFrom) > maxResults) {
+			throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS,
+					logger.log(GeneralMessage.TOO_MANY_RESULTS, "workflows", numberOfResults, config.getMaxResults()));
+		}
+
 		List<RestConfiguration> result = new ArrayList<>();
-		
+
 		String jpqlQuery = "select c from Configuration c where processorClass.mission.code = :missionCode";
 		if (null != processorName) {
 			jpqlQuery += " and processorClass.processorName = :processorName";
@@ -97,6 +119,8 @@ public class ConfigurationManager {
 		if (null != configurationVersion) {
 			jpqlQuery += " and configurationVersion = :configurationVersion";
 		}
+		jpqlQuery += " ORDER BY c.id";
+
 		Query query = em.createQuery(jpqlQuery);
 		query.setParameter("missionCode", mission);
 		if (null != processorName) {
@@ -105,7 +129,10 @@ public class ConfigurationManager {
 		if (null != configurationVersion) {
 			query.setParameter("configurationVersion", configurationVersion);
 		}
-		for (Object resultObject: query.getResultList()) {
+		query.setFirstResult(recordFrom);
+		query.setMaxResults(recordTo - recordFrom);
+
+		for (Object resultObject : query.getResultList()) {
 			if (resultObject instanceof de.dlr.proseo.model.Configuration) {
 				result.add(ConfigurationUtil.toRestConfiguration((de.dlr.proseo.model.Configuration) resultObject));
 			}
@@ -433,5 +460,38 @@ public class ConfigurationManager {
 		
 		logger.log(ProcessorMgrMessage.CONFIGURATION_DELETED, id);
 	}
+	
+	/**
+	 * Count the configurations matching the specified configurationName,
+	 * configurationVersion, outputProductClass, or configured processor.
+	 * 
+	 * @param missionCode          the mission code
+	 * @param processorName        the processor name
+	 * @param configurationVersion the configuration version
+	 * @return the number of configurations found as string
+	 * @throws SecurityException if a cross-mission data access was attempted
+	 */
+	public String countConfigurations(String missionCode, String processorName, String configurationVersion) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> countConfigurations({}, {}, {}, {}, {})", missionCode, processorName,
+					configurationVersion);
 
+		if (null == missionCode) {
+			missionCode = securityService.getMission();
+		} else {
+			// Ensure user is authorized for the requested mission
+			if (!securityService.isAuthorizedForMission(missionCode)) {
+				throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, missionCode,
+						securityService.getMission()));
+			}
+		}
+
+		Long result = RepositoryService.getConfigurationRepository().countByFields(missionCode, processorName,
+				configurationVersion);
+
+		logger.log(ProcessorMgrMessage.CONFIGURATIONS_COUNTED, result, missionCode, processorName,
+				configurationVersion);
+
+		return result.toString();
+	}
 }

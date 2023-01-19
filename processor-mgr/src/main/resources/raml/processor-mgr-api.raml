@@ -205,6 +205,12 @@ resourceTypes:
       mission?: string
       processorName?: string
       configurationVersion?: string
+      recordFrom?: 
+        type: integer
+        format: int32
+      recordTo?:
+        type: integer
+        format: int32
     responses:
       200:
         body:
@@ -224,6 +230,18 @@ resourceTypes:
           application/json:
             type: RestConfiguration
             example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
+  /count:
+    get:
+      description: Count the configurations with the given mission code, processor name and configuration version
+      displayName: countConfigurations
+      queryParameters:
+        missionCode?: string
+        processorName?: string
+        configurationVersion?: string
+      responses:
+        200:
+          body:
+            text/plain:
   /{id}:
     uriParameters:
       id:
