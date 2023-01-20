@@ -50,14 +50,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.api.odip.OdipApplicationBase;
 import de.dlr.proseo.api.odip.OdipConfiguration;
 import de.dlr.proseo.api.odip.OdipSecurity;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.OdipMessage;
 import de.dlr.proseo.model.ProcessingOrder;
-import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.Workflow;
-import de.dlr.proseo.model.enums.ProductVisibility;
 import de.dlr.proseo.model.enums.UserRole;
 
 
@@ -89,11 +88,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 	/** The configuration for the ODIP API */
 	@Autowired
 	private OdipConfiguration config;
-	
-	/** The configuration for the ODIP API */
-	@Autowired
-	private OdipUtil odipUtil;
-	
+		
 	/** The security utilities for the ODIP API */
 	@Autowired
 	private OdipSecurity securityConfig;
@@ -368,7 +363,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof ProcessingOrder) {
 				// Create output production order
-				Entity productionOrder = odipUtil.toOdipProductionOrder((ProcessingOrder) resultObject);
+				Entity productionOrder = OdipApplicationBase.util.toOdipProductionOrder((ProcessingOrder) resultObject);
 				orderList.add(productionOrder);
 			}
 		}		
@@ -429,7 +424,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof Workflow) {
 				// Create output workflow
-				Entity workflow = odipUtil.toOdipWorkflow((Workflow) resultObject);
+				Entity workflow = OdipApplicationBase.util.toOdipWorkflow((Workflow) resultObject);
 				workflowList.add(workflow);
 			}
 		}		

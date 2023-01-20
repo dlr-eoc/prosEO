@@ -22,8 +22,8 @@ public class StorageMgrMessageTest {
 	 */
 	@Test
 	public final void testGetCode() {
-		int result = StorageMgrMessage.TEST_TO_BE_REPLACED.getCode();
-		int expected = 5500;
+		int result = StorageMgrMessage.TOKEN_MISSING.getCode();
+		int expected = 5531;
 		assertEquals(expected, result);
 	}
 
@@ -33,8 +33,8 @@ public class StorageMgrMessageTest {
 	 */
 	@Test
 	public final void testGetLevel() {
-		Level result = StorageMgrMessage.TEST_TO_BE_REPLACED.getLevel();
-		Level expected = Level.WARN;
+		Level result = StorageMgrMessage.TOKEN_MISSING.getLevel();
+		Level expected = Level.ERROR;
 		assertEquals(expected, result);
 	}
 
@@ -44,8 +44,8 @@ public class StorageMgrMessageTest {
 	 */
 	@Test
 	public final void testGetMessage() {
-		String result = StorageMgrMessage.TEST_TO_BE_REPLACED.getMessage();
-		String expected = "to be replaced";
+		String result = StorageMgrMessage.TOKEN_MISSING.getMessage();
+		String expected = "Authentication token missing";
 		assertEquals(expected, result);
 	}
 
@@ -55,7 +55,7 @@ public class StorageMgrMessageTest {
 	 */
 	@Test
 	public final void testGetDescription() {
-		String result = StorageMgrMessage.TEST_TO_BE_REPLACED.getDescription();
+		String result = StorageMgrMessage.TOKEN_MISSING.getDescription();
 		String expected = "";
 		assertEquals(expected, result);
 	}
