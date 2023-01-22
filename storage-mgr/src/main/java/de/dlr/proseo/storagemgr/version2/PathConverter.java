@@ -82,7 +82,7 @@ public class PathConverter {
 	private void init(String endPath) {
 		p = p.replace(BACKSLASH, SLASH); // convertToSlash
 		p = p.trim();
-
+		
 		if (p.endsWith(SLASH)) {
 			return;
 		}
@@ -102,10 +102,29 @@ public class PathConverter {
 	public PathConverter(String path, List<String> basePaths) {
 
 		this(path);
-		this.basePaths = basePaths;
+		this.basePaths = correctBasePaths(basePaths);
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> PathConverter({}, {})", path, basePaths.size());
+	}
+
+	/**
+	 * Corrects base paths (replaces backslash with slash) 
+	 * 
+	 * @param basePaths
+	 * @return
+	 */
+	private List<String> correctBasePaths(List<String> basePaths) {
+		
+		List<String> correctedBasePaths = new ArrayList<>();
+		
+		for (String basePath : basePaths) { 
+			
+			String correctedBasePath = replaceBackslashWithSlash(basePath); 	
+			correctedBasePaths.add(correctedBasePath);
+		}
+		
+		return correctedBasePaths;
 	}
 
 	/**
@@ -125,6 +144,7 @@ public class PathConverter {
 	 */
 	public void addBasePath(String basePath) {
 		String path = new PathConverter(basePath).removeLeftSlash().getPath();
+		path = replaceBackslashWithSlash(basePath); 
 		basePaths.add(path);
 	}
 
@@ -420,6 +440,16 @@ public class PathConverter {
 
 		return new PathConverter(p.replace(DOUBLESLASH, SLASH), basePaths);
 	}
+	
+	/**
+	 * Replaces Backslash with slash
+	 * 
+	 * @return path with slash, no backslash
+	 */
+	public String replaceBackslashWithSlash(String str) {
+		
+		return str.replace(BACKSLASH, SLASH); 
+	}
 
 	/**
 	 * Gets relative path from path using base path list
@@ -472,5 +502,25 @@ public class PathConverter {
 		else {
 			return StorageType.POSIX;
 		}
+	}
+
+	/**
+	 * Normalizes windows path (removes slash at the beginning) 
+	 * 
+	 * @return normalized windows path
+	 */
+	public PathConverter normalizeWindowsPath() {
+		
+		if (isWindowsPath() && p.startsWith(SLASH)) { 
+			p = p.substring(1); // "/c:/blabla" => "c:/blabla"
+		}
+		
+		// TODO: Remove after integration, only for compatibility with the existing code 
+		if (p.startsWith("POSIX|/")) { 
+			int i = 6;
+			p = p.substring(0,i) + p.substring(i+1); // "POSIX|/c:/" => "POSIX|c:/"
+		}
+		
+		return new PathConverter(p, basePaths);
 	}
 }
