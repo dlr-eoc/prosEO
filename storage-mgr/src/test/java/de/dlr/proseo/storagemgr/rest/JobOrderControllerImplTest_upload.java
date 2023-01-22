@@ -186,7 +186,7 @@ public class JobOrderControllerImplTest_upload {
 	// random-generated)
 	private String getJobOrderPrefixForToday() {
 
-		String separator = File.separator;
+		String separator = "/";
 		DateTime timestamp = DateTime.now(DateTimeZone.UTC);
 
 		return cfg.getJoborderPrefix() + separator + timestamp.getYear() + separator + timestamp.getMonthOfYear()
