@@ -184,6 +184,8 @@ public class ProductfileControllerImplTest_download {
 		
 		System.out.println("Real cache path:     " + realAbsoluteCachePath);
 		System.out.println("Expected cache path: " + expectedAbsoluteCachePath);
+		
+		realAbsoluteCachePath = new PathConverter(realAbsoluteCachePath).normalizeWindowsPath().getPath();
 		assertTrue("Real cache path: " + realAbsoluteCachePath + " expected cache path: " + expectedAbsoluteCachePath, 
 				realAbsoluteCachePath.equals(expectedAbsoluteCachePath));
 		
