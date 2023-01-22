@@ -516,7 +516,7 @@ public class PathConverter {
 		}
 		
 		// TODO: Remove after integration, only for compatibility with the existing code 
-		if (p.startsWith("POSIX|/")) { 
+		if (isWindowsPath() && p.startsWith("POSIX|/")) { 
 			int i = 6;
 			p = p.substring(0,i) + p.substring(i+1); // "POSIX|/c:/" => "POSIX|c:/"
 		}
