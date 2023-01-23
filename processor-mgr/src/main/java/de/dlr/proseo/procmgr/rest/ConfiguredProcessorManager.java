@@ -6,11 +6,9 @@
 package de.dlr.proseo.procmgr.rest;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 import javax.persistence.EntityManager;
@@ -21,8 +19,10 @@ import javax.persistence.Query;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
@@ -31,9 +31,9 @@ import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.ProcessorClass;
-import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
+import de.dlr.proseo.procmgr.ProcessorManagerConfiguration;
 import de.dlr.proseo.procmgr.rest.model.ConfiguredProcessorUtil;
 import de.dlr.proseo.procmgr.rest.model.RestConfiguredProcessor;
 
@@ -54,25 +54,38 @@ public class ConfiguredProcessorManager {
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
+	
+	/** The processor manager configuration */
+	@Autowired
+	ProcessorManagerConfiguration config; 
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ConfiguredProcessorManager.class);
 	
 	/**
-	 * Get configured processors, filtered by mission, identifier, processor name, processor version and/or configuration version
+	 * Get configured processors, filtered by mission, identifier, processor name,
+	 * processor version and/or configuration version
 	 * 
-	 * @param mission the mission code
-	 * @param identifier the identifier for the configured processor
-	 * @param processorName the processor name
-	 * @param processorVersion the processor version
+	 * @param mission              the mission code
+	 * @param identifier           the identifier for the configured processor
+	 * @param processorName        the processor name
+	 * @param processorVersion     the processor version
 	 * @param configurationVersion the configuration version
-	 * @param uuid the UUID of the configured processor
-	 * @return a list of Json objects representing configured processors satisfying the search criteria
-	 * @throws NoResultException if no configured processors matching the given search criteria could be found
-     * @throws SecurityException if a cross-mission data access was attempted
+	 * @param uuid                 the UUID of the configured processor * @param
+	 *                             recordFrom first record of filtered and ordered
+	 *                             result to return
+	 * @param recordTo             last record of filtered and ordered result to
+	 *                             return
+	 * 
+	 * @return a list of Json objects representing configured processors satisfying
+	 *         the search criteria
+	 * @throws NoResultException if no configured processors matching the given
+	 *                           search criteria could be found
+	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public List<RestConfiguredProcessor> getConfiguredProcessors(String mission, String identifier,
-			String processorName, String processorVersion, String configurationVersion, String uuid)
+			String processorName, String processorVersion, String configurationVersion, String uuid,
+			Integer recordFrom, Integer recordTo)
 					throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getConfiguredProcessors({}, {}, {}, {}, {}, {})", 
 				mission, identifier, processorName, processorVersion, configurationVersion, uuid);
@@ -85,6 +98,21 @@ public class ConfiguredProcessorManager {
 				throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 						mission, securityService.getMission()));
 			} 
+		}
+		
+		if (recordFrom == null) {
+			recordFrom = 0;
+		}
+		if (recordTo == null) {
+			recordTo = Integer.MAX_VALUE;
+		}
+		
+		Long numberOfResults = Long.parseLong(this.countConfiguredProcessors(mission, processorName, processorVersion, configurationVersion));
+		Integer maxResults = config.getMaxResults();
+		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults
+				&& (numberOfResults - recordFrom) > maxResults) {
+			throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS,
+					logger.log(GeneralMessage.TOO_MANY_RESULTS, "workflows", numberOfResults, config.getMaxResults()));
 		}
 		
 		List<RestConfiguredProcessor> result = new ArrayList<>();
@@ -122,6 +150,9 @@ public class ConfiguredProcessorManager {
 		if (null != uuid) {
 			query.setParameter("uuid", uuid);
 		}
+		query.setFirstResult(recordFrom);
+		query.setMaxResults(recordTo - recordFrom);
+
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof ConfiguredProcessor) {
 				result.add(ConfiguredProcessorUtil.toRestConfiguredProcessor((ConfiguredProcessor) resultObject));
@@ -415,4 +446,38 @@ public class ConfiguredProcessorManager {
 		logger.log(ProcessorMgrMessage.CONFIGURED_PROCESSOR_DELETED, id);
 	}
 
+	/**
+	 * Count the configuredProcessors matching the specified mission, processorName,
+	 * processorVersion, configuration version
+	 * 
+	 * @param missionCode          the mission code
+	 * @param processorName        the processor name
+	 * @param processorVersion     the processor version
+	 * @param configurationVersion the configuration version
+	 * @return the number of configuredProcessors found as string
+	 * @throws SecurityException if a cross-mission data access was attempted
+	 */
+	public String countConfiguredProcessors(String missionCode, String processorName, String processorVersion, String configurationVersion) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> countConfiguredProcessors({}, {}, {}, {}, {}, {})", missionCode, processorName,
+					processorVersion, configurationVersion);
+
+		if (null == missionCode) {
+			missionCode = securityService.getMission();
+		} else {
+			// Ensure user is authorized for the requested mission
+			if (!securityService.isAuthorizedForMission(missionCode)) {
+				throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, missionCode,
+						securityService.getMission()));
+			}
+		}
+
+		Long result = RepositoryService.getConfiguredProcessorRepository().countByFields(missionCode, processorName,
+				processorVersion, configurationVersion);
+
+		logger.log(ProcessorMgrMessage.CONFIGURED_PROCESSORS_COUNTED, result, missionCode, processorName,
+				processorVersion, configurationVersion);
+
+		return result.toString();
+	}
 }

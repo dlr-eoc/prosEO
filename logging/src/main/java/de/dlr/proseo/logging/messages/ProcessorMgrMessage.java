@@ -105,6 +105,7 @@ public enum ProcessorMgrMessage implements ProseoMessage {
 	RANGE_MUST_CONTAIN_DEFAULT						(4589, Level.ERROR, false, "The default value \"{0}\" of workflow option {1} is not contained in the value range", ""),
 	WORKFLOWS_COUNTED								(4590, Level.INFO, true, "{0} workflows found for mission {1}, workflow name {2}, workflow version {3}, output product class {3}, configured processor {4}", ""),
 	CONFIGURATIONS_COUNTED							(4591, Level.INFO, true, "{0} configurations found for mission {1}, processor name {2}, configuration version {3}", ""),
+	CONFIGURED_PROCESSORS_COUNTED					(4592, Level.INFO, true, "{0} configured processors found for mission {1}, processor name {2}, processor version {3}, configuration version {4}", ""),
 	
 	;
 
