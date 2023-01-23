@@ -420,8 +420,10 @@ public class PosixStorage implements Storage {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> uploadFile({},{})", sourceFile.getFullPath(), targetFileOrDir.getFullPath());
+		
+		String uploadedAbsoluteFile = posixDAL.uploadFile(sourceFile.getFullPath(), targetFileOrDir.getFullPath());
 
-		return posixDAL.uploadFile(sourceFile.getFullPath(), targetFileOrDir.getFullPath());
+		return getRelativePath(uploadedAbsoluteFile);
 	}
 
 	/**
@@ -437,8 +439,10 @@ public class PosixStorage implements Storage {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> upload({},{})", sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
+		
+		List<String> uploadedAbsolutePaths = posixDAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
 
-		return posixDAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
+		return getRelativePath(uploadedAbsolutePaths);
 	}
 
 	/**
@@ -455,8 +459,10 @@ public class PosixStorage implements Storage {
 			logger.trace(">>> upload({})", sourceFileOrDir.getFullPath());
 
 		StorageFile targetFileOrDir = new PosixStorageFile(basePath, sourceFileOrDir.getRelativePath());
+		
+		List<String> uploadedAbsolutePaths = posixDAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
 
-		return posixDAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
+		return getRelativePath(uploadedAbsolutePaths);
 	}
 
 	/**
@@ -473,8 +479,10 @@ public class PosixStorage implements Storage {
 			logger.trace(">>> uploadFile({})", sourceFile.getFullPath());
 
 		StorageFile targetFile = new PosixStorageFile(basePath, sourceFile.getRelativePath());
+		
+		String uploadedFile = posixDAL.uploadFile(sourceFile.getFullPath(), targetFile.getFullPath());
 
-		return posixDAL.uploadFile(sourceFile.getFullPath(), targetFile.getFullPath());
+		return getRelativePath(uploadedFile);
 	}
 
 	/**
@@ -492,8 +500,10 @@ public class PosixStorage implements Storage {
 
 		StorageFile sourceFileOrDir = new PosixStorageFile(sourcePath, relativeSourceFileOrDir);
 		StorageFile targetFileOrDir = new PosixStorageFile(basePath, relativeSourceFileOrDir);
+		
+		List<String> uploadedAbsolutePaths = posixDAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
 
-		return posixDAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
+		return getRelativePath(uploadedAbsolutePaths);
 	}
 
 	/**
@@ -509,15 +519,17 @@ public class PosixStorage implements Storage {
 
 		StorageFile sourceFile = new PosixStorageFile(sourcePath, relativeSourceFile);
 		StorageFile targetFile = new PosixStorageFile(basePath, relativeSourceFile);
+		
+		String uploadedFile = posixDAL.uploadFile(sourceFile.getFullPath(), targetFile.getFullPath());
 
-		return posixDAL.uploadFile(sourceFile.getFullPath(), targetFile.getFullPath());
+		return getRelativePath(uploadedFile);
 	}
 
 	/**
 	 * @param sourceFileOrDir source file or directory in the storage
 	 * @param targetFileOrDir target file or directory
 	 * @return list of downloaded files
-	 * @throws IOException if file canot be downloaded
+	 * @throws IOException if file cannot be downloaded
 	 */
 	@Override
 	public List<String> download(StorageFile sourceFileOrDir, StorageFile targetFileOrDir) throws IOException {

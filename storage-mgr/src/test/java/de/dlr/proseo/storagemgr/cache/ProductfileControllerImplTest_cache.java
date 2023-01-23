@@ -211,6 +211,9 @@ public class ProductfileControllerImplTest_cache {
 		
 		System.out.println("Expected cache path: " + expectedCachePath);
 		System.out.println("Real cache path:     " + realCachePath);
+		
+		realCachePath = new PathConverter(realCachePath).normalizeWindowsPath().getPath();
+
 		assertTrue("Expected path: " + expectedCachePath + " Exists: " + realCachePath, 
 				expectedCachePath.equals(realCachePath));
 		

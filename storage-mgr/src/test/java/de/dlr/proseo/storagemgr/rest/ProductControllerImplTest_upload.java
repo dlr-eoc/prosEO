@@ -220,6 +220,8 @@ public class ProductControllerImplTest_upload {
 
 			System.out.println("Real      " + realAbsoluteStoragePath);
 			System.out.println("Expected: " + expectedAbsoluteStoragePath);
+			
+			realAbsoluteStoragePath = new PathConverter(realAbsoluteStoragePath).normalizeWindowsPath().getPath();
 
 			assertTrue("Real path: " + realAbsoluteStoragePath + " Expected  path: " + expectedAbsoluteStoragePath,
 					realAbsoluteStoragePath.equals(expectedAbsoluteStoragePath));

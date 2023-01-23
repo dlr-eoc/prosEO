@@ -238,7 +238,7 @@ public class JobOrderControllerImpl implements JoborderController {
 	 */
 	private String getJobOrderRelativePath(String joborderPrefix) {
 
-		String separator = File.separator;
+		String separator = "/";
 		DateTime timestamp = DateTime.now(DateTimeZone.UTC);
 
 		return joborderPrefix + separator + timestamp.getYear() + separator + timestamp.getMonthOfYear() + separator
