@@ -367,7 +367,15 @@ public class PathConverter {
 		if (isS3Path())
 			return false;
 
-		if (p.indexOf(':') >= 0)
+		if ((p.indexOf(':') == 1) && Character.isLetter(p.charAt(0))) // "c:"
+			return true;
+		
+		// TODO: remove after integration, for compatibility with v1 only, path like "/c:"
+		if ((p.indexOf(':') == 2) && Character.isLetter(p.charAt(1)) && p.startsWith("/"))
+			return true;
+		
+		// TODO: remove after integration, for compatibility with v1 only, path like "POSIX|/c:"
+		if ((p.indexOf(':') == 8) && Character.isLetter(p.charAt(7)) && p.startsWith("POSIX|/"))
 			return true;
 
 		return false;
