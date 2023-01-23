@@ -6,19 +6,11 @@
 
 package de.dlr.proseo.ui.cli;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFilePermission;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
@@ -35,7 +27,6 @@ import org.springframework.context.annotation.Configuration;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.ui.backend.LoginManager;
@@ -99,6 +90,8 @@ public class CommandLineInterface implements CommandLineRunner {
 	private UserCommandRunner userCommandRunner;
 	@Autowired
 	private FacilityCommandRunner facilityCommandRunner;
+	@Autowired
+	private WorkflowCommandRunner workflowCommandRunner;
 	
 	/** Indicator for interactive mode vs. running from input redirection */
 	public static boolean isInteractiveMode = true;
@@ -245,6 +238,9 @@ public class CommandLineInterface implements CommandLineRunner {
 				break;
 			case FacilityCommandRunner.CMD_FACILITY:
 				facilityCommandRunner.executeCommand(command);
+				break;
+			case WorkflowCommandRunner.CMD_WORKFLOW:
+				workflowCommandRunner.executeCommand(command);
 				break;
 			default:
 				String message = ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, command.getName());
