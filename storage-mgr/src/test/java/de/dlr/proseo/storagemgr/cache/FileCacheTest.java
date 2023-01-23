@@ -19,6 +19,8 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.storagemgr.StorageManager;
+import de.dlr.proseo.storagemgr.TestUtils;
+import de.dlr.proseo.storagemgr.version2.FileUtils;
 
 /**
  * @author Denys Chaykovskiy
@@ -119,7 +121,7 @@ public class FileCacheTest {
 		String path = dir + "/" + fileName;
 
 		String accessedPath = fileCache.getAccessedPath(path);
-		String expectedAccessedPath = dir + "/" + FileCache.getPrefix() + fileName;
+		String expectedAccessedPath = dir + "/" + FileCache.getAccessedPrefix() + fileName;
 
 		System.out.println("Path:                   " + path);
 		System.out.println("Accessed Path:          " + accessedPath);
