@@ -462,8 +462,8 @@ public class ConfigurationManager {
 	}
 	
 	/**
-	 * Count the configurations matching the specified configurationName,
-	 * configurationVersion, outputProductClass, or configured processor.
+	 * Count the configurations matching the specified mission, processorName, or
+	 * configurationVersion
 	 * 
 	 * @param missionCode          the mission code
 	 * @param processorName        the processor name

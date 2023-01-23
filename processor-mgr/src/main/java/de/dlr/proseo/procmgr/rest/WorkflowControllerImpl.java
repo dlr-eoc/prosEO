@@ -84,11 +84,12 @@ public class WorkflowControllerImpl implements WorkflowController {
 	 * @param workflowVersion     the workflow version
 	 * @param outputProductClass  the output product class
 	 * @param configuredProcessor the configured processor
-	 * @return HTTP status "OK" and a list of workflows or HTTP status "NOT_FOUND"
-	 *         and an error message, if no workflows match the search criteria, or
-	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data
-	 *         access was attempted, or HTTP status "TOO MANY REQUESTS" if the result
-	 *         list exceeds a configured maximum
+	 * @param recordFrom		  first record of filtered and ordered result to return
+	 * @param recordTo 			  last record of filtered and ordered result to return
+	 * @return HTTP status "OK" and a list of workflows or 
+	 * 		   HTTP status "NOT_FOUND" and an error message, if no workflows match the search criteria, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or 
+	 *         HTTP status "TOO MANY REQUESTS" if the result list exceeds a configured maximum
 	 */
 	@Override
 	public ResponseEntity<List<RestWorkflow>> getWorkflows(String missionCode, String workflowName,
