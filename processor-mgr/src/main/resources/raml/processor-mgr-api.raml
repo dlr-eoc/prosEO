@@ -119,6 +119,11 @@ resourceTypes:
             application/json:
               type: RestProcessorClass
               example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
+        304:
+          body:
+            application/json:
+              type: RestProcessorClass
+              example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
     delete:
       description: Delete a processor class by ID
       displayName: deleteProcessorClassById
@@ -180,6 +185,11 @@ resourceTypes:
             application/json:
               type: RestProcessor
               example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
+        304:
+          body:
+            application/json:
+              type: RestProcessor
+              example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
     delete:
       description: Delete a processor class by ID
       displayName: deleteProcessorById
@@ -195,6 +205,12 @@ resourceTypes:
       mission?: string
       processorName?: string
       configurationVersion?: string
+      recordFrom?: 
+        type: integer
+        format: int32
+      recordTo?:
+        type: integer
+        format: int32
     responses:
       200:
         body:
@@ -214,6 +230,18 @@ resourceTypes:
           application/json:
             type: RestConfiguration
             example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
+  /count:
+    get:
+      description: Count the configurations with the given mission code, processor name and configuration version
+      displayName: countConfigurations
+      queryParameters:
+        missionCode?: string
+        processorName?: string
+        configurationVersion?: string
+      responses:
+        200:
+          body:
+            text/plain:
   /{id}:
     uriParameters:
       id:
@@ -237,6 +265,11 @@ resourceTypes:
           example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
       responses:
         200:
+          body:
+            application/json:
+              type: RestConfiguration
+              example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
+        304:
           body:
             application/json:
               type: RestConfiguration
@@ -305,6 +338,11 @@ resourceTypes:
             application/json:
               type: RestConfiguredProcessor
               example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
+        304:
+          body:
+            application/json:
+              type: RestConfiguredProcessor
+              example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
     delete:
       description: Delete a configured processor by ID
       displayName: deleteConfiguredProcessorById
@@ -322,6 +360,12 @@ resourceTypes:
       workflowVersion?: string
       outputProductClass?: string
       configuredProcessor?: string
+      recordFrom?: 
+        type: integer
+        format: int32
+      recordTo?:
+        type: integer
+        format: int32
     responses:
       200:
         body:
@@ -341,6 +385,20 @@ resourceTypes:
           application/json:
             type: RestWorkflow
             example: !include ../../../../../model/src/main/resources/raml/examples/workflow.json
+  /count:
+    get:
+      description: Count the workflows with the given mission, workflow name, workflow version, outputProductClass or configuredProcessor
+      displayName: countWorkflows
+      queryParameters:
+        mission?: string
+        workflowName?: string
+        workflowVersion?: string
+        outputProductClass?: string
+        configuredProcessor?: string
+      responses:
+        200:
+          body:
+            text/plain:
   /{id}:
     uriParameters:
       id:
@@ -364,6 +422,11 @@ resourceTypes:
           example: !include ../../../../../model/src/main/resources/raml/examples/workflow.json
       responses:
         200:
+          body:
+            application/json:
+              type: RestWorkflow
+              example: !include ../../../../../model/src/main/resources/raml/examples/workflow.json
+        304:
           body:
             application/json:
               type: RestWorkflow

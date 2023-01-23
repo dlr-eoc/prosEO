@@ -28,7 +28,7 @@ public enum GeneralMessage implements ProseoMessage {
 	RUNTIME_EXCEPTION_ENCOUNTERED		(9012, Level.WARN, true, "Exception encountered: {0}", ""),
 	TRUE								(9013, Level.INFO, true, "true", ""),
 	UNDEFINED							(9014, Level.ERROR, false, "An unknown error occured.", ""),
-
+	TOO_MANY_RESULTS					(9015, Level.ERROR, false, "The number of {0} matching the search criteria ({1}) exceeds the configured maximum number of results ({2})", ""),
 	
 	;
 
