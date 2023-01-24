@@ -207,9 +207,11 @@ public class ProductControllerImplTest_get {
 
 			String expectedAbsoluteStoragePath = storage.getAbsolutePath(relativePaths.get(i));
 			expectedAbsoluteStoragePath = storage.addFSPrefix(expectedAbsoluteStoragePath);
-
+			
 			System.out.println("Real      " + realAbsoluteStoragePath);
 			System.out.println("Expected: " + expectedAbsoluteStoragePath);
+			
+			realAbsoluteStoragePath = new PathConverter(realAbsoluteStoragePath).normalizeWindowsPath().getPath();
 
 			assertTrue("Real path: " + realAbsoluteStoragePath + " Expected  path: " + expectedAbsoluteStoragePath,
 					realAbsoluteStoragePath.equals(expectedAbsoluteStoragePath));
