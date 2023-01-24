@@ -353,7 +353,7 @@ public class ConfigurationManager {
 		// Check for new or changed static input files
 		Set<ConfigurationInputFile> newInputFiles = new HashSet<>();
 		for (RestConfigurationInputFile restInputFile: configuration.getStaticInputFiles()) {
-			if (null == restInputFile.getId()) {
+			if (null == restInputFile.getId() || 0 == restInputFile.getId()) {
 				// New static input file
 				configurationChanged = true;
 				ConfigurationInputFile changedInputFile = new ConfigurationInputFile();

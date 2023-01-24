@@ -9,21 +9,32 @@ spring:
         username: postgres
         password: sequel09Master
 logging:
+    file: /proseo/log/proseo-ingestor.log
     level:
         root: INFO
         de.dlr.proseo: TRACE
 proseo:
+    ingestor:
+        # Wait time for product file cleanup (in days, default 1 day)
+        cleanupCycleTime: 1
+        # Notify Production Planner upon product ingestion? (For reprocessing it may be advisable to set this to false)
+        notifyPlanner: true
     productionPlanner:
+        # URL for Production Planner (leave as empty string [""] if no Planner is installed)
         url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/5SS2aW/planner
-        # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
-        filecheckwaittime: 1000
-        filecheckmaxcycles: 50
-        
-# Test configuration
+        # Connection timeout in ms
+        timeout: 10000
     storageManager:
-        url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/VYrwNF/storage-mgr
+        # Connection timeout in ms
+        timeout: 30000
+        # Shared secret for download token
         secret: MyVeryLongSecretMustBeAtLeast32Bytes
+        # Validity period for download token
         validity: 60000
+
+# Test configuration
+    # still storageManager:
+        url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/VYrwNF/storage-mgr
     testuser:
         name: testuser
         password: testpassword

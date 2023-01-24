@@ -432,6 +432,7 @@ public class FacilityCommandRunner {
 		RestProcessingFacility updatedFacility = null;
 		if (null == facilityFile) {
 			updatedFacility = new RestProcessingFacility();
+			updatedFacility.setFacilityState(null); // otherwise CLI will attempt to set state to default value of "DISABLED"
 		} else {
 			try {
 				updatedFacility = CLIUtil.parseObjectFile(facilityFile, facilityFileFormat, RestProcessingFacility.class);

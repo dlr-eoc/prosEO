@@ -7,6 +7,7 @@ package de.dlr.proseo.ingestor.rest;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
@@ -186,7 +187,7 @@ public class ProductIngestor {
 		newModelProduct.getProductFile().add(newProductFile);
 		// Check for first time ingestion (defines publication time)
 		if (null == newModelProduct.getPublicationTime()) {
-			newModelProduct.setPublicationTime(Instant.now());
+			newModelProduct.setPublicationTime(Instant.now().truncatedTo(ChronoUnit.MILLIS));
 		}
 		newModelProduct = RepositoryService.getProductRepository().save(newModelProduct);
 		
@@ -356,7 +357,7 @@ public class ProductIngestor {
 		
 		// Check for first time ingestion (defines publication time)
 		if (null == modelProduct.getPublicationTime()) {
-			modelProduct.setPublicationTime(Instant.now());
+			modelProduct.setPublicationTime(Instant.now().truncatedTo(ChronoUnit.MILLIS));
 		}
 		modelProduct.getProductFile().add(modelProductFile);  // Autosave with commit
 

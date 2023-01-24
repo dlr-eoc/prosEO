@@ -31,7 +31,7 @@ public enum IngestorMessage implements ProseoMessage {
 	INITIALIZE_AUTHENTICATION			(2015, Level.INFO, true, "Initializing authentication from user details service",""),
 	INITIALIZE_USER_INFO				(2016, Level.INFO, true, "Initializing user details service from datasource {0}",""),
 	INVALID_EVICTION_TIME				(2017, Level.ERROR, false, "Invalid eviction time {0}", ""),
-	INVALID_FACILITY					(2018, Level.INFO, true, "Invalid processing facility {0} for ingestion", ""),
+	INVALID_FACILITY					(2018, Level.ERROR, false, "Invalid processing facility {0} for ingestion", ""),
 	INVALID_PARAMETER_TYPE				(2019, Level.ERROR, false, "Invalid parameter type {0}", ""),
 	INVALID_PARAMETER_VALUE				(2020, Level.ERROR, false, "Invalid parameter value {0} for type {1}", ""),
 	INVALID_PRODUCT_GENERATION_TIME		(2021, Level.ERROR, false, "Invalid product generation time {0}", ""),
