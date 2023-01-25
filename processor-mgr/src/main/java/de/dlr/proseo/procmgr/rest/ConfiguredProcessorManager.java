@@ -16,6 +16,10 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -457,7 +461,8 @@ public class ConfiguredProcessorManager {
 	 * @return the number of configuredProcessors found as string
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public String countConfiguredProcessors(String missionCode, String processorName, String processorVersion, String configurationVersion) {
+	public String countConfiguredProcessors(String missionCode, String processorName, String processorVersion,
+			String configurationVersion) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> countConfiguredProcessors({}, {}, {}, {}, {}, {})", missionCode, processorName,
 					processorVersion, configurationVersion);
@@ -472,9 +477,28 @@ public class ConfiguredProcessorManager {
 			}
 		}
 
-		Long result = RepositoryService.getConfiguredProcessorRepository().countByFields(missionCode, processorName,
-				processorVersion, configurationVersion);
+		// build query
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+		CriteriaQuery<Long> query = cb.createQuery(Long.class);
+		Root<ConfiguredProcessor> rootConfiguredProcessor = query.from(ConfiguredProcessor.class);
 
+		List<Predicate> predicates = new ArrayList<>();
+
+		predicates
+				.add(cb.equal(rootConfiguredProcessor.get("processor").get("processorClass").get("mission").get("code"),
+						missionCode));
+		if (processorName != null)
+			predicates.add(cb.equal(rootConfiguredProcessor.get("processor").get("processorClass").get("processorName"),
+					processorName));
+		if (processorVersion != null)
+			predicates
+					.add(cb.equal(rootConfiguredProcessor.get("processor").get("processorVersion"), processorVersion));
+		if (configurationVersion != null)
+			predicates.add(cb.equal(rootConfiguredProcessor.get("configuration").get("configurationVersion"),
+					configurationVersion));
+		query.select(cb.count(rootConfiguredProcessor)).where(predicates.toArray(new Predicate[predicates.size()]));
+
+		Long result = em.createQuery(query).getSingleResult();
 		logger.log(ProcessorMgrMessage.CONFIGURED_PROCESSORS_COUNTED, result, missionCode, processorName,
 				processorVersion, configurationVersion);
 

@@ -7,7 +7,6 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
@@ -40,17 +39,4 @@ public interface ConfiguredProcessorRepository extends JpaRepository<ConfiguredP
 	 */
 	public ConfiguredProcessor findByUuid(UUID uuid);
 
-	/**
-	 * Return the number of configuredProcessors with the given value for the given
-	 * keys.
-	 */
-	@Query("SELECT COUNT(cp) FROM ConfiguredProcessor cp "
-			+ "WHERE processor.processorClass.mission.code = coalesce(:missionCode, cp.processor.processorClass.mission.code) "
-			+ "AND processor.processorClass.processorName = coalesce(:processorName, cp.processor.processorClass.processorName) "
-			+ "AND processor.processorVersion = coalesce(:processorVersion, cp.processor.processorVersion) "
-			+ "AND configuration.configurationVersion = coalesce(:configurationVersion, cp.configuration.configurationVersion)")
-	public Long countByFields(@Param("missionCode") String missionCode, 
-			@Param("processorName") String processorName,
-			@Param("processorVersion") String processorVersion,
-			@Param("configurationVersion") String configurationVersion);
 }
