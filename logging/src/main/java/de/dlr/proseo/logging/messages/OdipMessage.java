@@ -74,7 +74,8 @@ public enum OdipMessage implements ProseoMessage {
 	MSG_INPUTREF_INVALID					(5255, Level.ERROR, false, "Invalid input reference", ""),
 	MSG_PRODUCTCLASS_NOT_DEF				(5256, Level.ERROR, false, "Product class {0} not defined for mission {1}", ""),
 	MSG_PARAMETER_NOT_FOUND					(5257, Level.ERROR, false, "Parameter not found: {0}", ""),
-
+	MSG_INPUTREF_NOT_FOUND					(5258, Level.ERROR, false, "No product file named {0} found on any archive", ""),
+	MSG_NO_INPUTPRODUCT						(5259, Level.ERROR, false, "No product of type {0} found on any archive", ""),
 	;
 
 	private final int code;

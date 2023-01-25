@@ -28,12 +28,15 @@ import org.apache.olingo.server.api.uri.UriInfoResource;
 import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientResponseException;
 
 import de.dlr.proseo.api.odip.OdipConfiguration;
 import de.dlr.proseo.api.odip.OdipSecurity;
 import de.dlr.proseo.api.odip.service.ServiceConnection;
+import de.dlr.proseo.api.odip.util.ProductUtil;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.OdipMessage;
 import de.dlr.proseo.model.Parameter;
@@ -52,6 +55,7 @@ import de.dlr.proseo.model.rest.model.RestInputReference;
 import de.dlr.proseo.model.rest.model.RestNotificationEndpoint;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestParameter;
+import de.dlr.proseo.model.rest.model.RestProduct;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
@@ -74,6 +78,8 @@ public class OdipUtilBase {
 	private final String URI_PATH_ORDERS_APPROVE = "/orders/approve";
 	private final String URI_PATH_ORDERS_PLAN = "/orders/plan";
 	private final String URI_PATH_ORDERS_RESUME = "/orders/resume";
+	private final String URI_PATH_DOWNLOAD_BYNAME = "/download/byname";
+	private final String URI_PATH_DOWNLOAD_ALLBYTIME = "/download/allbytime";
 
 	/**
 	 * MonitorServices configuration
@@ -98,6 +104,7 @@ public class OdipUtilBase {
 	
 	protected final DateTimeFormatter instantFormatter =
 			DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm:ss.SSSSSS").withZone(ZoneId.of("UTC"));
+	
 	/**
 	 * Exception for unrecoverable errors during generation of processing orders
 	 */
@@ -503,6 +510,39 @@ public class OdipUtilBase {
 			return null;
 
 		RestOrder restOrder = new RestOrder();
+		// get the workflow
+		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWID) != null) {
+			restOrder.setWorkflowUuid((String)order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWID).getValue());
+		}
+		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWNAME) != null) {
+			restOrder.setWorkflowName((String)order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWNAME).getValue());
+		}
+		if (restOrder.getWorkflowUuid() == null && restOrder.getWorkflowName() == null) {
+			// no workflow reference, return error
+			String message = logger.log(OdipMessage.MSG_WORKFLOW_REFERENCE_MISSING);
+			throw new OdipException(message);
+		}
+		Workflow workflow = null;
+		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_PRIORITY) != null) {
+			restOrder.setPriority(((Long)(order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_PRIORITY).getValue())).intValue());
+		}
+		if (restOrder.getWorkflowUuid() != null && restOrder.getWorkflowName() != null) {
+			workflow = RepositoryService.getWorkflowRepository().findByUuid(UUID.fromString(restOrder.getWorkflowUuid()));
+			if (workflow != null) {
+				if (!workflow.getName().equals(restOrder.getWorkflowName())) {
+					workflow = null;
+				}
+			}
+		} else if (restOrder.getWorkflowUuid() != null) {
+			workflow = RepositoryService.getWorkflowRepository().findByUuid(UUID.fromString(restOrder.getWorkflowUuid()));
+		} else {
+			workflow = RepositoryService.getWorkflowRepository().findByName(restOrder.getWorkflowName());
+		}
+		if (workflow == null) {
+			// no workflow reference, return error
+			String message = logger.log(OdipMessage.MSG_WORKFLOW_REF_NOT_FOUND, restOrder.getWorkflowUuid(), restOrder.getWorkflowName());
+			throw new OdipException(message);
+		}
 		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_INPUTPRODUCTREFERENCE) != null) {
 			if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_INPUTPRODUCTREFERENCE).getValueType() == ValueType.COMPLEX) {
 				// handle input production order reference
@@ -548,15 +588,24 @@ public class OdipUtilBase {
 					restOrder.setInputProductReference(inputProductReference);
 					
 					// TODO ensure start and stop are set from reference or start/stop of input product reference
-					if ((start == null || end == null) && reference != null) {
-						// search referenced product
-						Product product = findProductByReference(reference);
-						if (product == null) {
-							// error
-						} else {
-							start = product.getSensingStartTime();
-							end = product.getSensingStopTime();
+					// search referenced product
+					Product product = null;
+					if (reference != null) {
+						try {
+							product = findProductByReference(reference);
+							if (product == null) {
+								String message = logger.log(OdipMessage.MSG_INPUTREF_NOT_FOUND, reference);
+								throw new OdipException(message);							
+							} 
+						} catch (Exception e) {
+							String message = logger.log(OdipMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
+							throw new OdipException(message);							
 						}
+					}
+					
+					if ((start == null || end == null) && product != null) {
+						start = product.getSensingStartTime();
+						end = product.getSensingStopTime();
 					}
 					if ((start == null || end == null) && reference == null) {
 						String message = logger.log(OdipMessage.MSG_INPUTREF_INVALID);
@@ -566,6 +615,16 @@ public class OdipUtilBase {
 						String message = logger.log(OdipMessage.MSG_STARTSTOP_MISSING);
 						throw new OdipException(message);
 					}
+					if (start != null && end != null && product == null) {
+						// search for possible products
+						if (workflow.getInputProductClass() != null) {
+							List<Product> products = findProductsByClassAndStartStop(workflow.getInputProductClass().getProductType(), start, end);
+							if (products.isEmpty()) {
+								String message = logger.log(OdipMessage.MSG_NO_INPUTPRODUCT, workflow.getInputProductClass().getProductType());
+								throw new OdipException(message);
+							}
+						}
+					}
 					restOrder.setSlicingType(OrderSlicingType.NONE.toString());
 					restOrder.setStartTime(OrbitTimeFormatter.format(start));
 					restOrder.setStopTime(OrbitTimeFormatter.format(end));
@@ -574,39 +633,7 @@ public class OdipUtilBase {
 		}
 		restOrder.setProcessingMode(ORDER_PROCESSING_MODE);
 		restOrder.setSlicingType(ORDER_SLICING_TYPE);
-		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWID) != null) {
-			restOrder.setWorkflowUuid((String)order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWID).getValue());
-		}
-		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWNAME) != null) {
-			restOrder.setWorkflowName((String)order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWNAME).getValue());
-		}
-		// get the workflow
-		if (restOrder.getWorkflowUuid() == null && restOrder.getWorkflowName() == null) {
-			// no workflow reference, return error
-			String message = logger.log(OdipMessage.MSG_WORKFLOW_REFERENCE_MISSING);
-			throw new OdipException(message);
-		}
-		Workflow workflow = null;
-		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_PRIORITY) != null) {
-			restOrder.setPriority(((Long)(order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_PRIORITY).getValue())).intValue());
-		}
-		if (restOrder.getWorkflowUuid() != null && restOrder.getWorkflowName() != null) {
-			workflow = RepositoryService.getWorkflowRepository().findByUuid(UUID.fromString(restOrder.getWorkflowUuid()));
-			if (workflow != null) {
-				if (!workflow.getName().equals(restOrder.getWorkflowName())) {
-					workflow = null;
-				}
-			}
-		} else if (restOrder.getWorkflowUuid() != null) {
-			workflow = RepositoryService.getWorkflowRepository().findByUuid(UUID.fromString(restOrder.getWorkflowUuid()));
-		} else {
-			workflow = RepositoryService.getWorkflowRepository().findByName(restOrder.getWorkflowName());
-		}
-		if (workflow == null) {
-			// no workflow reference, return error
-			String message = logger.log(OdipMessage.MSG_WORKFLOW_REF_NOT_FOUND, restOrder.getWorkflowUuid(), restOrder.getWorkflowName());
-			throw new OdipException(message);
-		}
+		
 		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONENDPOINT) != null) {
 			RestNotificationEndpoint rnep = new RestNotificationEndpoint();
 			rnep.setUri((String)order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONENDPOINT).getValue());
@@ -927,15 +954,25 @@ public class OdipUtilBase {
 			}
 		}
 		if (product == null) {
-			// TODO search product on LTAs
+			try {
+				RestProduct restProduct = serviceConnection.getFromService(config.getAuxipBaseUri(), URI_PATH_DOWNLOAD_BYNAME + "&filename=" + reference 
+						+ "?facility=" + config.getFacility(), 
+						RestProduct.class, securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword());
+				if (restProduct != null) {
+					product = ProductUtil.toModelProduct(restProduct);
+				}
+			} catch (HttpClientErrorException.NotFound e) {
+				// already logged
+				product = null;
+			}
 		}
 		return product;
 	}
 
-	public Product findProductByOutputClassAndStartStop(String productType, Instant start, Instant stop) throws OdipException {
+	public List<Product> findProductsByClassAndStartStop(String productType, Instant start, Instant stop) throws OdipException {
 		if (logger.isTraceEnabled()) logger.trace(">>> findProductByOutputClassAndStartStop({}, {}, {})", productType, start, stop);
 
-		Product product = null;
+		List<Product> products = new ArrayList<Product>();
 		// find product class
 		List<ProductClass> productClasses = RepositoryService.getProductClassRepository().findByProductType(productType);
 		// 
@@ -952,7 +989,32 @@ public class OdipUtilBase {
 			String message = logger.log(OdipMessage.MSG_PRODUCTCLASS_NOT_DEF, productType, securityConfig.getMission());
 			throw new OdipException(message);		
 		}
-		return product;
+		try {
+			@SuppressWarnings("unchecked")
+			List<RestProduct> restProducts = (List<RestProduct>) serviceConnection.getFromService(config.getAuxipBaseUri(), 
+					URI_PATH_DOWNLOAD_ALLBYTIME + "&productType=" + productType 
+					+ "?startTime=" + OrbitTimeFormatter.format(start)
+					+ "?stopTime=" +  OrbitTimeFormatter.format(stop)
+					+ "?facility=" + config.getFacility(), 
+					RestProduct.class, securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword());
+			if (restProducts != null) {
+				for (RestProduct restProduct : restProducts) {
+					products.add(ProductUtil.toModelProduct(restProduct));
+				}
+			}
+		} catch (HttpClientErrorException e) {
+			if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+				String message = logger.log(OdipMessage.MSG_NO_INPUTPRODUCT, productType);
+				throw new OdipException(message);
+			} else {
+				String message = logger.log(OdipMessage.MSG_EXCEPTION, e.getMessage(), e);
+				throw new OdipException(message);
+			}
+		} catch (Exception e) {
+			String message = logger.log(OdipMessage.MSG_EXCEPTION, e.getMessage(), e);
+			throw new OdipException(message);
+		}
+		return products;
 	}
 	
 }

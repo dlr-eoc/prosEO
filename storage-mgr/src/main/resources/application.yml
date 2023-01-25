@@ -9,7 +9,7 @@ proseo:
     global:
       storageIdPrefix: proseo
       storageManagerVersion2: true
-      sourcePath: default
+      sourcePath: testdata
 
     s3:
       s3AccessKey: short_access_key
@@ -22,9 +22,9 @@ proseo:
 
     posix:
       # Mount point for backend storage (must be different from cachePath)
-      backendPath: /proseo/data/backend
+      backendPath: /proseo/testdata/backend
       # Mount point for file cache
-      cachePath: /proseo/data/cache
+      cachePath: /proseo/testdata/cache
       
     joborder:
       bucket: internal
