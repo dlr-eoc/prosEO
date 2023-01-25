@@ -106,6 +106,7 @@ public enum ProcessorMgrMessage implements ProseoMessage {
 	WORKFLOWS_COUNTED								(4590, Level.INFO, true, "{0} workflows found for mission {1}, workflow name {2}, workflow version {3}, output product class {4}, configured processor {5}", ""),
 	CONFIGURATIONS_COUNTED							(4591, Level.INFO, true, "{0} configurations found for mission {1}, processor name {2}, configuration version {3}", ""),
 	CONFIGURED_PROCESSORS_COUNTED					(4592, Level.INFO, true, "{0} configured processors found for mission {1}, processor name {2}, processor version {3}, configuration version {4}", ""),
+	PROCESSORS_COUNTED								(4593, Level.INFO, true, "{0} processors found for mission {1}, processor name {2}, processor version {3}", ""),
 	
 	;
 

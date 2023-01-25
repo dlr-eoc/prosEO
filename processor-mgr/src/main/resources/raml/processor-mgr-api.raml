@@ -139,6 +139,12 @@ resourceTypes:
       mission?: string
       processorName?: string
       processorVersion?: string
+      recordFrom?: 
+        type: integer
+        format: int32
+      recordTo?:
+        type: integer
+        format: int32
     responses:
       200:
         body:
@@ -158,6 +164,18 @@ resourceTypes:
           application/json:
             type: RestProcessor
             example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
+  /count:
+    get:
+      description: Count the processors with the given mission code, processor name and processor version
+      displayName: countProcessors
+      queryParameters:
+        missionCode?: string
+        processorName?: string
+        processorVersion?: string
+      responses:
+        200:
+          body:
+            text/plain:
   /{id}:
     uriParameters:
       id:
