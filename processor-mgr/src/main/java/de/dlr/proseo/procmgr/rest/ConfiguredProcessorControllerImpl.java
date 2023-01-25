@@ -17,11 +17,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.procmgr.rest.model.RestConfiguration;
 import de.dlr.proseo.procmgr.rest.model.RestConfiguredProcessor;
 
 /**
@@ -42,33 +42,39 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.PROCESSOR_MGR);
 	
 	/**
-	 * Get configured processors, filtered by mission, identifier, processor name, processor version and/or configuration version
+	 * Get configured processors, filtered by mission, identifier, processor name,
+	 * processor version and/or configuration version
 	 * 
-	 * @param mission the mission code
-	 * @param identifier the identifier for the configured processor
-	 * @param processorName the processor name
-	 * @param processorVersion the processor version
+	 * @param mission              the mission code
+	 * @param identifier           the identifier for the configured processor
+	 * @param processorName        the processor name
+	 * @param processorVersion     the processor version
 	 * @param configurationVersion the configuration version
-	 * @param uuid the UUID of the configured processor
-	 * @return HTTP status "OK" and a list of Json objects representing configured processors satisfying the search criteria or
-	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
-	 *         HTTP status "NOT_FOUND" and an error message, if no configured processors matching the search criteria were found
+	 * @param uuid                 the UUID of the configured processor
+	 * @param recordFrom           first record of filtered and ordered result to return
+	 * @param recordTo             last record of filtered and ordered result to return
+	 * @return HTTP status "OK" and a list of JSON objects representing configured processors satisfying the search criteria or 
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or 
+	 *         HTTP status "NOT_FOUND" and an error message, if no configurations matching the search criteria were found, or 
+	 *         HTTP status "TOO MANY REQUESTS" if the result list exceeds a configured maximum	 
 	 */
 	@Override
 	public ResponseEntity<List<RestConfiguredProcessor>> getConfiguredProcessors(String mission, String identifier,
-			String processorName, String processorVersion, String configurationVersion, String uuid) {
+			String processorName, String processorVersion, String configurationVersion, String uuid, Integer recordFrom, Integer recordTo) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getConfiguredProcessors({}, {}, {}, {}, {}, {})", 
 				mission, identifier, processorName, processorVersion, configurationVersion, uuid);
 		
 		try {
 			return new ResponseEntity<>(
 					configuredProcessorManager.getConfiguredProcessors(mission, identifier, processorName, 
-							processorVersion, configurationVersion, uuid),
+							processorVersion, configurationVersion, uuid, recordFrom, recordTo),
 					HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		} catch (HttpClientErrorException.TooManyRequests e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.TOO_MANY_REQUESTS);
 		}
 	}
 
@@ -175,4 +181,30 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 		}
 	}
 
+	/**
+	 * Count the configuredProcessors matching the specified mission, processor
+	 * name, and configuredProcessor version.
+	 * 
+	 * @param missionCode          the mission code
+	 * @param processorName        the processor name
+	 * @param processorVersion     the processor version
+	 * @param configurationVersion the configuration version
+	 * @return the number of matching configuredProcessors as a String (may be zero)
+	 *         or HTTP status "FORBIDDEN" and an error message, if a cross-mission
+	 *         data access was attempted
+	 */
+	@Override
+	public ResponseEntity<String> countConfiguredProcessors(String missionCode, String processorName,
+			String processorVersion, String configurationVersion) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> countConfiguredProcessors({}, {}, {}, {})", missionCode, processorName, processorVersion,
+					configurationVersion);
+
+		try {
+			return new ResponseEntity<>(configuredProcessorManager.countConfiguredProcessors(missionCode, processorName,
+					processorVersion, configurationVersion), HttpStatus.OK);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		}
+	}	
 }

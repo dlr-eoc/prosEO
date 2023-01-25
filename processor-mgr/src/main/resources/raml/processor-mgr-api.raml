@@ -292,6 +292,12 @@ resourceTypes:
       processorVersion?: string
       configurationVersion?: string
       uuid?: string
+      recordFrom?: 
+        type: integer
+        format: int32
+      recordTo?:
+        type: integer
+        format: int32
     responses:
       200:
         body:
@@ -311,6 +317,19 @@ resourceTypes:
           application/json:
             type: RestConfiguredProcessor
             example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
+  /count:
+    get:
+      description: Count the configured processors with the given mission code, processor name, processor version and configuration version
+      displayName: countConfiguredProcessors
+      queryParameters:
+        missionCode?: string
+        processorName?: string
+        processorVersion?: string
+        configurationVersion?: string
+      responses:
+        200:
+          body:
+            text/plain:
   /{id}:
     uriParameters:
       id:

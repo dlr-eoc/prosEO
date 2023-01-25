@@ -43,12 +43,15 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	/**
 	 * Get configurations by mission, processor name and configuration version
 	 * 
-	 * @param mission the mission code
-	 * @param processorName the processor name
+	 * @param mission              the mission code
+	 * @param processorName        the processor name
 	 * @param configurationVersion the configuration version
-	 * @return HTTP status "OK" and a list of Json objects representing configurations satisfying the search criteria or
-	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
-	 *         HTTP status "NOT_FOUND" and an error message, if no configurations matching the search criteria were found
+	 * @param recordFrom           first record of filtered and ordered result to return
+	 * @param recordTo             last record of filtered and ordered result to return
+	 * @return HTTP status "OK" and a list of JSON objects representing configurations satisfying the search criteria or 
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or 
+	 *         HTTP status "NOT_FOUND" and an error message, if no configurations matching the search criteria were found, or 
+	 *         HTTP status "TOO MANY REQUESTS" if the result list exceeds a configured maximum
 	 */
 	@Override
 	public ResponseEntity<List<RestConfiguration>> getConfigurations(String mission, String processorName,
@@ -61,6 +64,8 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		} catch (HttpClientErrorException.TooManyRequests e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.TOO_MANY_REQUESTS);
 		}
 	}
 

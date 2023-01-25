@@ -9,7 +9,6 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.dlr.proseo.model.Workflow;
@@ -50,12 +49,4 @@ public interface WorkflowRepository extends JpaRepository<Workflow, Long> {
 	@Query("select w from Workflow w where w.configuredProcessor.processor.processorClass.mission.code = ?1 and w.name = ?2 and w.workflowVersion = ?3")
 	public Workflow findByMissionCodeAndWorkflowNameAndWorkflowVersion(String missionCode, String name,
 			String workflowVersion);
-	
-	/**
-	 * Return the number of workflows with the given value for the given keys.
-	 */
-	@Query("SELECT COUNT(w) FROM Workflow w WHERE name = coalesce(:name, w.name) AND workflowVersion = coalesce(:workflowVersion, w.workflowVersion) AND configuredProcessor.identifier = coalesce(:configuredProcessor, configuredProcessor.identifier) AND outputProductClass.productType = coalesce(:outputProductClass, outputProductClass.productType)")
-	public Long countByFields(@Param("name") String name, @Param("workflowVersion") String workflowVersion,
-			@Param("configuredProcessor") String configuredProcessor,
-			@Param("outputProductClass") String outputProductClass);
 }

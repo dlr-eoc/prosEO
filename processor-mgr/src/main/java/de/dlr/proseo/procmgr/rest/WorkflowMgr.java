@@ -16,6 +16,10 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -94,12 +98,30 @@ public class WorkflowMgr {
 			}
 		}
 
-		Long result = RepositoryService.getWorkflowRepository().countByFields(workflowName, workflowVersion,
-				configuredProcessor, outputProductClass);
+		// build query
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+		CriteriaQuery<Long> query = cb.createQuery(Long.class);
+		Root<Workflow> rootWorkflow = query.from(Workflow.class);
 
-		logger.log(ProcessorMgrMessage.WORKFLOWS_COUNTED, result, missionCode, workflowName,
-				workflowVersion, outputProductClass, configuredProcessor);
-		
+		List<Predicate> predicates = new ArrayList<>();
+
+		predicates.add(cb.equal(rootWorkflow.get("configuredProcessor").get("processor").get("processorClass")
+				.get("mission").get("code"), missionCode));
+		if (workflowName != null)
+			predicates.add(cb.equal(rootWorkflow.get("name"), workflowName));
+		if (workflowVersion != null)
+			predicates.add(cb.equal(rootWorkflow.get("workflowVersion"), workflowVersion));
+		if (outputProductClass != null)
+			predicates.add(cb.equal(rootWorkflow.get("outputProductClass").get("productType"), outputProductClass));
+		if (configuredProcessor != null)
+			predicates.add(cb.equal(rootWorkflow.get("configuredProcessor").get("identifier"), configuredProcessor));
+		query.select(cb.count(rootWorkflow)).where(predicates.toArray(new Predicate[predicates.size()]));
+
+		Long result = em.createQuery(query).getSingleResult();
+
+		logger.log(ProcessorMgrMessage.WORKFLOWS_COUNTED, result, missionCode, workflowName, workflowVersion,
+				outputProductClass, configuredProcessor);
+
 		return result.toString();
 	}
 	
