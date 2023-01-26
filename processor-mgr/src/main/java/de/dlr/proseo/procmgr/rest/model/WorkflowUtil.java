@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.procmgr.rest.model;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -78,7 +79,10 @@ public class WorkflowUtil {
 					restOption.setOptionType(option.getType().toString());
 				}
 				if (null != option.getValueRange()) {
-					restOption.setValueRange(option.getValueRange());
+					restOption.setValueRange(new ArrayList<String>());
+					for (String str : option.getValueRange()) {
+						restOption.getValueRange().add(str);
+					}
 				}
 				if (0 != option.getId()) {
 					restOption.setId(option.getId());
