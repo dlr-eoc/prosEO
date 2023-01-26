@@ -9,8 +9,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * Configuration class for the prosEO AIP Client component
@@ -20,11 +23,16 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @ConfigurationProperties(prefix="proseo")
+@EntityScan(basePackages = "de.dlr.proseo.model")
 public class AipClientConfiguration {
 	
 	/** The URL of the prosEO Ingestor */
 	@Value("${proseo.ingestor.url}")
 	private String ingestorUrl;
+	
+	/** Source directory for uploads by the prosEO Ingestor */
+	@Value("${proseo.ingestor.sourcedir}")
+	private String ingestorSourceDir;
 	
 	/** The AUXIP Monitor identifier */
 	@Value("${proseo.auxip.id}")
@@ -110,6 +118,24 @@ public class AipClientConfiguration {
 	@Value("${proseo.auxip.directory}")
 	private String auxipDirectoryPath;
 	
+	/**
+	 * Gets the URL of the prosEO Ingestor
+	 * 
+	 * @return the Ingestor URL
+	 */
+	public String getIngestorUrl() {
+		return ingestorUrl;
+	}
+
+	/**
+	 * Gets the source directory for uploads by the prosEO Ingestor
+	 * 
+	 * @return the Ingestor source directory
+	 */
+	public String getIngestorSourceDir() {
+		return ingestorSourceDir;
+	}
+
 	/**
 	 * Gets the AUXIP Monitor identifier
 	 * 
@@ -314,4 +340,13 @@ public class AipClientConfiguration {
 		return auxipDirectoryPath;
 	}
 
+	/**
+	 * Provide a common REST template instance for production code and test code
+	 * 
+	 * @return a REST template
+	 */
+	@Bean
+	public RestTemplate restTemplate() {
+	    return new RestTemplate();
+	}	
 }

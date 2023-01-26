@@ -2,7 +2,7 @@ package de.dlr.proseo.storagemgr.cache;
 
 import static org.junit.Assert.*;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import javax.annotation.PostConstruct;
 
@@ -17,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.storagemgr.StorageManager;
+import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.utils.ProseoFile;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -39,7 +40,7 @@ public class ProseoFilePosixTest {
 	@PostConstruct
 	private void init() {
 		testCachePath = testUtils.getTestCachePath();
-		sourceTestPath = testUtils.getTestSourcePath();
+		sourceTestPath = testUtils.getTestStoragePath();
 	}
 
 	@Test
@@ -57,67 +58,64 @@ public class ProseoFilePosixTest {
 
 		TestUtils.createFile(sourcePath1, "");
 		TestUtils.createFile(sourcePath2, "");
-		
+
 		ProseoFile targetFile1 = ProseoFile.fromPathInfo(targetPath1, TestUtils.getInstance().getCfg());
 		ProseoFile targetFile2 = ProseoFile.fromPathInfo(targetPath2, TestUtils.getInstance().getCfg());
-		
+
 		ProseoFile sourceFile;
-		
-		// add new - file not exists and not in cache, cache is empty 
+
+		// add new - file not exists and not in cache, cache is empty
 
 		sourceFile = ProseoFile.fromPathInfo(sourcePath1, TestUtils.getInstance().getCfg());
 		try {
-			ArrayList<String> transfered = sourceFile.copyTo(targetFile1, false);
-			
+			List<String> transfered = sourceFile.copyTo(targetFile1, false);
+
 			if (transfered != null && !transfered.isEmpty()) {
 
-				TestUtils.printArrayList("File copied to cache storage successfully", transfered);
+				TestUtils.printList("File copied to cache storage successfully", transfered);
 			}
 		} catch (Exception e) {
-			
+
 			e.printStackTrace();
 		}
 
 		assertTrue("Cache has not 1 element: " + fileCache.size(), fileCache.size() == 1);
-		
-		// add new - file not exists and not in cache, but cache has already 1 element 
+
+		// add new - file not exists and not in cache, but cache has already 1 element
 
 		sourceFile = ProseoFile.fromPathInfo(sourcePath2, TestUtils.getInstance().getCfg());
 		try {
-			ArrayList<String> transfered = sourceFile.copyTo(targetFile2, false);
-			
+			List<String> transfered = sourceFile.copyTo(targetFile2, false);
+
 			if (transfered != null && !transfered.isEmpty()) {
 
-				TestUtils.printArrayList("File copied to cache storage successfully", transfered);
+				TestUtils.printList("File copied to cache storage successfully", transfered);
 			}
 		} catch (Exception e) {
-			
+
 			e.printStackTrace();
 		}
 
 		assertTrue("Cache has not 2 elements: " + fileCache.size(), fileCache.size() == 2);
-		
-		
+
 		// update - file exists and in cache, cache has 2 elements
 
 		sourceFile = ProseoFile.fromPathInfo(sourcePath1, TestUtils.getInstance().getCfg());
 		try {
-			ArrayList<String> transfered = sourceFile.copyTo(targetFile1, false);
-			
+			List<String> transfered = sourceFile.copyTo(targetFile1, false);
+
 			if (transfered != null && !transfered.isEmpty()) {
 
-				TestUtils.printArrayList("File copied to cache storage successfully", transfered);
+				TestUtils.printList("File copied to cache storage successfully", transfered);
 			}
 		} catch (Exception e) {
-			
+
 			e.printStackTrace();
 		}
 
 		assertTrue("Cache has not 2 elements: " + fileCache.size(), fileCache.size() == 2);
-		
+
 		fileCache.clear();
 		TestUtils.deleteTestDirectories();
-
 	}
-
 }

@@ -188,7 +188,7 @@ public class FacmgrManager {
 			try {
 				modelFacility.setFacilityState(changedFacility.getFacilityState());
 			} catch (IllegalStateException e) {
-				throw new IllegalArgumentException(logger.log(GeneralMessage.ILLEGAL_ORDER_STATE_TRANSITION,
+				throw new IllegalArgumentException(logger.log(GeneralMessage.ILLEGAL_FACILITY_STATE_TRANSITION,
 						modelFacility.getFacilityState().toString(), changedFacility.getFacilityState().toString()));
 			}
 		}	

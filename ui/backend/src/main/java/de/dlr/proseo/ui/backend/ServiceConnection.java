@@ -310,10 +310,11 @@ public class ServiceConnection {
 				if (HttpStatus.UNAUTHORIZED.value() == httpStatusCode || HttpStatus.FORBIDDEN.value() == httpStatusCode) {
 					if (null != httpResponse.getEntity())
 						httpResponse.getEntity().getContent().close();
-					if (proseoMessage == null) 
+					if (proseoMessage == null) {
+						logger.log(UIMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
+					} else {
 						logger.log(UIMessage.EXTRACTED_MESSAGE, proseoMessage);
-						else
-							logger.log(UIMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
+					}
 					throw new HttpClientErrorException(HttpStatus.UNAUTHORIZED, proseoMessage);
 				} else if (HttpStatus.NOT_FOUND.value() == httpStatusCode || HttpStatus.BAD_REQUEST.value() == httpStatusCode) {
 					if (null != httpResponse.getEntity())

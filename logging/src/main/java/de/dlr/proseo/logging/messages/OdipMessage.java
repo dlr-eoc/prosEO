@@ -69,10 +69,13 @@ public enum OdipMessage implements ProseoMessage {
 	ORBIT_DATA_INVALID						(5250, Level.ERROR, false, "Orbit data invalid (cause: {0})", ""),
 	ORDER_DATA_INVALID						(5251, Level.ERROR, false, "Order data invalid (cause: {0})", ""),
 	SERIALIZATION_FAILED					(5252, Level.ERROR, false, "Cannot convert object to Json (cause: {0})", ""),
-	WARN_UNEXPECTED_STATUS					(5253, Level.WARN, false, "Unexpected HTTP status {0} received", ""),
-	MSG_STARTSTOP_MISSING					(5254, Level.WARN, false, "Sensing start/stop time missing", ""),
-	MSG_INPUTREF_INVALID					(5255, Level.WARN, false, "Invalid input reference", ""),
-	
+	WARN_UNEXPECTED_STATUS					(5253, Level.ERROR, false, "Unexpected HTTP status {0} received", ""),
+	MSG_STARTSTOP_MISSING					(5254, Level.ERROR, false, "Sensing start/stop time missing", ""),
+	MSG_INPUTREF_INVALID					(5255, Level.ERROR, false, "Invalid input reference", ""),
+	MSG_PRODUCTCLASS_NOT_DEF				(5256, Level.ERROR, false, "Product class {0} not defined for mission {1}", ""),
+	MSG_PARAMETER_NOT_FOUND					(5257, Level.ERROR, false, "Parameter not found: {0}", ""),
+	MSG_INPUTREF_NOT_FOUND					(5258, Level.ERROR, false, "No product file named {0} found on any archive", ""),
+	MSG_NO_INPUTPRODUCT						(5259, Level.ERROR, false, "No product of type {0} found on any archive", ""),
 	;
 
 	private final int code;

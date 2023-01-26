@@ -219,6 +219,32 @@
                     </execution>
 				</executions>
 			</plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>extendable-jar</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <configuration>
+              <classifier>extendable</classifier>
+              <includes>
+                <include>de/dlr/proseo/api/odip/OAuth2TokenManager$UserInfo.class</include>
+                <include>de/dlr/proseo/api/odip/OAuth2TokenManager.class</include>
+                <include>de/dlr/proseo/api/odip/OdipApplicationBase.class</include>
+                <include>de/dlr/proseo/api/odip/OdipConfiguration.class</include>
+                <include>de/dlr/proseo/api/odip/OdipHttp.class</include>
+                <include>de/dlr/proseo/api/odip/OdipSecurity.class</include>
+                <include>de/dlr/proseo/api/odip/odata/*.class</include>
+                <include>de/dlr/proseo/api/odip/service/*.class</include>
+                <include>de/dlr/proseo/api/odip/rest/**</include>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
 
 			<!-- Build Docker image -->
             <plugin>

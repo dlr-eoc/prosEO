@@ -42,20 +42,42 @@ public class Conf {
 	/** Job Order element Breakpoint_Enable */
 	private String breakpointEnable;
 	
-	/** Job Order element Processing_Station */
-	private String processingStation;
-	
 	/** Job Order element Acquisition_Station */
 	private String acquisitionStation;
 	
-	/** Job Order element Sensing_Time */
-	private SensingTime sensingTime;
+	/** Job Order element Processing_Station */
+	private String processingStation;
 	
 	/** Job Order elements Config_Files / Config_File_Name */
 	private List<String> configFileNames = new ArrayList<String>(); 
 
+	/** Job Order element Sensing_Time */
+	private SensingTime sensingTime;
+	
 	/** Job Order elements Dynamic_Processing_Parameters / Processing_Parameter */
 	private List<ProcessingParameter> dynamicProcessingParameters = new ArrayList<ProcessingParameter>();
+	
+	/**
+	 * Thrown when a request to a unique named processing parameter is executed and there is more than one parameter with the
+	 * given name.
+	 * 
+	 * The exception class name is borrowed from javax.persistence.NonUniqueResultException.
+	 */
+	public static class NonUniqueResultException extends RuntimeException {
+		private static final long serialVersionUID = -1717642966866290514L;
+
+		public NonUniqueResultException() {
+			super();
+		}
+		
+		public NonUniqueResultException(String message) {
+			super(message);
+		}
+		
+		public NonUniqueResultException(String message, Throwable cause) {
+			super(message, cause);
+		}
+	}
 	
 	/**
 	 * Gets the Processor_Name element
@@ -245,6 +267,62 @@ public class Conf {
 	}
 	
 	/**
+	 * Gets the Processing_Parameter values for the given key (ignoring case)
+	 * 
+	 * @param name the key to search for
+	 * @return a list of processing parameters with the given key
+	 */
+	public List<ProcessingParameter> getProcessingParametersByName(String name) {
+		List<ProcessingParameter> result = new ArrayList<>();
+		
+		for (ProcessingParameter param: dynamicProcessingParameters) {
+			if (param.getName().equalsIgnoreCase(name)) {
+				result.add(param);
+			}
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * Gets the unique Processing_parameter for the given key (ignoring case)
+	 * 
+	 * @param name the key to search for
+	 * @return the single processing parameter matching the key, or null if no such parameter exists
+	 * @throws NonUniqueResultException if more than one parameter with the given name exists
+	 */
+	public ProcessingParameter getUniqueProcessingParameterByName(String name) throws NonUniqueResultException {
+		List<ProcessingParameter> result = getProcessingParametersByName(name);
+		
+		if (result.isEmpty()) {
+			return null;
+		} else if (1 == result.size()) {
+			return result.get(0);
+		} else {
+			throw new NonUniqueResultException("More than one processing parameter with name " + name);
+		}
+	}
+	
+	/**
+	 * Sets the unique Processing_parameter for the given key (ignoring case) to the given value (parameter will be created,
+	 * if necessary)
+	 * 
+	 * @param name the key of the parameter to set
+	 * @param value the new parameter value
+	 * @throws NonUniqueResultException if more than one parameter with the given name exists
+	 */
+	public void setProcessingParameterByName(String name, String value) throws NonUniqueResultException {
+		ProcessingParameter param = getUniqueProcessingParameterByName(name);
+		
+		if (null == param) {
+			param = new ProcessingParameter(name, value);
+			dynamicProcessingParameters.add(param);
+		} else {
+			param.setValue(value);
+		}
+	}
+	
+	/**
 	 * No-argument constructor, initializes the configuration file names and the dynamic processing parameters
 	 */
 	public Conf() {	}
@@ -269,11 +347,11 @@ public class Conf {
 		this.stderrLogLevel = stderrLogLevel;
 		this.test = test;
 		this.breakpointEnable = breakpointEnable;
-		this.processingStation = processingStation;
 		this.acquisitionStation = acquisitionStation;
+		this.processingStation = processingStation;
 		this.configFileNames = new ArrayList<String>();
-		this.dynamicProcessingParameters = new ArrayList<ProcessingParameter>();
 		this.sensingTime = null;
+		this.dynamicProcessingParameters = new ArrayList<ProcessingParameter>();
 	}
 	
 	/**
@@ -313,20 +391,16 @@ public class Conf {
         breakpointEnableEle.appendChild(doc.createTextNode(breakpointEnable));
         configEle.appendChild(breakpointEnableEle);
         
-        Element processingStationEle = doc.createElement("Processing_Station");
-        processingStationEle.appendChild(doc.createTextNode(processingStation));
-        configEle.appendChild(processingStationEle);
-        
         if (acquisitionStation != null && !acquisitionStation.isBlank()) {
         	Element acquisitionStationEle = doc.createElement("Acquisition_Station");
         	acquisitionStationEle.appendChild(doc.createTextNode(acquisitionStation));
         	configEle.appendChild(acquisitionStationEle);
         }
 	    
-        if (sensingTime != null) {
-        	sensingTime.buildXML(doc, configEle, prosEOAttributes);
-        }
-
+        Element processingStationEle = doc.createElement("Processing_Station");
+        processingStationEle.appendChild(doc.createTextNode(processingStation));
+        configEle.appendChild(processingStationEle);
+        
         Element configFilesEle =
         	doc.createElement(jobOrderVersion == JobOrderVersion.MMFI_1_8 ? "Config_Files" : "List_of_Config_Files");
         configEle.appendChild(configFilesEle);
@@ -338,6 +412,11 @@ public class Conf {
         	configFileNameEle.appendChild(doc.createTextNode(item));
         	configFilesEle.appendChild(configFileNameEle);
         }
+
+        if (sensingTime != null) {
+        	sensingTime.buildXML(doc, configEle, prosEOAttributes);
+        }
+
         Element dynProcParamsEle =
         	doc.createElement(jobOrderVersion == JobOrderVersion.MMFI_1_8 ? "Dynamic_Processing_Parameters" : "List_of_Dyn_Processing_Parameters");
         configEle.appendChild(dynProcParamsEle);

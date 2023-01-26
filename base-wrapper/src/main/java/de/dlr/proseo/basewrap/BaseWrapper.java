@@ -8,7 +8,6 @@ package de.dlr.proseo.basewrap;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
@@ -23,24 +22,8 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -160,8 +143,6 @@ public class BaseWrapper {
 	private static final String MSG_ERROR_PARSING_PRODUCT = "Error converting HTTP response {} to REST product (cause: {})";
 	private static final String MSG_ERROR_CONVERTING_PRODUCT = "Error converting REST product of class {} to JSON (cause: {})";
 	private static final String MSG_ERROR_UPDATING_PRODUCT = "Error updating product with ID {} in database (HTTP status code: {}, message: {})";
-	private static final String MSG_ERROR_INSTANTIATING_DOCUMENT_BUILDER = "Error instantiating DocumentBuilder: {}";
-	private static final String MSG_JOF_NOT_PARSEABLE = "JobOrder file {} not parseable ({})";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseWrapper.class);
@@ -208,7 +189,7 @@ public class BaseWrapper {
 	/** Path to Job Order File, format according to file system type */
 	private String ENV_JOBORDER_FILE = System.getenv(ENV_VARS.JOBORDER_FILE.toString());
 	/** Path to Job Order File, format according to file system type */
-	private String ENV_JOBORDER_VERSION = System.getenv(ENV_VARS.JOBORDER_VERSION.toString());
+	protected String ENV_JOBORDER_VERSION = System.getenv(ENV_VARS.JOBORDER_VERSION.toString());
 	
 	/** HTTP endpoint for local Storage Manager */
 	private String ENV_STORAGE_ENDPOINT = System.getenv(ENV_VARS.STORAGE_ENDPOINT.toString());
@@ -331,7 +312,7 @@ public class BaseWrapper {
 			throw new WrapperException();
 		}
 		
-		// Retrieve product metadata from Ingestor
+		// Update product metadata using Ingestor
 		String ingestorRestUrl = "/products/" + output.getProductID();
 
 		String jsonRequest = null;
@@ -784,7 +765,7 @@ public class BaseWrapper {
 	 * @param path file path of newly created JOF
 	 * @throws WrapperException if the Job Order document cannot be written to an XML file
 	 */
-	protected void provideContainerJOF(JobOrder jo, String path) throws WrapperException {	
+	private void provideContainerJOF(JobOrder jo, String path) throws WrapperException {	
 		if (logger.isTraceEnabled()) logger.trace(">>> provideContainerJOF(JOF, {})", path);
 
 		boolean ok = jo.writeXML(path, JobOrderVersion.valueOf(ENV_JOBORDER_VERSION), false);
@@ -1119,70 +1100,6 @@ public class BaseWrapper {
 		
 	}
 	
-	/**
-	 * Logs the job order in formatted XML
-	 * This method should be called after provideContainerJOF 
-	 * 
-	 * @param path Path to job order file
-	 */
-	protected void logJOF(String path) {
-		if (logger.isTraceEnabled()) logger.trace(">>> log JOF({})", path);
-
-		DocumentBuilder docBuilder = null;
-		try {
-			docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-		} catch (ParserConfigurationException e) {
-			logger.error(MSG_ERROR_INSTANTIATING_DOCUMENT_BUILDER, e.getMessage());
-			throw new WrapperException();
-		}
-		Document jobOrderDoc = null;
-		File jobOrderFile = new File(path);
-		try {
-			jobOrderDoc = docBuilder.parse(jobOrderFile);
-		} catch (SAXException | IOException e) {
-			logger.error(MSG_JOF_NOT_PARSEABLE, jobOrderFile.getPath(), e.getMessage());
-			throw new WrapperException();
-		}
-		NodeList dynProcParams = jobOrderDoc.getElementsByTagName("Dynamic_Processing_Parameters");
-		if (dynProcParams.getLength() == 1) {
-			Element e = (Element) dynProcParams.item(0);
-			jobOrderDoc.renameNode(e, null, "List_of_Dynamic_Processing_Parameters");
-			Integer count = 0;
-			NodeList dynProcParam =  e.getChildNodes();
-			for (int i = 0; i < dynProcParam.getLength(); i++) {
-				if (dynProcParam.item(i).getNodeType() == org.w3c.dom.Node.ELEMENT_NODE) {
-					count++;
-				}
-			}
-			e.setAttribute("count", count.toString());
-		}
-		dynProcParams = jobOrderDoc.getElementsByTagName("Processing_Parameter");
-		for (int i = 0; i < dynProcParams.getLength(); i++) {
-			jobOrderDoc.renameNode(dynProcParams.item(i), null, "Dynamic_Processing_Parameter");
-		}
-		TransformerFactory transformerFactory = TransformerFactory.newInstance();
-		Transformer transformer;
-		try {
-			transformer = transformerFactory.newTransformer();
-		} catch (TransformerConfigurationException e) {
-			logger.error("Could not generate transformer: {}", e.getMessage());
-			throw new WrapperException();
-		}
-		DOMSource source = new DOMSource(jobOrderDoc);
-		StringWriter writer;
-		writer = new StringWriter();
-		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-		transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-		StreamResult result = new StreamResult(writer);
-		try {
-			transformer.transform(source, result);
-		} catch (TransformerException e) {
-			logger.error("Could not transform: {}", e.getMessage());
-			throw new WrapperException();
-		}
-
-		logger.info("Updated Job Order file:\n" + writer.toString());
-	}
 	/**
 	 * Perform processing: check parameters, parse JobOrder file, fetch input files, process, push output files
 	 * 

@@ -7,6 +7,9 @@ package de.dlr.proseo.logging.messages;
 
 import static org.junit.Assert.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.junit.Test;
 import org.slf4j.event.Level;
 
@@ -22,9 +25,16 @@ public class StorageMgrMessageTest {
 	 */
 	@Test
 	public final void testGetCode() {
-		int result = StorageMgrMessage.TEST_TO_BE_REPLACED.getCode();
-		int expected = 5500;
+		int result = StorageMgrMessage.TOKEN_MISSING.getCode();
+		int expected = 5531;
 		assertEquals(expected, result);
+		
+		Set<Integer> codes = new HashSet<>();
+		
+		for (StorageMgrMessage m : StorageMgrMessage.values()) {
+			if (!codes.add(m.getCode()))
+				throw new RuntimeException("No duplicate codes allowed, check " + m);
+		}
 	}
 
 	/**
@@ -33,8 +43,8 @@ public class StorageMgrMessageTest {
 	 */
 	@Test
 	public final void testGetLevel() {
-		Level result = StorageMgrMessage.TEST_TO_BE_REPLACED.getLevel();
-		Level expected = Level.WARN;
+		Level result = StorageMgrMessage.TOKEN_MISSING.getLevel();
+		Level expected = Level.ERROR;
 		assertEquals(expected, result);
 	}
 
@@ -44,8 +54,8 @@ public class StorageMgrMessageTest {
 	 */
 	@Test
 	public final void testGetMessage() {
-		String result = StorageMgrMessage.TEST_TO_BE_REPLACED.getMessage();
-		String expected = "to be replaced";
+		String result = StorageMgrMessage.TOKEN_MISSING.getMessage();
+		String expected = "Authentication token missing";
 		assertEquals(expected, result);
 	}
 
@@ -55,7 +65,7 @@ public class StorageMgrMessageTest {
 	 */
 	@Test
 	public final void testGetDescription() {
-		String result = StorageMgrMessage.TEST_TO_BE_REPLACED.getDescription();
+		String result = StorageMgrMessage.TOKEN_MISSING.getDescription();
 		String expected = "";
 		assertEquals(expected, result);
 	}

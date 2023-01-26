@@ -221,7 +221,7 @@ public abstract class BaseMonitor extends Thread {
 				
 				while (historyFile.ready()) {
 					
-					// Analyse entry: Consists of <check date>;<transfer object id>
+					// Parse entry: Consists of <check date>;<transfer object id>
 					String[] historyEntryParts = historyFile.readLine().split(";", 2);
 					if (2 != historyEntryParts.length) {
 						logger.log(ApiMonitorMessage.ILLEGAL_HISTORY_ENTRY_FORMAT, historyEntryParts.toString());

@@ -1,5 +1,6 @@
 package de.dlr.proseo.storagemgr.cache;
 
+import de.dlr.proseo.storagemgr.version2.FileUtils;
 
 /**
  * @author Denys Chaykovskiy

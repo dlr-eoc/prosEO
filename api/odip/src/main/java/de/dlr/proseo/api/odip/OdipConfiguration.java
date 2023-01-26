@@ -52,7 +52,18 @@ public class OdipConfiguration {
 	/** Facility to use */
 	@Value("${proseo.odip.facility}")
 	private String facility;
+
+	/** The base URI of the AUXIP (protocol, host name, port; no terminating slash) */
+	@Value("${proseo.auxip.baseuri}")
+	private String auxipBaseUri;
 	
+	/**
+	 * @return the auxipBaseUri
+	 */
+	public String getAuxipBaseUri() {
+		return auxipBaseUri;
+	}
+
 	/**
 	 * @return the facility
 	 */

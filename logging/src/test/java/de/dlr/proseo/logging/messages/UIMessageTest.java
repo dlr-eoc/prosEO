@@ -7,6 +7,9 @@ package de.dlr.proseo.logging.messages;
 
 import static org.junit.Assert.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.junit.Test;
 import org.slf4j.event.Level;
 
@@ -25,6 +28,13 @@ public class UIMessageTest {
 		int result = UIMessage.INVALID_COMMAND_NAME.getCode();
 		int expected = 6064;
 		assertEquals(expected, result);
+		
+		Set<Integer> codes = new HashSet<>();
+		
+		for (UIMessage m : UIMessage.values()) {
+			if (!codes.add(m.getCode()))
+				throw new RuntimeException("No duplicate codes allowed, check " + m);
+		}
 	}
 
 	/**

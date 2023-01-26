@@ -52,16 +52,16 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import de.dlr.proseo.api.odip.OdipApplicationBase;
 import de.dlr.proseo.api.odip.OdipConfiguration;
 import de.dlr.proseo.api.odip.OdipSecurity;
-import de.dlr.proseo.api.odip.odata.OdipUtil.OdipException;
+import de.dlr.proseo.api.odip.odata.OdipUtilBase.OdipException;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.OdipMessage;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Workflow;
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.rest.model.RestOrder;
-import de.dlr.proseo.model.util.OrderUtil;
 
 
 /**
@@ -97,10 +97,6 @@ public class OdipEntityProcessor implements EntityProcessor {
 	/** The security utilities for the ODIP API */
 	@Autowired
 	private OdipSecurity securityConfig;
-
-	/** The configuration for the ODIP API */
-	@Autowired
-	private OdipUtil odipUtil;
 	
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(OdipEntityProcessor.class);
@@ -263,7 +259,7 @@ public class OdipEntityProcessor implements EntityProcessor {
 		// Get the production order information from the Database
 		ProcessingOrder modelOrder = getProductionOrder(productionOrderUuid);
 		// Create output production order
-		Entity productionOrder = odipUtil.toOdipProductionOrder(modelOrder);
+		Entity productionOrder = OdipApplicationBase.util.toOdipProductionOrder(modelOrder);
 
 		if (logger.isTraceEnabled()) logger.trace("<<< getProductionOrderAsEntity()");
 		return productionOrder;
@@ -286,7 +282,7 @@ public class OdipEntityProcessor implements EntityProcessor {
 		// Get the workflow information from the Database
 		Workflow modelWorkflow = getWorkflow(workflowUuid);
 		// Create output workflow
-		Entity workflow = odipUtil.toOdipWorkflow(modelWorkflow);
+		Entity workflow = OdipApplicationBase.util.toOdipWorkflow(modelWorkflow);
 
 		if (logger.isTraceEnabled()) logger.trace("<<< getWorkflowAsEntity()");
 		return workflow;
@@ -472,7 +468,7 @@ public class OdipEntityProcessor implements EntityProcessor {
 		if (logger.isTraceEnabled()) logger.trace(">>> createEntity({}, {}, {}, {}, {})", request, response, uriInfo, requestFormat, responseFormat);
 
 		// 1. Retrieve the entity type from the URI 
-		EdmEntitySet edmEntitySet = odipUtil.getEdmEntitySet(uriInfo);
+		EdmEntitySet edmEntitySet = OdipApplicationBase.util.getEdmEntitySet(uriInfo);
 		EdmEntityType edmEntityType = edmEntitySet.getEntityType();
 
 		// 2. create the data in backend 
@@ -490,7 +486,7 @@ public class OdipEntityProcessor implements EntityProcessor {
 		Entity requestEntity = result.getEntity();
 		RestOrder modelOrder = null;
 		try {
-			modelOrder = odipUtil.toModelOrder(requestEntity);
+			modelOrder = OdipApplicationBase.util.toModelOrder(requestEntity);
 		} catch (OdipException e) {
 			response.setStatusCode((e.getHttpStatus() != null ? e.getHttpStatus() : HttpStatusCode.NOT_FOUND).getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, e.getMessage());
@@ -502,7 +498,7 @@ public class OdipEntityProcessor implements EntityProcessor {
 		}
 		// the rest order is created, now create the processing order
 		try {
-			modelOrder = odipUtil.sendAndReleaseOrder(modelOrder);
+			modelOrder = OdipApplicationBase.util.sendAndReleaseOrder(modelOrder);
 		} catch (OdipException e) {
 			response.setStatusCode((e.getHttpStatus() != null ? e.getHttpStatus() : HttpStatusCode.NOT_FOUND).getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, e.getMessage());
@@ -517,7 +513,7 @@ public class OdipEntityProcessor implements EntityProcessor {
 		Entity createdEntity = null;
 		ODataSerializer serializer = this.odata.createSerializer(responseFormat);
 		try {
-			createdEntity = odipUtil.toOdipProductionOrder(modelOrder);
+			createdEntity = OdipApplicationBase.util.toOdipProductionOrder(modelOrder);
 		} catch (SecurityException e) {
 			response.setContent(serializer.error(
 					LogUtil.oDataServerError(HttpStatusCode.UNAUTHORIZED.getStatusCode(), e.getMessage())).getContent());

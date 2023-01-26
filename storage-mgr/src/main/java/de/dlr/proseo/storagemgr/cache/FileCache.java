@@ -17,9 +17,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Assert;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.version2.FileUtils;
 
 /**
  * File cache for managing files in cache storage.
@@ -34,7 +34,10 @@ public class FileCache {
 	private String cachePath;
 
 	/** Prefix for accessed files */
-	private static final String PREFIX = "accessed-";
+	private static final String ACCESSED_PREFIX = "accessed-";
+
+	/** Prefix for temporary files */
+	private static final String TEMPORARY_PREFIX = "temporary-";
 
 	/** Cache Map for storing file pathes */
 	private MapCache mapCache;
@@ -59,7 +62,8 @@ public class FileCache {
 	}
 
 	/**
-	 * Puts the new element to map. If element exists, it will be overwritten
+	 * Puts the new element to map. If element exists, it will be overwritten.
+	 * Removes the file if it is temporary
 	 * 
 	 * @param pathKey File path as a key
 	 */
@@ -74,8 +78,15 @@ public class FileCache {
 			return;
 		}
 		if (!pathKey.startsWith(cachePath)) {
-			if (logger.isTraceEnabled()) logger.trace("... not adding {} to cache, because it is considered a backend file", pathKey);
+			if (logger.isTraceEnabled())
+				logger.trace("... not adding {} to cache, because it is considered a backend file", pathKey);
 			return;
+		}
+
+		if (isTemporaryPrefixFile(pathKey)) {
+
+			deleteFile(pathKey);
+			logger.warn("> Temporary file has been deleted: " + pathKey);
 		}
 
 		if (!mapCache.containsKey(pathKey)) {
@@ -83,7 +94,7 @@ public class FileCache {
 			deleteLRU();
 		}
 
-		rewriteFileAccessed(pathKey);
+		rewriteAccessedPrefixFile(pathKey);
 		FileInfo fileInfo = new FileInfo(getFileAccessed(pathKey), getFileSize(pathKey));
 
 		mapCache.put(pathKey, fileInfo);
@@ -120,6 +131,15 @@ public class FileCache {
 	}
 
 	/**
+	 * Gets temporary prefix of the file
+	 * 
+	 * @return temporary prefix of the file
+	 */
+	public static String getTemporaryPrefix() {
+		return TEMPORARY_PREFIX;
+	}
+
+	/**
 	 * Initializes file cache with directory from Application.yml
 	 */
 	@PostConstruct
@@ -132,7 +152,8 @@ public class FileCache {
 	}
 
 	/**
-	 * Cleanup cache by Least Recently Used strategy, if disk usage is higher than maximum usage configured
+	 * Cleanup cache by Least Recently Used strategy, if disk usage is higher than
+	 * maximum usage configured
 	 */
 	private void deleteLRU() {
 
@@ -149,25 +170,26 @@ public class FileCache {
 
 			@Override
 			public void run() {
-				
+
 				// Only one cleanup task at the same time allowed
 				synchronized (theFileCache) {
-					
-					// Once we get here, the cache may already have been cleared by a concurrent thread
+
+					// Once we get here, the cache may already have been cleared by a concurrent
+					// thread
 					if (getRealUsage() < cfg.getMaximumCacheUsage()) {
 						return;
 					}
 
 					long startTime = System.nanoTime();
-					
+
 					mapCache.sortByAccessedAsc();
-					
+
 					List<Entry<String, FileInfo>> sortedPathes = mapCache.getSortedPathes();
 					Iterator<Entry<String, FileInfo>> cacheIterator = sortedPathes.iterator();
-					
+
 					long endTime = System.nanoTime();
 					long duration = endTime - startTime;
-					
+
 					if (logger.isTraceEnabled())
 						logger.trace("... deleteLRU.duration of sorting({} ms, {} ns, Cache size - {} records)", duration / 1000000,
 								duration, size());
@@ -190,7 +212,7 @@ public class FileCache {
 					}
 					logger.info("Cache cleanup removed {} entries from file cache in {} ms", entryCount,
 							(System.nanoTime() - startTime) / 1000000);
-					
+
 					// We have a serious problem, if we still do not have enough cache space
 					if (getRealUsage() >= cfg.getMaximumCacheUsage()) {
 						logger.error("Disk usage {} exceeds maximum usage {} after emptying cache", getRealUsage(),
@@ -201,7 +223,6 @@ public class FileCache {
 
 		};
 		deleteLRUTask.start();
-		
 	}
 
 	/**
@@ -223,8 +244,8 @@ public class FileCache {
 	}
 
 	/**
-	 * Clears the cache only (without deleting of files), sets the cache path and puts
-	 * files in cache
+	 * Clears the cache only (without deleting of files), sets the cache path and
+	 * puts files in cache
 	 * 
 	 * @param pathKey The Cache Path
 	 */
@@ -272,7 +293,7 @@ public class FileCache {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> remove({}) - last accessed {}", pathKey, mapCache.get(pathKey).getAccessed());
 
-		deleteFileAndAccessed(pathKey);
+		deleteFileAndAccessedPrefixFile(pathKey);
 
 		mapCache.remove(pathKey);
 	}
@@ -332,11 +353,17 @@ public class FileCache {
 	 * 
 	 * @return the file prefix
 	 */
-	/* package */ static String getPrefix() {
+	/* package */ static String getAccessedPrefix() {
 
-		return PREFIX;
+		return ACCESSED_PREFIX;
 	}
 
+	/**
+	 * Puts files to cache, removes accessed prefix files without files, removes
+	 * temporary prefix files
+	 * 
+	 * @param path Path to files
+	 */
 	/* package */ void putFilesToCache(String path) {
 
 		if (logger.isTraceEnabled())
@@ -347,80 +374,80 @@ public class FileCache {
 		if (!directory.exists()) {
 
 			if (!directory.mkdirs()) { // try to create
-
-				throw new IllegalArgumentException("Wrong path for FileCache: " + path);
+				throw new IllegalArgumentException("Cannot create directory for FileCache: " + path);
 			}
 		}
-	
+
 		File[] files = directory.listFiles();
-		
 
 		for (File file : files) {
-			
-			if (mapCache.containsKey(file.getPath())) {
 
+			// check if already in cache
+			if (mapCache.containsKey(file.getPath())) {
 				continue;
 			}
-			
+
+			// recursive processing if directory
 			if (file.isDirectory()) {
-				
 				if (new FileUtils(file.getPath()).isEmptyDirectory()) {
-			
-					deleteEmptyDirectoriesToTop(file.getPath());	
-				}
-				else {
-			
+
+					deleteEmptyDirectoriesToTop(file.getPath());
+				} else {
+
 					putFilesToCache(file.getPath());
 				}
-				
 				continue;
 			}
 
-			if (isPrefixFile(file.getPath()) && 
-					!Files.exists(Paths.get(getPathFromAccessed(file.getPath())))) {
+			// delete if temporary file
+			if (isTemporaryPrefixFile(file.getPath())) {
+				deleteFile(file.getPath());
+			}
+
+			// delete if accessed file alone without file
+			if (isAccessedPrefixFile(file.getPath()) && !Files.exists(Paths.get(getPathFromAccessed(file.getPath())))) {
 
 				file.delete();
-				
+
 				if (new FileUtils(path).isEmptyDirectory()) {
-				
-					deleteEmptyDirectoriesToTop(path);	
-				
+
+					deleteEmptyDirectoriesToTop(path);
 					return;
 				}
-				
-				continue; 
+				continue;
 			}
-			
+
+			// if cache file, adds to cache without update accessed prefix file
 			else if (file.isFile() && isCacheFile(file.getPath())) {
 
-				putNotUpdateAccessed(file.getPath());
+				putWithoutUpdateAccessedPrefixFile(file.getPath());
 			}
 		}
 	}
 
 	/**
-	 * Puts the element to map without update accessed-info. If element exists, it
-	 * will be overwritten.
+	 * Puts the file to map without update accessed prefix file. If element exists,
+	 * it will be overwritten.
 	 *
 	 * @param pathKey File path as a key
 	 */
-	public void putNotUpdateAccessed(String pathKey) {
+	/* package */ void putWithoutUpdateAccessedPrefixFile(String pathKey) {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> putNotUpdateAccessed({})", pathKey);
-		
+			logger.trace(">>> putWithoutUpdateAccessedPrefixFile({})", pathKey);
+
 		if (!isCacheFile(pathKey)) {
-			
-			return; 
+			return;
 		}
 
 		// Ensure call is legal
 		if (!new File(pathKey).exists()) {
-			logger.error("> File can't be put to cache, it does not exist: " + pathKey);
+			logger.error("> File does not exist and can't be put to cache: " + pathKey);
 			return;
 		}
 		if (!pathKey.startsWith(cachePath)) {
-			if (logger.isTraceEnabled()) logger.trace("... not adding {} to cache, because it is considered a backend file", pathKey);
+			if (logger.isTraceEnabled())
+				logger.trace("... not adding {} to cache, because it is considered a backend file", pathKey);
 			return;
 		}
 
@@ -434,31 +461,16 @@ public class FileCache {
 	 * 
 	 * @param path full path to the file
 	 */
-	/* package */ void deleteFileAndAccessed(String path) {
+	/* package */ void deleteFileAndAccessedPrefixFile(String path) {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteFileAndAccessed({})", path);
 
 		String accessedPath = getAccessedPath(path);
-		File file = new File(path);
-		File accessedFile = new File(accessedPath);
-		String directory = file.getParent();
+		String directory = new File(path).getParent();
 
-		if (!file.exists()) {
-			if (logger.isTraceEnabled())
-				logger.warn("> File does not exist, but exists in cache({})", path);
-		} else if (!file.delete()) { // delete file
-			if (logger.isTraceEnabled())
-				logger.warn("> File was not deleted({})", path);
-		}
-
-		if (!accessedFile.exists()) {
-			if (logger.isTraceEnabled())
-				logger.warn("> File was not deleted({})", accessedPath);
-		} else if (!accessedFile.delete()) { // delete accessed file
-			if (logger.isTraceEnabled())
-				logger.warn("> Accessed File was not deleted({})", accessedPath);
-		}
+		deleteFile(path);
+		deleteFile(accessedPath);
 
 		deleteEmptyDirectoriesToTop(directory);
 	}
@@ -520,7 +532,7 @@ public class FileCache {
 		FileUtils fileUtils = new FileUtils(getAccessedPath(path));
 
 		if (!wasAccessed(path)) {
-			rewriteFileAccessed(path);
+			rewriteAccessedPrefixFile(path);
 		}
 
 		lastAccessed = fileUtils.getFileContent();
@@ -540,10 +552,9 @@ public class FileCache {
 			logger.trace(">>> getAccessedPath({})", path);
 
 		File file = new File(path);
-		String accessedPath = file.getParent() + "/" + PREFIX + file.getName();
+		String accessedPath = file.getParent() + "/" + ACCESSED_PREFIX + file.getName();
 
 		return accessedPath;
-
 	}
 
 	/**
@@ -558,10 +569,9 @@ public class FileCache {
 			logger.trace(">>> getPathFromAccessed({})", accessedPath);
 
 		File file = new File(accessedPath);
-		String path = file.getParent() + "/" + file.getName().replace(PREFIX, "");
+		String path = file.getParent() + "/" + file.getName().replace(ACCESSED_PREFIX, "");
 
 		return path;
-
 	}
 
 	/**
@@ -578,20 +588,23 @@ public class FileCache {
 	}
 
 	/**
-	 * Returns true if the file is the cache file (not accessed and not hidden file)
+	 * Returns true if the file is the cache file (not accessed, not temporary and
+	 * not hidden file)
 	 * 
 	 * @param path the full path to the file
 	 * @return true if the file is the cache file
 	 */
 	private boolean isCacheFile(String path) {
 
-		if (isPrefixFile(path)) {
+		if (isAccessedPrefixFile(path)) {
+			return false;
+		}
 
+		if (isTemporaryPrefixFile(path)) {
 			return false;
 		}
 
 		if (isHiddenFile(path)) {
-
 			return false;
 
 		}
@@ -605,11 +618,20 @@ public class FileCache {
 	 * @param path the full path to the file
 	 * @return true if the file has the prefix
 	 */
-	private boolean isPrefixFile(String path) {
-		
-		String fileName = new File(path).getName();
+	private boolean isAccessedPrefixFile(String path) {
 
-		return fileName.startsWith(PREFIX) ? true : false;
+		return hasFilePrefix(path, ACCESSED_PREFIX);
+	}
+
+	/**
+	 * Returns true if the file has the temporary prefix
+	 * 
+	 * @param path the full path to the file
+	 * @return true if the file has the prefix
+	 */
+	private boolean isTemporaryPrefixFile(String path) {
+
+		return hasFilePrefix(path, TEMPORARY_PREFIX);
 	}
 
 	/**
@@ -619,18 +641,29 @@ public class FileCache {
 	 * @return true if the file is hidden
 	 */
 	private boolean isHiddenFile(String path) {
-		
-		String fileName = new File(path).getName();
 
-		return fileName.startsWith(".") ? true : false;
+		return hasFilePrefix(path, ".");
 	}
 
 	/**
-	 * Rewrites accessed file with the current time stamp
+	 * Returns true if the file has the "x" prefix
+	 * 
+	 * @param path the full path to the file
+	 * @return true if the file has the prefix
+	 */
+	private boolean hasFilePrefix(String path, String prefix) {
+
+		String fileName = new File(path).getName();
+
+		return fileName.startsWith(prefix) ? true : false;
+	}
+
+	/**
+	 * Rewrites accessed prefix file with the current time stamp
 	 * 
 	 * @param path The full path to file
 	 */
-	private void rewriteFileAccessed(String path) {
+	private void rewriteAccessedPrefixFile(String path) {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> rewriteFileAccessed({})", path);
@@ -642,4 +675,20 @@ public class FileCache {
 		fileUtils.createFile(timeStamp);
 	}
 
+	/**
+	 * Deletes file
+	 * 
+	 * @param path The full path to file
+	 */
+	private void deleteFile(String path) {
+
+		File file = new File(path);
+
+		if (file.exists()) {
+			if (!file.delete()) { // delete file
+				if (logger.isTraceEnabled())
+					logger.warn("> File was not deleted({})", path);
+			}
+		}
+	}
 }
