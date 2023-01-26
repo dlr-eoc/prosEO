@@ -21,9 +21,12 @@ Install and run Docker Desktop and activate Kubernetes as described here:
   1) Install and run: <https://docs.docker.com/docker-for-windows/install/>
   2) Activate Kubernetes: <https://docs.docker.com/docker-for-windows/>
 
+*Caution:* Configurations and version numbers below are based on Docker Desktop 4.15.0 and Kubernetes 1.25.2. Newer (or older) 
+versions may require modified approaches.
+
 Deploy and run a Kubernetes dashboard:
 1) Download the recommended dashboard configuration from 
-   <https://raw.githubusercontent.com/kubernetes/dashboard/v2.3.1/aio/deploy/recommended.yaml> 
+   <https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml>
    to a new file `kubernetes/kubernetes-dashboard.yaml` (a copy may already be provided in the `kubernetes` directory).
 2) Run the dashboard:
    ```
@@ -31,8 +34,10 @@ Deploy and run a Kubernetes dashboard:
    nohup kubectl proxy --accept-hosts='.*' &
    ```
 3) Create a user with administrative privileges for the dashboard as per
-   <https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md> (you may use the
-   configuration provided in the file `kubernetes/kube-admin.yaml`).
+   <https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md> and (from Kubernetes 1.22)
+   an associated secret as per 
+   <https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#manually-create-a-long-lived-api-token-for-a-serviceaccount>
+   (you may use the configuration provided in the file `kubernetes/kube-admin.yaml`).
 4) Retrieve the secret token for this user:
    ```
    kubectl describe secret/$(kubectl get secrets --namespace kube-system | grep admin-user | cut -d ' ' -f 1) --namespace kube-system
@@ -182,7 +187,8 @@ docker-compose -p proseo up -d
 
 The `proseo-images` directory may be populated with convenience scripts for these steps (see `proseo-images/README.md`).
 
-After starting the prosEO control instance two SQL scripts need to be executed. First login to the proseo-db container:
+After starting the prosEO control instance two SQL scripts need to be executed. First login to the proseo-db container,
+either via the Docker Desktop dashboard (and the command `su - postgres`) or from the command line:
 ```
 docker exec -it proseo-proseo-db-1 su - postgres
 ```
