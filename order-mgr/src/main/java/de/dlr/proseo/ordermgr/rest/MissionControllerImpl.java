@@ -169,6 +169,23 @@ public class MissionControllerImpl implements MissionController {
 				if (null != RepositoryService.getMissionRepository().findByCode(mission.getCode())) {
 					throw new IllegalArgumentException(logger.log(OrderMgrMessage.MISSION_EXISTS, mission.getCode()));
 				}
+				
+				// Ensure mandatory attributes are set
+				if (null == mission.getName() || mission.getName().isBlank()) {
+					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "name", "mission creation"));
+				}				
+				if (null == mission.getFileClasses() || mission.getFileClasses().isEmpty()) {
+					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "fileClasses", "mission creation"));
+				}	
+				if (null == mission.getProcessingModes() || mission.getProcessingModes().isEmpty()) {
+					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processingModes", "mission creation"));
+				}	
+				if (null == mission.getProductFileTemplate() || mission.getProductFileTemplate().isBlank()) {
+					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "productFileTemplate", "mission creation"));
+				}	
+				if (null == mission.getSpacecrafts() || mission.getSpacecrafts().isEmpty()) {
+					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "spacecrafts", "mission creation"));
+				}	
 
 				modelMission = RepositoryService.getMissionRepository().save(modelMission);
 
@@ -282,6 +299,28 @@ public class MissionControllerImpl implements MissionController {
 				}
 				Mission modelMission = optModelMission.get();
 
+				// Check, whether mission exists already
+				if (null != RepositoryService.getMissionRepository().findByCode(mission.getCode())) {
+					throw new IllegalArgumentException(logger.log(OrderMgrMessage.MISSION_EXISTS, mission.getCode()));
+				}
+				
+				// Ensure mandatory attributes are set
+				if (null == mission.getName() || mission.getName().isBlank()) {
+					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "name", "mission modification"));
+				}				
+				if (null == mission.getFileClasses() || mission.getFileClasses().isEmpty()) {
+					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "fileClasses", "mission modification"));
+				}	
+				if (null == mission.getProcessingModes() || mission.getProcessingModes().isEmpty()) {
+					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processingModes", "mission modification"));
+				}	
+				if (null == mission.getProductFileTemplate() || mission.getProductFileTemplate().isBlank()) {
+					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "productFileTemplate", "mission modification"));
+				}	
+				if (null == mission.getSpacecrafts() || mission.getSpacecrafts().isEmpty()) {
+					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "spacecrafts", "mission modification"));
+				}
+				
 				// Update modified attributes
 				boolean missionChanged = false;
 

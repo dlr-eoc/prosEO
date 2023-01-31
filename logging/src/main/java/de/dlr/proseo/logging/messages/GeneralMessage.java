@@ -28,7 +28,7 @@ public enum GeneralMessage implements ProseoMessage {
 	RUNTIME_EXCEPTION_ENCOUNTERED		(9012, Level.WARN, true, "Exception encountered: {0}", ""),
 	TRUE								(9013, Level.INFO, true, "true", ""),
 	UNDEFINED							(9014, Level.ERROR, false, "An unknown error occured.", ""),
-
+	FIELD_NOT_SET						(9015, Level.ERROR, false, "Specification of {0} is mandatory for {1}", ""),
 	
 	;
 

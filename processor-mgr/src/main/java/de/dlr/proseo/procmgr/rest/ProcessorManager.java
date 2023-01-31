@@ -6,7 +6,6 @@
 package de.dlr.proseo.procmgr.rest;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Objects;
@@ -71,15 +70,30 @@ public class ProcessorManager {
 			throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.PROCESSOR_MISSING));
 		}
 		
-		// Make sure processor class name is set
-		if (null == processor.getProcessorName() || processor.getProcessorName().isBlank()) {
-			throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.PROCESSOR_NAME_MISSING));
-		}
-		
 		// Ensure user is authorized for the mission of the processor
 		if (!securityService.isAuthorizedForMission(processor.getMissionCode())) {
 			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					processor.getMissionCode(), securityService.getMission()));			
+		}
+		
+		// Ensure mandatory attributes are set
+		if (null == processor.getProcessorName() || processor.getProcessorName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorName", "processor creation"));
+		}
+		if (null == processor.getProcessorVersion() || processor.getProcessorVersion().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorVersion", "processor creation"));
+		}
+		if (null == processor.getConfiguredProcessors() || processor.getConfiguredProcessors().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configuredProcessors", "processor creation"));
+		}
+		if (null == processor.getTasks() || processor.getTasks().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "tasks", "processor creation"));
+		}
+		if (null == processor.getDockerImage() || processor.getDockerImage().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "dockerImage", "processor creation"));
+		}
+		if (null == processor.getDockerRunParameters() || processor.getDockerRunParameters().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "dockerRunParameters", "processor creation"));
 		}
 		
 		Processor modelProcessor = ProcessorUtil.toModelProcessor(processor);
@@ -236,6 +250,26 @@ public class ProcessorManager {
 		if (!securityService.isAuthorizedForMission(processor.getMissionCode())) {
 			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					processor.getMissionCode(), securityService.getMission()));			
+		}
+		
+		// Ensure mandatory attributes are set
+		if (null == processor.getProcessorName() || processor.getProcessorName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorName", "processor modification"));
+		}
+		if (null == processor.getProcessorVersion() || processor.getProcessorVersion().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorVersion", "processor modification"));
+		}
+		if (null == processor.getConfiguredProcessors() || processor.getConfiguredProcessors().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configuredProcessors", "processor modification"));
+		}
+		if (null == processor.getTasks() || processor.getTasks().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "tasks", "processor modification"));
+		}
+		if (null == processor.getDockerImage() || processor.getDockerImage().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "dockerImage", "processor modification"));
+		}
+		if (null == processor.getDockerRunParameters() || processor.getDockerRunParameters().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "dockerRunParameters", "processor modification"));
 		}
 		
 		Optional<Processor> optProcessor = RepositoryService.getProcessorRepository().findById(id);

@@ -6,7 +6,6 @@
 package de.dlr.proseo.usermgr.rest;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -32,7 +31,6 @@ import de.dlr.proseo.usermgr.model.Group;
 import de.dlr.proseo.usermgr.model.GroupAuthority;
 import de.dlr.proseo.usermgr.model.GroupMember;
 import de.dlr.proseo.usermgr.model.User;
-import de.dlr.proseo.usermgr.rest.UserManager.NotModifiedException;
 import de.dlr.proseo.usermgr.rest.model.RestGroup;
 import de.dlr.proseo.usermgr.rest.model.RestUser;
 
@@ -143,6 +141,9 @@ public class GroupManager {
 		}
 		if (null == restGroup.getGroupname() || restGroup.getGroupname().isBlank()) {
 			throw new IllegalArgumentException(logger.log(UserMgrMessage.GROUPNAME_MISSING));
+		}
+		if (null == restGroup.getAuthorities()) {
+			restGroup.setAuthorities(new ArrayList<String>());
 		}
 		
 		// Make sure the group does not exist already
@@ -281,6 +282,12 @@ public class GroupManager {
 		}
 		if (null == restGroup) {
 			throw new IllegalArgumentException(logger.log(UserMgrMessage.GROUP_DATA_MISSING));
+		}
+		if (null == restGroup.getGroupname() || restGroup.getGroupname().isBlank()) {
+			throw new IllegalArgumentException(logger.log(UserMgrMessage.GROUPNAME_MISSING));
+		}
+		if (null == restGroup.getAuthorities()) {
+			restGroup.setAuthorities(new ArrayList<String>());
 		}
 		
 		// Get the user group to modify

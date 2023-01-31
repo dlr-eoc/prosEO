@@ -6,11 +6,9 @@
 package de.dlr.proseo.procmgr.rest;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 import javax.persistence.EntityManager;
@@ -31,7 +29,6 @@ import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.ProcessorClass;
-import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.procmgr.rest.model.ConfiguredProcessorUtil;
@@ -161,6 +158,20 @@ public class ConfiguredProcessorManager {
 					configuredProcessor.getMissionCode(), securityService.getMission()));			
 		}
 		
+		// Ensure mandatory attributes are set
+		if (null == configuredProcessor.getIdentifier() || configuredProcessor.getIdentifier().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "identifier", "configuredProcessor creation"));
+		}
+		if (null == configuredProcessor.getProcessorName() || configuredProcessor.getProcessorName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorName", "configuredProcessor creation"));
+		}
+		if (null == configuredProcessor.getProcessorVersion() || configuredProcessor.getProcessorVersion().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorVersion", "configuredProcessor creation"));
+		}
+		if (null == configuredProcessor.getConfigurationVersion() || configuredProcessor.getConfigurationVersion().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configurationVersion", "configuredProcessor creation"));
+		}
+		
 		ConfiguredProcessor modelConfiguredProcessor = ConfiguredProcessorUtil.toModelConfiguredProcessor(configuredProcessor);
 		// Make sure configured processor has a UUID
 		if (null == modelConfiguredProcessor.getUuid()) {
@@ -285,6 +296,20 @@ public class ConfiguredProcessorManager {
 			throw new NoResultException(logger.log(ProcessorMgrMessage.CONFIGURED_PROCESSOR_ID_NOT_FOUND, id));
 		}
 		ConfiguredProcessor modelConfiguredProcessor = optConfiguredProcessor.get();
+				
+		// Ensure mandatory attributes are set
+		if (null == configuredProcessor.getIdentifier() || configuredProcessor.getIdentifier().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "identifier", "configuredProcessor modification"));
+		}
+		if (null == configuredProcessor.getProcessorName() || configuredProcessor.getProcessorName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorName", "configuredProcessor modification"));
+		}
+		if (null == configuredProcessor.getProcessorVersion() || configuredProcessor.getProcessorVersion().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorVersion", "configuredProcessor modification"));
+		}
+		if (null == configuredProcessor.getConfigurationVersion() || configuredProcessor.getConfigurationVersion().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configurationVersion", "configuredProcessor modification"));
+		}
 		
 		// Make sure we are allowed to change the configured processor (no intermediate update)
 		if (modelConfiguredProcessor.getVersion() != configuredProcessor.getVersion().intValue()) {

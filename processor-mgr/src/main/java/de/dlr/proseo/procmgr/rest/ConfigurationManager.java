@@ -143,6 +143,29 @@ public class ConfigurationManager {
 					configuration.getMissionCode(), securityService.getMission()));			
 		}
 		
+		// Ensure mandatory attributes are set
+		if (null == configuration.getProcessorName() || configuration.getProcessorName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorName", "configuration creation"));
+		}
+		if (null == configuration.getConfigurationVersion() || configuration.getConfigurationVersion().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configurationVersion", "configuration creation"));
+		}
+		if (null == configuration.getDynProcParameters() || configuration.getDynProcParameters().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "dynamic processing parameters", "configuration creation"));
+		}
+		if (null == configuration.getConfigurationFiles() || configuration.getConfigurationFiles().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configurationFiles", "configuration creation"));
+		}
+		if (null == configuration.getStaticInputFiles() || configuration.getStaticInputFiles().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "staticInputFiles", "configuration creation"));
+		}
+		if (null == configuration.getConfiguredProcessors() || configuration.getConfiguredProcessors().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configuredProcessors", "configuration creation"));
+		}
+		if (null == configuration.getDockerRunParameters() || configuration.getDockerRunParameters().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "dockerRunParameters", "configuration creation"));
+		}
+		
 		Configuration modelConfiguration = ConfigurationUtil.toModelConfiguration(configuration);
 		
 		// Make sure a configuration with the same processor class name and configuration version does not yet exist
@@ -259,6 +282,29 @@ public class ConfigurationManager {
 			throw new EntityNotFoundException(logger.log(ProcessorMgrMessage.CONFIGURATION_ID_NOT_FOUND, id));
 		}
 		Configuration modelConfiguration = optConfiguration.get();
+				
+		// Ensure mandatory attributes are set
+		if (null == configuration.getProcessorName() || configuration.getProcessorName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorName", "configuration modification"));
+		}
+		if (null == configuration.getConfigurationVersion() || configuration.getConfigurationVersion().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configurationVersion", "configuration modification"));
+		}
+		if (null == configuration.getDynProcParameters() || configuration.getDynProcParameters().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "dynamic processing parameters", "configuration modification"));
+		}
+		if (null == configuration.getConfigurationFiles() || configuration.getConfigurationFiles().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configurationFiles", "configuration modification"));
+		}
+		if (null == configuration.getStaticInputFiles() || configuration.getStaticInputFiles().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "staticInputFiles", "configuration modification"));
+		}
+		if (null == configuration.getConfiguredProcessors() || configuration.getConfiguredProcessors().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configuredProcessors", "configuration modification"));
+		}
+		if (null == configuration.getDockerRunParameters() || configuration.getDockerRunParameters().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "dockerRunParameters", "configuration modification"));
+		}
 		
 		// Make sure we are allowed to change the configuration (no intermediate update)
 		if (modelConfiguration.getVersion() != configuration.getVersion().intValue()) {

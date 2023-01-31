@@ -5,7 +5,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
@@ -112,6 +111,49 @@ public class ProcessingOrderMgr {
 					order.getMissionCode(), securityService.getMission()));			
 		}
 		
+		// Ensure mandatory attributes are set
+		if (null == order.getIdentifier() || order.getIdentifier().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "identifier", "order creation"));
+		}
+		if (null == order.getOrderState() || order.getOrderState().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "orderState", "order creation"));
+		}
+		if (null == order.getSlicingType() || order.getSlicingType().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "slicingType", "order creation"));
+		}
+		if (null == order.getOutputParameters() || order.getOutputParameters().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "outputParameters", "order creation"));
+		}
+		if (null == order.getConfiguredProcessors() || order.getConfiguredProcessors().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configuredProcessors", "order creation"));
+		}
+		if (null == order.getOrbits() || order.getOrbits().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "orbits", "order creation"));
+		}
+		if (null == order.getRequestedProductClasses() || order.getRequestedProductClasses().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "requestedProductClasses", "order creation"));
+		}
+		if (null == order.getInputProductClasses() || order.getInputProductClasses().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "inputProductClasses", "order creation"));
+		}
+		if (null == order.getOutputFileClass() || order.getOutputFileClass().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "outputFileClass", "order creation"));
+		}
+		if (null == order.getProcessingMode() || order.getProcessingMode().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processingMode", "order creation"));
+		}
+		
+		// If list attributes were set to null explicitly, initialize with empty lists
+		if (null == order.getInputFilters()) {
+			order.setInputFilters(new ArrayList<RestInputFilter>());
+		}
+		if (null == order.getClassOutputParameters()) {
+			order.setClassOutputParameters(new ArrayList<RestClassOutputParameter>());
+		}
+		if (null == order.getJobStepStates()) {
+			order.setJobStepStates(new ArrayList<String>());
+		}
+		
 		// Prepare the database order, but make sure ID and version are not copied if present
 		order.setId(null);
 		order.setVersion(null);
@@ -128,16 +170,13 @@ public class ProcessingOrderMgr {
 			}
 		}
 		
-		// Make sure order has a non-blank identifier, which is not yet in use
-		if (null == modelOrder.getIdentifier() || modelOrder.getIdentifier().isBlank()) {
-			throw new IllegalArgumentException(logger.log(OrderMgrMessage.ORDER_IDENTIFIER_MISSING));
-		}
+		// Make sure order identifier is not yet in use
 		if (null != RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(order.getMissionCode(), modelOrder.getIdentifier())) {
 			throw new IllegalArgumentException(logger.log(OrderMgrMessage.DUPLICATE_ORDER_IDENTIFIER, 
 					modelOrder.getIdentifier(), order.getMissionCode()));
 		}
 		
-		// Orders must always created in state INITIAL
+		// Orders must always be created in state INITIAL
 		if (!OrderState.INITIAL.equals(modelOrder.getOrderState())) {
 			throw new IllegalArgumentException(logger.log(OrderMgrMessage.ILLEGAL_CREATION_STATE,
 					modelOrder.getOrderState().toString()));
@@ -229,21 +268,19 @@ public class ProcessingOrderMgr {
 			modelOrder.getClassOutputParameters().put(productClass, classOutputParameter);
 		}
 		
-		// Make sure requested product classes are set (mandatory)
-		if (order.getRequestedProductClasses().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(OrderMgrMessage.REQUESTED_PRODUCTCLASSES_MISSING, modelOrder.getIdentifier()));
-		} else {
-			modelOrder.getRequestedProductClasses().clear();
-			for (String productType: order.getRequestedProductClasses()) {
-				ProductClass productClass = RepositoryService.getProductClassRepository()
-						.findByMissionCodeAndProductType(mission.getCode(), productType);
-				if (null == productClass) {
-					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_REQUESTED_CLASS,
-							productType, mission.getCode()));
-				}
-				modelOrder.getRequestedProductClasses().add(productClass);
-			} 
+		// Find requested product classes
+		modelOrder.getRequestedProductClasses().clear();
+		for (String productType : order.getRequestedProductClasses()) {
+			ProductClass productClass = RepositoryService.getProductClassRepository()
+					.findByMissionCodeAndProductType(mission.getCode(), productType);
+			if (null == productClass) {
+				throw new IllegalArgumentException(
+						logger.log(OrderMgrMessage.INVALID_REQUESTED_CLASS, productType, mission.getCode()));
+			}
+			modelOrder.getRequestedProductClasses().add(productClass);
 		}
+		
+		// Find input product classes
 		modelOrder.getInputProductClasses().clear();
 		for (String productType : order.getInputProductClasses()) {
 			ProductClass productClass = RepositoryService.getProductClassRepository()
@@ -254,6 +291,8 @@ public class ProcessingOrderMgr {
 			}
 			modelOrder.getInputProductClasses().add(productClass);
 		}		
+		
+		// Find requested configured processors
 		modelOrder.getRequestedConfiguredProcessors().clear();
 		for (String identifier : order.getConfiguredProcessors()) {
 			ConfiguredProcessor configuredProcessor = 
@@ -509,6 +548,50 @@ public class ProcessingOrderMgr {
 		ProcessingOrder modelOrder = optModelOrder.get();
 		Mission mission = modelOrder.getMission();
 		logger.log(OrderMgrMessage.MODEL_ORDER_MISSIONCODE, mission.getCode());
+		
+		// Ensure mandatory attributes are set
+		if (null == order.getIdentifier() || order.getIdentifier().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "identifier", "order modification"));
+		}
+		if (null == order.getOrderState() || order.getOrderState().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "orderState", "order modification"));
+		}
+		if (null == order.getSlicingType() || order.getSlicingType().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "slicingType", "order modification"));
+		}
+		if (null == order.getOutputParameters() || order.getOutputParameters().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "outputParameters", "order modification"));
+		}
+		if (null == order.getConfiguredProcessors() || order.getConfiguredProcessors().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configuredProcessors", "order modification"));
+		}
+		if (null == order.getOrbits() || order.getOrbits().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "orbits", "order modification"));
+		}
+		if (null == order.getRequestedProductClasses() || order.getRequestedProductClasses().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "requestedProductClasses", "order modification"));
+		}
+		if (null == order.getInputProductClasses() || order.getInputProductClasses().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "inputProductClasses", "order modification"));
+		}
+		if (null == order.getOutputFileClass() || order.getOutputFileClass().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "outputFileClass", "order modification"));
+		}
+		if (null == order.getProcessingMode() || order.getProcessingMode().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processingMode", "order modification"));
+		}
+		
+		// If list attributes were set to null explicitly, initialize with empty lists
+		if (null == order.getInputFilters()) {
+			order.setInputFilters(new ArrayList<RestInputFilter>());
+		}
+		if (null == order.getClassOutputParameters()) {
+			order.setClassOutputParameters(new ArrayList<RestClassOutputParameter>());
+		}
+		if (null == order.getJobStepStates()) {
+			order.setJobStepStates(new ArrayList<String>());
+		}
+
 		
 		// Make sure order is in INITIAL state
 		if (!OrderState.INITIAL.equals(modelOrder.getOrderState()))	{

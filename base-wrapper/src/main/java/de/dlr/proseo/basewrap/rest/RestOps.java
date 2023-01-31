@@ -4,8 +4,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
+
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
@@ -21,6 +25,30 @@ public class RestOps {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(RestOps.class);
 
+	/**
+	 * Timeout for connecting to or reading from a service, in milliseconds.
+	 */
+	private static final Long ENV_HTTP_TIMEOUT;
+
+	/**
+	 * Default HTTP timeout value in milliseconds, used if the "HTTP_TIMEOUT"
+	 * environment variable is not set or cannot be parsed as a long.
+	 */
+	private static final long DEFAULT_HTTP_TIMEOUT = 7_200_000L;
+
+	// set the timeout either from the environment variable or as a default
+	static {
+		Long parsedTimeout;
+		try {
+			parsedTimeout = Long.parseLong(System.getenv("HTTP_TIMEOUT"));
+		} catch (NumberFormatException e) {
+			parsedTimeout = DEFAULT_HTTP_TIMEOUT;
+			logger.error("HTTP_TIMEOUT environment variable cannot be parsed as a long, using default value: {}",
+					DEFAULT_HTTP_TIMEOUT);
+		}
+		ENV_HTTP_TIMEOUT = parsedTimeout > 0 ? parsedTimeout : DEFAULT_HTTP_TIMEOUT;
+	}
+	
 	public enum HttpMethod {
 		GET, POST, PUT, PATCH, DELETE, HEAD
 	};
@@ -49,7 +77,11 @@ public class RestOps {
 		int retry = 0;
 		while (retry < MAX_RETRIES) {
 			try {
-				Client client =  javax.ws.rs.client.ClientBuilder.newClient().register(new RestAuth(user, pw));
+				ClientConfig configuration = new ClientConfig();
+				configuration.property(ClientProperties.CONNECT_TIMEOUT, ENV_HTTP_TIMEOUT);
+				configuration.property(ClientProperties.READ_TIMEOUT, ENV_HTTP_TIMEOUT);
+				Client client = ClientBuilder.newClient(configuration);
+				client.register(new RestAuth(user, pw));
 				WebTarget webTarget = client.target(endPoint).path(endPointPath);
 				if (queryParams != null) {
 					for (Entry<String, String> queryParam : queryParams.entrySet()) {
