@@ -60,19 +60,19 @@
         description: Set of parameters to apply to a generated product of the referenced product class replacing the general output parameters
       outputParameters:
         type: RestParameter[]
-        description: Parameters to set for the generated products
+        description: Parameters to set for the generated products (may be empty)
       configuredProcessors:
         type: string[]
-        description: List of identifiers of the configured processors
+        description: List of identifiers of the configured processors (may be empty)
       orbits:
         type: RestOrbitQuery[]
-        description: List of orbit ranges, identified by spacecraft code and orbit number from/to
+        description: List of orbit ranges, identified by spacecraft code and orbit number from/to (may be empty)
       requestedProductClasses:
         type: string[]
-        description: List of internal product types requested as output from the order
+        description: List of internal product types requested as output from the order (at least one is required)
       inputProductClasses:
         type: string[]
-        description: List of internal product types given as input to the order
+        description: List of internal product types provided as input to the order (may be empty) 
       outputFileClass:
         type: string
         description: The file class for the generated output products

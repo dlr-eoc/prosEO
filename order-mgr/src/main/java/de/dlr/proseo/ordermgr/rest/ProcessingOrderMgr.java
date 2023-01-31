@@ -124,17 +124,8 @@ public class ProcessingOrderMgr {
 		if (null == order.getOutputParameters() || order.getOutputParameters().isEmpty()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "outputParameters", "order creation"));
 		}
-		if (null == order.getConfiguredProcessors() || order.getConfiguredProcessors().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configuredProcessors", "order creation"));
-		}
-		if (null == order.getOrbits() || order.getOrbits().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "orbits", "order creation"));
-		}
 		if (null == order.getRequestedProductClasses() || order.getRequestedProductClasses().isEmpty()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "requestedProductClasses", "order creation"));
-		}
-		if (null == order.getInputProductClasses() || order.getInputProductClasses().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "inputProductClasses", "order creation"));
 		}
 		if (null == order.getOutputFileClass() || order.getOutputFileClass().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "outputFileClass", "order creation"));
@@ -144,11 +135,20 @@ public class ProcessingOrderMgr {
 		}
 		
 		// If list attributes were set to null explicitly, initialize with empty lists
+		if (null == order.getOrbits()) {
+			order.setOrbits(new ArrayList<RestOrbitQuery>());
+		}
+		if (null == order.getInputProductClasses()) {
+			order.setInputProductClasses(new ArrayList<String>());
+		}
 		if (null == order.getInputFilters()) {
 			order.setInputFilters(new ArrayList<RestInputFilter>());
 		}
 		if (null == order.getClassOutputParameters()) {
 			order.setClassOutputParameters(new ArrayList<RestClassOutputParameter>());
+		}
+		if (null == order.getConfiguredProcessors()) {
+			order.setConfiguredProcessors(new ArrayList<String>());
 		}
 		if (null == order.getJobStepStates()) {
 			order.setJobStepStates(new ArrayList<String>());
@@ -325,6 +325,94 @@ public class ProcessingOrderMgr {
 
 	
 	/**
+	 * Delete the Job Order file for the given job step from the Storage Manager
+	 * 
+	 * @param js the job step to delete the JOF from
+	 * @return true on success, false otherwise
+	 */
+	private Boolean deleteJOF(JobStep js) {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteJOF({})", (null == js ? "null" : js.getId()));
+	
+		if (js != null && js.getJobOrderFilename() != null) {
+			ProcessingFacility facility = js.getJob().getProcessingFacility();
+			String storageManagerUrl = facility.getStorageManagerUrl()
+					+ String.format("/products?pathInfo=%s", js.getJobOrderFilename()); 
+	
+			RestTemplate restTemplate = rtb
+					.basicAuthentication(facility.getStorageManagerUser(), facility.getStorageManagerPassword())
+					.build();
+			try {
+				restTemplate.delete(storageManagerUrl);
+				logger.log(OrderMgrMessage.JOF_DELETED, js.getJobOrderFilename(), facility.getName());
+				return true;
+			} catch (RestClientException e) {
+				logger.log(OrderMgrMessage.JOF_DELETING_ERROR, js.getJobOrderFilename(), facility.getName(), e.getMessage());
+				return false;
+			} 
+		} else {
+			return false;
+		}
+	}
+
+
+	/** 
+	 * Prepare the order for deletion: remove dependencies to products and product queries.
+	 * 
+	 * @param order the order to prepare
+	 */
+	private void prepareOrderToDelete(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> prepareOrderToDelete({})", order.getIdentifier());
+
+		if (order != null) {
+			for (Job j : order.getJobs()) {
+				for (JobStep js : j.getJobSteps()) {
+
+					deleteJOF(js);
+
+					js.setJobOrderFilename(null);
+					if (js.getOutputProduct() != null) {
+						js.getOutputProduct().setJobStep(null);
+					}
+
+					for (ProductQuery pq : js.getInputProductQueries()) {
+						for (Product p : pq.getSatisfyingProducts()) {
+							p.getSatisfiedProductQueries().clear();
+						}
+						pq.getSatisfyingProducts().clear();
+						RepositoryService.getProductQueryRepository().delete(pq);
+					}
+					js.getInputProductQueries().clear();
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Delete an order by entity
+	 * 
+	 * @param order the order to delete
+	 * @throws EntityNotFoundException if the order to delete does not exist in the database
+	 * @throws RuntimeException if the deletion was not performed as expected
+	 */
+	private void deleteOrder(ProcessingOrder order) throws EntityNotFoundException, RuntimeException {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteOrder({})", order.getIdentifier());
+	
+		// Prepare the order to delete
+		prepareOrderToDelete(order);
+		// Delete the order
+		long id = order.getId();
+		RepositoryService.getOrderRepository().delete(order);
+		// Test whether the deletion was successful
+		Optional<ProcessingOrder> modelOrder = RepositoryService.getOrderRepository().findById(id);
+		if (!modelOrder.isEmpty()) {
+			throw new RuntimeException(logger.log(OrderMgrMessage.DELETION_UNSUCCESSFUL, id));
+		}
+		
+		logger.log(OrderMgrMessage.ORDER_DELETED, id);
+	}
+	
+
+	/**
 	 * Delete an order by ID
 	 * 
 	 * @param id the ID of the order to delete
@@ -351,26 +439,32 @@ public class ProcessingOrderMgr {
 	}
 	
 	/**
-	 * Delete an order by ID
+	 * Delete an expired order by ID without cross-mission access check
 	 * 
-	 * @param order the order to delete
+	 * @param id the ID of the order to delete
+	 * @param evictionTime the relevant cutoff time for the eviction of orders
 	 * @throws EntityNotFoundException if the order to delete does not exist in the database
+     * @throws SecurityException if a cross-mission data access was attempted
 	 * @throws RuntimeException if the deletion was not performed as expected
 	 */
-	private void deleteOrder(ProcessingOrder order) throws EntityNotFoundException, RuntimeException {
-		if (logger.isTraceEnabled()) logger.trace(">>> deleteOrder({})", order.getIdentifier());
-		// prepare the order to delete
-		prepareOrderToDelete(order);
-		// Delete the order
-		long id = order.getId();
-		RepositoryService.getOrderRepository().delete(order);
-		// Test whether the deletion was successful
+	public void deleteExpiredOrderById(Long id, Instant evictionTime)
+			throws EntityNotFoundException, SecurityException, RuntimeException {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteExpiredOrderById({}, {})", id, evictionTime);
+
+		
+		// Test whether the order id is valid
 		Optional<ProcessingOrder> modelOrder = RepositoryService.getOrderRepository().findById(id);
-		if (!modelOrder.isEmpty()) {
-			throw new RuntimeException(logger.log(OrderMgrMessage.DELETION_UNSUCCESSFUL, id));
+		if (modelOrder.isEmpty()) {
+			throw new EntityNotFoundException(logger.log(OrderMgrMessage.ORDER_NOT_FOUND));
 		}
 		
-		logger.log(OrderMgrMessage.ORDER_DELETED, id);
+		// Ensure order eviction time is actually before relevant cutoff time
+		ProcessingOrder order = modelOrder.get();
+		if (order.getEvictionTime().isBefore(evictionTime)) {
+			deleteOrder(order);
+		} else {
+			logger.log(OrderMgrMessage.ORDER_NOT_EVICTABLE, order.getId(), order.getEvictionTime(), evictionTime);
+		}
 	}
 	
 	/**
@@ -378,6 +472,7 @@ public class ProcessingOrderMgr {
 	 * 
 	 * @param t the time to compare to
 	 */
+	@Deprecated
 	public void deleteOrdersWithEvictionTimeLessThan(Instant t) {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteOrdersWithEvictionTimeLessThan({})", t);
 		List<ProcessingOrder> orders = RepositoryService.getOrderRepository().findByOrderStateAndEvictionTimeLessThan(OrderState.CLOSED, t);
@@ -397,61 +492,17 @@ public class ProcessingOrderMgr {
 	}
 	
 	/** 
-	 * Prepare the order for deletion: remove dependencies to products and product queries.
+	 * Find all orders of state CLOSED and eviction time less than t and return a list of their DB IDs
 	 * 
-	 * @param order the order to prepare
+	 * @param evictionTime the time to compare to
+	 * @return a list of database IDs for evictable orders
 	 */
-	private void prepareOrderToDelete(ProcessingOrder order) {
-		if (order != null) {
-			for (Job j : order.getJobs()) {
-				for (JobStep js : j.getJobSteps()) {
-					deleteJOF(js);
-					js.setJobOrderFilename(null);
-					if (js.getOutputProduct() != null) {
-						js.getOutputProduct().setJobStep(null);
-					}
-					for (ProductQuery pq : js.getInputProductQueries()) {
-						for (Product p : pq.getSatisfyingProducts()) {
-							p.getSatisfiedProductQueries().clear();
+	public List<Long> findOrdersWithEvictionTimeLessThan(Instant evictionTime) {
+		if (logger.isTraceEnabled()) logger.trace(">>> findOrdersWithEvictionTimeLessThan({})", evictionTime);
+
+		return RepositoryService.getOrderRepository().findIdsByOrderStateAndEvictionTimeLessThan(OrderState.CLOSED, evictionTime);
 						}
-						pq.getSatisfyingProducts().clear();
-						RepositoryService.getProductQueryRepository().delete(pq);
-					}
-					js.getInputProductQueries().clear();
-				}
-			}
-		}
-	}
 
-	/**
-	 * Delete the Job Order file for the given job step from the Storage Manager
-	 * 
-	 * @param js the job step to delete the JOF from
-	 * @return true on success, false otherwise
-	 */
-	private Boolean deleteJOF(JobStep js) {
-		if (logger.isTraceEnabled()) logger.trace(">>> deleteJOF({})", (null == js ? "null" : js.getId()));
-
-		if (js != null && js.getJobOrderFilename() != null) {
-			ProcessingFacility facility = js.getJob().getProcessingFacility();
-			String storageManagerUrl = facility.getStorageManagerUrl()
-					+ String.format("/products?pathInfo=%s", js.getJobOrderFilename()); 
-
-			RestTemplate restTemplate = rtb
-					.basicAuthentication(facility.getStorageManagerUser(), facility.getStorageManagerPassword())
-					.build();
-			try {
-				restTemplate.delete(storageManagerUrl);
-				logger.log(OrderMgrMessage.JOF_DELETED, js.getJobOrderFilename(), facility.getName());
-				return true;
-			} catch (RestClientException e) {
-				logger.log(OrderMgrMessage.JOF_DELETING_ERROR, js.getJobOrderFilename(), facility.getName(), e.getMessage());
-				return false;
-			} 
-		} else {
-			return false;
-		}
-	}
 	
 	/**
 	 * Find the oder with the given ID
@@ -562,17 +613,8 @@ public class ProcessingOrderMgr {
 		if (null == order.getOutputParameters() || order.getOutputParameters().isEmpty()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "outputParameters", "order modification"));
 		}
-		if (null == order.getConfiguredProcessors() || order.getConfiguredProcessors().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configuredProcessors", "order modification"));
-		}
-		if (null == order.getOrbits() || order.getOrbits().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "orbits", "order modification"));
-		}
 		if (null == order.getRequestedProductClasses() || order.getRequestedProductClasses().isEmpty()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "requestedProductClasses", "order modification"));
-		}
-		if (null == order.getInputProductClasses() || order.getInputProductClasses().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "inputProductClasses", "order modification"));
 		}
 		if (null == order.getOutputFileClass() || order.getOutputFileClass().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "outputFileClass", "order modification"));
@@ -582,11 +624,20 @@ public class ProcessingOrderMgr {
 		}
 		
 		// If list attributes were set to null explicitly, initialize with empty lists
+		if (null == order.getOrbits()) {
+			order.setOrbits(new ArrayList<RestOrbitQuery>());
+		}
+		if (null == order.getInputProductClasses()) {
+			order.setInputProductClasses(new ArrayList<String>());
+		}
 		if (null == order.getInputFilters()) {
 			order.setInputFilters(new ArrayList<RestInputFilter>());
 		}
 		if (null == order.getClassOutputParameters()) {
 			order.setClassOutputParameters(new ArrayList<RestClassOutputParameter>());
+		}
+		if (null == order.getConfiguredProcessors()) {
+			order.setConfiguredProcessors(new ArrayList<String>());
 		}
 		if (null == order.getJobStepStates()) {
 			order.setJobStepStates(new ArrayList<String>());

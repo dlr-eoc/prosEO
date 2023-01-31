@@ -87,6 +87,10 @@ public enum OrderMgrMessage implements ProseoMessage {
 	SPACECRAFT_EXISTS					(3571, Level.ERROR, false, "Spacecraft with spacecraft code {0} already exists for mission {1}", ""),
 	SPACECRAFT_NOT_FOUND				(3572, Level.ERROR, false, "Spacecraft {0} not found in mission {1}", ""),
 	STATE_TRANSITION_FORBIDDEN			(3573, Level.ERROR, false, "Order state transition from {0} to {1} not allowed for user {2}", ""),
+	ORDER_CLEANUP_CYCLE					(3574, Level.INFO, true, "Order cleanup cycle started", ""),
+	ORDER_CLEANUP_SLEEP					(3575, Level.INFO, true, "Order cleanup cycle completed, sleeping for {0} ms", ""),
+	ORDER_CLEANUP_TERMINATE				(3576, Level.INFO, true, "Order cleanup cycle interrupted – terminating‚", ""),
+	ORDER_NOT_EVICTABLE					(3577, Level.ERROR, false, "Eviction time {1} of order {0} not before requested cutoff time {2}", ""),
 	
 	;
 

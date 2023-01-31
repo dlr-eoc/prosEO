@@ -181,7 +181,7 @@ public enum UIMessage implements ProseoMessage {
 	ORBITS_UPDATED							(6165, Level.INFO, true, "{0} orbits updated", ""),
 	ORDER_APPROVED							(6166, Level.INFO, true, "Order with identifier {0} approved (new version {1})", ""),
 	ORDER_CANCELLED							(6167, Level.INFO, true, "Order with identifier {0} cancelled (new version {1})", ""),
-	ORDER_CREATED							(6168, Level.INFO, true, "Order with identifier {0} created (database ID {0})", ""),
+	ORDER_CREATED							(6168, Level.INFO, true, "Order with identifier {0} created (database ID {1})", ""),
 	ORDER_DATA_INVALID						(6169, Level.ERROR, false, "Order data invalid (cause: {0})", ""),
 	ORDER_DELETED							(6170, Level.INFO, true, "Order with identifier {0} deleted", ""),
 	ORDER_JOBS_NOT_FOUND					(6171, Level.ERROR, false, "No jobs found for order with identifier {0}", ""),
