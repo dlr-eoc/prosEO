@@ -27,6 +27,9 @@ import org.springframework.context.annotation.Configuration;
 @EntityScan(basePackages = "de.dlr.proseo.model")
 public class StorageManagerConfiguration {
 	
+	@Value("${proseo.global.storageIdPrefix}")
+	private String storageIdPrefix;
+	
 	@Value("${proseo.s3.s3AccessKey}")
 	private String s3AccessKey;
 	
@@ -36,11 +39,30 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.s3.s3EndPoint}")
 	private String s3EndPoint;
 	
+	@Value("${proseo.s3.s3Region}")
+	private String s3Region;
+	
+	@Value("${proseo.s3.s3MaxNumberOfBuckets}")
+	private int s3MaxNumberOfBuckets;
+
+	@Value("${proseo.s3.s3DefaultBucket}")
+	private String s3DefaultBucket;
+
+	// Obsolete
 	@Value("${proseo.alluxio.alluxioUnderFsS3Bucket}")
 	private String alluxioUnderFsS3Bucket;
 	
+	// Obsolete
 	@Value("${proseo.alluxio.alluxioUnderFsS3BucketPrefix}")
 	private String alluxioUnderFsS3BucketPrefix;
+	
+	/** Mount point for backend storage (must be different from cachePath) */
+	@Value("${proseo.posix.backendPath}")
+	private String posixBackendPath;
+
+	/** Mount point for file cache */
+	@Value("${proseo.posix.cachePath}")
+	private String posixCachePath;
 	
 	@Value("${proseo.joborder.bucket}")
 	private String joborderBucket;
@@ -48,39 +70,10 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.joborder.prefix}")
 	private String joborderPrefix;
 	
-	@Value("${proseo.s3.s3MaxNumberOfBuckets}")
-	private int s3MaxNumberOfBuckets;
-
-	@Value("${proseo.s3.s3Region}")
-	private String s3Region;
-	
-	@Value("${proseo.global.storageIdPrefix}")
-	private String storageIdPrefix;
-	
-	@Value("${proseo.s3.s3DefaultBucket}")
-	private String s3DefaultBucket;
-
-	@Value("${proseo.posix.backendPath}")
-	private String posixBackendPath;
-
-	@Value("${proseo.posix.cachePath}")
-	private String posixCachePath;
-	
+	/** Default type for backend storage */
 	@Value("${proseo.storageManager.defaultStorageType}")
 	private String defaultStorageType;
 
-	/** Recommended minimum cache usage for efficient operation (percentage of file system size) */
-	@Value("${proseo.storageManager.cache.expectedUsage}")
-	private Integer expectedCacheUsage;
-	
-	/** Maximum cache usage (percentage of file system size) */
-	@Value("${proseo.storageManager.cache.maximumUsage}")
-	private Integer maximumCacheUsage;
-
-	/** Shared secret for Storage Manager download tokens */
-	@Value("${proseo.storageManager.secret}")
-	private String storageManagerSecret;
-	
 	/** Maximum cycles for file size check */
 	@Value("${proseo.storageManager.filecheck.maxcycles}")
 	private Long fileCheckMaxCycles;
@@ -89,23 +82,18 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.storageManager.filecheck.waittime}")
 	private Long fileCheckWaitTime;
 	
-	// Alluxio configuration values currently not in use
+	/** Shared secret for Storage Manager download tokens */
+	@Value("${proseo.storageManager.secret}")
+	private String storageManagerSecret;
 	
-//	@Value("${proseo.alluxio.alluxioUnderFsDefaultPrefix}")
-//	private String alluxioUnderFsDefaultPrefix;
-//	
-//	@Value("${proseo.alluxio.alluxioUnderFsMaxPrefixes}")
-//	private int alluxioUnderFsMaxPrefixes;
-//	
-//	@Value("${proseo.alluxio.alluxioUnderFsS3BucketEndPoint}")
-//	private String alluxioUnderFsS3BucketEndPoint;
-//	
-//	@Value("${proseo.mountpoints.alluxio.k8sNode.alluxioCache}")
-//	private String alluxioK8sMountPointCache;
-//	
-//	@Value("${proseo.mountpoints.alluxio.k8sNode.alluxioFuse}")
-//	private String alluxioK8sMountPointFuse;
+	/** Recommended minimum cache usage for efficient operation (percentage of file system size) */
+	@Value("${proseo.storageManager.cache.expectedUsage}")
+	private Integer expectedCacheUsage;
 	
+	/** Maximum cache usage (percentage of file system size) */
+	@Value("${proseo.storageManager.cache.maximumUsage}")
+	private Integer maximumCacheUsage;
+
 	/** Singleton object */
 	private static StorageManagerConfiguration theConfiguration = null;
 	

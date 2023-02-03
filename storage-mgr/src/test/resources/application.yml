@@ -1,4 +1,5 @@
 logging:
+    file: /proseo/log/proseo-storage-mgr.log
     level:
         root: INFO
         de.dlr.proseo: TRACE
@@ -7,6 +8,7 @@ logging:
 proseo:
     global:
       storageIdPrefix: proseo
+      storageManagerVersion2: true
 
     s3:
       s3AccessKey: short_access_key
@@ -15,15 +17,12 @@ proseo:
       s3Region: eu-de
       s3MaxNumberOfBuckets: 50
       s3DefaultBucket: proseo-data-001
+      s3DefaultEndPoint: true
 
+    # Obsolete
     alluxio:
       alluxioUnderFsS3Bucket: internal
       alluxioUnderFsS3BucketPrefix: underfs
-
-      # Alluxio configuration values currently not in use       
-#      alluxioUnderFsDefaultPrefix: proseo-alluxio-cache
-#      alluxioUnderFsS3BucketEndPoint: http://192.168.20.191:9000
-#      alluxioUnderFsMaxPrefixes: 500
 
     posix:
       # Mount point for backend storage (must be different from cachePath)
@@ -55,11 +54,3 @@ proseo:
         expectedUsage: 95
         # Maximum cache usage (percentage of file system size)
         maximumUsage: 99
-
-    # Alluxio configuration values currently not in use       
-#    mountpoints:
-#     #ALLUXIO-properties are only used for answering GET-requests on endpoint /info
-#      alluxio:
-#        k8sNode:
-#          alluxioCache: /mnt/alluxio
-#          alluxioFuse: /alluxio-fuse
