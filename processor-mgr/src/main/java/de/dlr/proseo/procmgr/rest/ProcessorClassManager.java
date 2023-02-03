@@ -129,8 +129,10 @@ public class ProcessorClassManager {
 		if (null == processorClass.getProcessorName() || processorClass.getProcessorName().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorName", "processorClass creation"));
 		}
-		if (null == processorClass.getProductClasses() || processorClass.getProductClasses().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "productClasses", "processorClass creation"));			
+
+		// If list attributes were set to null explicitly, initialize with empty lists
+		if (null == processorClass.getProductClasses()) {
+			processorClass.setProductClasses(new ArrayList<>());
 		}
 		
 		ProcessorClass modelProcessorClass = ProcessorClassUtil.toModelProcessorClass(processorClass);
@@ -247,8 +249,10 @@ public class ProcessorClassManager {
 		if (null == processorClass.getProcessorName() || processorClass.getProcessorName().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorName", "processorClass modification"));
 		}
-		if (null == processorClass.getProductClasses() || processorClass.getProductClasses().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "productClasses", "processorClass modification"));			
+		
+		// If list attributes were set to null explicitly, initialize with empty lists
+		if (null == processorClass.getProductClasses()) {
+			processorClass.setProductClasses(new ArrayList<>());
 		}
 		
 		// Apply changed attributes

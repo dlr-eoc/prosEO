@@ -174,19 +174,24 @@ public class MissionControllerImpl implements MissionController {
 				if (null == mission.getName() || mission.getName().isBlank()) {
 					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "name", "mission creation"));
 				}				
-				if (null == mission.getFileClasses() || mission.getFileClasses().isEmpty()) {
-					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "fileClasses", "mission creation"));
-				}	
-				if (null == mission.getProcessingModes() || mission.getProcessingModes().isEmpty()) {
-					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processingModes", "mission creation"));
-				}	
+				if (null == mission.getCode() || mission.getCode().isBlank()) {
+					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "code", "mission creation"));
+				}				
 				if (null == mission.getProductFileTemplate() || mission.getProductFileTemplate().isBlank()) {
 					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "productFileTemplate", "mission creation"));
 				}	
-				if (null == mission.getSpacecrafts() || mission.getSpacecrafts().isEmpty()) {
-					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "spacecrafts", "mission creation"));
-				}	
 
+				// If list attributes were set to null explicitly, initialize with empty lists
+				if (null == mission.getFileClasses()) {
+					mission.setFileClasses(new ArrayList<>());
+				}	
+				if (null == mission.getProcessingModes()) {
+					mission.setProcessingModes(new ArrayList<>());
+				}	
+				if (null == mission.getSpacecrafts()) {
+					mission.setSpacecrafts(new ArrayList<>());
+				}	
+				
 				modelMission = RepositoryService.getMissionRepository().save(modelMission);
 
 				// Add spacecraft details
@@ -308,18 +313,23 @@ public class MissionControllerImpl implements MissionController {
 				if (null == mission.getName() || mission.getName().isBlank()) {
 					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "name", "mission modification"));
 				}				
-				if (null == mission.getFileClasses() || mission.getFileClasses().isEmpty()) {
-					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "fileClasses", "mission modification"));
-				}	
-				if (null == mission.getProcessingModes() || mission.getProcessingModes().isEmpty()) {
-					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processingModes", "mission modification"));
-				}	
+				if (null == mission.getCode() || mission.getCode().isBlank()) {
+					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "code", "mission modification"));
+				}				
 				if (null == mission.getProductFileTemplate() || mission.getProductFileTemplate().isBlank()) {
 					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "productFileTemplate", "mission modification"));
 				}	
-				if (null == mission.getSpacecrafts() || mission.getSpacecrafts().isEmpty()) {
-					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "spacecrafts", "mission modification"));
-				}
+				
+				// If list attributes were set to null explicitly, initialize with empty lists
+				if (null == mission.getFileClasses()) {
+					mission.setFileClasses(new ArrayList<>());
+				}	
+				if (null == mission.getProcessingModes()) {
+					mission.setProcessingModes(new ArrayList<>());
+				}	
+				if (null == mission.getSpacecrafts()) {
+					mission.setSpacecrafts(new ArrayList<>());
+				}	
 				
 				// Update modified attributes
 				boolean missionChanged = false;
@@ -632,6 +642,23 @@ public class MissionControllerImpl implements MissionController {
 		}
 		if (logger.isDebugEnabled()) logger.debug("... processing orders deleted");
 		
+		// Delete all configured processors and their connections to selection rules
+		jpqlQuery = "select cp from ConfiguredProcessor cp where cp.processor.processorClass.mission.id = " + missionId;
+		query = em.createQuery(jpqlQuery);
+		for (Object resultObject: query.getResultList()) {
+			if (resultObject instanceof ConfiguredProcessor) {
+				long configuredProcessorId = ((ConfiguredProcessor) resultObject).getId();
+				
+				String sqlQuery = "delete from simple_selection_rule_applicable_configured_processors " 
+						+ "where applicable_configured_processors_id = " + configuredProcessorId;
+				query = em.createNativeQuery(sqlQuery);
+				query.executeUpdate();
+
+				RepositoryService.getConfiguredProcessorRepository().deleteById(configuredProcessorId);
+			}
+		}
+		if (logger.isDebugEnabled()) logger.debug("... configured processors deleted");
+		
 		// Delete all product classes and selection rules (by cascade)
 		jpqlQuery = "select pc from ProductClass pc where pc.mission.id = " + missionId;
 		query = em.createQuery(jpqlQuery);
@@ -640,15 +667,6 @@ public class MissionControllerImpl implements MissionController {
 				RepositoryService.getProductClassRepository().deleteById(((ProductClass) resultObject).getId());
 		}
 		if (logger.isDebugEnabled()) logger.debug("... product classes deleted");
-		
-		// Delete all configured processors
-		jpqlQuery = "select cp from ConfiguredProcessor cp where cp.processor.processorClass.mission.id = " + missionId;
-		query = em.createQuery(jpqlQuery);
-		for (Object resultObject: query.getResultList()) {
-			if (resultObject instanceof ConfiguredProcessor)
-				RepositoryService.getConfiguredProcessorRepository().deleteById(((ConfiguredProcessor) resultObject).getId());
-		}
-		if (logger.isDebugEnabled()) logger.debug("... configured processors deleted");
 		
 		// Delete all processors and tasks (by cascade)
 		jpqlQuery = "select p from Processor p where p.processorClass.mission.id = " + missionId;

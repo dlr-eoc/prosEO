@@ -150,20 +150,22 @@ public class ConfigurationManager {
 		if (null == configuration.getConfigurationVersion() || configuration.getConfigurationVersion().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configurationVersion", "configuration creation"));
 		}
-		if (null == configuration.getDynProcParameters() || configuration.getDynProcParameters().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "dynamic processing parameters", "configuration creation"));
+
+		// If list attributes were set to null explicitly, initialize with empty lists
+		if (null == configuration.getDynProcParameters()) {
+			configuration.setDynProcParameters(new ArrayList<>());
 		}
-		if (null == configuration.getConfigurationFiles() || configuration.getConfigurationFiles().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configurationFiles", "configuration creation"));
+		if (null == configuration.getConfigurationFiles()) {
+			configuration.setConfigurationFiles(new ArrayList<>());
 		}
-		if (null == configuration.getStaticInputFiles() || configuration.getStaticInputFiles().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "staticInputFiles", "configuration creation"));
+		if (null == configuration.getStaticInputFiles()) {
+			configuration.setStaticInputFiles(new ArrayList<>());
 		}
-		if (null == configuration.getConfiguredProcessors() || configuration.getConfiguredProcessors().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configuredProcessors", "configuration creation"));
+		if (null == configuration.getConfiguredProcessors()) {
+			configuration.setConfiguredProcessors(new ArrayList<>());
 		}
-		if (null == configuration.getDockerRunParameters() || configuration.getDockerRunParameters().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "dockerRunParameters", "configuration creation"));
+		if (null == configuration.getDockerRunParameters()) {
+			configuration.setDockerRunParameters(new ArrayList<>());
 		}
 		
 		Configuration modelConfiguration = ConfigurationUtil.toModelConfiguration(configuration);
@@ -290,20 +292,22 @@ public class ConfigurationManager {
 		if (null == configuration.getConfigurationVersion() || configuration.getConfigurationVersion().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configurationVersion", "configuration modification"));
 		}
-		if (null == configuration.getDynProcParameters() || configuration.getDynProcParameters().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "dynamic processing parameters", "configuration modification"));
+		
+		// If list attributes were set to null explicitly, initialize with empty lists
+		if (null == configuration.getDynProcParameters()) {
+			configuration.setDynProcParameters(new ArrayList<>());
 		}
-		if (null == configuration.getConfigurationFiles() || configuration.getConfigurationFiles().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configurationFiles", "configuration modification"));
+		if (null == configuration.getConfigurationFiles()) {
+			configuration.setConfigurationFiles(new ArrayList<>());
 		}
-		if (null == configuration.getStaticInputFiles() || configuration.getStaticInputFiles().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "staticInputFiles", "configuration modification"));
+		if (null == configuration.getStaticInputFiles()) {
+			configuration.setStaticInputFiles(new ArrayList<>());
 		}
-		if (null == configuration.getConfiguredProcessors() || configuration.getConfiguredProcessors().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configuredProcessors", "configuration modification"));
+		if (null == configuration.getConfiguredProcessors()) {
+			configuration.setConfiguredProcessors(new ArrayList<>());
 		}
-		if (null == configuration.getDockerRunParameters() || configuration.getDockerRunParameters().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "dockerRunParameters", "configuration modification"));
+		if (null == configuration.getDockerRunParameters()) {
+			configuration.setDockerRunParameters(new ArrayList<>());
 		}
 		
 		// Make sure we are allowed to change the configuration (no intermediate update)

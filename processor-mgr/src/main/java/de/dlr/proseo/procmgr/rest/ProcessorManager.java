@@ -83,19 +83,21 @@ public class ProcessorManager {
 		if (null == processor.getProcessorVersion() || processor.getProcessorVersion().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorVersion", "processor creation"));
 		}
-		if (null == processor.getConfiguredProcessors() || processor.getConfiguredProcessors().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configuredProcessors", "processor creation"));
-		}
 		if (null == processor.getTasks() || processor.getTasks().isEmpty()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "tasks", "processor creation"));
 		}
 		if (null == processor.getDockerImage() || processor.getDockerImage().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "dockerImage", "processor creation"));
 		}
-		if (null == processor.getDockerRunParameters() || processor.getDockerRunParameters().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "dockerRunParameters", "processor creation"));
-		}
 		
+		// If list attributes were set to null explicitly, initialize with empty lists
+		if (null == processor.getConfiguredProcessors()) {
+			processor.setConfiguredProcessors(new ArrayList<>());
+		}
+		if (null == processor.getDockerRunParameters()) {
+			processor.setDockerRunParameters(new ArrayList<>());
+		}
+
 		Processor modelProcessor = ProcessorUtil.toModelProcessor(processor);
 		
 		// Make sure a processor with the same processor class name and processor version does not yet exist
@@ -259,17 +261,19 @@ public class ProcessorManager {
 		if (null == processor.getProcessorVersion() || processor.getProcessorVersion().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorVersion", "processor modification"));
 		}
-		if (null == processor.getConfiguredProcessors() || processor.getConfiguredProcessors().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configuredProcessors", "processor modification"));
-		}
 		if (null == processor.getTasks() || processor.getTasks().isEmpty()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "tasks", "processor modification"));
 		}
 		if (null == processor.getDockerImage() || processor.getDockerImage().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "dockerImage", "processor modification"));
 		}
-		if (null == processor.getDockerRunParameters() || processor.getDockerRunParameters().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "dockerRunParameters", "processor modification"));
+		
+		// If list attributes were set to null explicitly, initialize with empty lists
+		if (null == processor.getConfiguredProcessors()) {
+			processor.setConfiguredProcessors(new ArrayList<>());
+		}
+		if (null == processor.getDockerRunParameters()) {
+			processor.setDockerRunParameters(new ArrayList<>());
 		}
 		
 		Optional<Processor> optProcessor = RepositoryService.getProcessorRepository().findById(id);
