@@ -23,19 +23,25 @@ import org.springframework.context.annotation.Configuration;
  *
  */
 @Configuration
-@ConfigurationProperties(prefix="proseo")
+@ConfigurationProperties(prefix = "proseo")
 @EntityScan(basePackages = "de.dlr.proseo.model")
 public class StorageManagerConfiguration {
 	
 	@Value("${proseo.global.storageIdPrefix}")
 	private String storageIdPrefix;
 	
+	@Value("${proseo.global.storageManagerVersion2}")
+	private String storageManagerVersion2;
+
+	@Value("${proseo.global.sourcePath}")
+	private String sourcePath;
+
 	@Value("${proseo.s3.s3AccessKey}")
 	private String s3AccessKey;
-	
+
 	@Value("${proseo.s3.s3SecretAccessKey}")
 	private String s3SecretAccessKey;
-	
+
 	@Value("${proseo.s3.s3EndPoint}")
 	private String s3EndPoint;
 	
@@ -48,14 +54,9 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.s3.s3DefaultBucket}")
 	private String s3DefaultBucket;
 
-	// Obsolete
-	@Value("${proseo.alluxio.alluxioUnderFsS3Bucket}")
-	private String alluxioUnderFsS3Bucket;
-	
-	// Obsolete
-	@Value("${proseo.alluxio.alluxioUnderFsS3BucketPrefix}")
-	private String alluxioUnderFsS3BucketPrefix;
-	
+	@Value("${proseo.s3.s3DefaultEndPoint}")
+	private String s3DefaultEndPoint;
+
 	/** Mount point for backend storage (must be different from cachePath) */
 	@Value("${proseo.posix.backendPath}")
 	private String posixBackendPath;
@@ -66,7 +67,7 @@ public class StorageManagerConfiguration {
 	
 	@Value("${proseo.joborder.bucket}")
 	private String joborderBucket;
-	
+
 	@Value("${proseo.joborder.prefix}")
 	private String joborderPrefix;
 	
@@ -77,11 +78,15 @@ public class StorageManagerConfiguration {
 	/** Maximum cycles for file size check */
 	@Value("${proseo.storageManager.filecheck.maxcycles}")
 	private Long fileCheckMaxCycles;
-	
+
 	/** Wait time for file size check cycle in milliseconds */
 	@Value("${proseo.storageManager.filecheck.waittime}")
 	private Long fileCheckWaitTime;
 	
+	/** Maximum request attempts */
+	@Value("${proseo.storageManager.filecheck.maxRequestAttempts}")
+	private Integer maxRequestAttempts;
+
 	/** Shared secret for Storage Manager download tokens */
 	@Value("${proseo.storageManager.secret}")
 	private String storageManagerSecret;
@@ -94,9 +99,12 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.storageManager.cache.maximumUsage}")
 	private Integer maximumCacheUsage;
 
+	/** Mounted default storage type to change it with storage set property */
+	String mountedDefaultStorageType = "";
+
 	/** Singleton object */
 	private static StorageManagerConfiguration theConfiguration = null;
-	
+
 	/**
 	 * Sets the singleton object for this class
 	 */
@@ -104,7 +112,7 @@ public class StorageManagerConfiguration {
 	private void init() {
 		theConfiguration = this;
 	}
-	
+
 	/**
 	 * Gets the singleton object for this class
 	 * 
@@ -113,39 +121,63 @@ public class StorageManagerConfiguration {
 	public static StorageManagerConfiguration getConfiguration() {
 		return theConfiguration;
 	}
-	
-	
+
 	/**
-	 * @return the defaultStorageType
+	 * @return the storageManagerVersion2
+	 */
+	public String getStorageManagerVersion2() {
+		return storageManagerVersion2;
+	}
+
+	/**
+	 * @return the defaultStorageType from config file or mounted storage type
 	 */
 	public String getDefaultStorageType() {
+
+		if (mountedDefaultStorageType.length() > 0) {
+			return mountedDefaultStorageType;
+		}
+
 		return defaultStorageType;
 	}
 
 	/**
-	 * Gets the shared secret for generating Storage Manager download tokens as 256-bit byte array
+	 * Sets the singleton object for this class
+	 */
+	public void setDefaultStorageType(String storageType) {
+		mountedDefaultStorageType = storageType;
+	}
+
+	/**
+	 * Gets the shared secret for generating Storage Manager download tokens as
+	 * 256-bit byte array
 	 * 
 	 * @return the Storage Manager secret
 	 */
 	public byte[] getStorageManagerSecret() {
-		byte[] sharedSecret = Arrays.copyOf(
-				(storageManagerSecret + "                ").getBytes(),
-				32);
+		byte[] sharedSecret = Arrays.copyOf((storageManagerSecret + "                ").getBytes(), 32);
 		return sharedSecret;
 	}
 
-    /**
+	/**
 	 * @return the fileCheckMaxCycles
 	 */
 	public Long getFileCheckMaxCycles() {
 		return fileCheckMaxCycles;
 	}
-
+	
 	/**
 	 * @return the fileCheckWaitTime
 	 */
 	public Long getFileCheckWaitTime() {
 		return fileCheckWaitTime;
+	}
+	
+	/**
+	 * @return the maxRequestAttempts
+	 */
+	public int getMaxRequestAttempts() {
+		return maxRequestAttempts;
 	}
 
 	/**
@@ -158,6 +190,15 @@ public class StorageManagerConfiguration {
 	}
 
 	/**
+	 * Gets the absolute path to the POSIX source path
+	 * 
+	 * @return the POSIX source path
+	 */
+	public String getPosixSourcePath() {
+		return new File(sourcePath).getAbsolutePath();
+	}
+
+	/**
 	 * Gets the absolute path to the POSIX backend storage (if used)
 	 * 
 	 * @return the POSIX backend storage path
@@ -165,13 +206,6 @@ public class StorageManagerConfiguration {
 	public String getPosixBackendPath() {
 		return new File(posixBackendPath).getAbsolutePath();
 	}
-
-	/**
-	 * @return the alluxioUnderFsDefaultPrefix
-	 */
-//	public String getAlluxioUnderFsDefaultPrefix() {
-//		return alluxioUnderFsDefaultPrefix;
-//	}
 
 	/**
 	 * @return the s3DefaultBucket
@@ -194,55 +228,18 @@ public class StorageManagerConfiguration {
 		return s3Region;
 	}
 
-//	public String getAlluxioK8sMountPointCache() {
-//		return alluxioK8sMountPointCache;
-//	}
-//
-//	public String getAlluxioK8sMountPointFuse() {
-//		return alluxioK8sMountPointFuse;
-//	}
-
 	/**
 	 * @return the joborderPrefix
 	 */
 	public String getJoborderPrefix() {
 		return joborderPrefix;
 	}
-	
-	
+
 	/**
 	 * @return the joborderBucket
 	 */
 	public String getJoborderBucket() {
 		return joborderBucket;
-	}
-
-	/**
-	 * @return the alluxioUnderFsMaxPrefixes
-	 */
-//	public int getAlluxioUnderFsMaxPrefixes() {
-//		return alluxioUnderFsMaxPrefixes;
-//	}
-
-	/**
-	 * @return the alluxioUnderFsS3Bucket
-	 */
-	public String getAlluxioUnderFsS3Bucket() {
-		return alluxioUnderFsS3Bucket;
-	}
-
-	/**
-	 * @return the alluxioUnderFsS3BucketEndPoint
-	 */
-//	public String getAlluxioUnderFsS3BucketEndPoint() {
-//		return alluxioUnderFsS3BucketEndPoint;
-//	}
-
-	/**
-	 * @return the alluxioUnderFsS3BucketPrefix
-	 */
-	public String getAlluxioUnderFsS3BucketPrefix() {
-		return alluxioUnderFsS3BucketPrefix;
 	}
 
 	/**
@@ -273,6 +270,14 @@ public class StorageManagerConfiguration {
 		return s3EndPoint;
 	}
 	
+	
+	/**
+	 * @return the s3DefaultEndPoint
+	 */
+	public String getS3DefaultEndPoint() {
+		return s3DefaultEndPoint;
+	}
+	
 	/**
 	 * @return the expected cache usage
 	 */
@@ -286,5 +291,4 @@ public class StorageManagerConfiguration {
 	public Integer getMaximumCacheUsage() {
 		return maximumCacheUsage;
 	}
-
 }

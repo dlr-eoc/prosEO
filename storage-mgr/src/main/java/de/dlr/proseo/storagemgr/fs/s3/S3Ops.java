@@ -33,6 +33,7 @@ import com.amazonaws.services.s3.transfer.Download;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.version2.StorageProvider;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
@@ -66,21 +67,20 @@ public class S3Ops {
 
 	/** Maximum number of retries for data uploads to S3 storage */
 	private static final int MAX_UPLOAD_RETRIES = 3;
-	
-	
+
 	/**
 	 * Creates the empty key
 	 * 
-	 * @param s3 a given instantiated S3Client
-	 * @param bucketName Bucket name to which the PUT operation was initiated
-	 * @param key Object key for which the PUT operation was initiated
-	 * @param manifestMsg String to send to the service 
-	 * @return returns the created empty key 
+	 * @param s3          a given instantiated S3Client
+	 * @param bucketName  Bucket name to which the PUT operation was initiated
+	 * @param key         Object key for which the PUT operation was initiated
+	 * @param manifestMsg String to send to the service
+	 * @return returns the created empty key
 	 */
 	public static String createEmptyKey(S3Client s3, String bucketName, String key, String manifestMsg) {
-		
+
 		if (logger.isTraceEnabled()) logger.trace(">>> createEmptyKey({}, {}, {}, {})", s3, bucketName, key, manifestMsg);
-		
+
 		try {
 			s3.putObject(PutObjectRequest.builder().bucket(bucketName).key(key).build(),
 					RequestBody.fromString(manifestMsg));
@@ -95,45 +95,47 @@ public class S3Ops {
 	/**
 	 * List keys in bucket based on prefix
 	 * 
-	 * @param s3 the V1 S3 client to use
+	 * @param s3         the V1 S3 client to use
 	 * @param bucketName the bucket name
-	 * @param prefix the bucket prefix
+	 * @param prefix     the bucket prefix
 	 * @return the keys contained in the bucket
 	 * @throws SdkClientException if any error occurred in the communication with the S3 backend storage
+	 * @throws IOException
 	 */
-	public static List<String> listObjectsInBucket(AmazonS3 s3, String bucketName, String prefix) throws SdkClientException {
-		
-		if (logger.isTraceEnabled()) logger.trace(">>> listObjectsInBucket({}, {}, {})", s3, bucketName, prefix);
-		
-		Boolean isTopLevel = false;
-		String delimiter = "/";
-		if (prefix == "" || prefix == "/") {
-			isTopLevel = true;
-		}
-		if (!prefix.endsWith(delimiter)) {
-			prefix += delimiter;
-		}
-		ListObjectsRequest listObjectsRequest = null;
-		if (isTopLevel) {
-			listObjectsRequest = new ListObjectsRequest().withBucketName(bucketName);
-		} else {
-			listObjectsRequest = new ListObjectsRequest().withBucketName(bucketName).withPrefix(prefix);
-		}
-		List<String> folderLike = new ArrayList<String>();
-		ObjectListing objects = null;
-		objects = s3.listObjects(listObjectsRequest);
+	public static List<String> listObjectsInBucket(AmazonS3 s3, String bucketName, String prefix)
+			throws SdkClientException, IOException {
 
-		for (S3ObjectSummary f : objects.getObjectSummaries()) {
-			folderLike.add("s3://" + f.getBucketName() + "/" + f.getKey());
-		}
-		while (objects.isTruncated()) {
-			objects = s3.listNextBatchOfObjects(objects);
+		if (logger.isTraceEnabled()) logger.trace(">>> listObjectsInBucket({}, {}, {})", s3, bucketName, prefix);
+
+			Boolean isTopLevel = false;
+			String delimiter = "/";
+			if (prefix == "" || prefix == "/") {
+				isTopLevel = true;
+			}
+			if (!prefix.endsWith(delimiter)) {
+				prefix += delimiter;
+			}
+			ListObjectsRequest listObjectsRequest = null;
+			if (isTopLevel) {
+				listObjectsRequest = new ListObjectsRequest().withBucketName(bucketName);
+			} else {
+				listObjectsRequest = new ListObjectsRequest().withBucketName(bucketName).withPrefix(prefix);
+			}
+			List<String> folderLike = new ArrayList<String>();
+			ObjectListing objects = null;
+			objects = s3.listObjects(listObjectsRequest);
+
 			for (S3ObjectSummary f : objects.getObjectSummaries()) {
 				folderLike.add("s3://" + f.getBucketName() + "/" + f.getKey());
 			}
-		}
-		return folderLike;
-	}
+			while (objects.isTruncated()) {
+				objects = s3.listNextBatchOfObjects(objects);
+				for (S3ObjectSummary f : objects.getObjectSummaries()) {
+					folderLike.add("s3://" + f.getBucketName() + "/" + f.getKey());
+				}
+			}
+			return folderLike;
+		} 
 
 	/**
 	 * List all buckets; passes all exceptions on to the caller
@@ -142,32 +144,32 @@ public class S3Ops {
 	 * @return a list of buckets
 	 */
 	public static ArrayList<String> listBuckets(S3Client s3) {
-		
+
 		if (logger.isTraceEnabled()) logger.trace(">>> listBuckets({})", s3);
-			
-		ArrayList<String> buckets = new ArrayList<String>();
-		ListBucketsRequest listBucketsRequest = ListBucketsRequest.builder().build();
-		ListBucketsResponse listBucketsResponse = null;
-		try {
-			listBucketsResponse = s3.listBuckets(listBucketsRequest);
-		} catch (Exception e) {
-			logger.error(e.getMessage());
-			throw e;
-		}
-		listBucketsResponse.buckets().stream().forEach(x -> buckets.add(x.name()));
-		return buckets;
-	}
+
+			ArrayList<String> buckets = new ArrayList<String>();
+			ListBucketsRequest listBucketsRequest = ListBucketsRequest.builder().build();
+			ListBucketsResponse listBucketsResponse = null;
+			try {
+				listBucketsResponse = s3.listBuckets(listBucketsRequest);
+			} catch (Exception e) {
+				logger.error(e.getMessage());
+				throw e;
+			}
+			listBucketsResponse.buckets().stream().forEach(x -> buckets.add(x.name()));
+			return buckets;
+	} 
 
 	/**
 	 * Creates a new S3 bucket
 	 * 
-	 * @param s3 the S3 client to use
+	 * @param s3         the S3 client to use
 	 * @param bucketName the name of the new bucket
-	 * @param region the region, in which the bucket shall be stored
+	 * @param region     the region, in which the bucket shall be stored
 	 * @return the new bucket name or null, if the operation failed
 	 */
 	public static String createBucket(S3Client s3, String bucketName, String region) {
-		
+
 		if (logger.isTraceEnabled()) logger.trace(">>> createBucket({}, {}, {})", s3, bucketName, region);
 
 		try {
@@ -185,25 +187,36 @@ public class S3Ops {
 	/**
 	 * Create a base V2 S3 client
 	 *
-	 * @param s3AccessKey the access key for the client
+	 * @param s3AccessKey     the access key for the client
 	 * @param secretAccessKey the secret access key for the client
-	 * @param s3Endpoint the S3 endpoint to connect to
-	 * @param region the region, on which the client shall operate
+	 * @param s3Endpoint      the S3 endpoint to connect to
+	 * @param region          the region, on which the client shall operate
 	 * @return a configured S3 client or null, if an error occurred
 	 */
 	public static S3Client v2S3Client(String s3AccessKey, String secretAccessKey, String s3Endpoint, String region) {
-		
-		if (logger.isTraceEnabled()) logger.trace(">>> v2S3Client({}, {}, {}, {}))", "***", "***", s3Endpoint, region);
-		
-		try {
 
+		if (logger.isTraceEnabled()) logger.trace(">>> v2S3Client({}, {}, {}, {}))", "***", "***", s3Endpoint, region);
+
+		try {
 			AwsBasicCredentials creds = AwsBasicCredentials.create(s3AccessKey, secretAccessKey);
-			S3Client s3 = S3Client.builder().region(Region.of(region)).endpointOverride(URI.create(s3Endpoint))
+			
+			S3Client s3;
+			
+			if (StorageProvider.getInstance().getS3ConfigurationFromFile().isDefaultEndPoint()) {
+				s3 = S3Client.builder().region(Region.of(region))
 					.credentialsProvider(StaticCredentialsProvider.create(creds)).build();
+			}
+			else {
+				s3 = S3Client.builder().region(Region.of(region)).endpointOverride(URI.create(s3Endpoint))
+						.credentialsProvider(StaticCredentialsProvider.create(creds)).build();
+			}
+			
 			return s3;
+			
 		} catch (software.amazon.awssdk.core.exception.SdkClientException e) {
 			logger.error(e.getMessage());
 			return null;
+			
 		} catch (java.lang.NullPointerException e1) {
 			logger.error(e1.getMessage());
 			return null;
@@ -213,27 +226,38 @@ public class S3Ops {
 	/**
 	 * Create a base V1 S3 client
 	 *
-	 * @param s3AccessKey the access key for the client
+	 * @param s3AccessKey     the access key for the client
 	 * @param secretAccessKey the secret access key for the client
-	 * @param s3Endpoint the S3 endpoint to connect to
-	 * @param region the region, on which the client shall operate
+	 * @param s3Endpoint      the S3 endpoint to connect to
+	 * @param region          the region, on which the client shall operate
 	 * @return a configured S3 client or null, if an error occurred
 	 */
 	public static AmazonS3 v1S3Client(String s3AccessKey, String secretAccessKey, String s3Endpoint, String region) {
-		
-		if (logger.isTraceEnabled()) logger.trace(">>> v1S3Client({}, {}, {}, {}))", "***", "***", s3Endpoint, region);
-		
-		try {
 
+		if (logger.isTraceEnabled()) logger.trace(">>> v1S3Client({}, {}, {}, {}))", "***", "***", s3Endpoint, region);
+
+		try {
 			BasicAWSCredentials awsCreds = new BasicAWSCredentials(s3AccessKey, secretAccessKey);
 			ClientConfiguration clientConfiguration = new ClientConfiguration();
 			clientConfiguration.setSignerOverride("AWSS3V4SignerType");
-			AmazonS3 amazonS3 = AmazonS3ClientBuilder.standard()
-					.withEndpointConfiguration(
-							new AwsClientBuilder.EndpointConfiguration(s3Endpoint, Region.of(region).id()))
-					.withPathStyleAccessEnabled(true).withClientConfiguration(clientConfiguration)
-					.withCredentials(new AWSStaticCredentialsProvider(awsCreds)).build();
+
+			AmazonS3 amazonS3;
+
+			if (StorageProvider.getInstance().getS3ConfigurationFromFile().isDefaultEndPoint()) {
+				
+				amazonS3 = AmazonS3ClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(awsCreds))
+						.withRegion(region).build();
+			} else {
+
+				amazonS3 = AmazonS3ClientBuilder.standard()
+						.withEndpointConfiguration(
+								new AwsClientBuilder.EndpointConfiguration(s3Endpoint, Region.of(region).id()))
+						.withPathStyleAccessEnabled(true).withClientConfiguration(clientConfiguration)
+						.withCredentials(new AWSStaticCredentialsProvider(awsCreds)).build();
+			}
+
 			return amazonS3;
+
 		} catch (AmazonServiceException e) {
 			logger.error(e.getMessage());
 			return null;
@@ -256,7 +280,7 @@ public class S3Ops {
 	 * @return true, if the operation succeeded, false otherwise
 	 */
 	public static Boolean v2FetchFile(S3Client s3, String s3Object, String containerPath) {
-		
+
 		if (logger.isTraceEnabled()) logger.trace(">>> v2FetchFile({}, {}, {})",
 				(null == s3 ? "MISSING" : s3.serviceName()), s3Object, containerPath);
 
@@ -266,7 +290,7 @@ public class S3Ops {
 			subdirs.mkdirs();
 
 			AmazonS3URI s3uri = new AmazonS3URI(s3Object);
-			
+
 			ResponseInputStream<GetObjectResponse> is = s3.getObject(GetObjectRequest.builder().bucket(s3uri.getBucket()).key(s3uri.getKey()).build());
 			if (null == is) {
 				logger.error("Failed accessing S3 object {} (received 'null' response)", s3Object);
@@ -322,26 +346,26 @@ public class S3Ops {
 	/**
 	 * Fetch file from S3 to local file using AWS S3 SDK V1 TransferManager
 	 * 
-	 * @param s3Client      a given instantiated V1 S3 client
-	 * @param s3Bucket      S3 bucket name
-	 * @param s3Key 		S3 object key (without bucket)
-	 * @param targetFile	local (POSIX) target file path
+	 * @param s3Client   a given instantiated V1 S3 client
+	 * @param s3Bucket   S3 bucket name
+	 * @param s3Key      S3 object key (without bucket)
+	 * @param targetFile local (POSIX) target file path
 	 * @return true, if the operation succeeded, false otherwise
 	 */
 	public static Boolean v1FetchFile(AmazonS3 s3Client, String s3Bucket, String s3Key, File targetFile) {
-		
-		if (logger.isTraceEnabled()) logger.trace(">>> v1FetchFile({}, {}, {}, {})",
-				s3Client, s3Bucket, s3Key, targetFile);
-		
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> v1FetchFile({}, {}, {}, {})", s3Client, s3Bucket, s3Key, targetFile);
+
 		// Download using TransferManager as per
-				// https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/examples-s3-transfermanager.html#transfermanager-downloading
+		// https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/examples-s3-transfermanager.html#transfermanager-downloading
 		TransferManager transferManager;
 		try {
 			// Make sure target file is not already present
 			if (targetFile.exists()) {
 				targetFile.delete();
 			}
-			
+
 			transferManager = TransferManagerBuilder.standard()
 					.withMultipartCopyPartSize(MULTIPART_UPLOAD_PARTSIZE_BYTES).withS3Client(s3Client).build();
 			if (null == transferManager) {
@@ -352,12 +376,12 @@ public class S3Ops {
 			logger.error(e.getMessage(), e);
 			return false;
 		}
-		
+
 		try {
 			Download download = transferManager.download(s3Bucket, s3Key, targetFile);
-			
+
 			download.waitForCompletion();
-			
+
 			// TODO This may not apply to the TransferManager any more (it did for V2 getObject() and Files.copy())
 			// Unfortunately returning from waitForCompletion() may not mean the file is fully written to disk!
 			Long contentLength = download.getObjectMetadata().getContentLength();
@@ -388,21 +412,20 @@ public class S3Ops {
 		} finally {
 			transferManager.shutdownNow(false);
 		}
-
 	}
 
 	/**
 	 * Fetch file from S3 as input stream
 	 * 
-	 * @param s3            a given instantiated S3Client
-	 * @param s3Object      URI of S3-Object (e.g. s3://bucket/path/to/some/file)
+	 * @param s3       a given instantiated S3Client
+	 * @param s3Object URI of S3-Object (e.g. s3://bucket/path/to/some/file)
 	 * @return the file content
 	 */
 	public static InputStream v2FetchStream(S3Client s3, String s3Object) {
-		
-		if (logger.isTraceEnabled()) logger.trace(">>> v2FetchStream({}, {})", 
-				(null == s3 ? "MISSING" : s3.serviceName()), s3Object);
-		
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> v2FetchStream({}, {})", (null == s3 ? "MISSING" : s3.serviceName()), s3Object);
+
 		InputStream stream = null;
 		try {
 			AmazonS3URI s3uri = new AmazonS3URI(s3Object);
@@ -425,33 +448,33 @@ public class S3Ops {
 	/**
 	 * Upload a directory to S3 using multipart uploads
 	 * 
-	 * @param v1S3Client  the S3 V1 client to use
+	 * @param v1S3Client       the S3 V1 client to use
 	 * @param sourceDirPath    path to the directory to upload
 	 * @param targetBucketName the name of the target bucket
 	 * @param targetKeyPrefix  the key prefix to set for the target bucket
 	 * @param recursive   true, if subdirectories shall be copied, too, false otherwise
-	 * @param pause       (not used)
+	 * @param pause            (not used)
 	 * @return a list of uploaded keys or null, if the operation failed
 	 * @throws AmazonClientException if an error occurred during communication with the S3 backend storage
 	 * @throws InterruptedException if the wait for the upload completion was interrupted
 	 */
 	public static ArrayList<String> v1UploadDir(AmazonS3 v1S3Client, String sourceDirPath, String targetBucketName, String targetKeyPrefix,
 			boolean recursive, boolean pause) throws AmazonClientException, InterruptedException {
-		
+
 		if (logger.isTraceEnabled()) logger.trace(">>> v1UploadDir({}, {}, {}, {}, {})", 
 				v1S3Client, sourceDirPath, targetBucketName, targetKeyPrefix, recursive, pause);
-		
+
 		ArrayList<String> response = new ArrayList<String>();
 		TransferManager transferManager = TransferManagerBuilder.standard()
 				.withMultipartCopyPartSize(MULTIPART_UPLOAD_PARTSIZE_BYTES).withS3Client(v1S3Client).build();
 		AmazonS3URI s3uri = new AmazonS3URI(targetBucketName);
 		String bucket = s3uri.getBucket();
 
-		for (int i = 1; i <= MAX_UPLOAD_RETRIES ; ++i) {
+		for (int i = 1; i <= MAX_UPLOAD_RETRIES; ++i) {
 			try {
 				transferManager
 					.uploadDirectory(bucket, targetKeyPrefix, new File(sourceDirPath), recursive)
-					.waitForCompletion();
+						.waitForCompletion();
 				// Success, so no retry required
 				break;
 			} catch (Exception e) {
@@ -477,28 +500,27 @@ public class S3Ops {
 		return response;
 	}
 
-
 	/**
 	 * Upload file to S3 using multipart uploads
 	 * 
 	 * The source file is uploaded to a S3 storage. The target key in the storage is build as:
 	 * s3://&lt;bucket name&gt;/&lt;target key prefix&gt;/&lt;source file name&gt;
 	 * 
-	 * @param v1S3Client  the S3 V1 client to use
-	 * @param sourceFilePath The path of source file
+	 * @param v1S3Client       the S3 V1 client to use
+	 * @param sourceFilePath   The path of source file
 	 * @param targetBucketName The S3 bucket to store the file
-	 * @param targetKeyPrefix The key in the bucket to store the file
-	 * @param pause       (not used)
+	 * @param targetKeyPrefix  The key in the bucket to store the file
+	 * @param pause            (not used)
 	 * @return a single-element list of keys uploaded or null, if the operation failed
 	 * @throws AmazonClientException if an error occurred during communication with the S3 backend storage
 	 * @throws InterruptedException if the wait for the upload completion was interrupted
 	 */
-	public static ArrayList<String> v1UploadFile(AmazonS3 v1S3Client, String sourceFilePath, String targetBucketName, String targetKeyPrefix,
-			boolean pause) throws AmazonClientException, InterruptedException {
-		
+	public static ArrayList<String> v1UploadFile(AmazonS3 v1S3Client, String sourceFilePath, String targetBucketName,
+			String targetKeyPrefix, boolean pause) throws Exception {
+
 		if (logger.isTraceEnabled()) logger.trace(">>> v1UploadFile({}, {}, {}, {}, {})", 
 				v1S3Client, sourceFilePath, targetBucketName, targetKeyPrefix, pause);
-		
+
 		ArrayList<String> response = new ArrayList<String>();
 		String targetKeyName = null;
 		File f = new File(sourceFilePath);
@@ -514,11 +536,10 @@ public class S3Ops {
 			TransferManager transferManager = TransferManagerBuilder.standard()
 					.withMultipartCopyPartSize(MULTIPART_UPLOAD_PARTSIZE_BYTES).withS3Client(v1S3Client).build();
 
-			for (int i = 1; i <= MAX_UPLOAD_RETRIES ; ++i) {
+			for (int i = 1; i <= MAX_UPLOAD_RETRIES; ++i) {
 				try {
-					transferManager
-					.upload(bucket, targetKeyName, f)
-						.waitForCompletion();
+						transferManager.upload(bucket, targetKeyName, f).waitForCompletion();
+
 					// Success, so no retry required
 					break;
 				} catch (Exception e) {
@@ -531,7 +552,7 @@ public class S3Ops {
 					}
 				}
 			}
-			
+
 			String result = "s3://" + bucket + (targetKeyName.startsWith("/") ? "" : "/") + targetKeyName;
 			response.add(result);
 			logger.info("Copied file://{} to {}", sourceFilePath, result);
@@ -545,18 +566,19 @@ public class S3Ops {
 	/**
 	 * Upload files or directories to S3 using Multipart-Uploads
 	 * 
-	 * @param v1S3Client  the S3 V1 client to use
-	 * @param sourcePath    path to the file or directory to upload
+	 * @param v1S3Client       the S3 V1 client to use
+	 * @param sourcePath       path to the file or directory to upload
 	 * @param targetBucketName the name of the target bucket
-	 * @param targetPathPrefix  the key prefix to set for the target bucket
-	 * @param pause       (not used)
+	 * @param targetPathPrefix the key prefix to set for the target bucket
+	 * @param pause            (not used)
 	 * @return a list of uploaded keys or null, if the operation failed
 	 * @throws AmazonClientException if an error occurred during communication with the S3 backend storage
 	 * @throws InterruptedException if the wait for the upload completion was interrupted
+	 * @throws Exception on an unspecific error condition during a file upload
 	 */
 	public static ArrayList<String> v1Upload(AmazonS3 v1S3Client, String sourcePath, String targetBucketName, String targetPathPrefix,
-			boolean pause) throws AmazonClientException, InterruptedException {
-		
+			boolean pause) throws AmazonClientException, InterruptedException, Exception {
+
 		if (logger.isTraceEnabled()) logger.trace(">>> v1Upload({}, {}, {}, {}, {})", 
 				v1S3Client, sourcePath, targetBucketName, targetPathPrefix, pause);
 
@@ -583,6 +605,9 @@ public class S3Ops {
 		} catch (InterruptedException e) {
 			logger.error("Transfer interrupted: " + e.getMessage());
 			throw e;
+		} catch (Exception e) {
+			logger.error("Unspecific exception: " + e.getClass().getName() + " / " + e.getMessage());
+			throw e;
 		}
 		return response;
 	}
@@ -590,27 +615,27 @@ public class S3Ops {
 	/**
 	 * Copy objects between S3 buckets or inside S3 buckets
 	 * 
-	 * @param s3Client the S3 V1 client to use
-	 * @param sourceBucketName the bucket to copy from
+	 * @param s3Client              the S3 V1 client to use
+	 * @param sourceBucketName      the bucket to copy from
 	 * @param sourceObjectKeyPrefix the object key to copy from
-	 * @param destBucketName the bucket to copy to
-	 * @param destObjectPrefix the object key to copy to 
+	 * @param destBucketName        the bucket to copy to
+	 * @param destObjectPrefix      the object key to copy to
 	 * @return a list of copied keys or null, if the operation failed
 	 * @throws AmazonClientException if an error occurred during communication with the S3 backend storage
 	 * @throws InterruptedException if the wait for the upload completion was interrupted
 	 */
 	public static ArrayList<String> v1Copy(AmazonS3 s3Client, String sourceBucketName, String sourceObjectKeyPrefix,
 			String destBucketName, String destObjectPrefix) throws AmazonClientException, InterruptedException {
-		
+
 		if (logger.isTraceEnabled()) logger.trace(">>> v1Copy({}, {}, {}, {}, {})", 
 				s3Client, sourceBucketName, sourceObjectKeyPrefix, destBucketName, destObjectPrefix);
 
 		String separator = "/";
-		
+
 		if (destObjectPrefix.endsWith(separator)) {
 			destObjectPrefix = destObjectPrefix.substring(0, destObjectPrefix.length() - 1);
 		}
-		
+
 		ArrayList<String> response = new ArrayList<String>();
 		TransferManager transferManager = TransferManagerBuilder.standard()
 				.withMultipartCopyPartSize(MULTIPART_UPLOAD_PARTSIZE_BYTES).withS3Client(s3Client).build();
@@ -623,8 +648,8 @@ public class S3Ops {
 			for (S3ObjectSummary o : list) {
 				// destinationKey is built using this pattern: <destObjectPrefix>/<last elem of key>
 				String key = o.getKey();
-				
-				for (int i = 1; i <= MAX_UPLOAD_RETRIES ; ++i) {
+
+				for (int i = 1; i <= MAX_UPLOAD_RETRIES; ++i) {
 					try {
 						transferManager
 							.copy(sourceBucketName, key, destBucketName, destObjectPrefix+separator+key)
@@ -646,7 +671,6 @@ public class S3Ops {
 				logger.info("Copied s3://{}/{} to s3://{}/{}/{}", sourceBucketName, key, destBucketName, destObjectPrefix,key);
 			}
 
-
 			transferManager.shutdownNow(false);
 			return response;
 		} catch (AmazonServiceException e) {
@@ -659,7 +683,7 @@ public class S3Ops {
 	/**
 	 * Create a folder-like object in repository. This method passes low-level S3 exceptions on.
 	 * 
-	 * @param client the S3 V2 client to use
+	 * @param client     the S3 V2 client to use
 	 * @param bucketName the name of the bucket to create the folder in
 	 * @param folderName the name of the folder to create
 	 * @throws SdkException Base class for all exceptions that can be thrown by the SDK (both service and client). Can be used for catch all scenarios.
@@ -667,17 +691,17 @@ public class S3Ops {
      * @throws S3Exception Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @throws AwsServiceException if an error in the S3 object storage service occurs
 	 */
-	public static void createFolder(S3Client client, String bucketName, String folderName) 
+	public static void createFolder(S3Client client, String bucketName, String folderName)
 			throws SdkException, SdkClientException, S3Exception, AwsServiceException {
-		
+
 		if (logger.isTraceEnabled()) logger.trace(">>> createFolder({}, {}, {})", 
 				(null == client ? "MISSING" : client.serviceName()), bucketName, folderName);
-		
-	    // create meta-data for your folder and set content-length to 0
+
+		// create meta-data for your folder and set content-length to 0
 		String key = folderName;
 		if (!key.endsWith("/")) {
-		    key += "/";
-		}		
+			key += "/";
+		}
 		PutObjectRequest putRequest = PutObjectRequest.builder()
 		        .bucket(bucketName)
 		        .key(key)
@@ -700,64 +724,64 @@ public class S3Ops {
 	 * Delete object(s) in repository.
 	 * The prefix is either an object key or like a directory path 
 	 * 
-	 * @param client the S3 V1 client to use
+	 * @param client     the S3 V1 client to use
 	 * @param bucketName the name of the bucket to delete the object(s) in
-	 * @param prefix the object prefix
+	 * @param prefix     the object prefix
 	 */
 	public static void deleteDirectory(AmazonS3 client, String bucketName, String prefix) {
-		
+
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteDirectory({}, {}, {})", client, bucketName, prefix);
-		
-	    try {
-			ObjectListing objectList = client.listObjects(bucketName, prefix );
-			List<S3ObjectSummary> objectSummeryList =  objectList.getObjectSummaries();
-			while (objectList.isTruncated()) {
-				objectList = client.listNextBatchOfObjects(objectList);
-				objectSummeryList.addAll(objectList.getObjectSummaries());
+
+			try {
+				ObjectListing objectList = client.listObjects(bucketName, prefix);
+				List<S3ObjectSummary> objectSummeryList = objectList.getObjectSummaries();
+				while (objectList.isTruncated()) {
+					objectList = client.listNextBatchOfObjects(objectList);
+					objectSummeryList.addAll(objectList.getObjectSummaries());
+				}
+
+				String[] keysList = new String[objectSummeryList.size()];
+				int count = 0;
+				for (S3ObjectSummary summery : objectSummeryList) {
+					keysList[count++] = summery.getKey();
+				}
+				DeleteObjectsRequest deleteObjectsRequest = new DeleteObjectsRequest(bucketName).withKeys(keysList);
+				client.deleteObjects(deleteObjectsRequest);
+			} catch (AmazonServiceException e) {
+				logger.error(e.getMessage());
+				throw e;
+			} catch (com.amazonaws.SdkClientException e) {
+				logger.error(e.getMessage());
+				throw e;
 			}
-			
-			String[] keysList = new String[ objectSummeryList.size() ];
-			int count = 0;
-			for( S3ObjectSummary summery : objectSummeryList ) {
-			    keysList[count++] = summery.getKey();
-			}
-			DeleteObjectsRequest deleteObjectsRequest = new DeleteObjectsRequest( bucketName ).withKeys( keysList );
-			client.deleteObjects(deleteObjectsRequest);
-		} catch (AmazonServiceException e) {
-			logger.error(e.getMessage());
-			throw e;
-		} catch (com.amazonaws.SdkClientException e) {
-			logger.error(e.getMessage());
-			throw e;
-		}
 	}
-	
+
 	/**
 	 * Get the object length (file size)
 	 * 
-	 * @param client the S3 V1 client to use
+	 * @param client     the S3 V1 client to use
 	 * @param bucketName the name of the bucket, in which the object is stored
-	 * @param key the object key
+	 * @param key        the object key
 	 * @return the length of the object or zero, if no object metadata could be retrieved
 	 */
 	public static long getLength(AmazonS3 client, String bucketName, String key) {
-		
+
 		if (logger.isTraceEnabled()) logger.trace(">>> getLength({}, {}, {})", client, bucketName, key);
-		
-		ObjectMetadata md;
-		try {
-			md = client.getObjectMetadata(bucketName, key);
-		} catch (AmazonServiceException e) {
-			logger.error(e.getMessage());
-			throw e;
-		} catch (com.amazonaws.SdkClientException e) {
-			logger.error(e.getMessage());
-			throw e;
-		}
-		if (md != null) {
-			return md.getContentLength();
-		}
-		return 0;
+
+			ObjectMetadata md;
+			try {
+				md = client.getObjectMetadata(bucketName, key);
+			} catch (AmazonServiceException e) {
+				logger.error(e.getMessage());
+				throw e;
+			} catch (com.amazonaws.SdkClientException e) {
+				logger.error(e.getMessage());
+				throw e;
+			}
+			if (md != null) {
+				return md.getContentLength();
+			}
+			return 0;
 	}
 
-}
+} 
