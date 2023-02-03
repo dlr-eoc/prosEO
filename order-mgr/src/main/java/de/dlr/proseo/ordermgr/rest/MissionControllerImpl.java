@@ -649,8 +649,8 @@ public class MissionControllerImpl implements MissionController {
 			if (resultObject instanceof ConfiguredProcessor) {
 				long configuredProcessorId = ((ConfiguredProcessor) resultObject).getId();
 				
-				String sqlQuery = "delete from simple_selection_rule_applicable_configured_processors " 
-						+ "where applicable_configured_processors_id = " + configuredProcessorId;
+				String sqlQuery = "delete from simple_selection_rule_configured_processors " 
+						+ "where configured_processors_id = " + configuredProcessorId;
 				query = em.createNativeQuery(sqlQuery);
 				query.executeUpdate();
 
