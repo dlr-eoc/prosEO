@@ -41,6 +41,8 @@ public class S3Storage implements Storage {
 	 */
 	public S3Storage(S3Configuration cfg) throws IOException {
 		s3DAL = new S3DAL(cfg);
+		
+		new FileUtils(cfg.getSourcePath()).createDirectories();
 	}
 
 	/**

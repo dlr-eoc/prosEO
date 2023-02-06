@@ -94,7 +94,7 @@ public class StorageProvider {
 		version2 = cfg.getStorageManagerVersion2().equals("true") ? true : false;
 
 		basePaths.add(storage.getBasePath());
-		basePaths.add(cfg.getPosixSourcePath());
+		basePaths.add(cfg.getDefaultSourcePath());
 		basePaths.add(cfg.getPosixCachePath());
 
 		loadDefaultPaths();
@@ -105,7 +105,7 @@ public class StorageProvider {
 	 */
 	public void loadDefaultPaths() {
 
-		sourcePath = cfg.getPosixSourcePath();
+		sourcePath = cfg.getDefaultSourcePath();
 		storagePath = cfg.getPosixBackendPath();
 		cachePath = cfg.getPosixCachePath();
 	}
@@ -319,6 +319,8 @@ public class StorageProvider {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createStorage({}, {})", storageType.toString(), storagePath);
+		
+		sourcePath = cfg.getDefaultSourcePath();
 
 		if (storageType == StorageType.POSIX) {
 			return new PosixStorage(storagePath, sourcePath);
@@ -537,7 +539,7 @@ public class StorageProvider {
 
 		s3Configuration.setBucket(cfg.getS3DefaultBucket());
 		s3Configuration.setBasePath(cfg.getPosixBackendPath());
-		s3Configuration.setSourcePath(cfg.getPosixSourcePath());
+		s3Configuration.setSourcePath(cfg.getDefaultSourcePath());
 
 		s3Configuration.setMaxRequestAttempts(cfg.getMaxRequestAttempts());
 

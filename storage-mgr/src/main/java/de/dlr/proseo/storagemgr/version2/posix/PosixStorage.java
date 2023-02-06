@@ -61,6 +61,7 @@ public class PosixStorage implements Storage {
 		this.bucket = StorageFile.NO_BUCKET;
 
 		new FileUtils(basePath).createDirectories();
+		new FileUtils(sourcePath).createDirectories();
 	}
 
 	/**

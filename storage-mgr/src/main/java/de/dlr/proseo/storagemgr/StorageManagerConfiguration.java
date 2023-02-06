@@ -34,7 +34,7 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.global.storageManagerVersion2}")
 	private String storageManagerVersion2;
 
-	/** Default mount point for files to upload */
+	/** Default mount point for files to upload (always POSIX) */
 	@Value("${proseo.global.sourcePath}")
 	private String sourcePath;
 
@@ -192,11 +192,11 @@ public class StorageManagerConfiguration {
 	}
 
 	/**
-	 * Gets the absolute path to the POSIX source path
+	 * Gets the absolute path to the default upload source path (always POSIX)
 	 * 
-	 * @return the POSIX source path
+	 * @return the default upload source path
 	 */
-	public String getPosixSourcePath() {
+	public String getDefaultSourcePath() {
 		return new File(sourcePath).getAbsolutePath();
 	}
 
