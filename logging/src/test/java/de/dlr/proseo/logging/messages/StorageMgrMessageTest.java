@@ -25,8 +25,8 @@ public class StorageMgrMessageTest {
 	 */
 	@Test
 	public final void testGetCode() {
-		int result = StorageMgrMessage.TEST_TO_BE_REPLACED.getCode();
-		int expected = 5500;
+		int result = StorageMgrMessage.FILE_NOT_FOUND.getCode();
+		int expected = 5504;
 		assertEquals(expected, result);
 		
 		Set<Integer> codes = new HashSet<>();
@@ -43,8 +43,8 @@ public class StorageMgrMessageTest {
 	 */
 	@Test
 	public final void testGetLevel() {
-		Level result = StorageMgrMessage.TEST_TO_BE_REPLACED.getLevel();
-		Level expected = Level.WARN;
+		Level result = StorageMgrMessage.FILE_NOT_FOUND.getLevel();
+		Level expected = Level.ERROR;
 		assertEquals(expected, result);
 	}
 
@@ -54,8 +54,8 @@ public class StorageMgrMessageTest {
 	 */
 	@Test
 	public final void testGetMessage() {
-		String result = StorageMgrMessage.TEST_TO_BE_REPLACED.getMessage();
-		String expected = "to be replaced";
+		String result = StorageMgrMessage.FILE_NOT_FOUND.getMessage();
+		String expected = "File not found: {0}";
 		assertEquals(expected, result);
 	}
 
@@ -65,7 +65,7 @@ public class StorageMgrMessageTest {
 	 */
 	@Test
 	public final void testGetDescription() {
-		String result = StorageMgrMessage.TEST_TO_BE_REPLACED.getDescription();
+		String result = StorageMgrMessage.FILE_NOT_FOUND.getDescription();
 		String expected = "";
 		assertEquals(expected, result);
 	}

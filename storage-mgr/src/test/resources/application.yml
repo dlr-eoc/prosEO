@@ -9,7 +9,8 @@ proseo:
     global:
       storageIdPrefix: proseo
       storageManagerVersion2: true
-      sourcePath: default
+      # Default mount point for files to upload
+      sourcePath: target/testdata/source
 
     s3:
       s3AccessKey: short_access_key
@@ -49,6 +50,6 @@ proseo:
       # File cache control
       cache:
         # Recommended minimum cache usage for efficient operation (percentage of file system size)
-        expectedUsage: 95
+        expectedUsage: 75
         # Maximum cache usage (percentage of file system size)
-        maximumUsage: 99
+        maximumUsage: 85

@@ -7,6 +7,8 @@ proseo:
     global:
       storageIdPrefix: proseo
       storageManagerVersion2: true
+      # Default mount point for files to upload
+      sourcePath: /proseo/data/source
 
     s3:
       s3AccessKey: XXXX
@@ -15,12 +17,7 @@ proseo:
       s3Region: eu-de
       s3MaxNumberOfBuckets: 50
       s3DefaultBucket: proseo-backend
-      s3DefaultEndPoint: true
-
-    # Obsolete
-    alluxio:
-      alluxioUnderFsS3Bucket: proseo-backend-alluxio
-      alluxioUnderFsS3BucketPrefix: underfs
+      s3DefaultEndPoint: false
 
     posix:
       # Mount point for backend storage (must be different from cachePath)
@@ -42,6 +39,8 @@ proseo:
         waittime: 500
         # Maximum number of checks
         maxcycles: 600
+        # Maximum request attempts
+        maxRequestAttempts: 3 
       
       # Shared secret for download token
       secret: MyVeryLongSecretMustBeAtLeast32Bytes

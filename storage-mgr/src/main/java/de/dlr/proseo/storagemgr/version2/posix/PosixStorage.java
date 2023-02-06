@@ -245,8 +245,9 @@ public class PosixStorage implements Storage {
 	public List<String> getRelativePath(List<String> absolutePaths) {
 		
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getRelativePath({})", absolutePaths.size());
+			logger.trace(">>> getRelativePath({})", absolutePaths);
 		
+		logger.trace("... basePath = {}, sourcePath = {}", basePath, sourcePath);
 		List<String> basePaths = new ArrayList<>();
 		basePaths.add(basePath);
 		basePaths.add(sourcePath);
@@ -258,6 +259,8 @@ public class PosixStorage implements Storage {
 			String relativePath = new PathConverter(absolutePath, basePaths).getRelativePath().getPath();
 			relativePaths.add(relativePath);
 		}
+		
+		logger.trace("... resulting relativePaths = {}");
 		
 		return relativePaths; 
 	}

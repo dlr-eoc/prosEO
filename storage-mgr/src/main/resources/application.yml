@@ -9,6 +9,7 @@ proseo:
     global:
       storageIdPrefix: proseo
       storageManagerVersion2: true
+      # Default mount point for files to upload
       sourcePath: default
 
     s3:

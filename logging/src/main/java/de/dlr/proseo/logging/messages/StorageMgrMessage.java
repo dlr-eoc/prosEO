@@ -17,7 +17,7 @@ public enum StorageMgrMessage implements ProseoMessage {
 	INTERNAL_ERROR (5501, Level.ERROR, false, "Internal Storage Manager  Error: {0}", ""),
 	INVALID_PATH (5502, Level.ERROR, false, "Invalid path: {0}", ""),
 	SECRET_TOO_SHORT (5503, Level.ERROR, false, "Secret length is shorter than the minimum 256-bit requirement, Error: {0}", ""),
-	FILE_NOT_FOUND (5504, Level.ERROR, false, " File not found: {0}", ""),
+	FILE_NOT_FOUND (5504, Level.ERROR, false, "File not found: {0}", ""),
 	PATH_IS_NULL (5505, Level.ERROR, false, "The path is null", ""),
 
 

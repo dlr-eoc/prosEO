@@ -30,9 +30,11 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.global.storageIdPrefix}")
 	private String storageIdPrefix;
 	
+	/** Flag to indicate whether V2 implementation shall be used or older V1 implementation (will be deleted after removal of V1) */
 	@Value("${proseo.global.storageManagerVersion2}")
 	private String storageManagerVersion2;
 
+	/** Default mount point for files to upload */
 	@Value("${proseo.global.sourcePath}")
 	private String sourcePath;
 
