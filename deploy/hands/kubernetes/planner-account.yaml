@@ -39,3 +39,12 @@ subjects:
 - kind: ServiceAccount
   name: proseo-planner
   namespace: default
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: proseo-planner-secret
+  namespace: default
+  annotations:
+    kubernetes.io/service-account.name: proseo-planner
+type: kubernetes.io/service-account-token

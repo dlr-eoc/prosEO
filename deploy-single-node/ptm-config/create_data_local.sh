@@ -164,6 +164,7 @@ cat >$TEST_DATA_DIR/facility.json <<EOF
 {
     "name": "localhost",
     "description": "Docker Desktop Minikube",
+    "facilityState": "RUNNING",
     "processingEngineUrl": "http://host.docker.internal:8001/",
     "processingEngineToken": "TBD",
     "storageManagerUrl": 
