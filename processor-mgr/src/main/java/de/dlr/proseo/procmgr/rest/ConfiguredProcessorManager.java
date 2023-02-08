@@ -419,7 +419,7 @@ public class ConfiguredProcessorManager {
 			} 
 		}
 		// Check whether there are selection rules referencing this configured processor
-		String sqlQuery = "SELECT COUNT(*) FROM simple_selection_rule_applicable_configured_processors WHERE applicable_configured_processors_id = :id";
+		String sqlQuery = "SELECT COUNT(*) FROM simple_selection_rule_applicable_configured_processors WHERE configured_processors_id = :id";
 		Query query = em.createNativeQuery(sqlQuery);
 		query.setParameter("id", modelConfiguredProcessor.get().getId());
 		Object result = query.getSingleResult();
