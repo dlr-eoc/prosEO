@@ -336,14 +336,15 @@ public class PosixStorage implements Storage {
 	 * @param relativePath relative path of the file
 	 * @param content      content of the file
 	 * @return storage file object of created file
+	 * @throws IOException if file cannot be created
 	 */
 	@Override
-	public StorageFile createStorageFile(String relativePath, String content) {
+	public StorageFile createStorageFile(String relativePath, String content) throws IOException {
 
 		StorageFile storageFile = getStorageFile(relativePath);
 
 		FileUtils fileUtils = new FileUtils(storageFile.getFullPath());
-		fileUtils.createFile(content);
+		if (!fileUtils.createFile(content)) throw new IOException("Cannot create file in POSIX Storage: " + relativePath);
 
 		return storageFile;
 	}

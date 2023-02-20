@@ -58,8 +58,9 @@ public class FileUtils {
 	 * Creates the file with the content
 	 * 
 	 * @param content Content of the file
+	 * @return true if file was successfully created
 	 */
-	public void createFile(String content) {
+	public boolean createFile(String content) {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createFile({})", content);
@@ -72,10 +73,12 @@ public class FileUtils {
 			FileWriter writer = new FileWriter(file, false);
 			writer.write(content);
 			writer.close();
+			return true;
 
 		} catch (IOException e) {
 
 			e.printStackTrace();
+			return false;
 		}
 	}
 

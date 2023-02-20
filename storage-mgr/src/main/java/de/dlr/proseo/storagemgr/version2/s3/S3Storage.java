@@ -30,18 +30,16 @@ public class S3Storage implements Storage {
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3Storage.class);
-	
-	
 
 	/**
 	 * Constructor with bucket, access keys, region and end point
 	 * 
 	 * @param cfg s3 configuration
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public S3Storage(S3Configuration cfg) throws IOException {
 		s3DAL = new S3DAL(cfg);
-		
+
 		new FileUtils(cfg.getSourcePath()).createDirectories();
 	}
 
@@ -93,7 +91,7 @@ public class S3Storage implements Storage {
 	 * Sets the bucket
 	 * 
 	 * @param bucket bucket to set
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	@Override
 	public void setBucket(String bucket) throws IOException {
@@ -114,7 +112,7 @@ public class S3Storage implements Storage {
 	 * Gets buckets from storage
 	 * 
 	 * @return list of buckets
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	@Override
 	public List<String> getBuckets() throws IOException {
@@ -126,7 +124,7 @@ public class S3Storage implements Storage {
 	 * 
 	 * @param bucketName the name of the bucket
 	 * @return true if the bucket exists
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	@Override
 	public boolean bucketExists(String bucketName) throws IOException {
@@ -149,7 +147,7 @@ public class S3Storage implements Storage {
 	 * 
 	 * @param prefix prefix (folder) for search in storage
 	 * @return list of files with given prefix
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	@Override
 	public List<String> getRelativeFiles(String folder) throws IOException {
@@ -161,19 +159,19 @@ public class S3Storage implements Storage {
 	 * Gets all files from storage
 	 * 
 	 * @return list of all files from storage
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	@Override
 	public List<String> getRelativeFiles() throws IOException {
 		return s3DAL.getFiles();
-	}	
+	}
 
 	/**
 	 * Gets files (absolute paths) from storage with given prefix (folder)
 	 * 
 	 * @param prefix prefix (relative path) for search in storage
 	 * @return list of files with given prefix
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public List<String> getAbsoluteFiles(String relativePath) throws IOException {
 
@@ -189,7 +187,7 @@ public class S3Storage implements Storage {
 	 * Gets all files (absolute paths) from storage
 	 * 
 	 * @return list of all files from storage
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public List<String> getAbsoluteFiles() throws IOException {
 		return getAbsolutePath(s3DAL.getFiles());
@@ -281,7 +279,7 @@ public class S3Storage implements Storage {
 	 * Gets storage files
 	 * 
 	 * @return list of storage files
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	@Override
 	public List<StorageFile> getStorageFiles() throws IOException {
@@ -304,9 +302,10 @@ public class S3Storage implements Storage {
 	 * @param relativePath relative path of the file
 	 * @param content      content of the file
 	 * @return storage file object of created file
+	 * @throws IOException if file cannot be created
 	 */
 	@Override
-	public StorageFile createStorageFile(String relativePath, String content) {
+	public StorageFile createStorageFile(String relativePath, String content) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createStorageFile({},{})", relativePath, content);
@@ -323,11 +322,16 @@ public class S3Storage implements Storage {
 
 		try {
 			uploadFile(sourceFile, targetFile);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 
-		new File(path).delete();
+		} catch (IOException e) {
+			
+			e.printStackTrace();
+			throw e;
+
+		} finally {
+			
+			new File(path).delete();
+		}
 
 		return targetFile;
 	}
@@ -337,7 +341,7 @@ public class S3Storage implements Storage {
 	 * 
 	 * @param storageFile Storage File to check
 	 * @return true if file exists physically
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	@Override
 	public boolean fileExists(StorageFile storageFile) throws IOException {
@@ -349,7 +353,7 @@ public class S3Storage implements Storage {
 	 * 
 	 * @param storageFileOrDir storage file or directory
 	 * @return true if storage file is file
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	@Override
 	public boolean isFile(StorageFile storageFileOrDir) throws IOException {
@@ -361,7 +365,7 @@ public class S3Storage implements Storage {
 	 * 
 	 * @param storageFileOrDir storage file or directory
 	 * @return true if storage file is file
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	@Override
 	public boolean isDirectory(StorageFile storageFileOrDir) throws IOException {
@@ -373,7 +377,7 @@ public class S3Storage implements Storage {
 	 * 
 	 * @param storageFile Storage file
 	 * @return the file size of the storage file
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	@Override
 	public long getFileSize(StorageFile storageFile) throws IOException {
@@ -478,7 +482,8 @@ public class S3Storage implements Storage {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> upload({})", relativeSourceFileOrDir);
 
-		StorageFile sourceFileOrDir = new PosixStorageFile(s3DAL.getConfiguration().getSourcePath(), relativeSourceFileOrDir);
+		StorageFile sourceFileOrDir = new PosixStorageFile(s3DAL.getConfiguration().getSourcePath(),
+				relativeSourceFileOrDir);
 		StorageFile targetFileOrDir = new S3StorageFile(s3DAL.getBucket(), sourceFileOrDir.getRelativePath());
 
 		return s3DAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getRelativePath());
@@ -611,7 +616,7 @@ public class S3Storage implements Storage {
 
 		return pathsWithPrefix;
 	}
-	
+
 	/**
 	 * Gets input stream from file
 	 * 
@@ -620,7 +625,7 @@ public class S3Storage implements Storage {
 	 */
 	@Override
 	public InputStream getInputStream(StorageFile storageFile) throws IOException {
-		
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getInputStream({})", storageFile.getFullPath());
 

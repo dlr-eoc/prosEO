@@ -514,8 +514,9 @@ public class StorageProvider {
 	 * @param relativePath relative path to file
 	 * @param content      content of file
 	 * @return StorageFile of physically created file
+	 * @throws IOException
 	 */
-	public StorageFile createStorageFile(String relativePath, String content) {
+	public StorageFile createStorageFile(String relativePath, String content) throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createStorageFile({}, {})", relativePath, content.length());
