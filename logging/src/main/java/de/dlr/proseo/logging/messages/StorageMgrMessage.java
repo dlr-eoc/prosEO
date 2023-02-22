@@ -53,6 +53,12 @@ public enum StorageMgrMessage implements ProseoMessage {
 	PRODUCT_FILE_DELETED (5557, Level.INFO, true, "Product file deleted: {0}", ""),
 	
 	READ_TIME_OUT (5561, Level.ERROR, false, "Read for file {0} timed out after {1} seconds. Error {2}", ""), 
+	
+	CACHE_NO_FILE_FOR_PUTTING_TO_CACHE (5571, Level.ERROR, false, "File can't be put to cache, it does not exist: {0}", ""),
+	CACHE_TEMPORARY_FILE_DELETED (5572, Level.INFO,  true, "Temporary file has been deleted: {0}", ""),
+	CACHE_CLEANUP_REPORT (5573, Level.INFO, true, "Cache cleanup removed {0} entries from file cache in {1} ms", ""),
+	CACHE_NOT_ENOUGH_SPACE_AFTER_CLEANING (5574, Level.ERROR, false, "Disk usage {0} exceeds maximum usage {1} after emptying cache", ""),
+	CACHE_FILE_NOT_DELETED (5575, Level.WARN, false,  "File was not deleted: {0}", ""),
 	;
 
 	private final int code;
