@@ -6,7 +6,6 @@
 package de.dlr.proseo.storagemgr.rest;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -43,6 +42,7 @@ import de.dlr.proseo.storagemgr.utils.StorageManagerUtils;
  * required to manage Joborders
  * 
  * @author Hubert Asamer
+ * @author Denys Chaykovskiy
  *
  */
 @Component
@@ -53,12 +53,12 @@ public class JobOrderControllerImpl implements JoborderController {
 	private static final String HTTP_MSG_PREFIX = "4000 proseo-storage-mgr ";
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
 	private static final int MSG_ID_EXCEPTION_THROWN = 9001;
-	
+
 	private static Logger loggerLegacy = LoggerFactory.getLogger(JoborderController.class);
-	
+
 	/** A logger for this class */
-	private static ProseoLogger logger = new ProseoLogger(JoborderController.class);
-	
+	private static ProseoLogger logger = new ProseoLogger(JobOrderControllerImpl.class);
+
 	@Autowired
 	private StorageManagerConfiguration cfg;
 
@@ -82,7 +82,7 @@ public class JobOrderControllerImpl implements JoborderController {
 
 			String jobOrder64 = joborder.getJobOrderStringBase64();
 
-			if (!StorageFileConverter.isStringBase64(jobOrder64)) {
+			if (!isStringBase64(jobOrder64)) {
 
 				String msg = logger.log(StorageMgrMessage.STRING_NOT_BASE64_ENCODED);
 				return new ResponseEntity<>(createBadResponse(msg, jobOrder64), HttpStatus.FORBIDDEN);
@@ -97,7 +97,7 @@ public class JobOrderControllerImpl implements JoborderController {
 
 			} catch (Exception e) {
 
-				String msg = logger.log(StorageMgrMessage.JOB_ORDER_CREATION_ERROR, jobOrder64 + " "  + e.getMessage());
+				String msg = logger.log(StorageMgrMessage.JOB_ORDER_CREATION_ERROR, jobOrder64 + " " + e.getMessage());
 
 				return new ResponseEntity<>(createBadResponse(msg, jobOrder64), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
@@ -137,14 +137,14 @@ public class JobOrderControllerImpl implements JoborderController {
 			ProseoFile proFile = ProseoFile.fromType(StorageType.valueOf(joborder.getFsType()), objKey, cfg);
 			if (proFile != null) {
 
-					if (proFile.writeBytes(bytes)) {
-						response.setFsType(proFile.getFsType().toString());
-						response.setPathInfo(proFile.getFullPath());
-						response.setUploaded(true);
-						response.setJobOrderStringBase64(joborder.getJobOrderStringBase64());
-						loggerLegacy.info("Received & Uploaded joborder-file: {}", response.getPathInfo());
-						return new ResponseEntity<>(response, HttpStatus.CREATED);
-					}
+				if (proFile.writeBytes(bytes)) {
+					response.setFsType(proFile.getFsType().toString());
+					response.setPathInfo(proFile.getFullPath());
+					response.setUploaded(true);
+					response.setJobOrderStringBase64(joborder.getJobOrderStringBase64());
+					loggerLegacy.info("Received & Uploaded joborder-file: {}", response.getPathInfo());
+					return new ResponseEntity<>(response, HttpStatus.CREATED);
+				}
 			}
 		} catch (Exception e) {
 			return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
@@ -166,12 +166,12 @@ public class JobOrderControllerImpl implements JoborderController {
 			logger.trace(">>> getObjectByPathInfo({})", pathInfo);
 
 		if (storageProvider.isVersion2()) { // begin version 2 StorageFile -> String
-			
-			if (null == pathInfo)  {
-				return new ResponseEntity<>(logger.log(StorageMgrMessage.PATH_IS_NULL), HttpStatus.NOT_FOUND);		
+
+			if (null == pathInfo) {
+				return new ResponseEntity<>(logger.log(StorageMgrMessage.PATH_IS_NULL), HttpStatus.NOT_FOUND);
 			}
-			
-			if (pathInfo == "") {		
+
+			if (pathInfo == "") {
 				return new ResponseEntity<>(logger.log(StorageMgrMessage.INVALID_PATH, pathInfo), HttpStatus.NOT_FOUND);
 			}
 
@@ -187,8 +187,8 @@ public class JobOrderControllerImpl implements JoborderController {
 				return new ResponseEntity<>(response, HttpStatus.OK);
 
 			} catch (Exception e) {
-				
-				String msg = logger.log(StorageMgrMessage.JOB_ORDER_FILE_CANNOT_BE_GOT, pathInfo,  e.getMessage());
+
+				String msg = logger.log(StorageMgrMessage.JOB_ORDER_FILE_CANNOT_BE_GOT, pathInfo, e.getMessage());
 				return new ResponseEntity<>(msg, HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
@@ -203,35 +203,44 @@ public class JobOrderControllerImpl implements JoborderController {
 				return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 			}
 
-				InputStream jofStream = proFile.getDataAsInputStream();
-				if (jofStream != null) {
-					byte[] bytes = null;
+			InputStream jofStream = proFile.getDataAsInputStream();
+			if (jofStream != null) {
+				byte[] bytes = null;
 
-					try {
-						bytes = java.util.Base64.getEncoder().encode(jofStream.readAllBytes());
-					} catch (IOException e) {
-						loggerLegacy.error("Invalid job order stream");
-						return new ResponseEntity<>(
-								errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
-										e.getClass().toString() + ": " + e.getMessage()),
-								HttpStatus.INTERNAL_SERVER_ERROR);
-					}
-					response = new String(bytes);
-					try {
-						jofStream.close();
-					} catch (IOException e) {
-						loggerLegacy.warn("Failed to close input stream of " + pathInfo + " | " + e.getMessage());
-					}
-					return new ResponseEntity<>(response, HttpStatus.OK);
+				try {
+					bytes = java.util.Base64.getEncoder().encode(jofStream.readAllBytes());
+				} catch (IOException e) {
+					loggerLegacy.error("Invalid job order stream");
+					return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
+							e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
+				response = new String(bytes);
+				try {
+					jofStream.close();
+				} catch (IOException e) {
+					loggerLegacy.warn("Failed to close input stream of " + pathInfo + " | " + e.getMessage());
+				}
+				return new ResponseEntity<>(response, HttpStatus.OK);
+			}
 		}
 		return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 	}
+	
+	/**
+	 * Checks if string base64
+	 * 
+	 * @param stringBase64 string to check
+	 * @return true if string base64
+	 */
+	private boolean isStringBase64(String stringBase64) {
 
+		String stringBase64Pattern = "^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$";
 
+		return stringBase64.matches(stringBase64Pattern) ? true : false;
+	}
 
 	/**
-	 * Gets job order relative path  "prefix/YYYY/MM/DD/WEEKDAY/HH/RandomUUID.xml
+	 * Gets job order relative path "prefix/YYYY/MM/DD/WEEKDAY/HH/RandomUUID.xml
 	 * 
 	 * @param joborderPrefix job order prefix
 	 * @return job order relative path
@@ -249,9 +258,9 @@ public class JobOrderControllerImpl implements JoborderController {
 	/**
 	 * Creates Ok RestJobOrder response (uploaded = true)
 	 * 
-	 * @param storageFile storage file
+	 * @param storageFile  storage file
 	 * @param stringBase64 string base 64
-	 * @return Ok RestJobOrder response 
+	 * @return Ok RestJobOrder response
 	 */
 	private RestJoborder createOkResponse(StorageFile storageFile, String stringBase64) {
 
@@ -264,13 +273,13 @@ public class JobOrderControllerImpl implements JoborderController {
 
 		return response;
 	}
-	
+
 	/**
 	 * Creates Bad RestJobOrder response (uploaded = false)
 	 * 
-	 * @param message message
+	 * @param message      message
 	 * @param stringBase64 string base 64
-	 * @return Bad RestJobOrder response 
+	 * @return Bad RestJobOrder response
 	 */
 	private RestJoborder createBadResponse(String message, String stringBase64) {
 
@@ -283,7 +292,7 @@ public class JobOrderControllerImpl implements JoborderController {
 
 		return response;
 	}
-	
+
 	/**
 	 * Log an error and return the corresponding HTTP message header
 	 * 
