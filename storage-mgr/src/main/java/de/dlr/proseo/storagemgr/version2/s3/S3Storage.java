@@ -7,9 +7,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.storagemgr.version2.FileUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.model.Storage;
@@ -28,8 +26,8 @@ public class S3Storage implements Storage {
 	/** s3 data access layer object */
 	private S3DAL s3DAL;
 
-	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(S3Storage.class);
+	/** A logger for this class */
+	private static ProseoLogger logger = new ProseoLogger(S3Storage.class);
 
 	/**
 	 * Constructor with bucket, access keys, region and end point
@@ -324,12 +322,12 @@ public class S3Storage implements Storage {
 			uploadFile(sourceFile, targetFile);
 
 		} catch (IOException e) {
-			
+
 			e.printStackTrace();
 			throw e;
 
 		} finally {
-			
+
 			new File(path).delete();
 		}
 

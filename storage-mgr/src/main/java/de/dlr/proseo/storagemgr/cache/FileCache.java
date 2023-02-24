@@ -75,7 +75,6 @@ public class FileCache {
 		// Ensure call is legal
 		if (!new File(pathKey).exists()) {
 			logger.log(StorageMgrMessage.CACHE_NO_FILE_FOR_PUTTING_TO_CACHE, pathKey);
-			// logger.log("> File can't be put to cache, it does not exist: " + pathKey);
 			return;
 		}
 		if (!pathKey.startsWith(cachePath)) {

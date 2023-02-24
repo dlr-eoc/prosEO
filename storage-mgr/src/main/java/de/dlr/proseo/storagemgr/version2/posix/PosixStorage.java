@@ -10,9 +10,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.StorageMgrMessage;
 import de.dlr.proseo.storagemgr.version2.FileUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.model.Storage;
@@ -37,7 +36,7 @@ public class PosixStorage implements Storage {
 	private String bucket;
 
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(PosixStorage.class);
+	private static ProseoLogger logger = new ProseoLogger(PosixStorage.class);
 
 	/** posix data access layer object */
 	private PosixDAL posixDAL = new PosixDAL();
@@ -658,7 +657,7 @@ public class PosixStorage implements Storage {
 			return new FileInputStream(fullpath);
 
 		} catch (FileNotFoundException e) {
-			logger.error("Requested POSIX file {} not found", fullpath);
+			logger.log(StorageMgrMessage.FILE_NOT_FOUND, fullpath);
 			throw e;
 		}
 	}

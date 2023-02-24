@@ -10,11 +10,10 @@ import java.util.List;
 
 import javax.annotation.PostConstruct;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.version2.model.Storage;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
@@ -47,7 +46,7 @@ public class StorageProvider {
 	private boolean version2;
 
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(StorageProvider.class);
+	private static ProseoLogger logger = new ProseoLogger(StorageProvider.class);
 
 	/** Storage Manager Configuration */
 	@Autowired

@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.StorageMgrMessage;
 
 /**
  * Common file utilities
@@ -24,7 +24,7 @@ public class FileUtils {
 	private String path;
 
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(FileUtils.class);
+	private static ProseoLogger logger = new ProseoLogger(FileUtils.class);
 
 	/**
 	 * Gets the path to file
@@ -235,7 +235,7 @@ public class FileUtils {
 		} catch (Exception e) {
 			e.printStackTrace();
 			if (logger.isTraceEnabled())
-				logger.error("Cannot delete file: " + sourceFile, e.getMessage());
+				logger.log(StorageMgrMessage.FILE_NOT_DELETED, sourceFile, e.getMessage());
 			throw e;
 		}
 	}

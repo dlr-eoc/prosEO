@@ -3,9 +3,8 @@ package de.dlr.proseo.storagemgr.version2.posix;
 import java.io.File;
 
 import org.apache.commons.io.FilenameUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
@@ -30,7 +29,7 @@ public class PosixStorageFile implements StorageFile {
 	private String relativePath;
 
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(PosixStorageFile.class);
+	private static ProseoLogger logger = new ProseoLogger(PosixStorageFile.class);
 
 	/**
 	 * No Bucket Constructor

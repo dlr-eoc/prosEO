@@ -12,10 +12,6 @@ import de.dlr.proseo.storagemgr.version2.Exceptions.FileLockedAfterMaxCyclesExce
  * @author Denys Chaykovskiy
  *
  */
-/**
- * @author dchaykovskiy
- *
- */
 public class StorageFileLocker {
 
 	/** List of currently being downloaded files, which are locked */
