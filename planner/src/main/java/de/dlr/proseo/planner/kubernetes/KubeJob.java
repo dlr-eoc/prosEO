@@ -719,7 +719,9 @@ public class KubeJob {
 													js.get().setJobStepState(JobStepState.READY);
 													js.get().setJobStepState(JobStepState.RUNNING);
 												}
-												js.get().setJobStepState(JobStepState.COMPLETED);
+												if (!JobStepState.CLOSED.equals(js.get().getJobStepState())) {
+													js.get().setJobStepState(JobStepState.COMPLETED);
+												}
 												UtilService.getJobStepUtil().checkCreatedProducts(js.get());
 
 												if (cd == null) {
@@ -735,7 +737,9 @@ public class KubeJob {
 													js.get().setJobStepState(JobStepState.READY);
 													js.get().setJobStepState(JobStepState.RUNNING);
 												}
-												js.get().setJobStepState(JobStepState.FAILED);	
+												if (!JobStepState.COMPLETED.equals(js.get().getJobStepState()) && !JobStepState.CLOSED.equals(js.get().getJobStepState())) {
+													js.get().setJobStepState(JobStepState.FAILED);	
+												}
 												if (cd == null) {
 													cd = jc.getLastProbeTime();
 													js.get().setProcessingCompletionTime(cd.toInstant());
