@@ -13,11 +13,11 @@ import javax.annotation.PostConstruct;
 
 import java.util.Map.Entry;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.StorageMgrMessage;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.version2.FileUtils;
 
@@ -48,8 +48,8 @@ public class FileCache {
 	/** File Cache singleton */
 	private static FileCache theFileCache;
 
-	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(FileCache.class);
+	/** A logger for this class */
+	private static ProseoLogger logger = new ProseoLogger(FileCache.class);
 
 	/**
 	 * Instance of file cache
@@ -74,7 +74,7 @@ public class FileCache {
 
 		// Ensure call is legal
 		if (!new File(pathKey).exists()) {
-			logger.error("> File can't be put to cache, it does not exist: " + pathKey);
+			logger.log(StorageMgrMessage.CACHE_NO_FILE_FOR_PUTTING_TO_CACHE, pathKey);
 			return;
 		}
 		if (!pathKey.startsWith(cachePath)) {
@@ -86,7 +86,7 @@ public class FileCache {
 		if (isTemporaryPrefixFile(pathKey)) {
 
 			deleteFile(pathKey);
-			logger.warn("> Temporary file has been deleted: " + pathKey);
+			logger.log(StorageMgrMessage.CACHE_TEMPORARY_FILE_DELETED, pathKey);
 		}
 
 		if (!mapCache.containsKey(pathKey)) {
@@ -191,31 +191,33 @@ public class FileCache {
 					long duration = endTime - startTime;
 
 					if (logger.isTraceEnabled())
-						logger.trace("... deleteLRU.duration of sorting({} ms, {} ns, Cache size - {} records)", duration / 1000000,
-								duration, size());
-					
+						logger.trace("... deleteLRU.duration of sorting({} ms, {} ns, Cache size - {} records)",
+								duration / 1000000, duration, size());
+
 					long entryCount = 0;
-					long bytesToDelete =
-							(long) ((getRealUsage() - cfg.getExpectedCacheUsage()) * (new File(cachePath)).getTotalSpace() / 100.0);
-					
-					// We do not rely on getRealUsage() during the deletion, because the file system information may not be
+					long bytesToDelete = (long) ((getRealUsage() - cfg.getExpectedCacheUsage())
+							* (new File(cachePath)).getTotalSpace() / 100.0);
+
+					// We do not rely on getRealUsage() during the deletion, because the file system
+					// information may not be
 					// updated as fast as we are deleting files (this has been observed in practice)
 					while (0 < bytesToDelete && cacheIterator.hasNext()) {
-						if (logger.isTraceEnabled()) logger.trace("... to delete: {} --> deleting next entry", bytesToDelete);
-						
+						if (logger.isTraceEnabled())
+							logger.trace("... to delete: {} --> deleting next entry", bytesToDelete);
+
 						Entry<String, FileInfo> entry = cacheIterator.next();
 						bytesToDelete -= entry.getValue().getSize();
-						
+
 						remove(entry.getKey());
-						
+
 						++entryCount;
 					}
-					logger.info("Cache cleanup removed {} entries from file cache in {} ms", entryCount,
+					logger.log(StorageMgrMessage.CACHE_CLEANUP_REPORT, entryCount,
 							(System.nanoTime() - startTime) / 1000000);
 
 					// We have a serious problem, if we still do not have enough cache space
 					if (getRealUsage() >= cfg.getMaximumCacheUsage()) {
-						logger.error("Disk usage {} exceeds maximum usage {} after emptying cache", getRealUsage(),
+						logger.log(StorageMgrMessage.CACHE_NOT_ENOUGH_SPACE_AFTER_CLEANING, getRealUsage(),
 								cfg.getMaximumCacheUsage());
 					}
 				}
@@ -442,7 +444,7 @@ public class FileCache {
 
 		// Ensure call is legal
 		if (!new File(pathKey).exists()) {
-			logger.error("> File does not exist and can't be put to cache: " + pathKey);
+			logger.log(StorageMgrMessage.CACHE_NO_FILE_FOR_PUTTING_TO_CACHE, pathKey);
 			return;
 		}
 		if (!pathKey.startsWith(cachePath)) {
@@ -687,7 +689,7 @@ public class FileCache {
 		if (file.exists()) {
 			if (!file.delete()) { // delete file
 				if (logger.isTraceEnabled())
-					logger.warn("> File was not deleted({})", path);
+					logger.log(StorageMgrMessage.CACHE_FILE_NOT_DELETED, path);
 			}
 		}
 	}

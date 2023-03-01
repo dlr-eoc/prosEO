@@ -3,7 +3,8 @@ package de.dlr.proseo.storagemgr.cache;
 import java.time.Instant;
 
 /**
- * File Info (last Accessed and file size) for File Cache with sorting and search
+ * File Info (last Accessed and file size) for File Cache with sorting and
+ * search
  * 
  * @author Denys Chaykovskiy
  *
@@ -73,5 +74,4 @@ public class FileInfo {
 	public String toString() {
 		return "Accessed: '" + this.accessed + "', Size: '" + this.size;
 	}
-
 }

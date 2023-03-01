@@ -10,9 +10,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.StorageMgrMessage;
 import de.dlr.proseo.storagemgr.version2.FileUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 
@@ -25,7 +24,7 @@ import de.dlr.proseo.storagemgr.version2.PathConverter;
 public class PosixDAL {
 
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(PosixDAL.class);
+	private static ProseoLogger logger = new ProseoLogger(PosixDAL.class);
 
 	/**
 	 * Gets files which match path (prefix)
@@ -154,7 +153,7 @@ public class PosixDAL {
 		} catch (IOException e) {
 			e.printStackTrace();
 			if (logger.isTraceEnabled())
-				logger.error("Cannot upload file from " + sourceFile + " to " + targetFileOrDir + " ", e.getMessage());
+				logger.log(StorageMgrMessage.FILE_NOT_UPLOADED, sourceFile, targetFileOrDir, e.getMessage());
 			throw e;
 		}
 	}
@@ -241,8 +240,7 @@ public class PosixDAL {
 		} catch (Exception e) {
 			e.printStackTrace();
 			if (logger.isTraceEnabled())
-				logger.error("Cannot download file/folder from " + sourceFile + " to " + targetFileOrDir + " ",
-						e.getMessage());
+				logger.log(StorageMgrMessage.FILE_NOT_DOWNLOADED, sourceFile, targetFileOrDir, e.getMessage());
 			throw e;
 		}
 	}

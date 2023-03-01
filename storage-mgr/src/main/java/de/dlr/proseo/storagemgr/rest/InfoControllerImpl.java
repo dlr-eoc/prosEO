@@ -13,8 +13,6 @@ import de.dlr.proseo.storagemgr.rest.model.Posix;
 import de.dlr.proseo.storagemgr.rest.model.Joborder;
 import de.dlr.proseo.storagemgr.rest.model.RestInfo;
 
-
-
 /**
  * Handle information about storage manager settings.
  * 
@@ -26,10 +24,10 @@ public class InfoControllerImpl implements InfoController {
 
 	@Autowired
 	private StorageManagerConfiguration cfg;
-	
+
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(InfoControllerImpl.class);
-	
+
 	/**
 	 * Set information with configuration settings.
 	 * 
@@ -37,18 +35,18 @@ public class InfoControllerImpl implements InfoController {
 	 */
 	@Override
 	public ResponseEntity<RestInfo> getRestInfo() {
-		
-		if (logger.isTraceEnabled()) logger.trace(">>> getRestInfo()");
-		
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getRestInfo()");
+
 		RestInfo response = new RestInfo();
-		
+
 		S3 s3 = new S3();
 		s3.setS3EndPoint(cfg.getS3EndPoint());
 		s3.setS3Region(cfg.getS3Region());
 		s3.setS3MaxNumberOfBuckets(Long.valueOf(cfg.getS3MaxNumberOfBuckets()));
 		s3.setS3DefaultBucket(cfg.getS3DefaultBucket());
 		response.setS3(s3);
-		
 
 		Posix posix = new Posix();
 		posix.setBackendPath(cfg.getPosixBackendPath());
@@ -59,10 +57,9 @@ public class InfoControllerImpl implements InfoController {
 		joborder.setPrefix(cfg.getJoborderPrefix());
 
 		response.setJoborder(joborder);
-		
+
 		logger.log(StorageMgrMessage.REST_INFO_GOT);
-		
+
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-
 }
