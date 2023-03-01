@@ -29,10 +29,14 @@ public interface JobRepository extends JpaRepository<Job, Long> {
 	@Query("select j from Job j where j.processingOrder.id = ?1")
 	public List<Job> findAllByProcessingOrder(long orderId);	
 
+	@Deprecated
 	@Query("select j from Job j where j.jobState = ?1 and j.processingOrder.id = ?2")
 	public List<Job> findAllByJobStateAndProcessingOrder(JobState jobState, long orderId);	
 
-	@Query("SELECT COUNT(*) FROM Job j WHERE j.processingOrder.id = ?1 AND  j.jobState NOT IN ('COMPLETED', 'FAILED')")
+	@Query("select count(*) from Job j where j.jobState = ?1 and j.processingOrder.id = ?2")
+	public int countAllByJobStateAndProcessingOrder(JobState jobState, long orderId);	
+
+	@Query("SELECT COUNT(*) FROM Job j WHERE j.processingOrder.id = ?1 AND  j.jobState NOT IN ('CLOSED', 'COMPLETED', 'FAILED')")
 	public int countJobNotFinishedByProcessingOrderId(long id);
 
 	@Query("SELECT COUNT(*) FROM Job j WHERE j.processingOrder.id = ?1 AND  j.jobState = 'FAILED'")

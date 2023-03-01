@@ -13,6 +13,7 @@ import java.util.UUID;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Job.JobState;
+import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.enums.ParameterType;
@@ -189,50 +190,69 @@ public class OrderUtil {
 
 			restOrder.setOrbits(orbitQueries);
 		}
-		// Get the list of job step states
-		// this is much faster than iterating over jobs and job steps
-		List<String> jss = RepositoryService.getJobStepRepository().findDistinctJobStepStatesByOrderId(processingOrder.getId());
-		if (jss == null) {
-			jss = new ArrayList<String>();
-		}
-		restOrder.setJobStepStates(jss);
-		
-		// Calculate the percentage of finished job steps
 
-		Long percentCompleted = (long) 0;
-		Long percentFailed = (long) 0;
-		Long percentRunning = (long) 0;
-		Long jsCount = (long) RepositoryService.getJobStepRepository().countJobStepByOrderId(processingOrder.getId());
-		if (jsCount != null && jsCount > 0) {
-			Long jsCountCompleted = (long) RepositoryService.getJobStepRepository().countJobStepCompletedByOrderId(processingOrder.getId());
-			percentCompleted = (jsCountCompleted * 100 / jsCount);
+		// Get job and job step statistics for display
+		List<String> jobStepStates = new ArrayList<>();
+		Long jsCountRunning = 0L;
+		Long jsCountFailed = 0L;
+		Long jsCountCompleted = 0L;
+		Long jsCountTotal = 0L;
+		
+		if (logger.isTraceEnabled()) logger.trace("... checking job step states for order with DBID = {}", processingOrder.getId());
+		List<Object[]> resultRecords = RepositoryService.getJobStepRepository().countJobStepStatesByOrderId(processingOrder.getId());
+		if (logger.isTraceEnabled()) logger.trace("... found {} different job step states", resultRecords.size());
+		
+		for (Object[] resultRecord: resultRecords) {
+			if (logger.isTraceEnabled()) logger.trace("... checking job step state {} (class {}) with count {} (class {})", 
+					resultRecord[0], resultRecord[0].getClass().getCanonicalName(), resultRecord[1], resultRecord[1].getClass().getCanonicalName());
+			if (resultRecord[0] instanceof JobStepState && resultRecord[1] instanceof Long) {
+				String jsState = ((JobStepState) resultRecord[0]).toString();
+				jobStepStates.add(jsState);
+
+				switch(jsState) {
+				case "RUNNING":
+					jsCountRunning += (Long) resultRecord[1];
+					break;
+				case "COMPLETED":
+					jsCountCompleted += (Long) resultRecord[1];
+					break;
+				case "FAILED":
+					jsCountFailed += (Long) resultRecord[1];
+					break;
+				}
+				jsCountTotal += (Long) resultRecord[1];
+			}
 		}
-		restOrder.setPercentCompleted(percentCompleted);
-		if (jsCount != null && jsCount > 0) {
-			Long jsCountFailed = (long) RepositoryService.getJobStepRepository().countJobStepFailedByOrderId(processingOrder.getId());
-			percentFailed = (jsCountFailed * 100 / jsCount);
+		if (logger.isTraceEnabled()) logger.trace("... found {} total job steps, of which {} running, {} failed, {} completed", 
+				jsCountTotal, jsCountRunning, jsCountFailed, jsCountCompleted);
+		
+		// Create job step statistics
+		restOrder.setHasFailedJobSteps(jsCountFailed > 0);
+		restOrder.setJobStepStates(jobStepStates);
+		if (0 < jsCountTotal) {
+			restOrder.setPercentCompleted(jsCountCompleted * 100 / jsCountTotal);
+			restOrder.setPercentFailed(jsCountFailed * 100 / jsCountTotal);
+			restOrder.setPercentRunning(jsCountRunning * 100 / jsCountTotal);
+		} else {
+			restOrder.setPercentCompleted(0L);
+			restOrder.setPercentFailed(0L);
+			restOrder.setPercentRunning(0L);
 		}
-		restOrder.setPercentFailed(percentFailed);
-		if (jsCount != null && jsCount > 0) {
-			Long jsCountRunning = (long) RepositoryService.getJobStepRepository().countJobStepRunningByOrderId(processingOrder.getId());
-			percentRunning = (jsCountRunning * 100 / jsCount);
-		}
-		restOrder.setPercentRunning(percentRunning);
-		Long expectedCount = (long) 0;
-		Long createdCount = (long) 0;
+		// Create job statistics
+		int expectedCount = processingOrder.getJobs().size();
+		if (logger.isTraceEnabled()) logger.trace("... found {} total jobs for order in state {}", expectedCount, processingOrder.getOrderState());
+		int plannedCount = RepositoryService.getJobRepository().countAllByJobStateAndProcessingOrder(JobState.PLANNED, processingOrder.getId());
+		if (logger.isTraceEnabled()) logger.trace("... found {} planned jobs", plannedCount);
+		int createdCount = 0;
 		if (processingOrder.getOrderState() == OrderState.PLANNING) {
-			expectedCount = (long) processingOrder.getJobs().size();
-			createdCount = (long) RepositoryService.getJobRepository().findAllByJobStateAndProcessingOrder(JobState.PLANNED, processingOrder.getId()).size();
+			createdCount = plannedCount;
 		} else if (processingOrder.getOrderState() == OrderState.RELEASING) {
-			expectedCount = (long) processingOrder.getJobs().size();
-			createdCount = (long) RepositoryService.getJobRepository().findAllByJobStateAndProcessingOrder(JobState.RELEASED, processingOrder.getId()).size();
-			createdCount += (long) RepositoryService.getJobRepository().findAllByJobStateAndProcessingOrder(JobState.STARTED, processingOrder.getId()).size();
-			createdCount += (long) RepositoryService.getJobRepository().findAllByJobStateAndProcessingOrder(JobState.FAILED, processingOrder.getId()).size();
-			createdCount += (long) RepositoryService.getJobRepository().findAllByJobStateAndProcessingOrder(JobState.COMPLETED, processingOrder.getId()).size();
-			createdCount += (long) RepositoryService.getJobRepository().findAllByJobStateAndProcessingOrder(JobState.ON_HOLD, processingOrder.getId()).size();
+			createdCount = expectedCount - plannedCount;
 		}
-		restOrder.setExpectedJobs(expectedCount);
-		restOrder.setCreatedJobs(createdCount);
+		if (logger.isTraceEnabled()) logger.trace("... calculated {} created jobs", createdCount);
+		restOrder.setExpectedJobs(Long.valueOf(expectedCount));
+		restOrder.setCreatedJobs(Long.valueOf(createdCount));
+		
 		return restOrder;
 	}
 
