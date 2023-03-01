@@ -3,9 +3,8 @@ package de.dlr.proseo.ordermgr.cleanup;
 import java.time.Instant;
 import java.util.List;
 
-import org.springframework.transaction.annotation.Transactional;
-
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.OrderMgrMessage;
 import de.dlr.proseo.ordermgr.OrderManager;
 
@@ -69,8 +68,10 @@ public class CleanupOrdersThread  extends Thread {
 				sleep(wait);
 			} catch (InterruptedException e) {
 				logger.log(OrderMgrMessage.ORDER_CLEANUP_TERMINATE);
+				break;
 			} catch (Exception e) {
-				
+				logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " / " + e.getMessage());
+				// continue loop anyway
 			}
 		}
 	}

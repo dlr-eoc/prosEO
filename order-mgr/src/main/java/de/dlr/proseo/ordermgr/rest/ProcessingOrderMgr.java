@@ -121,9 +121,6 @@ public class ProcessingOrderMgr {
 		if (null == order.getSlicingType() || order.getSlicingType().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "slicingType", "order creation"));
 		}
-		if (null == order.getOutputParameters() || order.getOutputParameters().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "outputParameters", "order creation"));
-		}
 		if (null == order.getRequestedProductClasses() || order.getRequestedProductClasses().isEmpty()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "requestedProductClasses", "order creation"));
 		}
@@ -143,6 +140,9 @@ public class ProcessingOrderMgr {
 		}
 		if (null == order.getInputFilters()) {
 			order.setInputFilters(new ArrayList<RestInputFilter>());
+		}
+		if (null == order.getOutputParameters()) {
+			order.setOutputParameters(new ArrayList<RestParameter>());
 		}
 		if (null == order.getClassOutputParameters()) {
 			order.setClassOutputParameters(new ArrayList<RestClassOutputParameter>());
@@ -502,8 +502,6 @@ public class ProcessingOrderMgr {
 
 		return RepositoryService.getOrderRepository().findIdsByOrderStateAndEvictionTimeLessThan(OrderState.CLOSED, evictionTime);
 						}
-
-	
 	/**
 	 * Find the oder with the given ID
 	 * 
@@ -610,9 +608,6 @@ public class ProcessingOrderMgr {
 		if (null == order.getSlicingType() || order.getSlicingType().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "slicingType", "order modification"));
 		}
-		if (null == order.getOutputParameters() || order.getOutputParameters().isEmpty()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "outputParameters", "order modification"));
-		}
 		if (null == order.getRequestedProductClasses() || order.getRequestedProductClasses().isEmpty()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "requestedProductClasses", "order modification"));
 		}
@@ -632,6 +627,9 @@ public class ProcessingOrderMgr {
 		}
 		if (null == order.getInputFilters()) {
 			order.setInputFilters(new ArrayList<RestInputFilter>());
+		}
+		if (null == order.getOutputParameters()) {
+			order.setOutputParameters(new ArrayList<RestParameter>());
 		}
 		if (null == order.getClassOutputParameters()) {
 			order.setClassOutputParameters(new ArrayList<RestClassOutputParameter>());
@@ -1165,8 +1163,8 @@ public class ProcessingOrderMgr {
 	 * @param identifier the order identifier pattern
 	 * @param state an array of states
 	 * @param productClass an array of product types
-	 * @param startTime earliest sensing start time
-	 * @param stopTime latest sensing start time
+	 * @param startTimeFrom earliest sensing start time
+	 * @param startTimeTo latest sensing start time
 	 * @param recordFrom first record of filtered and ordered result to return
 	 * @param recordTo last record of filtered and ordered result to return
 	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
@@ -1175,11 +1173,11 @@ public class ProcessingOrderMgr {
 	 */
 	@Transactional
 	public List<RestOrder> getAndSelectOrders(String mission, String identifier, String[] state, 
-			String[] productClass, String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {
+			String[] productClass, String startTimeFrom, String startTimeTo, Long recordFrom, Long recordTo, String[] orderBy) {
 
 		List<RestOrder> list = new ArrayList<RestOrder>();
 		Query query = createOrdersQuery(mission, identifier, state, 
-				startTime, stopTime, orderBy, false);
+				startTimeFrom, startTimeTo, orderBy, false);
 
 		List<String> productClasses = null;
 		if (productClass != null && productClass.length > 0) {
@@ -1221,6 +1219,7 @@ public class ProcessingOrderMgr {
 			}
 		}		
 
+		logger.log(OrderMgrMessage.ORDER_LIST_RETRIEVED, list.size(), mission, identifier, startTimeFrom, startTimeTo);
 		return list;
 	}
 	
@@ -1231,8 +1230,8 @@ public class ProcessingOrderMgr {
 	 * @param identifier the order identifier pattern
 	 * @param state an array of states
 	 * @param productClass an array of product types
-	 * @param startTime earliest sensing start time
-	 * @param stopTime latest sensing start time
+	 * @param startTimeFrom earliest sensing start time
+	 * @param startTimeTo latest sensing start time
 	 * @param recordFrom first record of filtered and ordered result to return
 	 * @param recordTo last record of filtered and ordered result to return
 	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
@@ -1241,10 +1240,10 @@ public class ProcessingOrderMgr {
 	 */
 	@Transactional
 	public String countSelectOrders(String mission, String identifier, String[] state, 
-			String[] productClass, String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {
+			String[] productClass, String startTimeFrom, String startTimeTo, Long recordFrom, Long recordTo, String[] orderBy) {
 
 		Query query = createOrdersQuery(mission, identifier, state, 
-				startTime, stopTime, orderBy, false);
+				startTimeFrom, startTimeTo, orderBy, false);
 
 		List<String> productClasses = null;
 		if (productClass != null && productClass.length > 0) {
@@ -1280,7 +1279,7 @@ public class ProcessingOrderMgr {
 			}
 		}		
 
-		
+		logger.log(OrderMgrMessage.ORDER_LIST_RETRIEVED, i, mission, identifier, startTimeFrom, startTimeTo);
 		return i.toString();
 	}
 	
@@ -1292,8 +1291,8 @@ public class ProcessingOrderMgr {
 	 * @param identifier the order identifier pattern
 	 * @param state an array of states
 	 * @param productClass an array of product types
-	 * @param startTime earliest sensing start time
-	 * @param stopTime latest sensing start time
+	 * @param startTimeFrom earliest sensing start time
+	 * @param startTimeTo latest sensing start time
 	 * @param recordFrom first record of filtered and ordered result to return
 	 * @param recordTo last record of filtered and ordered result to return
 	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
@@ -1302,9 +1301,9 @@ public class ProcessingOrderMgr {
 	 * @return JPQL Query
 	 */
 	private Query createOrdersQuery(String mission, String identifier, String[] state, 
-			String startTime, String stopTime, String[] orderBy, Boolean count) {
+			String startTimeFrom, String startTimeTo, String[] orderBy, Boolean count) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getAndSelectOrders({}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, identifier, state, 
-				startTime, stopTime, orderBy, count);
+				startTimeFrom, startTimeTo, orderBy, count);
 		
 		// Find using search parameters
 		String jpqlQuery = null;
@@ -1325,10 +1324,10 @@ public class ProcessingOrderMgr {
 		if (null != identifier) {
 			jpqlQuery += " and upper(p.identifier) like :identifier";
 		}
-		if (null != startTime) {
+		if (null != startTimeFrom) {
 			jpqlQuery += " and p.startTime >= :startTime";
 		}
-		if (null != stopTime) {
+		if (null != startTimeTo) {
 			jpqlQuery += " and p.startTime <= :stopTime";
 		}
 				
@@ -1360,12 +1359,12 @@ public class ProcessingOrderMgr {
 			query.setParameter("identifier", identifier.toUpperCase());
 		}
 
-		if (null != startTime) {
-			query.setParameter("startTime", OrbitTimeFormatter.parseDateTime(startTime));
+		if (null != startTimeFrom) {
+			query.setParameter("startTime", OrbitTimeFormatter.parseDateTime(startTimeFrom));
 		}
 		
-		if (null != stopTime) {
-			query.setParameter("stopTime", OrbitTimeFormatter.parseDateTime(stopTime));
+		if (null != startTimeTo) {
+			query.setParameter("stopTime", OrbitTimeFormatter.parseDateTime(startTimeTo));
 		}
 		return query;
 	}
