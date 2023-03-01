@@ -1,13 +1,14 @@
 spring:
     jpa:
-        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        database-platform: org.hibernate.dialect.H2Dialect
         hibernate.ddl-auto: update
         open-in-view: false
         properties.hibernate.jdbc.time_zone: UTC
     datasource:
-        url: jdbc:postgresql://localhost:5432/proseo
-        username: postgres
-        password: sequel09Master
+        url: "jdbc:h2:mem:jpa_jbd"
+        driverClassName: org.h2.Driver
+        username: any       
+        password: any
 logging:
     file: /proseo/log/proseo-ingestor.log
     level:
@@ -21,7 +22,7 @@ proseo:
         notifyPlanner: true
     productionPlanner:
         # URL for Production Planner (leave as empty string [""] if no Planner is installed)
-        url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/5SS2aW/planner
+        url: http://localhost:8080/planner
         # Connection timeout in ms
         timeout: 10000
     storageManager:
@@ -34,10 +35,10 @@ proseo:
 
 # Test configuration
     # still storageManager:
-        url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/VYrwNF/storage-mgr
+        url: http://localhost:8080/storage-mgr
     testuser:
-        name: testuser
-        password: testpassword
+        name: PTM-testuser
+        password: password
     testinput:
         directory: src/test/resources/IDA_test
         files:

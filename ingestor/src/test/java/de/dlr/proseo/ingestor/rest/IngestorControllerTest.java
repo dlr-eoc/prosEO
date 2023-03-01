@@ -1,6 +1,6 @@
 /**
  * IngestorControllerTest.java
- * 
+ *
  * (c) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.ingestor.rest;
@@ -8,74 +8,72 @@ package de.dlr.proseo.ingestor.rest;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+
 import java.io.File;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
+
+import javax.validation.Valid;
 
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallback;
-import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+
 import de.dlr.proseo.ingestor.IngestorApplication;
-import de.dlr.proseo.ingestor.IngestorConfiguration;
 import de.dlr.proseo.ingestor.IngestorTestConfiguration;
 import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
+import de.dlr.proseo.ingestor.rest.model.ProductFileUtil;
 import de.dlr.proseo.ingestor.rest.model.RestParameter;
-import de.dlr.proseo.model.enums.ParameterType;
-import de.dlr.proseo.model.enums.StorageType;
+import de.dlr.proseo.ingestor.rest.model.RestProduct;
+import de.dlr.proseo.ingestor.rest.model.RestProductFile;
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.Spacecraft;
+import de.dlr.proseo.model.enums.ParameterType;
+import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
  * Test class for the REST API of IngestorControllerImpl
- * 
- * This class uses programmatic transaction management
- * 
+ *
  * @author Dr. Thomas Bassler
+ * @author Katharina Bassler
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest(classes = IngestorApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
-@DirtiesContext
+@SpringBootTest(classes = IngestorApplication.class)
+@WithMockUser(username = "UTM-testuser", password = "password")
+@Transactional
 public class IngestorControllerTest {
 
-	/* The base URI of the Ingestor */
-	private static String INGESTOR_BASE_URI = "/proseo/ingestor/v0.1";
-	
 	/* Various static test data */
-	private static final String TEST_CODE = "ABC";
+	private static final String TEST_CODE = "UTM";
 	private static final String TEST_PRODUCT_TYPE = "L2__FRESCO_";
 	private static final String TEST_NAME = "Test Facility";
 	private static final String TEST_STORAGE_SYSTEM = "src/test/resources/IDA_test";
-//	private static final String TEST_PRODUCT_PATH_1 = "L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__CLOUD__20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc";
+	private static final String TEST_PRODUCT_PATH_1 = "L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__CLOUD__20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc";
 	private static final String TEST_PRODUCT_PATH_2 = "L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__FRESCO_20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc";
 	private static final String TEST_SC_CODE = "XYZ";
 	private static final int TEST_ORBIT_NUMBER = 4712;
@@ -86,205 +84,190 @@ public class IngestorControllerTest {
 	private static final String TEST_MODE_OFFL = "OFFL";
 	private static final String TEST_FILE_CLASS = "OPER";
 	private static final long TEST_FILE_SIZE = 7654321L;
+	private static final String TEST_FILE_NAME = "S5P_OPER_L0________20190509T212509_20190509T214507_08138_01.ZIP";
 	private static final String TEST_CHECKSUM = "fb720888a0d9bae6b16c1f9607c4de27";
-	
+	private static final String STORAGE_MGR_RESPONSE = "{" + "    \"productId\": \"newProdId001XYZ\","
+			+ "    \"sourceStorageType\": \"POSIX\"," + "    \"sourceFilePaths\": [" + "        \"src/\","
+			+ "        \"target/\"" + "    ]," + "    \"targetStorageId\": \"proseo-data-001\","
+			+ "    \"targetStorageType\": \"S3\","
+			+ "    \"registeredFilePath\": \"s3://proseo-data-001/newProdId001XYZ/1573057763/\","
+			+ "    \"registered\": true," + "    \"registeredFilesCount\": 108,"
+			+ "    \"registeredFilesList\": [        "
+			+ "			\"src/test/resources/IDA_test/L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__FRESCO_20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc\""
+			+ "]," + "    \"deleted\": false" + "}";
+
 	/* Test products */
 	private static String[][] testProductData = {
-		// id, version, mission code, product class, file class, mode, sensing start, sensing stop, generation, revision (parameter)
-		{ "0", "1", "S5P", "L1B", TEST_FILE_CLASS, "NRTI", "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "2019-10-05T10:12:39.000000", "01" },
-		{ "0", "1", "S5P", "L1B", TEST_FILE_CLASS, "NRTI", "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "01" },
-		{ "0", "1", "TDM", "DEM", TEST_FILE_CLASS, null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "02" }
-	};
+			// id, version, mission code, product class, file class, mode, sensing start,
+			// sensing stop, generation, revision (parameter)
+			{ "0", "1", TEST_CODE, "L1B", TEST_FILE_CLASS, "NRTI", "2019-08-29T22:49:21.074395",
+					"2019-08-30T00:19:33.946628", "2019-10-05T10:12:39.000000", "01" },
+			{ "0", "1", TEST_CODE, "L1B", TEST_FILE_CLASS, "NRTI", "2019-08-30T00:19:33.946628",
+					"2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "01" },
+			{ "0", "1", TEST_CODE, "DEM", TEST_FILE_CLASS, null, "2019-08-30T00:19:33.946628",
+					"2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "02" } };
 
-	/** Ingestor configuration */
+	/** The ingestor controller under test */
 	@Autowired
-	private IngestorConfiguration ingestorConfig;
-	
+	private IngestControllerImpl ici;
+
 	/** Test configuration */
 	@Autowired
-	private IngestorTestConfiguration config;
-	
-	/** Transaction manager for transaction control */
-	@Autowired
-	private PlatformTransactionManager txManager;
-	
-	/** The (random) port on which the Ingestor was started */
-	@LocalServerPort
-	private int port;
-	
-    /** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(IngestorControllerTest.class);
-	
+	IngestorTestConfiguration config;
+
+	/** Mocking the storage manager and planner */
+	private static int WIREMOCK_PORT = 8080;
+	private static WireMockServer wireMockServer;
+
+	/** A logger for this class */
+	private static ProseoLogger logger = new ProseoLogger(IngestorControllerTest.class);
+
 	/**
-	 * Prepare the test environment
-	 * 
 	 * @throws java.lang.Exception
 	 */
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
+		wireMockServer = new WireMockServer(WIREMOCK_PORT);
+		wireMockServer.start();
+
+		wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo("/planner/semaphore/acquire")).willReturn(
+				WireMock.aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody("{}")));
+
+		wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo("/planner/semaphore/release")).willReturn(
+				WireMock.aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody("{}")));
+
+		wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/storage-mgr/products"))
+				.willReturn(WireMock.aResponse().withStatus(201).withHeader("Content-Type", "application/json")
+						.withBody(STORAGE_MGR_RESPONSE)));
+
+		wireMockServer.stubFor(WireMock.delete(WireMock.urlEqualTo(
+				"/storage-mgr/products?pathInfo=L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__FRESCO_20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc"
+						+ "/S5P_OPER_L0________20190509T212509_20190509T214507_08138_01.ZIP"))
+				.willReturn(WireMock.aResponse().withStatus(200).withHeader("Content-Type", "application/json")
+						.withBody("{\"foo\":\"bar\"}")));
+
+//		wireMockServer.getStubMappings().forEach(s -> logger.trace("Stub mapping: " + s));
 	}
 
 	/**
-	 * Clean up the test environment
-	 * 
-	 * @throws java.lang.Exception
-	 */
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
-
-	/**
-	 * Before every test: NOP (cannot use JPA here)
-	 * 
 	 * @throws java.lang.Exception
 	 */
 	@Before
 	public void setUp() throws Exception {
+		// Make sure processing facility and product class exist
+		Mission mission = new Mission();
+		mission.setCode(TEST_CODE);
+		mission.getFileClasses().add(TEST_FILE_CLASS);
+		mission.getProcessingModes().add(TEST_MODE_OFFL);
+		mission = RepositoryService.getMissionRepository().save(mission);
+		logger.trace("Using mission " + mission.getCode() + " with id " + mission.getId());
+
+		ProductClass prodClass = new ProductClass();
+		prodClass.setMission(mission);
+		prodClass.setProductType(TEST_PRODUCT_TYPE);
+		prodClass = RepositoryService.getProductClassRepository().save(prodClass);
+		mission.getProductClasses().add(prodClass);
+		mission = RepositoryService.getMissionRepository().save(mission);
+		logger.trace("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
+
+		Spacecraft spacecraft = new Spacecraft();
+		spacecraft.setCode(TEST_SC_CODE);
+		spacecraft.setMission(mission);
+		spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
+		logger.trace("Spacecraft " + spacecraft.getCode() + " created with id " + spacecraft.getId());
+		mission.getSpacecrafts().add(spacecraft);
+		mission = RepositoryService.getMissionRepository().save(mission);
+		logger.trace("Using spacecraft " + spacecraft.getCode() + " with id " + spacecraft.getId());
+
+		Orbit orbit = new Orbit();
+		orbit.setSpacecraft(spacecraft);
+		orbit.setOrbitNumber(TEST_ORBIT_NUMBER);
+		orbit.setStartTime(TEST_START_TIME);
+		orbit = RepositoryService.getOrbitRepository().save(orbit);
+		spacecraft.getOrbits().add(orbit);
+		spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
+
+		ProcessingFacility facility = new ProcessingFacility();
+		facility.setName(TEST_NAME);
+		facility.setProcessingEngineUrl("not used");
+		facility.setStorageManagerUrl(config.getStorageManagerUrl());
+		facility.setStorageManagerUser("testuser");
+		facility.setStorageManagerPassword("testpwd");
+		facility.setDefaultStorageType(StorageType.POSIX);
+		facility = RepositoryService.getFacilityRepository().save(facility);
+
+		Product testProduct;
+		logger.trace("... creating test products in the database");
+		for (String[] element : testProductData) {
+			testProduct = new Product();
+
+			testProduct.setProductClass(prodClass);
+			testProduct.setUuid(UUID.randomUUID());
+			testProduct.setFileClass(element[4]);
+			testProduct.setMode(element[5]);
+			testProduct.setSensingStartTime(Instant.from(OrbitTimeFormatter.parse(element[6])));
+			testProduct.setSensingStopTime(Instant.from(OrbitTimeFormatter.parse(element[7])));
+			testProduct.setGenerationTime(Instant.from(OrbitTimeFormatter.parse(element[8])));
+			testProduct.getParameters().put("revision",
+					new Parameter().init(ParameterType.INTEGER, Integer.parseInt(element[9])));
+
+			element[0] = RepositoryService.getProductRepository().save(testProduct).getId() + "";
+		}
+
+		testProduct = RepositoryService.getProductRepository().findById(Long.valueOf(testProductData[0][0])).get();
+
+		ProductFile productFile = new ProductFile();
+		productFile.setProduct(testProduct);
+		productFile.setProductFileName(TEST_FILE_NAME);
+		productFile.setFilePath(TEST_PRODUCT_PATH_2);
+		productFile.setProcessingFacility(facility);
+		productFile.setStorageType(StorageType.POSIX);
+		productFile.setFileSize(TEST_FILE_SIZE);
+		productFile.setChecksum(TEST_CHECKSUM);
+		productFile.setChecksumTime(Instant.now());
+		productFile = RepositoryService.getProductFileRepository().save(productFile);
+
+		testProduct.getProductFile().add(productFile);
+		RepositoryService.getProductRepository().save(testProduct);
 	}
 
 	/**
-	 * After every test: NOP (cannot use JPA here)
-	 * 
 	 * @throws java.lang.Exception
 	 */
 	@After
 	public void tearDown() throws Exception {
-	}
-	
-	/**
-	 * Create a product from a data array
-	 * 
-	 * @param testData an array of Strings representing the product to create
-	 * @return a Product with its attributes set to the input data
-	 */
-	private Product createProduct(String[] testData) {
-		Product testProduct = new Product();
-		
-		testProduct.setProductClass(
-				RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(testData[2], testData[3]));
-
-		logger.info("... creating product with product type {}", (null == testProduct.getProductClass() ? null : testProduct.getProductClass().getProductType()));
-		testProduct.setUuid(UUID.randomUUID());
-		testProduct.setFileClass(testData[4]);
-		testProduct.setMode(testData[5]);
-		testProduct.setSensingStartTime(Instant.from(OrbitTimeFormatter.parse(testData[6])));
-		testProduct.setSensingStopTime(Instant.from(OrbitTimeFormatter.parse(testData[7])));
-		testProduct.setGenerationTime(Instant.from(OrbitTimeFormatter.parse(testData[8])));
-		testProduct.getParameters().put(
-				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[9])));
-		testProduct = RepositoryService.getProductRepository().save(testProduct);
-		
-		logger.info("Created test product {}", testProduct.getId());
-		return testProduct;
-	}
-	
-	/**
-	 * Create test products in the database
-	 * 
-	 * @return a list of test product generated
-	 */
-	private List<Product> createTestProducts() {
-		logger.info("Creating test products");
-		List<Product> testProducts = new ArrayList<>();
-		for (int i = 0; i < testProductData.length; ++i) {
-			testProducts.add(createProduct(testProductData[i]));
-		}
-		return testProducts;
-	}
-	
-	/**
-	 * Remove all (remaining) test products
-	 * 
-	 * @param testProducts a list of test products to delete 
-	 */
-	private void deleteTestProducts(List<Product> testProducts) {
-		for (Product testProduct: testProducts) {
-			RepositoryService.getProductRepository().delete(testProduct);
-		}
+		RepositoryService.getProductFileRepository().deleteAll();
+		RepositoryService.getProductRepository().deleteAll();
+		RepositoryService.getProductClassRepository().deleteAll();
+		RepositoryService.getOrbitRepository().deleteAll();
+		RepositoryService.getSpacecraftRepository().deleteAll();
+		RepositoryService.getMissionRepository().deleteAll();
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.ingestor.rest.IngestControllerImpl#ingestProducts(java.lang.String, java.util.List)}.
-	 * 
+	 * @throws java.lang.Exception
+	 */
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		wireMockServer.stop();
+	}
+
+	/**
+	 * Test method for
+	 * {@link de.dlr.proseo.ingestor.rest.IngestControllerImpl#ingestProducts(java.lang.String, java.util.List)}.
+	 *
 	 * Test: Ingest a single product
-	 * Precondition: Processing facility exists, product class exists, mock storage manager exists, mock production planner exists
+	 *
+	 * Precondition: Processing facility exists, product class exists, mock storage
+	 * manager exists, mock production planner exists
 	 */
-	@SuppressWarnings("unchecked")
 	@Test
-	@Ignore
 	public final void testIngestProducts() {
-		
-		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
-		
-		transactionTemplate.execute(new TransactionCallback<>() {
+		logger.trace(">>> testIngestProducts()");
 
-			@Override
-			public Object doInTransaction(TransactionStatus txStatus) {
-				// Make sure processing facility and product class exist
-				Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
-				if (null == mission) {
-					mission = new Mission();
-					mission.setCode(TEST_CODE);
-					mission.getFileClasses().add(TEST_FILE_CLASS);
-					mission.getProcessingModes().add(TEST_MODE_OFFL);
-					mission = RepositoryService.getMissionRepository().save(mission);
-				}
-				logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
-				
-				ProductClass prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
-				if (null == prodClass) {
-					prodClass = new ProductClass();
-					prodClass.setMission(mission);
-					prodClass.setProductType(TEST_PRODUCT_TYPE);
-					prodClass = RepositoryService.getProductClassRepository().save(prodClass);
-					//mission.getProductClasses().add(prodClass);
-					//mission = RepositoryService.getMissionRepository().save(mission);
-				}
-				logger.info("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
-				
-				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByMissionAndCode(TEST_CODE, TEST_SC_CODE);
-				if (null == spacecraft) {
-					spacecraft = new Spacecraft();
-					spacecraft.setCode(TEST_SC_CODE);
-					spacecraft.setMission(mission);
-					spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
-					logger.info("Spacecraft " + spacecraft.getCode() + " created with id " + spacecraft.getId());
-					//mission.getSpacecrafts().add(spacecraft);
-					//mission = RepositoryService.getMissionRepository().save(mission);
-				}
-				logger.info("Using spacecraft " + spacecraft.getCode() + " with id " + spacecraft.getId());
-				
-				Orbit orbit = RepositoryService.getOrbitRepository().findByMissionCodeAndSpacecraftCodeAndOrbitNumber(TEST_CODE, TEST_SC_CODE, TEST_ORBIT_NUMBER);
-				if (null == orbit) {
-					orbit = new Orbit();
-					orbit.setSpacecraft(spacecraft);
-					orbit.setOrbitNumber(TEST_ORBIT_NUMBER);
-					orbit.setStartTime(TEST_START_TIME);
-					orbit = RepositoryService.getOrbitRepository().save(orbit);
-					//spacecraft.getOrbits().add(orbit);
-					//spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
-				}
-				
-				ProcessingFacility facility = RepositoryService.getFacilityRepository().findByName(TEST_NAME);
-				if (null == facility) {
-					facility = new ProcessingFacility();
-					facility.setName(TEST_NAME);
-				}
-				// Make sure the following attributes are as expected	
-				facility.setProcessingEngineUrl("not used");
-				facility.setStorageManagerUrl(config.getStorageManagerUrl());
-				facility.setStorageManagerUser("testuser");
-				facility.setStorageManagerPassword("testpwd");
-				facility.setDefaultStorageType(StorageType.POSIX);
-				facility = RepositoryService.getFacilityRepository().save(facility);
+//		Create a directory with product data files
+//		Static: src/test/resources/IDA_test
 
-				return null;
-			}
-		});
-		
-		// Create a directory with product data files
-		// Static: src/test/resources/IDA_test
-		
 		// Create an IngestorProduct describing the product directory
 		IngestorProduct ingestorProduct = new IngestorProduct();
 		ingestorProduct.setId(0L);
@@ -308,215 +291,163 @@ public class IngestorControllerTest {
 		ingestorProduct.setFileSize(TEST_FILE_SIZE);
 		ingestorProduct.setChecksum(TEST_CHECKSUM);
 		ingestorProduct.setChecksumTime(TEST_GEN_TIME_TEXT);
-		ingestorProduct.getParameters().add(new RestParameter(
-				"copernicusCollection", "STRING", "01"));
-		ingestorProduct.getParameters().add(new RestParameter(
-				"revision", "STRING", "99"));
+		ingestorProduct.getParameters().add(new RestParameter("copernicusCollection", "STRING", "01"));
+		ingestorProduct.getParameters().add(new RestParameter("revision", "STRING", "99"));
 		List<IngestorProduct> ingestorProducts = new ArrayList<>();
 		ingestorProducts.add(ingestorProduct);
-		
-		// Check mock storage manager is up (logging calls) (using Castlemock: https://hub.docker.com/r/castlemock/castlemock/)
-		String testUrl = config.getStorageManagerUrl() + "/products";
-		Map<String, String> mockRequest = new HashMap<>();
-		mockRequest.put("productId", "4711");
-		
-		logger.info("Testing availability of mock storage manager at {}", testUrl);
-		
-		ResponseEntity<Object> mockEntity = new TestRestTemplate().postForEntity(testUrl, mockRequest, Object.class);
-		assertEquals("Mock storage manager not available:", HttpStatus.CREATED, mockEntity.getStatusCode());
-		
-		// Check mock production planner is up (logging calls)
-		testUrl = ingestorConfig.getProductionPlannerUrl() + "/product/4711";
-		logger.info("Testing availability of mock production planner at {}", testUrl);
-		
-		Object mockObject = new TestRestTemplate().getForObject(testUrl, Object.class);
-		assertNotNull("Mock production planner not available", mockObject);
-		logger.info("Got result object " + mockObject);
-		if (mockObject instanceof ResponseEntity) {
-			Map<String, String> mockResult = ((ResponseEntity<Map<String, String>>) mockObject).getBody();
-			assertEquals("Mock production planner returns unexpected status:", "OK", mockResult.get("status"));
-		}
-		
-		// Perform REST API call
-		testUrl = "http://localhost:" + port + INGESTOR_BASE_URI + "/ingest/" + TEST_NAME; // URL path segment encoding is handled by TestTemplate!
-		logger.info("Testing URL {} / POST", testUrl);
 
-		@SuppressWarnings("rawtypes")
-		ResponseEntity<List> postEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.postForEntity(testUrl, ingestorProducts, List.class);
+		HttpHeaders testHeader = new HttpHeaders();
+		testHeader.add(HttpHeaders.AUTHORIZATION, "Basic VVRNLXRlc3R1c2VyOnBhc3N3b3Jk");
+
+		ResponseEntity<List<RestProduct>> postEntity = ici.ingestProducts(TEST_NAME, false, ingestorProducts,
+				testHeader);
 		assertEquals("Unexpected HTTP status code: ", HttpStatus.CREATED, postEntity.getStatusCode());
 		assertEquals("Unexpected number of response products: ", 1, postEntity.getBody().size());
-		
+
 		// Check result attributes
-		Map<String, Object> responseProduct = (Map<String, Object>) postEntity.getBody().get(0);
-		assertNotEquals("Unexpected database ID: ", 0L, responseProduct.get("id"));
-		assertEquals("Unexpected product class: ", ingestorProduct.getProductClass(), responseProduct.get("productClass"));
-		assertEquals("Unexpected processing mode: ", ingestorProduct.getMode(), responseProduct.get("mode"));
-		assertEquals("Unexpected sensing start time: ", ingestorProduct.getSensingStartTime(), responseProduct.get("sensingStartTime"));
-		assertEquals("Unexpected sensing stop time: ", ingestorProduct.getSensingStopTime(), responseProduct.get("sensingStopTime"));
-		assertEquals("Unexpected generation time: ", ingestorProduct.getGenerationTime(), responseProduct.get("generationTime"));
-		Map<String, Object> responseOrbit = (Map<String, Object>) responseProduct.get("orbit");
+		RestProduct responseProduct = postEntity.getBody().get(0);
+		assertNotEquals("Unexpected database ID: ", 0L, responseProduct.getId().longValue());
+		assertEquals("Unexpected product class: ", ingestorProduct.getProductClass(),
+				responseProduct.getProductClass());
+		assertEquals("Unexpected processing mode: ", ingestorProduct.getMode(), responseProduct.getMode());
+		assertEquals("Unexpected sensing start time: ", ingestorProduct.getSensingStartTime(),
+				responseProduct.getSensingStartTime());
+		assertEquals("Unexpected sensing stop time: ", ingestorProduct.getSensingStopTime(),
+				responseProduct.getSensingStopTime());
+		assertEquals("Unexpected generation time: ", ingestorProduct.getGenerationTime(),
+				responseProduct.getGenerationTime());
+
+		de.dlr.proseo.ingestor.rest.model.Orbit responseOrbit = responseProduct.getOrbit();
 		assertNotNull("Orbit missing", responseOrbit);
-		assertEquals("Unexpected orbit number: ", ingestorProduct.getOrbit().getOrbitNumber().intValue(), responseOrbit.get("orbitNumber"));
-		List<Map<String, Object>> responseProductFiles = (List<Map<String, Object>>) responseProduct.get("productFile");
+		assertEquals("Unexpected orbit number: ", ingestorProduct.getOrbit().getOrbitNumber().intValue(),
+				responseOrbit.getOrbitNumber().intValue());
+
+		@Valid
+		List<RestProductFile> responseProductFiles = responseProduct.getProductFile();
 		assertNotNull("Product files missing", responseProductFiles);
 		assertEquals("Unexpected number of product files: ", 1, responseProductFiles.size());
-		Map<String, Object> responseProductFile = responseProductFiles.get(0);
-		assertEquals("Unexpected product file name: ", ingestorProduct.getProductFileName(), responseProductFile.get("productFileName"));
-		assertEquals("Unexpected number of aux files: ", 0, ((List<String>) responseProductFile.get("auxFileNames")).size());
-		
-		// Check triggering of production planner
-		// TODO
+		RestProductFile responseProductFile = responseProductFiles.get(0);
+		assertEquals("Unexpected product file name: ", ingestorProduct.getProductFileName(),
+				responseProductFile.getProductFileName());
+		assertEquals("Unexpected number of aux files: ", 0, responseProductFile.getAuxFileNames().size());
 
-		logger.info("Test OK: Insert a list of products");
+		// Check triggering of production planner in log
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.ingestor.rest.IngestControllerImpl#getProductFile(java.lang.Long, java.lang.String)}.
-	 * 
+	 * Test method for
+	 * {@link de.dlr.proseo.ingestor.rest.IngestControllerImpl#getProductFile(java.lang.Long, java.lang.String)}.
+	 *
 	 * Test: Get the product file for a product at a given processing facility
+	 *
 	 * Precondition: Processing facility exists, product and product file exist
 	 */
 	@Test
-	public final void testGetProducts() {
-		
-		List<Product> testProducts = new ArrayList<>();
-		
-		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
-		
-		transactionTemplate.execute(new TransactionCallback<>() {
+	public final void testGetProductFile() {
+		logger.trace(">>> testGetProductFile()");
 
-			@Override
-			public Object doInTransaction(TransactionStatus status) {
-				// Make sure processing facility and product class exist
-				
-				// Make sure test products with product files exist
-				testProducts.addAll(createTestProducts());
+		// Retrieve a test product from the database
+		Product testProduct = RepositoryService.getProductRepository().findById(Long.valueOf(testProductData[0][0]))
+				.get();
 
-				return null;
-			}
-		
-		});
-		
-		// Perform REST API call and check retrieved product file
-				
-		// TODO
-		logger.warn("Test not implemented for getProductFile");
-		
-		// Clean up database
-		deleteTestProducts(testProducts);
+		// Create a test header for authentication
+		HttpHeaders testHeader = new HttpHeaders();
+		testHeader.add(HttpHeaders.AUTHORIZATION, "Basic VVRNLXRlc3R1c2VyOnBhc3N3b3Jk");
 
-		logger.info("Test OK: Get Product File");
+		ResponseEntity<RestProductFile> response = ici.getProductFile(testProduct.getId(), TEST_NAME, testHeader);
+		assertEquals("Unexpected HTTP status code: ", HttpStatus.CREATED, response.getStatusCode());
+		assertEquals("Wrong product file: ", TEST_PRODUCT_PATH_2, response.getBody().getFilePath());
+
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.ingestor.rest.IngestControllerImpl#ingestProductFile(java.lang.Long, ProcessingFacility, de.dlr.proseo.ingestor.rest.model.ProductFile)}.
-	 * 
+	 * Test method for
+	 * {@link de.dlr.proseo.ingestor.rest.IngestControllerImpl#ingestProductFile(java.lang.Long, ProcessingFacility, de.dlr.proseo.ingestor.rest.model.ProductFile)}.
+	 *
 	 * Test: Ingest a product file for an existing product
-	 * Precondition: Processing facility exists, product exists, mock storage manager exists, mock production planner exists
+	 *
+	 * Precondition: Processing facility exists, product exists, mock storage
+	 * manager exists, mock production planner exists
 	 */
 	@Test
 	public final void testIngestProductFile() {
-		
-		// Make sure processing facility and product class exist
-		
-		// Make sure product exists
-		
-		// Create a directory with product data files
-		
-		// Create a ProductFile describing the product
-		
-		// Create mock storage manager (logging calls)
-		
-		// Create mock production planner (logging calls)
-		
-		// Perform REST API call
-		
-		// Check logged calls for storage manager and production planner
-		
-		
-		// TODO
-		logger.warn("Test not implemented for ingestProductFile");
 
-		logger.info("Test OK: Insert files for an existing product");
+		// Retrieve a test product and product file from the database
+		Product testProduct = RepositoryService.getProductRepository().findById(Long.valueOf(testProductData[0][0]))
+				.get();
+		ProductFile testProductFile = RepositoryService.getProductFileRepository().findByProductId(testProduct.getId())
+				.get(0);
+
+		// Delete product file from the product and the database
+		testProduct.getProductFile().clear();
+		RepositoryService.getProductFileRepository().deleteAll();
+
+		//
+		HttpHeaders testHeader = new HttpHeaders();
+		testHeader.add(HttpHeaders.AUTHORIZATION, "Basic VVRNLXRlc3R1c2VyOnBhc3N3b3Jk");
+
+		ResponseEntity<RestProductFile> response = ici.ingestProductFile(testProduct.getId(), TEST_NAME,
+				ProductFileUtil.toRestProductFile(testProductFile), testHeader);
+		assertEquals("Unexpected HTTP status code: ", HttpStatus.CREATED, response.getStatusCode());
+
+		// Check logged calls for storage manager and production planner
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.ingestor.rest.IngestControllerImpl#deleteProductFile(java.lang.Long, java.lang.String)}.
-	 * 
-	 * Test: Delete a product file from the metadata database and from the storage manager
-	 * Precondition: Processing facility exists, product with a product file exists, mock storage manager exists
+	 * Test method for
+	 * {@link de.dlr.proseo.ingestor.rest.IngestControllerImpl#deleteProductFile(java.lang.Long, java.lang.String)}.
+	 *
+	 * Test: Delete a product file from the metadata database and from the storage
+	 * manager
+	 *
+	 * Precondition: Processing facility exists, product with a product file exists,
+	 * mock storage manager exists
 	 */
 	@Test
 	public final void testDeleteProductFile() {
-		
-		List<Product> testProducts = new ArrayList<>();
-		
-		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
-		
-		transactionTemplate.execute(new TransactionCallback<>() {
+		logger.trace(">>> testDeleteProductFile()");
 
-			@Override
-			public Object doInTransaction(TransactionStatus status) {
-				// Make sure processing facility and product class exist
-				
-				// Make sure test products with product files exist
-				testProducts.addAll(createTestProducts());
+		// Retrieve a test product and product file from the database
+		Product testProduct = RepositoryService.getProductRepository().findById(Long.valueOf(testProductData[0][0]))
+				.get();
 
-				return null;
-			}
-		
-		});
-		
-		// Create mock storage manager (logging calls)
-		
-		// Perform REST API call
-		
+		//
+		HttpHeaders testHeader = new HttpHeaders();
+		testHeader.add(HttpHeaders.AUTHORIZATION, "Basic VVRNLXRlc3R1c2VyOnBhc3N3b3Jk");
+
+		ResponseEntity<?> response = ici.deleteProductFile(testProduct.getId(), TEST_NAME, true, testHeader);
+		assertEquals("Unexpected HTTP status code: ", HttpStatus.NO_CONTENT, response.getStatusCode());
+
 		// Check logged calls for storage manager
-		
-		// TODO
-		logger.warn("Test not implemented for deleteProductFile");
-
-		logger.info("Test OK: Delete Product File");
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.ingestor.rest.IngestControllerImpl#modifyProductFile(java.lang.Long, java.lang.String, de.dlr.proseo.ingestor.rest.model.ProductFile)}.
-	 * 
+	 * Test method for
+	 * {@link de.dlr.proseo.ingestor.rest.IngestControllerImpl#modifyProductFile(java.lang.Long, java.lang.String, de.dlr.proseo.ingestor.rest.model.ProductFile)}.
+	 *
 	 * Test: Update a product file at a given processing facility
-	 * Precondition: At least one product with a known ID is in the database 
+	 *
+	 * Precondition: At least one product with a known ID is in the database
 	 */
 	@Test
 	public final void testModifyProductFile() {
-		
-		List<Product> testProducts = new ArrayList<>();
-		
-		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
-		
-		transactionTemplate.execute(new TransactionCallback<>() {
+		logger.trace(">>> testModifyProductFile()");
 
-			@Override
-			public Object doInTransaction(TransactionStatus status) {
-				// Make sure processing facility and product class exist
-				
-				// Make sure test products with product files exist
-				testProducts.addAll(createTestProducts());
+		// Retrieve a test product and product file from the database
+		Product testProduct = RepositoryService.getProductRepository().findById(Long.valueOf(testProductData[0][0]))
+				.get();
+		RestProductFile testProductFile = ProductFileUtil.toRestProductFile(
+				RepositoryService.getProductFileRepository().findByProductId(testProduct.getId()).get(0));
+		testProductFile.setFilePath(TEST_PRODUCT_PATH_1);
 
-				return null;
-			}
-		
-		});
-		
-		// Create mock storage manager (logging calls)
-		
-		// Perform REST API call
-		
+		HttpHeaders testHeader = new HttpHeaders();
+		testHeader.add(HttpHeaders.AUTHORIZATION, "Basic VVRNLXRlc3R1c2VyOnBhc3N3b3Jk");
+
+		ResponseEntity<RestProductFile> response = ici.modifyProductFile(testProduct.getId(), TEST_NAME,
+				testProductFile, testHeader);
+		assertEquals("Unexpected HTTP status code: ", HttpStatus.OK, response.getStatusCode());
+
 		// Check logged calls for storage manager
-		
-		// TODO
-		logger.warn("Test not implemented for modifyProductFile");
-
-		logger.info("Test OK: Modify Product File");
 	}
 
 }
