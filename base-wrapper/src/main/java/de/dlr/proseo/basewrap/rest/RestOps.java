@@ -4,19 +4,17 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientProperties;
-
-import javax.ws.rs.ProcessingException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+//import org.jboss.resteasy.plugins.providers.jackson.ResteasyJackson2Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.ProcessingException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 
 public class RestOps {
 	
@@ -77,17 +75,19 @@ public class RestOps {
 		int retry = 0;
 		while (retry < MAX_RETRIES) {
 			try {
-				ClientConfig configuration = new ClientConfig();
-				configuration.property(ClientProperties.CONNECT_TIMEOUT, ENV_HTTP_TIMEOUT);
-				configuration.property(ClientProperties.READ_TIMEOUT, ENV_HTTP_TIMEOUT);
-				Client client = ClientBuilder.newClient(configuration);
-				client.register(new RestAuth(user, pw));
+				ResteasyClient client = new ResteasyClientBuilder()
+						.connectTimeout(ENV_HTTP_TIMEOUT, TimeUnit.SECONDS)
+						.readTimeout(ENV_HTTP_TIMEOUT, TimeUnit.SECONDS)
+						.build()
+						.register(new RestAuth(user, pw));
+				
 				WebTarget webTarget = client.target(endPoint).path(endPointPath);
 				if (queryParams != null) {
 					for (Entry<String, String> queryParam : queryParams.entrySet()) {
 						webTarget = webTarget.queryParam(queryParam.getKey(), queryParam.getValue());
 					}
 				}
+				
 				switch (method) {
 				case POST:
 					if (logger.isDebugEnabled()) logger.debug(method + " " + webTarget.getUri());
