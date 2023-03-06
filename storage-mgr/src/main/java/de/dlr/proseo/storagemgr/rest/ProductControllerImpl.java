@@ -388,14 +388,18 @@ public class ProductControllerImpl implements ProductController {
 				HttpStatus status = getOkOrPartialStatus(fromByte, toByte);
 
 				InputStreamResource fsr = new InputStreamResource(stream);
-				if (fsr != null) {
-
+				
+				if (null == fromByte || null == toByte) {
+					logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED, pathInfo);
+				} else {
 					logger.log(StorageMgrMessage.PRODUCT_FILE_PARTIALLY_DOWNLOADED, pathInfo, Long.toString(fromByte),
 							Long.toString(toByte), Long.toString(toByte - fromByte));
-					return new ResponseEntity<>(fsr, headers, status);
 				}
+				return new ResponseEntity<>(fsr, headers, status);
 
 			} catch (Exception e) {
+				
+				if (logger.isTraceEnabled()) logger.trace("... exception thrown: ", e);
 
 				String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
 				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -578,6 +582,7 @@ public class ProductControllerImpl implements ProductController {
 		Storage storage = storageProvider.getStorage(sourceFile.getFullPath());
 
 		Long len = storage.getFileSize(sourceFile);
+		
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentDispositionFormData("attachment", sourceFile.getFileName());
 		long from = 0;
