@@ -193,7 +193,7 @@ public class ProductControllerTest {
 	public final void testDeleteProductById() {
 		logger.trace(">>> testDeleteProductById()");
 		
-		jdbcTemplate.execute("RUNSCRIPT FROM '" + "classpath:create_view_product_processing_facilities.sql" + "'");
+		jdbcTemplate.execute("RUNSCRIPT FROM '" + "classpath:create_view_product_processing_facilities_simplified.sql" + "'");
 
 		// Get a test product from the database
 		Product testProduct = RepositoryService.getProductRepository().findById(Long.valueOf(testProductData[0][0]))
