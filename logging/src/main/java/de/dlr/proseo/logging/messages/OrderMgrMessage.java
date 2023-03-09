@@ -71,7 +71,7 @@ public enum OrderMgrMessage implements ProseoMessage {
 	ORDER_ID_MISSING					(3555, Level.ERROR, false, "Order ID not set", ""),
 	ORDER_IDENTIFIER_MISSING			(3556, Level.ERROR, false, "Order identifier not set", ""),
 	ORDER_LIST_EMPTY					(3557, Level.ERROR, false, "No processing order found for search criteria", ""),
-	ORDER_LIST_RETRIEVED				(3558, Level.INFO, true, "Order list of size {0} retrieved for mission {1}, order {2}, start time {3}, stop time {4}", ""),
+	ORDER_LIST_RETRIEVED				(3558, Level.INFO, true, "Order list of size {0} retrieved for mission {1}, order {2}, sensing start time between {3} and {4}", ""),
 	ORDER_MISSING						(3559, Level.ERROR, false, "Order not set", ""),
 	ORDER_MODIFICATION_FORBIDDEN		(3560, Level.ERROR, false, "Order modification other than state change not allowed for user {0}", ""),
 	ORDER_MODIFIED						(3561, Level.INFO, true, "Order with id {0} modified", ""),

@@ -65,6 +65,14 @@ public interface JobStepRepository extends JpaRepository<JobStep, Long> {
 	
 	@Query("SELECT COUNT(*) FROM JobStep js WHERE js.job.processingOrder.id = ?1 AND  js.jobStepState = 'RUNNING'")
 	public int countJobStepRunningByOrderId(long id);
+	
+	@Query("select js.jobStepState, count(*) "
+				+ "from ProcessingOrder o "
+				+ "join o.jobs j "
+				+ "join j.jobSteps js "
+				+ "where o.id = ?1 "
+				+ "group by js.jobStepState")
+	public List<Object[]> countJobStepStatesByOrderId(long id);
 
 	@Query("SELECT DISTINCT(js.jobStepState) FROM JobStep js WHERE js.job.processingOrder.id = ?1")
 	public List<String> findDistinctJobStepStatesByOrderId(long id);

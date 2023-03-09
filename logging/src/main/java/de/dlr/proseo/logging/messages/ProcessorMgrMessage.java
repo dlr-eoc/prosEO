@@ -32,7 +32,7 @@ public enum ProcessorMgrMessage implements ProseoMessage {
 	CONFIGURED_PROCESSOR_DATA_MISSING				(4516, Level.ERROR, false, "Data for configured processor not set", ""),
 	CONFIGURED_PROCESSOR_DELETED					(4517, Level.INFO, true, "Configured processor with id {0} deleted", ""),
 	CONFIGURED_PROCESSOR_HAS_PRODUCTS				(4518, Level.ERROR, false, "Cannot delete configured processor {0}, because it is referenced by {1} products", ""),
-	CONFIGURED_PROCESSOR_HAS_SELECTION_RULES		(4519, Level.ERROR, false, "Cannot delete configured processor {0}, because it is referenced by {2} selection rules", ""),
+	CONFIGURED_PROCESSOR_HAS_SELECTION_RULES		(4519, Level.ERROR, false, "Cannot delete configured processor {0}, because it is referenced by {1} selection rules", ""),
 	CONFIGURED_PROCESSOR_ID_MISSING					(4520, Level.ERROR, false, "Configuration ID not set", ""),
 	CONFIGURED_PROCESSOR_ID_NOT_FOUND				(4521, Level.ERROR, false, "No Configuration found with ID {0}", ""),
 	CONFIGURED_PROCESSOR_LIST_RETRIEVED				(4522, Level.INFO, true, "Configuration(s) for mission {0}, identifier {1}, processor name {2}, processor version {3} and configuration version {4} retrieved", ""),

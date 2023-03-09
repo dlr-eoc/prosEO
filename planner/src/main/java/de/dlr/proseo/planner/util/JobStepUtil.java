@@ -1232,7 +1232,7 @@ public class JobStepUtil {
 	public void checkCreatedProducts(JobStep js) {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkCreatedProducts({})", (null == js ? "null" : js.getId()));
 
-		if (js != null && js.getJobStepState() == JobStepState.COMPLETED) {
+		if (js != null && js.getJobStepState() == JobStepState.COMPLETED && null != js.getOutputProduct()) {
 			ProcessingFacility pf = js.getJob().getProcessingFacility();
 			if (pf != null) {
 
