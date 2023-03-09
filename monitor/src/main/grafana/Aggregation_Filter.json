@@ -1,0 +1,283 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 7,
+  "iteration": 1678380816305,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "Abr_Q1Onz"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 75,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<p style=\"text-align: center\"><a style=\"font-size: 80px; text-decoration: none\" href=\"/d/${var_dashboard}?orgId=1&from=${var_datetime}&to=${var_datetime_to_calc}&${var_production_type:queryparam}\">APPLY</a></p> \n\n",
+        "mode": "html"
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "Abr_Q1Onz"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": false,
+          "rawSql": "SELECT\n  $__time(time_column),\n  value1\nFROM\n  metric_table\nWHERE\n  $__timeFilter(time_column)\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Aggregation Filter",
+      "type": "text"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 34,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "",
+          "value": ""
+        },
+        "hide": 2,
+        "label": "Mission",
+        "name": "var_mission_id",
+        "options": [
+          {
+            "selected": true,
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": [
+            "systematic_production"
+          ],
+          "value": [
+            "systematic_production"
+          ]
+        },
+        "hide": 2,
+        "includeAll": false,
+        "label": "Production Types",
+        "multi": true,
+        "name": "var_production_type",
+        "options": [
+          {
+            "selected": true,
+            "text": "systematic_production",
+            "value": "systematic_production"
+          },
+          {
+            "selected": false,
+            "text": "on-demand default",
+            "value": "on-demand default"
+          },
+          {
+            "selected": false,
+            "text": "on-demand non-default",
+            "value": "on-demand non-default"
+          }
+        ],
+        "query": "systematic_production,on-demand default,on-demand non-default",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "1631176730994",
+          "value": "1631176730994"
+        },
+        "hide": 2,
+        "name": "var_datetime",
+        "options": [
+          {
+            "selected": true,
+            "text": "1631176730994",
+            "value": "1631176730994"
+          }
+        ],
+        "query": "1631176730994",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "2021-09-09 08:38:50+00",
+          "value": "2021-09-09 08:38:50+00"
+        },
+        "definition": "select  cast(to_timestamp(cast(${var_datetime}/1000 as bigint)) as varchar)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "From",
+        "multi": false,
+        "name": "var_datetime_show",
+        "options": [],
+        "query": "select  cast(to_timestamp(cast(${var_datetime}/1000 as bigint)) as varchar)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "86400000",
+          "value": "86400000"
+        },
+        "hide": 2,
+        "name": "var_datetime_offset",
+        "options": [
+          {
+            "selected": true,
+            "text": "86400000",
+            "value": "86400000"
+          }
+        ],
+        "query": "86400000",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "1631263130994",
+          "value": "1631263130994"
+        },
+        "definition": "select ${var_datetime} + ${var_datetime_offset}",
+        "hide": 2,
+        "includeAll": false,
+        "multi": false,
+        "name": "var_datetime_to_calc",
+        "options": [],
+        "query": "select ${var_datetime} + ${var_datetime_offset}",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "2021-09-10 08:38:50+00",
+          "value": "2021-09-10 08:38:50+00"
+        },
+        "definition": "select  cast(to_timestamp(cast(${var_datetime_to_calc}/1000 as bigint)) as varchar)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "To",
+        "multi": false,
+        "name": "var_datetime_to_calc_show",
+        "options": [],
+        "query": "select  cast(to_timestamp(cast(${var_datetime_to_calc}/1000 as bigint)) as varchar)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "",
+          "value": ""
+        },
+        "hide": 2,
+        "name": "var_dashboard",
+        "options": [
+          {
+            "selected": true,
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "timepicker": {
+    "hidden": true
+  },
+  "timezone": "utc",
+  "title": "Aggregation Filter",
+  "uid": "uid_aggregation_filter",
+  "version": 2,
+  "weekStart": ""
+}
