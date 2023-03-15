@@ -27,10 +27,15 @@ public class OrdermgrConfiguration {
 	@Value("${proseo.orderManager.cleanupCycleTime}")
 	private Integer cleanupCycleTime;
 
+	/**
+	 * The maximum number of results to be retrieved by REST requests
+	 */
+	@Value("${spring.maxResults}")
+	public Integer maxResults;
+
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(OrdermgrConfiguration.class);
-	
-	
+		
 	/**
 	 * @return the cleanupCycleTime
 	 */
@@ -44,4 +49,12 @@ public class OrdermgrConfiguration {
 	public void setCleanupCycleTime(Integer cleanupCycleTime) {
 		this.cleanupCycleTime = cleanupCycleTime;
 	}
+
+	/**
+	 * @return the maximum number of results to be retrieved by REST requests
+	 */
+	public Integer getMaxResults() {
+		return maxResults;
+	}
+
 }

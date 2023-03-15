@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
@@ -20,10 +21,10 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.OrderMgrMessage;
 import de.dlr.proseo.model.Job;
-import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.rest.OrderjobController;
 import de.dlr.proseo.model.rest.model.RestJob;
 import de.dlr.proseo.model.service.SecurityService;
+import de.dlr.proseo.ordermgr.OrdermgrConfiguration;
 import de.dlr.proseo.ordermgr.rest.model.RestUtil;
 
 /**
@@ -45,6 +46,10 @@ public class OrderjobControllerImpl implements OrderjobController {
 	@Autowired
 	private SecurityService securityService;
 	
+	/** The order manager configuration */
+	@Autowired
+	private OrdermgrConfiguration config;
+	
     /**
      * Get production planner jobs, optionally filtered by job state and/or order ID
      * 
@@ -57,8 +62,8 @@ public class OrderjobControllerImpl implements OrderjobController {
      */
 	@Override
 	@Transactional(readOnly = true)
-    public ResponseEntity<List<RestJob>> getJobs(Long orderId,
-			Long recordFrom, Long recordTo, Boolean logs, String[] states, String[] orderBy) {
+    public ResponseEntity<List<RestJob>> getJobs(Long orderId, Integer recordFrom, Integer recordTo,
+			Boolean logs, String[] states, String[] orderBy) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getJobs({}, {}, {}, {}, {}, {})",
 				states, orderId, recordFrom, recordTo, (null == orderBy ? "null" : Arrays.asList(orderBy)));
 		
@@ -68,8 +73,23 @@ public class OrderjobControllerImpl implements OrderjobController {
 			}
 			List<RestJob> resultList = new ArrayList<>();
 
-			Query query = createJobsQuery(states, orderId, recordFrom, recordTo, orderBy, false);
+			if (recordFrom == null) {
+				recordFrom = 0;
+			}
+			if (recordTo == null) {
+				recordTo = Integer.MAX_VALUE;
+			}
+
+			Long numberOfResults = Long.parseLong(this.countJobs(states, orderId).getBody());
+			Integer maxResults = config.getMaxResults();
+			if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults
+					&& (numberOfResults - recordFrom) > maxResults) {
+				throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS,
+						logger.log(GeneralMessage.TOO_MANY_RESULTS, "workflows", numberOfResults, config.getMaxResults()));
+			}
 			
+			Query query = createJobsQuery(states, orderId, recordFrom, recordTo, orderBy, false);
+
 			for (Object resultObject: query.getResultList()) {
 				if (resultObject instanceof Job) {
 					Job job = (Job) resultObject;					
@@ -85,6 +105,8 @@ public class OrderjobControllerImpl implements OrderjobController {
 			logger.log(OrderMgrMessage.JOBS_RETRIEVED, orderId);
 
 			return new ResponseEntity<>(resultList, HttpStatus.OK);
+		} catch (HttpClientErrorException.TooManyRequests e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.TOO_MANY_REQUESTS);
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e); 
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -206,7 +228,7 @@ public class OrderjobControllerImpl implements OrderjobController {
 	 * @return a JPQL query object
 	 */
 	private Query createJobsQuery(String[] states, Long orderId,
-			Long recordFrom, Long recordTo, String[] orderBy, Boolean count) {
+			Integer recordFrom, Integer recordTo, String[] orderBy, Boolean count) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsQuery({}, {}, {}, {}, {}, {}, count: {})",
 				states, orderId, recordFrom, recordTo, (null == orderBy ? "null" : Arrays.asList(orderBy)), count);
 		
