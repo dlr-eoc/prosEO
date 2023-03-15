@@ -18,6 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
@@ -101,18 +102,21 @@ public class ProductClassControllerImpl implements ProductclassController {
      * @return HTTP status "OK" and a list of Json objects representing product classes satisfying the search criteria or
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "NOT_FOUND" and an error message, if no product classes matching the search criteria were found
+	 *         HTTP status "TOO MANY REQUESTS" if the result list exceeds a configured maximum
      */
 	@Override
 	public ResponseEntity<List<RestProductClass>> getRestProductClass(String mission, String[] productType, String[] processorClass, 
-			String level, String visibility, Long recordFrom, Long recordTo, String[] orderBy) {
+			String level, String visibility, Integer recordFrom, Integer recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getRestProductClass({}, {}, {})", mission, productType);
 		
 		try {
-			return new ResponseEntity<>(productClassManager.getRestProductClass(mission, productType, processorClass, level, visibility, recordFrom, recordTo, orderBy), HttpStatus.OK);
+			return new ResponseEntity<>(productClassManager.getRestProductClass(mission, productType, processorClass, level, visibility, orderBy, recordFrom, recordTo), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		} catch (HttpClientErrorException.TooManyRequests e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.TOO_MANY_REQUESTS);
 		}
 	}
 
