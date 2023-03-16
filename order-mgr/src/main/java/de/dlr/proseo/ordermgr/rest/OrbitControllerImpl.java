@@ -113,7 +113,7 @@ public class OrbitControllerImpl implements OrbitController {
 		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults
 				&& (numberOfResults - recordFrom) > maxResults) {
 			return new ResponseEntity<>(
-					http.errorHeaders(logger.log(GeneralMessage.TOO_MANY_RESULTS, "workflows", numberOfResults, config.getMaxResults())), HttpStatus.TOO_MANY_REQUESTS);
+					http.errorHeaders(logger.log(GeneralMessage.TOO_MANY_RESULTS, "orbits", numberOfResults, config.getMaxResults())), HttpStatus.TOO_MANY_REQUESTS);
 		}
 
 		List<RestOrbit> resultList = new ArrayList<RestOrbit>();

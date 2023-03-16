@@ -239,7 +239,7 @@ public class ProductClassManager {
 		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults
 				&& (numberOfResults - recordFrom) > maxResults) {
 			throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS,
-					logger.log(GeneralMessage.TOO_MANY_RESULTS, "workflows", numberOfResults, config.getMaxResults()));
+					logger.log(GeneralMessage.TOO_MANY_RESULTS, "product classes", numberOfResults, config.getMaxResults()));
 		}
 		
 		List<RestProductClass> result = new ArrayList<>();
