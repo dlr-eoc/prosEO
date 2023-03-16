@@ -17,6 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
@@ -42,18 +43,23 @@ public class UserControllerImpl implements UserController {
 	/**
 	 * Get users by mission
 	 * 
-	 * @param mission the mission code
+	 * @param mission	  the mission code
+	 * @param recordFrom  first record of filtered and ordered result to return
+	 * @param recordTo    last record of filtered and ordered result to return
 	 * @return HTTP status "OK" and a list of Json objects representing users authorized for the given mission or
 	 *         HTTP status "NOT_FOUND" and an error message, if no users matching the search criteria were found
+	 *         HTTP status "TOO MANY REQUESTS" if the result list exceeds a configured maximum
 	 */
 	@Override
-	public ResponseEntity<List<RestUser>> getUsers(String mission) {
+	public ResponseEntity<List<RestUser>> getUsers(String mission, Integer recordFrom, Integer recordTo) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getUsers({})", mission);
 		
 		try {
-			return new ResponseEntity<>(userManager.getUsers(mission), HttpStatus.OK);
+			return new ResponseEntity<>(userManager.getUsers(mission, recordFrom, recordTo), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (HttpClientErrorException.TooManyRequests e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.TOO_MANY_REQUESTS);
 		}
 	}
 
@@ -153,4 +159,22 @@ public class UserControllerImpl implements UserController {
 		}
 	}
 
+	/**
+	 * Count the users matching the specified mission.
+	 * 
+	 * @param missionCode          the mission 	 * @return the number of matching users as a String (may be zero) or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data
+	 *         access was attempted
+	 */
+	@Override
+	public ResponseEntity<String> countUsers(String missionCode) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> countUsers({})", missionCode);
+
+		try {
+			return new ResponseEntity<>(userManager.countUsers(missionCode), HttpStatus.OK);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		}
+	}	
 }

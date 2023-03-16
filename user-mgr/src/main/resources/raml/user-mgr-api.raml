@@ -77,6 +77,12 @@ resourceTypes:
     displayName: getUsers
     queryParameters:
       mission?: string
+      recordFrom?: 
+        type: integer
+        format: int32
+      recordTo?:
+        type: integer
+        format: int32
     responses:
       200:
         body:
@@ -96,6 +102,16 @@ resourceTypes:
           application/json:
             type: RestUser
             example: !include examples/user.json
+  /count:
+    get:
+      description: Count the users with the given mission code
+      displayName: countUsers
+      queryParameters:
+        missionCode?: string
+      responses:
+        200:
+          body:
+            text/plain:
   /{username}:
     uriParameters:
       username: string
@@ -135,6 +151,12 @@ resourceTypes:
     queryParameters:
       mission: string
       groupName?: string
+      recordFrom?: 
+        type: integer
+        format: int32
+      recordTo?:
+        type: integer
+        format: int32
     responses:
       200:
         body:
@@ -154,6 +176,16 @@ resourceTypes:
           application/json:
             type: RestGroup
             example: !include examples/group.json
+  /count:
+    get:
+      description: Count the user groups with the given mission code
+      displayName: countGroups
+      queryParameters:
+        missionCode: string
+      responses:
+        200:
+          body:
+            text/plain:
   /{id}:
     uriParameters:
       id:
