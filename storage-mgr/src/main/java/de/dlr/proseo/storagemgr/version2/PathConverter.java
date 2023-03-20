@@ -5,9 +5,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 /**
@@ -25,7 +23,7 @@ public class PathConverter {
 	private List<String> basePaths = new ArrayList<>();
 
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(FileUtils.class);
+	private static ProseoLogger logger = new ProseoLogger(FileUtils.class);
 
 	private static String S3PREFIX = "s3://";
 	private static String SLASH = "/";

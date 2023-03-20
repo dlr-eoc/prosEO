@@ -35,7 +35,6 @@ import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.ProcessorClass;
-import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.procmgr.ProcessorManagerApplication;
@@ -71,9 +70,6 @@ public class ConfiguredProcessorControllerTest {
 	private static String[] testMissionData =
 			// code, name, processing_mode, file_class, product_file_template
 			{ "UTM", "ABCD Testing", "NRTI", "OPER", "test_file_temp" };
-	private static String[] testSpacecraftData =
-			// code, name
-			{ "S_TDX1", "Tandom-X" };
 	private static String[][] testConfigurationData = {
 			// mission code, processor name, configuration version, processor version
 			{ "UTM", "KNMI L2", "2019-03-30", "1.0" }, { "UTM", "KNMI L3", "2019-04-27", "3.7" } };
@@ -104,8 +100,7 @@ public class ConfiguredProcessorControllerTest {
 	public void setUp() throws Exception {
 		logger.trace(">>> Starting to create test data in the database");
 
-		createMissionAndSpacecraft(testMissionData, testSpacecraftData);
-		fillDatabase(RepositoryService.getMissionRepository().findByCode(testMissionData[0]));
+		fillDatabase();
 
 		logger.trace("<<< Finished creating test data in database");
 	}
@@ -123,52 +118,8 @@ public class ConfiguredProcessorControllerTest {
 		RepositoryService.getConfigurationRepository().deleteAll();
 		RepositoryService.getProcessorRepository().deleteAll();
 		RepositoryService.getProcessorClassRepository().deleteAll();
-		RepositoryService.getSpacecraftRepository().deleteAll();
 		RepositoryService.getMissionRepository().deleteAll();
 		logger.trace("<<< Finished deleting test data in database");
-	}
-
-	/**
-	 * Create a test mission and a test spacecraft in the database
-	 *
-	 * @param missionData    The data from which to create the mission
-	 * @param spacecraftData The data from which to create the spacecraft
-	 */
-	private static void createMissionAndSpacecraft(String[] missionData, String[] spacecraftData) {
-		if (null != RepositoryService.getMissionRepository().findByCode(missionData[2])) {
-			return;
-		}
-
-		Mission testMission = new Mission();
-		Spacecraft testSpacecraft = new Spacecraft();
-
-		logger.trace("... creating mission {}", missionData[0]);
-
-		// adding mission attributes
-		testMission.setCode(missionData[0]);
-		testMission.setName(missionData[1]);
-		testMission.getProcessingModes().add(missionData[2]);
-		testMission.getFileClasses().add(missionData[3]);
-		testMission.setProductFileTemplate(missionData[4]);
-
-		// saving mission in the database
-		testMission = RepositoryService.getMissionRepository().save(testMission);
-
-		logger.trace("... creating spacecraft {}", spacecraftData[1]);
-
-		// adding spacecraft attributes
-		testSpacecraft.setMission(testMission);
-		testSpacecraft.setCode(spacecraftData[0]);
-		testSpacecraft.setName(spacecraftData[1]);
-
-		// saving spacecraft in the database
-		testSpacecraft = RepositoryService.getSpacecraftRepository().save(testSpacecraft);
-
-		// assigning the spacecraft to the mission
-		testMission.getSpacecrafts().clear();
-		testMission.getSpacecrafts().add(testSpacecraft);
-
-		RepositoryService.getMissionRepository().save(testMission);
 	}
 
 	/**
@@ -177,15 +128,24 @@ public class ConfiguredProcessorControllerTest {
 	 * @param mission the mission to be referenced by the data filled in the
 	 *                database
 	 */
-	private static void fillDatabase(Mission mission) {
+	private static void fillDatabase() {
+		logger.trace("... creating testMission {}", testMissionData[0]);
+		Mission testMission = new Mission();
+		testMission.setCode(testMissionData[0]);
+		testMission.setName(testMissionData[1]);
+		testMission.getProcessingModes().add(testMissionData[2]);
+		testMission.getFileClasses().add(testMissionData[3]);
+		testMission.setProductFileTemplate(testMissionData[4]);
+		testMission.setId(RepositoryService.getMissionRepository().save(testMission).getId());
+
 		logger.debug("... adding processor classes");
 		ProcessorClass processorClass0 = new ProcessorClass();
-		processorClass0.setMission(mission);
+		processorClass0.setMission(testMission);
 		processorClass0.setProcessorName(testConfigurationData[0][1]);
 		processorClass0.setId(RepositoryService.getProcessorClassRepository().save(processorClass0).getId());
 
 		ProcessorClass processorClass1 = new ProcessorClass();
-		processorClass1.setMission(mission);
+		processorClass1.setMission(testMission);
 		processorClass1.setProcessorName(testConfigurationData[1][1]);
 		processorClass1.setId(RepositoryService.getProcessorClassRepository().save(processorClass1).getId());
 

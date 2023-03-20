@@ -123,32 +123,7 @@ public class ProductUtil {
 		// Set footprint information from "coordinates" parameter, if available
 		Parameter footprintParameter = modelProduct.getParameters().get("coordinates");
 		if (null != footprintParameter) {
-			try {
-				// Coordinates are blank-separated lists of blank- or comma-separated latitude/longitude pairs in counter-clockwise sequence
-				
-				// First normalize coordinates to gml:posList separated by white space (older missions may have gml:coordinates format with comma separation)
-				String footprintPosList = footprintParameter.getStringValue().replaceAll(",", " ");
-				
-				// Convert GML posList to OData list of Point
-				String[] pointValues = footprintPosList.split("\\s+");
-				List<Point> exteriorRing = new ArrayList<>();
-				for (int i = 0; i < pointValues.length / 2; ++i) {
-					// OData has longitude as x-value and latitude as y-value, in contrast to GML
-					Point p = new Point(Geospatial.Dimension.GEOGRAPHY, null);
-					p.setY(Double.parseDouble(pointValues[2 * i])); // Latitude
-					p.setX(Double.parseDouble(pointValues[2 * i + 1])); // Longitude
-					exteriorRing.add(p);
-				}
-				
-				// Create the footprint polygon
-				Polygon footprint = new Polygon(Geospatial.Dimension.GEOGRAPHY, null, new ArrayList<LineString>(),
-						new LineString(Geospatial.Dimension.GEOGRAPHY, null, exteriorRing));
-				product.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_FOOTPRINT, ValueType.PRIMITIVE, footprint));
-			} catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
-				// Log warning, otherwise ignore
-				logger.log(PripMessage.MSG_CANNOT_CONVERT_COORD,
-						footprintParameter.getStringValue());
-			}
+			createODataFootprint(product, footprintParameter);
 		}
 
 		// Create navigable collection of attributes
@@ -378,5 +353,43 @@ public class ProductUtil {
 		product.setId(new URI(ProductEdmProvider.ET_PRODUCT_NAME + "('" + modelProduct.getUuid() + "')"));
 
 		return product;
+	}
+
+	/**
+	 * Create OData compliant geographical footprints (fields "Footprint" and "GeoFootprint") from coordinates string.
+	 * Coordinates are blank-separated lists of blank- or comma-separated latitude/longitude pairs in counter-clockwise sequence.
+	 * 
+	 * @param product the product entity to updated
+	 * @param footprintParameter the "coordinates" parameter to take the footprint values from
+	 */
+	private static void createODataFootprint(Entity product, Parameter footprintParameter) {
+		try {
+			if (logger.isTraceEnabled()) logger.trace(">>> createODataFootprint({}, {})",
+					(null == product ? "null" : product.getId()), footprintParameter);
+			
+			// First normalize coordinates to gml:posList separated by white space (older missions may have gml:coordinates format with comma separation)
+			String footprintPosList = footprintParameter.getStringValue().replaceAll(",", " ");
+			
+			// Convert GML posList to OData list of Point
+			String[] pointValues = footprintPosList.split("\\s+");
+			List<Point> exteriorRing = new ArrayList<>();
+			for (int i = 0; i < pointValues.length / 2; ++i) {
+				// OData has longitude as x-value and latitude as y-value, in contrast to GML
+				Point p = new Point(Geospatial.Dimension.GEOGRAPHY, null);
+				p.setY(Double.parseDouble(pointValues[2 * i])); // Latitude
+				p.setX(Double.parseDouble(pointValues[2 * i + 1])); // Longitude
+				exteriorRing.add(p);
+			}
+			
+			// Create the footprint polygon
+			Polygon footprint = new Polygon(Geospatial.Dimension.GEOGRAPHY, null, new ArrayList<LineString>(),
+					new LineString(Geospatial.Dimension.GEOGRAPHY, null, exteriorRing));
+			product.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_FOOTPRINT, ValueType.PRIMITIVE, footprint));
+
+			product.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_GEO_FOOTPRINT, ValueType.GEOSPATIAL, footprint));
+		} catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+			// Log warning, otherwise ignore
+			logger.log(PripMessage.MSG_INVALID_COORDINATES, footprintParameter.getStringValue());
+		}
 	}
 }

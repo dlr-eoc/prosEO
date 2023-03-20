@@ -1,1 +1,1 @@
-typeSearchIndex = [{"l":"All Classes","url":"allclasses-index.html"},{"p":"de.dlr.proseo.samplewrap","l":"SampleWrapper"}]
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"de.dlr.proseo.samplewrap","l":"SampleWrapper"}];updateSearchResults();

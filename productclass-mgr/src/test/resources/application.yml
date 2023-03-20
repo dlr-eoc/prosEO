@@ -1,12 +1,15 @@
 spring:
+    maxResults: 10000
     jpa:
-        database-platform: org.hibernate.dialect.PostgreSQLDialect
-        hibernate.ddl-auto: update
+        database-platform: org.hibernate.dialect.H2Dialect
+        hibernate.ddl-auto: create-drop
+        open-in-view: false
         properties.hibernate.jdbc.time_zone: UTC
     datasource:
-        url: jdbc:postgresql://localhost:5432/proseo
-        username: postgres
-        password: sequel09Master
+        url: "jdbc:h2:mem:jpa_jbd"
+        driverClassName: org.h2.Driver
+        username: any       
+        password: any
     packagesToScan: de.dlr.proseo.model
 logging:
     level:

@@ -8,7 +8,6 @@ package de.dlr.proseo.usermgr.rest;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -19,15 +18,23 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.UserMgrMessage;
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.usermgr.UsermgrConfiguration;
@@ -176,6 +183,9 @@ public class UserManager {
 		if (null == restUser.getPassword() || restUser.getPassword().isBlank()) {
 			throw new IllegalArgumentException(logger.log(UserMgrMessage.PASSWORD_MISSING));
 		}
+		if (null == restUser.getAuthorities()) {
+			restUser.setAuthorities(new ArrayList<String>());
+		}
 		
 		// Make sure user does not exist already
 		if (null != userRepository.findByUsername(restUser.getUsername())) {
@@ -194,10 +204,13 @@ public class UserManager {
 	 * Get users by mission
 	 * 
 	 * @param mission the mission code
+	 * @param recordFrom  first record of filtered and ordered result to return
+	 * @param recordTo    last record of filtered and ordered result to return
 	 * @return a list of Json objects representing the users authorized for the given mission
 	 * @throws NoResultException if no user is found for the given mission
+	 * @throws HttpClientErrorException.TOO_MANY_REQUESTS if the result list exceeds a configured maximum
 	 */
-	public List<RestUser> getUsers(String mission) throws NoResultException {
+	public List<RestUser> getUsers(String mission, Integer recordFrom, Integer recordTo) throws NoResultException, HttpClientErrorException.TooManyRequests {
 		if (logger.isTraceEnabled()) logger.trace(">>> getUsers({})", mission);
 		
 		// Check whether principal has ROOT role
@@ -215,23 +228,47 @@ public class UserManager {
 			throw new IllegalArgumentException(logger.log(UserMgrMessage.MISSION_MISSING));
 		}
 		
-		// Collect all users whose user name starts with the mission code (or all users, if a root user starts the request without a mission)
-		List<User> userList = null;
-		if (isRootUser && (null == mission || mission.isBlank())) {
-			userList = userRepository.findAll();
-		} else {
-			userList = userRepository.findByMissionCode(mission);
+		// Collect all users within the configured range whose user name starts with the mission code (or all users, if a root user starts the request without a mission)
+		if (recordFrom == null) {
+			recordFrom = 0;
+		}
+		if (recordTo == null) {
+			recordTo = Integer.MAX_VALUE;
 		}
 
-		if (userList.isEmpty()) {
-			throw new NoResultException(logger.log(UserMgrMessage.USER_NOT_FOUND, mission));
+		Long numberOfResults = Long.parseLong(this.countUsers(mission));
+		Integer maxResults = config.getMaxResults();
+		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults
+				&& (numberOfResults - recordFrom) > maxResults) {
+			throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS,
+					logger.log(GeneralMessage.TOO_MANY_RESULTS, "users", numberOfResults, config.getMaxResults()));
 		}
 		
 		List<RestUser> result = new ArrayList<>();
-		for (User modelUser: userList) {
-			result.add(toRestUser(modelUser));
+		
+		String jpqlQuery = "select u from users u";
+		
+		if (!isRootUser || !(null == mission || mission.isBlank())) {
+			jpqlQuery += " where u.username like concat(:missionCode, '-%')";
+		}
+		
+		Query query = em.createQuery(jpqlQuery);		
+		if (!isRootUser || !(null == mission || mission.isBlank())) {
+			query.setParameter("missionCode", mission);
+		}
+		query.setFirstResult(recordFrom);
+		query.setMaxResults(recordTo - recordFrom);
+		
+		for (Object resultObject : query.getResultList()) {
+			if (resultObject instanceof User) {
+				result.add(toRestUser((User) resultObject));
+			}
 		}
 
+		if (result.isEmpty()) {
+			throw new NoResultException(logger.log(UserMgrMessage.USER_NOT_FOUND, mission));
+		}
+		
 		logger.log(UserMgrMessage.USER_LIST_RETRIEVED, mission);
 		
 		return result;
@@ -350,6 +387,9 @@ public class UserManager {
 		}
 		if (null == restUser) {
 			throw new IllegalArgumentException(logger.log(UserMgrMessage.USER_DATA_MISSING));
+		}
+		if (null == restUser.getAuthorities()) {
+			restUser.setAuthorities(new ArrayList<String>());
 		}
 		
 		// Check permission to change the user (only ROOT and USERMGR may change all users, regular users may only change
@@ -483,6 +523,52 @@ public class UserManager {
 		
 		// Return the changed user
 		return toRestUser(modelUser);
+	}
+
+	/**
+	 * Count the users matching the specified mission, if any
+	 * 
+	 * @param mission the mission code
+	 * @return the number of users found as string
+	 */
+	public String countUsers(String mission) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> countUsers({})", mission);
+
+		// Check whether principal has ROOT role
+		boolean isRootUser = false;
+		Collection<? extends GrantedAuthority> authorities = SecurityContextHolder.getContext().getAuthentication()
+				.getAuthorities();
+		for (GrantedAuthority authority : authorities) {
+			if (logger.isTraceEnabled())
+				logger.trace("... checking granted authority " + authority.getAuthority());
+			if (ROLE_ROOT.equals(authority.getAuthority())) {
+				isRootUser = true;
+			}
+		}
+
+		// Check parameter
+		if (!isRootUser && (null == mission || mission.isBlank())) {
+			throw new IllegalArgumentException(logger.log(UserMgrMessage.MISSION_MISSING));
+		}
+
+		// build query
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+		CriteriaQuery<Long> query = cb.createQuery(Long.class);
+		Root<User> userType = query.from(User.class);
+
+		List<Predicate> predicates = new ArrayList<>();
+
+		if (!isRootUser || !(null == mission || mission.isBlank())) {
+			predicates.add(cb.equal(cb.substring(userType.get("username"), 0, mission.length()), mission));
+		}
+		query.select(cb.count(userType)).where(predicates.toArray(new Predicate[predicates.size()]));
+
+		Long result = em.createQuery(query).getSingleResult();
+
+		logger.log(UserMgrMessage.USERS_COUNTED, result, mission);
+
+		return result.toString();
 	}
 
 }

@@ -25,8 +25,10 @@ import javax.persistence.TypedQuery;
 
 import org.apache.http.client.utils.URIBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
@@ -40,7 +42,10 @@ import com.nimbusds.jwt.SignedJWT;
 
 import de.dlr.proseo.ingestor.IngestorConfiguration;
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
+import de.dlr.proseo.ingestor.rest.model.RestDownloadHistory;
+import de.dlr.proseo.ingestor.rest.model.RestParameter;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
+import de.dlr.proseo.ingestor.rest.model.RestProductFile;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.IngestorMessage;
@@ -216,7 +221,7 @@ public class ProductManager {
 	 */
 	public List<RestProduct> getProducts(String mission, String[] productClass, String mode, String fileClass, String quality, 
 			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo,
-			Long recordFrom, Long recordTo, Long jobStepId, String[] orderBy) throws NoResultException, SecurityException {
+			Integer recordFrom, Integer recordTo, Long jobStepId, String[] orderBy) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, 
 				(null == productClass ? "null" : Arrays.asList(productClass).toString()),
 				mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo, recordFrom, recordTo, orderBy);
@@ -230,11 +235,30 @@ public class ProductManager {
 						mission, securityService.getMission()));
 			} 
 		}
+		
+		if (recordFrom == null) {
+			recordFrom = 0;
+		}
+		if (recordTo == null) {
+			recordTo = Integer.MAX_VALUE;
+		}
+
+		Long numberOfResults = Long.parseLong(this.countProducts(mission, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo, jobStepId));
+		Integer maxResults = ingestorConfig.getMaxResults();
+		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults
+				&& (numberOfResults - recordFrom) > maxResults) {
+			throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS,
+					logger.log(GeneralMessage.TOO_MANY_RESULTS, "products", numberOfResults, ingestorConfig.getMaxResults()));
+		}
+
+		
 		List<RestProduct> result = new ArrayList<>();
 		
 		// Find using search parameters
 		Query query = createProductsQuery(mission, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo,
 				genTimeFrom, genTimeTo, recordFrom, recordTo, jobStepId, orderBy, false);
+		query.setFirstResult(recordFrom);
+		query.setMaxResults(recordTo - recordFrom);
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof Product) {
 				// Filter depending on product visibility and user authorization
@@ -246,8 +270,6 @@ public class ProductManager {
 		if (result.isEmpty()) {
 			throw new NoResultException(logger.log(IngestorMessage.PRODUCT_LIST_EMPTY));
 		}
-		
-		// TODO: Restrict number of products retrieved (like in PRIP API)
 		
 		logger.log(IngestorMessage.PRODUCT_LIST_RETRIEVED, result.size(), mission,
 				(null == productClass ? "null" : Arrays.asList(productClass).toString()), startTimeFrom, startTimeTo);
@@ -316,6 +338,37 @@ public class ProductManager {
 		if (!securityService.isAuthorizedForMission(product.getMissionCode())) {
 			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					product.getMissionCode(), securityService.getMission()));			
+		}
+		
+		// Ensure that mandatory attributes are set
+		if (null == product.getProductClass() || product.getProductClass().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "productClass", "product creation"));
+		}
+		if (null == product.getFileClass() || product.getFileClass().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "fileClass", "product creation"));
+		}
+		if (null == product.getSensingStartTime() || product.getSensingStartTime().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "sensingStartTime", "product creation"));
+		}
+		if (null == product.getSensingStopTime() || product.getSensingStopTime().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "sensingStopTime", "product creation"));
+		}
+		if (null == product.getGenerationTime() || product.getGenerationTime().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "generationTime", "product creation"));
+		}
+		
+		// If list attributes were explicitly set to null, initialize with empty list to avoid NullPointerExceptions
+		if (null == product.getDownloadHistory()) {
+			product.setDownloadHistory(new ArrayList<RestDownloadHistory>());
+		}
+		if (null == product.getComponentProductIds()) {
+			product.setComponentProductIds(new ArrayList<Long>());
+		}
+		if (null == product.getProductFile()) {
+			product.setProductFile(new ArrayList<RestProductFile>());
+		}
+		if (null == product.getParameters()) {
+			product.setParameters(new ArrayList<RestParameter>());
 		}
 		
 		Product modelProduct = ProductUtil.toModelProduct(product);
@@ -489,6 +542,37 @@ public class ProductManager {
 			throw new ConcurrentModificationException(logger.log(IngestorMessage.CONCURRENT_UPDATE, id));
 		}
 		
+		// Ensure that mandatory attributes are set
+		if (null == product.getProductClass() || product.getProductClass().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "productClass", "product modification"));
+		}
+		if (null == product.getFileClass() || product.getFileClass().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "fileClass", "product modification"));
+		}
+		if (null == product.getSensingStartTime() || product.getSensingStartTime().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "sensingStartTime", "product modification"));
+		}
+		if (null == product.getSensingStopTime() || product.getSensingStopTime().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "sensingStopTime", "product modification"));
+		}
+		if (null == product.getGenerationTime() || product.getGenerationTime().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "generationTime", "product modification"));
+		}
+		
+		// If list attributes were explicitly set to null, initialize with empty list to avoid NullPointerExceptions
+		if (null == product.getDownloadHistory()) {
+			product.setDownloadHistory(new ArrayList<RestDownloadHistory>());
+		}
+		if (null == product.getComponentProductIds()) {
+			product.setComponentProductIds(new ArrayList<Long>());
+		}
+		if (null == product.getProductFile()) {
+			product.setProductFile(new ArrayList<RestProductFile>());
+		}
+		if (null == product.getParameters()) {
+			product.setParameters(new ArrayList<RestParameter>());
+		}
+				
 		// Update modified attributes
 		boolean productChanged = false;
 		Product changedProduct = ProductUtil.toModelProduct(product);
@@ -794,7 +878,7 @@ public class ProductManager {
 	 */
 	private Query createProductsQuery(String mission, String[] productClass, String mode, String fileClass, String quality, 
 			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo,
-			Long recordFrom, Long recordTo, Long jobStepId, String[] orderBy, Boolean count) {
+			Integer recordFrom, Integer recordTo, Long jobStepId, String[] orderBy, Boolean count) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createProductsQuery({}, {}, {}, {}, {}, {}, {}, {}, {})",
 				mission, productClass, startTimeFrom, startTimeTo, recordFrom, recordTo, jobStepId, orderBy, count);
 		

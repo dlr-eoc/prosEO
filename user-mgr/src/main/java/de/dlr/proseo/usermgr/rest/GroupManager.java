@@ -6,7 +6,6 @@
 package de.dlr.proseo.usermgr.rest;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -17,14 +16,22 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.http.HttpStatus;import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.UserMgrMessage;
 import de.dlr.proseo.model.enums.UserRole;
+import de.dlr.proseo.usermgr.UsermgrConfiguration;
 import de.dlr.proseo.usermgr.dao.GroupMemberRepository;
 import de.dlr.proseo.usermgr.dao.GroupRepository;
 import de.dlr.proseo.usermgr.dao.UserRepository;
@@ -32,7 +39,6 @@ import de.dlr.proseo.usermgr.model.Group;
 import de.dlr.proseo.usermgr.model.GroupAuthority;
 import de.dlr.proseo.usermgr.model.GroupMember;
 import de.dlr.proseo.usermgr.model.User;
-import de.dlr.proseo.usermgr.rest.UserManager.NotModifiedException;
 import de.dlr.proseo.usermgr.rest.model.RestGroup;
 import de.dlr.proseo.usermgr.rest.model.RestUser;
 
@@ -56,6 +62,10 @@ public class GroupManager {
 	/** Repository for group members */
 	@Autowired
 	GroupMemberRepository groupMemberRepository;
+		
+	/** The User Manager configuration */
+	@Autowired
+	private UsermgrConfiguration config;
 	
 	/** JPA entity manager */
 	@PersistenceContext
@@ -144,6 +154,9 @@ public class GroupManager {
 		if (null == restGroup.getGroupname() || restGroup.getGroupname().isBlank()) {
 			throw new IllegalArgumentException(logger.log(UserMgrMessage.GROUPNAME_MISSING));
 		}
+		if (null == restGroup.getAuthorities()) {
+			restGroup.setAuthorities(new ArrayList<String>());
+		}
 		
 		// Make sure the group does not exist already
 		if (null != groupRepository.findByGroupName(restGroup.getGroupname())) {
@@ -163,35 +176,70 @@ public class GroupManager {
 	 * 
 	 * @param mission the mission code
 	 * @param groupName the group name (optional)
+	 * @param recordFrom  first record of filtered and ordered result to return
+	 * @param recordTo    last record of filtered and ordered result to return
 	 * @return a list of Json objects representing the user groups authorized for the given mission
+	 * @throws HttpClientErrorException.TOO_MANY_REQUESTS if the result list exceeds a configured maximum
 	 * @throws NoResultException if no groups matching the search criteria can be found
 	 */
-	public List<RestGroup> getGroups(String mission, String groupName) throws NoResultException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getGroups({}, {})", mission, groupName);
-		
+	public List<RestGroup> getGroups(String mission, String groupName, Integer recordFrom, Integer recordTo)
+			throws NoResultException, HttpClientErrorException.TooManyRequests {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getGroups({}, {})", mission, groupName);
+
 		// Check parameter
 		if (null == mission || mission.isBlank()) {
 			throw new IllegalArgumentException(logger.log(UserMgrMessage.MISSION_MISSING));
 		}
-		
-		// Collect all user groups for the mission
+
 		List<RestGroup> result = new ArrayList<>();
-		if (null == groupName) {
-			for (Group modelGroup : groupRepository.findByMissionCode(mission)) {
-				result.add(toRestGroup(modelGroup));
-			} 
-		} else {
-			Group modelGroup = groupRepository.findByGroupName(groupName);
-			if (null != modelGroup) {
-				result.add(toRestGroup(modelGroup));
+
+		// If specified, find group by name
+		if (null != groupName) {
+			Group group = groupRepository.findByGroupName(groupName);
+
+			if (null == group) {
+				throw new NoResultException(logger.log(UserMgrMessage.GROUPNAME_NOT_FOUND, groupName));
+			} else {
+				logger.log(UserMgrMessage.GROUP_RETRIEVED, groupName);
+
+				result.add(toRestGroup(group));
+				return result;
 			}
 		}
+
+		// Collect all user groups for the mission within the configured range
+		if (recordFrom == null) {
+			recordFrom = 0;
+		}
+		if (recordTo == null) {
+			recordTo = Integer.MAX_VALUE;
+		}
+
+		Long numberOfResults = Long.parseLong(this.countGroups(mission));
+		Integer maxResults = config.getMaxResults();
+		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults
+				&& (numberOfResults - recordFrom) > maxResults) {
+			throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS,
+					logger.log(GeneralMessage.TOO_MANY_RESULTS, "groups", numberOfResults, config.getMaxResults()));
+		}
+
+		Query query = em.createQuery("select g from groups g where g.groupName like '" + mission + "-%'");
+		query.setFirstResult(recordFrom);
+		query.setMaxResults(recordTo - recordFrom);
+
+		for (Object resultObject : query.getResultList()) {
+			if (resultObject instanceof Group) {
+				result.add(toRestGroup((Group) resultObject));
+			}
+		}
+
 		if (result.isEmpty()) {
 			throw new NoResultException(logger.log(UserMgrMessage.GROUP_NOT_FOUND, mission));
 		}
-		
+
 		logger.log(UserMgrMessage.GROUP_LIST_RETRIEVED, mission);
-		
+
 		return result;
 	}
 
@@ -281,6 +329,12 @@ public class GroupManager {
 		}
 		if (null == restGroup) {
 			throw new IllegalArgumentException(logger.log(UserMgrMessage.GROUP_DATA_MISSING));
+		}
+		if (null == restGroup.getGroupname() || restGroup.getGroupname().isBlank()) {
+			throw new IllegalArgumentException(logger.log(UserMgrMessage.GROUPNAME_MISSING));
+		}
+		if (null == restGroup.getAuthorities()) {
+			restGroup.setAuthorities(new ArrayList<String>());
 		}
 		
 		// Get the user group to modify
@@ -495,4 +549,34 @@ public class GroupManager {
 		logger.log(UserMgrMessage.GROUP_MEMBER_REMOVED, username, id);
 	}
 
+	/**
+	 * Count the groups matching the specified mission
+	 * 
+	 * @param mission the mission code
+	 * @return the number of groups found as string
+	 */
+	public String countGroups(String mission) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> countGroups({})", mission);
+
+		// Check parameter
+		if (null == mission || mission.isBlank()) {
+			throw new IllegalArgumentException(logger.log(UserMgrMessage.MISSION_MISSING));
+		}
+
+		// build query
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+		CriteriaQuery<Long> query = cb.createQuery(Long.class);
+		Root<Group> groupType = query.from(Group.class);
+
+		List<Predicate> predicates = new ArrayList<>();
+		predicates.add(cb.equal(cb.substring(groupType.get("groupName"), 0, mission.length()), mission));
+		query.select(cb.count(groupType)).where(predicates.toArray(new Predicate[predicates.size()]));
+
+		Long result = em.createQuery(query).getSingleResult();
+
+		logger.log(UserMgrMessage.GROUPS_COUNTED, result, mission);
+
+		return result.toString();
+	}	
 }

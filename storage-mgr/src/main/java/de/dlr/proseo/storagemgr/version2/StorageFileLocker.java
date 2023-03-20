@@ -2,9 +2,7 @@ package de.dlr.proseo.storagemgr.version2;
 
 import java.util.concurrent.ConcurrentSkipListSet;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.storagemgr.version2.Exceptions.FileLockedAfterMaxCyclesException;
 
 /**
@@ -14,23 +12,19 @@ import de.dlr.proseo.storagemgr.version2.Exceptions.FileLockedAfterMaxCyclesExce
  * @author Denys Chaykovskiy
  *
  */
-/**
- * @author dchaykovskiy
- *
- */
 public class StorageFileLocker {
 
 	/** List of currently being downloaded files, which are locked */
 	private static ConcurrentSkipListSet<String> productLockSet = new ConcurrentSkipListSet<>();
 
 	/** Logger */
-	private static Logger logger = LoggerFactory.getLogger(StorageFileLocker.class);
+	private static ProseoLogger logger = new ProseoLogger(StorageFileLocker.class);
 
 	/** File check max cycles */
-	private int fileCheckMaxCycles;
-	
+	private long fileCheckMaxCycles;
+
 	/** Wait time */
-	private int waitTime;
+	private long waitTime;
 
 	/** file path to lock */
 	private String path;
@@ -41,7 +35,7 @@ public class StorageFileLocker {
 	 * @param path               path of the file
 	 * @param fileCheckMaxCycles file check max cycles
 	 */
-	public StorageFileLocker(String path, int waitTime, int fileCheckMaxCycles) {
+	public StorageFileLocker(String path, long waitTime, long fileCheckMaxCycles) {
 
 		this.path = path;
 		this.fileCheckMaxCycles = fileCheckMaxCycles;
@@ -57,7 +51,7 @@ public class StorageFileLocker {
 	 */
 	public void lock() throws FileLockedAfterMaxCyclesException, InterruptedException {
 
-		int i = 0;
+		long i = 0;
 
 		for (; i < fileCheckMaxCycles; ++i) {
 
@@ -82,7 +76,7 @@ public class StorageFileLocker {
 	 * Unlocks the file
 	 * 
 	 */
-	public void unlock() {	
+	public void unlock() {
 		productLockSet.remove(path);
 	}
 }

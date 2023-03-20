@@ -194,8 +194,12 @@ resourceTypes:
         type: integer
         format: long
         description: The persistent id of the processing order
-      recordFrom?: integer
-      recordTo?: integer
+      recordFrom?: 
+        type: integer
+        format: int32
+      recordTo?:
+        type: integer
+        format: int32
       logs?: boolean
       state?: string[]
       orderBy?:
@@ -357,8 +361,12 @@ resourceTypes:
       orbitNumberTo?: integer
       startTimeFrom?: string
       startTimeTo?: string
-      recordFrom?: integer
-      recordTo?: integer
+      recordFrom?: 
+        type: integer
+        format: int32
+      recordTo?:
+        type: integer
+        format: int32
       orderBy?:
         type: string[]
         description: an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space

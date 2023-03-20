@@ -21,7 +21,7 @@ public enum FacilityMgrMessage implements ProseoMessage {
 	 FACILITY_HAS_PRODUCTS		(1004, Level.ERROR, false, "Cannot delete facility {0} due to existing products", ""),
 	 FACILITY_ID_MISSING		(1005, Level.ERROR, false, "Facility ID not set", ""),
 	 FACILITY_LIST_EMPTY		(1006, Level.ERROR, false, "No facilities found for search criteria", ""),
-	 FACILITY_LIST_RETRIEVED	(1007, Level.INFO, true, "Facility list of size {0} retrieved for facility '{1}'", ""),
+	 FACILITY_LIST_RETRIEVED	(1007, Level.INFO, true, "Facility list of size {0} retrieved for facility ''{1}''", ""),
 	 FACILITY_MISSING			(1008, Level.ERROR, false, "Facility not set", ""),
 	 FACILITY_MODIFIED			(1009, Level.INFO, true, "Facility with id {0} modified", ""),
 	 FACILITY_NOT_FOUND			(1010, Level.ERROR, false, "No facility found for ID {0}", ""),

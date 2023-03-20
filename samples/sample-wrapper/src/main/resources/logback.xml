@@ -35,6 +35,7 @@
     </appender>
     
     <logger name="software.amazon.awssdk" level="ERROR"/>
+    <logger name="de.dlr.proseo" level="TRACE"/>
     
     <root level="INFO">
         <appender-ref ref="STDOUT" />

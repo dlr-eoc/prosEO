@@ -32,7 +32,7 @@ public enum ProcessorMgrMessage implements ProseoMessage {
 	CONFIGURED_PROCESSOR_DATA_MISSING				(4516, Level.ERROR, false, "Data for configured processor not set", ""),
 	CONFIGURED_PROCESSOR_DELETED					(4517, Level.INFO, true, "Configured processor with id {0} deleted", ""),
 	CONFIGURED_PROCESSOR_HAS_PRODUCTS				(4518, Level.ERROR, false, "Cannot delete configured processor {0}, because it is referenced by {1} products", ""),
-	CONFIGURED_PROCESSOR_HAS_SELECTION_RULES		(4519, Level.ERROR, false, "Cannot delete configured processor {0}, because it is referenced by {2} selection rules", ""),
+	CONFIGURED_PROCESSOR_HAS_SELECTION_RULES		(4519, Level.ERROR, false, "Cannot delete configured processor {0}, because it is referenced by {1} selection rules", ""),
 	CONFIGURED_PROCESSOR_ID_MISSING					(4520, Level.ERROR, false, "Configuration ID not set", ""),
 	CONFIGURED_PROCESSOR_ID_NOT_FOUND				(4521, Level.ERROR, false, "No Configuration found with ID {0}", ""),
 	CONFIGURED_PROCESSOR_LIST_RETRIEVED				(4522, Level.INFO, true, "Configuration(s) for mission {0}, identifier {1}, processor name {2}, processor version {3} and configuration version {4} retrieved", ""),
@@ -103,9 +103,11 @@ public enum ProcessorMgrMessage implements ProseoMessage {
 	WORKFLOW_DATA_MISSING							(4587, Level.ERROR, false, "Workflow data not set", ""),
 	CONCURRENT_WORKFLOW_UPDATE						(4588, Level.ERROR, false, "The workflow with ID {0} has been modified since retrieval by the client", ""),
 	RANGE_MUST_CONTAIN_DEFAULT						(4589, Level.ERROR, false, "The default value \"{0}\" of workflow option {1} is not contained in the value range", ""),
-	WORKFLOWS_COUNTED								(4590, Level.INFO, true, "{0} workflows found for mission {1}, workflow name {2}, workflow version {3}, output product class {4}, configured processor {5}", ""),
-	CONFIGURATIONS_COUNTED							(4591, Level.INFO, true, "{0} configurations found for mission {1}, processor name {2}, configuration version {3}", ""),
-	CONFIGURED_PROCESSORS_COUNTED					(4592, Level.INFO, true, "{0} configured processors found for mission {1}, processor name {2}, processor version {3}, configuration version {4}", ""),
+	WORKFLOWS_COUNTED								(4590, Level.INFO, true, "{0} workflow(s) found for mission {1}, workflow name {2}, workflow version {3}, output product class {4}, configured processor {5}", ""),
+	CONFIGURATIONS_COUNTED							(4591, Level.INFO, true, "{0} configuration(s) found for mission {1}, processor name {2}, configuration version {3}", ""),
+	CONFIGURED_PROCESSORS_COUNTED					(4592, Level.INFO, true, "{0} configured processor(s) found for mission {1}, processor name {2}, processor version {3}, configuration version {4}", ""),
+	PROCESSORS_COUNTED								(4593, Level.INFO, true, "{0} processor(s) found for mission {1}, processor name {2}, processor version {3}", ""),
+	PROCESSOR_CLASSES_COUNTED						(4594, Level.INFO, true, "{0} processor classe(s) found for mission {1}, processor name {2}", ""),
 	
 	;
 

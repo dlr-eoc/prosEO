@@ -62,6 +62,9 @@ public class IngestorConfiguration {
 	@Value("${proseo.ingestor.notifyPlanner:true}")
 	private Boolean notifyPlanner;
 	
+	/** The maximum number of results to be retrieved by REST requests */
+	@Value("${spring.maxResults}")
+	public Integer maxResults;
 	
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(IngestorConfiguration.class);
@@ -166,6 +169,13 @@ public class IngestorConfiguration {
 	 */
 	public Boolean getNotifyPlanner() {
 		return notifyPlanner;
+	}
+
+	/**
+	 * @return the maximum number of results to be retrieved by REST requests
+	 */
+	public Integer getMaxResults() {
+		return maxResults;
 	}
 
 }

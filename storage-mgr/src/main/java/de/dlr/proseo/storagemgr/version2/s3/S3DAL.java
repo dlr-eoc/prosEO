@@ -20,12 +20,10 @@ import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.model.AtomicCommand;
 import de.dlr.proseo.storagemgr.version2.model.DefaultRetryStrategy;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -36,10 +34,6 @@ import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
 import software.amazon.awssdk.services.s3.model.DeletedObject;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.S3Exception;
-
-import software.amazon.awssdk.transfer.s3.S3TransferManager;
-import software.amazon.awssdk.transfer.s3.FileDownload;
-import software.amazon.awssdk.transfer.s3.FileUpload;
 
 /**
  * S3 Data Access Layer based on Amazon S3 SDK v2
@@ -60,12 +54,6 @@ public class S3DAL {
 
 	/** AWS Basic Credentials */
 	private AwsBasicCredentials credentials;
-
-	/** AWS Credentials Provider */
-	private AwsCredentialsProvider credentialsProvider;
-
-	/** S3 Transfer Manager */
-	private S3TransferManager transferManager;
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3DAL.class);
@@ -101,11 +89,15 @@ public class S3DAL {
 	 */
 	public void initS3ClientV1() throws IOException {
 
+		if (logger.isTraceEnabled())
+			logger.trace(">>> initS3ClientV1()");
+
+		logger.trace("... using access key {} and secret {}", cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
 		AWSCredentials awsCredentialsV1 = new BasicAWSCredentials(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
 
-		Regions region = Regions.fromName(cfg.getS3Region());
-
 		if (cfg.isDefaultEndPoint()) {
+			Regions region = Regions.fromName(cfg.getS3Region());
+
 			s3ClientV1 = AmazonS3ClientBuilder.standard()
 				.withCredentials(new AWSStaticCredentialsProvider(awsCredentialsV1)).withRegion(region).build();
 		}
@@ -116,7 +108,7 @@ public class S3DAL {
 			
 			s3ClientV1 = AmazonS3ClientBuilder.standard()
 					.withEndpointConfiguration(
-							new AwsClientBuilder.EndpointConfiguration(s3EndPoint, Region.of(region.name()).id()))
+							new AwsClientBuilder.EndpointConfiguration(s3EndPoint, Region.of(cfg.getS3Region()).id()))
 					.withPathStyleAccessEnabled(true).withClientConfiguration(clientConfiguration)
 					.withCredentials(new AWSStaticCredentialsProvider(awsCredentialsV1)).build();
 		}
@@ -128,11 +120,14 @@ public class S3DAL {
 	 * @throws IOException
 	 */
 	public void initS3ClientV2() throws IOException {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> initS3ClientV2()");
 
 		Region s3Region = Region.of(cfg.getS3Region()); // Region.EU_CENTRAL_1;
 
+		logger.trace("... using access key {} and secret {}", cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
 		initCredentials(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
-		initTransferManager(s3Region);
 
 		if (cfg.isDefaultEndPoint()) {
 			s3ClientV2 = S3Client.builder().region(s3Region)
@@ -500,62 +495,6 @@ public class S3DAL {
 	}
 
 	/**
-	 * Uploads file or directory with file transfer manager v2
-	 * 
-	 * @param sourcePath source path to upload
-	 * @param targetPath target path in storage
-	 * @return uploaded file path
-	 * @throws IOException if file or directory cannot be uploaded
-	 */
-	public String uploadFileTransferManager(String sourcePath, String targetPath) throws IOException {
-
-		if (logger.isTraceEnabled())
-			logger.trace(">>> uploadFileTransferManager({},{})", sourcePath, targetPath);
-
-		try {
-			FileUpload upload = transferManager.uploadFile(b -> b.source(Paths.get(sourcePath))
-					.putObjectRequest(req -> req.bucket(cfg.getBucket()).key(targetPath)));
-
-			upload.completionFuture().join();
-
-			return targetPath;
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error(e.getMessage());
-			throw e;
-		}
-	}
-
-	/**
-	 * Downloads file or directory with file transfer manager v2
-	 * 
-	 * @param sourcePath source path in storage to download
-	 * @param targetPath target path
-	 * @return downloaded file path
-	 * @throws IOException if file or directory cannot be downloaded
-	 */
-	public String downloadFileTransferManager(String sourcePath, String targetPath) throws IOException {
-
-		if (logger.isTraceEnabled())
-			logger.trace(">>> downloadFileTransferManager({},{})", sourcePath, targetPath);
-
-		try {
-
-			FileDownload download = transferManager.downloadFile(b -> b.destination(Paths.get(targetPath))
-					.getObjectRequest(req -> req.bucket(cfg.getBucket()).key(sourcePath)));
-			download.completionFuture().join();
-
-			return targetPath;
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error(e.getMessage());
-			throw e;
-		}
-	}
-
-	/**
 	 * Sets bucket
 	 * 
 	 * @param bucket bucket
@@ -647,21 +586,6 @@ public class S3DAL {
 
 		credentials = AwsBasicCredentials.create(s3AccessKey, s3SecretAccessKey);
 
-		credentialsProvider = StaticCredentialsProvider
-				.create(AwsBasicCredentials.create(s3AccessKey, s3SecretAccessKey));
-	}
-
-	/**
-	 * Initializes transfer manager for productive upload and download
-	 * 
-	 * @param region region
-	 */
-	private void initTransferManager(Region region) {
-
-		transferManager = S3TransferManager.builder()
-				.s3ClientConfiguration(cfg -> cfg.credentialsProvider(credentialsProvider).region(region)
-						.targetThroughputInGbps(20.0).minimumPartSizeInBytes((long) (10 * 1024 * 1024)))
-				.build();
 	}
 
 	/**

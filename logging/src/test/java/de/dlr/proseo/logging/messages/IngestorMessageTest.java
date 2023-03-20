@@ -44,7 +44,7 @@ public class IngestorMessageTest {
 	@Test
 	public final void testGetLevel() {
 		Level result = IngestorMessage.INVALID_FACILITY.getLevel();
-		Level expected = Level.INFO;
+		Level expected = Level.ERROR;
 		assertEquals(expected, result);
 	}
 

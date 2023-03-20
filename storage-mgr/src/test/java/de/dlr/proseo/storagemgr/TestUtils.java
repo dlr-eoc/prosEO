@@ -76,7 +76,7 @@ public class TestUtils {
 	 */
 	public String getSourcePath() {
 
-		return cfg.getPosixSourcePath();
+		return cfg.getDefaultSourcePath();
 	}
 
 	/**

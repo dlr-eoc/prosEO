@@ -6,7 +6,6 @@
 package de.dlr.proseo.procmgr.rest;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Objects;
@@ -17,6 +16,10 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,17 +74,34 @@ public class ProcessorManager {
 			throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.PROCESSOR_MISSING));
 		}
 		
-		// Make sure processor class name is set
-		if (null == processor.getProcessorName() || processor.getProcessorName().isBlank()) {
-			throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.PROCESSOR_NAME_MISSING));
-		}
-		
 		// Ensure user is authorized for the mission of the processor
 		if (!securityService.isAuthorizedForMission(processor.getMissionCode())) {
 			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					processor.getMissionCode(), securityService.getMission()));			
 		}
 		
+		// Ensure mandatory attributes are set
+		if (null == processor.getProcessorName() || processor.getProcessorName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorName", "processor creation"));
+		}
+		if (null == processor.getProcessorVersion() || processor.getProcessorVersion().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorVersion", "processor creation"));
+		}
+		if (null == processor.getTasks() || processor.getTasks().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "tasks", "processor creation"));
+		}
+		if (null == processor.getDockerImage() || processor.getDockerImage().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "dockerImage", "processor creation"));
+		}
+		
+		// If list attributes were set to null explicitly, initialize with empty lists
+		if (null == processor.getConfiguredProcessors()) {
+			processor.setConfiguredProcessors(new ArrayList<>());
+		}
+		if (null == processor.getDockerRunParameters()) {
+			processor.setDockerRunParameters(new ArrayList<>());
+		}
+
 		Processor modelProcessor = ProcessorUtil.toModelProcessor(processor);
 		
 		// Make sure a processor with the same processor class name and processor version does not yet exist
@@ -129,7 +149,8 @@ public class ProcessorManager {
 	 * @throws NoResultException if no processors matching the given search criteria could be found
      * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public List<RestProcessor> getProcessors(String mission, String processorName, String processorVersion)
+	public List<RestProcessor> getProcessors(String mission, String processorName, String processorVersion,
+			Integer recordFrom, Integer recordTo)
 			throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProcessors({}, {}, {})", mission, processorName, processorVersion);
 		
@@ -141,6 +162,13 @@ public class ProcessorManager {
 				throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 						mission, securityService.getMission()));
 			} 
+		}
+				
+		if (recordFrom == null) {
+			recordFrom = 0;
+		}
+		if (recordTo == null) {
+			recordTo = Integer.MAX_VALUE;
 		}
 		
 		List<RestProcessor> result = new ArrayList<>();
@@ -160,6 +188,9 @@ public class ProcessorManager {
 		if (null != processorVersion) {
 			query.setParameter("processorVersion", processorVersion);
 		}
+		query.setFirstResult(recordFrom);
+		query.setMaxResults(recordTo - recordFrom);
+
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof Processor) {
 				result.add(ProcessorUtil.toRestProcessor((Processor) resultObject));
@@ -236,6 +267,28 @@ public class ProcessorManager {
 		if (!securityService.isAuthorizedForMission(processor.getMissionCode())) {
 			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					processor.getMissionCode(), securityService.getMission()));			
+		}
+		
+		// Ensure mandatory attributes are set
+		if (null == processor.getProcessorName() || processor.getProcessorName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorName", "processor modification"));
+		}
+		if (null == processor.getProcessorVersion() || processor.getProcessorVersion().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorVersion", "processor modification"));
+		}
+		if (null == processor.getTasks() || processor.getTasks().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "tasks", "processor modification"));
+		}
+		if (null == processor.getDockerImage() || processor.getDockerImage().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "dockerImage", "processor modification"));
+		}
+		
+		// If list attributes were set to null explicitly, initialize with empty lists
+		if (null == processor.getConfiguredProcessors()) {
+			processor.setConfiguredProcessors(new ArrayList<>());
+		}
+		if (null == processor.getDockerRunParameters()) {
+			processor.setDockerRunParameters(new ArrayList<>());
 		}
 		
 		Optional<Processor> optProcessor = RepositoryService.getProcessorRepository().findById(id);
@@ -424,6 +477,51 @@ public class ProcessorManager {
 		}
 		
 		logger.log(ProcessorMgrMessage.PROCESSOR_DELETED, id);
+	}
+
+	/**
+	 * Count the processors matching the specified mission, processorName, or
+	 * processorVersion
+	 * 
+	 * @param missionCode      the mission code
+	 * @param processorName    the processor name
+	 * @param processorVersion the processor version
+	 * @return the number of processors found as string
+	 * @throws SecurityException if a cross-mission data access was attempted
+	 */
+	public String countProcessors(String missionCode, String processorName, String processorVersion) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> countProcessors({}, {}, {})", missionCode, processorName, processorVersion);
+
+		if (null == missionCode) {
+			missionCode = securityService.getMission();
+		} else {
+			// Ensure user is authorized for the requested mission
+			if (!securityService.isAuthorizedForMission(missionCode)) {
+				throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, missionCode,
+						securityService.getMission()));
+			}
+		}
+
+		// build query
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+		CriteriaQuery<Long> query = cb.createQuery(Long.class);
+		Root<Processor> rootProcessor = query.from(Processor.class);
+
+		List<Predicate> predicates = new ArrayList<>();
+
+		predicates.add(cb.equal(rootProcessor.get("processorClass").get("mission").get("code"), missionCode));
+		if (processorName != null)
+			predicates.add(cb.equal(rootProcessor.get("processorClass").get("processorName"), processorName));
+		if (processorVersion != null)
+			predicates.add(cb.equal(rootProcessor.get("processorVersion"), processorVersion));
+		query.select(cb.count(rootProcessor)).where(predicates.toArray(new Predicate[predicates.size()]));
+
+		Long result = em.createQuery(query).getSingleResult();
+
+		logger.log(ProcessorMgrMessage.PROCESSORS_COUNTED, result, missionCode, processorName, processorVersion);
+
+		return result.toString();
 	}
 
 }

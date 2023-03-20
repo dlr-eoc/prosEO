@@ -1,1 +1,0 @@
-docker run -d -p 8090:8080 -v /Users/thomas/Documents/Thomas\ Beruf/Managementberatung/30\ Kunden/DLR-EOC/Copernicus/S5P/S5P\ Processing\ Subsystem/prosEO/ingestor/src/test/resources/castlemock/:/root/.castlemock castlemock/castlemock

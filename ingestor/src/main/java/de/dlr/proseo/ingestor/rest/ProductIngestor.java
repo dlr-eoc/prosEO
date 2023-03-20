@@ -132,6 +132,11 @@ public class ProductIngestor {
 			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					ingestorProduct.getMissionCode(), securityService.getMission()));			
 		}
+
+		// Ensure that mandatory attributes are set
+		if (null == ingestorProduct.getGenerationTime()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "generationTime", "product ingestion"));
+		}
 		
 		// Default is to copy files, if query parameter is not set
 		if (null == copyFiles) {

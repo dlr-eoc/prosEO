@@ -33,7 +33,6 @@ import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.ProductClass;
-import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.Workflow;
 import de.dlr.proseo.model.WorkflowOption;
 import de.dlr.proseo.model.WorkflowOption.WorkflowOptionType;
@@ -71,9 +70,6 @@ public class WorkflowMgrTest {
 	private static String[] testMissionData =
 			// code, name, processing_mode, file_class, product_file_template
 			{ "UTM", "ABCD Testing", "NRTI", "OPER", "test_file_temp" };
-	private static String[] testSpacecraftData =
-			// code, name
-			{ "S_TDX1", "Tandom-X" };
 	private static String[][] testWorkflowData = {
 			// name, uuid, workflowVersion, inputProductClass, outputProductClass,
 			// configuredProcessor
@@ -95,8 +91,7 @@ public class WorkflowMgrTest {
 	public void setUp() throws Exception {
 		logger.trace(">>> Starting to create test data in the database");
 
-		createMissionAndSpacecraft(testMissionData, testSpacecraftData);
-		fillDatabase(RepositoryService.getMissionRepository().findByCode(testMissionData[0]));
+		fillDatabase();
 
 		createTestWorkflow(testWorkflowData[0], testWorkflowOptions[0]);
 		createTestWorkflow(testWorkflowData[1], testWorkflowOptions[1]);
@@ -119,7 +114,6 @@ public class WorkflowMgrTest {
 		RepositoryService.getConfiguredProcessorRepository().deleteAll();
 		RepositoryService.getProcessorRepository().deleteAll();
 		RepositoryService.getProcessorClassRepository().deleteAll();
-		RepositoryService.getSpacecraftRepository().deleteAll();
 		RepositoryService.getMissionRepository().deleteAll();
 		logger.trace("<<< Finished deleting test data in database");
 	}
@@ -163,48 +157,6 @@ public class WorkflowMgrTest {
 		return workflow;
 	}
 
-	/**
-	 * Create a test mission and a test spacecraft in the database
-	 *
-	 * @param missionData    The data from which to create the mission
-	 * @param spacecraftData The data from which to create the spacecraft
-	 */
-	private static void createMissionAndSpacecraft(String[] missionData, String[] spacecraftData) {
-		if (null != RepositoryService.getMissionRepository().findByCode(missionData[2])) {
-			return;
-		}
-
-		Mission testMission = new Mission();
-		Spacecraft testSpacecraft = new Spacecraft();
-
-		logger.trace("... creating mission {}", missionData[0]);
-
-		// adding mission attributes
-		testMission.setCode(missionData[0]);
-		testMission.setName(missionData[1]);
-		testMission.getProcessingModes().add(missionData[2]);
-		testMission.getFileClasses().add(missionData[3]);
-		testMission.setProductFileTemplate(missionData[4]);
-
-		// saving mission in the database
-		testMission = RepositoryService.getMissionRepository().save(testMission);
-
-		logger.trace("... creating spacecraft {}", spacecraftData[1]);
-
-		// adding spacecraft attributes
-		testSpacecraft.setMission(testMission);
-		testSpacecraft.setCode(spacecraftData[0]);
-		testSpacecraft.setName(spacecraftData[1]);
-
-		// saving spacecraft in the database
-		testSpacecraft = RepositoryService.getSpacecraftRepository().save(testSpacecraft);
-
-		// assigning the spacecraft to the mission
-		testMission.getSpacecrafts().clear();
-		testMission.getSpacecrafts().add(testSpacecraft);
-
-		RepositoryService.getMissionRepository().save(testMission);
-	}
 
 	/**
 	 * Filling the database with some initial data for testing purposes
@@ -212,33 +164,42 @@ public class WorkflowMgrTest {
 	 * @param mission the mission to be referenced by the data filled in the
 	 *                database
 	 */
-	private static void fillDatabase(Mission mission) {
+	private static void fillDatabase() {
+		logger.trace("... creating testMission {}", testMissionData[0]);
+		Mission testMission = new Mission();
+		testMission.setCode(testMissionData[0]);
+		testMission.setName(testMissionData[1]);
+		testMission.getProcessingModes().add(testMissionData[2]);
+		testMission.getFileClasses().add(testMissionData[3]);
+		testMission.setProductFileTemplate(testMissionData[4]);
+		testMission.setId(RepositoryService.getMissionRepository().save(testMission).getId());
+		
 		logger.debug("... adding input product classes");
 		ProductClass productClass0 = new ProductClass();
 		productClass0.setProductType(testWorkflowData[0][3]);
-		productClass0.setMission(mission);
+		productClass0.setMission(testMission);
 		RepositoryService.getProductClassRepository().save(productClass0);
 
 		ProductClass productClass1 = new ProductClass();
 		productClass1.setProductType(testWorkflowData[1][3]);
-		productClass1.setMission(mission);
+		productClass1.setMission(testMission);
 		RepositoryService.getProductClassRepository().save(productClass1);
 
 		logger.debug("... adding a processor class and output product classes");
 		ProcessorClass processorClass = new ProcessorClass();
-		processorClass.setMission(mission);
+		processorClass.setMission(testMission);
 		processorClass.setProcessorName("randomName");
 		processorClass.setId(RepositoryService.getProcessorClassRepository().save(processorClass).getId());
 
 		ProductClass productClass2 = new ProductClass();
 		productClass2.setProductType(testWorkflowData[0][4]);
-		productClass2.setMission(mission);
+		productClass2.setMission(testMission);
 		productClass2.setProcessorClass(processorClass);
 		productClass2.setId(RepositoryService.getProductClassRepository().save(productClass2).getId());
 
 		ProductClass productClass3 = new ProductClass();
 		productClass3.setProductType(testWorkflowData[1][4]);
-		productClass3.setMission(mission);
+		productClass3.setMission(testMission);
 		productClass3.setProcessorClass(processorClass);
 		productClass3.setId(RepositoryService.getProductClassRepository().save(productClass3).getId());
 

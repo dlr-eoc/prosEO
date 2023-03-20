@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<restEvent>
+    <endDate>2020-09-01T14:37:55.814Z</endDate>
+    <id>giMS9N</id>
+    <resourceName>delete</resourceName>
+    <startDate>2020-09-01T14:37:55.814Z</startDate>
+    <applicationId>VYrwNF</applicationId>
+    <methodId>xOyrAw</methodId>
+    <projectId>DB3vth</projectId>
+    <request>
+        <body></body>
+        <httpHeaders>
+            <httpHeader>
+                <name>authorization</name>
+                <value>Basic dGVzdHVzZXI6dGVzdHB3ZA==</value>
+            </httpHeader>
+            <httpHeader>
+                <name>content-length</name>
+                <value>0</value>
+            </httpHeader>
+            <httpHeader>
+                <name>host</name>
+                <value>host.docker.internal:8090</value>
+            </httpHeader>
+            <httpHeader>
+                <name>connection</name>
+                <value>Keep-Alive</value>
+            </httpHeader>
+            <httpHeader>
+                <name>user-agent</name>
+                <value>Apache-HttpClient/4.5.9 (Java/11.0.7)</value>
+            </httpHeader>
+            <httpHeader>
+                <name>accept-encoding</name>
+                <value>gzip,deflate</value>
+            </httpHeader>
+        </httpHeaders>
+        <httpMethod>DELETE</httpMethod>
+        <httpParameters>
+            <httpParameter>
+                <name>pathInfo</name>
+                <value> s3%3A%2F%2Fproseo-data-001%2F123%2F1574197047%2Fintegration-test%2Ftestdata%2FS5P_OFFL_L2__FRESCO_20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc</value>
+            </httpParameter>
+        </httpParameters>
+        <uri>/storage-mgr/products</uri>
+    </request>
+    <resourceId>NUAqCO</resourceId>
+    <response>
+        <body></body>
+        <contentEncodings/>
+        <httpHeaders/>
+        <httpStatusCode>204</httpStatusCode>
+        <mockResponseName>No content</mockResponseName>
+    </response>
+</restEvent>

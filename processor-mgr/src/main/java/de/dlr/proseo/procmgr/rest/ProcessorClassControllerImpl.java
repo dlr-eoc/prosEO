@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.procmgr.rest.model.RestConfiguredProcessor;
 import de.dlr.proseo.procmgr.rest.model.RestProcessorClass;
 
 /**
@@ -46,16 +45,23 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 * 
 	 * @param mission the mission code (optional)
 	 * @param processorName the processor name (optional)
+	 * @param recordFrom    first record of filtered and ordered result to return
+	 * @param recordTo      last record of filtered and ordered result to return
 	 * @return HTTP status "OK" and a list of Json objects representing processor classes satisfying the search criteria or
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "NOT_FOUND" and an error message, if no processor classes matching the search criteria were found
+	 *         HTTP status "TOO MANY REQUESTS" if the result list exceeds a configured maximum
 	 */
 	@Override
-	public ResponseEntity<List<RestProcessorClass>> getProcessorClasses(String mission, String processorName) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProcessorClass({}, {})", mission, processorName);
-		
+	public ResponseEntity<List<RestProcessorClass>> getProcessorClasses(String mission, String processorName,
+			Integer recordFrom, Integer recordTo) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getProcessorClass({}, {})", mission, processorName);
+
 		try {
-			return new ResponseEntity<>(processorClassManager.getProcessorClasses(mission, processorName), HttpStatus.OK);
+			return new ResponseEntity<>(
+					processorClassManager.getProcessorClasses(mission, processorName, recordFrom, recordTo),
+					HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {
@@ -166,6 +172,28 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		} catch (RuntimeException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
+		}
+	}
+
+	/**
+	 * Count the processor classes matching the specified mission and processor name.
+	 * 
+	 * @param missionCode          the mission code
+	 * @param processorName        the processor name
+	 * @param configurationVersion the configuration version
+	 * @return the number of matching configurations as a String (may be zero) or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data
+	 *         access was attempted
+	 */
+	@Override
+	public ResponseEntity<String> countProcessorClasses(String missionCode, String processorName) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> countProcessorClasses({}, {})", missionCode, processorName);
+
+		try {
+			return new ResponseEntity<>(processorClassManager.countProcessorClasses(missionCode, processorName), HttpStatus.OK);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 

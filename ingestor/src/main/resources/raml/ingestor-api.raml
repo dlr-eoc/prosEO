@@ -103,8 +103,12 @@ resourceTypes:
       startTimeTo?: string
       genTimeFrom?: string
       genTimeTo?: string
-      recordFrom?: integer
-      recordTo?: integer
+      recordFrom?:
+        type: integer
+        format: int32
+      recordTo?:
+        type: integer
+        format: int32
       jobStep?: integer
       orderBy?:
         type: string[]

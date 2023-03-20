@@ -1,0 +1,717 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 12,
+  "iteration": 1678380869743,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "filterable": true
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "completed_job_steps {_start=\"2021-08-25 09:26:29 +0000 UTC\", _stop=\"2021-08-25 09:31:29 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 155
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "finished_job_steps {_start=\"2021-08-25 09:26:29 +0000 UTC\", _stop=\"2021-08-25 09:31:29 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 139
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "_time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 169
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "all_job_steps {_start=\"2021-08-25 09:29:12 +0000 UTC\", _stop=\"2021-08-25 09:34:12 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 100
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "completed_job_steps {_start=\"2021-08-25 09:29:12 +0000 UTC\", _stop=\"2021-08-25 09:34:12 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 154
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "failed_job_steps {_start=\"2021-08-25 09:29:12 +0000 UTC\", _stop=\"2021-08-25 09:34:12 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 121
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "finished_job_steps {_start=\"2021-08-25 09:29:12 +0000 UTC\", _stop=\"2021-08-25 09:34:12 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 135
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "name {_start=\"2021-08-25 09:29:12 +0000 UTC\", _stop=\"2021-08-25 09:34:12 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 183
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "running_job_steps {_start=\"2021-08-25 09:29:12 +0000 UTC\", _stop=\"2021-08-25 09:34:12 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 135
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "all_job_steps {_start=\"2021-08-25 09:31:57 +0000 UTC\", _stop=\"2021-08-25 09:36:57 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 118
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "completed_job_steps {_start=\"2021-08-25 09:31:57 +0000 UTC\", _stop=\"2021-08-25 09:36:57 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 169
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "failed_job_steps {_start=\"2021-08-25 09:31:57 +0000 UTC\", _stop=\"2021-08-25 09:36:57 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 140
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "finished_job_steps {_start=\"2021-08-25 09:31:57 +0000 UTC\", _stop=\"2021-08-25 09:36:57 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 156
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "name {_start=\"2021-08-25 09:31:57 +0000 UTC\", _stop=\"2021-08-25 09:36:57 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 186
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "running_job_steps {_start=\"2021-08-25 09:31:57 +0000 UTC\", _stop=\"2021-08-25 09:36:57 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 151
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "completed_job_steps"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 194
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 213
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "All Job Steps"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 166
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Failed Job Steps"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 153
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Finished Job Steps"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 163
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Running Job Steps"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 177
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Completed Job Steps"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 171
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "All"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 63
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Completed"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 112
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Failed"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 81
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Finished"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 97
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 89
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Running"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 106
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "prodution_latency_max"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 192
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Count"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 114
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Hour"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 120
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mission"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 143
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Size"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 102
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Type"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 133
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "count"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 164
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "type_id"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 153
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "raw_data_avail"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 186
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Raw Data Availability"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 177
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Production Latency"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 168
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Total Latency"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 158
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Production Type"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 190
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Raw Data Availability Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 185
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Sensing Stop Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 180
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Sensing Start Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 175
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 21,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 74,
+      "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Mission\", \"Date\", \"Hour\", \"Type\", \"Count\", \"Size\", \"production_latency_min\", \r\n  \"production_latency_max\", \"production_latency_avg\", \"total_latency_min\", \"total_latency_max\", \"total_latency_avg\"]\r\n\r\nRawSeries = from(bucket: \"production_hour\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"product\" and r._field =~ /mission|date|hour|type|count|size|production_latency_min|production_latency_max|production_latency_avg|total_latency_min|total_latency_max|total_latency_avg/)\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n\r\n//  |> filter(fn: (r) => r.type == \"${var_types}\")\r\n\r\n\r\n NamedSeries = RawSeries\r\n  |> map(fn: (r) => ({\"Mission\":r.mission, \"Date\":r.date, \"Hour\":r.hour, \"Type\":r.type, \"Count\":r.count, \"Size\":r.size, \r\n        \"production_latency_min\":r.production_latency_min, \"production_latency_max\":r.production_latency_max, \"production_latency_avg\":r.production_latency_avg, \r\n        \"total_latency_min\":r.total_latency_min, \"total_latency_max\":r.total_latency_max, \"total_latency_avg\":r.total_latency_avg}))\r\n    |> keep(columns:FinalOutput)\r\n    \r\nNamedSeries |> yield()",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n  mission.code AS \"Mission\", \r\n  product_class.product_type AS \"Product Type\",\r\n  product_file_name AS \"Product File Name\",\r\n  file_size AS \"File Size\",\r\n  \r\n  CASE\r\n    WHEN production_type = 'SYSTEMATIC' THEN 'Systematic Production'\r\n    WHEN production_type = 'ON_DEMAND_DEFAULT' THEN 'On-Demand Default'\r\n    WHEN production_type = 'ON_DEMAND_NON_DEFAULT' THEN 'On-Demand Non-Default'\r\n    ELSE production_type\r\n  END \r\n  AS \"Production Type\",\r\n  \r\n  sensing_start_time at TIME zone 'UTC' AS \"Sensing Start Time\",\r\n  sensing_stop_time  at TIME zone 'UTC' AS \"Sensing Stop Time\",\r\n  raw_data_availability_time at TIME zone 'UTC' AS \"Raw Data Availability Time\",\r\n  generation_time at TIME zone 'UTC' AS \"Generation Time\",\r\n  publication_time at TIME zone 'UTC' AS \"Publication Time\",\r\n  \r\n  CASE WHEN raw_data_availability_time IS NULL \r\n    THEN publication_time at TIME zone 'UTC' - sensing_stop_time at TIME zone 'UTC'\r\n    ELSE publication_time  at TIME zone 'UTC' - raw_data_availability_time at TIME zone 'UTC'  \r\n  END AS \"Production Latency\",\r\n  \r\n  publication_time at TIME zone 'UTC' - sensing_stop_time at TIME zone 'UTC' AS \"Total Latency\"\r\nFROM product\r\nLEFT JOIN product_file ON product.id = product_file.product_id\r\nINNER JOIN product_class ON product_class.id = product.product_class_id\r\nINNER JOIN mission ON mission.id = product_class.mission_id AND \r\n  product_class.processing_level IS NOT NULL\r\nWHERE \r\n  production_type IN (${var_production_type}) AND\r\n  $__timeFilter(publication_time at TIME zone 'UTC')\r\nORDER BY publication_time at TIME zone 'UTC'",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Products ($var_production_type)",
+      "type": "table"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 34,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "",
+          "value": ""
+        },
+        "hide": 2,
+        "label": "Mission",
+        "name": "var_mission_id",
+        "options": [
+          {
+            "selected": true,
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": [
+            "Systematic Production"
+          ],
+          "value": [
+            "SYSTEMATIC"
+          ]
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Production Types",
+        "multi": true,
+        "name": "var_production_type",
+        "options": [
+          {
+            "selected": true,
+            "text": "Systematic Production",
+            "value": "SYSTEMATIC"
+          },
+          {
+            "selected": false,
+            "text": "On-Demand Default",
+            "value": "ON_DEMAND_DEFAULT"
+          },
+          {
+            "selected": false,
+            "text": "On-Demand Non-Default",
+            "value": "ON_DEMAND_NON_DEFAULT"
+          }
+        ],
+        "query": "Systematic Production : SYSTEMATIC, On-Demand Default : ON_DEMAND_DEFAULT, On-Demand Non-Default : ON_DEMAND_NON_DEFAULT",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "utc",
+  "title": "Products",
+  "uid": "uid_products",
+  "version": 2,
+  "weekStart": ""
+}

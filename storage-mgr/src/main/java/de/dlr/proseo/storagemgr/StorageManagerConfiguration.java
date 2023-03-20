@@ -26,6 +26,17 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "proseo")
 @EntityScan(basePackages = "de.dlr.proseo.model")
 public class StorageManagerConfiguration {
+	
+	@Value("${proseo.global.storageIdPrefix}")
+	private String storageIdPrefix;
+	
+	/** Flag to indicate whether V2 implementation shall be used or older V1 implementation (will be deleted after removal of V1) */
+	@Value("${proseo.global.storageManagerVersion2}")
+	private String storageManagerVersion2;
+
+	/** Default mount point for files to upload (always POSIX) */
+	@Value("${proseo.global.sourcePath}")
+	private String sourcePath;
 
 	@Value("${proseo.s3.s3AccessKey}")
 	private String s3AccessKey;
@@ -35,57 +46,36 @@ public class StorageManagerConfiguration {
 
 	@Value("${proseo.s3.s3EndPoint}")
 	private String s3EndPoint;
+	
+	@Value("${proseo.s3.s3Region}")
+	private String s3Region;
+	
+	@Value("${proseo.s3.s3MaxNumberOfBuckets}")
+	private int s3MaxNumberOfBuckets;
 
+	@Value("${proseo.s3.s3DefaultBucket}")
+	private String s3DefaultBucket;
+
+	@Value("${proseo.s3.s3DefaultEndPoint}")
+	private String s3DefaultEndPoint;
+
+	/** Mount point for backend storage (must be different from cachePath) */
+	@Value("${proseo.posix.backendPath}")
+	private String posixBackendPath;
+
+	/** Mount point for file cache */
+	@Value("${proseo.posix.cachePath}")
+	private String posixCachePath;
+	
 	@Value("${proseo.joborder.bucket}")
 	private String joborderBucket;
 
 	@Value("${proseo.joborder.prefix}")
 	private String joborderPrefix;
-
-	@Value("${proseo.s3.s3MaxNumberOfBuckets}")
-	private int s3MaxNumberOfBuckets;
-
-	@Value("${proseo.s3.s3Region}")
-	private String s3Region;
-
-	@Value("${proseo.global.storageIdPrefix}")
-	private String storageIdPrefix;
-
-	@Value("${proseo.global.storageManagerVersion2}")
-	private String storageManagerVersion2;
-
-	@Value("${proseo.global.sourcePath}")
-	private String sourcePath;
-
-	@Value("${proseo.s3.s3DefaultBucket}")
-	private String s3DefaultBucket;
-	   
-	@Value("${proseo.s3.s3DefaultEndPoint}")
-	private String s3DefaultEndPoint;
-
-	@Value("${proseo.posix.backendPath}")
-	private String posixBackendPath;
-
-	@Value("${proseo.posix.cachePath}")
-	private String posixCachePath;
-
+	
+	/** Default type for backend storage */
 	@Value("${proseo.storageManager.defaultStorageType}")
 	private String defaultStorageType;
-
-	/**
-	 * Recommended minimum cache usage for efficient operation (percentage of file
-	 * system size)
-	 */
-	@Value("${proseo.storageManager.cache.expectedUsage}")
-	private Integer expectedCacheUsage;
-
-	/** Maximum cache usage (percentage of file system size) */
-	@Value("${proseo.storageManager.cache.maximumUsage}")
-	private Integer maximumCacheUsage;
-
-	/** Shared secret for Storage Manager download tokens */
-	@Value("${proseo.storageManager.secret}")
-	private String storageManagerSecret;
 
 	/** Maximum cycles for file size check */
 	@Value("${proseo.storageManager.filecheck.maxcycles}")
@@ -98,6 +88,18 @@ public class StorageManagerConfiguration {
 	/** Maximum request attempts */
 	@Value("${proseo.storageManager.filecheck.maxRequestAttempts}")
 	private Integer maxRequestAttempts;
+
+	/** Shared secret for Storage Manager download tokens */
+	@Value("${proseo.storageManager.secret}")
+	private String storageManagerSecret;
+	
+	/** Recommended minimum cache usage for efficient operation (percentage of file system size) */
+	@Value("${proseo.storageManager.cache.expectedUsage}")
+	private Integer expectedCacheUsage;
+	
+	/** Maximum cache usage (percentage of file system size) */
+	@Value("${proseo.storageManager.cache.maximumUsage}")
+	private Integer maximumCacheUsage;
 
 	/** Mounted default storage type to change it with storage set property */
 	String mountedDefaultStorageType = "";
@@ -190,11 +192,11 @@ public class StorageManagerConfiguration {
 	}
 
 	/**
-	 * Gets the absolute path to the POSIX source path
+	 * Gets the absolute path to the default upload source path (always POSIX)
 	 * 
-	 * @return the POSIX source path
+	 * @return the default upload source path
 	 */
-	public String getPosixSourcePath() {
+	public String getDefaultSourcePath() {
 		return new File(sourcePath).getAbsolutePath();
 	}
 
