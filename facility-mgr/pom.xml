@@ -158,7 +158,7 @@
                         <phase>install</phase>
                         <configuration>
                             <target>
-                                <exec executable="docker">
+                            	<exec executable="docker" failonerror="true">
                                     <arg value="build" />
                                     <arg value="-t" />
                                     <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
@@ -166,7 +166,7 @@
                                     <arg value="${project.build.platform}" />
                                     <arg value="." />
                                 </exec>
-                                <exec executable="docker">
+                            	<exec executable="docker" failonerror="true">
                                     <arg value="push" />
                                     <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
                                 </exec>

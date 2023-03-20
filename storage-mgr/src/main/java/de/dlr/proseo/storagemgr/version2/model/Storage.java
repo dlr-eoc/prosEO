@@ -171,8 +171,9 @@ public interface Storage {
 	 * @param relativePath relative path of the file
 	 * @param content      content of the file
 	 * @return storage file object of created file
+	 * @throws IOException if file cannot be created
 	 */
-	public StorageFile createStorageFile(String relativePath, String content);
+	public StorageFile createStorageFile(String relativePath, String content) throws IOException;
 
 	/**
 	 * Checks if file exists

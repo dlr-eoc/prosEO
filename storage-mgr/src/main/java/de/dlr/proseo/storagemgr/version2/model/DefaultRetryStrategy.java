@@ -2,8 +2,8 @@ package de.dlr.proseo.storagemgr.version2.model;
 
 import java.io.IOException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.StorageMgrMessage;
 
 /**
  * Default Retry Strategy for atomic operations
@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 public class DefaultRetryStrategy<T> {
 
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(DefaultRetryStrategy.class);
+	private static ProseoLogger logger = new ProseoLogger(DefaultRetryStrategy.class);
 
 	/** Atom command object */
 	private AtomicCommand<T> atomicCommand;
@@ -67,11 +67,11 @@ public class DefaultRetryStrategy<T> {
 		}
 
 		if (exception == null) {
-			logger.error(">>>>> Exception is null. Check max attempts: " + maxAttempts);
+			logger.log(StorageMgrMessage.EXCEPTION_IS_NULL);
 			throw new IOException("Exception is null");
 
 		} else {
-			logger.error("All " + maxAttempts + " attempts were not successful: " + atomicCommand.getInfo()
+			logger.log(StorageMgrMessage.ATTEMPTS_WERE_NOT_SUCCESSFUL, maxAttempts, atomicCommand.getInfo()
 					+ exception.getMessage());
 			exception.printStackTrace();
 			throw exception;

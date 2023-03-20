@@ -1,0 +1,746 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 16,
+  "iteration": 1678380628877,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "Abr_Q1Onz"
+      },
+      "description": "",
+      "gridPos": {
+        "h": 21,
+        "w": 4,
+        "x": 0,
+        "y": 0
+      },
+      "id": 92,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<b>Services</b><br><br>\n\n<a href=\"/d/uid_services/services?orgId=1&from=now-1h&to=now&var-var_service=${var_service}\">Last hour</a><br>\n<a href=\"/d/uid_services_per_day/services-per-day?orgId=1&from=now-31d&to=now&var-var_service=${var_service}\">Last 31 days (aggregated)</a><br>\n<a href=\"/d/uid_services_per_month/services-per-month?orgId=1&from=now-24M&to=now&var-var_service=${var_service}\">Last 24 month (aggregated)</a><br><br>\n\n<b>Processing Orders</b><br><br>\n\n<a href=\"/d/uid_processing_orders/processing-orders?orgId=1&from=now-1h&to=now&var-var_processing_order=${var_processing_order}\">Last hour</a><br>\n<a href=\"/d/uid_processing_orders/processing-orders?orgId=1&from=${__from}&to=${__to}&var-var_processing_order=${var_processing_order}\">Selected time range</a><br><br>\n\n<b>Products</b><br><br>\n\n<a href=\"/d/uid_products/products?orgId=1&from=now-1h&to=now&${var_production_type_short}\">Last hour</a><br>\n<a href=\"/d/uid_products_per_hour/products-per-hour?orgId=1&from=now-24h&to=now&${var_production_type:queryparam}\">Last 24 hours (aggregated)</a><br>\n<a href=\"/d/uid_products_per_day/products-per-day?orgId=1&from=now-31d&to=now&${var_production_type:queryparam}\">Last 31 days (aggregated)</a><br>\n<a href=\"/d/uid_products_per_month/products-per-month?orgId=1&from=now-24M&to=now&${var_production_type:queryparam}\">Last 24 months (aggregated)</a><br><br>\n",
+        "mode": "html"
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": false,
+          "rawSql": "SELECT\n  $__time(time_column),\n  value1\nFROM\n  metric_table\nWHERE\n  $__timeFilter(time_column)\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Menu (scroll down)",
+      "type": "text"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 0
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 13,
+        "x": 4,
+        "y": 0
+      },
+      "id": 64,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.1.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "id_service",
+          "query": "FinalOutput = [\"Time\", \"State\"]\n\nRawSeries =from(bucket: \"operation\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> filter(fn: (r) => r.service == \"${var_services}\")\n\nNamedSeries = RawSeries\n    |> map(fn: (r) => ({\"Time\":r._time, \"State\":r.state}))\n    |> keep(columns:FinalOutput)\n    \nNamedSeries |> yield()\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nINNER JOIN mon_service on mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = '${var_service}')\nWHERE  \n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "id"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "table": "service_state_operation",
+          "timeColumn": "datetime",
+          "timeColumnType": "timestamptz",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "${var_service} (selected)",
+      "type": "state-timeline"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 17,
+        "y": 0
+      },
+      "id": 94,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\n (SELECT\n    COUNT(*)  \n  FROM\n    mon_service_state_operation\n  WHERE\n    mon_service_id = (SELECT id FROM mon_service WHERE name='$var_service') AND\n    mon_service_state_id = (SELECT id FROM mon_service_state WHERE name='running') AND\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\n\n  / (SELECT\n    COUNT(*)  \n  FROM\n    mon_service_state_operation\n  WHERE\n    mon_service_id = (SELECT id FROM mon_service WHERE name='$var_service') AND\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\n  * 100;\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "$var_service (selected)",
+      "type": "gauge"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "super-light-green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 0
+      },
+      "id": 97,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\" ]\r\n\r\nRawSeries =from(bucket: \"operation\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r._measurement == \"ext_service_state\" and r._field =~ /state|service/ )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.service == \"extService_1\")\r\n\r\nNamedSeries = RawSeries\r\n    |> map(fn: (r) => ({\"Time\":r._time, \"Service\":r.service, \"State\":r.state, }))\r\n    |> keep(columns:FinalOutput)\r\n    \r\nNamedSeries |> yield()\r\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nINNER JOIN mon_service on mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = '${var_service}')\nWHERE  \n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "${var_service} (selected)",
+      "type": "stat"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "displayName": "${__field.name}",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 17,
+        "w": 20,
+        "x": 4,
+        "y": 4
+      },
+      "id": 41,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.1.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "from(bucket: \"order\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"progress\"and r._field =~ /name|failed_job_steps/ )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.name == \"${var_orders}\")",
+          "rawQuery": true,
+          "rawSql": "SELECT\n   datetime at TIME zone 'UTC' AS \"time\",\n   failed_job_steps as failed\nFROM processing_order_mon_order_progress\nINNER JOIN processing_order on processing_order_mon_order_progress.processing_order_id = processing_order.id\nWHERE\n  $__timeFilter(datetime at TIME zone 'UTC') AND \n  processing_order_mon_order_progress.processing_order_id = (SELECT id FROM processing_order WHERE identifier = '${var_processing_order}')\nORDER BY datetime",
+          "refId": "failed_job_steps",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "hide": false,
+          "metricColumn": "none",
+          "query": "from(bucket: \"order\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"progress\"and r._field =~ /name|completed_job_steps/ )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.name == \"${var_orders}\")",
+          "rawQuery": true,
+          "rawSql": "SELECT\n   datetime at TIME zone 'UTC' AS \"time\",\n   completed_job_steps as completed\nFROM processing_order_mon_order_progress\nINNER JOIN processing_order on processing_order_mon_order_progress.processing_order_id = processing_order.id\nWHERE\n  $__timeFilter(datetime at TIME zone 'UTC') AND \n  processing_order_mon_order_progress.processing_order_id = (SELECT id FROM processing_order WHERE identifier = '${var_processing_order}')\nORDER BY datetime\n",
+          "refId": "completed_job_steps",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "hide": false,
+          "metricColumn": "none",
+          "query": "from(bucket: \"order\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"progress\"and r._field =~ /name|finished_job_steps/ )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.name == \"${var_orders}\")",
+          "rawQuery": true,
+          "rawSql": "SELECT\n   datetime at TIME zone 'UTC' AS \"time\",\n   finished_job_steps as finished\nFROM processing_order_mon_order_progress\nINNER JOIN processing_order on processing_order_mon_order_progress.processing_order_id = processing_order.id\nWHERE\n  $__timeFilter(datetime at TIME zone 'UTC') AND \n  processing_order_mon_order_progress.processing_order_id = (SELECT id FROM processing_order WHERE identifier = '${var_processing_order}')\nORDER BY datetime",
+          "refId": "finished_job_steps",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "hide": false,
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\n   datetime at TIME zone 'UTC' AS \"time\",\n   all_job_steps as all\nFROM processing_order_mon_order_progress\nINNER JOIN processing_order on processing_order_mon_order_progress.processing_order_id = processing_order.id\nWHERE\n  $__timeFilter(datetime at TIME zone 'UTC') AND \n  processing_order_mon_order_progress.processing_order_id = (SELECT id FROM processing_order WHERE identifier = '${var_processing_order}')\nORDER BY datetime\n",
+          "refId": "all_job_steps",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "hide": false,
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\n   datetime at TIME zone 'UTC' AS \"time\",\n   running_job_steps as running\nFROM processing_order_mon_order_progress\nINNER JOIN processing_order on processing_order_mon_order_progress.processing_order_id = processing_order.id\nWHERE\n  $__timeFilter(datetime at TIME zone 'UTC') AND \n  processing_order_mon_order_progress.processing_order_id = (SELECT id FROM processing_order WHERE identifier = '${var_processing_order}')\nORDER BY datetime\n",
+          "refId": "running_job_steps",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "${var_processing_order} (selected processing order: Failed + Completed = Finished Job Steps)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 34,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "Facility Manager",
+          "value": "Facility Manager"
+        },
+        "definition": "SELECT mon_service.name\nFROM mon_service_state_operation\nINNER JOIN mon_service on mon_service_state_operation.mon_service_id = mon_service.id\nWHERE $__timeFilter(mon_service_state_operation.datetime at TIME zone 'UTC')\nGROUP BY 1; ",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Services",
+        "multi": false,
+        "name": "var_service",
+        "options": [],
+        "query": "SELECT mon_service.name\nFROM mon_service_state_operation\nINNER JOIN mon_service on mon_service_state_operation.mon_service_id = mon_service.id\nWHERE $__timeFilter(mon_service_state_operation.datetime at TIME zone 'UTC')\nGROUP BY 1; ",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "isNone": true,
+          "selected": false,
+          "text": "None",
+          "value": ""
+        },
+        "definition": "SELECT processing_order.identifier\nFROM processing_order_mon_order_progress\nINNER JOIN processing_order on processing_order_mon_order_progress.processing_order_id = processing_order.id\nWHERE $__timeFilter(processing_order_mon_order_progress.datetime  at TIME zone 'UTC')\nGROUP BY 1; \n\n\n",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Orders",
+        "multi": false,
+        "name": "var_processing_order",
+        "options": [],
+        "query": "SELECT processing_order.identifier\nFROM processing_order_mon_order_progress\nINNER JOIN processing_order on processing_order_mon_order_progress.processing_order_id = processing_order.id\nWHERE $__timeFilter(processing_order_mon_order_progress.datetime  at TIME zone 'UTC')\nGROUP BY 1; \n\n\n",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "123&456"
+          ],
+          "value": [
+            "123&456"
+          ]
+        },
+        "definition": "create or replace function get_missions()\nreturns varchar as\n$$\n\ndeclare\n    sql varchar;\n\nbegin\n\n   sql = '123&456';\n   return sql;\n\nend;\n$$\nlanguage plpgsql;\n\nselect get_missions();",
+        "hide": 2,
+        "includeAll": false,
+        "label": "Mission",
+        "multi": true,
+        "name": "var_mission_id",
+        "options": [],
+        "query": "create or replace function get_missions()\nreturns varchar as\n$$\n\ndeclare\n    sql varchar;\n\nbegin\n\n   sql = '123&456';\n   return sql;\n\nend;\n$$\nlanguage plpgsql;\n\nselect get_missions();",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "Systematic Production",
+          "value": "systematic_production"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Production Types",
+        "multi": true,
+        "name": "var_production_type",
+        "options": [
+          {
+            "selected": true,
+            "text": "Systematic Production",
+            "value": "systematic_production"
+          },
+          {
+            "selected": false,
+            "text": "On-Demand Default",
+            "value": "on-demand default"
+          },
+          {
+            "selected": false,
+            "text": "On-Demand Non-Default",
+            "value": "on-demand non-default"
+          }
+        ],
+        "query": "Systematic Production : systematic_production, On-Demand Default : on-demand default, On-Demand Non-Default : on-demand non-default",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "&var-var_production_type=SYSTEMATIC",
+          "value": "&var-var_production_type=SYSTEMATIC"
+        },
+        "definition": "create or replace function get_short_type(long_type varchar(255))\nreturns varchar as\n$$\ndeclare short_type varchar(255);\n \nbegin\n\tshort_type := ''; \n\t\n\tif position('systematic_production' in long_type) > 0 then\n\t\tshort_type := short_type || '&var-var_production_type=SYSTEMATIC';\n\tend if;\n\t \n\tif position('on-demand default' in long_type) > 0 then\n\t\tshort_type := short_type || '&var-var_production_type=ON_DEMAND_DEFAULT';\n\t end if;\n\t \n\t if position('on-demand non-default' in long_type) > 0 then\n\t\tshort_type := short_type || '&var-var_production_type=ON_DEMAND_NON_DEFAULT';\n\t end if;\n  \t\n   return short_type;\nend;\n$$\nlanguage plpgsql;\n\nselect get_short_type('${var_production_type:csv}'); ",
+        "hide": 2,
+        "includeAll": false,
+        "label": "Short",
+        "multi": false,
+        "name": "var_production_type_short",
+        "options": [],
+        "query": "create or replace function get_short_type(long_type varchar(255))\nreturns varchar as\n$$\ndeclare short_type varchar(255);\n \nbegin\n\tshort_type := ''; \n\t\n\tif position('systematic_production' in long_type) > 0 then\n\t\tshort_type := short_type || '&var-var_production_type=SYSTEMATIC';\n\tend if;\n\t \n\tif position('on-demand default' in long_type) > 0 then\n\t\tshort_type := short_type || '&var-var_production_type=ON_DEMAND_DEFAULT';\n\t end if;\n\t \n\t if position('on-demand non-default' in long_type) > 0 then\n\t\tshort_type := short_type || '&var-var_production_type=ON_DEMAND_NON_DEFAULT';\n\t end if;\n  \t\n   return short_type;\nend;\n$$\nlanguage plpgsql;\n\nselect get_short_type('${var_production_type:csv}'); ",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "utc",
+  "title": "Cockpit",
+  "uid": "uid_cockpit",
+  "version": 7,
+  "weekStart": ""
+}

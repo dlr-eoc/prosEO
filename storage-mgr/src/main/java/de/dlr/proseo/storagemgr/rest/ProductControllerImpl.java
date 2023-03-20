@@ -57,6 +57,7 @@ import de.dlr.proseo.storagemgr.utils.StorageLogger;
  * 
  * @author Hubert Asamer
  * @author Dr. Thomas Bassler
+ * @author Denys Chaykovskiy
  *
  */
 @Component
@@ -66,9 +67,9 @@ public class ProductControllerImpl implements ProductController {
 	private static final int MSG_ID_EXCEPTION_THROWN = 4001;
 	private static final int MSG_ID_FILE_NOT_FOUND = 4002;
 	private static final int MSG_ID_INVALID_PATH = 4003;
-	private static final int MSG_ID_TOKEN_MISSING = 4004;
-	private static final int MSG_ID_TOKEN_INVALID = 4005;
-	private static final int MSG_ID_TOKEN_EXPIRED = 4006;
+	// private static final int MSG_ID_TOKEN_MISSING = 4004;
+	// private static final int MSG_ID_TOKEN_INVALID = 4005;
+	// private static final int MSG_ID_TOKEN_EXPIRED = 4006;
 	private static final int MSG_ID_TOKEN_MISMATCH = 4007;
 	private static final int MSG_ID_FILES_REGISTERED = 4008;
 	private static final int MSG_ID_FILES_LISTED = 4009;
@@ -79,9 +80,12 @@ public class ProductControllerImpl implements ProductController {
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
 	private static final String MSG_FILE_NOT_FOUND = "(E%d) File %s not found";
 	private static final String MSG_INVALID_PATH = "(E%d) Invalid path %s";
-	private static final String MSG_TOKEN_MISSING = "(E%d) Authentication token missing";
-	private static final String MSG_TOKEN_INVALID = "(E%d) Authentication token %s invalid (cause: %s)";
-	private static final String MSG_TOKEN_EXPIRED = "(E%d) Authentication token expired at %s";
+	// private static final String MSG_TOKEN_MISSING = "(E%d) Authentication token
+	// missing";
+	// private static final String MSG_TOKEN_INVALID = "(E%d) Authentication token
+	// %s invalid (cause: %s)";
+	// private static final String MSG_TOKEN_EXPIRED = "(E%d) Authentication token
+	// expired at %s";
 	private static final String MSG_TOKEN_MISMATCH = "(E%d) Authentication token not valid for file %s";
 	private static final String MSG_FILES_REGISTERED = "(I%d) Files registered: %s";
 	private static final String MSG_FILES_LISTED = "(I%d) Files listed: %s";
@@ -89,22 +93,27 @@ public class ProductControllerImpl implements ProductController {
 	private static final String MSG_FILE_DELETED = "(I%d) File %s deleted";
 
 	/* Submessages for token evaluation */
-	private static final String MSG_TOKEN_PAYLOAD_INVALID = "The payload of the JWT doesn't represent a valid JSON object and a JWT claims set";
-	private static final String MSG_TOKEN_NOT_VERIFIABLE = "The JWS object couldn't be verified";
-	private static final String MSG_TOKEN_STATE_INVALID = "The JWS object is not in a signed or verified state, actual state: ";
-	private static final String MSG_TOKEN_VERIFICATION_FAILED = "Verification of the JWT failed";
-	private static final String MSG_SECRET_TOO_SHORT = "Secret length is shorter than the minimum 256-bit requirement";
-	private static final String MSG_TOKEN_NOT_PARSEABLE = "Token not parseable";
+	// private static final String MSG_TOKEN_PAYLOAD_INVALID = "The payload of the
+	// JWT doesn't represent a valid JSON object and a JWT claims set";
+	// private static final String MSG_TOKEN_NOT_VERIFIABLE = "The JWS object
+	// couldn't be verified";
+	// private static final String MSG_TOKEN_STATE_INVALID = "The JWS object is not
+	// in a signed or verified state, actual state: ";
+	// private static final String MSG_TOKEN_VERIFICATION_FAILED = "Verification of
+	// the JWT failed";
+	// private static final String MSG_SECRET_TOO_SHORT = "Secret length is shorter
+	// than the minimum 256-bit requirement";
+	// private static final String MSG_TOKEN_NOT_PARSEABLE = "Token not parseable";
 
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String HTTP_MSG_PREFIX = "199 proseo-storage-mgr ";
 
 	/** Logger for this class */
 	private static Logger loggerLegacy = LoggerFactory.getLogger(ProductControllerImpl.class);
-	
+
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductControllerImpl.class);
-	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.PLANNER);
+	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.STORAGE_MGR);
 
 	/** Storage Manager configuration */
 	@Autowired
@@ -112,8 +121,6 @@ public class ProductControllerImpl implements ProductController {
 
 	@Autowired
 	private StorageProvider storageProvider;
-
-
 
 	/**
 	 * Copy a file from "ingest" file system to storage manager controlled prosEO
@@ -155,16 +162,15 @@ public class ProductControllerImpl implements ProductController {
 						targetFolder.getFullPath() + "/", allUploaded, false,
 						"registration executed on node " + hostName);
 
-				// StorageLogger.logInfo(loggerLegacy, MSG_FILES_REGISTERED, MSG_ID_FILES_REGISTERED, allUploaded.toString());
-				
-				logger.log(StorageMgrMessage.PRODUCTS_UPLOADED_TO_STORAGE, Integer.toString(allUploaded.size()), allUploaded.toString());
-				
+				logger.log(StorageMgrMessage.PRODUCTS_UPLOADED_TO_STORAGE, Integer.toString(allUploaded.size()),
+						allUploaded.toString());
+
 				return new ResponseEntity<>(response, HttpStatus.CREATED);
 
 			} catch (Exception e) {
-				
+
 				String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
-								
+
 				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
@@ -260,13 +266,13 @@ public class ProductControllerImpl implements ProductController {
 							.getStorage(de.dlr.proseo.storagemgr.version2.model.StorageType.valueOf(storageType))
 							.addFSPrefix(response);
 				}
-								
+
 				logger.log(StorageMgrMessage.PRODUCT_FILES_LISTED, response.toString());
 
 				return new ResponseEntity<>(response, HttpStatus.OK);
 
 			} catch (Exception e) {
-				
+
 				String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
 
 				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -297,7 +303,6 @@ public class ProductControllerImpl implements ProductController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-
 	/**
 	 * Retrieve the byte stream for download of a file object in repository.
 	 * 
@@ -322,75 +327,80 @@ public class ProductControllerImpl implements ProductController {
 			String msg = logger.log(StorageMgrMessage.PATH_IS_NULL);
 			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);
 		}
-		
+
 		if (null == token) {
 			String msg = logger.log(StorageMgrMessage.TOKEN_MISSING);
 			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.UNAUTHORIZED);
 		}
-		
+
 		// token check begin
 		// Check authentication token
 		JWTClaimsSet claimsSet = null;
-		
+
 		try {
 			claimsSet = extractJwtClaimsSet(token);
-			
+
 		} catch (IllegalArgumentException e) {
-			
+
 			String msg = logger.log(StorageMgrMessage.TOKEN_INVALID, token, e.getMessage());
 			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.UNAUTHORIZED);
 		}
-		
+
 		if ((new Date()).after(claimsSet.getExpirationTime())) {
-			
+
 			String msg = logger.log(StorageMgrMessage.TOKEN_EXPIRED, claimsSet.getExpirationTime().toString());
 			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.UNAUTHORIZED);
 
 		}
 		// token check end
-		
+
 		if (storageProvider.isVersion2()) { // begin version 2 - storage file -> byte page
 
-			try {	
-				Storage storage = storageProvider.getStorage(pathInfo); 
-				
+			try {
+				Storage storage = storageProvider.getStorage(pathInfo);
+
 				String relativePath = storage.getRelativePath(pathInfo);
-				
+
 				StorageFile sourceFile = storage.getStorageFile(relativePath);
-				
+
 				if (sourceFile == null) {
-					
+
 					String msg = logger.log(StorageMgrMessage.PATH_IS_NULL);
 					return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);
 				}
-								
+
 				// token check begin
 				if (!sourceFile.getFileName().equals(claimsSet.getSubject())) {
-					
+
 					String msg = logger.log(StorageMgrMessage.TOKEN_MISMATCH, sourceFile.getFileName());
 					return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.UNAUTHORIZED);
 				}
-				// token check end 
-				
+				// token check end
+
 				InputStream stream = storage.getInputStream(sourceFile);
 				if (stream == null) {
-					
+
 					String msg = logger.log(StorageMgrMessage.FILE_NOT_FOUND, pathInfo);
-					return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.NOT_FOUND);					
+					return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.NOT_FOUND);
 				}
 
 				HttpHeaders headers = getFilePage(sourceFile, stream, fromByte, toByte);
 				HttpStatus status = getOkOrPartialStatus(fromByte, toByte);
 
 				InputStreamResource fsr = new InputStreamResource(stream);
-				if (fsr != null) {
-					
-					logger.log(StorageMgrMessage.PRODUCT_FILE_PARTIALLY_DOWNLOADED, pathInfo, Long.toString(fromByte), Long.toString(toByte), Long.toString(toByte - fromByte));
-					return new ResponseEntity<>(fsr, headers, status);
+				
+				if (null == fromByte || null == toByte) {
+					logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED, pathInfo);
+				} else {
+					logger.log(StorageMgrMessage.PRODUCT_FILE_PARTIALLY_DOWNLOADED, pathInfo, Long.toString(fromByte),
+							Long.toString(toByte), Long.toString(toByte - fromByte));
 				}
+				return new ResponseEntity<>(fsr, headers, status);
 
 			} catch (Exception e) {
 				
+				if (logger.isTraceEnabled()) logger.trace("... exception thrown: ", e);
+
 				String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
 				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
@@ -405,7 +415,7 @@ public class ProductControllerImpl implements ProductController {
 				return new ResponseEntity<>(errorHeaders(MSG_INVALID_PATH, MSG_ID_INVALID_PATH, pathInfo),
 						HttpStatus.BAD_REQUEST);
 			}
-			
+
 			// token check begin
 			if (!sourceFile.getFileName().equals(claimsSet.getSubject())) {
 				return new ResponseEntity<>(
@@ -413,7 +423,7 @@ public class ProductControllerImpl implements ProductController {
 						HttpStatus.UNAUTHORIZED);
 			}
 			// token check end
-			
+
 			InputStream stream = sourceFile.getDataAsInputStream();
 			if (stream == null) {
 				return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND, pathInfo),
@@ -478,15 +488,15 @@ public class ProductControllerImpl implements ProductController {
 			logger.trace(">>> deleteProductByPathInfo({})", pathInfo);
 
 		if (storageProvider.isVersion2()) { // begin version 2 - delete files in storage
-			
-			if (null == pathInfo)  {
+
+			if (null == pathInfo) {
 				String msg = logger.log(StorageMgrMessage.PATH_IS_NULL);
-				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.NOT_FOUND);		
+				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.NOT_FOUND);
 			}
-			
-			if (pathInfo == "") {			
+
+			if (pathInfo == "") {
 				String msg = logger.log(StorageMgrMessage.INVALID_PATH, pathInfo);
-				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.NOT_FOUND);					
+				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.NOT_FOUND);
 			}
 
 			try {
@@ -495,13 +505,13 @@ public class ProductControllerImpl implements ProductController {
 				String relativePath = storageProvider.getRelativePath(pathInfo);
 				List<String> deletedFilesOrDir = storageProvider.getStorage().delete(relativePath);
 				RestProductFS response = createRestProductFilesDeleted(deletedFilesOrDir, storageType);
-				
+
 				logger.log(StorageMgrMessage.PRODUCT_FILE_DELETED, pathInfo);
-								
+
 				return new ResponseEntity<>(response, HttpStatus.OK);
 
 			} catch (Exception e) {
-				
+
 				String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
 				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
@@ -532,12 +542,12 @@ public class ProductControllerImpl implements ProductController {
 		return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND, pathInfo),
 				HttpStatus.NOT_FOUND);
 	}
-	
+
 	/**
 	 * Gets OK or PARTIAL_CONTENT status
 	 * 
 	 * @param fromByte from byte
-	 * @param toByte to byte
+	 * @param toByte   to byte
 	 * @return http status OK or PARTIAL_CONTENT
 	 */
 	private HttpStatus getOkOrPartialStatus(Long fromByte, Long toByte) {
@@ -556,22 +566,23 @@ public class ProductControllerImpl implements ProductController {
 	/**
 	 * Gets file page
 	 * 
-	 * @param sourceFile source file 
-	 * @param stream stream
-	 * @param fromByte from byte
-	 * @param toByte to byte
+	 * @param sourceFile source file
+	 * @param stream     stream
+	 * @param fromByte   from byte
+	 * @param toByte     to byte
 	 * @return http header
 	 * @throws IOException
 	 */
 	private HttpHeaders getFilePage(StorageFile sourceFile, InputStream stream, Long fromByte, Long toByte)
 			throws IOException {
-		
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFilePage({}, {}, {}, {})", sourceFile.getFullPath(), stream, fromByte, toByte);
-		
-		Storage storage = storageProvider.getStorage(sourceFile.getFullPath()); 	
+
+		Storage storage = storageProvider.getStorage(sourceFile.getFullPath());
 
 		Long len = storage.getFileSize(sourceFile);
+		
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentDispositionFormData("attachment", sourceFile.getFileName());
 		long from = 0;
@@ -661,9 +672,9 @@ public class ProductControllerImpl implements ProductController {
 		SignedJWT signedJWT = null;
 		try {
 			signedJWT = SignedJWT.parse(token);
-			
+
 		} catch (ParseException e) {
-			
+
 			String msg = logger.log(StorageMgrMessage.TOKEN_NOT_PARSEABLE, e.getMessage());
 			throw new IllegalArgumentException(msg);
 		}
@@ -671,9 +682,9 @@ public class ProductControllerImpl implements ProductController {
 		JWSVerifier verifier = null;
 		try {
 			verifier = new MACVerifier(cfg.getStorageManagerSecret());
-			
+
 		} catch (JOSEException e) {
-			
+
 			String msg = logger.log(StorageMgrMessage.SECRET_TOO_SHORT, e.getMessage());
 			throw new IllegalArgumentException(msg);
 		}
@@ -682,15 +693,15 @@ public class ProductControllerImpl implements ProductController {
 			if (!signedJWT.verify(verifier)) {
 				String msg = logger.log(StorageMgrMessage.TOKEN_VERIFICATION_FAILED);
 				throw new IllegalArgumentException(msg);
-			}		
-			
+			}
+
 		} catch (IllegalStateException e) {
-			
+
 			String msg = logger.log(StorageMgrMessage.TOKEN_STATE_INVALID, signedJWT.getState(), e.getMessage());
 			throw new IllegalArgumentException(msg);
-			
+
 		} catch (JOSEException e) {
-			
+
 			String msg = logger.log(StorageMgrMessage.TOKEN_NOT_VERIFIABLE, e.getMessage());
 			throw new IllegalArgumentException(msg);
 		}
@@ -699,9 +710,9 @@ public class ProductControllerImpl implements ProductController {
 		JWTClaimsSet claimsSet = null;
 		try {
 			claimsSet = signedJWT.getJWTClaimsSet();
-			
+
 		} catch (ParseException e) {
-			
+
 			String msg = logger.log(StorageMgrMessage.TOKEN_PAYLOAD_INVALID, e.getMessage());
 			throw new IllegalArgumentException(msg);
 		}
@@ -712,7 +723,7 @@ public class ProductControllerImpl implements ProductController {
 	 * Creates rest product files deleted
 	 * 
 	 * @param deletedFiles deleted files
-	 * @param storageType storage type
+	 * @param storageType  storage type
 	 * @return RestProductFS
 	 */
 	private RestProductFS createRestProductFilesDeleted(List<String> deletedFiles, String storageType) {
@@ -796,9 +807,9 @@ public class ProductControllerImpl implements ProductController {
 
 		return response;
 	}
-	
+
 	/**
-	 * Gets Local host name 
+	 * Gets Local host name
 	 * 
 	 * @return local host name
 	 */
@@ -812,7 +823,7 @@ public class ProductControllerImpl implements ProductController {
 			return "(UNKNOWN)";
 		}
 	}
-	
+
 	/**
 	 * Log an error and return the corresponding HTTP message header
 	 * 

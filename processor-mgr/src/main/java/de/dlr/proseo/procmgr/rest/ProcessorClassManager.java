@@ -155,6 +155,16 @@ public class ProcessorClassManager {
 					processorClass.getMissionCode(), securityService.getMission()));			
 		}
 		
+		// Ensure mandatory attributes are set
+		if (null == processorClass.getProcessorName() || processorClass.getProcessorName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorName", "processorClass creation"));
+		}
+
+		// If list attributes were set to null explicitly, initialize with empty lists
+		if (null == processorClass.getProductClasses()) {
+			processorClass.setProductClasses(new ArrayList<>());
+		}
+		
 		ProcessorClass modelProcessorClass = ProcessorClassUtil.toModelProcessorClass(processorClass);
 		
 		// Make sure a processor class with the same name does not yet exist for the mission
@@ -263,6 +273,16 @@ public class ProcessorClassManager {
 		// Make sure we are allowed to change the processor class (no intermediate update)
 		if (modelProcessorClass.getVersion() != processorClass.getVersion().intValue()) {
 			throw new ConcurrentModificationException(logger.log(ProcessorMgrMessage.CONCURRENT_UPDATE, id));
+		}
+		
+		// Ensure mandatory attributes are set
+		if (null == processorClass.getProcessorName() || processorClass.getProcessorName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorName", "processorClass modification"));
+		}
+		
+		// If list attributes were set to null explicitly, initialize with empty lists
+		if (null == processorClass.getProductClasses()) {
+			processorClass.setProductClasses(new ArrayList<>());
 		}
 		
 		// Apply changed attributes

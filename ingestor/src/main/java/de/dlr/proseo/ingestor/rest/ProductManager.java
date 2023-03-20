@@ -42,7 +42,10 @@ import com.nimbusds.jwt.SignedJWT;
 
 import de.dlr.proseo.ingestor.IngestorConfiguration;
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
+import de.dlr.proseo.ingestor.rest.model.RestDownloadHistory;
+import de.dlr.proseo.ingestor.rest.model.RestParameter;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
+import de.dlr.proseo.ingestor.rest.model.RestProductFile;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.IngestorMessage;
@@ -337,6 +340,37 @@ public class ProductManager {
 					product.getMissionCode(), securityService.getMission()));			
 		}
 		
+		// Ensure that mandatory attributes are set
+		if (null == product.getProductClass() || product.getProductClass().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "productClass", "product creation"));
+		}
+		if (null == product.getFileClass() || product.getFileClass().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "fileClass", "product creation"));
+		}
+		if (null == product.getSensingStartTime() || product.getSensingStartTime().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "sensingStartTime", "product creation"));
+		}
+		if (null == product.getSensingStopTime() || product.getSensingStopTime().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "sensingStopTime", "product creation"));
+		}
+		if (null == product.getGenerationTime() || product.getGenerationTime().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "generationTime", "product creation"));
+		}
+		
+		// If list attributes were explicitly set to null, initialize with empty list to avoid NullPointerExceptions
+		if (null == product.getDownloadHistory()) {
+			product.setDownloadHistory(new ArrayList<RestDownloadHistory>());
+		}
+		if (null == product.getComponentProductIds()) {
+			product.setComponentProductIds(new ArrayList<Long>());
+		}
+		if (null == product.getProductFile()) {
+			product.setProductFile(new ArrayList<RestProductFile>());
+		}
+		if (null == product.getParameters()) {
+			product.setParameters(new ArrayList<RestParameter>());
+		}
+		
 		Product modelProduct = ProductUtil.toModelProduct(product);
 		
 		// Check metadata database for product with same characteristics
@@ -508,6 +542,37 @@ public class ProductManager {
 			throw new ConcurrentModificationException(logger.log(IngestorMessage.CONCURRENT_UPDATE, id));
 		}
 		
+		// Ensure that mandatory attributes are set
+		if (null == product.getProductClass() || product.getProductClass().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "productClass", "product modification"));
+		}
+		if (null == product.getFileClass() || product.getFileClass().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "fileClass", "product modification"));
+		}
+		if (null == product.getSensingStartTime() || product.getSensingStartTime().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "sensingStartTime", "product modification"));
+		}
+		if (null == product.getSensingStopTime() || product.getSensingStopTime().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "sensingStopTime", "product modification"));
+		}
+		if (null == product.getGenerationTime() || product.getGenerationTime().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "generationTime", "product modification"));
+		}
+		
+		// If list attributes were explicitly set to null, initialize with empty list to avoid NullPointerExceptions
+		if (null == product.getDownloadHistory()) {
+			product.setDownloadHistory(new ArrayList<RestDownloadHistory>());
+		}
+		if (null == product.getComponentProductIds()) {
+			product.setComponentProductIds(new ArrayList<Long>());
+		}
+		if (null == product.getProductFile()) {
+			product.setProductFile(new ArrayList<RestProductFile>());
+		}
+		if (null == product.getParameters()) {
+			product.setParameters(new ArrayList<RestParameter>());
+		}
+				
 		// Update modified attributes
 		boolean productChanged = false;
 		Product changedProduct = ProductUtil.toModelProduct(product);

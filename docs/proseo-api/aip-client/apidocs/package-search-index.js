@@ -1,1 +1,1 @@
-packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"l":"de.dlr.proseo.api.aipclient"},{"l":"de.dlr.proseo.api.aipclient.rest"},{"l":"de.dlr.proseo.api.aipclient.rest.model"}]
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"de.dlr.proseo.api.aipclient"},{"l":"de.dlr.proseo.api.aipclient.rest"},{"l":"de.dlr.proseo.api.aipclient.rest.model"}];updateSearchResults();

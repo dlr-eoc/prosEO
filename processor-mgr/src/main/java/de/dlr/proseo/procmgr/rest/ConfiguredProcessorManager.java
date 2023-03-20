@@ -196,6 +196,20 @@ public class ConfiguredProcessorManager {
 					configuredProcessor.getMissionCode(), securityService.getMission()));			
 		}
 		
+		// Ensure mandatory attributes are set
+		if (null == configuredProcessor.getIdentifier() || configuredProcessor.getIdentifier().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "identifier", "configuredProcessor creation"));
+		}
+		if (null == configuredProcessor.getProcessorName() || configuredProcessor.getProcessorName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorName", "configuredProcessor creation"));
+		}
+		if (null == configuredProcessor.getProcessorVersion() || configuredProcessor.getProcessorVersion().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorVersion", "configuredProcessor creation"));
+		}
+		if (null == configuredProcessor.getConfigurationVersion() || configuredProcessor.getConfigurationVersion().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configurationVersion", "configuredProcessor creation"));
+		}
+		
 		ConfiguredProcessor modelConfiguredProcessor = ConfiguredProcessorUtil.toModelConfiguredProcessor(configuredProcessor);
 		// Make sure configured processor has a UUID
 		if (null == modelConfiguredProcessor.getUuid()) {
@@ -320,6 +334,20 @@ public class ConfiguredProcessorManager {
 			throw new NoResultException(logger.log(ProcessorMgrMessage.CONFIGURED_PROCESSOR_ID_NOT_FOUND, id));
 		}
 		ConfiguredProcessor modelConfiguredProcessor = optConfiguredProcessor.get();
+				
+		// Ensure mandatory attributes are set
+		if (null == configuredProcessor.getIdentifier() || configuredProcessor.getIdentifier().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "identifier", "configuredProcessor modification"));
+		}
+		if (null == configuredProcessor.getProcessorName() || configuredProcessor.getProcessorName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorName", "configuredProcessor modification"));
+		}
+		if (null == configuredProcessor.getProcessorVersion() || configuredProcessor.getProcessorVersion().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorVersion", "configuredProcessor modification"));
+		}
+		if (null == configuredProcessor.getConfigurationVersion() || configuredProcessor.getConfigurationVersion().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configurationVersion", "configuredProcessor modification"));
+		}
 		
 		// Make sure we are allowed to change the configured processor (no intermediate update)
 		if (modelConfiguredProcessor.getVersion() != configuredProcessor.getVersion().intValue()) {
@@ -429,7 +457,7 @@ public class ConfiguredProcessorManager {
 			} 
 		}
 		// Check whether there are selection rules referencing this configured processor
-		String sqlQuery = "SELECT COUNT(*) FROM simple_selection_rule_applicable_configured_processors WHERE applicable_configured_processors_id = :id";
+		String sqlQuery = "SELECT COUNT(*) FROM simple_selection_rule_applicable_configured_processors WHERE configured_processors_id = :id";
 		Query query = em.createNativeQuery(sqlQuery);
 		query.setParameter("id", modelConfiguredProcessor.get().getId());
 		Object result = query.getSingleResult();

@@ -20,6 +20,13 @@
 
 	<properties>
 		<module.version>0.9.5-ODIP</module.version>
+		<resteasy.version>3.14.0.Final</resteasy.version>
+		<!-- Properties below to raise dependencies from Spring Boot 2.1.6 to Resteasy 3.14.0 -->
+        <commons-codec.version>1.14</commons-codec.version>
+        <httpclient.version>4.5.13</httpclient.version>
+        <jackson.version>2.10.5</jackson.version>
+        <jboss-logging.version>3.4.1.Final</jboss-logging.version>
+        <reactive-streams.version>1.0.3</reactive-streams.version>
 	</properties>
 
 	<dependencies>
@@ -39,20 +46,24 @@
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<!-- From JBoss Resteasy documentation -->
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-jaxrs</artifactId>
+            <version>${resteasy.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>3.0.2.Final</version>
+            <version>${resteasy.version}</version>
         </dependency>
-		<dependency>
-			<groupId>javax.ws.rs</groupId>
-			<artifactId>javax.ws.rs-api</artifactId>
-			<version>2.1</version>
-		</dependency>
+
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 		</dependency>
+   
 		<dependency>
 			<groupId>de.dlr.proseo</groupId>
 			<artifactId>proseo-common</artifactId>

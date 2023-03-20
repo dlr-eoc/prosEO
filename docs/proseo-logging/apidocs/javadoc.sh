@@ -1,1 +1,1 @@
-/Library/Java/JavaVirtualMachines/jdk-17.0.3.1.jdk/Contents/Home/bin/javadoc @options @packages
+/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home/bin/javadoc @options @packages

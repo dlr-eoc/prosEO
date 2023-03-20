@@ -15,7 +15,7 @@ public enum ModelMessage implements ProseoMessage {
 
 	SLICING_DURATION_NOT_ALLOWED		(2500, Level.ERROR, false, "Setting of slicing duration not allowed for slicing type ", ""),
 	SLICING_OVERLAP_NOT_ALLOWED			(2501, Level.ERROR, false, "Setting of slicing overlap not allowed for slicing type ", ""),
-	NO_ITEM_FOUND						(2502, Level.ERROR, false, "No item found or not enough time coverage for selection rule '{0}' and time interval ({1}, {2})", ""),
+	NO_ITEM_FOUND						(2502, Level.ERROR, false, "No item found or not enough time coverage for selection rule ''{0}'' and time interval ({1}, {2})", ""),
 	INVALID_ITEM_TYPE					(2503, Level.ERROR, false, "Item with different item type found ", ""),
 	CANNOT_CREATE_QUERY					(2504, Level.ERROR, false, "Cannot create query (cause: {0})", ""),
 	POLICY_TYPE_NOT_IMPLEMENTED			(2505, Level.ERROR, false, "Policy type {0} not implemented", ""),

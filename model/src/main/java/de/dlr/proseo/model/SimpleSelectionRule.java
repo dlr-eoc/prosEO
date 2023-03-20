@@ -87,7 +87,7 @@ public class SimpleSelectionRule extends PersistentObject {
 
 	/** The set of processor configurations, for which this rule is applicable */
 	@ManyToMany
-	private Set<ConfiguredProcessor> applicableConfiguredProcessors = new HashSet<>();
+	private Set<ConfiguredProcessor> configuredProcessors = new HashSet<>();
 	
 	/**
 	 * Gets the applicable processing mode
@@ -241,19 +241,19 @@ public class SimpleSelectionRule extends PersistentObject {
 	/**
 	 * Gets the applicable processor configurations
 	 * 
-	 * @return the applicableConfiguredProcessors
+	 * @return the configuredProcessors
 	 */
-	public Set<ConfiguredProcessor> getApplicableConfiguredProcessors() {
-		return applicableConfiguredProcessors;
+	public Set<ConfiguredProcessor> getConfiguredProcessors() {
+		return configuredProcessors;
 	}
 
 	/**
 	 * Sets the applicable processor configurations
 	 * 
-	 * @param applicableConfiguredProcessors the applicableConfiguredProcessors to set
+	 * @param configuredProcessors the configuredProcessors to set
 	 */
-	public void setApplicableConfiguredProcessors(Set<ConfiguredProcessor> applicableConfiguredProcessors) {
-		this.applicableConfiguredProcessors = applicableConfiguredProcessors;
+	public void setConfiguredProcessors(Set<ConfiguredProcessor> configuredProcessors) {
+		this.configuredProcessors = configuredProcessors;
 	}
 
 	/**

@@ -183,6 +183,9 @@ public class UserManager {
 		if (null == restUser.getPassword() || restUser.getPassword().isBlank()) {
 			throw new IllegalArgumentException(logger.log(UserMgrMessage.PASSWORD_MISSING));
 		}
+		if (null == restUser.getAuthorities()) {
+			restUser.setAuthorities(new ArrayList<String>());
+		}
 		
 		// Make sure user does not exist already
 		if (null != userRepository.findByUsername(restUser.getUsername())) {
@@ -384,6 +387,9 @@ public class UserManager {
 		}
 		if (null == restUser) {
 			throw new IllegalArgumentException(logger.log(UserMgrMessage.USER_DATA_MISSING));
+		}
+		if (null == restUser.getAuthorities()) {
+			restUser.setAuthorities(new ArrayList<String>());
 		}
 		
 		// Check permission to change the user (only ROOT and USERMGR may change all users, regular users may only change

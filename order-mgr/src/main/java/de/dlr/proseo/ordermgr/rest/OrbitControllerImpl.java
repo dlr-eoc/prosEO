@@ -188,7 +188,7 @@ public class OrbitControllerImpl implements OrbitController {
 	
 	/**
 	 * Create orbit/s from the given Json object 
-	 * @param orbit the List of Json object to create the orbit from
+	 * @param orbits the List of Json object to create the orbit from
 	 * @return a response containing 
 	 *         HTTP status "CREATED" and a List of Json object corresponding to the orbit after persistence
      *             (with ID and version for all contained objects) or
@@ -197,11 +197,11 @@ public class OrbitControllerImpl implements OrbitController {
 	 *         HTTP status "INTERNAL_SERVER_ERROR" and an error message, if any other error occurred
 	 */
 	@Override
-	public ResponseEntity<List<RestOrbit>> createOrbits(@Valid List<RestOrbit> orbit) {		
-		if (logger.isTraceEnabled()) logger.trace(">>> createOrbit({})", orbit.getClass());
+	public ResponseEntity<List<RestOrbit>> createOrbits(@Valid List<RestOrbit> orbits) {		
+		if (logger.isTraceEnabled()) logger.trace(">>> createOrbit({})", orbits.getClass());
 		
 		/* Check argument */
-		if (null == orbit || orbit.isEmpty()) {
+		if (null == orbits || orbits.isEmpty()) {
 			return new ResponseEntity<>(
 					http.errorHeaders(logger.log(OrderMgrMessage.ORBIT_MISSING)), HttpStatus.BAD_REQUEST);
 		}
@@ -213,7 +213,21 @@ public class OrbitControllerImpl implements OrbitController {
 			restOrbitList = transactionTemplate.execute((status) -> {
 				List<RestOrbit> restOrbits = new ArrayList<>();
 				//Insert every valid Rest orbit into the DB
-				for(RestOrbit tomodelOrbit : orbit) {
+				for(RestOrbit tomodelOrbit : orbits) {
+					// Ensure mandatory attributes are set
+					if (null == tomodelOrbit.getSpacecraftCode() || tomodelOrbit.getSpacecraftCode().isBlank()) {
+						throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "spacecraftCode", "orbit creation"));
+					}
+					if (null == tomodelOrbit.getOrbitNumber()) {
+						throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "orbitNumber", "orbit creation"));
+					}
+					if (null == tomodelOrbit.getStartTime() || tomodelOrbit.getStartTime().isBlank()) {
+						throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "startTime", "orbit creation"));
+					}
+					if (null == tomodelOrbit.getStopTime() || tomodelOrbit.getStopTime().isBlank()) {
+						throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "stopTime", "orbit creation"));
+					}
+					
 					Orbit modelOrbit = OrbitUtil.toModelOrbit(tomodelOrbit);
 					
 					// Check for existing orbits and update them!
@@ -326,8 +340,22 @@ public class OrbitControllerImpl implements OrbitController {
 				
 				if (optModelOrbit.isEmpty()) {
 					throw new NoResultException(logger.log(OrderMgrMessage.ORBIT_NOT_FOUND, id));
-				}
+				}				
 				Orbit modelOrbit = optModelOrbit.get();
+				
+				// Ensure mandatory attributes are set
+				if (null == orbit.getSpacecraftCode() || orbit.getSpacecraftCode().isBlank()) {
+					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "spacecraftCode", "orbit modification"));
+				}
+				if (null == orbit.getOrbitNumber()) {
+					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "orbitNumber", "orbit modification"));
+				}
+				if (null == orbit.getStartTime() || orbit.getStartTime().isBlank()) {
+					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "startTime", "orbit modification"));
+				}
+				if (null == orbit.getStopTime() || orbit.getStopTime().isBlank()) {
+					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "stopTime", "orbit modification"));
+				}
 				
 				// Update modified attributes
 				boolean orbitChanged = false;

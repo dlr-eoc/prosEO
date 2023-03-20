@@ -10,9 +10,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.StorageMgrMessage;
 import de.dlr.proseo.storagemgr.version2.FileUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 import de.dlr.proseo.storagemgr.version2.model.Storage;
@@ -37,7 +36,7 @@ public class PosixStorage implements Storage {
 	private String bucket;
 
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(PosixStorage.class);
+	private static ProseoLogger logger = new ProseoLogger(PosixStorage.class);
 
 	/** posix data access layer object */
 	private PosixDAL posixDAL = new PosixDAL();
@@ -61,6 +60,7 @@ public class PosixStorage implements Storage {
 		this.bucket = StorageFile.NO_BUCKET;
 
 		new FileUtils(basePath).createDirectories();
+		new FileUtils(sourcePath).createDirectories();
 	}
 
 	/**
@@ -245,8 +245,9 @@ public class PosixStorage implements Storage {
 	public List<String> getRelativePath(List<String> absolutePaths) {
 		
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getRelativePath({})", absolutePaths.size());
+			logger.trace(">>> getRelativePath({})", absolutePaths);
 		
+		logger.trace("... basePath = {}, sourcePath = {}", basePath, sourcePath);
 		List<String> basePaths = new ArrayList<>();
 		basePaths.add(basePath);
 		basePaths.add(sourcePath);
@@ -258,6 +259,8 @@ public class PosixStorage implements Storage {
 			String relativePath = new PathConverter(absolutePath, basePaths).getRelativePath().getPath();
 			relativePaths.add(relativePath);
 		}
+		
+		logger.trace("... resulting relativePaths = {}");
 		
 		return relativePaths; 
 	}
@@ -332,14 +335,15 @@ public class PosixStorage implements Storage {
 	 * @param relativePath relative path of the file
 	 * @param content      content of the file
 	 * @return storage file object of created file
+	 * @throws IOException if file cannot be created
 	 */
 	@Override
-	public StorageFile createStorageFile(String relativePath, String content) {
+	public StorageFile createStorageFile(String relativePath, String content) throws IOException {
 
 		StorageFile storageFile = getStorageFile(relativePath);
 
 		FileUtils fileUtils = new FileUtils(storageFile.getFullPath());
-		fileUtils.createFile(content);
+		if (!fileUtils.createFile(content)) throw new IOException("Cannot create file in POSIX Storage: " + relativePath);
 
 		return storageFile;
 	}
@@ -653,7 +657,7 @@ public class PosixStorage implements Storage {
 			return new FileInputStream(fullpath);
 
 		} catch (FileNotFoundException e) {
-			logger.error("Requested POSIX file {} not found", fullpath);
+			logger.log(StorageMgrMessage.FILE_NOT_FOUND, fullpath);
 			throw e;
 		}
 	}

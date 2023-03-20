@@ -1,25 +1,25 @@
 -classpath
-'/Users/katharina/.m2/repository/ch/qos/logback/logback-core/1.2.3/logback-core-1.2.3.jar:/Users/katharina/.m2/repository/ch/qos/logback/logback-classic/1.2.3/logback-classic-1.2.3.jar:/Users/katharina/.m2/repository/org/slf4j/slf4j-api/1.7.26/slf4j-api-1.7.26.jar:/Users/katharina/.m2/repository/org/springframework/spring-web/5.1.8.RELEASE/spring-web-5.1.8.RELEASE.jar:/Users/katharina/.m2/repository/org/springframework/spring-beans/5.1.8.RELEASE/spring-beans-5.1.8.RELEASE.jar:/Users/katharina/.m2/repository/org/springframework/spring-core/5.1.8.RELEASE/spring-core-5.1.8.RELEASE.jar:/Users/katharina/.m2/repository/org/springframework/spring-jcl/5.1.8.RELEASE/spring-jcl-5.1.8.RELEASE.jar:/Users/katharina/.m2/repository/junit/junit/4.13.1/junit-4.13.1.jar:/Users/katharina/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar'
+'/Users/thomas/.m2/repository/ch/qos/logback/logback-core/1.2.3/logback-core-1.2.3.jar:/Users/thomas/.m2/repository/ch/qos/logback/logback-classic/1.2.3/logback-classic-1.2.3.jar:/Users/thomas/.m2/repository/org/slf4j/slf4j-api/1.7.26/slf4j-api-1.7.26.jar:/Users/thomas/.m2/repository/org/springframework/spring-web/5.1.8.RELEASE/spring-web-5.1.8.RELEASE.jar:/Users/thomas/.m2/repository/org/springframework/spring-beans/5.1.8.RELEASE/spring-beans-5.1.8.RELEASE.jar:/Users/thomas/.m2/repository/org/springframework/spring-core/5.1.8.RELEASE/spring-core-5.1.8.RELEASE.jar:/Users/thomas/.m2/repository/org/springframework/spring-jcl/5.1.8.RELEASE/spring-jcl-5.1.8.RELEASE.jar:/Users/thomas/.m2/repository/junit/junit/4.13.1/junit-4.13.1.jar:/Users/thomas/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar'
 -encoding
 'UTF-8'
 -package
 -quiet
 -sourcepath
-'/Users/katharina/Documents/Arbeit/prosEO/prosEO/logging/src/main/java'
+'/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/logging/src/main/java:/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/logging/target/generated-sources/annotations'
 -author
 -bottom
 'Copyright &#169; 2023 <a href="http://www.dlr.de">DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</a>. All rights reserved.'
 -charset
 'UTF-8'
 -d
-'/Users/katharina/Documents/Arbeit/prosEO/prosEO/logging/target/site/apidocs'
+'/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/logging/target/site/apidocs'
 -docencoding
 'UTF-8'
 -doctitle
-'prosEO Logging 0.9.4-ODIP API'
+'prosEO Logging 0.9.5-ODIP API'
 -linkoffline
-'https://docs.oracle.com/en/java/javase/11/docs/api' '/Users/katharina/Documents/Arbeit/prosEO/prosEO/logging/target/javadoc-bundle-options'
+'https://docs.oracle.com/en/java/javase/11/docs/api' '/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/logging/target/javadoc-bundle-options'
 -use
 -version
 -windowtitle
-'prosEO Logging 0.9.4-ODIP API'
+'prosEO Logging 0.9.5-ODIP API'

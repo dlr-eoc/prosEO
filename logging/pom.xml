@@ -120,7 +120,7 @@
 						<phase>package</phase>
 						<configuration>
 							<target>
-								<exec executable="java">
+								<exec executable="java" failonerror="true">
 									<arg value="-jar" />
 									<arg value="target/proseo-logging-documentation.jar" />
 									<arg value="src/site/resources/logging.html" />

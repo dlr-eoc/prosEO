@@ -51,6 +51,7 @@ public enum PripMessage implements ProseoMessage {
 	MSG_EXCEPTION_SET_RESP			(5035, Level.ERROR, false, "Exception setting response content (cause {0}: {1})", ""),
 	MSG_EXCEPTION_PIS				(5036, Level.ERROR, false, "Server Error occurred in ProductionInterfaceSecurity (cause {0}: {1})", ""),
 	MSG_EXCEPTION_PQC				(5037, Level.ERROR, false, "Server Error occurred in ProductQueryController (cause {0}: {1})", ""),
+	MSG_INVALID_COORDINATES			(5038, Level.ERROR, false, "Cannot convert coordinate string '{0}' to OData footprint", ""),
 	
 	;
 
