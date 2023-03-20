@@ -73,6 +73,8 @@ public class MonitorOrders extends Thread {
 	 */
 	@Transactional
 	public void checkOrders() {
+    	if (logger.isTraceEnabled()) logger.trace(">>> checkOrders()");
+
 		Instant now = Instant.now();
 		List<ProcessingOrder> processingOrders = RepositoryService.getOrderRepository().findAll();
 		if (processingOrders != null) {
@@ -112,6 +114,8 @@ public class MonitorOrders extends Thread {
      * Start the monitor thread
      */
     public void run() {
+    	if (logger.isTraceEnabled()) logger.trace(">>> run()");
+    	
     	Long wait = (long) 100000;
     	try {
     		if (config.getOrderCycle() != null) {
@@ -139,7 +143,7 @@ public class MonitorOrders extends Thread {
     			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
     		} catch (TransactionException e) {
     			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
-    		} catch (RuntimeException e) {
+    		} catch (Exception e) {
     			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
     		}
     		try {

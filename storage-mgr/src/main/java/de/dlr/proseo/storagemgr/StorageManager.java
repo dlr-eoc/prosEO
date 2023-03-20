@@ -12,8 +12,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import de.dlr.proseo.logging.logger.ProseoLogger;
 
 /**
  * prosEO Storage Manager application
@@ -26,14 +25,15 @@ import org.slf4j.LoggerFactory;
 @EnableConfigurationProperties
 @ComponentScan
 public class StorageManager {
-	
-	private static Logger logger = LoggerFactory.getLogger(StorageManager.class);
+
+	/** A logger for this class */
+	private static ProseoLogger logger = new ProseoLogger(StorageManager.class);
 
 	public static void main(String[] args) throws Exception {
-		
-		if (logger.isTraceEnabled()) logger.trace(">>> main({})", (Object[]) args);
-		
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> main({})", (Object[]) args);
+
 		SpringApplication.run(StorageManager.class, args);
 	}
-	
 }

@@ -9,22 +9,22 @@ import java.io.IOException;
  *
  */
 public class FileLockedAfterMaxCyclesException extends IOException {
-	
+
 	/** Serial version UID */
 	private static final long serialVersionUID = 2205920887732503437L;
 
-    /**
-     * Parameterless Constructor
-     */
-    public FileLockedAfterMaxCyclesException() {}
+	/**
+	 * Parameterless Constructor
+	 */
+	public FileLockedAfterMaxCyclesException() {
+	}
 
-    /**
-     * Constructor with message
-     * 
-     * @param message exception message
-     */
-    public FileLockedAfterMaxCyclesException(String message)
-    {
-       super(message);
-    }
+	/**
+	 * Constructor with message
+	 * 
+	 * @param message exception message
+	 */
+	public FileLockedAfterMaxCyclesException(String message) {
+		super(message);
+	}
 }

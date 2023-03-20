@@ -71,7 +71,7 @@ public enum OrderMgrMessage implements ProseoMessage {
 	ORDER_ID_MISSING					(3555, Level.ERROR, false, "Order ID not set", ""),
 	ORDER_IDENTIFIER_MISSING			(3556, Level.ERROR, false, "Order identifier not set", ""),
 	ORDER_LIST_EMPTY					(3557, Level.ERROR, false, "No processing order found for search criteria", ""),
-	ORDER_LIST_RETRIEVED				(3558, Level.INFO, true, "Order list of size {0} retrieved for mission {1}, order {2}, start time {3}, stop time {4}", ""),
+	ORDER_LIST_RETRIEVED				(3558, Level.INFO, true, "Order list of size {0} retrieved for mission {1}, order {2}, sensing start time between {3} and {4}", ""),
 	ORDER_MISSING						(3559, Level.ERROR, false, "Order not set", ""),
 	ORDER_MODIFICATION_FORBIDDEN		(3560, Level.ERROR, false, "Order modification other than state change not allowed for user {0}", ""),
 	ORDER_MODIFIED						(3561, Level.INFO, true, "Order with id {0} modified", ""),
@@ -92,6 +92,10 @@ public enum OrderMgrMessage implements ProseoMessage {
 	INVALID_WORKFLOW_UUID				(3576, Level.ERROR, false, "No workflow was found with UUID {0}", ""),
 	INVALID_WORKFLOW_SPECIFICATION		(3577, Level.ERROR, false, "Workflow name ({0}) and UUID ({1}) do not match", ""),
 	MODIFICATION_NOT_ALLOWED			(3578, Level.ERROR, false, "The following property may not be modified: {0} (Attempt to modify order {1})", ""),
+	ORDER_CLEANUP_CYCLE					(3579, Level.INFO, true, "Order cleanup cycle started", ""),
+	ORDER_CLEANUP_SLEEP					(3580, Level.INFO, true, "Order cleanup cycle completed, sleeping for {0} ms", ""),
+	ORDER_CLEANUP_TERMINATE				(3581, Level.INFO, true, "Order cleanup cycle interrupted – terminating‚", ""),
+	ORDER_NOT_EVICTABLE					(3582, Level.ERROR, false, "Eviction time {1} of order {0} not before requested cutoff time {2}", ""),
 	
 	;
 

@@ -267,8 +267,8 @@ public class GUIProductClassController extends GUIBaseController {
 							for (Object o2 : srl) {
 								if (o2 instanceof HashMap) {
 									HashMap<?, ?> sr = (HashMap<?, ?>) o2;
-									// collect all applicableConfiguredProcessors
-									List<String> procs = (List<String>)sr.get("applicableConfiguredProcessors");
+									// collect all configuredProcessors
+									List<String> procs = (List<String>)sr.get("configuredProcessors");
 									if (procs == null || procs.isEmpty()) {
 										procs = new ArrayList<String>();
 										procs.add("");
@@ -276,7 +276,7 @@ public class GUIProductClassController extends GUIBaseController {
 									for (String proc : procs) {
 										if (!sortedProcessorsList.containsKey(proc)) {
 											HashMap<String, Object> localList = new HashMap<String, Object>();
-											localList.put("applicableConfiguredProcessor", proc);
+											localList.put("configuredProcessor", proc);
 											localList.put("selRules", new ArrayList<Object>());
 											sortedProcessorsList.put(proc, localList);
 										}
@@ -312,7 +312,7 @@ public class GUIProductClassController extends GUIBaseController {
 									if (mode == null) {
 										mode = "";
 									}				
-									List<String> procs = (List<String>)sr.get("applicableConfiguredProcessors");
+									List<String> procs = (List<String>)sr.get("configuredProcessors");
 									if (procs == null || procs.isEmpty()) {
 										procs = new ArrayList<String>();
 										procs.add("");

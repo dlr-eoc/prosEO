@@ -1,1 +1,1 @@
-packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"l":"de.dlr.proseo.api.odip"},{"l":"de.dlr.proseo.api.odip.odata"},{"l":"de.dlr.proseo.api.odip.rest"},{"l":"de.dlr.proseo.api.odip.rest.model"}]
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"de.dlr.proseo.api.odip"},{"l":"de.dlr.proseo.api.odip.odata"},{"l":"de.dlr.proseo.api.odip.rest"},{"l":"de.dlr.proseo.api.odip.rest.model"},{"l":"de.dlr.proseo.api.odip.service"},{"l":"de.dlr.proseo.api.odip.util"}];updateSearchResults();

@@ -5,11 +5,17 @@
  */
 package de.dlr.proseo.api.prip.odata;
 
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -49,6 +55,8 @@ import org.apache.olingo.server.api.uri.queryoption.expression.ExpressionVisitEx
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.api.prip.ProductionInterfaceConfiguration;
 import de.dlr.proseo.api.prip.ProductionInterfaceSecurity;
@@ -402,7 +410,36 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 					.count(countOption)
 					.build();
 			SerializerResult serializerResult = serializer.entityCollection(serviceMetadata, edmEntityType, entityCollection, opts);
-			serializedContent = serializerResult.getContent();
+			
+			// Filter out elements with "null" content (i. e. empty optional fields like Footprint and GeoFootprint)
+			// Workaround because there is no way to get Olingo to do this (see also https://issues.apache.org/jira/browse/OLINGO-1361)
+			InputStream intermediateContent = serializerResult.getContent();
+			
+			// Deserialize JSON output
+			ObjectMapper om = new ObjectMapper();
+			Map<?, ?> intermediateMap = om.readValue(intermediateContent, Map.class);
+			
+			// Remove all fields with null values
+			Object valueList = intermediateMap.get("value");
+			if (null != valueList && valueList instanceof List) {
+				for (Object intermediateProduct: (List<?>) valueList) {
+					if (intermediateProduct instanceof Map) {
+						Map<?, ?> productMap = (Map<?, ?>) intermediateProduct;
+						Iterator<?> productMapKeyIter = productMap.keySet().iterator();
+						while (productMapKeyIter.hasNext()) {
+							if (null == productMap.get(productMapKeyIter.next())) {
+								productMapKeyIter.remove();
+							}
+						}
+					}
+				}
+			}
+			
+			// Re-serialize into JSON
+			ByteArrayOutputStream cleanedOutput = new ByteArrayOutputStream();
+			om.writeValue(cleanedOutput, intermediateMap);
+			
+			serializedContent = new ByteArrayInputStream(cleanedOutput.toByteArray());
 		} catch (Exception e) {
 			String message = logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
 			e.printStackTrace();

@@ -789,7 +789,7 @@ public class OrderDispatcher {
 		for (SimpleSelectionRule selectionRule : selectedSelectionRules) {
 			
 			// Skip selection rules not applicable for the selected configured processor
-			if (!selectionRule.getApplicableConfiguredProcessors().isEmpty()) {
+			if (!selectionRule.getConfiguredProcessors().isEmpty()) {
 				Set<ConfiguredProcessor> requestedProcessors = jobStep.getJob().getProcessingOrder().getRequestedConfiguredProcessors();
 				if (!requestedProcessors.isEmpty()) {
 					// Check whether any of the requested processors in the order is applicable for the given product class
@@ -805,7 +805,7 @@ public class OrderDispatcher {
 						// the selection rule must be applicable for them
 						Boolean processorFound = false;
 						for (ConfiguredProcessor requestedProcessor : applicableRequestedProcessors) {
-							if (selectionRule.getApplicableConfiguredProcessors().contains(requestedProcessor)) {
+							if (selectionRule.getConfiguredProcessors().contains(requestedProcessor)) {
 								// At least one requested processor exists, which is applicable for this selection rule
 								processorFound = true;
 								break;

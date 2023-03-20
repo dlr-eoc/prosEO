@@ -55,7 +55,7 @@ public class ModelMessageTest {
 	@Test
 	public final void testGetMessage() {
 		String result = ModelMessage.NO_ITEM_FOUND.getMessage();
-		String expected = "No item found or not enough time coverage for selection rule '{0}' and time interval ({1}, {2})";
+		String expected = "No item found or not enough time coverage for selection rule ''{0}'' and time interval ({1}, {2})";
 		assertEquals(expected, result);
 	}
 

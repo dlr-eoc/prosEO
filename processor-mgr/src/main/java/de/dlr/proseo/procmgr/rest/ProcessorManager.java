@@ -74,17 +74,34 @@ public class ProcessorManager {
 			throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.PROCESSOR_MISSING));
 		}
 		
-		// Make sure processor class name is set
-		if (null == processor.getProcessorName() || processor.getProcessorName().isBlank()) {
-			throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.PROCESSOR_NAME_MISSING));
-		}
-		
 		// Ensure user is authorized for the mission of the processor
 		if (!securityService.isAuthorizedForMission(processor.getMissionCode())) {
 			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					processor.getMissionCode(), securityService.getMission()));			
 		}
 		
+		// Ensure mandatory attributes are set
+		if (null == processor.getProcessorName() || processor.getProcessorName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorName", "processor creation"));
+		}
+		if (null == processor.getProcessorVersion() || processor.getProcessorVersion().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorVersion", "processor creation"));
+		}
+		if (null == processor.getTasks() || processor.getTasks().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "tasks", "processor creation"));
+		}
+		if (null == processor.getDockerImage() || processor.getDockerImage().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "dockerImage", "processor creation"));
+		}
+		
+		// If list attributes were set to null explicitly, initialize with empty lists
+		if (null == processor.getConfiguredProcessors()) {
+			processor.setConfiguredProcessors(new ArrayList<>());
+		}
+		if (null == processor.getDockerRunParameters()) {
+			processor.setDockerRunParameters(new ArrayList<>());
+		}
+
 		Processor modelProcessor = ProcessorUtil.toModelProcessor(processor);
 		
 		// Make sure a processor with the same processor class name and processor version does not yet exist
@@ -250,6 +267,28 @@ public class ProcessorManager {
 		if (!securityService.isAuthorizedForMission(processor.getMissionCode())) {
 			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					processor.getMissionCode(), securityService.getMission()));			
+		}
+		
+		// Ensure mandatory attributes are set
+		if (null == processor.getProcessorName() || processor.getProcessorName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorName", "processor modification"));
+		}
+		if (null == processor.getProcessorVersion() || processor.getProcessorVersion().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorVersion", "processor modification"));
+		}
+		if (null == processor.getTasks() || processor.getTasks().isEmpty()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "tasks", "processor modification"));
+		}
+		if (null == processor.getDockerImage() || processor.getDockerImage().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "dockerImage", "processor modification"));
+		}
+		
+		// If list attributes were set to null explicitly, initialize with empty lists
+		if (null == processor.getConfiguredProcessors()) {
+			processor.setConfiguredProcessors(new ArrayList<>());
+		}
+		if (null == processor.getDockerRunParameters()) {
+			processor.setDockerRunParameters(new ArrayList<>());
 		}
 		
 		Optional<Processor> optProcessor = RepositoryService.getProcessorRepository().findById(id);

@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo</artifactId>
-		<version>0.9.4-ODIP</version>
+		<version>0.9.5-ODIP</version>
 	</parent>
 
 
@@ -20,7 +20,7 @@
 	</organization>
 
 	<properties>
-		<module.version>0.9.4-ODIP</module.version>
+		<module.version>0.9.5-ODIP</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/storage-mgr-api.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.storagemgr.rest</raml-base-package>
@@ -74,7 +74,6 @@
 
 
 		<!-- AWS S3 SDK 2 -->
-
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>aws-sdk-java</artifactId>
@@ -91,11 +90,6 @@
 			</exclusions>
 		</dependency>
 
-
-		<!-- <dependency> <groupId>software.amazon.awssdk</groupId> <artifactId>aws-crt-client</artifactId> 
-			<version>2.17.123-PREVIEW</version> </dependency> -->
-
-
 		<!-- https://mvnrepository.com/artifact/software.amazon.awssdk.crt/aws-crt -->
 		<dependency>
 			<groupId>software.amazon.awssdk.crt</groupId>
@@ -103,16 +97,7 @@
 			<version>0.16.6</version>
 		</dependency>
 
-
-		<dependency>
-			<groupId>software.amazon.awssdk</groupId>
-			<artifactId>s3-transfer-manager</artifactId>
-			<version>2.17.123-PREVIEW</version>
-		</dependency>
-
 		<!-- AWS S3 SDK 1 -->
-
-
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-java-sdk-s3</artifactId>
@@ -129,26 +114,6 @@
 			</exclusions>
 		</dependency>
 
-
-		<!-- Alluxio -->
-		<!-- 
-		<dependency>
-			<groupId>org.alluxio</groupId>
-			<artifactId>alluxio-core-client-fs</artifactId>
-			<version>${alluxio.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-log4j12</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>log4j</groupId>
-					<artifactId>log4j</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-        -->
-        
         <dependency>
 			<groupId>de.dlr.proseo</groupId>
 			<artifactId>proseo-logging</artifactId>
@@ -237,7 +202,7 @@
                         <phase>install</phase>
                         <configuration>
                             <target>
-                                <exec executable="docker">
+                                <exec executable="docker" failonerror="true">
                                     <arg value="build" />
                                     <arg value="-t" />
                                     <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
@@ -245,7 +210,7 @@
                                     <arg value="${project.build.platform}" />
                                     <arg value="." />
                                 </exec>
-                                <exec executable="docker">
+                                <exec executable="docker" failonerror="true">
                                     <arg value="push" />
                                     <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
                                 </exec>

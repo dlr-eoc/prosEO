@@ -306,10 +306,9 @@ public class ProductClassControllerTest {
 		assertEquals("Unexpected mandatory value:", false, responseRule.getIsMandatory());
 		assertEquals("Unexpected target product class:", TEST_NEW_PRODUCT_TYPE, responseRule.getTargetProductClass());
 		assertEquals("Unexpected source product class:", TEST_PRODUCT_TYPE, responseRule.getSourceProductClass());
-		assertNotNull("List of configured processors missing", responseRule.getApplicableConfiguredProcessors());
-		assertEquals("Unexpected number of configured processors:", 0,
-				responseRule.getApplicableConfiguredProcessors().size());
-
+		assertNotNull("List of configured processors missing", responseRule.getConfiguredProcessors());
+		assertEquals("Unexpected number of configured processors:", 0, responseRule.getConfiguredProcessors().size());
+		
 		assertNotNull("List of filter conditions missing", responseRule.getFilterConditions());
 		assertEquals("Unexpected number of filter conditions:", 1, responseRule.getFilterConditions().size());
 

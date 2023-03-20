@@ -174,6 +174,31 @@ public class ConfigurationManager {
 					configuration.getMissionCode(), securityService.getMission()));			
 		}
 		
+		// Ensure mandatory attributes are set
+		if (null == configuration.getProcessorName() || configuration.getProcessorName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorName", "configuration creation"));
+		}
+		if (null == configuration.getConfigurationVersion() || configuration.getConfigurationVersion().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configurationVersion", "configuration creation"));
+		}
+
+		// If list attributes were set to null explicitly, initialize with empty lists
+		if (null == configuration.getDynProcParameters()) {
+			configuration.setDynProcParameters(new ArrayList<>());
+		}
+		if (null == configuration.getConfigurationFiles()) {
+			configuration.setConfigurationFiles(new ArrayList<>());
+		}
+		if (null == configuration.getStaticInputFiles()) {
+			configuration.setStaticInputFiles(new ArrayList<>());
+		}
+		if (null == configuration.getConfiguredProcessors()) {
+			configuration.setConfiguredProcessors(new ArrayList<>());
+		}
+		if (null == configuration.getDockerRunParameters()) {
+			configuration.setDockerRunParameters(new ArrayList<>());
+		}
+		
 		Configuration modelConfiguration = ConfigurationUtil.toModelConfiguration(configuration);
 		
 		// Make sure a configuration with the same processor class name and configuration version does not yet exist
@@ -290,6 +315,31 @@ public class ConfigurationManager {
 			throw new EntityNotFoundException(logger.log(ProcessorMgrMessage.CONFIGURATION_ID_NOT_FOUND, id));
 		}
 		Configuration modelConfiguration = optConfiguration.get();
+				
+		// Ensure mandatory attributes are set
+		if (null == configuration.getProcessorName() || configuration.getProcessorName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "processorName", "configuration modification"));
+		}
+		if (null == configuration.getConfigurationVersion() || configuration.getConfigurationVersion().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "configurationVersion", "configuration modification"));
+		}
+		
+		// If list attributes were set to null explicitly, initialize with empty lists
+		if (null == configuration.getDynProcParameters()) {
+			configuration.setDynProcParameters(new ArrayList<>());
+		}
+		if (null == configuration.getConfigurationFiles()) {
+			configuration.setConfigurationFiles(new ArrayList<>());
+		}
+		if (null == configuration.getStaticInputFiles()) {
+			configuration.setStaticInputFiles(new ArrayList<>());
+		}
+		if (null == configuration.getConfiguredProcessors()) {
+			configuration.setConfiguredProcessors(new ArrayList<>());
+		}
+		if (null == configuration.getDockerRunParameters()) {
+			configuration.setDockerRunParameters(new ArrayList<>());
+		}
 		
 		// Make sure we are allowed to change the configuration (no intermediate update)
 		if (modelConfiguration.getVersion() != configuration.getVersion().intValue()) {

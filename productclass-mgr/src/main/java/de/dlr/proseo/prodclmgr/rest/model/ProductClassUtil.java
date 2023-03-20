@@ -79,8 +79,8 @@ public class ProductClassUtil {
 			if (null != simpleSelectionRule.getSourceProductClass()) {
 				restSimpleSelectionRule.setSourceProductClass(simpleSelectionRule.getSourceProductClass().getProductType());
 			}
-			for (ConfiguredProcessor configuredProcessor: simpleSelectionRule.getApplicableConfiguredProcessors()) {
-				restSimpleSelectionRule.getApplicableConfiguredProcessors().add(configuredProcessor.getIdentifier());
+			for (ConfiguredProcessor configuredProcessor: simpleSelectionRule.getConfiguredProcessors()) {
+				restSimpleSelectionRule.getConfiguredProcessors().add(configuredProcessor.getIdentifier());
 			}
 			for (String filterConditionKey: simpleSelectionRule.getFilterConditions().keySet()) {
 				restSimpleSelectionRule.getFilterConditions().add(

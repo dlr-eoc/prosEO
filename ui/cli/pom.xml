@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo-ui</artifactId>
-		<version>0.9.4-ODIP</version>
+		<version>0.9.5-ODIP</version>
 	</parent>
 
 	<artifactId>proseo-ui-cli</artifactId>
@@ -18,7 +18,7 @@
 	</organization>
 
 	<properties>
-		<module.version>0.9.4-ODIP</module.version>
+		<module.version>0.9.5-ODIP</module.version>
 		<jline.version>3.13.2</jline.version>
 	</properties>
 
@@ -162,7 +162,7 @@
                         <phase>package</phase>
                         <configuration>
                             <target>
-                                <exec executable="java">
+                            	<exec executable="java" failonerror="true">
                                     <arg value="-jar" />
                                     <arg value="target/proseo-ui-cli-syntax2html.jar" />
                                     <arg value="src/main/resources/ui-cli-syntax.yml" />

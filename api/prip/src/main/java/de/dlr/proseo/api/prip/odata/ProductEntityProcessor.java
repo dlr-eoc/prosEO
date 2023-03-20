@@ -5,9 +5,15 @@
  */
 package de.dlr.proseo.api.prip.odata;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
@@ -15,6 +21,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.olingo.commons.api.data.ContextURL;
@@ -53,6 +60,11 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.dlr.proseo.api.prip.ProductionInterfaceConfiguration;
 import de.dlr.proseo.api.prip.ProductionInterfaceSecurity;
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -73,6 +85,9 @@ import de.dlr.proseo.model.enums.UserRole;
 @Transactional
 public class ProductEntityProcessor implements EntityProcessor, MediaEntityProcessor {
 
+	// Unformatted message
+	private static final String MSG_CANNOT_FILTER_SERIALIZED_OUTPUT = "Cannot filter serialized output";
+	
 	/* Other string constants */
 	private static final String HTTP_HEADER_WARNING = "Warning";
 
@@ -352,7 +367,35 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 				.select(selectOption)
 				.build();
 		SerializerResult serializerResult = serializer.entity(serviceMetadata, edmEntityType, entity, opts);
-		InputStream serializedContent = serializerResult.getContent();
+		
+		// Filter out elements with "null" content (i. e. empty optional fields like Footprint and GeoFootprint)
+		// Workaround because there is no way to get Olingo to do this (see also https://issues.apache.org/jira/browse/OLINGO-1361)
+		InputStream intermediateContent = serializerResult.getContent();
+		InputStream serializedContent = null;
+		
+		try {
+			// Deserialize JSON output
+			ObjectMapper om = new ObjectMapper();
+			Map<?, ?> intermediateMap = om.readValue(intermediateContent, Map.class);
+			
+			// Remove all fields with null values
+			Iterator<?> productMapKeyIter = intermediateMap.keySet().iterator();
+			while (productMapKeyIter.hasNext()) {
+				if (null == intermediateMap.get(productMapKeyIter.next())) {
+					productMapKeyIter.remove();
+				}
+			}
+			
+			// Re-serialize into JSON
+			ByteArrayOutputStream cleanedOutput = new ByteArrayOutputStream();
+			om.writeValue(cleanedOutput, intermediateMap);
+			
+			serializedContent = new ByteArrayInputStream(cleanedOutput.toByteArray());
+		} catch (IOException e) {
+			// Highly unlikely given that we transform JSON to Map to JSON using the same ObjectMapper
+			throw new ODataApplicationException(MSG_CANNOT_FILTER_SERIALIZED_OUTPUT, 
+					HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Locale.ROOT, e);
+		}
 
 		// Finally: configure the response object: set the body, headers and status code
 		response.setContent(serializedContent);

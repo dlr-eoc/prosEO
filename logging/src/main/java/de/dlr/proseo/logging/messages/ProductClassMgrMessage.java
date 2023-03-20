@@ -56,7 +56,7 @@ public enum ProductClassMgrMessage implements ProseoMessage {
 	PRODUCT_CLASS_NOT_MODIFIED			(5040, Level.INFO, true, "Product class with ID {0} not modified (no changes)", ""),
 	PRODUCT_CLASS_RETRIEVED				(5041, Level.INFO, true, "Product class with ID {0} retrieved", ""),
 	PRODUCT_CLASS_SAVE_FAILED			(5042, Level.ERROR, false, "Save failed for product class {0} in mission {1} (cause: {2})", ""),
-	PRODUCT_QUERIES_EXIST				(5043, Level.ERROR, false, "Rule '{0}' for product class {1} cannot be deleted, because it is used in product queries", ""),
+	PRODUCT_QUERIES_EXIST				(5043, Level.ERROR, false, "Rule ''{0}'' for product class {1} cannot be deleted, because it is used in product queries", ""),
 	RULE_STRING_MISSING					(5044, Level.ERROR, false, "Selection rule missing in selection rule string {0}", ""),
 	SELECTION_RULE_DATA_MISSING			(5045, Level.ERROR, false, "Selection rule data not set", ""),
 	SELECTION_RULE_DELETED				(5046, Level.INFO, true, "Selection rule with ID {0} for product class with ID {1} deleted", ""),

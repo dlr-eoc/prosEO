@@ -1,0 +1,3993 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 17,
+  "iteration": 1678380912739,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 0
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 10,
+        "x": 0,
+        "y": 0
+      },
+      "id": 50,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.1.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\"]\n\nRawSeries =from(bucket: \"operation\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> filter(fn: (r) => r.service == \"${var_services}\")\n\nNamedSeries = RawSeries\n    |> map(fn: (r) => ({\"Time\":r._time, \"State\":r.state}))\n    |> keep(columns:FinalOutput)\n    \nNamedSeries |> yield()\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = '${var_service}') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "${var_service} (selected)",
+      "type": "state-timeline"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 3,
+        "x": 10,
+        "y": 0
+      },
+      "id": 59,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='$var_service') AND\r\n    mon_service_state_id = (SELECT id FROM mon_service_state WHERE name='running') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n\r\n  / (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='$var_service') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n  * 100;",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "$var_service (selected)",
+      "type": "gauge"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "super-light-green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 13,
+        "y": 0
+      },
+      "id": 32,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\" ]\r\n\r\nRawSeries =from(bucket: \"operation\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.service == \"${var_services}\")\r\n\r\nNamedSeries = RawSeries\r\n    |> map(fn: (r) => ({\"Time\":r._time, \"Service\":r.service, \"State\":r.state, }))\r\n    |> keep(columns:FinalOutput)\r\n    \r\nNamedSeries |> yield()\r\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = '${var_service}') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "${var_service} (selected)",
+      "type": "stat"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "color-text",
+            "filterable": true
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "string"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 7,
+        "x": 17,
+        "y": 0
+      },
+      "id": 33,
+      "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "frameIndex": 0,
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "state {_start=\"2021-08-19 13:42:55 +0000 UTC\", _stop=\"2021-08-19 13:47:55 +0000 UTC\", service=\"order_manager\"}"
+          }
+        ]
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"Service\", \"State\" ]\n\nRawSeries =from(bucket: \"operation\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> filter(fn: (r) => r.service == \"${var_services}\")\n\nNamedSeries = RawSeries\n    |> map(fn: (r) => ({\"Time\":r._time, \"Service\":r.service, \"State\":r.state, }))\n    |> keep(columns:FinalOutput)\n    \nNamedSeries |> yield()\n\n \n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = '${var_service}') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "${var_service} (selected)",
+      "type": "table"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 0
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 10,
+        "x": 0,
+        "y": 6
+      },
+      "id": 54,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.1.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\"]\n\nRawSeries =from(bucket: \"operation\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> filter(fn: (r) => r.service == \"facility_manager\")\n\nNamedSeries = RawSeries\n    |> map(fn: (r) => ({\"Time\":r._time, \"State\":r.state}))\n    |> keep(columns:FinalOutput)\n    \nNamedSeries |> yield()\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'Facility Manager') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Facility Manager",
+      "type": "state-timeline"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 10,
+        "y": 6
+      },
+      "id": 62,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='Facility Manager') AND\r\n    mon_service_state_id = (SELECT id FROM mon_service_state WHERE name='running') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n\r\n  / (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='Facility Manager') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n  * 100;",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Facility Manager",
+      "type": "gauge"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "super-light-green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 13,
+        "y": 6
+      },
+      "id": 57,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\" ]\r\n\r\nRawSeries =from(bucket: \"operation\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.service == \"facility_manager\")\r\n\r\nNamedSeries = RawSeries\r\n    |> map(fn: (r) => ({\"Time\":r._time, \"Service\":r.service, \"State\":r.state, }))\r\n    |> keep(columns:FinalOutput)\r\n    \r\nNamedSeries |> yield()\r\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'Facility Manager') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Facility Manager",
+      "type": "stat"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "color-text",
+            "filterable": true
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "string"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 48,
+        "w": 7,
+        "x": 17,
+        "y": 6
+      },
+      "id": 51,
+      "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "frameIndex": 0,
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "time"
+          }
+        ]
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"Service\", \"State\" ]\n\nRawSeries =from(bucket: \"operation\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n\n\nNamedSeries = RawSeries\n    |> map(fn: (r) => ({\"Time\":r._time, \"Service\":r.service, \"State\":r.state, }))\n    |> keep(columns:FinalOutput)\n    \nNamedSeries |> yield()\n\n \n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service.name AS service,\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nINNER JOIN mon_service on mon_service_state_operation.mon_service_id = mon_service.id\nWHERE  \n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "All",
+      "type": "table"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 0
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 10,
+        "x": 0,
+        "y": 10
+      },
+      "id": 69,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.1.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\"]\n\nRawSeries =from(bucket: \"operation\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> filter(fn: (r) => r.service == \"facility_manager\")\n\nNamedSeries = RawSeries\n    |> map(fn: (r) => ({\"Time\":r._time, \"State\":r.state}))\n    |> keep(columns:FinalOutput)\n    \nNamedSeries |> yield()\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'Grafana') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Grafana",
+      "type": "state-timeline"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 10,
+        "y": 10
+      },
+      "id": 67,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='Grafana') AND\r\n    mon_service_state_id = (SELECT id FROM mon_service_state WHERE name='running') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n\r\n  / (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='Grafana') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n  * 100;",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Grafana",
+      "type": "gauge"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "super-light-green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 13,
+        "y": 10
+      },
+      "id": 68,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\" ]\r\n\r\nRawSeries =from(bucket: \"operation\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.service == \"facility_manager\")\r\n\r\nNamedSeries = RawSeries\r\n    |> map(fn: (r) => ({\"Time\":r._time, \"Service\":r.service, \"State\":r.state, }))\r\n    |> keep(columns:FinalOutput)\r\n    \r\nNamedSeries |> yield()\r\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'Grafana') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Grafana",
+      "type": "stat"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 0
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 10,
+        "x": 0,
+        "y": 14
+      },
+      "id": 87,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.1.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\"]\n\nRawSeries =from(bucket: \"operation\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> filter(fn: (r) => r.service == \"facility_manager\")\n\nNamedSeries = RawSeries\n    |> map(fn: (r) => ({\"Time\":r._time, \"State\":r.state}))\n    |> keep(columns:FinalOutput)\n    \nNamedSeries |> yield()\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'GUI') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "GUI",
+      "type": "state-timeline"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 10,
+        "y": 14
+      },
+      "id": 85,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='GUI') AND\r\n    mon_service_state_id = (SELECT id FROM mon_service_state WHERE name='running') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n\r\n  / (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='GUI') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n  * 100;",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "GUI",
+      "type": "gauge"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "super-light-green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 13,
+        "y": 14
+      },
+      "id": 86,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\" ]\r\n\r\nRawSeries =from(bucket: \"operation\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.service == \"facility_manager\")\r\n\r\nNamedSeries = RawSeries\r\n    |> map(fn: (r) => ({\"Time\":r._time, \"Service\":r.service, \"State\":r.state, }))\r\n    |> keep(columns:FinalOutput)\r\n    \r\nNamedSeries |> yield()\r\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'GUI') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "GUI",
+      "type": "stat"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 0
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 10,
+        "x": 0,
+        "y": 18
+      },
+      "id": 63,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.1.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\"]\n\nRawSeries =from(bucket: \"operation\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> filter(fn: (r) => r.service == \"facility_manager\")\n\nNamedSeries = RawSeries\n    |> map(fn: (r) => ({\"Time\":r._time, \"State\":r.state}))\n    |> keep(columns:FinalOutput)\n    \nNamedSeries |> yield()\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'Ingestor') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Ingestor",
+      "type": "state-timeline"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 10,
+        "y": 18
+      },
+      "id": 64,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='Ingestor') AND\r\n    mon_service_state_id = (SELECT id FROM mon_service_state WHERE name='running') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n\r\n  / (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='Ingestor') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n  * 100;",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Ingestor",
+      "type": "gauge"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "super-light-green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 13,
+        "y": 18
+      },
+      "id": 65,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\" ]\r\n\r\nRawSeries =from(bucket: \"operation\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.service == \"facility_manager\")\r\n\r\nNamedSeries = RawSeries\r\n    |> map(fn: (r) => ({\"Time\":r._time, \"Service\":r.service, \"State\":r.state, }))\r\n    |> keep(columns:FinalOutput)\r\n    \r\nNamedSeries |> yield()\r\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'Ingestor') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Ingestor",
+      "type": "stat"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 0
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 10,
+        "x": 0,
+        "y": 22
+      },
+      "id": 52,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.1.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\"]\n\nRawSeries =from(bucket: \"operation\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> filter(fn: (r) => r.service == \"order_manager\")\n\nNamedSeries = RawSeries\n    |> map(fn: (r) => ({\"Time\":r._time, \"State\":r.state}))\n    |> keep(columns:FinalOutput)\n    \nNamedSeries |> yield()\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE\n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'Metadata Database') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Metadata Database",
+      "type": "state-timeline"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 10,
+        "y": 22
+      },
+      "id": 60,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='Metadata Database') AND\r\n    mon_service_state_id = (SELECT id FROM mon_service_state WHERE name='running') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n\r\n  / (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='Metadata Database') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n  * 100;",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Metadata Database",
+      "type": "gauge"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "super-light-green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 13,
+        "y": 22
+      },
+      "id": 55,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\" ]\r\n\r\nRawSeries =from(bucket: \"operation\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.service == \"order_manager\")\r\n\r\nNamedSeries = RawSeries\r\n    |> map(fn: (r) => ({\"Time\":r._time, \"Service\":r.service, \"State\":r.state, }))\r\n    |> keep(columns:FinalOutput)\r\n    \r\nNamedSeries |> yield()\r\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE\n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'Metadata Database') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Metadata Database",
+      "type": "stat"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 0
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 10,
+        "x": 0,
+        "y": 26
+      },
+      "id": 66,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.1.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\"]\n\nRawSeries =from(bucket: \"operation\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> filter(fn: (r) => r.service == \"facility_manager\")\n\nNamedSeries = RawSeries\n    |> map(fn: (r) => ({\"Time\":r._time, \"State\":r.state}))\n    |> keep(columns:FinalOutput)\n    \nNamedSeries |> yield()\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'Order Manager') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Order Manager",
+      "type": "state-timeline"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 10,
+        "y": 26
+      },
+      "id": 70,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='Order Manager') AND\r\n    mon_service_state_id = (SELECT id FROM mon_service_state WHERE name='running') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n\r\n  / (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='Order Manager') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n  * 100;",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Order Manager",
+      "type": "gauge"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "super-light-green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 13,
+        "y": 26
+      },
+      "id": 71,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\" ]\r\n\r\nRawSeries =from(bucket: \"operation\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.service == \"facility_manager\")\r\n\r\nNamedSeries = RawSeries\r\n    |> map(fn: (r) => ({\"Time\":r._time, \"Service\":r.service, \"State\":r.state, }))\r\n    |> keep(columns:FinalOutput)\r\n    \r\nNamedSeries |> yield()\r\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'Order Manager') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Order Manager",
+      "type": "stat"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 0
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 10,
+        "x": 0,
+        "y": 30
+      },
+      "id": 53,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.1.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\"]\n\nRawSeries =from(bucket: \"operation\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> filter(fn: (r) => r.service == \"planner\")\n\nNamedSeries = RawSeries\n    |> map(fn: (r) => ({\"Time\":r._time, \"State\":r.state}))\n    |> keep(columns:FinalOutput)\n    \nNamedSeries |> yield()\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'PRIP API') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "PRIP API",
+      "type": "state-timeline"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 10,
+        "y": 30
+      },
+      "id": 61,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='PRIP API') AND\r\n    mon_service_state_id = (SELECT id FROM mon_service_state WHERE name='running') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n\r\n  / (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='PRIP API') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n  * 100;",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "PRIP API",
+      "type": "gauge"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "super-light-green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 13,
+        "y": 30
+      },
+      "id": 56,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\" ]\r\n\r\nRawSeries =from(bucket: \"operation\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.service == \"planner\")\r\n\r\nNamedSeries = RawSeries\r\n    |> map(fn: (r) => ({\"Time\":r._time, \"Service\":r.service, \"State\":r.state, }))\r\n    |> keep(columns:FinalOutput)\r\n    \r\nNamedSeries |> yield()\r\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'PRIP API') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "PRIP API",
+      "type": "stat"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 0
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 10,
+        "x": 0,
+        "y": 34
+      },
+      "id": 78,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.1.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\"]\n\nRawSeries =from(bucket: \"operation\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> filter(fn: (r) => r.service == \"facility_manager\")\n\nNamedSeries = RawSeries\n    |> map(fn: (r) => ({\"Time\":r._time, \"State\":r.state}))\n    |> keep(columns:FinalOutput)\n    \nNamedSeries |> yield()\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'Processor Manager') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Processor Manager",
+      "type": "state-timeline"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 10,
+        "y": 34
+      },
+      "id": 76,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='Processor Manager') AND\r\n    mon_service_state_id = (SELECT id FROM mon_service_state WHERE name='running') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n\r\n  / (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='Processor Manager') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n  * 100;",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Processor Manager",
+      "type": "gauge"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "super-light-green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 13,
+        "y": 34
+      },
+      "id": 77,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\" ]\r\n\r\nRawSeries =from(bucket: \"operation\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.service == \"facility_manager\")\r\n\r\nNamedSeries = RawSeries\r\n    |> map(fn: (r) => ({\"Time\":r._time, \"Service\":r.service, \"State\":r.state, }))\r\n    |> keep(columns:FinalOutput)\r\n    \r\nNamedSeries |> yield()\r\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'Processor Manager') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Processor Manager",
+      "type": "stat"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 0
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 10,
+        "x": 0,
+        "y": 38
+      },
+      "id": 75,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.1.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\"]\n\nRawSeries =from(bucket: \"operation\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> filter(fn: (r) => r.service == \"facility_manager\")\n\nNamedSeries = RawSeries\n    |> map(fn: (r) => ({\"Time\":r._time, \"State\":r.state}))\n    |> keep(columns:FinalOutput)\n    \nNamedSeries |> yield()\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'Product Class Manager') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Product Class Manager",
+      "type": "state-timeline"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 10,
+        "y": 38
+      },
+      "id": 79,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='Product Class Manager') AND\r\n    mon_service_state_id = (SELECT id FROM mon_service_state WHERE name='running') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n\r\n  / (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='Product Class Manager') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n  * 100;",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Product Class Manager",
+      "type": "gauge"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "super-light-green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 13,
+        "y": 38
+      },
+      "id": 80,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\" ]\r\n\r\nRawSeries =from(bucket: \"operation\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.service == \"facility_manager\")\r\n\r\nNamedSeries = RawSeries\r\n    |> map(fn: (r) => ({\"Time\":r._time, \"Service\":r.service, \"State\":r.state, }))\r\n    |> keep(columns:FinalOutput)\r\n    \r\nNamedSeries |> yield()\r\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'Product Class Manager') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Product Class Manager",
+      "type": "stat"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 0
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 10,
+        "x": 0,
+        "y": 42
+      },
+      "id": 72,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.1.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\"]\n\nRawSeries =from(bucket: \"operation\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> filter(fn: (r) => r.service == \"facility_manager\")\n\nNamedSeries = RawSeries\n    |> map(fn: (r) => ({\"Time\":r._time, \"State\":r.state}))\n    |> keep(columns:FinalOutput)\n    \nNamedSeries |> yield()\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'Production Planner') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Production Planner",
+      "type": "state-timeline"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 10,
+        "y": 42
+      },
+      "id": 73,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='Production Planner') AND\r\n    mon_service_state_id = (SELECT id FROM mon_service_state WHERE name='running') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n\r\n  / (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='Production Planner') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n  * 100;",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Production Planner",
+      "type": "gauge"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "super-light-green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 13,
+        "y": 42
+      },
+      "id": 74,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\" ]\r\n\r\nRawSeries =from(bucket: \"operation\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.service == \"facility_manager\")\r\n\r\nNamedSeries = RawSeries\r\n    |> map(fn: (r) => ({\"Time\":r._time, \"Service\":r.service, \"State\":r.state, }))\r\n    |> keep(columns:FinalOutput)\r\n    \r\nNamedSeries |> yield()\r\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'Production Planner') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Production Planner",
+      "type": "stat"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 0
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 10,
+        "x": 0,
+        "y": 46
+      },
+      "id": 81,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.1.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\"]\n\nRawSeries =from(bucket: \"operation\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> filter(fn: (r) => r.service == \"facility_manager\")\n\nNamedSeries = RawSeries\n    |> map(fn: (r) => ({\"Time\":r._time, \"State\":r.state}))\n    |> keep(columns:FinalOutput)\n    \nNamedSeries |> yield()\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'Storage Manager') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Storage Manager",
+      "type": "state-timeline"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 10,
+        "y": 46
+      },
+      "id": 82,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='Storage Manager') AND\r\n    mon_service_state_id = (SELECT id FROM mon_service_state WHERE name='running') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n\r\n  / (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='Storage Manager') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n  * 100;",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Storage Manager",
+      "type": "gauge"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "super-light-green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 13,
+        "y": 46
+      },
+      "id": 83,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\" ]\r\n\r\nRawSeries =from(bucket: \"operation\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.service == \"facility_manager\")\r\n\r\nNamedSeries = RawSeries\r\n    |> map(fn: (r) => ({\"Time\":r._time, \"Service\":r.service, \"State\":r.state, }))\r\n    |> keep(columns:FinalOutput)\r\n    \r\nNamedSeries |> yield()\r\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'Storage Manager') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Storage Manager",
+      "type": "stat"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 0
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 10,
+        "x": 0,
+        "y": 50
+      },
+      "id": 90,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.1.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\"]\n\nRawSeries =from(bucket: \"operation\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> filter(fn: (r) => r.service == \"facility_manager\")\n\nNamedSeries = RawSeries\n    |> map(fn: (r) => ({\"Time\":r._time, \"State\":r.state}))\n    |> keep(columns:FinalOutput)\n    \nNamedSeries |> yield()\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'User Manager') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "User Manager",
+      "type": "state-timeline"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 10,
+        "y": 50
+      },
+      "id": 88,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='User Manager') AND\r\n    mon_service_state_id = (SELECT id FROM mon_service_state WHERE name='running') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n\r\n  / (SELECT\r\n    COUNT(*)  \r\n  FROM\r\n    mon_service_state_operation\r\n  WHERE\r\n    mon_service_id = (SELECT id FROM mon_service WHERE name='User Manager') AND\r\n    $__timeFilter(datetime at TIME zone 'UTC'))::decimal\r\n  * 100;",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "User Manager",
+      "type": "gauge"
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "running": {
+                  "color": "super-light-green",
+                  "index": 0
+                },
+                "starting": {
+                  "color": "purple",
+                  "index": 3
+                },
+                "stopped": {
+                  "color": "red",
+                  "index": 2
+                },
+                "stopping": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 13,
+        "y": 50
+      },
+      "id": 89,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Time\", \"State\" ]\r\n\r\nRawSeries =from(bucket: \"operation\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r._measurement == \"service_state\" and r._field =~ /state|service/ )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.service == \"facility_manager\")\r\n\r\nNamedSeries = RawSeries\r\n    |> map(fn: (r) => ({\"Time\":r._time, \"Service\":r.service, \"State\":r.state, }))\r\n    |> keep(columns:FinalOutput)\r\n    \r\nNamedSeries |> yield()\r\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  datetime at TIME zone 'UTC' AS \"time\",\n  mon_service_state.name AS state\nFROM mon_service_state_operation\nINNER JOIN mon_service_state on mon_service_state_operation.mon_service_state_id = mon_service_state.id\nWHERE \n  mon_service_state_operation.mon_service_id = (SELECT id FROM mon_service WHERE name = 'User Manager') AND\n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "User Manager",
+      "type": "stat"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 34,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "Facility Manager",
+          "value": "Facility Manager"
+        },
+        "definition": "SELECT mon_service.name\nFROM mon_service_state_operation\nINNER JOIN mon_service on mon_service_state_operation.mon_service_id = mon_service.id\nWHERE $__timeFilter(mon_service_state_operation.datetime at TIME zone 'UTC')\nGROUP BY 1; \n\n\n",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Services",
+        "multi": false,
+        "name": "var_service",
+        "options": [],
+        "query": "SELECT mon_service.name\nFROM mon_service_state_operation\nINNER JOIN mon_service on mon_service_state_operation.mon_service_id = mon_service.id\nWHERE $__timeFilter(mon_service_state_operation.datetime at TIME zone 'UTC')\nGROUP BY 1; \n\n\n",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "utc",
+  "title": "Services",
+  "uid": "uid_services",
+  "version": 1,
+  "weekStart": ""
+}

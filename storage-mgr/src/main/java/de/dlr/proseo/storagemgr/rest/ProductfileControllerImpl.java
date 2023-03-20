@@ -39,6 +39,7 @@ import de.dlr.proseo.storagemgr.utils.StorageLogger;
  * required to manage product files
  * 
  * @author Ernst Melchinger
+ * @author Denys Chaykovskiy
  *
  */
 
@@ -70,12 +71,11 @@ public class ProductfileControllerImpl implements ProductfileController {
 	private static ConcurrentSkipListSet<String> productLockSet = new ConcurrentSkipListSet<>();
 
 	private static Logger loggerLegacy = LoggerFactory.getLogger(ProductfileControllerImpl.class);
-	
+
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductControllerImpl.class);
 	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.STORAGE_MGR);
 
-	
 	@Autowired
 	private StorageManagerConfiguration cfg;
 
@@ -94,23 +94,23 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRestFileInfoByPathInfo({})", pathInfo);
-		
-		if (null == pathInfo)  {
+
+		if (null == pathInfo) {
 			String msg = logger.log(StorageMgrMessage.PATH_IS_NULL);
-			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);		
+			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);
 		}
-		
-		if (pathInfo == "" || pathInfo.isBlank()) {			
+
+		if (pathInfo == "" || pathInfo.isBlank()) {
 			String msg = logger.log(StorageMgrMessage.INVALID_PATH, pathInfo);
-			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);					
+			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);
 		}
 
 		// pathInfo is absolute path s3://bucket/.. or /storagePath/.. DOWNLOAD Storage
 		// -> Cache
 		if (storageProvider.isVersion2()) {
 
-			// TODO: read from cfg
-			StorageFileLocker fileLocker = new StorageFileLocker(pathInfo, 500, 600);
+			StorageFileLocker fileLocker = new StorageFileLocker(pathInfo, cfg.getFileCheckWaitTime(),
+					cfg.getFileCheckMaxCycles());
 
 			try {
 				// relative path depends on path, not on actual storage
@@ -131,25 +131,25 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 				RestFileInfo restFileInfo = convertToRestFileInfo(targetFile,
 						storageProvider.getCacheFileSize(sourceFile.getRelativePath()));
-				
+
 				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED, targetFile.getFullPath());
 
 				return new ResponseEntity<>(restFileInfo, HttpStatus.OK);
 
 			} catch (FileLockedAfterMaxCyclesException e) {
-				
+
 				String time = String.valueOf(cfg.getFileCheckMaxCycles() * cfg.getFileCheckWaitTime() / 1000);
 				String msg = logger.log(StorageMgrMessage.READ_TIME_OUT, pathInfo, time, e.getLocalizedMessage());
 
 				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.SERVICE_UNAVAILABLE);
-				
+
 			} catch (IOException e) {
-				
-				String msg = logger.log(StorageMgrMessage.PRODUCT_FILE_CANNOT_BE_DOWNLOADED, e.getMessage());	
+
+				String msg = logger.log(StorageMgrMessage.PRODUCT_FILE_CANNOT_BE_DOWNLOADED, e.getMessage());
 				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);
 
 			} catch (Exception e) {
-				
+
 				String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
 				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
@@ -164,7 +164,8 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		{
 			return new ResponseEntity<>(
-					errorHeaders(StorageLogger.logError(loggerLegacy, MSG_TARGET_PATH_MISSING, MSG_ID_TARGET_PATH_MISSING)),
+					errorHeaders(
+							StorageLogger.logError(loggerLegacy, MSG_TARGET_PATH_MISSING, MSG_ID_TARGET_PATH_MISSING)),
 					HttpStatus.BAD_REQUEST);
 		}
 
@@ -186,7 +187,8 @@ public class ProductfileControllerImpl implements ProductfileController {
 					}
 				}
 				if (loggerLegacy.isDebugEnabled())
-					loggerLegacy.debug("... waiting for concurrent access to {} to terminate", sourceFile.getFileName());
+					loggerLegacy.debug("... waiting for concurrent access to {} to terminate",
+							sourceFile.getFileName());
 				Thread.sleep(cfg.getFileCheckWaitTime());
 			}
 			;
@@ -217,9 +219,8 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 				return new ResponseEntity<>(response, HttpStatus.OK);
 			} else {
-				return new ResponseEntity<>(
-						errorHeaders(
-								StorageLogger.logError(loggerLegacy, MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND, pathInfo)),
+				return new ResponseEntity<>(errorHeaders(
+						StorageLogger.logError(loggerLegacy, MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND, pathInfo)),
 						HttpStatus.NOT_FOUND);
 			}
 		} catch (IllegalArgumentException e) {
@@ -269,19 +270,18 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 				storage.uploadFile(sourceFile, targetFile);
 
-				RestFileInfo restFileInfo = convertToRestFileInfo(targetFile,
-						storage.getFileSize(targetFile));
+				RestFileInfo restFileInfo = convertToRestFileInfo(targetFile, storage.getFileSize(targetFile));
 
 				logger.log(StorageMgrMessage.PRODUCT_FILE_UPLOADED, pathInfo, productId);
-				
+
 				return new ResponseEntity<>(restFileInfo, HttpStatus.CREATED);
 
 			} catch (Exception e) {
-				
+
 				String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
 				return new ResponseEntity<>(errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
-		} // end version 2 
+		} // end version 2
 
 		RestFileInfo response = new RestFileInfo();
 		if (pathInfo != null) {
@@ -337,7 +337,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 					return new ResponseEntity<>(response, HttpStatus.CREATED);
 				}
 			} catch (Exception e) {
-			
+
 				return new ResponseEntity<>(errorHeaders(StorageLogger.logError(loggerLegacy, MSG_EXCEPTION_THROWN,
 						MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage())),
 						HttpStatus.INTERNAL_SERVER_ERROR);
@@ -346,27 +346,26 @@ public class ProductfileControllerImpl implements ProductfileController {
 		return new ResponseEntity<RestFileInfo>(response, HttpStatus.NOT_FOUND);
 	}
 
-	
 	/**
 	 * Converts storage file to rest file info (generated model)
 	 * 
-	 * @param storageFile storage file 
-	 * @param fileSize file size
-
+	 * @param storageFile storage file
+	 * @param fileSize    file size
+	 * 
 	 * @return rest file info
 	 */
-	private static RestFileInfo convertToRestFileInfo(StorageFile storageFile, long fileSize) { 
-		
+	private static RestFileInfo convertToRestFileInfo(StorageFile storageFile, long fileSize) {
+
 		RestFileInfo restFileInfo = new RestFileInfo();
-		
+
 		restFileInfo.setStorageType(storageFile.getStorageType().toString());
 		restFileInfo.setFilePath(storageFile.getFullPath());
 		restFileInfo.setFileName(storageFile.getFileName());
 		restFileInfo.setFileSize(fileSize);
-		
+
 		return restFileInfo;
 	}
-	
+
 	/**
 	 * Create an HTTP "Warning" header with the given text message
 	 * 

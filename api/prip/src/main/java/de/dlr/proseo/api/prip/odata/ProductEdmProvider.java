@@ -64,6 +64,7 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 	public static final String ET_PRODUCT_PROP_CONTENT_DATE = "ContentDate";
 	public static final String ET_PRODUCT_PROP_PRODUCTION_TYPE = "ProductionType";
 	public static final String ET_PRODUCT_PROP_FOOTPRINT = "Footprint";
+	public static final String ET_PRODUCT_PROP_GEO_FOOTPRINT = "GeoFootprint";
 	public static final String ET_PRODUCT_PROP_ATTRIBUTES = "Attributes";
 	public static final String ET_PRODUCT_PROP_STRING_ATTRIBUTES = "StringAttributes";
 	public static final String ET_PRODUCT_PROP_INT_ATTRIBUTES = "IntegerAttributes";
@@ -328,6 +329,8 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 					.setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName()).setPrecision(3);
 			CsdlProperty footprint = new CsdlProperty().setName(ET_PRODUCT_PROP_FOOTPRINT)
 					.setType(EdmPrimitiveTypeKind.GeographyPolygon.getFullQualifiedName());
+			CsdlProperty geoFootprint = new CsdlProperty().setName(ET_PRODUCT_PROP_GEO_FOOTPRINT)
+					.setType(EdmPrimitiveTypeKind.Geography.getFullQualifiedName());
 
 			// Add structured properties
 			CsdlProperty checksum = new CsdlProperty().setName(ET_PRODUCT_PROP_CHECKSUM).setCollection(true)
@@ -359,7 +362,7 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 			CsdlEntityType productType = new CsdlEntityType();
 			productType.setName(ET_PRODUCT_NAME);
 			productType.setProperties(Arrays.asList(id, name , contentType, contentLength, originDate, publicationDate, 
-					evictionDate, footprint, checksum, contentDate, productionType));
+					evictionDate, footprint, geoFootprint, checksum, contentDate, productionType));
 			productType.setNavigationProperties(Arrays.asList(attributes, stringAttributes, intAttributes, doubleAttributes, 
 					boolAttributes, dateAttributes));
 			productType.setKey(Collections.singletonList(idRef));

@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo</artifactId>
-		<version>0.9.4-ODIP</version>
+		<version>0.9.5-ODIP</version>
 	</parent>
 
 	<artifactId>proseo-productclass-mgr</artifactId>
@@ -18,7 +18,7 @@
 	</organization>
 
 	<properties>
-        <module.version>0.9.4-ODIP</module.version>
+        <module.version>0.9.5-ODIP</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/productclass-mgr-api.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.prodclmgr.rest</raml-base-package>
@@ -150,7 +150,7 @@
                         <phase>install</phase>
                         <configuration>
                             <target>
-                                <exec executable="docker">
+                            	<exec executable="docker" failonerror="true">
                                     <arg value="build" />
                                     <arg value="-t" />
                                     <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
@@ -158,7 +158,7 @@
                                     <arg value="${project.build.platform}" />
                                     <arg value="." />
                                 </exec>
-                                <exec executable="docker">
+                            	<exec executable="docker" failonerror="true">
                                     <arg value="push" />
                                     <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
                                 </exec>

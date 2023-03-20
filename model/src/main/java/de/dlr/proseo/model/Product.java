@@ -54,8 +54,9 @@ import de.dlr.proseo.model.enums.ProductionType;
 		@Index(unique = false, columnList = "product_class_id, sensing_start_time"), 
 		@Index(unique = false, columnList = "product_class_id, sensing_stop_time"), 
 		@Index(unique = false, columnList = "product_class_id, generation_time"), 
-		@Index(unique = false, columnList = "eviction_time") })
-// TODO add index on "enclosing_product_id"
+		@Index(unique = false, columnList = "eviction_time"),
+		@Index(unique = false, columnList = "publication_time"),
+		@Index(unique = false, columnList = "enclosing_product_id")})
 public class Product extends PersistentObject {
 	
 	private static final String MSG_FILENAME_TEMPLATE_NOT_FOUND = "Product filename template for mission not found";
