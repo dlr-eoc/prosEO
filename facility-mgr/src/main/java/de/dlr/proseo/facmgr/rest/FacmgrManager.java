@@ -1,7 +1,6 @@
 package de.dlr.proseo.facmgr.rest;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Objects;
