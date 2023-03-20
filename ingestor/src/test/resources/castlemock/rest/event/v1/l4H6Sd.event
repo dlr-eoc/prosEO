@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<restEvent>
+    <endDate>2020-09-01T13:38:02.038Z</endDate>
+    <id>l4H6Sd</id>
+    <resourceName>Store product</resourceName>
+    <startDate>2020-09-01T13:38:02.038Z</startDate>
+    <applicationId>VYrwNF</applicationId>
+    <methodId>m1UidH</methodId>
+    <projectId>DB3vth</projectId>
+    <request>
+        <body>{"targetStorageType":null,"sourceFilePaths":["src/test/resources/IDA_test/L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__FRESCO_20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc"],"productId":"2429","sourceStorageType":"S3"}</body>
+        <contentType>application/json;charset=UTF-8</contentType>
+        <httpHeaders>
+            <httpHeader>
+                <name>accept</name>
+                <value>application/json, application/*+json</value>
+            </httpHeader>
+            <httpHeader>
+                <name>content-type</name>
+                <value>application/json;charset=UTF-8</value>
+            </httpHeader>
+            <httpHeader>
+                <name>authorization</name>
+                <value>Basic dGVzdHVzZXI6dGVzdHB3ZA==</value>
+            </httpHeader>
+            <httpHeader>
+                <name>content-length</name>
+                <value>232</value>
+            </httpHeader>
+            <httpHeader>
+                <name>host</name>
+                <value>localhost:8090</value>
+            </httpHeader>
+            <httpHeader>
+                <name>connection</name>
+                <value>Keep-Alive</value>
+            </httpHeader>
+            <httpHeader>
+                <name>user-agent</name>
+                <value>Apache-HttpClient/4.5.9 (Java/11.0.7)</value>
+            </httpHeader>
+            <httpHeader>
+                <name>accept-encoding</name>
+                <value>gzip,deflate</value>
+            </httpHeader>
+        </httpHeaders>
+        <httpMethod>POST</httpMethod>
+        <httpParameters/>
+        <uri>/storage-mgr/products</uri>
+    </request>
+    <resourceId>NUAqCO</resourceId>
+    <response>
+        <body>{&#13;
+  "productId": "123",&#13;
+  "sourceStorageType": "S3",&#13;
+  "sourceFilePaths": [&#13;
+    "s3://proseo-s5p-main/integration-test/testdata/PTM_L0_20191104090000_20191104094500_20191104120000.RAW"&#13;
+  ],&#13;
+  "targetStorageId": "proseo-data-001",&#13;
+  "targetStorageType": "S3",&#13;
+  "registeredFilePath": "s3://proseo-data-001/123/1574197047/",&#13;
+  "registered": true,&#13;
+  "registeredFilesCount": 1,&#13;
+  "registeredFilesList": [&#13;
+    " s3://proseo-data-001/123/1574197047/integration-test/testdata/S5P_OFFL_L2__CLOUD__20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc"&#13;
+  ],&#13;
+  "deleted": false,&#13;
+  "message": "registration executed on node storage-mgr-pqlz8"&#13;
+}</body>
+        <contentEncodings/>
+        <httpHeaders/>
+        <httpStatusCode>201</httpStatusCode>
+        <mockResponseName>Product stored</mockResponseName>
+    </response>
+</restEvent>
