@@ -6,7 +6,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Compile SM only no tests
+name: Compile all no tests
 
 on:
   push:
@@ -27,5 +27,5 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
         cache: maven
-    - name: Compile SM only no tests
+    - name: Compile all no tests
       run: mvn -B compile --file pom.xml
