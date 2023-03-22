@@ -38,13 +38,9 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
         cache: maven
-        
-  
+      
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
-    
-    - name: Build and push
-      uses: docker/build-push-action@v4
-        
+      
     - name: Install SM only no tests
       run: mvn -B install --file pom.xml -pl storage-mgr -am -Dmaven.test.skip=true
