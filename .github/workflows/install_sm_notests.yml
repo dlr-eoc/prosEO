@@ -1,0 +1,42 @@
+# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven 
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Install SM only no tests
+
+on:
+  push:
+    branches: [ "dev-denys" ]
+  pull_request:
+    branches: [ "dev-denys" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '15.x'
+    - name: Install dependencies
+      run: npm install
+    
+    - name: Install raml2html
+      run: npm i -g raml2html
+    
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: maven
+    - name: Install SM only no tests
+      run: mvn -B install --file pom.xml -pl storage-mgr -am -Dmaven.test.skip=true
