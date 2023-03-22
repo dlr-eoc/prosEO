@@ -43,10 +43,10 @@ jobs:
       uses: docker/setup-buildx-action@v2
       
     - name: Create registry folder
-      run: mkdir /Users/runner/work/prosEOregistry
+      run: mkdir /home/runner/work/prosEOregistry
     
     - name: Create local registry
-      run: docker run -d -p 5000:5000 --restart always -e STORAGE_DELETE_ENABLED=true -v /Users/runner/work/prosEOregistry:/var/lib/registry --name registry registry:2
+      run: docker run -d -p 5000:5000 --restart always -e STORAGE_DELETE_ENABLED=true -v /home/runner/work/prosEOregistry:/var/lib/registry --name registry registry:2
 
       
     - name: Install SM only no tests
