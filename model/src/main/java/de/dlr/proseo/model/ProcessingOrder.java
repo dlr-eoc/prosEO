@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.OrderSource;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ProductionType;
 
@@ -85,6 +86,10 @@ public class ProcessingOrder extends PersistentObject {
 	 * mandatory for ProcessingOrders created via the ODIP
 	 */
 	private String stateMessage;
+	
+	/** Source application for the processing order */
+	@Enumerated(EnumType.STRING)
+	private OrderSource orderSource;
 	
 	/**
 	 * Date and time at which the ProcessingOrder was received
@@ -480,6 +485,24 @@ public class ProcessingOrder extends PersistentObject {
 	}
 
 	/**
+	 * Gets the source application for the order
+	 * 
+	 * @return the order source
+	 */
+	public OrderSource getOrderSource() {
+		return orderSource;
+	}
+
+	/**
+	 * Sets the source application for the order
+	 * 
+	 * @param orderSource the order source to set
+	 */
+	public void setOrderSource(OrderSource orderSource) {
+		this.orderSource = orderSource;
+	}
+
+	/**
 	 * Gets the date and time the order was received
 	 * 
 	 * @return the submission time
@@ -797,7 +820,7 @@ public class ProcessingOrder extends PersistentObject {
 	/**
 	 * Sets the output parameters
 	 * 
-	 * @param outputParameters the outputParameters to set
+	 * @param outputParameters the output parameters to set
 	 */
 	public void setOutputParameters(Map<String, Parameter> outputParameters) {
 		this.outputParameters = outputParameters;
@@ -1062,12 +1085,17 @@ public class ProcessingOrder extends PersistentObject {
 	@Override
 	public String toString() {
 		return "ProcessingOrder [mission=" + (null == mission ? "null" : mission.getCode()) + ", identifier=" + identifier 
-				+ ", orderState=" + orderState + ", executionTime=" + executionTime + ", requestedProductClasses=" + requestedProductClasses
+				+ ", orderState=" + orderState + ", stateMessage=" + stateMessage + ", orderSource=" + orderSource
+				+ ", submissionTime=" + submissionTime + ", executionTime=" + executionTime + ", releaseTime=" + releaseTime
+				+ ", requestedProductClasses=" + requestedProductClasses
 				+ ", startTime=" + startTime + ", stopTime=" + stopTime + ", requestedOrbits=" + requestedOrbits
 				+ ", slicingType=" + slicingType + ", sliceDuration=" + sliceDuration + ", sliceOverlap=" + sliceOverlap
 				+ ", inputFilters=" + inputFilters + ", outputParameters=" + outputParameters
-				+ ", classOutputParameters=" + classOutputParameters + ", processingMode=" + processingMode
-				+ ", productionType=" + productionType + ", hasFailedJobSteps=" + hasFailedJobSteps + "]";
+				+ ", classOutputParameters=" + classOutputParameters 
+				+ ", outputFileClass=" + outputFileClass + ", processingMode=" + processingMode
+				+ ", productionType=" + productionType + ", notificationEndpoint=" + notificationEndpoint
+				+ ", productRetentionPeriod=" + productRetentionPeriod
+				+ ", hasFailedJobSteps=" + hasFailedJobSteps + "]";
 	}
 
 }

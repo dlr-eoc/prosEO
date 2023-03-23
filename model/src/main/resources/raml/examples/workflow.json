@@ -5,9 +5,25 @@
     "name": "CLOUD_to_O3",
     "uuid": "43ff0d08-8bf1-48b5-b887-5c6b400967f6",
     "workflowVersion": "1.0",
+    "enabled": true,
     "inputProductClass": "L2__CLOUD_",
     "outputProductClass": "L2__O3____",
     "configuredProcessor": "UPAS 02.04.01 2022-11-02",
+    "outputFileClass": "RPRO",
+    "processingMode": "OFFL",
+    "slicingType": "NONE",
+    "inputFilters": [
+        {
+            "productClass": "L2__CLOUD_",
+            "filterConditions": [
+                {
+                    "key": "fileClass",
+                    "parameterType": "STRING",
+                    "parameterValue": "OFFL"
+                }
+            ]
+        }
+    ],
     "workflowOptions": [
         {
             "id": 890456232,
@@ -18,6 +34,25 @@
             "optionType": "NUMBER",
             "defaultValue": "10",
             "valueRange": []
+        }
+    ],
+    "classOutputParameters": [
+        {
+            "productClass": "L2__O3____",
+            "outputParameters": [
+                {
+                    "key": "revision",
+                    "parameterType": "INTEGER",
+                    "parameterValue": "02"
+                }
+            ]
+        }
+    ],
+    "outputParameters": [
+        {
+            "key": "baselineCollection",
+            "parameterType": "STRING",
+            "parameterValue": "99"
         }
     ]
 }

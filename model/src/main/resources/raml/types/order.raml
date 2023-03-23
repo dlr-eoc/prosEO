@@ -33,6 +33,10 @@
       stateMessage?:
         type: string
         description: Explanatory message describing the reason for the latest state change (mandatory for ProcessingOrders created via the ODIP)
+      orderSource?:
+        type: string
+        default: OTHER
+        description: Source application for the processing order; one of { CLI, GUI, ODIP, OTHER }
       submissionTime?:
         type: datetime-only
         description: Date and time at which the ProcessingOrder was received (mandatory for ProcessingOrders created via the ODIP)
