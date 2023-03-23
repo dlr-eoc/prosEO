@@ -56,6 +56,9 @@ jobs:
         docker pull openjdk:11
         docker tag openjdk:11 localhost:5000/openjdk:11
         docker push localhost:5000/openjdk:11
+        
+    - name: Show docker images 
+      run: docker images
 
     - name: Show docker containers 
       run: docker container ls
