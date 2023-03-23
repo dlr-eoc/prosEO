@@ -63,5 +63,5 @@ jobs:
     - name: Show docker containers 
       run: docker container ls
       
-#    - name: Install SM only no tests
-#      run: mvn -B install --file pom.xml -pl storage-mgr -am -Dmaven.test.skip=true
+    - name: Install SM only no tests
+      run: mvn -B install --file pom.xml -pl storage-mgr -am -Dmaven.test.skip=true
