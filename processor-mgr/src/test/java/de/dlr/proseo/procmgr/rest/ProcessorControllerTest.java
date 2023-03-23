@@ -30,6 +30,7 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.ProcessorClass;
+import de.dlr.proseo.model.Task;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.procmgr.ProcessorManagerApplication;
 import de.dlr.proseo.procmgr.rest.model.ProcessorUtil;
@@ -126,25 +127,41 @@ public class ProcessorControllerTest {
 		ProcessorClass processorClass0 = new ProcessorClass();
 		processorClass0.setMission(testMission);
 		processorClass0.setProcessorName(testProcessorData[0][0]);
-		processorClass0.setId(RepositoryService.getProcessorClassRepository().save(processorClass0).getId());
+		processorClass0 = RepositoryService.getProcessorClassRepository().save(processorClass0);
 
 		ProcessorClass processorClass1 = new ProcessorClass();
 		processorClass1.setMission(testMission);
 		processorClass1.setProcessorName(testProcessorData[1][0]);
-		processorClass1.setId(RepositoryService.getProcessorClassRepository().save(processorClass1).getId());
+		processorClass1 = RepositoryService.getProcessorClassRepository().save(processorClass1);
 
 		logger.debug("... adding processors");
 		Processor processor0 = new Processor();
 		processor0.setProcessorClass(processorClass0);
 		processor0.setProcessorVersion(testProcessorData[0][1]);
 		processor0.setDockerImage("someDockerImage");
-		processor0.setId(RepositoryService.getProcessorRepository().save(processor0).getId());
+		processor0 = RepositoryService.getProcessorRepository().save(processor0);
+		Task task0 = new Task();
+		task0.setTaskName("task0");
+		task0.setTaskVersion("1");
+		task0.setIsCritical(false);
+		task0.setProcessor(processor0);
+		task0 = RepositoryService.getTaskRepository().save(task0);
+		processor0.getTasks().add(task0);
+		processor0 = RepositoryService.getProcessorRepository().save(processor0);
 
 		Processor processor1 = new Processor();
 		processor1.setProcessorClass(processorClass1);
 		processor1.setProcessorVersion(testProcessorData[1][1]);
 		processor1.setDockerImage("someOtherDockerImage");
-		processor1.setId(RepositoryService.getProcessorRepository().save(processor1).getId());
+		processor1 = RepositoryService.getProcessorRepository().save(processor1);
+		Task task1 = new Task();
+		task1.setTaskName("task1");
+		task1.setTaskVersion("1");
+		task1.setIsCritical(false);
+		task1.setProcessor(processor1);
+		task1 = RepositoryService.getTaskRepository().save(task1);
+		processor1.getTasks().add(task1);
+		processor1 = RepositoryService.getProcessorRepository().save(processor1);
 	}
 
 	/**

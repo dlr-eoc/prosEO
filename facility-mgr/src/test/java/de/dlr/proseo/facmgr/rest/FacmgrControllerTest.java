@@ -106,6 +106,7 @@ public class FacmgrControllerTest {
 			testFacility.setProcessingEngineToken(TEST_TOKEN);
 			testFacility.setStorageManagerUrl(testData[5]);
 			testFacility.setLocalStorageManagerUrl(testData[5]);
+			testFacility.setExternalStorageManagerUrl(testData[5]);
 			testFacility.setStorageManagerUser(TEST_USER);
 			testFacility.setStorageManagerPassword(TEST_PASSWORD);
 			testFacility.setDefaultStorageType(StorageType.valueOf(testData[6]));
