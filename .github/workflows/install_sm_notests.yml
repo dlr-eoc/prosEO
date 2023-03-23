@@ -44,10 +44,13 @@ jobs:
       
     - name: Create registry folder
       run: mkdir /home/runner/work/prosEOregistry
-    
+      
+    - name: Check docker status
+      run: systemctl status docker
+
     - name: Create local registry
       run: docker run -d -p 5000:5000 --restart always -e STORAGE_DELETE_ENABLED=true -v /home/runner/work/prosEOregistry:/var/lib/registry --name registry registry:2
 
       
-    - name: Install SM only no tests
-      run: mvn -B install --file pom.xml -pl storage-mgr -am -Dmaven.test.skip=true
+#    - name: Install SM only no tests
+#      run: mvn -B install --file pom.xml -pl storage-mgr -am -Dmaven.test.skip=true
