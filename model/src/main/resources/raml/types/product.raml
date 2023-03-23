@@ -33,6 +33,14 @@
       productQuality?:
         type: string
         description: Indicator for the suitability of this product for general use (NOMINAL, EXPERIMENTAL, TEST; default NOMINAL)
+      requestedStartTime?:
+        type: string
+        description: Planned start time in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS), default same as sensingStartTime
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      requestedStopTime?:
+        type: string
+        description: Planned stop time in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS), default same as sensingStopTime
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
       sensingStartTime:
         type: string
         description: Sensing start time in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)

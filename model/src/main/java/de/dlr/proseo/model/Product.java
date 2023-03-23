@@ -81,11 +81,31 @@ public class Product extends PersistentObject {
 	@Enumerated(EnumType.STRING)
 	private ProductQuality productQuality = ProductQuality.NOMINAL;
 	
-	/** Sensing start time */
+	/** 
+	 * Product (validity) start time as requested during order planning; used by Production Planner to prevent
+	 * double processing of the same product. Initially same as sensingStartTime. 
+	 */
+	@Column(name = "requested_start_time", columnDefinition = "TIMESTAMP(6)")
+	private Instant requestedStartTime;
+	
+	/**
+	 * Product (validity) stop time as requested during order planning; used by Production Planner to prevent
+	 * double processing of the same product. Initially same as sensingStopTime. 
+	 */
+	@Column(name = "requested_stop_time", columnDefinition = "TIMESTAMP(6)")
+	private Instant requestedStopTime;
+	
+	/**
+	 * Sensing start time; initially same as requestedStartTime, but may be updated after processing to reflect
+	 * the actual product sensing times
+	 */
 	@Column(name = "sensing_start_time", columnDefinition = "TIMESTAMP(6)")
 	private Instant sensingStartTime;
 	
-	/** Sensing stop time */
+	/**
+	 * Sensing stop time; initially same as requestedStopTime, but may be updated after processing to reflect
+	 * the actual product sensing times
+	 */
 	@Column(name = "sensing_stop_time", columnDefinition = "TIMESTAMP(6)")
 	private Instant sensingStopTime;
 	
@@ -243,7 +263,7 @@ public class Product extends PersistentObject {
 		return productQuality;
 	}
 	/**
-	 * sets the product quality indicator
+	 * Sets the product quality indicator
 	 * 
 	 * @param productQuality the product quality to set
 	 */
@@ -251,9 +271,41 @@ public class Product extends PersistentObject {
 		this.productQuality = productQuality;
 	}
 	/**
+	 * Gets the requested start time
+	 * 
+	 * @return the requested start time
+	 */
+	public Instant getRequestedStartTime() {
+		return requestedStartTime;
+	}
+	/**
+	 * Sets the requested start time
+	 * 
+	 * @param requestedStartTime the requested start time to set
+	 */
+	public void setRequestedStartTime(Instant requestedStartTime) {
+		this.requestedStartTime = requestedStartTime;
+	}
+	/**
+	 * Gets the requested stop time
+	 * 
+	 * @return the requested stop time
+	 */
+	public Instant getRequestedStopTime() {
+		return requestedStopTime;
+	}
+	/**
+	 * Sets the requested stop time
+	 * 
+	 * @param requestedStopTime the requested stop time to set
+	 */
+	public void setRequestedStopTime(Instant requestedStopTime) {
+		this.requestedStopTime = requestedStopTime;
+	}
+	/**
 	 * Gets the sensing start time
 	 * 
-	 * @return the sensingStartTime
+	 * @return the sensing start time
 	 */
 	public Instant getSensingStartTime() {
 		return sensingStartTime;
@@ -261,7 +313,7 @@ public class Product extends PersistentObject {
 	/**
 	 * Sets the sensing start time
 	 * 
-	 * @param sensingStartTime the sensingStartTime to set
+	 * @param sensingStartTime the sensing start time to set
 	 */
 	public void setSensingStartTime(Instant sensingStartTime) {
 		this.sensingStartTime = sensingStartTime;
@@ -270,7 +322,7 @@ public class Product extends PersistentObject {
 	/**
 	 * Gets the sensing stop time
 	 * 
-	 * @return the sensingStopTime
+	 * @return the sensing stop time
 	 */
 	public Instant getSensingStopTime() {
 		return sensingStopTime;
@@ -279,7 +331,7 @@ public class Product extends PersistentObject {
 	/**
 	 * Sets the sensing stop time
 	 * 
-	 * @param sensingStopTime the sensingStopTime to set
+	 * @param sensingStopTime the sensing stop time to set
 	 */
 	public void setSensingStopTime(Instant sensingStopTime) {
 		this.sensingStopTime = sensingStopTime;
@@ -714,8 +766,10 @@ public class Product extends PersistentObject {
 	public String toString() {
 		return "Product [productClass=" + (null == productClass ? "null" : productClass.getProductType()) 
 				+ ", configuredProcessor=" + (null == configuredProcessor ? "null" : configuredProcessor.getIdentifier())
+				+ ", requestedStartTime=" + requestedStartTime + ", requestedStopTime=" + requestedStopTime
 				+ ", sensingStartTime=" + sensingStartTime + ", sensingStopTime=" + sensingStopTime
-				+ ", generationTime=" + generationTime
+				+ ", generationTime=" + generationTime + ", publicationTime=" + publicationTime
+				+ ", evictionTime=" + evictionTime
 				+ ", mode=" + mode + ", fileClass=" + fileClass + ", productQuality=" + productQuality
 				+ ", productionType=" + productionType + ", parameters=" + parameters + "]";
 	}
