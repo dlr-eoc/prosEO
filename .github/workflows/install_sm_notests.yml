@@ -50,6 +50,12 @@ jobs:
 
     - name: Create local registry
       run: docker run -d -p 5000:5000 --restart always -e STORAGE_DELETE_ENABLED=true -v /home/runner/work/prosEOregistry:/var/lib/registry --name registry registry:2
+      
+    - name: Add openjdk container
+      run: |
+        docker pull openjdk:11
+        docker tag openjdk:11 localhost:5000/openjdk:11
+        docker push localhost:5000/openjdk:11
 
     - name: Show docker containers 
       run: docker container ls
