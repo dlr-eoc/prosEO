@@ -33,6 +33,7 @@ import de.dlr.proseo.model.dao.OrderRepository;
 import de.dlr.proseo.model.dao.ClassOutputParameterRepository;
 import de.dlr.proseo.model.dao.ProcessorClassRepository;
 import de.dlr.proseo.model.dao.ProcessorRepository;
+import de.dlr.proseo.model.dao.ProductArchiveRepository;
 import de.dlr.proseo.model.dao.ProductClassRepository;
 import de.dlr.proseo.model.dao.ProductFileRepository;
 import de.dlr.proseo.model.dao.ProductQueryRepository;
@@ -92,6 +93,10 @@ public class RepositoryService {
 	/** The repository for the Processor class */
 	@Autowired
     private ProcessorRepository processorRepository;
+	
+	/** The repository for the ProductArchive class */
+	@Autowired
+    private ProductArchiveRepository productArchiveRepository;
 	
 	/** The repository for the ProductClass class */
 	@Autowired
@@ -281,6 +286,15 @@ public class RepositoryService {
 	 */
 	public static ProcessorRepository getProcessorRepository() {
 		return theRepositoryService.processorRepository;
+	}
+
+	/**
+	 * Gets the repository for the ProductArchive class
+	 * 
+	 * @return the productArchiveRepository
+	 */
+	public static ProductArchiveRepository getProductArchiveRepository() {
+		return theRepositoryService.productArchiveRepository;
 	}
 
 	/**

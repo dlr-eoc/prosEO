@@ -48,6 +48,7 @@ types:
   RestProcessingFacility: !include ../../../../../model/src/main/resources/raml/types/processingfacility.raml
   RestProcessor: !include ../../../../../model/src/main/resources/raml/types/processor.raml
   RestProcessorClass: !include ../../../../../model/src/main/resources/raml/types/processorclass.raml
+  RestProductArchive: !include ../../../../../model/src/main/resources/raml/types/productarchive.raml
   RestProduct: !include ../../../../../model/src/main/resources/raml/types/product.raml
   RestProductClass: !include ../../../../../model/src/main/resources/raml/types/productclass.raml
   RestProductFile: !include ../../../../../model/src/main/resources/raml/types/productfile.raml
@@ -235,6 +236,21 @@ resourceTypes:
         application/json:
           type: RestProcessorClass
           example:  !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
+
+  /productarchivess:
+    type: standard
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestProductArchive[]
+              example:  !include ../../../../../model/src/main/resources/raml/examples/productarchive-list.json
+    put:
+      body:
+        application/json:
+          type: RestProductArchive
+          example:  !include ../../../../../model/src/main/resources/raml/examples/productarchive.json
 
   /products:
     type: standard
