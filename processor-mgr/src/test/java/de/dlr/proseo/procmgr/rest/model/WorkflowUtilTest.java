@@ -28,11 +28,11 @@ public class WorkflowUtilTest {
 	private static String[] testWorkflowData =
 			// name, uuid, workflowVersion, inputProductClass, outputProductClass,
 			// configuredProcessor
-			{ "CLOUD_to_O3", UUID.randomUUID().toString(), "1.0", "L2__CLOUD_", "L2__O3____",
+			{ "PTM", "CLOUD_to_O3", UUID.randomUUID().toString(), "1.0", "L2__CLOUD_", "L2__O3____",
 					"UPAS 02.04.01 2022-11-02" };
 	private static String[] testWorkflowOption =
 			// workflowName, name, optionType
-			{ "CLOUD_to_O3", "Threads", "NUMBER" };
+			{ "PTM", "CLOUD_to_O3", "Threads", "NUMBER" };
 
 	/**
 	 * Create a local test workflow
@@ -46,18 +46,20 @@ public class WorkflowUtilTest {
 		RestWorkflow workflow = new RestWorkflow();
 
 		// set workflow parameters
-		workflow.setName(workflowData[0]);
-		workflow.setUuid(workflowData[1]);
-		workflow.setWorkflowVersion(workflowData[2]);
-		workflow.setInputProductClass(workflowData[3]);
-		workflow.setOutputProductClass(workflowData[4]);
-		workflow.setConfiguredProcessor(workflowData[5]);
+		workflow.setMissionCode(workflowData[0]);
+		workflow.setName(workflowData[1]);
+		workflow.setUuid(workflowData[2]);
+		workflow.setWorkflowVersion(workflowData[3]);
+		workflow.setInputProductClass(workflowData[4]);
+		workflow.setOutputProductClass(workflowData[5]);
+		workflow.setConfiguredProcessor(workflowData[6]);
 
 		// set workflow options
 		RestWorkflowOption workflowOption = new RestWorkflowOption();
-		workflowOption.setWorkflowName(workflowOptionData[0]);
-		workflowOption.setName(workflowOptionData[1]);
-		workflowOption.setOptionType(workflowOptionData[2]);
+		workflowOption.setMissionCode(workflowOptionData[0]);
+		workflowOption.setWorkflowName(workflowOptionData[1]);
+		workflowOption.setName(workflowOptionData[2]);
+		workflowOption.setOptionType(workflowOptionData[3]);
 		workflowOption.setValueRange(null);
 		workflow.getWorkflowOptions().add(workflowOption);
 

@@ -885,7 +885,7 @@ commands:
             - name: workflowVersion
               type: string
               optional: true
-              description: The textual description of the workflow to show
+              description: Version number of the workflow to show
             - name: outputProductClass
               type: string
               optional: true
@@ -910,10 +910,10 @@ commands:
               type: string
               optional: true
               description: The name of the workflow to create (mandatory if not read from file)
-            - name: workflow Version
+            - name: workflowVersion
               type: string
               optional: true
-              description: A textual description of the workflow to create (mandatory if not read from file)
+              description: Version number applicable to the workflow (mandatory if not read from file)
             - name: attribute
               type: string
               optional: true
@@ -939,10 +939,10 @@ commands:
               type: string
               optional: true
               description: The name of the workflow to create (mandatory if not read from file)
-            - name: workflow Version
+            - name: workflowVersion
               type: string
               optional: true
-              description: A textual description of the workflow to create (mandatory if not read from file)
+              description: Version number applicable to the workflow (mandatory if not read from file)
             - name: attribute
               type: string
               optional: true
@@ -955,10 +955,10 @@ commands:
               type: string
               optional: true
               description: The name of the workflow to create (mandatory if not read from file)
-            - name: workflow Version
+            - name: workflowVersion
               type: string
               optional: true
-              description: A textual description of the workflow to create (mandatory if not read from file)
+              description: Version number applicable to the workflow (mandatory if not read from file)
                  
     # Commands for the Product Class Manager
     - name: productclass

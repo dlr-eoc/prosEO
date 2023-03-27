@@ -238,9 +238,9 @@ public class WorkflowMgr {
 					throw new IllegalArgumentException(
 							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For workflowOption creation, option type"));
 				}
-				if (option.getValueRange().isEmpty()) {
-					throw new IllegalArgumentException(
-							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For workflowOption creation, value range"));
+				if (null == option.getValueRange()) {
+					// Quietly restore value range as empty list
+					option.setValueRange(new ArrayList<>());
 				}
 				if (null != option.getDefaultValue() && !option.getValueRange().contains(option.getDefaultValue())) {
 					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.RANGE_MUST_CONTAIN_DEFAULT,
@@ -521,9 +521,9 @@ public class WorkflowMgr {
 					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
 							"For workflowOption modification, option type"));
 				}
-				if (newOption.getValueRange().isEmpty()) {
-					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
-							"For workflowOption modification, value range"));
+				if (null == newOption.getValueRange()) {
+					// Quietly restore value range as empty list
+					newOption.setValueRange(new ArrayList<>());
 				}
 				if (null != newOption.getDefaultValue() && !newOption.getValueRange().contains(newOption.getDefaultValue())) {
 					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.RANGE_MUST_CONTAIN_DEFAULT,
