@@ -21,6 +21,7 @@
 		<module>auxip-monitor</module>
 		<module>odip</module>
 		<module>aip-client</module>
+        <module>archive-mgr</module>
 	</modules>
 
 	<url>https://github.com/dlr-eoc/prosEO/api</url>
