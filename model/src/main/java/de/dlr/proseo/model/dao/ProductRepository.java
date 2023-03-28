@@ -39,12 +39,26 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 			String missionCode, String productType, Integer orbitNumberFrom, Integer orbitNumberTo);
 
 	/**
+	 * Get all products of a given mission and class with their requested start times in the given time interval
+	 * 
+	 * @param missionCode the mission code
+	 * @param productType the prosEO product type
+	 * @param requestedStartTimeFrom the earliest planned/requested start time
+	 * @param requestedStartTimeTo the latest planned/requested start time
+	 * @return a list of products satisfying the search criteria
+	 */
+	@Query("select p from Product p where p.productClass.mission.code = ?1 and p.productClass.productType = ?2"
+			+ " and p.requestedStartTime between ?3 and ?4")
+	public List<Product> findByMissionCodeAndProductTypeAndRequestedStartTimeBetween(
+			String missionCode, String productType, Instant requestedStartTimeFrom, Instant requestedStartTimeTo);
+
+	/**
 	 * Get all products of a given mission and class with their sensing start times in the given time interval
 	 * 
 	 * @param missionCode the mission code
 	 * @param productType the prosEO product type
-	 * @param sensingStartTimeFrom the earliest start time
-	 * @param sensingStartTimeTo the latest stop time
+	 * @param sensingStartTimeFrom the earliest sensing start time
+	 * @param sensingStartTimeTo the latest sensing start time
 	 * @return a list of products satisfying the search criteria
 	 */
 	@Query("select p from Product p where p.productClass.mission.code = ?1 and p.productClass.productType = ?2"
@@ -79,6 +93,23 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 			+ " and p.generationTime is not null and p.generationTime between ?3 and ?4")
 	public List<Product> findByMissionCodeAndProductionTypeAndGeneratedAndGenerationTimeBetween(
 			String missionCode, ProductionType productionType, Instant generationTimeFrom, Instant generationTimeTo);
+
+	/**
+	 * Get all products of a given mission and class with their sensing start time before the end of a time interval
+	 * and the sensing stop time after the beginning of that interval (including border values);
+	 * this results in a check for intersection with the time interval, if latestSensingStartTime after earliestSensingStopTime,
+	 * and a check for coverage of the time interval, if latestSensingStartTime before earliestSensingStopTime
+	 * 
+	 * @param missionCode the mission code
+	 * @param productType the prosEO product type
+	 * @param latestRequestedStartTime the latest planned/requested start time
+	 * @param earliestRequestedStopTime the earliest planned/requested stop time
+	 * @return a list of products satisfying the search criteria
+	 */
+	@Query("select p from Product p where p.productClass.mission.code = ?1 and p.productClass.productType = ?2"
+			+ " and p.requestedStartTime <= ?3 and p.requestedStopTime >= ?4")
+	public List<Product> findByMissionCodeAndProductTypeAndRequestedStartTimeLessAndRequestedStopTimeGreater(
+			String missionCode, String productType, Instant latestRequestedStartTime, Instant earliestRequestedStopTime);
 
 	/**
 	 * Get all products of a given mission and class with their sensing start time before the end of a time interval

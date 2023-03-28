@@ -1,0 +1,25 @@
+[
+    {
+        "code": "MY_PRIP",
+        "name": "My Production Service Interface Delivery Point",
+        "archiveType": "PRIP",
+        "baseUri": "https://prip.proseo-domain.de:8443",
+        "context": "proseo/prip/odata/v1",
+        "tokenRequired": false,
+        "username": "PTM\\proseo",
+        "password": "mypwd",
+        "availableProductClasses": [ "PTM_L1B", "PTM_L2A", "PTM_L2B", "PTM_L3" ]
+    },
+    {
+        "code": "MY_LTA",
+        "name": "My Long Term Archive",
+        "archiveType": "AIP",
+        "baseUri": "https://archive.proseo-domain.de:8443",
+        "context": "proseo/aip/odata/v1",
+        "tokenRequired": true,
+        "tokenUri": "https://idprovided.proseo-domain.de/proseo/token",
+        "username": "PTM\\proseo",
+        "password": "mypwd",
+        "availableProductClasses": [ "PTM_L1B", "PTM_L2A", "PTM_L2B", "PTM_L3" ]
+    }
+]

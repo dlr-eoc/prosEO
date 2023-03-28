@@ -145,10 +145,24 @@ public class WorkflowUtil {
 		if (null != restWorkflow.getWorkflowOptions() && !restWorkflow.getWorkflowOptions().isEmpty()) {
 			for (RestWorkflowOption option : restWorkflow.getWorkflowOptions()) {
 				WorkflowOption modelOption = new WorkflowOption();
+				
+				if (null == option.getMissionCode()) {
+					throw new IllegalArgumentException(
+							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "In workflow option: missionCode"));
+				}
+				if (null == option.getWorkflowName()) {
+					throw new IllegalArgumentException(
+							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "In workflow option: workflowName"));
+				}
+				if (null == option.getName()) {
+					throw new IllegalArgumentException(
+							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "In workflow option: name"));
+				}
 
-				if ((null != option.getMissionCode() && option.getMissionCode() != restWorkflow.getMissionCode())
-						|| option.getWorkflowName() != restWorkflow.getName()) {
-					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.WORKFLOW_OPTION_MISMATCH));
+				if ((null != option.getMissionCode() && !option.getMissionCode().equals(restWorkflow.getMissionCode()))
+				|| (null != option.getWorkflowName() && !option.getWorkflowName().equals(restWorkflow.getName()))) {
+					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.WORKFLOW_OPTION_MISMATCH, 
+							option.getMissionCode(), option.getWorkflowName(), restWorkflow.getMissionCode(), restWorkflow.getName()));
 				}
 				if (null != option.getName()) {
 					modelOption.setName(option.getName());

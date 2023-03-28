@@ -5,9 +5,14 @@ package de.dlr.proseo.model.enums;
  */
 
 public enum ParameterType {
+	/** String parameter */
 	STRING, 
+	/** Boolean parameter, allowed values "true" and "false" */
 	BOOLEAN, 
+	/** Integer parameter */
 	INTEGER, 
+	/** Floating-point parameter with double precision */
 	DOUBLE,
+	/** ISO-formatted UTC-STS timestamps with microsecond fraction and without time zone */
 	INSTANT
 }

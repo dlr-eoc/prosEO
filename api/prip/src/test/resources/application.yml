@@ -1,0 +1,32 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.H2Dialect
+        hibernate.ddl-auto: create-drop
+        open-in-view: false
+        properties.hibernate.jdbc.time_zone: UTC
+        show-sql: false
+    datasource:
+        url: "jdbc:h2:mem:jpa_jbd"
+        driverClassName: org.h2.Driver
+        username: any       
+        password: any
+    packagesToScan: de.dlr.proseo.model
+logging:
+    level:
+        root: INFO
+        org.springframework.web.servlet: DEBUG
+        de.dlr.proseo: TRACE
+        org.apache.olingo: DEBUG
+        org.hibernate.engine.jdbc.env.internal: WARN
+proseo:
+    #userManager.url: http://localhost:8086/proseo/user-mgr/v0.1
+    #ingestor.url: http://localhost:8081/proseo/ingestor/v0.1
+    #processorManager.url: http://localhost:8084/proseo/processor-mgr/v0.1
+    #facilityManager:
+    #    url: http://localhost:8087/proseo/facility-mgr/v0.1
+    #    user: pripapi
+    #    password: pripapi
+
+    user:
+        name: UTM-testuser
+        password: password
