@@ -7,8 +7,10 @@
     "fileClass": "TEST",
     "mode": "OFFL",
     "productQuality": "EXPERIMENTAL",
-    "sensingStartTime": "2018-06-13T09:23:45.396521",
-    "sensingStopTime": "2018-06-13T10:53:45.396521",
+    "requestedStartTime": "2018-06-13T09:23:45.396521",
+    "requestedStopTime": "2018-06-13T10:53:45.396521",
+    "sensingStartTime": "2018-06-13T09:43:56.789000",
+    "sensingStopTime": "2018-06-13T10:33:45.678000",
     "generationTime": "2019-10-05T10:12:39.000000",
     "orbit": {
         "spacecraftCode": "S5P",

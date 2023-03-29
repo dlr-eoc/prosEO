@@ -1,0 +1,55 @@
+#%RAML 1.0 DataType
+#  RestProductArchive:
+    type: object
+    properties:
+      id?:
+        type: integer
+        format: long
+        default: 0
+        description: The persistent id of this object
+      version?:
+        type: integer
+        default: 1
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      code:
+        type: string
+        description: Short code for the archive (unique key)
+      name:
+        type: string
+        description: Descriptive name for the archive
+      archiveType:
+        type: string
+        default: AIP
+        description: Interface protocol for this archive, one of { AIP, AUXIP, PODIP, PRIP }
+        pattern: ^(AIP|AUXIP|PODIP|PRIP)$
+      baseUri:
+        type: string
+        description: Base URI to access the archive (of the form "http[s]://<hostname>[:<port>]", no trailing slash)
+      context:
+        type: string
+        description: The context path of the archive service endpoint
+      tokenRequired:
+        type: boolean
+        description: Flag indicating whether token-based authentication shall be used
+      tokenUri?:
+        type: string
+        description: The full URI for token requests (may be routed to a different host from the archive service itself)
+      username?:
+        type: string
+        description: The username for Basic Authentication (for token or service requests, depending on authentication method)
+      password?:
+        type: string
+        description: Password for Basic Authentication (CAUTION - Clear text)
+      clientId?:
+        type: string
+        description: Client-ID for OpenID-based token requests
+      clientSecret?:
+        type: string
+        description: Client secret for OpenID-based token requests
+      sendAuthInBody?:
+        type: boolean
+        default: false
+        description: Flag indicating whether credentials for OpenID-based token requests shall be sent in request body
+      availableProductClasses:
+        type: string[]
+        description: List of product class names (product types) retrievable from this archive

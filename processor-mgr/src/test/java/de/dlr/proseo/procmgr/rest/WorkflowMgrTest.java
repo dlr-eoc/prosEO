@@ -364,7 +364,8 @@ public class WorkflowMgrTest {
 		testWorkflowOption.setValueRange(null);
 		testWorkflow.getWorkflowOptions().clear();
 		testWorkflow.getWorkflowOptions().add(testWorkflowOption);
-		assertThrows(IllegalArgumentException.class, () -> workflowMgr.createWorkflow(testWorkflow));
+		// Empty value ranges are allowed, so a non-existing value range is quietly corrected
+//		assertThrows(IllegalArgumentException.class, () -> workflowMgr.createWorkflow(testWorkflow));
 		testWorkflowOption.setValueRange(new ArrayList<String>());
 		testWorkflowOption.getValueRange().add("someValue");
 		
@@ -539,8 +540,9 @@ public class WorkflowMgrTest {
 		testWorkflowOption.setValueRange(null);
 		testWorkflow.getWorkflowOptions().clear();
 		testWorkflow.getWorkflowOptions().add(testWorkflowOption);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		// Empty value ranges are allowed, so a non-existing value range is quietly corrected
+//		assertThrows(IllegalArgumentException.class,
+//				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 
 		// No exception is thrown if nothing was modified.
 		workflowMgr.modifyWorkflow(testWorkflow.getId(), WorkflowUtil

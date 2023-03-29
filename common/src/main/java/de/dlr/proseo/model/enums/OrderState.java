@@ -25,7 +25,30 @@ package de.dlr.proseo.model.enums;
  * 
  */
 public enum OrderState {
-	INITIAL, APPROVED, PLANNING, PLANNING_FAILED, PLANNED, RELEASING, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED;
+	/** Order has been created and can be modified through REST API, GUI or CLI */
+	INITIAL, 
+	/** Order has been approved (e. g. order parameters, bulk processing budget etc.) */
+	APPROVED, 
+	/** Planning process is running */
+	PLANNING, 
+	/** Planning process has failed */
+	PLANNING_FAILED, 
+	/** Planning process completed, or retry has been issued */
+	PLANNED, 
+	/** Releasing process is running */
+	RELEASING, 
+	/** Releasing process completed, but no job has yet been started */
+	RELEASED, 
+	/** Releasing process completed and at least one job is running */
+	RUNNING, 
+	/** A suspend command has been issued, but at least one job is still running */
+	SUSPENDING, 
+	/** All jobs have been completed successfully */
+	COMPLETED, 
+	/** All jobs are finished, but at least one job failed */
+	FAILED, 
+	/** The order has been closed, no further actions (except deletion) are possible */
+	CLOSED;
 	
 	/**
 	 * Check whether the transition to the other state is legal

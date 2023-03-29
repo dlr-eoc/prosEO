@@ -117,6 +117,8 @@ public class ProductRepositoryTest {
 		product.setUuid(TEST_UUID);
 		product.setProductClass(prodClass);
 		product.setOrbit(orbit);
+		product.setRequestedStartTime(TEST_START_TIME);
+		product.setRequestedStopTime(TEST_START_TIME.plusSeconds(900));
 		product.setSensingStartTime(TEST_START_TIME);
 		product.setSensingStopTime(TEST_START_TIME.plusSeconds(900));
 		product.setEvictionTime(Instant.now().minusSeconds(1800));
@@ -134,12 +136,26 @@ public class ProductRepositoryTest {
 		
 		logger.info("OK: Test for findByMissionCodeAndProductTypeAndOrbitNumberBetween completed");
 		
+		// Test findByMissionCodeAndProductTypeAndRequestedStartTimeBetween
+		products = RepositoryService.getProductRepository().findByMissionCodeAndProductTypeAndRequestedStartTimeBetween(
+				TEST_CODE, TEST_PRODUCT_TYPE, TEST_START_TIME, TEST_START_TIME.plusSeconds(200));
+		assertFalse("Find by mission code, product type and requested start time failed for Product", products.isEmpty());
+		
+		logger.info("OK: Test for findByMissionCodeAndProductTypeAndRequestedStartTimeBetween completed");
+		
 		// Test findByMissionCodeAndProductTypeAndSensingStartTimeBetween
 		products = RepositoryService.getProductRepository().findByMissionCodeAndProductTypeAndSensingStartTimeBetween(
 				TEST_CODE, TEST_PRODUCT_TYPE, TEST_START_TIME, TEST_START_TIME.plusSeconds(200));
 		assertFalse("Find by mission code, product type and start time failed for Product", products.isEmpty());
 		
 		logger.info("OK: Test for findByMissionCodeAndProductTypeAndSensingStartTimeBetween completed");
+		
+		// Test findByMissionCodeAndProductTypeAndRequesteStartTimeLessAndSensingStopTimeGreater (testing intersection)
+		products = RepositoryService.getProductRepository().findByMissionCodeAndProductTypeAndRequestedStartTimeLessAndRequestedStopTimeGreater(
+				TEST_CODE, TEST_PRODUCT_TYPE, TEST_START_TIME.plusSeconds(1000), TEST_START_TIME.minusSeconds(200));
+		assertFalse("Find by mission code, product type and requested start/stop time failed for Product", products.isEmpty());
+		
+		logger.info("OK: Test for findByMissionCodeAndProductTypeAndSensingStartTimeLessAndSensingStopTimeGreater completed");
 		
 		// Test findByMissionCodeAndProductTypeAndSensingStartTimeLessAndSensingStopTimeGreater (testing intersection)
 		products = RepositoryService.getProductRepository().findByMissionCodeAndProductTypeAndSensingStartTimeLessAndSensingStopTimeGreater(

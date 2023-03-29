@@ -96,7 +96,7 @@ public enum ProcessorMgrMessage implements ProseoMessage {
 	WORKFLOW_CREATED								(4580, Level.INFO, true, "Workflow {0}, version {1} created for mission {2}", ""),
 	FIELD_NOT_SET									(4581, Level.ERROR, false, "{0} is mandatory", ""),
 	PROCESSOR_PRODUCT_MISMATCH						(4582, Level.ERROR, false, "The specified processor class must be able to produce the specified output product class", ""),
-	WORKFLOW_OPTION_MISMATCH						(4583, Level.ERROR, false, "Workflow options must match the respective workflow by mission and by workflow name", ""),
+	WORKFLOW_OPTION_MISMATCH						(4583, Level.ERROR, false, "Workflow reference {0}/{1} in workflow option does not match workflow {2}/{3}", ""),
 	FIELD_MISSSPECIFIED								(4584, Level.ERROR, false, "No {0} found for mission code {1} and {0} \"{2}\"", ""),
 	WORKFLOW_MODIFIED								(4585, Level.INFO, true, "Workflow with id {0} modified", ""),
 	WORKFLOW_NOT_MODIFIED							(4586, Level.INFO, true, "Workflow with id {0} not modified (no changes)", ""),

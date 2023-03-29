@@ -5,9 +5,10 @@
  */
 package de.dlr.proseo.model;
 
-import java.util.ArrayList;
+import java.time.Duration;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -16,11 +17,16 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.Index;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+
+import de.dlr.proseo.model.enums.OrderSlicingType;
 
 /**
  * A Workflow allows to select a suitable ConfiguredProcessor based on a given input product type
@@ -56,6 +62,9 @@ public class Workflow extends PersistentObject {
 	/** Version number applicable to the workflow */
 	private String workflowVersion;
 	
+	/** Flag indicating whether this workflow is available for use (disabled workflows are not visible on the ODIP) */
+	private Boolean enabled;
+	
 	/**
 	 * The (primary) ProductClass used as input for the workflow (note that depending on the selection rules for the
 	 * output ProductClass additional ProductClasses may be used as input, and it is not even guaranteed that the named
@@ -72,9 +81,50 @@ public class Workflow extends PersistentObject {
 	@ManyToOne
 	private ConfiguredProcessor configuredProcessor;
 	
+	/** The file class of the generated output products (from the list of allowed file classes agreed for the mission) */
+	private String outputFileClass;
+	
+	/** The processing mode to run the processor(s) in (one of the modes specified for the mission) */
+	private String processingMode;
+	
+	/**
+	 * Method for slicing the orbit time interval into jobs for product generation (default "ORBIT")
+	 */
+	@Enumerated(EnumType.STRING)
+	private OrderSlicingType slicingType = OrderSlicingType.ORBIT;
+	
+	/**
+	 * Duration of a time slice for slicing type TIME_SLICE
+	 */
+	private Duration sliceDuration = null;
+	
+	/**
+	 * Overlap between adjacent time slices, half of the overlap is added at each end of the slice time interval
+	 */
+	private Duration sliceOverlap = Duration.ZERO;
+	
+	/**
+	 * Filter conditions to apply to input products of a specific product class in addition to filter conditions contained
+	 * in the applicable selection rule
+	 */
+	@ManyToMany
+	private Map<ProductClass, InputFilter> inputFilters = new HashMap<>();
+	
 	/** Options, which can be set as "Dynamic Processing Parameters" in Job Orders generated from this workflow */
 	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY, mappedBy = "workflow")
 	private Set<WorkflowOption> workflowOptions = new HashSet<>();
+	
+	/**
+	 * Set of parameters to apply to a generated product of the referenced product class replacing the general output parameters
+	 */
+	@ManyToMany
+	private Map<ProductClass, ClassOutputParameter> classOutputParameters = new HashMap<>();
+	
+	/**
+	 * Parameters to set for the generated products
+	 */
+	@ElementCollection
+	private Map<String, Parameter> outputParameters = new HashMap<>();
 	
 	/**
 	 * Gets the workflow UUID
@@ -149,6 +199,33 @@ public class Workflow extends PersistentObject {
 	}
 
 	/**
+	 * Gets the status of the "enabled" flag
+	 * 
+	 * @return the enabled flag
+	 */
+	public Boolean getEnabled() {
+		return enabled;
+	}
+
+	/**
+	 * Indicates, whether the workflow is available for use
+	 * 
+	 * @return the enabled flag
+	 */
+	public Boolean isEnabled() {
+		return getEnabled();
+	}
+
+	/**
+	 * Sets the status of the "enabled" flag
+	 * 
+	 * @param enabled the status of the enabled flag to set
+	 */
+	public void setEnabled(Boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	/**
 	 * Gets the input product class
 	 * 
 	 * @return the input product class
@@ -203,6 +280,114 @@ public class Workflow extends PersistentObject {
 	}
 
 	/**
+	 * Gets the output file class
+	 * 
+	 * @return the output file class
+	 */
+	public String getOutputFileClass() {
+		return outputFileClass;
+	}
+
+	/**
+	 * Sets the output file class
+	 * 
+	 * @param outputFileClass the output file class to set
+	 */
+	public void setOutputFileClass(String outputFileClass) {
+		this.outputFileClass = outputFileClass;
+	}
+
+	/**
+	 * Gets the processing mode
+	 * 
+	 * @return the processing mode
+	 */
+	public String getProcessingMode() {
+		return processingMode;
+	}
+
+	/**
+	 * Sets the processing mode
+	 * 
+	 * @param processingMode the processing mode to set
+	 */
+	public void setProcessingMode(String processingMode) {
+		this.processingMode = processingMode;
+	}
+
+	/**
+	 * Gets the order slicing type
+	 * 
+	 * @return the slicing type
+	 */
+	public OrderSlicingType getSlicingType() {
+		return slicingType;
+	}
+
+	/**
+	 * Sets the order slicing type
+	 * 
+	 * @param slicingType the slicing type to set
+	 */
+	public void setSlicingType(OrderSlicingType slicingType) {
+		this.slicingType = slicingType;
+	}
+
+	/**
+	 * Gets the slice duration for sliced orders
+	 * 
+	 * @return the slice duration
+	 */
+	public Duration getSliceDuration() {
+		return sliceDuration;
+	}
+
+	/**
+	 * Sets the slice duration for sliced orders
+	 * 
+	 * @param sliceDuration the slice duration to set
+	 */
+	public void setSliceDuration(Duration sliceDuration) {
+		this.sliceDuration = sliceDuration;
+	}
+
+	/**
+	 * Gets the overlap between adjacent slices
+	 * 
+	 * @return the slice overlap
+	 */
+	public Duration getSliceOverlap() {
+		return sliceOverlap;
+	}
+
+	/**
+	 * Sets the overlap between adjacent slices
+	 * 
+	 * @param sliceOverlap the slice overlap to set
+	 */
+	public void setSliceOverlap(Duration sliceOverlap) {
+		this.sliceOverlap = sliceOverlap;
+	}
+
+	/**
+	 * Gets the input filters
+	 * 
+	 * @return the input filters
+	 */
+	public Map<ProductClass, InputFilter> getInputFilters() {
+		return inputFilters;
+	}
+
+	/**
+	 * Sets the input filters
+	 * 
+	 * @param inputFilters the input filters to set
+	 */
+	public void setInputFilters(Map<ProductClass, InputFilter> inputFilters) {
+		this.inputFilters = inputFilters;
+	}
+
+	/**
 	 * Gets the available workflow options
 	 * 
 	 * @return the workflow options
@@ -218,6 +403,42 @@ public class Workflow extends PersistentObject {
 	 */
 	public void setWorkflowOptions(Set<WorkflowOption> workflowOptions) {
 		this.workflowOptions = workflowOptions;
+	}
+
+	/**
+	 * Gets the class-specific output parameters
+	 * 
+	 * @return the class-specific output parameters
+	 */
+	public Map<ProductClass, ClassOutputParameter> getClassOutputParameters() {
+		return classOutputParameters;
+	}
+
+	/**
+	 * Sets the class-specific output parameters
+	 * 
+	 * @param classOutputParameters the class-specific output parameters to set
+	 */
+	public void setClassOutputParameters(Map<ProductClass, ClassOutputParameter> classOutputParameters) {
+		this.classOutputParameters = classOutputParameters;
+	}
+
+	/**
+	 * Gets the output parameters
+	 * 
+	 * @return the outputParameters
+	 */
+	public Map<String, Parameter> getOutputParameters() {
+		return outputParameters;
+	}
+
+	/**
+	 * Sets the output parameters
+	 * 
+	 * @param outputParameters the output parameters to set
+	 */
+	public void setOutputParameters(Map<String, Parameter> outputParameters) {
+		this.outputParameters = outputParameters;
 	}
 
 	@Override
@@ -246,7 +467,11 @@ public class Workflow extends PersistentObject {
 				+ ", inputProductClass=" + (null == inputProductClass ? "null" : inputProductClass.getProductType()) 
 				+ ", outputProductClass=" + (null == outputProductClass ? "null" : outputProductClass.getProductType())
 				+ ", configuredProcessor=" + (null == configuredProcessor ? "null" : configuredProcessor.getIdentifier())
-				+ ", workflowOptions=" + workflowOptions + "]";
+				+ ", outputFileClass=" + outputFileClass + ", processingMode=" + processingMode + ", slicingType=" + slicingType
+				+ ", sliceDuration=" + sliceDuration + ", sliceOverlap=" + sliceOverlap
+				+ ", inputFilters=" + inputFilters + ", workflowOptions=" + workflowOptions 
+				+ ", classOutputParameters=" + classOutputParameters + ", outputParameters=" + outputParameters
+				+ "]";
 	}
 	
 }
