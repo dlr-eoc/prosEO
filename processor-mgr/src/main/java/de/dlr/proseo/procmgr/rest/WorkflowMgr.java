@@ -7,7 +7,9 @@ package de.dlr.proseo.procmgr.rest;
 
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,10 +37,12 @@ import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.Workflow;
 import de.dlr.proseo.model.WorkflowOption;
+import de.dlr.proseo.model.WorkflowOption.WorkflowOptionType;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.procmgr.ProcessorManagerConfiguration;
 import de.dlr.proseo.procmgr.rest.model.RestWorkflow;
+import de.dlr.proseo.procmgr.rest.model.RestWorkflowOption;
 import de.dlr.proseo.procmgr.rest.model.WorkflowUtil;
 
 /**
@@ -134,6 +138,7 @@ public class WorkflowMgr {
 	 * @throws IllegalArgumentException if any of the input data was invalid
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
+	@Transactional
 	public RestWorkflow createWorkflow(RestWorkflow restWorkflow) throws IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createWorkflow({})", (null == restWorkflow ? "MISSING" : restWorkflow.getName()));
@@ -157,15 +162,25 @@ public class WorkflowMgr {
 
 		// Ensure a workflow with the same mission, name and version, or the same
 		// UUID, does not yet exist
-		if (null != RepositoryService.getWorkflowRepository().findByMissionCodeAndWorkflowNameAndWorkflowVersion(
+		if ((null != RepositoryService.getWorkflowRepository().findByMissionCodeAndWorkflowNameAndWorkflowVersion(
 				restWorkflow.getMissionCode(), restWorkflow.getName(), restWorkflow.getWorkflowVersion())
-				|| null != RepositoryService.getWorkflowRepository()
-						.findByUuid(UUID.fromString(restWorkflow.getUuid()))) {
+				|| (null != restWorkflow.getUuid() && null != RepositoryService.getWorkflowRepository()
+						.findByUuid(UUID.fromString(restWorkflow.getUuid()))))) {
 			throw new IllegalArgumentException(
 					logger.log(ProcessorMgrMessage.DUPLICATE_WORKFLOW, restWorkflow.getMissionCode(),
 							restWorkflow.getName(), restWorkflow.getWorkflowVersion(), restWorkflow.getUuid()));
 		}
 
+		// Prepare the database order, but make sure ID and version are not copied if present
+		restWorkflow.setId(null);
+		restWorkflow.setVersion(null);
+		if (null != restWorkflow.getWorkflowOptions() && !restWorkflow.getWorkflowOptions().isEmpty()) {
+			for (RestWorkflowOption option : restWorkflow.getWorkflowOptions()) {				
+				option.setId(null);
+				option.setVersion(null);
+			}
+		}
+		
 		Workflow modelWorkflow = WorkflowUtil.toModelWorkflow(restWorkflow);
 
 		// If no UUID was given, a random one is assigned
@@ -250,15 +265,8 @@ public class WorkflowMgr {
 		}
 
 		// The new workflow is saved to the repository.
-		modelWorkflow = RepositoryService.getWorkflowRepository().save(modelWorkflow);
-
-		// The workflow options are saved to the repository.
-		if (!modelWorkflow.getWorkflowOptions().isEmpty()) {
-			for (WorkflowOption option : modelWorkflow.getWorkflowOptions()) {
-				RepositoryService.getWorkflowOptionRepository().save(option);
-			}
-		}
-
+		RepositoryService.getWorkflowRepository().save(modelWorkflow);
+		modelWorkflow = RepositoryService.getWorkflowRepository().findByUuid(modelWorkflow.getUuid());
 		logger.log(ProcessorMgrMessage.WORKFLOW_CREATED, modelWorkflow.getName(), modelWorkflow.getWorkflowVersion(),
 				modelWorkflow.getConfiguredProcessor().getProcessor().getProcessorClass().getMission().getCode());
 
@@ -504,33 +512,78 @@ public class WorkflowMgr {
 			modelWorkflow.getWorkflowOptions().clear();
 		}
 
-		// If options were provided, replace old options
+		// If options were provided, update old options (and don't create new one)
+		
+		// TODO remember names to remove "deleted" options
+		Map<String, String> optNames = new HashMap<String, String>();
+		for (WorkflowOption opt : modelWorkflow.getWorkflowOptions()) {
+			optNames.put(opt.getName(), opt.getName());
+		}
 		if (!restWorkflow.getWorkflowOptions().isEmpty()) {
 			workflowOptionsChanged = true;
-			modelWorkflow.getWorkflowOptions().clear();
 
-			for (WorkflowOption newOption : WorkflowUtil.toModelWorkflow(restWorkflow).getWorkflowOptions()) {
-				RepositoryService.getWorkflowOptionRepository().save(newOption);
-
-				// If new options are provided, their mandatory fields must be set.
+			for (RestWorkflowOption newOption : restWorkflow.getWorkflowOptions()) {
+				WorkflowOption modelOption = null;
+				Boolean isNew = false;
+				if (null == newOption.getMissionCode()) {
+					throw new IllegalArgumentException(
+							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "In workflow option: missionCode"));
+				}
+				if (null == newOption.getWorkflowName()) {
+					throw new IllegalArgumentException(
+							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "In workflow option: workflowName"));
+				}
 				if (null == newOption.getName()) {
-					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
-							"For workflowOption modification, option name"));
+					throw new IllegalArgumentException(
+							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "In workflow option: name"));
 				}
-				if (null == newOption.getType()) {
-					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
-							"For workflowOption modification, option type"));
+
+				if ((null != newOption.getMissionCode() && !newOption.getMissionCode().equals(restWorkflow.getMissionCode()))
+				|| (null != newOption.getWorkflowName() && !newOption.getWorkflowName().equals(restWorkflow.getName()))) {
+					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.WORKFLOW_OPTION_MISMATCH, 
+							newOption.getMissionCode(), newOption.getWorkflowName(), restWorkflow.getMissionCode(), restWorkflow.getName()));
 				}
-				if (null == newOption.getValueRange()) {
-					// Quietly restore value range as empty list
-					newOption.setValueRange(new ArrayList<>());
+				for (WorkflowOption opt : modelWorkflow.getWorkflowOptions()) {
+					if (newOption.getName().equals(opt.getName())) {
+						modelOption = opt;
+						break;
+					}
 				}
-				if (null != newOption.getDefaultValue() && !newOption.getValueRange().contains(newOption.getDefaultValue())) {
-					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.RANGE_MUST_CONTAIN_DEFAULT,
-							newOption.getDefaultValue(), newOption.getId()));
+				if (modelOption == null) {
+					modelOption = new WorkflowOption();
+					modelOption.setWorkflow(modelWorkflow);
+					modelOption.setName(newOption.getName());
+					isNew = true;
 				}
-				modelWorkflow.getWorkflowOptions().add(newOption);
+				// If new options are provided, their mandatory fields must be set.
+
+				if (null != newOption.getOptionType()) {
+					modelOption.setType(WorkflowOptionType.get(newOption.getOptionType().toLowerCase()));
+				}
+				if (null != newOption.getValueRange()) {
+					modelOption.setValueRange(newOption.getValueRange());
+				}
+				if (null != newOption.getDefaultValue()) {
+					modelOption.setDefaultValue(newOption.getDefaultValue());
+				}
+				if (isNew) {
+					modelWorkflow.getWorkflowOptions().add(modelOption);
+				} else {
+					optNames.remove(modelOption.getName());
+				}		
 			}
+			for (String name : optNames.keySet()) {
+				WorkflowOption toRemove = null;
+				for (WorkflowOption opt : modelWorkflow.getWorkflowOptions()) {
+					if (opt.getName().equals(name)) {
+						toRemove = opt;
+						break;
+					}
+				}
+				if (toRemove != null) {
+					modelWorkflow.getWorkflowOptions().remove(toRemove);
+				}					
+			}		
 		}
 
 		if (logger.isTraceEnabled())
