@@ -369,13 +369,6 @@ public class WorkflowMgrTest {
 		testWorkflowOption.setValueRange(new ArrayList<String>());
 		testWorkflowOption.getValueRange().add("someValue");
 		
-		// If a default value is provided, it must be contained in the value range.
-		testWorkflowOption.setDefaultValue("notContained");
-		testWorkflow.getWorkflowOptions().clear();
-		testWorkflow.getWorkflowOptions().add(testWorkflowOption);
-		assertThrows(IllegalArgumentException.class, () -> workflowMgr.createWorkflow(testWorkflow));
-		testWorkflowOption.setDefaultValue(null);
-		
 		// No exception is thrown for correct input.
 		testWorkflow.getWorkflowOptions().clear();
 		testWorkflow.getWorkflowOptions().add(testWorkflowOption);

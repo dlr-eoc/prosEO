@@ -242,13 +242,15 @@ public class WorkflowMgr {
 					// Quietly restore value range as empty list
 					option.setValueRange(new ArrayList<>());
 				}
-				if (null != option.getDefaultValue() && !option.getValueRange().contains(option.getDefaultValue())) {
+				if (!option.getValueRange().isEmpty() && null != option.getDefaultValue() && !option.getValueRange().contains(option.getDefaultValue())) {
 					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.RANGE_MUST_CONTAIN_DEFAULT,
 							option.getDefaultValue(), option.getId()));
 				}
 			}
 		}
 
+		logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE);
+		
 		// The new workflow is saved to the repository.
 		modelWorkflow = RepositoryService.getWorkflowRepository().save(modelWorkflow);
 
@@ -525,7 +527,7 @@ public class WorkflowMgr {
 					// Quietly restore value range as empty list
 					newOption.setValueRange(new ArrayList<>());
 				}
-				if (null != newOption.getDefaultValue() && !newOption.getValueRange().contains(newOption.getDefaultValue())) {
+				if (!newOption.getValueRange().isEmpty() && null != newOption.getDefaultValue() && !newOption.getValueRange().contains(newOption.getDefaultValue())) {
 					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.RANGE_MUST_CONTAIN_DEFAULT,
 							newOption.getDefaultValue(), newOption.getId()));
 				}

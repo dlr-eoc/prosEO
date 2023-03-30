@@ -19,6 +19,7 @@ import org.springframework.web.client.RestClientResponseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.rest.model.RestWorkflow;
 import de.dlr.proseo.model.rest.model.RestWorkflowOption;
@@ -60,7 +61,7 @@ public class WorkflowCommandRunner {
 	private static final String PROMPT_WORKFLOW_OPTIONS = "WorkflowOption names (comma-separated list; empty field cancels): ";
 	private static final String PROMPT_WORKFLOW_OPTION_TYPE = "WorkflowOption type (STRING, NUMBER, or DATENUMBER) for %s (empty field cancels): ";
 	private static final String PROMPT_WORKFLOW_OPTION_DEFAULT = "WorkflowOption default value for %s (empty field means no default): ";
-	private static final String PROMPT_WORKFLOW_OPTION_RANGE = "WorkflowOption value range for %s (comma-separated list; empty field cancels): ";
+	private static final String PROMPT_WORKFLOW_OPTION_RANGE = "WorkflowOption value range for %s (comma-separated list): ";
 
 	private static final String URI_PATH_WORKFLOWS = "/workflows";
 //	private static final String URI_PATH_WORKFLOW_OPTIONS = "/workflowoptions";
@@ -225,19 +226,17 @@ public class WorkflowCommandRunner {
 
 				System.out.print(String.format(PROMPT_WORKFLOW_OPTION_RANGE, workflowOption));
 				response = System.console().readLine();
-				if (response.isBlank()) {
-					System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
-					return;
-				}
-				String[] range = response.split(",");
-				for (String element : range) {
-					restWorkflowOption.getValueRange().add(element);
+				if (!response.isBlank()) {
+					String[] range = response.split(",");
+					for (String element : range) {
+						restWorkflowOption.getValueRange().add(element);
+					}
 				}
 
 				restWorkflow.getWorkflowOptions().add(restWorkflowOption);
 			}
 		}
-
+		
 		/* Create workflow */
 		try {
 			restWorkflow = serviceConnection.postToService(serviceConfig.getProcessorManagerUrl(), URI_PATH_WORKFLOWS,
