@@ -86,6 +86,7 @@ public enum UserRole {
 	/** Create, update and delete access to workflows */
 	WORKFLOW_MGR,
 	
+	
 	// Processing facility management roles
 	
 	/** Read access to processing facilities */
@@ -96,6 +97,15 @@ public enum UserRole {
 	
 	/** Read access to facility monitoring data */
 	FACILITY_MONITOR,
+	
+	
+	// Product archive endpoint management roles
+	
+	/** Read access to product archive endpoints */
+	ARCHIVE_READER,
+	
+	/** Create, update and delete access to product archive endpoints */
+	ARCHIVE_MGR,
 	
 	
 	// Order management roles

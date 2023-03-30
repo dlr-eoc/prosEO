@@ -10,7 +10,7 @@
 	<groupId>de.dlr.proseo</groupId>
 	<artifactId>proseo-geotools</artifactId>
 	<version>0.9.5-ODIP</version>
-	<name>proseo-geotools</name>
+	<name>prosEO Geotools</name>
 
 	<properties>
 		<module.version>0.9.5-ODIP</module.version>
