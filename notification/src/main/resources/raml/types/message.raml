@@ -1,0 +1,32 @@
+#%RAML 1.0 DataType
+# RestMessage:
+type: object
+description: todo
+properties:
+  endpoint:
+    type: string
+    description: The notification endpoint (HTTP(S) or mail)
+  user?:
+    type: string
+    description: User to authenticate
+  password?:
+    type: string
+    description: Password to authenticate
+  subject?:
+    type: string
+    description: The subject
+  contentType?:
+    type: string
+    description: The HTML content type
+  messageCode?:
+    type: string
+    description: The message code
+  raw?:
+    type: boolean
+    description: Flag to identify raw message data
+  message:
+    type: string
+    description: The message data
+  sender:
+    type: string
+    description: The sender of the message
