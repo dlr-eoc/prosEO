@@ -37,6 +37,10 @@ public class ProductionPlannerConfiguration {
 	/** The URL of the prosEO Ingestor */
 	@Value("${proseo.ingestor.url}")
 	private String ingestorUrl;
+
+	/** The URL of the prosEO notification service */
+	@Value("${proseo.notification.url}")
+	private String notificationUrl;
 	
 	/** A host alias to forward to the pods for use in the Planner and Ingestor URLs */
 	@Value("${proseo.wrapper.hostalias:}")
@@ -82,6 +86,38 @@ public class ProductionPlannerConfiguration {
 	@Value("${proseo.productionPlanner.planningbatchsize}")
 	private Integer planningBatchSize;
 
+	
+	/** Timeout for HTTP requests in milliseconds */
+	@Value("${proseo.http.timeout}")
+	private Integer httpTimeout;
+
+	/**
+	 * @return the httpTimeout
+	 */
+	public Integer getHttpTimeout() {
+		return httpTimeout;
+	}
+
+	/**
+	 * @param httpTimeout the httpTimeout to set
+	 */
+	public void setHttpTimeout(Integer httpTimeout) {
+		this.httpTimeout = httpTimeout;
+	}
+
+	/**
+	 * @return the notificationUrl
+	 */
+	public String getNotificationUrl() {
+		return notificationUrl;
+	}
+
+	/**
+	 * @param notificationUrl the notificationUrl to set
+	 */
+	public void setNotificationUrl(String notificationUrl) {
+		this.notificationUrl = notificationUrl;
+	}
 
 	/**
 	 * @return the checkForFurtherJobStepsToRun

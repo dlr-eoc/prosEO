@@ -9,6 +9,7 @@ import java.math.BigInteger;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -17,26 +18,38 @@ import java.util.Set;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.ws.rs.ProcessingException;
+import javax.ws.rs.core.MediaType;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.client.RestTemplate;
 
+import de.dlr.proseo.interfaces.rest.model.RestMessage;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.ProseoMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.IngestorMessage;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
+import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
+import de.dlr.proseo.planner.ProductionPlannerConfiguration;
+import de.dlr.proseo.planner.ProductionPlannerSecurityConfig;
 
 /**
  * Handle processing orders
@@ -52,6 +65,14 @@ public class OrderUtil {
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
+
+	/** Planner configuration */
+	@Autowired
+	ProductionPlannerConfiguration config;
+	
+	/** REST template builder */
+	@Autowired
+	RestTemplateBuilder rtb;
 	
     /**
      * The job utility instance
@@ -68,6 +89,10 @@ public class OrderUtil {
     /** The Production Planner instance */
     @Autowired
     private ProductionPlanner productionPlanner;
+
+	/** Utility class for user authorizations */
+	@Autowired
+	private ProductionPlannerSecurityConfig securityConfig;
 
 
 	/**
@@ -1200,6 +1225,7 @@ public class OrderUtil {
 					} else {
 						order.setOrderState(OrderState.COMPLETED);
 						checkAutoClose(order);
+						sendNotification(order);
 					}
 					hasChanged = true;
 				}
@@ -1239,6 +1265,82 @@ public class OrderUtil {
 		return false;
 	}
 	
+	@Transactional
+	public Boolean 
+	sendNotification(ProcessingOrder order) {
+		if (order.getNotificationEndpoint() != null) {
+			switch (order.getOrderSource()) {
+			case ODIP:
+				// create the message content as String
+				// first check whether product is generated, 
+				// use output product of first job step
+				JobStep jobStep = null;
+				if (!order.getJobs().isEmpty()) {
+					Job firstJob = null;
+					for (Job job : order.getJobs()) {
+						firstJob = job;
+						break;
+					}
+					if (!firstJob.getJobSteps().isEmpty()) {
+						for (JobStep js : firstJob.getJobSteps()) {
+							jobStep = js;
+							break;
+						}
+					}
+				}
+				if (jobStep != null && jobStep.getOutputProduct() != null && jobStep.getOutputProduct().getProductFile() != null 
+						&& jobStep.getOutputProduct().getProductFile() != null) {
+					String fileName = null;
+					Product product = jobStep.getOutputProduct();
+					for (ProductFile pf : jobStep.getOutputProduct().getProductFile()) {
+						fileName = pf.getProductFileName();
+						break;
+					}
+					if (fileName != null) {
+						String message = String.join("\n", 
+								"POST",
+								order.getNotificationEndpoint().getUri(),
+								"{",
+								"    \"@odata.context\": \"$metadata#Notification/$entity\",",
+								"    \"ProductId\": \""+ product.getUuid() + "\",",
+								"    \"ProductName\": \""+ fileName + "\",",
+								"    \"ProductionOrderId\": \""+ order.getUuid() + "\",",
+								"    \"NotificationDate\": \""+ Date.from(Instant.now()) + "\",",
+								"}",
+								""
+								);
+
+						// Skip if notification service is not configured
+						if (config.getNotificationUrl().isBlank()) {
+							// TODO log error
+							return false;
+						}
+						RestMessage restMessage = new RestMessage();
+						restMessage.setEndpoint(order.getNotificationEndpoint().getUri());
+						restMessage.setUser(order.getNotificationEndpoint().getUsername());
+						restMessage.setPassword(order.getNotificationEndpoint().getPassword());
+						restMessage.setMessage(message);
+						restMessage.setRaw(true);
+						restMessage.setContentType(MediaType.APPLICATION_JSON);
+						restMessage.setSender(order.getOrderSource().toString());
+						String url = config.getNotificationUrl() + "/notify";
+						RestTemplate restTemplate = new RestTemplate();
+						ResponseEntity<String> response = restTemplate.postForEntity(url, restMessage, String.class);
+						if (!(HttpStatus.OK.equals(response.getStatusCode()) || (HttpStatus.CREATED.equals(response.getStatusCode())))) {
+							throw new ProcessingException(
+									// TODO
+									logger.log(IngestorMessage.ERROR_ACQUIRE_SEMAPHORE, response.getStatusCode().toString()));
+						}
+					}
+				}
+				return true;
+			default:	
+				// do nothing
+				break;
+			}
+		}
+		return false;
+	}
 	/**
 	 * Get the processing facility(-ies) processing the order
 	 * At the moment there is normally only one facility to do so.

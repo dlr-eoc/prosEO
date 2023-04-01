@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.logging.messages.IngestorMessage;
 import de.dlr.proseo.logging.messages.NotificationMessage;
 import de.dlr.proseo.notification.NotificationConfiguration;
 import de.dlr.proseo.notification.rest.model.RestMessage;

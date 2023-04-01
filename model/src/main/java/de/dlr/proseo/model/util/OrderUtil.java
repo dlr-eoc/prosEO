@@ -22,6 +22,7 @@ import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.OrderSource;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
@@ -178,6 +179,9 @@ public class OrderUtil {
 		}
 		if (null != processingOrder.hasFailedJobSteps()) {
 			restOrder.setHasFailedJobSteps(processingOrder.hasFailedJobSteps());
+		}
+		if (null != processingOrder.getOrderSource()) {
+			restOrder.setOrderSource(processingOrder.getOrderSource().toString());
 		}
 		
 		if (null != processingOrder.getRequestedConfiguredProcessors()) {
@@ -361,6 +365,14 @@ public class OrderUtil {
 		processingOrder.setOrderState(OrderState.valueOf(restOrder.getOrderState()));
 		processingOrder.setStateMessage(restOrder.getStateMessage());
 		processingOrder.setProcessingMode(restOrder.getProcessingMode());
+		OrderSource orderSource = OrderSource.OTHER;
+		try {
+			orderSource = OrderSource.valueOf(restOrder.getOrderSource());
+		} catch (Exception ex) {
+			if (logger.isTraceEnabled()) logger.trace("    orderSource unknown: {}", (null == restOrder.getOrderSource() ? "null" : restOrder.getOrderSource()));
+			orderSource = OrderSource.OTHER;
+		}
+		
 
 		if (null != restOrder.getSubmissionTime()) {
 			try {

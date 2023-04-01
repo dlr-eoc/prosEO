@@ -6,7 +6,7 @@ baseUri: /proseo/notification/{version}
 mediaType: application/json
 
 types:
-  RestMessage: !include types/message.raml
+  RestMessage: !include ../../../../../interfaces/src/main/resources/raml/types/message.raml
 
 resourceTypes:
   standard:
@@ -44,7 +44,7 @@ resourceTypes:
     body:
       application/json:
         type: RestMessage
-        example: !include examples/message.json
+        example: !include ../../../../../interfaces/src/main/resources/raml/examples/message.json
     responses:
       201:
         body:

@@ -48,6 +48,7 @@ types:
   IngestorProduct: !include ../../../main/resources/raml/types/ingestorproduct.raml
   SelectionRuleString: !include ../../../main/resources/raml/types/selectionrulestring.raml
   RestHealth: !include ../../../main/resources/raml/types/health.raml
+  RestMessage: !include ../../../main/resources/raml/types/message.raml
 
 resourceTypes:
   standard:
@@ -143,3 +144,11 @@ resourceTypes:
           body:
             application/json:
               type: RestHealth
+  /messages:
+    type: standard
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestMessage

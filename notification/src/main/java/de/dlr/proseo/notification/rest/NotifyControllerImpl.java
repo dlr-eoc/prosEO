@@ -5,12 +5,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.notification.rest.model.RestMessage;
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
-import de.dlr.proseo.logging.messages.NotificationMessage;
-import de.dlr.proseo.notification.rest.model.RestMessage;
 
 /**
  * NotificationService REST controller implementation

@@ -73,6 +73,7 @@ public class ProductClassManager {
 	private EntityManager em;
 
 	/** The product class configuration */
+	@Autowired
 	ProductClassConfiguration config;
 	
 	/** A logger for this class */

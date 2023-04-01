@@ -1,8 +1,6 @@
 package de.dlr.proseo.notification;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -11,7 +9,6 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -19,14 +16,13 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.core.Options;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.extension.responsetemplating.ResponseTemplateTransformer;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.notification.rest.NotifyControllerImpl;
-import de.dlr.proseo.notification.rest.model.RestMessage;
+import de.dlr.proseo.interfaces.rest.model.RestMessage;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)

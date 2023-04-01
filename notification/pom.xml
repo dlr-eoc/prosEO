@@ -52,6 +52,11 @@
     </dependency>
     <dependency>
       <groupId>de.dlr.proseo</groupId>
+      <artifactId>proseo-interfaces</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>de.dlr.proseo</groupId>
       <artifactId>proseo-logging</artifactId>
       <version>${project.version}</version>
     </dependency>
