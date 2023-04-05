@@ -1,0 +1,6 @@
+{
+    "endpoint": "http://notification.endpoint",
+    "raw" : true,
+    "message": "Any text message",
+    "sender": "prosEO"
+}

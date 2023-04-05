@@ -70,6 +70,14 @@ public class ProductionPlanner implements CommandLineRunner {
 
 	public static String PLAN_THREAD_PREFIX = "PlanOrder_";
 	public static String RELEASE_THREAD_PREFIX = "ReleaseOrder_";
+
+	public static String STATE_MESSAGE_COMPLETED 			= "requested output product is available";
+	public static String STATE_MESSAGE_QUEUED 				= "request is queued for processing";
+	public static String STATE_MESSAGE_RUNNING 				= "request is under processing";
+	public static String STATE_MESSAGE_CANCELLED 			= "request cancelled by user";
+	public static String STATE_MESSAGE_FAILED 				= "production has failed";
+	public static String STATE_MESSAGE_NO_INPUT_AVAILABLE 	= "input product currently unavailable";
+	public static String STATE_MESSAGE_NO_INPUT 			= "input product not found on LTA";
 	
 	public static ProductionPlannerConfiguration config;
 	

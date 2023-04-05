@@ -49,8 +49,10 @@ import de.dlr.proseo.model.WorkflowOption;
 import de.dlr.proseo.model.WorkflowOption.WorkflowOptionType;
 import de.dlr.proseo.model.dao.ProductClassRepository;
 import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.OrderSource;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ParameterType;
+import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestInputReference;
 import de.dlr.proseo.model.rest.model.RestNotificationEndpoint;
 import de.dlr.proseo.model.rest.model.RestOrder;
@@ -775,6 +777,30 @@ public class OdipUtilBase {
 				}
 			}
 		}
+		if(workflow.getOutputParameters() != null) {			
+			for (String paramKey: workflow.getOutputParameters().keySet()) {
+				restOrder.getOutputParameters().add(
+					new RestParameter(paramKey,
+							workflow.getOutputParameters().get(paramKey).getParameterType().toString(),
+							workflow.getOutputParameters().get(paramKey).getParameterValue()));
+			}
+		}
+		if (workflow.getClassOutputParameters() != null) {
+			for (ProductClass targetClass : workflow.getClassOutputParameters().keySet()) {
+				RestClassOutputParameter restClassOutputParameter = new RestClassOutputParameter();
+				restClassOutputParameter.setProductClass(targetClass.getProductType());
+				Map<String, Parameter> outputParameters = workflow.getClassOutputParameters().get(targetClass)
+						.getOutputParameters();
+				for (String paramKey : outputParameters.keySet()) {
+					restClassOutputParameter.getOutputParameters()
+							.add(new RestParameter(paramKey,
+									outputParameters.get(paramKey).getParameterType().toString(),
+									outputParameters.get(paramKey).getParameterValue()));
+				}
+				restOrder.getClassOutputParameters().add(restClassOutputParameter);
+			}
+		}
+		
 		List<String> requestedProductClasses = new ArrayList<String>();
 		requestedProductClasses.add(workflow.getOutputProductClass().getProductType());
 		restOrder.setRequestedProductClasses(requestedProductClasses);
@@ -793,6 +819,7 @@ public class OdipUtilBase {
 		// set the mission
 		Date d = Date.from(now);
 		restOrder.setSubmissionTime(d);
+		restOrder.setOrderSource(OrderSource.ODIP.toString());
 		return restOrder;
 	}
 	
@@ -841,7 +868,7 @@ public class OdipUtilBase {
 				}
 			}
 	// TODO change to > 2
-			if (i > 0) {
+			if (i > 2) {
 				return createdOrder;
 			}
 			// approve, plan, release the order
