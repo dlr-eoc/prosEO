@@ -868,7 +868,7 @@ public class OdipUtilBase {
 				}
 			}
 	// TODO change to > 2
-			if (i > 0) {
+			if (i > 2) {
 				return createdOrder;
 			}
 			// approve, plan, release the order

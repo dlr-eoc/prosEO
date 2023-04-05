@@ -102,6 +102,7 @@ public class OrderPlanThread extends Thread {
 					logger.log(PlannerMessage.ORDER_PLANNING_EXCEPTION, this.getName(), lambdaOrder.getIdentifier());
 					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage());
 					lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
+					UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_FAILED);
 					lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 					return null;
 				});
@@ -117,6 +118,7 @@ public class OrderPlanThread extends Thread {
 							lambdaOrder = orderOpt.get();
 						}
 						lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
+						UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_FAILED);
 						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 						return null;
 					});
@@ -135,6 +137,7 @@ public class OrderPlanThread extends Thread {
 					logger.log(PlannerMessage.ORDER_PLANNING_EXCEPTION, this.getName(), lambdaOrder.getIdentifier());
 					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage());
 					lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
+					UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_FAILED);
 					lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 					return null;
 				});
@@ -190,9 +193,12 @@ public class OrderPlanThread extends Thread {
 						if (lambdaOrder.getJobs().isEmpty()) {
 							lambdaOrder.setOrderState(OrderState.COMPLETED);
 							UtilService.getOrderUtil().checkAutoClose(lambdaOrder);
+							UtilService.getOrderUtil().setTimes(lambdaOrder);
+							UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_COMPLETED);
 							lambdaAnswer = PlannerMessage.ORDER_PRODUCT_EXIST;
 						} else {
 							lambdaOrder.setOrderState(OrderState.PLANNED);
+							UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_QUEUED);
 							lambdaAnswer = PlannerMessage.ORDER_PLANNED;
 						}
 						logger.log(lambdaAnswer, lambdaOrder.getIdentifier());
@@ -200,6 +206,7 @@ public class OrderPlanThread extends Thread {
 						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 					} else {
 						lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
+						UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_FAILED);
 						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 						lambdaAnswer = PlannerMessage.ORDER_PLANNING_FAILED;
 						logger.log(lambdaAnswer, lambdaOrder.getIdentifier(), this.getName());

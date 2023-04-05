@@ -37,6 +37,7 @@ import org.apache.olingo.server.api.uri.UriInfo;
 import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
 import org.apache.olingo.server.api.uri.queryoption.CountOption;
+import org.apache.olingo.server.api.uri.queryoption.CustomQueryOption;
 import org.apache.olingo.server.api.uri.queryoption.ExpandOption;
 import org.apache.olingo.server.api.uri.queryoption.FilterOption;
 import org.apache.olingo.server.api.uri.queryoption.OrderByItem;
@@ -233,6 +234,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 
 		sqlCommand = createProcessingOrderSqlQueryFilter(uriInfo, false);
 
+		List<CustomQueryOption> customQueryOptions = uriInfo.getCustomQueryOptions();
 		// Test order option
 		OrderByOption orderByOption = uriInfo.getOrderByOption();
 		if (null != orderByOption) {

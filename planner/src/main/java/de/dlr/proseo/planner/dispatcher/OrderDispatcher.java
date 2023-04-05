@@ -134,6 +134,8 @@ public class OrderDispatcher {
 							order.setOrderState(OrderState.RUNNING);
 							order.setOrderState(OrderState.COMPLETED);
 							UtilService.getOrderUtil().checkAutoClose(order);
+							UtilService.getOrderUtil().setTimes(order);
+							UtilService.getOrderUtil().setStateMessage(order, ProductionPlanner.STATE_MESSAGE_COMPLETED);
 						}
 						break;
 					}
