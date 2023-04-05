@@ -130,7 +130,7 @@ public class WorkflowUtil {
 		if (null != restWorkflow.getId()) {
 			modelWorkflow.setId(restWorkflow.getId());
 		}
-		if (0 != restWorkflow.getVersion()) {
+		if (null != restWorkflow.getVersion() && 0 != restWorkflow.getVersion()) {
 			while (modelWorkflow.getVersion() < restWorkflow.getVersion()) {
 				modelWorkflow.incrementVersion();
 			}
@@ -173,7 +173,7 @@ public class WorkflowUtil {
 				if (null != option.getValueRange()) {
 					modelOption.setValueRange(option.getValueRange());
 				}
-				if (0 != option.getId()) {
+				if (null != option.getId() && 0 != option.getId()) {
 					modelOption.setId(option.getId());
 				}
 				if (null != option.getDefaultValue()) {

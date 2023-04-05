@@ -216,7 +216,7 @@ public class OdipEntityProcessor implements EntityProcessor {
 		if (logger.isTraceEnabled()) logger.trace(">>> getWorkflow({})", workflowUuid);
 
 		// Request workflow metadata from database
-		Query query = em.createQuery("select p from Workflow p where p.uuid = :uuid", Workflow.class);
+		Query query = em.createQuery("select p from Workflow p where p.uuid = :uuid and (enabled is null or enabled = TRUE)", Workflow.class);
 		query.setParameter("uuid", UUID.fromString(workflowUuid));
 		Object resultObject;
 		try {

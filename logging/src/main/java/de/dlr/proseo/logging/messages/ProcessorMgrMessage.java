@@ -108,6 +108,7 @@ public enum ProcessorMgrMessage implements ProseoMessage {
 	CONFIGURED_PROCESSORS_COUNTED					(4592, Level.INFO, true, "{0} configured processor(s) found for mission {1}, processor name {2}, processor version {3}, configuration version {4}", ""),
 	PROCESSORS_COUNTED								(4593, Level.INFO, true, "{0} processor(s) found for mission {1}, processor name {2}, processor version {3}", ""),
 	PROCESSOR_CLASSES_COUNTED						(4594, Level.INFO, true, "{0} processor classe(s) found for mission {1}, processor name {2}", ""),
+	ILLEGAL_OPTION_TYPE								(4595, Level.ERROR, false, "{0} is not a legal WorkflowOptionType (must be STRING, NUMBER, or DATENUMBER)", ""),
 	
 	;
 

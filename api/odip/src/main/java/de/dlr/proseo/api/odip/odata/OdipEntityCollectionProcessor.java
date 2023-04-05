@@ -203,6 +203,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 		        		HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ROOT);
 			}
 		}
+		sqlCommand.append(" and (enabled is null or enabled = TRUE)");
 		
 		// Add filter for mission
 		// sqlCommand.append("\nAND m.code = '").append(securityConfig.getMission()).append("'");

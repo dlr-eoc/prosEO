@@ -26,6 +26,7 @@ public enum HttpPrefix {
 	UI				("199 proseo-ui "),
 	USER_MGR		("199 proseo-user-mgr "),
 	XBIP_MONITOR 	("199 proseo-xbip-monitor "),
+	NOTIFICATION	("199 proseo-notification "),
 
 	;
 
