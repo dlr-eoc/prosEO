@@ -125,7 +125,7 @@
 			"response": []
 		},
 		{
-			"name": "Get orders",
+			"name": "Get orders (Basic Auth)",
 			"request": {
 				"method": "GET",
 				"header": [],
@@ -151,6 +151,105 @@
 						{
 							"key": "$top",
 							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get orders (Bearer Token)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{bearerToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8090/proseo/odip/odata/v1/ProductionOrders?$count=true&$top=1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"proseo",
+						"odip",
+						"odata",
+						"v1",
+						"ProductionOrders"
+					],
+					"query": [
+						{
+							"key": "$count",
+							"value": "true"
+						},
+						{
+							"key": "$top",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Authorization Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8090/proseo/odip/v1/token?grant_type=client_credentials",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"proseo",
+						"odip",
+						"v1",
+						"token"
+					],
+					"query": [
+						{
+							"key": "grant_type",
+							"value": "password",
+							"disabled": true
+						},
+						{
+							"key": "username",
+							"value": "{{username}}",
+							"disabled": true
+						},
+						{
+							"key": "password",
+							"value": "{{password}}",
+							"disabled": true
+						},
+						{
+							"key": "grant_type",
+							"value": "client_credentials"
 						}
 					]
 				}
