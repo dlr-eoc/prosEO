@@ -19,9 +19,14 @@ proseo:
     ingestor.url: http://proseo-ingestor:8080/proseo/ingestor/v0.1
     orderManager.url: http://proseo-order-mgr:8080/proseo/order-mgr/v0.1
     productionPlanner.url: http://proseo-prodplanner:8080/proseo/planner/v0.1
+    # Timeout for outgoing HTTP connections
+    http.timeout: 10000
     # Expiration time for OAuth2 tokens in seconds
     token.expiration: 3600
     # Maximum number of products to retrieve in a single query
     quota: 5000
     odip:
         facility: localhost
+        
+    # Not sure what this is (AIP client?)
+    auxip.baseuri: http://192.168.20.155:8080/proseo/api/aip-client/v0.1

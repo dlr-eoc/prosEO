@@ -22,7 +22,7 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.notification.rest.NotifyControllerImpl;
-import de.dlr.proseo.interfaces.rest.model.RestMessage;
+import de.dlr.proseo.notification.rest.model.RestMessage;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
