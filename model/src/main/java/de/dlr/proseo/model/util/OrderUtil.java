@@ -372,7 +372,7 @@ public class OrderUtil {
 			if (logger.isTraceEnabled()) logger.trace("    orderSource unknown: {}", (null == restOrder.getOrderSource() ? "null" : restOrder.getOrderSource()));
 			orderSource = OrderSource.OTHER;
 		}
-		
+		processingOrder.setOrderSource(orderSource);
 
 		if (null != restOrder.getSubmissionTime()) {
 			try {

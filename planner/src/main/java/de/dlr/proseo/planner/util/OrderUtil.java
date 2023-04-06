@@ -28,6 +28,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.interfaces.rest.model.RestMessage;
@@ -1354,10 +1355,7 @@ public class OrderUtil {
 						&& jobStep.getOutputProduct().getProductFile() != null) {
 					String fileName = null;
 					Product product = jobStep.getOutputProduct();
-					for (ProductFile pf : jobStep.getOutputProduct().getProductFile()) {
-						fileName = pf.getProductFileName();
-						break;
-					}
+					fileName = getFirstFileName(product);
 					if (fileName != null) {
 						String message = String.join("\n", 
 								"POST",
@@ -1387,11 +1385,19 @@ public class OrderUtil {
 						restMessage.setSender(order.getOrderSource().toString());
 						String url = config.getNotificationUrl() + "/notify";
 						RestTemplate restTemplate = new RestTemplate();
-						ResponseEntity<String> response = restTemplate.postForEntity(url, restMessage, String.class);
+						ResponseEntity<String> response = null;
+						try {
+							response = restTemplate.postForEntity(url, restMessage, String.class);
+						} catch (RestClientException rce) {
+							String msg = logger.log(PlannerMessage.NOTIFY_FAILED, url, rce.getMessage());
+							return false;
+						} catch (Exception e) {
+							String msg = logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage());
+							return false;
+						}
 						if (!(HttpStatus.OK.equals(response.getStatusCode()) || (HttpStatus.CREATED.equals(response.getStatusCode())))) {
-							throw new ProcessingException(
-									// TODO
-									logger.log(IngestorMessage.ERROR_ACQUIRE_SEMAPHORE, response.getStatusCode().toString()));
+							logger.log(PlannerMessage.NOTIFY_FAILED, url, response.getStatusCode().toString());
+							return false;
 						}
 					}
 				}
@@ -1541,5 +1547,22 @@ public class OrderUtil {
 		if (logger.isTraceEnabled()) logger.trace(">>> restartSuspendingOrder({})", id);
 		
 		UtilService.getOrderUtil().suspend(id, true);
+	}
+	
+	private String getFirstFileName(Product product) {
+		String fileName = null;
+		for (ProductFile pf : product.getProductFile()) {
+			fileName = pf.getProductFileName();
+			if (fileName != null) {
+				return fileName;
+			}
+		}
+		for (Product p : product.getComponentProducts()) {
+			fileName = getFirstFileName(p);
+			if (fileName != null) {
+				return fileName;
+			}
+		}
+		return fileName;
 	}
 }

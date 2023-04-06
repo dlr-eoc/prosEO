@@ -67,7 +67,7 @@ public class OdipUtilBase {
 	private final Date END_OF_MISSION = Date.from(Instant.parse("9999-12-31T23:59:59.999Z"));
 
 	// TODO where to get the settings?
-	private final String ORDER_PROCESSING_MODE = "OFFL";
+	private final String ORDER_PROCESSING_MODE = "OPER";
 	private final String ORDER_OUTPUT_FILE_CLASS = "OPER";
 	private final String ORDER_SLICING_TYPE = "NONE";
 
@@ -609,24 +609,25 @@ public class OdipUtilBase {
 						start = product.getSensingStartTime();
 						end = product.getSensingStopTime();
 					}
-					if ((start == null || end == null) && reference == null) {
+					if ((start == null || end == null) && reference == null && product == null) {
 						String message = logger.log(OdipMessage.MSG_INPUTREF_INVALID);
 						throw new OdipException(message);
 					}
-					if (start == null || end == null) {
-						String message = logger.log(OdipMessage.MSG_STARTSTOP_MISSING);
-						throw new OdipException(message);
-					}
-					if (start != null && end != null && product == null) {
-						// search for possible products
-						if (workflow.getInputProductClass() != null) {
-							List<Product> products = findProductsByClassAndStartStop(workflow.getInputProductClass().getProductType(), start, end);
-							if (products.isEmpty()) {
-								String message = logger.log(OdipMessage.MSG_NO_INPUTPRODUCT, workflow.getInputProductClass().getProductType());
-								throw new OdipException(message);
-							}
-						}
-					}
+					// TODO use planner only for testing
+//					if (start == null || end == null) {
+//						String message = logger.log(OdipMessage.MSG_STARTSTOP_MISSING);
+//						throw new OdipException(message);
+//					}
+//					if (start != null && end != null && product == null) {
+//						// search for possible products
+//						if (workflow.getInputProductClass() != null) {
+//							List<Product> products = findProductsByClassAndStartStop(workflow.getInputProductClass().getProductType(), start, end);
+//							if (products.isEmpty()) {
+//								String message = logger.log(OdipMessage.MSG_NO_INPUTPRODUCT, workflow.getInputProductClass().getProductType());
+//								throw new OdipException(message);
+//							}
+//						}
+//					}
 					restOrder.setSlicingType(OrderSlicingType.NONE.toString());
 					restOrder.setStartTime(OrbitTimeFormatter.format(start));
 					restOrder.setStopTime(OrbitTimeFormatter.format(end));
@@ -635,6 +636,7 @@ public class OdipUtilBase {
 		}
 		restOrder.setProcessingMode(ORDER_PROCESSING_MODE);
 		restOrder.setSlicingType(ORDER_SLICING_TYPE);
+		restOrder.setOrderSource(OrderSource.ODIP.toString());
 		
 		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONENDPOINT) != null) {
 			RestNotificationEndpoint rnep = new RestNotificationEndpoint();

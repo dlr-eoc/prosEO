@@ -71,7 +71,8 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 	private static final String WORKFLOW_FROM_CLAUSE = "FROM workflow p\n" +
 			"JOIN workflow_option wo ON wo.workflow_id = p.id\n" +
 			"LEFT OUTER JOIN product_class ipc ON p.input_product_class_id = ipc.id\n" +
-			"LEFT OUTER JOIN product_class opc ON p.output_product_class_id = opc.id\n";
+			"LEFT OUTER JOIN product_class opc ON p.output_product_class_id = opc.id\n" +
+			"LEFT OUTER JOIN configured_processor cp ON p.configured_processor_id = cp.id\n";
 			// "LEFT OUTER JOIN workflow_option_value_range wovr ON wo.id = wovr.workflow_option_id\n";
 	private static final String PARAMETER_JOIN_TEMPLATE = "LEFT OUTER JOIN processing_order_dynamic_processing_parameters pp%d ON p.id = pp%d.processing_order_id\n";
 	private static final String WHERE_CLAUSE = "WHERE ";
@@ -81,9 +82,9 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 	private static Map<String, String> oDataToSqlMap = new HashMap<>();
 	private static final String[][] ODATA_TO_SQL_MAPPING = {
 			{ OdipEdmProvider.GENERIC_PROP_ID, "p.uuid" },
-			{ OdipEdmProvider.GENERIC_PROP_NAME, "pf.product_file_name" }, // TODO Find way to also check for ZIP files
+			{ OdipEdmProvider.GENERIC_PROP_NAME, "p.name" }, 
 			{ OdipEdmProvider.GENERIC_PROP_CONTENT_TYPE, null }, // not part of data model
-			{ OdipEdmProvider.GENERIC_PROP_CONTENT_LENGTH, "pf.file_size" },
+			{ OdipEdmProvider.GENERIC_PROP_CONTENT_LENGTH, "p.file_size" },
 			{ CscAttributeName.STATUS.getValue(), "p.order_state" },
 			{ CscAttributeName.SUBMISSION_DATE.getValue(), "p.submission_time" },
 			{ CscAttributeName.ESTIMATED_DATE.getValue(), "p.estimated_completion_time" },
@@ -94,7 +95,13 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 			{ CscAttributeName.NOTIFICATION_ENDPOINT.getValue(), "p.endpoint_uri" },
 			{ CscAttributeName.NOTIFICATION_EPUSERNAME.getValue(), "p.endpoint_username" },
 			{ CscAttributeName.NOTIFICATION_EPPASSWORD.getValue(), "p.endpoint_password" },
-			{ CscAttributeName.WORKFLOW_NAME.getValue(), "p.name" }
+			{ CscAttributeName.OUTPUT_PRODUCT_CLASS.getValue(), "opc.product_type" },
+			{ CscAttributeName.INPUT_PRODUCT_CLASS.getValue(), "ipc.product_type" },
+			{ CscAttributeName.CONFIGURED_PROCESSOR.getValue(), "cp.identifier" },
+			{ CscAttributeName.PROCESSING_MODE.getValue(), "p.processing_mode" },
+			{ CscAttributeName.OUTPUT_FILE_CLASS.getValue(), "p.output_file_class" },
+			{ CscAttributeName.DESCRIPTION.getValue(), "p.description" },
+			{ CscAttributeName.WORKFLOW_VERSION.getValue(), "p.workflow_version" }
 	};
 	
 	private static final DateTimeFormatter sqlTimestampFormatter =
