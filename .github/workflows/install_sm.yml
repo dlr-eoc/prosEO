@@ -64,7 +64,10 @@ jobs:
         
     - name: Show current directory
       run: pwd
-        
+      
+    - name: Add minio container for s3 testing
+      run: docker compose -f ./storage-mgr/src/test/resources/docker-compose.yml up -d
+      
     - name: Show docker images 
       run: docker images
 
