@@ -158,6 +158,7 @@ public class OdipUtilBase {
 	
 	/**
 	 * Create a ODIP interface production order from a prosEO interface processing order.
+	 * Replace password  by "*****"
 	 * 
 	 * @param modelOrder the prosEO model order to convert
 	 * @return an OData entity object representing the prosEO interface production order
@@ -257,7 +258,9 @@ public class OdipUtilBase {
 			}
 			if (modelOrder.getNotificationEndpoint().getPassword() != null) {
 			order.addProperty(new Property(null, OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONEPPASSWORD, ValueType.PRIMITIVE,
-					modelOrder.getNotificationEndpoint().getPassword()));
+					// modelOrder.getNotificationEndpoint().getPassword()
+					"*****"
+					));
 			}
 		}
 		return order;
