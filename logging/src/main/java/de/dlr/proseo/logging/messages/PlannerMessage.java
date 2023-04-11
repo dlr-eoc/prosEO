@@ -160,7 +160,10 @@ public enum PlannerMessage implements ProseoMessage {
 			"  Status code: {2}" + "\n" +
 			"  Reason: {3}" + "\n" +
 			"  Response headers: {4}", ""),
-	NO_INPUT_QUERIES					(4143, Level.WARN, true, "Job Step ''{0}'' has no input product queries", "");
+	NO_INPUT_QUERIES					(4143, Level.WARN, true, "Job Step ''{0}'' has no input product queries", ""),
+	MSG_NO_INPUTPRODUCT					(4144, Level.ERROR, false, "No input product(s) found for order {0}", ""),
+	NOTIFY_FAILED						(4145, Level.ERROR, false, "Notification to {0} failed: {1}", ""),
+	;
 	
 	;
 

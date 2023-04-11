@@ -369,7 +369,8 @@ public class OdipEntityProcessor implements EntityProcessor {
 	    
 		Entity entity;
 			try {
-				if (edmEntitySet.getEntityType().getFullQualifiedName().equals(OdipEdmProvider.ET_PRODUCTIONORDER_FQN)) {
+				if (edmEntitySet.getEntityType().getFullQualifiedName().equals(OdipEdmProvider.ET_PRODUCTIONORDER_FQN) ||
+						edmEntitySet.getEntityType().getFullQualifiedName().equals(OdipEdmProvider.ET_ORDER_FQN)) {
 					// Query the backend services for the requested objects, passing on user, password and mission
 					entity = getProductionOrderAsEntity(keyPredicates.get(0).getText());
 				} else if (edmEntitySet.getEntityType().getFullQualifiedName().equals(OdipEdmProvider.ET_WORKFLOW_FQN)) {
@@ -480,7 +481,7 @@ public class OdipEntityProcessor implements EntityProcessor {
 			result = deserializer.entity(requestInputStream, edmEntityType);	
 		} catch (Exception e) {			
 			response.setStatusCode(HttpStatusCode.NOT_ACCEPTABLE.getStatusCode());
-			response.setHeader(HTTP_HEADER_WARNING, logger.log(OdipMessage.MSG_JSON_PARSE_ERROR, e.getMessage() + ": " + e.getCause().getMessage()));
+			response.setHeader(HTTP_HEADER_WARNING, logger.log(OdipMessage.MSG_JSON_PARSE_ERROR, e.getMessage() + (e.getCause() == null ? "" : (": " + e.getCause().getMessage()))));
 			return;
 		}
 		Entity requestEntity = result.getEntity();
@@ -493,7 +494,7 @@ public class OdipEntityProcessor implements EntityProcessor {
 			return;
 		} catch (Exception e) {
 			response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
-			response.setHeader(HTTP_HEADER_WARNING, logger.log(OdipMessage.MSG_EXCEPTION, e.getMessage() + ": " + e.getCause().getMessage()));
+			response.setHeader(HTTP_HEADER_WARNING, logger.log(OdipMessage.MSG_EXCEPTION, e.getMessage() + (e.getCause() == null ? "" : (": " + e.getCause().getMessage()))));
 			return;
 		}
 		// the rest order is created, now create the processing order
@@ -505,7 +506,7 @@ public class OdipEntityProcessor implements EntityProcessor {
 			return;
 		} catch (Exception e) {
 			response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
-			response.setHeader(HTTP_HEADER_WARNING, logger.log(OdipMessage.MSG_EXCEPTION, e.getMessage() + ": " + e.getCause().getMessage()));
+			response.setHeader(HTTP_HEADER_WARNING, logger.log(OdipMessage.MSG_EXCEPTION, e.getMessage() + (e.getCause() == null ? "" : (": " + e.getCause().getMessage()))));
 			return;
 		}
 		

@@ -59,6 +59,20 @@ public enum CscAttributeName {
 	NOTIFICATION_EPPASSWORD("NotificationEpPassword"),
 	/** Product (file) class */
 	PRODUCT_CLASS("productClass"),
+	/** Output product (file) class */
+	OUTPUT_PRODUCT_CLASS("OutputProductType"),
+	/** Input product (file) class */
+	INPUT_PRODUCT_CLASS("InputProductType"),
+	/** configured processor */
+	CONFIGURED_PROCESSOR("ConfiguredProcessor"),
+	/** processing mode */
+	PROCESSING_MODE("ProcessingMode"),
+	/** output file class */
+	OUTPUT_FILE_CLASS("OutputFileClass"),
+	/** description */
+	DESCRIPTION("Description"),
+	/** description */
+	WORKFLOW_VERSION("WorkflowVersion"),
 	
 	// Extended attributes (Copernicus Sentinel-1 only)
 	/** Start time from ascending node */
