@@ -197,14 +197,13 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 		        if (null == result) {
 					throw new NullPointerException("Unexpected null result from expressionVisitor");
 				}
-		        sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(countOnly)); // The number of parameters requested may have changed!
+		        sqlCommand = new StringBuilder(expressionVisitor.getWorkflowSqlCommand(countOnly)); // The number of parameters requested may have changed!
 				sqlCommand.append(result);
 			} catch (ODataApplicationException | ExpressionVisitException e) {
 		        throw new ODataApplicationException("Exception thrown in filter expression: " + e.getMessage(),
 		        		HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ROOT);
 			}
 		}
-		sqlCommand.append(" and (enabled is null or enabled = TRUE)");
 		
 		// Add filter for mission
 		// sqlCommand.append("\nAND m.code = '").append(securityConfig.getMission()).append("'");
@@ -484,7 +483,8 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 		// [2] Fetch the data from backend for this requested EntitySetName (has to be delivered as EntityCollection object)
 		EntityCollection entityCollection;
 		try {
-			if (edmEntitySet.getEntityType().getFullQualifiedName().equals(OdipEdmProvider.ET_PRODUCTIONORDER_FQN)) {
+			if (edmEntitySet.getEntityType().getFullQualifiedName().equals(OdipEdmProvider.ET_PRODUCTIONORDER_FQN) ||
+					edmEntitySet.getEntityType().getFullQualifiedName().equals(OdipEdmProvider.ET_ORDER_FQN)) {
 				// Query the backend services for the requested objects, passing on user, password and mission
 				entityCollection = queryProductionOrders(uriInfo);
 			} else if (edmEntitySet.getEntityType().getFullQualifiedName().equals(OdipEdmProvider.ET_WORKFLOW_FQN)) {

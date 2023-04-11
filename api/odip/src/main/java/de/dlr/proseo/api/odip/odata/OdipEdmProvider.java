@@ -56,8 +56,10 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 
 	// Entity Types
 	public static final String ET_PRODUCTIONORDER_NAME = "ProductionOrder";
+	public static final String ET_ORDER_NAME = "Order";
 	public static final String ET_WORKFLOW_NAME = "Workflow";
 	public static final FullQualifiedName ET_PRODUCTIONORDER_FQN = new FullQualifiedName(NAMESPACE, ET_PRODUCTIONORDER_NAME);
+	public static final FullQualifiedName ET_ORDER_FQN = new FullQualifiedName(NAMESPACE, ET_ORDER_NAME);
 	public static final FullQualifiedName ET_WORKFLOW_FQN = new FullQualifiedName(NAMESPACE, ET_WORKFLOW_NAME);
 	public static final String ET_WORKFLOW_PROP_NAME = "Name";
 	public static final String ET_WORKFLOW_PROP_ID = "Id";
@@ -116,6 +118,7 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 
 	// Entity Sets
 	public static final String ES_PRODUCTIONORDER_NAME = "ProductionOrder";
+	public static final String ES_ORDER_NAME = "Order";
 	public static final String ES_PRODUCTIONORDERS_NAME = "ProductionOrders";
 	public static final String ES_WORKFLOW_NAME = "Workflow";
 	public static final String ES_WORKFLOWS_NAME = "Workflows";
@@ -217,21 +220,33 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 		if (logger.isTraceEnabled()) logger.trace(">>> getEntitySet({}, {})", entityContainer, entitySetName);
 		
 		if(entityContainer.equals(CONTAINER)){
-//			if(entitySetName.equals(ES_PRODUCTIONORDER_NAME)){
-//				CsdlEntitySet entitySet = new CsdlEntitySet();
-//				entitySet.setName(ES_PRODUCTIONORDER_NAME);
-//				entitySet.setType(ET_PRODUCTIONORDER_FQN);
-//				
-//			    CsdlNavigationPropertyBinding navAttributesBinding = new CsdlNavigationPropertyBinding();
-//			    navAttributesBinding.setPath(ET_ATTRIBUTE_NAME); 
-//			    navAttributesBinding.setTarget(ES_ATTRIBUTES_NAME); //target entitySet, where the nav prop points to
-//
-//			    entitySet.setNavigationPropertyBindings(Arrays.asList(navAttributesBinding));
-//				
-//				if (logger.isTraceEnabled()) logger.trace("<<< getEntitySet({}, {})", entityContainer, entitySetName);
-//				return entitySet;
-//			} else 
-			if(entitySetName.equals(ES_PRODUCTIONORDERS_NAME)){
+			if(entitySetName.equals(ES_ORDER_NAME)){
+				CsdlEntitySet entitySet = new CsdlEntitySet();
+				entitySet.setName(ES_ORDER_NAME);
+				entitySet.setType(ET_ORDER_FQN);
+				
+			    CsdlNavigationPropertyBinding navAttributesBinding = new CsdlNavigationPropertyBinding();
+			    navAttributesBinding.setPath(ET_ATTRIBUTE_NAME); 
+			    navAttributesBinding.setTarget(ES_ATTRIBUTES_NAME); //target entitySet, where the nav prop points to
+
+			    entitySet.setNavigationPropertyBindings(Arrays.asList(navAttributesBinding));
+				
+				if (logger.isTraceEnabled()) logger.trace("<<< getEntitySet({}, {})", entityContainer, entitySetName);
+				return entitySet;
+			} else if(entitySetName.equals(ES_PRODUCTIONORDER_NAME)){
+				CsdlEntitySet entitySet = new CsdlEntitySet();
+				entitySet.setName(ES_PRODUCTIONORDER_NAME);
+				entitySet.setType(ET_PRODUCTIONORDER_FQN);
+				
+			    CsdlNavigationPropertyBinding navAttributesBinding = new CsdlNavigationPropertyBinding();
+			    navAttributesBinding.setPath(ET_ATTRIBUTE_NAME); 
+			    navAttributesBinding.setTarget(ES_ATTRIBUTES_NAME); //target entitySet, where the nav prop points to
+
+			    entitySet.setNavigationPropertyBindings(Arrays.asList(navAttributesBinding));
+				
+				if (logger.isTraceEnabled()) logger.trace("<<< getEntitySet({}, {})", entityContainer, entitySetName);
+				return entitySet;
+			} else if(entitySetName.equals(ES_PRODUCTIONORDERS_NAME)){
 				CsdlEntitySet entitySet = new CsdlEntitySet();
 				entitySet.setName(ES_PRODUCTIONORDERS_NAME);
 				entitySet.setType(ET_PRODUCTIONORDER_FQN);
@@ -452,7 +467,7 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 		if (logger.isTraceEnabled()) logger.trace(">>> getEntityType({})", entityTypeName);
 		
 		// this method is called for one of the EntityTypes that are configured in the Schema
-		if(entityTypeName.equals(ET_PRODUCTIONORDER_FQN)){
+		if(entityTypeName.equals(ET_PRODUCTIONORDER_FQN) || entityTypeName.equals(ET_ORDER_FQN)){
 
 			// Create Product order properties
 			CsdlProperty id = new CsdlProperty().setName(GENERIC_PROP_ID)
@@ -511,7 +526,11 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 
 			// Configure production order entity type
 			CsdlEntityType productType = new CsdlEntityType();
-			productType.setName(ET_PRODUCTIONORDER_NAME);
+			if (entityTypeName.equals(ET_PRODUCTIONORDER_FQN)) {
+				productType.setName(ET_PRODUCTIONORDER_NAME);
+			} else {
+				productType.setName(ET_ORDER_NAME);
+			}
 			productType.setProperties(Arrays.asList(id, status , statusMessage, orderOutputSize, submissionDate, estimatedDate, completedDate, 
 					evictionDate, priority, inputProductReference, workflowId, workflowName, workflowOptions, notificationEndPolint, 
 					notificationUserName, notificationPassword));
@@ -665,6 +684,7 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 		// add EntityTypes
 		List<CsdlEntityType> entityTypes = new ArrayList<CsdlEntityType>();
 		entityTypes.add(getEntityType(ET_PRODUCTIONORDER_FQN));
+		entityTypes.add(getEntityType(ET_ORDER_FQN));
 		entityTypes.add(getEntityType(ET_WORKFLOW_FQN));
 		entityTypes.add(getEntityType(ET_ATTRIBUTE_FQN));
 		entityTypes.add(getEntityType(ET_STRINGATTRIBUTE_FQN));
