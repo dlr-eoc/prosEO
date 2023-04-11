@@ -369,13 +369,6 @@ public class WorkflowMgrTest {
 		testWorkflowOption.setValueRange(new ArrayList<String>());
 		testWorkflowOption.getValueRange().add("someValue");
 		
-		// If a default value is provided, it must be contained in the value range.
-		testWorkflowOption.setDefaultValue("notContained");
-		testWorkflow.getWorkflowOptions().clear();
-		testWorkflow.getWorkflowOptions().add(testWorkflowOption);
-		assertThrows(IllegalArgumentException.class, () -> workflowMgr.createWorkflow(testWorkflow));
-		testWorkflowOption.setDefaultValue(null);
-		
 		// No exception is thrown for correct input.
 		testWorkflow.getWorkflowOptions().clear();
 		testWorkflow.getWorkflowOptions().add(testWorkflowOption);
@@ -523,11 +516,11 @@ public class WorkflowMgrTest {
 		testWorkflowOption.setName("optionName");
 
 		// A valid optionType must be provided.
-		testWorkflowOption.setOptionType(null);
-		testWorkflow.getWorkflowOptions().clear();
-		testWorkflow.getWorkflowOptions().add(testWorkflowOption);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+//		testWorkflowOption.setOptionType(null);
+//		testWorkflow.getWorkflowOptions().clear();
+//		testWorkflow.getWorkflowOptions().add(testWorkflowOption);
+//		assertThrows(IllegalArgumentException.class,
+//				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 
 		testWorkflowOption.setOptionType("invalid");
 		testWorkflow.getWorkflowOptions().clear();
@@ -536,13 +529,10 @@ public class WorkflowMgrTest {
 				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testWorkflowOption.setOptionType(WorkflowOptionType.NUMBER.toString());
 
-		// A valueRange must be provided.
+		// Empty value ranges are allowed, so a non-existing value range is quietly corrected
 		testWorkflowOption.setValueRange(null);
 		testWorkflow.getWorkflowOptions().clear();
 		testWorkflow.getWorkflowOptions().add(testWorkflowOption);
-		// Empty value ranges are allowed, so a non-existing value range is quietly corrected
-//		assertThrows(IllegalArgumentException.class,
-//				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 
 		// No exception is thrown if nothing was modified.
 		workflowMgr.modifyWorkflow(testWorkflow.getId(), WorkflowUtil

@@ -5,7 +5,7 @@ spring:
         open-in-view: false
         properties.hibernate.jdbc.time_zone: UTC
     datasource:
-        url: jdbc:postgresql://proseo-db:5432/proseo
+        url: jdbc:postgresql://10.x.x.c:5432/proseo
         username: <db_user>
         password: <db_pwd>
 logging:
@@ -15,10 +15,10 @@ logging:
         de.dlr.proseo: TRACE
         org.hibernate.engine.jdbc.env.internal: WARN
 proseo:
-    userManager.url: http://localhost:8086/proseo/user-mgr/v0.1
-    ingestor.url: http://localhost:8081/proseo/ingestor/v0.1
-    orderManager.url: http://192.168.20.155:8082/proseo/order-mgr/v0.1
-    productionPlanner.url: http://192.168.20.155:8080/proseo/planner/v0.1
+    userManager.url: http://proseo-user-mgr:8080/proseo/user-mgr/v0.1
+    ingestor.url: http://proseo-ingestor:8080/proseo/ingestor/v0.1
+    orderManager.url: http://proseo-order-mgr:8080/proseo/order-mgr/v0.1
+    productionPlanner.url: http://proseo-prodplanner:8080/proseo/planner/v0.1
     # Timeout for outgoing HTTP connections
     http.timeout: 10000
     # Expiration time for OAuth2 tokens in seconds
@@ -26,7 +26,7 @@ proseo:
     # Maximum number of products to retrieve in a single query
     quota: 5000
     odip:
-        facility: Lerchenhof
+        facility: localhost
         
     # Not sure what this is (AIP client?)
     auxip.baseuri: http://192.168.20.155:8080/proseo/api/aip-client/v0.1

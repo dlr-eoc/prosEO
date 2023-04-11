@@ -41,7 +41,7 @@ public class RestOps {
 			parsedTimeout = Long.parseLong(System.getenv("HTTP_TIMEOUT"));
 		} catch (NumberFormatException e) {
 			parsedTimeout = DEFAULT_HTTP_TIMEOUT;
-			logger.error("HTTP_TIMEOUT environment variable cannot be parsed as a long, using default value: {}",
+			logger.info("HTTP_TIMEOUT environment variable cannot be parsed as a long, using default value: {}",
 					DEFAULT_HTTP_TIMEOUT);
 		}
 		ENV_HTTP_TIMEOUT = parsedTimeout > 0 ? parsedTimeout : DEFAULT_HTTP_TIMEOUT;

@@ -110,6 +110,47 @@ services:
       options:
         max-size: 100m
     restart: unless-stopped
+  proseo-api-odip:
+    image: ${REGISTRY_URL}/proseo-api-odip:${VERSION}-proseo
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8090:8080"
+    depends_on:
+      - proseo-user-mgr
+      - proseo-ingestor
+      - proseo-order-mgr
+      - proseo-prodplanner
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-notification:
+    image: ${REGISTRY_URL}/proseo-notification:${VERSION}-proseo
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8091:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-aip-client:
+    image: ${REGISTRY_URL}/proseo-aip-client:${VERSION}-proseo
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8092:8080"
+    depends_on:
+      - proseo-user-mgr
+      - proseo-ingestor
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
   proseo-pgadmin:
     image: ${REGISTRY_URL}/dpage/pgadmin4:latest-proseo
     environment:

@@ -1,0 +1,82 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+        open-in-view: false
+        properties.hibernate.jdbc.time_zone: UTC
+    datasource:
+        url: jdbc:postgresql://proseo-db:5432/proseo
+        username: <db_user>
+        password: <db_pwd>
+logging:
+    file: /proseo/log/proseo-api-aipclient.log
+    level:
+        root: INFO
+        de.dlr.proseo: INFO
+        org.hibernate.engine.jdbc.env.internal: WARN
+proseo:
+    ingestor:
+        # URL of the Ingestor Service
+        url: http://proseo-ingestor:8080/proseo/ingestor/v0.1
+        # The directory for the Ingestor Service to upload from
+        sourcedir: target/test/downloads
+    ltas:
+        # TODO
+
+    # AUXIP Monitor configuration
+    auxip:
+        # AUXIP Monitor identifier (must be unique for all AUXIP monitors on the same host)
+        id: PTM-AUXIP
+        # The base URI of the AUXIP (protocol, host name, port; no terminating slash)
+        baseuri: http://localhost:8080
+        # The AUXIP context, if any ("service root", any URI component(s) before "odata"; no starting or terminating slash)
+        context: proseo/api/prip
+        
+        # Flag indicating whether token-based authentication shall be used (default false)
+        usetoken: true
+        # The URI for requesting a bearer token (full URL)
+        tokenuri: http://localhost:8080/proseo/api/prip/token
+        # The AUXIP username
+        user: myuser
+        # The AUXIP password
+        password: mypassword
+        # Credentials for OpenID-based token requests (optional)
+        client:
+            # The AUXIP client ID
+            id: my-client-id
+            # The AUXIP client secret (mandatory if client ID is set)
+            secret: mysecret
+            # Send client ID and secret in body?
+            sendinbody: false
+            
+        # The product types to select
+        producttypes: "AUX_IERSC,AUX_IERSB"
+        
+        # Interval between pickup point checks in milliseconds (e. g. every min)
+        check.interval: 60000
+        # Interval between individual chunk retrievals in milliseconds (e. g. every 10 s)
+        chunk.interval: 10000
+        
+        # Handling of history file
+        history:
+            # Path to the file for storing transfer history (on a persistent volume)
+            file: /Path/to/transfer/history/file
+            # Interval to truncate transfer history file in milliseconds (e. g. daily)
+            truncate.interval: 86400000
+            # Period to retain transfer history entries for, in milliseconds (e. g. one week)
+            retention: 604800000
+            
+        # Handling of parallel threads
+        thread:
+            # Maximum number of parallel transfer threads (default 1 = no parallel threads)
+            # max: 1
+            # Interval in millliseconds to check for completed transfers (default 500 ms)
+            # wait: 500
+            # Maximum number of wait cycles for transfer completion checks (default 3600)
+            # cycles: 3600
+            
+        # Minimum size in bytes of a file to be used for performance measurements (e. g. 20 MiB = 20 * 1024 * 1024 Bytes)
+        performance.minsize: 20971520
+            
+        # The path to the target AUX file directory (for ingestion)
+        directory: /Path/to/transfer/directory

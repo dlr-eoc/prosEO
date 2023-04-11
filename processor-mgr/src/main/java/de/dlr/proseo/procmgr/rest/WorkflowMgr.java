@@ -138,7 +138,6 @@ public class WorkflowMgr {
 	 * @throws IllegalArgumentException if any of the input data was invalid
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
-	@Transactional
 	public RestWorkflow createWorkflow(RestWorkflow restWorkflow) throws IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createWorkflow({})", (null == restWorkflow ? "MISSING" : restWorkflow.getName()));
@@ -257,13 +256,15 @@ public class WorkflowMgr {
 					// Quietly restore value range as empty list
 					option.setValueRange(new ArrayList<>());
 				}
-				if (null != option.getDefaultValue() && !option.getValueRange().contains(option.getDefaultValue())) {
+				if (!option.getValueRange().isEmpty() && null != option.getDefaultValue() && !option.getValueRange().contains(option.getDefaultValue())) {
 					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.RANGE_MUST_CONTAIN_DEFAULT,
 							option.getDefaultValue(), option.getId()));
 				}
 			}
 		}
 
+		logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE);
+		
 		// The new workflow is saved to the repository.
 		RepositoryService.getWorkflowRepository().save(modelWorkflow);
 		modelWorkflow = RepositoryService.getWorkflowRepository().findByUuid(modelWorkflow.getUuid());
@@ -549,15 +550,42 @@ public class WorkflowMgr {
 						break;
 					}
 				}
+
+				if (!newOption.getValueRange().isEmpty() && null != newOption.getDefaultValue() && !newOption.getValueRange().contains(newOption.getDefaultValue())) {
+					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.RANGE_MUST_CONTAIN_DEFAULT,
+							newOption.getDefaultValue(), newOption.getId()));
+				}
+				
 				if (modelOption == null) {
 					modelOption = new WorkflowOption();
 					modelOption.setWorkflow(modelWorkflow);
 					modelOption.setName(newOption.getName());
 					isNew = true;
+		
+					// If new options are provided, their mandatory fields must be set.
+					if (null == newOption.getName()) {
+						throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
+								"For workflowOption modification, option name"));
+					}
+					if (null == newOption.getOptionType()) {
+						throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
+								"For workflowOption modification, option type"));
+					}
+					if (null == newOption.getValueRange()) {
+						// Quietly restore value range as empty list
+						newOption.setValueRange(new ArrayList<>());
+					}
+					if (!newOption.getValueRange().isEmpty() && null != newOption.getDefaultValue()
+							&& !newOption.getValueRange().contains(newOption.getDefaultValue())) {
+						throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.RANGE_MUST_CONTAIN_DEFAULT,
+								newOption.getDefaultValue(), newOption.getId()));
+					}
 				}
-				// If new options are provided, their mandatory fields must be set.
-
+					
 				if (null != newOption.getOptionType()) {
+					if (null == WorkflowOptionType.get(newOption.getOptionType().toLowerCase())) {
+						throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.ILLEGAL_OPTION_TYPE, newOption.getOptionType()));
+					}					
 					modelOption.setType(WorkflowOptionType.get(newOption.getOptionType().toLowerCase()));
 				}
 				if (null != newOption.getValueRange()) {

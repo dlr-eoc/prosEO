@@ -50,5 +50,12 @@ proseo:
     ingestor:
         # Callback URL for wrapper
         url: http://192.168.20.155:8081/proseo/ingestor/v0.1
+    notification:
+        # URL for notification service
+        url: http://proseo-notification/proseo/notification/v0.1
     posix:
         workerMountPoint: /proseo/data
+        
+    # Timeout for outgoing HTTP connections
+    http.timeout: 10000
+        

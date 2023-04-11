@@ -87,7 +87,7 @@ public class DownloadManager {
 		final ProcessingFacility processingFacility = readProcessingFacility(facility);
 		
 		// TODO Auto-generated method stub
-		return null;
+		throw new NoResultException("Not implemented");
 	}
 
     /**
@@ -125,7 +125,7 @@ public class DownloadManager {
 		
 		
 		// TODO Auto-generated method stub
-		return result;
+		throw new NoResultException("Not implemented");
 	}
 
     /**
@@ -152,7 +152,7 @@ public class DownloadManager {
 		final ProcessingFacility processingFacility = readProcessingFacility(facility);
 		
 		// TODO Auto-generated method stub
-		return null;
+		throw new NoResultException("Not implemented");
 	}
 
 }
