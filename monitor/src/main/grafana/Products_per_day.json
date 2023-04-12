@@ -1,0 +1,1307 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 14,
+  "iteration": 1678380880620,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "${__field.name}",
+          "links": [
+            {
+              "title": "Details",
+              "url": "/d/uid_aggregation_filter/aggregation_filter?orgId=1﻿﻿﻿﻿﻿﻿﻿&${var_production_type:queryparam}﻿﻿﻿﻿﻿﻿﻿&var-var_datetime=﻿﻿﻿﻿﻿﻿﻿${__value.time}﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿&var-var_datetime_offset=86400000&var-var_dashboard=uid_products_per_hour/products-per-hour"
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 75,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "8.3.5",
+      "pointradius": 2,
+      "points": true,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "\r\n\r\nfrom(bucket: \"production_hour\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"product\" and r[\"_field\"] =~ /type|production_latency_min/)\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.type == \"${var_types}\")\r\n  |> rename(columns: {production_latency_min: \"min  \"})",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n  datetime at TIME zone 'UTC' AS \"time\",\r\n  min(production_latency_min) AS \"min\"\r\nFROM mon_product_production_day this \r\nINNER JOIN mission ON mission.id = this.mission_id\r\nWHERE  \r\n  production_type IN (${var_production_type}) AND\r\n  mission.code IN (${var_mission}) AND \r\n  $__timeFilter(datetime at TIME zone 'UTC') \r\nGROUP BY datetime\r\nORDER BY datetime",
+          "refId": "production_latency_min",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "hide": false,
+          "metricColumn": "none",
+          "query": "from(bucket: \"production_hour\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"product\" and r[\"_field\"] =~ /type|production_latency_max/)\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.type == \"${var_types}\")\r\n  |> rename(columns: {production_latency_max: \"max  \"})",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n  datetime at TIME zone 'UTC' AS \"time\",\r\n  max(production_latency_max) AS \"max\"\r\nFROM mon_product_production_day this\r\nINNER JOIN mission ON mission.id = this.mission_id\r\nWHERE  \r\n  production_type IN (${var_production_type}) AND\r\n  mission.code IN (${var_mission}) AND \r\n  $__timeFilter(datetime at TIME zone 'UTC') \r\nGROUP BY datetime\r\nORDER BY datetime",
+          "refId": "production_latency_max",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "hide": false,
+          "metricColumn": "none",
+          "query": "from(bucket: \"production_hour\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"product\" and r[\"_field\"] =~ /type|production_latency_avg/)\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.type == \"${var_types}\")\r\n  |> rename(columns: {production_latency_avg: \"avg  \"})",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n  datetime at TIME zone 'UTC' AS \"time\",\r\n  avg(production_latency_avg) AS \"avg\"\r\nFROM mon_product_production_day this\r\nINNER JOIN mission ON mission.id = this.mission_id\r\nWHERE  \r\n  production_type IN (${var_production_type}) AND\r\n  mission.code IN (${var_mission}) AND \r\n  $__timeFilter(datetime at TIME zone 'UTC') \r\nGROUP BY datetime\r\nORDER BY datetime",
+          "refId": "production_latency_avg",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeRegions": [],
+      "title": "Production latency min, max, avg ($var_production_type)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "${__field.name}",
+          "links": [
+            {
+              "title": "Details",
+              "url": "/d/uid_aggregation_filter/aggregation_filter?orgId=1﻿﻿﻿﻿﻿﻿﻿&${var_production_type:queryparam}﻿﻿﻿﻿﻿﻿﻿&var-var_datetime=﻿﻿﻿﻿﻿﻿﻿${__value.time}﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿&var-var_datetime_offset=86400000&var-var_dashboard=uid_products_per_hour/products-per-hour"
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "hiddenSeries": false,
+      "id": 76,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "8.3.5",
+      "pointradius": 2,
+      "points": true,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "from(bucket: \"production_hour\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"product\" and r[\"_field\"] =~ /type|total_latency_min/)\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.type == \"${var_types}\")\r\n  |> rename(columns: {total_latency_min: \"min  \"})",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n  datetime at TIME zone 'UTC' AS \"time\",\r\n  min(total_latency_min) AS \"min\"\r\nFROM mon_product_production_day this\r\nINNER JOIN mission ON mission.id = this.mission_id\r\nWHERE  \r\n  production_type IN (${var_production_type}) AND\r\n  mission.code IN (${var_mission}) AND \r\n  $__timeFilter(datetime at TIME zone 'UTC') \r\nGROUP BY datetime\r\nORDER BY datetime",
+          "refId": "total_latency_min",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "hide": false,
+          "metricColumn": "none",
+          "query": "from(bucket: \"production_hour\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"product\" and r[\"_field\"] =~ /type|total_latency_max/)\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.type == \"${var_types}\")\r\n  |> rename(columns: {total_latency_max: \"max  \"})\r\n  ",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n  datetime at TIME zone 'UTC' AS \"time\",\r\n  max(total_latency_max) AS \"max\"\r\nFROM mon_product_production_day this\r\nINNER JOIN mission ON mission.id = this.mission_id\r\nWHERE  \r\n  production_type IN (${var_production_type}) AND\r\n  mission.code IN (${var_mission}) AND \r\n  $__timeFilter(datetime at TIME zone 'UTC') \r\nGROUP BY datetime\r\nORDER BY datetime",
+          "refId": "total_latency_max",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "hide": false,
+          "metricColumn": "none",
+          "query": "from(bucket: \"production_hour\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"product\" and r[\"_field\"] =~ /type|total_latency_avg/)\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.type == \"${var_types}\")\r\n  |> rename(columns: {total_latency_avg: \"avg  \"})",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n  datetime at TIME zone 'UTC' AS \"time\",\r\n  avg(total_latency_avg) AS \"avg\"\r\nFROM mon_product_production_day this\r\nINNER JOIN mission ON mission.id = this.mission_id\r\nWHERE  \r\n  production_type IN (${var_production_type}) AND\r\n  mission.code IN (${var_mission}) AND \r\n  $__timeFilter(datetime at TIME zone 'UTC') \r\nGROUP BY datetime\r\nORDER BY datetime",
+          "refId": "total_latency_avg",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeRegions": [],
+      "title": "Total latency min, max, avg ($var_production_type)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "${__field.name}",
+          "links": [
+            {
+              "title": "Details",
+              "url": "/d/uid_aggregation_filter/aggregation_filter?orgId=1﻿﻿﻿﻿﻿﻿﻿&${var_production_type:queryparam}﻿﻿﻿﻿﻿﻿﻿&var-var_datetime=﻿﻿﻿﻿﻿﻿﻿${__value.time}﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿&var-var_datetime_offset=86400000&var-var_dashboard=uid_products_per_hour/products-per-hour"
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "hiddenSeries": false,
+      "id": 77,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "8.3.5",
+      "pointradius": 2,
+      "points": true,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "query": "from(bucket: \"production_hour\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"product\" and r[\"_field\"] =~ /type|count/)\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.type == \"${var_types}\")\r\n  ",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  datetime at TIME zone 'UTC' AS \"time\",\n  sum(count) AS \"count\"\nFROM mon_product_production_day this\nINNER JOIN mission ON mission.id = this.mission_id\nWHERE  \n  production_type IN (${var_production_type}) AND\n  mission.code IN (${var_mission}) AND \n  $__timeFilter(datetime at TIME zone 'UTC') \nGROUP BY datetime\nORDER BY datetime",
+          "refId": "count",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeRegions": [],
+      "title": "Count ($var_production_type)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "${__field.name}",
+          "links": [
+            {
+              "title": "Details",
+              "url": "/d/uid_aggregation_filter/aggregation_filter?orgId=1﻿﻿﻿﻿﻿﻿﻿&${var_production_type:queryparam}﻿﻿﻿﻿﻿﻿﻿&var-var_datetime=﻿﻿﻿﻿﻿﻿﻿${__value.time}﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿&var-var_datetime_offset=86400000&var-var_dashboard=uid_products_per_hour/products-per-hour"
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "hiddenSeries": false,
+      "id": 78,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "8.3.5",
+      "pointradius": 2,
+      "points": true,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "time_series",
+          "group": [],
+          "hide": false,
+          "metricColumn": "none",
+          "query": "from(bucket: \"production_hour\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"product\" and r[\"_field\"] =~ /type|size/)\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.type == \"${var_types}\")",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  datetime at TIME zone 'UTC' AS \"time\",\n  sum(file_size) AS file_size\nFROM mon_product_production_day this\nINNER JOIN mission ON mission.id = this.mission_id\nWHERE  \n  production_type IN (${var_production_type}) AND\n  mission.code IN (${var_mission}) AND \n  $__timeFilter(datetime at TIME zone 'UTC') \nGROUP BY datetime\nORDER BY datetime",
+          "refId": "size",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeRegions": [],
+      "title": "Size ($var_production_type)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
+    },
+    {
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "filterable": true
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "completed_job_steps {_start=\"2021-08-25 09:26:29 +0000 UTC\", _stop=\"2021-08-25 09:31:29 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 155
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "finished_job_steps {_start=\"2021-08-25 09:26:29 +0000 UTC\", _stop=\"2021-08-25 09:31:29 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 139
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "_time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 169
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "all_job_steps {_start=\"2021-08-25 09:29:12 +0000 UTC\", _stop=\"2021-08-25 09:34:12 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 100
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "completed_job_steps {_start=\"2021-08-25 09:29:12 +0000 UTC\", _stop=\"2021-08-25 09:34:12 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 154
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "failed_job_steps {_start=\"2021-08-25 09:29:12 +0000 UTC\", _stop=\"2021-08-25 09:34:12 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 121
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "finished_job_steps {_start=\"2021-08-25 09:29:12 +0000 UTC\", _stop=\"2021-08-25 09:34:12 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 135
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "name {_start=\"2021-08-25 09:29:12 +0000 UTC\", _stop=\"2021-08-25 09:34:12 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 183
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "running_job_steps {_start=\"2021-08-25 09:29:12 +0000 UTC\", _stop=\"2021-08-25 09:34:12 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 135
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "all_job_steps {_start=\"2021-08-25 09:31:57 +0000 UTC\", _stop=\"2021-08-25 09:36:57 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 118
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "completed_job_steps {_start=\"2021-08-25 09:31:57 +0000 UTC\", _stop=\"2021-08-25 09:36:57 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 169
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "failed_job_steps {_start=\"2021-08-25 09:31:57 +0000 UTC\", _stop=\"2021-08-25 09:36:57 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 140
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "finished_job_steps {_start=\"2021-08-25 09:31:57 +0000 UTC\", _stop=\"2021-08-25 09:36:57 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 156
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "name {_start=\"2021-08-25 09:31:57 +0000 UTC\", _stop=\"2021-08-25 09:36:57 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 186
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "running_job_steps {_start=\"2021-08-25 09:31:57 +0000 UTC\", _stop=\"2021-08-25 09:36:57 +0000 UTC\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 151
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "completed_job_steps"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 194
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 213
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "All Job Steps"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 166
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Failed Job Steps"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 153
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Finished Job Steps"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 163
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Running Job Steps"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 177
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Completed Job Steps"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 171
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "All"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 63
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Completed"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 112
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Failed"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 81
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Finished"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 97
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 89
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Running"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 106
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "prodution_latency_max"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 192
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Count"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 114
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Hour"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 120
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mission"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 143
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Size"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 102
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Type"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 133
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "count"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 164
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Total Latency Avg"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 155
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Total Latency Max"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 157
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Total Latency Min"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 152
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Production Latency Min"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 195
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Production Latency Max"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 205
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Production Type"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 168
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Production Latency Avg"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 191
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Date"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 173
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "File Size"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 224
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "id": 74,
+      "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "8.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "kkvh4vtnk"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "query": "FinalOutput = [\"Mission\", \"Date\", \"Hour\", \"Type\", \"Count\", \"Size\", \"production_latency_min\", \r\n  \"production_latency_max\", \"production_latency_avg\", \"total_latency_min\", \"total_latency_max\", \"total_latency_avg\"]\r\n\r\nRawSeries = from(bucket: \"production_hour\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"product\" and r._field =~ /mission|date|hour|type|count|size|production_latency_min|production_latency_max|production_latency_avg|total_latency_min|total_latency_max|total_latency_avg/)\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n\r\n//  |> filter(fn: (r) => r.type == \"${var_types}\")\r\n\r\n\r\n NamedSeries = RawSeries\r\n  |> map(fn: (r) => ({\"Mission\":r.mission, \"Date\":r.date, \"Hour\":r.hour, \"Type\":r.type, \"Count\":r.count, \"Size\":r.size, \r\n        \"production_latency_min\":r.production_latency_min, \"production_latency_max\":r.production_latency_max, \"production_latency_avg\":r.production_latency_avg, \r\n        \"total_latency_min\":r.total_latency_min, \"total_latency_max\":r.total_latency_max, \"total_latency_avg\":r.total_latency_avg}))\r\n    |> keep(columns:FinalOutput)\r\n    \r\nNamedSeries |> yield()",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  mission.code AS \"Mission\",\n  substring(cast((datetime at TIME zone 'UTC') as varchar(100)),1, 10)  AS \"Date\",\n  \"count\" AS \"Count\",  \n  file_size AS \"File Size\", \n  \n  CASE\n    WHEN production_type = 'systematic_production' THEN 'Systematic Production'\n    WHEN production_type = 'on-demand default' THEN 'On-Demand Default'\n    WHEN production_type = 'on-demand non-default' THEN 'On-Demand Non-Default'\n    ELSE production_type\n  END \n  AS \"Production Type\",\n  \n  production_latency_min AS \"Production Latency Min\", \n  production_latency_max AS \"Production Latency Max\", \n  production_latency_avg AS \"Production Latency Avg\", \n  total_latency_min AS \"Total Latency Min\", \n  total_latency_max AS \"Total Latency Max\", \n  total_latency_avg AS \"Total Latency Avg\"\nFROM mon_product_production_day this\nINNER JOIN mission ON mission.id = this.mission_id\nWHERE  \n  production_type IN (${var_production_type}) AND\n  mission.code IN (${var_mission}) AND \n  $__timeFilter(datetime at TIME zone 'UTC') \nORDER BY datetime\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Products per day ($var_production_type)",
+      "type": "table"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 34,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "S1A",
+          "value": "S1A"
+        },
+        "definition": "select code from mission",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Mission",
+        "multi": true,
+        "name": "var_mission",
+        "options": [],
+        "query": "select code from mission",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": [
+            "Systematic Production"
+          ],
+          "value": [
+            "systematic_production"
+          ]
+        },
+        "description": "",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Production Types",
+        "multi": true,
+        "name": "var_production_type",
+        "options": [
+          {
+            "selected": true,
+            "text": "Systematic Production",
+            "value": "systematic_production"
+          },
+          {
+            "selected": false,
+            "text": "On-Demand Default",
+            "value": "on-demand default"
+          },
+          {
+            "selected": false,
+            "text": "On-Demand Non-Default",
+            "value": "on-demand non-default"
+          }
+        ],
+        "query": "Systematic Production : systematic_production, On-Demand Default : on-demand default, On-Demand Non-Default : on-demand non-default",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-31d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "utc",
+  "title": "Products per day",
+  "uid": "uid_products_per_day",
+  "version": 3,
+  "weekStart": ""
+}

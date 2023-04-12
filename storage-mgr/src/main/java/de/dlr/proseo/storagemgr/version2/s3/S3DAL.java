@@ -92,7 +92,7 @@ public class S3DAL {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> initS3ClientV1()");
 
-		logger.trace("... using access key {} and secret {}", cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
+		logger.trace("... using access key {} and secret {}", cfg.getS3AccessKey(), "***");
 		AWSCredentials awsCredentialsV1 = new BasicAWSCredentials(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
 
 		if (cfg.isDefaultEndPoint()) {
@@ -126,7 +126,7 @@ public class S3DAL {
 
 		Region s3Region = Region.of(cfg.getS3Region()); // Region.EU_CENTRAL_1;
 
-		logger.trace("... using access key {} and secret {}", cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
+		logger.trace("... using access key {} and secret {}", cfg.getS3AccessKey(), "***");
 		initCredentials(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
 
 		if (cfg.isDefaultEndPoint()) {
