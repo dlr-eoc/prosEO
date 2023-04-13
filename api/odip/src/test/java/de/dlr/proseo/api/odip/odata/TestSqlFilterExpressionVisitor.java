@@ -41,7 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.api.odip.odata.OdipEdmProvider;
-import de.dlr.proseo.api.odip.odata.SqlFilterExpressionVisitor;
+import de.dlr.proseo.api.odip.odata.OrderSqlFilterExpressionVisitor;
 
 /**
  * @author thomas
@@ -99,7 +99,7 @@ public class TestSqlFilterExpressionVisitor {
 			logger.trace("URI info: Aliases = {}", uriInfo.getAliases());
 
 			String result = "TRUE"; // default value for no filter
-			SqlFilterExpressionVisitor expressionVisitor = new SqlFilterExpressionVisitor();
+			OrderSqlFilterExpressionVisitor expressionVisitor = new OrderSqlFilterExpressionVisitor();
 
 			// Test filter option
 			FilterOption filterOption = uriInfo.getFilterOption();
@@ -133,7 +133,7 @@ public class TestSqlFilterExpressionVisitor {
 						orderByClause += ", ";
 					}
 					try {
-						String orderExpression = orderByItem.getExpression().accept(new SqlFilterExpressionVisitor());
+						String orderExpression = orderByItem.getExpression().accept(new OrderSqlFilterExpressionVisitor());
 						orderByClause += orderExpression + " " + (orderByItem.isDescending() ? "DESC" : "ASC");
 					} catch (ExpressionVisitException | ODataApplicationException e) {
 						logger.error("Exception thrown in orderBy expression: ", e);
@@ -210,7 +210,7 @@ public class TestSqlFilterExpressionVisitor {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.api.odip.odata.SqlFilterExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
+	 * Test method for {@link de.dlr.proseo.api.odip.odata.OrderSqlFilterExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
 	 */
 	@Test
 	public final void testVisitMember() {
@@ -221,7 +221,7 @@ public class TestSqlFilterExpressionVisitor {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.api.odip.odata.SqlFilterExpressionVisitor#visitMethodCall(
+	 * Test method for {@link de.dlr.proseo.api.odip.odata.OrderSqlFilterExpressionVisitor#visitMethodCall(
 	 * org.apache.olingo.server.api.uri.queryoption.expression.MethodKind, java.util.List)}.
 	 */
 	@Test
@@ -235,7 +235,7 @@ public class TestSqlFilterExpressionVisitor {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.api.odip.odata.SqlFilterExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
+	 * Test method for {@link de.dlr.proseo.api.odip.odata.OrderSqlFilterExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
 	 */
 	@Test
 	public final void testVisitMemberComplex() {
@@ -246,7 +246,7 @@ public class TestSqlFilterExpressionVisitor {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.api.odip.odata.SqlFilterExpressionVisitor#visitEnum(
+	 * Test method for {@link de.dlr.proseo.api.odip.odata.OrderSqlFilterExpressionVisitor#visitEnum(
 	 * org.apache.olingo.commons.api.edm.EdmEnumType, java.util.List)}.
 	 */
 	@Test
@@ -321,7 +321,7 @@ public class TestSqlFilterExpressionVisitor {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.api.odip.odata.SqlFilterExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
+	 * Test method for {@link de.dlr.proseo.api.odip.odata.OrderSqlFilterExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
 	 */
 	@Test
 	public final void testTop() {
@@ -332,7 +332,7 @@ public class TestSqlFilterExpressionVisitor {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.api.odip.odata.SqlFilterExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
+	 * Test method for {@link de.dlr.proseo.api.odip.odata.OrderSqlFilterExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
 	 */
 	@Test
 	public final void testSkip() {
@@ -343,7 +343,7 @@ public class TestSqlFilterExpressionVisitor {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.api.odip.odata.SqlFilterExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
+	 * Test method for {@link de.dlr.proseo.api.odip.odata.OrderSqlFilterExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
 	 */
 	@Test
 	public final void testOrderBy() {
@@ -354,7 +354,7 @@ public class TestSqlFilterExpressionVisitor {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.api.odip.odata.SqlFilterExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
+	 * Test method for {@link de.dlr.proseo.api.odip.odata.OrderSqlFilterExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
 	 */
 	@Test
 	public final void testNoFilter() {

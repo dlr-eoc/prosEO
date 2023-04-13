@@ -1,5 +1,5 @@
 /*
- * SqlFilterExpressionVisitor.java
+ * OrderSqlFilterExpressionVisitor.java
  * 
  * (C) 2021 Dr. Bassler & Co. Managementberatung GmbH
  */
@@ -57,7 +57,7 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
  *  
  * @author Dr. Thomas Bassler
  */
-public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
+public class OrderSqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 	
 	/** Counter for parameters in WHERE clause */
 	private int paramCount = 0;
@@ -108,7 +108,7 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 			DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS Z").withZone(ZoneId.of("UTC"));
 
 	/** A logger for this class */
-	private static ProseoLogger logger = new ProseoLogger(SqlFilterExpressionVisitor.class);
+	private static ProseoLogger logger = new ProseoLogger(OrderSqlFilterExpressionVisitor.class);
 
 	/* Initialize OData-to-SQL name mapping */
 	{
@@ -121,7 +121,7 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 	 * Get the applicable SQL command up to and including the 'WHERE' keyword (the remainder has been created by the
 	 * visit* methods).
 	 * 
-	 * Make sure this SqlFilterExpressionVisitor was subject to an "accept" call before calling this method!
+	 * Make sure this OrderSqlFilterExpressionVisitor was subject to an "accept" call before calling this method!
 	 * 
 	 * @param countOnly create a command, which only counts the requested objects, but does not return them
 	 * 
@@ -147,7 +147,7 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 	 * Get the applicable SQL command up to and including the 'WHERE' keyword (the remainder has been created by the
 	 * visit* methods).
 	 * 
-	 * Make sure this SqlFilterExpressionVisitor was subject to an "accept" call before calling this method!
+	 * Make sure this OrderSqlFilterExpressionVisitor was subject to an "accept" call before calling this method!
 	 * 
 	 * @param countOnly create a command, which only counts the requested objects, but does not return them
 	 * 
