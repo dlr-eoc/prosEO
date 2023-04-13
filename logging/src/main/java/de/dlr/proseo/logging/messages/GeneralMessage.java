@@ -30,6 +30,7 @@ public enum GeneralMessage implements ProseoMessage {
 	UNDEFINED							(9014, Level.ERROR, false, "An unknown error occured.", ""),
 	TOO_MANY_RESULTS					(9015, Level.ERROR, false, "The number of {0} matching the search criteria ({1}) exceeds the configured maximum number of results ({2})", ""),
 	FIELD_NOT_SET						(9016, Level.ERROR, false, "Specification of {0} is mandatory for {1}", ""),
+	NO_UUID_MODIFICATION				(9017, Level.ERROR, false, "UUID may not be modified", ""),
 	
 	;
 

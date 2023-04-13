@@ -62,14 +62,14 @@ public class WorkflowControllerImpl implements WorkflowController {
 	 */
 	@Override
 	public ResponseEntity<String> countWorkflows(String missionCode, String workflowName, String workflowVersion,
-			String outputProductClass, String configuredProcessor) {
+			String outputProductClass, String configuredProcessor, Boolean enabled) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> countWorkflows({}, {}, {}, {}, {})", missionCode, workflowName, workflowVersion,
 					outputProductClass, configuredProcessor);
 
 		try {
 			return new ResponseEntity<>(workflowManager.countWorkflows(missionCode, workflowName, workflowVersion,
-					outputProductClass, configuredProcessor), HttpStatus.OK);
+					outputProductClass, configuredProcessor, enabled), HttpStatus.OK);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
@@ -93,14 +93,14 @@ public class WorkflowControllerImpl implements WorkflowController {
 	 */
 	@Override
 	public ResponseEntity<List<RestWorkflow>> getWorkflows(String missionCode, String workflowName,
-			String workflowVersion, String outputProductClass, String configuredProcessor, Integer recordFrom, Integer recordTo) {
+			String workflowVersion, String outputProductClass, String configuredProcessor, Boolean enabled, Integer recordFrom, Integer recordTo) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getWorkflows({}, {}, {}, {}, {})", missionCode, workflowName, workflowVersion,
 					outputProductClass, configuredProcessor);
 
 		try {
 			return new ResponseEntity<>(workflowManager.getWorkflows(missionCode, workflowName, workflowVersion,
-					outputProductClass, configuredProcessor, recordFrom, recordTo), HttpStatus.OK);
+					outputProductClass, configuredProcessor, enabled, recordFrom, recordTo), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {
