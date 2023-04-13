@@ -1,1 +1,1 @@
-typeSearchIndex = [{"l":"All Classes","url":"allclasses-index.html"},{"p":"de.dlr.proseo.api.basemon","l":"BaseMonitor"},{"p":"de.dlr.proseo.api.basemon","l":"BaseMonitor.TransferControl"},{"p":"de.dlr.proseo.api.basemon","l":"TransferObject"}]
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"de.dlr.proseo.api.basemon","l":"BaseMonitor"},{"p":"de.dlr.proseo.api.basemon","l":"BaseMonitor.TransferControl"},{"p":"de.dlr.proseo.api.basemon","l":"TransferObject"}];updateSearchResults();

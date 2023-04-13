@@ -37,6 +37,7 @@ import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.rest.OrbitController;
 import de.dlr.proseo.model.rest.model.RestOrbit;
+import de.dlr.proseo.ordermgr.OrdermgrConfiguration;
 import de.dlr.proseo.ordermgr.rest.model.OrbitUtil;
 
 /**
@@ -56,6 +57,10 @@ public class OrbitControllerImpl implements OrbitController {
 	@Autowired
 	private PlatformTransactionManager txManager;
 
+	/** The order manager configuration */
+	@Autowired
+	private OrdermgrConfiguration config;
+	
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
@@ -63,19 +68,7 @@ public class OrbitControllerImpl implements OrbitController {
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(OrbitControllerImpl.class);
 	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.ORDER_MGR);
-
-	/**
-	 * List of all orbits filtered by mission, spacecraft, start time range , orbit number range
-	 * 
-	 * @param missionCode the mission 
-	 * @param spacecraftCode the spacecraft
-	 * @param startTimeFrom earliest sensing start time
-	 * @param startTimeTo latest sensing start time
-	 * @param orbitNumberFrom included orbits beginning
-	 * @param orbitNumberTo included orbits end
-	 * @return a response entity with either a list of products and HTTP status OK or an error message and an HTTP status indicating failure
-	 */
-			
+	
 	/**
 	 * List of all orbits filtered by spacecraft code, orbit number range, starttime range
 	 * 
@@ -92,19 +85,35 @@ public class OrbitControllerImpl implements OrbitController {
 	 *         HTTP status "BAD_REQUEST" and an error message, if the request parameters were inconsistent, or
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "INTERNAL_SERVER_ERROR" on any unexpected exception
+	 *         HTTP status "TOO MANY REQUESTS" if the result list exceeds a configured maximum
 	 */
 
 	@Transactional
 	@Override
 	public ResponseEntity<List<RestOrbit>> getOrbits(String spacecraftCode, Long orbitNumberFrom,
 			Long orbitNumberTo, String startTimeFrom, String startTimeTo,
-			Long recordFrom, Long recordTo, String[] orderBy) {
+			Integer recordFrom, Integer recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrbit{}");
 		
 		/* Check arguments */
 		if (null == spacecraftCode || "".equals(spacecraftCode)) {
 			return new ResponseEntity<>(
 					http.errorHeaders(logger.log(OrderMgrMessage.ORBIT_INCOMPLETE)), HttpStatus.BAD_REQUEST);
+		}
+		
+		if (recordFrom == null) {
+			recordFrom = 0;
+		}
+		if (recordTo == null) {
+			recordTo = Integer.MAX_VALUE;
+		}
+
+		Long numberOfResults = Long.parseLong(this.countOrbits(spacecraftCode, orbitNumberFrom, orbitNumberTo, startTimeFrom, startTimeTo).getBody());
+		Integer maxResults = config.getMaxResults();
+		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults
+				&& (numberOfResults - recordFrom) > maxResults) {
+			return new ResponseEntity<>(
+					http.errorHeaders(logger.log(GeneralMessage.TOO_MANY_RESULTS, "orbits", numberOfResults, config.getMaxResults())), HttpStatus.TOO_MANY_REQUESTS);
 		}
 
 		List<RestOrbit> resultList = new ArrayList<RestOrbit>();
@@ -144,7 +153,7 @@ public class OrbitControllerImpl implements OrbitController {
 	 * @param orbitNumberTo the maximum order number requested (may be null)
 	 * @param startTimeFrom earliest sensing start time requested (may be null)
 	 * @param startTimeTo latest sensing start time requested (may be null) sort direction (ASC/DESC), separated by white space
-	 * @return HTTP status "OK" and a list of orbits or
+	 * @return HTTP status "OK" and the number of retrieved orbits or
 	 *         HTTP status "NOT_FOUND" and an error message, if no orbits matching the search criteria were found, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if the request parameters were inconsistent, or
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
@@ -471,7 +480,7 @@ public class OrbitControllerImpl implements OrbitController {
 
 	private Query createOrbitsQuery(String spacecraftCode, Long orbitNumberFrom,
 			Long orbitNumberTo, String startTimeFrom, String startTimeTo,
-			Long recordFrom, Long recordTo, String[] orderBy, Boolean count) {
+			Integer recordFrom, Integer recordTo, String[] orderBy, Boolean count) {
 
 		// Find using search parameters
 		String jpqlQuery = null;

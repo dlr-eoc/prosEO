@@ -15,9 +15,14 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.ProseoMessage;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
+import de.dlr.proseo.model.Job;
+import de.dlr.proseo.model.JobStep;
+import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.FacilityState;
+import de.dlr.proseo.model.enums.OrderSource;
+import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.planner.ProductionPlanner;
@@ -358,17 +363,67 @@ public class OrderControllerImpl implements OrderController {
 			if (msg.getSuccess()) {
 				// resumed
 				RestOrder ro = getRestOrder(order.getId());
+				// handle special ODIP case
+				if (ro.getOrderSource().equals(OrderSource.ODIP.toString())) {
+					// read database object and check state of job steps. 
+					// They have to be released and not waiting input
+
+					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+					// used to identify the order and missing input (if not null) as well 
+					String orderName = null;
+					try {
+						productionPlanner.acquireThreadSemaphore("resumeOdip");	
+						orderName = transactionTemplate.execute((status) -> {
+							Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
+							if (opt.isPresent()) {
+								ProcessingOrder orderx = opt.get();
+								for(Job j : orderx.getJobs()) {
+									for(JobStep js : j.getJobSteps()) {
+										if (js.getJobStepState() == JobStepState.WAITING_INPUT) {
+											return orderx.getIdentifier();
+										}
+									}
+								}
+								return null;
+							}
+							return null;
+						});
+					} catch (Exception e) {
+						logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+					} finally {
+						productionPlanner.releaseThreadSemaphore("resumeOdip");					
+					}
+					if (orderName != null) {
+						String message = logger.log(PlannerMessage.MSG_NO_INPUTPRODUCT, orderName);
+						// suspend and cancel the order
+						orderUtil.suspend(order.getId(), true);
+						try {
+							productionPlanner.acquireThreadSemaphore("resumeOdip2");	
+							String dummy = transactionTemplate.execute((status) -> {
+								Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
+								if (opt.isPresent()) {
+									ProcessingOrder orderx = opt.get();
+									orderUtil.cancel(orderx);
+								}
+								return null;
+							});
+						} catch (Exception e) {
+							logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+						} finally {
+							productionPlanner.releaseThreadSemaphore("resumeOdip2");					
+						}
+						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
+					}
+				}
 
 				return new ResponseEntity<>(ro, HttpStatus.OK);
 			} else {
 				// illegal state for resume
 				String message = logger.log(msg, orderId);
-
 				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 			}
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
-			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -383,7 +438,7 @@ public class OrderControllerImpl implements OrderController {
 		
 		if (wait == null) {
 			wait = false;
-		}
+	}
 		return releaseOrder(orderId, wait);
 	}
 

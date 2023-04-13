@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<restEvent>
+    <endDate>2020-05-08T12:45:52.194Z</endDate>
+    <id>OLu0dJ</id>
+    <resourceName>Product notification</resourceName>
+    <startDate>2020-05-08T12:45:52.194Z</startDate>
+    <applicationId>5SS2aW</applicationId>
+    <methodId>SwKT69</methodId>
+    <projectId>DB3vth</projectId>
+    <request>
+        <body></body>
+        <httpHeaders>
+            <httpHeader>
+                <name>accept</name>
+                <value>application/json, application/cbor, application/*+json</value>
+            </httpHeader>
+            <httpHeader>
+                <name>host</name>
+                <value>localhost:8090</value>
+            </httpHeader>
+            <httpHeader>
+                <name>connection</name>
+                <value>Keep-Alive</value>
+            </httpHeader>
+            <httpHeader>
+                <name>user-agent</name>
+                <value>Apache-HttpClient/4.5.9 (Java/11.0.3)</value>
+            </httpHeader>
+            <httpHeader>
+                <name>accept-encoding</name>
+                <value>gzip,deflate</value>
+            </httpHeader>
+        </httpHeaders>
+        <httpMethod>GET</httpMethod>
+        <httpParameters/>
+        <uri>/planner/product/4711</uri>
+    </request>
+    <resourceId>vDzSj7</resourceId>
+    <response>
+        <body>{&#13;
+	"status": "OK"&#13;
+}</body>
+        <contentEncodings/>
+        <httpHeaders/>
+        <httpStatusCode>200</httpStatusCode>
+        <mockResponseName>Notification accepted</mockResponseName>
+    </response>
+</restEvent>

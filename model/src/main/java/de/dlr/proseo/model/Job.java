@@ -73,9 +73,9 @@ public class Job extends PersistentObject {
 	private Instant stopTime;
 	
 	/**
-	 * A processing priority (lower numbers indicate lower priority, higher numbers higher priority; the default value is 0).
+	 * A processing priority (lower numbers indicate lower priority, higher numbers higher priority; the default value is 50).
 	 */
-	private Integer priority;
+	private Integer priority = 50;
 	
 	/** Indicates whether at least one of the job steps for this job is in state FAILED */
 	private Boolean hasFailedJobSteps = false;

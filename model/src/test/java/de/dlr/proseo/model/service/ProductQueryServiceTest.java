@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
@@ -79,6 +80,9 @@ public class ProductQueryServiceTest {
 
 	@Autowired
 	private ProductQueryService queryService;
+	
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductQueryServiceTest.class);
@@ -153,6 +157,8 @@ public class ProductQueryServiceTest {
 	 */
 	@Test
 	public final void testExecuteQuery() {
+		
+		jdbcTemplate.execute("RUNSCRIPT FROM '" + "classpath:create_view_product_processing_facilities_simplified.sql" + "'");
 		
 		// Create test data: mission, product class, product, selection rules (with and without MINCOVER), order, job, job step
 		Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);

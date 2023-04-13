@@ -1,0 +1,180 @@
+<!DOCTYPE HTML><html><head><title>prosEO Production Interface Delivery Point (ODIP) REST Services API API documentation</title><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="generator" content="https://github.com/raml2html/raml2html 7.5.0"><link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"><script type="text/javascript" src="https://code.jquery.com/jquery-1.11.0.min.js"></script><script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script><script type="text/javascript">
+      $(document).ready(function() {
+  $('.page-header pre code, .top-resource-description pre code, .modal-body pre code').each(function(i, block) {
+    hljs.highlightBlock(block);
+  });
+
+  $('[data-toggle]').click(function() {
+    var selector = $(this).data('target') + ' pre code';
+    $(selector).each(function(i, block) {
+      hljs.highlightBlock(block);
+    });
+  });
+
+  // open modal on hashes like #_action_get
+  $(window).bind('hashchange', function(e) {
+    var anchor_id = document.location.hash.substr(1); //strip #
+    var element = $('#' + anchor_id);
+
+    // do we have such element + is it a modal?  --> show it
+    if (element.length && element.hasClass('modal')) {
+      element.modal('show');
+    }
+  });
+
+  // execute hashchange on first page load
+  $(window).trigger('hashchange');
+
+  // remove url fragment on modal hide
+  $('.modal').on('hidden.bs.modal', function() {
+    try {
+      if (history && history.replaceState) {
+          history.replaceState({}, '', '#');
+      }
+    } catch(e) {}
+  });
+});
+    </script><style>
+      .hljs {
+  background: transparent;
+}
+.parent {
+  color: #999;
+}
+.list-group-item > .badge {
+  float: none;
+  margin-right: 6px;
+}
+.panel-title > .methods {
+  float: right;
+}
+.badge {
+  border-radius: 0;
+  text-transform: uppercase;
+  width: 70px;
+  font-weight: normal;
+  color: #f3f3f6;
+  line-height: normal;
+}
+.badge_get {
+  background-color: #63a8e2;
+}
+.badge_post {
+  background-color: #6cbd7d;
+}
+.badge_put {
+  background-color: #22bac4;
+}
+.badge_delete {
+  background-color: #d26460;
+}
+.badge_patch {
+  background-color: #ccc444;
+}
+.list-group,
+.panel-group {
+  margin-bottom: 0;
+}
+.panel-group .panel+.panel-white {
+  margin-top: 0;
+}
+.panel-group .panel-white {
+  border-bottom: 1px solid #F5F5F5;
+  border-radius: 0;
+}
+.panel-white:last-child {
+  border-bottom-color: white;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
+.panel-white .panel-heading {
+  background: white;
+}
+.tab-pane ul {
+  padding-left: 2em;
+}
+.tab-pane h1 {
+  font-size: 1.3em;
+}
+.tab-pane h2 {
+  font-size: 1.2em;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #ddd;
+}
+.tab-pane h3 {
+  font-size: 1.1em;
+}
+.tab-content {
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  padding: 10px;
+}
+#sidebar {
+  margin-top: 30px;
+  padding-right: 5px;
+  overflow: auto;
+  height: 90%;
+}
+.top-resource-description {
+  border-bottom: 1px solid #ddd;
+  background: #fcfcfc;
+  padding: 15px 15px 0 15px;
+  margin: -15px -15px 10px -15px;
+}
+.resource-description {
+  border-bottom: 1px solid #fcfcfc;
+  background: #fcfcfc;
+  padding: 15px 15px 0 15px;
+  margin: -15px -15px 10px -15px;
+}
+.resource-description p:last-child {
+  margin: 0;
+}
+.list-group .badge {
+  float: left;
+}
+.method_description {
+  margin-left: 85px;
+}
+.method_description p:last-child {
+  margin: 0;
+}
+.list-group-item {
+  cursor: pointer;
+}
+.list-group-item:hover {
+  background-color: #f5f5f5;
+}
+pre code {
+  overflow: auto;
+  word-wrap: normal;
+  white-space: pre;
+}
+.items {
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 9.5px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.42857143;
+}
+.examples {
+  margin-left: 0.5em;
+}
+.resource-modal li > ul {
+  margin-bottom: 1em;
+}
+.required {
+  color: #f00;
+}
+    </style></head><body data-spy="scroll" data-target="#sidebar"><div class="container"><div class="row"><div class="col-md-9" role="main"><div class="page-header"><h1>prosEO Production Interface Delivery Point (ODIP) REST Services API API documentation <small>version v0.1</small></h1><p>/proseo/odip/{version}</p><ul><li><strong>version</strong>: <em><span class="required">required</span>(v0.1)</em></li></ul></div><div class="panel panel-default"><div class="panel-heading"><h3 id="token" class="panel-title">/token</h3></div><div class="panel-body"><div class="panel-group"><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_token"><span class="parent"></span>/token</a> <span class="methods"><a href="#token_post"><span class="badge badge_post">post</span></a></span></h4></div><div id="panel_token" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#token_post'" class="list-group-item"><span class="badge badge_post">post</span><div class="method_description"><p>Create an authentication token and a refresh token for the user identified in the Basic Auth header</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="token_post"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_post">post</span> <span class="parent"></span>/token</h4></div><div class="modal-body"><div class="alert alert-info"><p>Create an authentication token and a refresh token for the user identified in the Basic Auth header</p></div><ul class="nav nav-tabs"><li class="active"><a href="#token_post_request" data-toggle="tab">Request</a></li><li><a href="#token_post_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="token_post_request"><h3>Query Parameters</h3><ul><li><strong>grant_type</strong>: <em><span class="required">required</span>(string)</em><p>Type of grant requested (value must be set to "password" for "Resource Owner Password Credentials Grant" flow or to "client_credentials" for "Client Credentials Grant" flow as per RFC 6749; REQUIRED)</p></li><li><strong>username</strong>: <em>(string)</em><p>The ODIP username (as per RFC 6749; REQUIRED for "Resource Owner Password Credentials Grant" flow, must not be set otherwise)</p></li><li><strong>password</strong>: <em>(string)</em><p>The ODIP password (as per RFC 6749; REQUIRED for "Resource Owner Password Credentials Grant" flow, must not be set otherwise)</p></li><li><strong>scope</strong>: <em>(string)</em><p>The scope of the access request (as per RFC 6749; OPTIONAL, will be ignored if set)</p></li></ul></div><div class="tab-pane" id="token_post_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><p>Authentication succeeded, and the token was successfully generated</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>access_token</strong>: <em><span class="required">required</span>(string)</em><p>The access token issued by the authorization server (as per RFC 6749)</p></li><li><strong>token_type</strong>: <em><span class="required">required</span>(string)</em><p>The type of the token issued (as per RFC 6749; always "bearer")</p></li><li><strong>expires_in</strong>: <em><span class="required">required</span>(integer)</em><p>The lifetime in seconds of the access token. For example, the value 3600 denotes that the access token will expire in one hour from the time the response was generated (as per RFC 6749)</p></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+	"access_token": "2YotnFZFEjr1zCsicMWpAA",
+	"token_type": "bearer",
+	"expires_in": 3600
+}</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/400" target="_blank">400</a></h2><p>Authentication failed</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>error</strong>: <em><span class="required">required</span>(string)</em><p>A single ASCII [USASCII] error code from the following: invalid_request, unauthorized_client, unsupported_grant_type (subset of values defined in RFC 6749)</p></li><li><strong>error_description</strong>: <em><span class="required">required</span>(string)</em><p>Human-readable ASCII [USASCII] text providing additional information (as per RFC 6749)</p></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+	"error": "unauthorized_client",
+	"error_description": "(E5008) User S5P\\odipuser not authorized for ODIP API"
+}</code></pre></div></div></div></div></div></div></div></div></div></div></div></div><div class="col-md-3"><div id="sidebar" class="hidden-print affix" role="complementary"><ul class="nav nav-pills nav-stacked"><li><a href="#token">/token</a></li></ul></div></div></div></div></body></html>

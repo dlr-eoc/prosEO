@@ -120,6 +120,7 @@ public class OrderReleaseThread extends Thread {
 							lambdaOrder = orderOpt.get();
 						}
 						lambdaOrder.setOrderState(OrderState.PLANNED);
+						UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_QUEUED);
 						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 						return null;
 					});
@@ -139,6 +140,7 @@ public class OrderReleaseThread extends Thread {
 						lambdaOrder = orderOpt.get();
 					}
 					lambdaOrder.setOrderState(OrderState.PLANNED);
+					UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_QUEUED);
 					lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 					return null;
 				});
@@ -242,7 +244,7 @@ public class OrderReleaseThread extends Thread {
 									+ "JOIN processing_facility pf ON j.processing_facility_id = pf.id "
 									+ "WHERE o.id = :orderId "
 									+ "AND js.job_step_state = :jsState "
-									+ "ORDER BY j.start_time, js.id";
+									+ "ORDER BY js.priority desc, j.start_time, js.id";
 							
 							List<?> jobStepList = em.createNativeQuery(nativeQuery)
 									.setParameter("orderId", orderId)
@@ -316,6 +318,8 @@ public class OrderReleaseThread extends Thread {
 						if (lambdaOrder.getJobs().isEmpty()) {
 							lambdaOrder.setOrderState(OrderState.COMPLETED);
 							UtilService.getOrderUtil().checkAutoClose(lambdaOrder);
+							UtilService.getOrderUtil().setTimes(lambdaOrder);
+							UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_COMPLETED);
 							lambdaAnswer = PlannerMessage.ORDER_PRODUCT_EXIST;
 						} else {
 							// check whether order is already running
@@ -328,8 +332,10 @@ public class OrderReleaseThread extends Thread {
 							}
 							if (!lambdaOrder.getOrderState().equals(OrderState.RUNNING)) {
 								lambdaOrder.setOrderState(OrderState.RELEASED);
+								UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_RUNNING);
 								if (running) {
 									lambdaOrder.setOrderState(OrderState.RUNNING);
+									UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_RUNNING);
 								}
 							}
 							lambdaAnswer = PlannerMessage.ORDER_RELEASED;
@@ -348,8 +354,10 @@ public class OrderReleaseThread extends Thread {
 						}
 						if (!lambdaOrder.getOrderState().equals(OrderState.RUNNING)) {
 							lambdaOrder.setOrderState(OrderState.RELEASED);
+							UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_RUNNING);
 							if (running) {
 								lambdaOrder.setOrderState(OrderState.RUNNING);
+								UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_RUNNING);
 							}
 						}
 						lambdaAnswer = PlannerMessage.ORDER_RELEASED;

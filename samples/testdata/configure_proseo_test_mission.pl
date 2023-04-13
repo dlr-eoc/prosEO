@@ -64,8 +64,8 @@ my @groups = (
     {
         name => 'engineer',
         authorities => [ 'MISSION_READER', 'MISSION_MGR', 'PRODUCTCLASS_READER', 'PRODUCTCLASS_MGR', 'PRODUCT_READER_ALL',
-           'PROCESSOR_READER', 'PROCESSORCLASS_MGR', 'CONFIGURATION_MGR', 'FACILITY_READER', 'FACILITY_MGR', 'FACILITY_MONITOR',
-           'ORDER_READER', 'ORDER_MONITOR' ]
+           'PROCESSOR_READER', 'PROCESSORCLASS_MGR', 'CONFIGURATION_MGR', 'WORKFLOW_MGR',
+           'FACILITY_READER', 'FACILITY_MGR', 'FACILITY_MONITOR', 'ORDER_READER', 'ORDER_MONITOR' ]
     },
     {
         name => 'approver',
@@ -147,7 +147,7 @@ my @orbits = (
 );
 
 #
-# -- Processor classes, versions and configurations
+# -- Processor classes, versions, configurations and workflows
 #
 my @processor_classes = ( 'PTML1B', 'PTML2', 'PTML3' );
 my @processors = (
@@ -158,7 +158,7 @@ my @processors = (
     	tasks => [ 
     	   { taskName => 'ptm_l01b', taskVersion => '0.1.0' }
     	],
-    	dockerImage => 'localhost:5000/proseo-sample-wrapper:0.9.4'
+    	dockerImage => 'localhost:5000/proseo-sample-wrapper:0.9.5-ODIP'
     },
     {
         processorName => 'PTML2', 
@@ -167,7 +167,7 @@ my @processors = (
         tasks => [ 
            { taskName => 'ptm_l2', taskVersion => '0.1.0' }
         ],
-        dockerImage => 'localhost:5000/proseo-sample-wrapper:0.9.4'
+        dockerImage => 'localhost:5000/proseo-sample-wrapper:0.9.5-ODIP'
     },
     {
         processorName => 'PTML3', 
@@ -176,7 +176,7 @@ my @processors = (
         tasks => [ 
            { taskName => 'ptm_l3', taskVersion => '0.1.0' }
         ],
-        dockerImage => 'localhost:5000/proseo-sample-wrapper:0.9.4'
+        dockerImage => 'localhost:5000/proseo-sample-wrapper:0.9.5-ODIP'
     }
 );
 my @configurations = (
@@ -245,6 +245,36 @@ my @configured_processors = (
         processorName => 'PTML3',
         processorVersion => '0.1.0',
         configurationVersion => 'OPER_2020-03-25' 
+    }
+);
+my @workflows = (
+    {
+    	name => 'PTML2-to-L3',
+    	uuid => 'd4466bcb-3256-416a-9d9c-dc86592e43bb',
+    	description => 'Create level 3 products from level 2',
+    	workflowVersion => '1.0',
+    	enabled => 'true',
+    	inputProductClass => 'PTM_L2_A',
+    	outputProductClass => 'PTM_L3',
+    	configuredProcessor => 'PTML3_0.1.0_OPER_2020-03-25',
+    	outputFileClass => 'TEST',
+    	processingMode => 'OPER',
+    	slicingType => 'NONE',
+    	workflowOptions => [
+    	   {
+    	       name => 'Threads',
+    	       optionType => 'number',
+    	       defaultValue => 16,
+    	       valueRange => []
+    	   }
+    	],
+    	outputParameters => [
+	        {
+	            key => 'revision',
+	            parameterType => 'INTEGER',
+	            parameterValue => 99
+	        }
+    	]
     }
 );
 
@@ -639,6 +669,139 @@ foreach my $product_class ( @product_types ) {
         print $cli_script "\n";
 	}
 }
+
+say '... creating workflows';
+
+foreach my $workflow ( @workflows ) {
+    $filename = $OUT_FILE_DIR . "/" . $mission->{code} . '_' . $workflow->{name} . '.json';
+    $fh = FileHandle->new( $filename, 'w' ) or error_die( 'Cannot open output file ' . $filename );
+
+    print $fh '{ ';
+    print $fh '"missionCode": "' . $mission->{code} . '"';
+    print $fh ', "name": "' . $workflow->{name} . '"';
+    
+    if ( $workflow->{uuid} ) {
+    	print $fh ', "uuid": "' . $workflow->{uuid} . '"';
+    }
+    if ( $workflow->{description} ) {
+    	print $fh ', "description": "' . $workflow->{description} . '"';
+    }
+    print $fh ', "workflowVersion": "' . $workflow->{workflowVersion} . '"';
+    print $fh ', "enabled": ' . $workflow->{enabled};
+    print $fh ', "inputProductClass": "' . $workflow->{inputProductClass} . '"';
+    print $fh ', "outputProductClass": "' . $workflow->{outputProductClass} . '"';
+    print $fh ', "configuredProcessor": "' . $workflow->{configuredProcessor} . '"';
+    print $fh ', "outputFileClass": "' . $workflow->{outputFileClass} . '"';
+    print $fh ', "processingMode": "' . $workflow->{processingMode} . '"';
+    print $fh ', "slicingType": "' . $workflow->{slicingType} . '"';
+    if ( $workflow->{sliceDuration} ) {
+        print $fh ', "sliceDuration": ' . $workflow->{sliceDuration};
+    }
+    if ( $workflow->{sliceOverlap} ) {
+        print $fh ', "sliceOverlap": ' . $workflow->{sliceOverlap};
+    }
+    
+    if ( $workflow->{inputFilters} ) {
+    	print $fh ', "inputFilters": [ ';
+    	my $innerfirst = 1;
+        foreach my $inputFilter ( $workflow->{inputFilters} ) {
+	        if ( $innerfirst ) {
+	            $innerfirst = 0;
+	        }
+	        else {
+	            print $fh ', ';
+	        }
+            print $fh '{ "productClass": "' . $inputFilter->{productClass} . ', "filterConditions": [ ';
+            my $innerinnerfirst = 1;
+            foreach my $filterCondition ( $inputFilter->{filterConditions} ) {
+	            if ( $innerinnerfirst ) {
+	                $innerinnerfirst = 0;
+	            }
+	            else {
+	                print $fh ', ';
+	            }
+                print $fh '{ "key": "' . $filterCondition->{key} . ', "parameterType": ' . $filterCondition->{parameterType}
+                    . '", "parameterValue": "' . $filterCondition->{parameterValue} . '" }';
+            }
+            print $fh ' ] }';
+        }
+        print $fh ' ]';
+    }
+    
+    print $fh ', "workflowOptions": [ ';
+    my $first = 1;
+    foreach my $option ( @{ $workflow->{workflowOptions} } ) {
+        if ( $first ) {
+            $first = 0;
+        }
+        else {
+            print $fh ', ';
+        }
+    	print $fh '{ "missionCode": "' . $mission->{code} . '", "workflowName": "' . $workflow->{name} . '"';
+        print $fh ', "name": "' . $option->{name} . '", "optionType": "' . $option->{optionType} . '"';
+    	if ( $option->{defaultValue} ) {
+    		print $fh ', "defaultValue": "' . $option->{defaultValue} . '"';
+    	}
+    	print $fh ', "valueRange": [ ';
+        my $innerfirst = 1;
+        foreach my $range ( @{ $option->{valueRange} } ) {
+            if ( $innerfirst ) {
+                $innerfirst = 0;
+            }
+            else {
+                print $fh ', ';
+            }
+            print $fh '"' . $range . '"';
+        }
+        print $fh ' ] }';
+    }
+    print $fh ' ]';
+    
+    if ( $workflow->{classOutputParameters} ) {
+    	print $fh ', "classOutputParameters": [ ';
+        my $innerfirst = 1;
+        foreach my $classOutputParameter ( @{ $workflow->{classOutputParameters} } ) {
+            if ( $innerfirst ) {
+                $innerfirst = 0;
+            }
+            else {
+                print $fh ', ';
+            }
+            print $fh '{ "productClass": "' . $classOutputParameter->{productClass} . '", "outputParameters": [ ';
+            my $innerinnerfirst = 1;
+            foreach my $parameter ( @{ $classOutputParameter->{outputParameters} } ) {
+                if ( $innerinnerfirst ) {
+                    $innerinnerfirst = 0;
+                }
+                else {
+                    print $fh ', ';
+                }
+                print $fh '{ "key": "' . $parameter->{key} . '", "parameterType": "' . $parameter->{parameterType}
+                    . '", "parameterValue": "' . $parameter->{parameterValue} . '" }';
+            }
+            print $fh ' ] }';
+        }
+        print $fh ' ] }';
+    }
+    
+    print $fh ', "outputParameters": [ ';
+    $first = 1;
+    foreach my $parameter ( @{ $workflow->{outputParameters} } ) {
+        if ( $first ) {
+            $first = 0;
+        }
+        else {
+            print $fh ', ';
+        }
+        print $fh '{ "key": "' . $parameter->{key} . '", "parameterType": "' . $parameter->{parameterType}
+            . '", "parameterValue": "' . $parameter->{parameterValue} . '" }';
+    }
+    print $fh " ] }\n";
+    
+    $fh->close();
+    print $cli_script 'workflow create --file=' . $filename . "\n";
+}
+
 print $cli_script "exit\n";
 $cli_script->close();
 

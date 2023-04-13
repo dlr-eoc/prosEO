@@ -16,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
@@ -42,24 +43,29 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	/**
 	 * Get configurations by mission, processor name and configuration version
 	 * 
-	 * @param mission the mission code
-	 * @param processorName the processor name
+	 * @param mission              the mission code
+	 * @param processorName        the processor name
 	 * @param configurationVersion the configuration version
-	 * @return HTTP status "OK" and a list of Json objects representing configurations satisfying the search criteria or
-	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
-	 *         HTTP status "NOT_FOUND" and an error message, if no configurations matching the search criteria were found
+	 * @param recordFrom           first record of filtered and ordered result to return
+	 * @param recordTo             last record of filtered and ordered result to return
+	 * @return HTTP status "OK" and a list of JSON objects representing configurations satisfying the search criteria or 
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or 
+	 *         HTTP status "NOT_FOUND" and an error message, if no configurations matching the search criteria were found, or 
+	 *         HTTP status "TOO MANY REQUESTS" if the result list exceeds a configured maximum
 	 */
 	@Override
 	public ResponseEntity<List<RestConfiguration>> getConfigurations(String mission, String processorName,
-			String configurationVersion) {
+			String configurationVersion, Integer recordFrom, Integer recordTo) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getConfigurations({}, {}, {})", mission, processorName, configurationVersion);
 		
 		try {
-			return new ResponseEntity<>(configurationManager.getConfigurations(mission, processorName, configurationVersion), HttpStatus.OK);
+			return new ResponseEntity<>(configurationManager.getConfigurations(mission, processorName, configurationVersion, recordFrom, recordTo), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		} catch (HttpClientErrorException.TooManyRequests e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.TOO_MANY_REQUESTS);
 		}
 	}
 
@@ -92,7 +98,8 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	 * @return HTTP status "OK" and a Json object corresponding to the configuration found or 
 	 *         HTTP status "BAD_REQUEST" and an error message, if no configuration ID was given, or
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
-	 * 		   HTTP status "NOT_FOUND" and an error message, if no configuration with the given ID exists
+	 * 		   HTTP status "NOT_FOUND" and an error message, if no configuration with the given ID exists, or 
+	 * 		   HTTP status "TOO MANY REQUESTS" if the result list exceeds a configured maximum
 	 */
 	@Override
 	public ResponseEntity<RestConfiguration> getConfigurationById(Long id) {
@@ -106,8 +113,9 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		} catch (HttpClientErrorException.TooManyRequests e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.TOO_MANY_REQUESTS);
 		}
-		
 	}
 
 	/**
@@ -167,6 +175,30 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		} catch (RuntimeException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
+		}
+	}
+
+	/**
+	 * Count the configurations matching the specified mission, processor name, and
+	 * configuration version.
+	 * 
+	 * @param missionCode          the mission code
+	 * @param processorName        the processor name
+	 * @param configurationVersion the configuration version
+	 * @return the number of matching configurations as a String (may be zero) or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data
+	 *         access was attempted
+	 */
+	@Override
+	public ResponseEntity<String> countConfigurations(String missionCode, String processorName,
+			String configurationVersion) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> countConfigurations({}, {}, {})", missionCode, processorName, configurationVersion);
+
+		try {
+			return new ResponseEntity<>(configurationManager.countConfigurations(missionCode, processorName, configurationVersion), HttpStatus.OK);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 

@@ -33,7 +33,11 @@ types:
   RestConfigurationFile: !include ../../../../../model/src/main/resources/raml/types/configurationfile.raml
   RestConfigurationInputFile: !include ../../../../../model/src/main/resources/raml/types/configurationinputfile.raml
   RestConfiguredProcessor: !include ../../../../../model/src/main/resources/raml/types/configuredprocessor.raml
-
+  RestWorkflow: !include ../../../../../model/src/main/resources/raml/types/workflow.raml
+  RestWorkflowOption: !include ../../../../../model/src/main/resources/raml/types/workflowoption.raml
+  RestClassOutputParameter: !include ../../../../../model/src/main/resources/raml/types/classoutputparameter.raml
+  RestInputFilter: !include ../../../../../model/src/main/resources/raml/types/inputfilter.raml
+  
 resourceTypes:
   standard:
     get?:
@@ -71,6 +75,12 @@ resourceTypes:
     queryParameters:
       mission?: string
       processorName?: string
+      recordFrom?: 
+        type: integer
+        format: int32
+      recordTo?:
+        type: integer
+        format: int32
     responses:
       200:
         body:
@@ -90,6 +100,17 @@ resourceTypes:
           application/json:
             type: RestProcessorClass
             example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
+  /count:
+    get:
+      description: Count the processor classes with the given mission code and processor name
+      displayName: countProcessorClasses
+      queryParameters:
+        missionCode?: string
+        processorName?: string
+      responses:
+        200:
+          body:
+            text/plain:
   /{id}:
     uriParameters:
       id:
@@ -117,6 +138,11 @@ resourceTypes:
             application/json:
               type: RestProcessorClass
               example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
+        304:
+          body:
+            application/json:
+              type: RestProcessorClass
+              example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
     delete:
       description: Delete a processor class by ID
       displayName: deleteProcessorClassById
@@ -132,6 +158,12 @@ resourceTypes:
       mission?: string
       processorName?: string
       processorVersion?: string
+      recordFrom?: 
+        type: integer
+        format: int32
+      recordTo?:
+        type: integer
+        format: int32
     responses:
       200:
         body:
@@ -151,6 +183,18 @@ resourceTypes:
           application/json:
             type: RestProcessor
             example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
+  /count:
+    get:
+      description: Count the processors with the given mission code, processor name and processor version
+      displayName: countProcessors
+      queryParameters:
+        missionCode?: string
+        processorName?: string
+        processorVersion?: string
+      responses:
+        200:
+          body:
+            text/plain:
   /{id}:
     uriParameters:
       id:
@@ -178,6 +222,11 @@ resourceTypes:
             application/json:
               type: RestProcessor
               example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
+        304:
+          body:
+            application/json:
+              type: RestProcessor
+              example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
     delete:
       description: Delete a processor class by ID
       displayName: deleteProcessorById
@@ -193,6 +242,12 @@ resourceTypes:
       mission?: string
       processorName?: string
       configurationVersion?: string
+      recordFrom?: 
+        type: integer
+        format: int32
+      recordTo?:
+        type: integer
+        format: int32
     responses:
       200:
         body:
@@ -212,6 +267,18 @@ resourceTypes:
           application/json:
             type: RestConfiguration
             example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
+  /count:
+    get:
+      description: Count the configurations with the given mission code, processor name and configuration version
+      displayName: countConfigurations
+      queryParameters:
+        missionCode?: string
+        processorName?: string
+        configurationVersion?: string
+      responses:
+        200:
+          body:
+            text/plain:
   /{id}:
     uriParameters:
       id:
@@ -239,6 +306,11 @@ resourceTypes:
             application/json:
               type: RestConfiguration
               example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
+        304:
+          body:
+            application/json:
+              type: RestConfiguration
+              example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
     delete:
       description: Delete a configuration by ID
       displayName: deleteConfigurationById
@@ -257,6 +329,12 @@ resourceTypes:
       processorVersion?: string
       configurationVersion?: string
       uuid?: string
+      recordFrom?: 
+        type: integer
+        format: int32
+      recordTo?:
+        type: integer
+        format: int32
     responses:
       200:
         body:
@@ -276,6 +354,19 @@ resourceTypes:
           application/json:
             type: RestConfiguredProcessor
             example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
+  /count:
+    get:
+      description: Count the configured processors with the given mission code, processor name, processor version and configuration version
+      displayName: countConfiguredProcessors
+      queryParameters:
+        missionCode?: string
+        processorName?: string
+        processorVersion?: string
+        configurationVersion?: string
+      responses:
+        200:
+          body:
+            text/plain:
   /{id}:
     uriParameters:
       id:
@@ -303,8 +394,101 @@ resourceTypes:
             application/json:
               type: RestConfiguredProcessor
               example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
+        304:
+          body:
+            application/json:
+              type: RestConfiguredProcessor
+              example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
     delete:
       description: Delete a configured processor by ID
       displayName: deleteConfiguredProcessorById
+      responses:
+        204:
+
+/workflows:
+  type: standard
+  get:
+    description: Get workflows by mission, workflow name, workflow version, outputProductClass and configuredProcessor
+    displayName: getWorkflows
+    queryParameters:
+      mission?: string
+      workflowName?: string
+      workflowVersion?: string
+      outputProductClass?: string
+      configuredProcessor?: string
+      recordFrom?: 
+        type: integer
+        format: int32
+      recordTo?:
+        type: integer
+        format: int32
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestWorkflow[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/workflow-list.json
+  post:
+    description: Create a new workflow
+    displayName: createWorkflow
+    body:
+      application/json:
+        type: RestWorkflow
+        example: !include ../../../../../model/src/main/resources/raml/examples/workflow.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: RestWorkflow
+            example: !include ../../../../../model/src/main/resources/raml/examples/workflow.json
+  /count:
+    get:
+      description: Count the workflows with the given mission, workflow name, workflow version, outputProductClass or configuredProcessor
+      displayName: countWorkflows
+      queryParameters:
+        mission?: string
+        workflowName?: string
+        workflowVersion?: string
+        outputProductClass?: string
+        configuredProcessor?: string
+      responses:
+        200:
+          body:
+            text/plain:
+  /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
+    get:
+      description: Get a workflow by ID
+      displayName: getWorkflowById
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestWorkflow
+              example: !include ../../../../../model/src/main/resources/raml/examples/workflow.json
+    patch:
+      description: Update a workflow by ID
+      displayName: modifyWorkflow
+      body:
+        application/json:
+          type: RestWorkflow
+          example: !include ../../../../../model/src/main/resources/raml/examples/workflow.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestWorkflow
+              example: !include ../../../../../model/src/main/resources/raml/examples/workflow.json
+        304:
+          body:
+            application/json:
+              type: RestWorkflow
+              example: !include ../../../../../model/src/main/resources/raml/examples/workflow.json
+    delete:
+      description: Delete a workflow by ID
+      displayName: deleteWorkflowById
       responses:
         204:

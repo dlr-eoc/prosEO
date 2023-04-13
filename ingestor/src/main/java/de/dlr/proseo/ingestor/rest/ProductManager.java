@@ -25,8 +25,10 @@ import javax.persistence.TypedQuery;
 
 import org.apache.http.client.utils.URIBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
@@ -219,7 +221,7 @@ public class ProductManager {
 	 */
 	public List<RestProduct> getProducts(String mission, String[] productClass, String mode, String fileClass, String quality, 
 			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo,
-			Long recordFrom, Long recordTo, Long jobStepId, String[] orderBy) throws NoResultException, SecurityException {
+			Integer recordFrom, Integer recordTo, Long jobStepId, String[] orderBy) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, 
 				(null == productClass ? "null" : Arrays.asList(productClass).toString()),
 				mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo, recordFrom, recordTo, orderBy);
@@ -233,11 +235,30 @@ public class ProductManager {
 						mission, securityService.getMission()));
 			} 
 		}
+		
+		if (recordFrom == null) {
+			recordFrom = 0;
+		}
+		if (recordTo == null) {
+			recordTo = Integer.MAX_VALUE;
+		}
+
+		Long numberOfResults = Long.parseLong(this.countProducts(mission, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo, jobStepId));
+		Integer maxResults = ingestorConfig.getMaxResults();
+		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults
+				&& (numberOfResults - recordFrom) > maxResults) {
+			throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS,
+					logger.log(GeneralMessage.TOO_MANY_RESULTS, "products", numberOfResults, ingestorConfig.getMaxResults()));
+		}
+
+		
 		List<RestProduct> result = new ArrayList<>();
 		
 		// Find using search parameters
 		Query query = createProductsQuery(mission, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo,
 				genTimeFrom, genTimeTo, recordFrom, recordTo, jobStepId, orderBy, false);
+		query.setFirstResult(recordFrom);
+		query.setMaxResults(recordTo - recordFrom);
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof Product) {
 				// Filter depending on product visibility and user authorization
@@ -249,8 +270,6 @@ public class ProductManager {
 		if (result.isEmpty()) {
 			throw new NoResultException(logger.log(IngestorMessage.PRODUCT_LIST_EMPTY));
 		}
-		
-		// TODO: Restrict number of products retrieved (like in PRIP API)
 		
 		logger.log(IngestorMessage.PRODUCT_LIST_RETRIEVED, result.size(), mission,
 				(null == productClass ? "null" : Arrays.asList(productClass).toString()), startTimeFrom, startTimeTo);
@@ -859,7 +878,7 @@ public class ProductManager {
 	 */
 	private Query createProductsQuery(String mission, String[] productClass, String mode, String fileClass, String quality, 
 			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo,
-			Long recordFrom, Long recordTo, Long jobStepId, String[] orderBy, Boolean count) {
+			Integer recordFrom, Integer recordTo, Long jobStepId, String[] orderBy, Boolean count) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createProductsQuery({}, {}, {}, {}, {}, {}, {}, {}, {})",
 				mission, productClass, startTimeFrom, startTimeTo, recordFrom, recordTo, jobStepId, orderBy, count);
 		

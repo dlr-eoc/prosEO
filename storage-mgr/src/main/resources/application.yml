@@ -9,6 +9,7 @@ proseo:
     global:
       storageIdPrefix: proseo
       storageManagerVersion2: true
+
       # Default mount point for files to upload
       sourcePath: default
 
@@ -23,9 +24,9 @@ proseo:
 
     posix:
       # Mount point for backend storage (must be different from cachePath)
-      backendPath: /proseo/data/backend
+      backendPath: /proseo/testdata/backend
       # Mount point for file cache
-      cachePath: /proseo/data/cache
+      cachePath: /proseo/testdata/cache
       
     joborder:
       bucket: internal

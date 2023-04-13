@@ -52,7 +52,7 @@ To build prosEO from source code, the following prerequisites must be met:
   </settings>
   ```
   If you already have a `properties` element in your settings file, it is of course
-  If sufficient to just add the `docker.registry` property there.
+  sufficient to just add the `docker.registry` property there.
 - Add the following to your Docker Engine configuration (e. g. via the Docker Dashboard):
   ```
   "insecure-registries": [

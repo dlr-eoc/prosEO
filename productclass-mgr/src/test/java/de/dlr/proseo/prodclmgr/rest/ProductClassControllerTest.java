@@ -1,45 +1,48 @@
 /**
  * ProductClassControllerTest.java
- * 
+ *
  * (c) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.prodclmgr.rest;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import javax.transaction.Transactional;
+
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.Mission;
+import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.SimplePolicy;
+import de.dlr.proseo.model.SimplePolicy.DeltaTime;
 import de.dlr.proseo.model.SimplePolicy.PolicyType;
+import de.dlr.proseo.model.SimpleSelectionRule;
+import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.enums.ProductVisibility;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.prodclmgr.ProductClassManagerApplication;
-import de.dlr.proseo.prodclmgr.ProductClassSecurityConfig;
-import de.dlr.proseo.prodclmgr.ProductClassTestConfiguration;
-import de.dlr.proseo.prodclmgr.rest.model.DeltaTimeT0;
-import de.dlr.proseo.prodclmgr.rest.model.DeltaTimeT1;
+import de.dlr.proseo.prodclmgr.rest.model.ProductClassUtil;
 import de.dlr.proseo.prodclmgr.rest.model.RestParameter;
 import de.dlr.proseo.prodclmgr.rest.model.RestProductClass;
 import de.dlr.proseo.prodclmgr.rest.model.RestSimplePolicy;
@@ -48,68 +51,43 @@ import de.dlr.proseo.prodclmgr.rest.model.SelectionRuleString;
 
 /**
  * Test class for the REST API of ProductClassControllerImpl
- * 
+ *
  * @author Dr. Thomas Bassler
+ * @author Katharina Bassler
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest(classes = ProductClassManagerApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
-//@DirtiesContext
-//@Transactional
+@SpringBootTest(classes = ProductClassManagerApplication.class)
+@WithMockUser(username = "UTM-testuser", roles = {})
 @AutoConfigureTestEntityManager
+@Transactional
 public class ProductClassControllerTest {
-	
 
-	/* The base URI of the Ingestor */
-	private static String PRODUCT_CLASS_BASE_URI = "/proseo/productclass-mgr/v0.1/productclasses";
-
-	/* Various static test data */
-	private static final String TEST_CODE = "ABC";
+	// Test data
+	private static String[] testMissionData =
+			// code, name, processing_mode, file_class, product_file_template
+			{ "UTM", "ABCD Testing", "OFFL", "OPER", "test_file_temp" };
 	private static final String TEST_PRODUCT_TYPE = "L2__FRESCO_";
 	private static final String TEST_PARAM_VALUE = "01";
 	private static final String TEST_PARAM_TYPE = "STRING";
 	private static final String TEST_PARAM_KEY = "revision";
-	private static final String TEST_MODE = "OFFL";
 	private static final String TEST_NEW_PRODUCT_TYPE = "$L2__AAI___$";
-	private static final String TEST_SELECTION_RULE =
-			"FOR " + TEST_PRODUCT_TYPE + "/" + TEST_PARAM_KEY + ":" + TEST_PARAM_VALUE + 
-			" SELECT LatestValIntersect(180 M, 180 M) OR LatestValidity OPTIONAL";
-
+	private static final String TEST_SELECTION_RULE = "FOR " + TEST_PRODUCT_TYPE + "/" + TEST_PARAM_KEY + ":"
+			+ TEST_PARAM_VALUE + " SELECT LatestValIntersect(180 M, 180 M) OR LatestValidity OPTIONAL";
 	private static final ProductVisibility TEST_VISIBILITY = ProductVisibility.PUBLIC;
-	
-	/** Test configuration */
+
+	/** The ProductClassControllerImpl under test */
 	@Autowired
-	ProductClassTestConfiguration config;
-	
-	/** The security environment for this test */
-	@Autowired
-	ProductClassSecurityConfig ingestorSecurityConfig;
-	
-	/** The (random) port on which the Product Class Manager was started */
-	@LocalServerPort
-	private int port;
-	
+	private ProductClassControllerImpl pci;
+
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProductClassControllerTest.class);
-
-	/**
-	 * @throws java.lang.Exception if any error occurs
-	 */
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
-
-	/**
-	 * @throws java.lang.Exception if any error occurs
-	 */
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
+	private static ProseoLogger logger = new ProseoLogger(ProductClassControllerTest.class);
 
 	/**
 	 * @throws java.lang.Exception if any error occurs
 	 */
 	@Before
 	public void setUp() throws Exception {
+		fillDatabase();
 	}
 
 	/**
@@ -117,204 +95,193 @@ public class ProductClassControllerTest {
 	 */
 	@After
 	public void tearDown() throws Exception {
+		RepositoryService.getProductClassRepository().deleteAll();
+		RepositoryService.getMissionRepository().deleteAll();
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#getRestProductClass(java.lang.String, java.lang.String)}.
+	 * Filling the database with some initial data for testing purposes
+	 */
+	private static void fillDatabase() {
+		logger.trace("... creating testMission {}", testMissionData[0]);
+		Mission testMission = new Mission();
+		testMission.setCode(testMissionData[0]);
+		testMission.setName(testMissionData[1]);
+		testMission.getProcessingModes().add(testMissionData[2]);
+		testMission.getFileClasses().add(testMissionData[3]);
+		testMission.setProductFileTemplate(testMissionData[4]);
+		testMission = RepositoryService.getMissionRepository().save(testMission);
+
+		logger.trace("... adding a test product class");
+		ProductClass testProductClass = new ProductClass();
+		testProductClass.setProductType(TEST_NEW_PRODUCT_TYPE);
+		testProductClass.setMission(testMission);
+		testProductClass.setVisibility(TEST_VISIBILITY);
+		testProductClass = RepositoryService.getProductClassRepository().save(testProductClass);
+
+		// Create a selection rule for the new product class
+		SimpleSelectionRule testSelectionRule = new SimpleSelectionRule();
+		testSelectionRule.setMode(testMissionData[2]);
+		testSelectionRule.setIsMandatory(true);
+		testSelectionRule.getFilterConditions().put(TEST_PARAM_KEY,
+				new Parameter().init(ParameterType.valueOf(TEST_PARAM_TYPE), TEST_PARAM_VALUE));
+
+		testSelectionRule.setTargetProductClass(testProductClass);
+
+		ProductClass sourceProductClass = new ProductClass();
+		sourceProductClass.setProductType(TEST_PRODUCT_TYPE);
+		sourceProductClass.setMission(testMission);
+		sourceProductClass = RepositoryService.getProductClassRepository().save(sourceProductClass);
+		testSelectionRule.setSourceProductClass(sourceProductClass);
+
+		// Create a simple policy for the new product class
+		SimplePolicy testSimplePolicy = new SimplePolicy();
+		testSimplePolicy.setPolicyType(PolicyType.LatestValCover);
+		DeltaTime deltaTimeT0 = new DeltaTime();
+		deltaTimeT0.duration = 4L;
+		testSimplePolicy.setDeltaTimeT0(deltaTimeT0);
+		DeltaTime deltaTimeT1 = new DeltaTime();
+		deltaTimeT1.duration = 180L;
+		testSimplePolicy.setDeltaTimeT1(deltaTimeT1);
+
+		testSelectionRule.getSimplePolicies().add(testSimplePolicy);
+		testProductClass.getRequiredSelectionRules().add(testSelectionRule);
+
+		testProductClass = RepositoryService.getProductClassRepository().save(testProductClass);
+
+		testMission.getProductClasses().add(sourceProductClass);
+		testMission.getProductClasses().add(testProductClass);
+		RepositoryService.getMissionRepository().save(testMission);
+	}
+
+	/**
+	 * Test method for
+	 * {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#getRestProductClass(java.lang.String, java.lang.String)}.
 	 */
 	@Test
 	public final void testGetRestProductClass() {
 		// TODO
-		logger.warn("Test not implemented for getRestProductClass");
+		logger.trace("Test not implemented for getRestProductClass");
 
-		logger.info("Test OK: Read all product classes");
+		logger.trace("Test OK: Read all product classes");
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#createRestProductClass(de.dlr.proseo.prodclmgr.rest.model.RestProductClass)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#createRestProductClass(de.dlr.proseo.prodclmgr.rest.model.RestProductClass)}.
 	 */
 	@Test
 	public final void testCreateRestProductClass() {
-		
-		// Make sure a mission and a base product class to derive the new one from exist
-		Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
-		if (null == mission) {
-			mission = new Mission();
-			mission.setCode(TEST_CODE);
-			mission.getProcessingModes().add(TEST_MODE);
-			mission = RepositoryService.getMissionRepository().save(mission);
-		}
-		logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
-		
-		ProductClass prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
-		if (null == prodClass) {
-			prodClass = new ProductClass();
-			prodClass.setMission(mission);
-			prodClass.setProductType(TEST_PRODUCT_TYPE);
-			prodClass = RepositoryService.getProductClassRepository().save(prodClass);
-			//mission.getProductClasses().add(prodClass);
-			//mission = RepositoryService.getMissionRepository().save(mission);
-		}
-		logger.info("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
-		
-		// Create a REST object for the new product class
-		RestProductClass restProductClass = new RestProductClass();
-		restProductClass.setMissionCode(TEST_CODE);
-		restProductClass.setProductType(TEST_NEW_PRODUCT_TYPE);
-		restProductClass.setVisibility(TEST_VISIBILITY.toString());
-		// TODO We could add a configured processor here, if one was created beforehand
-		
-		// Create a REST selection rule for the new product class
-		RestSimpleSelectionRule newSelectionRule = new RestSimpleSelectionRule();
-		newSelectionRule.setMode(TEST_MODE);
-		newSelectionRule.setIsMandatory(true);
-		newSelectionRule.getFilterConditions().add(
-				new RestParameter(TEST_PARAM_KEY, TEST_PARAM_TYPE, TEST_PARAM_VALUE));
-		newSelectionRule.setTargetProductClass(TEST_NEW_PRODUCT_TYPE);
-		newSelectionRule.setSourceProductClass(TEST_PRODUCT_TYPE);
-		RestSimplePolicy newSimplePolicy = new RestSimplePolicy();
-		newSimplePolicy.setPolicyType(PolicyType.LatestValCover.toString());
-		newSimplePolicy.setDeltaTimeT0(new DeltaTimeT0(4L, TimeUnit.HOURS.toString()));
-		newSimplePolicy.setDeltaTimeT1(new DeltaTimeT1(180L, TimeUnit.MINUTES.toString()));
-		newSelectionRule.getSimplePolicies().add(newSimplePolicy);
-		restProductClass.getSelectionRule().add(newSelectionRule);
-		
-		// Make sure the new class does not yet exist
-		ProductClass deleteProductClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_NEW_PRODUCT_TYPE);
-		if (null != deleteProductClass) {
-			RepositoryService.getProductClassRepository().delete(deleteProductClass);
-		}
-		
-		// Call the REST API
-		String testUrl = "http://localhost:" + port + PRODUCT_CLASS_BASE_URI + "/";
-		logger.info("Testing URL {} / POST", testUrl);
-		logger.debug("Post data: " + restProductClass);
+		logger.trace(">>> testCreateRestProductClass()");
 
-		ResponseEntity<RestProductClass> postEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.postForEntity(testUrl, restProductClass, RestProductClass.class);
+		//
+		RestProductClass testProductClass = ProductClassUtil
+				.toRestProductClass(RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(testMissionData[0], TEST_NEW_PRODUCT_TYPE));
+		RestSimpleSelectionRule testSelectionRule = testProductClass.getSelectionRule().get(0);
+		RestSimplePolicy restSimplePolicy = testSelectionRule.getSimplePolicies().get(0);
+		RepositoryService.getProductClassRepository().deleteById(testProductClass.getId());
+
+		//
+		ResponseEntity<RestProductClass> postEntity = pci.createRestProductClass(testProductClass);
+
 		assertEquals("Unexpected HTTP status code: ", HttpStatus.CREATED, postEntity.getStatusCode());
-		
+
 		// Check the result
 		RestProductClass responseProductClass = postEntity.getBody();
 		assertNotNull("Product class missing", responseProductClass);
 		assertNotEquals("Database ID should be set: ", 0L, responseProductClass.getId().longValue());
-		assertEquals("Unexpected mission code: ", restProductClass.getMissionCode(), responseProductClass.getMissionCode());
-		assertEquals("Unexpected product type: ", restProductClass.getProductType(), responseProductClass.getProductType());
+		assertEquals("Unexpected mission code: ", testProductClass.getMissionCode(),
+				responseProductClass.getMissionCode());
+		assertEquals("Unexpected product type: ", testProductClass.getProductType(),
+				responseProductClass.getProductType());
 		assertNotNull("List of selection rules missing", responseProductClass.getSelectionRule());
-		assertEquals("Unexpected number of selection rules: ", restProductClass.getSelectionRule().size(), responseProductClass.getSelectionRule().size());
+		assertEquals("Unexpected number of selection rules: ", testProductClass.getSelectionRule().size(),
+				responseProductClass.getSelectionRule().size());
 		RestSimpleSelectionRule responseSelectionRule = responseProductClass.getSelectionRule().get(0);
-		assertEquals("Unexpected selection rule mode: ", newSelectionRule.getMode(), responseSelectionRule.getMode());
-		assertEquals("Unexpected mandatory value: ", newSelectionRule.getIsMandatory(), responseSelectionRule.getIsMandatory());
+		assertEquals("Unexpected selection rule mode: ", testSelectionRule.getMode(), responseSelectionRule.getMode());
+		assertEquals("Unexpected mandatory value: ", testSelectionRule.getIsMandatory(),
+				responseSelectionRule.getIsMandatory());
 		assertNotNull("List of filter conditions missing", responseSelectionRule.getFilterConditions());
-		assertEquals("Unexpected number of filter conditions: ", newSelectionRule.getFilterConditions().size(), responseSelectionRule.getFilterConditions().size());
-		assertEquals("Unexpected filter condition: ", newSelectionRule.getFilterConditions().get(0), responseSelectionRule.getFilterConditions().get(0));
+		assertEquals("Unexpected number of filter conditions: ", testSelectionRule.getFilterConditions().size(),
+				responseSelectionRule.getFilterConditions().size());
+		assertEquals("Unexpected filter condition: ", testSelectionRule.getFilterConditions().get(0),
+				responseSelectionRule.getFilterConditions().get(0));
 		assertNotNull("List of simple policies missing", responseSelectionRule.getSimplePolicies());
-		assertEquals("Unexpected number of simple policies: ", newSelectionRule.getSimplePolicies().size(), responseSelectionRule.getSimplePolicies().size());
+		assertEquals("Unexpected number of simple policies: ", testSelectionRule.getSimplePolicies().size(),
+				responseSelectionRule.getSimplePolicies().size());
 		RestSimplePolicy responsePolicy = responseSelectionRule.getSimplePolicies().get(0);
-		assertEquals("Unexpected policy type: ", newSimplePolicy.getPolicyType(), responsePolicy.getPolicyType());
-		assertEquals("Unexpected delta time T0: ", newSimplePolicy.getDeltaTimeT0(), responsePolicy.getDeltaTimeT0());
-		assertEquals("Unexpected delta time T1: ", newSimplePolicy.getDeltaTimeT1(), responsePolicy.getDeltaTimeT1());
-		
-		Optional<ProductClass> dbProductClass = RepositoryService.getProductClassRepository().findById(responseProductClass.getId());
+		assertEquals("Unexpected policy type: ", restSimplePolicy.getPolicyType(), responsePolicy.getPolicyType());
+		assertEquals("Unexpected delta time T0: ", restSimplePolicy.getDeltaTimeT0(), responsePolicy.getDeltaTimeT0());
+		assertEquals("Unexpected delta time T1: ", restSimplePolicy.getDeltaTimeT1(), responsePolicy.getDeltaTimeT1());
+
+		Optional<ProductClass> dbProductClass = RepositoryService.getProductClassRepository()
+				.findById(responseProductClass.getId());
 		assertFalse("Product class not in database", dbProductClass.isEmpty());
-		
-		logger.info("Test OK: Insert a single product class");
+
+		logger.trace("Test OK: Insert a single product class");
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#getRestProductClassById(java.lang.Long)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#getRestProductClassById(java.lang.Long)}.
 	 */
 	@Test
 	public final void testGetRestProductClassById() {
 		// TODO
-		logger.warn("Test not implemented for getRestProductClassById");
+		logger.trace("Test not implemented for getRestProductClassById");
 
-		logger.info("Test OK: Read a single product class");
+		logger.trace("Test OK: Read a single product class");
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#modifyRestProductClass(java.lang.Long, de.dlr.proseo.prodclmgr.rest.model.RestProductClass)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#modifyRestProductClass(java.lang.Long, de.dlr.proseo.prodclmgr.rest.model.RestProductClass)}.
 	 */
 	@Test
 	public final void testModifyRestProductClass() {
 		// TODO
-		logger.warn("Test not implemented for modifyRestProductClass");
+		logger.trace("Test not implemented for modifyRestProductClass");
 
-		logger.info("Test OK: Update a single product class");
+		logger.trace("Test OK: Update a single product class");
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#deleteProductclassById(java.lang.Long)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#deleteProductclassById(java.lang.Long)}.
 	 */
 	@Test
 	public final void testDeleteProductclassById() {
 		// TODO
-		logger.warn("Test not implemented for deleteProductclassById");
+		logger.trace("Test not implemented for deleteProductclassById");
 
-		logger.info("Test OK: Delete a single product class");
+		logger.trace("Test OK: Delete a single product class");
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#getSelectionRuleStrings(java.lang.Long, java.lang.String)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#getSelectionRuleStrings(java.lang.Long, java.lang.String)}.
 	 */
 	@Test
 	public final void testGetSelectionRuleStrings() {
 		// TODO
-		logger.warn("Test not implemented for getSelectionRuleStrings");
+		logger.trace("Test not implemented for getSelectionRuleStrings");
 
-		logger.info("Test OK: Get selection rule strings");
+		logger.trace("Test OK: Get selection rule strings");
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#createSelectionRuleString(java.lang.Long, java.util.List)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#createSelectionRuleString(java.lang.Long, java.util.List)}.
 	 */
 	@Test
 	public final void testCreateSelectionRuleString() {
+		logger.trace(">>> testCreateSelectionRuleString()");
 
-		// Make sure a mission and a base product class to derive the new one from exist
-		Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
-		if (null == mission) {
-			mission = new Mission();
-			mission.setCode(TEST_CODE);
-			mission.getProcessingModes().add(TEST_MODE);
-			mission = RepositoryService.getMissionRepository().save(mission);
-		}
-		logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
-		
-		ProductClass prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
-		if (null == prodClass) {
-			prodClass = new ProductClass();
-			prodClass.setMission(mission);
-			prodClass.setProductType(TEST_PRODUCT_TYPE);
-			prodClass.setVisibility(TEST_VISIBILITY);
-			prodClass = RepositoryService.getProductClassRepository().save(prodClass);
-			//mission.getProductClasses().add(prodClass);
-			//mission = RepositoryService.getMissionRepository().save(mission);
-		}
-		logger.info("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
-		
-		// Create a REST object for the new product class
-		RestProductClass restProductClass = new RestProductClass();
-		restProductClass.setMissionCode(TEST_CODE);
-		restProductClass.setProductType(TEST_NEW_PRODUCT_TYPE);
-		restProductClass.setVisibility(TEST_VISIBILITY.toString());
-		// TODO We could add a configured processor here, if one was created beforehand
-		
-		// Make sure the new class does not yet exist
-		ProductClass deleteProductClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_NEW_PRODUCT_TYPE);
-		if (null != deleteProductClass) {
-			RepositoryService.getProductClassRepository().delete(deleteProductClass);
-		}
-		
-		// Call the REST API to create the new product class
-		String testUrl = "http://localhost:" + port + PRODUCT_CLASS_BASE_URI + "/";
+		// Retrieve a test product class from the repository and remove the selection rule
+		ProductClass testProductClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(testMissionData[0], TEST_NEW_PRODUCT_TYPE);
+		testProductClass.getRequiredSelectionRules().clear();
+		logger.trace("Success? " + RepositoryService.getProductClassRepository().findByMissionCodeAndProductType("UTM", TEST_PRODUCT_TYPE));
 
-		ResponseEntity<RestProductClass> postEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.postForEntity(testUrl, restProductClass, RestProductClass.class);
-		assertEquals("Unexpected HTTP status code: ", HttpStatus.CREATED, postEntity.getStatusCode());
-		
-		restProductClass = postEntity.getBody();
-		
 		// Now create a selection rule for this product class
 		SelectionRuleString ruleString = new SelectionRuleString();
 		ruleString.setMode("OFFL");
@@ -322,24 +289,20 @@ public class ProductClassControllerTest {
 		// TODO We could add a configured processor here, if one was created beforehand
 		List<SelectionRuleString> ruleStrings = new ArrayList<>();
 		ruleStrings.add(ruleString);
-		
-		testUrl = "http://localhost:" + port + PRODUCT_CLASS_BASE_URI + "/" + restProductClass.getId() + "/selectionrules";
-		logger.info("Testing URL {} / POST", testUrl);
-		logger.debug("Post data: " + ruleStrings);
 
-		postEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.postForEntity(testUrl, ruleStrings, RestProductClass.class);
+		ResponseEntity<RestProductClass> postEntity = pci.createSelectionRuleString(testProductClass.getId(), ruleStrings);
 		assertEquals("Unexpected HTTP status code: ", HttpStatus.CREATED, postEntity.getStatusCode());
-		
-		restProductClass = postEntity.getBody();
-		
+
+		RestProductClass restProductClass = postEntity.getBody();
+
 		// Check result
 		assertNotNull("Product class missing", restProductClass);
 		assertNotNull("List of selection rules missing", restProductClass.getSelectionRule());
-		assertEquals("Unexpected number of selection rules:", ruleStrings.size(), restProductClass.getSelectionRule().size());
-		
+		assertEquals("Unexpected number of selection rules:", ruleStrings.size(),
+				restProductClass.getSelectionRule().size());
+
 		RestSimpleSelectionRule responseRule = restProductClass.getSelectionRule().get(0);
-		assertEquals("Unexpected mode:", TEST_MODE, responseRule.getMode());
+		assertEquals("Unexpected mode:", testMissionData[2], responseRule.getMode());
 		assertEquals("Unexpected mandatory value:", false, responseRule.getIsMandatory());
 		assertEquals("Unexpected target product class:", TEST_NEW_PRODUCT_TYPE, responseRule.getTargetProductClass());
 		assertEquals("Unexpected source product class:", TEST_PRODUCT_TYPE, responseRule.getSourceProductClass());
@@ -348,87 +311,102 @@ public class ProductClassControllerTest {
 		
 		assertNotNull("List of filter conditions missing", responseRule.getFilterConditions());
 		assertEquals("Unexpected number of filter conditions:", 1, responseRule.getFilterConditions().size());
-		
+
 		RestParameter filterParameter = responseRule.getFilterConditions().get(0);
 		assertEquals("Unexpected filter condition key:", TEST_PARAM_KEY, filterParameter.getKey());
 		assertEquals("Unexpected filter condition type:", TEST_PARAM_TYPE, filterParameter.getParameterType());
 		assertEquals("Unexpected filter condition value:", TEST_PARAM_VALUE, filterParameter.getParameterValue());
-		
+
 		assertNotNull("List of simple policies missing", responseRule.getSimplePolicies());
 		assertEquals("Unexpected number of simple policies:", 2, responseRule.getSimplePolicies().size());
-		
-		for (RestSimplePolicy responsePolicy: responseRule.getSimplePolicies()) {
+
+		for (RestSimplePolicy responsePolicy : responseRule.getSimplePolicies()) {
 			if ("LatestValIntersect".equals(responsePolicy.getPolicyType())) {
-				assertEquals("Unexpected LatestValIntersect delta time 0 duration:", 180L, responsePolicy.getDeltaTimeT0().getDuration().longValue());
-				assertEquals("Unexpected LatestValIntersect delta time 0 unit:", TimeUnit.MINUTES.toString(), responsePolicy.getDeltaTimeT0().getUnit());
-				assertEquals("Unexpected LatestValIntersect delta time 1 duration:", 180L, responsePolicy.getDeltaTimeT1().getDuration().longValue());
-				assertEquals("Unexpected LatestValIntersect delta time 1 unit:", TimeUnit.MINUTES.toString(), responsePolicy.getDeltaTimeT1().getUnit());
+				// 3 hours are expected instead of 180 minutes, as the delta time is normalized
+				// during selection rule creation
+				assertEquals("Unexpected LatestValIntersect delta time 0 duration:", 3L,
+						responsePolicy.getDeltaTimeT0().getDuration().longValue());
+				assertEquals("Unexpected LatestValIntersect delta time 0 unit:", TimeUnit.HOURS.toString(),
+						responsePolicy.getDeltaTimeT0().getUnit());
+				assertEquals("Unexpected LatestValIntersect delta time 1 duration:", 3L,
+						responsePolicy.getDeltaTimeT1().getDuration().longValue());
+				assertEquals("Unexpected LatestValIntersect delta time 1 unit:", TimeUnit.HOURS.toString(),
+						responsePolicy.getDeltaTimeT1().getUnit());
 			} else if ("LatestValidity".equals(responsePolicy.getPolicyType())) {
-				assertEquals("Unexpected LatestValidity delta time 0 duration:", 0, responsePolicy.getDeltaTimeT0().getDuration().longValue());
-				assertEquals("Unexpected LatestValidity delta time 0 unit:", TimeUnit.DAYS.toString(), responsePolicy.getDeltaTimeT0().getUnit());
-				assertEquals("Unexpected LatestValidity delta time 1 duration:", 0, responsePolicy.getDeltaTimeT1().getDuration().longValue());
-				assertEquals("Unexpected LatestValidity delta time 1 unit:", TimeUnit.DAYS.toString(), responsePolicy.getDeltaTimeT1().getUnit());
+				assertEquals("Unexpected LatestValidity delta time 0 duration:", 0,
+						responsePolicy.getDeltaTimeT0().getDuration().longValue());
+				assertEquals("Unexpected LatestValidity delta time 0 unit:", TimeUnit.DAYS.toString(),
+						responsePolicy.getDeltaTimeT0().getUnit());
+				assertEquals("Unexpected LatestValidity delta time 1 duration:", 0,
+						responsePolicy.getDeltaTimeT1().getDuration().longValue());
+				assertEquals("Unexpected LatestValidity delta time 1 unit:", TimeUnit.DAYS.toString(),
+						responsePolicy.getDeltaTimeT1().getUnit());
 			} else {
 				fail("Unexpected policy type: " + responsePolicy.getPolicyType());
 			}
 		}
-		
-		logger.info("Test OK: Create selection rule from string");
+
+		logger.trace("Test OK: Create selection rule from string");
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#getSelectionRuleString(java.lang.Long, java.lang.Long)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#getSelectionRuleString(java.lang.Long, java.lang.Long)}.
 	 */
 	@Test
 	public final void testGetSelectionRuleString() {
 		// TODO
-		logger.warn("Test not implemented for getSelectionRuleString");
+		logger.trace("Test not implemented for getSelectionRuleString");
 
-		logger.info("Test OK: Get selection rule by ID");
+		logger.trace("Test OK: Get selection rule by ID");
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#modifySelectionRuleString(java.lang.Long, java.lang.Long, de.dlr.proseo.prodclmgr.rest.model.SelectionRuleString)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#modifySelectionRuleString(java.lang.Long, java.lang.Long, de.dlr.proseo.prodclmgr.rest.model.SelectionRuleString)}.
 	 */
 	@Test
 	public final void testModifySelectionRuleString() {
 		// TODO
-		logger.warn("Test not implemented for modifySelectionRuleString");
+		logger.trace("Test not implemented for modifySelectionRuleString");
 
-		logger.info("Test OK: Update selection rule by ID");
+		logger.trace("Test OK: Update selection rule by ID");
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#deleteSelectionrule(java.lang.Long, java.lang.Long)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#deleteSelectionrule(java.lang.Long, java.lang.Long)}.
 	 */
 	@Test
 	public final void testDeleteSelectionrule() {
 		// TODO
-		logger.warn("Test not implemented for deleteSelectionrule");
+		logger.trace("Test not implemented for deleteSelectionrule");
 
-		logger.info("Test OK: Delete selection rule by ID");
+		logger.trace("Test OK: Delete selection rule by ID");
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#addProcessorToRule(java.lang.String, java.lang.Long, java.lang.Long)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#addProcessorToRule(java.lang.String, java.lang.Long, java.lang.Long)}.
 	 */
 	@Test
 	public final void testAddProcessorToRule() {
 		// TODO
-		logger.warn("Test not implemented for addProcessorToRule");
+		logger.trace("Test not implemented for addProcessorToRule");
 
-		logger.info("Test OK: Add configured processor to selection rule");
+		logger.trace("Test OK: Add configured processor to selection rule");
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#removeProcessorFromRule(java.lang.String, java.lang.Long, java.lang.Long)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#removeProcessorFromRule(java.lang.String, java.lang.Long, java.lang.Long)}.
 	 */
 	@Test
 	public final void testRemoveProcessorFromRule() {
 		// TODO
-		logger.warn("Test not implemented for removeProcessorFromRule");
+		logger.trace("Test not implemented for removeProcessorFromRule");
 
-		logger.info("Test OK: Remove configured processor from selection rule");
+		logger.trace("Test OK: Remove configured processor from selection rule");
 	}
 
 }

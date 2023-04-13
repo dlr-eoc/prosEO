@@ -1,0 +1,60 @@
+#%RAML 1.0 DataType
+#  CscProductionOrder:
+    type: object
+    properties:
+      Id?:
+        type: string
+        description: Universally unique production order identifier
+        pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$
+      Status?:
+        enum: [ queued, in_progress, completed, failed, cancelled ]
+        description: JobStatus value 
+      StatusMessage?:
+        type: string
+        description: Text message providing additional information on the returned status
+      OrderOutputSize?:
+        type: integer
+        format: long
+        description: Actual size in bytes (B) of the output Product composing the Order.
+      SubmissionDate?:
+        type: string
+        description: Date and time at which the ProductionOrder was received by the  ODPRIP
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{3}Z$
+      EstimatedDate?:
+        type: string
+        description: Estimated date and time when the product will be available for download from the ODPRIP
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{3}Z$
+      CompletedDate?:
+        type: string
+        description: Date and time when the product was available for download from the ODPRIP
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{3}Z$
+      EvictionDate?:
+        type: string
+        description: Date when the Product related to the order will be removed from the ODPRIP
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{3}Z$
+      Priority:
+        type: integer
+        format: long
+        description: Priority of the ProductionOrder. It is an integer from 1-100, default 50.
+      InputProductReference:
+        type: CscInputProductReference
+        description: Complex type used to unambiguously identify the input product
+      WorkflowId:
+        type: string
+        description: The Id is a local unique identifier for the Workflow instance within the ODPRIP which is applicable to the ProductionOrder
+      WorkflowName:
+        type: string
+        description: Short name of the workflow
+      WorkflowOptions:
+        type: CscWorkflowOption[]
+        description: Selection of applicable options from the Workflow
+      NotificationEndpoint?:
+        type: string
+        description: URI used by the ODPRIP for product download readiness notifications
+      NotificationEpUsername?:
+        type: string
+        description: The username associated with the EndPoint URI provided
+      NotificationEpPassword?:
+        type: string
+        description: The password associated with the EndPoint URI provided
+        

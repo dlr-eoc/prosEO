@@ -304,11 +304,6 @@ public class MissionControllerImpl implements MissionController {
 				}
 				Mission modelMission = optModelMission.get();
 
-				// Check, whether mission exists already
-				if (null != RepositoryService.getMissionRepository().findByCode(mission.getCode())) {
-					throw new IllegalArgumentException(logger.log(OrderMgrMessage.MISSION_EXISTS, mission.getCode()));
-				}
-				
 				// Ensure mandatory attributes are set
 				if (null == mission.getName() || mission.getName().isBlank()) {
 					throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "name", "mission modification"));

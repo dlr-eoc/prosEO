@@ -28,4 +28,5 @@ public interface ConfigurationRepository extends JpaRepository<Configuration, Lo
 	 */
 	@Query("select c from Configuration c where c.processorClass.mission.code = ?1 and c.processorClass.processorName = ?2 and c.configurationVersion = ?3")
 	public Configuration findByMissionCodeAndProcessorNameAndConfigurationVersion(String mission, String processorName, String configurationVersion);
+
 }

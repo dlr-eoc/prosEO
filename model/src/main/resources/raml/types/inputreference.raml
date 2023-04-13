@@ -1,0 +1,15 @@
+#%RAML 1.0 DataType
+#  RestInputReference:
+    type: object
+    properties:
+      inputFileName?:
+        type: string
+        description: The file name of the input product to retrieve
+      sensingStartTime?:
+        type: string
+        description: Sensing start time of the input product
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(.\d{1,6})?$
+      sensingStopTime?:
+        type: string
+        description: Sensing stop time of the input product
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(.\d{1,6})?$

@@ -1,0 +1,60 @@
+#%RAML 1.0
+title: prosEO On-Demand Production Interface Delivery Point (ODIP) REST Services API
+version: v0.1
+protocols: [ HTTPS ] 
+baseUri: /proseo/odip/{version}
+mediaType: application/octet-stream
+
+securitySchemes:
+  basicAuth:
+    description: Each request must contain the headers necessary for basic authentication
+    type: Basic Authentication
+    describedBy:
+      headers:
+        Authorization:
+          description: Used to send the Base64-encoded "username:password" credentials
+          type: string
+      responses:
+        401:
+          description: |
+            Unauthorized. Either the provided username and password combination is invalid, or the user is not allowed to access
+            the content provided by the requested URL.
+
+types:
+  OAuth2Response: !include types/oauth2-response.raml
+  OAuth2ErrorResponse: !include types/oauth2-error-response.raml
+
+/token:
+  post:
+    description: Create an authentication token and a refresh token for the user identified in the Basic Auth header
+    displayName: getToken
+    queryParameters:
+      grant_type:
+        type: string
+        description: |
+          Type of grant requested (value must be set to "password" for "Resource Owner Password Credentials Grant" flow
+          or to "client_credentials" for "Client Credentials Grant" flow as per RFC 6749; REQUIRED)
+      username?:
+        type: string
+        description: |
+          The ODIP username (as per RFC 6749; REQUIRED for "Resource Owner Password Credentials Grant" flow, must not be set otherwise)
+      password?:
+        type: string
+        description: |
+          The ODIP password (as per RFC 6749; REQUIRED for "Resource Owner Password Credentials Grant" flow, must not be set otherwise)
+      scope?:
+        type: string
+        description: The scope of the access request (as per RFC 6749; OPTIONAL, will be ignored if set)
+    responses:
+      200:
+        description: Authentication succeeded, and the token was successfully generated
+        body:
+          application/json:
+            type: OAuth2Response
+            example: !include examples/oauth2-response.json
+      400:
+        description: Authentication failed
+        body:
+          application/json:
+            type: OAuth2ErrorResponse
+            example: !include examples/oauth2-error-response.json

@@ -1,0 +1,280 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>de.dlr.proseo</groupId>
+		<artifactId>proseo-api</artifactId>
+		<version>0.9.5-ODIP</version>
+	</parent>
+
+  <artifactId>odip</artifactId>
+  <name>prosEO On-Demand Production Interface Delivery Point API</name>
+  <description>prosEO API conforming to ESA's On-Demand Production Interface Delivery Point API (ESA-EOPG-EOPGC-TN-7)</description>
+
+	<url>https://github.com/dlr-eoc/prosEO/api/odip</url>
+	<organization>
+		<name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
+		<url>http://www.dlr.de</url>
+	</organization>
+
+	<properties>
+		<olingo.version>4.7.1</olingo.version>
+		<module.version>0.9.5-ODIP</module.version>
+		<main.basedir>${basedir}/../..</main.basedir>
+		<raml-path-query>src/main/resources/raml/odip-query.raml</raml-path-query>
+        <raml-path-oauth2>src/main/resources/raml/odip-oauth2.raml</raml-path-oauth2>
+		<raml-base-package>de.dlr.proseo.api.odip.rest</raml-base-package>
+        <nimbus.jwt.version>9.10</nimbus.jwt.version>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-configuration-processor</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+		</dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+        </dependency>
+		<dependency>
+			<groupId>org.projectreactor</groupId>
+			<artifactId>reactor-spring</artifactId>
+			<version>1.0.1.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.olingo</groupId>
+			<artifactId>odata-server-api</artifactId>
+			<version>${olingo.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.olingo</groupId>
+			<artifactId>odata-server-core</artifactId>
+			<version>${olingo.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.olingo</groupId>
+			<artifactId>odata-commons-api</artifactId>
+			<version>${olingo.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.olingo</groupId>
+			<artifactId>odata-commons-core</artifactId>
+			<version>${olingo.version}</version>
+		</dependency>
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+            <version>${nimbus.jwt.version}</version>
+        </dependency>
+    <dependency>
+      <groupId>de.dlr.proseo</groupId>
+      <artifactId>proseo-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>de.dlr.proseo</groupId>
+      <artifactId>proseo-interfaces</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+		<dependency>
+			<groupId>de.dlr.proseo</groupId>
+			<artifactId>proseo-model</artifactId>
+			<version>${project.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>javax</groupId>
+					<artifactId>javaee-api</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.glassfish.jersey.bundles</groupId>
+					<artifactId>jaxrs-ri</artifactId>
+				</exclusion>
+                <!-- The SecurityService in the model is not used -->
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-security</artifactId>
+                </exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>com.phoenixnap.oss</groupId>
+			<artifactId>springmvc-raml-plugin</artifactId>
+            <type>maven-plugin</type>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<finalName>proseo-api-odip</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+
+			<!-- required for adding generated sources -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>add-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<!-- where to find the generated sources -->
+								<source>${raml-output-path}</source>
+							</sources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Generate Spring MVC from RAML files -->
+			<plugin>
+				<groupId>com.phoenixnap.oss</groupId>
+				<artifactId>springmvc-raml-plugin</artifactId>
+				<configuration>
+					<basePackage>${raml-base-package}</basePackage>
+                    <injectHttpHeadersParameter>true</injectHttpHeadersParameter>
+					<rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerInterfaceRule</rule>
+				</configuration>
+				<executions>
+					<execution>
+						<id>generate-springmvc-query</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<ramlPath>${raml-path-query}</ramlPath>
+						</configuration>
+						<goals>
+							<goal>generate-springmvc-endpoints</goal>
+						</goals>
+					</execution>
+                    <execution>
+                        <id>generate-springmvc-oauth2</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <ramlPath>${raml-path-oauth2}</ramlPath>
+                        </configuration>
+                        <goals>
+                            <goal>generate-springmvc-endpoints</goal>
+                        </goals>
+                    </execution>
+				</executions>
+			</plugin>
+
+			<!-- Create HTML documentation from RAML files -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>generate-html-query</id>
+						<phase>package</phase>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<configuration>
+							<executable>raml2html</executable>
+							<commandlineArgs>-i ${raml-path-query} -o src/site/resources/${project.artifactId}-query.html</commandlineArgs>
+						</configuration>
+					</execution>
+                    <execution>
+                        <id>generate-html-oauth2</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>raml2html</executable>
+                            <commandlineArgs>-i ${raml-path-oauth2} -o src/site/resources/${project.artifactId}-oauth2.html</commandlineArgs>
+                        </configuration>
+                    </execution>
+				</executions>
+			</plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>extendable-jar</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <configuration>
+              <classifier>extendable</classifier>
+              <includes>
+                <include>de/dlr/proseo/api/odip/OAuth2TokenManager$UserInfo.class</include>
+                <include>de/dlr/proseo/api/odip/OAuth2TokenManager.class</include>
+                <include>de/dlr/proseo/api/odip/OdipApplicationBase.class</include>
+                <include>de/dlr/proseo/api/odip/OdipConfiguration.class</include>
+                <include>de/dlr/proseo/api/odip/OdipHttp.class</include>
+                <include>de/dlr/proseo/api/odip/OdipSecurity.class</include>
+                <include>de/dlr/proseo/api/odip/odata/*.class</include>
+                <include>de/dlr/proseo/api/odip/service/*.class</include>
+                <include>de/dlr/proseo/api/odip/rest/**</include>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+			<!-- Build Docker image -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <configuration>
+                            <target>
+                                <exec executable="docker">
+                                    <arg value="build" />
+                                    <arg value="-t" />
+                                    <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
+                                    <arg value="--platform" />
+                                    <arg value="${project.build.platform}" />
+                                    <arg value="." />
+                                </exec>
+                                <exec executable="docker">
+                                    <arg value="push" />
+                                    <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
+                                </exec>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+		</plugins>
+	</build>
+</project>

@@ -17,11 +17,17 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
@@ -30,6 +36,7 @@ import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
+import de.dlr.proseo.procmgr.ProcessorManagerConfiguration;
 import de.dlr.proseo.procmgr.rest.model.ProcessorClassUtil;
 import de.dlr.proseo.procmgr.rest.model.RestProcessorClass;
 
@@ -50,7 +57,11 @@ public class ProcessorClassManager {
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
-
+	
+	/** The processor manager configuration */
+	@Autowired
+	ProcessorManagerConfiguration config; 
+	
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProcessorClassManager.class);
 
@@ -63,7 +74,8 @@ public class ProcessorClassManager {
 	 * @throws NoResultException if no processor classes matching the given search criteria could be found
      * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public List<RestProcessorClass> getProcessorClasses(String mission, String processorName)
+	public List<RestProcessorClass> getProcessorClasses(String mission, String processorName,
+			Integer recordFrom, Integer recordTo)
 			throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProcessorClasses({}, {})", mission, processorName);
 		
@@ -77,6 +89,21 @@ public class ProcessorClassManager {
 			} 
 		}
 		
+		if (recordFrom == null) {
+			recordFrom = 0;
+		}
+		if (recordTo == null) {
+			recordTo = Integer.MAX_VALUE;
+		}
+		
+		Long numberOfResults = Long.parseLong(this.countProcessorClasses(mission, processorName));
+		Integer maxResults = config.getMaxResults();
+		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults
+				&& (numberOfResults - recordFrom) > maxResults) {
+			throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS,
+					logger.log(GeneralMessage.TOO_MANY_RESULTS, "workflows", numberOfResults, config.getMaxResults()));
+		}
+		
 		List<RestProcessorClass> result = new ArrayList<>();
 		
 		String jpqlQuery = "select pc from ProcessorClass pc where mission.code = :missionCode";
@@ -88,6 +115,9 @@ public class ProcessorClassManager {
 		if (null != processorName) {
 			query.setParameter("processorName", processorName);
 		}
+		query.setFirstResult(recordFrom);
+		query.setMaxResults(recordTo - recordFrom);
+		
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof de.dlr.proseo.model.ProcessorClass) {
 				result.add(ProcessorClassUtil.toRestProcessorClass((de.dlr.proseo.model.ProcessorClass) resultObject));
@@ -368,4 +398,44 @@ public class ProcessorClassManager {
 		logger.log(ProcessorMgrMessage.PROCESSOR_CLASS_DELETED, id);
 	}
 
+	/**
+	 * Count the processor classes matching the specified mission or processorName.
+	 * 
+	 * @param missionCode          the mission code
+	 * @param processorName        the processor name
+	 * @return the number of processor classes found as string
+	 * @throws SecurityException if a cross-mission data access was attempted
+	 */
+	public String countProcessorClasses(String missionCode, String processorName) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> countProcessorClasses({}, {})", missionCode, processorName);
+
+		if (null == missionCode) {
+			missionCode = securityService.getMission();
+		} else {
+			// Ensure user is authorized for the requested mission
+			if (!securityService.isAuthorizedForMission(missionCode)) {
+				throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, missionCode,
+						securityService.getMission()));
+			}
+		}
+
+		// build query
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+		CriteriaQuery<Long> query = cb.createQuery(Long.class);
+		Root<ProcessorClass> rootProcessorClass = query.from(ProcessorClass.class);
+
+		List<Predicate> predicates = new ArrayList<>();
+
+		predicates.add(cb.equal(rootProcessorClass.get("mission").get("code"), missionCode));
+		if (processorName != null)
+			predicates.add(cb.equal(rootProcessorClass.get("processorName"), processorName));
+		query.select(cb.count(rootProcessorClass)).where(predicates.toArray(new Predicate[predicates.size()]));
+
+		Long result = em.createQuery(query).getSingleResult();
+
+		logger.log(ProcessorMgrMessage.CONFIGURATIONS_COUNTED, result, missionCode, processorName);
+
+		return result.toString();
+	}
 }

@@ -32,9 +32,9 @@ import javax.persistence.Table;
 
 import org.springframework.transaction.annotation.Transactional;
 
-import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.OrderSource;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ProductionType;
 
@@ -54,15 +54,9 @@ import de.dlr.proseo.model.enums.ProductionType;
 	@Index(unique = false, columnList = "execution_time") 
 })
 public class ProcessingOrder extends PersistentObject {
-	/**
-	 * Logger of this class
-	 */
-	private static ProseoLogger logger = new ProseoLogger(ProcessingOrder.class);
-	
+
 	private static final String MSG_ILLEGAL_STATE_TRANSITION = "Illegal order state transition from %s to %s";
-
 	private static final String MSG_SLICING_DURATION_NOT_ALLOWED = "Setting of slicing duration not allowed for slicing type ";
-
 	private static final String MSG_SLICING_OVERLAP_NOT_ALLOWED = "Setting of slicing overlap not allowed for slicing type ";
 
 	/** Mission, to which this order belongs */
@@ -77,13 +71,57 @@ public class ProcessingOrder extends PersistentObject {
 	@Column(nullable = false)
 	private UUID uuid;
 	
+	/**
+	 * Priority of the ProcessingOrder (lower number means lower priority; value range 1..100 is defined for the ODIP,
+	 * but other values are allowed outside On-Demand Production, including negative numbers). Default value is 50.
+	 */
+	private Integer priority = 50;
+	
 	/** State of the processing order */
 	@Enumerated(EnumType.STRING)
 	private OrderState orderState;
 	
-	/** Expected execution time (optional, used for scheduling) */
+	/** 
+	 * Explanatory message describing the reason for the latest state change ("StatusMessage" in ODPRIP ICD),
+	 * mandatory for ProcessingOrders created via the ODIP
+	 */
+	private String stateMessage;
+	
+	/** Source application for the processing order */
+	@Enumerated(EnumType.STRING)
+	private OrderSource orderSource;
+	
+	/**
+	 * Date and time at which the ProcessingOrder was received
+	 * (mandatory for ProcessingOrders created via the ODIP; "SubmissionDate" in ODPRIP ICD)
+	 */
+	@Column(name = "submission_time", columnDefinition = "TIMESTAMP")
+	private Instant submissionTime;
+	
+	/** Earliest execution time (optional, used for scheduling) */
 	@Column(name = "execution_time", columnDefinition = "TIMESTAMP")
 	private Instant executionTime;
+	
+	/**
+	 * Date and time at which the releasing of the ProcessingOrder was completed
+	 * (used during priority calculation by the Production Planner)
+	 */
+	@Column(name = "release_time", columnDefinition = "TIMESTAMP")
+	private Instant releaseTime;
+	
+	/**
+	 * Estimated date and time when the output product(s) will be available for download from the (OD)PRIP
+	 * (mandatory for ProcessingOrders created via the ODIP; "EstimatedDate" in ODPRIP ICD)
+	 */
+	@Column(name = "estimated_completion_time", columnDefinition = "TIMESTAMP")
+	private Instant estimatedCompletionTime;
+	
+	/**
+	 * Date and time when the output product(s) was/were available for download from the (OD)PRIP
+	 * (mandatory for ProcessingOrders created via the ODIP, once they are in state "COMPLETED"; "CompletedDate" in ODPRIP ICD)
+	 */
+	@Column(name = "actual_completion_time", columnDefinition = "TIMESTAMP")
+	private Instant actualCompletionTime;
 	
 	/**
 	 * Time for automatic order deletion, if an orderRetentionPeriod is set for the mission and
@@ -122,12 +160,30 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	private Duration sliceOverlap = Duration.ZERO;
 	
+	/** Identification of the input product to use for On-Demand Production */
+	private InputProductReference inputProductReference;
+	
 	/**
 	 * Filter conditions to apply to input products of a specific product class in addition to filter conditions contained
 	 * in the applicable selection rule
 	 */
 	@ManyToMany
 	private Map<ProductClass, InputFilter> inputFilters = new HashMap<>();
+	
+	/**
+	 * Processing option settings (for on-demand processing called "WorkflowOptions" in the ICD); these options will be passed
+	 * to the data processors in the "Dynamic Processing Parameter" section of the Job Order file.
+	 * 
+	 * If derived from a WorkflowOptions object, then the "Type" value given in that object will be mapped to parameterType
+	 * as follows (this mapping will be reversed when creating the Job Order file):
+	 * <ul>
+	 *   <li>"string" --> "STRING"</li>
+	 *   <li>"number" --> if parameterValue is a valid integer then "INTEGER" else "DOUBLE"</li>
+	 *   <li>"datenumber" --> "INTEGER"</li>
+	 * </ul>
+	 */
+	@ElementCollection
+	private Map<String, Parameter> dynamicProcessingParameters = new HashMap<>();
 	
 	/**
 	 * Set of parameters to apply to a generated product of the referenced product class replacing the general output parameters
@@ -159,6 +215,9 @@ public class ProcessingOrder extends PersistentObject {
 	@Enumerated(EnumType.STRING)
 	private ProductionType productionType = ProductionType.ON_DEMAND_DEFAULT;
 	
+	/** The endpoint to send order completion notifications to */
+	private NotificationEndpoint notificationEndpoint;
+	
 	/** 
 	 * Period between product generation time and product eviction time for all products generated by job steps of this
 	 * processing order (not just those of the output product classes). If the eviction period is not set, it will be taken
@@ -168,6 +227,10 @@ public class ProcessingOrder extends PersistentObject {
 	
 	/** Indicates whether at least one of the job steps for this order is in state FAILED */
 	private Boolean hasFailedJobSteps = false;
+	
+	/** The workflow applicable for this processing order (only for orders created through the On-Demand Interface Point API */
+	@ManyToOne
+	private Workflow workflow;
 	
 	/** The processor configurations for processing the products */
 	@ManyToMany
@@ -182,25 +245,11 @@ public class ProcessingOrder extends PersistentObject {
 	private Set<Job> jobs = new HashSet<>();
 
 	/**
-	 * The progress monitoring for this order
+	 * The progress monitoring data for this order
 	 */
 	@ElementCollection
 	private Set<MonOrderProgress> monOrderProgress = new HashSet<>();
 	
-	/**
-	 * @return the monOrderProgress
-	 */
-	public Set<MonOrderProgress> getMonOrderProgress() {
-		return monOrderProgress;
-	}
-
-	/**
-	 * @param monOrderProgress the monOrderProgress to set
-	 */
-	public void setMonOrderProgress(Set<MonOrderProgress> monOrderProgress) {
-		this.monOrderProgress = monOrderProgress;
-	}
-
 	/**
 	 * Gets the owning mission
 	 * 
@@ -253,6 +302,24 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	public void setUuid(UUID uuid) {
 		this.uuid = uuid;
+	}
+
+	/**
+	 * Gets the priority value for scheduling
+	 * 
+	 * @return the priority
+	 */
+	public Integer getPriority() {
+		return priority;
+	}
+
+	/**
+	 * Sets the priority value for scheduling
+	 * 
+	 * @param priority the priority to set
+	 */
+	public void setPriority(Integer priority) {
+		this.priority = priority;
 	}
 
 	/**
@@ -400,6 +467,60 @@ public class ProcessingOrder extends PersistentObject {
 	}
 
 	/**
+	 * Gets a message explaining the latest state change
+	 * 
+	 * @return the state message
+	 */
+	public String getStateMessage() {
+		return stateMessage;
+	}
+
+	/**
+	 * Sets a message explaining the latest state change
+	 * 
+	 * @param stateMessage the state message to set
+	 */
+	public void setStateMessage(String stateMessage) {
+		this.stateMessage = stateMessage;
+	}
+
+	/**
+	 * Gets the source application for the order
+	 * 
+	 * @return the order source
+	 */
+	public OrderSource getOrderSource() {
+		return orderSource;
+	}
+
+	/**
+	 * Sets the source application for the order
+	 * 
+	 * @param orderSource the order source to set
+	 */
+	public void setOrderSource(OrderSource orderSource) {
+		this.orderSource = orderSource;
+	}
+
+	/**
+	 * Gets the date and time the order was received
+	 * 
+	 * @return the submission time
+	 */
+	public Instant getSubmissionTime() {
+		return submissionTime;
+	}
+
+	/**
+	 * Sets the date and time the order was received
+	 * 
+	 * @param submissionTime the submission time to set
+	 */
+	public void setSubmissionTime(Instant submissionTime) {
+		this.submissionTime = submissionTime;
+	}
+
+	/**
 	 * Gets the scheduled execution time (if any)
 	 * 
 	 * @return the executionTime (may be null)
@@ -415,6 +536,60 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	public void setExecutionTime(Instant executionTime) {
 		this.executionTime = executionTime;
+	}
+
+	/**
+	 * Gets the date and time the order was released for processing
+	 * 
+	 * @return the releaseTime
+	 */
+	public Instant getReleaseTime() {
+		return releaseTime;
+	}
+
+	/**
+	 * Sets the date and time the order was released for processing
+	 * 
+	 * @param releaseTime the releaseTime to set
+	 */
+	public void setReleaseTime(Instant releaseTime) {
+		this.releaseTime = releaseTime;
+	}
+
+	/**
+	 * Gets the date and time the order is expected to be completed
+	 * 
+	 * @return the estimated completion time
+	 */
+	public Instant getEstimatedCompletionTime() {
+		return estimatedCompletionTime;
+	}
+
+	/**
+	 * Sets the date and time the order is expected to be completed
+	 * 
+	 * @param estimatedCompletionTime the estimated completion time to set
+	 */
+	public void setEstimatedCompletionTime(Instant estimatedCompletionTime) {
+		this.estimatedCompletionTime = estimatedCompletionTime;
+	}
+
+	/**
+	 * Gets the date and time the order was actually completed
+	 * 
+	 * @return the actualCompletionTime
+	 */
+	public Instant getActualCompletionTime() {
+		return actualCompletionTime;
+	}
+
+	/**
+	 * Sets the date and time the order was actually completed
+	 * 
+	 * @param actualCompletionTime the actualCompletionTime to set
+	 */
+	public void setActualCompletionTime(Instant actualCompletionTime) {
+		this.actualCompletionTime = actualCompletionTime;
 	}
 
 	/**
@@ -552,6 +727,20 @@ public class ProcessingOrder extends PersistentObject {
 	}
 
 	/**
+	 * @return the inputProductReference
+	 */
+	public InputProductReference getInputProductReference() {
+		return inputProductReference;
+	}
+
+	/**
+	 * @param inputProductReference the inputProductReference to set
+	 */
+	public void setInputProductReference(InputProductReference inputProductReference) {
+		this.inputProductReference = inputProductReference;
+	}
+
+	/**
 	 * Gets the input filters
 	 * 
 	 * @return the input filters
@@ -567,6 +756,24 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	public void setInputFilters(Map<ProductClass, InputFilter> inputFilters) {
 		this.inputFilters = inputFilters;
+	}
+
+	/**
+	 * Gets the dynamic processing parameters to be set for the Job Orders in this order
+	 * 
+	 * @return the dynamicProcessingParameters
+	 */
+	public Map<String, Parameter> getDynamicProcessingParameters() {
+		return dynamicProcessingParameters;
+	}
+
+	/**
+	 * Sets the dynamic processing parameters to be set for the Job Orders in this order
+	 * 
+	 * @param dynamicProcessingParameters the dynamicProcessingParameters to set
+	 */
+	public void setDynamicProcessingParameters(Map<String, Parameter> dynamicProcessingParameters) {
+		this.dynamicProcessingParameters = dynamicProcessingParameters;
 	}
 
 	/**
@@ -613,7 +820,7 @@ public class ProcessingOrder extends PersistentObject {
 	/**
 	 * Sets the output parameters
 	 * 
-	 * @param outputParameters the outputParameters to set
+	 * @param outputParameters the output parameters to set
 	 */
 	public void setOutputParameters(Map<String, Parameter> outputParameters) {
 		this.outputParameters = outputParameters;
@@ -710,6 +917,20 @@ public class ProcessingOrder extends PersistentObject {
 	}
 
 	/**
+	 * @return the notificationEndpoint
+	 */
+	public NotificationEndpoint getNotificationEndpoint() {
+		return notificationEndpoint;
+	}
+
+	/**
+	 * @param notificationEndpoint the notificationEndpoint to set
+	 */
+	public void setNotificationEndpoint(NotificationEndpoint notificationEndpoint) {
+		this.notificationEndpoint = notificationEndpoint;
+	}
+
+	/**
 	 * Gets the retention period for products generated by this processing order
 	 * 
 	 * @return the product retention period
@@ -752,6 +973,20 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	public void setHasFailedJobSteps(Boolean hasFailedJobSteps) {
 		this.hasFailedJobSteps = hasFailedJobSteps;
+	}
+
+	/** Get the workflow
+	 * @return the workflow
+	 */
+	public Workflow getWorkflow() {
+		return workflow;
+	}
+
+	/** Set the workflow
+	 * @param workflow the workflow to set
+	 */
+	public void setWorkflow(Workflow workflow) {
+		this.workflow = workflow;
 	}
 
 	/**
@@ -808,6 +1043,24 @@ public class ProcessingOrder extends PersistentObject {
 		this.jobs = jobs;
 	}
 
+	/**
+	 * Gets the order progress monitoring data
+	 * 
+	 * @return the order progress monitoring data
+	 */
+	public Set<MonOrderProgress> getMonOrderProgress() {
+		return monOrderProgress;
+	}
+
+	/**
+	 * Sets the order progress monitoring data
+	 * 
+	 * @param monOrderProgress the order progress monitoring data to set
+	 */
+	public void setMonOrderProgress(Set<MonOrderProgress> monOrderProgress) {
+		this.monOrderProgress = monOrderProgress;
+	}
+
 	@Override
 	public int hashCode() {
 		return Objects.hash(identifier); // same identifier in different missions unlikely
@@ -832,12 +1085,17 @@ public class ProcessingOrder extends PersistentObject {
 	@Override
 	public String toString() {
 		return "ProcessingOrder [mission=" + (null == mission ? "null" : mission.getCode()) + ", identifier=" + identifier 
-				+ ", orderState=" + orderState + ", executionTime=" + executionTime + ", requestedProductClasses=" + requestedProductClasses
+				+ ", orderState=" + orderState + ", stateMessage=" + stateMessage + ", orderSource=" + orderSource
+				+ ", submissionTime=" + submissionTime + ", executionTime=" + executionTime + ", releaseTime=" + releaseTime
+				+ ", requestedProductClasses=" + requestedProductClasses
 				+ ", startTime=" + startTime + ", stopTime=" + stopTime + ", requestedOrbits=" + requestedOrbits
 				+ ", slicingType=" + slicingType + ", sliceDuration=" + sliceDuration + ", sliceOverlap=" + sliceOverlap
 				+ ", inputFilters=" + inputFilters + ", outputParameters=" + outputParameters
-				+ ", classOutputParameters=" + classOutputParameters + ", processingMode=" + processingMode
-				+ ", productionType=" + productionType + ", hasFailedJobSteps=" + hasFailedJobSteps + "]";
+				+ ", classOutputParameters=" + classOutputParameters 
+				+ ", outputFileClass=" + outputFileClass + ", processingMode=" + processingMode
+				+ ", productionType=" + productionType + ", notificationEndpoint=" + notificationEndpoint
+				+ ", productRetentionPeriod=" + productRetentionPeriod
+				+ ", hasFailedJobSteps=" + hasFailedJobSteps + "]";
 	}
 
 }

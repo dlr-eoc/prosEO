@@ -1,0 +1,171 @@
+#%RAML 1.0
+title: prosEO AIP Client REST Services API
+version: v0.1
+protocols: [ HTTPS ] 
+baseUri: /proseo/ingestor/{version}
+baseUriParameters:
+  port:
+    description: The port the application is running on
+mediaType: application/json
+
+securitySchemes:
+  basicAuth:
+    description: Each request must contain the headers necessary for basic authentication
+    type: Basic Authentication
+    describedBy:
+      headers:
+        Authorization:
+          description: Used to send the Base64-encoded "username:password" credentials
+          type: string
+      responses:
+        401:
+          description: |
+            Unauthorized. Either the provided username and password
+            combination is invalid, or the user is not allowed to access
+            the content provided by the requested URL.
+
+types:
+  RestConfiguredProcessor: !include ../../../../../../model/src/main/resources/raml/types/configuredprocessor.raml
+  RestDownloadHistory: !include ../../../../../../model/src/main/resources/raml/types/downloadhistory.raml
+  RestProduct: !include ../../../../../../model/src/main/resources/raml/types/product.raml
+  RestProductFile: !include ../../../../../../model/src/main/resources/raml/types/productfile.raml
+  RestParameter: !include ../../../../../../model/src/main/resources/raml/types/parameter.raml
+
+resourceTypes:
+  standard:
+    get?:
+      responses:          
+        400:
+          description: |
+            The request sent to the server contains data which is not as expected e.g. invalid facility name, product type or sensing time
+          headers:
+            Warning: !include types/error.raml
+        404:
+          description: |
+            The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
+    put?:
+      responses:
+        400:
+          description: |
+            The request contained invalid data
+          headers:
+            Waring: !include types/error.raml      
+        404:
+          description: |
+            The requested resource on which the modification is being attempted was not found              
+          headers:
+            Warning: !include types/error.raml
+    patch?:
+      responses:          
+        400:
+          description: |
+            The request contained invalid data
+          headers:
+            Waring: !include types/error.raml      
+        404:
+          description: |
+            The requested resource on which the modification is being attempted was not found              
+          headers:
+            Warning: !include types/error.raml
+        409:
+          description: |
+            The resource was modified since retrieval by the client
+          headers:
+            Waring: !include types/error.raml      
+    delete?:
+      responses:          
+        404:
+          description: | 
+            The requested resource to delete was not found 
+          headers:
+            Warning: !include types/error.raml
+              
+/download:
+  /byname:
+    type: standard
+    description: Retrieve a single product from a remote Long-term Archive by file name
+    get:
+      description: |
+        Provide the product with the given file name at the given processing facility. If it already is available there, do
+        nothing and just return the product metadata. If it is not available locally, query all configured LTAs for a product
+        with the given file name, the first response is returned to the caller, then download from the LTA and ingested
+        at the given processing facility.
+      displayName: downloadByName
+      queryParameters:
+        filename:
+          type: string
+          description: The (unique) product file name to search for
+        facility:
+          type: string
+          description: The processing facility to use
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestProduct
+              example: !include ../../../../../../model/src/main/resources/raml/examples/product.json
+  /bytime:
+    type: standard
+    description: Retrieve a single product from a remote Long-term Archive by product type and time interval
+    get:
+      description: |
+        Provide the product with the given product type and the exact sensing start and stop times at the given processing facility.
+        If it already is available there, do nothing and just return the product metadata.
+        If it is not available locally, query all configured LTAs for a product with the given search criteria.
+        The first response is evaluated: If multiple products fulfilling the criteria are found in the LTA, the product with the
+        most recent generation time will be used. In the (unlikely) case of several products having the same generation time,
+        the product with the greatest file name (alphanumeric string comparison) will be used.
+        The product metadata is returned to the caller, then the product is downloaded from the LTA and ingested
+        at the given processing facility.
+      displayName: downloadBySensingTime
+      queryParameters:
+        productType:
+          type: string
+          description: The product type
+        startTime:
+          type: string
+          description: The requested sensing (or validity) start time
+        stopTime:
+          type: string
+          description: The requested sensing (or validity) stop time
+        facility?:
+          type: string
+          description: The processing facility to use
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestProduct
+              example: !include ../../../../../../model/src/main/resources/raml/examples/product.json
+  /allbytime:
+    type: standard
+    description: Retrieve products from a remote Long-term Archive by product type and time interval
+    get:
+      description: |
+        Provide all products with the given product type at the given processing facility, whose sensing times intersect with 
+        the given sensing time interval.
+        Query all configured LTAs for products with the given search criteria, the first response is evaluated.
+        The product metadata is returned to the caller, then the products are downloaded from the LTA and ingested
+        at the given processing facility, unless they are already available there.
+      displayName: downloadAllBySensingTime
+      queryParameters:
+        productType:
+          type: string
+          description: The product type
+        startTime:
+          type: string
+          description: The start of the sensing time interval
+        stopTime:
+          type: string
+          description: The end of the sensing time interval
+        facility?:
+          type: string
+          description: The processing facility to use
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestProduct[]
+              example: !include ../../../../../../model/src/main/resources/raml/examples/product-list.json

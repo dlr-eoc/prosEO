@@ -1,0 +1,61 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.H2Dialect
+        hibernate.ddl-auto: create-drop
+        open-in-view: false
+        properties.hibernate.jdbc.time_zone: UTC
+        show-sql: false
+    datasource:
+        url: "jdbc:h2:mem:jpa_jbd"
+        driverClassName: org.h2.Driver
+        username: any       
+        password: any
+        hikari.transaction-isolation: TRANSACTION_SERIALIZABLE
+logging:
+    file: /proseo/log/proseo-prodplanner.log
+    level:
+        root: INFO
+        okhttp3: WARN
+        de.dlr.proseo: TRACE
+        #io.kubernetes.client.openapi: INFO
+        org.hibernate.engine.jdbc.env.internal: WARN
+proseo:
+    wrapper:
+        # User and password for wrapper callbacks
+        user: wrapper
+        password: <wrapper_pwd>
+        # (Brain) host alias to forward to the pods for use in the Planner and Ingestor URLs
+        # hostalias: "ip:host1,host2"
+    productionPlanner:
+        # Callback URL for wrapper
+        url: http://192.168.20.155:8080/proseo/planner/v0.1
+        # maximum cycles to check finish of k8s proseo job 
+        maxcycles: 50
+        # wait time between cycle in milliseconds  
+        cyclewaittime: 1000
+        # wait time after k8s job creation in milliseconds  
+        jobcreatedwaittime: 2000
+        # wait time between test for new ready jobs in milliseconds (fallback loop, 1 h may be sufficient)
+        # run once if <= 0 (at startup)
+        dispatcherwaittime: 3600000
+        # kubernetes configuration file, used to connect master
+        kubeconfig: empty
+        # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
+        filecheckwaittime: 1000
+        filecheckmaxcycles: 50
+        # check for job steps to run after one has finished
+        checkForFurtherJobStepsToRun: true
+        # collect the planning and releasing of jobs and job steps into one transaction with planningbatchsize job steps 
+        planningbatchsize: 50
+    ingestor:
+        # Callback URL for wrapper
+        url: http://192.168.20.155:8081/proseo/ingestor/v0.1
+    notification:
+        # URL for notification service
+        url: http://proseo-notification/proseo/notification/v0.1
+    posix:
+        workerMountPoint: /proseo/data
+        
+    # Timeout for outgoing HTTP connections
+    http.timeout: 10000
+        

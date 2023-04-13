@@ -1,0 +1,19 @@
+#%RAML 1.0 DataType
+#  CscOutputProduct:
+    type: object
+    properties:
+      ProductId:
+        type: string
+        description: Universally unique product identifier
+        pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$
+      ProductName:
+        type: string
+        description: Data file name
+      ProductionOrderId:
+        type: string
+        description: The identifier of the ProductionOrder being notified
+        pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$
+      NotifictionDate:
+        type: string
+        description: Date and time at which the notification was generated
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{3}Z$

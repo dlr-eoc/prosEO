@@ -11,7 +11,6 @@ import static org.mockito.Mockito.when;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -94,9 +93,6 @@ public class ProductManagerTest {
 	private static final String STORAGE_MGR_URL = "https://localhost:8080/proseo/storage-mgr/v1";
 	private static final long STORAGE_MGR_TEST_TO = 70L;
 	private static final long STORAGE_MGR_TEST_FROM = 20L;
-	private static final byte[] STORAGE_MGR_SECRET = Arrays.copyOf(
-			("MyVeryLongSecretMustBeAtLeast32Bytes" + "                ").getBytes(),
-			32);
 	
 	/** Ingestor configuration */
 	@Autowired

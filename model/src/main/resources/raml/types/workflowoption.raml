@@ -1,0 +1,31 @@
+#%RAML 1.0 DataType
+#  RestWorkflowOption:
+    type: object
+    properties:
+      id?:
+        type: integer
+        format: long
+        default: 0
+        description: The persistent id of this object
+      version?:
+        type: integer
+        default: 1
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      missionCode:
+        type: string
+        description: The mission code (e. g. S5P)
+      workflowName:
+        type: string
+        description: Unique short name of the owning workflow
+      name:
+        type: string
+        description: Short name of the option
+      optionType:
+        type: string
+        description: Data type of the option, one of { string, number, datenumber }
+      defaultValue?:
+        type: string
+        description: The default value of the option (from the value range, if applicable)
+      valueRange:
+        type: string[]
+        description: List of all possible values of the option

@@ -5,6 +5,7 @@
     "identifier": "RPRO Orbits 4567-5678",
     "uuid": "3fcab4f3-457a-4424-9287-269286e5c03c",
     "orderState": "INITIAL",
+    "orderSource": "CLI",
     "startTime": "2018-05-17T00:00:00.123456",
     "stopTime": "2019-07-31T12:00:00",
     "slicingType": "ORBIT",

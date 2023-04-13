@@ -25,8 +25,8 @@ public class StorageMgrMessageTest {
 	 */
 	@Test
 	public final void testGetCode() {
-		int result = StorageMgrMessage.FILE_NOT_FOUND.getCode();
-		int expected = 5504;
+		int result = StorageMgrMessage.TOKEN_MISSING.getCode();
+		int expected = 5531;
 		assertEquals(expected, result);
 		
 		Set<Integer> codes = new HashSet<>();
@@ -43,7 +43,7 @@ public class StorageMgrMessageTest {
 	 */
 	@Test
 	public final void testGetLevel() {
-		Level result = StorageMgrMessage.FILE_NOT_FOUND.getLevel();
+		Level result = StorageMgrMessage.TOKEN_MISSING.getLevel();
 		Level expected = Level.ERROR;
 		assertEquals(expected, result);
 	}
@@ -54,8 +54,8 @@ public class StorageMgrMessageTest {
 	 */
 	@Test
 	public final void testGetMessage() {
-		String result = StorageMgrMessage.FILE_NOT_FOUND.getMessage();
-		String expected = "File not found: {0}";
+		String result = StorageMgrMessage.TOKEN_MISSING.getMessage();
+		String expected = "Authentication token missing";
 		assertEquals(expected, result);
 	}
 
@@ -65,7 +65,7 @@ public class StorageMgrMessageTest {
 	 */
 	@Test
 	public final void testGetDescription() {
-		String result = StorageMgrMessage.FILE_NOT_FOUND.getDescription();
+		String result = StorageMgrMessage.TOKEN_MISSING.getDescription();
 		String expected = "";
 		assertEquals(expected, result);
 	}

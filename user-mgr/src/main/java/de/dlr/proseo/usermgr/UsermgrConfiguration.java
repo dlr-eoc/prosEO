@@ -32,6 +32,17 @@ public class UsermgrConfiguration {
 	/** The password expiration period in days */
 	@Value("${proseo.password.expirationtime}")
 	private String passwordExpirationTime;
+	
+	/** The maximum number of results to be retrieved by REST requests */
+	@Value("${spring.maxResults}")
+	public Integer maxResults;
+
+	/**
+	 * @return the maximum number of results to be retrieved by REST requests
+	 */
+	public Integer getMaxResults() {
+		return maxResults;
+	}
 
 	/**
 	 * Gets the name of the default user

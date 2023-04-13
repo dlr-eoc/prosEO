@@ -17,6 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
@@ -45,17 +46,22 @@ public class GroupControllerImpl implements GroupController {
 	 * 
 	 * @param mission the mission code and optionally by group name
 	 * @param groupName the group name (optional)
+	 * @param recordFrom  first record of filtered and ordered result to return
+	 * @param recordTo    last record of filtered and ordered result to return
 	 * @return HTTP status "OK" and a list of Json objects representing groups authorized for the given mission or
+	 *         HTTP status "TOO MANY REQUESTS" if the result list exceeds a configured maximum
 	 *         HTTP status "NOT_FOUND" and an error message, if no groups matching the search criteria were found
 	 */
 	@Override
-	public ResponseEntity<List<RestGroup>> getGroups(String mission, String groupName) {
+	public ResponseEntity<List<RestGroup>> getGroups(String mission, String groupName, Integer recordFrom, Integer recordTo) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getGroups({}, {})", mission, groupName);
 		
 		try {
-			return new ResponseEntity<>(groupManager.getGroups(mission, groupName), HttpStatus.OK);
+			return new ResponseEntity<>(groupManager.getGroups(mission, groupName, recordFrom, recordTo), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (HttpClientErrorException.TooManyRequests e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.TOO_MANY_REQUESTS);
 		}
 	}
 
@@ -218,4 +224,23 @@ public class GroupControllerImpl implements GroupController {
 		}
 	}
 
+	/**
+	 * Count the groups matching the specified mission.
+	 * 
+	 * @param missionCode          the mission code
+	 * @return the number of matching groups as a String (may be zero) or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data
+	 *         access was attempted
+	 */
+	@Override
+	public ResponseEntity<String> countGroups(String missionCode) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> countGroups({})", missionCode);
+
+		try {
+			return new ResponseEntity<>(groupManager.countGroups(missionCode), HttpStatus.OK);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		}
+	}	
 }

@@ -33,12 +33,15 @@ import de.dlr.proseo.model.dao.OrderRepository;
 import de.dlr.proseo.model.dao.ClassOutputParameterRepository;
 import de.dlr.proseo.model.dao.ProcessorClassRepository;
 import de.dlr.proseo.model.dao.ProcessorRepository;
+import de.dlr.proseo.model.dao.ProductArchiveRepository;
 import de.dlr.proseo.model.dao.ProductClassRepository;
 import de.dlr.proseo.model.dao.ProductFileRepository;
 import de.dlr.proseo.model.dao.ProductQueryRepository;
 import de.dlr.proseo.model.dao.ProductRepository;
 import de.dlr.proseo.model.dao.SpacecraftRepository;
 import de.dlr.proseo.model.dao.TaskRepository;
+import de.dlr.proseo.model.dao.WorkflowOptionRepository;
+import de.dlr.proseo.model.dao.WorkflowRepository;
 
 /**
  * This class autowires all available repositories and makes them accessible throughout prosEO by static methods.
@@ -90,6 +93,10 @@ public class RepositoryService {
 	/** The repository for the Processor class */
 	@Autowired
     private ProcessorRepository processorRepository;
+	
+	/** The repository for the ProductArchive class */
+	@Autowired
+    private ProductArchiveRepository productArchiveRepository;
 	
 	/** The repository for the ProductClass class */
 	@Autowired
@@ -175,7 +182,14 @@ public class RepositoryService {
 	@Autowired
     private MonExtServiceStateOperationMonthRepository monExtServiceStateOperationMonthRepository;
 	
-
+	/** The repository for the Workflow class */
+	@Autowired
+    private WorkflowRepository workflowRepository;
+	
+	/** The repository for the WorkflowOption class */
+	@Autowired
+    private WorkflowOptionRepository workflowOptionRepository;
+	
 	/**
 	 * Singleton constructor
 	 */
@@ -272,6 +286,15 @@ public class RepositoryService {
 	 */
 	public static ProcessorRepository getProcessorRepository() {
 		return theRepositoryService.processorRepository;
+	}
+
+	/**
+	 * Gets the repository for the ProductArchive class
+	 * 
+	 * @return the productArchiveRepository
+	 */
+	public static ProductArchiveRepository getProductArchiveRepository() {
+		return theRepositoryService.productArchiveRepository;
 	}
 
 	/**
@@ -448,4 +471,19 @@ public class RepositoryService {
 	public static MonExtServiceStateOperationMonthRepository getMonExtServiceStateOperationMonthRepository() {
 		return theRepositoryService.monExtServiceStateOperationMonthRepository;
 	}
+
+	/**
+	 * @return the workflowRepository
+	 */
+	public static WorkflowRepository getWorkflowRepository() {
+		return theRepositoryService.workflowRepository;
+	}
+
+	/**
+	 * @return the workflowOptionRepository
+	 */
+	public static WorkflowOptionRepository getWorkflowOptionRepository() {
+		return theRepositoryService.workflowOptionRepository;
+	}
+
 }

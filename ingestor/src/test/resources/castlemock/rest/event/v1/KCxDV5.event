@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<restEvent>
+    <endDate>2020-09-01T08:19:00.947Z</endDate>
+    <id>KCxDV5</id>
+    <resourceName>delete</resourceName>
+    <startDate>2020-09-01T08:19:00.947Z</startDate>
+    <applicationId>VYrwNF</applicationId>
+    <methodId>xOyrAw</methodId>
+    <projectId>DB3vth</projectId>
+    <request>
+        <body></body>
+        <httpHeaders>
+            <httpHeader>
+                <name>host</name>
+                <value>localhost:8090</value>
+            </httpHeader>
+            <httpHeader>
+                <name>user-agent</name>
+                <value>Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:79.0) Gecko/20100101 Firefox/79.0</value>
+            </httpHeader>
+            <httpHeader>
+                <name>accept</name>
+                <value>*/*</value>
+            </httpHeader>
+            <httpHeader>
+                <name>accept-language</name>
+                <value>de,cy;q=0.9,en;q=0.7,de-DE;q=0.6,en-GB;q=0.4,fr;q=0.3,en-US;q=0.1</value>
+            </httpHeader>
+            <httpHeader>
+                <name>accept-encoding</name>
+                <value>gzip, deflate</value>
+            </httpHeader>
+            <httpHeader>
+                <name>origin</name>
+                <value>moz-extension://b37c86ce-71f1-4543-9cb3-87b2052ff6ae</value>
+            </httpHeader>
+            <httpHeader>
+                <name>connection</name>
+                <value>keep-alive</value>
+            </httpHeader>
+            <httpHeader>
+                <name>cookie</name>
+                <value>JSESSIONID=D69CC6E430490E258CE0C9720E4D4AA2; JSESSIONID=A989D40C73D93AECB7663BE79D2982B9; org.springframework.web.servlet.i18n.CookieLocaleResolver.LOCALE=en</value>
+            </httpHeader>
+        </httpHeaders>
+        <httpMethod>DELETE</httpMethod>
+        <httpParameters/>
+        <uri>/storage-mgr/products</uri>
+    </request>
+    <resourceId>NUAqCO</resourceId>
+    <response>
+        <body></body>
+        <contentEncodings/>
+        <httpHeaders/>
+        <httpStatusCode>204</httpStatusCode>
+        <mockResponseName>No content</mockResponseName>
+    </response>
+</restEvent>

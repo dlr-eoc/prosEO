@@ -1,0 +1,70 @@
+#%RAML 1.0 DataType
+#  RestWorkflow:
+    type: object
+    properties:
+      id?:
+        type: integer
+        format: long
+        default: 0
+        description: The persistent id of this object
+      version?:
+        type: integer
+        default: 1
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      missionCode:
+        type: string
+        description: The mission code (e. g. S5P)
+      name:
+        type: string
+        description: Short name of the workflow
+      uuid?:
+        type: string
+        description: Universally unique workflow identifier
+        pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$
+      description?:
+        type: string
+        description: Textual description of the workflow, including details of the processor version and configuration applicable
+      workflowVersion:
+        type: string
+        description: Version number applicable to the workflow
+      enabled:
+        type: boolean
+        description: Flag indicating whether this workflow is available for use (disabled workflows are not visible on the ODIP)
+      inputProductClass:
+        type: string
+        description: The (primary) ProductClass used as input for the workflow
+      outputProductClass:
+        type: string
+        description: The ProductClass of the (main) output product
+      configuredProcessor:
+        type: string
+        description: The identifier of the configured processor implementing this workflow
+      outputFileClass:
+        type: string
+        description: The file class for the generated output products
+      processingMode:
+        type: string
+        description: The processing mode to run the processor(s) in
+      slicingType:
+        type: string
+        default: NONE
+        description: One of { "ORBIT", "CALENDAR_DAY", "CALENDAR_MONTH", "CALENDAR_YEAR", "TIME_SLICE", "NONE" }
+      sliceDuration?:
+        type: integer
+        description: Duration of a slice in seconds (only for slicingType TIME_SLICE)
+      sliceOverlap?:
+        type: integer
+        default: 0
+        description: Overlap between adjacent slices in seconds (applicable for all slicingTypes except NONE, default 0)
+      inputFilters?:
+        type: RestInputFilter[]
+        description: Filter conditions to apply to input products
+      workflowOptions:
+        type: RestWorkflowOption[]
+        description: Options, which can be set as "Dynamic Processing Parameters" in Job Orders generated from this workflow
+      classOutputParameters?:
+        type: RestClassOutputParameter[]
+        description: Set of parameters to apply to a generated product of the referenced product class replacing the general output parameters
+      outputParameters:
+        type: RestParameter[]
+        description: Parameters to set for the generated products (may be empty)

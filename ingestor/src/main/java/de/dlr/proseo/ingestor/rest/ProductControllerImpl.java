@@ -17,6 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 
 import de.dlr.proseo.ingestor.IngestorSecurityConfig;
 import de.dlr.proseo.ingestor.PlannerSemaphoreClient;
@@ -92,11 +93,12 @@ public class ProductControllerImpl implements ProductController {
 	 * @return HTTP status "OK" and a list of products or
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "NOT_FOUND" and an error message, if no products matching the search criteria were found
+	 *         HTTP status "TOO MANY REQUESTS" if the result list exceeds a configured maximum
 	 */
 	@Override
 	public ResponseEntity<List<RestProduct>> getProducts(String mission, String[] productClass, String mode, String fileClass, String quality, 
 			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, 
-			Long recordFrom, Long recordTo, Long jobStepId, String[] orderBy, HttpHeaders httpHeaders) {
+			Integer recordFrom, Integer recordTo, Long jobStepId, String[] orderBy, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, productClass,
 				mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo, recordFrom, recordTo, orderBy);
 		
@@ -108,6 +110,8 @@ public class ProductControllerImpl implements ProductController {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		} catch (HttpClientErrorException.TooManyRequests e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.TOO_MANY_REQUESTS);
 		}
 	}
 

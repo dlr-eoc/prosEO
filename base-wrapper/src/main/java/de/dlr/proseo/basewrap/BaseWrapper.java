@@ -312,7 +312,7 @@ public class BaseWrapper {
 			throw new WrapperException();
 		}
 		
-		// Retrieve product metadata from Ingestor
+		// Update product metadata using Ingestor
 		String ingestorRestUrl = "/products/" + output.getProductID();
 
 		String jsonRequest = null;
