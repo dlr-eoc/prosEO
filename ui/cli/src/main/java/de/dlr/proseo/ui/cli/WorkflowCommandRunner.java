@@ -52,7 +52,7 @@ public class WorkflowCommandRunner {
 	private static final String OPTION_FILE = "file";
 
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
-	private static final String PROMPT_WORKFLOW_NAME = "Workflow class name (empty field cancels): ";
+	private static final String PROMPT_WORKFLOW_NAME = "Workflow name (empty field cancels): ";
 	private static final String PROMPT_WORKFLOW_VERSION = "Workflow version (empty field cancels): ";
 	private static final String PROMPT_WORKFLOW_OUTPUT = "Workflow output product class (empty field cancels): ";
 	private static final String PROMPT_WORKFLOW_CONFIGURED_PROCESSOR = "Workflow configured processor (empty field cancels): ";
@@ -61,7 +61,11 @@ public class WorkflowCommandRunner {
 	private static final String PROMPT_WORKFLOW_OPTION_TYPE = "WorkflowOption type (STRING, NUMBER, or DATENUMBER) for %s (empty field cancels): ";
 	private static final String PROMPT_WORKFLOW_OPTION_DEFAULT = "WorkflowOption default value for %s (empty field means no default): ";
 	private static final String PROMPT_WORKFLOW_OPTION_RANGE = "WorkflowOption value range for %s (comma-separated list): ";
-
+	private static final String PROMPT_ENABLED = "Enabled status (either TRUE or FALSE; empty field cancels): ";
+	private static final String PROMPT_OUTPUT_FILE_CLASS = "Output file class (empty field cancels): ";
+	private static final String PROMPT_PROCESSING_MODE = "Processing mode (empty field cancels): ";
+	private static final String PROMPT_SLICING_TYPE = "Slicing type (ORBIT, CALENDAR_DAY, CALENDAR_MONTH, CALENDAR_YEAR, TIME_SLICE, or NONE; empty field cancels): ";
+		
 	private static final String URI_PATH_WORKFLOWS = "/workflows";
 //	private static final String URI_PATH_WORKFLOW_OPTIONS = "/workflowoptions";
 
@@ -163,6 +167,42 @@ public class WorkflowCommandRunner {
 				return;
 			}
 			restWorkflow.setWorkflowVersion(response);
+		}				
+		if (null == restWorkflow.getEnabled()) {
+			System.out.print(PROMPT_ENABLED);
+			String response = System.console().readLine();
+			if (response.isBlank() || !(response.equalsIgnoreCase("true")) || response.equalsIgnoreCase("false")) {
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
+				return;
+			}
+			restWorkflow.setEnabled(Boolean.valueOf(response));
+		}
+		if (null == restWorkflow.getOutputFileClass() || 0 == restWorkflow.getOutputFileClass().length()) {
+			System.out.print(PROMPT_OUTPUT_FILE_CLASS);
+			String response = System.console().readLine();
+			if (response.isBlank()) {
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
+				return;
+			}
+			restWorkflow.setOutputFileClass(response);
+		}
+		if (null == restWorkflow.getProcessingMode() || 0 == restWorkflow.getProcessingMode().length()) {
+			System.out.print(PROMPT_PROCESSING_MODE);
+			String response = System.console().readLine();
+			if (response.isBlank()) {
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
+				return;
+			}
+			restWorkflow.setProcessingMode(response);
+		}
+		if (null == restWorkflow.getSlicingType() || 0 == restWorkflow.getSlicingType().length()) {
+			System.out.print(PROMPT_SLICING_TYPE);
+			String response = System.console().readLine();
+			if (response.isBlank()) {
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
+				return;
+			}
+			restWorkflow.setSlicingType(response);
 		}
 		if (null == restWorkflow.getConfiguredProcessor() || 0 == restWorkflow.getConfiguredProcessor().length()) {
 			System.out.print(PROMPT_WORKFLOW_CONFIGURED_PROCESSOR);
@@ -478,11 +518,17 @@ public class WorkflowCommandRunner {
 
 		/* Update attributes of database workflow */
 		// No modification of ID, version, mission code, workflow name or uuid
+		if (null != updatedWorkflow.getDescription()) {
+			restWorkflow.setDescription(updatedWorkflow.getDescription());
+		}
 		if (null != updatedWorkflow.getWorkflowVersion()) {
 			restWorkflow.setWorkflowVersion(updatedWorkflow.getWorkflowVersion());
 		}
 		if (null != updatedWorkflow.getConfiguredProcessor()) {
 			restWorkflow.setConfiguredProcessor(updatedWorkflow.getConfiguredProcessor());
+		}
+		if (null != updatedWorkflow.getEnabled()) {
+			restWorkflow.setEnabled(updatedWorkflow.getEnabled());
 		}
 		if (null != updatedWorkflow.getInputProductClass()) {
 			restWorkflow.setInputProductClass(updatedWorkflow.getInputProductClass());
@@ -490,6 +536,31 @@ public class WorkflowCommandRunner {
 		if (null != updatedWorkflow.getOutputProductClass()) {
 			restWorkflow.setOutputProductClass(updatedWorkflow.getOutputProductClass());
 		}
+		if (null != updatedWorkflow.getOutputFileClass()) {
+			restWorkflow.setOutputFileClass(updatedWorkflow.getOutputFileClass());
+		}
+		if (null != updatedWorkflow.getProcessingMode()) {
+			restWorkflow.setProcessingMode(updatedWorkflow.getProcessingMode());
+		}
+		if (null != updatedWorkflow.getSlicingType()) {
+			restWorkflow.setSlicingType(updatedWorkflow.getSlicingType());
+		}
+		if (null != updatedWorkflow.getSliceDuration()) {
+			restWorkflow.setSliceDuration(updatedWorkflow.getSliceDuration());
+		}
+		if (null != updatedWorkflow.getSliceOverlap()) {
+			restWorkflow.setSliceOverlap(updatedWorkflow.getSliceOverlap());
+		}
+		if (null != updatedWorkflow.getInputFilters()) {
+			restWorkflow.setInputFilters(updatedWorkflow.getInputFilters());
+		}
+		if (null != updatedWorkflow.getClassOutputParameters()) {
+			restWorkflow.setClassOutputParameters(updatedWorkflow.getClassOutputParameters());
+		}
+		if (null != updatedWorkflow.getOutputParameters()) {
+			restWorkflow.setOutputParameters(updatedWorkflow.getOutputParameters());
+		}
+
 		if (isDeleteAttributes
 				|| (null != updatedWorkflow.getWorkflowOptions() && !updatedWorkflow.getWorkflowOptions().isEmpty())) {
 			restWorkflow.getWorkflowOptions().clear();
