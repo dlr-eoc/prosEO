@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.procmgr.rest;
 
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
@@ -78,15 +79,15 @@ public class WorkflowMgr {
 
 	/** The processor manager configuration */
 	@Autowired
-	ProcessorManagerConfiguration config; 
-	
+	ProcessorManagerConfiguration config;
+
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(WorkflowMgr.class);
 
 	/**
 	 * Count the workflows matching the specified workflowName, workflowVersion,
 	 * outputProductClass, or configured processor.
-	 * 
+	 *
 	 * @param missionCode         the mission code
 	 * @param workflowName        the workflow name
 	 * @param workflowVersion     the workflow version
@@ -139,10 +140,10 @@ public class WorkflowMgr {
 
 		return result.toString();
 	}
-	
+
 	/**
 	 * Create a new workflow
-	 * 
+	 *
 	 * @param workflow a Json representation of the new workflow
 	 * @return a Json representation of the workflow after creation (with ID and
 	 *         version number)
@@ -181,16 +182,17 @@ public class WorkflowMgr {
 							restWorkflow.getName(), restWorkflow.getWorkflowVersion(), restWorkflow.getUuid()));
 		}
 
-		// Prepare the database order, but make sure ID and version are not copied if present
+		// Prepare the database order, but make sure ID and version are not copied if
+		// present
 		restWorkflow.setId(null);
 		restWorkflow.setVersion(null);
 		if (null != restWorkflow.getWorkflowOptions() && !restWorkflow.getWorkflowOptions().isEmpty()) {
-			for (RestWorkflowOption option : restWorkflow.getWorkflowOptions()) {				
+			for (RestWorkflowOption option : restWorkflow.getWorkflowOptions()) {
 				option.setId(null);
 				option.setVersion(null);
 			}
 		}
-		
+
 		Workflow modelWorkflow = WorkflowUtil.toModelWorkflow(restWorkflow);
 
 		// If no UUID was given, a random one is assigned
@@ -207,9 +209,9 @@ public class WorkflowMgr {
 		// Enabled status is mandatory.
 		if (null == restWorkflow.getEnabled()) {
 			throw new IllegalArgumentException(
-					logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For workflow creation, enabled field")); 
+					logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For workflow creation, enabled field"));
 		}
-		
+
 		// The configured processor is mandatory and must exist in the repository.
 		if (null == restWorkflow.getConfiguredProcessor()) {
 			throw new IllegalArgumentException(
@@ -257,30 +259,40 @@ public class WorkflowMgr {
 						"output product class", restWorkflow.getMissionCode(), restWorkflow.getOutputProductClass()));
 			}
 		}
-		
+
 		// Output file class is mandatory.
 		if (null == restWorkflow.getOutputFileClass()) {
 			throw new IllegalArgumentException(
 					logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For workflow creation, outputFileClass"));
 		}
-		
+
 		// Processing mode is mandatory.
 		if (null == restWorkflow.getProcessingMode()) {
 			throw new IllegalArgumentException(
 					logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For workflow creation, processingMode"));
 		}
-		
-		// Slicing type is mandatory and duration and overlap must be specified accordingly.
+
+		// Quietly replace slice duration and overlap nulls
+		if (null == restWorkflow.getSliceDuration()) {
+			restWorkflow.setSliceDuration(0l);
+		}
+		if (null == restWorkflow.getSliceOverlap()) {
+			restWorkflow.setSliceOverlap(0l);
+		}
+
+		// Slicing type is mandatory and duration and overlap must be specified
+		// accordingly.
 		if (null == restWorkflow.getSlicingType()) {
 			throw new IllegalArgumentException(
 					logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For workflow creation, slicingType"));
 		}
-		
-		if (restWorkflow.getSlicingType().equals(OrderSlicingType.TIME_SLICE.toString()) && restWorkflow.getSliceDuration().equals(Long.valueOf(0l))) {
-			throw new IllegalArgumentException(
-					logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For workflow creation and slicingType TIME_SLICE, slicingDuration"));
+
+		if (restWorkflow.getSlicingType().equals(OrderSlicingType.TIME_SLICE.toString())
+				&& restWorkflow.getSliceDuration().equals(Long.valueOf(0l))) {
+			throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
+					"For workflow creation and slicingType TIME_SLICE, slicingDuration"));
 		}
-		
+
 		// If provided, workflowOptions must have the mandatory fields set.
 		if (!modelWorkflow.getWorkflowOptions().isEmpty()) {
 			for (WorkflowOption option : modelWorkflow.getWorkflowOptions()) {
@@ -301,54 +313,224 @@ public class WorkflowMgr {
 
 		// Check for completeness of non-mandatory attributes
 
-		// If provided, inputFilters must have the mandatory fields set.
-		if (!modelWorkflow.getInputFilters().isEmpty()) {
-			modelWorkflow.getInputFilters().forEach((productClass, filterConditions) -> {
-				if (productClass == null) {
-					throw new IllegalArgumentException(
-							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For inputFilter creation, productClass"));
-				}
-				if (filterConditions.getFilterConditions().isEmpty()) {
-					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
-							"For inputFilter creation, filterConditions"));
-					// TODO possibly check whether filter conditions have mandatory fields set
-				}
-			});
-		}
+		// If provided, class output parameters must have the mandatory fields set.
+		if (null == restWorkflow.getClassOutputParameters()) {
+			// Quietly restore as empty list
+			restWorkflow.setClassOutputParameters(new ArrayList<RestClassOutputParameter>());
+		} else if (!restWorkflow.getClassOutputParameters().isEmpty()) {
+			// Convert RestClassOutputParameters to model ClassOutputParameters
+			for (RestClassOutputParameter restClassOutputParam : restWorkflow.getClassOutputParameters()) {
+				ClassOutputParameter modelClassOutputParam = new ClassOutputParameter();
 
-		// If provided, classOutputParameters must have the mandatory fields set.
-		if (!modelWorkflow.getClassOutputParameters().isEmpty()) {
-			modelWorkflow.getClassOutputParameters().forEach((productClass, classOutputParameters) -> {
-				if (productClass == null) {
+				// Check and convert product class
+				if (null == restClassOutputParam.getProductClass()) {
 					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
 							"For classOutputParameter creation, productClass"));
 				}
-				if (classOutputParameters.getOutputParameters().isEmpty()) {
+				ProductClass productClass;
+
+				productClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
+						restWorkflow.getMissionCode(), restClassOutputParam.getProductClass());
+				if (null == productClass) {
+					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_MISSSPECIFIED,
+							"product class (class output parameters)", restWorkflow.getMissionCode(),
+							restClassOutputParam.getProductClass()));
+				}
+
+				// Check and convert output parameters
+				if (null == restClassOutputParam.getOutputParameters()
+						|| restClassOutputParam.getOutputParameters().isEmpty()) {
 					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
-							"For classOutputParameter creation, classOutputParameters"));
-					// TODO possibly check whether output parameters have mandatory fields set
+							"For classOutputParameter creation, output parameters"));
+				}
+				for (RestParameter restParam : restClassOutputParam.getOutputParameters()) {
+
+					if (null == restParam.getKey()) {
+						throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
+								"For classOutputParameter creation, output parameter key"));
+					}
+
+					Parameter modelParam = new Parameter();
+					restParam.setParameterType(restParam.getParameterType().toUpperCase());
+					modelParam.setParameterType(ParameterType.valueOf(restParam.getParameterType()));
+
+					if (null == restParam.getParameterValue()) {
+						throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
+								"For classOutputParameter creation, output parameter value"));
+					}
+
+					switch (restParam.getParameterType()) {
+					case "BOOLEAN":
+						if (!restParam.getParameterValue().equalsIgnoreCase("true")
+								&& !restParam.getParameterValue().equalsIgnoreCase("false"))
+							throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+									restParam.getParameterValue(), "BOOLEAN"));
+						modelParam.setBooleanValue(Boolean.valueOf(restParam.getParameterValue()));
+						modelParam.setParameterValue(restParam.getParameterValue());
+						break;
+					case "DOUBLE":
+						try {
+							modelParam.setDoubleValue(Double.valueOf(restParam.getParameterValue()));
+							modelParam.setParameterValue(restParam.getParameterValue());
+						} catch (NumberFormatException e) {
+							throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+									restParam.getParameterValue(), "DOUBLE"));
+						}
+						break;
+					case "INSTANT":
+						try {
+							modelParam.setInstantValue(OrbitTimeFormatter.parseDateTime(restParam.getParameterValue()));
+							modelParam.setParameterValue(restParam.getParameterValue());
+						} catch (DateTimeParseException e) {
+							throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+									restParam.getParameterValue(), "INSTANT"));
+						}
+						break;
+					case "INTEGER":
+						try {
+							modelParam.setIntegerValue(Integer.valueOf(restParam.getParameterValue()));
+							modelParam.setParameterValue(restParam.getParameterValue());
+						} catch (NumberFormatException e) {
+							throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+									restParam.getParameterValue(), "DOUBLE"));
+						}
+						break;
+					case "STRING":
+						modelParam.setStringValue(restParam.getParameterValue());
+						modelParam.setParameterValue(restParam.getParameterValue());
+						break;
+					default:
+						throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+								restParam.getParameterValue(), "(any)"));
+					}
+
+					modelClassOutputParam.getOutputParameters().put(restParam.getKey(), modelParam);
+				}
+
+				modelClassOutputParam = RepositoryService.getClassOutputParameterRepository()
+						.save(modelClassOutputParam);
+				modelWorkflow.getClassOutputParameters().put(productClass, modelClassOutputParam);
+			}
+		}
+
+		// If provided, output parameters must have the mandatory fields set.
+		if (!modelWorkflow.getOutputParameters().isEmpty()) {
+			modelWorkflow.getOutputParameters().forEach((key, param) -> {
+				if (null == key) {
+					throw new IllegalArgumentException(
+							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For output parameter, key"));
+				}
+				if (null == param) {
+					throw new IllegalArgumentException(
+							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For output parameter, parameter"));
+				}
+				if (null == param.getParameterType()) {
+					throw new IllegalArgumentException(
+							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For output parameter, parameter type"));
+				}
+				if (null == param.getParameterValue()) {
+					throw new IllegalArgumentException(
+							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For output parameter, parameter value"));
 				}
 			});
 		}
 
-		// If provided, outputParameters must have the mandatory fields set.
-		if (!modelWorkflow.getOutputParameters().isEmpty()) {
-			modelWorkflow.getOutputParameters().forEach((key, parameter) -> {
-				if (key == null) {
+		// If provided, input filters must have the mandatory fields set.
+		if (null == restWorkflow.getInputFilters()) {
+			// Quietly restore as empty list
+			restWorkflow.setInputFilters(new ArrayList<RestInputFilter>());
+		} else if (!restWorkflow.getInputFilters().isEmpty()) {
+			// Convert RestInputFilters to model InputFilters
+			for (RestInputFilter restFilter : restWorkflow.getInputFilters()) {
+				InputFilter modelFilter = new InputFilter();
+
+				// Check and convert product class
+				if (null == restFilter.getProductClass()) {
 					throw new IllegalArgumentException(
-							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For outputParameter creation, product"));
+							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For input filter creation, productClass"));
 				}
-				if (null == parameter.getParameterType()) {
+				ProductClass productClass = RepositoryService.getProductClassRepository()
+						.findByMissionCodeAndProductType(restWorkflow.getMissionCode(), restFilter.getProductClass());
+				if (null == productClass) {
+					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_MISSSPECIFIED,
+							"product class (class output parameters)", restWorkflow.getMissionCode(),
+							restFilter.getProductClass()));
+				}
+
+				// Check and convert output parameters
+				if (null == restFilter.getFilterConditions() || restFilter.getFilterConditions().isEmpty()) {
 					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
-							"For outputParameter creation, parameter type"));
+							"For input filter creation, output parameters"));
 				}
-				if (null == parameter.getParameterValue()) {
-					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
-							"For outputParameter creation, parameter value"));
+
+				for (RestParameter restParam : restFilter.getFilterConditions()) {
+					Parameter modelParam = new Parameter();
+					restParam.setParameterType(restParam.getParameterType().toUpperCase());
+					modelParam.setParameterType(ParameterType.valueOf(restParam.getParameterType()));
+
+					if (null == restParam.getKey()) {
+						throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
+								"For input filter creation, filter condition key"));
+					}
+
+					if (null == restParam.getParameterValue()) {
+						throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
+								"For input filter creation, filter condition value"));
+					}
+
+					switch (restParam.getParameterType()) {
+					case "BOOLEAN":
+						if (!restParam.getParameterValue().equalsIgnoreCase("true")
+								&& !restParam.getParameterValue().equalsIgnoreCase("false"))
+							throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+									restParam.getParameterValue(), "BOOLEAN"));
+						modelParam.setBooleanValue(Boolean.valueOf(restParam.getParameterValue()));
+						modelParam.setParameterValue(restParam.getParameterValue());
+						break;
+					case "DOUBLE":
+						try {
+							modelParam.setDoubleValue(Double.valueOf(restParam.getParameterValue()));
+							modelParam.setParameterValue(restParam.getParameterValue());
+						} catch (NumberFormatException e) {
+							throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+									restParam.getParameterValue(), "DOUBLE"));
+						}
+						break;
+					case "INSTANT":
+						try {
+							modelParam.setInstantValue(OrbitTimeFormatter.parseDateTime(restParam.getParameterValue()));
+							modelParam.setParameterValue(restParam.getParameterValue());
+						} catch (DateTimeParseException e) {
+							throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+									restParam.getParameterValue(), "INSTANT"));
+						}
+						break;
+					case "INTEGER":
+						try {
+							modelParam.setIntegerValue(Integer.valueOf(restParam.getParameterValue()));
+							modelParam.setParameterValue(restParam.getParameterValue());
+						} catch (NumberFormatException e) {
+							throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+									restParam.getParameterValue(), "DOUBLE"));
+						}
+						break;
+					case "STRING":
+						modelParam.setStringValue(restParam.getParameterValue());
+						modelParam.setParameterValue(restParam.getParameterValue());
+						break;
+					default:
+						throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+								restParam.getParameterValue(), "(any)"));
+					}
+
+					modelFilter.getFilterConditions().put(restParam.getKey(), modelParam);
 				}
-			});
+
+				modelFilter = RepositoryService.getInputFilterRepository().save(modelFilter);
+				modelWorkflow.getInputFilters().put(productClass, modelFilter);
+			}
 		}
-		
+
 		// The new workflow is saved to the repository.
 		RepositoryService.getWorkflowRepository().save(modelWorkflow);
 		modelWorkflow = RepositoryService.getWorkflowRepository().findByUuid(modelWorkflow.getUuid());
@@ -458,7 +640,7 @@ public class WorkflowMgr {
 
 	/**
 	 * Update a workflow by ID
-	 * 
+	 *
 	 * @param id       the ID of the workflow to update
 	 * @param workflow a Json object containing the modified (and unmodified)
 	 *                 attributes
@@ -525,7 +707,7 @@ public class WorkflowMgr {
 		} else if (!modelWorkflow.getWorkflowVersion().equals(restWorkflow.getWorkflowVersion())) {
 			workflowChanged = true;
 			modelWorkflow.setWorkflowVersion(restWorkflow.getWorkflowVersion());
-		}		
+		}
 
 		// Enabled status may not be null.
 		if (null == restWorkflow.getEnabled()) {
@@ -594,7 +776,7 @@ public class WorkflowMgr {
 			}
 			modelWorkflow.setOutputProductClass(newOutputProductClass);
 		}
-		
+
 		// Output file class is mandatory.
 		if (null == restWorkflow.getOutputFileClass()) {
 			throw new IllegalArgumentException(
@@ -603,7 +785,7 @@ public class WorkflowMgr {
 			workflowChanged = true;
 			modelWorkflow.setOutputFileClass(restWorkflow.getOutputFileClass());
 		}
-		
+
 		// Processing mode is mandatory.
 		if (null == restWorkflow.getProcessingMode()) {
 			throw new IllegalArgumentException(
@@ -611,6 +793,14 @@ public class WorkflowMgr {
 		} else if (!modelWorkflow.getProcessingMode().equals(restWorkflow.getProcessingMode())) {
 			workflowChanged = true;
 			modelWorkflow.setProcessingMode(restWorkflow.getProcessingMode());
+		}
+
+		// Quietly replace slice duration and overlap nulls
+		if (null == restWorkflow.getSliceDuration()) {
+			restWorkflow.setSliceDuration(0l);
+		}
+		if (null == restWorkflow.getSliceOverlap()) {
+			restWorkflow.setSliceOverlap(0l);
 		}
 
 		// Check that slice parameters are still consistent
@@ -640,7 +830,7 @@ public class WorkflowMgr {
 
 			for (RestInputFilter newFilter : restWorkflow.getInputFilters()) {
 				InputFilter modelFilter = null;
-				Boolean isNew = false;
+				boolean isNew = false;
 
 				// Check for missing mandatory values in new filter
 				if (null == newFilter.getProductClass()) {
@@ -679,40 +869,62 @@ public class WorkflowMgr {
 					modelFilter = modelWorkflow.getInputFilters().get(productClass);
 				} else {
 					isNew = true;
+					modelFilter = new InputFilter();
 				}
 
 				// Potentially override old values
-				// TODO truly override instead of replace
 				modelFilter.getFilterConditions().clear();
-				for (RestParameter param : newFilter.getFilterConditions()) {
+				for (RestParameter restParam : newFilter.getFilterConditions()) {
 					Parameter newParam = new Parameter();
-					newParam.setParameterType(ParameterType.valueOf(param.getParameterType()));
-					switch (newParam.getParameterType()) {
-					case BOOLEAN:
-						newParam.setBooleanValue(Boolean.valueOf(param.getParameterValue()));
-						newParam.setParameterValue(Boolean.valueOf(param.getParameterValue()));
+
+					restParam.setParameterType(restParam.getParameterType().toUpperCase());
+					newParam.setParameterType(ParameterType.valueOf(restParam.getParameterType()));
+					switch (restParam.getParameterType()) {
+					case "BOOLEAN":
+						if (!restParam.getParameterValue().equalsIgnoreCase("true")
+								&& !restParam.getParameterValue().equalsIgnoreCase("false"))
+							throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+									restParam.getParameterValue(), "BOOLEAN"));
+						newParam.setBooleanValue(Boolean.valueOf(restParam.getParameterValue()));
+						newParam.setParameterValue(Boolean.valueOf(restParam.getParameterValue()));
 						break;
-					case DOUBLE:
-						newParam.setDoubleValue(Double.valueOf(param.getParameterValue()));
-						newParam.setParameterValue(Double.valueOf(param.getParameterValue()));
+					case "DOUBLE":
+						try {
+							newParam.setDoubleValue(Double.valueOf(restParam.getParameterValue()));
+							newParam.setParameterValue(Double.valueOf(restParam.getParameterValue()));
+						} catch (NumberFormatException e) {
+							throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+									restParam.getParameterValue(), "DOUBLE"));
+						}
 						break;
-					case INSTANT:
-						// TODO verify
-						newParam.setInstantValue(OrbitTimeFormatter.parseDateTime(param.getParameterValue()));
-						newParam.setParameterValue(OrbitTimeFormatter.parseDateTime(param.getParameterValue()));
+					case "INSTANT":
+						try {
+							newParam.setInstantValue(OrbitTimeFormatter.parseDateTime(restParam.getParameterValue()));
+							newParam.setParameterValue(restParam.getParameterValue());
+						} catch (DateTimeParseException e) {
+							throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+									restParam.getParameterValue(), "INSTANT"));
+						}
 						break;
-					case INTEGER:
-						newParam.setIntegerValue(Integer.valueOf(param.getParameterValue()));
-						newParam.setParameterValue(Integer.valueOf(param.getParameterValue()));
+					case "INTEGER":
+						try {
+							newParam.setIntegerValue(Integer.valueOf(restParam.getParameterValue()));
+							newParam.setParameterValue(Integer.valueOf(restParam.getParameterValue()));
+						} catch (NumberFormatException e) {
+							throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+									restParam.getParameterValue(), "DOUBLE"));
+						}
 						break;
-					case STRING:
-						newParam.setStringValue(param.getParameterValue());
-						newParam.setParameterValue(param.getParameterValue());
+					case "STRING":
+						newParam.setStringValue(restParam.getParameterValue());
+						newParam.setParameterValue(restParam.getParameterValue());
 						break;
 					default:
-						break;
+						throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+								restParam.getParameterValue(), "(any)"));
 					}
-					modelFilter.getFilterConditions().put(param.getKey(), newParam);
+
+					modelFilter.getFilterConditions().put(restParam.getKey(), newParam);
 				}
 
 				// Add new filters, update map of old values to contain only deleted filters
@@ -741,15 +953,16 @@ public class WorkflowMgr {
 
 			for (RestClassOutputParameter newClassOutputParameter : restWorkflow.getClassOutputParameters()) {
 				ClassOutputParameter modelClassOutputParameter = null;
-				Boolean isNew = false;
+				boolean isNew = false;
 
 				// Check for missing mandatory values in new classOutputParameter
 				if (null == newClassOutputParameter.getProductClass()) {
 					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
 							"In input classOutputParameter: productClass"));
 				}
-				if (newClassOutputParameter.getOutputParameters().isEmpty()
-						|| null == newClassOutputParameter.getOutputParameters()) {
+
+				if (null == newClassOutputParameter.getOutputParameters()
+						|| newClassOutputParameter.getOutputParameters().isEmpty()) {
 					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
 							"In input classOutputParameter: outputParameters"));
 				}
@@ -782,41 +995,66 @@ public class WorkflowMgr {
 					modelClassOutputParameter = modelWorkflow.getClassOutputParameters().get(productClass);
 				} else {
 					isNew = true;
+					modelClassOutputParameter = new ClassOutputParameter();
 				}
 
 				// Potentially override old values
-				// TODO truly override instead of replace
 				modelClassOutputParameter.getOutputParameters().clear();
-				for (RestParameter param : newClassOutputParameter.getOutputParameters()) {
+				for (RestParameter restParam : newClassOutputParameter.getOutputParameters()) {
 					Parameter newParam = new Parameter();
-					newParam.setParameterType(ParameterType.valueOf(param.getParameterType()));
-					switch (newParam.getParameterType()) {
-					case BOOLEAN:
-						newParam.setBooleanValue(Boolean.valueOf(param.getParameterValue()));
-						newParam.setParameterValue(Boolean.valueOf(param.getParameterValue()));
+
+					restParam.setParameterType(restParam.getParameterType().toUpperCase());
+					newParam.setParameterType(ParameterType.valueOf(restParam.getParameterType()));
+					switch (restParam.getParameterType()) {
+					case "BOOLEAN":
+						if (!restParam.getParameterValue().equalsIgnoreCase("true")
+								&& !restParam.getParameterValue().equalsIgnoreCase("false"))
+							throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+									restParam.getParameterValue(), "BOOLEAN"));
+						newParam.setBooleanValue(Boolean.valueOf(restParam.getParameterValue()));
+						newParam.setParameterValue(restParam.getParameterValue());
 						break;
-					case DOUBLE:
-						newParam.setDoubleValue(Double.valueOf(param.getParameterValue()));
-						newParam.setParameterValue(Double.valueOf(param.getParameterValue()));
+					case "DOUBLE":
+						try {
+							newParam.setDoubleValue(Double.valueOf(restParam.getParameterValue()));
+							newParam.setParameterValue(restParam.getParameterValue());
+						} catch (NumberFormatException e) {
+							throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+									restParam.getParameterValue(), "DOUBLE"));
+						}
 						break;
-					case INSTANT:
-						// TODO verify
-						newParam.setInstantValue(OrbitTimeFormatter.parseDateTime(param.getParameterValue()));
-						newParam.setParameterValue(OrbitTimeFormatter.parseDateTime(param.getParameterValue()));
+					case "INSTANT":
+						try {
+							newParam.setInstantValue(OrbitTimeFormatter.parseDateTime(restParam.getParameterValue()));
+							newParam.setParameterValue(restParam.getParameterValue());
+						} catch (DateTimeParseException e) {
+							throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+									restParam.getParameterValue(), "INSTANT"));
+						}
 						break;
-					case INTEGER:
-						newParam.setIntegerValue(Integer.valueOf(param.getParameterValue()));
-						newParam.setParameterValue(Integer.valueOf(param.getParameterValue()));
+					case "INTEGER":
+						try {
+							newParam.setIntegerValue(Integer.valueOf(restParam.getParameterValue()));
+							newParam.setParameterValue(restParam.getParameterValue());
+						} catch (NumberFormatException e) {
+							throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+									restParam.getParameterValue(), "DOUBLE"));
+						}
 						break;
-					case STRING:
-						newParam.setStringValue(param.getParameterValue());
-						newParam.setParameterValue(param.getParameterValue());
+					case "STRING":
+						newParam.setStringValue(restParam.getParameterValue());
+						newParam.setParameterValue(restParam.getParameterValue());
 						break;
 					default:
-						break;
+						throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+								restParam.getParameterValue(), "(any)"));
 					}
-					modelClassOutputParameter.getOutputParameters().put(param.getKey(), newParam);
+
+					modelClassOutputParameter.getOutputParameters().put(restParam.getKey(), newParam);
 				}
+
+				modelClassOutputParameter = RepositoryService.getClassOutputParameterRepository()
+						.save(modelClassOutputParameter);
 
 				// Add new classOutputParameters, update map of old values to contain only
 				// deleted classOutputParameters
@@ -835,6 +1073,11 @@ public class WorkflowMgr {
 			}
 		}
 
+		// Quietly replace null output parameters with empty list
+		if (null == restWorkflow.getOutputParameters()) {
+			restWorkflow.setOutputParameters(new ArrayList<RestParameter>());
+		}
+
 		// If outputParameters where provided, update old outputParameters
 		// Remember old values
 		Map<String, Parameter> oldOutputParameters = new HashMap<>();
@@ -843,69 +1086,86 @@ public class WorkflowMgr {
 
 		if (!restWorkflow.getOutputParameters().isEmpty()) {
 
-			for (RestParameter newOutputParameter : restWorkflow.getOutputParameters()) {
+			for (RestParameter restOutputParameter : restWorkflow.getOutputParameters()) {
 				Parameter modelOutputParameter = null;
-				Boolean isNew = false;
+				boolean isNew = false;
 
 				// Check for missing mandatory values in new outputParameter
-				if (null == newOutputParameter.getKey()) {
+				if (null == restOutputParameter.getKey()) {
 					throw new IllegalArgumentException(
 							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "In outputParameter, parameter key"));
 				}
-				if (null == newOutputParameter.getParameterType()) {
+				if (null == restOutputParameter.getParameterType()) {
 					throw new IllegalArgumentException(
 							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "In outputParameter, parameter type"));
 				}
-				if (null == newOutputParameter.getParameterValue()) {
+				if (null == restOutputParameter.getParameterValue()) {
 					throw new IllegalArgumentException(
 							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "In outputParameter, parameter value"));
 				}
 
 				// Check whether the new outputParameter is in fact an old
 				// outputParameter
-				if (modelWorkflow.getOutputParameters().containsKey(newOutputParameter.getKey())) {
-					modelOutputParameter = modelWorkflow.getOutputParameters().get(newOutputParameter.getKey());
+				if (modelWorkflow.getOutputParameters().containsKey(restOutputParameter.getKey())) {
+					modelOutputParameter = modelWorkflow.getOutputParameters().get(restOutputParameter.getKey());
 				} else {
 					isNew = true;
 				}
 
 				// Potentially override old values
-				modelOutputParameter.setParameterType(ParameterType.valueOf(newOutputParameter.getParameterType()));
-				switch (modelOutputParameter.getParameterType()) {
-				case BOOLEAN:
-					modelOutputParameter.setBooleanValue(Boolean.valueOf(newOutputParameter.getParameterValue()));
-					modelOutputParameter.setParameterValue(Boolean.valueOf(newOutputParameter.getParameterValue()));
+				modelOutputParameter.setParameterType(ParameterType.valueOf(restOutputParameter.getParameterType()));
+				switch (restOutputParameter.getParameterType()) {
+				case "BOOLEAN":
+					if (!restOutputParameter.getParameterValue().equalsIgnoreCase("true")
+							&& !restOutputParameter.getParameterValue().equalsIgnoreCase("false"))
+						throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+								restOutputParameter.getParameterValue(), "BOOLEAN"));
+					modelOutputParameter.setBooleanValue(Boolean.valueOf(restOutputParameter.getParameterValue()));
+					modelOutputParameter.setParameterValue(restOutputParameter.getParameterValue());
 					break;
-				case DOUBLE:
-					modelOutputParameter.setDoubleValue(Double.valueOf(newOutputParameter.getParameterValue()));
-					modelOutputParameter.setParameterValue(Double.valueOf(newOutputParameter.getParameterValue()));
+				case "DOUBLE":
+					try {
+						modelOutputParameter.setDoubleValue(Double.valueOf(restOutputParameter.getParameterValue()));
+						modelOutputParameter.setParameterValue(restOutputParameter.getParameterValue());
+					} catch (NumberFormatException e) {
+						throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+								restOutputParameter.getParameterValue(), "DOUBLE"));
+					}
 					break;
-				case INSTANT:
-					// TODO verify
-					modelOutputParameter
-							.setInstantValue(OrbitTimeFormatter.parseDateTime(newOutputParameter.getParameterValue()));
-					modelOutputParameter.setParameterValue(
-							OrbitTimeFormatter.parseDateTime(newOutputParameter.getParameterValue()));
+				case "INSTANT":
+					try {
+						modelOutputParameter.setInstantValue(
+								OrbitTimeFormatter.parseDateTime(restOutputParameter.getParameterValue()));
+						modelOutputParameter.setParameterValue(restOutputParameter.getParameterValue());
+					} catch (DateTimeParseException e) {
+						throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+								restOutputParameter.getParameterValue(), "INSTANT"));
+					}
 					break;
-				case INTEGER:
-					modelOutputParameter.setIntegerValue(Integer.valueOf(newOutputParameter.getParameterValue()));
-					modelOutputParameter.setParameterValue(Integer.valueOf(newOutputParameter.getParameterValue()));
+				case "INTEGER":
+					try {
+						modelOutputParameter.setIntegerValue(Integer.valueOf(restOutputParameter.getParameterValue()));
+						modelOutputParameter.setParameterValue(restOutputParameter.getParameterValue());
+					} catch (NumberFormatException e) {
+						throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+								restOutputParameter.getParameterValue(), "DOUBLE"));
+					}
 					break;
-				case STRING:
-					modelOutputParameter.setStringValue(newOutputParameter.getParameterValue());
-					modelOutputParameter.setParameterValue(newOutputParameter.getParameterValue());
+				case "STRING":
+					modelOutputParameter.setStringValue(restOutputParameter.getParameterValue());
+					modelOutputParameter.setParameterValue(restOutputParameter.getParameterValue());
 					break;
 				default:
-					break;
+					throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
+							restOutputParameter.getParameterValue(), "(any)"));
 				}
-				;
 
 				// Add new outputParameters, update map of old values to contain only
 				// deleted outputParameters
 				if (isNew) {
-					modelWorkflow.getOutputParameters().put(newOutputParameter.getKey(), modelOutputParameter);
+					modelWorkflow.getOutputParameters().put(restOutputParameter.getKey(), modelOutputParameter);
 				} else {
-					oldOutputParameters.remove(newOutputParameter.getKey());
+					oldOutputParameters.remove(restOutputParameter.getKey());
 				}
 			}
 
@@ -937,7 +1197,7 @@ public class WorkflowMgr {
 
 		// TODO remember names to remove "deleted" options
 		// Remember old values
-		Map<String, String> optNames = new HashMap<String, String>();
+		Map<String, String> optNames = new HashMap<>();
 		for (WorkflowOption opt : modelWorkflow.getWorkflowOptions()) {
 			optNames.put(opt.getName(), opt.getName());
 		}
@@ -946,7 +1206,7 @@ public class WorkflowMgr {
 
 			for (RestWorkflowOption newOption : restWorkflow.getWorkflowOptions()) {
 				WorkflowOption modelOption = null;
-				Boolean isNew = false;
+				boolean isNew = false;
 
 				// Check for missing mandatory values in new option
 				if (null == newOption.getMissionCode()) {
@@ -1064,7 +1324,8 @@ public class WorkflowMgr {
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public List<RestWorkflow> getWorkflows(String missionCode, String workflowName, String workflowVersion,
-			String outputProductClass, String configuredProcessor, Boolean enabled, Integer recordFrom, Integer recordTo) throws NoResultException, SecurityException {
+			String outputProductClass, String configuredProcessor, Boolean enabled, Integer recordFrom,
+			Integer recordTo) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getWorkflows({}, {}, {}, {}, {}, {})", missionCode, workflowName, workflowVersion,
 					outputProductClass, configuredProcessor, enabled);
@@ -1076,9 +1337,9 @@ public class WorkflowMgr {
 			if (!securityService.isAuthorizedForMission(missionCode)) {
 				throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, missionCode,
 						securityService.getMission()));
-			}		
+			}
 		}
-		
+
 		if (recordFrom == null) {
 			recordFrom = 0;
 		}
@@ -1086,12 +1347,15 @@ public class WorkflowMgr {
 			recordTo = Integer.MAX_VALUE;
 		}
 
-		Long numberOfResults = Long.parseLong(this.countWorkflows(missionCode, workflowName, workflowVersion, outputProductClass, configuredProcessor, enabled));
+		Long numberOfResults = Long.parseLong(this.countWorkflows(missionCode, workflowName, workflowVersion,
+				outputProductClass, configuredProcessor, enabled));
 		Integer maxResults = config.getMaxResults();
-		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults && (numberOfResults - recordFrom) > maxResults) {
-			throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS, logger.log(GeneralMessage.TOO_MANY_RESULTS, "workflows", numberOfResults, config.getMaxResults()));
+		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults
+				&& (numberOfResults - recordFrom) > maxResults) {
+			throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS,
+					logger.log(GeneralMessage.TOO_MANY_RESULTS, "workflows", numberOfResults, config.getMaxResults()));
 		}
-		
+
 		List<RestWorkflow> result = new ArrayList<>();
 
 		String jpqlQuery = "select w from Workflow w where configuredProcessor.processor.processorClass.mission.code = :missionCode";
@@ -1137,12 +1401,12 @@ public class WorkflowMgr {
 				result.add(WorkflowUtil.toRestWorkflow((Workflow) resultObject));
 			}
 		}
-		
+
 		if (result.isEmpty()) {
 			throw new NoResultException(logger.log(ProcessorMgrMessage.NO_WORKFLOW_FOUND, missionCode, workflowName,
 					workflowVersion, outputProductClass, configuredProcessor));
 		}
-		
+
 		logger.log(ProcessorMgrMessage.WORKFLOW_LIST_RETRIEVED, result.size(), missionCode, workflowName,
 				workflowVersion, outputProductClass, configuredProcessor);
 
