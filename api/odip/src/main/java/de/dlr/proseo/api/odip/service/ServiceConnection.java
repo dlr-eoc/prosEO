@@ -102,9 +102,10 @@ public class ServiceConnection {
 				else
 					logger.log(OdipMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
 			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
-		} catch (RestClientException e) {
-			String message = logger.log(OdipMessage.HTTP_REQUEST_FAILED, e);
-			throw new RestClientException(message, e);
+		} catch (RestClientResponseException e) {
+			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getMessage());
+			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getResponseBodyAsString());
+			throw e;
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
 			throw new RuntimeException(e);
@@ -158,9 +159,10 @@ public class ServiceConnection {
 				else
 					logger.log(OdipMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
 			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
-		} catch (RestClientException e) {
-			String message = logger.log(OdipMessage.HTTP_REQUEST_FAILED, e);
-			throw new RestClientException(message, e);
+		} catch (RestClientResponseException e) {
+			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getMessage());
+			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getResponseBodyAsString());
+			throw e;
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
 			throw new RuntimeException(e);
@@ -216,9 +218,10 @@ public class ServiceConnection {
 				else
 					logger.log(OdipMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
 			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
-		} catch (RestClientException e) {
-			String message = logger.log(OdipMessage.HTTP_REQUEST_FAILED, e);
-			throw new RestClientException(message, e);
+		} catch (RestClientResponseException e) {
+			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getMessage());
+			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getResponseBodyAsString());
+			throw e;
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
 			throw new RuntimeException(e);
@@ -344,7 +347,8 @@ public class ServiceConnection {
 			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e);
 			throw new RestClientException(message, e);
 		} catch (RestClientResponseException e) {
-			// already logged
+			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getMessage());
+			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getResponseBodyAsString());
 			throw e;
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
@@ -386,9 +390,10 @@ public class ServiceConnection {
 				else
 					logger.log(OdipMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
 			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
-		} catch (RestClientException e) {
-			String message = logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getMessage());
-			throw new RestClientException(message, e);
+		} catch (RestClientResponseException e) {
+			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getMessage());
+			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getResponseBodyAsString());
+			throw e;
 		} catch (IllegalArgumentException e) {
 			String message = logger.log(OdipMessage.INVALID_URL, serviceUrl + requestPath, e.getMessage());
 			throw new RuntimeException(message, e);

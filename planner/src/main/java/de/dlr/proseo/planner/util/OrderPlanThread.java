@@ -15,7 +15,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
-import de.dlr.proseo.logging.messages.ProseoMessage;
+import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderState;
@@ -54,6 +54,18 @@ public class OrderPlanThread extends Thread {
 	private ProcessingFacility procFacility;
 	
 	/**
+	 * The result of the planning
+	 */
+	private PlannerResultMessage resultMessage;
+	
+	/**
+	 * @return the resultMessage
+	 */
+	public PlannerResultMessage getResultMessage() {
+		return resultMessage;
+	}
+
+	/**
 	 * Create new thread
 	 * 
 	 * @param productionPlanner The production planner instance
@@ -77,7 +89,7 @@ public class OrderPlanThread extends Thread {
 		if (logger.isTraceEnabled()) logger.trace(">>> run({})", this.getName());
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		
-		ProseoMessage answer = GeneralMessage.FALSE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		if (orderId != 0 && productionPlanner != null && orderDispatcher != null) {
 			try {
 				productionPlanner.acquireThreadSemaphore("OrderPlanThread.run");
@@ -85,12 +97,16 @@ public class OrderPlanThread extends Thread {
 				productionPlanner.releaseThreadSemaphore("OrderPlanThread.run");
 			} catch(InterruptedException e) {
 				productionPlanner.releaseThreadSemaphore("OrderPlanThread.run");
+				answer.setMessage(PlannerMessage.PLANNING_INTERRUPTED);
+				answer.setText(logger.log(answer.getMessage(), orderId));
 			} 
 			try {
 				if (answer.getSuccess()) {
 					answer = plan(orderId);
 				}
 			} catch(InterruptedException e) {
+				answer.setMessage(PlannerMessage.PLANNING_INTERRUPTED);
+				answer.setText(logger.log(answer.getMessage(), orderId));
 			} catch(Exception e) {
 				@SuppressWarnings("unused")
 				Object dummy = transactionTemplate.execute((status) -> {
@@ -99,13 +115,14 @@ public class OrderPlanThread extends Thread {
 					if (orderOpt.isPresent()) {
 						lambdaOrder = orderOpt.get();
 					}
-					logger.log(PlannerMessage.ORDER_PLANNING_EXCEPTION, this.getName(), lambdaOrder.getIdentifier());
-					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage());
 					lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
 					UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_FAILED);
 					lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 					return null;
 				});
+				answer.setText(logger.log(PlannerMessage.ORDER_PLANNING_EXCEPTION, this.getName(), orderId));
+				answer.setMessage(GeneralMessage.EXCEPTION_ENCOUNTERED);
+				answer.setText(logger.log(answer.getMessage(), e.getMessage()));
 			}
 			try {
 				if (!answer.getSuccess()) {
@@ -134,15 +151,17 @@ public class OrderPlanThread extends Thread {
 					if (orderOpt.isPresent()) {
 						lambdaOrder = orderOpt.get();
 					}
-					logger.log(PlannerMessage.ORDER_PLANNING_EXCEPTION, this.getName(), lambdaOrder.getIdentifier());
-					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage());
 					lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
 					UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_FAILED);
 					lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 					return null;
 				});
+				answer.setText(logger.log(PlannerMessage.ORDER_PLANNING_EXCEPTION, this.getName(), orderId));
+				answer.setMessage(GeneralMessage.EXCEPTION_ENCOUNTERED);
+				answer.setText(logger.log(answer.getMessage(), e.getMessage()));
 			}
 		}
+		this.resultMessage = answer;
 		productionPlanner.getPlanThreads().remove(this.getName());
 		if (logger.isTraceEnabled()) logger.trace("<<< run({})", this.getName());
 		productionPlanner.checkNextForRestart();				
@@ -156,7 +175,7 @@ public class OrderPlanThread extends Thread {
      * @return The result message
      * @throws InterruptedException
      */
-    public ProseoMessage plan(long orderId) throws InterruptedException {
+    public PlannerResultMessage plan(long orderId) throws InterruptedException {
 		ProcessingOrder order = null;
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -170,8 +189,8 @@ public class OrderPlanThread extends Thread {
 		});
 		if (logger.isTraceEnabled()) logger.trace(">>> plan({}, {})", (null == order ? "null" : order.getId()),
 				(null == procFacility ? "null" : procFacility.getName()));
-		ProseoMessage answer = GeneralMessage.FALSE;
-		ProseoMessage publishAnswer = GeneralMessage.FALSE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
+		PlannerResultMessage publishAnswer = new PlannerResultMessage(GeneralMessage.FALSE);
 		if (order != null && procFacility != null && 
 				(order.getOrderState() == OrderState.PLANNING || order.getOrderState() == OrderState.APPROVED)) {
 			try {
@@ -181,41 +200,41 @@ public class OrderPlanThread extends Thread {
 			}
 			try {
 				productionPlanner.acquireThreadSemaphore("OrderPlanThread.plan");
-				final ProseoMessage finalAnswer = publishAnswer;
+				final PlannerResultMessage finalAnswer = new PlannerResultMessage(publishAnswer.getMessage());
 				answer = transactionTemplate.execute((status) -> {
 					ProcessingOrder lambdaOrder = null;
 					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
 					if (orderOpt.isPresent()) {
 						lambdaOrder = orderOpt.get();
 					}
-					ProseoMessage lambdaAnswer = GeneralMessage.FALSE;
+					PlannerResultMessage lambdaAnswer = new PlannerResultMessage(GeneralMessage.FALSE);
 					if (finalAnswer.getSuccess()) {
 						if (lambdaOrder.getJobs().isEmpty()) {
 							lambdaOrder.setOrderState(OrderState.COMPLETED);
 							UtilService.getOrderUtil().checkAutoClose(lambdaOrder);
 							UtilService.getOrderUtil().setTimes(lambdaOrder);
 							UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_COMPLETED);
-							lambdaAnswer = PlannerMessage.ORDER_PRODUCT_EXIST;
+							lambdaAnswer.setMessage(PlannerMessage.ORDER_PRODUCT_EXIST);
 						} else {
 							lambdaOrder.setOrderState(OrderState.PLANNED);
 							UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_QUEUED);
-							lambdaAnswer = PlannerMessage.ORDER_PLANNED;
+							lambdaAnswer.setMessage(PlannerMessage.ORDER_PLANNED);
 						}
-						logger.log(lambdaAnswer, lambdaOrder.getIdentifier());
+						lambdaAnswer.setText(logger.log(lambdaAnswer.getMessage(), lambdaOrder.getIdentifier()));
 						lambdaOrder.incrementVersion();
 						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 					} else {
 						lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
 						UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_FAILED);
 						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
-						lambdaAnswer = PlannerMessage.ORDER_PLANNING_FAILED;
-						logger.log(lambdaAnswer, lambdaOrder.getIdentifier(), this.getName());
+						lambdaAnswer.setMessage(PlannerMessage.ORDER_PLANNING_FAILED);
+						lambdaAnswer.setText(logger.log(lambdaAnswer.getMessage(), lambdaOrder.getIdentifier(), this.getName()));
 					}
 					return lambdaAnswer;
 				});
 			} catch (Exception e) {
-				answer = GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED;
-				logger.log(answer,  e.getMessage());
+				answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
+				answer.setText(logger.log(answer.getMessage(),  e.getMessage()));
 			} finally {
 				productionPlanner.releaseThreadSemaphore("OrderPlanThread.plan");
 			}

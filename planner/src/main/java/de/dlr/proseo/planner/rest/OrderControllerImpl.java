@@ -12,7 +12,7 @@ import java.util.Optional;
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.logging.messages.ProseoMessage;
+import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.model.Job;
@@ -146,7 +146,7 @@ public class OrderControllerImpl implements OrderController {
 
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} else {
-			ProseoMessage msg = null;
+			PlannerResultMessage msg = new PlannerResultMessage(null);
 			try {
 				productionPlanner.acquireThreadSemaphore("approveOrder");
 				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -167,9 +167,7 @@ public class OrderControllerImpl implements OrderController {
 				return new ResponseEntity<>(ro, HttpStatus.OK);
 			} else {
 				// already running or at end, could not approve
-				String message = logger.log(msg, orderId);
-
-				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>(http.errorHeaders(msg.getText()), HttpStatus.BAD_REQUEST);
 			}
 		}
 	}
@@ -191,7 +189,7 @@ public class OrderControllerImpl implements OrderController {
 				
 				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 			} else {
-				ProseoMessage msg = orderUtil.reset(order);
+				PlannerResultMessage msg = orderUtil.reset(order);
 				// Already logged
 				
 				if (msg.getSuccess()) {
@@ -201,9 +199,7 @@ public class OrderControllerImpl implements OrderController {
 					return new ResponseEntity<>(ro, HttpStatus.OK);
 				} else {
 					// illegal state for reset
-					String message = logger.log(msg, orderId);
-
-					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
+					return new ResponseEntity<>(http.errorHeaders(msg.getText()), HttpStatus.BAD_REQUEST);
 				}
 			}
 		} catch (Exception e) {
@@ -230,7 +226,7 @@ public class OrderControllerImpl implements OrderController {
 				
 				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 			} else {
-				ProseoMessage msg = null;
+				PlannerResultMessage msg = new PlannerResultMessage(null);
 				try {
 					productionPlanner.acquireThreadSemaphore("deleteOrder");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -252,9 +248,7 @@ public class OrderControllerImpl implements OrderController {
 					return new ResponseEntity<>(ro, HttpStatus.OK);
 				} else {
 					// illegal state for delete
-					String message = logger.log(msg, orderId);
-
-					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
+					return new ResponseEntity<>(http.errorHeaders(msg.getText()), HttpStatus.BAD_REQUEST);
 				}
 			}
 		} catch (Exception e) {
@@ -310,7 +304,7 @@ public class OrderControllerImpl implements OrderController {
 			if (wait == null) {
 				wait = false;
 			}
-			ProseoMessage msg = orderUtil.plan(order.getId(), pf, wait);
+			PlannerResultMessage msg = orderUtil.plan(order.getId(), pf, wait);
 			if (msg.getSuccess()) {
 				RestOrder ro = getRestOrder(order.getId());
 
@@ -321,13 +315,9 @@ public class OrderControllerImpl implements OrderController {
 				return new ResponseEntity<>(ro, HttpStatus.CREATED);
 			} else if (msg.getLevel() == Level.WARN) {
 				RestOrder ro = getRestOrder(order.getId());
-				String message = logger.log(msg);					
-
-				return new ResponseEntity<>(ro, http.errorHeaders(message), HttpStatus.NOT_MODIFIED);
+				return new ResponseEntity<>(ro, http.errorHeaders(msg.getText()), HttpStatus.NOT_MODIFIED);
 			} else {
-				String message = logger.log(msg);					
-
-				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>(http.errorHeaders(msg.getText()), HttpStatus.BAD_REQUEST);
 			}
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
@@ -355,7 +345,7 @@ public class OrderControllerImpl implements OrderController {
 			if (wait == null) {
 				wait = false;
 			}
-			ProseoMessage msg = orderUtil.resume(order, wait);
+			PlannerResultMessage msg = orderUtil.resume(order, wait);
 			
 			// Check whether the release triggers any job steps
 			// This is already done during RELEASING
@@ -394,33 +384,38 @@ public class OrderControllerImpl implements OrderController {
 						productionPlanner.releaseThreadSemaphore("resumeOdip");					
 					}
 					if (orderName != null) {
-						String message = logger.log(PlannerMessage.MSG_NO_INPUTPRODUCT, orderName);
 						// suspend and cancel the order
-						orderUtil.suspend(order.getId(), true);
+						PlannerResultMessage message = orderUtil.suspend(order.getId(), true);
 						try {
 							productionPlanner.acquireThreadSemaphore("resumeOdip2");	
-							String dummy = transactionTemplate.execute((status) -> {
+							PlannerResultMessage dummy = transactionTemplate.execute((status) -> {
+								PlannerResultMessage lamdaMsg = new PlannerResultMessage(GeneralMessage.FALSE);
 								Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
 								if (opt.isPresent()) {
 									ProcessingOrder orderx = opt.get();
-									orderUtil.cancel(orderx);
+									lamdaMsg = orderUtil.cancel(orderx);
 								}
-								return null;
+								return lamdaMsg;
 							});
+							message.copy(dummy);
 						} catch (Exception e) {
 							logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 						} finally {
 							productionPlanner.releaseThreadSemaphore("resumeOdip2");					
 						}
-						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
+						if (message.getSuccess()) {
+							return new ResponseEntity<>(http.errorHeaders(logger.log(PlannerMessage.MSG_NO_INPUTPRODUCT, orderName)), HttpStatus.NOT_FOUND);
+						} else {
+							message.setText(logger.log(PlannerMessage.MSG_NO_INPUTPRODUCT, orderName));
+							return new ResponseEntity<>(http.errorHeaders(message.getText()), HttpStatus.NOT_FOUND);
+						}
 					}
 				}
 
 				return new ResponseEntity<>(ro, HttpStatus.OK);
 			} else {
 				// illegal state for resume
-				String message = logger.log(msg, orderId);
-				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>(http.errorHeaders(msg.getText()), HttpStatus.BAD_REQUEST);
 			}
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
@@ -458,7 +453,7 @@ public class OrderControllerImpl implements OrderController {
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		}
 
-		ProseoMessage msg = null;
+		PlannerResultMessage msg = new PlannerResultMessage(null);
 		try {
 			productionPlanner.acquireThreadSemaphore("cancelOrder");
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -480,9 +475,7 @@ public class OrderControllerImpl implements OrderController {
 			return new ResponseEntity<>(ro, HttpStatus.OK);
 		} else {
 			// illegal state for cancel
-			String message = logger.log(msg, orderId);
-
-			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(http.errorHeaders(msg.getText()), HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -501,11 +494,11 @@ public class OrderControllerImpl implements OrderController {
 
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		}
-		ProseoMessage msg = null;
+		PlannerResultMessage msg = new PlannerResultMessage(null);
 		try {
 			productionPlanner.acquireThreadSemaphore("closeOrder");
 			msg = orderUtil.close(order.getId());
-			logger.log(msg, order.getIdentifier());
+			logger.log(msg.getMessage(), order.getIdentifier());
 			productionPlanner.releaseThreadSemaphore("closeOrder");	
 		} catch (Exception e) {
 			productionPlanner.releaseThreadSemaphore("closeOrder");	
@@ -520,9 +513,7 @@ public class OrderControllerImpl implements OrderController {
 			return new ResponseEntity<>(ro, HttpStatus.OK);
 		} else {
 			// illegal state for close
-			String message = logger.log(msg, orderId);
-
-			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(http.errorHeaders(msg.getText()), HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -566,7 +557,7 @@ public class OrderControllerImpl implements OrderController {
 				} 
 			}
 
-			ProseoMessage msg = orderUtil.prepareSuspend(order.getId(), force);
+			PlannerResultMessage msg = orderUtil.prepareSuspend(order.getId(), force);
 			if (msg.getSuccess()) {
 				msg = orderUtil.suspend(order.getId(), force);
 			}
@@ -580,9 +571,7 @@ public class OrderControllerImpl implements OrderController {
 				return new ResponseEntity<>(ro, HttpStatus.OK);
 			} else {
 				// illegal state for suspend
-				String message = logger.log(msg, orderId);
-
-				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>(http.errorHeaders(msg.getText()), HttpStatus.BAD_REQUEST);
 			}
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
@@ -608,7 +597,7 @@ public class OrderControllerImpl implements OrderController {
 				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 			}
 			
-			ProseoMessage msg = null;
+			PlannerResultMessage msg = new PlannerResultMessage(null);
 			try {
 				productionPlanner.acquireThreadSemaphore("retryOrder");
 				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -629,9 +618,7 @@ public class OrderControllerImpl implements OrderController {
 				return new ResponseEntity<>(ro, HttpStatus.OK);
 			} else {
 				// illegal state for retry
-				String message = logger.log(msg, orderId);
-
-				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>(http.errorHeaders(msg.getText()), HttpStatus.BAD_REQUEST);
 			}
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());

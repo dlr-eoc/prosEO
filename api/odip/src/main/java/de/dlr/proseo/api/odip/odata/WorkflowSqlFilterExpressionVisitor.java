@@ -500,7 +500,7 @@ public class WorkflowSqlFilterExpressionVisitor implements ExpressionVisitor<Str
 			}
 			++paramCount;
 			result = String.format(OPTION_WHERE_TEMPLATE,
-					paramCount, attCondition.getName());
+					paramCount, attCondition.getName(), paramCount, attCondition.getOp(), attCondition.getValue());
 		} else {
 			attCondition.setName(mappedProperty);
 			result = attCondition.toString();

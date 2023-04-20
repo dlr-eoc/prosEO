@@ -26,7 +26,7 @@ import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
-import de.dlr.proseo.logging.messages.ProseoMessage;
+import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.enums.FacilityState;
@@ -228,7 +228,7 @@ public class JobControllerImpl implements JobController {
 			Job job = this.findJobById(jobId);
 			if (job != null) {
 
-				ProseoMessage msg = null;
+				PlannerResultMessage msg = new PlannerResultMessage(null);
 				try {
 					productionPlanner.acquireThreadSemaphore("resumeJob");
 					final ResponseEntity<RestJob> answer = transactionTemplate.execute((status) -> {
@@ -275,7 +275,7 @@ public class JobControllerImpl implements JobController {
 					RestJob rj = getRestJob(job.getId(), false);
 					return new ResponseEntity<>(rj, HttpStatus.OK);
 				} else {
-					String message = logger.log(msg, jobId);
+					String message = logger.log(msg.getMessage(), jobId);
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}
 			}
@@ -301,7 +301,7 @@ public class JobControllerImpl implements JobController {
 		try {
 			Job job = this.findJobById(jobId);
 			if (job != null) {
-				ProseoMessage msg = null;
+				PlannerResultMessage msg = new PlannerResultMessage(null);
 				try {
 					productionPlanner.acquireThreadSemaphore("cancelJob");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -320,7 +320,7 @@ public class JobControllerImpl implements JobController {
 
 					return new ResponseEntity<>(rj, HttpStatus.OK);
 				} else {
-					String message = logger.log(msg, jobId);
+					String message = logger.log(msg.getMessage(), jobId);
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}
 			}
@@ -351,7 +351,7 @@ public class JobControllerImpl implements JobController {
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 			if (job != null) {
 
-				ProseoMessage msg = null;
+				PlannerResultMessage msg = new PlannerResultMessage(null);
 				try {
 					productionPlanner.acquireThreadSemaphore("suspendJob");
 					final ResponseEntity<RestJob> answer = transactionTemplate.execute((status) -> {
@@ -394,7 +394,7 @@ public class JobControllerImpl implements JobController {
 
 					return new ResponseEntity<>(pj, HttpStatus.OK);
 				} else {
-					String message = logger.log(msg, jobId);
+					String message = logger.log(msg.getMessage(), jobId);
 
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_ACCEPTABLE);
 				}
@@ -496,7 +496,7 @@ public class JobControllerImpl implements JobController {
 		try {
 			Job j = this.findJobById(id);
 			if (j != null) {
-				ProseoMessage msg = null;
+				PlannerResultMessage msg = new PlannerResultMessage(null);
 				try {
 					productionPlanner.acquireThreadSemaphore("retryJob");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -515,7 +515,7 @@ public class JobControllerImpl implements JobController {
 
 					return new ResponseEntity<>(rj, HttpStatus.OK);
 				} else {
-					String message = logger.log(msg, id);
+					String message = logger.log(msg.getMessage(), id);
 
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}
