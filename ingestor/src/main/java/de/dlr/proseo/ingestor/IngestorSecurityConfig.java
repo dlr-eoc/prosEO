@@ -60,7 +60,8 @@ public class IngestorSecurityConfig extends WebSecurityConfigurerAdapter {
 			String message = logger.log(IngestorMessage.AUTH_MISSING_OR_INVALID, authHeader);
 			throw new IllegalArgumentException (message);
 		}
-		String[] userPassword = (new String(Base64.getDecoder().decode(authParts[1]))).split(":"); // guaranteed to work as per BasicAuth specification
+		// The following is guaranteed to work as per BasicAuth specification (but split limited, because password may contain ':')
+		String[] userPassword = (new String(Base64.getDecoder().decode(authParts[1]))).split(":", 2);
 		return userPassword;
 	}
 
