@@ -32,7 +32,7 @@ import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
-import de.dlr.proseo.logging.messages.ProseoMessage;
+import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
@@ -255,17 +255,17 @@ public class JobStepUtil {
 	 * @return Result message
 	 */
 	@Transactional
-	public ProseoMessage suspend(JobStep js, Boolean force) {
+	public PlannerResultMessage suspend(JobStep js, Boolean force) {
 		if (logger.isTraceEnabled()) logger.trace(">>> suspend({}, {})",
 				(null == js ? "null" : js.getId()), force);
 
-		ProseoMessage answer = GeneralMessage.FALSE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		// check current state for possibility to be suspended
 		// PLANNED, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED
 		if (js != null) {
 			switch (js.getJobStepState()) {
 			case PLANNED:
-				answer = PlannerMessage.JOBSTEP_SUSPENDED;
+				answer.setMessage(PlannerMessage.JOBSTEP_SUSPENDED);
 				break;
 			case READY:
 			case WAITING_INPUT:
@@ -273,7 +273,7 @@ public class JobStepUtil {
 				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
 				em.merge(js);
-				answer = PlannerMessage.JOBSTEP_SUSPENDED;
+				answer.setMessage(PlannerMessage.JOBSTEP_SUSPENDED);
 				break;
 			case RUNNING:
 				Boolean deleted = false;
@@ -298,9 +298,9 @@ public class JobStepUtil {
 				if (deleted) {
 					em.merge(js);
 					if (js.getJobStepState() == JobStepState.COMPLETED) {
-						answer = PlannerMessage.JOBSTEP_COMPLETED;
+						answer.setMessage(PlannerMessage.JOBSTEP_COMPLETED);
 					} else if (js.getJobStepState() == JobStepState.FAILED) {
-						answer = PlannerMessage.JOBSTEP_COMPLETED;
+						answer.setMessage(PlannerMessage.JOBSTEP_COMPLETED);
 					} else {
 						js.setProcessingStartTime(null);
 						js.setProcessingCompletionTime(null);
@@ -309,7 +309,7 @@ public class JobStepUtil {
 						js.setJobOrderFilename(null);
 						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.PLANNED);
 						js.incrementVersion();
-						answer = PlannerMessage.JOBSTEP_SUSPENDED;
+						answer.setMessage(PlannerMessage.JOBSTEP_SUSPENDED);
 						RepositoryService.getJobStepRepository().save(js);
 						em.merge(js);
 					}
@@ -319,26 +319,26 @@ public class JobStepUtil {
 						kc.sync();
 						KubeJob kj = kc.getKubeJob(ProductionPlanner.jobNamePrefix + js.getId());
 						if (kj != null) {
-							answer = PlannerMessage.JOBSTEP_ALREADY_RUNNING;
+							answer.setMessage(PlannerMessage.JOBSTEP_ALREADY_RUNNING);
 						}
 					} else {
-						answer = PlannerMessage.JOBSTEP_SUSPENDED;
+						answer.setMessage(PlannerMessage.JOBSTEP_SUSPENDED);
 					}
 				}
 				break;
 			case COMPLETED:
-				answer = PlannerMessage.JOBSTEP_COMPLETED;
+				answer.setMessage(PlannerMessage.JOBSTEP_COMPLETED);
 				break;
 			case FAILED:
-				answer = PlannerMessage.JOBSTEP_FAILED;
+				answer.setMessage(PlannerMessage.JOBSTEP_FAILED);
 				break;
 			case CLOSED:
-				answer = PlannerMessage.JOBSTEP_ALREADY_CLOSED;
+				answer.setMessage(PlannerMessage.JOBSTEP_ALREADY_CLOSED);
 				break;
 			default:
 				break;
 			}
-			logger.log(answer, js.getId());
+			answer.setText(logger.log(answer.getMessage(), js.getId()));
 		}
 		return answer;
 	}
@@ -350,10 +350,10 @@ public class JobStepUtil {
 	 * @return Result message
 	 */
 	@Transactional
-	public ProseoMessage cancel(JobStep js) {
+	public PlannerResultMessage cancel(JobStep js) {
 		if (logger.isTraceEnabled()) logger.trace(">>> cancel({})", (null == js ? "null" : js.getId()));
 
-		ProseoMessage answer = GeneralMessage.FALSE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		// check current state for possibility to be suspended
 		if (js != null) {
 			switch (js.getJobStepState()) {
@@ -364,7 +364,7 @@ public class JobStepUtil {
 				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
 				em.merge(js);
-				answer = PlannerMessage.JOBSTEP_CANCELED;
+				answer.setMessage(PlannerMessage.JOBSTEP_CANCELED);
 				break;
 			case RUNNING:
 				Boolean deleted = false;
@@ -380,24 +380,24 @@ public class JobStepUtil {
 					js.incrementVersion();
 					RepositoryService.getJobStepRepository().save(js);
 					em.merge(js);
-					answer = PlannerMessage.JOBSTEP_CANCELED;
+					answer.setMessage(PlannerMessage.JOBSTEP_CANCELED);
 				} else {
-					answer = PlannerMessage.JOBSTEP_ALREADY_RUNNING;
+					answer.setMessage(PlannerMessage.JOBSTEP_ALREADY_RUNNING);
 				}
 				break;
 			case COMPLETED:
-				answer = PlannerMessage.JOBSTEP_ALREADY_COMPLETED;
+				answer.setMessage(PlannerMessage.JOBSTEP_ALREADY_COMPLETED);
 				break;
 			case FAILED:
-				answer = PlannerMessage.JOBSTEP_ALREADY_FAILED;
+				answer.setMessage(PlannerMessage.JOBSTEP_ALREADY_FAILED);
 				break;
 			case CLOSED:
-				answer = PlannerMessage.JOBSTEP_ALREADY_CLOSED;
+				answer.setMessage(PlannerMessage.JOBSTEP_ALREADY_CLOSED);
 				break;
 			default:
 				break;
 			}
-			logger.log(answer, js.getId());
+			answer.setText(logger.log(answer.getMessage(), js.getId()));
 		}
 		return answer;
 	}
@@ -408,7 +408,7 @@ public class JobStepUtil {
 	 * @param js Job step
 	 * @return Result message
 	 */
-	public ProseoMessage close(Long id) {
+	public PlannerResultMessage close(Long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> close({})", (null == id ? "null" : id));
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -419,7 +419,7 @@ public class JobStepUtil {
 			Object o = query.getSingleResult();
 			return JobStepState.valueOf((String)o);			
 		});
-		ProseoMessage answer = GeneralMessage.FALSE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		// check current state for possibility to be suspended
 		if (id != null) {
 			switch (jobStepState) {
@@ -427,7 +427,7 @@ public class JobStepUtil {
 			case READY:
 			case WAITING_INPUT:
 			case RUNNING:
-				answer = PlannerMessage.JOBSTEP_COULD_NOT_CLOSE;
+				answer.setMessage(PlannerMessage.JOBSTEP_COULD_NOT_CLOSE);
 				break;
 			case COMPLETED:
 			case FAILED:
@@ -442,15 +442,15 @@ public class JobStepUtil {
 					query.executeUpdate();
 					return null;
 				});		
-				answer = PlannerMessage.JOBSTEP_CLOSED;
+				answer.setMessage(PlannerMessage.JOBSTEP_CLOSED);
 				break;
 			case CLOSED:
-				answer = PlannerMessage.JOBSTEP_ALREADY_CLOSED;
+				answer.setMessage(PlannerMessage.JOBSTEP_ALREADY_CLOSED);
 				break;
 			default:
 				break;
 			}
-			logger.log(answer, id);
+			answer.setText(logger.log(answer.getMessage(), id));
 		}
 		return answer;
 	}
@@ -462,10 +462,10 @@ public class JobStepUtil {
 	 * @return Result message
 	 */
 	@Transactional
-	public ProseoMessage retry(JobStep js) {
+	public PlannerResultMessage retry(JobStep js) {
 		if (logger.isTraceEnabled()) logger.trace(">>> retry({})", (null == js ? "null" : js.getId()));
 
-		ProseoMessage answer = GeneralMessage.FALSE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		// check current state for possibility to be suspended
 		if (js != null) {
 			switch (js.getJobStepState()) {
@@ -474,7 +474,7 @@ public class JobStepUtil {
 			case RUNNING:
 			case COMPLETED:
 			case CLOSED:
-				answer = PlannerMessage.JOBSTEP_COULD_NOT_RETRY;
+				answer.setMessage(PlannerMessage.JOBSTEP_COULD_NOT_RETRY);
 				break;
 			case WAITING_INPUT:
 			case FAILED:
@@ -497,7 +497,7 @@ public class JobStepUtil {
 						js.incrementVersion();
 						RepositoryService.getJobStepRepository().save(js);
 						em.merge(js);
-						answer = PlannerMessage.JOBSTEP_RETRIED_COMPLETED;
+						answer.setMessage(PlannerMessage.JOBSTEP_RETRIED_COMPLETED);
 						break;
 					}		
 				}
@@ -510,12 +510,12 @@ public class JobStepUtil {
 				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
 				em.merge(js);
-				answer = PlannerMessage.JOBSTEP_RETRIED;
+				answer.setMessage(PlannerMessage.JOBSTEP_RETRIED);
 				break;
 			default:
 				break;
 			}
-			logger.log(answer, js.getId());
+			answer.setText(logger.log(answer.getMessage(), js.getId()));
 		}
 		return answer;
 	}
@@ -741,10 +741,10 @@ public class JobStepUtil {
 	 * @param js Job step
 	 * @return Result message
 	 */
-	public ProseoMessage resume(JobStep js, Boolean force) {
+	public PlannerResultMessage resume(JobStep js, Boolean force) {
 		if (logger.isTraceEnabled()) logger.trace(">>> resume({}, {})", js.getId(), force);
 		
-		ProseoMessage answer = GeneralMessage.FALSE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		// check current state for possibility to be suspended
 		if (js != null) {
 			switch (js.getJobStepState()) {
@@ -759,27 +759,27 @@ public class JobStepUtil {
 					productionPlanner.releaseReleaseSemaphore("resume");				
 				}
 				if (js.getJobStepState() == JobStepState.WAITING_INPUT) {
-					answer = PlannerMessage.JOBSTEP_WAITING;
+					answer.setMessage(PlannerMessage.JOBSTEP_WAITING);
 				} else {
-					answer = PlannerMessage.JOBSTEP_READY;
+					answer.setMessage(PlannerMessage.JOBSTEP_READY);
 				}				
 				break;
 			case READY:
-				answer = PlannerMessage.JOBSTEP_READY;
+				answer.setMessage(PlannerMessage.JOBSTEP_READY);
 				break;
 			case RUNNING:
-				answer = PlannerMessage.JOBSTEP_ALREADY_RUNNING;
+				answer.setMessage(PlannerMessage.JOBSTEP_ALREADY_RUNNING);
 				break;
 			case COMPLETED:
-				answer = PlannerMessage.JOBSTEP_ALREADY_COMPLETED;
+				answer.setMessage(PlannerMessage.JOBSTEP_ALREADY_COMPLETED);
 				break;
 			case FAILED:
-				answer = PlannerMessage.JOBSTEP_ALREADY_FAILED;
+				answer.setMessage(PlannerMessage.JOBSTEP_ALREADY_FAILED);
 				break;
 			default:
 				break;
 			}
-			logger.log(answer, js.getId());
+			answer.setText(logger.log(answer.getMessage(), js.getId()));
 		}
 		return answer;
 	}

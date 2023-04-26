@@ -58,7 +58,7 @@ public enum CscAttributeName {
 	/** The password associated with the EndPoint URI provided */
 	NOTIFICATION_EPPASSWORD("NotificationEpPassword"),
 	/** Product (file) class */
-	PRODUCT_CLASS("productClass"),
+	PRODUCT_CLASS("ProductClass"),
 	/** Output product (file) class */
 	OUTPUT_PRODUCT_CLASS("OutputProductType"),
 	/** Input product (file) class */

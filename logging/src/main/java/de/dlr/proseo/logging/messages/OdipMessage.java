@@ -21,7 +21,7 @@ public enum OdipMessage implements ProseoMessage {
 	MSG_NOT_AUTHORIZED_FOR_SERVICE 	(5205, Level.ERROR, false, "User {0} not authorized for requested service", ""),
 	MSG_PRODUCTIONORDER_NOT_FOUND	(5206, Level.ERROR, false, "No production order found with UUID {0}", ""),
 	MSG_NOT_AUTHORIZED_FOR_PRODUCTIONORDER 	(5207, Level.ERROR, false, "User {0} not authorized to access requested production order {1}", ""),
-	MSG_WORKFLOW_NOT_FOUND			(5206, Level.ERROR, false, "No production order found with UUID {0}", ""),
+	MSG_WORKFLOW_NOT_FOUND			(5206, Level.ERROR, false, "No workflow found with UUID {0}", ""),
 	MSG_NOT_AUTHORIZED_FOR_WORKFLOW (5207, Level.ERROR, false, "User {0} not authorized to access requested production order {1}", ""),
 	MSG_EXCEPTION 					(5208, Level.ERROR, false, "Request failed (cause {0}: {1})", ""),
 	MSG_FORBIDDEN 					(5209, Level.ERROR, false, "Creation, update and deletion of products not allowed through PRIP", ""),

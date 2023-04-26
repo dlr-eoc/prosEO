@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.logging.messages.ProseoMessage;
+import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.model.Job;
@@ -58,15 +58,15 @@ public class JobUtil {
 	 * @return Result message
 	 */
 	@Transactional
-	public ProseoMessage suspend(Job job, Boolean force) {
+	public PlannerResultMessage suspend(Job job, Boolean force) {
 		if (logger.isTraceEnabled()) logger.trace(">>> suspend({}, {})", (null == job ? "null" : job.getId()), force);
 
-		ProseoMessage answer = GeneralMessage.FALSE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		// check current state for possibility to be suspended
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
-				answer = PlannerMessage.JOB_INITIAL;
+				answer.setMessage(PlannerMessage.JOB_INITIAL);
 				break;
 			case PLANNED:
 			case RELEASED:
@@ -87,26 +87,26 @@ public class JobUtil {
 					} else if (job.getJobState() == JobState.ON_HOLD) {
 						job.setJobState(de.dlr.proseo.model.Job.JobState.PLANNED);
 					}
-					answer = PlannerMessage.JOB_SUSPENDED;
+					answer.setMessage(PlannerMessage.JOB_SUSPENDED);
 				} else {
 					job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
-					answer = PlannerMessage.JOB_HOLD;
+					answer.setMessage(PlannerMessage.JOB_HOLD);
 				}
 				RepositoryService.getJobRepository().save(job);
 				em.merge(job);
 				break;
 			case COMPLETED:
-				answer = PlannerMessage.JOB_ALREADY_COMPLETED;
+				answer.setMessage(PlannerMessage.JOB_ALREADY_COMPLETED);
 				break;
 			case FAILED:
-				answer = PlannerMessage.JOB_ALREADY_FAILED;
+				answer.setMessage(PlannerMessage.JOB_ALREADY_FAILED);
 			case CLOSED:
-				answer = PlannerMessage.JOB_ALREADY_CLOSED;
+				answer.setMessage(PlannerMessage.JOB_ALREADY_CLOSED);
 				break;
 			default:
 				break;
 			}
-			logger.log(answer, job.getId());
+			answer.setText(logger.log(answer.getMessage(), job.getId()));
 		}
 		return answer;
 	}
@@ -118,7 +118,7 @@ public class JobUtil {
 	 * @param job The job
 	 * @return Result message
 	 */
-	public ProseoMessage close(Long id) {
+	public PlannerResultMessage close(Long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> close({})", (null == id ? "null" : id));
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -141,7 +141,7 @@ public class JobUtil {
 			}
 			return null;
 		});
-		ProseoMessage answer = GeneralMessage.FALSE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		// check current state for possibility to be suspended
 		if (id != null) {
 			switch (jobState) {
@@ -150,7 +150,7 @@ public class JobUtil {
 			case RELEASED:
 			case STARTED:
 			case ON_HOLD:
-				answer = PlannerMessage.JOB_COULD_NOT_CLOSE;
+				answer.setMessage(PlannerMessage.JOB_COULD_NOT_CLOSE);
 				break;
 			case COMPLETED:
 			case FAILED:
@@ -167,15 +167,15 @@ public class JobUtil {
 					query.executeUpdate();
 					return null;
 				});
-				answer = PlannerMessage.JOB_CLOSED;
+				answer.setMessage(PlannerMessage.JOB_CLOSED);
 				break;
 			case CLOSED:
-				answer = PlannerMessage.JOB_ALREADY_CLOSED;
+				answer.setMessage(PlannerMessage.JOB_ALREADY_CLOSED);
 				break;
 			default:
 				break;
 			}
-			logger.log(answer, id);
+			answer.setText(logger.log(answer.getMessage(), id));
 		}
 		return answer;
 	}
@@ -187,23 +187,23 @@ public class JobUtil {
 	 * @return Result message
 	 */
 	@Transactional
-	public ProseoMessage retry(Job job) {
+	public PlannerResultMessage retry(Job job) {
 		if (logger.isTraceEnabled()) logger.trace(">>> retry({})", (null == job ? "null" : job.getId()));
 
-		ProseoMessage answer = GeneralMessage.FALSE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		// check current state for possibility to be suspended
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
 			case RELEASED:
 			case STARTED:
-				answer = PlannerMessage.JOB_COULD_NOT_RETRY;
+				answer.setMessage(PlannerMessage.JOB_COULD_NOT_RETRY);
 				break;
 			case COMPLETED:
-				answer = PlannerMessage.JOB_ALREADY_COMPLETED;
+				answer.setMessage(PlannerMessage.JOB_ALREADY_COMPLETED);
 				break;
 			case PLANNED:
-				answer = PlannerMessage.JOB_RETRIED;
+				answer.setMessage(PlannerMessage.JOB_RETRIED);
 				break;
 			case ON_HOLD:
 			case FAILED:
@@ -228,7 +228,7 @@ public class JobUtil {
 				}
 				if (all) {
 					if (job.getJobState() == JobState.COMPLETED) {
-						answer = PlannerMessage.JOB_COMPLETED;
+						answer.setMessage(PlannerMessage.JOB_COMPLETED);
 					} else if (allCompleted) {
 						job.setJobState(de.dlr.proseo.model.Job.JobState.PLANNED);
 						job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
@@ -237,7 +237,7 @@ public class JobUtil {
 						job.incrementVersion();
 						RepositoryService.getJobRepository().save(job);
 						em.merge(job);
-						answer = PlannerMessage.JOB_COMPLETED;
+						answer.setMessage(PlannerMessage.JOB_COMPLETED);
 					} else {
 						if (job.getJobState() == JobState.STARTED) {
 							job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
@@ -246,19 +246,19 @@ public class JobUtil {
 						job.incrementVersion();
 						RepositoryService.getJobRepository().save(job);
 						em.merge(job);
-						answer = PlannerMessage.JOB_RETRIED;
+						answer.setMessage(PlannerMessage.JOB_RETRIED);
 					}
 				} else {
-					answer = PlannerMessage.JOB_COULD_NOT_RETRY;
+					answer.setMessage(PlannerMessage.JOB_COULD_NOT_RETRY);
 				}
 				break;
 			case CLOSED:
-				answer = PlannerMessage.JOB_ALREADY_CLOSED;
+				answer.setMessage(PlannerMessage.JOB_ALREADY_CLOSED);
 				break;
 			default:
 				break;
 			}
-			logger.log(answer, job.getId());
+			answer.setText(logger.log(answer.getMessage(), job.getId()));
 		}
 		return answer;
 	}
@@ -270,10 +270,10 @@ public class JobUtil {
 	 * @return Result message
 	 */
 	@Transactional
-	public ProseoMessage cancel(Job job) {
+	public PlannerResultMessage cancel(Job job) {
 		if (logger.isTraceEnabled()) logger.trace(">>> cancel({})", (null == job ? "null" : job.getId()));
 
-		ProseoMessage answer = GeneralMessage.FALSE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		// check current state for possibility to be suspended
 		if (job != null) {
 			switch (job.getJobState()) {
@@ -285,30 +285,30 @@ public class JobUtil {
 				job.setJobState(de.dlr.proseo.model.Job.JobState.FAILED);
 				job.incrementVersion();
 				RepositoryService.getJobRepository().save(job);
-				answer = PlannerMessage.JOB_CANCELED;
+				answer.setMessage(PlannerMessage.JOB_CANCELED);
 				break;
 			case RELEASED:
-				answer = PlannerMessage.JOB_ALREADY_RELEASED;
+				answer.setMessage(PlannerMessage.JOB_ALREADY_RELEASED);
 				break;
 			case ON_HOLD:
-				answer = PlannerMessage.JOB_ALREADY_HOLD;
+				answer.setMessage(PlannerMessage.JOB_ALREADY_HOLD);
 				break;
 			case STARTED:
-				answer = PlannerMessage.JOB_ALREADY_STARTED;
+				answer.setMessage(PlannerMessage.JOB_ALREADY_STARTED);
 				break;
 			case COMPLETED:
-				answer = PlannerMessage.JOB_ALREADY_COMPLETED;
+				answer.setMessage(PlannerMessage.JOB_ALREADY_COMPLETED);
 				break;
 			case FAILED:
-				answer = PlannerMessage.JOB_ALREADY_FAILED;
+				answer.setMessage(PlannerMessage.JOB_ALREADY_FAILED);
 				break;
 			case CLOSED:
-				answer = PlannerMessage.JOB_ALREADY_CLOSED;
+				answer.setMessage(PlannerMessage.JOB_ALREADY_CLOSED);
 				break;
 			default:
 				break;
 			}
-			logger.log(answer, job.getId());
+			answer.setText(logger.log(answer.getMessage(), job.getId()));
 		}
 		return answer;
 	}
@@ -319,10 +319,10 @@ public class JobUtil {
 	 * @param jobId The job id
 	 * @return Result message
 	 */
-	public ProseoMessage resume(Job job) {
+	public PlannerResultMessage resume(Job job) {
 		if (logger.isTraceEnabled()) logger.trace(">>> resume({})", job.getId());
 
-		ProseoMessage answer = GeneralMessage.FALSE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 //		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 //
 //		final Job job = transactionTemplate.execute((status) -> {
@@ -344,7 +344,7 @@ public class JobUtil {
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
-				answer = PlannerMessage.JOB_HASTOBE_PLANNED;
+				answer.setMessage(PlannerMessage.JOB_HASTOBE_PLANNED);
 				break;
 			case PLANNED:
 				try {
@@ -356,33 +356,33 @@ public class JobUtil {
 					for (JobStep js : job.getJobSteps()) {
 						UtilService.getJobStepUtil().resume(js, false);
 					}
-					answer = PlannerMessage.JOB_RELEASED;
+					answer.setMessage(PlannerMessage.JOB_RELEASED);
 				} catch (Exception e) {
 					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 				}
 				break;
 			case RELEASED:
-				answer = PlannerMessage.JOB_RELEASED;
+				answer.setMessage(PlannerMessage.JOB_RELEASED);
 				break;
 			case ON_HOLD:
-				answer = PlannerMessage.JOB_ALREADY_HOLD;
+				answer.setMessage(PlannerMessage.JOB_ALREADY_HOLD);
 				break;
 			case STARTED:
-				answer = PlannerMessage.JOB_ALREADY_STARTED;
+				answer.setMessage(PlannerMessage.JOB_ALREADY_STARTED);
 				break;
 			case COMPLETED:
-				answer = PlannerMessage.JOB_ALREADY_COMPLETED;
+				answer.setMessage(PlannerMessage.JOB_ALREADY_COMPLETED);
 				break;
 			case FAILED:
-				answer = PlannerMessage.JOB_ALREADY_FAILED;
+				answer.setMessage(PlannerMessage.JOB_ALREADY_FAILED);
 				break;
 			case CLOSED:
-				answer = PlannerMessage.JOB_ALREADY_CLOSED;
+				answer.setMessage(PlannerMessage.JOB_ALREADY_CLOSED);
 				break;
 			default:
 				break;
 			}
-			logger.log(answer, job.getId());
+			answer.setText(logger.log(answer.getMessage(), job.getId()));
 		}
 		return answer;
 	}

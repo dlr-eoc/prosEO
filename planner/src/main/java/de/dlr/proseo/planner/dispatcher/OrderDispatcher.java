@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.logging.messages.ProseoMessage;
+import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.model.ConfiguredProcessor;
@@ -73,11 +73,11 @@ public class OrderDispatcher {
 	 * @param pf The processing facility 
 	 * @return true after success, else false
 	 */
-	public ProseoMessage prepareExpectedJobs(long orderId, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
+	public PlannerResultMessage prepareExpectedJobs(long orderId, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(ProductionPlanner.productionPlanner.getTxManager());
-		ProseoMessage msg = GeneralMessage.FALSE;
+		PlannerResultMessage msg = new PlannerResultMessage(GeneralMessage.FALSE);
 		try	{
-			msg = (ProseoMessage) transactionTemplate.execute((status) -> {
+			msg = (PlannerResultMessage) transactionTemplate.execute((status) -> {
 				ProcessingOrder order = null;
 				Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
 				if (orderOpt.isPresent()) {
@@ -85,7 +85,7 @@ public class OrderDispatcher {
 				}
 				if (logger.isTraceEnabled()) logger.trace(">>> prepareExpectedJobs({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 
-				ProseoMessage answer = GeneralMessage.FALSE;
+				PlannerResultMessage answer =new PlannerResultMessage(GeneralMessage.FALSE);
 				if (thread.isInterrupted()) {
 					return PlannerMessage.PLANNING_INTERRUPTED;
 				}
@@ -119,8 +119,8 @@ public class OrderDispatcher {
 								answer = createSingleJob(order, pf);
 								break;
 							default:
-								answer = PlannerMessage.ORDER_SLICING_TYPE_NOT_SET;
-								logger.log(answer, order.getIdentifier());
+								answer.setMessage(PlannerMessage.ORDER_SLICING_TYPE_NOT_SET);
+								answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 								break;
 
 							}
@@ -136,17 +136,18 @@ public class OrderDispatcher {
 							UtilService.getOrderUtil().checkAutoClose(order);
 							UtilService.getOrderUtil().setTimes(order);
 							UtilService.getOrderUtil().setStateMessage(order, ProductionPlanner.STATE_MESSAGE_COMPLETED);
+							answer.setMessage(PlannerMessage.ORDER_ALREADY_COMPLETED);
 						}
 						break;
 					}
 					case RELEASED: {
-						answer = PlannerMessage.ORDER_WAIT_FOR_RELEASE;
-						logger.log(answer, order.getIdentifier(), order.getOrderState());
+						answer.setMessage(PlannerMessage.ORDER_WAIT_FOR_RELEASE);
+						answer.setText(logger.log(answer.getMessage(), order.getIdentifier(), order.getOrderState()));
 						break;
 					}
 					default: {
-						answer = PlannerMessage.ORDER_WAIT_FOR_RELEASE;
-						logger.log(answer, order.getIdentifier(), order.getOrderState());
+						answer.setMessage(PlannerMessage.ORDER_WAIT_FOR_RELEASE);
+						answer.setText(logger.log(answer.getMessage(), order.getIdentifier(), order.getOrderState()));
 						break;
 					}
 
@@ -169,18 +170,18 @@ public class OrderDispatcher {
 	 * @param order
 	 * @return
 	 */
-	public ProseoMessage checkForValidOrder(ProcessingOrder order) {
+	public PlannerResultMessage checkForValidOrder(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkForValidOrder({}, {})", (null == order ? "null": order.getIdentifier()));
 		
-		ProseoMessage answer = GeneralMessage.TRUE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.TRUE);
 		// check for needed data
 		if (order.getMission() == null) {
-			answer = PlannerMessage.ORDER_MISSION_NOT_SET;
-			logger.log(answer, order.getIdentifier());
+			answer.setMessage(PlannerMessage.ORDER_MISSION_NOT_SET);
+			answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 		}
 		if (order.getRequestedProductClasses().isEmpty()) {
-			answer = PlannerMessage.ORDER_REQ_PROD_CLASS_NOT_SET;
-			logger.log(answer, order.getIdentifier());
+			answer.setMessage(PlannerMessage.ORDER_REQ_PROD_CLASS_NOT_SET);
+			answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 		}
 		return answer;
 	}
@@ -194,16 +195,16 @@ public class OrderDispatcher {
 	 * @return The result message
 	 * @throws InterruptedException
 	 */
-	public ProseoMessage createJobsForOrbit(ProcessingOrder order, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
+	public PlannerResultMessage createJobsForOrbit(ProcessingOrder order, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForOrbit({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 		
-		ProseoMessage answer = GeneralMessage.FALSE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		// there has to be a list of orbits
 		List<Orbit> orbits = order.getRequestedOrbits();
 		try {
 			if (orbits.isEmpty()) {
-				answer = PlannerMessage.ORDER_REQ_ORBIT_NOT_SET;
-				logger.log(answer, order.getIdentifier());
+				answer.setMessage(PlannerMessage.ORDER_REQ_ORBIT_NOT_SET);
+				answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 			} else {
 				// create a job for each orbit
 				// set order start time and stop time
@@ -211,15 +212,15 @@ public class OrderDispatcher {
 				// product class
 				Set<ProductClass> productClasses = order.getRequestedProductClasses();
 				if (productClasses.isEmpty()) {
-					answer = PlannerMessage.ORDER_REQ_PROD_CLASS_NOT_SET;
-					logger.log(answer, order.getIdentifier());
+					answer.setMessage(PlannerMessage.ORDER_REQ_PROD_CLASS_NOT_SET);
+					answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 				} else {
 					// create jobs
 					// for each orbit
 					for (Orbit orbit : orbits) {
 						if (thread.isInterrupted()) {
-							answer = PlannerMessage.PLANNING_INTERRUPTED;
-							logger.log(answer, order.getIdentifier());
+							answer.setMessage(PlannerMessage.PLANNING_INTERRUPTED);
+							answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 							throw new InterruptedException();
 						}
 						// create job
@@ -232,8 +233,8 @@ public class OrderDispatcher {
 			throw e;
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			answer = GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED;
-				logger.log(answer, ex.getMessage());
+			answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
+				answer.setText(logger.log(answer.getMessage(), ex.getMessage()));
 		}
 
 		return answer;
@@ -248,10 +249,10 @@ public class OrderDispatcher {
 	 * @return The result message
 	 * @throws InterruptedException
 	 */
-	public ProseoMessage createJobsForDay(ProcessingOrder order, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
+	public PlannerResultMessage createJobsForDay(ProcessingOrder order, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForDay({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 		
-		ProseoMessage answer = GeneralMessage.FALSE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 
 		Instant startT = null;
 		Instant stopT = null;
@@ -260,22 +261,22 @@ public class OrderDispatcher {
 			// get first day
 			
 			if (order.getStartTime() == null || order.getStopTime() == null) {
-				answer = PlannerMessage.ORDER_REQ_DAY_NOT_SET;
-				logger.log(answer, order.getIdentifier());
+				answer.setMessage(PlannerMessage.ORDER_REQ_DAY_NOT_SET);
+				answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 			} else {
 				startT = order.getStartTime().truncatedTo(ChronoUnit.DAYS);
 				stopT = order.getStopTime();
 				sliceStopT = startT.plus(1, ChronoUnit.DAYS);
 				Set<ProductClass> productClasses = order.getRequestedProductClasses();
 				if (productClasses.isEmpty()) {
-					answer = PlannerMessage.ORDER_REQ_PROD_CLASS_NOT_SET;
-					logger.log(answer, order.getIdentifier());
+					answer.setMessage(PlannerMessage.ORDER_REQ_PROD_CLASS_NOT_SET);
+					answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 				} else {
 					// create jobs for each day
 					while (startT.isBefore(stopT)) {
 						if (thread.isInterrupted()) {
-							answer = PlannerMessage.PLANNING_INTERRUPTED;
-							logger.log(answer, order.getIdentifier());
+							answer.setMessage(PlannerMessage.PLANNING_INTERRUPTED);
+							answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 							throw new InterruptedException();
 						}
 						// create job (without orbit association)
@@ -290,8 +291,8 @@ public class OrderDispatcher {
 			throw e;
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			answer = GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED;
-			logger.log(answer, ex.getMessage());
+			answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
+			answer.setText(logger.log(answer.getMessage(), ex.getMessage()));
 		}
 
 		return answer;
@@ -306,10 +307,10 @@ public class OrderDispatcher {
 	 * @return The result message
 	 * @throws InterruptedException
 	 */
-	public ProseoMessage createJobsForMonth(ProcessingOrder order, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
+	public PlannerResultMessage createJobsForMonth(ProcessingOrder order, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForMonth({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 		
-		ProseoMessage answer = GeneralMessage.FALSE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 
 		Instant startT = null;
 		Instant stopT = null;
@@ -318,8 +319,8 @@ public class OrderDispatcher {
 			// get first day
 			
 			if (order.getStartTime() == null || order.getStopTime() == null) {
-				answer = PlannerMessage.ORDER_REQ_DAY_NOT_SET;
-				logger.log(answer, order.getIdentifier());
+				answer.setMessage(PlannerMessage.ORDER_REQ_DAY_NOT_SET);
+				answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 			} else {
 				ZonedDateTime zdt = ZonedDateTime.ofInstant(order.getStartTime(), ZoneId.of("UTC"));
 				Calendar calStart = GregorianCalendar.from(zdt);
@@ -333,15 +334,15 @@ public class OrderDispatcher {
 				stopT = order.getStopTime();
 				Set<ProductClass> productClasses = order.getRequestedProductClasses();
 				if (productClasses.isEmpty()) {
-					answer = PlannerMessage.ORDER_REQ_PROD_CLASS_NOT_SET;
-					logger.log(answer, order.getIdentifier());
+					answer.setMessage(PlannerMessage.ORDER_REQ_PROD_CLASS_NOT_SET);
+					answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 				} else {
 					// create jobs for each day
 					startT = calStart.toInstant();
 					while (startT.isBefore(stopT)) {
 						if (thread.isInterrupted()) {
-							answer = PlannerMessage.PLANNING_INTERRUPTED;
-							logger.log(answer, order.getIdentifier());
+							answer.setMessage(PlannerMessage.PLANNING_INTERRUPTED);
+							answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 							throw new InterruptedException();
 						}
 						// create job (without orbit association)
@@ -358,8 +359,8 @@ public class OrderDispatcher {
 			throw e;
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			answer = GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED;
-			logger.log(answer, ex.getMessage());
+			answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
+			answer.setText(logger.log(answer.getMessage(), ex.getMessage()));
 		}
 
 		return answer;
@@ -374,10 +375,10 @@ public class OrderDispatcher {
 	 * @return The result message
 	 * @throws InterruptedException
 	 */
-	public ProseoMessage createJobsForYear(ProcessingOrder order, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
+	public PlannerResultMessage createJobsForYear(ProcessingOrder order, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForYear({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 		
-		ProseoMessage answer = GeneralMessage.FALSE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 
 		Instant startT = null;
 		Instant stopT = null;
@@ -386,8 +387,8 @@ public class OrderDispatcher {
 			// get first day
 			
 			if (order.getStartTime() == null || order.getStopTime() == null) {
-				answer = PlannerMessage.ORDER_REQ_DAY_NOT_SET;
-				logger.log(answer, order.getIdentifier());
+				answer.setMessage(PlannerMessage.ORDER_REQ_DAY_NOT_SET);
+				answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 			} else {
 				ZonedDateTime zdt = ZonedDateTime.ofInstant(order.getStartTime(), ZoneId.of("UTC"));
 				Calendar calStart = GregorianCalendar.from(zdt);
@@ -402,15 +403,15 @@ public class OrderDispatcher {
 				stopT = order.getStopTime();
 				Set<ProductClass> productClasses = order.getRequestedProductClasses();
 				if (productClasses.isEmpty()) {
-					answer = PlannerMessage.ORDER_REQ_PROD_CLASS_NOT_SET;
-					logger.log(answer, order.getIdentifier());
+					answer.setMessage(PlannerMessage.ORDER_REQ_PROD_CLASS_NOT_SET);
+					answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 				} else {
 					// create jobs for each day
 					startT = calStart.toInstant();
 					while (startT.isBefore(stopT)) {
 						if (thread.isInterrupted()) {
-							answer = PlannerMessage.PLANNING_INTERRUPTED;
-							logger.log(answer, order.getIdentifier());
+							answer.setMessage(PlannerMessage.PLANNING_INTERRUPTED);
+							answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 							throw new InterruptedException();
 						}
 						// create job (without orbit association)
@@ -427,8 +428,8 @@ public class OrderDispatcher {
 			throw e;
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			answer = GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED;
-			logger.log(answer, ex.getMessage());
+			answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
+			answer.setText(logger.log(answer.getMessage(), ex.getMessage()));
 		}
 
 		return answer;
@@ -443,10 +444,10 @@ public class OrderDispatcher {
 	 * @return The result message
 	 * @throws InterruptedException
 	 */
-	public ProseoMessage createJobsForTimeSlices(ProcessingOrder order, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
+	public PlannerResultMessage createJobsForTimeSlices(ProcessingOrder order, ProcessingFacility pf, OrderPlanThread thread) throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForTimeSlices({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 		
-		ProseoMessage answer = GeneralMessage.FALSE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 
 		Instant startT = null;
 		Instant stopT = null;
@@ -455,16 +456,16 @@ public class OrderDispatcher {
 			// get first day
 			
 			if (order.getStartTime() == null || order.getStopTime() == null || order.getSliceDuration() == null) {
-				answer = PlannerMessage.ORDER_REQ_TIMESLICE_NOT_SET;
-				logger.log(answer, order.getIdentifier());
+				answer.setMessage(PlannerMessage.ORDER_REQ_TIMESLICE_NOT_SET);
+				answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 			} else {
 				startT = order.getStartTime();
 				stopT = order.getStopTime();
 				sliceStopT = startT.plus(order.getSliceDuration());
 				Set<ProductClass> productClasses = order.getRequestedProductClasses();
 				if (productClasses.isEmpty()) {
-					answer = PlannerMessage.ORDER_REQ_PROD_CLASS_NOT_SET;
-					logger.log(answer, order.getIdentifier());
+					answer.setMessage(PlannerMessage.ORDER_REQ_PROD_CLASS_NOT_SET);
+					answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 				} else {
 					Duration delta = order.getSliceOverlap();
 					if (delta == null) {
@@ -475,14 +476,14 @@ public class OrderDispatcher {
 						answer = createJobForOrbitOrTime(order, null, startT.minus(delta), stopT.plus(delta), pf);
 					} else {
 						if (Duration.ZERO.equals(order.getSliceDuration())) {
-							answer = PlannerMessage.ORDER_REQ_TIMESLICE_NOT_SET;
-							logger.log(answer, order.getIdentifier());
+							answer.setMessage(PlannerMessage.ORDER_REQ_TIMESLICE_NOT_SET);
+							answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 						}
 						// create jobs for each time slice
 						while (startT.isBefore(stopT)) {
 							if (thread.isInterrupted()) {
-								answer = PlannerMessage.PLANNING_INTERRUPTED;
-								logger.log(answer, order.getIdentifier());
+								answer.setMessage(PlannerMessage.PLANNING_INTERRUPTED);
+								answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 								throw new InterruptedException();
 							}
 							// check orbit
@@ -499,8 +500,8 @@ public class OrderDispatcher {
 			throw e;
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			answer = GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED;
-			logger.log(answer, ex.getMessage());
+			answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
+			answer.setText(logger.log(answer.getMessage(), ex.getMessage()));
 		}
 
 		return answer;
@@ -513,28 +514,28 @@ public class OrderDispatcher {
 	 * @param pf The processing facility 
 	 * @return The result message
 	 */
-	public ProseoMessage createSingleJob(ProcessingOrder order, ProcessingFacility pf) {
+	public PlannerResultMessage createSingleJob(ProcessingOrder order, ProcessingFacility pf) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createSingleJob({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 		
-		ProseoMessage answer = GeneralMessage.FALSE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 
 		try {
 			if (order.getStartTime() == null || order.getStopTime() == null) {
-				answer = PlannerMessage.ORDER_REQ_TIMESLICE_NOT_SET;
-				logger.log(answer, order.getIdentifier());
+				answer.setMessage(PlannerMessage.ORDER_REQ_TIMESLICE_NOT_SET);
+				answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 			} else {
 				Set<ProductClass> productClasses = order.getRequestedProductClasses();
 				if (productClasses.isEmpty()) {
-					answer = PlannerMessage.ORDER_REQ_PROD_CLASS_NOT_SET;
-					logger.log(answer, order.getIdentifier());
+					answer.setMessage(PlannerMessage.ORDER_REQ_PROD_CLASS_NOT_SET);
+					answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 				} else {
 					answer = createJobForOrbitOrTime(order, null, order.getStartTime(), order.getStopTime(), pf);
 				} 
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			answer = GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED;
-			logger.log(answer, ex.getMessage());
+			answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
+			answer.setText(logger.log(answer.getMessage(), ex.getMessage()));
 		}
 
 		return answer;
@@ -551,18 +552,18 @@ public class OrderDispatcher {
 	 * @return true after success, else false
 	 */
 	@Transactional
-	public ProseoMessage createJobForOrbitOrTime(ProcessingOrder order, Orbit orbit, Instant startT, Instant stopT, ProcessingFacility pf) {
+	public PlannerResultMessage createJobForOrbitOrTime(ProcessingOrder order, Orbit orbit, Instant startT, Instant stopT, ProcessingFacility pf) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobForOrbitOrTime({}, {}, {}, {}, {})",
 				(null == order ? "null": order.getIdentifier()), (null == orbit ? "null" : orbit.getOrbitNumber()), startT, stopT,
 				(null == pf ? "null" : pf.getName()));
 
-		ProseoMessage answer = GeneralMessage.TRUE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.TRUE);
 		// there has to be a list of orbits
 
 		try {
 			if (orbit == null && (startT == null || stopT == null)) {
-				answer = PlannerMessage.ORDER_REQ_ORBIT_OR_TIME_NOT_SET;
-				logger.log(answer, order.getIdentifier());
+				answer.setMessage(PlannerMessage.ORDER_REQ_ORBIT_OR_TIME_NOT_SET);
+				answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 			} else {
 				// create a job for each orbit
 				// set order start time and stop time
@@ -570,8 +571,8 @@ public class OrderDispatcher {
 				// product class
 				Set<ProductClass> requestedProductClasses = order.getRequestedProductClasses();
 				if (requestedProductClasses.isEmpty()) {
-					answer = PlannerMessage.ORDER_REQ_PROD_CLASS_NOT_SET;
-					logger.log(answer, order.getIdentifier());
+					answer.setMessage(PlannerMessage.ORDER_REQ_PROD_CLASS_NOT_SET);
+					answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
 				} else {
 					// create job (only keep it if at least one job step is created
 					Job job = new Job();
@@ -609,11 +610,11 @@ public class OrderDispatcher {
 				}
 			}
 		} catch (IllegalArgumentException ex) {
-			answer = GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED;
-			logger.log(answer, ex.getMessage());
+			answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
+			answer.setText(logger.log(answer.getMessage(), ex.getMessage()));
 		} catch (NoSuchElementException ex) {
-			answer = GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED;
-			logger.log(answer, ex.getMessage());
+			answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
+			answer.setText(logger.log(answer.getMessage(), ex.getMessage()));
 		}
 		return answer;
 	}
@@ -628,7 +629,7 @@ public class OrderDispatcher {
 	 * @return The result message
 	 * @throws InterruptedException
 	 */
-	public ProseoMessage createJobSteps(long orderId, ProcessingFacility pf, ProductionPlanner productionPlanner, OrderPlanThread thread) throws InterruptedException {
+	public PlannerResultMessage createJobSteps(long orderId, ProcessingFacility pf, ProductionPlanner productionPlanner, OrderPlanThread thread) throws InterruptedException {
 		ProcessingOrder order = null;
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -652,7 +653,7 @@ public class OrderDispatcher {
 		}
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobSteps({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 
-		ProseoMessage answer = GeneralMessage.TRUE;
+		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.TRUE);
 		// calculate the planning packet size 
 		
 		int packetSize = ProductionPlanner.config.getPlanningBatchSize();
@@ -664,12 +665,12 @@ public class OrderDispatcher {
 		try {
 			while (curJList.get(0) < jCount) {
 				productionPlanner.acquireThreadSemaphore("createJobSteps");
-				ProseoMessage answer1 = transactionTemplate.execute((status) -> {
+				PlannerResultMessage answer1 = transactionTemplate.execute((status) -> {
 					curJSList.set(0, 0);
 				    ProcessingOrder locOrder =  RepositoryService.getOrderRepository().getOne(orderId);
 					while (curJList.get(0) < jCount && curJSList.get(0) < packetSize) {
 						if (thread.isInterrupted()) {
-							return PlannerMessage.PLANNING_INTERRUPTED;
+							return new PlannerResultMessage(PlannerMessage.PLANNING_INTERRUPTED);
 						}
 						if (jobList.get(curJList.get(0)).getJobState() == JobState.INITIAL) {
 							Job locJob = RepositoryService.getJobRepository().getOne(jobList.get(curJList.get(0)).getId());
@@ -678,12 +679,12 @@ public class OrderDispatcher {
 						}
 						curJList.set(0, curJList.get(0) + 1);
 					}
-					return GeneralMessage.TRUE;
+					return new PlannerResultMessage(GeneralMessage.TRUE);
 				});
 				if (!answer1.getSuccess()) {
 					answer = answer1;
 					productionPlanner.releaseThreadSemaphore("createJobSteps");	
-					return PlannerMessage.PLANNING_INTERRUPTED;
+					return new PlannerResultMessage(PlannerMessage.PLANNING_INTERRUPTED);
 				}
 				productionPlanner.releaseThreadSemaphore("createJobSteps");	
 			}

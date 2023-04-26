@@ -158,6 +158,7 @@ public class OdipUtilBase {
 	
 	/**
 	 * Create a ODIP interface production order from a prosEO interface processing order.
+	 * Replace password  by "*****"
 	 * 
 	 * @param modelOrder the prosEO model order to convert
 	 * @return an OData entity object representing the prosEO interface production order
@@ -257,7 +258,9 @@ public class OdipUtilBase {
 			}
 			if (modelOrder.getNotificationEndpoint().getPassword() != null) {
 			order.addProperty(new Property(null, OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONEPPASSWORD, ValueType.PRIMITIVE,
-					modelOrder.getNotificationEndpoint().getPassword()));
+					// modelOrder.getNotificationEndpoint().getPassword()
+					"*****"
+					));
 			}
 		}
 		return order;
@@ -852,6 +855,7 @@ public class OdipUtilBase {
 					case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 						status = HttpStatusCode.BAD_REQUEST;
 						message = logger.log(OdipMessage.ORDER_DATA_INVALID, e.getStatusText());
+						status = HttpStatusCode.BAD_REQUEST;
 						break;
 					case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 					case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -886,12 +890,14 @@ public class OdipUtilBase {
 					switch (e.getRawStatusCode()) {
 					case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 						message = logger.log(OdipMessage.ORDER_DATA_INVALID, e.getStatusText());
+						status = HttpStatusCode.BAD_REQUEST;
 						break;
 					case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 					case org.apache.http.HttpStatus.SC_FORBIDDEN:
 						message = (null == e.getStatusText() ?
 								ProseoLogger.format(OdipMessage.NOT_AUTHORIZED, securityConfig.getUser(), ORDERS, securityConfig.getMission()) :
 									e.getStatusText());
+						status = HttpStatusCode.UNAUTHORIZED;
 						break;
 					default:
 						message = logger.log(OdipMessage.EXCEPTION, e.getMessage());
@@ -918,12 +924,14 @@ public class OdipUtilBase {
 					switch (e.getRawStatusCode()) {
 					case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 						message = logger.log(OdipMessage.ORDER_DATA_INVALID, e.getStatusText());
+						status = HttpStatusCode.BAD_REQUEST;
 						break;
 					case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 					case org.apache.http.HttpStatus.SC_FORBIDDEN:
 						message = (null == e.getStatusText() ?
 								ProseoLogger.format(OdipMessage.NOT_AUTHORIZED, securityConfig.getUser(), ORDERS, securityConfig.getMission()) :
 									e.getStatusText());
+						status = HttpStatusCode.UNAUTHORIZED;
 						break;
 					default:
 						message = logger.log(OdipMessage.EXCEPTION, e.getMessage());
@@ -950,12 +958,14 @@ public class OdipUtilBase {
 					switch (e.getRawStatusCode()) {
 					case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 						message = logger.log(OdipMessage.ORDER_DATA_INVALID, e.getStatusText());
+						status = HttpStatusCode.BAD_REQUEST;
 						break;
 					case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 					case org.apache.http.HttpStatus.SC_FORBIDDEN:
 						message = (null == e.getStatusText() ?
 								ProseoLogger.format(OdipMessage.NOT_AUTHORIZED, securityConfig.getUser(), ORDERS, securityConfig.getMission()) :
 									e.getStatusText());
+						status = HttpStatusCode.UNAUTHORIZED;
 						break;
 					default:
 						message = logger.log(OdipMessage.EXCEPTION, e.getMessage());
