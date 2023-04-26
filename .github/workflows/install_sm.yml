@@ -1,0 +1,78 @@
+# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven 
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation. 
+
+name: Install SM only 
+
+on:
+  push:
+    branches: [ "dev-denys" ]
+  pull_request:
+    branches: [ "dev-denys" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '15.x'
+    - name: Install dependencies
+      run: npm install
+    
+    - name: Install raml2html
+      run: npm i -g raml2html
+    
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: maven
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+      
+    - name: Create registry folder
+      run: mkdir /home/runner/work/prosEOregistry
+      
+    - name: Check docker status
+      run: systemctl status docker
+      
+    - name: Create settings.xml in .m2
+      run:  |
+        cd ~/.m2
+        echo '<settings><profiles><profile><id>dev-local</id><!-- or any other id you prefer --><activation><activeByDefault>true</activeByDefault></activation><properties><docker.registry>localhost:5000</docker.registry></properties></profile></profiles></settings>' > ~/.m2/settings.xml
+        ls -la
+    - name: Create local registry
+      run: docker run -d -p 5000:5000 --restart always -e STORAGE_DELETE_ENABLED=true -v /home/runner/work/prosEOregistry:/var/lib/registry --name registry registry:2
+      
+    - name: Add openjdk container
+      run: |
+        docker pull openjdk:11
+        docker tag openjdk:11 localhost:5000/openjdk:11
+        docker push localhost:5000/openjdk:11
+        
+    - name: Show current directory
+      run: pwd
+      
+    - name: Add minio container for s3 testing
+      run: docker compose -f ./storage-mgr/src/test/resources/docker-compose.yml up -d
+      
+    - name: Show docker images 
+      run: docker images
+
+    - name: Show docker containers 
+      run: docker container ls
+      
+    - name: Install SM only 
+      run: mvn -B install --file pom.xml -pl storage-mgr -am
