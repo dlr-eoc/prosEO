@@ -1,6 +1,5 @@
 package de.dlr.proseo.ordermgr.rest;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -613,7 +612,7 @@ public class ProcessingOrderMgr {
 			throw new IllegalArgumentException(logger.log(OrderMgrMessage.ORDER_MISSING, id));
 		}
 		
-		// Ensure user is authorized for the order mission
+		// Ensure user is authorized for the order missionƒ
 		if (!securityService.isAuthorizedForMission(order.getMissionCode())) {
 			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
 					order.getMissionCode(), securityService.getMission()));			
@@ -692,6 +691,11 @@ public class ProcessingOrderMgr {
 			orderChanged = true;
 			stateChangeOnly = false;
 			modelOrder.setIdentifier(changedOrder.getIdentifier());
+		}
+		if (!modelOrder.getOrderSource().equals(changedOrder.getOrderSource())) {
+			orderChanged = true;
+			stateChangeOnly = false;
+			modelOrder.setOrderSource(changedOrder.getOrderSource());
 		}
 		if (!modelOrder.getOrderState().equals(changedOrder.getOrderState())) {
 			orderChanged = true;
