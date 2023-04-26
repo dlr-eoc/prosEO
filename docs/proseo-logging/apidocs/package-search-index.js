@@ -1,1 +1,1 @@
-packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"l":"de.dlr.proseo.logging.documentation"},{"l":"de.dlr.proseo.logging.http"},{"l":"de.dlr.proseo.logging.logger"},{"l":"de.dlr.proseo.logging.messages"}]
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"de.dlr.proseo.logging.documentation"},{"l":"de.dlr.proseo.logging.http"},{"l":"de.dlr.proseo.logging.logger"},{"l":"de.dlr.proseo.logging.messages"}];updateSearchResults();
