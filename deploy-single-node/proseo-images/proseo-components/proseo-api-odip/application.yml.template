@@ -29,4 +29,4 @@ proseo:
         facility: localhost
 
     # Not sure what this is (AIP client?)
-    auxip.baseuri: http://192.168.20.155:8080/proseo/api/aip-client/v0.1
+    auxip.baseuri: http://proseo-aip-client:8080/proseo/api/aip-client/v0.1
