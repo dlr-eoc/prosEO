@@ -33,11 +33,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -45,6 +44,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
 
 import de.dlr.proseo.api.aipclient.AipClientApplication;
 import de.dlr.proseo.api.aipclient.AipClientConfiguration;
@@ -70,7 +71,7 @@ import de.dlr.proseo.model.service.RepositoryService;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = AipClientApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
-@DirtiesContext
+@Transactional
 public class DownloadManagerTest {
 	
 	// Database test data
@@ -93,29 +94,29 @@ public class DownloadManagerTest {
 	private static final String TEST_UUID_1 = "3cdc5b00-0050-4c21-925e-4806b59db629";
 	private static final String TEST_UUID_2 = "3cdc5b00-0050-4c21-925e-4806b59db73a";
 	
-	private static final String URL_LTA1 = "https://localhost:9090/lta1/odata/v1/";
-	private static final String URL_LTA2 = "https://localhost:9090/lta2/odata/v1/";
+	private static final String URL_LTA1 = "/lta1/odata/v1/";
+	private static final String URL_LTA2 = "/lta2/odata/v1/";
 	
 	private static final String LTA_QUERY_BY_NAME = 
-			"Products?$filter=Name eq " 
+			"Products?$filter=Name%20eq%20" 
 				+ TEST_FILENAME_1
 				+ "&$top=1&$expand=Attributes"; 
 	private static final String LTA_QUERY_BY_TIME = 
-			"Products?$filter=ContentDate/Start eq " 
+			"Products?$filter=ContentDate/Start%20eq%20" 
 				+ TEST_START_TIME 
-				+ "Z and ContentDate/End eq " 
+				+ "Z%20and%20ContentDate/End%20eq%20" 
 				+ TEST_STOP_TIME 
-				+ "Z and Attributes/OData.CSC.StringAttribute/any(att:att/Name eq 'productType' " 
-				+ "and att/OData.CSC.StringAttribute/Value eq '" 
+				+ "Z%20and%20Attributes/OData.CSC.StringAttribute/any(att:att/Name%20eq%20'productType'%20" 
+				+ "and%20att/OData.CSC.StringAttribute/Value%20eq%20'" 
 				+ TEST_PRODUCT_TYPE 
 				+ "')&$top=1&$expand=Attributes";
 	private static final String LTA_QUERY_ALL_BY_TIME = 
-			"Products?$filter=ContentDate/Start le " 
+			"Products?$filter=ContentDate/Start%20le%20" 
 				+ TEST_STOP_TIME 
-				+ "Z and ContentDate/End ge " 
+				+ "Z%20and%20ContentDate/End%20ge%20" 
 				+ TEST_START_TIME 
-				+ "Z and Attributes/OData.CSC.StringAttribute/any(att:att/Name eq 'productType' " 
-				+ "and att/OData.CSC.StringAttribute/Value eq '" 
+				+ "Z%20and%20Attributes/OData.CSC.StringAttribute/any(att:att/Name%20eq%20'productType'%20" 
+				+ "and%20att/OData.CSC.StringAttribute/Value%20eq%20'" 
 				+ TEST_PRODUCT_TYPE 
 				+ "')&$top=1000&$expand=Attributes";
 	
@@ -298,10 +299,8 @@ public class DownloadManagerTest {
     private RestTemplate restTemplate;
 
     /** A mock LTA service */
-    private MockRestServiceServer mockLtaService;
-    
-    /** Marker for first creation of test environment */
-    private static boolean first = true;
+	private static int WIREMOCK_PORT = 9876;
+	private static WireMockServer mockLtaService;
     
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(DownloadManagerTest.class);
@@ -354,7 +353,6 @@ public class DownloadManagerTest {
 	 * 
 	 * @throws Exception if any error condition arises
 	 */
-	@Transactional
 	private void setUpDatabase() throws Exception {
 		if (logger.isTraceEnabled()) logger.trace(">>> setUpDatabase()");
 		
@@ -415,7 +413,7 @@ public class DownloadManagerTest {
 		product1 = RepositoryService.getProductRepository().save(product1);
 		
 		// Create test LTAs
-		// TODO Requires new entity "ExternalInterface"
+		// TODO Requires new entity "ProductArchive"
 	}
 
 	/**
@@ -426,50 +424,51 @@ public class DownloadManagerTest {
 	private void setUpMockLtaService() throws URISyntaxException {
 		if (logger.isTraceEnabled()) logger.trace(">>> setUpMockLtaService()");
 		
-		mockLtaService = MockRestServiceServer.createServer(restTemplate);
+		mockLtaService = new WireMockServer(WIREMOCK_PORT);
+		mockLtaService.start();
 		
-		mockLtaService.expect(ExpectedCount.manyTimes(), 
-				requestTo(new URI(URL_LTA1 + LTA_QUERY_BY_NAME)))
-			.andExpect(method(HttpMethod.GET))
-			.andRespond(withStatus(HttpStatus.OK)
-				.contentType(MediaType.APPLICATION_JSON)
-				.body(LTA_RESPONSE_BY_NAME_1)
-				);                                   
-		mockLtaService.expect(ExpectedCount.manyTimes(), 
-				requestTo(new URI(URL_LTA2 + LTA_QUERY_BY_TIME)))
-			.andExpect(method(HttpMethod.GET))
-			.andRespond(withStatus(HttpStatus.OK)
-				.contentType(MediaType.APPLICATION_JSON)
-				.body(LTA_RESPONSE_BY_TIME)
-				);                                   
-		mockLtaService.expect(ExpectedCount.manyTimes(), 
-				requestTo(new URI(URL_LTA2 + LTA_QUERY_ALL_BY_TIME)))
-			.andExpect(method(HttpMethod.GET))
-			.andRespond(withStatus(HttpStatus.OK)
-				.contentType(MediaType.APPLICATION_JSON)
-				.body(LTA_RESPONSE_ALL_BY_TIME)
-				);                                   
-		mockLtaService.expect(ExpectedCount.manyTimes(), 
-				requestTo(new URI(URL_LTA1 + LTA_DOWNLOAD_BY_UUID_1)))
-			.andExpect(method(HttpMethod.GET))
-			.andRespond(withStatus(HttpStatus.OK)
-				.contentType(MediaType.APPLICATION_OCTET_STREAM)
-				.body(TEST_PRODUCT_DATA_1)
-				);                                   
-		mockLtaService.expect(ExpectedCount.manyTimes(), 
-				requestTo(new URI(URL_LTA2 + LTA_DOWNLOAD_BY_UUID_1)))
-			.andExpect(method(HttpMethod.GET))
-			.andRespond(withStatus(HttpStatus.OK)
-				.contentType(MediaType.APPLICATION_OCTET_STREAM)
-				.body(TEST_PRODUCT_DATA_1)
-				);                                   
-		mockLtaService.expect(ExpectedCount.manyTimes(), 
-				requestTo(new URI(URL_LTA2 + LTA_DOWNLOAD_BY_UUID_2)))
-			.andExpect(method(HttpMethod.GET))
-			.andRespond(withStatus(HttpStatus.OK)
-				.contentType(MediaType.APPLICATION_OCTET_STREAM)
-				.body(TEST_PRODUCT_DATA_2)
-				);                                   
+		mockLtaService.stubFor(WireMock.get(WireMock.urlEqualTo(URL_LTA1 + LTA_QUERY_BY_NAME))
+				.willReturn(
+						WireMock.aResponse()
+						.withStatus(HttpStatus.OK.value())
+						.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString())
+						.withBody(LTA_RESPONSE_BY_NAME_1)));
+		
+		mockLtaService.stubFor(WireMock.get(WireMock.urlEqualTo(URL_LTA2 + LTA_QUERY_BY_TIME))
+				.willReturn(
+						WireMock.aResponse()
+						.withStatus(HttpStatus.OK.value())
+						.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString())
+						.withBody(LTA_RESPONSE_BY_TIME)));
+		
+		mockLtaService.stubFor(WireMock.get(WireMock.urlEqualTo(URL_LTA2 + LTA_QUERY_ALL_BY_TIME))
+				.willReturn(
+						WireMock.aResponse()
+						.withStatus(HttpStatus.OK.value())
+						.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString())
+						.withBody(LTA_RESPONSE_ALL_BY_TIME)));
+		
+		mockLtaService.stubFor(WireMock.get(WireMock.urlEqualTo(URL_LTA1 + LTA_DOWNLOAD_BY_UUID_1))
+				.willReturn(
+						WireMock.aResponse()
+						.withStatus(HttpStatus.OK.value())
+						.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM.toString())
+						.withBody(TEST_PRODUCT_DATA_1)));
+		
+		mockLtaService.stubFor(WireMock.get(WireMock.urlEqualTo(URL_LTA2 + LTA_DOWNLOAD_BY_UUID_1))
+				.willReturn(
+						WireMock.aResponse()
+						.withStatus(HttpStatus.OK.value())
+						.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM.toString())
+						.withBody(TEST_PRODUCT_DATA_1)));
+		
+		mockLtaService.stubFor(WireMock.get(WireMock.urlEqualTo(URL_LTA2 + LTA_DOWNLOAD_BY_UUID_2))
+				.willReturn(
+						WireMock.aResponse()
+						.withStatus(HttpStatus.OK.value())
+						.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM.toString())
+						.withBody(TEST_PRODUCT_DATA_2)));
+		
 	}
 
 	/**
@@ -481,15 +480,11 @@ public class DownloadManagerTest {
 	public void setUp() throws Exception {
 		if (logger.isTraceEnabled()) logger.trace(">>> setUp()");
 		
-		if (first) {
-			first = false;
-			
-			// Create test processing facility and test products in local database
-			setUpDatabase();
-			
-			// Set up mock LTA for external product query
-			setUpMockLtaService();
-		}
+		// Create test processing facility and test products in local database
+		setUpDatabase();
+		
+		// Set up mock LTA for external product query
+		setUpMockLtaService();
 		
 		// Ensure files to download are not present
 		Files.deleteIfExists(Path.of(config.getIngestorSourceDir(), TEST_FILENAME_1));
@@ -508,6 +503,9 @@ public class DownloadManagerTest {
 	@After
 	public void tearDown() throws Exception {
 		if (logger.isTraceEnabled()) logger.trace(">>> tearDown()");
+		
+		// Stop mock LTA service
+		mockLtaService.stop();
 		
 		// Remove downloaded files
 		Files.deleteIfExists(Path.of(config.getIngestorSourceDir(), TEST_FILENAME_1));

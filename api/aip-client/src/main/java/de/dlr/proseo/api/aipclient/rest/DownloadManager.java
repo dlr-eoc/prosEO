@@ -8,6 +8,7 @@ package de.dlr.proseo.api.aipclient.rest;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.NoResultException;
 import javax.transaction.Transactional;
@@ -117,9 +118,18 @@ public class DownloadManager {
 		
 		// --- Test REST service stub ---
 		
-		String response = restTemplate.getForObject("http://localhost:9090/info", String.class);
-		RestProduct result = new RestProduct();
-		result.setProductClass(response);
+		Map<?, ?> response = restTemplate.getForObject("http://localhost:9876/lta2/odata/v1/Products?$filter=ContentDate/Start eq "
+				+ startTime + "Z and ContentDate/End eq " + stopTime + "Z and Attributes/OData.CSC.StringAttribute/any(att:att/Name eq 'productType' " 
+						+ "and att/OData.CSC.StringAttribute/Value eq '" + productType + "')&$top=1&$expand=Attributes", Map.class);
+		
+		if (response.get("value") instanceof List) {
+			for (Object obj : (List<?>) response.get("value")) {
+				System.out.println(obj.toString());
+			} 
+		} else {
+			System.out.println("Found unexpected response: " + response);
+		}
+		
 		
 		// --- End Test REST service stub ---
 		
