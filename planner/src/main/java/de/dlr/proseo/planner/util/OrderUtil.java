@@ -905,7 +905,7 @@ public class OrderUtil {
 			case RELEASED:
 			case RUNNING:
 			case SUSPENDING:
-				// look for plan thread and interrupt it
+				// look for release thread and interrupt it
 				answer.setMessage(GeneralMessage.TRUE);
 				OrderReleaseThread rt = productionPlanner.getReleaseThreads().get(ProductionPlanner.RELEASE_THREAD_PREFIX + order.getId());
 				if (rt != null) {
