@@ -9,7 +9,8 @@
 --
 ALTER TABLE public.processing_order
   ADD COLUMN order_source character varying(255);
-  
+
+UPDATE public.processing_order SET order_source = 'OTHER';
 
 --
 -- Add requested times to product

@@ -81,7 +81,8 @@ public class OdipSecurity {
 			String message = logger.log(OdipMessage.MSG_AUTH_MISSING_OR_INVALID, authHeader);
 			throw new IllegalArgumentException(message);
 		}
-		String[] userPassword = missionUserPassword[1].split(":"); // guaranteed to work as per BasicAuth specification
+		// The following is guaranteed to work as per BasicAuth specification (but split limited, because password may contain ':')
+		String[] userPassword = missionUserPassword[1].split(":", 2); 
 		
 		return new UserInfo(missionUserPassword[0], userPassword[0], userPassword[1], new ArrayList<>());
 	}

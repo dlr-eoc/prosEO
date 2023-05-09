@@ -52,14 +52,11 @@ public class AipClientSecurityConfig extends WebSecurityConfigurerAdapter {
 				.and()
 			.authorizeRequests()
 				.antMatchers("/**/actuator/health").permitAll()
-				.antMatchers(HttpMethod.GET, "/**/products", "/**/products/*", "/**/products/*/*", "/**/products/*/*/*", "/**/ingest/*/*")
+				.anyRequest()
 					.hasAnyRole(
 						UserRole.PRODUCT_READER.toString(),
 						UserRole.PRODUCT_READER_RESTRICTED.toString(),
 						UserRole.PRODUCT_READER_ALL.toString())
-				.antMatchers(HttpMethod.POST, "/**/ingest/*").hasAnyRole(UserRole.PRODUCT_INGESTOR.toString())
-				.antMatchers(HttpMethod.POST, "/**/ingest/*/*").hasAnyRole(UserRole.PRODUCT_GENERATOR.toString())
-				.anyRequest().hasAnyRole(UserRole.PRODUCT_MGR.toString())
 				.and()
 			.csrf().disable(); // Required for POST requests (or configure CSRF)
 	}

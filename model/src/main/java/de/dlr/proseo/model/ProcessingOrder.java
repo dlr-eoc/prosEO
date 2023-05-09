@@ -87,9 +87,9 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	private String stateMessage;
 	
-	/** Source application for the processing order */
+	/** Source application for the processing order (default OTHER) */
 	@Enumerated(EnumType.STRING)
-	private OrderSource orderSource;
+	private OrderSource orderSource = OrderSource.OTHER;
 	
 	/**
 	 * Date and time at which the ProcessingOrder was received
