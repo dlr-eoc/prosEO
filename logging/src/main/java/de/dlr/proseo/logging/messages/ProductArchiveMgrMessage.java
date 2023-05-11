@@ -29,6 +29,8 @@ public enum ProductArchiveMgrMessage implements ProseoMessage {
 	 ARCHIVE_NOT_FOUND			(5610, Level.ERROR, false, "No Product Archive found for ID {0}", ""),
 	 ARCHIVE_NOT_MODIFIED		(5611, Level.INFO,  true,  "Product Archive with id {0} not modified (no changes)", ""),
 	 ARCHIVE_RETRIEVED			(5612, Level.INFO,  true,  "Product Archive with ID {0} retrieved", ""),
+	 ARCHIVE_TYPE_WRONG			(5613, Level.ERROR, false, "Product Archive Type is wrong: {0}", ""),
+
 	
 	;
 
