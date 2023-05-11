@@ -67,6 +67,7 @@ public class SecurityService {
 	 * @return the user name
 	 */
 	public String getUser() {
+		System.out.println("Current security context = " + SecurityContextHolder.getContext());
 		// Since successful authentication is required for accessing any method, we trust that the authentication object is filled
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		return auth.getName();

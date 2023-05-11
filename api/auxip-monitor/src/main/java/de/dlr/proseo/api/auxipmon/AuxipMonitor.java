@@ -70,6 +70,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.dlr.proseo.api.basemon.BaseMonitor;
 import de.dlr.proseo.api.basemon.TransferObject;
 import de.dlr.proseo.basewrap.MD5Util;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.ApiMonitorMessage;
+import de.dlr.proseo.logging.messages.OAuthMessage;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
@@ -101,25 +104,9 @@ public class AuxipMonitor extends BaseMonitor {
 	@Autowired
 	private AuxipMonitorConfiguration config;
 	
-	/** Reference times per product type */
-//	private Map<String, Instant> productTypeReferenceTimes = new HashMap<>();
-
-	// Message IDs
-	private static final int MSG_ID_TOKEN_REQUEST_FAILED = 5362;
-	private static final int MSG_ID_TOKEN_RESPONSE_INVALID = 5363;
-	private static final int MSG_ID_ACCESS_TOKEN_MISSING = 5364;
-	private static final int MSG_ID_TOKEN_RESPONSE_EMPTY = 5365;
-	private static final int MSG_ID_PRODUCT_UUID_MISSING = 5370;
 	private static final int MSG_ID_PRODUCT_TRANSFER_COMPLETED = 5371;
 	private static final int MSG_ID_TARGET_DIRECTORY_NOT_WRITABLE = 5372;
 	private static final int MSG_ID_FILE_NOT_WRITABLE = 5373;
-	private static final int MSG_ID_PRODUCT_FILENAME_MISSING = 5374;
-	private static final int MSG_ID_PRODUCT_SIZE_MISSING = 5375;
-	private static final int MSG_ID_PRODUCT_HASH_MISSING = 5376;
-	private static final int MSG_ID_PRODUCT_VAL_START_MISSING = 5377;
-	private static final int MSG_ID_PRODUCT_VAL_STOP_MISSING = 5378;
-	private static final int MSG_ID_PRODUCT_PUBLICATION_MISSING = 5379;
-	private static final int MSG_ID_PRODUCT_EVICTION_MISSING = 5380;
 	private static final int MSG_ID_PRODUCT_EVICTED = 5381;
 	private static final int MSG_ID_WAIT_INTERRUPTED = 5382;
 	private static final int MSG_ID_ODATA_REQUEST_FAILED = 5383;
@@ -130,8 +117,6 @@ public class AuxipMonitor extends BaseMonitor {
 	private static final int MSG_ID_RETRIEVAL_RESULT = 5388;
 	private static final int MSG_ID_FILE_SIZE_MISMATCH = 5389;
 	private static final int MSG_ID_CHECKSUM_MISMATCH = 5390;
-	private static final int MSG_ID_CANNOT_RELEASE_BUFFER = 5391;
-	
 	/* Same as XBIP Monitor */
 	private static final int MSG_ID_AVAILABLE_DOWNLOADS_FOUND = 5302;
 	private static final int MSG_ID_TRANSFER_OBJECT_IS_NULL = 5303;
@@ -143,20 +128,8 @@ public class AuxipMonitor extends BaseMonitor {
 	private static final String MSG_TRANSFER_OBJECT_IS_NULL = "(E%d) Transfer object is null - skipped";
 	private static final String MSG_INVALID_TRANSFER_OBJECT_TYPE = "(E%d) Transfer object %s of invalid type found - skipped";
 	/* package */ static final String MSG_COPY_FILE_FAILED = "(E%d) Copying of session data file %s failed (cause: %s)";
-	private static final String MSG_TOKEN_REQUEST_FAILED = "(E%d) Token request to AUXIP URI %s failed";
-	private static final String MSG_TOKEN_RESPONSE_INVALID = "(E%d) Token response %s from AUXIP URI %s invalid (cause: %s)";
-	private static final String MSG_ACCESS_TOKEN_MISSING = "(E%d) Token response %s from AUXIP URI %s does not contain access token";
-	private static final String MSG_TOKEN_RESPONSE_EMPTY = "(E%d) Token response %s from AUXIP URI %s is empty";
-	private static final String MSG_PRODUCT_UUID_MISSING = "(E%d) Product list entry %s does not contain product UUID ('Id' element)";
 	private static final String MSG_TARGET_DIRECTORY_NOT_WRITABLE = "(E%d) Target directory %s not writable";
 	private static final String MSG_FILE_NOT_WRITABLE = "(E%d) Cannot write product file %s";
-	private static final String MSG_PRODUCT_FILENAME_MISSING = "(E%d) Product list entry %s does not contain product filename ('Name' element)";
-	private static final String MSG_PRODUCT_SIZE_MISSING = "(E%d) Product list entry %s does not contain product size ('ContentLength' element)";
-	private static final String MSG_PRODUCT_HASH_MISSING = "(E%d) Product list entry %s does not contain product checksum ('Checksum/Value' element)";
-	private static final String MSG_PRODUCT_VAL_START_MISSING = "(E%d) Product list entry %s does not contain product validity start ('ContentDate/Start' element)";
-	private static final String MSG_PRODUCT_VAL_STOP_MISSING = "(E%d) Product list entry %s does not contain product validity end ('ContentDate/End' element)";
-	private static final String MSG_PRODUCT_PUBLICATION_MISSING = "(E%d) Product list entry %s does not contain valid publication time ('PublicationDate' element)";
-	private static final String MSG_PRODUCT_EVICTION_MISSING = "(E%d) Product list entry %s does not contain valid eviction time ('EvictionDate' element)";
 	private static final String MSG_WAIT_INTERRUPTED = "(E%d) Wait for next chunk of product data interrupted";
 	private static final String MSG_ODATA_REQUEST_FAILED = "(E%d) OData request for reference time %s failed with HTTP status code %d, message:\n%s\n";
 	private static final String MSG_ODATA_RESPONSE_UNREADABLE = "(E%d) OData response not readable";
@@ -165,8 +138,6 @@ public class AuxipMonitor extends BaseMonitor {
 	private static final String MSG_PRODUCT_DOWNLOAD_FAILED = "(E%d) Download of product file %s failed (cause: %s)";
 	private static final String MSG_FILE_SIZE_MISMATCH = "(E%d) File size mismatch for product file %s (expected: %d Bytes, got %d Bytes)";
 	private static final String MSG_CHECKSUM_MISMATCH = "(E%d) Checksum mismatch for product file %s (expected: %s, got %s)";
-	private static final String MSG_CANNOT_RELEASE_BUFFER = "(E%d) Cannot release data buffer %s of transfer request for product file %s";
-
 	private static final String MSG_PRODUCT_EVICTED = "(W%d) Product %s already evicted at %s – skipped";
 
 	private static final String MSG_AVAILABLE_DOWNLOADS_FOUND = "(I%d) %d session entries found for download (unfiltered)";
@@ -174,8 +145,9 @@ public class AuxipMonitor extends BaseMonitor {
 	private static final String MSG_FOLLOW_ON_ACTION_STARTED = "(I%d) Follow-on action for session %s started with command %s";
 	private static final String MSG_RETRIEVAL_RESULT = "(I%d) Retrieval request returned %d products out of %d available";
 
-	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(AuxipMonitor.class);
+	/** A oldLogger for this class */
+	private static Logger oldLogger = LoggerFactory.getLogger(AuxipMonitor.class);
+	private static ProseoLogger logger = new ProseoLogger(AuxipMonitor.class);
 	
 	/**
 	 * Class describing a download session
@@ -316,19 +288,19 @@ public class AuxipMonitor extends BaseMonitor {
 		
 		HttpURLConnection.setFollowRedirects(true);
 		
-		logger.info("------  Starting AUXIP Monitor  ------");
-		logger.info("AUXIP base URI . . . . . . : " + config.getAuxipBaseUri());
-		logger.info("AUXIP context. . . . . . . : " + config.getAuxipContext());
-		logger.info("Use token-based auth . . . : " + config.getAuxipUseToken());
-		logger.info("Product types requested  . : " + config.getAuxipProductTypes());
-		logger.info("Transfer history file  . . : " + this.getTransferHistoryFile());
-		logger.info("AUXIP check interval   . . : " + this.getCheckInterval());
-		logger.info("Chunk retrieval interval . : " + config.getAuxipChunkInterval());
-		logger.info("History truncation interval: " + this.getTruncateInterval());
-		logger.info("History retention period . : " + this.getHistoryRetentionDuration());
-		logger.info("Max. transfer sessions . . : " + this.getMaxDownloadThreads());
-		logger.info("Transfer session wait time : " + this.getTaskWaitInterval());
-		logger.info("Max. session wait cycles . : " + this.getMaxWaitCycles());
+		oldLogger.info("------  Starting AUXIP Monitor  ------");
+		oldLogger.info("AUXIP base URI . . . . . . : " + config.getAuxipBaseUri());
+		oldLogger.info("AUXIP context. . . . . . . : " + config.getAuxipContext());
+		oldLogger.info("Use token-based auth . . . : " + config.getAuxipUseToken());
+		oldLogger.info("Product types requested  . : " + config.getAuxipProductTypes());
+		oldLogger.info("Transfer history file  . . : " + this.getTransferHistoryFile());
+		oldLogger.info("AUXIP check interval   . . : " + this.getCheckInterval());
+		oldLogger.info("Chunk retrieval interval . : " + config.getAuxipChunkInterval());
+		oldLogger.info("History truncation interval: " + this.getTruncateInterval());
+		oldLogger.info("History retention period . : " + this.getHistoryRetentionDuration());
+		oldLogger.info("Max. transfer sessions . . : " + this.getMaxDownloadThreads());
+		oldLogger.info("Transfer session wait time : " + this.getTaskWaitInterval());
+		oldLogger.info("Max. session wait cycles . : " + this.getMaxWaitCycles());
 		
 	}
 	
@@ -398,8 +370,7 @@ public class AuxipMonitor extends BaseMonitor {
 			.bodyToMono(String.class)
 			.block();
 		if (null == tokenResponse) {
-			logger.error(String.format(MSG_TOKEN_REQUEST_FAILED, MSG_ID_TOKEN_REQUEST_FAILED,
-					config.getAuxipBaseUri() + "/" + config.getAuxipTokenUri()));
+			logger.log(OAuthMessage.TOKEN_REQUEST_FAILED, config.getAuxipBaseUri() + "/" + config.getAuxipTokenUri());
 			return null;
 		}
 //		if (logger.isTraceEnabled()) logger.trace("... got token response '{}'", tokenResponse);
@@ -410,19 +381,19 @@ public class AuxipMonitor extends BaseMonitor {
 		try {
 			tokenResponseMap = om.readValue(tokenResponse, Map.class);
 		} catch (IOException e) {
-			logger.error(String.format(MSG_TOKEN_RESPONSE_INVALID, MSG_ID_TOKEN_RESPONSE_INVALID,
-					tokenResponse, config.getAuxipBaseUri() + "/" + config.getAuxipTokenUri(), e.getMessage()));
+			logger.log(OAuthMessage.TOKEN_RESPONSE_INVALID, tokenResponse, 
+					config.getAuxipBaseUri() + "/" + config.getAuxipTokenUri(), e.getMessage());
 			return null;
 		}
 		if (null == tokenResponseMap || tokenResponseMap.isEmpty()) {
-			logger.error(String.format(MSG_TOKEN_RESPONSE_EMPTY, MSG_ID_TOKEN_RESPONSE_EMPTY,
-					tokenResponse, config.getAuxipBaseUri() + "/" + config.getAuxipTokenUri()));
+			logger.log(OAuthMessage.TOKEN_RESPONSE_EMPTY, tokenResponse, 
+					config.getAuxipBaseUri() + "/" + config.getAuxipTokenUri());
 			return null;
 		}
 		Object accessToken = tokenResponseMap.get("access_token");
 		if (null == accessToken || ! (accessToken instanceof String)) {
-			logger.error(String.format(MSG_ACCESS_TOKEN_MISSING, MSG_ID_ACCESS_TOKEN_MISSING,
-					tokenResponse, config.getAuxipBaseUri() + "/" + config.getAuxipTokenUri()));
+			logger.log(OAuthMessage.ACCESS_TOKEN_MISSING, tokenResponse,
+					config.getAuxipBaseUri() + "/" + config.getAuxipTokenUri());
 			return null;
 		} else {
 //			if (logger.isTraceEnabled()) logger.trace("... found access token {}", accessToken);
@@ -490,23 +461,22 @@ public class AuxipMonitor extends BaseMonitor {
 		try {
 			response = futureResponse.get(30, TimeUnit.SECONDS);
 		} catch (InterruptedException | ExecutionException | TimeoutException e1) {
-			logger.error(String.format(MSG_ODATA_REQUEST_ABORTED, MSG_ID_ODATA_REQUEST_ABORTED, 
-					referenceTimeStamp, e1.getClass().getName(), e1.getMessage()));
+			logger.log(ApiMonitorMessage.ODATA_REQUEST_ABORTED, referenceTimeStamp, e1.getClass().getName(), e1.getMessage());
 			return transferControl;
 		}
 		
 		if (HttpStatus.OK.value() != response.getStatusCode()) {
 			try {
-				logger.error(String.format(MSG_ODATA_REQUEST_FAILED, MSG_ID_ODATA_REQUEST_FAILED,
-					referenceTimeStamp, response.getStatusCode(), new String(response.getRawResponse().readAllBytes())));
+				logger.log(ApiMonitorMessage.ODATA_REQUEST_FAILED,
+						referenceTimeStamp, response.getStatusCode(), new String(response.getRawResponse().readAllBytes()));
 			} catch (IOException e) {
-				logger.error(String.format(MSG_ODATA_RESPONSE_UNREADABLE, MSG_ID_ODATA_RESPONSE_UNREADABLE));
+				logger.log(ApiMonitorMessage.ODATA_RESPONSE_UNREADABLE);
 			}
 			return transferControl;
 		}
 		
 		ClientEntitySet entitySet = response.getBody();
-		logger.info(String.format(MSG_RETRIEVAL_RESULT, MSG_ID_RETRIEVAL_RESULT, entitySet.getEntities().size(), entitySet.getCount()));
+		logger.log(ApiMonitorMessage.RETRIEVAL_RESULT, entitySet.getEntities().size(), entitySet.getCount());
 		
 		// No products found, next search starts from current date and time
 		if (entitySet.getEntities().isEmpty()) {
@@ -525,7 +495,7 @@ public class AuxipMonitor extends BaseMonitor {
 					}
 					if (!referenceTimeStamp.isAfter(tp.getPublicationTime())) {
 						if (Instant.now().isAfter(tp.getEvictionTime())) {
-							logger.warn(String.format(MSG_PRODUCT_EVICTED, MSG_ID_PRODUCT_EVICTED, tp.getName(),
+							oldLogger.warn(String.format(MSG_PRODUCT_EVICTED, MSG_ID_PRODUCT_EVICTED, tp.getName(),
 									tp.getEvictionTime().toString()));
 						} else {
 							transferControl.transferObjects.add(tp);
@@ -546,7 +516,7 @@ public class AuxipMonitor extends BaseMonitor {
 			try {
 				Thread.sleep(config.getAuxipChunkInterval());
 			} catch (InterruptedException e) {
-				logger.error(String.format(MSG_WAIT_INTERRUPTED, MSG_ID_WAIT_INTERRUPTED));
+				oldLogger.error(String.format(MSG_WAIT_INTERRUPTED, MSG_ID_WAIT_INTERRUPTED));
 				return transferControl;
 			}
 			
@@ -570,23 +540,23 @@ public class AuxipMonitor extends BaseMonitor {
 			try {
 				response = futureResponse.get(30, TimeUnit.SECONDS);
 			} catch (InterruptedException | ExecutionException | TimeoutException e1) {
-				logger.error(String.format(MSG_ODATA_REQUEST_ABORTED, MSG_ID_ODATA_REQUEST_ABORTED, 
+				oldLogger.error(String.format(MSG_ODATA_REQUEST_ABORTED, MSG_ID_ODATA_REQUEST_ABORTED, 
 						referenceTimeStamp, e1.getClass().getName(), e1.getMessage()));
 				return transferControl;
 			}
 			
 			if (HttpStatus.OK.value() != response.getStatusCode()) {
 				try {
-					logger.error(String.format(MSG_ODATA_REQUEST_FAILED, MSG_ID_ODATA_REQUEST_FAILED,
+					oldLogger.error(String.format(MSG_ODATA_REQUEST_FAILED, MSG_ID_ODATA_REQUEST_FAILED,
 						referenceTimeStamp, response.getStatusCode(), new String(response.getRawResponse().readAllBytes())));
 				} catch (IOException e) {
-					logger.error(String.format(MSG_ODATA_RESPONSE_UNREADABLE, MSG_ID_ODATA_RESPONSE_UNREADABLE));
+					oldLogger.error(String.format(MSG_ODATA_RESPONSE_UNREADABLE, MSG_ID_ODATA_RESPONSE_UNREADABLE));
 				}
 				return transferControl;
 			}
 			
 			entitySet = response.getBody();
-			logger.info(String.format(MSG_RETRIEVAL_RESULT, MSG_ID_RETRIEVAL_RESULT, entitySet.getEntities().size(), entitySet.getCount()));
+			oldLogger.info(String.format(MSG_RETRIEVAL_RESULT, MSG_ID_RETRIEVAL_RESULT, entitySet.getEntities().size(), entitySet.getCount()));
 			
 		} while (!entitySet.getEntities().isEmpty());
 		
@@ -607,7 +577,7 @@ public class AuxipMonitor extends BaseMonitor {
 		try {
 			tp.setUuid(product.getProperty("Id").getPrimitiveValue().toCastValue(String.class));
 		} catch (EdmPrimitiveTypeException | NullPointerException e) {
-			logger.error(String.format(MSG_PRODUCT_UUID_MISSING, MSG_ID_PRODUCT_UUID_MISSING, product.toString()));
+			logger.log(ApiMonitorMessage.PRODUCT_UUID_MISSING, product.toString());
 			return null;
 		}
 		if (logger.isTraceEnabled()) logger.trace("... uuid = {}", tp.getUuid());
@@ -615,7 +585,7 @@ public class AuxipMonitor extends BaseMonitor {
 		try {
 			tp.setName(product.getProperty("Name").getPrimitiveValue().toCastValue(String.class));
 		} catch (EdmPrimitiveTypeException | NullPointerException e) {
-			logger.error(String.format(MSG_PRODUCT_FILENAME_MISSING, MSG_ID_PRODUCT_FILENAME_MISSING, product.toString()));
+			logger.log(ApiMonitorMessage.PRODUCT_FILENAME_MISSING, product.toString());
 			return null;
 		}
 		if (logger.isTraceEnabled()) logger.trace("... name = {}", tp.getName());
@@ -623,7 +593,7 @@ public class AuxipMonitor extends BaseMonitor {
 		try {
 			tp.setSize(product.getProperty("ContentLength").getPrimitiveValue().toCastValue(Long.class));
 		} catch (EdmPrimitiveTypeException | NullPointerException e) {
-			logger.error(String.format(MSG_PRODUCT_SIZE_MISSING, MSG_ID_PRODUCT_SIZE_MISSING, product.toString()));
+			logger.log(ApiMonitorMessage.PRODUCT_SIZE_MISSING, product.toString());
 			return null;
 		}
 		if (logger.isTraceEnabled()) logger.trace("... size = {}", tp.getSize());
@@ -636,15 +606,15 @@ public class AuxipMonitor extends BaseMonitor {
 						tp.setChecksum(clientValue.asComplex().get("Value").getPrimitiveValue().toCastValue(String.class));
 					}
 				} catch (EdmPrimitiveTypeException e) {
-					logger.error(String.format(MSG_PRODUCT_HASH_MISSING, MSG_ID_PRODUCT_HASH_MISSING, product.toString()));
+					logger.log(ApiMonitorMessage.PRODUCT_HASH_MISSING, product.toString());
 				}
 			});
 		} catch (NullPointerException e) {
-			logger.error(String.format(MSG_PRODUCT_HASH_MISSING, MSG_ID_PRODUCT_HASH_MISSING, product.toString()));
+			logger.log(ApiMonitorMessage.PRODUCT_HASH_MISSING, product.toString());
 			return null;
 		}
 		if (null == tp.getChecksum()) {
-			logger.error(String.format(MSG_PRODUCT_HASH_MISSING, MSG_ID_PRODUCT_HASH_MISSING, product.toString()));
+			logger.log(ApiMonitorMessage.PRODUCT_HASH_MISSING, product.toString());
 			return null;
 		}
 		if (logger.isTraceEnabled()) logger.trace("... checksum = {}", tp.getChecksum());
@@ -665,7 +635,7 @@ public class AuxipMonitor extends BaseMonitor {
 			tp.setStartTime(Instant.parse(product.getProperty("ContentDate").getComplexValue()
 					.get("Start").getPrimitiveValue().toCastValue(String.class)));
 		} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
-			logger.error(String.format(MSG_PRODUCT_VAL_START_MISSING, MSG_ID_PRODUCT_VAL_START_MISSING, product.toString()));
+			logger.log(ApiMonitorMessage.PRODUCT_VAL_START_MISSING, product.toString());
 			return null;
 		}
 //		if (logger.isTraceEnabled()) logger.trace("... start = {}", tp.getStartTime());
@@ -674,7 +644,7 @@ public class AuxipMonitor extends BaseMonitor {
 			tp.setStopTime(Instant.parse(product.getProperty("ContentDate").getComplexValue()
 					.get("End").getPrimitiveValue().toCastValue(String.class)));
 		} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
-			logger.error(String.format(MSG_PRODUCT_VAL_STOP_MISSING, MSG_ID_PRODUCT_VAL_STOP_MISSING, product.toString()));
+			logger.log(ApiMonitorMessage.PRODUCT_VAL_STOP_MISSING, product.toString());
 			return null;
 		}
 //		if (logger.isTraceEnabled()) logger.trace("... stop = {}", tp.getStopTime());
@@ -683,7 +653,7 @@ public class AuxipMonitor extends BaseMonitor {
 			tp.setPublicationTime(Instant.parse(
 					product.getProperty("PublicationDate").getPrimitiveValue().toCastValue(String.class)));
 		} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
-			logger.error(String.format(MSG_PRODUCT_PUBLICATION_MISSING, MSG_ID_PRODUCT_PUBLICATION_MISSING, product.toString()));
+			logger.log(ApiMonitorMessage.PRODUCT_PUBLICATION_MISSING, product.toString());
 			return null;
 		}
 		if (logger.isTraceEnabled()) logger.trace("... publication = {}", tp.getPublicationTime());
@@ -692,7 +662,7 @@ public class AuxipMonitor extends BaseMonitor {
 			tp.setEvictionTime(Instant.parse(
 					product.getProperty("EvictionDate").getPrimitiveValue().toCastValue(String.class)));
 		} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
-			logger.error(String.format(MSG_PRODUCT_EVICTION_MISSING, MSG_ID_PRODUCT_EVICTION_MISSING, product.toString()));
+			logger.log(ApiMonitorMessage.PRODUCT_EVICTION_MISSING, product.toString());
 			return null;
 		}
 //		if (logger.isTraceEnabled()) logger.trace("... eviction = {}", tp.getEvictionTime());
@@ -740,9 +710,9 @@ public class AuxipMonitor extends BaseMonitor {
 			// product types OR'ed in a single list
 			transferControl = checkAvailableProducts(referenceTimeStamp, bearerToken);
 			
-			logger.info(String.format(MSG_AVAILABLE_DOWNLOADS_FOUND, MSG_ID_AVAILABLE_DOWNLOADS_FOUND, transferControl.transferObjects.size()));
+			oldLogger.info(String.format(MSG_AVAILABLE_DOWNLOADS_FOUND, MSG_ID_AVAILABLE_DOWNLOADS_FOUND, transferControl.transferObjects.size()));
 		} catch (Exception e) {
-			logger.error(String.format(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN), e);;
+			oldLogger.error(String.format(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN), e);;
 		}
 		
 		return transferControl;
@@ -756,7 +726,7 @@ public class AuxipMonitor extends BaseMonitor {
 		if (logger.isTraceEnabled()) logger.trace(">>> transferToTargetDir({})", null == object ? "null" : object.getIdentifier());
 		
 		if (null == object) {
-			logger.error(String.format(MSG_TRANSFER_OBJECT_IS_NULL, MSG_ID_TRANSFER_OBJECT_IS_NULL));
+			oldLogger.error(String.format(MSG_TRANSFER_OBJECT_IS_NULL, MSG_ID_TRANSFER_OBJECT_IS_NULL));
 			return false;
 		}
 		
@@ -767,7 +737,7 @@ public class AuxipMonitor extends BaseMonitor {
 				
 				// Check target directory
 				if (!Files.isWritable(Path.of(config.getAuxipDirectoryPath()))) {
-					logger.error(String.format(MSG_TARGET_DIRECTORY_NOT_WRITABLE, MSG_ID_TARGET_DIRECTORY_NOT_WRITABLE,
+					oldLogger.error(String.format(MSG_TARGET_DIRECTORY_NOT_WRITABLE, MSG_ID_TARGET_DIRECTORY_NOT_WRITABLE,
 							config.getAuxipDirectoryPath()));
 					return false;
 				}
@@ -850,14 +820,14 @@ public class AuxipMonitor extends BaseMonitor {
 					if (logger.isTraceEnabled()) logger.trace("... buffer written to file {}", productFile);
 					
 				} catch (FileNotFoundException e) {
-					logger.error(String.format(MSG_FILE_NOT_WRITABLE, MSG_ID_FILE_NOT_WRITABLE, productFile.toString()));
+					oldLogger.error(String.format(MSG_FILE_NOT_WRITABLE, MSG_ID_FILE_NOT_WRITABLE, productFile.toString()));
 					return false;
 				} catch (WebClientResponseException e) {
-					logger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED, 
+					oldLogger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED, 
 							transferProduct.getName(), e.getMessage() + " / " + e.getResponseBodyAsString()));
 					return false;
 				} catch (Exception e) {
-					logger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED, 
+					oldLogger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED, 
 							transferProduct.getName(), e.getMessage()));
 					return false;
 				}
@@ -865,7 +835,7 @@ public class AuxipMonitor extends BaseMonitor {
 				// Compare file size with value given by AUXIP 
 				Long productFileLength = productFile.length();
 				if (!productFileLength.equals(transferProduct.getSize())) {
-					logger.error(String.format(MSG_FILE_SIZE_MISMATCH, MSG_ID_FILE_SIZE_MISMATCH, transferProduct.getIdentifier(),
+					oldLogger.error(String.format(MSG_FILE_SIZE_MISMATCH, MSG_ID_FILE_SIZE_MISMATCH, transferProduct.getIdentifier(),
 							transferProduct.getSize(), productFileLength));
 					return false;
 				}
@@ -883,25 +853,25 @@ public class AuxipMonitor extends BaseMonitor {
 				// Compute checksum and compare with value given by AUXIP
 				String md5Hash = MD5Util.md5Digest(productFile);
 				if (!md5Hash.equalsIgnoreCase(transferProduct.checksum)) {
-					logger.error(String.format(MSG_CHECKSUM_MISMATCH, MSG_ID_CHECKSUM_MISMATCH, transferProduct.getIdentifier(),
+					oldLogger.error(String.format(MSG_CHECKSUM_MISMATCH, MSG_ID_CHECKSUM_MISMATCH, transferProduct.getIdentifier(),
 							transferProduct.getChecksum(), md5Hash));
 					return false;
 				}
 				
 				// Log download with UUID, file name, size, checksum, publication date (request by ESA)
-				logger.info(String.format(MSG_PRODUCT_TRANSFER_COMPLETED, MSG_ID_PRODUCT_TRANSFER_COMPLETED,
+				oldLogger.info(String.format(MSG_PRODUCT_TRANSFER_COMPLETED, MSG_ID_PRODUCT_TRANSFER_COMPLETED,
 						transferProduct.getIdentifier(), transferProduct.getName(),
 						transferProduct.getSize(), transferProduct.getChecksum(),
 						transferProduct.getPublicationTime().toString()));
 				
 				return true;
 			} catch (Exception e) {
-				logger.error(String.format(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN), e);
+				oldLogger.error(String.format(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN), e);
 				return false;
 			}
 
 		} else {
-			logger.error(String.format(MSG_INVALID_TRANSFER_OBJECT_TYPE, MSG_ID_INVALID_TRANSFER_OBJECT_TYPE, object.getIdentifier()));
+			oldLogger.error(String.format(MSG_INVALID_TRANSFER_OBJECT_TYPE, MSG_ID_INVALID_TRANSFER_OBJECT_TYPE, object.getIdentifier()));
 			return false;
 		}
 	}
@@ -915,18 +885,18 @@ public class AuxipMonitor extends BaseMonitor {
 				null == transferObject ? "null" : transferObject.getIdentifier());
 
 		if (null == transferObject) {
-			logger.error(String.format(MSG_TRANSFER_OBJECT_IS_NULL, MSG_ID_TRANSFER_OBJECT_IS_NULL));
+			oldLogger.error(String.format(MSG_TRANSFER_OBJECT_IS_NULL, MSG_ID_TRANSFER_OBJECT_IS_NULL));
 			return false;
 		}
 		
 		if (! (transferObject instanceof TransferProduct)) {
-			logger.error(String.format(MSG_INVALID_TRANSFER_OBJECT_TYPE, MSG_ID_INVALID_TRANSFER_OBJECT_TYPE, transferObject.getIdentifier()));
+			oldLogger.error(String.format(MSG_INVALID_TRANSFER_OBJECT_TYPE, MSG_ID_INVALID_TRANSFER_OBJECT_TYPE, transferObject.getIdentifier()));
 			return false;
 		}
 
 		TransferProduct transferProduct = (TransferProduct) transferObject;
 		
-		logger.warn(String.format(MSG_FOLLOW_ON_ACTION_STARTED, MSG_ID_FOLLOW_ON_ACTION_STARTED,
+		oldLogger.warn(String.format(MSG_FOLLOW_ON_ACTION_STARTED, MSG_ID_FOLLOW_ON_ACTION_STARTED,
 				transferProduct.getIdentifier(), "NOT IMPLEMENTED"));
 
 		return true;

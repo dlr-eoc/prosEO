@@ -33,6 +33,18 @@ public enum ApiMonitorMessage implements ProseoMessage {
 
 	// -- AUXIP Monitor --
 	INVALID_AUXIP_ID			(7100, Level.ERROR, false, "Invalid AUXIP Monitor identifier {0} passed", ""),
+	ODATA_REQUEST_ABORTED		(7101, Level.ERROR, false, "OData request for reference time {0} aborted (cause: {1} / {2})", ""),
+	ODATA_REQUEST_FAILED		(7102, Level.ERROR, false, "OData request for reference time {0} failed with HTTP status code {1}, message:\n{2}\n", ""),
+	ODATA_RESPONSE_UNREADABLE	(7103, Level.ERROR, false, "OData response not readable", ""),
+	RETRIEVAL_RESULT			(7104, Level.INFO, true, "Retrieval request returned {0} products out of {1} available", ""),
+	PRODUCT_UUID_MISSING		(7105, Level.ERROR, false, "Product list entry {0} does not contain product UUID ('Id' element)", ""),
+	PRODUCT_FILENAME_MISSING	(7106, Level.ERROR, false, "Product list entry {0} does not contain product filename ('Name' element)", ""),
+	PRODUCT_SIZE_MISSING		(7107, Level.ERROR, false, "Product list entry {0} does not contain product size ('ContentLength' element)", ""),
+	PRODUCT_HASH_MISSING		(7108, Level.ERROR, false, "Product list entry {0} does not contain product checksum ('Checksum/Value' element)", ""),
+	PRODUCT_VAL_START_MISSING	(7109, Level.ERROR, false, "Product list entry {0} does not contain product validity start ('ContentDate/Start' element)", ""),
+	PRODUCT_VAL_STOP_MISSING	(7110, Level.ERROR, false, "Product list entry {0} does not contain product validity end ('ContentDate/End' element)", ""),
+	PRODUCT_PUBLICATION_MISSING	(7111, Level.ERROR, false, "Product list entry {0} does not contain valid publication time ('PublicationDate' element)", ""),
+	PRODUCT_EVICTION_MISSING	(7112, Level.ERROR, false, "Product list entry {0} does not contain valid eviction time ('EvictionDate' element)", ""),
 	
 	// -- EDIP Monitor --
 	EDIP_NOT_READABLE			(7150, Level.ERROR, false, "EDIP directory {0} not readable (cause: {1})", ""),
