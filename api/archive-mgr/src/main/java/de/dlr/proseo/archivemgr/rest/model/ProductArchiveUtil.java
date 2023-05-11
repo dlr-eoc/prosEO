@@ -7,160 +7,162 @@
 package de.dlr.proseo.archivemgr.rest.model;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.model.ProcessingFacility;
-import de.dlr.proseo.model.enums.FacilityState;
-import de.dlr.proseo.model.enums.StorageType;
+import de.dlr.proseo.logging.messages.ProductArchiveMgrMessage;
+import de.dlr.proseo.model.ProductArchive;
+import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.enums.ArchiveType;
 
+import java.util.List;
+import java.util.ArrayList;
 
+import java.util.Set;
+
+/**
+ * Model - Rest and Rest - Model Mapper for Product Archive
+ * 
+ * @author Denys Chaykovskiy
+ */
+
+// TODO: Think about data model, should it be inside or not, maybe mapper class or even separate classes
 public class ProductArchiveUtil {
+	
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductArchiveUtil.class);
 	
 	/**
-	 * Convert a prosEO model ProcessingFacility into a REST Facility
+	 * Converts a prosEO model ProductArchive into a REST ProductArchive
 	 * 
-	 * @param modelFacility the prosEO model ProcessingFacility
-	 * @return an equivalent REST processingFacility or null, if no model ProcessingFacility was given
+	 * @param modelArchive the prosEO model ProductArchive
+	 * @return an equivalent REST ProductArchive or null, if no model ProductArchive was given
 	 */
+	public static RestProductArchive toRestProductArchive(ProductArchive modelArchive) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> toRestProductArchive({})", (null == modelArchive ? "MISSING" : modelArchive.getId()));
 	
-//	public static RestProcessingFacility toRestFacility(ProcessingFacility modelFacility) {
-//		if (logger.isTraceEnabled()) logger.trace(">>> toRestFacility({})", (null == modelFacility ? "MISSING" : modelFacility.getId()));
-//		
-//		if (null == modelFacility)
-//			return null;
-//		
-//		RestProcessingFacility restFacility = new RestProcessingFacility();
-//		
-//		restFacility.setId(modelFacility.getId());
-//
-//		restFacility.setVersion(Long.valueOf(modelFacility.getVersion()));
-//		if (null != modelFacility.getName()) {
-//			restFacility.setName(modelFacility.getName());
-//
-//		}	
-//		if (null != modelFacility.getDescription()) {
-//			restFacility.setDescription(modelFacility.getDescription());
-//
-//		}	
-//		if (null != modelFacility.getFacilityState()) {
-//			restFacility.setFacilityState(modelFacility.getFacilityState().toString());
-//
-//		}
-//		if (null != modelFacility.getProcessingEngineUrl()) {
-//			restFacility.setProcessingEngineUrl(modelFacility.getProcessingEngineUrl());
-//
-//		}	
-//		if (null != modelFacility.getProcessingEngineToken()) {
-//			restFacility.setProcessingEngineToken(modelFacility.getProcessingEngineToken());
-//
-//		}
-//		if (null != modelFacility.getMaxJobsPerNode()) {
-//			restFacility.setMaxJobsPerNode(modelFacility.getMaxJobsPerNode().longValue());
-//
-//		}	
-//		if (null != modelFacility.getStorageManagerUrl()) {
-//			restFacility.setStorageManagerUrl(modelFacility.getStorageManagerUrl());
-//
-//		}	
-//		if (null != modelFacility.getExternalStorageManagerUrl()) {
-//			restFacility.setExternalStorageManagerUrl(modelFacility.getExternalStorageManagerUrl());
-//
-//		}	
-//		if (null != modelFacility.getLocalStorageManagerUrl()) {
-//			restFacility.setLocalStorageManagerUrl(modelFacility.getLocalStorageManagerUrl());
-//
-//		}	
-//		if (null != modelFacility.getStorageManagerUser()) {
-//			restFacility.setStorageManagerUser(modelFacility.getStorageManagerUser());
-//
-//		}
-//		if (null != modelFacility.getStorageManagerPassword()) {
-//			restFacility.setStorageManagerPassword(modelFacility.getStorageManagerPassword());
-//
-//		}
-//		if (null != modelFacility.getDefaultStorageType()) {
-//			restFacility.setDefaultStorageType(modelFacility.getDefaultStorageType().toString());
-//		}
-//		
-//
-//		return restFacility;
-//		
-//	}
-	
+		if (null == modelArchive)
+			return null;
+		
+		RestProductArchive restArchive = new RestProductArchive();
+		
+		setDefaultRestValues(restArchive);
+		
+		
+		Set<ProductClass> modelProductClasses = modelArchive.getAvailableProductClasses();
+		List<String> restProductClasses = new ArrayList<String>();
+		
+		for (ProductClass modelProductClass : modelProductClasses) {
+			
+			String productType = modelProductClass.getProductType();
+			restProductClasses.add(productType);
+		}
+		restArchive.setAvailableProductClasses(restProductClasses);
+		
+		
+		restArchive.setArchiveType(modelArchive.getArchiveType().toString());
+		
+		restArchive.setBaseUri(modelArchive.getBaseUri());
+		
+		restArchive.setClientId(modelArchive.getClientId());
+		
+		restArchive.setClientSecret(modelArchive.getClientSecret());
+		
+		restArchive.setCode(modelArchive.getCode());
+
+		restArchive.setContext(modelArchive.getContext());
+		
+		restArchive.setId(modelArchive.getId());
+		
+		restArchive.setName(modelArchive.getName());
+		
+		restArchive.setPassword(modelArchive.getPassword());
+		
+		restArchive.setSendAuthInBody(modelArchive.getSendAuthInBody());
+		
+		restArchive.setTokenRequired(modelArchive.getTokenRequired());
+		
+		restArchive.setTokenUri(modelArchive.getTokenUri());
+		
+		restArchive.setUsername(modelArchive.getUsername());
+		
+		restArchive.setVersion((long) modelArchive.getVersion());
+		
+		return restArchive;
+	}
+					
 	/**
-	 * Convert a REST ProcessingFacility into a prosEO model ProcessingFacility (scalar and embedded attributes only, no orbit references)
+	 * Convert a REST ProductArchive into a prosEO model ProductArchive 
+	 * AvailableProductClasses will not be set here, the field will be null
 	 * 
-	 * @param restFacility the REST Facility
-	 * @return a (roughly) equivalent model Processing Facility
-	 * @throws IllegalArgumentException if the REST facility violates syntax rules for date, enum or numeric values
+	 * @param restArchive the REST ProductArchive
+	 * @return model Product Archive
+	 * @throws IllegalArgumentException if the REST Product Archive has a wrong archive type
 	 */
-//	public static ProcessingFacility toModelFacility(RestProcessingFacility restFacility) {
-//		if (logger.isTraceEnabled()) logger.trace(">>> toModelFacility({})", (null == restFacility ? "MISSING" : restFacility.getId()));
-//		
-//		if (null == restFacility)
-//			return null;
-//		
-//		ProcessingFacility modelFacility = new ProcessingFacility();
-//		
-//		if (null != restFacility.getId() && 0 != restFacility.getId()) {
-//			modelFacility.setId(restFacility.getId());
-//			while (modelFacility.getVersion() < restFacility.getVersion()) {
-//				modelFacility.incrementVersion();
-//			} 
-//		}
-//
-//		if (null != restFacility.getName()) {
-//			modelFacility.setName(restFacility.getName());
-//
-//		}	
-//		if (null != restFacility.getDescription()) {
-//			modelFacility.setDescription(restFacility.getDescription());
-//
-//		}	
-//		if (null != restFacility.getFacilityState()) {
-//			modelFacility.setFacilityState(FacilityState.valueOf(restFacility.getFacilityState()));
-//
-//		}	
-//		if (null != restFacility.getProcessingEngineUrl()) {
-//			modelFacility.setProcessingEngineUrl(restFacility.getProcessingEngineUrl());
-//
-//		}	
-//		if (null != restFacility.getProcessingEngineToken()) {
-//			modelFacility.setProcessingEngineToken(restFacility.getProcessingEngineToken());
-//
-//		}	
-//		if (null != restFacility.getMaxJobsPerNode()) {
-//			modelFacility.setMaxJobsPerNode(restFacility.getMaxJobsPerNode().intValue());
-//
-//		}	
-//		if (null != restFacility.getStorageManagerUrl()) {
-//			modelFacility.setStorageManagerUrl(restFacility.getStorageManagerUrl());
-//
-//		}	
-//		if (null != restFacility.getExternalStorageManagerUrl()) {
-//			modelFacility.setExternalStorageManagerUrl(restFacility.getExternalStorageManagerUrl());
-//
-//		}	
-//		if (null != restFacility.getLocalStorageManagerUrl()) {
-//			modelFacility.setLocalStorageManagerUrl(restFacility.getLocalStorageManagerUrl());
-//
-//		}	
-//		if (null != restFacility.getStorageManagerUser()) {
-//			modelFacility.setStorageManagerUser(restFacility.getStorageManagerUser());
-//
-//		}	
-//		if (null != restFacility.getStorageManagerPassword()) {
-//			modelFacility.setStorageManagerPassword(restFacility.getStorageManagerPassword());
-//
-//		}	
-//		if (null != restFacility.getDefaultStorageType()) {		
-//			modelFacility.setDefaultStorageType(StorageType.valueOf(restFacility.getDefaultStorageType()));
-//		}		
-//
-//		return modelFacility;
-//		
-//		
-//	}
+	public static ProductArchive toModelProductArchive(RestProductArchive restArchive) throws IllegalArgumentException {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> toModelProductArchive({})", (null == restArchive ? "MISSING" : restArchive.getId()));
+		
+		if (null == restArchive)
+			return null;
+		
+		ProductArchive modelArchive = new ProductArchive();
+		
+		setDefaultModelValues(modelArchive);
+		
+		try {
+			modelArchive.setArchiveType(ArchiveType.valueOf(restArchive.getArchiveType()));	
+	    } catch (IllegalArgumentException e) {
+	    	 
+	    	throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_TYPE_WRONG));	    	 
+	    }
+		
+		modelArchive.setBaseUri(restArchive.getBaseUri());
+		
+		modelArchive.setClientId(restArchive.getClientId());
+		
+		modelArchive.setClientSecret(restArchive.getClientSecret());
+		
+		modelArchive.setCode(restArchive.getCode());
+		
+		modelArchive.setContext(restArchive.getContext());
+		
+		modelArchive.setId(restArchive.getId());
+		
+		modelArchive.setName(restArchive.getName());
+		
+		modelArchive.setPassword(restArchive.getPassword());
+		
+		modelArchive.setSendAuthInBody(restArchive.getSendAuthInBody());
+		
+		modelArchive.setTokenRequired(restArchive.getTokenRequired());
+		
+		modelArchive.setTokenUri(restArchive.getTokenUri());
+		
+		modelArchive.setUsername(restArchive.getUsername());
+		
+		return modelArchive;
+	}
 
-
+	/**
+	 * @param modelArchive
+	 */
+	public static void setDefaultModelValues(ProductArchive modelArchive) {
+		
+		modelArchive.setArchiveType(ArchiveType.AIP);
+		
+		modelArchive.setTokenRequired(false);
+		
+		modelArchive.setSendAuthInBody(false);
+	}
+		
+	/**
+	 * @param restArchive
+	 */
+	public static void setDefaultRestValues(RestProductArchive restArchive) {
+		
+		restArchive.setArchiveType(ArchiveType.AIP.toString());
+		
+		restArchive.setTokenRequired(false);
+		
+		restArchive.setSendAuthInBody(false);
+	}
 }
