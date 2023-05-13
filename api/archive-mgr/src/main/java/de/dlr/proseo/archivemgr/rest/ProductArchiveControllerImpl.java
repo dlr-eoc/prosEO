@@ -24,83 +24,91 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 
 
 /**
- * Spring MVC controller for the prosEO Product ARchive Manager;
+ * Spring MVC controller for the prosEO Product Archive Manager;
  * implements the services required to manage product archive endpoints
  * 
- * @author xxx
+ * @author Denys Chaykovskiy
  *
  */
 @Component
 public class ProductArchiveControllerImpl implements ArchiveController{
 
 	private static ProseoLogger logger = new ProseoLogger(ProductArchiveControllerImpl.class);
-	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.FACILTY_MGR);
+	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.ARCHIVE_MGR);
 	
-	/** The processing facility manager */
+	/** Product archive manager */
 	@Autowired
 	private ProductArchiveManager productArchiveManager;
 
 	/**
-	 * Create a facility from the given Json object 
+	 * Create a product archive from the given Json object 
 	 * 
-	 * @param facility the Json object to create the facility from
-	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the facility after persistence
+	 * @param facility the Json object to create the product archive from
+	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the product archive after persistence
 	 *             (with ID and version for all contained objects) or
 	 *         HTTP status "BAD_REQUEST", if any of the input data was invalid
 	 */
-
 	@Override
-	public ResponseEntity<RestProductArchive> createArchive(RestProductArchive facility) {	
-		if (logger.isTraceEnabled()) logger.trace(">>> createArchive({})", (null == facility ? "MISSING" : facility.getName()));
+	public ResponseEntity<RestProductArchive> createArchive(RestProductArchive archive) {	
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> createArchive({})", (null == archive ? "MISSING" : archive.getName()));
 		
 		try {
-			return new ResponseEntity<>(productArchiveManager.createArchive(facility), HttpStatus.CREATED);
+			return new ResponseEntity<>(productArchiveManager.createArchive(archive), HttpStatus.CREATED);
+			
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		}	
 	}
 	
 	/**
-	 * List of all facilities with no search criteria
-	 * @param name the unique facility name
-	 * @return a response entity with either a list of facilities and HTTP status OK or an error message and an HTTP status indicating failure
+	 * List of all product archives with no search criteria
+	 * @param name the unique product archive name
+	 * @return a response entity with either a list of product archives and HTTP status OK or an error message and an HTTP status indicating failure
 	 */
 	@Override
 	public ResponseEntity<List<RestProductArchive>> getArchives(String name) {
+		
 		if (logger.isTraceEnabled()) logger.trace(">>> getArchives( {})",  name);
 		
 		try {
 			return new ResponseEntity<>(productArchiveManager.getArchives(name), HttpStatus.OK);
+			
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		}
 	}
+	
 	/**
-	 * Find the facility with the given ID
+	 * Find the product archive with the given ID
 	 * 
 	 * @param id the ID to look for
-	 * @return a response entity corresponding to the found facility and HTTP status "OK" or an error message and
-	 * 		   HTTP status "NOT_FOUND", if no facility with the given ID exists
+	 * @return a response entity corresponding to the found product archive and HTTP status "OK" or an error message and
+	 * 		   HTTP status "NOT_FOUND", if no product archive with the given ID exists
 	 */
 	@Override
 	public ResponseEntity<RestProductArchive> getArchiveById(Long id) {
+		
 		if (logger.isTraceEnabled()) logger.trace(">>> getArchiveById({})", id);
+		
 		try {
 			return new ResponseEntity<>(productArchiveManager.getArchiveById(id), HttpStatus.OK);
+			
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+			
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		}
-		
 	}
+	
 	/**
-	 * Delete a facility by ID
+	 * Delete a product archive by ID
 	 * 
 	 * @param id the ID of the facility to delete
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful,
-	 * 		"BAD_REQUEST", if the facility still has stored products,
-	 * 		"NOT_FOUND", if the facility did not exist, or 
+	 * 		"BAD_REQUEST", if the archive still has stored products, TODO: Check dependencies
+	 * 		"NOT_FOUND", if the archive did not exist, or 
 	 * 		"NOT_MODIFIED", if the deletion was unsuccessful
 	 */
 	@Override
@@ -111,35 +119,44 @@ public class ProductArchiveControllerImpl implements ArchiveController{
 		try {
 			productArchiveManager.deleteArchiveById(id);
 			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
+			
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+			
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+			
 		} catch (RuntimeException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}
 	}
+	
 	/**
-	 * Update the facility with the given ID with the attribute values of the given Json object. 
-	 * @param id the ID of the facility to update
+	 * Update the product archive with the given ID with the attribute values of the given Json object. 
+	 * @param id the ID of the product archive to update
 	 * @param restArchive a Json object containing the modified (and unmodified) attributes
 	 * @return a response containing
-	 *     	   HTTP status "OK" and a Json object corresponding to the facility after modification (with ID and version for all 
+	 *     	   HTTP status "OK" and a Json object corresponding to the product archive after modification (with ID and version for all 
 	 * 		       contained objects) or 
-	 *         HTTP status "NOT_MODIFIED" and the unchanged facility, if no attributes were actually changed, or
-	 * 	       HTTP status "NOT_FOUND" and an error message, if no facility with the given ID exists
+	 *         HTTP status "NOT_MODIFIED" and the unchanged product archive, if no attributes were actually changed, or
+	 * 	       HTTP status "NOT_FOUND" and an error message, if no product archive with the given ID exists
 	 */
 	@Override
 	public ResponseEntity<RestProductArchive> modifyArchive(Long id, RestProductArchive restArchive) {
+		
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyArchive({})", id);
+		
 		try {
 			RestProductArchive changedArchive = productArchiveManager.modifyArchive(id, restArchive);
 			HttpStatus httpStatus = (restArchive.getVersion() == changedArchive.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
 			return new ResponseEntity<>(changedArchive, httpStatus);
+			
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+			
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+			
 		} catch (ConcurrentModificationException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
 		}
