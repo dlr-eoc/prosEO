@@ -49,6 +49,7 @@ public enum AipClientMessage implements ProseoMessage {
 	PRODUCT_ATTRIBUTES_MISSING			(5433, Level.ERROR, false, "Product list entry {0} does not contain attribute list ('Attributes' element)", ""),
 	ORDER_DATA_MISSING					(5434, Level.ERROR, false, "Order list entry {0} does not contain mandatory values ('Id' and/or 'Status' elements)", ""),
 	ORDER_REQUEST_FAILED				(5435, Level.ERROR, false, "Product order request to external API {0} failed", ""),
+	PRODUCT_DOWNLOAD_ONGOING			(5424, Level.INFO, true, "Download for product {0} already ongoing, skipping download and ingestion", ""),
 	;
 
 	private final int code;

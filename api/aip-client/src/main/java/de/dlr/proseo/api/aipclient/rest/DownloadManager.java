@@ -23,6 +23,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -129,6 +130,9 @@ public class DownloadManager {
 	/** Utility class for user authorizations */
 	@Autowired
 	private SecurityService securityService;
+
+	/** Lookup table for products currently being downloaded from some archive */
+	private static ConcurrentSkipListSet<String> productDownloads = new ConcurrentSkipListSet<>();
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(DownloadManager.class);
@@ -948,6 +952,12 @@ public class DownloadManager {
 				(null == archive ? "NULL" : archive.getCode()),
 				(null == product ? "NULL" : product.getUuid()),
 				(null == facility ? "NULL" : facility.getName()));
+		
+		// Avoid duplicate downloads
+		if (productDownloads.contains(product.getUuid())) {
+			logger.log(AipClientMessage.PRODUCT_DOWNLOAD_ONGOING, product.getUuid());
+			return;
+		}
 
 		// Get the user from the current security context (not preserved to spawned thread)
 		String user = securityService.getUser();
@@ -961,6 +971,9 @@ public class DownloadManager {
 						(null == archive ? "NULL" : archive.getCode()),
 						(null == product ? "NULL" : product.getUuid()),
 						(null == facility ? "NULL" : facility.getName()));
+				
+				// Log download in lookup table
+				productDownloads.add(product.getUuid());
 				
 				try {
 					// For long-term archives, create a product order first and wait for its completion
@@ -979,6 +992,8 @@ public class DownloadManager {
 				} catch (Exception e) {
 					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass().getName() + "/" + e.getMessage());
 					if (logger.isDebugEnabled()) logger.debug("Stack trace: ", e);
+				} finally {
+					productDownloads.remove(product.getUuid());
 				}
 			}
 		};
