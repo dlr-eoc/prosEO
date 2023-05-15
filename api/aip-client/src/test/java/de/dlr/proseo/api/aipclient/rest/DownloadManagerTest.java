@@ -6,12 +6,7 @@
 package de.dlr.proseo.api.aipclient.rest;
 
 import static org.junit.Assert.*;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
-
 import java.io.File;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,18 +31,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.web.client.ExpectedCount;
-import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -112,6 +102,7 @@ public class DownloadManagerTest {
 	private static final String URL_ODATA = "/odata/v1/";
 	private static final String URL_LTA1 = "/" + TEST_LTA_1 + URL_ODATA;
 	private static final String URL_LTA2 = "/" + TEST_LTA_2 + URL_ODATA;
+	private static final String URL_INGESTOR = "/proseo/ingestor/v0.1/ingest/" + TEST_FACILITY;
 	
 	private static final String LTA_QUERY_BY_NAME = 
 			"Products?%24filter=Name%20eq%20" 
@@ -363,6 +354,10 @@ public class DownloadManagerTest {
 			+ "    \"Priority\": 50\n"
 			+ "  } ]\n"
 			+ "}";
+	
+	private static final String INGESTOR_RESPONSE_1 = 
+			"["
+			+ "]";
 	
 	/** AIP Client configuration */
 	@Autowired
@@ -699,6 +694,15 @@ public class DownloadManagerTest {
 						.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString())
 						.withBody(LTA_RESPONSE_QUERY_ORDER_2)));
 		
+		// Ingestor request
+		
+		mockLtaService.stubFor(WireMock.post(WireMock.urlEqualTo(URL_INGESTOR))
+				.willReturn(
+						WireMock.aResponse()
+						.withStatus(HttpStatus.CREATED.value())
+						.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString())
+						.withBody(INGESTOR_RESPONSE_1)));
+		
 	}
 
 	/**
@@ -725,6 +729,7 @@ public class DownloadManagerTest {
 		
 		// Mock authentication
 		Authentication auth = new TestingAuthenticationToken(testConfig.getTestMission() + "-" + TEST_USER, TEST_PASSWORD);
+		auth.setAuthenticated(true);
 		SecurityContextHolder.getContext().setAuthentication(auth);
 		
 		logger.info("Using security context {}", SecurityContextHolder.getContext());

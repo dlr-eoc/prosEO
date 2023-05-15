@@ -15,7 +15,7 @@ logging:
 proseo:
     ingestor:
         # URL of the Ingestor Service
-        url: http://proseo-ingestor:8080/proseo/ingestor/v0.1
+        url: http://localhost:9876/proseo/ingestor/v0.1
         # The directory for the Ingestor Service to upload from
         sourcedir: target/test/downloads
         # Timeout for Ingestor connections in milliseconds (e. g. 30 s)

@@ -47,6 +47,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -877,13 +878,15 @@ public class DownloadManager {
 	 * 
 	 * @param product the metadata of the product to ingest
 	 * @param facility the processing facility to ingest to
+	 * @param user username for Ingestor service (no security context available in spawned thread)
 	 * @param password password for Ingestor service
 	 * @throws IOException if any error occurs during the ingestion process
 	 */
-	private void ingestProduct(IngestorProduct product, ProcessingFacility facility, String password) throws IOException {
-		if (logger.isTraceEnabled()) logger.trace(">>> downloadAndIngest({}, {}, ********)",
+	private void ingestProduct(IngestorProduct product, ProcessingFacility facility, String user, String password) throws IOException {
+		if (logger.isTraceEnabled()) logger.trace(">>> downloadAndIngest({}, {}, {}, ********)",
 				(null == product ? "NULL" : product.getUuid()),
-				(null == facility ? "NULL" : facility.getName()));
+				(null == facility ? "NULL" : facility.getName()),
+				user);
 		
 		// Upload product via Ingestor
 		String ingestorRestUrl = "/ingest/" + facility.getName();
@@ -898,7 +901,7 @@ public class DownloadManager {
 		} 
 		
 		String basicAuth = "Basic " + Base64.getEncoder().encodeToString(
-				(securityService.getMission() + "-" + securityService.getUser() + ":" + password).getBytes());
+				(user + ":" + password).getBytes());
 		HttpClient httpClient = HttpClient.create()
 				.wiretap(logger.isDebugEnabled());
 		WebClient webClient = WebClient.builder()
@@ -909,7 +912,7 @@ public class DownloadManager {
 				config.getIngestorUrl() + ingestorRestUrl, basicAuth, jsonRequest);
 		
 		try {
-			Flux<IngestorProduct> result = webClient
+			Flux<String> result = webClient
 					.post()
 					.uri(ingestorRestUrl)
 					.headers(httpHeaders -> {
@@ -918,7 +921,7 @@ public class DownloadManager {
 					})
 					.body(BodyInserters.fromObject(jsonRequest))
 					.retrieve()
-					.bodyToFlux(IngestorProduct.class);
+					.bodyToFlux(String.class);
 			result.blockLast(Duration.ofSeconds(config.getIngestorTimeout()));
 		} catch (WebClientResponseException e) {
 			logger.log(AipClientMessage.ERROR_REGISTERING_PRODUCT,
@@ -946,6 +949,9 @@ public class DownloadManager {
 				(null == product ? "NULL" : product.getUuid()),
 				(null == facility ? "NULL" : facility.getName()));
 
+		// Get the user from the current security context (not preserved to spawned thread)
+		String user = securityService.getUser();
+		
 		// Create a new thread
 		Thread downloadThread = new Thread() {
 			
@@ -967,7 +973,7 @@ public class DownloadManager {
 					ingestorProduct = downloadProduct(archive, product);
 					
 					// Ingest product to prosEO
-					ingestProduct(ingestorProduct, facility, password);
+					ingestProduct(ingestorProduct, facility, user, password);
 				} catch (InterruptedException | IOException e) {
 					// Already logged, just finish this thread
 				} catch (Exception e) {
