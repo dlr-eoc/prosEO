@@ -92,8 +92,10 @@ public class DownloadManagerTest {
 	private static final String TEST_FILENAME_1 = "UTM_OPER_L0__ODB_1__20210101T000510_20210101T002508_16680_03.RAW";
 	private static final String TEST_FILENAME_2 = "UTM_OPER_L0__ODB_1__20210101T001510_20210101T003508_16680_04.RAW";
 	private static final String TEST_NON_EXISTENT_FILENAME = "non-existent-filename";
-	private static final String TEST_START_TIME = "2021-01-01T00:05:10.123";
-	private static final String TEST_STOP_TIME = "2021-01-01T00:25:08.234";
+	private static final String TEST_START_TIME = "2021-01-01T00:05:10.123Z";
+	private static final String TEST_STOP_TIME = "2021-01-01T00:25:08.234Z";
+	private static final String TEST_START_TIME_INVALID = "2000-01-01T00:00:00.000Z";
+	private static final String TEST_STOP_TIME_INVALID = "2000-01-01T01:00:00.000Z";
 	private static final String TEST_UUID_1 = "3cdc5b00-0050-4c21-925e-4806b59db629";
 	private static final String TEST_UUID_2 = "3cdc5b00-0050-4c21-925e-4806b59db73a";
 	private static final String TEST_ORDER_UUID_1 = "2b17b57d-fff4-4645-b539-91f305c26e53";
@@ -113,23 +115,41 @@ public class DownloadManagerTest {
 				+ TEST_NON_EXISTENT_FILENAME
 				+ "&%24count=true&%24top=1000&%24expand=Attributes"; 
 	private static final String LTA_QUERY_BY_TIME = 
-			"Products?%24filter=ContentDate/Start%20eq%20" 
-				+ TEST_START_TIME 
-				+ "Z%20and%20ContentDate/End%20eq%20" 
-				+ TEST_STOP_TIME 
-				+ "Z%20and%20Attributes/OData.CSC.StringAttribute/any(att:att/Name%20eq%20'productType'%20" 
-				+ "and%20att/OData.CSC.StringAttribute/Value%20eq%20'" 
+			"Products?%24filter=ContentDate%2FStart%20eq%20" 
+				+ TEST_START_TIME.replaceAll(":", "%3A")
+				+ "%20and%20ContentDate%2FEnd%20eq%20" 
+				+ TEST_STOP_TIME.replaceAll(":", "%3A")
+				+ "%20and%20Attributes%2FOData.CSC.StringAttribute%2Fany%28att%3Aatt%2FName%20eq%20'productType'%20" 
+				+ "and%20att%2FOData.CSC.StringAttribute%2FValue%20eq%20'" 
 				+ TEST_PRODUCT_TYPE 
-				+ "')&%24count=true&%24top=1000&%24expand=Attributes";
+				+ "'%29&%24count=true&%24top=1000&%24expand=Attributes";
+	private static final String LTA_QUERY_BY_INVALID_TIME = 
+			"Products?%24filter=ContentDate%2FStart%20eq%20" 
+				+ TEST_START_TIME_INVALID.replaceAll(":", "%3A")
+				+ "%20and%20ContentDate%2FEnd%20eq%20" 
+				+ TEST_STOP_TIME_INVALID.replaceAll(":", "%3A")
+				+ "%20and%20Attributes%2FOData.CSC.StringAttribute%2Fany%28att%3Aatt%2FName%20eq%20'productType'%20" 
+				+ "and%20att%2FOData.CSC.StringAttribute%2FValue%20eq%20'" 
+				+ TEST_PRODUCT_TYPE 
+				+ "'%29&%24count=true&%24top=1000&%24expand=Attributes";
 	private static final String LTA_QUERY_ALL_BY_TIME = 
-			"Products?%24filter=ContentDate/Start%20le%20" 
-				+ TEST_STOP_TIME 
-				+ "Z%20and%20ContentDate/End%20ge%20" 
-				+ TEST_START_TIME 
-				+ "Z%20and%20Attributes/OData.CSC.StringAttribute/any(att:att/Name%20eq%20'productType'%20" 
-				+ "and%20att/OData.CSC.StringAttribute/Value%20eq%20'" 
+			"Products?%24filter=ContentDate%2FStart%20lt%20" 
+				+ TEST_STOP_TIME.replaceAll(":", "%3A")
+				+ "%20and%20ContentDate%2FEnd%20gt%20" 
+				+ TEST_START_TIME.replaceAll(":", "%3A")
+				+ "%20and%20Attributes%2FOData.CSC.StringAttribute%2Fany%28att%3Aatt%2FName%20eq%20'productType'%20" 
+				+ "and%20att%2FOData.CSC.StringAttribute%2FValue%20eq%20'" 
 				+ TEST_PRODUCT_TYPE 
-				+ "')&%24count=true&%24top=1000&%24expand=Attributes";
+				+ "'%29&%24count=true&%24top=1000&%24expand=Attributes";
+	private static final String LTA_QUERY_ALL_BY_INVALID_TIME = 
+			"Products?%24filter=ContentDate%2FStart%20lt%20" 
+				+ TEST_STOP_TIME_INVALID.replaceAll(":", "%3A")
+				+ "%20and%20ContentDate%2FEnd%20gt%20" 
+				+ TEST_START_TIME_INVALID.replaceAll(":", "%3A")
+				+ "%20and%20Attributes%2FOData.CSC.StringAttribute%2Fany%28att%3Aatt%2FName%20eq%20'productType'%20" 
+				+ "and%20att%2FOData.CSC.StringAttribute%2FValue%20eq%20'" 
+				+ TEST_PRODUCT_TYPE 
+				+ "'%29&%24count=true&%24top=1000&%24expand=Attributes";
 	
 	private static final String TEST_PRODUCT_DATA_1 = "testdata1 for UUID " + TEST_UUID_1;
 	private static final String TEST_PRODUCT_DATA_2 = "testdata2 for UUID " + TEST_UUID_2;
@@ -148,17 +168,17 @@ public class DownloadManagerTest {
 				+ "\"Value\":\"F9A7D8E261FB280AF0DBC0F508FD84F7\","  // MD5 hash for TEST_PRODUCT_DATA_1
 				+ "\"ChecksumDate\":\"2022-02-19T18:10:50Z\"}]," 
 			+ "\"ContentDate\":{" 
-				+ "\"Start\":\"" + TEST_START_TIME + "Z\"," 
-				+ "\"End\":\"" + TEST_STOP_TIME + "Z\"}," 
+				+ "\"Start\":\"" + TEST_START_TIME + "\"," 
+				+ "\"End\":\"" + TEST_STOP_TIME + "\"}," 
 			+ "\"ProductionType\":\"systematic_production\"," 
 			+ "\"Attributes\":[{"
 				+ "\"@odata.type\":\"#OData.CSC.DateTimeOffsetAttribute\","
 				+ "\"Name\":\"beginningDateTime\","
 				+ "\"ValueType\":\"DateTimeOffset\","
-				+ "\"Value\":\"" + TEST_START_TIME + "Z\"},"
+				+ "\"Value\":\"" + TEST_START_TIME + "\"},"
 				+ "{\"@odata.type\":\"#OData.CSC.DateTimeOffsetAttribute\","
 				+ "\"Name\":\"endingDateTime\",\"ValueType\":\"DateTimeOffset\","
-				+ "\"Value\":\"" + TEST_STOP_TIME + "Z\"},"
+				+ "\"Value\":\"" + TEST_STOP_TIME + "\"},"
 				+ "{\"@odata.type\":\"#OData.CSC.DateTimeOffsetAttribute\","
 				+ "\"Name\":\"processingDate\","
 				+ "\"ValueType\":\"DateTimeOffset\",\"Value\":\"2021-01-01T00:25:08Z\"},"
@@ -582,7 +602,21 @@ public class DownloadManagerTest {
 						.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString())
 						.withBody(LTA_RESPONSE_EMPTY)));
 		
+		mockLtaService.stubFor(WireMock.get(WireMock.urlEqualTo(URL_LTA1 + LTA_QUERY_BY_INVALID_TIME))
+				.willReturn(
+						WireMock.aResponse()
+						.withStatus(HttpStatus.OK.value())
+						.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString())
+						.withBody(LTA_RESPONSE_EMPTY)));
+		
 		mockLtaService.stubFor(WireMock.get(WireMock.urlEqualTo(URL_LTA1 + LTA_QUERY_ALL_BY_TIME))
+				.willReturn(
+						WireMock.aResponse()
+						.withStatus(HttpStatus.OK.value())
+						.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString())
+						.withBody(LTA_RESPONSE_EMPTY)));
+		
+		mockLtaService.stubFor(WireMock.get(WireMock.urlEqualTo(URL_LTA1 + LTA_QUERY_ALL_BY_INVALID_TIME))
 				.willReturn(
 						WireMock.aResponse()
 						.withStatus(HttpStatus.OK.value())
@@ -612,12 +646,26 @@ public class DownloadManagerTest {
 						.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString())
 						.withBody(LTA_RESPONSE_BY_TIME)));
 		
+		mockLtaService.stubFor(WireMock.get(WireMock.urlEqualTo(URL_LTA2 + LTA_QUERY_BY_INVALID_TIME))
+				.willReturn(
+						WireMock.aResponse()
+						.withStatus(HttpStatus.OK.value())
+						.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString())
+						.withBody(LTA_RESPONSE_EMPTY)));
+		
 		mockLtaService.stubFor(WireMock.get(WireMock.urlEqualTo(URL_LTA2 + LTA_QUERY_ALL_BY_TIME))
 				.willReturn(
 						WireMock.aResponse()
 						.withStatus(HttpStatus.OK.value())
 						.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString())
 						.withBody(LTA_RESPONSE_ALL_BY_TIME)));
+		
+		mockLtaService.stubFor(WireMock.get(WireMock.urlEqualTo(URL_LTA2 + LTA_QUERY_ALL_BY_INVALID_TIME))
+				.willReturn(
+						WireMock.aResponse()
+						.withStatus(HttpStatus.OK.value())
+						.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString())
+						.withBody(LTA_RESPONSE_EMPTY)));
 		
 		// LTA1 Download (download for UUID 2 should not be attempted)
 		
@@ -941,7 +989,8 @@ public class DownloadManagerTest {
 		
 		
 		// Test non-existing time range
-		sensingStartTime = "2000-01-01T00:00:00.000000";
+		sensingStartTime = TEST_START_TIME_INVALID;
+		sensingStopTime = TEST_STOP_TIME_INVALID;
 		
 		try {
 			downloadManager.downloadBySensingTime(productType, sensingStartTime, sensingStopTime, facility, null);
@@ -953,6 +1002,7 @@ public class DownloadManagerTest {
 		}
 		
 		sensingStartTime = TEST_START_TIME;
+		sensingStopTime = TEST_STOP_TIME;
 
 		
 		// Test successful product download
@@ -960,8 +1010,8 @@ public class DownloadManagerTest {
 			RestProduct restProduct = downloadManager.downloadBySensingTime(productType, sensingStartTime, sensingStopTime, facility, null);
 			
 			assertEquals("Unexpected product type", productType, restProduct.getProductClass());
-			assertEquals("Unexpected start time", sensingStartTime, restProduct.getSensingStartTime());
-			assertEquals("Unexpected stop time", sensingStopTime, restProduct.getSensingStopTime());
+			assertEquals("Unexpected start time", sensingStartTime.replaceAll("Z", "000"), restProduct.getSensingStartTime());
+			assertEquals("Unexpected stop time", sensingStopTime.replaceAll("Z", "000"), restProduct.getSensingStopTime());
 			
 			// Wait for download completion and check existence of file
 			Thread.sleep(2000L);
@@ -1062,8 +1112,8 @@ public class DownloadManagerTest {
 		
 		
 		// Test non-existing time range
-		sensingStartTime = "2000-01-01T00:00:00.000000";
-		sensingStopTime = "2000-01-01T01:00:00.000000";
+		sensingStartTime = TEST_START_TIME_INVALID;
+		sensingStopTime = TEST_STOP_TIME_INVALID;
 		
 		try {
 			downloadManager.downloadAllBySensingTime(productType, sensingStartTime, sensingStopTime, facility, null);
@@ -1075,7 +1125,7 @@ public class DownloadManagerTest {
 		}
 		
 		sensingStartTime = TEST_START_TIME;
-		sensingStartTime = TEST_STOP_TIME;
+		sensingStopTime = TEST_STOP_TIME;
 
 		
 		// Test successful product download
@@ -1084,8 +1134,8 @@ public class DownloadManagerTest {
 			
 			for (RestProduct restProduct: restProducts) {
 				assertEquals("Unexpected product type", productType, restProduct.getProductClass());
-				assertTrue("Unexpected start time", sensingStartTime.compareTo(restProduct.getSensingStopTime()) <= 0); // hopefully it's as easy as that ...
-				assertEquals("Unexpected stop time", sensingStopTime.compareTo(restProduct.getSensingStartTime()) >= 0);
+				assertTrue("Unexpected start time", sensingStartTime.replaceAll("Z", "000").compareTo(restProduct.getSensingStopTime()) <= 0); // hopefully it's as easy as that ...
+				assertTrue("Unexpected stop time", sensingStopTime.replaceAll("Z", "000").compareTo(restProduct.getSensingStartTime()) >= 0);
 			}
 			
 			// Wait for download completion and check existence of file

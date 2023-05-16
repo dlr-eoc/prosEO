@@ -1208,7 +1208,7 @@ public class DownloadManager {
 	private RestProduct downloadBySensingTime(ProductArchive archive, String productType, String startTime,
 			String stopTime, ProcessingFacility processingFacility, String password) {
 		if (logger.isTraceEnabled()) logger.trace(">>> downloadBySensingTime({}, {}, {}, {}, {}, ********)", 
-				(null == archive ? "NULL" : archive.getName()),
+				(null == archive ? "NULL" : archive.getCode()),
 				productType, startTime, stopTime,
 				(null == processingFacility ? "NULL" : processingFacility.getName()));
 
@@ -1257,8 +1257,8 @@ public class DownloadManager {
 	 */
 	private List<RestProduct> downloadAllBySensingTime(ProductArchive archive, String productType, String startTime,
 			String stopTime, ProcessingFacility processingFacility, String password) {
-		if (logger.isTraceEnabled()) logger.trace(">>> downloadBySensingTime({}, {}, {}, {}, {}, ********)", 
-				(null == archive ? "NULL" : archive.getName()),
+		if (logger.isTraceEnabled()) logger.trace(">>> downloadAllBySensingTime({}, {}, {}, {}, {}, ********)", 
+				(null == archive ? "NULL" : archive.getCode()),
 				productType, startTime, stopTime,
 				(null == processingFacility ? "NULL" : processingFacility.getName()));
 
