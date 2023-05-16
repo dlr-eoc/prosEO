@@ -50,6 +50,12 @@ public enum AipClientMessage implements ProseoMessage {
 	ORDER_DATA_MISSING					(5434, Level.ERROR, false, "Order list entry {0} does not contain mandatory values ('Id' and/or 'Status' elements)", ""),
 	ORDER_REQUEST_FAILED				(5435, Level.ERROR, false, "Product order request to external API {0} failed", ""),
 	PRODUCT_DOWNLOAD_ONGOING			(5424, Level.INFO, true, "Download for product {0} already ongoing, skipping download and ingestion", ""),
+	INVALID_PRODUCT_TYPE				(5425, Level.ERROR, false, "Invalid product type {1} for mission {0}", ""),
+	INVALID_SENSING_TIME				(5426, Level.ERROR, false, "Invalid sensing time: {0}", ""),
+	PRODUCT_NOT_FOUND_BY_TIME	 		(5427, Level.INFO, true, "Product file of type {0} with sensing time interval {1} – {2} not found in external archive {3}", ""),
+	MULTIPLE_PRODUCTS_FOUND_BY_TIME	 	(5428, Level.WARN, true, "Multiple files of type {0} with sensing time interval {1} – {2} found in external archive {3}, using first one", ""),
+	INPUT_FILE_NOT_FOUND_BY_TIME		(5429, Level.ERROR, false, "No input file of type {0} with sensing time interval {1} – {2} found locally or in any external archive", ""),
+	NO_PRODUCTS_FOUND_BY_TIME	 		(5430, Level.INFO, true, "No product files of type {0} intersecting sensing time interval {1} – {2} found in external archive {3}", ""),
 	;
 
 	private final int code;

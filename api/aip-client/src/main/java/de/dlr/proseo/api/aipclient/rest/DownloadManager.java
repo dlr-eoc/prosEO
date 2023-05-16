@@ -18,9 +18,12 @@ import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoField;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -48,11 +51,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.RequestBodySpec;
@@ -81,6 +82,7 @@ import de.dlr.proseo.model.DownloadHistory;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductArchive;
+import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.enums.ArchiveType;
 import de.dlr.proseo.model.enums.ParameterType;
@@ -171,6 +173,154 @@ public class DownloadManager {
 			throw new IllegalArgumentException(logger.log(AipClientMessage.INVALID_FACILITY, facility));
 		}
 		return processingFacility;
+	}
+
+	/**
+	 * Query the database for a product class of the given type
+	 * 
+	 * @param productType the product type to look for
+	 * @return the product class from the metadata database
+	 * @throws IllegalArgumentException if no product class with the given type can be found for the user's mission
+	 */
+	private ProductClass readProductClass(String productType) throws IllegalArgumentException {
+		if (logger.isTraceEnabled()) logger.trace(">>> readProductClass({})", productType);
+		
+		ProductClass productClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
+				securityService.getMission(), productType);
+		
+		if (null == productClass) {
+			throw new IllegalArgumentException(
+					logger.log(AipClientMessage.INVALID_PRODUCT_TYPE, securityService.getMission(), productType));
+		}
+		
+		return productClass;
+	}
+
+	/**
+	 * Query the database for products of the given type, which exactly match the given sensing time period and are available
+	 * at the given processing facility.
+	 * 
+	 * @param productType the product type to query for
+	 * @param startTime the beginning of the requested or sensing time period (to millisecond precision)
+	 * @param stopTime the end of the requested or sensing time period (to millisecond precision)
+	 * @param processingFacility the processing facility to look for
+	 * @return the (first) product found or null, if no product can be found for the given criteria
+	 * @throws IllegalArgumentException if the start and/or stop time cannot be parsed
+	 */
+	private Product findProductBySensingTime(String productType, String startTime, String stopTime,
+			final ProcessingFacility processingFacility) throws IllegalArgumentException {
+		if (logger.isTraceEnabled()) logger.trace(">>> findProductBySensingTime({}, {}, {}, {})", productType, startTime, stopTime, 
+				(null == processingFacility ? "NULL" : processingFacility.getName()));
+
+		Instant earliestStart, earliestStop;
+		try {
+			// Ensure millisecond precision for start and stop time
+			earliestStart = OrbitTimeFormatter.parseDateTime(startTime);
+			earliestStart.minusNanos(earliestStart.getNano() - earliestStart.get(ChronoField.MILLI_OF_SECOND) * 1000000);
+			earliestStop = OrbitTimeFormatter.parseDateTime(stopTime);
+			earliestStop.minusNanos(earliestStop.getNano() - earliestStop.get(ChronoField.MILLI_OF_SECOND) * 1000000);
+		} catch (DateTimeParseException e) {
+			throw new IllegalArgumentException(logger.log(AipClientMessage.INVALID_SENSING_TIME, e.getMessage()));
+		}
+		
+		Product modelProduct = null;
+		
+		// Try requested (nominal) product start and stop times
+		List<Product> productList = RepositoryService.getProductRepository()
+				.findByMissionCodeAndProductTypeAndRequestedStartTimeBetween(
+						securityService.getMission(), productType, earliestStart, earliestStart.plusNanos(999999L));
+
+		OUTER1:
+		for (Product product: productList) {
+			if (!product.getRequestedStopTime().isBefore(earliestStop) 
+					&& earliestStop.plusMillis(1L).isAfter(product.getRequestedStopTime())) {
+				// Time frame OK, check availability at processing facility
+				for (ProductFile productFile: product.getProductFile()) {
+					if (productFile.getProcessingFacility().equals(processingFacility))	{
+						modelProduct = product;
+						break OUTER1;
+					}
+				}
+			}
+		}
+		
+		if (null == modelProduct) {
+			// Try actual (sensing data) start and stop times
+			productList = RepositoryService.getProductRepository()
+					.findByMissionCodeAndProductTypeAndSensingStartTimeBetween(
+							securityService.getMission(), productType, earliestStart, earliestStart.plusNanos(999999L));
+			
+			OUTER2:
+			for (Product product: productList) {
+				if (!product.getSensingStopTime().isBefore(earliestStop) 
+						&& earliestStop.plusMillis(1L).isAfter(product.getSensingStopTime())) {
+					// Time frame OK, check availability at processing facility
+					for (ProductFile productFile: product.getProductFile()) {
+						if (productFile.getProcessingFacility().equals(processingFacility))	{
+							modelProduct = product;
+							break OUTER2;
+						}
+					}
+				}
+			}
+		}
+		return modelProduct;
+	}
+
+	/**
+	 * Query the database for products of the given type, which intersect the given sensing time period and are available
+	 * at the given processing facility.
+	 * 
+	 * @param productType the product type to query for
+	 * @param startTime the beginning of the requested or sensing time period (to millisecond precision)
+	 * @param stopTime the end of the requested or sensing time period (to millisecond precision)
+	 * @param processingFacility the processing facility to look for
+	 * @return a list of products found (may be empty, if no product can be found for the given criteria)
+	 * @throws IllegalArgumentException if the start and/or stop time cannot be parsed
+	 */
+	private List<Product> findAllProductsBySensingTime(String productType, String startTime, String stopTime,
+			ProcessingFacility processingFacility) {
+		if (logger.isTraceEnabled()) logger.trace(">>> findProductBySensingTime({}, {}, {}, {})", productType, startTime, stopTime, 
+				(null == processingFacility ? "NULL" : processingFacility.getName()));
+
+		Instant earliestStart, earliestStop;
+		try {
+			// Ensure millisecond precision for start and stop time
+			earliestStart = OrbitTimeFormatter.parseDateTime(startTime);
+			earliestStart.minusNanos(earliestStart.getNano() - earliestStart.get(ChronoField.MILLI_OF_SECOND) * 1000000);
+			earliestStop = OrbitTimeFormatter.parseDateTime(stopTime);
+			earliestStop.minusNanos(earliestStop.getNano() - earliestStop.get(ChronoField.MILLI_OF_SECOND) * 1000000);
+		} catch (DateTimeParseException e) {
+			throw new IllegalArgumentException(logger.log(AipClientMessage.INVALID_SENSING_TIME, e.getMessage()));
+		}
+		
+		// Try requested (nominal) and actual (sensing data) product start and stop times
+		List<Product> productList = RepositoryService.getProductRepository()
+				.findByMissionCodeAndProductTypeAndRequestedStartTimeLessAndRequestedStopTimeGreater(
+						securityService.getMission(), productType, earliestStop.plusNanos(999999L), earliestStart);
+		productList.addAll(RepositoryService.getProductRepository()
+				.findByMissionCodeAndProductTypeAndSensingStartTimeLessAndSensingStopTimeGreater(
+						securityService.getMission(), productType, earliestStop.plusNanos(999999L), earliestStart));
+
+		Iterator<Product> productIter = productList.iterator();
+		
+		// Remove products not available at the requested processing facility
+		while (productIter.hasNext()) {
+			Product product = productIter.next();
+			
+			boolean found = false;
+			for (ProductFile productFile: product.getProductFile()) {
+				if (productFile.getProcessingFacility().equals(processingFacility))	{
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				productIter.remove();
+			}
+		}
+		
+		return productList;
 	}
 
 	/**
@@ -1044,6 +1194,110 @@ public class DownloadManager {
 	}
 
 	/**
+	 * Query the given archive for the first product matching the given product type and sensing start/stop times,
+	 * download it and ingest it to the prosEO Storage Manager backend storage.
+	 * 
+	 * @param archive the archive to query
+	 * @param productType the product type to look for
+	 * @param startTime sensing start time at millisecond precision
+	 * @param stopTime sensing stop time at millisecond precision
+	 * @param processingFacility the processing facility to store the result in
+	 * @param password password for Ingestor login
+	 * @return the product metadata in REST interface format or null, if no product was found
+	 */
+	private RestProduct downloadBySensingTime(ProductArchive archive, String productType, String startTime,
+			String stopTime, ProcessingFacility processingFacility, String password) {
+		if (logger.isTraceEnabled()) logger.trace(">>> downloadBySensingTime({}, {}, {}, {}, {}, ********)", 
+				(null == archive ? "NULL" : archive.getName()),
+				productType, startTime, stopTime,
+				(null == processingFacility ? "NULL" : processingFacility.getName()));
+
+		// Request the product from the archive
+		List<ClientEntity> productList = null;
+		String queryFilter = "ContentDate/Start eq " + startTime + " and ContentDate/End eq " + stopTime 
+				+ " and Attributes/OData.CSC.StringAttribute/any("
+					+ "att:att/Name eq 'productType' " 
+					+ "and att/OData.CSC.StringAttribute/Value eq '" + productType + "')";
+		try {
+			productList = queryArchive(archive, ODATA_ENTITY_PRODUCTS, queryFilter);
+		} catch (IOException e) {
+			// Already logged
+			return null;
+		}
+		
+		if (null == productList || 0 == productList.size()) {
+			logger.log(AipClientMessage.PRODUCT_NOT_FOUND_BY_TIME, productType, startTime, stopTime, archive);
+			return null;
+		}
+		if (1 < productList.size()) {
+			logger.log(AipClientMessage.MULTIPLE_PRODUCTS_FOUND_BY_TIME, productType, startTime, stopTime, archive);
+		}
+		
+		RestProduct restProduct = toRestProduct(productList.get(0), processingFacility);
+		
+		// Start download and ingestion thread
+		downloadAndIngest(archive, restProduct, processingFacility, password);
+		
+		// Return product metadata
+		if (logger.isTraceEnabled()) logger.trace("Found product " + restProduct);
+		return restProduct;
+	}
+
+	/**
+	 * Query the given archive for all products matching the given product type and intersecting the given sensing start/stop 
+	 * time interval, download them and ingest them to the prosEO Storage Manager backend storage.
+	 * 
+	 * @param archive the archive to query
+	 * @param productType the product type to look for
+	 * @param startTime sensing start time at millisecond precision
+	 * @param stopTime sensing stop time at millisecond precision
+	 * @param processingFacility the processing facility to store the result in
+	 * @param password password for Ingestor login
+	 * @return a list of product metadata in REST interface format or an empty list, if no product was found
+	 */
+	private List<RestProduct> downloadAllBySensingTime(ProductArchive archive, String productType, String startTime,
+			String stopTime, ProcessingFacility processingFacility, String password) {
+		if (logger.isTraceEnabled()) logger.trace(">>> downloadBySensingTime({}, {}, {}, {}, {}, ********)", 
+				(null == archive ? "NULL" : archive.getName()),
+				productType, startTime, stopTime,
+				(null == processingFacility ? "NULL" : processingFacility.getName()));
+
+		// Request the product from the archive
+		List<ClientEntity> productList = null;
+		String queryFilter = "ContentDate/Start lt " + stopTime + " and ContentDate/End gt " + startTime 
+				+ " and Attributes/OData.CSC.StringAttribute/any("
+					+ "att:att/Name eq 'productType' " 
+					+ "and att/OData.CSC.StringAttribute/Value eq '" + productType + "')";
+		try {
+			productList = queryArchive(archive, ODATA_ENTITY_PRODUCTS, queryFilter);
+		} catch (IOException e) {
+			// Already logged
+			return new ArrayList<>();
+		}
+		
+		if (null == productList || 0 == productList.size()) {
+			logger.log(AipClientMessage.NO_PRODUCTS_FOUND_BY_TIME, productType, startTime, stopTime, archive);
+			return new ArrayList<>();
+		}
+		
+		List<RestProduct> restProducts = new ArrayList<>();
+		
+		for (ClientEntity odataProduct: productList) {
+			RestProduct restProduct = toRestProduct(odataProduct, processingFacility);
+			
+			// Start download and ingestion thread
+			downloadAndIngest(archive, restProduct, processingFacility, password);
+			if (logger.isTraceEnabled())
+				logger.trace("Found product " + restProduct);
+			
+			restProducts.add(restProduct);
+		}
+
+		// Return list of product metadata
+		return restProducts;
+	}
+
+	/**
      * Provide the product with the given file name at the given processing facility. If it already is available there, do
      * nothing and just return the product metadata. If it is not available locally, query all configured LTAs for a product
      * with the given file name, the first response is returned to the caller, then download from the LTA and ingested
@@ -1055,9 +1309,9 @@ public class DownloadManager {
      * @return the product provided
      * @throws NoResultException if no products matching the given selection criteria were found
      * @throws IllegalArgumentException if an invalid processing facility name was given
-     * @throws RuntimeException if the communication to the Ingestor failed TODO Check whether needed!
      */
-	public RestProduct downloadByName(String filename, String facility, String password) throws NoResultException, IllegalArgumentException {
+	public RestProduct downloadByName(String filename, String facility, String password)
+			throws NoResultException, IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> downloadByName({}, {}, ********)", filename, facility);
 
 		// Find the requested processing facility
@@ -1087,7 +1341,8 @@ public class DownloadManager {
 	}
 
 	/**
-     * Provide the product with the given product type and the exact sensing start and stop times at the given processing facility.
+     * Provide the product with the given product type and the exact sensing start and stop times (at millisecond precision)
+     * at the given processing facility.
      * If it already is available there, do nothing and just return the product metadata.
      * If it is not available locally, query all configured LTAs for a product with the given search criteria.
      * The first response is evaluated: If multiple products fulfilling the criteria are found in the LTA, the product with the
@@ -1097,41 +1352,45 @@ public class DownloadManager {
      * at the given processing facility.
      * 
      * @param productType the product type
-	 * @param startTime start of the sensing time interval
-	 * @param stopTime end of the sensing time interval
+	 * @param startTime start of the sensing time interval (at millisecond precision)
+	 * @param stopTime end of the sensing time interval (at millisecond precision)
 	 * @param facility the processing facility to use
 	 * @param password password for Ingestor login
      * @return the product provided
      * @throws NoResultException if no products matching the given selection criteria were found
      * @throws IllegalArgumentException if an invalid facility name, product type or sensing time was given
-     * @throws RuntimeException if the communication to the Ingestor failed TODO Check whether needed!
      */
 	public RestProduct downloadBySensingTime(String productType, String startTime, String stopTime, String facility, String password)
 			throws NoResultException, IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> downloadBySensingTime({}, {}, {}, ********)", startTime, stopTime, facility);
 
+		// Check input parameters
 		final ProcessingFacility processingFacility = readProcessingFacility(facility);
+		final ProductClass productClass = readProductClass(productType);
 		
-		// --- Test REST service stub ---
+		// Check availability of products
+		Product modelProduct = findProductBySensingTime(productType, startTime, stopTime, processingFacility);
 		
-//		Map<?, ?> response = restTemplate.getForObject("http://localhost:9876/lta2/odata/v1/Products?$filter=ContentDate/Start eq "
-//				+ startTime + "Z and ContentDate/End eq " + stopTime + "Z and Attributes/OData.CSC.StringAttribute/any(att:att/Name eq 'productType' " 
-//						+ "and att/OData.CSC.StringAttribute/Value eq '" + productType + "')&$top=1&$expand=Attributes", Map.class);
-//		
-//		if (response.get(ODATA_RESPONSE_VALUE) instanceof List) {
-//			for (Object obj : (List<?>) response.get(ODATA_RESPONSE_VALUE)) {
-//				System.out.println(obj.toString());
-//			} 
-//		} else {
-//			System.out.println("Found unexpected response: " + response);
-//		}
+		if (null != modelProduct) {
+			// Found (at least) one suitable product
+			return toRestProduct(modelProduct);
+		}
 		
+		// Query the available archives for the given product type
+		List<ProductArchive> productArchives = RepositoryService.getProductArchiveRepository().findAll();
 		
-		// --- End Test REST service stub ---
+		for (ProductArchive archive: productArchives) {
+			if (archive.getAvailableProductClasses().contains(productClass)) {
+				RestProduct result = downloadBySensingTime(
+						archive, productType, startTime, stopTime, processingFacility, password);
+				if (null != result) {
+					return result;
+				} 
+			}
+		}
 		
-		
-		// TODO Auto-generated method stub
-		throw new NoResultException("Not implemented");
+		// Fall-through: All archive requests failed
+		throw new NoResultException(logger.log(AipClientMessage.INPUT_FILE_NOT_FOUND_BY_TIME, productType, startTime, stopTime));
 	}
 
     /**
@@ -1149,17 +1408,43 @@ public class DownloadManager {
      * @return a list of the products provided from the LTA
      * @throws NoResultException if no products matching the given selection criteria were found
      * @throws IllegalArgumentException if an invalid facility name, product type or sensing time was given
-     * @throws RuntimeException if the communication to the Ingestor failed TODO Check whether needed!
      */
 	public List<RestProduct> downloadAllBySensingTime(String productType, String startTime, String stopTime, String facility, String password)
 			throws NoResultException, IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> downloadAllBySensingTime({}, {}, {}, {}, ********)", 
 				productType, startTime, stopTime, facility);
 
+		// Check input parameters
 		final ProcessingFacility processingFacility = readProcessingFacility(facility);
+		final ProductClass productClass = readProductClass(productType);
 		
-		// TODO Auto-generated method stub
-		throw new NoResultException("Not implemented");
+		// Check availability of products
+		List<Product> modelProducts = findAllProductsBySensingTime(productType, startTime, stopTime, processingFacility);
+		
+		if (!modelProducts.isEmpty()) {
+			// Found some suitable products
+			List<RestProduct> resultList = new ArrayList<>();
+			for (Product modelProduct: modelProducts) {
+				resultList.add(toRestProduct(modelProduct));
+			}
+			return resultList;
+		}
+		
+		// Query the available archives for the given product type
+		List<ProductArchive> productArchives = RepositoryService.getProductArchiveRepository().findAll();
+		
+		for (ProductArchive archive: productArchives) {
+			if (archive.getAvailableProductClasses().contains(productClass)) {
+				List<RestProduct> result = downloadAllBySensingTime(
+						archive, productType, startTime, stopTime, processingFacility, password);
+				if (!result.isEmpty()) {
+					return result;
+				} 
+			}
+		}
+		
+		// Fall-through: All archive requests failed
+		throw new NoResultException(logger.log(AipClientMessage.INPUT_FILE_NOT_FOUND_BY_TIME, productType, startTime, stopTime));
 	}
 
 }
