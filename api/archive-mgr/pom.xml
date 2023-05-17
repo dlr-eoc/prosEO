@@ -3,7 +3,7 @@
 
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
-		<artifactId>proseo</artifactId>
+		<artifactId>proseo-api</artifactId>
 		<version>0.9.5-ODIP</version>
 	</parent>
 
@@ -85,7 +85,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>proseo-facility-mgr</finalName>
+		<finalName>proseo-archive-mgr</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
