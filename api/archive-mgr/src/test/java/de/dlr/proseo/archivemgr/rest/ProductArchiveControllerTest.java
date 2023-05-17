@@ -8,6 +8,8 @@ package de.dlr.proseo.archivemgr.rest;
 import static org.junit.Assert.assertEquals;
 
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 import org.junit.After;
 import org.junit.Before;
@@ -27,6 +29,7 @@ import de.dlr.proseo.archivemgr.rest.model.ProductArchiveUtil;
 import de.dlr.proseo.archivemgr.rest.model.RestProductArchive;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.ProductArchive;
+import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.enums.ArchiveType;
 import de.dlr.proseo.model.service.RepositoryService;
 
@@ -40,6 +43,7 @@ import de.dlr.proseo.model.service.RepositoryService;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = ProductArchiveManagerApplication.class)
 @AutoConfigureTestEntityManager
+@Transactional
 @WithMockUser(username = "UTM-testuser")
 public class ProductArchiveControllerTest {
 
@@ -126,9 +130,12 @@ public class ProductArchiveControllerTest {
 			testArchive.setTokenRequired(Boolean.valueOf(testData[10]));
 			testArchive.setTokenUri(testData[11]);
 			testArchive.setUsername(testData[12]);
+			
+			// Set<ProductClass> availableProductClasses = new HashSet<>();		
+			// testArchive.setAvailableProductClasses(availableProductClasses);
 
 			testArchive = RepositoryService.getProductArchiveRepository().save(testArchive);
-
+			
 		}
 		logger.trace("Created test product archive {}", testArchive.getId());
 		return testArchive;
@@ -166,6 +173,8 @@ public class ProductArchiveControllerTest {
 
 		// Get a test product archive from the database
 		ProductArchive testArchive = RepositoryService.getProductArchiveRepository().findAll().get(0);
+		
+		System.out.println("Size=" + RepositoryService.getProductArchiveRepository().findAll().size());
 
 		// Delete the test archive with the product archive controller
 		ResponseEntity<?> entity = paci.deleteArchiveById(testArchive.getId());
