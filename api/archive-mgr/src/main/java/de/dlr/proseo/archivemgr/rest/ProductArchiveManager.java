@@ -63,18 +63,18 @@ public class ProductArchiveManager {
 	public RestProductArchive createArchive(RestProductArchive restArchive) throws IllegalArgumentException {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> createArchive({})", (null == restArchive ? "MISSING" : restArchive.getName()));
+			logger.trace(">>> createArchive({})", (null == restArchive ? "MISSING" : restArchive.getCode()));
 
 		if (null == restArchive) {
 			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING));
 		}
 
 		// Make sure the facility does not yet exist
-		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findByCode(restArchive.getName());
+		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findByCode(restArchive.getCode());
 
 		if (null != modelArchive) {
 			throw new IllegalArgumentException(
-					logger.log(ProductArchiveMgrMessage.DUPLICATED_ARCHIVE, restArchive.getName()));
+					logger.log(ProductArchiveMgrMessage.DUPLICATED_ARCHIVE, restArchive.getCode()));
 		}
 		
 		modelArchive = ProductArchiveUtil.toModelProductArchive(restArchive);	
@@ -90,15 +90,18 @@ public class ProductArchiveManager {
 			
 			ProductClass productClass = repository.findByMissionCodeAndProductType(code, productType);
 
-			// TODO: Do something or not? 
+			// ProductClass with such code and productType not found
 			if (null == productClass) {
 				
-				continue;
+				throw new IllegalArgumentException(
+						logger.log(ProductArchiveMgrMessage.PRODUCT_CLASS_NOT_FOUND, code, productType));			
 			}
 			
+			// adding product class, if not duplicated
 			if (!modelProductClasses.add(productClass)) {
 				
-				// TODO: duplicated product class throw error
+				throw new IllegalArgumentException(
+						logger.log(ProductArchiveMgrMessage.DUPLICATED_PRODUCT_CLASS, productClass.getProductType(), restArchive.getCode()));			
 			}
 	
 		}
@@ -150,9 +153,11 @@ public class ProductArchiveManager {
 
 				result.add(restArchive);
 			}
-
-			// Search by name
-		} else {
+		} 
+		
+		// TODO: Use JPA to access to db
+		// Search by name
+		else {
 
 			String jpqlQuery = "select p from ProductArchive p where p.name = :name";
 			Query query = em.createQuery(jpqlQuery);
@@ -163,7 +168,6 @@ public class ProductArchiveManager {
 					result.add(ProductArchiveUtil.toRestProductArchive((ProductArchive) resultObject));
 				}
 			}
-
 		}
 
 		if (result.isEmpty()) {
@@ -254,14 +258,16 @@ public class ProductArchiveManager {
 //			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "DefaultStorageType"));
 //		}
 //
-//		// Update modified attributes
-//		boolean facilityChanged = false;
-//		ProcessingFacility changedFacility = FacmgrUtil.toModelFacility(restFacility);
-//
-//		if (!modelFacility.getName().equals(changedFacility.getName())) {
-//			facilityChanged = true;
-//			modelFacility.setName(changedFacility.getName());
-//		}
+		// TODO: Check all fields, also if mandatory, maybe refactoring in methods
+		// Update modified attributes
+		boolean archiveChanged = false;
+		ProductArchive changedArchive = ProductArchiveUtil.toModelProductArchive(restArchive);
+
+		if (!modelArchive.getName().equals(changedArchive.getName())) {
+			archiveChanged = true;
+			modelArchive.setName(changedArchive.getName());
+		}
+		
 //		if (!modelFacility.getDescription().equals(changedFacility.getDescription())) {
 //			facilityChanged = true;
 //			modelFacility.setDescription(changedFacility.getDescription());
@@ -312,17 +318,16 @@ public class ProductArchiveManager {
 //			modelFacility.setDefaultStorageType(changedFacility.getDefaultStorageType());
 //		}
 //		
-//		// Save order only if anything was actually changed
-//		if (facilityChanged) {
-//			modelFacility.incrementVersion();
-//			modelFacility = RepositoryService.getFacilityRepository().save(modelFacility);
-//			logger.log(FacilityMgrMessage.FACILITY_MODIFIED, id);
-//		} else {
-//			logger.log(FacilityMgrMessage.FACILITY_NOT_MODIFIED, id);
-//		}
-//		return FacmgrUtil.toRestFacility(modelFacility);
+		// Save order only if anything was actually changed
+		if (archiveChanged) {
+			modelArchive.incrementVersion();
+			modelArchive = RepositoryService.getProductArchiveRepository().save(modelArchive);
+			logger.log(ProductArchiveMgrMessage.ARCHIVE_MODIFIED, id);
+		} else {
+			logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_MODIFIED, id);
+		}
+		return ProductArchiveUtil.toRestProductArchive(modelArchive);
 
-		throw new java.lang.UnsupportedOperationException("modifyArchive");
 	}
 
 	/**
@@ -341,22 +346,13 @@ public class ProductArchiveManager {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteArchiveById({})", id);
 
-		// Test whether the facility id is valid
+		// Test whether the product id is valid
 		Optional<ProductArchive> modelArchive = RepositoryService.getProductArchiveRepository().findById(id);
 		if (modelArchive.isEmpty()) {
 			throw new EntityNotFoundException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND));
 		}
-
-		// TODO: Verify if it is needed to check dependencies
-		// Test whether the product archive still has stored products
-//		if (!RepositoryService.getProductFileRepository().findById(modelArchive.get().getId())
-//				.isEmpty()) {
-//			throw new IllegalArgumentException(
-//					logger.log(ProductArchiveMgrMessage.ARCHIVE_HAS_PRODUCTS, modelArchive.get().getName()));
-//		}
 		
-
-		// Delete the facility
+		// Delete the product
 		RepositoryService.getProductArchiveRepository().deleteById(id);
 
 		// Test whether the deletion was successful
