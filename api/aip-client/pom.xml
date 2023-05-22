@@ -19,6 +19,7 @@
 
 	<properties>
 		<module.version>0.9.5-ODIP</module.version>
+        <olingo.version>4.7.1</olingo.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/aip-client-api.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.api.aipclient.rest</raml-base-package>
@@ -38,6 +39,10 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
@@ -55,6 +60,39 @@
             <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.github.tomakehurst</groupId>
+            <artifactId>wiremock-jre8</artifactId>
+            <version>2.35.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+            <version>3.2.16.RELEASE</version><!-- Dependency of reactor-netty 0.8.17 -->
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-test</artifactId>
+            <version>3.2.16.RELEASE</version><!-- Dependency of reactor-netty 0.8.17 -->
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor.netty</groupId>
+            <artifactId>reactor-netty</artifactId>
+            <version>0.8.17.RELEASE</version><!-- Minimum version required for correct redirecting -->
+        </dependency>
+        <dependency>
+            <groupId>org.apache.olingo</groupId>
+            <artifactId>odata-client-core</artifactId>
+            <version>${olingo.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>de.dlr.proseo</groupId>
+            <artifactId>proseo-interfaces</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 		<dependency>
 			<groupId>de.dlr.proseo</groupId>
 			<artifactId>proseo-model</artifactId>
@@ -65,6 +103,11 @@
 			<artifactId>proseo-logging</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+        <dependency>
+            <groupId>de.dlr.proseo</groupId>
+            <artifactId>proseo-base-wrapper</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 		<dependency>
 			<groupId>com.phoenixnap.oss</groupId>
 			<artifactId>springmvc-raml-plugin</artifactId>
@@ -106,6 +149,7 @@
 				<artifactId>springmvc-raml-plugin</artifactId>
 				<configuration>
 					<basePackage>${raml-base-package}</basePackage>
+                    <injectHttpHeadersParameter>true</injectHttpHeadersParameter>
 					<rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerDecoratorRule</rule>
 				</configuration>
 				<executions>
@@ -137,6 +181,17 @@
 				</configuration>
 			</plugin>
 			
+            <!-- Exclude generated dummy client from compilation -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                       <exclude>**/IngestorproductController*</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
 			<!-- Temporarily (to allow for full build of prosEO): Ignore failing unit tests -->
 			<plugin>
                 <groupId>org.apache.maven.plugins</groupId>

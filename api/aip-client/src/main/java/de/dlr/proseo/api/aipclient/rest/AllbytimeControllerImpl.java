@@ -10,10 +10,12 @@ import java.util.List;
 import javax.persistence.NoResultException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.api.aipclient.AipClientSecurityConfig;
 import de.dlr.proseo.api.aipclient.rest.model.RestProduct;
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
@@ -30,11 +32,15 @@ public class AllbytimeControllerImpl implements AllbytimeController {
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(AllbytimeControllerImpl.class);
-	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.INGESTOR);
+	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.AIP_CLIENT);
 	
 	/** Download Manager */
 	@Autowired
 	private DownloadManager downloadManager;
+			
+	/** Security configuration for AIP client */
+	@Autowired
+	private AipClientSecurityConfig securityConfig;
 			
     /**
      * Provide all products with the given product type at the given processing facility, whose sensing times intersect with 
@@ -47,6 +53,7 @@ public class AllbytimeControllerImpl implements AllbytimeController {
      * @param startTime The start of the sensing time interval
      * @param stopTime The end of the sensing time interval
      * @param facility The processing facility to use
+     * @param httpHeaders the HTTP request headers (injected)
      * @return HTTP status "CREATED" and a list of Json representations of the products provided or
      *         HTTP status "NOT_FOUND", if no products matching the given selection criteria were found, or
      *         HTTP status "BAD_REQUEST", if an invalid facility name, product type or sensing time was given, or
@@ -54,13 +61,16 @@ public class AllbytimeControllerImpl implements AllbytimeController {
      */
 	@Override
 	public ResponseEntity<List<RestProduct>> downloadAllBySensingTime(String productType, String startTime, String stopTime,
-			String facility) {
+			String facility, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> downloadAllBySensingTime({}, {}, {}, {})",
 				productType, startTime, stopTime, facility);
 		
+		// Get username and password from HTTP Authentication header for authentication with Production Planner
+		String[] userPassword = securityConfig.parseAuthenticationHeader(httpHeaders.getFirst(HttpHeaders.AUTHORIZATION));
+		
 		try {
 			return new ResponseEntity<List<RestProduct>>(downloadManager.downloadAllBySensingTime(
-					productType, startTime, stopTime, facility), HttpStatus.CREATED);
+					productType, startTime, stopTime, facility, userPassword[1]), HttpStatus.CREATED);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
