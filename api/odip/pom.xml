@@ -127,6 +127,11 @@
 			<artifactId>springmvc-raml-plugin</artifactId>
             <type>maven-plugin</type>
 		</dependency>
+		<dependency>
+			<groupId>de.dlr.proseo</groupId>
+			<artifactId>proseo-planner</artifactId>
+			<version>0.9.5-ODIP</version>
+		</dependency>
 	</dependencies>
 
 	<build>
