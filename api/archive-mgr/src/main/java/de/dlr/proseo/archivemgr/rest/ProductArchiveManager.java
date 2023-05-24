@@ -265,6 +265,40 @@ public class ProductArchiveManager {
 	}
 
 	/**
+	 * Delete a product archive by ID
+	 * 
+	 * @param id the ID of the product archive to delete
+	 * @throws EntityNotFoundException  if the product archive to delete does not
+	 *                                  exist in the database
+	 * @throws IllegalArgumentException if the product archive to delete still has
+	 *                                  stored products
+	 * @throws RuntimeException         if the deletion was not performed as
+	 *                                  expected
+	 */
+	public void deleteArchiveById(Long id) throws EntityNotFoundException, IllegalArgumentException, RuntimeException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteArchiveById({})", id);
+
+		// Test whether the product id is valid
+		Optional<ProductArchive> modelArchive = RepositoryService.getProductArchiveRepository().findById(id);
+		if (modelArchive.isEmpty()) {
+			throw new EntityNotFoundException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND));
+		}
+		
+		// Delete the product
+		RepositoryService.getProductArchiveRepository().deleteById(id);
+
+		// Test whether the deletion was successful
+		modelArchive = RepositoryService.getProductArchiveRepository().findById(id);
+		if (!modelArchive.isEmpty()) {
+			throw new RuntimeException(logger.log(FacilityMgrMessage.DELETION_UNSUCCESSFUL, id));
+		}
+
+		logger.log(ProductArchiveMgrMessage.ARCHIVE_DELETED, id);
+	}
+	
+	/**
 	 * Sets changed fields in modelArchive from changedArchive
 	 *
 	 * @param modelArchive model archive
@@ -408,39 +442,5 @@ public class ProductArchiveManager {
 		if (null == modelArchive.getTokenRequired()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "TokenRequired", "Product archive modifcation"));
 		}
-	}
-
-	/**
-	 * Delete a product archive by ID
-	 * 
-	 * @param id the ID of the product archive to delete
-	 * @throws EntityNotFoundException  if the product archive to delete does not
-	 *                                  exist in the database
-	 * @throws IllegalArgumentException if the product archive to delete still has
-	 *                                  stored products
-	 * @throws RuntimeException         if the deletion was not performed as
-	 *                                  expected
-	 */
-	public void deleteArchiveById(Long id) throws EntityNotFoundException, IllegalArgumentException, RuntimeException {
-
-		if (logger.isTraceEnabled())
-			logger.trace(">>> deleteArchiveById({})", id);
-
-		// Test whether the product id is valid
-		Optional<ProductArchive> modelArchive = RepositoryService.getProductArchiveRepository().findById(id);
-		if (modelArchive.isEmpty()) {
-			throw new EntityNotFoundException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND));
-		}
-		
-		// Delete the product
-		RepositoryService.getProductArchiveRepository().deleteById(id);
-
-		// Test whether the deletion was successful
-		modelArchive = RepositoryService.getProductArchiveRepository().findById(id);
-		if (!modelArchive.isEmpty()) {
-			throw new RuntimeException(logger.log(FacilityMgrMessage.DELETION_UNSUCCESSFUL, id));
-		}
-
-		logger.log(ProductArchiveMgrMessage.ARCHIVE_DELETED, id);
 	}
 }
