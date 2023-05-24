@@ -236,92 +236,143 @@ public class ProductArchiveManager {
 		if (optModelArchive.isEmpty()) {
 			throw new EntityNotFoundException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND, id));
 		}
+		
 		ProductArchive modelArchive = optModelArchive.get();
 		
 		checkMandatoryAttributes(modelArchive);
 
-
-		// TODO: Check all fields, also if mandatory, maybe refactoring in methods
-		// Update modified attributes
-		boolean archiveChanged = false;
 		ProductArchive changedArchive = ProductArchiveUtil.toModelProductArchive(restArchive);
 		
-		/*
-		archiveChanged = isArchiveChanged(modelArchive, changedArchive);
-		
+		// TODO: Maybe use here !equals for ProductArchive
+		boolean archiveChanged = isArchiveChanged(modelArchive, changedArchive);
+					
+		// Save order only if anything was actually changed
 		if (archiveChanged) {
+			
 			setChangedFields(modelArchive, changedArchive);
-		}
-		*/
-		
 
-		if (!modelArchive.getName().equals(changedArchive.getName())) {
-			archiveChanged = true;
+			modelArchive.incrementVersion();
+			modelArchive = RepositoryService.getProductArchiveRepository().save(modelArchive);
+			
+			logger.log(ProductArchiveMgrMessage.ARCHIVE_MODIFIED, id);
+			
+		} else {
+			
+			logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_MODIFIED, id);
+		}
+		
+		return ProductArchiveUtil.toRestProductArchive(modelArchive);
+	}
+
+	/**
+	 * Sets changed fields in modelArchive from changedArchive
+	 *
+	 * @param modelArchive model archive
+	 * @param changedArchive changed archive
+	 */
+	private void setChangedFields(ProductArchive modelArchive, ProductArchive changedArchive) {
+		
+		if (!modelArchive.getCode().equals(changedArchive.getCode())) {		
+			modelArchive.setCode(changedArchive.getCode());
+		}
+
+		if (!modelArchive.getName().equals(changedArchive.getName())) {	
 			modelArchive.setName(changedArchive.getName());
 		}
 		
-		
-		
-//		if (!modelFacility.getDescription().equals(changedFacility.getDescription())) {
-//			facilityChanged = true;
-//			modelFacility.setDescription(changedFacility.getDescription());
-//		}
-//		if (!modelFacility.getFacilityState().equals(changedFacility.getFacilityState())) {
-//			facilityChanged = true;
-//			try {
-//				modelFacility.setFacilityState(changedFacility.getFacilityState());
-//			} catch (IllegalStateException e) {
-//				throw new IllegalArgumentException(logger.log(GeneralMessage.ILLEGAL_FACILITY_STATE_TRANSITION,
-//						modelFacility.getFacilityState().toString(), changedFacility.getFacilityState().toString()));
-//			}
-//		}
-//		if (!modelFacility.getProcessingEngineUrl().equals(changedFacility.getProcessingEngineUrl())) {
-//			facilityChanged = true;
-//			modelFacility.setProcessingEngineUrl(changedFacility.getProcessingEngineUrl());
-//		}
-//		if (!modelFacility.getProcessingEngineToken().equals(changedFacility.getProcessingEngineToken())) {
-//			facilityChanged = true;
-//			modelFacility.setProcessingEngineToken(changedFacility.getProcessingEngineToken());
-//		}
-//		if (!modelFacility.getMaxJobsPerNode().equals(changedFacility.getMaxJobsPerNode())) {
-//			facilityChanged = true;
-//			modelFacility.setMaxJobsPerNode(changedFacility.getMaxJobsPerNode());
-//		}
-//		if (!modelFacility.getStorageManagerUrl().equals(changedFacility.getStorageManagerUrl())) {
-//			facilityChanged = true;
-//			modelFacility.setStorageManagerUrl(changedFacility.getStorageManagerUrl());
-//		}
-//		if (!modelFacility.getExternalStorageManagerUrl().equals(changedFacility.getExternalStorageManagerUrl())) {
-//			facilityChanged = true;
-//			modelFacility.setExternalStorageManagerUrl(changedFacility.getExternalStorageManagerUrl());
-//		}
-//		if (!modelFacility.getLocalStorageManagerUrl().equals(changedFacility.getLocalStorageManagerUrl())) {
-//			facilityChanged = true;
-//			modelFacility.setLocalStorageManagerUrl(changedFacility.getLocalStorageManagerUrl());
-//		}
-//		if (!modelFacility.getStorageManagerUser().equals(changedFacility.getStorageManagerUser())) {
-//			facilityChanged = true;
-//			modelFacility.setStorageManagerUser(changedFacility.getStorageManagerUser());
-//		}
-//		if (!modelFacility.getStorageManagerPassword().equals(changedFacility.getStorageManagerPassword())) {
-//			facilityChanged = true;
-//			modelFacility.setStorageManagerPassword(changedFacility.getStorageManagerPassword());
-//		}
-//		if (!modelFacility.getDefaultStorageType().equals(changedFacility.getDefaultStorageType())) {
-//			facilityChanged = true;
-//			modelFacility.setDefaultStorageType(changedFacility.getDefaultStorageType());
-//		}
-//		
-		// Save order only if anything was actually changed
-		if (archiveChanged) {
-			modelArchive.incrementVersion();
-			modelArchive = RepositoryService.getProductArchiveRepository().save(modelArchive);
-			logger.log(ProductArchiveMgrMessage.ARCHIVE_MODIFIED, id);
-		} else {
-			logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_MODIFIED, id);
+		if (!modelArchive.getArchiveType().equals(changedArchive.getArchiveType())) {
+			modelArchive.setArchiveType(changedArchive.getArchiveType());
 		}
-		return ProductArchiveUtil.toRestProductArchive(modelArchive);
+		
+		if (!modelArchive.getBaseUri().equals(changedArchive.getBaseUri())) {
+			modelArchive.setBaseUri(changedArchive.getBaseUri());
+		}
+		
+		if (!modelArchive.getContext().equals(changedArchive.getContext())) {
+			modelArchive.setContext(changedArchive.getContext());
+		}
+		
+		if (!modelArchive.getTokenRequired().equals(changedArchive.getTokenRequired())) {
+			modelArchive.setTokenRequired(changedArchive.getTokenRequired());
+		}
+		
+		if (!modelArchive.getTokenUri().equals(changedArchive.getTokenUri())) {
+			modelArchive.setTokenUri(changedArchive.getTokenUri());
+		}
+		
+		if (!modelArchive.getUsername().equals(changedArchive.getUsername())) {
+			modelArchive.setUsername(changedArchive.getUsername());
+		}
+		
+		if (!modelArchive.getClientId().equals(changedArchive.getClientId())) {
+			modelArchive.setClientId(changedArchive.getClientId());
+		}
+		
+		if (!modelArchive.getClientSecret().equals(changedArchive.getClientSecret())) {
+			modelArchive.setClientSecret(changedArchive.getClientSecret());
+		}
+		
+		if (!modelArchive.getSendAuthInBody().equals(changedArchive.getSendAuthInBody())) {
+			modelArchive.setSendAuthInBody(changedArchive.getSendAuthInBody());
+		}
+	}
 
+	/**
+	 * Checks if an archive was changed
+	 * 
+	 * @param modelArchive Model Archive to check
+	 * @param changedArchive changed archive
+	 * @return true, if the changedArchive was changed
+	 */
+	private boolean isArchiveChanged(ProductArchive modelArchive, ProductArchive changedArchive) {
+		
+		boolean archiveChanged = false;
+		
+		if (!modelArchive.getCode().equals(changedArchive.getCode())) {
+			archiveChanged = true;
+		}
+		
+		if (!modelArchive.getName().equals(changedArchive.getName())) {
+			archiveChanged = true;
+		}
+		
+		if (!modelArchive.getArchiveType().equals(changedArchive.getArchiveType())) {
+			archiveChanged = true;
+		}
+		
+		if (!modelArchive.getBaseUri().equals(changedArchive.getBaseUri())) {
+			archiveChanged = true;
+		}
+		
+		if (!modelArchive.getContext().equals(changedArchive.getContext())) {
+			archiveChanged = true;
+		}
+		
+		if (!modelArchive.getTokenRequired().equals(changedArchive.getTokenRequired())) {
+			archiveChanged = true;
+		}
+		
+		if (!modelArchive.getTokenUri().equals(changedArchive.getTokenUri())) {
+			archiveChanged = true;
+		}
+		
+		if (!modelArchive.getUsername().equals(changedArchive.getUsername())) {
+			archiveChanged = true;
+		}
+		
+		if (!modelArchive.getClientId().equals(changedArchive.getClientId())) {
+			archiveChanged = true;
+		}
+		
+		if (!modelArchive.getClientSecret().equals(changedArchive.getClientSecret())) {
+			archiveChanged = true;
+		}
+		
+		if (!modelArchive.getSendAuthInBody().equals(changedArchive.getSendAuthInBody())) {
+			archiveChanged = true;
+		}
+		
+		return archiveChanged; 
 	}
 
 	/**
