@@ -237,36 +237,30 @@ public class ProductArchiveManager {
 			throw new EntityNotFoundException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND, id));
 		}
 		ProductArchive modelArchive = optModelArchive.get();
+		
+		checkMandatoryAttributes(modelArchive);
 
-		// Check that mandatory attributes are set
-//		if (null == modelFacility.getStorageManagerUrl() || modelFacility.getStorageManagerUrl().isBlank()) {
-//			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "StorageManagerUrl", "facility modifcation"));
-//		}
-//		if (null == modelFacility.getExternalStorageManagerUrl() || modelFacility.getExternalStorageManagerUrl().isBlank())
-//			if (null == modelFacility.getStorageManagerUrl()) {
-//				throw new IllegalArgumentException(
-//						logger.log(GeneralMessage.FIELD_NOT_SET, "ExternalStorageManagerUrl", "facility modifcation"));
-//			}
-//		if (null == modelFacility.getStorageManagerUser() || modelFacility.getStorageManagerUser().isBlank()) {
-//			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "StorageManagerUser", "facility modifcation"));
-//		}
-//		if (null == modelFacility.getStorageManagerPassword()) {
-//			throw new IllegalArgumentException(
-//					logger.log(GeneralMessage.FIELD_NOT_SET, "StorageManagerPassword", "facility modifcation"));
-//		}
-//		if (null == modelFacility.getDefaultStorageType() || modelFacility.getStorageManagerPassword().isBlank()) {
-//			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "DefaultStorageType"));
-//		}
-//
+
 		// TODO: Check all fields, also if mandatory, maybe refactoring in methods
 		// Update modified attributes
 		boolean archiveChanged = false;
 		ProductArchive changedArchive = ProductArchiveUtil.toModelProductArchive(restArchive);
+		
+		/*
+		archiveChanged = isArchiveChanged(modelArchive, changedArchive);
+		
+		if (archiveChanged) {
+			setChangedFields(modelArchive, changedArchive);
+		}
+		*/
+		
 
 		if (!modelArchive.getName().equals(changedArchive.getName())) {
 			archiveChanged = true;
 			modelArchive.setName(changedArchive.getName());
 		}
+		
+		
 		
 //		if (!modelFacility.getDescription().equals(changedFacility.getDescription())) {
 //			facilityChanged = true;
@@ -328,6 +322,41 @@ public class ProductArchiveManager {
 		}
 		return ProductArchiveUtil.toRestProductArchive(modelArchive);
 
+	}
+
+	/**
+	 * Checks that mandatory attributes are set
+	 * 
+	 * @param modelArchive Model Archive
+	 */
+	private void checkMandatoryAttributes(ProductArchive modelArchive) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> checkMandatoryAttributes()");
+
+		if (null == modelArchive.getCode() || modelArchive.getCode().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Code", "Product archive modifcation"));
+		}
+		
+		if (null == modelArchive.getName() || modelArchive.getName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Name", "Product archive modifcation"));
+		}
+		
+		if (null == modelArchive.getArchiveType()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "ArchiveType", "Product archive modifcation"));
+		}
+		
+		if (null == modelArchive.getBaseUri() || modelArchive.getBaseUri().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "BaseUri", "Product archive modifcation"));
+		}
+		
+		if (null == modelArchive.getContext() || modelArchive.getContext().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Context", "Product archive modifcation"));
+		}
+		
+		if (null == modelArchive.getTokenRequired()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "TokenRequired", "Product archive modifcation"));
+		}
 	}
 
 	/**
