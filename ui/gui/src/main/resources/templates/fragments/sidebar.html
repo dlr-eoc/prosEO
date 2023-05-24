@@ -47,6 +47,12 @@
             th:if="${hasroleprocessorreader}"
              class="nav-item"><a id="sb-configured-processor" class="nav-link"
             href="/configured-processor-show"><span th:text="#{configuredprocessor}">configuredprocessor</span></a></li>
+          <!-- workflow -->
+          <li 
+            th:if="${hasroleprocessorreader}"
+             class="nav-item"><a id="sb-workflow" class="nav-link"
+            href="/workflow-show"><span th:text="#{workflow}">workflow</span></a></li>
+
 					<!-- mission -->
 					<li 
             th:if="${hasrolemissionreader}"
