@@ -23,7 +23,8 @@ import javax.persistence.Query;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.dlr.proseo.archivemgr.rest.model.ProductArchiveUtil;
+import de.dlr.proseo.archivemgr.rest.model.ProductArchiveModelMapper;
+import de.dlr.proseo.archivemgr.rest.model.ProductArchiveRestMapper;
 import de.dlr.proseo.archivemgr.rest.model.RestProductArchive;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.FacilityMgrMessage;
@@ -77,7 +78,7 @@ public class ProductArchiveManager {
 					logger.log(ProductArchiveMgrMessage.DUPLICATED_ARCHIVE, restArchive.getCode()));
 		}
 		
-		modelArchive = ProductArchiveUtil.toModelProductArchive(restArchive);	
+		modelArchive = ProductArchiveRestMapper.toModel(restArchive);	
 
 		// TODO: Make it in a method, maybe in a separate class
 		// here, not in util
@@ -122,7 +123,7 @@ public class ProductArchiveManager {
 
 		modelArchive = RepositoryService.getProductArchiveRepository().save(modelArchive);
 		logger.log(FacilityMgrMessage.FACILITY_CREATED, modelArchive.getName());
-		return ProductArchiveUtil.toRestProductArchive(modelArchive);
+		return ProductArchiveModelMapper.toRest(modelArchive);
 	}
 
 	/**
@@ -147,7 +148,7 @@ public class ProductArchiveManager {
 				if (logger.isDebugEnabled())
 					logger.debug("Found product archive with ID {}", archive.getId());
 
-				RestProductArchive restArchive = ProductArchiveUtil.toRestProductArchive(archive);
+				RestProductArchive restArchive = ProductArchiveModelMapper.toRest(archive);
 				if (logger.isDebugEnabled())
 					logger.debug("Created result rest product archive with ID {}", restArchive.getId());
 
@@ -165,7 +166,7 @@ public class ProductArchiveManager {
 
 			for (Object resultObject : query.getResultList()) {
 				if (resultObject instanceof ProductArchive) {
-					result.add(ProductArchiveUtil.toRestProductArchive((ProductArchive) resultObject));
+					result.add(ProductArchiveModelMapper.toRest((ProductArchive) resultObject));
 				}
 			}
 		}
@@ -203,7 +204,7 @@ public class ProductArchiveManager {
 
 		logger.log(ProductArchiveMgrMessage.ARCHIVE_RETRIEVED, id);
 
-		return ProductArchiveUtil.toRestProductArchive(modelArchive.get());
+		return ProductArchiveModelMapper.toRest(modelArchive.get());
 	}
 
 	/**
@@ -241,7 +242,7 @@ public class ProductArchiveManager {
 		
 		checkMandatoryAttributes(modelArchive);
 
-		ProductArchive changedArchive = ProductArchiveUtil.toModelProductArchive(restArchive);
+		ProductArchive changedArchive = ProductArchiveRestMapper.toModel(restArchive);
 		
 		// TODO: Maybe use here !equals for ProductArchive
 		boolean archiveChanged = isArchiveChanged(modelArchive, changedArchive);
@@ -261,7 +262,7 @@ public class ProductArchiveManager {
 			logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_MODIFIED, id);
 		}
 		
-		return ProductArchiveUtil.toRestProductArchive(modelArchive);
+		return ProductArchiveModelMapper.toRest(modelArchive);
 	}
 
 	/**
