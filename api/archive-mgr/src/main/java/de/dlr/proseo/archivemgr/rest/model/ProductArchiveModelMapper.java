@@ -27,62 +27,57 @@ public class ProductArchiveModelMapper {
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductArchiveModelMapper.class);
 	
+	/** Product Archive as input parameter */
+	private ProductArchive modelArchive;
+	
+	/** Rest Archive as output parameter */
+	private RestProductArchive restArchive;  
+	
+	/**
+	 * Constructor with modelArchive parameter
+	 * 
+	 * @param modelArchive model archive
+	 */
+	public ProductArchiveModelMapper(ProductArchive modelArchive) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> Constructor({})", (null == modelArchive ? "MISSING" : modelArchive.getId()));
+
+		this.modelArchive = modelArchive; 
+	}
+	
 	/**
 	 * Converts a prosEO model ProductArchive into a REST ProductArchive
 	 * 
-	 * @param modelArchive the prosEO model ProductArchive
 	 * @return an equivalent REST ProductArchive or null, if no model ProductArchive was given
 	 */
-	public static RestProductArchive toRest(ProductArchive modelArchive) {
+	public RestProductArchive toRest() {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> toRest({})", (null == modelArchive ? "MISSING" : modelArchive.getId()));
 	
 		if (null == modelArchive)
 			return null;
-		
-		RestProductArchive restArchive = new RestProductArchive();
-		
+				
 		setDefaultRestValues(restArchive);
 		
-		
-		Set<ProductClass> modelProductClasses = modelArchive.getAvailableProductClasses();
-		List<String> restProductClasses = new ArrayList<String>();
-		
-		for (ProductClass modelProductClass : modelProductClasses) {
-			
-			String productType = modelProductClass.getProductType();
-			restProductClasses.add(productType);
-		}
-		
-		restArchive.setAvailableProductClasses(restProductClasses);
-		
-		
-		restArchive.setArchiveType(modelArchive.getArchiveType().toString());
-		
-		restArchive.setBaseUri(modelArchive.getBaseUri());
-		
+		setAvailableProductClasses();
+					
+		restArchive.setArchiveType(modelArchive.getArchiveType().toString());		
+		restArchive.setBaseUri(modelArchive.getBaseUri());		
 		restArchive.setClientId(modelArchive.getClientId());
 		
-		restArchive.setClientSecret(modelArchive.getClientSecret());
-		
+		restArchive.setClientSecret(modelArchive.getClientSecret());		
 		restArchive.setCode(modelArchive.getCode());
-
 		restArchive.setContext(modelArchive.getContext());
 		
-		restArchive.setId(modelArchive.getId());
-		
+		restArchive.setId(modelArchive.getId());		
 		restArchive.setName(modelArchive.getName());
 		
-		restArchive.setPassword(modelArchive.getPassword());
-		
-		restArchive.setSendAuthInBody(modelArchive.getSendAuthInBody());
-		
+		restArchive.setPassword(modelArchive.getPassword());		
+		restArchive.setSendAuthInBody(modelArchive.getSendAuthInBody());		
 		restArchive.setTokenRequired(modelArchive.getTokenRequired());
 		
-		restArchive.setTokenUri(modelArchive.getTokenUri());
-		
-		restArchive.setUsername(modelArchive.getUsername());
-		
+		restArchive.setTokenUri(modelArchive.getTokenUri());		
+		restArchive.setUsername(modelArchive.getUsername());	
 		restArchive.setVersion((long) modelArchive.getVersion());
 		
 		return restArchive;
@@ -100,5 +95,23 @@ public class ProductArchiveModelMapper {
 		restArchive.setTokenRequired(false);
 		
 		restArchive.setSendAuthInBody(false);
+	}
+	
+	/**
+	 * Sets available product classes of the rest product archive 
+	 * 
+	 */
+	private void setAvailableProductClasses()
+	{
+		Set<ProductClass> modelProductClasses = modelArchive.getAvailableProductClasses();
+		List<String> restProductClasses = new ArrayList<String>();
+		
+		for (ProductClass modelProductClass : modelProductClasses) {
+			
+			String productType = modelProductClass.getProductType();
+			restProductClasses.add(productType);
+		}
+		
+		restArchive.setAvailableProductClasses(restProductClasses);
 	}
 }

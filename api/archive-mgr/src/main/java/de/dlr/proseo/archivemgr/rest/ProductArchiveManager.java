@@ -9,10 +9,7 @@ package de.dlr.proseo.archivemgr.rest;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.List;
-import java.util.HashSet;
-
 import java.util.Optional;
-import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
@@ -31,8 +28,6 @@ import de.dlr.proseo.logging.messages.FacilityMgrMessage;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.ProductArchiveMgrMessage;
 import de.dlr.proseo.model.ProductArchive;
-import de.dlr.proseo.model.ProductClass;
-import de.dlr.proseo.model.dao.ProductClassRepository;
 import de.dlr.proseo.model.enums.ArchiveType;
 import de.dlr.proseo.model.service.RepositoryService;
 
@@ -78,36 +73,7 @@ public class ProductArchiveManager {
 					logger.log(ProductArchiveMgrMessage.DUPLICATED_ARCHIVE, restArchive.getCode()));
 		}
 		
-		modelArchive = ProductArchiveRestMapper.toModel(restArchive);	
-
-		// TODO: Make it in a method, maybe in a separate class
-		// here, not in util
-		String code = restArchive.getCode();
-		ProductClassRepository repository = RepositoryService.getProductClassRepository();
-		
-		Set<ProductClass> modelProductClasses = new HashSet<>();
-		
-		for (String productType : restArchive.getAvailableProductClasses() ) {
-			
-			ProductClass productClass = repository.findByMissionCodeAndProductType(code, productType);
-
-			// ProductClass with such code and productType not found
-			if (null == productClass) {
-				
-				throw new IllegalArgumentException(
-						logger.log(ProductArchiveMgrMessage.PRODUCT_CLASS_NOT_FOUND, code, productType));			
-			}
-			
-			// adding product class, if not duplicated
-			if (!modelProductClasses.add(productClass)) {
-				
-				throw new IllegalArgumentException(
-						logger.log(ProductArchiveMgrMessage.DUPLICATED_PRODUCT_CLASS, productClass.getProductType(), restArchive.getCode()));			
-			}
-	
-		}
-		
-		modelArchive.setAvailableProductClasses(modelProductClasses);
+		modelArchive = new ProductArchiveRestMapper(restArchive).toModel();		
 		
 		// TODO: Check and remove to separate methods 
 		// Set default values where possible
@@ -123,7 +89,7 @@ public class ProductArchiveManager {
 
 		modelArchive = RepositoryService.getProductArchiveRepository().save(modelArchive);
 		logger.log(FacilityMgrMessage.FACILITY_CREATED, modelArchive.getName());
-		return ProductArchiveModelMapper.toRest(modelArchive);
+		return new ProductArchiveModelMapper(modelArchive).toRest();
 	}
 
 	/**
@@ -148,7 +114,7 @@ public class ProductArchiveManager {
 				if (logger.isDebugEnabled())
 					logger.debug("Found product archive with ID {}", archive.getId());
 
-				RestProductArchive restArchive = ProductArchiveModelMapper.toRest(archive);
+				RestProductArchive restArchive =new ProductArchiveModelMapper(archive).toRest();;
 				if (logger.isDebugEnabled())
 					logger.debug("Created result rest product archive with ID {}", restArchive.getId());
 
@@ -166,7 +132,7 @@ public class ProductArchiveManager {
 
 			for (Object resultObject : query.getResultList()) {
 				if (resultObject instanceof ProductArchive) {
-					result.add(ProductArchiveModelMapper.toRest((ProductArchive) resultObject));
+					result.add(new ProductArchiveModelMapper((ProductArchive) resultObject).toRest());
 				}
 			}
 		}
@@ -204,7 +170,7 @@ public class ProductArchiveManager {
 
 		logger.log(ProductArchiveMgrMessage.ARCHIVE_RETRIEVED, id);
 
-		return ProductArchiveModelMapper.toRest(modelArchive.get());
+		return new ProductArchiveModelMapper(modelArchive.get()).toRest();
 	}
 
 	/**
@@ -242,7 +208,7 @@ public class ProductArchiveManager {
 		
 		checkMandatoryAttributes(modelArchive);
 
-		ProductArchive changedArchive = ProductArchiveRestMapper.toModel(restArchive);
+		ProductArchive changedArchive = new ProductArchiveRestMapper(restArchive).toModel();
 		
 		// TODO: Maybe use here !equals for ProductArchive
 		boolean archiveChanged = isArchiveChanged(modelArchive, changedArchive);
@@ -262,7 +228,7 @@ public class ProductArchiveManager {
 			logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_MODIFIED, id);
 		}
 		
-		return ProductArchiveModelMapper.toRest(modelArchive);
+		return new ProductArchiveModelMapper(modelArchive).toRest();
 	}
 
 	/**
@@ -281,13 +247,13 @@ public class ProductArchiveManager {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteArchiveById({})", id);
 
-		// Test whether the product id is valid
+		// Test whether the product archive id is valid
 		Optional<ProductArchive> modelArchive = RepositoryService.getProductArchiveRepository().findById(id);
 		if (modelArchive.isEmpty()) {
 			throw new EntityNotFoundException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND));
 		}
 		
-		// Delete the product
+		// Delete the product archive
 		RepositoryService.getProductArchiveRepository().deleteById(id);
 
 		// Test whether the deletion was successful
