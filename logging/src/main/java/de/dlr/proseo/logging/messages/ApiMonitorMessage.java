@@ -31,7 +31,7 @@ public enum ApiMonitorMessage implements ProseoMessage {
 	EXCEPTION_CHECKING_DOWNLOADS (7013, Level.ERROR, false, "Exception during check for available downloads (cause: {0} / {1})", ""),
 	EXCEPTION_IN_TRANSFER_OR_ACTION (7014, Level.ERROR, false, "Exception during data transfer or follow-on action (cause: {0} / {1})", ""),
 
-	// -- AUXIP Monitor --
+	// -- AUXIP/CADIP Monitor --
 	INVALID_AUXIP_ID			(7100, Level.ERROR, false, "Invalid AUXIP Monitor identifier {0} passed", ""),
 	ODATA_REQUEST_ABORTED		(7101, Level.ERROR, false, "OData request for reference time {0} aborted (cause: {1} / {2})", ""),
 	ODATA_REQUEST_FAILED		(7102, Level.ERROR, false, "OData request for reference time {0} failed with HTTP status code {1}, message:\n{2}\n", ""),
@@ -45,6 +45,7 @@ public enum ApiMonitorMessage implements ProseoMessage {
 	PRODUCT_VAL_STOP_MISSING	(7110, Level.ERROR, false, "Product list entry {0} does not contain product validity end ('ContentDate/End' element)", ""),
 	PRODUCT_PUBLICATION_MISSING	(7111, Level.ERROR, false, "Product list entry {0} does not contain valid publication time ('PublicationDate' element)", ""),
 	PRODUCT_EVICTION_MISSING	(7112, Level.ERROR, false, "Product list entry {0} does not contain valid eviction time ('EvictionDate' element)", ""),
+	INVALID_CADIP_ID			(7113, Level.ERROR, false, "Invalid CADIP Monitor identifier {0} passed", ""),
 	
 	// -- EDIP Monitor --
 	EDIP_NOT_READABLE			(7150, Level.ERROR, false, "EDIP directory {0} not readable (cause: {1})", ""),

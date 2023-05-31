@@ -13,6 +13,7 @@ package de.dlr.proseo.logging.http;
 public enum HttpPrefix {
 	
 	AUXIP_MONITOR 	("199 proseo-auxip-monitor "),
+	CADIP_MONITOR 	("199 proseo-cadip-monitor "),
 	EDIP_MONITOR 	("199 proseo-edip-monitor "),
 	FACILTY_MGR 	("199 proseo-facmgr "),
 	MODEL			("199 proseo-model "),
