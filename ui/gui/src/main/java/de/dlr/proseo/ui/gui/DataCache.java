@@ -31,6 +31,10 @@ public class DataCache {
 	/**
 	 * List with cached data
 	 */
+	private List<String> workflows = null;
+	/**
+	 * List with cached data
+	 */
 	private List<String> facilities = null;
 
 	/**
@@ -72,6 +76,20 @@ public class DataCache {
 	 */
 	public void setConfiguredProcessors(List<String> configuredProcessors) {
 		this.configuredProcessors = configuredProcessors;
+	}
+	
+	/**
+	 * @return the workflows
+	 */
+	public List<String> getWorkflows() {
+		return workflows;
+	}
+
+	/**
+	 * @param workflows the workflows to set
+	 */
+	public void setWorkflows(List<String> workflows) {
+		this.workflows = workflows;
 	}
 
 	/**
