@@ -28,5 +28,15 @@ public interface ProductArchiveRepository extends JpaRepository<ProductArchive, 
 	 */
 	@Query("select pa from ProductArchive pa where UPPER(pa.code) = UPPER(?1)")
 	public ProductArchive findByCode(String code);
+	
+	
+	/**
+	 * Get the product archive with the given name
+	 * 
+	 * @param archiveName the name of the productArchive
+	 * @return product archive identified by the name
+	 */
+	@Query("select pa from ProductArchive pa where UPPER(pa.name) = UPPER(?1)")
+	public ProductArchive findByName(String archiveName);
 
 }
