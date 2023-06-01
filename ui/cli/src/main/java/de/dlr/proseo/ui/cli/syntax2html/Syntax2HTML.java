@@ -20,6 +20,7 @@ import org.yaml.snakeyaml.constructor.Constructor;
 /**
  * 
  * Converts YAML syntax file to HTML for documentation purposes.
+ * Usage: Syntax2HTML source_file target_file
  *
  * @author Katharina Bassler
  *
@@ -53,6 +54,8 @@ public class Syntax2HTML {
 				
 			// Write HTML documentation to target file
 			Files.writeString(target, htmlDoc);
+			
+			System.out.println("HTML documentation generated successfully.");
 			
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -112,12 +112,12 @@ public class CLIParameter {
 		htmlDoc.append(
 				"<table>" + "<tr>" + "<td>" + "Parameter" + "</td>" + "<td>" + "<strong>" + this.name + "</strong>");
 
-		if (this.optional != null)
-			if (this.repeatable != null)
+		if (this.optional == true)
+			if (this.repeatable == true)
 				htmlDoc.append(" (optional, repeatable)");
 			else
 				htmlDoc.append(" (optional)");
-		else if (this.repeatable != null)
+		else if (this.repeatable == true)
 			htmlDoc.append(" (repeatable)");
 
 		htmlDoc.append("</td>" + "</tr>")
