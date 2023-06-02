@@ -40,21 +40,28 @@ public class FacmgrManager {
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(FacmgrManager.class);
 
-	public RestProcessingFacility createFacility(RestProcessingFacility facility) throws IllegalArgumentException {
+	/**
+	 * Create a processing facility with the specified attributes in the database.
+	 * 
+	 * @param restFacility The ProcessingFacility to create in REST format
+	 * @return The created RestProcessingFacility
+	 * @throws IllegalArgumentException in case of invalid input data
+	 */
+	public RestProcessingFacility createFacility(RestProcessingFacility restFacility) throws IllegalArgumentException {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> createFacility({})", (null == facility ? "MISSING" : facility.getName()));
+			logger.trace(">>> createFacility({})", (null == restFacility ? "MISSING" : restFacility.getName()));
 
-		if (null == facility) {
+		if (null == restFacility) {
 			throw new IllegalArgumentException(logger.log(FacilityMgrMessage.FACILITY_MISSING));
 		}
 
 		// Make sure the facility does not yet exist
-		ProcessingFacility modelFacility = RepositoryService.getFacilityRepository().findByName(facility.getName());
+		ProcessingFacility modelFacility = RepositoryService.getFacilityRepository().findByName(restFacility.getName());
 		if (null != modelFacility) {
-			throw new IllegalArgumentException(logger.log(FacilityMgrMessage.DUPLICATE_FACILITY, facility.getName()));
+			throw new IllegalArgumentException(logger.log(FacilityMgrMessage.DUPLICATE_FACILITY, restFacility.getName()));
 		}
 
-		modelFacility = FacmgrUtil.toModelFacility(facility);
+		modelFacility = FacmgrUtil.toModelFacility(restFacility);
 
 		// Set default values where possible
 		if (null == modelFacility.getFacilityState()) {
@@ -65,11 +72,12 @@ public class FacmgrManager {
 		if (null == modelFacility.getStorageManagerUrl() || modelFacility.getStorageManagerUrl().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "StorageManagerUrl", "facility creation"));
 		}
-		if (null == modelFacility.getExternalStorageManagerUrl() || modelFacility.getExternalStorageManagerUrl().isBlank())
+		if (null == modelFacility.getExternalStorageManagerUrl() || modelFacility.getExternalStorageManagerUrl().isBlank()) {
 			if (null == modelFacility.getStorageManagerUrl()) {
 				throw new IllegalArgumentException(
 						logger.log(GeneralMessage.FIELD_NOT_SET, "ExternalStorageManagerUrl", "facility creation"));
 			}
+		}
 		if (null == modelFacility.getStorageManagerUser() || modelFacility.getStorageManagerUser().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "StorageManagerUser", "facility creation"));
 		}
@@ -81,23 +89,26 @@ public class FacmgrManager {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "DefaultStorageType"));
 		}
 
+		// Save and return the new faciltiy
 		modelFacility = RepositoryService.getFacilityRepository().save(modelFacility);
-		logger.log(FacilityMgrMessage.FACILITY_CREATED, facility.getName());
+
+		logger.log(FacilityMgrMessage.FACILITY_CREATED, restFacility.getName());
+
 		return FacmgrUtil.toRestFacility(modelFacility);
 	}
 
 	/**
-	 * List of all facilities filtered by mission and name
+	 * Retrieve a list of facilities filtered by mission and name.
 	 * 
 	 * @param name the name of the facility
-	 * @return a list of facilities
+	 * @return a list of facilities matching mission and name
 	 * @throws NoResultException if no facilities matching the given search criteria
 	 *                           could be found
 	 */
-
-	public List<RestProcessingFacility> getFacility(String name) {
+	public List<RestProcessingFacility> getFacility(String name) throws NoResultException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFacilities({})", name);
+
 		List<RestProcessingFacility> result = new ArrayList<>();
 
 		if (null == name) {
@@ -105,7 +116,9 @@ public class FacmgrManager {
 			for (ProcessingFacility facility : RepositoryService.getFacilityRepository().findAll()) {
 				if (logger.isDebugEnabled())
 					logger.debug("Found facility with ID {}", facility.getId());
+
 				RestProcessingFacility resultFacility = FacmgrUtil.toRestFacility(facility);
+
 				if (logger.isDebugEnabled())
 					logger.debug("Created result facilities with ID {}", resultFacility.getId());
 
@@ -114,31 +127,36 @@ public class FacmgrManager {
 		} else {
 			// Find using search parameters
 			String jpqlQuery = "select p from ProcessingFacility p where 1 = 1";
+
 			if (null != name) {
 				jpqlQuery += " and p.name = :name";
 			}
+
 			Query query = em.createQuery(jpqlQuery);
+
 			if (null != name) {
 				query.setParameter("name", name);
 			}
+
 			for (Object resultObject : query.getResultList()) {
 				if (resultObject instanceof ProcessingFacility) {
 					result.add(FacmgrUtil.toRestFacility((ProcessingFacility) resultObject));
 				}
 			}
-
 		}
+
+		// Return retrieved facility or throw NoResultException
 		if (result.isEmpty()) {
 			throw new NoResultException(logger.log(FacilityMgrMessage.FACILITY_LIST_EMPTY));
-
 		}
+
 		logger.log(FacilityMgrMessage.FACILITY_LIST_RETRIEVED, result.size(), name);
 
 		return result;
 	}
 
 	/**
-	 * Find the facility with the given ID
+	 * Find the facility with the given ID.
 	 * 
 	 * @param id the ID to look for
 	 * @return a Json object corresponding to the facility found
@@ -149,18 +167,22 @@ public class FacmgrManager {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFacilityById({})", id);
 
+		// Ensure an ID is given
 		if (null == id) {
 			throw new IllegalArgumentException(logger.log(FacilityMgrMessage.FACILITY_MISSING, id));
 		}
+
+		// Search for matching processing facility
 		Optional<ProcessingFacility> modelFacility = RepositoryService.getFacilityRepository().findById(id);
 
+		// Return facility if exists, otherwise throw NoResultException
 		if (modelFacility.isEmpty()) {
 			throw new NoResultException(logger.log(FacilityMgrMessage.FACILITY_NOT_FOUND, id));
 		}
+
 		logger.log(FacilityMgrMessage.FACILITY_RETRIEVED, id);
 
 		return FacmgrUtil.toRestFacility(modelFacility.get());
-
 	}
 
 	/**
@@ -169,34 +191,40 @@ public class FacmgrManager {
 	 * to null.
 	 * 
 	 * @param id           the ID of the facility to update
-	 * @param restFacility a Json object containing the modified (and unmodified)
+	 * @param restFacility a Json object containing the modified and unmodified
 	 *                     attributes
 	 * @return a Json object corresponding to the facility after modification (with
 	 *         ID and version for all contained objects)
-	 * @throws EntityNotFoundException         if no product with the given ID
+	 * @throws EntityNotFoundException         if no facility with the given ID
 	 *                                         exists
 	 * @throws IllegalArgumentException        if any of the input data was invalid
 	 * @throws ConcurrentModificationException if the facility has been modified
 	 *                                         since retrieval by the client
 	 */
-	public RestProcessingFacility modifyFacility(Long id, RestProcessingFacility restFacility) {
+	public RestProcessingFacility modifyFacility(Long id, RestProcessingFacility restFacility)
+			throws IllegalArgumentException, EntityNotFoundException, ConcurrentModificationException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> modifyFacility({})", id);
 
+		// Ensure an ID is given
 		if (null == id) {
 			throw new IllegalArgumentException(logger.log(FacilityMgrMessage.FACILITY_MISSING, id));
 		}
 
+		// Search for matching processing facility and if none is found throw
+		// EntityNotFoundException
 		Optional<ProcessingFacility> optModelFacility = RepositoryService.getFacilityRepository().findById(id);
 
 		if (optModelFacility.isEmpty()) {
 			throw new EntityNotFoundException(logger.log(FacilityMgrMessage.FACILITY_NOT_FOUND, id));
 		}
+
 		ProcessingFacility modelFacility = optModelFacility.get();
 
 		// Check that mandatory attributes are set
 		if (null == modelFacility.getStorageManagerUrl() || modelFacility.getStorageManagerUrl().isBlank()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "StorageManagerUrl", "facility modifcation"));
+			throw new IllegalArgumentException(
+					logger.log(GeneralMessage.FIELD_NOT_SET, "StorageManagerUrl", "facility modifcation"));
 		}
 		if (null == modelFacility.getExternalStorageManagerUrl() || modelFacility.getExternalStorageManagerUrl().isBlank())
 			if (null == modelFacility.getStorageManagerUrl()) {
@@ -204,7 +232,8 @@ public class FacmgrManager {
 						logger.log(GeneralMessage.FIELD_NOT_SET, "ExternalStorageManagerUrl", "facility modifcation"));
 			}
 		if (null == modelFacility.getStorageManagerUser() || modelFacility.getStorageManagerUser().isBlank()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "StorageManagerUser", "facility modifcation"));
+			throw new IllegalArgumentException(
+					logger.log(GeneralMessage.FIELD_NOT_SET, "StorageManagerUser", "facility modifcation"));
 		}
 		if (null == modelFacility.getStorageManagerPassword()) {
 			throw new IllegalArgumentException(
@@ -214,8 +243,9 @@ public class FacmgrManager {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "DefaultStorageType"));
 		}
 
-		// Update modified attributes
+		// Update modified attributes and keep track of change status
 		boolean facilityChanged = false;
+
 		ProcessingFacility changedFacility = FacmgrUtil.toModelFacility(restFacility);
 
 		if (!modelFacility.getName().equals(changedFacility.getName())) {
@@ -271,6 +301,11 @@ public class FacmgrManager {
 			facilityChanged = true;
 			modelFacility.setDefaultStorageType(changedFacility.getDefaultStorageType());
 		}
+
+		// Check for concurrent modification
+		if (modelFacility.getVersion() != RepositoryService.getFacilityRepository().findById(id).get().getVersion()) {
+		    throw new ConcurrentModificationException(logger.log(GeneralMessage.CONCURRENT_MODIFICATION, "facility", id));
+		}
 		
 		// Save order only if anything was actually changed
 		if (facilityChanged) {
@@ -280,11 +315,12 @@ public class FacmgrManager {
 		} else {
 			logger.log(FacilityMgrMessage.FACILITY_NOT_MODIFIED, id);
 		}
+
 		return FacmgrUtil.toRestFacility(modelFacility);
 	}
 
 	/**
-	 * Delete an facility by ID
+	 * Delete the facility with the given ID.
 	 * 
 	 * @param id the ID of the facility to delete
 	 * @throws EntityNotFoundException  if the facility to delete does not exist in
@@ -305,12 +341,9 @@ public class FacmgrManager {
 		}
 
 		// Test whether the facility still has stored products
-		if (!RepositoryService.getProductFileRepository().findByProcessingFacilityId(modelFacility.get().getId())
-				.isEmpty()) {
-			throw new IllegalArgumentException(
-					logger.log(FacilityMgrMessage.FACILITY_HAS_PRODUCTS, modelFacility.get().getName()));
+		if (!RepositoryService.getProductFileRepository().findByProcessingFacilityId(modelFacility.get().getId()).isEmpty()) {
+			throw new IllegalArgumentException(logger.log(FacilityMgrMessage.FACILITY_HAS_PRODUCTS, modelFacility.get().getName()));
 		}
-		;
 
 		// Delete the facility
 		RepositoryService.getFacilityRepository().deleteById(id);
@@ -322,7 +355,6 @@ public class FacmgrManager {
 		}
 
 		logger.log(FacilityMgrMessage.FACILITY_DELETED, id);
-
 	}
 
 }

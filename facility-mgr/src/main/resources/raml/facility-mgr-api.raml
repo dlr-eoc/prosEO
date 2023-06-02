@@ -7,14 +7,12 @@ mediaType: application/json
 
 securitySchemes:
   basicAuth:
-    description: Each request must contain the headers necessary for
-                 basic authentication
+    description: Each request must contain the headers necessary for basic authentication
     type: Basic Authentication
     describedBy:
       headers:
         Authorization:
-          description: Used to send the Base64-encoded "username:password"
-                       credentials
+          description: Used to send the Base64-encoded "username:password" credentials
           type: string
       responses:
         401:
@@ -42,13 +40,28 @@ resourceTypes:
             Warning: !include types/error.raml
     patch?:
       responses:          
+        400:
+          description: |
+            The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml          
         404:
           description: |
             The requested resource on which the modification is being attempted was not found              
           headers:
-            Warning: !include types/error.raml
+            Warning: !include types/error.raml          
+        409:
+          description: |
+            The request sent to the server could not be completed due to a conflict with the current state of the target resource
+          headers:
+            Warning: !include types/error.raml        
     delete?:
-      responses:          
+      responses:              
+        400:
+          description: |
+            The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml           
         404:
           description: | 
             The requested resource to delete was not found 
@@ -61,7 +74,9 @@ resourceTypes:
     description: Get processing facilities by mission and facility name
     displayName: getFacilities
     queryParameters:
-      name?: string
+      name?: 
+        type: string
+        description: The processing facility name (unique key)
     responses:
       200:
         body:
@@ -86,6 +101,7 @@ resourceTypes:
       id:
         type: integer
         format: long
+        description: The persistent id of this object
     get:
       description: Get a processing facility by ID
       displayName: getFacilityById
