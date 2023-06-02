@@ -31,7 +31,7 @@ public class ProductArchiveModelMapper {
 	private ProductArchive modelArchive;
 	
 	/** Rest Archive as output parameter */
-	private RestProductArchive restArchive;  
+	private RestProductArchive restArchive = new RestProductArchive();  
 	
 	/**
 	 * Constructor with modelArchive parameter
@@ -57,7 +57,7 @@ public class ProductArchiveModelMapper {
 		if (null == modelArchive)
 			return null;
 				
-		setDefaultRestValues(restArchive);
+		setDefaultRestValues();
 		
 		setAvailableProductClasses();
 					
@@ -88,13 +88,19 @@ public class ProductArchiveModelMapper {
 	 * 
 	 * @param restArchive rest product archive
 	 */
-	private static void setDefaultRestValues(RestProductArchive restArchive) {
+	private void setDefaultRestValues() {
 		
-		restArchive.setArchiveType(ArchiveType.AIP.toString());
+		if (null == restArchive.getArchiveType()) {
+			restArchive.setArchiveType(ArchiveType.AIP.toString());
+		}
 		
-		restArchive.setTokenRequired(false);
+		if (null == restArchive.getTokenRequired()) {
+			restArchive.setTokenRequired(false);
+		}
 		
-		restArchive.setSendAuthInBody(false);
+		if (null == restArchive.getArchiveType()) {
+			restArchive.setSendAuthInBody(false);
+		}
 	}
 	
 	/**
