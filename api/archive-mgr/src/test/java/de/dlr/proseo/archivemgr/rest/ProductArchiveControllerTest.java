@@ -8,8 +8,6 @@ package de.dlr.proseo.archivemgr.rest;
 import static org.junit.Assert.assertEquals;
 
 import java.util.List;
-import java.util.Set;
-import java.util.HashSet;
 
 import org.junit.After;
 import org.junit.Before;
@@ -25,11 +23,10 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.archivemgr.ProductArchiveManagerApplication;
-import de.dlr.proseo.archivemgr.rest.model.ProductArchiveUtil;
+import de.dlr.proseo.archivemgr.rest.model.ProductArchiveModelMapper;
 import de.dlr.proseo.archivemgr.rest.model.RestProductArchive;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.ProductArchive;
-import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.enums.ArchiveType;
 import de.dlr.proseo.model.service.RepositoryService;
 
@@ -152,7 +149,8 @@ public class ProductArchiveControllerTest {
 		logger.trace(">>> testCreateArchive()");
 
 		// Get a test facility from the database
-		RestProductArchive restArchive = ProductArchiveUtil.toRestProductArchive(RepositoryService.getProductArchiveRepository().findAll().get(0));
+		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findAll().get(0);
+		RestProductArchive restArchive = new ProductArchiveModelMapper(modelArchive).toRest();
 
 		// Remove the test facility from the database
 		RepositoryService.getProductArchiveRepository().deleteById(restArchive.getId());
@@ -236,8 +234,8 @@ public class ProductArchiveControllerTest {
 		logger.trace(">>> testModifyArchive()");
 
 		// Modify product archive with product archive controller
-		RestProductArchive restArchive = ProductArchiveUtil
-				.toRestProductArchive(RepositoryService.getProductArchiveRepository().findAll().get(0));
+		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findAll().get(0);
+		RestProductArchive restArchive = new ProductArchiveModelMapper(modelArchive).toRest();
 
 		restArchive.setName("Modified_Name");
 		ResponseEntity<RestProductArchive> getEntity = paci.modifyArchive(restArchive.getId(), restArchive);
