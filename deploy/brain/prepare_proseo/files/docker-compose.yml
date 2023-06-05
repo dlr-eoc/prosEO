@@ -151,6 +151,18 @@ services:
       options:
         max-size: 100m
     restart: unless-stopped
+  proseo-archive-mgr:
+    image: ${REGISTRY_URL}/proseo-archive-mgr:${VERSION}-proseo
+    platform: linux/amd64
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8093:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
   proseo-pgadmin:
     image: ${REGISTRY_URL}/dpage/pgadmin4:latest-proseo
     environment:

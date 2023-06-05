@@ -96,11 +96,17 @@ public class ProductArchiveRestMapper {
 	 */
 	private void setDefaultModelValues() {
 		
-		modelArchive.setArchiveType(ArchiveType.AIP);
+		if (null == modelArchive.getArchiveType()) {
+			modelArchive.setArchiveType(ArchiveType.AIP);
+		}
 		
-		modelArchive.setTokenRequired(false);
+		if (null == modelArchive.getTokenRequired()) {
+			modelArchive.setTokenRequired(false);
+		}
 		
-		modelArchive.setSendAuthInBody(false);
+		if (null == modelArchive.getSendAuthInBody()) {
+			modelArchive.setSendAuthInBody(false);
+		}
 	}
 	
 	/**
