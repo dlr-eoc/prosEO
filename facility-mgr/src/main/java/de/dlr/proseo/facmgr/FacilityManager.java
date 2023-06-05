@@ -1,9 +1,8 @@
 /**
  * FacilityManager.java
  * 
- * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
+ * (C) 2020 Dr. Bassler & Co. Managementberatung GmbH
  */
-
 package de.dlr.proseo.facmgr;
 
 import org.springframework.boot.SpringApplication;

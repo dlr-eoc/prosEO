@@ -1,3 +1,8 @@
+/**
+ * FacmgrUtil.java
+ * 
+ * (C) 2020 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.facmgr.rest.model;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;

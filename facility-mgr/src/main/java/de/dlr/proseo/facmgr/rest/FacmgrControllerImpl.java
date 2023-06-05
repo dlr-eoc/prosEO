@@ -1,3 +1,8 @@
+/**
+ * FacmgControllerImpl.java
+ * 
+ * (C) 2020 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.facmgr.rest;
 
 import java.util.ConcurrentModificationException;
