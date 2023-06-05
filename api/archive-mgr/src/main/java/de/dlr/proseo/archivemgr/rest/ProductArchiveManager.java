@@ -16,6 +16,7 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.validation.constraints.NotNull;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,31 +65,19 @@ public class ProductArchiveManager {
 		if (null == restArchive) {
 			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING));
 		}
-
-		// Make sure the facility does not yet exist
-		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findByCode(restArchive.getCode());
-
-		if (null != modelArchive) {
-			throw new IllegalArgumentException(
-					logger.log(ProductArchiveMgrMessage.DUPLICATED_ARCHIVE, restArchive.getCode()));
-		}
 		
+		if (archiveExists(restArchive.getCode())) {
+			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.DUPLICATED_ARCHIVE, restArchive.getCode()));
+		}
+
+		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findByCode(restArchive.getCode());
+		
+		// all checks inside
 		modelArchive = new ProductArchiveRestMapper(restArchive).toModel();		
 		
-		// TODO: Check and remove to separate methods 
-		// Set default values where possible
-		if (null == modelArchive.getArchiveType()) {
-			modelArchive.setArchiveType(ArchiveType.AIP);
-		}
-
-		// Ensure that mandatory attributes are set
-		if (modelArchive.getTokenRequired() && null == modelArchive.getTokenUri()) {
-			throw new IllegalArgumentException(
-					logger.log(GeneralMessage.FIELD_NOT_SET, "TokenUri", "produch archive creation"));
-		}
-
 		modelArchive = RepositoryService.getProductArchiveRepository().save(modelArchive);
-		logger.log(FacilityMgrMessage.FACILITY_CREATED, modelArchive.getName());
+		
+		logger.log(ProductArchiveMgrMessage.ARCHIVE_CREATED, modelArchive.getName());
 		return new ProductArchiveModelMapper(modelArchive).toRest();
 	}
 
@@ -409,5 +398,18 @@ public class ProductArchiveManager {
 		if (null == modelArchive.getTokenRequired()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "TokenRequired", "Product archive modifcation"));
 		}
+	}
+	
+	/**
+	 * Checks if archive exists
+	 * 
+	 * @param code code of the archive
+	 * @return true if exists
+	 */
+	private boolean archiveExists(String code) {
+		
+		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findByCode(code);
+		
+		return modelArchive != null ? true : false; 		
 	}
 }
