@@ -68,8 +68,8 @@ public class OdipUtilBase {
 
 	// TODO where to get the settings?
 	private final String ORDER_PROCESSING_MODE = "OPER";
-	private final String ORDER_OUTPUT_FILE_CLASS = "OPER";
 	private final String ORDER_SLICING_TYPE = "NONE";
+	private final String ORDER_OUTPUT_FILE_CLASS = "OPER";
 
 	private final String URI_PATH_ORBITS = "/orbits";
 	private final String ORBITS = "orbits";
@@ -637,8 +637,23 @@ public class OdipUtilBase {
 				}				
 			}
 		}
-		restOrder.setProcessingMode(ORDER_PROCESSING_MODE);
-		restOrder.setSlicingType(ORDER_SLICING_TYPE);
+		if (workflow.getProcessingMode() != null && !workflow.getProcessingMode().isEmpty()) {
+			restOrder.setProcessingMode(workflow.getProcessingMode());
+		} else {
+			restOrder.setProcessingMode(ORDER_PROCESSING_MODE);
+		}
+		if (workflow.getSlicingType() != null) {
+			restOrder.setSlicingType(workflow.getSlicingType().toString());
+		} else {
+			restOrder.setSlicingType(ORDER_SLICING_TYPE);
+		}
+		if (workflow.getSliceDuration() != null) {
+			restOrder.setSliceDuration(workflow.getSliceDuration().getSeconds());
+		}
+		if (workflow.getSliceOverlap() != null) {
+			restOrder.setSliceOverlap(workflow.getSliceOverlap().getSeconds());
+		}
+		
 		restOrder.setOrderSource(OrderSource.ODIP.toString());
 		
 		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONENDPOINT) != null) {
@@ -809,7 +824,11 @@ public class OdipUtilBase {
 		List<String> requestedProductClasses = new ArrayList<String>();
 		requestedProductClasses.add(workflow.getOutputProductClass().getProductType());
 		restOrder.setRequestedProductClasses(requestedProductClasses);
-		restOrder.setOutputFileClass(ORDER_OUTPUT_FILE_CLASS);
+		if (workflow.getOutputFileClass() != null && !workflow.getOutputFileClass().isEmpty()) {
+			restOrder.setOutputFileClass(workflow.getOutputFileClass());
+		} else {
+			restOrder.setOutputFileClass(ORDER_OUTPUT_FILE_CLASS);
+		}
 		List<String> confProcs = new ArrayList<String>();
 		if (workflow.getConfiguredProcessor() != null) {
 			confProcs.add(workflow.getConfiguredProcessor().getIdentifier());

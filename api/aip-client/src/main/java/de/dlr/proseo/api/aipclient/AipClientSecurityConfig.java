@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.api.aipclient;
 
+import java.util.Base64;
+
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.IngestorMessage;
 import de.dlr.proseo.model.enums.UserRole;
 
 /**
@@ -41,7 +44,30 @@ public class AipClientSecurityConfig extends WebSecurityConfigurerAdapter {
 	private static ProseoLogger logger = new ProseoLogger(AipClientSecurityConfig.class);
 	
 	/**
-	 * Set the Processor Manager security options
+	 * Parse an HTTP authentication header into username and password
+	 * @param authHeader the authentication header to parse
+	 * @return a string array containing the username and the password
+	 * @throws IllegalArgumentException if the authentication header cannot be parsed
+	 */
+	public String[] parseAuthenticationHeader(String authHeader) throws IllegalArgumentException {
+		if (logger.isTraceEnabled()) logger.trace(">>> parseAuthenticationHeader({})", authHeader);
+
+		if (null == authHeader) {
+			String message = logger.log(IngestorMessage.AUTH_MISSING_OR_INVALID, authHeader);
+			throw new IllegalArgumentException (message);
+		}
+		String[] authParts = authHeader.split(" ");
+		if (2 != authParts.length || !"Basic".equals(authParts[0])) {
+			String message = logger.log(IngestorMessage.AUTH_MISSING_OR_INVALID, authHeader);
+			throw new IllegalArgumentException (message);
+		}
+		// The following is guaranteed to work as per BasicAuth specification (but split limited, because password may contain ':')
+		String[] userPassword = (new String(Base64.getDecoder().decode(authParts[1]))).split(":", 2);
+		return userPassword;
+	}
+
+	/**
+	 * Set the AIP client security options
 	 * 
 	 * @param http the HTTP security object
 	 */
@@ -53,10 +79,7 @@ public class AipClientSecurityConfig extends WebSecurityConfigurerAdapter {
 			.authorizeRequests()
 				.antMatchers("/**/actuator/health").permitAll()
 				.anyRequest()
-					.hasAnyRole(
-						UserRole.PRODUCT_READER.toString(),
-						UserRole.PRODUCT_READER_RESTRICTED.toString(),
-						UserRole.PRODUCT_READER_ALL.toString())
+					.hasAnyRole(UserRole.PRODUCT_INGESTOR.toString())
 				.and()
 			.csrf().disable(); // Required for POST requests (or configure CSRF)
 	}

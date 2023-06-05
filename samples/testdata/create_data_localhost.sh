@@ -99,7 +99,7 @@ cp -p bulletinb-380.xml $TEST_DATA_DIR
 CLI_SCRIPT=cli_data_script.txt
 echo "" >$CLI_SCRIPT
 
-# Create a processing facility
+# Create a processing facility (assuming Storage Manager running as Kubernetes service on Docker Desktop as per /deploy-single-node)
 cat >$TEST_DATA_DIR/facility.json <<EOF
 {
     "name": "localhost",
@@ -125,7 +125,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
 [
     {
         "missionCode": "PTM",
-        "productClass": "L0________",
+        "productClass": "PTM_L0",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -150,7 +150,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0________",
+        "productClass": "PTM_L0",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -175,7 +175,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0________",
+        "productClass": "PTM_L0",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -200,7 +200,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0________",
+        "productClass": "PTM_L0",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -225,7 +225,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0________",
+        "productClass": "PTM_L0",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -250,7 +250,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0________",
+        "productClass": "PTM_L0",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -275,7 +275,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0________",
+        "productClass": "PTM_L0",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -300,7 +300,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0________",
+        "productClass": "PTM_L0",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -325,7 +325,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0________",
+        "productClass": "PTM_L0",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -350,7 +350,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0________",
+        "productClass": "PTM_L0",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -375,7 +375,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0________",
+        "productClass": "PTM_L0",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -400,7 +400,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0________",
+        "productClass": "PTM_L0",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -425,7 +425,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0________",
+        "productClass": "PTM_L0",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -450,7 +450,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0________",
+        "productClass": "PTM_L0",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -512,7 +512,7 @@ cat >$TEST_DATA_DIR/order_l2.json <<EOF
     "sliceOverlap": 0,
 	"inputFilters": [
     	{
-    		"productClass": "L0________",
+    		"productClass": "PTM_L0",
     "filterConditions": [
         {
             "key": "revision",
@@ -527,7 +527,7 @@ cat >$TEST_DATA_DIR/order_l2.json <<EOF
 		    ]
 	    },
     	{
-    		"productClass": "L1B_PART1",
+    		"productClass": "PTM_L1B_P1",
 		    "filterConditions": [
 		        {
 		            "key": "revision",
@@ -544,7 +544,7 @@ cat >$TEST_DATA_DIR/order_l2.json <<EOF
     ],
     "classOutputParameters": [
     	{
-    		"productClass": "L1B_PART1",
+    		"productClass": "PTM_L1B_P1",
     "outputParameters": [
         {
             "key": "revision",
@@ -570,7 +570,7 @@ cat >$TEST_DATA_DIR/order_l2.json <<EOF
     "orbits": [
         { "spacecraftCode": "PTS", "orbitNumberFrom": 3000, "orbitNumberTo": 3002 }
     ],
-    "requestedProductClasses": [ "PTM_L2A", "PTM_L2B" ],
+    "requestedProductClasses": [ "PTM_L2_A", "PTM_L2_B" ],
     "inputProductClasses": [],
     "outputFileClass": "TEST",
     "processingMode": "OPER"
@@ -591,7 +591,7 @@ cat >$TEST_DATA_DIR/order_l3.json <<EOF
     "sliceOverlap": 0,
     "inputFilters": [
     	{
-    		"productClass": "PTM_L2A",
+    		"productClass": "PTM_L2_A",
 		    "filterConditions": [
 		        {
 		            "key": "revision",
@@ -606,7 +606,7 @@ cat >$TEST_DATA_DIR/order_l3.json <<EOF
 		    ]
     	},
     	{
-    		"productClass": "PTM_L2B",
+    		"productClass": "PTM_L2_B",
     "filterConditions": [
         {
             "key": "revision",
@@ -636,7 +636,7 @@ cat >$TEST_DATA_DIR/order_l3.json <<EOF
     "configuredProcessors": [ "PTML3_0.1.0_OPER_2020-03-25" ],
     "orbits": [],
     "requestedProductClasses": [ "PTM_L3" ],
-    "inputProductClasses": [ "PTM_L2A", "PTM_L2B" ],
+    "inputProductClasses": [ "PTM_L2_A", "PTM_L2_B" ],
     "outputFileClass": "TEST",
     "processingMode": "OPER"
 }

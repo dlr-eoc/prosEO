@@ -1,0 +1,12 @@
+
+                            /-------\ /-------\
+                            |       | |       |
+                            |   /---/ |  /-\  |
+                            |   \---\ |  | |  |   prosEO - The Processing System for Earth Observation Data
+/----\ /----\ /----\ /----\ |       | |  | |  |
+|    | |    | |    | | ---+ |   /---/ |  | |  |   CADIP Monitor          ${application.formatted-version}
+| {} | |  /-/ | {} | \    \ |   \---\ |  \-/  |
+|    | |  |   |    | +--- | |       | |       |   :: Spring Boot ::      ${spring-boot.formatted-version}
+|  /-/ \--/   \----/ \----/ \-------/ \-------/
+|  |
+\--/

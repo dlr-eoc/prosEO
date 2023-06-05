@@ -1,22 +1,16 @@
 /**
- * AuxipMonitor.java
+ * CadipMonitor.java
  * 
- * (C) 2021 Dr. Bassler & Co. Managementberatung GmbH
+ * (C) 2023 Dr. Bassler & Co. Managementberatung GmbH
  */
-package de.dlr.proseo.api.auxipmon;
+package de.dlr.proseo.api.cadipmon;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLEncoder;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,15 +37,10 @@ import org.apache.olingo.client.api.uri.QueryOption;
 import org.apache.olingo.client.core.ODataClientFactory;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeException;
 import org.apache.olingo.commons.api.format.ContentType;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.io.buffer.DataBufferUtils;
-import org.springframework.core.io.buffer.PooledDataBuffer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -60,7 +49,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
-import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.RequestBodySpec;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -73,20 +61,19 @@ import de.dlr.proseo.basewrap.MD5Util;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.ApiMonitorMessage;
 import de.dlr.proseo.logging.messages.OAuthMessage;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 /**
- * Monitor for Auxiliary Data Interface Points (AUXIP)
+ * Monitor for CADU Interface Points (CADIP)
  * 
- * For specification details see "Auxiliary Data Interface Delivery Point Specification" (ESA-EOPG-EOPGC-IF-10, issue 1.3)
+ * For specification details see "CADU Interface Delivery Point Specification" (ESA-EOPG-EOPGC-IF-15, issue 1.1)
  * 
  * @author Dr. Thomas Bassler
  */
 @Component
 @Scope("singleton")
-public class AuxipMonitor extends BaseMonitor {
+public class CadipMonitor extends BaseMonitor {
 	
 	/** Header marker for S3 redirects */
 	private static final String S3_CREDENTIAL_PARAM = "Amz-Credential";
@@ -100,9 +87,9 @@ public class AuxipMonitor extends BaseMonitor {
 	/** Indicator for parallel copying processes */
 	/* package */ Map<String, Boolean> copySuccess = new ConcurrentHashMap<>();
 	
-	/** The AUXIP Monitor configuration to use */
+	/** The CADIP Monitor configuration to use */
 	@Autowired
-	private AuxipMonitorConfiguration config;
+	private CadipMonitorConfiguration config;
 	
 	private static final int MSG_ID_PRODUCT_TRANSFER_COMPLETED = 5371;
 	private static final int MSG_ID_TARGET_DIRECTORY_NOT_WRITABLE = 5372;
@@ -134,7 +121,7 @@ public class AuxipMonitor extends BaseMonitor {
 	private static final String MSG_ODATA_REQUEST_FAILED = "(E%d) OData request for reference time %s failed with HTTP status code %d, message:\n%s\n";
 	private static final String MSG_ODATA_RESPONSE_UNREADABLE = "(E%d) OData response not readable";
 	private static final String MSG_ODATA_REQUEST_ABORTED = "(E%d) OData request for reference time %s aborted (cause: %s / %s)";
-	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown in AUXIP monitor: ";
+	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown in CADIP monitor: ";
 	private static final String MSG_PRODUCT_DOWNLOAD_FAILED = "(E%d) Download of product file %s failed (cause: %s)";
 	private static final String MSG_FILE_SIZE_MISMATCH = "(E%d) File size mismatch for product file %s (expected: %d Bytes, got %d Bytes)";
 	private static final String MSG_CHECKSUM_MISMATCH = "(E%d) Checksum mismatch for product file %s (expected: %s, got %s)";
@@ -146,8 +133,8 @@ public class AuxipMonitor extends BaseMonitor {
 	private static final String MSG_RETRIEVAL_RESULT = "(I%d) Retrieval request returned %d products out of %d available";
 
 	/** A oldLogger for this class */
-	private static Logger oldLogger = LoggerFactory.getLogger(AuxipMonitor.class);
-	private static ProseoLogger logger = new ProseoLogger(AuxipMonitor.class);
+	private static Logger oldLogger = LoggerFactory.getLogger(CadipMonitor.class);
+	private static ProseoLogger logger = new ProseoLogger(CadipMonitor.class);
 	
 	/**
 	 * Class describing a download session
@@ -276,10 +263,10 @@ public class AuxipMonitor extends BaseMonitor {
 	@PostConstruct
 	private void init() {
 		// Set parameters in base monitor
-		this.setTransferHistoryFile(Paths.get(config.getAuxipHistoryPath()));
-		this.setCheckInterval(config.getAuxipCheckInterval());
-		this.setTruncateInterval(config.getAuxipTruncateInterval());
-		this.setHistoryRetentionDuration(Duration.ofMillis(config.getAuxipHistoryRetention()));
+		this.setTransferHistoryFile(Paths.get(config.getCadipHistoryPath()));
+		this.setCheckInterval(config.getCadipCheckInterval());
+		this.setTruncateInterval(config.getCadipTruncateInterval());
+		this.setHistoryRetentionDuration(Duration.ofMillis(config.getCadipHistoryRetention()));
 		
 		// Multi-threading control
 		this.setMaxDownloadThreads(config.getMaxDownloadThreads());
@@ -288,14 +275,14 @@ public class AuxipMonitor extends BaseMonitor {
 		
 		HttpURLConnection.setFollowRedirects(true);
 		
-		oldLogger.info("------  Starting AUXIP Monitor  ------");
-		oldLogger.info("AUXIP base URI . . . . . . : " + config.getAuxipBaseUri());
-		oldLogger.info("AUXIP context. . . . . . . : " + config.getAuxipContext());
-		oldLogger.info("Use token-based auth . . . : " + config.getAuxipUseToken());
-		oldLogger.info("Product types requested  . : " + config.getAuxipProductTypes());
+		oldLogger.info("------  Starting CADIP Monitor  ------");
+		oldLogger.info("CADIP base URI . . . . . . : " + config.getCadipBaseUri());
+		oldLogger.info("CADIP context. . . . . . . : " + config.getCadipContext());
+		oldLogger.info("Use token-based auth . . . : " + config.getCadipUseToken());
+		oldLogger.info("Product types requested  . : " + config.getCadipProductTypes());
 		oldLogger.info("Transfer history file  . . : " + this.getTransferHistoryFile());
-		oldLogger.info("AUXIP check interval   . . : " + this.getCheckInterval());
-		oldLogger.info("Chunk retrieval interval . : " + config.getAuxipChunkInterval());
+		oldLogger.info("CADIP check interval   . . : " + this.getCheckInterval());
+		oldLogger.info("Chunk retrieval interval . : " + config.getCadipChunkInterval());
 		oldLogger.info("History truncation interval: " + this.getTruncateInterval());
 		oldLogger.info("History retention period . : " + this.getHistoryRetentionDuration());
 		oldLogger.info("Max. transfer sessions . . : " + this.getMaxDownloadThreads());
@@ -323,40 +310,40 @@ public class AuxipMonitor extends BaseMonitor {
 	}
 	
 	/**
-	 * Request a bearer token from the AUXIP
+	 * Request a bearer token from the CADIP
 	 * 
-	 * @return the bearer token as received from AUXIP, or null, if the request failed
+	 * @return the bearer token as received from CADIP, or null, if the request failed
 	 */
 	private String getBearerToken() {
 		if (logger.isTraceEnabled()) logger.trace(">>> getBearerToken()");
 		
 		// Create a request
-		WebClient webClient = WebClient.create(config.getAuxipBaseUri());
+		WebClient webClient = WebClient.create(config.getCadipBaseUri());
 		RequestBodySpec request = webClient.post()
-				.uri(config.getAuxipTokenUri())
+				.uri(config.getCadipTokenUri())
 				.accept(MediaType.APPLICATION_JSON);
 		
 		// Set username and password as query parameters
 		MultiValueMap<String, String> queryVariables = new LinkedMultiValueMap<>();
 		
 		queryVariables.add("grant_type", "password");
-		queryVariables.add("username", config.getAuxipUser());
-		queryVariables.add("password", config.getAuxipPassword());
+		queryVariables.add("username", config.getCadipUser());
+		queryVariables.add("password", config.getCadipPassword());
 		
 		// Add client credentials, if OpenID is required for login, otherwise prepare Basic Auth with username/password
-		if (null == config.getAuxipClientId()) {
-			String base64Auth =  new String(Base64.getEncoder().encode((config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
+		if (null == config.getCadipClientId()) {
+			String base64Auth =  new String(Base64.getEncoder().encode((config.getCadipUser() + ":" + config.getCadipPassword()).getBytes()));
 			request = request.header(HttpHeaders.AUTHORIZATION, "Basic " + base64Auth);
 			logger.trace("... Auth: '{}'", base64Auth);
 		} else {
 			queryVariables.add("scope", "openid");
-			if (config.getAuxipClientSendInBody()) {
-				queryVariables.add("client_id", config.getAuxipClientId());
+			if (config.getCadipClientSendInBody()) {
+				queryVariables.add("client_id", config.getCadipClientId());
 				queryVariables.add("client_secret",
-						URLEncoder.encode(config.getAuxipClientSecret(), Charset.defaultCharset()));
+						URLEncoder.encode(config.getCadipClientSecret(), Charset.defaultCharset()));
 			} else {
 				String base64Auth =  new String(Base64.getEncoder()
-						.encode((config.getAuxipClientId() + ":" + config.getAuxipClientSecret()).getBytes()));
+						.encode((config.getCadipClientId() + ":" + config.getCadipClientSecret()).getBytes()));
 				request = request.header(HttpHeaders.AUTHORIZATION, "Basic " + base64Auth);
 				logger.trace("... Auth: '{}'", base64Auth);
 			}
@@ -370,7 +357,7 @@ public class AuxipMonitor extends BaseMonitor {
 			.bodyToMono(String.class)
 			.block();
 		if (null == tokenResponse) {
-			logger.log(OAuthMessage.TOKEN_REQUEST_FAILED, config.getAuxipBaseUri() + "/" + config.getAuxipTokenUri());
+			logger.log(OAuthMessage.TOKEN_REQUEST_FAILED, config.getCadipBaseUri() + "/" + config.getCadipTokenUri());
 			return null;
 		}
 //		if (logger.isTraceEnabled()) logger.trace("... got token response '{}'", tokenResponse);
@@ -382,18 +369,18 @@ public class AuxipMonitor extends BaseMonitor {
 			tokenResponseMap = om.readValue(tokenResponse, Map.class);
 		} catch (IOException e) {
 			logger.log(OAuthMessage.TOKEN_RESPONSE_INVALID, tokenResponse, 
-					config.getAuxipBaseUri() + "/" + config.getAuxipTokenUri(), e.getMessage());
+					config.getCadipBaseUri() + "/" + config.getCadipTokenUri(), e.getMessage());
 			return null;
 		}
 		if (null == tokenResponseMap || tokenResponseMap.isEmpty()) {
 			logger.log(OAuthMessage.TOKEN_RESPONSE_EMPTY, tokenResponse, 
-					config.getAuxipBaseUri() + "/" + config.getAuxipTokenUri());
+					config.getCadipBaseUri() + "/" + config.getCadipTokenUri());
 			return null;
 		}
 		Object accessToken = tokenResponseMap.get("access_token");
 		if (null == accessToken || ! (accessToken instanceof String)) {
 			logger.log(OAuthMessage.ACCESS_TOKEN_MISSING, tokenResponse,
-					config.getAuxipBaseUri() + "/" + config.getAuxipTokenUri());
+					config.getCadipBaseUri() + "/" + config.getCadipTokenUri());
 			return null;
 		} else {
 //			if (logger.isTraceEnabled()) logger.trace("... found access token {}", accessToken);
@@ -420,19 +407,19 @@ public class AuxipMonitor extends BaseMonitor {
 		ODataClient oDataClient = ODataClientFactory.getClient();
 		oDataClient.getConfiguration().setDefaultPubFormat(ContentType.APPLICATION_JSON);
 		
-		String oDataServiceRoot = config.getAuxipBaseUri() 
+		String oDataServiceRoot = config.getCadipBaseUri() 
 				+ "/" 
-				+ (config.getAuxipContext().isBlank() ? "" : config.getAuxipContext() + "/") 
+				+ (config.getCadipContext().isBlank() ? "" : config.getCadipContext() + "/") 
 				+ "odata/v1";
-		String authorizationHeader = config.getAuxipUseToken() ?
+		String authorizationHeader = config.getCadipUseToken() ?
 					"Bearer " + bearerToken : 
-        			"Basic " + Base64.getEncoder().encode((config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes());
+        			"Basic " + Base64.getEncoder().encode((config.getCadipUser() + ":" + config.getCadipPassword()).getBytes());
 		
 		// Create query filter for all product types configured
-		// Note: 'false' literal not implemented in some AUXIPs, therefore approach "false or ..." does not work
+		// Note: 'false' literal not implemented in some CADIPs, therefore approach "false or ..." does not work
 		StringBuilder queryFilter = new StringBuilder("(");
 		boolean firstFilter = true;
-		for (String productType: config.getAuxipProductTypes()) {
+		for (String productType: config.getCadipProductTypes()) {
 			if (firstFilter) {
 				firstFilter = false;
 			} else {
@@ -512,9 +499,9 @@ public class AuxipMonitor extends BaseMonitor {
 			}
 			
 			if (logger.isTraceEnabled())
-				logger.trace("... waiting {} s before requesting next chunk of data", config.getAuxipChunkInterval() / 1000);
+				logger.trace("... waiting {} s before requesting next chunk of data", config.getCadipChunkInterval() / 1000);
 			try {
-				Thread.sleep(config.getAuxipChunkInterval());
+				Thread.sleep(config.getCadipChunkInterval());
 			} catch (InterruptedException e) {
 				oldLogger.error(String.format(MSG_WAIT_INTERRUPTED, MSG_ID_WAIT_INTERRUPTED));
 				return transferControl;
@@ -671,10 +658,10 @@ public class AuxipMonitor extends BaseMonitor {
 	}
 
 	/**
-	 * Check the configured AUXIP for new files of the configured product types, whose publication date is after the
+	 * Check the configured CADIP for new files of the configured product types, whose publication date is after the
 	 * reference time stamp:
 	 * <ol>
-	 *   <li>If token-based authentication is required, login to AUXIP and request token</li>
+	 *   <li>If token-based authentication is required, login to CADIP and request token</li>
 	 *   <li>For all configured product types:
 	 *     <ol>
 	 *       <li>Retrieve all products of the given type with publication time after reference time stamp (authenticating with
@@ -695,10 +682,10 @@ public class AuxipMonitor extends BaseMonitor {
 		TransferControl transferControl = new TransferControl();
 		
 		try {
-			// If token-based authentication is required, login to AUXIP and request token
+			// If token-based authentication is required, login to CADIP and request token
 			String bearerToken = null;
-			if (config.getAuxipUseToken()) {
-				if (logger.isTraceEnabled()) logger.trace("... requesting token from AUXIP");
+			if (config.getCadipUseToken()) {
+				if (logger.isTraceEnabled()) logger.trace("... requesting token from CADIP");
 				bearerToken = getBearerToken();
 				if (null == bearerToken) {
 					// Already logged, return an empty list
@@ -736,25 +723,25 @@ public class AuxipMonitor extends BaseMonitor {
 				TransferProduct transferProduct = (TransferProduct) object;
 				
 				// Check target directory
-				if (!Files.isWritable(Path.of(config.getAuxipDirectoryPath()))) {
+				if (!Files.isWritable(Path.of(config.getCadipDirectoryPath()))) {
 					oldLogger.error(String.format(MSG_TARGET_DIRECTORY_NOT_WRITABLE, MSG_ID_TARGET_DIRECTORY_NOT_WRITABLE,
-							config.getAuxipDirectoryPath()));
+							config.getCadipDirectoryPath()));
 					return false;
 				}
 				
 				// Create retrieval request
-				String requestUri = (config.getAuxipContext().isBlank() ? "" : config.getAuxipContext() + "/") + "odata/v1/"
+				String requestUri = (config.getCadipContext().isBlank() ? "" : config.getCadipContext() + "/") + "odata/v1/"
 						+ "Products("	+ transferProduct.getUuid() + ")"
 						+ "/$value";
 				
 				HttpClient httpClient = HttpClient.create()
 						.secure()
 						.headers(httpHeaders -> {
-							if (config.getAuxipUseToken()) {
+							if (config.getCadipUseToken()) {
 								httpHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
 							} else {
 								httpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder().encodeToString(
-										(config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
+										(config.getCadipUser() + ":" + config.getCadipPassword()).getBytes()));
 							}
 						})
 						.followRedirect((request, response) -> {
@@ -790,13 +777,13 @@ public class AuxipMonitor extends BaseMonitor {
 						;
 
 				WebClient webClient = WebClient.builder()
-						.baseUrl(config.getAuxipBaseUri())
+						.baseUrl(config.getCadipBaseUri())
 						.clientConnector(new ReactorClientHttpConnector(httpClient))
 						.build();
 				
 				// Retrieve and store product file
 				Instant copyStart = Instant.now();
-				File productFile = new File(config.getAuxipDirectoryPath() + File.separator + transferProduct.getName());
+				File productFile = new File(config.getCadipDirectoryPath() + File.separator + transferProduct.getName());
 
 				logger.trace("... starting request for URL '{}'", requestUri);
 				
@@ -832,7 +819,7 @@ public class AuxipMonitor extends BaseMonitor {
 					return false;
 				}
 
-				// Compare file size with value given by AUXIP 
+				// Compare file size with value given by CADIP 
 				Long productFileLength = productFile.length();
 				if (!productFileLength.equals(transferProduct.getSize())) {
 					oldLogger.error(String.format(MSG_FILE_SIZE_MISMATCH, MSG_ID_FILE_SIZE_MISMATCH, transferProduct.getIdentifier(),
@@ -846,11 +833,11 @@ public class AuxipMonitor extends BaseMonitor {
 						(copyDuration.toNanos() / 1000000000.0) // seconds (with fraction)
 						/ (1024 * 1024); // --> MiB/s
 				
-				if (config.getAuxipPerformanceMinSize() < productFileLength) {
+				if (config.getCadipPerformanceMinSize() < productFileLength) {
 					setLastCopyPerformance(copyPerformance);
 				}
 				
-				// Compute checksum and compare with value given by AUXIP
+				// Compute checksum and compare with value given by CADIP
 				String md5Hash = MD5Util.md5Digest(productFile);
 				if (!md5Hash.equalsIgnoreCase(transferProduct.checksum)) {
 					oldLogger.error(String.format(MSG_CHECKSUM_MISMATCH, MSG_ID_CHECKSUM_MISMATCH, transferProduct.getIdentifier(),

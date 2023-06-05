@@ -1,17 +1,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  
-  <parent>
-    <groupId>de.dlr.proseo</groupId>
-    <artifactId>proseo-api</artifactId>
-    <version>0.9.5-ODIP</version>
-  </parent>
-  
-  <artifactId>aip-client</artifactId>
-  <name>prosEO Archive Interface Delivery Point Client</name>
-  <description>prosEO client to retrieve products via ESA's Archive Interface Delivery Point API (ESA-EOPG-EOPGC-IF-2)</description>
+	<modelVersion>4.0.0</modelVersion>
 
-	<url>https://github.com/dlr-eoc/prosEO/api/aip-client</url>
+	<parent>
+		<groupId>de.dlr.proseo</groupId>
+		<artifactId>proseo-api</artifactId>
+		<version>0.9.5-ODIP</version>
+	</parent>
+
+	<artifactId>cadip-monitor</artifactId>
+	<name>prosEO CADIP Monitor</name>
+	<description>Monitor process for ESA's CADU Interface Delivery Point (CADIP)</description>
+	<url>https://github.com/dlr-eoc/prosEO/api/prip</url>
 	<organization>
 		<name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
 		<url>http://www.dlr.de</url>
@@ -19,10 +18,11 @@
 
 	<properties>
 		<module.version>0.9.5-ODIP</module.version>
-        <olingo.version>4.7.1</olingo.version>
+		<olingo.version>4.7.1</olingo.version>
 		<main.basedir>${basedir}/../..</main.basedir>
-		<raml-path>src/main/resources/raml/aip-client-api.raml</raml-path>
-		<raml-base-package>de.dlr.proseo.api.aipclient.rest</raml-base-package>
+		<raml-path>src/main/resources/raml/cadip-monitor-api.raml</raml-path>
+		<raml-base-package>de.dlr.proseo.api.cadipmon.rest</raml-base-package>
+        <netty.version>4.1.48.Final</netty.version><!-- Dependency of reactor-netty 0.8.17 -->
 	</properties>
 
 	<dependencies>
@@ -39,68 +39,49 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webflux</artifactId>
-        </dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa</artifactId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 		</dependency>
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.tomakehurst</groupId>
-            <artifactId>wiremock-jre8</artifactId>
-            <version>2.35.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.projectreactor</groupId>
-            <artifactId>reactor-core</artifactId>
-            <version>3.2.16.RELEASE</version><!-- Dependency of reactor-netty 0.8.17 -->
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.projectreactor</groupId>
-            <artifactId>reactor-test</artifactId>
-            <version>3.2.16.RELEASE</version><!-- Dependency of reactor-netty 0.8.17 -->
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.projectreactor.netty</groupId>
-            <artifactId>reactor-netty</artifactId>
-            <version>0.8.17.RELEASE</version><!-- Minimum version required for correct redirecting -->
-        </dependency>
-        <dependency>
-            <groupId>org.apache.olingo</groupId>
-            <artifactId>odata-client-core</artifactId>
-            <version>${olingo.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>de.dlr.proseo</groupId>
-            <artifactId>proseo-interfaces</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.projectreactor</groupId> -->
+<!-- 			<artifactId>reactor-spring</artifactId> -->
+<!-- 			<version>1.0.1.RELEASE</version> -->
+<!-- 		</dependency> -->
+	    <dependency>
+	        <groupId>io.projectreactor</groupId>
+	        <artifactId>reactor-core</artifactId>
+	        <version>3.2.16.RELEASE</version><!-- Dependency of reactor-netty 0.8.17 -->
+	        <scope>compile</scope>
+	    </dependency>
+	    <dependency>
+	        <groupId>io.projectreactor</groupId>
+	        <artifactId>reactor-test</artifactId>
+	        <version>3.2.16.RELEASE</version><!-- Dependency of reactor-netty 0.8.17 -->
+	        <scope>compile</scope>
+	    </dependency>
+		<dependency>
+			<groupId>io.projectreactor.netty</groupId>
+			<artifactId>reactor-netty</artifactId>
+			<version>0.8.17.RELEASE</version><!-- Minimum version required for correct redirecting -->
+		</dependency>
+		<dependency>
+			<groupId>org.apache.olingo</groupId>
+			<artifactId>odata-client-core</artifactId>
+			<version>${olingo.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>de.dlr.proseo</groupId>
-			<artifactId>proseo-model</artifactId>
+			<artifactId>proseo-base-monitor</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>de.dlr.proseo</groupId>
-			<artifactId>proseo-logging</artifactId>
+			<artifactId>proseo-interfaces</artifactId>
 			<version>${project.version}</version>
 		</dependency>
         <dependency>
@@ -116,7 +97,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>proseo-aip-client</finalName>
+		<finalName>proseo-cadip-monitor</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
@@ -149,7 +130,7 @@
 				<artifactId>springmvc-raml-plugin</artifactId>
 				<configuration>
 					<basePackage>${raml-base-package}</basePackage>
-                    <injectHttpHeadersParameter>true</injectHttpHeadersParameter>
+					<injectHttpHeadersParameter>true</injectHttpHeadersParameter>
 					<rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerDecoratorRule</rule>
 				</configuration>
 				<executions>
@@ -180,26 +161,29 @@
 					<commandlineArgs>-i ${raml-path} -o src/site/resources/${project.artifactId}.html</commandlineArgs>
 				</configuration>
 			</plugin>
-			
-            <!-- Exclude generated dummy client from compilation -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                       <exclude>**/IngestorproductController*</exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
 
-			<!-- Temporarily (to allow for full build of prosEO): Ignore failing unit tests -->
+			<!-- Create JAR file to extend specific monitors from -->
 			<plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <testFailureIgnore>true</testFailureIgnore>
-                </configuration>
-            </plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>extendable-jar</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>extendable</classifier>
+							<includes>
+								<include>de/dlr/proseo/api/cadipmon/CadipMonitor.class</include>
+								<include>de/dlr/proseo/api/cadipmon/CadipMonitor$*.class</include>
+								<include>de/dlr/proseo/api/cadipmon/CadipMonitorConfiguration.class</include>
+								<include>de/dlr/proseo/api/cadipmon/rest/**</include>
+							</includes>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 
 			<!-- Build Docker image -->
             <plugin>
@@ -210,7 +194,7 @@
                         <phase>install</phase>
                         <configuration>
                             <target>
-                                <exec executable="docker">
+                            	<exec executable="docker" failonerror="true">
                                     <arg value="build" />
                                     <arg value="-t" />
                                     <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
@@ -218,7 +202,7 @@
                                     <arg value="${project.build.platform}" />
                                     <arg value="." />
                                 </exec>
-                                <exec executable="docker">
+                            	<exec executable="docker" failonerror="true">
                                     <arg value="push" />
                                     <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
                                 </exec>

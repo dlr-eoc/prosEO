@@ -24,7 +24,7 @@ public enum PlannerMessage implements ProseoMessage {
 	ORDER_RUNNING						(4007, Level.INFO, true, "Processing order ''{0}'' is running", ""), 
 	ORDER_SUSPENDED						(4008, Level.INFO, true, "Processing order ''{0}'' is suspended", ""), 
 	ORDER_SUSPEND_PREPARED				(4009, Level.INFO, true, "Processing order ''{0}'' is prepared for suspend", ""), 
-	ORDER_COULD_NOT_INTERRUPT			(4010, Level.ERROR, false, "Processing order ''{0}'' could not onterrpt release thread", ""), 
+	ORDER_COULD_NOT_INTERRUPT			(4010, Level.ERROR, false, "Processing order ''{0}'' could not interrupt release thread", ""), 
 	ORDER_CANCELED						(4011, Level.INFO, true, "Processing order ''{0}'' is canceled", ""), 
 	ORDER_RESET							(4012, Level.INFO, true, "Processing order ''{0}'' is reset", ""), 
 	ORDER_DELETED						(4013, Level.INFO, true, "Processing order ''{0}'' deleted", ""), 
