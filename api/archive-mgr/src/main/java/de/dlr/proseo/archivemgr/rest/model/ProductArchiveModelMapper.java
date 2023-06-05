@@ -7,6 +7,8 @@
 package de.dlr.proseo.archivemgr.rest.model;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.ProductArchiveMgrMessage;
 import de.dlr.proseo.model.ProductArchive;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.enums.ArchiveType;
@@ -42,9 +44,19 @@ public class ProductArchiveModelMapper {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> Constructor({})", (null == modelArchive ? "MISSING" : modelArchive.getId()));
 
+		if (null == modelArchive) {
+			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING));
+		}
+		
 		this.modelArchive = modelArchive; 
+		
+		setDefaultValuesIfNull();
+		
+		checkMandatoryFields();
 	}
 	
+
+
 	/**
 	 * Converts a prosEO model ProductArchive into a REST ProductArchive
 	 * 
@@ -53,11 +65,6 @@ public class ProductArchiveModelMapper {
 	public RestProductArchive toRest() {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> toRest({})", (null == modelArchive ? "MISSING" : modelArchive.getId()));
-	
-		if (null == modelArchive)
-			return null;
-				
-		setDefaultRestValues();
 		
 		setAvailableProductClasses();
 					
@@ -84,22 +91,59 @@ public class ProductArchiveModelMapper {
 	}
 					
 	/**
-	 * Sets default values in rest product archive
+	 * Sets default values in product archive
 	 * 
-	 * @param restArchive rest product archive
 	 */
-	private void setDefaultRestValues() {
+	private void setDefaultValuesIfNull() {
 		
-		if (null == restArchive.getArchiveType()) {
-			restArchive.setArchiveType(ArchiveType.AIP.toString());
+		if (null == modelArchive.getArchiveType()) {
+			modelArchive.setArchiveType(ArchiveType.AIP);
 		}
 		
-		if (null == restArchive.getTokenRequired()) {
-			restArchive.setTokenRequired(false);
+		if (null == modelArchive.getTokenRequired()) {
+			modelArchive.setTokenRequired(false);
 		}
 		
-		if (null == restArchive.getArchiveType()) {
-			restArchive.setSendAuthInBody(false);
+		if (null == modelArchive.getArchiveType()) {
+			modelArchive.setSendAuthInBody(false);
+		}
+	}
+	
+	/**
+	 * Checks mandatory fields in product archive
+	 * 
+	 */
+	private void checkMandatoryFields() {
+		
+		if (modelArchive.getTokenRequired()) {
+			if (null == modelArchive.getTokenUri()) { 
+				throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "TokenUri", "product archive model checker"));
+			}
+		}
+		
+		if (modelArchive.getSendAuthInBody()) {
+			if (null == modelArchive.getUsername()) {
+				throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Username", "produch archive model checker"));
+			}
+			if (null == modelArchive.getPassword()) {
+				throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Password", "produch archive model checker"));
+			}
+		}
+		
+		if (null == modelArchive.getCode()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Code", "produch archive model checker"));
+		}
+		
+		if (null == modelArchive.getName()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Name", "produch archive model checker"));
+		}
+		
+		if (null == modelArchive.getBaseUri()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "BaseUri", "produch archive model checker"));
+		}
+		
+		if (null == modelArchive.getContext()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Context", "produch archive model checker"));
 		}
 	}
 	
