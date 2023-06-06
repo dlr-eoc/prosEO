@@ -16,7 +16,6 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.validation.constraints.NotNull;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +28,6 @@ import de.dlr.proseo.logging.messages.FacilityMgrMessage;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.ProductArchiveMgrMessage;
 import de.dlr.proseo.model.ProductArchive;
-import de.dlr.proseo.model.enums.ArchiveType;
 import de.dlr.proseo.model.service.RepositoryService;
 
 /**
@@ -85,7 +83,7 @@ public class ProductArchiveManager {
 	 * List of all product archives archives filtered by name
 	 * 
 	 * @param name the name of the product archive
-	 * @return a list of product archives
+	 * @return a list of product archives, if name == null, returns all archives
 	 * @throws NoResultException if no product archives matching the given search
 	 *                           criteria could be found
 	 */
@@ -95,7 +93,30 @@ public class ProductArchiveManager {
 			logger.trace(">>> getArchives({})", name);
 
 		List<RestProductArchive> result = new ArrayList<>();
+		List<ProductArchive> modelArchives;
 
+		if (null == name) {
+			modelArchives = RepositoryService.getProductArchiveRepository().findAll();
+		}
+		else {
+			modelArchives = RepositoryService.getProductArchiveRepository().findByName(name);			
+		}
+		
+		for (ProductArchive modelArchive : modelArchives) {
+			
+			if (logger.isDebugEnabled())
+				logger.debug("Found product archive with ID {}", modelArchive.getId());
+
+			RestProductArchive restArchive = new ProductArchiveModelMapper(modelArchive).toRest();
+			
+			if (logger.isDebugEnabled())
+				logger.debug("Created result rest product archive with ID {}", restArchive.getId());
+
+			result.add(restArchive);
+		}
+		
+		// TODO: Delete legacy code after confirmation  
+		 /*		
 		// Simple case: no search criteria set
 		if (null == name) {
 
@@ -125,6 +146,7 @@ public class ProductArchiveManager {
 				}
 			}
 		}
+		*/
 
 		if (result.isEmpty()) {
 			throw new NoResultException(logger.log(ProductArchiveMgrMessage.ARCHIVE_LIST_EMPTY));
@@ -145,12 +167,14 @@ public class ProductArchiveManager {
 	 *                                  exists
 	 */
 	public RestProductArchive getArchiveById(Long id) throws IllegalArgumentException, NoResultException {
+		
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getArchiveById({})", id);
 
 		if (null == id) {
 			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING, id));
 		}
+		
 		Optional<ProductArchive> modelArchive = RepositoryService.getProductArchiveRepository().findById(id);
 
 		if (modelArchive.isEmpty()) {
@@ -235,6 +259,10 @@ public class ProductArchiveManager {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteArchiveById({})", id);
+		
+		if (null == id) {
+			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING, id));
+		}
 
 		// Test whether the product archive id is valid
 		Optional<ProductArchive> modelArchive = RepositoryService.getProductArchiveRepository().findById(id);
@@ -242,7 +270,6 @@ public class ProductArchiveManager {
 			throw new EntityNotFoundException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND));
 		}
 		
-		// Delete the product archive
 		RepositoryService.getProductArchiveRepository().deleteById(id);
 
 		// Test whether the deletion was successful
