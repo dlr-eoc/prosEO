@@ -17,6 +17,7 @@ public enum HttpPrefix {
 	CADIP_MONITOR 	("199 proseo-cadip-monitor "),
 	EDIP_MONITOR 	("199 proseo-edip-monitor "),
 	FACILTY_MGR 	("199 proseo-facmgr "),
+	GEOTOOLS		("199 proseo-geotools "),
 	MODEL			("199 proseo-model "),
 	INGESTOR		("199 proseo-ingestor "),
 	ORDER_MGR		("199 proseo-order-mgr "),
