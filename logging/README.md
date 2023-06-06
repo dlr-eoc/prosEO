@@ -18,6 +18,8 @@ The class logging/documentation/LoggingDocumentation.java needs to be updated to
 
 Add the new service to the methods addTableOfContents() and addMessages().
 
+#### Updating HttpPrefix
+Where necessary, add a new enum constant in logging/http/HttpPrefix.java, to be used in warning headers.
 
 ### Ranges
 - 1000-1199	FacilityMgr
