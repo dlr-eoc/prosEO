@@ -10,6 +10,10 @@ import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.enums.StorageType;
 
+/**
+ * A utility class converting between RestProcessingFacility and
+ * ProcessingFacility (model)
+ */
 public class FacmgrUtil {
 
 	/** A logger for this class */
