@@ -32,6 +32,12 @@ public class CadipMonitorApplication implements CommandLineRunner {
     @Autowired
     private TaskExecutor taskExecutor;
 
+	/**
+	 * Start the Spring application
+	 * 
+	 * @param args command line arguments (not used)
+	 * @throws Exception maybe; actually it should not
+	 */
 	public static void main(String[] args) throws Exception {
 		SpringApplication.run(CadipMonitorApplication.class, args);
 	}

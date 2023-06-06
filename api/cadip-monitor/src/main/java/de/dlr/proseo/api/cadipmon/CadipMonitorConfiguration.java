@@ -26,6 +26,10 @@ public class CadipMonitorConfiguration {
 	@Value("${proseo.cadip.id}")
 	private String cadipId;
 	
+	/** The satellite identifier (e. g. "S1B") */
+	@Value("${proseo.cadip.satellite}")
+	private String cadipSatellite;
+	
 	/** The base URI of the CADIP (protocol, host name, port; no terminating slash) */
 	@Value("${proseo.cadip.baseuri}")
 	private String cadipBaseUri;
@@ -62,17 +66,21 @@ public class CadipMonitorConfiguration {
 	@Value("${proseo.cadip.client.sendinbody:#{null}}")
 	private Boolean cadipClientSendInBody;
 	
-	/** The product types to select */
-	@Value("${proseo.cadip.producttypes}")
-	private String cadipProductTypes;
-	
 	/** The interval between pickup point checks in milliseconds */
 	@Value("${proseo.cadip.check.interval}")
 	private Long cadipCheckInterval;
 	
-	/** The interval between individual chunk retrievals in milliseconds */
-	@Value("${proseo.cadip.chunk.interval}")
-	private Long cadipChunkInterval;
+	/** The interval between checks for available session files in milliseconds */
+	@Value("${proseo.cadip.session.interval}")
+	private Long cadipSessionInterval;
+	
+	/** The retrieval delay in milliseconds (to avoid concurrent CADIP access by multiple PDGSs, default 0) */
+	@Value("${proseo.cadip.retrieval.delay:0}")
+	private Long cadipRetrievalDelay;
+	
+	/** The maximum allowed duration for download of a single session in milliseconds */
+	@Value("${proseo.cadip.retrieval.timeout}")
+	private Long cadipRetrievalTimeout;
 	
 	/** The path to the file for storing transfer history */
 	@Value("${proseo.cadip.history.file}")
@@ -86,25 +94,37 @@ public class CadipMonitorConfiguration {
 	@Value("${proseo.cadip.history.truncate.interval}")
 	private Long cadipTruncateInterval;
 	
-	/** Maximum number of parallel transfer threads */
+	/** Maximum number of parallel transfer sessions */
 	@Value("${proseo.cadip.thread.max:1}")
 	private Integer maxDownloadThreads;
 	
-	/** Interval in millliseconds to check for completed transfers */
+	/** Interval in millliseconds to check for completed transfer sessions */
 	@Value("${proseo.cadip.thread.wait:500}")
 	private Integer taskWaitInterval;
 	
-	/** Maximum number of wait cycles for transfer completion checks */
+	/** Maximum number of wait cycles for transfer session completion checks */
 	@Value("${proseo.cadip.thread.cycles:3600}")
 	private Integer maxWaitCycles;
+	
+	/** Maximum number of parallel file download threads within a download session */
+	@Value("${proseo.cadip.file.maxthreads:1}")
+	private Integer maxFileDownloadThreads;
+	
+	/** Interval in millliseconds to check for completed file downloads */
+	@Value("${proseo.cadip.file.wait:500}")
+	private Integer fileWaitInterval;
+	
+	/** Maximum number of wait cycles for file download completion checks */
+	@Value("${proseo.cadip.file.maxcycles:3600}")
+	private Integer maxFileWaitCycles;
 	
 	/** The minimum size in bytes of a file to be used for performance measurements */
 	@Value("${proseo.cadip.performance.minsize}")
 	private Long cadipPerformanceMinSize;
 	
-	/** The path to the target AUX file directory (for ingestion) */
-	@Value("${proseo.cadip.directory}")
-	private String cadipDirectoryPath;
+	/** The path to the target CADU directory (for L0 processing) */
+	@Value("${proseo.l0.directory.cadu}")
+	private String l0CaduDirectoryPath;
 	
 	/**
 	 * Gets the CADIP Monitor identifier
@@ -113,6 +133,15 @@ public class CadipMonitorConfiguration {
 	 */
 	public String getCadipId() {
 		return cadipId;
+	}
+
+	/**
+	 * Gets the satellite identifier
+	 * 
+	 * @return the satellite identifier
+	 */
+	public String getCadipSatellite() {
+		return cadipSatellite;
 	}
 
 	/**
@@ -212,15 +241,6 @@ public class CadipMonitorConfiguration {
 	}
 
 	/**
-	 * Gets the list of product types to retrieve from CADIP
-	 * 
-	 * @return the a list of product types
-	 */
-	public List<String> getCadipProductTypes() {
-		return Arrays.asList(cadipProductTypes.split(","));
-	}
-
-	/**
 	 * Gets the path to the file for storing transfer history
 	 * 
 	 * @return the CADIP transfer history file path
@@ -239,12 +259,30 @@ public class CadipMonitorConfiguration {
 	}
 
 	/**
-	 * Gets the interval between individual chunk retrievals
+	 * Gets the interval between checks for available session files
 	 * 
-	 * @return the interval between chunk retrievals in ms
+	 * @return the interval between session checks in ms
 	 */
-	public Long getCadipChunkInterval() {
-		return cadipChunkInterval;
+	public Long getCadipSessionInterval() {
+		return cadipSessionInterval;
+	}
+
+	/**
+	 * Gets the retrieval delay for the pickup point
+	 * 
+	 * @return the CADIP retrieval delay in ms
+	 */
+	public Long getCadipRetrievalDelay() {
+		return cadipRetrievalDelay;
+	}
+
+	/**
+	 * Gets the maximum allowed duration for download of a single session
+	 * 
+	 * @return the retrieval timeout in ms
+	 */
+	public Long getCadipRetrievalTimeout() {
+		return cadipRetrievalTimeout;
 	}
 
 	/**
@@ -293,6 +331,33 @@ public class CadipMonitorConfiguration {
 	}
 
 	/**
+	 * Gets the maximum number of parallel file download threads within a download session
+	 * 
+	 * @return the maximum number of parallel file download threads
+	 */
+	public Integer getMaxFileDownloadThreads() {
+		return maxFileDownloadThreads;
+	}
+
+	/**
+	 * Gets the interval to check for completed file downloads
+	 * 
+	 * @return the check interval in millliseconds
+	 */
+	public Integer getFileWaitInterval() {
+		return fileWaitInterval;
+	}
+
+	/**
+	 * Gets the maximum number of wait cycles for file download completion checks
+	 * 
+	 * @return the maximum number of wait cycles
+	 */
+	public Integer getMaxFileWaitCycles() {
+		return maxFileWaitCycles;
+	}
+
+	/**
 	 * Gets the minimum size for files used in performance measurements
 	 * 
 	 * @return the minimum file size in bytes
@@ -302,12 +367,12 @@ public class CadipMonitorConfiguration {
 	}
 
 	/**
-	 * Gets the target path to store AUX files for ingestion
+	 * Gets the path to the target CADU directory
 	 * 
-	 * @return the path to the target directory
+	 * @return the CADU directory path
 	 */
-	public String getCadipDirectoryPath() {
-		return cadipDirectoryPath;
+	public String getL0CaduDirectoryPath() {
+		return l0CaduDirectoryPath;
 	}
 
 }
