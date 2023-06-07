@@ -56,8 +56,16 @@ public class ProductArchiveModelMapper {
 		checkMandatoryFields();
 	}
 	
-
-
+	/**
+	 * Gets checked in constructor product archive
+	 * 
+	 * @return product archive
+	 */
+	public ProductArchive get() {
+		
+		return modelArchive;
+	}
+	
 	/**
 	 * Converts a prosEO model ProductArchive into a REST ProductArchive
 	 * 
@@ -116,35 +124,39 @@ public class ProductArchiveModelMapper {
 	 */
 	private void checkMandatoryFields() {
 		
+		if (StringUtils.isNullOrBlank(modelArchive.getCode())) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Code", "product archive model checker"));
+		}
+		
+		if (StringUtils.isNullOrBlank(modelArchive.getName())) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Name", "product archive model checker"));
+		}
+		
+		if (null == modelArchive.getArchiveType()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "ArchiveType", "product archive model checker"));
+		}
+		
+		if (StringUtils.isNullOrBlank(modelArchive.getBaseUri())) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "BaseUri", "product archive model checker"));
+		}
+		
+		if (StringUtils.isNullOrBlank(modelArchive.getContext())) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Context", "product archive model checker"));
+		}
+		
 		if (modelArchive.getTokenRequired()) {
-			if (null == modelArchive.getTokenUri()) { 
+			if (StringUtils.isNullOrBlank(modelArchive.getTokenUri())) { 
 				throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "TokenUri", "product archive model checker"));
 			}
 		}
 		
 		if (modelArchive.getSendAuthInBody()) {
 			if (StringUtils.isNullOrBlank(modelArchive.getUsername())) {
-				throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Username", "produch archive model checker"));
+				throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Username", "product archive model checker"));
 			}
 			if (null == modelArchive.getPassword()) {
-				throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Password", "produch archive model checker"));
+				throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Password", "product archive model checker"));
 			}
-		}
-		
-		if (StringUtils.isNullOrBlank(modelArchive.getCode())) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Code", "produch archive model checker"));
-		}
-		
-		if (StringUtils.isNullOrBlank(modelArchive.getName())) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Name", "produch archive model checker"));
-		}
-		
-		if (StringUtils.isNullOrBlank(modelArchive.getBaseUri())) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "BaseUri", "produch archive model checker"));
-		}
-		
-		if (StringUtils.isNullOrBlank(modelArchive.getContext())) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Context", "produch archive model checker"));
 		}
 	}
 	

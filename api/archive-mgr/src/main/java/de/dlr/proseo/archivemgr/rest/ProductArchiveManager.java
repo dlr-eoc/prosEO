@@ -265,15 +265,18 @@ public class ProductArchiveManager {
 		if (null == id) {
 			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING, id));
 		}
-
+		
+		if (null == restArchive) {
+			throw new EntityNotFoundException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING));
+		}
+		
 		if (!archiveExistsById(id)) {
 			throw new EntityNotFoundException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND, id));
 		}
-		
-		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findById(id).get();
-		
-		checkMandatoryAttributes(modelArchive);
 
+		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findById(id).get();
+		modelArchive = new ProductArchiveModelMapper(modelArchive).get();
+		
 		ProductArchive changedArchive = new ProductArchiveRestMapper(restArchive).toModel();
 		
 		boolean archiveChanged = isArchiveChanged(modelArchive, changedArchive);
@@ -336,6 +339,13 @@ public class ProductArchiveManager {
 	 * @param changedArchive changed archive
 	 */
 	private void setChangedFields(ProductArchive modelArchive, ProductArchive changedArchive) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> setChangedFields({}, {})", modelArchive, changedArchive);
+		
+		if (null == modelArchive || null == changedArchive) {
+			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING));
+		}
 		
 		if (!modelArchive.getCode().equals(changedArchive.getCode())) {		
 			modelArchive.setCode(changedArchive.getCode());
@@ -440,38 +450,7 @@ public class ProductArchiveManager {
 		return archiveChanged; 
 	}
 
-	/**
-	 * Checks that mandatory attributes are set
-	 * 
-	 * @param modelArchive Model Archive
-	 */
-	private void checkMandatoryAttributes(ProductArchive modelArchive) {
-		
-		if (logger.isTraceEnabled())
-			logger.trace(">>> checkMandatoryAttributes()");
 
-		if (null == modelArchive.getCode() || modelArchive.getCode().isBlank()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Code", "Product archive modifcation"));
-		}
-		
-		if (null == modelArchive.getName() || modelArchive.getName().isBlank()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Name", "Product archive modifcation"));
-		}
-		
-		if (null == modelArchive.getArchiveType()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "ArchiveType", "Product archive modifcation"));
-		}
-		
-		if (null == modelArchive.getBaseUri() || modelArchive.getBaseUri().isBlank()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "BaseUri", "Product archive modifcation"));
-		}
-		
-		if (null == modelArchive.getContext() || modelArchive.getContext().isBlank()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Context", "Product archive modifcation"));
-		}
-		
-		if (null == modelArchive.getTokenRequired()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "TokenRequired", "Product archive modifcation"));
-		}
-	}
+	
+	
 }
