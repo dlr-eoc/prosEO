@@ -72,7 +72,7 @@ public class ProductArchiveControllerImpl implements ArchiveController{
 		if (logger.isTraceEnabled()) logger.trace(">>> getArchives( {})",  name);
 		
 		try {
-			return new ResponseEntity<>(productArchiveManager.getArchives(name), HttpStatus.OK);
+			return new ResponseEntity<>(productArchiveManager.getArchivesByCode(name), HttpStatus.OK);
 			
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);

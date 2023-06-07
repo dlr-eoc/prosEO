@@ -64,7 +64,7 @@ public class ProductArchiveManager {
 			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING));
 		}
 		
-		if (archiveExists(restArchive.getCode())) {
+		if (archiveExistsByCode(restArchive.getCode())) {
 			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.DUPLICATED_ARCHIVE, restArchive.getCode()));
 		}
 
@@ -76,30 +76,88 @@ public class ProductArchiveManager {
 		modelArchive = RepositoryService.getProductArchiveRepository().save(modelArchive);
 		
 		logger.log(ProductArchiveMgrMessage.ARCHIVE_CREATED, modelArchive.getName());
+		
+		return new ProductArchiveModelMapper(modelArchive).toRest();
+	}
+	
+	/**
+	 * Checks if archive exists, filtered by code
+	 * 
+	 * @param code code of the archive
+	 * @return true if exists
+	 */
+	public boolean archiveExistsByCode(String code) {
+		
+		if (null == code) {
+			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_CODE_MISSING));
+		}
+			
+		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findByCode(code);
+		
+		return modelArchive != null ? true : false; 		
+	}
+	
+	/**
+	 * Checks if archive exists, filtered by id
+	 * 
+	 * @param id id of the archive
+	 * @return true if exists
+	 */
+	public boolean archiveExistsById(Long id) {
+		
+		if (null == id) {
+			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_ID_MISSING));
+		}
+			
+		Optional<ProductArchive> modelArchive = RepositoryService.getProductArchiveRepository().findById(id);
+
+		return !modelArchive.isEmpty() ? true : false; 		
+	}
+	
+	/**
+	 * Gets a product archive, searched by code
+	 * 
+	 * @param code the code of the product archive
+	 * @return product archive
+	 * @throws IllegalArgumentException if no product archive matching the given code could be found
+	 */
+	public RestProductArchive getArchiveByCode(String code) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getArchive({})", code);
+		
+		if (!archiveExistsByCode(code)) {
+			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND, code));
+		}
+		
+		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findByCode(code);
+		
+		logger.log(ProductArchiveMgrMessage.ARCHIVE_RETRIEVED, code);
+		
 		return new ProductArchiveModelMapper(modelArchive).toRest();
 	}
 
 	/**
-	 * List of all product archives archives filtered by name
+	 * List of all product archives archives filtered by code
 	 * 
-	 * @param name the name of the product archive
-	 * @return a list of product archives, if name == null, returns all archives
+	 * @param code the code of the product archive
+	 * @return a list of product archives, if code == null, returns all archives
 	 * @throws NoResultException if no product archives matching the given search
 	 *                           criteria could be found
 	 */
-	public List<RestProductArchive> getArchives(String name) {
+	public List<RestProductArchive> getArchivesByCode(String code) {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getArchives({})", name);
+			logger.trace(">>> getArchives({})", code);
 
 		List<RestProductArchive> result = new ArrayList<>();
 		List<ProductArchive> modelArchives;
 
-		if (null == name) {
+		if (null == code) {		
 			modelArchives = RepositoryService.getProductArchiveRepository().findAll();
 		}
-		else {
-			modelArchives = RepositoryService.getProductArchiveRepository().findByName(name);			
+		else {			
+			modelArchives = RepositoryService.getProductArchiveRepository().findArchivesByCode(code);			
 		}
 		
 		for (ProductArchive modelArchive : modelArchives) {
@@ -108,54 +166,51 @@ public class ProductArchiveManager {
 				logger.debug("Found product archive with ID {}", modelArchive.getId());
 
 			RestProductArchive restArchive = new ProductArchiveModelMapper(modelArchive).toRest();
-			
+
+			result.add(restArchive);
+		}
+		
+		if (result.isEmpty()) {
+			throw new NoResultException(logger.log(ProductArchiveMgrMessage.ARCHIVE_LIST_EMPTY));
+		}
+
+		logger.log(ProductArchiveMgrMessage.ARCHIVE_LIST_RETRIEVED, result.size(), code);
+
+		return result;
+	}
+	
+	// TODO: Delete legacy code after confirmation  
+	 /*		
+	// Simple case: no search criteria set
+	if (null == name) {
+
+		for (ProductArchive archive : RepositoryService.getProductArchiveRepository().findAll()) {
+			if (logger.isDebugEnabled())
+				logger.debug("Found product archive with ID {}", archive.getId());
+
+			RestProductArchive restArchive =new ProductArchiveModelMapper(archive).toRest();;
 			if (logger.isDebugEnabled())
 				logger.debug("Created result rest product archive with ID {}", restArchive.getId());
 
 			result.add(restArchive);
 		}
-		
-		// TODO: Delete legacy code after confirmation  
-		 /*		
-		// Simple case: no search criteria set
-		if (null == name) {
+	} 
+	
+	// TODO: Use JPA to access to db
+	// Search by name
+	else {
 
-			for (ProductArchive archive : RepositoryService.getProductArchiveRepository().findAll()) {
-				if (logger.isDebugEnabled())
-					logger.debug("Found product archive with ID {}", archive.getId());
+		String jpqlQuery = "select p from ProductArchive p where p.name = :name";
+		Query query = em.createQuery(jpqlQuery);
+		query.setParameter("name", name);
 
-				RestProductArchive restArchive =new ProductArchiveModelMapper(archive).toRest();;
-				if (logger.isDebugEnabled())
-					logger.debug("Created result rest product archive with ID {}", restArchive.getId());
-
-				result.add(restArchive);
-			}
-		} 
-		
-		// TODO: Use JPA to access to db
-		// Search by name
-		else {
-
-			String jpqlQuery = "select p from ProductArchive p where p.name = :name";
-			Query query = em.createQuery(jpqlQuery);
-			query.setParameter("name", name);
-
-			for (Object resultObject : query.getResultList()) {
-				if (resultObject instanceof ProductArchive) {
-					result.add(new ProductArchiveModelMapper((ProductArchive) resultObject).toRest());
-				}
+		for (Object resultObject : query.getResultList()) {
+			if (resultObject instanceof ProductArchive) {
+				result.add(new ProductArchiveModelMapper((ProductArchive) resultObject).toRest());
 			}
 		}
-		*/
-
-		if (result.isEmpty()) {
-			throw new NoResultException(logger.log(ProductArchiveMgrMessage.ARCHIVE_LIST_EMPTY));
-		}
-
-		logger.log(ProductArchiveMgrMessage.ARCHIVE_LIST_RETRIEVED, result.size(), name);
-
-		return result;
 	}
+	*/
 
 	/**
 	 * Find the product archive with the given ID
@@ -175,15 +230,15 @@ public class ProductArchiveManager {
 			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING, id));
 		}
 		
-		Optional<ProductArchive> modelArchive = RepositoryService.getProductArchiveRepository().findById(id);
-
-		if (modelArchive.isEmpty()) {
+		if (!archiveExistsById(id)) {
 			throw new NoResultException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND, id));
 		}
+		
+		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findById(id).get();
 
 		logger.log(ProductArchiveMgrMessage.ARCHIVE_RETRIEVED, id);
 
-		return new ProductArchiveModelMapper(modelArchive.get()).toRest();
+		return new ProductArchiveModelMapper(modelArchive).toRest();
 	}
 
 	/**
@@ -211,19 +266,16 @@ public class ProductArchiveManager {
 			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING, id));
 		}
 
-		Optional<ProductArchive> optModelArchive = RepositoryService.getProductArchiveRepository().findById(id);
-
-		if (optModelArchive.isEmpty()) {
+		if (!archiveExistsById(id)) {
 			throw new EntityNotFoundException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND, id));
 		}
 		
-		ProductArchive modelArchive = optModelArchive.get();
+		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findById(id).get();
 		
 		checkMandatoryAttributes(modelArchive);
 
 		ProductArchive changedArchive = new ProductArchiveRestMapper(restArchive).toModel();
 		
-		// TODO: Maybe use here !equals for ProductArchive
 		boolean archiveChanged = isArchiveChanged(modelArchive, changedArchive);
 					
 		// Save order only if anything was actually changed
@@ -261,20 +313,16 @@ public class ProductArchiveManager {
 			logger.trace(">>> deleteArchiveById({})", id);
 		
 		if (null == id) {
-			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING, id));
+			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_ID_MISSING));
 		}
 
-		// Test whether the product archive id is valid
-		Optional<ProductArchive> modelArchive = RepositoryService.getProductArchiveRepository().findById(id);
-		if (modelArchive.isEmpty()) {
+		if (!archiveExistsById(id)) {
 			throw new EntityNotFoundException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND));
 		}
-		
+			
 		RepositoryService.getProductArchiveRepository().deleteById(id);
-
-		// Test whether the deletion was successful
-		modelArchive = RepositoryService.getProductArchiveRepository().findById(id);
-		if (!modelArchive.isEmpty()) {
+		
+		if (archiveExistsById(id)) {
 			throw new RuntimeException(logger.log(FacilityMgrMessage.DELETION_UNSUCCESSFUL, id));
 		}
 
@@ -425,18 +473,5 @@ public class ProductArchiveManager {
 		if (null == modelArchive.getTokenRequired()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "TokenRequired", "Product archive modifcation"));
 		}
-	}
-	
-	/**
-	 * Checks if archive exists
-	 * 
-	 * @param code code of the archive
-	 * @return true if exists
-	 */
-	private boolean archiveExists(String code) {
-		
-		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findByCode(code);
-		
-		return modelArchive != null ? true : false; 		
 	}
 }

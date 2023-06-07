@@ -218,7 +218,7 @@ public class ProductArchiveControllerTest {
 		retrievedArchives = paci.getArchives("invalid");
 		assertEquals("Wrong HTTP status: ", HttpStatus.NOT_FOUND, retrievedArchives.getStatusCode());
 
-		retrievedArchives = paci.getArchives(testArchiveData[0][7]);
+		retrievedArchives = paci.getArchives(testArchiveData[0][5]);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedArchives.getStatusCode());
 		assertEquals("Wrong number of archives retrieved: ", 1, retrievedArchives.getBody().size());
 	}
