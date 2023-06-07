@@ -9,6 +9,7 @@ package de.dlr.proseo.archivemgr.rest.model;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.dlr.proseo.archivemgr.utils.StringUtils;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.ProductArchiveMgrMessage;
@@ -125,7 +126,7 @@ public class ProductArchiveRestMapper {
 		}
 		
 		if (restArchive.getSendAuthInBody()) {
-			if (null == restArchive.getUsername()) {
+			if (StringUtils.isNullOrBlank(restArchive.getUsername())) {
 				throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Username", "produch archive model checker"));
 			}
 			if (null == restArchive.getPassword()) {
@@ -133,19 +134,19 @@ public class ProductArchiveRestMapper {
 			}
 		}
 		
-		if (null == restArchive.getCode()) {
+		if (StringUtils.isNullOrBlank(restArchive.getCode())) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Code", "produch archive model checker"));
 		}
 		
-		if (null == restArchive.getName()) {
+		if (StringUtils.isNullOrBlank(restArchive.getName())) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Name", "produch archive model checker"));
 		}
 		
-		if (null == restArchive.getBaseUri()) {
+		if (StringUtils.isNullOrBlank(restArchive.getBaseUri())) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "BaseUri", "produch archive model checker"));
 		}
 		
-		if (null == restArchive.getContext()) {
+		if (StringUtils.isNullOrBlank(restArchive.getContext())) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Context", "produch archive model checker"));
 		}
 	}

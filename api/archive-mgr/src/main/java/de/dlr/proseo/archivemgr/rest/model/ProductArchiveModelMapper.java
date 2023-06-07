@@ -6,6 +6,7 @@
 
 package de.dlr.proseo.archivemgr.rest.model;
 
+import de.dlr.proseo.archivemgr.utils.StringUtils;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.ProductArchiveMgrMessage;
@@ -122,7 +123,7 @@ public class ProductArchiveModelMapper {
 		}
 		
 		if (modelArchive.getSendAuthInBody()) {
-			if (null == modelArchive.getUsername()) {
+			if (StringUtils.isNullOrBlank(modelArchive.getUsername())) {
 				throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Username", "produch archive model checker"));
 			}
 			if (null == modelArchive.getPassword()) {
@@ -130,19 +131,19 @@ public class ProductArchiveModelMapper {
 			}
 		}
 		
-		if (null == modelArchive.getCode()) {
+		if (StringUtils.isNullOrBlank(modelArchive.getCode())) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Code", "produch archive model checker"));
 		}
 		
-		if (null == modelArchive.getName()) {
+		if (StringUtils.isNullOrBlank(modelArchive.getName())) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Name", "produch archive model checker"));
 		}
 		
-		if (null == modelArchive.getBaseUri()) {
+		if (StringUtils.isNullOrBlank(modelArchive.getBaseUri())) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "BaseUri", "produch archive model checker"));
 		}
 		
-		if (null == modelArchive.getContext()) {
+		if (StringUtils.isNullOrBlank(modelArchive.getContext())) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Context", "produch archive model checker"));
 		}
 	}
@@ -163,5 +164,5 @@ public class ProductArchiveModelMapper {
 		}
 		
 		restArchive.setAvailableProductClasses(restProductClasses);
-	}
+	}	
 }
