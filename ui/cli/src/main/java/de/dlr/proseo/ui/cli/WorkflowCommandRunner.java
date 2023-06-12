@@ -349,6 +349,9 @@ public class WorkflowCommandRunner {
 			} else if (3 == i) {
 				// Fourth parameter is configured processor
 				requestURI += "&configuredProcessor=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
+			} else if (4 == i) {
+				// Fourth parameter is enabled status
+				requestURI += "&enabled=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
 			}
 		}
 
