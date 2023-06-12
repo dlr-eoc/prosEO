@@ -29,4 +29,4 @@ proseo:
         facility: Lerchenhof
         
     # Not sure what this is (AIP client?)
-    auxip.baseuri: http://192.168.20.155:8080/proseo/api/aip-client/v0.1
+    aip.url: http://192.168.20.155:8080/proseo/api/aip-client/v0.1
