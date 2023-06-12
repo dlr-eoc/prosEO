@@ -45,7 +45,10 @@ public enum ApiMonitorMessage implements ProseoMessage {
 	PRODUCT_VAL_STOP_MISSING	(7110, Level.ERROR, false, "Product list entry {0} does not contain product validity end ('ContentDate/End' element)", ""),
 	PRODUCT_PUBLICATION_MISSING	(7111, Level.ERROR, false, "Product list entry {0} does not contain valid publication time ('PublicationDate' element)", ""),
 	PRODUCT_EVICTION_MISSING	(7112, Level.ERROR, false, "Product list entry {0} does not contain valid eviction time ('EvictionDate' element)", ""),
-	INVALID_CADIP_ID			(7113, Level.ERROR, false, "Invalid CADIP Monitor identifier {0} passed", ""),
+	TARGET_DIR_NOT_WRITABLE		(7113, Level.ERROR, false, "Target directory {0} not writable", ""),
+	ODATA_SESSION_REQ_ABORTED	(7114, Level.ERROR, false, "OData request for files of session {0} aborted (cause: {1} / {2})", ""),
+	ODATA_SESSION_REQ_FAILED	(7115, Level.ERROR, false, "OData request for files of session {0} failed with HTTP status code {1}, message:\n{2}\n", ""),
+	SESSION_RETRIEVAL_RESULT	(7116, Level.INFO, true, "Session file list request returned {0} files out of {1} available", ""),
 	
 	// -- EDIP Monitor --
 	EDIP_NOT_READABLE			(7150, Level.ERROR, false, "EDIP directory {0} not readable (cause: {1})", ""),
@@ -69,7 +72,7 @@ public enum ApiMonitorMessage implements ProseoMessage {
 															+ "Max. file wait cycles  . . : {13}"
 															,""),
 	
-	// -- XBIP Monitor --
+	// -- XBIP/CADIP Monitor --
 	XBIP_NOT_READABLE			(7200, Level.ERROR, false, "XBIP directory {0} not readable (cause: {1})", ""),
 	TRANSFER_OBJECT_IS_NULL		(7201, Level.ERROR, false, "Transfer object is null - skipped", ""),
 	INVALID_TRANSFER_OBJECT_TYPE (7202, Level.ERROR, false, "Transfer object {0} of invalid type found - skipped", ""),
@@ -90,6 +93,38 @@ public enum ApiMonitorMessage implements ProseoMessage {
 	SKIPPING_SESSION_FOR_DELAY	(7216, Level.INFO, true, "Waiting for retrieval delay for session {0} to expire - skipped", ""),
 	FOLLOW_ON_ACTION_STARTED	(7217, Level.INFO, true, "Follow-on action for session {0} started with command {1}", ""),
 	INVALID_XBIP_ID				(7218, Level.ERROR, true, "Invalid XBIP Monitor identifier {0} passed", ""),
+	INVALID_CADIP_ID			(7219, Level.ERROR, false, "Invalid CADIP Monitor identifier {0} passed", ""),
+	SESSION_ELEMENT_MISSING		(7220, Level.ERROR, false, "Session list entry {0} does not contain ''{1}'' element", ""),
+	DOWNLOAD_INTERRUPTED		(7224, Level.ERROR, false, "Download of session {0} failed due to interrupt", ""),
+	DOWNLOAD_TIMEOUT			(7225, Level.ERROR, false, "Timeout after {0} s during wait for download of session {1}, download cancelled", ""),
+	DOWNLOAD_FAILED				(7226, Level.ERROR, false, "Download of DSDB file {0} failed (cause: {1})", ""),
+	FILE_ELEMENT_MISSING		(7227, Level.ERROR, false, "CADU file entry {0} does not contain ''{1}'' element", ""),
+	FILE_NOT_WRITABLE			(7228, Level.ERROR, false, "Cannot write CADU file {0} (cause: {1})", ""),
+	FILE_DOWNLOAD_FAILED		(7229, Level.ERROR, false, "Download of CADU file {0} failed (cause: {1})", ""),
+	FILE_SIZE_MISMATCH			(7230, Level.ERROR, false, "File size mismatch for CADU file {0} (expected: {1} Bytes, got {2} Bytes)", ""),
+	SESSION_DOWNLOAD_TIMEOUT	(7231, Level.ERROR, false, "Timeout after {0} s during wait for completion of session {1}, download incomplete", ""),
+	FILE_TRANSFER_COMPLETED		(7232, Level.INFO, true, "Session {0}: Transfer for CADU file {1} completed (size {2} bytes, published {3})", ""),
+	
+	CADIP_START_MESSAGE			(7298, Level.INFO, true, "------  Starting CADIP Monitor  ------\n"
+															+ "CADIP base URI . . . . . . : {0}\n"
+															+ "CADIP context. . . . . . . : {1}\n"
+															+ "Use token-based auth . . . : {2}\n"
+															+ "Satellite  . . . . . . . . : {3}\n"
+															+ "Transfer history file  . . : {4}\n"
+															+ "CADIP check interval . . . : {5}\n"
+															+ "Session file check interval: {6}\n"
+															+ "Session download timeout . : {7}\n"
+															+ "History truncation interval: {8}\n"
+															+ "History retention period . : {9}\n"
+															+ "CADU target directory  . . : {10}\n"
+															+ "L0 processor command . . . : {11}\n"
+															+ "Max. transfer sessions . . : {12}\n"
+															+ "Transfer session wait time : {13}\n"
+															+ "Max. session wait cycles . : {14}\n"
+															+ "Max. file download threads : {15}\n"
+															+ "File download wait time  . : {16}\n"
+															+ "Max. file wait cycles  . . : {17}"
+															,""),
 	
 	XBIP_START_MESSAGE			(7299, Level.INFO, true, "------  Starting XBIP Monitor  ------\n"
 															+ "XBIP directory . . . . . . : {0}\n"

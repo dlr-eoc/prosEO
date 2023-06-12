@@ -60,9 +60,6 @@ import de.dlr.proseo.model.service.SecurityService;
 
 /**
  * Test product downloads from remote Long-term Archives
- * <br>
- * Inspiration for REST service mocking from:
- * https://www.baeldung.com/spring-mock-rest-template#using-spring-test
  * 
  * @author Dr. Thomas Bassler
  * 
