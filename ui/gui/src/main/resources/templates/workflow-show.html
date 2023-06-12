@@ -70,27 +70,45 @@
 						<thead class="thead-proseo" id="proseo-thead">
 							<tr>
 								<th><span th:text="#{id}">id</span></th>
+								<th><span th:text="#{version}">version</span></th>
 								<th><span th:text="#{name}">name</span></th>
 								<th><span th:text="#{uuid}">uuid</span></th>
+								<th><span th:text="#{description}">description</span></th>
 								<th><span th:text="#{workflowversion}">workflowversion</span></th>
 								<th><span th:text="#{enabled}">enabled</span></th>
+							</tr>
+							<tr>
 								<th><span th:text="#{inputproductclass}">inputproductclass</span></th>
 								<th><span th:text="#{outputproductclass}">outputproductclass</span></th>
 								<th><span th:text="#{configuredprocessor}">configuredprocessor</span></th>
 								<th><span th:text="#{outputfileclass}">outputfileclass</span></th>
+								<th><span th:text="#{processingmode}">processingmode</span></th>
+								<th><span th:text="#{slicingtype}">slicingtype</span></th>
+								<th><span th:text="#{sliceduration}">sliceduration</span></th>
+							</tr>
+							<tr>
+								<th><span th:text="#{sliceoverlap}">sliceoverlap</span></th>
+								<th><span th:text="#{inputfilters}">inputfilters</span></th>
+								<th><span th:text="#{workflowoptions}">workflowoptions</span></th>
+								<th><span th:text="#{classoutputparameters}">classoutputparameters</span></th>
+								<th><span th:text="#{outputparameters}">outputparameters</span></th>
 							</tr>
 						</thead>
 						<tbody th:unless="${workflows == null}">
 							<tr th:each="workflow : ${workflows}">
 								<td class="first-row" th:text="${workflow.id}"></td>
+								<td class="first-row" th:text="${workflow.version}"></td>
 								<td class="first-row" th:text="${workflow.name}"></td>
 								<td class="first-row" th:text="${workflow.uuid}"></td>
+								<td class="first-row" th:text="${workflow.description}"></td>
 								<td class="first-row"><a th:if="${hasroleprocessorreader}"
 									th:href="'/workflow-show#' + ${workflow.name} + '-' + ${workflow.workflowVersion}"
 									th:text="${workflow.workflowVersion}"></a><span
 									th:unless="${hasroleprocessorreader}"
 									th:text="${workflow.workflowVersion}"></span></td>
 								<td class="first-row" th:text="${workflow.enabled}"></td>
+							</tr>
+							<tr th:each="workflow : ${workflows}">
 								<td class="first-row"><a th:if="${hasroleprocessorreader}"
 									th:href="'/workflow-show#' + ${workflow.name} + '-' + ${workflow.inputProductClass}"
 									th:text="${workflow.inputProductClass}"></a><span
@@ -111,9 +129,71 @@
 									th:text="${workflow.outputFileClass}"></a><span
 									th:unless="${hasroleprocessorreader}"
 									th:text="${workflow.outputFileClass}"></span></td>
+								<td class="first-row"><a th:if="${hasroleprocessorreader}"
+									th:href="'/workflow-show#' + ${workflow.name} + '-' + ${workflow.processingMode}"
+									th:text="${workflow.processingMode}"></a><span
+									th:unless="${hasroleprocessorreader}"
+									th:text="${workflow.processingMode}"></span></td>
+								<td class="first-row"><a th:if="${hasroleprocessorreader}"
+									th:href="'/workflow-show#' + ${workflow.name} + '-' + ${workflow.slicingType}"
+									th:text="${workflow.slicingType}"></a><span
+									th:unless="${hasroleprocessorreader}"
+									th:text="${workflow.slicingType}"></span></td>
+								<td class="first-row"><a th:if="${hasroleprocessorreader}"
+									th:href="'/workflow-show#' + ${workflow.name} + '-' + ${workflow.sliceDuration}"
+									th:text="${workflow.sliceDuration}"></a><span
+									th:unless="${hasroleprocessorreader}"
+									th:text="${workflow.sliceDuration}"></span></td>
+							</tr>
+							<tr th:each="workflow : ${workflows}">
+								<td class="first-row"><a th:if="${hasroleprocessorreader}"
+									th:href="'/workflow-show#' + ${workflow.name} + '-' + ${workflow.sliceOverlap}"
+									th:text="${workflow.sliceOverlap}"></a><span
+									th:unless="${hasroleprocessorreader}"
+									th:text="${workflow.sliceOverlap}"></span></td>
+								<td class="first-row">
+									<table class="table">
+										<tbody>
+											<tr th:each="elem : ${workflow?.inputFilters}">
+												<td th:text="${elem?.key}"></td>
+												<td th:text="${elem?.value}"></td>
+											</tr>
+										</tbody>
+									</table>
+								</td>
+								<td class="first-row">
+									<table class="table">
+										<tbody>
+											<tr th:each="elem : ${workflow?.workflowOptions}">
+												<td th:text="${elem?.name}"></td>
+											</tr>
+										</tbody>
+									</table>
+								</td>
+								<td class="first-row">
+									<table class="table">
+										<tbody>
+											<tr th:each="elem : ${workflow?.classOutputParameters}">
+												<td th:text="${elem?.key}"></td>
+												<td th:text="${elem?.value}"></td>
+											</tr>
+										</tbody>
+									</table>
+								</td>
+								<td class="first-row">
+									<table class="table">
+										<tbody>
+											<tr th:each="elem : ${workflow?.outputParameters}">
+												<td th:text="${elem?.key}"></td>
+												<td th:text="${elem?.parameterValue}"></td>
+											</tr>
+										</tbody>
+									</table>
+								</td>
 							</tr>
 						</tbody>
 					</table>
+					<div th:replace="fragments/navbar.html :: pagenav"></div>
 				</div>
 				<div th:insert="fragments/footer.html :: footer"></div>
 			</main>
