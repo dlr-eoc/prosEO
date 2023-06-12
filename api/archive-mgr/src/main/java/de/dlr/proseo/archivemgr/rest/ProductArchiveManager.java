@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.archivemgr.rest.model.ProductArchiveModelMapper;
 import de.dlr.proseo.archivemgr.rest.model.ProductArchiveRestMapper;
 import de.dlr.proseo.archivemgr.rest.model.RestProductArchive;
+import de.dlr.proseo.archivemgr.utils.StringUtils;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.FacilityMgrMessage;
 import de.dlr.proseo.logging.messages.GeneralMessage;
@@ -346,12 +347,12 @@ public class ProductArchiveManager {
 		if (null == modelArchive || null == changedArchive) {
 			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING));
 		}
-		
-		if (!modelArchive.getCode().equals(changedArchive.getCode())) {		
+				
+		if (!StringUtils.equalStrings(modelArchive.getCode(), changedArchive.getCode())) {		
 			modelArchive.setCode(changedArchive.getCode());
 		}
 
-		if (!modelArchive.getName().equals(changedArchive.getName())) {	
+		if (!StringUtils.equalStrings(modelArchive.getName(), changedArchive.getName())) {		
 			modelArchive.setName(changedArchive.getName());
 		}
 		
@@ -359,11 +360,11 @@ public class ProductArchiveManager {
 			modelArchive.setArchiveType(changedArchive.getArchiveType());
 		}
 		
-		if (!modelArchive.getBaseUri().equals(changedArchive.getBaseUri())) {
+		if (!StringUtils.equalStrings(modelArchive.getBaseUri(), changedArchive.getBaseUri())) {		
 			modelArchive.setBaseUri(changedArchive.getBaseUri());
 		}
 		
-		if (!modelArchive.getContext().equals(changedArchive.getContext())) {
+		if (!StringUtils.equalStrings(modelArchive.getContext(), changedArchive.getContext())) {		
 			modelArchive.setContext(changedArchive.getContext());
 		}
 		
@@ -371,19 +372,19 @@ public class ProductArchiveManager {
 			modelArchive.setTokenRequired(changedArchive.getTokenRequired());
 		}
 		
-		if (!modelArchive.getTokenUri().equals(changedArchive.getTokenUri())) {
+		if (!StringUtils.equalStrings(modelArchive.getTokenUri(), changedArchive.getTokenUri())) {		
 			modelArchive.setTokenUri(changedArchive.getTokenUri());
 		}
 		
-		if (!modelArchive.getUsername().equals(changedArchive.getUsername())) {
+		if (!StringUtils.equalStrings(modelArchive.getUsername(), changedArchive.getUsername())) {		
 			modelArchive.setUsername(changedArchive.getUsername());
 		}
 		
-		if (!modelArchive.getClientId().equals(changedArchive.getClientId())) {
+		if (!StringUtils.equalStrings(modelArchive.getClientId(), changedArchive.getClientId())) {		
 			modelArchive.setClientId(changedArchive.getClientId());
 		}
 		
-		if (!modelArchive.getClientSecret().equals(changedArchive.getClientSecret())) {
+		if (!StringUtils.equalStrings(modelArchive.getClientSecret(), changedArchive.getClientSecret())) {		
 			modelArchive.setClientSecret(changedArchive.getClientSecret());
 		}
 		
