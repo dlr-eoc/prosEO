@@ -23,7 +23,7 @@ public enum ProductArchiveMgrMessage implements ProseoMessage {
 	 ARCHIVE_HAS_PRODUCTS		(4804, Level.ERROR, false, "Cannot delete Product Archive {0} due to existing products", ""),
 	 ARCHIVE_ID_MISSING			(4805, Level.ERROR, false, "Product Archive ID not set", ""),
 	 ARCHIVE_LIST_EMPTY			(4806, Level.ERROR, false, "No Product Archives found for search criteria", ""),
-	 ARCHIVE_LIST_RETRIEVED		(4807, Level.INFO,  true,  "Product Archive list of size {0} retrieved for facility ''{1}''", ""),
+	 ARCHIVE_LIST_RETRIEVED		(4807, Level.INFO,  true,  "Product Archive list of size {0} retrieved for archive ''{1}''", ""),
 	 ARCHIVE_MISSING			(4808, Level.ERROR, false, "Product Archive not set", ""),
 	 ARCHIVE_MODIFIED			(4809, Level.INFO,  true,  "Product Archive with id {0} modified", ""),
 	 ARCHIVE_NOT_FOUND			(4810, Level.ERROR, false, "No Product Archive found for ID {0}", ""),
@@ -32,6 +32,9 @@ public enum ProductArchiveMgrMessage implements ProseoMessage {
 	 ARCHIVE_TYPE_WRONG			(4813, Level.ERROR, false, "Product Archive Type is wrong: {0}", ""),
 	 DUPLICATED_PRODUCT_CLASS	(4814, Level.ERROR, false, "Duplicated Product Class {0} in Product Archive {1}", ""),
 	 PRODUCT_CLASS_NOT_FOUND    (4815, Level.ERROR, false, "Product Class with code {0} and type {1} not found", ""),
+	 ARCHIVE_CODE_MISSING		(4816, Level.ERROR, false, "Product Archive code not set", ""),
+
+
 	 
 	;
 

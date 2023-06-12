@@ -101,19 +101,19 @@ public class ProductArchiveControllerTest {
 	 */
 	private ProductArchive createProductArchive(String[] testData) {
 		
-		logger.trace("... creating facility ");
+		logger.trace("... creating archive ");
 
 		ProductArchive testArchive = new ProductArchive();
 
-		String archiveName = testData[7];
+		String archiveCode = testData[5];
 		
-		if (null != RepositoryService.getProductArchiveRepository().findByName(archiveName)) {
+		if (null != RepositoryService.getProductArchiveRepository().findByCode(archiveCode)) {
 			
 			logger.trace("Found test product archive {}", testArchive.getId());
-			return testArchive = RepositoryService.getProductArchiveRepository().findByName(archiveName);
+			return testArchive = RepositoryService.getProductArchiveRepository().findByCode(archiveCode);
 			
 		} else {
-			// testFacility.setId(Long.parseLong(testData[0]));
+			// testArchive.setId(Long.parseLong(testData[0]));
 			testArchive.setArchiveType(ArchiveType.valueOf(testData[1]));
 			
 			testArchive.setBaseUri(testData[2]);
@@ -148,14 +148,14 @@ public class ProductArchiveControllerTest {
 		
 		logger.trace(">>> testCreateArchive()");
 
-		// Get a test facility from the database
+		// Get a test archive from the database
 		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findAll().get(0);
 		RestProductArchive restArchive = new ProductArchiveModelMapper(modelArchive).toRest();
 
-		// Remove the test facility from the database
+		// Remove the test archive from the database
 		RepositoryService.getProductArchiveRepository().deleteById(restArchive.getId());
 
-		// Create a facility with the facility controller
+		// Create a archive with the archive controller
 		ResponseEntity<RestProductArchive> getEntity = paci.createArchive(restArchive);
 		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, getEntity.getStatusCode());
 	}
@@ -206,21 +206,21 @@ public class ProductArchiveControllerTest {
 		
 		logger.trace(">>> testGetArchives");
 
-		// Get test facilities from the database
+		// Get test archives from the database
 		List<ProductArchive> testArchives = RepositoryService.getProductArchiveRepository().findAll();
 
-		// Get facilities using different selection criteria
-		ResponseEntity<List<RestProductArchive>> retrievedFacilities = paci.getArchives(null);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedFacilities.getStatusCode());
-		assertEquals("Wrong number of facilities retrieved: ", testArchives.size(),
-				retrievedFacilities.getBody().size());
+		// Get archives using different selection criteria
+		ResponseEntity<List<RestProductArchive>> retrievedArchives = paci.getArchives(null);
+		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedArchives.getStatusCode());
+		assertEquals("Wrong number of archives retrieved: ", testArchives.size(),
+				retrievedArchives.getBody().size());
 
-		retrievedFacilities = paci.getArchives("invalid");
-		assertEquals("Wrong HTTP status: ", HttpStatus.NOT_FOUND, retrievedFacilities.getStatusCode());
+		retrievedArchives = paci.getArchives("invalid");
+		assertEquals("Wrong HTTP status: ", HttpStatus.NOT_FOUND, retrievedArchives.getStatusCode());
 
-		retrievedFacilities = paci.getArchives(testArchiveData[0][7]);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedFacilities.getStatusCode());
-		assertEquals("Wrong number of facilities retrieved: ", 1, retrievedFacilities.getBody().size());
+		retrievedArchives = paci.getArchives(testArchiveData[0][5]);
+		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedArchives.getStatusCode());
+		assertEquals("Wrong number of archives retrieved: ", 1, retrievedArchives.getBody().size());
 	}
 
 	/**
