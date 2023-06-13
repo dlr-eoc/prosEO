@@ -163,10 +163,6 @@ public class ProductArchiveRestMapper {
 				throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Password", "product archive model checker"));
 			}
 		}
-		
-	
-		
-	
 	}
 		
 	/**
