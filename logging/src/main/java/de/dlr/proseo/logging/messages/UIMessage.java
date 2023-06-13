@@ -294,7 +294,7 @@ public enum UIMessage implements ProseoMessage {
 	ARCHIVE_NOT_FOUND_BY_ID					(6278, Level.ERROR, false, "Product archive with database ID {0} not found", ""),
 	ARCHIVE_NOT_READABLE					(6279, Level.ERROR, false, "Product archive {0} not readable (cause: {1})", ""),
 	ARCHIVE_UPDATED							(6280, Level.INFO,  true,  "Product archive with database ID {0} updated (new version {1})", ""),	
-	NO_ARCHIVE_NAME_GIVEN					(6281, Level.ERROR, false, "No product archive name given", ""),
+	NO_ARCHIVE_CODE_GIVEN					(6281, Level.ERROR, false, "No product archive code given", ""),
 	NO_ARCHIVES_FOUND						(6282, Level.ERROR, false, "No product archives found", ""),
 	
 	;
