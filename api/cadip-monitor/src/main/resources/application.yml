@@ -19,23 +19,30 @@ proseo:
         baseuri: http://localhost:8080
         # The CADIP context, if any ("service root", any URI component(s) before "odata"; no starting or terminating slash)
         context: cadip
-        
-        # Flag indicating whether token-based authentication shall be used (default false)
-        usetoken: true
-        # The URI for requesting a bearer token (full URL)
-        tokenuri: http://localhost:8080/cadip/token
-        # The CADIP username
+        # The CADIP username (for Basic Authentication, optional)
         user: myuser
-        # The CADIP password
+        # The CADIP password (for Basic Authentication, mandatory, if CADIP user is set)
         password: mypassword
-        # Credentials for OpenID-based token requests (optional)
-        client:
+        
+        # Flag indicating whether token-based authentication shall be used (optional, default false)
+        usetoken: true
+        token:
+          # The URI for requesting a bearer token (full URL, mandatory, if token authentication is used)
+          uri: http://localhost:8080/cadip/token
+          # The username for the token request Authentication header (optional, default same as CADIP user)
+          # user: mytokenuser
+          # The password for the token request Authentication header (mandatory, if token user is set, default same as CADIP password)
+          # password: mytokenpassword
+          # Token request workflow to use (optional, one of {"password", "client_credentials"}, default "password")
+          grantType: password
+          # OAuth2 scope to use for token request (optional)
+          scope: openid
+          # Credentials for OpenID-based token requests (optional)
+          client:
             # The CADIP client ID
-            id: my-client-id
+            id: myclientid
             # The CADIP client secret (mandatory if client ID is set)
-            secret: mysecret
-            # Send client ID and secret in body?
-            sendinbody: false
+            secret: myclientsecret
             
         # Interval between pickup point checks in milliseconds (e. g. every min)
         check.interval: 60000

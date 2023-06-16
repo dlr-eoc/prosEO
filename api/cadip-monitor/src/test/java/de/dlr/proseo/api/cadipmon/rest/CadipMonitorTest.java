@@ -332,19 +332,19 @@ public class CadipMonitorTest {
 		assertTrue("Session directory missing", 
 				Files.isDirectory(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH)));
 		assertTrue("Session ch.1 directory missing", 
-				Files.isDirectory(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch1")));
+				Files.isDirectory(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_1")));
 		assertTrue("Session ch.2 directory missing", 
-				Files.isDirectory(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch1")));
+				Files.isDirectory(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_1")));
 		assertTrue("Session file 1 missing", 
-				Files.exists(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch1", TEST_FILE1_NAME)));
+				Files.exists(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_1", TEST_FILE1_NAME)));
 		assertTrue("Session file 2 missing", 
-				Files.exists(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch2", TEST_FILE2_NAME)));
+				Files.exists(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_2", TEST_FILE2_NAME)));
 
 		try {
 			assertEquals("Session file 1 has wrong size", TEST_FILE1_SIZE.longValue(),
-					Files.size(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch1", TEST_FILE1_NAME)));
+					Files.size(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_1", TEST_FILE1_NAME)));
 			assertEquals("Session file 2 has wrong size", TEST_FILE2_SIZE.longValue(),
-					Files.size(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch2", TEST_FILE2_NAME)));
+					Files.size(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_2", TEST_FILE2_NAME)));
 		} catch (IOException e) {
 			logger.error("Cannot check file size (cause: {} / {})", e.getClass(), e.getMessage());
 			fail("File size validation failed");

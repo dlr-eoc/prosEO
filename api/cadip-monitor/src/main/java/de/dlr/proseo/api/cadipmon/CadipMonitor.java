@@ -80,6 +80,8 @@ import reactor.netty.http.client.HttpClient;
 @Scope("singleton")
 public class CadipMonitor extends BaseMonitor {
 	
+	private static final String CHANNEL_PREFIX = "ch_";
+
 	/** The path to the target CADU directory (for L0 processing) */
 	private Path caduDirectoryPath;
 	
@@ -146,8 +148,20 @@ public class CadipMonitor extends BaseMonitor {
 		/** Flag indicating completeness of session provisioning */
 		private Boolean sessionComplete = false;
 		
+		/** Acquisition time of the first CADU in the first DSDB */
+		private Instant downlinkStart;
+		
+		/** Acquisition time of the last CADU in the last DSDB */
+		private Instant downlinkStop;
+		
 		/** Flag indicating quality of session provisioning */
 		private Boolean deliveryPushOk;
+		
+		/** Total downlink size */
+		private Long downlinkSize;
+		
+		/** Latest publication time of any CADU file */
+		private Instant latestPublicationTime;
 		
 		/** Reference time for this session (publication timestamp) */
 		private Instant referenceTime;
@@ -279,6 +293,42 @@ public class CadipMonitor extends BaseMonitor {
 		}
 
 		/**
+		 * Gets the acquisition time of the first CADU in the first DSDB
+		 * 
+		 * @return the downlink start time
+		 */
+		public Instant getDownlinkStart() {
+			return downlinkStart;
+		}
+
+		/**
+		 * Sets the acquisition time of the first CADU in the first DSDB
+		 * 
+		 * @param downlinkStart the downlink start time to set
+		 */
+		public void setDownlinkStart(Instant downlinkStart) {
+			this.downlinkStart = downlinkStart;
+		}
+
+		/**
+		 * Gets the acquisition time of the last CADU in the last DSDB
+		 * 
+		 * @return the downlink stop time
+		 */
+		public Instant getDownlinkStop() {
+			return downlinkStop;
+		}
+
+		/**
+		 * Sets the acquisition time of the last CADU in the last DSDB
+		 * 
+		 * @param downlinkStop the downlink stop time to set
+		 */
+		public void setDownlinkStop(Instant downlinkStop) {
+			this.downlinkStop = downlinkStop;
+		}
+
+		/**
 		 * Indicates whether session provisioning was successful
 		 * 
 		 * @return true, if session provisioning was successful, false otherwise
@@ -294,6 +344,42 @@ public class CadipMonitor extends BaseMonitor {
 		 */
 		public void setDeliveryPushOk(Boolean deliveryPushOk) {
 			this.deliveryPushOk = deliveryPushOk;
+		}
+
+		/**
+		 * Gets the total downlink size
+		 * 
+		 * @return the downlink size in bytes
+		 */
+		public Long getDownlinkSize() {
+			return downlinkSize;
+		}
+
+		/**
+		 * Sets the total downlink size
+		 * 
+		 * @param downlinkSize the downlink size in bytes to set
+		 */
+		public void setDownlinkSize(Long downlinkSize) {
+			this.downlinkSize = downlinkSize;
+		}
+
+		/**
+		 * Gets the latest publication time of any CADU file
+		 * 
+		 * @return the latest CADU publication time
+		 */
+		public Instant getLatestPublicationTime() {
+			return latestPublicationTime;
+		}
+
+		/**
+		 * Gets the latest publication time of any CADU file
+		 * 
+		 * @param latestPublicationTime the latest CADU publication time to set
+		 */
+		public void setLatestPublicationTime(Instant latestPublicationTime) {
+			this.latestPublicationTime = latestPublicationTime;
 		}
 
 		/**
@@ -650,35 +736,35 @@ public class CadipMonitor extends BaseMonitor {
 		if (logger.isTraceEnabled()) logger.trace(">>> getBearerToken()");
 		
 		// Create a request
-		WebClient webClient = WebClient.create(config.getCadipBaseUri());
+		WebClient webClient = WebClient.create();
 		RequestBodySpec request = webClient.post()
 				.uri(config.getCadipTokenUri())
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
 				.accept(MediaType.APPLICATION_JSON);
-		
-		// Set username and password as query parameters
-		MultiValueMap<String, String> queryVariables = new LinkedMultiValueMap<>();
-		
-		queryVariables.add("grant_type", "password");
-		queryVariables.add("username", config.getCadipUser());
-		queryVariables.add("password", config.getCadipPassword());
-		
-		// Add client credentials, if OpenID is required for login, otherwise prepare Basic Auth with username/password
-		if (null == config.getCadipClientId()) {
+		if (logger.isTraceEnabled()) logger.trace("... created request for URL '{}'", config.getCadipTokenUri());
+
+		// Prepare Authentication header, if requested
+		if (null != config.getCadipUser()) {
 			String base64Auth =  new String(Base64.getEncoder().encode((config.getCadipUser() + ":" + config.getCadipPassword()).getBytes()));
 			request = request.header(HttpHeaders.AUTHORIZATION, "Basic " + base64Auth);
-			logger.trace("... Auth: '{}'", base64Auth);
-		} else {
-			queryVariables.add("scope", "openid");
-			if (config.getCadipClientSendInBody()) {
-				queryVariables.add("client_id", config.getCadipClientId());
-				queryVariables.add("client_secret",
-						URLEncoder.encode(config.getCadipClientSecret(), Charset.defaultCharset()));
-			} else {
-				String base64Auth =  new String(Base64.getEncoder()
-						.encode((config.getCadipClientId() + ":" + config.getCadipClientSecret()).getBytes()));
-				request = request.header(HttpHeaders.AUTHORIZATION, "Basic " + base64Auth);
-				logger.trace("... Auth: '{}'", base64Auth);
-			}
+			if (logger.isTraceEnabled()) logger.trace("... Auth: '{}'", base64Auth);
+		}
+		
+		// Set grant type, username and password as query parameters
+		MultiValueMap<String, String> queryVariables = new LinkedMultiValueMap<>();
+		
+		queryVariables.add("grant_type", config.getCadipTokenGrantType());
+		queryVariables.add("username", config.getCadipTokenUser());
+		queryVariables.add("password", config.getCadipTokenPassword());
+		
+		// Add client credentials, if requested
+		if (null != config.getCadipClientId()) {
+			queryVariables.add("client_id", config.getCadipClientId());
+			queryVariables.add("client_secret", URLEncoder.encode(config.getCadipClientSecret(), Charset.defaultCharset()));
+		}
+		// Add (OpenID) scope, if requested
+		if (null != config.getCadipTokenScope()) {
+			queryVariables.add("scope", config.getCadipTokenScope());
 		}
 		if (logger.isTraceEnabled()) logger.trace("... using query variables '{}'", queryVariables);
 		
@@ -689,7 +775,7 @@ public class CadipMonitor extends BaseMonitor {
 			.bodyToMono(String.class)
 			.block();
 		if (null == tokenResponse) {
-			logger.log(OAuthMessage.TOKEN_REQUEST_FAILED, config.getCadipBaseUri() + "/" + config.getCadipTokenUri());
+			logger.log(OAuthMessage.TOKEN_REQUEST_FAILED, config.getCadipTokenUri());
 			return null;
 		}
 //		if (logger.isTraceEnabled()) logger.trace("... got token response '{}'", tokenResponse);
@@ -700,19 +786,16 @@ public class CadipMonitor extends BaseMonitor {
 		try {
 			tokenResponseMap = om.readValue(tokenResponse, Map.class);
 		} catch (IOException e) {
-			logger.log(OAuthMessage.TOKEN_RESPONSE_INVALID, tokenResponse, 
-					config.getCadipBaseUri() + "/" + config.getCadipTokenUri(), e.getMessage());
+			logger.log(OAuthMessage.TOKEN_RESPONSE_INVALID, tokenResponse, config.getCadipTokenUri(), e.getMessage());
 			return null;
 		}
 		if (null == tokenResponseMap || tokenResponseMap.isEmpty()) {
-			logger.log(OAuthMessage.TOKEN_RESPONSE_EMPTY, tokenResponse, 
-					config.getCadipBaseUri() + "/" + config.getCadipTokenUri());
+			logger.log(OAuthMessage.TOKEN_RESPONSE_EMPTY, tokenResponse, config.getCadipTokenUri());
 			return null;
 		}
 		Object accessToken = tokenResponseMap.get("access_token");
 		if (null == accessToken || ! (accessToken instanceof String)) {
-			logger.log(OAuthMessage.ACCESS_TOKEN_MISSING, tokenResponse,
-					config.getCadipBaseUri() + "/" + config.getCadipTokenUri());
+			logger.log(OAuthMessage.ACCESS_TOKEN_MISSING, tokenResponse, config.getCadipTokenUri());
 			return null;
 		} else {
 //			if (logger.isTraceEnabled()) logger.trace("... found access token {}", accessToken);
@@ -817,8 +900,8 @@ public class CadipMonitor extends BaseMonitor {
 	 * @return a session metadata object or null, if the extraction failed
 	 */
 	private TransferSession extractTransferSession(ClientEntity session) {
-		if (logger.isTraceEnabled()) logger.trace(">>> extractTransferProduct({})", 
-				(null == session ? "null" : session.getProperty("Name")));
+		if (logger.isTraceEnabled()) logger.trace(">>> extractTransferSession({})", 
+				(null == session ? "null" : session.getProperty("SessionId")));
 
 		TransferSession ts = new TransferSession();
 		
@@ -880,12 +963,32 @@ public class CadipMonitor extends BaseMonitor {
 		if (logger.isTraceEnabled()) logger.trace("... downlink orbit = {}", ts.getDownlinkOrbit());
 		
 		try {
+			ts.setDownlinkStart(Instant.parse(
+					session.getProperty("DownlinkStart").getPrimitiveValue().toCastValue(String.class)));
+		} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
+			logger.log(ApiMonitorMessage.SESSION_ELEMENT_MISSING, session.toString(), "DownlinkStart");
+			return null;
+		}
+		if (logger.isTraceEnabled()) logger.trace("... downlink start = {}", ts.getDownlinkStart());
+		
+		try {
+			ts.setDownlinkStop(Instant.parse(
+					session.getProperty("DownlinkStop").getPrimitiveValue().toCastValue(String.class)));
+		} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
+			logger.log(ApiMonitorMessage.SESSION_ELEMENT_MISSING, session.toString(), "DownlinkStop");
+			return null;
+		}
+		if (logger.isTraceEnabled()) logger.trace("... downlink stop = {}", ts.getDownlinkStop());
+		
+		try {
 			ts.setDeliveryPushOk(session.getProperty("DeliveryPushOK").getPrimitiveValue().toCastValue(Boolean.class));
 		} catch (EdmPrimitiveTypeException | NullPointerException e) {
 			logger.log(ApiMonitorMessage.SESSION_ELEMENT_MISSING, session.toString(), "DeliveryPushOK");
 			return null;
 		}
 		if (logger.isTraceEnabled()) logger.trace("... delivery push OK = {}", ts.getDeliveryPushOk());
+		
+		ts.setLatestPublicationTime(ts.getReferenceTime());
 		
 		return ts;
 	}
@@ -1001,7 +1104,7 @@ public class CadipMonitor extends BaseMonitor {
 			logger.log(ApiMonitorMessage.FILE_ELEMENT_MISSING, file.toString(), "Size");
 			return null;
 		}
-		if (logger.isTraceEnabled()) logger.trace("... block number = {}", tf.getFileSize());
+		if (logger.isTraceEnabled()) logger.trace("... file size = {}", tf.getFileSize());
 		
 		try {
 			tf.setRetransfer(file.getProperty("Retransfer").getPrimitiveValue().toCastValue(Boolean.class));
@@ -1009,7 +1112,7 @@ public class CadipMonitor extends BaseMonitor {
 			logger.log(ApiMonitorMessage.FILE_ELEMENT_MISSING, file.toString(), "Retransfer");
 			return null;
 		}
-		if (logger.isTraceEnabled()) logger.trace("... final block = {}", tf.getRetransfer());
+		if (logger.isTraceEnabled()) logger.trace("... retransfer = {}", tf.getRetransfer());
 		
 		return tf;
 	}
@@ -1091,6 +1194,10 @@ public class CadipMonitor extends BaseMonitor {
 				throw new IOException();
 			}
 			result.add(tf);
+			
+			if (tf.getPublicationTime().isAfter(transferSession.getLatestPublicationTime())) {
+				transferSession.setLatestPublicationTime(tf.getPublicationTime());
+			}
 		}
 		
 		return result;
@@ -1113,58 +1220,58 @@ public class CadipMonitor extends BaseMonitor {
 				+ "/$value";
 		
 		HttpClient httpClient = HttpClient.create()
-				.secure()
-				.headers(httpHeaders -> {
-					if (config.getCadipUseToken()) {
-						httpHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
-					} else {
-						httpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder().encodeToString(
-								(config.getCadipUser() + ":" + config.getCadipPassword()).getBytes()));
-					}
-				})
-				.followRedirect((request, response) -> {
-					if (logger.isTraceEnabled()) logger.trace("... checking redirect for response status code {}", response.status());
-					switch (response.status().code()) {
-					case 301:
-					case 302:
-					case 307:
-					case 308:
-						String redirectLocation = response.responseHeaders().get(HttpHeaders.LOCATION);
-						if (null == redirectLocation) {
-							return false;
-						}
-						// Prevent sending authorization header, if target is S3 and credentials are already given in URL
-						if (redirectLocation.contains(S3_CREDENTIAL_PARAM)) {
-							if (logger.isTraceEnabled()) logger.trace(
-									"... redirect credentials given in location header, removing authorization header from request");
-							request.requestHeaders().remove(HttpHeaders.AUTHORIZATION);
-						}
-						return true;
-					default:
+			.secure()
+			.headers(httpHeaders -> {
+				if (config.getCadipUseToken()) {
+					httpHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
+				} else {
+					httpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder().encodeToString(
+							(config.getCadipUser() + ":" + config.getCadipPassword()).getBytes()));
+				}
+			})
+			.followRedirect((request, response) -> {
+				if (logger.isTraceEnabled()) logger.trace("... checking redirect for response status code {}", response.status());
+				switch (response.status().code()) {
+				case 301:
+				case 302:
+				case 307:
+				case 308:
+					String redirectLocation = response.responseHeaders().get(HttpHeaders.LOCATION);
+					if (null == redirectLocation) {
 						return false;
 					}
-				}, null)
-				.doAfterResponse((response, connection) -> {
-					if (logger.isTraceEnabled()) {
-						logger.trace("... response code: {}", response.status());
-						logger.trace("... response redirections: {}", Arrays.asList(response.redirectedFrom()));
-						logger.trace("... response headers: {}", response.responseHeaders());
+					// Prevent sending authorization header, if target is S3 and credentials are already given in URL
+					if (redirectLocation.contains(S3_CREDENTIAL_PARAM)) {
+						if (logger.isTraceEnabled()) logger.trace(
+								"... redirect credentials given in location header, removing authorization header from request");
+						request.requestHeaders().remove(HttpHeaders.AUTHORIZATION);
 					}
-				})
-//				.wiretap(logger.isDebugEnabled())
-				;
+					return true;
+				default:
+					return false;
+				}
+			}, null)
+			.doAfterResponse((response, connection) -> {
+				if (logger.isTraceEnabled()) {
+					logger.trace("... response code: {}", response.status());
+					logger.trace("... response redirections: {}", Arrays.asList(response.redirectedFrom()));
+					logger.trace("... response headers: {}", response.responseHeaders());
+				}
+			})
+//			.wiretap(logger.isDebugEnabled())
+		;
 
 		WebClient webClient = WebClient.builder()
 				.baseUrl(config.getCadipBaseUri())
 				.clientConnector(new ReactorClientHttpConnector(httpClient))
 				.build();
-		
+
 		// Retrieve and store product file
 		Instant downloadStart = Instant.now();
 		File caduFile = caduDirectoryPath.resolve(
-				Path.of(sessionDirName, "ch" + transferFile.getChannel(), transferFile.getFilename())).toFile();
+				Path.of(sessionDirName, CHANNEL_PREFIX + transferFile.getChannel(), transferFile.getFilename())).toFile();
 
-		logger.trace("... starting request for URL '{}'", requestUri);
+		if (logger.isTraceEnabled()) logger.trace("... starting request for URL '{}'", requestUri);
 		
 		try (FileOutputStream fileOutputStream = new FileOutputStream(caduFile)) {
 			
@@ -1270,7 +1377,7 @@ public class CadipMonitor extends BaseMonitor {
 						"DCS_" + transferSession.getStationUnitId()+ "_" + transferSession.getSessionIdentifier() + "_dat";
 				for (int i = 1; i <= transferSession.getNumChannels(); ++i) {
 					try {
-						Files.createDirectories(caduDirectoryPath.resolve(Path.of(sessionDirName, "ch" + i)));
+						Files.createDirectories(caduDirectoryPath.resolve(Path.of(sessionDirName, CHANNEL_PREFIX + i)));
 					} catch (Exception e) {
 						logger.log(ApiMonitorMessage.CANNOT_CREATE_TARGET_DIR, caduDirectoryPath);
 					}
@@ -1398,7 +1505,8 @@ public class CadipMonitor extends BaseMonitor {
 //				} else {
 //					if (logger.isTraceEnabled()) logger.trace("... total session data size is as expected: " + expectedSessionDataSize);
 //				}
-//				sessionDataSizes.remove(transferSession.getIdentifier());
+				transferSession.setDownlinkSize(sessionDataSizes.get(transferSession.getIdentifier()));
+				sessionDataSizes.remove(transferSession.getIdentifier());
 				
 				// Check whether any copy action failed
 				Boolean myCopySuccess = copySuccess.get(transferSession.getIdentifier());
