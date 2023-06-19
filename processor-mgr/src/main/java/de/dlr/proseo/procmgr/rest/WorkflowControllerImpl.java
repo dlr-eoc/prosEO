@@ -48,13 +48,13 @@ public class WorkflowControllerImpl implements WorkflowController {
 	private EntityManager em;
 
 	/**
-	 * Count the workflows matching the specified workflowName, workflowVersion,
-	 * outputProductClass, or configured processor.
+	 * Count the workflows matching the specified name, workflow version, input
+	 * product class, or configured processor.
 	 * 
 	 * @param missionCode         the mission code
 	 * @param workflowName        the workflow name
 	 * @param workflowVersion     the workflow version
-	 * @param outputProductClass  the output product class
+	 * @param inputProductClass   the input product class
 	 * @param configuredProcessor the configured processor
 	 * @return the number of matching workflows as a String (may be zero) or HTTP
 	 *         status "FORBIDDEN" and an error message, if a cross-mission data
@@ -62,45 +62,48 @@ public class WorkflowControllerImpl implements WorkflowController {
 	 */
 	@Override
 	public ResponseEntity<String> countWorkflows(String missionCode, String workflowName, String workflowVersion,
-			String outputProductClass, String configuredProcessor, Boolean enabled) {
+			String inputProductClass, String configuredProcessor, Boolean enabled) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> countWorkflows({}, {}, {}, {}, {})", missionCode, workflowName, workflowVersion,
-					outputProductClass, configuredProcessor);
+			logger.trace(">>> countWorkflows({}, {}, {}, {}, {})", missionCode, workflowName, workflowVersion, inputProductClass,
+					configuredProcessor);
 
 		try {
 			return new ResponseEntity<>(workflowManager.countWorkflows(missionCode, workflowName, workflowVersion,
-					outputProductClass, configuredProcessor, enabled), HttpStatus.OK);
+					inputProductClass, configuredProcessor, enabled), HttpStatus.OK);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
-	
+
 	/**
 	 * Get a list of all workflows with the specified mission, workflow name,
-	 * workflow version, output product class and configured processor
+	 * workflow version, input product class and configured processor
 	 *
 	 * @param missionCode         the mission code
 	 * @param workflowName        the workflow name
 	 * @param workflowVersion     the workflow version
-	 * @param outputProductClass  the output product class
+	 * @param inputProductClass   the input product class
 	 * @param configuredProcessor the configured processor
-	 * @param recordFrom		  first record of filtered and ordered result to return
-	 * @param recordTo 			  last record of filtered and ordered result to return
-	 * @return HTTP status "OK" and a list of workflows or 
-	 * 		   HTTP status "NOT_FOUND" and an error message, if no workflows match the search criteria, or
-	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or 
-	 *         HTTP status "TOO MANY REQUESTS" if the result list exceeds a configured maximum
+	 * @param recordFrom          first record of filtered and ordered result to
+	 *                            return
+	 * @param recordTo            last record of filtered and ordered result to
+	 *                            return
+	 * @return HTTP status "OK" and a list of workflows or HTTP status "NOT_FOUND"
+	 *         and an error message, if no workflows match the search criteria, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data
+	 *         access was attempted, or HTTP status "TOO MANY REQUESTS" if the
+	 *         result list exceeds a configured maximum
 	 */
 	@Override
-	public ResponseEntity<List<RestWorkflow>> getWorkflows(String missionCode, String workflowName,
-			String workflowVersion, String outputProductClass, String configuredProcessor, Boolean enabled, Integer recordFrom, Integer recordTo) {
+	public ResponseEntity<List<RestWorkflow>> getWorkflows(String missionCode, String workflowName, String workflowVersion,
+			String inputProductClass, String configuredProcessor, Boolean enabled, Integer recordFrom, Integer recordTo) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getWorkflows({}, {}, {}, {}, {})", missionCode, workflowName, workflowVersion,
-					outputProductClass, configuredProcessor);
+			logger.trace(">>> getWorkflows({}, {}, {}, {}, {})", missionCode, workflowName, workflowVersion, inputProductClass,
+					configuredProcessor);
 
 		try {
-			return new ResponseEntity<>(workflowManager.getWorkflows(missionCode, workflowName, workflowVersion,
-					outputProductClass, configuredProcessor, enabled, recordFrom, recordTo), HttpStatus.OK);
+			return new ResponseEntity<>(workflowManager.getWorkflows(missionCode, workflowName, workflowVersion, inputProductClass,
+					configuredProcessor, enabled, recordFrom, recordTo), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {

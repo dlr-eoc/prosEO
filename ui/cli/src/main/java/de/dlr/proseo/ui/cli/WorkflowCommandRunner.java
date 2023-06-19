@@ -54,7 +54,7 @@ public class WorkflowCommandRunner {
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
 	private static final String PROMPT_WORKFLOW_NAME = "Workflow name (empty field cancels): ";
 	private static final String PROMPT_WORKFLOW_VERSION = "Workflow version (empty field cancels): ";
-	private static final String PROMPT_WORKFLOW_OUTPUT = "Workflow output product class (empty field cancels): ";
+	private static final String PROMPT_WORKFLOW_OUTPUT = "Workflow input product class (empty field cancels): ";
 	private static final String PROMPT_WORKFLOW_CONFIGURED_PROCESSOR = "Workflow configured processor (empty field cancels): ";
 	private static final String PROMPT_WORKFLOW_INPUT = "Workflow input product class (empty field cancels): ";
 	private static final String PROMPT_WORKFLOW_OPTIONS = "WorkflowOption names (comma-separated list; empty field cancels): ";
@@ -344,8 +344,8 @@ public class WorkflowCommandRunner {
 				// Second parameter is workflow version
 				requestURI += "&workflowVersion=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
 			} else if (2 == i) {
-				// Third parameter is output product class
-				requestURI += "&outputProductClass=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
+				// Third parameter is input product class
+				requestURI += "&inputProductClass=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
 			} else if (3 == i) {
 				// Fourth parameter is configured processor
 				requestURI += "&configuredProcessor=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
@@ -404,7 +404,7 @@ public class WorkflowCommandRunner {
 					Map<?, ?> resultMap = (Map<?, ?>) resultObject;
 					System.out.println(
 							String.format(listFormat, resultMap.get("name"), resultMap.get("workflowVersion"),
-									resultMap.get("outputProductClass"), resultMap.get("configuredProcessor")));
+									resultMap.get("inputProductClass"), resultMap.get("configuredProcessor")));
 				}
 			}
 		}
