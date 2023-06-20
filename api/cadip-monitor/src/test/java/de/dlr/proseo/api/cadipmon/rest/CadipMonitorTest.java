@@ -140,6 +140,8 @@ public class CadipMonitorTest {
 	private static final String CADIP_QUERY_SESSIONS =
 			"Sessions?%24filter=Satellite%20eq%20'" + TEST_SESSION_SAT + "'"
 			+ "%20and%20"
+			+ "Retransfer%20eq%20false"
+			+ "%20and%20"
 			+ "PublicationDate%20gt%20" + TEST_REFERENCE_TIME.replaceAll(":", "%3A")
 			+ "&%24count=true&%24top=1000&%24orderby=PublicationDate%20asc";
 	

@@ -19,6 +19,8 @@ proseo:
         baseuri: http://localhost:8080
         # The CADIP context, if any ("service root", any URI component(s) before "odata"; no starting or terminating slash)
         context: cadip
+        # Flag indicating whether retransferred sessions are to be retrieved (optional,default false)
+        # retransfer: false
         # The CADIP username (for Basic Authentication, optional)
         user: myuser
         # The CADIP password (for Basic Authentication, mandatory, if CADIP user is set)

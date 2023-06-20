@@ -829,10 +829,15 @@ public class CadipMonitor extends BaseMonitor {
         			"Basic " + Base64.getEncoder().encode((config.getCadipUser() + ":" + config.getCadipPassword()).getBytes());
 		
 		// Create query filter
-		// Note: 'false' literal not implemented in some CADIPs, therefore approach "false or ..." does not work
 		StringBuilder queryFilter = new StringBuilder("Satellite eq '");
-		queryFilter.append(config.getCadipSatellite())
-			.append("' and PublicationDate gt ").append(odataDateFormat.format(referenceTimeStamp.atZone(ZoneId.of("Z"))));
+		queryFilter.append(config.getCadipSatellite()).append("'");
+		if (config.isCadipRetransfer()) {
+			// In the retransfer case we do not restrict the publication date
+			queryFilter.append(" and Retransfer eq true");
+		} else {
+			queryFilter.append(" and Retransfer eq false")
+				.append(" and PublicationDate gt ").append(odataDateFormat.format(referenceTimeStamp.atZone(ZoneId.of("Z"))));
+		}
 		
 		// Retrieve downlink sessions
 		if (logger.isTraceEnabled()) logger.trace("... requesting session list at URL '{}'", oDataServiceRoot);
@@ -870,9 +875,11 @@ public class CadipMonitor extends BaseMonitor {
 		ClientEntitySet entitySet = response.getBody();
 		logger.log(ApiMonitorMessage.SESSION_RETRIEVAL_RESULT, entitySet.getEntities().size(), entitySet.getCount());
 		
-		// No sessions found, next search starts from current date and time
+		// No sessions found, next search starts from current date and time (except for retransfers)
 		if (entitySet.getEntities().isEmpty()) {
-			transferControl.referenceTime = Instant.now();
+			if (!config.isCadipRetransfer()) {
+				transferControl.referenceTime = Instant.now();
+			}
 			return transferControl;
 		}
 
@@ -883,7 +890,7 @@ public class CadipMonitor extends BaseMonitor {
 				if (transferControl.referenceTime.isBefore(ts.getReferenceTime())) {
 					transferControl.referenceTime = ts.getReferenceTime();
 				}
-				if (!referenceTimeStamp.isAfter(ts.getReferenceTime())) {
+				if (!referenceTimeStamp.isAfter(ts.getReferenceTime()) || config.isCadipRetransfer()) {
 					transferControl.transferObjects.add(ts);
 				}
 			}

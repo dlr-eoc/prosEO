@@ -38,6 +38,10 @@ public class CadipMonitorConfiguration {
 	@Value("${proseo.cadip.context}")
 	private String cadipContext;
 	
+	/** Flag indicating whether retransferred sessions are to be retrieved (optional,default false) */
+	@Value("${proseo.cadip.retransfer:false}")
+	private Boolean cadipRetransfer;
+	
 	/** The CADIP username (for Basic Authentication, optional) */
 	@Value("${proseo.cadip.user:#{null}}")
 	private String cadipUser;
@@ -183,6 +187,15 @@ public class CadipMonitorConfiguration {
 		return cadipContext;
 	}
 	
+	/**
+	 * Indicates whether retransferred sessions are to be retrieved
+	 * 
+	 * @return true, if retransferred sessions are to be retrieved, false otherwise
+	 */
+	public Boolean isCadipRetransfer() {
+		return cadipRetransfer;
+	}
+
 	/**
 	 * Indicates whether token-based authentication shall be used
 	 * 
