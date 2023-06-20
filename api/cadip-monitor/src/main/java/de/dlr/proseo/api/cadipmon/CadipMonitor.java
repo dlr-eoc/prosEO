@@ -1431,8 +1431,31 @@ public class CadipMonitor extends BaseMonitor {
 
 								// Download CADU file (including size check)
 								try {
-									downloadCaduFile(transferFile, sessionDirName);
-
+									// Try up to three times with one second delay in between
+									int maxRetry = 3;
+									for (int i = 0; i < maxRetry; i++) {
+										try {
+											downloadCaduFile(transferFile, sessionDirName);
+											break;
+										} catch (Exception e) {
+											// Already logged
+											if (i < maxRetry - 1) {
+												if (logger.isTraceEnabled())
+													logger.trace("... download attempt {} of {} failed, waiting 1 s", i + 1, maxRetry);
+												try {
+													Thread.sleep(1000);
+												} catch (InterruptedException e1) {
+													logger.log(ApiMonitorMessage.ABORTING_TASK, e1.toString());
+													throw e;
+												};
+											} else {
+												if (logger.isTraceEnabled())
+													logger.trace("... download attempt {} of {} failed", i + 1, maxRetry);
+												throw e;
+											}
+										}
+									}
+									
 									// Calculate total download size
 									addToSessionDataSize(transferSession.getIdentifier(), transferFile.getFileSize());
 									
