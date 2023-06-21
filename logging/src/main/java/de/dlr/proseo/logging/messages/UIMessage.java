@@ -288,7 +288,7 @@ public enum UIMessage implements ProseoMessage {
 	ARCHIVE_CREATED							(6272, Level.INFO,  true,  "Product archive {0} created (database ID {1})", ""),
 	ARCHIVE_DATA_INVALID					(6273, Level.ERROR, false, "Product archive data invalid (cause: {0})", ""),
 	ARCHIVE_DELETE_FAILED					(6274, Level.ERROR, false, "Deletion of Product archive {0} failed (cause: {1})", ""),
-	ARCHIVE_DELETED							(6275, Level.INFO,  true,  "Product archive with database ID {0} deleted", ""),
+	ARCHIVE_DELETED							(6275, Level.INFO,  true,  "Product archive with code={0} and with database ID={1} deleted", ""),
 	ARCHIVE_MISSING							(6276, Level.ERROR, false, "Product archive missing in parameters", ""),
 	ARCHIVE_NOT_FOUND						(6277, Level.ERROR, false, "Product archive {0} not found", ""),
 	ARCHIVE_NOT_FOUND_BY_ID					(6278, Level.ERROR, false, "Product archive with database ID {0} not found", ""),
