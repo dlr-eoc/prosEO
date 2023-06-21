@@ -63,16 +63,16 @@ public class ProductArchiveControllerImpl implements ArchiveController{
 	
 	/**
 	 * List of all product archives with no search criteria
-	 * @param name the unique product archive name
+	 * @param code the unique product archive name
 	 * @return a response entity with either a list of product archives and HTTP status OK or an error message and an HTTP status indicating failure
 	 */
 	@Override
-	public ResponseEntity<List<RestProductArchive>> getArchives(String name) {
+	public ResponseEntity<List<RestProductArchive>> getArchives(String code) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> getArchives( {})",  name);
+		if (logger.isTraceEnabled()) logger.trace(">>> getArchives( {})",  code);
 		
 		try {
-			return new ResponseEntity<>(productArchiveManager.getArchivesByCode(name), HttpStatus.OK);
+			return new ResponseEntity<>(productArchiveManager.getArchivesByCode(code), HttpStatus.OK);
 			
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
