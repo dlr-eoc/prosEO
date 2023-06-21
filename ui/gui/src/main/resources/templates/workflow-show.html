@@ -116,7 +116,7 @@
 								<span th:text="#{workflow-show}"></span>
 							</button>
 						</div>
-						
+
 						<!-- Filter input product class -->
 						<div class="col-3 pr-lg-0">
 							<p class="input-group-text word-wrap"
@@ -134,9 +134,10 @@
 				<div id="workflowcontent" name="workflowcontent">
 					<table class="table" id="workflowTable">
 
-						<!-- Table header -->
+						<!-- Table header (parts that are always visible) -->
 						<thead class="thead-proseo" id="proseo-thead">
 							<tr>
+								<th><span>&nbsp;</span></th>
 								<th><span th:text="#{id}">id</span></th>
 								<th><span th:text="#{version}">version</span></th>
 								<th><span th:text="#{name}">name</span></th>
@@ -145,126 +146,135 @@
 								<th><span th:text="#{workflowversion}">workflowversion</span></th>
 								<th><span th:text="#{enabled}">enabled</span></th>
 							</tr>
-							<tr>
-								<th><span th:text="#{inputproductclass}">inputproductclass</span></th>
-								<th><span th:text="#{outputproductclass}">outputproductclass</span></th>
-								<th><span th:text="#{configuredprocessor}">configuredprocessor</span></th>
-								<th><span th:text="#{outputfileclass}">outputfileclass</span></th>
-								<th><span th:text="#{processingmode}">processingmode</span></th>
-								<th><span th:text="#{slicingtype}">slicingtype</span></th>
-								<th><span th:text="#{sliceduration}">sliceduration</span></th>
-							</tr>
-							<tr>
-								<th><span th:text="#{sliceoverlap}">sliceoverlap</span></th>
-								<th><span th:text="#{inputfilters}">inputfilters</span></th>
-								<th><span th:text="#{workflowoptions}">workflowoptions</span></th>
-								<th><span th:text="#{classoutputparameters}">classoutputparameters</span></th>
-								<th><span th:text="#{outputparameters}">outputparameters</span></th>
-							</tr>
 						</thead>
 
-						<!-- Table body -->
-						<tbody th:unless="${workflows == null}">
+						<div th:unless="${workflows} == null">
 							<div th:each="workflow : ${workflows}">
-								<tr>
-									<td class="first-row" th:text="${workflow.id}"></td>
-									<td class="first-row" th:text="${workflow.version}"></td>
-									<td class="first-row" th:text="${workflow.name}"></td>
-									<td class="first-row" th:text="${workflow.uuid}"></td>
-									<td class="first-row" th:text="${workflow.description}"></td>
-									<td class="first-row"><a th:if="${hasroleprocessorreader}"
-										th:href="'/workflow-show#' + ${workflow.name} + '-' + ${workflow.workflowVersion}"
-										th:text="${workflow.workflowVersion}"></a><span
-										th:unless="${hasroleprocessorreader}"
-										th:text="${workflow.workflowVersion}"></span></td>
-									<td class="first-row" th:text="${workflow.enabled}"></td>
-								</tr>
-								<tr>
-									<td class="first-row"><a th:if="${hasroleprocessorreader}"
-										th:href="'/workflow-show#' + ${workflow.name} + '-' + ${workflow.inputProductClass}"
-										th:text="${workflow.inputProductClass}"></a><span
-										th:unless="${hasroleprocessorreader}"
-										th:text="${workflow.inputProductClass}"></span></td>
-									<td class="first-row"><a th:if="${hasroleprocessorreader}"
-										th:href="'/workflow-show#' + ${workflow.name} + '-' + ${workflow.outputProductClass}"
-										th:text="${workflow.outputProductClass}"></a><span
-										th:unless="${hasroleprocessorreader}"
-										th:text="${workflow.outputProductClass}"></span></td>
-									<td class="first-row"><a th:if="${hasroleprocessorreader}"
-										th:href="'/workflow-show#' + ${workflow.name} + '-' + ${workflow.configuredProcessor}"
-										th:text="${workflow.configuredProcessor}"></a><span
-										th:unless="${hasroleprocessorreader}"
-										th:text="${workflow.configuredProcessor}"></span></td>
-									<td class="first-row"><a th:if="${hasroleprocessorreader}"
-										th:href="'/workflow-show#' + ${workflow.name} + '-' + ${workflow.outputFileClass}"
-										th:text="${workflow.outputFileClass}"></a><span
-										th:unless="${hasroleprocessorreader}"
-										th:text="${workflow.outputFileClass}"></span></td>
-									<td class="first-row"><a th:if="${hasroleprocessorreader}"
-										th:href="'/workflow-show#' + ${workflow.name} + '-' + ${workflow.processingMode}"
-										th:text="${workflow.processingMode}"></a><span
-										th:unless="${hasroleprocessorreader}"
-										th:text="${workflow.processingMode}"></span></td>
-									<td class="first-row"><a th:if="${hasroleprocessorreader}"
-										th:href="'/workflow-show#' + ${workflow.name} + '-' + ${workflow.slicingType}"
-										th:text="${workflow.slicingType}"></a><span
-										th:unless="${hasroleprocessorreader}"
-										th:text="${workflow.slicingType}"></span></td>
-									<td class="first-row"><a th:if="${hasroleprocessorreader}"
-										th:href="'/workflow-show#' + ${workflow.name} + '-' + ${workflow.sliceDuration}"
-										th:text="${workflow.sliceDuration}"></a><span
-										th:unless="${hasroleprocessorreader}"
-										th:text="${workflow.sliceDuration}"></span></td>
-								</tr>
-								<tr>
-									<td class="first-row"><a th:if="${hasroleprocessorreader}"
-										th:href="'/workflow-show#' + ${workflow.name} + '-' + ${workflow.sliceOverlap}"
-										th:text="${workflow.sliceOverlap}"></a><span
-										th:unless="${hasroleprocessorreader}"
-										th:text="${workflow.sliceOverlap}"></span></td>
-									<td class="first-row">
-										<table class="table">
-											<tbody>
-												<tr th:each="elem : ${workflow?.inputFilters}">
-													<td th:text="${elem?.key}"></td>
-													<td th:text="${elem?.value}"></td>
-												</tr>
-											</tbody>
-										</table>
-									</td>
-									<td class="first-row">
-										<table class="table">
-											<tbody>
-												<tr th:each="elem : ${workflow?.workflowOptions}">
-													<td th:text="${elem?.name}"></td>
-													<td th:text="${elem?.defaultValue}"></td>
-												</tr>
-											</tbody>
-										</table>
-									</td>
-									<td class="first-row">
-										<table class="table">
-											<tbody>
-												<tr th:each="elem : ${workflow?.classOutputParameters}">
-													<td th:text="${elem?.key}"></td>
-													<td th:text="${elem?.value}"></td>
-												</tr>
-											</tbody>
-										</table>
-									</td>
-									<td class="first-row">
-										<table class="table">
-											<tbody>
-												<tr th:each="elem : ${workflow?.outputParameters}">
-													<td th:text="${elem?.key}"></td>
-													<td th:text="${elem?.parameterValue}"></td>
-												</tr>
-											</tbody>
-										</table>
-									</td>
-								</tr>
-							</div>
-						</tbody>
+
+								<!-- Workflow content that is always visible -->
+								<tbody>
+									<tr>
+										<td th:id="'togglewf' + ${workflow.id}"
+											class="cursorpointer first-row no-right-border"
+											th:onclick="'toggleWorkflow('+${workflow.id}+')'">
+											<div class="hideworkflow" th:id="'hidewf' + ${workflow.id}"
+												th:style="${'display: none;'}">
+												<span data-feather="minus-circle"></span>
+											</div>
+											<div class="showworkflow" th:id="'showwf' + ${workflow.id}"
+												th:style="${'display: block;'}">
+												<span data-feather="plus-circle"></span>
+											</div>
+										</td>
+										<td class="cursorpointer first-row no-left-border"
+											th:onclick="'toggleWorkflow('+${workflow.id}+')'"
+											th:text="${workflow.id}"></td>
+										<td class="first-row" th:text="${workflow.version}"></td>
+										<td class="first-row" th:text="${workflow.name}"></td>
+										<td class="first-row" th:text="${workflow.uuid}"></td>
+										<td class="first-row" th:text="${workflow.description}"></td>
+										<td class="first-row" th:text="${workflow.workflowVersion}"></td>
+										<td class="first-row" th:text="${workflow.enabled}"></td>
+									</tr>
+								</tbody>
+
+								<!-- Workflow headers and content that can be hidden -->
+								<tbody class="filtercontent" th:id="'wfcontent'+${workflow.id}">
+
+									<!-- Table header (parts that are hidden by default) -->
+									<tr class="th-row">
+										<th class="tr-rowspan"><span>&nbsp;</span></th>
+										<th><span th:text="#{inputproductclass}">inputproductclass</span></th>
+										<th><span th:text="#{outputproductclass}">outputproductclass</span></th>
+										<th><span th:text="#{configuredprocessor}">configuredprocessor</span></th>
+										<th><span th:text="#{outputfileclass}">outputfileclass</span></th>
+										<th><span th:text="#{processingmode}">processingmode</span></th>
+										<th><span th:text="#{slicingtype}">slicingtype</span></th>
+										<th><span th:text="#{sliceduration}">sliceduration</span></th>
+									</tr>
+
+									<!-- Hidden content -->
+									<tr class="proseo-row-divider">
+										<td class="tr-rowspan">&nbsp;</td>
+										<td class="first-row"><a th:if="${hasroleproductreader}"
+											th:href="'/productclass-show?productClass=' + ${workflow.inputProductClass}"
+											th:text="${workflow.inputProductClass}"></a><span
+											th:unless="${hasroleproductreader}"
+											th:text="${workflow.inputProductClass}"></span></td>
+										<td class="first-row"><a th:if="${hasroleproductreader}"
+											th:href="'/productclass-show?productClass=' + ${workflow.outputProductClass}"
+											th:text="${workflow.outputProductClass}"></a><span
+											th:unless="${hasroleproductreader}"
+											th:text="${workflow.outputProductClass}"></span></td>
+										<td class="first-row"
+											th:text="${workflow.configuredProcessor}"></td>
+										<td class="first-row" th:text="${workflow.outputFileClass}"></td>
+										<td class="first-row" th:text="${workflow.processingMode}"></td>
+										<td class="first-row" th:text="${workflow.slicingType}"></td>
+										<td class="first-row" th:text="${workflow.sliceDuration}"></td>
+									</tr>
+
+									<!-- More hidden table headers -->
+									<tr class="th-row">
+										<th class="tr-rowspan"><span>&nbsp;</span></th>
+										<th><span th:text="#{sliceoverlap}">sliceoverlap</span></th>
+										<th><span th:text="#{inputfilters}">inputfilters</span></th>
+										<th><span th:text="#{workflowoptions}">workflowoptions</span></th>
+										<th><span th:text="#{classoutputparameters}">classoutputparameters</span></th>
+										<th><span th:text="#{outputparameters}">outputparameters</span></th>
+									</tr>
+
+									<!-- More hidden table content -->
+									<tr class="proseo-row-divider">
+										<td class="tr-rowspan">&nbsp;</td>
+										<td class="first-row" th:text="${workflow.sliceOverlap}"></td>
+										<td class="first-row">
+											<table class="table">
+												<tbody>
+													<tr th:each="elem : ${workflow?.inputFilters}">
+														<td th:text="${elem?.key}"></td>
+														<td th:text="${elem?.value}"></td>
+													</tr>
+												</tbody>
+											</table>
+										</td>
+										<td class="first-row">
+											<table class="table">
+												<tbody>
+													<tr th:each="elem : ${workflow?.workflowOptions}">
+														<td th:text="${elem?.name}"></td>
+														<td th:text="${elem?.defaultValue}"></td>
+													</tr>
+												</tbody>
+											</table>
+										</td>
+										<td class="first-row">
+											<table class="table">
+												<tbody>
+													<tr th:each="elem : ${workflow?.classOutputParameters}">
+														<td th:text="${elem?.key}"></td>
+														<td th:text="${elem?.value}"></td>
+													</tr>
+												</tbody>
+											</table>
+										</td>
+										<td class="first-row">
+											<table class="table">
+												<tbody>
+													<tr th:each="elem : ${workflow?.outputParameters}">
+														<td th:text="${elem?.key}"></td>
+														<td th:text="${elem?.parameterValue}"></td>
+													</tr>
+												</tbody>
+											</table>
+										</td>
+									</tr>
+
+								</tbody>
+
+						</div>
+						</div>
+
 					</table>
 
 					<div th:replace="fragments/navbar.html :: alternatePageNav"></div>
@@ -279,11 +289,30 @@
 	<!-- Imports -->
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 	<script src="https://unpkg.com/feather-icons"></script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.5.1.js"
+		integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+		crossorigin="anonymous"></script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+		integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+		crossorigin="anonymous"></script>
+	<script
+		src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+		integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+		crossorigin="anonymous"></script>
+	<script
+		src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
+	<script src="../static/fragments/proseo.js"
+		th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
+	<script src="../static/fragments/bootstrap-multiselect.js"
+		th:src="@{/fragments/bootstrap-multiselect.js}" type="text/javascript"></script>
 
 	<script type="text/javascript" th:inline="javascript">
 		// Global variables
 		var currentPage = 1; // Current page number
-		var pageSize = 2; // Maximum objects per page
+		var pageSize = 50; // Maximum objects per page
 		
 		// Workflow filters
 		var id = null;
@@ -322,10 +351,12 @@
 			  .then(html => {
 				  $("#workflowcontent").html(html); // Set the HTML content of the element
 				  feather.replace(); // Display the arrows on the buttons
-				  })
+                  document.getElementById("pageSizeField").placeholder = pageSize; //Display correct page size
+                  })
 			  .catch(console.error);
 		}
 		
+		// Function to fetch and apply filters
 		function setFilters(event) {	
 			// Allow for custom form handling
 			event.preventDefault();
@@ -339,6 +370,32 @@
 		    // Update the table according to the new filters
 		    updateTable(currentPage);
 		}
+		
+		// Function to hide or show workflow details
+	    function toggleWorkflow(id) {
+		      var content = document.getElementById("wfcontent" + id);
+		      var eleshow = document.getElementById("showwf" + id);
+		      var elehide = document.getElementById("hidewf" + id);
+		      $(content).toggleClass("filtercontent");
+		      if ($(content).css("display") === "none") {
+		          $(eleshow).show();
+		          $(elehide).hide();
+		      } else {
+		          $(eleshow).hide();
+		          $(elehide).show();
+		      }
+		  }
+		
+		// Function to customize the page size
+	    function updatePageSize() {
+			
+			// Retrieve the new page size
+			var newPageSize = document.getElementById("pageSizeField").value;
+			pageSize = (!isNaN(newPageSize) && newPageSize > 0) ? parseInt(newPageSize) : pageSize;console.log("New page size: " + pageSize);
+	        
+	        // Call the function to update the table with the new page size	        
+	        updateTable(currentPage);
+	    }
 	</script>
 
 	<script>
@@ -348,7 +405,7 @@
 		
 		// Add an event listener to the form so that the filters will be applied
 		document.getElementById("workflowFilters").addEventListener("submit", setFilters);
-    }
+		}
 	</script>
 </body>
 
