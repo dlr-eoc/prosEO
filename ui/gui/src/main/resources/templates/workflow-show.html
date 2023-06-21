@@ -139,12 +139,12 @@
 							<tr>
 								<th><span>&nbsp;</span></th>
 								<th><span th:text="#{id}">id</span></th>
-								<th><span th:text="#{version}">version</span></th>
 								<th><span th:text="#{name}">name</span></th>
-								<th><span th:text="#{uuid}">uuid</span></th>
-								<th><span th:text="#{description}">description</span></th>
 								<th><span th:text="#{workflowversion}">workflowversion</span></th>
-								<th><span th:text="#{enabled}">enabled</span></th>
+								<th><span th:text="#{inputproductclass}">inputproductclass</span></th>
+								<th><span th:text="#{outputproductclass}">outputproductclass</span></th>
+								<th><span th:text="#{description}">description</span></th>
+								<th><span th:text="#{processingmode}">processingmode</span></th>
 							</tr>
 						</thead>
 
@@ -169,33 +169,8 @@
 										<td class="cursorpointer first-row no-left-border"
 											th:onclick="'toggleWorkflow('+${workflow.id}+')'"
 											th:text="${workflow.id}"></td>
-										<td class="first-row" th:text="${workflow.version}"></td>
 										<td class="first-row" th:text="${workflow.name}"></td>
-										<td class="first-row" th:text="${workflow.uuid}"></td>
-										<td class="first-row" th:text="${workflow.description}"></td>
 										<td class="first-row" th:text="${workflow.workflowVersion}"></td>
-										<td class="first-row" th:text="${workflow.enabled}"></td>
-									</tr>
-								</tbody>
-
-								<!-- Workflow headers and content that can be hidden -->
-								<tbody class="filtercontent" th:id="'wfcontent'+${workflow.id}">
-
-									<!-- Table header (parts that are hidden by default) -->
-									<tr class="th-row">
-										<th class="tr-rowspan"><span>&nbsp;</span></th>
-										<th><span th:text="#{inputproductclass}">inputproductclass</span></th>
-										<th><span th:text="#{outputproductclass}">outputproductclass</span></th>
-										<th><span th:text="#{configuredprocessor}">configuredprocessor</span></th>
-										<th><span th:text="#{outputfileclass}">outputfileclass</span></th>
-										<th><span th:text="#{processingmode}">processingmode</span></th>
-										<th><span th:text="#{slicingtype}">slicingtype</span></th>
-										<th><span th:text="#{sliceduration}">sliceduration</span></th>
-									</tr>
-
-									<!-- Hidden content -->
-									<tr class="proseo-row-divider">
-										<td class="tr-rowspan">&nbsp;</td>
 										<td class="first-row"><a th:if="${hasroleproductreader}"
 											th:href="'/productclass-show?productClass=' + ${workflow.inputProductClass}"
 											th:text="${workflow.inputProductClass}"></a><span
@@ -206,18 +181,43 @@
 											th:text="${workflow.outputProductClass}"></a><span
 											th:unless="${hasroleproductreader}"
 											th:text="${workflow.outputProductClass}"></span></td>
+										<td class="first-row" th:text="${workflow.description}"></td>
+										<td class="first-row" th:text="${workflow.processingMode}"></td>
+									</tr>
+								</tbody>
+
+								<!-- Workflow headers and content that can be hidden -->
+								<tbody class="filtercontent" th:id="'wfcontent'+${workflow.id}">
+
+									<!-- Table header (parts that are hidden by default) -->
+									<tr class="th-row">
+										<th class="tr-rowspan"><span>&nbsp;</span></th>
+										<th><span th:text="#{slicingtype}">slicingtype</span></th>
+										<th><span th:text="#{sliceduration}">sliceduration</span></th>
+										<th><span th:text="#{sliceoverlap}">sliceoverlap</span></th>
+										<th><span th:text="#{configuredprocessor}">configuredprocessor</span></th>
+										<th><span th:text="#{outputfileclass}">outputfileclass</span></th>
+										<th><span th:text="#{uuid}">uuid</span></th>
+										<th><span th:text="#{version}">version</span></th>
+									</tr>
+
+									<!-- Hidden content -->
+									<tr class="proseo-row-divider">
+										<td class="tr-rowspan">&nbsp;</td>
+										<td class="first-row" th:text="${workflow.slicingType}"></td>
+										<td class="first-row" th:text="${workflow.sliceDuration}"></td>
+										<td class="first-row" th:text="${workflow.sliceOverlap}"></td>
 										<td class="first-row"
 											th:text="${workflow.configuredProcessor}"></td>
 										<td class="first-row" th:text="${workflow.outputFileClass}"></td>
-										<td class="first-row" th:text="${workflow.processingMode}"></td>
-										<td class="first-row" th:text="${workflow.slicingType}"></td>
-										<td class="first-row" th:text="${workflow.sliceDuration}"></td>
+										<td class="first-row" th:text="${workflow.uuid}"></td>
+										<td class="first-row" th:text="${workflow.version}"></td>
 									</tr>
 
 									<!-- More hidden table headers -->
 									<tr class="th-row">
 										<th class="tr-rowspan"><span>&nbsp;</span></th>
-										<th><span th:text="#{sliceoverlap}">sliceoverlap</span></th>
+										<th><span th:text="#{enabled}">enabled</span></th>
 										<th><span th:text="#{inputfilters}">inputfilters</span></th>
 										<th><span th:text="#{workflowoptions}">workflowoptions</span></th>
 										<th><span th:text="#{classoutputparameters}">classoutputparameters</span></th>
@@ -227,7 +227,7 @@
 									<!-- More hidden table content -->
 									<tr class="proseo-row-divider">
 										<td class="tr-rowspan">&nbsp;</td>
-										<td class="first-row" th:text="${workflow.sliceOverlap}"></td>
+										<td class="first-row" th:text="${workflow.enabled}"></td>
 										<td class="first-row">
 											<table class="table">
 												<tbody>
