@@ -68,13 +68,16 @@ public class ProductArchiveManager {
 		if (archiveExistsByCode(restArchive.getCode())) {
 			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.DUPLICATED_ARCHIVE, restArchive.getCode()));
 		}
-
-		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findByCode(restArchive.getCode());
 		
 		// all checks inside
-		modelArchive = new ProductArchiveRestMapper(restArchive).toModel();		
+		ProductArchive modelArchive = new ProductArchiveRestMapper(restArchive).toModel();		
 		
-		modelArchive = RepositoryService.getProductArchiveRepository().save(modelArchive);
+		try {
+			modelArchive = RepositoryService.getProductArchiveRepository().save(modelArchive);
+		}
+		catch (Exception e) {
+			throw e; 			
+		}
 		
 		logger.log(ProductArchiveMgrMessage.ARCHIVE_CREATED, modelArchive.getName());
 		
@@ -428,19 +431,19 @@ public class ProductArchiveManager {
 			archiveChanged = true;
 		}
 		
-		if (!modelArchive.getTokenUri().equals(changedArchive.getTokenUri())) {
+		if (!StringUtils.equalStrings(modelArchive.getTokenUri(), changedArchive.getTokenUri())) {
 			archiveChanged = true;
 		}
 		
-		if (!modelArchive.getUsername().equals(changedArchive.getUsername())) {
+		if (!StringUtils.equalStrings(modelArchive.getUsername(), changedArchive.getUsername())) {
 			archiveChanged = true;
 		}
 		
-		if (!modelArchive.getClientId().equals(changedArchive.getClientId())) {
+		if (!StringUtils.equalStrings(modelArchive.getClientId(), changedArchive.getClientId())) {
 			archiveChanged = true;
 		}
-		
-		if (!modelArchive.getClientSecret().equals(changedArchive.getClientSecret())) {
+
+		if (!StringUtils.equalStrings(modelArchive.getClientSecret(), changedArchive.getClientSecret())) {
 			archiveChanged = true;
 		}
 		
