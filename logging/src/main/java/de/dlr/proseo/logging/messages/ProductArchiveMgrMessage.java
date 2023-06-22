@@ -33,9 +33,8 @@ public enum ProductArchiveMgrMessage implements ProseoMessage {
 	 DUPLICATED_PRODUCT_CLASS	(4814, Level.ERROR, false, "Duplicated Product Class {0} in Product Archive {1}", ""),
 	 PRODUCT_CLASS_NOT_FOUND    (4815, Level.ERROR, false, "Product Class with code {0} and type {1} not found", ""),
 	 ARCHIVE_CODE_MISSING		(4816, Level.ERROR, false, "Product Archive code not set", ""),
+	 ARCHIVE_MISSION_MISSING	(4817, Level.ERROR, false, "Mission for Product Archive not set", ""),
 
-
-	 
 	;
 
 	private final int code;
