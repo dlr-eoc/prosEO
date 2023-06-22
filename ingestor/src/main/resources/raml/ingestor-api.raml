@@ -43,6 +43,11 @@ resourceTypes:
             The request sent to the server contains data which is not as expected e.g. invalid location URI
           headers:
             Warning: !include types/error.raml
+        403:
+          description: |
+            The user is not authorized to perform the desired action
+          headers:
+            Warning: !include types/error.raml 
         404:
           description: |
             The requested resource was not found                     
@@ -54,7 +59,12 @@ resourceTypes:
           description: |
             The request contained invalid data
           headers:
-            Waring: !include types/error.raml      
+            Warning: !include types/error.raml
+        403:
+          description: |
+            The user is not authorized to perform the desired action
+          headers:
+            Warning: !include types/error.raml 
         404:
           description: |
             The requested resource on which the modification is being attempted was not found              
@@ -66,7 +76,12 @@ resourceTypes:
           description: |
             The request contained invalid data
           headers:
-            Waring: !include types/error.raml      
+            Warning: !include types/error.raml
+        403:
+          description: |
+            The user is not authorized to perform the desired action
+          headers:
+            Warning: !include types/error.raml
         404:
           description: |
             The requested resource on which the modification is being attempted was not found              
@@ -76,9 +91,14 @@ resourceTypes:
           description: |
             The resource was modified since retrieval by the client
           headers:
-            Waring: !include types/error.raml      
+            Warning: !include types/error.raml      
     delete?:
-      responses:          
+      responses:
+        403:
+          description: |
+            The user is not authorized to perform the desired action
+          headers:
+            Warning: !include types/error.raml
         404:
           description: | 
             The requested resource to delete was not found 
@@ -89,27 +109,71 @@ resourceTypes:
   type: standard
   description: Methods to manage product metadata in the database
   get:
-    description: List of all products by mission, product class, processing mode, file class, quality 
-      and time ranges of start time and generation time; the output will be ordered by the columns
-        given in orderBy, and the resulting product list will only contain the records in the given range
+    description: | 
+       List of all products filtered by mission, product class, start time range;
+       the output will be ordered by the columns given in orderBy, and the resulting
+       product list will only contain the records in the given range
+
+       @param mission       the mission code
+       @param productClass  an array of product types
+       @param mode          processing mode as defined for the mission
+       @param fileClass     one of the file classes defined for the mission
+       @param quality       indicator for the suitability of this product for
+                            general use
+       @param startTimeFrom earliest sensing start time
+       @param startTimeTo   latest sensing start time
+       @param genTimeFrom   product generation time, earliest
+       @param genTimeTo     product generation time, latest
+       @param recordFrom    the first product to retrieve
+       @param recordTo      the last product to retrieve
+       @param jobStep       job step that produced the products (if any)
+       @param orderBy       an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+       @param httpHeaders   HTTP Authentication header
+       @return HTTP status "OK" and a list of products or HTTP status "FORBIDDEN"
+               and an error message, if a cross-mission data access was attempted,
+               or HTTP status "NOT_FOUND" and an error message, if no products
+               matching the search criteria were found HTTP status "TOO MANY
+               REQUESTS" if the result list exceeds a configured maximum
     displayName: getProducts
     queryParameters:
-      mission?: string
-      productClass?: string[]
-      mode?: string
-      fileClass?: string
-      quality?: string
-      startTimeFrom?: string
-      startTimeTo?: string
-      genTimeFrom?: string
-      genTimeTo?: string
+      mission?:
+        type: string
+        description: The mission
+      productClass?:
+        type: string[]
+        description: Product class this products instantiates
+      mode?:
+        type: string
+        description: Processing mode as defined for the mission
+      fileClass?:
+        type: string
+        description: One of the file classes defined for the mission
+      quality?:
+        type: string
+        description: Indicator for the suitability of this product for general use
+      startTimeFrom?:
+        type: string
+        description: Product (validity) start time as requested during order planning, earliest
+      startTimeTo?:
+        type: string
+        description: Product (validity) start time as requested during order planning, latest
+      genTimeFrom?:
+        type: string
+        description: Product generation time, earliest
+      genTimeTo?:
+        type: string
+        description: Product generation time, latest
       recordFrom?:
         type: integer
         format: int32
+        description: First result to display from an ordered result list 
       recordTo?:
         type: integer
         format: int32
-      jobStep?: integer
+        description: Last result to display from an ordered result list
+      jobStep?:
+        type: integer
+        description: Job step that produced this product (if any)
       orderBy?:
         type: string[]
         description: an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
@@ -119,8 +183,23 @@ resourceTypes:
           application/json:
             type: RestProduct[]
             example: !include ../../../../../model/src/main/resources/raml/examples/product-list.json
+      429:
+          description: |
+            The result list exceeds a configured maximum
+          headers:
+            Warning: !include types/error.raml
+            
   post:
-    description: Create a new product
+    description: |
+      Create a product from the given Json object (does NOT create associated
+      product files!)
+
+      @param restProduct the Json object to create the product from
+      @return HTTP status "CREATED" and a response containing a Json object
+              corresponding to the product after persistence (with ID and version
+              for all contained objects) or HTTP status "FORBIDDEN" and an error
+              message, if a cross-mission data access was attempted, or HTTP status
+              "BAD_REQUEST", if any of the input data was invalid
     displayName: createProduct
     body:
       application/json:
@@ -134,20 +213,57 @@ resourceTypes:
             example: !include ../../../../../model/src/main/resources/raml/examples/product.json
   /count:
     get:
-      description: Number of products available, possibly filtered by mission, product class, processing mode, file class, quality 
-          and time ranges of start time and generation time
+      description: |
+        Number of products available, possibly filtered by mission, product class and
+        time range
+
+        @param mission       the mission code
+        @param productClass  an array of product types
+        @param mode          processing mode as defined for the mission
+        @param fileClass     one of the file classes defined for the mission
+        @param quality       indicator for the suitability of this product for
+                             general use
+        @param startTimeFrom earliest sensing start time
+        @param startTimeTo   latest sensing start time
+        @param genTimeFrom   product generation time, earliest
+        @param genTimeTo     product generation time, latest
+        @param jobStep       job step that produced the products (if any)
+        @param httpHeaders   HTTP Authentication header
+        @return HTTP status "OK" and the number of products found (may be zero) or
+                HTTP status "FORBIDDEN" and an error message, if a cross-mission data
+                access was attempted
       displayName: countProducts
       queryParameters:
-        mission?: string
-        productClass?: string[]
-        mode?: string
-        fileClass?: string
-        quality?: string
-        startTimeFrom?: string
-        startTimeTo?: string
-        genTimeFrom?: string
-        genTimeTo?: string
-        jobStep?: integer
+        mission?:
+          type: string
+          description: The mission
+        productClass?:
+          type: string[]
+          description: Product class this products instantiates
+        mode?:
+          type: string
+          description: Processing mode as defined for the mission
+        fileClass?:
+          type: string
+          description: One of the file classes defined for the mission
+        quality?:
+          type: string
+          description: Indicator for the suitability of this product for general use
+        startTimeFrom?:
+          type: string
+          description: Product (validity) start time as requested during order planning, earliest
+        startTimeTo?:
+          type: string
+          description: Product (validity) start time as requested during order planning, latest
+        genTimeFrom?:
+          type: string
+          description: Product generation time, earliest
+        genTimeTo?:
+          type: string
+          description: Product generation time, latest
+        jobStep?:
+          type: integer
+          description: Job step that produced this product (if any)
       responses:
         200:
           body:
@@ -158,7 +274,15 @@ resourceTypes:
         type: integer
         format: long
     get:
-      description: Get a product by ID
+      description: |
+        Find the product with the given ID
+
+        @param id the ID to look for
+        @return HTTP status "OK" and a Json object corresponding to the product found
+                or HTTP status "BAD_REQUEST" and an error message, if no product ID
+                was given, or HTTP status "FORBIDDEN" and an error message, if a
+                cross-mission data access was attempted, or HTTP status "NOT_FOUND"
+                and an error message, if no product with the given ID exists
       displayName: getProductById
       responses:
         200:
@@ -167,7 +291,23 @@ resourceTypes:
               type: RestProduct
               example: !include ../../../../../model/src/main/resources/raml/examples/product.json
     patch:
-      description: Update a product by ID
+      description: |
+        Update the product with the given ID with the attribute values of the given
+        Json object. This method will NOT modify associated product files.
+
+        @param id      the ID of the product to update
+        @param restProduct a Json object containing the modified (and unmodified)
+                       attributes
+        @return HTTP status "OK" and a response containing a Json object
+                corresponding to the product after modification (with ID and version
+                for all contained objects) or HTTP status "NOT_MODIFIED" and the
+                unchanged product, if no attributes were actually changed, or HTTP
+                status "NOT_FOUND" and an error message, if no product with the given
+                ID exists, or HTTP status "BAD_REQUEST" and an error message, if any
+                of the input data was invalid, or HTTP status "FORBIDDEN" and an
+                error message, if a cross-mission data access was attempted, or HTTP
+                status "CONFLICT"and an error message, if the product has been
+                modified since retrieval by the client
       displayName: modifyProduct
       body:
         application/json:
@@ -185,14 +325,36 @@ resourceTypes:
               type: RestProduct
               example: !include ../../../../../model/src/main/resources/raml/examples/product.json
     delete:
-      description: Delete a product by ID
+      description: |
+        Delete a product by ID
+
+        @param id the ID of the product to delete
+        @return a response entity with HTTP status "NO_CONTENT", if the deletion was
+                successful, or HTTP status "NOT_FOUND", if the product did not exist,
+                or HTTP status "BAD_REQUEST", if the product still has files at some
+                Processing Facility, or HTTP status "FORBIDDEN" and an error message,
+                if a cross-mission data access was attempted, or HTTP status
+                "NOT_MODIFIED", if the deletion was unsuccessful
       responses:
         204:
     /download:
       get:
         description: |
-          Get the data file for the product as data stream (optionally range-restricted),
-          returns a redirection link to the Storage Manager of a random Processing Facility
+          Get the primary data file (or ZIP file, if available) for the product as data
+          stream (optionally range-restricted), returns a redirection link to the
+          Storage Manager of a random Processing Facility
+
+          @param id       the ID of the product to download
+          @param fromByte the first byte of the data stream to download (optional,
+                          default is file start, i.e. byte 0)
+          @param toByte   the last byte of the data stream to download (optional,
+                          default is file end, i.e. file size - 1)
+          @return HTTP status "TEMPORARY_REDIRECT" and a redirect URL in the HTTP
+                  Location header, or HTTP status "BAD_REQUEST" and an error message,
+                  if no or an invalid product ID was given, or HTTP status "FORBIDDEN"
+                  and an error message, if a cross-mission data access was attempted,
+                  or HTTP status "NOT_FOUND" and an error message, if no product with
+                  the given ID exists or if it does not have a data file
         displayName: downloadProductById
         queryParameters:
           fromByte?:
@@ -205,7 +367,18 @@ resourceTypes:
           307:
       /token:
         get:
-          description: Get a JSON Web Token for creating a download link to a Storage Manager
+          description: |
+            Get a JSON Web Token for creating a download link to a Storage Manager
+
+            @param id       the ID of the product to download
+            @param fileName the name of the file to download (default primary data file
+                            or ZIP file, if available)
+            @return HTTP status "OK" and the signed JSON Web Token (JWS) as per RFC 7515
+                    and RFC 7519, or HTTP status "BAD_REQUEST" and an error message, if
+                    no or an invalid product ID was given, or HTTP status "FORBIDDEN" and
+                    an error message, if a cross-mission data access was attempted, or
+                    HTTP status "NOT_FOUND" and an error message, if no product with the
+                    given ID or no file with the given name exists
           displayName: getDownloadTokenById
           queryParameters:
             fileName?:
@@ -222,7 +395,16 @@ resourceTypes:
         type: string
         pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$
     get:
-      description: Get a product by UUID
+      description: |
+        Get a product by UUID
+
+        @param uuid the universally unique product identifier
+        @return HTTP status "OK" and a Json object corresponding to the product found
+                or HTTP status "BAD_REQUEST" and an error message, if no or an
+                invalid product UUID was given, or HTTP status "FORBIDDEN" and an
+                error message, if a cross-mission data access was attempted, or HTTP
+                status "NOT_FOUND" and an error message, if no product with the given
+                UUID exists
       displayName: getProductByUuid
       responses:
         200:
@@ -240,7 +422,31 @@ resourceTypes:
         type: string
         description: The name of the facility to ingest the products to
     post:
-      description: Ingest all given products into the storage manager of the given processing facility
+      description: |
+        Ingest all given products into the storage manager of the given processing
+        facility. If the ID of a product to ingest is null or 0 (zero), then the
+        product will be created, otherwise a matching product will be looked up and
+        updated.
+        
+        The Production Planner will be notified of all ingested products. However,
+        notification is optional, and if it fails, the Ingestor still returns with
+        HTTP status CREATED. We rely on a cyclical check by the Production Planner to
+        pick up all newly ingested products, should it not have been notified.
+
+        @param processingFacility the processing facility to ingest products to
+        @param copyFiles          indicates, whether to copy the files to a different
+                                  storage area (default "true"; only applicable if
+                                  source and target storage type are the same)
+        @param ingestorProduct    a list of product descriptions with product file
+                                  locations
+        @param httpHeaders        the HTTP request headers (injected)
+        @return HTTP status "CREATED" and a Json list of the products updated and/or
+                created including their product files or HTTP status "BAD_REQUEST",
+                if an invalid processing facility was given, or HTTP status
+                "FORBIDDEN" and an error message, if a cross-mission data access was
+                attempted, or HTTP status "INTERNAL_SERVER_ERROR", if the
+                communication to the Storage Manager or to the Production Planner
+                failed
       displayName: ingestProducts
       queryParameters:
         copyFiles?:
@@ -265,7 +471,17 @@ resourceTypes:
           format: long
           description: The ID of the product to ingest product files for
       get:
-        description: Get the product file metadata for a product at a given processing facility
+        description: |
+          Get the product file metadata for a product at a given processing facility
+          @param productId          the ID of the product to retrieve
+          @param processingFacility the processing facility to retrieve the product
+                                    file metadata for
+          @param httpHeaders        the HTTP request headers (injected)
+          @return HTTP status "OK" and the Json representation of the product file
+                  metadata, or HTTP status "FORBIDDEN" and an error message, if a
+                  cross-mission data access was attempted, or HTTP status "NOT_FOUND",
+                  if no product file for the given product ID exists at the given
+                  processing facility        
         displayName: getProductFile
         responses:
           200:
@@ -274,8 +490,27 @@ resourceTypes:
                 type: RestProductFile
                 example: !include ../../../../../model/src/main/resources/raml/examples/productfile.json
       post:
-        description: Create the metadata of a new product file for a product at a given processing facility
-                     (it is assumed that the files themselves are already pushed to the Storage Manager)
+        description: |
+         Create the metadata of a new product file for a product at a given processing
+         facility (it is assumed that the files themselves are already pushed to the
+         Storage Manager)
+  
+         The Production Planner will be notified of the ingested product. However,
+         notification is optional, and if it fails, the Ingestor still returns with
+         HTTP status CREATED. We rely on a cyclical check by the Production Planner to
+         pick up all newly ingested products, should it not have been notified.
+ 
+         @param productId          the ID of the product to retrieve
+         @param processingFacility the name of the processing facility, in which the
+                                   files have been stored
+         @param restProductFile    the REST product file to store
+         @param httpHeaders        the HTTP request headers (injected)
+         @return HTTP status "CREATED" and the updated REST product file (with ID and
+               version) or HTTP status "FORBIDDEN" and an error message, if a
+               cross-mission data access was attempted, or HTTP status
+               "BAD_REQUEST", if the processing facility or the product cannot be
+               found, or if the data for the product file is invalid (also, if a
+               product file for the given processing facility already exists)
         displayName: ingestProductFile
         body:
           application/json:
@@ -288,7 +523,24 @@ resourceTypes:
                 type: RestProductFile
                 example: !include ../../../../../model/src/main/resources/raml/examples/productfile.json
       patch:
-        description: Update the product file metadata for a product at a given processing facility
+        description: |
+          Update the product file metadata for a product at a given processing facility
+          (it is assumed that any new or changed files themselves are already pushed to
+          the Storage Manager)
+          
+          @param productId          the ID of the product to retrieve
+          @param processingFacility the name of the processing facility, in which the
+                                    files have been stored
+          @param httpHeaders        the HTTP request headers (injected)
+          @param restProductFile        the REST product file to store HTTP status
+          @return HTTP status OK and the updated REST product file (with ID and
+             version) or HTTP status "NOT_FOUND" and an error message, if no
+             product with the given ID or no processing facility with the given
+             name exists, or HTTP status "BAD_REQUEST" and an error message, if
+             any of the input data was invalid, or HTTP status "FORBIDDEN" and an
+             error message, if a cross-mission data access was attempted, or HTTP
+             status "CONFLICT"and an error message, if the product file has been
+             modified since retrieval by the client
         displayName: modifyProductFile
         body:
           application/json:
@@ -301,7 +553,25 @@ resourceTypes:
                 type: RestProductFile
                 example: !include ../../../../../model/src/main/resources/raml/examples/productfile.json
       delete:
-        description: Delete a product file for a product from a given processing facility (metadata and actual data file(s))
+        description: |
+          Delete a product file for a product from a given processing facility
+          (metadata and actual data file(s))
+ 
+          @param productId          the ID of the product to retrieve
+          @param processingFacility the name of the processing facility, from which the
+                                    files shall be deleted
+          @param eraseFiles         erase the data file(s) from the storage area
+                                    (default "true")
+          @param httpHeaders        the HTTP request headers (injected)
+          @return a response entity with HTTP status "NO_CONTENT", if the deletion was
+                  successful, or HTTP status "NOT_FOUND", if the processing facility,
+                  the product or the product file did not exist, or HTTP status
+                  "BAD_REQUEST", if the product currently satisfies a product query for
+                  the given processing facility, or HTTP status "NOT_MODIFIED", if the
+                  deletion was unsuccessful, or HTTP status "FORBIDDEN" and an error
+                  message, if a cross-mission data access was attempted, or HTTP status
+                  "INTERNAL_SERVER_ERROR", if the communication to the Storage Manager
+                  or to the Production Planner failed        
         displayName: deleteProductFile
         queryParameters:
           eraseFiles?:
