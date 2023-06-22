@@ -669,7 +669,7 @@ public class CadipMonitor extends BaseMonitor {
 		/**
 		 * Sets the channel number
 		 * 
-		 * @param channel the channel numbe to set
+		 * @param channel the channel number to set
 		 */
 		public void setChannel(Integer channel) {
 			this.channel = channel;
@@ -1788,7 +1788,7 @@ public class CadipMonitor extends BaseMonitor {
 				retrieveQualityInfo(transferSession);
 				
 				// Check the total session data size
-				if (transferSession.getDownlinkSize() != sessionDataSizes.get(transferSession.getIdentifier())) {
+				if (!transferSession.getDownlinkSize().equals(sessionDataSizes.get(transferSession.getIdentifier()))) {
 					logger.log(ApiMonitorMessage.DATA_SIZE_MISMATCH,
 							transferSession.getIdentifier(),
 							transferSession.getDownlinkSize(),
