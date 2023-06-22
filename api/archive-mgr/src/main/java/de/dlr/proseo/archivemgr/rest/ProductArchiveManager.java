@@ -15,20 +15,21 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.archivemgr.rest.model.ProductArchiveModelMapper;
 import de.dlr.proseo.archivemgr.rest.model.ProductArchiveRestMapper;
 import de.dlr.proseo.archivemgr.rest.model.RestProductArchive;
+import de.dlr.proseo.archivemgr.utils.StringUtils;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.FacilityMgrMessage;
-import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.ProductArchiveMgrMessage;
 import de.dlr.proseo.model.ProductArchive;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.service.SecurityService;
 
 /**
  * Service methods required to create, modify and delete product archives in the
@@ -43,6 +44,10 @@ public class ProductArchiveManager {
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
+	
+	/** Utility class for user authorizations */
+	@Autowired
+	private SecurityService securityService;
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductArchiveManager.class);
@@ -67,13 +72,16 @@ public class ProductArchiveManager {
 		if (archiveExistsByCode(restArchive.getCode())) {
 			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.DUPLICATED_ARCHIVE, restArchive.getCode()));
 		}
-
-		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findByCode(restArchive.getCode());
 		
 		// all checks inside
-		modelArchive = new ProductArchiveRestMapper(restArchive).toModel();		
+		ProductArchive modelArchive = new ProductArchiveRestMapper(restArchive, securityService.getMission()).toModel();		
 		
-		modelArchive = RepositoryService.getProductArchiveRepository().save(modelArchive);
+		try {
+			modelArchive = RepositoryService.getProductArchiveRepository().save(modelArchive);
+		}
+		catch (Exception e) {
+			throw e; 			
+		}
 		
 		logger.log(ProductArchiveMgrMessage.ARCHIVE_CREATED, modelArchive.getName());
 		
@@ -179,39 +187,6 @@ public class ProductArchiveManager {
 		return result;
 	}
 	
-	// TODO: Delete legacy code after confirmation  
-	 /*		
-	// Simple case: no search criteria set
-	if (null == name) {
-
-		for (ProductArchive archive : RepositoryService.getProductArchiveRepository().findAll()) {
-			if (logger.isDebugEnabled())
-				logger.debug("Found product archive with ID {}", archive.getId());
-
-			RestProductArchive restArchive =new ProductArchiveModelMapper(archive).toRest();;
-			if (logger.isDebugEnabled())
-				logger.debug("Created result rest product archive with ID {}", restArchive.getId());
-
-			result.add(restArchive);
-		}
-	} 
-	
-	// TODO: Use JPA to access to db
-	// Search by name
-	else {
-
-		String jpqlQuery = "select p from ProductArchive p where p.name = :name";
-		Query query = em.createQuery(jpqlQuery);
-		query.setParameter("name", name);
-
-		for (Object resultObject : query.getResultList()) {
-			if (resultObject instanceof ProductArchive) {
-				result.add(new ProductArchiveModelMapper((ProductArchive) resultObject).toRest());
-			}
-		}
-	}
-	*/
-
 	/**
 	 * Find the product archive with the given ID
 	 * 
@@ -277,7 +252,7 @@ public class ProductArchiveManager {
 		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findById(id).get();
 		modelArchive = new ProductArchiveModelMapper(modelArchive).get();
 		
-		ProductArchive changedArchive = new ProductArchiveRestMapper(restArchive).toModel();
+		ProductArchive changedArchive = new ProductArchiveRestMapper(restArchive, securityService.getMission()).toModel();
 		
 		boolean archiveChanged = isArchiveChanged(modelArchive, changedArchive);
 					
@@ -346,12 +321,12 @@ public class ProductArchiveManager {
 		if (null == modelArchive || null == changedArchive) {
 			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING));
 		}
-		
-		if (!modelArchive.getCode().equals(changedArchive.getCode())) {		
+				
+		if (!StringUtils.equalStrings(modelArchive.getCode(), changedArchive.getCode())) {		
 			modelArchive.setCode(changedArchive.getCode());
 		}
 
-		if (!modelArchive.getName().equals(changedArchive.getName())) {	
+		if (!StringUtils.equalStrings(modelArchive.getName(), changedArchive.getName())) {		
 			modelArchive.setName(changedArchive.getName());
 		}
 		
@@ -359,11 +334,11 @@ public class ProductArchiveManager {
 			modelArchive.setArchiveType(changedArchive.getArchiveType());
 		}
 		
-		if (!modelArchive.getBaseUri().equals(changedArchive.getBaseUri())) {
+		if (!StringUtils.equalStrings(modelArchive.getBaseUri(), changedArchive.getBaseUri())) {		
 			modelArchive.setBaseUri(changedArchive.getBaseUri());
 		}
 		
-		if (!modelArchive.getContext().equals(changedArchive.getContext())) {
+		if (!StringUtils.equalStrings(modelArchive.getContext(), changedArchive.getContext())) {		
 			modelArchive.setContext(changedArchive.getContext());
 		}
 		
@@ -371,19 +346,19 @@ public class ProductArchiveManager {
 			modelArchive.setTokenRequired(changedArchive.getTokenRequired());
 		}
 		
-		if (!modelArchive.getTokenUri().equals(changedArchive.getTokenUri())) {
+		if (!StringUtils.equalStrings(modelArchive.getTokenUri(), changedArchive.getTokenUri())) {		
 			modelArchive.setTokenUri(changedArchive.getTokenUri());
 		}
 		
-		if (!modelArchive.getUsername().equals(changedArchive.getUsername())) {
+		if (!StringUtils.equalStrings(modelArchive.getUsername(), changedArchive.getUsername())) {		
 			modelArchive.setUsername(changedArchive.getUsername());
 		}
 		
-		if (!modelArchive.getClientId().equals(changedArchive.getClientId())) {
+		if (!StringUtils.equalStrings(modelArchive.getClientId(), changedArchive.getClientId())) {		
 			modelArchive.setClientId(changedArchive.getClientId());
 		}
 		
-		if (!modelArchive.getClientSecret().equals(changedArchive.getClientSecret())) {
+		if (!StringUtils.equalStrings(modelArchive.getClientSecret(), changedArchive.getClientSecret())) {		
 			modelArchive.setClientSecret(changedArchive.getClientSecret());
 		}
 		
@@ -427,19 +402,19 @@ public class ProductArchiveManager {
 			archiveChanged = true;
 		}
 		
-		if (!modelArchive.getTokenUri().equals(changedArchive.getTokenUri())) {
+		if (!StringUtils.equalStrings(modelArchive.getTokenUri(), changedArchive.getTokenUri())) {
 			archiveChanged = true;
 		}
 		
-		if (!modelArchive.getUsername().equals(changedArchive.getUsername())) {
+		if (!StringUtils.equalStrings(modelArchive.getUsername(), changedArchive.getUsername())) {
 			archiveChanged = true;
 		}
 		
-		if (!modelArchive.getClientId().equals(changedArchive.getClientId())) {
+		if (!StringUtils.equalStrings(modelArchive.getClientId(), changedArchive.getClientId())) {
 			archiveChanged = true;
 		}
-		
-		if (!modelArchive.getClientSecret().equals(changedArchive.getClientSecret())) {
+
+		if (!StringUtils.equalStrings(modelArchive.getClientSecret(), changedArchive.getClientSecret())) {
 			archiveChanged = true;
 		}
 		
@@ -449,8 +424,4 @@ public class ProductArchiveManager {
 		
 		return archiveChanged; 
 	}
-
-
-	
-	
 }

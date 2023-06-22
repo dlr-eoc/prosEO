@@ -80,18 +80,19 @@ public class ProductArchiveCommandRunner {
 	private static ProseoLogger logger = new ProseoLogger(ProductArchiveCommandRunner.class);
 
 	/**
-	 * Retrieve the processing product archive with the given name, notifying the user of any errors occurring
+	 * Retrieve the processing product archive with the given code, notifying the user of any errors occurring
 	 * 
-	 * @param archiveName the archive name
+	 * @param archiveCode the archive code
 	 * @return the requested archive or null, if the archive does not exist
 	 */
-	private RestProductArchive retrieveArchiveByName(String archiveName) {
+	private RestProductArchive retrieveArchiveByCode(String archiveCode) {
 		List<?> resultList = null;
 		try {
+			String encodedArchiveCode = "?code=" + URLEncoder.encode(archiveCode, Charset.defaultCharset());
 			resultList = serviceConnection.getFromService(serviceConfig.getArchiveManagerUrl(),
-					URI_PATH_ARCHIVES + "?name=" + URLEncoder.encode(archiveName, Charset.defaultCharset()), List.class, loginManager.getUser(), loginManager.getPassword());
+					URI_PATH_ARCHIVES + encodedArchiveCode, List.class, loginManager.getUser(), loginManager.getPassword() );
 			if (resultList.isEmpty()) {
-				String message = logger.log(UIMessage.ARCHIVE_NOT_FOUND, archiveName);
+				String message = logger.log(UIMessage.ARCHIVE_NOT_FOUND, archiveCode);
 				System.err.println(message);
 				return null;
 			} else {
@@ -99,7 +100,7 @@ public class ProductArchiveCommandRunner {
 				try {
 					return mapper.convertValue(resultList.get(0), RestProductArchive.class);
 				} catch (Exception e) {
-					String message = logger.log(UIMessage.ARCHIVE_NOT_READABLE, archiveName, e.getMessage());
+					String message = logger.log(UIMessage.ARCHIVE_NOT_READABLE, archiveCode, e.getMessage());
 					System.err.println(message);
 					return null;
 				}
@@ -108,7 +109,7 @@ public class ProductArchiveCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = logger.log(UIMessage.ARCHIVE_NOT_FOUND, archiveName);
+				message = logger.log(UIMessage.ARCHIVE_NOT_FOUND, archiveCode);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -135,7 +136,7 @@ public class ProductArchiveCommandRunner {
 	 * @param restArchive rest archive
 	 * @param updatedArchive updated archive
 	 */
-	private void setRestArchiveAttributes(RestProductArchive restArchive, RestProductArchive updatedArchive) {
+	private void setRestArchiveAttributes(RestProductArchive restArchive, RestProductArchive updatedArchive, boolean isDeleteAttributes) {
 
 		if (null != updatedArchive.getCode() && 0 != updatedArchive.getCode().length()) { // mandatory, must not be empty
 			restArchive.setCode(updatedArchive.getCode());
@@ -155,27 +156,64 @@ public class ProductArchiveCommandRunner {
 		if (null != updatedArchive.getTokenRequired()) {
 			restArchive.setTokenRequired(updatedArchive.getTokenRequired());
 		}
-		if (null != updatedArchive.getTokenUri() && !updatedArchive.getTokenUri().isBlank()) {
+		
+		// optional fields
+		if (isDeleteAttributes || null != updatedArchive.getTokenUri() && !updatedArchive.getTokenUri().isBlank()) {
 			restArchive.setTokenUri(updatedArchive.getTokenUri());
 		}
-		if (null != updatedArchive.getUsername() && !updatedArchive.getUsername().isBlank()) {
+		if (isDeleteAttributes || null != updatedArchive.getUsername() && !updatedArchive.getUsername().isBlank()) {
 			restArchive.setUsername(updatedArchive.getUsername());
 		}
-		if (null != updatedArchive.getPassword() && !updatedArchive.getPassword().isBlank()) {
+		if (isDeleteAttributes || null != updatedArchive.getPassword() && !updatedArchive.getPassword().isBlank()) {
 			restArchive.setPassword(updatedArchive.getPassword());
 		}
-		if (null != updatedArchive.getClientId() && !updatedArchive.getClientId().isBlank()) {
+		if (isDeleteAttributes || null != updatedArchive.getClientId() && !updatedArchive.getClientId().isBlank()) {
 			restArchive.setClientId(updatedArchive.getClientId());
 		}
-		if (null != updatedArchive.getClientSecret() && !updatedArchive.getClientSecret().isBlank()) {
+		if (isDeleteAttributes || null != updatedArchive.getClientSecret() && !updatedArchive.getClientSecret().isBlank()) {
 			restArchive.setClientSecret(updatedArchive.getClientSecret());
 		}
-		if (null != updatedArchive.getSendAuthInBody()) {
+		if (isDeleteAttributes || null != updatedArchive.getSendAuthInBody()) {
 			restArchive.setSendAuthInBody(updatedArchive.getSendAuthInBody());
 		}
 	}
 
+	/**
+	 * Clones rest product archive 
+	 * 
+	 * @param source source rest product archive
+	 * @return cloned rest product archive
+	 */
+	private RestProductArchive cloneRestProductArchive(RestProductArchive source) {
+		
+		if (source == null) return null;  
+		
+		RestProductArchive cloned = new RestProductArchive(); 
+		
+		cloned.setId(source.getId());
+		
+		cloned.setCode(source.getCode());
+		cloned.setName(source.getName());
+		cloned.setArchiveType(source.getArchiveType());
+		
+		cloned.setBaseUri(source.getBaseUri());
+		cloned.setCode(source.getCode());
+		cloned.setContext(source.getContext());
+		
+		cloned.setTokenRequired(source.getTokenRequired());
+		cloned.setTokenUri(source.getTokenUri());
+		cloned.setUsername(source.getUsername());
+		
+		cloned.setPassword(source.getPassword());
+		cloned.setClientId(source.getClientId());
+		cloned.setClientSecret(source.getClientSecret());
+		
+		cloned.setSendAuthInBody(source.getSendAuthInBody());
+		cloned.setAvailableProductClasses(source.getAvailableProductClasses());
 
+		return cloned; 
+	}
+	
 	/**
 	 * Create a new product archive in prosEO; if the input is not from a file, the user will be prompted for mandatory 
 	 * attributes not given on the command line
@@ -349,7 +387,7 @@ public class ProductArchiveCommandRunner {
 		/* If archive name is set, show just the requested archive */
 		if (!showCommand.getParameters().isEmpty()) {
 			// Only archive name allowed as parameter
-			RestProductArchive restArchive = retrieveArchiveByName(showCommand.getParameters().get(0).getValue());
+			RestProductArchive restArchive = retrieveArchiveByCode(showCommand.getParameters().get(0).getValue());
 			if (null != restArchive) {
 				try {
 					CLIUtil.printObject(System.out, restArchive, archiveOutputFormat);
@@ -416,10 +454,10 @@ public class ProductArchiveCommandRunner {
 				return;
 			} 
 		} else {
-			// Print archive names only; resultList must be a list of product archives
+			// Print archive codes only; resultList must be a list of product archives
 			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
 				if (resultObject instanceof Map) {
-					System.out.println(((Map<?, ?>) resultObject).get("name"));
+					System.out.println(((Map<?, ?>) resultObject).get("code"));
 				}
 			}
 		}
@@ -452,11 +490,32 @@ public class ProductArchiveCommandRunner {
 			}
 		}
 		
+	
+		
+	
+		
 		/* Read product archive file, if any */
 		RestProductArchive updatedArchive = null;
 		if (null == archiveFile) {
-			updatedArchive = new RestProductArchive();
-			updatedArchive.setArchiveType(ArchiveType.AIP.toString());
+			
+			if (updateCommand.getParameters().size() == 0) {
+				return; // no "code" parameter
+			}
+			
+			String code = updateCommand.getParameters().get(0).getValue();
+			updatedArchive = retrieveArchiveByCode(code);
+			if (null == updatedArchive) {
+				return; // no archive with "code" found
+			}
+			updatedArchive = this.cloneRestProductArchive(updatedArchive);
+			
+		
+			
+			// TODO: check if other parameters needed
+			// updatedArchive = new RestProductArchive();
+			// updatedArchive.setCode(code);
+			// updatedArchive.setTokenRequired(false);
+			// updatedArchive.setSendAuthInBody(false);
 		} else {
 			try {
 				updatedArchive = CLIUtil.parseObjectFile(archiveFile, archiveFileFormat, RestProductArchive.class);
@@ -466,12 +525,17 @@ public class ProductArchiveCommandRunner {
 			}
 		}
 		
+		RestProductArchive restArchive = retrieveArchiveByCode(updatedArchive.getCode());
+		if (null == restArchive) {
+			return;
+		}
+		
 		/* Check command parameters (overriding values from product archive file) */
 		for (int i = 0; i < updateCommand.getParameters().size(); ++i) {
 			ParsedParameter param = updateCommand.getParameters().get(i);
 			if (0 == i) {
-				// First parameter is archive name
-				updatedArchive.setName(param.getValue());
+				// First parameter is archive code
+				updatedArchive.setCode(param.getValue());
 			} else {
 				// Remaining parameters are "attribute=value" parameters
 				try {
@@ -484,19 +548,16 @@ public class ProductArchiveCommandRunner {
 		}
 		
 		/* Read original archive from Archive Manager service */
-		if (null == updatedArchive.getName() || 0 == updatedArchive.getName().length()) {
+		if (null == updatedArchive.getCode() || 0 == updatedArchive.getCode().length()) {
 			// No identifying value given
-			System.err.println(ProseoLogger.format(UIMessage.NO_ARCHIVE_NAME_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_ARCHIVE_CODE_GIVEN));
 			return;
 		}
-		RestProductArchive restArchive = retrieveArchiveByName(updatedArchive.getName());
-		if (null == restArchive) {
-			return;
-		}
+
 		
 		/* Compare attributes of database archive with updated archive */
 		// No modification of ID, version and archive name allowed
-		setRestArchiveAttributes(restArchive, updatedArchive);
+		setRestArchiveAttributes(restArchive, updatedArchive, isDeleteAttributes);
 		
 		
 		/* Update product archive using Archive Manager service */
@@ -548,13 +609,13 @@ public class ProductArchiveCommandRunner {
 		/* Get product archive name from command parameters */
 		if (1 > deleteCommand.getParameters().size()) {
 			// No identifying value given
-			System.err.println(ProseoLogger.format(UIMessage.NO_ARCHIVE_NAME_GIVEN));
+			System.err.println(ProseoLogger.format(UIMessage.NO_ARCHIVE_CODE_GIVEN));
 			return;
 		}
-		String archiveName = deleteCommand.getParameters().get(0).getValue();
+		String archiveCode = deleteCommand.getParameters().get(0).getValue();
 		
 		/* Retrieve the product archive using Archive Manager service */
-		RestProductArchive restArchive = retrieveArchiveByName(archiveName);
+		RestProductArchive restArchive = retrieveArchiveByCode(archiveCode);
 		if (null == restArchive) {
 			return;
 		}
@@ -564,6 +625,7 @@ public class ProductArchiveCommandRunner {
 			serviceConnection.deleteFromService(serviceConfig.getArchiveManagerUrl(),
 					URI_PATH_ARCHIVES + "/" + restArchive.getId(), 
 					loginManager.getUser(), loginManager.getPassword());
+			
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
@@ -576,7 +638,7 @@ public class ProductArchiveCommandRunner {
 						e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				message = logger.log(UIMessage.ARCHIVE_DELETE_FAILED, archiveName, e.getMessage());
+				message = logger.log(UIMessage.ARCHIVE_DELETE_FAILED, archiveCode, e.getMessage());
 				break;
 			default:
 				message = logger.log(UIMessage.EXCEPTION, e.getMessage());
@@ -589,7 +651,7 @@ public class ProductArchiveCommandRunner {
 		}
 		
 		/* Report success */
-		String message = logger.log(UIMessage.ARCHIVE_DELETED, restArchive.getId());
+		String message = logger.log(UIMessage.ARCHIVE_DELETED, restArchive.getCode(), restArchive.getId());
 		System.out.println(message);
 	}
 	

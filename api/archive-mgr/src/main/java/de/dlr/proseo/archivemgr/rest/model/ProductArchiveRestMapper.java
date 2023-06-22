@@ -33,6 +33,9 @@ public class ProductArchiveRestMapper {
 	/** Rest Archive as input parameter */
 	private RestProductArchive restArchive;  
 	
+	/** Mission */
+	String mission;
+	
 	/** Product Archive as output parameter */
 	private ProductArchive modelArchive = new ProductArchive();
 	
@@ -41,7 +44,7 @@ public class ProductArchiveRestMapper {
 	 * 
 	 * @param restArchive rest archive
 	 */
-	public ProductArchiveRestMapper(RestProductArchive restArchive) {
+	public ProductArchiveRestMapper(RestProductArchive restArchive, String mission) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> Constructor({})", (null == restArchive ? "MISSING" : restArchive.getId()));
 
@@ -49,7 +52,13 @@ public class ProductArchiveRestMapper {
 			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING));
 		}
 		
+		if (null == mission) {
+			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSION_MISSING));
+		}
+		
 		this.restArchive = restArchive; 
+		
+		this.mission = mission; 
 		
 		setDefaultValuesIfNull();
 		
@@ -91,7 +100,7 @@ public class ProductArchiveRestMapper {
 		
 		modelArchive.setCode(restArchive.getCode());
 		modelArchive.setContext(restArchive.getContext());
-		modelArchive.setId(restArchive.getId());
+		// modelArchive.setId(restArchive.getId());
 		
 		modelArchive.setName(restArchive.getName());
 		modelArchive.setPassword(restArchive.getPassword());	
@@ -123,6 +132,7 @@ public class ProductArchiveRestMapper {
 		}
 	}
 	
+
 	/**
 	 * Checks mandatory fields in product archive
 	 * 
@@ -163,10 +173,6 @@ public class ProductArchiveRestMapper {
 				throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Password", "product archive model checker"));
 			}
 		}
-		
-	
-		
-	
 	}
 		
 	/**
@@ -175,20 +181,34 @@ public class ProductArchiveRestMapper {
 	 */
 	private void setAvailableProductClasses()
 	{
-		String code = restArchive.getCode();
 		ProductClassRepository repository = RepositoryService.getProductClassRepository();
+		
+		// TODO: FOR DEBUGGING, remove in release 
+//		int i = 0;
+//		System.out.println("ProductClass Count = " + repository.count());
+//		
+//		for (ProductClass productClass : repository.findAll()) {
+//			
+//			String str = i + "=" + productClass.getProductType() + ", " + productClass.getId();
+//			
+//			System.out.println(str);
+//			
+//			if (i==3) break;
+//			
+//			
+//		}
 		
 		Set<ProductClass> modelProductClasses = new HashSet<>();
 		
 		for (String productType : restArchive.getAvailableProductClasses() ) {
 			
-			ProductClass productClass = repository.findByMissionCodeAndProductType(code, productType);
+			ProductClass productClass = repository.findByMissionCodeAndProductType(mission, productType);
 
 			// ProductClass with such code and productType not found
 			if (null == productClass) {
 				
 				throw new IllegalArgumentException(
-						logger.log(ProductArchiveMgrMessage.PRODUCT_CLASS_NOT_FOUND, code, productType));			
+						logger.log(ProductArchiveMgrMessage.PRODUCT_CLASS_NOT_FOUND, mission, productType));			
 			}
 			
 			// adding product class, if not duplicated
@@ -197,9 +217,8 @@ public class ProductArchiveRestMapper {
 				throw new IllegalArgumentException(
 						logger.log(ProductArchiveMgrMessage.DUPLICATED_PRODUCT_CLASS, productClass.getProductType(), restArchive.getCode()));			
 			}
-	
 		}
-		
+				
 		modelArchive.setAvailableProductClasses(modelProductClasses);
 	}
 }

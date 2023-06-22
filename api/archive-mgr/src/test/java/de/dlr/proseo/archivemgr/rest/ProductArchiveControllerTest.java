@@ -8,6 +8,8 @@ package de.dlr.proseo.archivemgr.rest;
 import static org.junit.Assert.assertEquals;
 
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 import org.junit.After;
 import org.junit.Before;
@@ -27,6 +29,7 @@ import de.dlr.proseo.archivemgr.rest.model.ProductArchiveModelMapper;
 import de.dlr.proseo.archivemgr.rest.model.RestProductArchive;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.ProductArchive;
+import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.enums.ArchiveType;
 import de.dlr.proseo.model.service.RepositoryService;
 
@@ -128,8 +131,11 @@ public class ProductArchiveControllerTest {
 			testArchive.setTokenUri(testData[11]);
 			testArchive.setUsername(testData[12]);
 			
-			// Set<ProductClass> availableProductClasses = new HashSet<>();		
-			// testArchive.setAvailableProductClasses(availableProductClasses);
+			Set<ProductClass> availableProductClasses = new HashSet<>();
+			
+			// availableProductClasses.add
+		
+			testArchive.setAvailableProductClasses(availableProductClasses);
 
 			testArchive = RepositoryService.getProductArchiveRepository().save(testArchive);
 			
