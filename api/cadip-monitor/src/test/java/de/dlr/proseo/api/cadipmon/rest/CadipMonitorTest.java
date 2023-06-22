@@ -87,8 +87,7 @@ public class CadipMonitorTest {
 	private static final String URL_CADIP = "/cadip" + URL_ODATA;
 	
 	private static final String CADU_SESSION =
-			"{"
-			+ "\"Id\":\"" + TEST_SESSION_UUID + "\","
+			"\"Id\":\"" + TEST_SESSION_UUID + "\","
 			+ "\"SessionId\":\"" + TEST_SESSION_ID + "\","
 			+ "\"NumChannels\":" + TEST_SESSION_NUMCH + ","
 			+ "\"PublicationDate\":\"" + TEST_SESSION_PUBDATE + "\","
@@ -106,8 +105,25 @@ public class CadipMonitorTest {
 			+ "\"DownlinkStart\":\"2023-06-05T10:21:45.456Z\","
 			+ "\"DownlinkStop\":\"2023-06-05T10:29:56.123Z\","
 			+ "\"DownlinkStatusOK\":true,"
-			+ "\"DeliveryPushOK\":true"
-			+ "}";
+			+ "\"DeliveryPushOK\":true,\n"
+			+ "\"QualityInfo\": ["
+				+ "{"
+				+ "\"Channel\": 1,"
+				+ "\"SessionId\":\"" + TEST_SESSION_ID + "\","
+				+ "\"DeliveryStart\":\"2023-06-05T10:21:46Z\","
+				+ "\"DeliveryStop\":\"2023-06-05T10:29:56Z\","
+				+ "\"TotalChunks\": 1,"
+				+ "\"TotalVolume\": " + TEST_FILE1_SIZE
+				+ "}\n,"
+				+ "{"
+				+ "\"Channel\": 2,"
+				+ "\"SessionId\":\"" + TEST_SESSION_ID + "\","
+				+ "\"DeliveryStart\":\"2023-06-05T10:21:46Z\","
+				+ "\"DeliveryStop\":\"2023-06-05T10:29:56Z\","
+				+ "\"TotalChunks\": 1,"
+				+ "\"TotalVolume\": " + TEST_FILE2_SIZE
+				+ "}"
+			+ "]";
 	
 	private static final String CADU_FILE_1 =
 			"{"
@@ -140,16 +156,22 @@ public class CadipMonitorTest {
 	private static final String CADIP_QUERY_SESSIONS =
 			"Sessions?%24filter=Satellite%20eq%20'" + TEST_SESSION_SAT + "'"
 			+ "%20and%20"
+			+ "Retransfer%20eq%20false"
+			+ "%20and%20"
 			+ "PublicationDate%20gt%20" + TEST_REFERENCE_TIME.replaceAll(":", "%3A")
 			+ "&%24count=true&%24top=1000&%24orderby=PublicationDate%20asc";
 	
 	private static final String CADIP_RESPONSE_SESSIONS =
 			"{\"@odata.context\":\"$metadata#Sessions\",\"@odata.count\":1,\"value\":[" 
+			+ "{"
 			+ CADU_SESSION
+			+ "}"
 			+ "]}";
 	
 	private static final String CADIP_QUERY_FILES =
 			"Files?%24filter=SessionId%20eq%20'" + TEST_SESSION_ID + "'"
+			+ "%20and%20"
+			+ "Retransfer%20eq%20false"
 			+ "&%24count=true&%24top=1000&%24orderby=PublicationDate%20asc";
 	
 	private static final String CADIP_RESPONSE_FILES =
@@ -164,6 +186,15 @@ public class CadipMonitorTest {
 	
 	private static final String CADIP_DOWNLOAD_BY_UUID_2 =
 			"Files(" + TEST_FILE2_UUID + ")/$value";
+	
+	private static final String CADIP_QUERY_QUALITY =
+			"Sessions(" + TEST_SESSION_UUID + ")"
+			+ "?%24expand=QualityInfo";
+	
+	private static final String CADIP_RESPONSE_QUALITY =
+			"{\"@odata.context\":\"$metadata#Sessions(QualityInfo())\"," 
+			+ CADU_SESSION
+			+ "}";
 	
 	/** CADIP monitor configuration */
 	@Autowired
@@ -194,12 +225,21 @@ public class CadipMonitorTest {
 			om.readTree(CADIP_RESPONSE_SESSIONS);
 		} catch (Exception e) {
 			logger.error("CADU sessions response not parseable (cause: {} / {})", e.getClass(), e.getMessage());
+			logger.error("Faulty response:\n{}", CADIP_RESPONSE_SESSIONS);
 			failed = true;
 		}
 		try {
 			om.readTree(CADIP_RESPONSE_FILES);
 		} catch (Exception e) {
 			logger.error("CADU files response not parseable (cause: {} / {})", e.getClass(), e.getMessage());
+			logger.error("Faulty response:\n{}", CADIP_RESPONSE_FILES);
+			failed = true;
+		}
+		try {
+			om.readTree(CADIP_RESPONSE_QUALITY);
+		} catch (Exception e) {
+			logger.error("CADU quality info response not parseable (cause: {} / {})", e.getClass(), e.getMessage());
+			logger.error("Faulty response:\n{}", CADIP_RESPONSE_QUALITY);
 			failed = true;
 		}
 
@@ -239,6 +279,13 @@ public class CadipMonitorTest {
 						.withStatus(HttpStatus.OK.value())
 						.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString())
 						.withBody(CADIP_RESPONSE_FILES)));
+		
+		mockCadipService.stubFor(WireMock.get(WireMock.urlEqualTo(URL_CADIP + CADIP_QUERY_QUALITY))
+				.willReturn(
+						WireMock.aResponse()
+						.withStatus(HttpStatus.OK.value())
+						.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString())
+						.withBody(CADIP_RESPONSE_QUALITY)));
 		
 		// CADIP Download
 		
@@ -332,19 +379,19 @@ public class CadipMonitorTest {
 		assertTrue("Session directory missing", 
 				Files.isDirectory(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH)));
 		assertTrue("Session ch.1 directory missing", 
-				Files.isDirectory(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch1")));
+				Files.isDirectory(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_1")));
 		assertTrue("Session ch.2 directory missing", 
-				Files.isDirectory(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch1")));
+				Files.isDirectory(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_1")));
 		assertTrue("Session file 1 missing", 
-				Files.exists(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch1", TEST_FILE1_NAME)));
+				Files.exists(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_1", TEST_FILE1_NAME)));
 		assertTrue("Session file 2 missing", 
-				Files.exists(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch2", TEST_FILE2_NAME)));
+				Files.exists(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_2", TEST_FILE2_NAME)));
 
 		try {
 			assertEquals("Session file 1 has wrong size", TEST_FILE1_SIZE.longValue(),
-					Files.size(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch1", TEST_FILE1_NAME)));
+					Files.size(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_1", TEST_FILE1_NAME)));
 			assertEquals("Session file 2 has wrong size", TEST_FILE2_SIZE.longValue(),
-					Files.size(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch2", TEST_FILE2_NAME)));
+					Files.size(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_2", TEST_FILE2_NAME)));
 		} catch (IOException e) {
 			logger.error("Cannot check file size (cause: {} / {})", e.getClass(), e.getMessage());
 			fail("File size validation failed");

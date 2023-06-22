@@ -38,33 +38,49 @@ public class CadipMonitorConfiguration {
 	@Value("${proseo.cadip.context}")
 	private String cadipContext;
 	
-	/** Flag indicating whether token-based authentication shall be used */
+	/** Flag indicating whether retransferred sessions are to be retrieved (optional,default false) */
+	@Value("${proseo.cadip.retransfer:false}")
+	private Boolean cadipRetransfer;
+	
+	/** The CADIP username (for Basic Authentication, optional) */
+	@Value("${proseo.cadip.user:#{null}}")
+	private String cadipUser;
+	
+	/** The CADIP password (for Basic Authentication, mandatory, if CADIP user is set) */
+	@Value("${proseo.cadip.password:#{null}}")
+	private String cadipPassword;
+	
+	/** Flag indicating whether token-based authentication shall be used (optional, default false) */
 	@Value("${proseo.cadip.usetoken:false}")
 	private Boolean cadipUseToken;
 	
-	/** The URI for requesting a bearer token (full URL) */
-	@Value("${proseo.cadip.tokenuri}")
+	/** The URI for requesting a bearer token (full URL, mandatory, if token authentication is used) */
+	@Value("${proseo.cadip.token.uri:#{null}}")
 	private String cadipTokenUri;
 	
-	/** The CADIP username */
-	@Value("${proseo.cadip.user}")
-	private String cadipUser;
+	/** The username for the token request Authentication header (optional, default same as CADIP user) */
+	@Value("${proseo.cadip.token.user:#{null}}")
+	private String cadipTokenUser;
 	
-	/** The CADIP password */
-	@Value("${proseo.cadip.password}")
-	private String cadipPassword;
+	/** The password for the token request Authentication header (mandatory, if token user is set, default same as CADIP password) */
+	@Value("${proseo.cadip.token.password:#{null}}")
+	private String cadipTokenPassword;
 	
-	/** The CADIP client ID (optional, only for OpenID-based token requests) */
-	@Value("${proseo.cadip.client.id:#{null}}")
+	/** Token request workflow to use (optional, one of {"password", "client_credentials"}, default "password") */
+	@Value("${proseo.cadip.token.grantType:password}")
+	private String cadipTokenGrantType;
+	
+	/** OAuth2 scope to use for token request (optional) */
+	@Value("${proseo.cadip.token.scope:#{null}}")
+	private String cadipTokenScope;
+	
+	/** The CADIP client ID (optional, only for token requests) */
+	@Value("${proseo.cadip.token.client.id:#{null}}")
 	private String cadipClientId;
 	
 	/** The CADIP client secret (only for OpenID-based token requests; mandatory if client ID is set) */
-	@Value("${proseo.cadip.client.secret:#{null}}")
+	@Value("${proseo.cadip.token.client.secret:#{null}}")
 	private String cadipClientSecret;
-	
-	/** Flag whether to send cliend ID and secret in body (only for OpenID-based token requests; mandatory if client ID is set) */
-	@Value("${proseo.cadip.client.sendinbody:#{null}}")
-	private Boolean cadipClientSendInBody;
 	
 	/** The interval between pickup point checks in milliseconds */
 	@Value("${proseo.cadip.check.interval}")
@@ -172,6 +188,15 @@ public class CadipMonitorConfiguration {
 	}
 	
 	/**
+	 * Indicates whether retransferred sessions are to be retrieved
+	 * 
+	 * @return true, if retransferred sessions are to be retrieved, false otherwise
+	 */
+	public Boolean isCadipRetransfer() {
+		return cadipRetransfer;
+	}
+
+	/**
 	 * Indicates whether token-based authentication shall be used
 	 * 
 	 * @return true, if token-based authentication shall be used, false otherwise
@@ -193,6 +218,50 @@ public class CadipMonitorConfiguration {
 			cadipTokenUri = cadipTokenUri.substring(0, cadipTokenUri.length() - 1);
 		}
 		return cadipTokenUri;
+	}
+
+	/**
+	 * Gets the username for a token request
+	 * 
+	 * @return the token request user name
+	 */
+	public String getCadipTokenUser() {
+		if (null == cadipTokenUser) {
+			return getCadipUser();
+		} else {
+			return cadipTokenUser;
+		}
+	}
+
+	/**
+	 * Gets the password for a token request
+	 * 
+	 * @return the token request password
+	 */
+	public String getCadipTokenPassword() {
+		if (null == cadipTokenPassword) {
+			return getCadipPassword();
+		} else {
+			return cadipTokenPassword;
+		}
+	}
+
+	/**
+	 * Gets the grant type for the token request
+	 * 
+	 * @return the grant type
+	 */
+	public String getCadipTokenGrantType() {
+		return cadipTokenGrantType;
+	}
+
+	/**
+	 * Gets the token request scope
+	 * 
+	 * @return the token request scope
+	 */
+	public String getCadipTokenScope() {
+		return cadipTokenScope;
 	}
 
 	/**
@@ -229,15 +298,6 @@ public class CadipMonitorConfiguration {
 	 */
 	public String getCadipClientSecret() {
 		return cadipClientSecret;
-	}
-
-	/**
-	 * Indicates whether to send the client ID and secret in the message body for OpenID token requests
-	 * 
-	 * @return true, if client ID and secret are to be sent in the body, false otherwise
-	 */
-	public Boolean getCadipClientSendInBody() {
-		return cadipClientSendInBody;
 	}
 
 	/**

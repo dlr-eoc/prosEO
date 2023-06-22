@@ -23,6 +23,8 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Calendar;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -36,10 +38,12 @@ import java.util.concurrent.TimeoutException;
 import javax.annotation.PostConstruct;
 
 import org.apache.olingo.client.api.ODataClient;
+import org.apache.olingo.client.api.communication.request.retrieve.ODataEntityRequest;
 import org.apache.olingo.client.api.communication.request.retrieve.ODataEntitySetRequest;
 import org.apache.olingo.client.api.communication.response.ODataRetrieveResponse;
 import org.apache.olingo.client.api.domain.ClientEntity;
 import org.apache.olingo.client.api.domain.ClientEntitySet;
+import org.apache.olingo.client.api.domain.ClientValue;
 import org.apache.olingo.client.api.uri.QueryOption;
 import org.apache.olingo.client.core.ODataClientFactory;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeException;
@@ -80,6 +84,8 @@ import reactor.netty.http.client.HttpClient;
 @Scope("singleton")
 public class CadipMonitor extends BaseMonitor {
 	
+	private static final String CHANNEL_PREFIX = "ch_";
+
 	/** The path to the target CADU directory (for L0 processing) */
 	private Path caduDirectoryPath;
 	
@@ -146,11 +152,26 @@ public class CadipMonitor extends BaseMonitor {
 		/** Flag indicating completeness of session provisioning */
 		private Boolean sessionComplete = false;
 		
+		/** Acquisition time of the first CADU in the first DSDB */
+		private Instant downlinkStart;
+		
+		/** Acquisition time of the last CADU in the last DSDB */
+		private Instant downlinkStop;
+		
 		/** Flag indicating quality of session provisioning */
 		private Boolean deliveryPushOk;
 		
+		/** Total downlink size */
+		private Long downlinkSize;
+		
+		/** Latest publication time of any CADU file */
+		private Instant latestPublicationTime;
+		
 		/** Reference time for this session (publication timestamp) */
 		private Instant referenceTime;
+		
+		/** Session quality information per channel (indexed by channel number, i. e. starting with 1!) */
+		private TransferQualityInfo[] qualityInfos = null;
 
 		/**
 		 * Gets the session identifier
@@ -279,6 +300,42 @@ public class CadipMonitor extends BaseMonitor {
 		}
 
 		/**
+		 * Gets the acquisition time of the first CADU in the first DSDB
+		 * 
+		 * @return the downlink start time
+		 */
+		public Instant getDownlinkStart() {
+			return downlinkStart;
+		}
+
+		/**
+		 * Sets the acquisition time of the first CADU in the first DSDB
+		 * 
+		 * @param downlinkStart the downlink start time to set
+		 */
+		public void setDownlinkStart(Instant downlinkStart) {
+			this.downlinkStart = downlinkStart;
+		}
+
+		/**
+		 * Gets the acquisition time of the last CADU in the last DSDB
+		 * 
+		 * @return the downlink stop time
+		 */
+		public Instant getDownlinkStop() {
+			return downlinkStop;
+		}
+
+		/**
+		 * Sets the acquisition time of the last CADU in the last DSDB
+		 * 
+		 * @param downlinkStop the downlink stop time to set
+		 */
+		public void setDownlinkStop(Instant downlinkStop) {
+			this.downlinkStop = downlinkStop;
+		}
+
+		/**
 		 * Indicates whether session provisioning was successful
 		 * 
 		 * @return true, if session provisioning was successful, false otherwise
@@ -294,6 +351,60 @@ public class CadipMonitor extends BaseMonitor {
 		 */
 		public void setDeliveryPushOk(Boolean deliveryPushOk) {
 			this.deliveryPushOk = deliveryPushOk;
+		}
+
+		/**
+		 * Gets the total downlink size
+		 * 
+		 * @return the downlink size in bytes
+		 */
+		public Long getDownlinkSize() {
+			return downlinkSize;
+		}
+
+		/**
+		 * Sets the total downlink size
+		 * 
+		 * @param downlinkSize the downlink size in bytes to set
+		 */
+		public void setDownlinkSize(Long downlinkSize) {
+			this.downlinkSize = downlinkSize;
+		}
+
+		/**
+		 * Gets the latest publication time of any CADU file
+		 * 
+		 * @return the latest CADU publication time
+		 */
+		public Instant getLatestPublicationTime() {
+			return latestPublicationTime;
+		}
+
+		/**
+		 * Sets the latest publication time of any CADU file
+		 * 
+		 * @param latestPublicationTime the latest CADU publication time to set
+		 */
+		public void setLatestPublicationTime(Instant latestPublicationTime) {
+			this.latestPublicationTime = latestPublicationTime;
+		}
+
+		/**
+		 * Gets the array of quality information data per channel
+		 * 
+		 * @return an array of quality information objects, indexed by channel number
+		 */
+		public TransferQualityInfo[] getQualityInfos() {
+			return qualityInfos;
+		}
+
+		/**
+		 * Sets the array of quality information data per channel
+		 * 
+		 * @param qualityInfos the array of quality information objects to set
+		 */
+		public void setQualityInfos(TransferQualityInfo[] qualityInfos) {
+			this.qualityInfos = qualityInfos;
 		}
 
 		/**
@@ -524,6 +635,139 @@ public class CadipMonitor extends BaseMonitor {
 	}
 
 	/**
+	 * Class holding session quality data (available as soon as final CADU file has been written by acquisition station)
+	 */
+	public static class TransferQualityInfo {
+		
+		/** Downlink channel */
+		private Integer channel;
+		
+		/** Downlink session ID */
+		private String sessionId;
+		
+		/** Actual Date/Time start of the transferring of the first CADU chunk for the corresponding channel */
+		private Instant deliveryStart;
+		
+		/** Actual Date/Time stop of the transferring of the last CADU chunk for the corresponding channel */
+		private Instant deliveryStop;
+		
+		/** Total number of transferred chunks (CADU files) for the corresponding channel */
+		private Integer totalChunks;
+		
+		/** Overall volume size in bytes of the acquisition session for the corresponding channel */
+		private Long totalVolume;
+
+		/**
+		 * Gets the channel number
+		 * 
+		 * @return the channel number
+		 */
+		public Integer getChannel() {
+			return channel;
+		}
+
+		/**
+		 * Sets the channel number
+		 * 
+		 * @param channel the channel number to set
+		 */
+		public void setChannel(Integer channel) {
+			this.channel = channel;
+		}
+
+		/**
+		 * Gets the session ID
+		 * 
+		 * @return the session ID
+		 */
+		public String getSessionId() {
+			return sessionId;
+		}
+
+		/**
+		 * Sets the session ID
+		 * 
+		 * @param sessionId the session ID to set
+		 */
+		public void setSessionId(String sessionId) {
+			this.sessionId = sessionId;
+		}
+
+		/**
+		 * Gets the transfer start timestamp
+		 * 
+		 * @return the delivery start time
+		 */
+		public Instant getDeliveryStart() {
+			return deliveryStart;
+		}
+
+		/**
+		 * sets the transfer start timestamp
+		 * 
+		 * @param deliveryStart the delivery start time to set
+		 */
+		public void setDeliveryStart(Instant deliveryStart) {
+			this.deliveryStart = deliveryStart;
+		}
+
+		/**
+		 * Gets the transfer stop timestamp
+		 * 
+		 * @return the delivery stop time
+		 */
+		public Instant getDeliveryStop() {
+			return deliveryStop;
+		}
+
+		/**
+		 * Sets the transfer stop timestamp
+		 * 
+		 * @param deliveryStop the delivery stop time to set
+		 */
+		public void setDeliveryStop(Instant deliveryStop) {
+			this.deliveryStop = deliveryStop;
+		}
+
+		/**
+		 * Gets the total number of CADU files in this channel
+		 * 
+		 * @return the number of chunks
+		 */
+		public Integer getTotalChunks() {
+			return totalChunks;
+		}
+
+		/**
+		 * Sets the total number of CADU files in this channel
+		 * 
+		 * @param totalChunks the number of chunks to set
+		 */
+		public void setTotalChunks(Integer totalChunks) {
+			this.totalChunks = totalChunks;
+		}
+
+		/**
+		 * Gets the total data volume in this channel
+		 * 
+		 * @return the total data volume
+		 */
+		public Long getTotalVolume() {
+			return totalVolume;
+		}
+
+		/**
+		 * Sets the total data volume in this channel
+		 * 
+		 * @param totalVolume the total data volume to set
+		 */
+		public void setTotalVolume(Long totalVolume) {
+			this.totalVolume = totalVolume;
+		}
+		
+	}
+	
+	/**
 	 * Gets the maximum number of parallel file download threads within a download session
 	 * 
 	 * @return the maximum number of parallel file download threads
@@ -650,35 +894,35 @@ public class CadipMonitor extends BaseMonitor {
 		if (logger.isTraceEnabled()) logger.trace(">>> getBearerToken()");
 		
 		// Create a request
-		WebClient webClient = WebClient.create(config.getCadipBaseUri());
+		WebClient webClient = WebClient.create();
 		RequestBodySpec request = webClient.post()
 				.uri(config.getCadipTokenUri())
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
 				.accept(MediaType.APPLICATION_JSON);
-		
-		// Set username and password as query parameters
-		MultiValueMap<String, String> queryVariables = new LinkedMultiValueMap<>();
-		
-		queryVariables.add("grant_type", "password");
-		queryVariables.add("username", config.getCadipUser());
-		queryVariables.add("password", config.getCadipPassword());
-		
-		// Add client credentials, if OpenID is required for login, otherwise prepare Basic Auth with username/password
-		if (null == config.getCadipClientId()) {
+		if (logger.isTraceEnabled()) logger.trace("... created request for URL '{}'", config.getCadipTokenUri());
+
+		// Prepare Authentication header, if requested
+		if (null != config.getCadipUser()) {
 			String base64Auth =  new String(Base64.getEncoder().encode((config.getCadipUser() + ":" + config.getCadipPassword()).getBytes()));
 			request = request.header(HttpHeaders.AUTHORIZATION, "Basic " + base64Auth);
-			logger.trace("... Auth: '{}'", base64Auth);
-		} else {
-			queryVariables.add("scope", "openid");
-			if (config.getCadipClientSendInBody()) {
-				queryVariables.add("client_id", config.getCadipClientId());
-				queryVariables.add("client_secret",
-						URLEncoder.encode(config.getCadipClientSecret(), Charset.defaultCharset()));
-			} else {
-				String base64Auth =  new String(Base64.getEncoder()
-						.encode((config.getCadipClientId() + ":" + config.getCadipClientSecret()).getBytes()));
-				request = request.header(HttpHeaders.AUTHORIZATION, "Basic " + base64Auth);
-				logger.trace("... Auth: '{}'", base64Auth);
-			}
+			if (logger.isTraceEnabled()) logger.trace("... Auth: '{}'", base64Auth);
+		}
+		
+		// Set grant type, username and password as query parameters
+		MultiValueMap<String, String> queryVariables = new LinkedMultiValueMap<>();
+		
+		queryVariables.add("grant_type", config.getCadipTokenGrantType());
+		queryVariables.add("username", config.getCadipTokenUser());
+		queryVariables.add("password", config.getCadipTokenPassword());
+		
+		// Add client credentials, if requested
+		if (null != config.getCadipClientId()) {
+			queryVariables.add("client_id", config.getCadipClientId());
+			queryVariables.add("client_secret", URLEncoder.encode(config.getCadipClientSecret(), Charset.defaultCharset()));
+		}
+		// Add (OpenID) scope, if requested
+		if (null != config.getCadipTokenScope()) {
+			queryVariables.add("scope", config.getCadipTokenScope());
 		}
 		if (logger.isTraceEnabled()) logger.trace("... using query variables '{}'", queryVariables);
 		
@@ -689,7 +933,7 @@ public class CadipMonitor extends BaseMonitor {
 			.bodyToMono(String.class)
 			.block();
 		if (null == tokenResponse) {
-			logger.log(OAuthMessage.TOKEN_REQUEST_FAILED, config.getCadipBaseUri() + "/" + config.getCadipTokenUri());
+			logger.log(OAuthMessage.TOKEN_REQUEST_FAILED, config.getCadipTokenUri());
 			return null;
 		}
 //		if (logger.isTraceEnabled()) logger.trace("... got token response '{}'", tokenResponse);
@@ -700,19 +944,16 @@ public class CadipMonitor extends BaseMonitor {
 		try {
 			tokenResponseMap = om.readValue(tokenResponse, Map.class);
 		} catch (IOException e) {
-			logger.log(OAuthMessage.TOKEN_RESPONSE_INVALID, tokenResponse, 
-					config.getCadipBaseUri() + "/" + config.getCadipTokenUri(), e.getMessage());
+			logger.log(OAuthMessage.TOKEN_RESPONSE_INVALID, tokenResponse, config.getCadipTokenUri(), e.getMessage());
 			return null;
 		}
 		if (null == tokenResponseMap || tokenResponseMap.isEmpty()) {
-			logger.log(OAuthMessage.TOKEN_RESPONSE_EMPTY, tokenResponse, 
-					config.getCadipBaseUri() + "/" + config.getCadipTokenUri());
+			logger.log(OAuthMessage.TOKEN_RESPONSE_EMPTY, tokenResponse, config.getCadipTokenUri());
 			return null;
 		}
 		Object accessToken = tokenResponseMap.get("access_token");
 		if (null == accessToken || ! (accessToken instanceof String)) {
-			logger.log(OAuthMessage.ACCESS_TOKEN_MISSING, tokenResponse,
-					config.getCadipBaseUri() + "/" + config.getCadipTokenUri());
+			logger.log(OAuthMessage.ACCESS_TOKEN_MISSING, tokenResponse, config.getCadipTokenUri());
 			return null;
 		} else {
 //			if (logger.isTraceEnabled()) logger.trace("... found access token {}", accessToken);
@@ -746,10 +987,15 @@ public class CadipMonitor extends BaseMonitor {
         			"Basic " + Base64.getEncoder().encode((config.getCadipUser() + ":" + config.getCadipPassword()).getBytes());
 		
 		// Create query filter
-		// Note: 'false' literal not implemented in some CADIPs, therefore approach "false or ..." does not work
 		StringBuilder queryFilter = new StringBuilder("Satellite eq '");
-		queryFilter.append(config.getCadipSatellite())
-			.append("' and PublicationDate gt ").append(odataDateFormat.format(referenceTimeStamp.atZone(ZoneId.of("Z"))));
+		queryFilter.append(config.getCadipSatellite()).append("'");
+		if (config.isCadipRetransfer()) {
+			// In the retransfer case we do not restrict the publication date
+			queryFilter.append(" and Retransfer eq true");
+		} else {
+			queryFilter.append(" and Retransfer eq false")
+				.append(" and PublicationDate gt ").append(odataDateFormat.format(referenceTimeStamp.atZone(ZoneId.of("Z"))));
+		}
 		
 		// Retrieve downlink sessions
 		if (logger.isTraceEnabled()) logger.trace("... requesting session list at URL '{}'", oDataServiceRoot);
@@ -787,9 +1033,11 @@ public class CadipMonitor extends BaseMonitor {
 		ClientEntitySet entitySet = response.getBody();
 		logger.log(ApiMonitorMessage.SESSION_RETRIEVAL_RESULT, entitySet.getEntities().size(), entitySet.getCount());
 		
-		// No sessions found, next search starts from current date and time
+		// No sessions found, next search starts from current date and time (except for retransfers)
 		if (entitySet.getEntities().isEmpty()) {
-			transferControl.referenceTime = Instant.now();
+			if (!config.isCadipRetransfer()) {
+				transferControl.referenceTime = Instant.now();
+			}
 			return transferControl;
 		}
 
@@ -800,7 +1048,7 @@ public class CadipMonitor extends BaseMonitor {
 				if (transferControl.referenceTime.isBefore(ts.getReferenceTime())) {
 					transferControl.referenceTime = ts.getReferenceTime();
 				}
-				if (!referenceTimeStamp.isAfter(ts.getReferenceTime())) {
+				if (!referenceTimeStamp.isAfter(ts.getReferenceTime()) || config.isCadipRetransfer()) {
 					transferControl.transferObjects.add(ts);
 				}
 			}
@@ -817,8 +1065,8 @@ public class CadipMonitor extends BaseMonitor {
 	 * @return a session metadata object or null, if the extraction failed
 	 */
 	private TransferSession extractTransferSession(ClientEntity session) {
-		if (logger.isTraceEnabled()) logger.trace(">>> extractTransferProduct({})", 
-				(null == session ? "null" : session.getProperty("Name")));
+		if (logger.isTraceEnabled()) logger.trace(">>> extractTransferSession({})", 
+				(null == session ? "null" : session.getProperty("SessionId")));
 
 		TransferSession ts = new TransferSession();
 		
@@ -880,12 +1128,33 @@ public class CadipMonitor extends BaseMonitor {
 		if (logger.isTraceEnabled()) logger.trace("... downlink orbit = {}", ts.getDownlinkOrbit());
 		
 		try {
+			ts.setDownlinkStart(Instant.parse(
+					session.getProperty("DownlinkStart").getPrimitiveValue().toCastValue(String.class)));
+		} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
+			logger.log(ApiMonitorMessage.SESSION_ELEMENT_MISSING, session.toString(), "DownlinkStart");
+			return null;
+		}
+		if (logger.isTraceEnabled()) logger.trace("... downlink start = {}", ts.getDownlinkStart());
+		
+		try {
+			ts.setDownlinkStop(Instant.parse(
+					session.getProperty("DownlinkStop").getPrimitiveValue().toCastValue(String.class)));
+		} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
+			logger.log(ApiMonitorMessage.SESSION_ELEMENT_MISSING, session.toString(), "DownlinkStop");
+			return null;
+		}
+		if (logger.isTraceEnabled()) logger.trace("... downlink stop = {}", ts.getDownlinkStop());
+		
+		try {
 			ts.setDeliveryPushOk(session.getProperty("DeliveryPushOK").getPrimitiveValue().toCastValue(Boolean.class));
 		} catch (EdmPrimitiveTypeException | NullPointerException e) {
 			logger.log(ApiMonitorMessage.SESSION_ELEMENT_MISSING, session.toString(), "DeliveryPushOK");
 			return null;
 		}
 		if (logger.isTraceEnabled()) logger.trace("... delivery push OK = {}", ts.getDeliveryPushOk());
+		
+		ts.setLatestPublicationTime(ts.getReferenceTime());
+		ts.setQualityInfos(new TransferQualityInfo[ts.getNumChannels()]);
 		
 		return ts;
 	}
@@ -1001,7 +1270,7 @@ public class CadipMonitor extends BaseMonitor {
 			logger.log(ApiMonitorMessage.FILE_ELEMENT_MISSING, file.toString(), "Size");
 			return null;
 		}
-		if (logger.isTraceEnabled()) logger.trace("... block number = {}", tf.getFileSize());
+		if (logger.isTraceEnabled()) logger.trace("... file size = {}", tf.getFileSize());
 		
 		try {
 			tf.setRetransfer(file.getProperty("Retransfer").getPrimitiveValue().toCastValue(Boolean.class));
@@ -1009,7 +1278,7 @@ public class CadipMonitor extends BaseMonitor {
 			logger.log(ApiMonitorMessage.FILE_ELEMENT_MISSING, file.toString(), "Retransfer");
 			return null;
 		}
-		if (logger.isTraceEnabled()) logger.trace("... final block = {}", tf.getRetransfer());
+		if (logger.isTraceEnabled()) logger.trace("... retransfer = {}", tf.getRetransfer());
 		
 		return tf;
 	}
@@ -1040,6 +1309,7 @@ public class CadipMonitor extends BaseMonitor {
 		// Create query filter
 		StringBuilder queryFilter = new StringBuilder("SessionId eq '");
 		queryFilter.append(transferSession.getSessionIdentifier()).append("'");
+		queryFilter.append(" and Retransfer eq ").append(config.isCadipRetransfer());
 		
 		// Retrieve session files
 		if (logger.isTraceEnabled()) logger.trace("... requesting session file list at URL '{}'", oDataServiceRoot);
@@ -1091,6 +1361,10 @@ public class CadipMonitor extends BaseMonitor {
 				throw new IOException();
 			}
 			result.add(tf);
+			
+			if (tf.getPublicationTime().isAfter(transferSession.getLatestPublicationTime())) {
+				transferSession.setLatestPublicationTime(tf.getPublicationTime());
+			}
 		}
 		
 		return result;
@@ -1113,58 +1387,58 @@ public class CadipMonitor extends BaseMonitor {
 				+ "/$value";
 		
 		HttpClient httpClient = HttpClient.create()
-				.secure()
-				.headers(httpHeaders -> {
-					if (config.getCadipUseToken()) {
-						httpHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
-					} else {
-						httpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder().encodeToString(
-								(config.getCadipUser() + ":" + config.getCadipPassword()).getBytes()));
-					}
-				})
-				.followRedirect((request, response) -> {
-					if (logger.isTraceEnabled()) logger.trace("... checking redirect for response status code {}", response.status());
-					switch (response.status().code()) {
-					case 301:
-					case 302:
-					case 307:
-					case 308:
-						String redirectLocation = response.responseHeaders().get(HttpHeaders.LOCATION);
-						if (null == redirectLocation) {
-							return false;
-						}
-						// Prevent sending authorization header, if target is S3 and credentials are already given in URL
-						if (redirectLocation.contains(S3_CREDENTIAL_PARAM)) {
-							if (logger.isTraceEnabled()) logger.trace(
-									"... redirect credentials given in location header, removing authorization header from request");
-							request.requestHeaders().remove(HttpHeaders.AUTHORIZATION);
-						}
-						return true;
-					default:
+			.secure()
+			.headers(httpHeaders -> {
+				if (config.getCadipUseToken()) {
+					httpHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
+				} else {
+					httpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder().encodeToString(
+							(config.getCadipUser() + ":" + config.getCadipPassword()).getBytes()));
+				}
+			})
+			.followRedirect((request, response) -> {
+				if (logger.isTraceEnabled()) logger.trace("... checking redirect for response status code {}", response.status());
+				switch (response.status().code()) {
+				case 301:
+				case 302:
+				case 307:
+				case 308:
+					String redirectLocation = response.responseHeaders().get(HttpHeaders.LOCATION);
+					if (null == redirectLocation) {
 						return false;
 					}
-				}, null)
-				.doAfterResponse((response, connection) -> {
-					if (logger.isTraceEnabled()) {
-						logger.trace("... response code: {}", response.status());
-						logger.trace("... response redirections: {}", Arrays.asList(response.redirectedFrom()));
-						logger.trace("... response headers: {}", response.responseHeaders());
+					// Prevent sending authorization header, if target is S3 and credentials are already given in URL
+					if (redirectLocation.contains(S3_CREDENTIAL_PARAM)) {
+						if (logger.isTraceEnabled()) logger.trace(
+								"... redirect credentials given in location header, removing authorization header from request");
+						request.requestHeaders().remove(HttpHeaders.AUTHORIZATION);
 					}
-				})
-//				.wiretap(logger.isDebugEnabled())
-				;
+					return true;
+				default:
+					return false;
+				}
+			}, null)
+			.doAfterResponse((response, connection) -> {
+				if (logger.isTraceEnabled()) {
+					logger.trace("... response code: {}", response.status());
+					logger.trace("... response redirections: {}", Arrays.asList(response.redirectedFrom()));
+					logger.trace("... response headers: {}", response.responseHeaders());
+				}
+			})
+//			.wiretap(logger.isDebugEnabled())
+		;
 
 		WebClient webClient = WebClient.builder()
 				.baseUrl(config.getCadipBaseUri())
 				.clientConnector(new ReactorClientHttpConnector(httpClient))
 				.build();
-		
+
 		// Retrieve and store product file
 		Instant downloadStart = Instant.now();
 		File caduFile = caduDirectoryPath.resolve(
-				Path.of(sessionDirName, "ch" + transferFile.getChannel(), transferFile.getFilename())).toFile();
+				Path.of(sessionDirName, CHANNEL_PREFIX + transferFile.getChannel(), transferFile.getFilename())).toFile();
 
-		logger.trace("... starting request for URL '{}'", requestUri);
+		if (logger.isTraceEnabled()) logger.trace("... starting request for URL '{}'", requestUri);
 		
 		try (FileOutputStream fileOutputStream = new FileOutputStream(caduFile)) {
 			
@@ -1219,6 +1493,105 @@ public class CadipMonitor extends BaseMonitor {
 
 	}
 
+	/**
+	 * Extract session quality data from an OData "Sessions" response
+	 * 
+	 * @param transferSession the transfer session to update
+	 * @param qualityInfo the quality info data to extract
+	 */
+	private void extractQualityInfo(TransferSession transferSession, Map<?, ?> qualityInfo) {
+		if (logger.isTraceEnabled()) logger.trace(">>> extractQualityInfo({}, {})",
+				null == transferSession ? "null" : transferSession.getIdentifier(), qualityInfo);
+
+		// Identify the channel number
+		Integer channel = ((Number) qualityInfo.get("Channel")).intValue();
+		
+		// Update quality info for extracted channel
+		TransferQualityInfo tqi = new TransferQualityInfo();
+		tqi.setChannel(channel);
+		tqi.setDeliveryStart(Instant.parse((String) qualityInfo.get("DeliveryStart")));
+		tqi.setDeliveryStop(Instant.parse((String) qualityInfo.get("DeliveryStop")));
+		tqi.setSessionId((String) qualityInfo.get("SessionId"));
+		tqi.setTotalChunks(((Number) qualityInfo.get("TotalChunks")).intValue());
+		tqi.setTotalVolume(((Number) qualityInfo.get("TotalVolume")).longValue());
+		
+		transferSession.getQualityInfos()[channel - 1] = tqi;
+		transferSession.setDownlinkSize(transferSession.getDownlinkSize() + tqi.getTotalVolume());
+	}
+
+	/**
+	 * Retrieve the quality information for all channels of the given transfer session
+	 * 
+	 * @param transferSession the transfer session to use and update
+	 * @throws IOException if an error occurs during request execution
+	 */
+	private void retrieveQualityInfo(TransferSession transferSession) throws IOException {
+		if (logger.isTraceEnabled()) logger.trace(">>> retrieveQualityInfo({})",
+				null == transferSession ? "null" : transferSession.getIdentifier());
+
+		// Prepare OData request
+		ODataClient oDataClient = ODataClientFactory.getClient();
+		oDataClient.getConfiguration().setDefaultPubFormat(ContentType.APPLICATION_JSON);
+		
+		String oDataServiceRoot = config.getCadipBaseUri() 
+				+ "/" 
+				+ (config.getCadipContext().isBlank() ? "" : config.getCadipContext() + "/") 
+				+ "odata/v1";
+		String authorizationHeader = config.getCadipUseToken() ?
+				"Bearer " + getBearerToken() : 
+        			"Basic " + Base64.getEncoder().encode((config.getCadipUser() + ":" + config.getCadipPassword()).getBytes());
+		
+		// Retrieve session files
+		if (logger.isTraceEnabled()) logger.trace("... requesting session file list at URL '{}'", oDataServiceRoot);
+		ODataEntityRequest<ClientEntity> request = oDataClient.getRetrieveRequestFactory()
+		        .getEntityRequest(
+		        		oDataClient.newURIBuilder(oDataServiceRoot)
+		        			.appendEntitySetSegment("Sessions(" + transferSession.getSessionUuid() + ")")
+		        			.expand("QualityInfo")
+		        			.build()
+		        );
+		request.addCustomHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
+		if (logger.isTraceEnabled()) logger.trace("... sending OData request '{}'", request.getURI());
+		Future<ODataRetrieveResponse<ClientEntity>> futureResponse = request.asyncExecute();
+		ODataRetrieveResponse<ClientEntity> response = null;
+		try {
+			response = futureResponse.get(30, TimeUnit.SECONDS);
+		} catch (InterruptedException | ExecutionException | TimeoutException e1) {
+			throw new IOException(
+					logger.log(ApiMonitorMessage.ODATA_REQUEST_ABORTED, 
+							transferSession.getIdentifier(), e1.getClass().getName(), e1.getMessage()));
+		}
+		
+		if (HttpStatus.OK.value() != response.getStatusCode()) {
+			String message = null;
+			try {
+				message = logger.log(ApiMonitorMessage.ODATA_SESSION_REQ_FAILED,
+						transferSession.getIdentifier(), 
+						response.getStatusCode(),
+						new String(response.getRawResponse().readAllBytes()));
+			} catch (IOException e) {
+				message = logger.log(ApiMonitorMessage.ODATA_RESPONSE_UNREADABLE);
+				if (logger.isTraceEnabled()) logger.trace("... stack trace:", e);
+			}
+			throw new IOException(message);
+		}
+		
+		ClientEntity clientEntity = response.getBody();
+		Collection<?> qualityInfos = clientEntity.getProperty("QualityInfo").getValue().asCollection().asJavaCollection();
+		
+		// Extract quality info metadata
+		transferSession.setDownlinkSize(0L);
+		for (Object qualityInfoObject: qualityInfos) {
+			if (qualityInfoObject instanceof Map) {
+				Map<?, ?> qualityInfo = (Map<?, ?>) qualityInfoObject;
+				extractQualityInfo(transferSession, qualityInfo);
+			} else {
+				logger.debug("qualityInfoObject is not a Map, but a {}", qualityInfoObject.getClass().getName());
+			}
+		}
+		
+		
+	}
 
 	/**
 	 * Transfer the session found and its CADU files to the configured CADU target directory for L0 processing
@@ -1270,7 +1643,7 @@ public class CadipMonitor extends BaseMonitor {
 						"DCS_" + transferSession.getStationUnitId()+ "_" + transferSession.getSessionIdentifier() + "_dat";
 				for (int i = 1; i <= transferSession.getNumChannels(); ++i) {
 					try {
-						Files.createDirectories(caduDirectoryPath.resolve(Path.of(sessionDirName, "ch" + i)));
+						Files.createDirectories(caduDirectoryPath.resolve(Path.of(sessionDirName, CHANNEL_PREFIX + i)));
 					} catch (Exception e) {
 						logger.log(ApiMonitorMessage.CANNOT_CREATE_TARGET_DIR, caduDirectoryPath);
 					}
@@ -1324,8 +1697,31 @@ public class CadipMonitor extends BaseMonitor {
 
 								// Download CADU file (including size check)
 								try {
-									downloadCaduFile(transferFile, sessionDirName);
-
+									// Try up to three times with one second delay in between
+									int maxRetry = 3;
+									for (int i = 0; i < maxRetry; i++) {
+										try {
+											downloadCaduFile(transferFile, sessionDirName);
+											break;
+										} catch (Exception e) {
+											// Already logged
+											if (i < maxRetry - 1) {
+												if (logger.isTraceEnabled())
+													logger.trace("... download attempt {} of {} failed, waiting 1 s", i + 1, maxRetry);
+												try {
+													Thread.sleep(1000);
+												} catch (InterruptedException e1) {
+													logger.log(ApiMonitorMessage.ABORTING_TASK, e1.toString());
+													throw e;
+												};
+											} else {
+												if (logger.isTraceEnabled())
+													logger.trace("... download attempt {} of {} failed", i + 1, maxRetry);
+												throw e;
+											}
+										}
+									}
+									
 									// Calculate total download size
 									addToSessionDataSize(transferSession.getIdentifier(), transferFile.getFileSize());
 									
@@ -1389,16 +1785,21 @@ public class CadipMonitor extends BaseMonitor {
 				}
 				
 				// Check session quality information (esp. no. of chunks and total volume/transfer data size)
-				// TODO
-				// Check the total session data size -- FROM XBIP MONITOR
-//				if (expectedSessionDataSize != sessionDataSizes.get(transferSession.getIdentifier())) {
-//					logger.log(ApiMonitorMessage.DATA_SIZE_MISMATCH, transferSession.sessionPath.toString(), expectedSessionDataSize,
-//							sessionDataSizes.get(transferSession.getIdentifier()));
-//					copySuccess.put(transferSession.getIdentifier(), false);
-//				} else {
-//					if (logger.isTraceEnabled()) logger.trace("... total session data size is as expected: " + expectedSessionDataSize);
-//				}
-//				sessionDataSizes.remove(transferSession.getIdentifier());
+				retrieveQualityInfo(transferSession);
+				
+				// Check the total session data size
+				if (!transferSession.getDownlinkSize().equals(sessionDataSizes.get(transferSession.getIdentifier()))) {
+					logger.log(ApiMonitorMessage.DATA_SIZE_MISMATCH,
+							transferSession.getIdentifier(),
+							transferSession.getDownlinkSize(),
+							sessionDataSizes.get(transferSession.getIdentifier()));
+					copySuccess.put(transferSession.getIdentifier(), false);
+				} else {
+					if (logger.isTraceEnabled())
+						logger.trace("... total session data size is as expected: " + transferSession.getDownlinkSize());
+				}
+				transferSession.setDownlinkSize(sessionDataSizes.get(transferSession.getIdentifier()));
+				sessionDataSizes.remove(transferSession.getIdentifier());
 				
 				// Check whether any copy action failed
 				Boolean myCopySuccess = copySuccess.get(transferSession.getIdentifier());
