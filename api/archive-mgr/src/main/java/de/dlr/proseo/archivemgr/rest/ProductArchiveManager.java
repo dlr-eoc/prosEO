@@ -15,8 +15,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,10 +26,10 @@ import de.dlr.proseo.archivemgr.rest.model.RestProductArchive;
 import de.dlr.proseo.archivemgr.utils.StringUtils;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.FacilityMgrMessage;
-import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.ProductArchiveMgrMessage;
 import de.dlr.proseo.model.ProductArchive;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.service.SecurityService;
 
 /**
  * Service methods required to create, modify and delete product archives in the
@@ -44,6 +44,10 @@ public class ProductArchiveManager {
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
+	
+	/** Utility class for user authorizations */
+	@Autowired
+	private SecurityService securityService;
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductArchiveManager.class);
@@ -70,7 +74,7 @@ public class ProductArchiveManager {
 		}
 		
 		// all checks inside
-		ProductArchive modelArchive = new ProductArchiveRestMapper(restArchive).toModel();		
+		ProductArchive modelArchive = new ProductArchiveRestMapper(restArchive, securityService.getMission()).toModel();		
 		
 		try {
 			modelArchive = RepositoryService.getProductArchiveRepository().save(modelArchive);
@@ -183,39 +187,6 @@ public class ProductArchiveManager {
 		return result;
 	}
 	
-	// TODO: Delete legacy code after confirmation  
-	 /*		
-	// Simple case: no search criteria set
-	if (null == name) {
-
-		for (ProductArchive archive : RepositoryService.getProductArchiveRepository().findAll()) {
-			if (logger.isDebugEnabled())
-				logger.debug("Found product archive with ID {}", archive.getId());
-
-			RestProductArchive restArchive =new ProductArchiveModelMapper(archive).toRest();;
-			if (logger.isDebugEnabled())
-				logger.debug("Created result rest product archive with ID {}", restArchive.getId());
-
-			result.add(restArchive);
-		}
-	} 
-	
-	// TODO: Use JPA to access to db
-	// Search by name
-	else {
-
-		String jpqlQuery = "select p from ProductArchive p where p.name = :name";
-		Query query = em.createQuery(jpqlQuery);
-		query.setParameter("name", name);
-
-		for (Object resultObject : query.getResultList()) {
-			if (resultObject instanceof ProductArchive) {
-				result.add(new ProductArchiveModelMapper((ProductArchive) resultObject).toRest());
-			}
-		}
-	}
-	*/
-
 	/**
 	 * Find the product archive with the given ID
 	 * 
@@ -281,7 +252,7 @@ public class ProductArchiveManager {
 		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findById(id).get();
 		modelArchive = new ProductArchiveModelMapper(modelArchive).get();
 		
-		ProductArchive changedArchive = new ProductArchiveRestMapper(restArchive).toModel();
+		ProductArchive changedArchive = new ProductArchiveRestMapper(restArchive, securityService.getMission()).toModel();
 		
 		boolean archiveChanged = isArchiveChanged(modelArchive, changedArchive);
 					
@@ -453,8 +424,4 @@ public class ProductArchiveManager {
 		
 		return archiveChanged; 
 	}
-
-
-	
-	
 }
