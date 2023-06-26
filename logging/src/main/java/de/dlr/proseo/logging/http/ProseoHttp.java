@@ -15,6 +15,8 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
 
 /**
+ * A utility class for creating and parsing HTTP error headers.
+ * 
  * @author Katharina Bassler
  *
  */

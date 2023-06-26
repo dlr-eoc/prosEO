@@ -1,7 +1,17 @@
+/**
+ * MonitorMessage.java
+ * 
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.logging.messages;
 
 import org.slf4j.event.Level;
 
+/**
+ * A collection of messages needed by the monitor.
+ *
+ * @author Ernst Melchinger
+ */
 public enum NotificationMessage implements ProseoMessage {
 
 	MSG_ENDPOINT_NOT_SET 		(1700, Level.ERROR, false, "No endpoint defined", ""),

@@ -1,17 +1,19 @@
 /**
  * HttpPrefix.java
- * 
+ *
  * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.logging.http;
 
 
 /**
+ * A collection of prefixes indicating the service returning the HTTP response.
+ *
  * @author Katharina Bassler
  *
  */
 public enum HttpPrefix {
-	
+
 	ARCHIVE_MGR     ("199 proseo-archive-mgr "),
 	AUXIP_MONITOR 	("199 proseo-auxip-monitor "),
 	CADIP_MONITOR 	("199 proseo-cadip-monitor "),
@@ -34,12 +36,21 @@ public enum HttpPrefix {
 
 	;
 
+	/** A String indicating the service from which a HTTP response originates. */
 	private String prefix;
 
+	/**
+	 * @param prefix
+	 */
 	private HttpPrefix(String prefix) {
 		this.prefix = prefix;
 	}
 
+	/**
+	 * Retrieve the prefix indicating the service returning the HTTP response.
+	 *
+	 * @return the prefix indicating the service returning the HTTP response
+	 */
 	public String getPrefix() {
 		return prefix;
 	}
