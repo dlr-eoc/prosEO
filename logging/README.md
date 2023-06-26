@@ -25,7 +25,7 @@ Where necessary, add a new enum constant in logging/http/HttpPrefix.java, to be 
 - 1000-1199	FacilityMgr
 - 1200-1499
 - 1500-1699	Geotools
-- 1700-1999	Notification (aktuell 5500) 
+- 1700-1999	Notification
 - 2000-2299	Ingestor
 - 2300-2499
 - 2500-2699	Model
@@ -33,7 +33,7 @@ Where necessary, add a new enum constant in logging/http/HttpPrefix.java, to be 
 - 3000-3199	Monitor
 - 3200-3499
 - 3500-3799	OrderMgr
-- 3800-3999	 
+- 3800-3999	OAuth 
 - 4000-4499	Planner
 - 4500-4799	ProcessorMgr
 - 4800-4999
@@ -45,9 +45,9 @@ Where necessary, add a new enum constant in logging/http/HttpPrefix.java, to be 
 - 6500-6799	UserMgr
 - 6800-6999	AIP-Client	
 - 7000-7199	ESA API Monitor
-- 7200-7499	ODIP (aktuell 5200)	
-- 7500-7699	Product Archive Manager (aktuell 5600)	
-- 7700-7999	PRIP (aktuell 5000)	
+- 7200-7499	ODIP
+- 7500-7699	Product Archive Manager	
+- 7700-7999	PRIP
 - 8000-8199	
 - 8200-8499	
 - 8500-8999	

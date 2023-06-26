@@ -22,7 +22,7 @@ import de.dlr.proseo.logging.messages.*;
  * @author Katharina Bassler
  */
 public class LoggingDocumentation {
-	
+
 	/**
 	 * Collects the message codes to ensure that no code is duplicate across
 	 * services
@@ -38,52 +38,41 @@ public class LoggingDocumentation {
 		}
 
 		File target = new File(args[0]);
-		
+
 		try (BufferedWriter htmlWriter = new BufferedWriter(new FileWriter(target))) {
-			
+
 			StringBuilder loggingDoc = new StringBuilder();
-			
-			loggingDoc
-				.append(addBeginning())
-				.append(addTableOfContents())
-				.append(addMessages())
-				.append(addEnd());
-			
-			htmlWriter
-				.write(loggingDoc.toString());
-			
+
+			loggingDoc.append(addBeginning()).append(addTableOfContents()).append(addMessages()).append(addEnd());
+
+			htmlWriter.write(loggingDoc.toString());
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
-	
+
 	/**
-     * Returns the beginning of the HTML documentation.
-     */
+	 * Returns the beginning of the HTML documentation.
+	 */
 	private static String addBeginning() {
-		return "<!DOCTYPE html>\n"
-				+ "<html>\n"
-				+ "<head>\n"
-				+ "<title>ProsEO Messages Documentation\n"
-				+ "</title>\n"
-				+ "<link rel=\"stylesheet\" href=\"css/logging.css\">\n"
-				+ "</head>\n"
-				+ "<body>\n"
+		return "<!DOCTYPE html>\n" + "<html>\n" + "<head>\n" + "<title>ProsEO Messages Documentation\n" + "</title>\n"
+				+ "<link rel=\"stylesheet\" href=\"css/logging.css\">\n" + "</head>\n" + "<body>\n"
 				+ "<h1 id=\"Header\">ProsEO Messages</h1>\n";
 	}
-	
+
 	/**
 	 * Returns a navigable table of contents.
 	 */
 	private static String addTableOfContents() {
-		
+
 		// Prepare a StringBuilder to collect the table of contents
 		StringBuilder tableOfContents = new StringBuilder();
-		
+
 		// Add a heading
 		tableOfContents.append("<h2>Table of Contents</h2>");
-		
+
 		// Add the services as an unordered list
 		tableOfContents.append("<ul>");
 
@@ -107,16 +96,16 @@ public class LoggingDocumentation {
 		tableOfContents.append("<li><a href=\"#UserMgrMessage\">User Manager Messages</a></li>");
 
 		tableOfContents.append("</ul>");
-		
+
 		// Return the table of contents in HTML format as a String.
 		return tableOfContents.toString();
 	}
-	
-    /**
-     * Adds the services' messages to the HTML documentation.
-     */
+
+	/**
+	 * Adds the services' messages to the HTML documentation.
+	 */
 	private static String addMessages() {
-		
+
 		// Prepare a StringBuilder to collect each service's table with its messages
 		StringBuilder messages = new StringBuilder();
 
@@ -124,12 +113,15 @@ public class LoggingDocumentation {
 		messages.append("<h2 id=\"GeneralMessage\">General Messages</h2>");
 		messages.append(addService(GeneralMessage.class));
 
+		messages.append("<h2 id=\"AipClientMessage\">AIP Client Messages</h2>");
+		messages.append(addService(AipClientMessage.class));
+
 		messages.append("<h2 id=\"ApiMonitorMessage\">ESA API Monitor Messages</h2>");
 		messages.append(addService(ApiMonitorMessage.class));
-		
+
 		messages.append("<h2 id=\"FacilityMgrMessage\">Facility Manager Messages</h2>");
 		messages.append(addService(FacilityMgrMessage.class));
-		
+
 		messages.append("<h2 id=\"GeotoolsMessage\">Geotools Messages</h2>");
 		messages.append(addService(GeotoolsMessage.class));
 
@@ -138,13 +130,16 @@ public class LoggingDocumentation {
 
 		messages.append("<h2 id=\"ModelMessage\">Model Messages</h2>");
 		messages.append(addService(ModelMessage.class));
-		
+
 		messages.append("<h2 id=\"MonitorMessage\">Monitor Messages</h2>");
 		messages.append(addService(MonitorMessage.class));
-		
+
 		messages.append("<h2 id=\"NotificationMessage\">Notification Messages</h2>");
 		messages.append(addService(NotificationMessage.class));
-		
+
+		messages.append("<h2 id=\"OAuthMessage\">OAuth Messages</h2>");
+		messages.append(addService(OAuthMessage.class));
+
 		messages.append("<h2 id=\"OdipMessage\">ODIP Messages</h2>");
 		messages.append(addService(OdipMessage.class));
 
@@ -153,16 +148,16 @@ public class LoggingDocumentation {
 
 		messages.append("<h2 id=\"PlannerMessage\">Planner Messages</h2>");
 		messages.append(addService(PlannerMessage.class));
-		
+
 		messages.append("<h2 id=\"PripMessage\">PRIP Messages</h2>");
 		messages.append(addService(PripMessage.class));
 
 		messages.append("<h2 id=\"ProcessorMgrMessage\">Processor Manager Messages</h2>");
 		messages.append(addService(ProcessorMgrMessage.class));
-		
+
 		messages.append("<h2 id=\"ProductArchiveMgrMessage\">Product Archive Manager Messages</h2>");
 		messages.append(addService(ProductArchiveMgrMessage.class));
-		
+
 		messages.append("<h2 id=\"ProductClassMgrMessage\">Product Class Manager Messages</h2>");
 		messages.append(addService(ProductClassMgrMessage.class));
 
@@ -211,7 +206,8 @@ public class LoggingDocumentation {
 
 			// Ensure that no codes are duplicate within and across services
 			if (!messageCodes.add(m.getCode())) {
-				throw new RuntimeException("No duplicate codes allowed, check error code " + m.getCode());
+				throw new RuntimeException(
+						"No duplicate codes allowed, check error code " + m.getCode() + " (" + m.getClass() + ")");
 			}
 		}
 
@@ -221,12 +217,11 @@ public class LoggingDocumentation {
 		// Return an HTML table containing all the messages of one service as a string.
 		return messages.toString();
 	}
-	
-    /**
-     * Returns the end of the HTML documentation.
-     */
+
+	/**
+	 * Returns the end of the HTML documentation.
+	 */
 	private static String addEnd() {
-		return "</body>\n"
-				+ "</html>";
+		return "</body>\n" + "</html>";
 	}
 }

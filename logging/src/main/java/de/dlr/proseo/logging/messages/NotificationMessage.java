@@ -4,13 +4,12 @@ import org.slf4j.event.Level;
 
 public enum NotificationMessage implements ProseoMessage {
 
-	MSG_ENDPOINT_NOT_SET 		(5500, Level.ERROR, false, "No endpoint defined", ""),
-	MSG_ENDPOINT_TYPE_UNKNOWN	(5501, Level.ERROR, false, "The endpint type {} is unknown", ""),
-	MSG_USER_PASSWORD_NOT_SET	(5502, Level.ERROR, false, "HTTP(S) endpoints need a user and password", ""), 
-	MSG_MISSING_MESSAGE_CONTENT	(5503, Level.ERROR, false, "Message content is missed", ""),
-	MSG_INVALID_CONTENT_TYPE	(5504, Level.WARN, false, "Invalid content type, set to {}", ""),
-	MESSAGING_EXCEPTION			(5505, Level.ERROR, false, "Error sending MIME message: {}", ""),
-	
+	MSG_ENDPOINT_NOT_SET 		(1700, Level.ERROR, false, "No endpoint defined", ""),
+	MSG_ENDPOINT_TYPE_UNKNOWN	(1701, Level.ERROR, false, "The endpint type {} is unknown", ""),
+	MSG_USER_PASSWORD_NOT_SET	(1702, Level.ERROR, false, "HTTP(S) endpoints need a user and password", ""), 
+	MSG_MISSING_MESSAGE_CONTENT	(1703, Level.ERROR, false, "Message content is missed", ""),
+	MSG_INVALID_CONTENT_TYPE	(1704, Level.WARN, false, "Invalid content type, set to {}", ""),
+	MESSAGING_EXCEPTION			(1705, Level.ERROR, false, "Error sending MIME message: {}", ""),
 	;
 	
 	private final int code;
