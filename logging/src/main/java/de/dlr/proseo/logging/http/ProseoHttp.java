@@ -20,26 +20,39 @@ import de.dlr.proseo.logging.messages.UIMessage;
  */
 public class ProseoHttp {
 
+	/** A logger for this class */
 	private final ProseoLogger logger;
+
+	/** A prefix indicating the service */
 	private final HttpPrefix prefix;
 
+	/**
+	 * @param logger The calling class's logger
+	 * @param prefix A prefix indicatimg the service
+	 */
 	public ProseoHttp(ProseoLogger logger, HttpPrefix prefix) {
 		this.logger = logger;
 		this.prefix = prefix;
 	}
 
-	// prosEO message format, e. g. "199 proseo-processor-mgr (E2205) Product type
-	// L2________ invalid for mission NM4T"
+	/**
+	 * prosEO message format, e. g. "[Warning: 199 proseo-processor-mgr (E2205)
+	 * Product type L2________ invalid for mission NM4T]"
+	 */
 	private static final Pattern PROSEO_MESSAGE_TEMPLATE_A = Pattern
-			.compile("\\[Warning:\"199 +\\S+ +(?<message>\\([IWEF]\\d+\\) .*)\"\\]");
-	private static final Pattern PROSEO_MESSAGE_TEMPLATE_B = Pattern
-			.compile("199 +\\S+ +(?<message>\\([IWEF]\\d+\\) .*)");
+		.compile("\\[Warning:\"199 +\\S+ +(?<message>\\([IWEF]\\d+\\) .*)\"\\]");
+
+	/**
+	 * prosEO message format, e. g. "199 proseo-processor-mgr (E2205) Product type
+	 * L2________ invalid for mission NM4T"
+	 */
+	private static final Pattern PROSEO_MESSAGE_TEMPLATE_B = Pattern.compile("199 +\\S+ +(?<message>\\([IWEF]\\d+\\) .*)");
 
 	// Method taken from ui/backend/ServiceConnection.java and adapted
 	/**
 	 * Create an HTTP "Warning" header with the given text message
 	 *
-	 * @param message the message text
+	 * @param loggedMessage the message text
 	 * @return an HttpHeaders object with a warning message
 	 */
 	public HttpHeaders errorHeaders(String loggedMessage) {
@@ -83,7 +96,7 @@ public class ProseoHttp {
 	 * Checks whether the error message from the "Warning" header is
 	 * prosEO-compliant; if so, returns the error message from the header, otherwise
 	 * generates a generic error message
-	 * 
+	 *
 	 * @param httpStatus  the HTTP status returned by the REST call
 	 * @param httpHeaders the HTTP headers returned by the REST call
 	 * @return a formatted error message
@@ -102,8 +115,7 @@ public class ProseoHttp {
 		String warningMessage = extractProseoMessage(warningHeader);
 
 		return (null == warningMessage
-				? ProseoLogger.format(UIMessage.SERVICE_REQUEST_FAILED, httpStatus.value(), httpStatus.toString(),
-						warningHeader)
+				? ProseoLogger.format(UIMessage.SERVICE_REQUEST_FAILED, httpStatus.value(), httpStatus.toString(), warningHeader)
 				: warningMessage);
 	}
 }
