@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -57,8 +58,9 @@ public class ProductArchiveCommandRunner {
 	private static final String PROMPT_ARCHIVE_CODE = "Archive code (empty field cancels): ";
 	private static final String PROMPT_ARCHIVE_BASE_URI = "Base URI(empty field cancels): ";	
 	private static final String PROMPT_ARCHIVE_CONTEXT = "Archive context (empty field cancels): ";
-		
-	// TODO: Is there the such path? 
+	private static final String PROMPT_ARCHIVE_TYPE = "Archive type (empty field cancels): ";
+	private static final String PROMPT_ARCHIVE_TOKEN_REQUIRED = "Archive token required (empty field cancels): ";
+
 	private static final String URI_PATH_ARCHIVES = "/archives";
 	
 	private static final String ARCHIVES = "archives";
@@ -163,6 +165,10 @@ public class ProductArchiveCommandRunner {
 			restArchive.setTokenRequired(updatedArchive.getTokenRequired());
 		}
 		
+		if (null != updatedArchive.getAvailableProductClasses()) {
+			restArchive.setAvailableProductClasses(updatedArchive.getAvailableProductClasses());			
+		}
+		
 		// optional fields		
 		if (isDeleteAttributes || !StringUtils.isNullOrBlank(updatedArchive.getTokenUri())) {
 			restArchive.setTokenUri(updatedArchive.getTokenUri());
@@ -215,7 +221,10 @@ public class ProductArchiveCommandRunner {
 		cloned.setClientSecret(source.getClientSecret());
 		
 		cloned.setSendAuthInBody(source.getSendAuthInBody());
-		cloned.setAvailableProductClasses(source.getAvailableProductClasses());
+		
+		List<String> clonedProductClasses = new ArrayList<String>();
+		clonedProductClasses.addAll(source.getAvailableProductClasses());
+		cloned.setAvailableProductClasses(clonedProductClasses);
 
 		return cloned; 
 	}
@@ -285,13 +294,11 @@ public class ProductArchiveCommandRunner {
 		if (null == restArchive.getSendAuthInBody()) {
 			restArchive.setSendAuthInBody(false);			
 		}
-		
-		// TODO: Add all mandatory fields
-		
+				
 		/* Prompt user for missing mandatory attributes */
 		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
 		
-		if (null == restArchive.getName() || restArchive.getName().isBlank()) {		
+		if (StringUtils.isNullOrBlank(restArchive.getName())) {		
 			System.out.print(PROMPT_ARCHIVE_NAME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
@@ -311,7 +318,7 @@ public class ProductArchiveCommandRunner {
 			restArchive.setCode(response);
 		}
 		
-		if (!StringUtils.isNullOrBlank(restArchive.getBaseUri())) {
+		if (StringUtils.isNullOrBlank(restArchive.getBaseUri())) {
 			System.out.print(PROMPT_ARCHIVE_BASE_URI);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
@@ -321,7 +328,7 @@ public class ProductArchiveCommandRunner {
 			restArchive.setBaseUri(response);
 		}
 		
-		if (!StringUtils.isNullOrBlank(restArchive.getContext())) {
+		if (StringUtils.isNullOrBlank(restArchive.getContext())) {
 			System.out.print(PROMPT_ARCHIVE_CONTEXT);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
@@ -329,6 +336,26 @@ public class ProductArchiveCommandRunner {
 				return;
 			}
 			restArchive.setContext(response);
+		}
+		
+		if (StringUtils.isNullOrBlank(restArchive.getArchiveType())) {
+			System.out.print(PROMPT_ARCHIVE_TYPE);
+			String response = System.console().readLine();
+			if (response.isBlank()) {
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
+				return;
+			}
+			restArchive.setArchiveType(response);
+		}
+		
+		if (null == restArchive.getTokenRequired()) {
+			System.out.print(PROMPT_ARCHIVE_TOKEN_REQUIRED);
+			String response = System.console().readLine();
+			if (response.isBlank()) {
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
+				return;
+			}
+			restArchive.setTokenRequired(Boolean.getBoolean(response));
 		}
 		
 		/* Create product archive */
@@ -359,7 +386,7 @@ public class ProductArchiveCommandRunner {
 
 		/* Report success, giving newly assigned product archive ID */
 		String message = logger.log(UIMessage.ARCHIVE_CREATED,
-				restArchive.getName(), restArchive.getId());
+				restArchive.getCode(), restArchive.getId());
 		System.out.println(message);
 	}
 	

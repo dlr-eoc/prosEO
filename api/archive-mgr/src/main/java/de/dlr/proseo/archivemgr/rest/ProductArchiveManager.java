@@ -7,6 +7,7 @@
 package de.dlr.proseo.archivemgr.rest;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Optional;
@@ -83,7 +84,7 @@ public class ProductArchiveManager {
 			throw e; 			
 		}
 		
-		logger.log(ProductArchiveMgrMessage.ARCHIVE_CREATED, modelArchive.getName());
+		logger.log(ProductArchiveMgrMessage.ARCHIVE_CREATED, modelArchive.getCode(), modelArchive.getId());
 		
 		return new ProductArchiveModelMapper(modelArchive).toRest();
 	}
@@ -354,6 +355,10 @@ public class ProductArchiveManager {
 			modelArchive.setUsername(changedArchive.getUsername());
 		}
 		
+		if (!StringUtils.equalStrings(modelArchive.getPassword(), changedArchive.getPassword())) {		
+			modelArchive.setPassword(changedArchive.getPassword());
+		}
+		
 		if (!StringUtils.equalStrings(modelArchive.getClientId(), changedArchive.getClientId())) {		
 			modelArchive.setClientId(changedArchive.getClientId());
 		}
@@ -365,6 +370,11 @@ public class ProductArchiveManager {
 		if (!modelArchive.getSendAuthInBody().equals(changedArchive.getSendAuthInBody())) {
 			modelArchive.setSendAuthInBody(changedArchive.getSendAuthInBody());
 		}
+		
+		if (!modelArchive.getAvailableProductClasses().equals(changedArchive.getAvailableProductClasses())) {
+			modelArchive.setAvailableProductClasses(changedArchive.getAvailableProductClasses());
+		}
+		
 	}
 
 	/**
@@ -419,6 +429,10 @@ public class ProductArchiveManager {
 		}
 		
 		if (!modelArchive.getSendAuthInBody().equals(changedArchive.getSendAuthInBody())) {
+			archiveChanged = true;
+		}
+		
+		if (!modelArchive.getAvailableProductClasses().equals(changedArchive.getAvailableProductClasses())) {
 			archiveChanged = true;
 		}
 		

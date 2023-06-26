@@ -18,7 +18,7 @@ public enum ProductArchiveMgrMessage implements ProseoMessage {
 	
 	 DELETION_UNSUCCESSFUL		(4800, Level.ERROR, false, "Product Archive deletion unsuccessful for ID {0}", ""),
 	 DUPLICATED_ARCHIVE			(4801, Level.ERROR, false, "Product Archive {0} exists already", ""),
-	 ARCHIVE_CREATED			(4802, Level.INFO,  true,  "Product Archive with identifier {0} created", ""),
+	 ARCHIVE_CREATED			(4802, Level.INFO,  true,  "Product Archive {0} with ID {1} created", ""),
 	 ARCHIVE_DELETED			(4803, Level.INFO,  true,  "Product Archive with id {0} deleted", ""),	 
 	 ARCHIVE_HAS_PRODUCTS		(4804, Level.ERROR, false, "Cannot delete Product Archive {0} due to existing products", ""),
 	 ARCHIVE_ID_MISSING			(4805, Level.ERROR, false, "Product Archive ID not set", ""),
