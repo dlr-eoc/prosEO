@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +23,7 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.enums.ArchiveType;
 import de.dlr.proseo.model.rest.model.RestProductArchive;
+import de.dlr.proseo.model.util.StringUtils;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -56,8 +58,9 @@ public class ProductArchiveCommandRunner {
 	private static final String PROMPT_ARCHIVE_CODE = "Archive code (empty field cancels): ";
 	private static final String PROMPT_ARCHIVE_BASE_URI = "Base URI(empty field cancels): ";	
 	private static final String PROMPT_ARCHIVE_CONTEXT = "Archive context (empty field cancels): ";
-		
-	// TODO: Is there the such path? 
+	private static final String PROMPT_ARCHIVE_TYPE = "Archive type (empty field cancels): ";
+	private static final String PROMPT_ARCHIVE_TOKEN_REQUIRED = "Archive token required (empty field cancels): ";
+
 	private static final String URI_PATH_ARCHIVES = "/archives";
 	
 	private static final String ARCHIVES = "archives";
@@ -138,39 +141,48 @@ public class ProductArchiveCommandRunner {
 	 */
 	private void setRestArchiveAttributes(RestProductArchive restArchive, RestProductArchive updatedArchive, boolean isDeleteAttributes) {
 
-		if (null != updatedArchive.getCode() && 0 != updatedArchive.getCode().length()) { // mandatory, must not be empty
+		// mandatory fields	
+		if (!StringUtils.isNullOrBlank(updatedArchive.getCode())) { 			
 			restArchive.setCode(updatedArchive.getCode());
 		}
-		if (null != updatedArchive.getName() && 0 != updatedArchive.getName().length()) { // mandatory, must not be empty
+		
+		if (!StringUtils.isNullOrBlank(updatedArchive.getName())) { 			
 			restArchive.setName(updatedArchive.getName());
 		}
-		if (null != updatedArchive.getArchiveType()) {
+		
+		if (null != updatedArchive.getArchiveType()) {			
 			restArchive.setArchiveType(updatedArchive.getArchiveType());
 		}
-		if (null != updatedArchive.getBaseUri() && 0 != updatedArchive.getBaseUri().length()) { // mandatory, must not be empty
+		
+		if (!StringUtils.isNullOrBlank(updatedArchive.getBaseUri())) {
 			restArchive.setBaseUri(updatedArchive.getBaseUri());
 		}
-		if (null != updatedArchive.getContext() && 0 != updatedArchive.getContext().length()) { // mandatory, must not be empty
+		
+		if (!StringUtils.isNullOrBlank(updatedArchive.getContext())) { 
 			restArchive.setContext(updatedArchive.getContext());
 		}
 		if (null != updatedArchive.getTokenRequired()) {
 			restArchive.setTokenRequired(updatedArchive.getTokenRequired());
 		}
 		
-		// optional fields
-		if (isDeleteAttributes || null != updatedArchive.getTokenUri() && !updatedArchive.getTokenUri().isBlank()) {
+		if (null != updatedArchive.getAvailableProductClasses()) {
+			restArchive.setAvailableProductClasses(updatedArchive.getAvailableProductClasses());			
+		}
+		
+		// optional fields		
+		if (isDeleteAttributes || !StringUtils.isNullOrBlank(updatedArchive.getTokenUri())) {
 			restArchive.setTokenUri(updatedArchive.getTokenUri());
 		}
-		if (isDeleteAttributes || null != updatedArchive.getUsername() && !updatedArchive.getUsername().isBlank()) {
+		if (isDeleteAttributes || !StringUtils.isNullOrBlank(updatedArchive.getUsername())) {
 			restArchive.setUsername(updatedArchive.getUsername());
 		}
-		if (isDeleteAttributes || null != updatedArchive.getPassword() && !updatedArchive.getPassword().isBlank()) {
+		if (isDeleteAttributes || !StringUtils.isNullOrBlank(updatedArchive.getPassword())) {
 			restArchive.setPassword(updatedArchive.getPassword());
 		}
-		if (isDeleteAttributes || null != updatedArchive.getClientId() && !updatedArchive.getClientId().isBlank()) {
+		if (isDeleteAttributes || !StringUtils.isNullOrBlank(updatedArchive.getClientId())) {
 			restArchive.setClientId(updatedArchive.getClientId());
 		}
-		if (isDeleteAttributes || null != updatedArchive.getClientSecret() && !updatedArchive.getClientSecret().isBlank()) {
+		if (isDeleteAttributes || !StringUtils.isNullOrBlank(updatedArchive.getClientSecret())) {
 			restArchive.setClientSecret(updatedArchive.getClientSecret());
 		}
 		if (isDeleteAttributes || null != updatedArchive.getSendAuthInBody()) {
@@ -209,7 +221,10 @@ public class ProductArchiveCommandRunner {
 		cloned.setClientSecret(source.getClientSecret());
 		
 		cloned.setSendAuthInBody(source.getSendAuthInBody());
-		cloned.setAvailableProductClasses(source.getAvailableProductClasses());
+		
+		List<String> clonedProductClasses = new ArrayList<String>();
+		clonedProductClasses.addAll(source.getAvailableProductClasses());
+		cloned.setAvailableProductClasses(clonedProductClasses);
 
 		return cloned; 
 	}
@@ -279,12 +294,11 @@ public class ProductArchiveCommandRunner {
 		if (null == restArchive.getSendAuthInBody()) {
 			restArchive.setSendAuthInBody(false);			
 		}
-		
-		
+				
 		/* Prompt user for missing mandatory attributes */
 		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
 		
-		if (null == restArchive.getName() || restArchive.getName().isBlank()) {		
+		if (StringUtils.isNullOrBlank(restArchive.getName())) {		
 			System.out.print(PROMPT_ARCHIVE_NAME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
@@ -294,7 +308,7 @@ public class ProductArchiveCommandRunner {
 			restArchive.setName(response);
 		}
 		
-		if (null == restArchive.getCode() || restArchive.getCode().isBlank()) {
+		if (StringUtils.isNullOrBlank(restArchive.getCode())) {
 			System.out.print(PROMPT_ARCHIVE_CODE);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
@@ -304,7 +318,7 @@ public class ProductArchiveCommandRunner {
 			restArchive.setCode(response);
 		}
 		
-		if (null == restArchive.getBaseUri() || restArchive.getBaseUri().isBlank()) {
+		if (StringUtils.isNullOrBlank(restArchive.getBaseUri())) {
 			System.out.print(PROMPT_ARCHIVE_BASE_URI);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
@@ -314,7 +328,7 @@ public class ProductArchiveCommandRunner {
 			restArchive.setBaseUri(response);
 		}
 		
-		if (null == restArchive.getContext() || restArchive.getContext().isBlank()) {
+		if (StringUtils.isNullOrBlank(restArchive.getContext())) {
 			System.out.print(PROMPT_ARCHIVE_CONTEXT);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
@@ -324,7 +338,25 @@ public class ProductArchiveCommandRunner {
 			restArchive.setContext(response);
 		}
 		
-
+		if (StringUtils.isNullOrBlank(restArchive.getArchiveType())) {
+			System.out.print(PROMPT_ARCHIVE_TYPE);
+			String response = System.console().readLine();
+			if (response.isBlank()) {
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
+				return;
+			}
+			restArchive.setArchiveType(response);
+		}
+		
+		if (null == restArchive.getTokenRequired()) {
+			System.out.print(PROMPT_ARCHIVE_TOKEN_REQUIRED);
+			String response = System.console().readLine();
+			if (response.isBlank()) {
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
+				return;
+			}
+			restArchive.setTokenRequired(Boolean.getBoolean(response));
+		}
 		
 		/* Create product archive */
 		try {
@@ -354,7 +386,7 @@ public class ProductArchiveCommandRunner {
 
 		/* Report success, giving newly assigned product archive ID */
 		String message = logger.log(UIMessage.ARCHIVE_CREATED,
-				restArchive.getName(), restArchive.getId());
+				restArchive.getCode(), restArchive.getId());
 		System.out.println(message);
 	}
 	
@@ -490,15 +522,13 @@ public class ProductArchiveCommandRunner {
 			}
 		}
 		
-	
-		
-	
-		
 		/* Read product archive file, if any */
 		RestProductArchive updatedArchive = null;
 		if (null == archiveFile) {
 			
 			if (updateCommand.getParameters().size() == 0) {
+				
+				// TODO: Add processing if needed
 				return; // no "code" parameter
 			}
 			
@@ -508,8 +538,6 @@ public class ProductArchiveCommandRunner {
 				return; // no archive with "code" found
 			}
 			updatedArchive = this.cloneRestProductArchive(updatedArchive);
-			
-		
 			
 			// TODO: check if other parameters needed
 			// updatedArchive = new RestProductArchive();
@@ -527,6 +555,8 @@ public class ProductArchiveCommandRunner {
 		
 		RestProductArchive restArchive = retrieveArchiveByCode(updatedArchive.getCode());
 		if (null == restArchive) {
+			
+			// TODO: Add processing if needed
 			return;
 		}
 		
@@ -554,7 +584,6 @@ public class ProductArchiveCommandRunner {
 			return;
 		}
 
-		
 		/* Compare attributes of database archive with updated archive */
 		// No modification of ID, version and archive name allowed
 		setRestArchiveAttributes(restArchive, updatedArchive, isDeleteAttributes);
