@@ -1,6 +1,6 @@
 /**
  * UsermgrConfiguration.java
- * 
+ *
  * (C) 2020 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.usermgr;
@@ -12,19 +12,18 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * Configuration class for the prosEO User Manager component
- * 
- * @author Dr. Thomas Bassler
  *
+ * @author Dr. Thomas Bassler *
  */
 @Configuration
-@ConfigurationProperties(prefix="proseo")
-@EntityScan(basePackages = { "de.dlr.proseo.model", "de.dlr.proseo.usermgr.model"})
+@ConfigurationProperties(prefix = "proseo")
+@EntityScan(basePackages = { "de.dlr.proseo.model", "de.dlr.proseo.usermgr.model" })
 public class UsermgrConfiguration {
 
 	/** The default user to create in an empty user database */
 	@Value("${proseo.defaultuser.name}")
 	private String defaultUserName;
-	
+
 	/** The initial password of the default user */
 	@Value("${proseo.defaultuser.password}")
 	private String defaultUserPassword;
@@ -32,7 +31,7 @@ public class UsermgrConfiguration {
 	/** The password expiration period in days */
 	@Value("${proseo.password.expirationtime}")
 	private String passwordExpirationTime;
-	
+
 	/** The maximum number of results to be retrieved by REST requests */
 	@Value("${spring.maxResults}")
 	public Integer maxResults;
@@ -46,7 +45,7 @@ public class UsermgrConfiguration {
 
 	/**
 	 * Gets the name of the default user
-	 * 
+	 *
 	 * @return the name of the default user
 	 */
 	public String getDefaultUserName() {
@@ -55,7 +54,7 @@ public class UsermgrConfiguration {
 
 	/**
 	 * Gets the password of the default user
-	 * 
+	 *
 	 * @return the password of the default user
 	 */
 	public String getDefaultUserPassword() {
@@ -64,11 +63,11 @@ public class UsermgrConfiguration {
 
 	/**
 	 * Gets the password expiration time
-	 * 
+	 *
 	 * @return the password expiration time
 	 */
 	public String getPasswordExpirationTime() {
 		return passwordExpirationTime;
 	}
-	
+
 }
