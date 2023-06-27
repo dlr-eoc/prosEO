@@ -134,7 +134,7 @@ public class CadipMonitorTest {
 			+ "\"BlockNumber\":" + TEST_FILE1_BLOCK +","
 			+ "\"FinalBlock\":" + TEST_FILE1_FINAL +","
 			+ "\"PublicationDate\":\"" + TEST_SESSION_PUBDATE +"\","
-			+ "\"EvictionDate\":\"2023-06-05T10:21:45.456Z\","
+			+ "\"EvictionDate\":\"9999-12-31T23:59:59.999Z\","
 			+ "\"Size\":" + TEST_FILE1_SIZE +","
 			+ "\"Retransfer\":false"
 			+ "}";
@@ -148,7 +148,7 @@ public class CadipMonitorTest {
 			+ "\"BlockNumber\":" + TEST_FILE2_BLOCK +","
 			+ "\"FinalBlock\":" + TEST_FILE2_FINAL +","
 			+ "\"PublicationDate\":\"" + TEST_SESSION_PUBDATE +"\","
-			+ "\"EvictionDate\":\"2023-06-05T10:21:45.456Z\","
+			+ "\"EvictionDate\":\"9999-12-31T23:59:59.999Z\","
 			+ "\"Size\":" + TEST_FILE2_SIZE +","
 			+ "\"Retransfer\":false"
 			+ "}";

@@ -35,6 +35,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
+
 import javax.annotation.PostConstruct;
 
 import org.apache.olingo.client.api.ODataClient;
@@ -72,6 +74,7 @@ import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.OAuthMessage;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
+import reactor.netty.http.client.HttpClientRequest;
 
 /**
  * Monitor for CADU Interface Points (CADIP)
@@ -1386,11 +1389,13 @@ public class CadipMonitor extends BaseMonitor {
 				+ "Files("	+ transferFile.getUuid() + ")"
 				+ "/$value";
 		
+		final StringBuilder bearerToken = new StringBuilder();
+		
 		HttpClient httpClient = HttpClient.create()
 			.secure()
 			.headers(httpHeaders -> {
 				if (config.getCadipUseToken()) {
-					httpHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
+					httpHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + (bearerToken.append(getBearerToken()).toString()));
 				} else {
 					httpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder().encodeToString(
 							(config.getCadipUser() + ":" + config.getCadipPassword()).getBytes()));
@@ -1403,21 +1408,25 @@ public class CadipMonitor extends BaseMonitor {
 				case 302:
 				case 307:
 				case 308:
-					String redirectLocation = response.responseHeaders().get(HttpHeaders.LOCATION);
-					if (null == redirectLocation) {
+					if (null == response.responseHeaders().get(HttpHeaders.LOCATION)) {
 						return false;
-					}
-					// Prevent sending authorization header, if target is S3 and credentials are already given in URL
-					if (redirectLocation.contains(S3_CREDENTIAL_PARAM)) {
-						if (logger.isTraceEnabled()) logger.trace(
-								"... redirect credentials given in location header, removing authorization header from request");
-						request.requestHeaders().remove(HttpHeaders.AUTHORIZATION);
 					}
 					return true;
 				default:
 					return false;
 				}
-			}, null)
+			}, redirectRequest -> {
+				// Send authorization header, except if target is S3 (credential token already given in URL)
+				if (!redirectRequest.uri().contains(S3_CREDENTIAL_PARAM)) {
+					if (logger.isTraceEnabled()) logger.trace("... adding redirect credentials to request header");
+					if (config.getCadipUseToken()) {
+						redirectRequest.requestHeaders().add(HttpHeaders.AUTHORIZATION, "Bearer " + bearerToken.toString());
+					} else {
+						redirectRequest.requestHeaders().add(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder().encodeToString(
+								(config.getCadipUser() + ":" + config.getCadipPassword()).getBytes()));
+					}
+				}
+			})
 			.doAfterResponse((response, connection) -> {
 				if (logger.isTraceEnabled()) {
 					logger.trace("... response code: {}", response.status());
@@ -1425,8 +1434,8 @@ public class CadipMonitor extends BaseMonitor {
 					logger.trace("... response headers: {}", response.responseHeaders());
 				}
 			})
-//			.wiretap(logger.isDebugEnabled())
-		;
+			//.wiretap(logger.isDebugEnabled())
+			;
 
 		WebClient webClient = WebClient.builder()
 				.baseUrl(config.getCadipBaseUri())
@@ -1666,12 +1675,26 @@ public class CadipMonitor extends BaseMonitor {
 						return false;
 					}
 					
+					// Fail if the file list is empty
+					if (transferFiles.isEmpty()) {
+						logger.log(ApiMonitorMessage.FILE_LIST_EMPTY, transferSession.getSessionIdentifier());
+						transferSession.setSessionComplete(true);
+						break;
+					}
+
 					// Download files in parallel, unless in "done" list
 					for (TransferFile transferFile: transferFiles) {
 						if (filesDone.contains(transferFile.getFilename())) {
 							continue;
 						} else {
 							filesDone.add(transferFile.getFilename());
+						}
+						
+						// Fail if at least one file has been evicted
+						if (Instant.now().isAfter(transferFile.getEvictionTime())) {
+							logger.log(ApiMonitorMessage.FILE_EVICTED, transferFile.getFilename());
+							transferSession.setSessionComplete(true);
+							break;
 						}
 
 						// If CADU file is marked as "final block", set session as completed

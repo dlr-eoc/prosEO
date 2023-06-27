@@ -104,6 +104,8 @@ public enum ApiMonitorMessage implements ProseoMessage {
 	FILE_SIZE_MISMATCH			(7230, Level.ERROR, false, "File size mismatch for CADU file {0} (expected: {1} Bytes, got {2} Bytes)", ""),
 	SESSION_DOWNLOAD_TIMEOUT	(7231, Level.ERROR, false, "Timeout after {0} s during wait for completion of session {1}, download incomplete", ""),
 	FILE_TRANSFER_COMPLETED		(7232, Level.INFO, true, "Session {0}: Transfer for CADU file {1} completed (size {2} bytes, published {3})", ""),
+	FILE_EVICTED				(7233, Level.ERROR, false, "CADU file {0} already evicted, cancelling session download", ""),
+	FILE_LIST_EMPTY				(7234, Level.ERROR, false, "CADU file list for session {0} empty, cancelling session download", ""),
 	
 	CADIP_START_MESSAGE			(7298, Level.INFO, true, "------  Starting CADIP Monitor  ------\n"
 															+ "CADIP base URI . . . . . . : {0}\n"
