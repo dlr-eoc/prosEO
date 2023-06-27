@@ -46,6 +46,10 @@ public class ServiceConfiguration {
 	@Value("${proseo.facilityManager.url}")
 	private String facilityManagerUrl;
 	
+	/** The URL of the prosEO Archive Manager */
+	@Value("${proseo.archiveManager.url}")
+	private String archiveManagerUrl;
+	
 	/** Timeout for HTTP connections */
 	@Value("${proseo.http.timeout}")
 	private Long httpTimeout;
@@ -114,6 +118,15 @@ public class ServiceConfiguration {
 	}
 
 	/**
+	 * Gets the URL of the prosEO Archive Manager component
+	 * 
+	 * @return the archiveManagerUrl
+	 */
+	public String getArchiveManagerUrl() {
+		return archiveManagerUrl;
+	}
+
+	/**
 	 * Gets the default timeout for HTTP connections
 	 * 
 	 * @return the httpTimeout
@@ -121,5 +134,4 @@ public class ServiceConfiguration {
 	public Long getHttpTimeout() {
 		return httpTimeout;
 	}
-
 }

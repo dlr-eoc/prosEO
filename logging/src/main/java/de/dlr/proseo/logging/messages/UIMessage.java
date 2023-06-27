@@ -284,8 +284,19 @@ public enum UIMessage implements ProseoMessage {
 	WORKFLOW_NOT_FOUND_BY_ID				(6268, Level.ERROR, false, "Workflow with database ID {0} not found", ""),
 	WORKFLOW_UPDATED						(6269, Level.INFO, true, "Workflow with database ID {0} updated (new version {1})", ""),
 	NO_WORKFLOWS_FOUND						(6270, Level.ERROR, false, "No workflows found for given search criteria", ""),
-	NO_WORKFLOW_IDENTIFIER_GIVEN			(6271, Level.ERROR, false, "No workflow name and/or version given", ""),
-		
+	NO_WORKFLOW_IDENTIFIER_GIVEN			(6271, Level.ERROR, false, "No workflow name and/or version given", ""),	
+	ARCHIVE_CREATED							(6272, Level.INFO,  true,  "Product archive {0} created (database ID {1})", ""),
+	ARCHIVE_DATA_INVALID					(6273, Level.ERROR, false, "Product archive data invalid (cause: {0})", ""),
+	ARCHIVE_DELETE_FAILED					(6274, Level.ERROR, false, "Deletion of Product archive {0} failed (cause: {1})", ""),
+	ARCHIVE_DELETED							(6275, Level.INFO,  true,  "Product archive {0} with database ID {1} deleted", ""),
+	ARCHIVE_MISSING							(6276, Level.ERROR, false, "Product archive missing in parameters", ""),
+	ARCHIVE_NOT_FOUND						(6277, Level.ERROR, false, "Product archive {0} not found", ""),
+	ARCHIVE_NOT_FOUND_BY_ID					(6278, Level.ERROR, false, "Product archive with database ID {0} not found", ""),
+	ARCHIVE_NOT_READABLE					(6279, Level.ERROR, false, "Product archive {0} not readable (cause: {1})", ""),
+	ARCHIVE_UPDATED							(6280, Level.INFO,  true,  "Product archive with database ID {0} updated (new version {1})", ""),	
+	NO_ARCHIVE_CODE_GIVEN					(6281, Level.ERROR, false, "No product archive code given", ""),
+	NO_ARCHIVES_FOUND						(6282, Level.ERROR, false, "No product archives found", ""),
+	
 	;
 
 	private final int code;

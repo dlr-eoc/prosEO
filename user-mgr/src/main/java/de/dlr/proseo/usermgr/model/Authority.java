@@ -12,20 +12,22 @@ import javax.persistence.Embeddable;
 import org.hibernate.annotations.Parent;
 
 /**
- * An authority (also called a "privilege") is an atomic entitlement for a user to access a prosEO method or domain object.
+ * An authority (also called a "privilege") is an atomic entitlement for a user
+ * to access a prosEO method or domain object.
  * 
  * @author Dr. Thomas Bassler
  */
 @Embeddable
 public class Authority {
 
-	/** 
-	 * The authority identifier (may be prefixed by "ROLE_" to indicate a user role, or by other common prefixes).
-	 * An authority identifier may occur at most once for each user.
+	/**
+	 * The authority identifier (may be prefixed by "ROLE_" to indicate a user role,
+	 * or by other common prefixes). An authority identifier may occur at most once
+	 * for each user.
 	 */
 	@Column(nullable = false)
 	private String authority;
-	
+
 	/** The user, to which the authority (privilege) was granted */
 	@Parent
 	private User user;
@@ -80,5 +82,5 @@ public class Authority {
 		Authority other = (Authority) obj;
 		return Objects.equals(authority, other.authority) && Objects.equals(user, other.user);
 	}
-	
+
 }

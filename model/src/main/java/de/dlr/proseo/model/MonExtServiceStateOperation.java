@@ -55,7 +55,7 @@ public class MonExtServiceStateOperation extends PersistentObject {
 		this.monServiceState = monServiceState;
 	}
 	/**
-	 * @param monService the monService to set
+	 * @param monExtService the monExtService to set
 	 */
 	public void setMonExtService(MonExtService monExtService) {
 		this.monExtService = monExtService;

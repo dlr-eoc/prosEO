@@ -23,9 +23,12 @@ public interface MonExtServiceStateOperationMonthRepository extends JpaRepositor
 	/**
 	 * Get a list of entries
 	 * 
+	 * @param timeFrom        earliest time
+	 * @param timeTo          latest time
+	 * @param monExtServiceId service id
 	 * @return a list of services satisfying the search criteria
 	 */
 	@Query("select p from MonExtServiceStateOperationMonth p where p.datetime >= ?1 and p.datetime < ?2 and p.monExtServiceId = ?3")
-	public List<MonExtServiceStateOperationMonth> findByDateTimeBetween(Instant timeFrom, Instant timeTo, long monServiceId);
+	public List<MonExtServiceStateOperationMonth> findByDateTimeBetween(Instant timeFrom, Instant timeTo, long monExtServiceId);
 
 }

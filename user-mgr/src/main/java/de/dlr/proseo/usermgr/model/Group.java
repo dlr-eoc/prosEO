@@ -1,6 +1,6 @@
 /**
  * Group.java
- * 
+ *
  * (C) 2020 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.usermgr.model;
@@ -22,7 +22,7 @@ import javax.persistence.OneToMany;
 
 /**
  * A group of users
- * 
+ *
  * @author Dr. Thomas Bassler
  */
 @Entity(name = "groups")
@@ -32,30 +32,28 @@ public class Group {
 	@Id
 	@GeneratedValue
 	private long id;
-	
-	/** 
-	 * The (unique) name of the group, consisting of the mission code, a hyphen ("-") and the actual group name 
-	 * (which may be used across missions to denote equivalent functional groups). 
+
+	/**
+	 * The (unique) name of the group, consisting of the mission code, a hyphen
+	 * ("-") and the actual group name (which may be used across missions to denote
+	 * equivalent functional groups).
 	 */
 	@Column(nullable = false, unique = true)
 	private String groupName;
-	
+
 	/** The users belonging to this group */
 	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<GroupMember> groupMembers = new HashSet<>();
-	
+
 	/** The authorities (privileges) members of this group are granted */
 	@ElementCollection
 	@CollectionTable(name = "group_authorities", joinColumns = {
-			@JoinColumn(
-				name = "group_id", 
-				foreignKey = @ForeignKey(name = "fk_group_authorities_group")
-		)})
+			@JoinColumn(name = "group_id", foreignKey = @ForeignKey(name = "fk_group_authorities_group")) })
 	private Set<GroupAuthority> groupAuthorities = new HashSet<>();
 
 	/**
 	 * Gets the group ID
-	 * 
+	 *
 	 * @return the id
 	 */
 	public long getId() {
@@ -64,7 +62,7 @@ public class Group {
 
 	/**
 	 * Sets the group ID
-	 * 
+	 *
 	 * @param id the id to set
 	 */
 	public void setId(long id) {
@@ -73,7 +71,7 @@ public class Group {
 
 	/**
 	 * Gets the group name
-	 * 
+	 *
 	 * @return the group name
 	 */
 	public String getGroupName() {
@@ -82,7 +80,7 @@ public class Group {
 
 	/**
 	 * Sets the group name
-	 * 
+	 *
 	 * @param groupName the group name to set
 	 */
 	public void setGroupName(String groupName) {
@@ -91,7 +89,7 @@ public class Group {
 
 	/**
 	 * Gets the members of this group
-	 * 
+	 *
 	 * @return a set of users
 	 */
 	public Set<GroupMember> getGroupMembers() {
@@ -100,7 +98,7 @@ public class Group {
 
 	/**
 	 * Sets the members of this group
-	 * 
+	 *
 	 * @param groupMembers the group members to set
 	 */
 	public void setGroupMembers(Set<GroupMember> groupMembers) {
@@ -109,7 +107,7 @@ public class Group {
 
 	/**
 	 * Gets the authorities granted to members of this group
-	 * 
+	 *
 	 * @return the group authorities
 	 */
 	public Set<GroupAuthority> getGroupAuthorities() {
@@ -118,7 +116,7 @@ public class Group {
 
 	/**
 	 * Sets the authorities granted to members of this group
-	 * 
+	 *
 	 * @param groupAuthorities the group authorities to set
 	 */
 	public void setGroupAuthorities(Set<GroupAuthority> groupAuthorities) {

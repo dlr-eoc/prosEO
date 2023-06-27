@@ -19,6 +19,7 @@ import org.springframework.web.client.RestClientResponseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeotoolsMessage;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.rest.model.RestWorkflow;
 import de.dlr.proseo.model.rest.model.RestWorkflowOption;
@@ -50,11 +51,12 @@ public class WorkflowCommandRunner {
 	private static final String OPTION_VERBOSE = "verbose";
 	private static final String OPTION_FORMAT = "format";
 	private static final String OPTION_FILE = "file";
+	private static final String OPTION_INPUT_PRODUCT_CLASS = "input-product-class";
 
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
 	private static final String PROMPT_WORKFLOW_NAME = "Workflow name (empty field cancels): ";
 	private static final String PROMPT_WORKFLOW_VERSION = "Workflow version (empty field cancels): ";
-	private static final String PROMPT_WORKFLOW_OUTPUT = "Workflow output product class (empty field cancels): ";
+	private static final String PROMPT_WORKFLOW_OUTPUT = "Workflow input product class (empty field cancels): ";
 	private static final String PROMPT_WORKFLOW_CONFIGURED_PROCESSOR = "Workflow configured processor (empty field cancels): ";
 	private static final String PROMPT_WORKFLOW_INPUT = "Workflow input product class (empty field cancels): ";
 	private static final String PROMPT_WORKFLOW_OPTIONS = "WorkflowOption names (comma-separated list; empty field cancels): ";
@@ -321,6 +323,7 @@ public class WorkflowCommandRunner {
 		/* Check command options */
 		String workflowOutputFormat = CLIUtil.FILE_FORMAT_YAML;
 		boolean isVerbose = false;
+		String requestedInputProductClass = null;
 		for (ParsedOption option : showCommand.getOptions()) {
 			switch (option.getName()) {
 			case OPTION_FORMAT:
@@ -329,6 +332,8 @@ public class WorkflowCommandRunner {
 			case OPTION_VERBOSE:
 				isVerbose = true;
 				break;
+			case OPTION_INPUT_PRODUCT_CLASS:
+				requestedInputProductClass = option.getValue();
 			}
 		}
 
@@ -339,19 +344,17 @@ public class WorkflowCommandRunner {
 			String paramValue = showCommand.getParameters().get(i).getValue();
 			if (0 == i) {
 				// First parameter is workflow name
-				requestURI += "&workflowName=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
+				requestURI += "&name=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
 			} else if (1 == i) {
 				// Second parameter is workflow version
 				requestURI += "&workflowVersion=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
-			} else if (2 == i) {
-				// Third parameter is output product class
-				requestURI += "&outputProductClass=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
-			} else if (3 == i) {
-				// Fourth parameter is configured processor
-				requestURI += "&configuredProcessor=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
 			}
 		}
-
+		
+		if (null != requestedInputProductClass) {
+			requestURI += "&inputProductClass=" + URLEncoder.encode(requestedInputProductClass, Charset.defaultCharset());
+		}
+		
 		/* Get the workflow information from the Workflow Manager service */
 		List<?> resultList = null;
 		try {
@@ -394,14 +397,14 @@ public class WorkflowCommandRunner {
 		} else {
 			// Must be a list of workflows
 			String listFormat = "%-20s %-10s %-25s %s";
-			System.out.println(String.format(listFormat, "Workflow name", "Version", "Output product class",
+			System.out.println(String.format(listFormat, "Workflow name", "Version", "Input product class",
 					"Configured processor"));
 			for (Object resultObject : (new ObjectMapper()).convertValue(resultList, List.class)) {
 				if (resultObject instanceof Map) {
 					Map<?, ?> resultMap = (Map<?, ?>) resultObject;
 					System.out.println(
 							String.format(listFormat, resultMap.get("name"), resultMap.get("workflowVersion"),
-									resultMap.get("outputProductClass"), resultMap.get("configuredProcessor")));
+									resultMap.get("inputProductClass"), resultMap.get("configuredProcessor")));
 				}
 			}
 		}
@@ -479,7 +482,7 @@ public class WorkflowCommandRunner {
 		List<?> resultList = null;
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
-					URI_PATH_WORKFLOWS + "?mission=" + loginManager.getMission() + "&workflowName="
+					URI_PATH_WORKFLOWS + "?mission=" + loginManager.getMission() + "&name="
 							+ URLEncoder.encode(updatedWorkflow.getName(), Charset.defaultCharset())
 							+ "&workflowVersion="
 							+ URLEncoder.encode(updatedWorkflow.getWorkflowVersion(), Charset.defaultCharset()),
@@ -621,22 +624,22 @@ public class WorkflowCommandRunner {
 			System.err.println(ProseoLogger.format(UIMessage.NO_WORKFLOW_IDENTIFIER_GIVEN));
 			return;
 		}
-		String workflowName = deleteCommand.getParameters().get(0).getValue();
+		String name = deleteCommand.getParameters().get(0).getValue();
 		String workflowVersion = deleteCommand.getParameters().get(1).getValue();
 
 		/* Retrieve the workflow using Workflow Manager service */
 		List<?> resultList = null;
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
-					URI_PATH_WORKFLOWS + "?mission=" + loginManager.getMission() + "&workflowName="
-							+ URLEncoder.encode(workflowName, Charset.defaultCharset()) + "&workflowVersion="
+					URI_PATH_WORKFLOWS + "?mission=" + loginManager.getMission() + "&name="
+							+ URLEncoder.encode(name, Charset.defaultCharset()) + "&workflowVersion="
 							+ URLEncoder.encode(workflowVersion, Charset.defaultCharset()),
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.WORKFLOW_NOT_FOUND, workflowName, workflowVersion);
+				message = ProseoLogger.format(UIMessage.WORKFLOW_NOT_FOUND, name, workflowVersion);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -655,7 +658,7 @@ public class WorkflowCommandRunner {
 			return;
 		}
 		if (resultList.isEmpty()) {
-			String message = logger.log(UIMessage.WORKFLOW_NOT_FOUND, workflowName, workflowVersion);
+			String message = logger.log(UIMessage.WORKFLOW_NOT_FOUND, name, workflowVersion);
 			System.err.println(message);
 			return;
 		}
@@ -680,7 +683,7 @@ public class WorkflowCommandRunner {
 						: e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				message = ProseoLogger.format(UIMessage.WORKFLOW_DELETE_FAILED, workflowName, workflowVersion,
+				message = ProseoLogger.format(UIMessage.WORKFLOW_DELETE_FAILED, name, workflowVersion,
 						e.getMessage());
 				break;
 			default:

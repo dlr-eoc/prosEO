@@ -1,6 +1,6 @@
 /**
  * SampleProcessor.java
- * 
+ *
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.sampleproc;
@@ -36,13 +36,13 @@ import org.xml.sax.SAXException;
 /**
  * prosEO Sample Processor - a minimal dummy processor conforming to ESA's
  * "Generic IPF Interface Specification" (MMFI-GSEG-EOPG-TN-07-0003, V.1.8)
- * 
+ *
  * @author Dr. Thomas Bassler
  * @author Hubert Asamer
  *
  */
 public class SampleProcessor {
-	
+
 	/** Exit code for successful completion */
 	private static final int EXIT_CODE_OK = 0;
 	/** Exit code for failure */
@@ -51,7 +51,7 @@ public class SampleProcessor {
 	private static final String EXIT_TEXT_OK = "OK";
 	/** Exit code explanation for failure */
 	private static final String EXIT_TEXT_FAILURE = "FAILURE";
-	
+
 	// Error messages
 	private static final String MSG_LEAVING_SAMPLE_PROCESSOR = "Leaving sample-processor with exit code {} ({})";
 	private static final String MSG_STARTING_SAMPLE_PROCESSOR = "Starting sample-processor V00.00.02 with JobOrder file {}";
@@ -86,12 +86,12 @@ public class SampleProcessor {
 	private static final String JOF_TAG_TASK_NAME = "Task_Name";
 	private static final String JOF_TAG_CONFIG_FILES = "Config_Files";
 	private static final String JOF_TAG_CONFIG_FILE_NAME = "Conf_File_Name";
-	
+
 	// Tags for the configuration file
 	private static final String CONF_TAG_PARAM = "PARAM";
 	private static final String CONF_ATTR_NAME = "name";
 	private static final String CONF_ATTR_VALUE_TASK_NAME = "task_name";
-	
+
 	// Allowed product types and requested input
 	private static final String STATIC_INPUT_CONFIG = "processing_configuration";
 	private static final String PRODUCT_TYPE_L0 = "PTM_L0";
@@ -101,40 +101,38 @@ public class SampleProcessor {
 	private static final String PRODUCT_TYPE_L2A = "PTM_L2_A";
 	private static final String PRODUCT_TYPE_L2B = "PTM_L2_B";
 	private static final String PRODUCT_TYPE_L3 = "PTM_L3";
-	
+
 	private static Map<String, List<String>> PRODUCT_TYPES = new HashMap<>();
 	private static final String[][] PRODUCT_TYPE_DEPENDENCIES = {
 			// type, input type 1, input type 2, ...
 			{ PRODUCT_TYPE_L0 }, // Not producible
-			{ PRODUCT_TYPE_L1B, PRODUCT_TYPE_L0 },
-			{ PRODUCT_TYPE_L1B_1, PRODUCT_TYPE_L0 },
-			{ PRODUCT_TYPE_L1B_2, PRODUCT_TYPE_L0 },
+			{ PRODUCT_TYPE_L1B, PRODUCT_TYPE_L0 }, { PRODUCT_TYPE_L1B_1, PRODUCT_TYPE_L0 }, { PRODUCT_TYPE_L1B_2, PRODUCT_TYPE_L0 },
 			{ PRODUCT_TYPE_L2A, PRODUCT_TYPE_L1B, PRODUCT_TYPE_L1B_1, PRODUCT_TYPE_L1B_2 },
 			{ PRODUCT_TYPE_L2B, PRODUCT_TYPE_L1B, PRODUCT_TYPE_L1B_1, PRODUCT_TYPE_L1B_2 },
-			{ PRODUCT_TYPE_L3, PRODUCT_TYPE_L2A, PRODUCT_TYPE_L2B }
-	};
-	
+			{ PRODUCT_TYPE_L3, PRODUCT_TYPE_L2A, PRODUCT_TYPE_L2B } };
+
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(SampleProcessor.class);
-	
+
 	/**
 	 * Static initializer: Initialize map of product types
 	 */
 	{
-		for (int i = 0; i < PRODUCT_TYPE_DEPENDENCIES.length; ++i) {
+		for (String[] element : PRODUCT_TYPE_DEPENDENCIES) {
 			List<String> inputTypes = new ArrayList<>();
-			for (int k = 1; k < PRODUCT_TYPE_DEPENDENCIES[i].length; ++k) {
-				inputTypes.add(PRODUCT_TYPE_DEPENDENCIES[i][k]);
+			for (int k = 1; k < element.length; ++k) {
+				inputTypes.add(element[k]);
 			}
-			PRODUCT_TYPES.put(PRODUCT_TYPE_DEPENDENCIES[i][0], inputTypes);
+			PRODUCT_TYPES.put(element[0], inputTypes);
 		}
 	}
-	
-	
-	/*
-	 * Check the invocation arguments: only one argument allowed, which must be a path to a JobOrder XML file
-	 * 
+
+	/**
+	 * Check the invocation arguments: only one argument allowed, which must be a
+	 * path to a JobOrder XML file
+	 *
 	 * @param args the invocation arguments
+	 *
 	 * @return the JobOrder file
 	 */
 	private File checkArguments(String[] args) {
@@ -147,13 +145,13 @@ public class SampleProcessor {
 			logger.error(MSG_FILE_NOT_READABLE, jobOrderFileName);
 			return null;
 		}
-		
+
 		return new File(jobOrderFileName);
 	}
-	
+
 	/**
 	 * Parse the given JobOrder XML file
-	 * 
+	 *
 	 * @param jobOrderFile the XML file to parse
 	 * @return
 	 */
@@ -176,10 +174,11 @@ public class SampleProcessor {
 	}
 
 	/**
-	 * Check whether the parameters in the configuration file (expected parameters) match the parameters found in the Job Order Document
-	 * 
+	 * Check whether the parameters in the configuration file (expected parameters)
+	 * match the parameters found in the Job Order Document
+	 *
 	 * @param configurationFileName name of the XML configuration file to parse
-	 * @param taskName the task name in the Job Order Document
+	 * @param taskName              the task name in the Job Order Document
 	 * @return true, if the given parameters match, false otherwise
 	 */
 	private boolean checkConfigurationFile(String configurationFileName, String taskName) {
@@ -198,7 +197,7 @@ public class SampleProcessor {
 			logger.error(MSG_CONFIGURATION_DOC_NOT_PARSEABLE, configurationFileName, e.getMessage());
 			return false;
 		}
-		
+
 		// Find the task_name parameter
 		NodeList params = configurationDoc.getElementsByTagName(CONF_TAG_PARAM);
 		for (int i = 0; i < params.getLength(); ++i) {
@@ -214,17 +213,18 @@ public class SampleProcessor {
 					logger.error(MSG_INVALID_TASK_NAME_IN_JOF, taskName, params.item(i).getTextContent());
 					return false;
 				}
-			} 
+			}
 		}
-		
+
 		logger.error(MSG_TASK_NAME_MISSING_IN_CONF_FILE, configurationFileName);
 		return false;
 	}
 
 	/**
-	 * Checks the content of the given static input file for output product type L1B: 
-	 * static input file expected with parameter "task_name" = task name from Job Order document
-	 * 
+	 * Checks the content of the given static input file for output product type
+	 * L1B: static input file expected with parameter "task_name" = task name from
+	 * Job Order document
+	 *
 	 * @param jobOrderDoc the Job Order document
 	 * @return true, if the static input file is OK, false otherwise
 	 */
@@ -247,28 +247,29 @@ public class SampleProcessor {
 				logger.error(MSG_INVALID_NUMBER_OF_INPUT_FILE_NAMES, inputFileNames.getLength());
 				return false;
 			}
-			
+
 			if (STATIC_INPUT_CONFIG.equals(inputFileTypes.item(0).getTextContent())) {
 				configurationFileName = inputFileNames.item(0).getTextContent();
 				break;
 			}
 		}
-		
+
 		// Find the task name
 		NodeList taskNames = jobOrderDoc.getElementsByTagName(JOF_TAG_TASK_NAME);
 		if (1 != taskNames.getLength()) {
 			logger.error(MSG_INVALID_NUMBER_OF_TASK_NAMES, taskNames.getLength());
 			return false;
 		}
-		
+
 		// Check the "task_name" parameter in the static config file
 		return checkConfigurationFile(configurationFileName, taskNames.item(0).getTextContent());
 	}
 
 	/**
-	 * Checks the content of the given configuration file for output product types PTM_L2A and PTM_L2B:
-	 * configuration file expected with "task_name" = task name from Job Order document
-	 * 
+	 * Checks the content of the given configuration file for output product types
+	 * PTM_L2A and PTM_L2B: configuration file expected with "task_name" = task name
+	 * from Job Order document
+	 *
 	 * @param jobOrderDoc the Job Order document
 	 * @return true, if the configuration input file is OK, false otherwise
 	 */
@@ -276,7 +277,8 @@ public class SampleProcessor {
 		// Find the processor configuration file for processor configuration
 		NodeList configurationFiles = jobOrderDoc.getElementsByTagName(JOF_TAG_CONFIG_FILES);
 		if (1 != configurationFiles.getLength()) {
-			logger.error(MSG_INVALID_NUMBER_OF_CONFIGURATION_FILES, PRODUCT_TYPE_L2A + " or " + PRODUCT_TYPE_L2B, configurationFiles.getLength());
+			logger.error(MSG_INVALID_NUMBER_OF_CONFIGURATION_FILES, PRODUCT_TYPE_L2A + " or " + PRODUCT_TYPE_L2B,
+					configurationFiles.getLength());
 			return false;
 		}
 
@@ -285,14 +287,14 @@ public class SampleProcessor {
 			logger.error(MSG_INVALID_NUMBER_OF_CONFIGURATION_FILE_NAMES, configFileNames.getLength());
 			return false;
 		}
-			
+
 		// Find the task name
 		NodeList taskNames = jobOrderDoc.getElementsByTagName(JOF_TAG_TASK_NAME);
 		if (1 != taskNames.getLength()) {
 			logger.error(MSG_INVALID_NUMBER_OF_TASK_NAMES, taskNames.getLength());
 			return false;
 		}
-		
+
 		// Check the "task_name" parameter in the static config file
 		return checkConfigurationFile(configFileNames.item(0).getTextContent(), taskNames.item(0).getTextContent());
 	}
@@ -300,11 +302,14 @@ public class SampleProcessor {
 	/**
 	 * Checks the content of the given configuration and/or static input files:
 	 * <ul>
-	 *   <li>For output product type L1B: static input file expected with parameter "task_name" = task name from Job Order document
-	 *   <li>For output product types PTM_L2A and PTM_L2B: configuration file expected with "task_name" = task name from Job Order 
-	 *       document
-	 *   <li>For output product type PTM_L3: no configuration or static input file expected
+	 * <li>For output product type L1B: static input file expected with parameter
+	 * "task_name" = task name from Job Order document
+	 * <li>For output product types PTM_L2A and PTM_L2B: configuration file expected
+	 * with "task_name" = task name from Job Order document
+	 * <li>For output product type PTM_L3: no configuration or static input file
+	 * expected
 	 * </ul>
+	 *
 	 * @param jobOrderDoc the Job Order document
 	 * @return true, if the configuration/static input file is OK, false otherwise
 	 */
@@ -321,9 +326,9 @@ public class SampleProcessor {
 			return false;
 		}
 		String outputFileType = outputFileTypes.item(0).getTextContent();
-		
+
 		// Check the configuration/static input files according to output product type
-		switch(outputFileType) {
+		switch (outputFileType) {
 		case PRODUCT_TYPE_L1B:
 		case PRODUCT_TYPE_L1B_1:
 		case PRODUCT_TYPE_L1B_2:
@@ -339,11 +344,12 @@ public class SampleProcessor {
 			return false;
 		}
 	}
-	
+
 	/**
 	 * Read the input product file named in the given JobOrder document
-	 * 
-	 * @param jobOrderDoc the JobOrder document containing the input product file path
+	 *
+	 * @param jobOrderDoc the JobOrder document containing the input product file
+	 *                    path
 	 * @return
 	 */
 	private SampleProduct readInputProduct(Document jobOrderDoc) {
@@ -359,14 +365,14 @@ public class SampleProcessor {
 			return null;
 		}
 		String outputFileType = outputFileTypes.item(0).getTextContent();
-		
+
 		// Get the input files from the JobOrder document
 		NodeList inputFiles = jobOrderDoc.getElementsByTagName(JOF_TAG_INPUT);
 		if (0 == inputFiles.getLength()) {
 			logger.error(MSG_JOF_TAG_MISSING, JOF_TAG_INPUT);
 			return null;
 		}
-		
+
 		// Find the first usable input file
 		String inputFileName = null;
 		for (int i = 0; i < inputFiles.getLength(); i++) {
@@ -391,8 +397,9 @@ public class SampleProcessor {
 			logger.error(MSG_NO_VALID_INPUT_FILE_IN_JOF, outputFileType);
 			return null;
 		}
-		
-		// Create an input product from the file content (expecting 'id|type|startTime|stopTime|revision')
+
+		// Create an input product from the file content (expecting
+		// 'id|type|startTime|stopTime|revision')
 		BufferedReader input = null;
 		try {
 			input = new BufferedReader(new FileReader(new File(inputFileName)));
@@ -400,18 +407,18 @@ public class SampleProcessor {
 			logger.error(MSG_FILE_NOT_READABLE, inputFileName);
 			return null;
 		}
-		
+
 		SampleProduct inputProduct = new SampleProduct();
 		try {
 			// test if readable...
 			String[] fields = input.readLine().split("\\|");
 			logger.debug("... input product test-read with file {} having {} fields: {}", inputFileName, fields.length, fields);
-			
+
 			if (6 != fields.length) {
 				logger.error(MSG_INVALID_FILE_CONTENT, inputFileName);
 				return null;
 			}
-			 
+
 			inputProduct.setId(fields[0]);
 			inputProduct.setType(fields[1]);
 			inputProduct.setStartTime(Instant.parse(fields[2]));
@@ -432,17 +439,18 @@ public class SampleProcessor {
 				logger.warn(MSG_FILE_NOT_CLOSABLE, inputFileName);
 			}
 		}
-				
+
 		// Return newly created product
 		return inputProduct;
 	}
-	
+
 	/**
 	 * Create output products from the input product (more or less ;-) ), using the
 	 * output product file names given in the JobOrder document
-	 * 
+	 *
 	 * @param inputProduct the input product to process
-	 * @param jobOrderDoc the JobOrder document containing the output product file path
+	 * @param jobOrderDoc  the JobOrder document containing the output product file
+	 *                     path
 	 * @return
 	 */
 	private boolean processOutputProduct(SampleProduct inputProduct, Document jobOrderDoc) {
@@ -452,8 +460,9 @@ public class SampleProcessor {
 			logger.error(MSG_JOF_TAG_MISSING, JOF_TAG_OUTPUT);
 			return false;
 		}
-		
-		// For each output product, get the requested file name and type and generate the product
+
+		// For each output product, get the requested file name and type and generate
+		// the product
 		for (int i = 0; i < outputFiles.getLength(); ++i) {
 			NodeList outputFileNames = ((Element) outputFiles.item(i)).getElementsByTagName(JOF_TAG_FILE_NAME);
 			if (0 == outputFileNames.getLength()) {
@@ -470,10 +479,11 @@ public class SampleProcessor {
 				logger.error(MSG_JOF_TAG_MISSING, JOF_TAG_FILE_NAME_TYPE);
 				return false;
 			}
-			if (outputFileNameTypes.item(0).getTextContent().trim().equalsIgnoreCase("physical")) { 
-				// Generate a product with random identifier and the file type specified in the JobOrder document
+			if (outputFileNameTypes.item(0).getTextContent().trim().equalsIgnoreCase("physical")) {
+				// Generate a product with random identifier and the file type specified in the
+				// JobOrder document
 				SampleProduct outputProduct = new SampleProduct();
-				outputProduct.setId("DERIVED_FROM_"+inputProduct.getId().replace("/", "_"));
+				outputProduct.setId("DERIVED_FROM_" + inputProduct.getId().replace("/", "_"));
 				outputProduct.setType(outputFileTypes.item(0).getTextContent());
 				outputProduct.setStartTime(inputProduct.getStartTime());
 				outputProduct.setStopTime(inputProduct.getStopTime());
@@ -486,12 +496,9 @@ public class SampleProcessor {
 				BufferedWriter output = null;
 				try {
 					output = new BufferedWriter(new FileWriter(new File(outputFileName)));
-					output.write(
-							String.format("%s|%s|%s|%s|%s|%d", outputProduct.getId(), outputProduct.getType(),
-									outputProduct.getStartTime().toString(), outputProduct.getStopTime().toString(),
-									outputProduct.getGenerationTime().toString(), outputProduct.getRevision()
-									)
-							);
+					output.write(String.format("%s|%s|%s|%s|%s|%d", outputProduct.getId(), outputProduct.getType(),
+							outputProduct.getStartTime().toString(), outputProduct.getStopTime().toString(),
+							outputProduct.getGenerationTime().toString(), outputProduct.getRevision()));
 					output.newLine();
 				} catch (IOException e) {
 					logger.error(MSG_FILE_NOT_WRITABLE, outputFileName);
@@ -507,52 +514,55 @@ public class SampleProcessor {
 				}
 			}
 		}
-		
+
 		// Everything OK
 		return true;
 	}
-	
-	/*
-	 * Perform the dummy processing: check arguments, parse JobOrder file, read one input file, create one output file
-	 * 
-	 * @param args the invocation arguments (only one argument allowed, namely the path to a JobOrder XML file)
+
+	/**
+	 * Perform the dummy processing: check arguments, parse JobOrder file, read one
+	 * input file, create one output file
+	 *
+	 * @param args the invocation arguments (only one argument allowed, namely the
+	 *             path to a JobOrder XML file)
+	 *
 	 * @return the program exit code (OK or FAILURE)
 	 */
 	public int run(String[] args) {
 		logger.info(MSG_STARTING_SAMPLE_PROCESSOR, (0 < args.length ? args[0] : "null"));
-		
+
 		// Get the JobOrder file from the invocation arguments
 		File jobOrderFile = checkArguments(args);
 		if (null == jobOrderFile) {
 			logger.info(MSG_LEAVING_SAMPLE_PROCESSOR, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
-		
+
 		// Parse the JobOrder file
 		Document jobOrderDoc = parseJobOrderFile(jobOrderFile);
 		if (null == jobOrderDoc) {
 			logger.info(MSG_LEAVING_SAMPLE_PROCESSOR, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
-		
+
 		// Check the configuration/static input files
 		boolean ok = checkConfiguration(jobOrderDoc);
 		if (!ok) {
 			logger.info(MSG_LEAVING_SAMPLE_PROCESSOR, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
-		
+
 		// Read some data from the input file
 		SampleProduct inputProduct = readInputProduct(jobOrderDoc);
 		if (null == inputProduct) {
 			logger.info(MSG_LEAVING_SAMPLE_PROCESSOR, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
-		
+
 		// do something like process
 		// wait ...
-		try {			
-			int i = ((int)(9.0 * Math.random())) + 1;
+		try {
+			int i = ((int) (9.0 * Math.random())) + 1;
 			int factor = 1;
 			while (i > 0) {
 				logger.info("... wait " + ((i) * 1 * factor) + " seconds ...");
@@ -562,23 +572,25 @@ public class SampleProcessor {
 		} catch (InterruptedException e) {
 			// Never mind ...
 		}
-		
+
 		// Process input product to output product
 		ok = processOutputProduct(inputProduct, jobOrderDoc);
 		if (!ok) {
 			logger.info(MSG_LEAVING_SAMPLE_PROCESSOR, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
-		
+
 		// Everything went well
 		logger.info(MSG_LEAVING_SAMPLE_PROCESSOR, EXIT_CODE_OK, EXIT_TEXT_OK);
 		return EXIT_CODE_OK;
 	}
 
 	/**
-	 * Main routine, to be called with a path to a JobOrder XML file as single argument
-	 * 
-	 * @param args the invocation arguments (only one argument allowed, namely the path to a JobOrder XML file)
+	 * Main routine, to be called with a path to a JobOrder XML file as single
+	 * argument
+	 *
+	 * @param args the invocation arguments (only one argument allowed, namely the
+	 *             path to a JobOrder XML file)
 	 */
 	public static void main(String[] args) {
 		System.exit((new SampleProcessor()).run(args));

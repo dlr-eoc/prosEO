@@ -1,12 +1,12 @@
 /**
  * SampleWrapperTest.java
- * 
+ *
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  * (C) 2019 Hubert Asamer
  */
 package de.dlr.proseo.basewrap;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.FileNotFoundException;
 import java.lang.reflect.Field;
@@ -20,9 +20,6 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -30,20 +27,18 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Test class for prosEO Sample Processor Wrapper using a simple job order file.
- * 
- * @author Dr. Thomas Bassler
- * @author Hubert Asamer
  *
+ * @author Dr. Thomas Bassler
+ * @author Hubert Asamer *
  */
 public class BaseWrapperTest {
-	
+
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseWrapperTest.class);
 	private static final String JOB_ORDER_FILE_NAME = "src/test/resources/JobOrder.609521551_KNMI.xml";
-	private static final String JOB_ORDER_UNFORMATTED_FILE_NAME = "src/test/resources/JobOrderUnformatted.xml";
-	
-	
-    public static final String ANSI_RESET = "\u001B[0m";
+//	private static final String JOB_ORDER_UNFORMATTED_FILE_NAME = "src/test/resources/JobOrderUnformatted.xml";
+
+	public static final String ANSI_RESET = "\u001B[0m";
 	public static final String ANSI_BLACK = "\u001B[30m";
 	public static final String ANSI_RED = "\u001B[31m";
 	public static final String ANSI_GREEN = "\u001B[32m";
@@ -52,9 +47,10 @@ public class BaseWrapperTest {
 	public static final String ANSI_PURPLE = "\u001B[35m";
 	public static final String ANSI_CYAN = "\u001B[36m";
 	public static final String ANSI_WHITE = "\u001B[37m";
-    
+
 	/**
 	 * Used for setting required ENV VARS before TEST-RUN
+	 * 
 	 * @param newenv environment variables mapped by key and value
 	 * @throws Exception on any exception that occurs
 	 */
@@ -68,13 +64,13 @@ public class BaseWrapperTest {
 			env.putAll(newenv);
 			Field theCaseInsensitiveEnvironmentField = processEnvironmentClass.getDeclaredField("theCaseInsensitiveEnvironment");
 			theCaseInsensitiveEnvironmentField.setAccessible(true);
-			Map<String, String> cienv = (Map<String, String>)     theCaseInsensitiveEnvironmentField.get(null);
+			Map<String, String> cienv = (Map<String, String>) theCaseInsensitiveEnvironmentField.get(null);
 			cienv.putAll(newenv);
 		} catch (NoSuchFieldException e) {
 			Class[] classes = Collections.class.getDeclaredClasses();
 			Map<String, String> env = System.getenv();
-			for(Class cl : classes) {
-				if("java.util.Collections$UnmodifiableMap".equals(cl.getName())) {
+			for (Class cl : classes) {
+				if ("java.util.Collections$UnmodifiableMap".equals(cl.getName())) {
 					Field field = cl.getDeclaredField("m");
 					field.setAccessible(true);
 					Object obj = field.get(env);
@@ -85,11 +81,10 @@ public class BaseWrapperTest {
 			}
 		}
 	}
-	
 
 	/**
 	 * Make sure all input files exist, and all output files are removed
-	 * 
+	 *
 	 * @throws java.lang.Exception if any of the input fails is missing
 	 */
 	@BeforeClass
@@ -98,40 +93,13 @@ public class BaseWrapperTest {
 			throw new FileNotFoundException(JOB_ORDER_FILE_NAME);
 		}
 	}
-	/**
-	 * Currently not in use
-	 * 
-	 * @throws java.lang.Exception never
-	 */
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
-
-	/**
-	 * Currently not in use
-	 * 
-	 * @throws java.lang.Exception never
-	 */
-	@Before
-	public void setUp1() throws Exception {
-
-	}
-
-	/**
-	 * Clean up: Remove generated output products
-	 * 
-	 * @throws java.lang.Exception never
-	 */
-	@After
-	public void tearDown() throws Exception {
-	}
 
 	/**
 	 * Test method for {@link de.dlr.proseo.basewrap.BaseWrapper#run()}.
 	 */
 	@Test
 	public final void testRun1() {
-		
+
 		// test for debug
 		Client client = ClientBuilder.newClient();
 
@@ -142,9 +110,8 @@ public class BaseWrapperTest {
 		logger.info(webTarget.getUri().toString());
 
 		// Hashmap holding env-vars
-		Map<String,String> envmap = new HashMap<>();
-		
-		
+		Map<String, String> envmap = new HashMap<>();
+
 		/** working run using POSIX-JOF */
 		envmap.put("FS_TYPE", "POSIX");
 		envmap.put("JOBORDER_FILE", JOB_ORDER_FILE_NAME);
@@ -159,12 +126,12 @@ public class BaseWrapperTest {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		logger.info(ANSI_YELLOW+"**TEST: working run using POSIX-JOF "+envmap+ANSI_RESET);
-//		TEST SKIPPED, DOES NOT WORK
-//		int rc = (new SampleWrapper()).run(); 
+		logger.info(ANSI_YELLOW + "**TEST: working run using POSIX-JOF " + envmap + ANSI_RESET);
+
+		//		TEST SKIPPED, DOES NOT WORK
+//		int rc = (new SampleWrapper()).run();
 //		assertEquals("Return code should be 0", 0L, (long) rc);
-		
-		
+
 		/** JOF-path is wrong */
 		envmap.clear();
 		envmap.put("FS_TYPE", "POSIX");
@@ -180,11 +147,10 @@ public class BaseWrapperTest {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		logger.info(ANSI_YELLOW+"**TEST: JOF-path is wrong "+envmap+ANSI_RESET);
-		int rc = (new BaseWrapper()).run(); 
-		assertEquals("Return code should be 255", 255L, (long) rc);
-		
-		
+		logger.info(ANSI_YELLOW + "**TEST: JOF-path is wrong " + envmap + ANSI_RESET);
+		int rc = (new BaseWrapper()).run();
+		assertEquals("Return code should be 255", 255L, rc);
+
 		/** FS_TYPE is wrong */
 		envmap.clear();
 		envmap.put("FS_TYPE", "sfsf");
@@ -201,11 +167,11 @@ public class BaseWrapperTest {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		logger.info(ANSI_YELLOW+"**TEST: FS_TYPE is wrong "+envmap+ANSI_RESET);
-		rc = (new BaseWrapper()).run(); 
-		assertEquals("Return code should be 255", 255L, (long) rc);
 		
-		
+		logger.info(ANSI_YELLOW + "**TEST: FS_TYPE is wrong " + envmap + ANSI_RESET);
+		rc = (new BaseWrapper()).run();
+		assertEquals("Return code should be 255", 255L, rc);
+
 		/** FS_TYPE is S3, but JOBORDER_FILE refers to non s3 URI */
 		envmap.clear();
 		envmap.put("FS_TYPE", "S3");
@@ -216,17 +182,16 @@ public class BaseWrapperTest {
 		envmap.put("LOGFILE_TARGET", "test");
 		envmap.put("STATE_CALLBACK_ENDPOINT", "test");
 		envmap.put("SUCCESS_STATE", "test");
-		
+
 		try {
 			setEnv(envmap);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		logger.info(ANSI_YELLOW+"**TEST: FS_TYPE is S3, but JOBORDER_FILE refers to non s3 URI "+envmap+ANSI_RESET);
-		rc = (new BaseWrapper()).run(); 
-		assertEquals("Return code should be 255", 255L, (long) rc);
-		
-		
+		logger.info(ANSI_YELLOW + "**TEST: FS_TYPE is S3, but JOBORDER_FILE refers to non s3 URI " + envmap + ANSI_RESET);
+		rc = (new BaseWrapper()).run();
+		assertEquals("Return code should be 255", 255L, rc);
+
 		/** working run using S3-JOF */
 		envmap.clear();
 		envmap.put("JOBORDER_FILE", "s3://joborders/JobOrder.609521551_KNMI.xml");
@@ -242,13 +207,12 @@ public class BaseWrapperTest {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		logger.info(ANSI_YELLOW+"**TEST: working run using S3-JOF "+envmap+ANSI_RESET);
+		logger.info(ANSI_YELLOW + "**TEST: working run using S3-JOF " + envmap + ANSI_RESET);
 //		TEST SKIPPED, DOES NOT WORK
-//		rc = (new SampleWrapper()).run(); 
+//		rc = (new SampleWrapper()).run();
 //		assertEquals("Return code should be 0", 0L, (long) rc);
-		
-		
-		/** S3-JOF but using wrong s3-credentials*/
+
+		/** S3-JOF but using wrong s3-credentials */
 		envmap.clear();
 		envmap.put("JOBORDER_FILE", "s3://joborders/JobOrder.609521551_KNMI.xml");
 		envmap.put("FS_TYPE", "S3");
@@ -263,11 +227,10 @@ public class BaseWrapperTest {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		logger.info(ANSI_YELLOW+"**TEST: S3-JOF but using wrong s3-credentials "+envmap+ANSI_RESET);
-		rc = (new BaseWrapper()).run(); 
-		assertEquals("Return code should be 255", 255L, (long) rc);
-		
-		
+		logger.info(ANSI_YELLOW + "**TEST: S3-JOF but using wrong s3-credentials " + envmap + ANSI_RESET);
+		rc = (new BaseWrapper()).run();
+		assertEquals("Return code should be 255", 255L, rc);
+
 		/** S3-JOF but using wrong s3-URI */
 		envmap.clear();
 		envmap.put("JOBORDER_FILE", "s3://joborers/JobOrer.609521551_KNMI.xml");
@@ -283,11 +246,9 @@ public class BaseWrapperTest {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		logger.info(ANSI_YELLOW+"**TEST: S3-JOF but using wrong s3-URI "+envmap+ANSI_RESET);
-		
-		rc = (new BaseWrapper()).run(); 
-		assertEquals("Return code should be 255", 255L, (long) rc);
-	}
-	
+		logger.info(ANSI_YELLOW + "**TEST: S3-JOF but using wrong s3-URI " + envmap + ANSI_RESET);
 
+		rc = (new BaseWrapper()).run();
+		assertEquals("Return code should be 255", 255L, rc);
+	}
 }

@@ -62,8 +62,8 @@ public class MonExtServiceStateOperationDay extends PersistentObject {
 	/**
 	 * @param monExtServiceId the monExtServiceId to set
 	 */
-	public void setMonExtServiceId(long monServiceId) {
-		this.monExtServiceId = monServiceId;
+	public void setMonExtServiceId(long monExtServiceId) {
+		this.monExtServiceId = monExtServiceId;
 	}
 
 	/**

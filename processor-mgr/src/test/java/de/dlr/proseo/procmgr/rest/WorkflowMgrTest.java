@@ -78,13 +78,11 @@ public class WorkflowMgrTest {
 	private static String[][] testWorkflowData = {
 			// name, uuid, workflowVersion, inputProductClass, outputProductClass,
 			// configuredProcessor
-			{ "CLOUD_to_O3", UUID.randomUUID().toString(), "1.0", "L2__CLOUD_", "L2__O3____",
-					"UPAS 02.04.01 2022-11-02" },
+			{ "CLOUD_to_O3", UUID.randomUUID().toString(), "1.0", "L2__CLOUD_", "L2__O3____", "UPAS 02.04.01 2022-11-02" },
 			{ "AER_to_SO2", UUID.randomUUID().toString(), "1.3", "L2__AER_AI", "L2__SO2___", "NL-L2 02.04.00" }, };
 	private static String[][] testWorkflowOptions = {
 			// workflowName, name, optionType, valueRange
-			{ "CLOUD_to_O3", "someName", "NUMBER", "someValue" },
-			{ "AER_to_SO2", "someOtherName", "NUMBER", "someValue" } };
+			{ "CLOUD_to_O3", "someName", "NUMBER", "someValue" }, { "AER_to_SO2", "someOtherName", "NUMBER", "someValue" } };
 
 	/**
 	 *
@@ -139,12 +137,10 @@ public class WorkflowMgrTest {
 		workflow.setName(workflowData[0]);
 		workflow.setUuid(UUID.fromString(workflowData[1]));
 		workflow.setWorkflowVersion(workflowData[2]);
-		workflow.setInputProductClass(
-				RepositoryService.getProductClassRepository().findByProductType(workflowData[3]).get(0));
-		workflow.setOutputProductClass(
-				RepositoryService.getProductClassRepository().findByProductType(workflowData[4]).get(0));
+		workflow.setInputProductClass(RepositoryService.getProductClassRepository().findByProductType(workflowData[3]).get(0));
+		workflow.setOutputProductClass(RepositoryService.getProductClassRepository().findByProductType(workflowData[4]).get(0));
 		workflow.setConfiguredProcessor(RepositoryService.getConfiguredProcessorRepository()
-				.findByMissionCodeAndIdentifier(testMissionData[0], workflowData[5]));
+			.findByMissionCodeAndIdentifier(testMissionData[0], workflowData[5]));
 		workflow.setEnabled(true);
 		workflow.setOutputFileClass("someOutputFileClass");
 		workflow.setProcessingMode("NRTI");
@@ -247,7 +243,7 @@ public class WorkflowMgrTest {
 		assertEquals("Wrong workflow count.", "1",
 				workflowMgr.countWorkflows("UTM", null, testWorkflowData[0][2], null, null, null));
 		assertEquals("Wrong workflow count.", "1",
-				workflowMgr.countWorkflows("UTM", null, null, testWorkflowData[0][4], null, null));
+				workflowMgr.countWorkflows("UTM", null, null, testWorkflowData[0][3], null, null));
 		assertEquals("Wrong workflow count.", "1",
 				workflowMgr.countWorkflows("UTM", null, null, null, testWorkflowData[0][5], null));
 		assertEquals("Wrong workflow count.", "2", workflowMgr.countWorkflows("UTM", null, null, null, null, true));
@@ -264,7 +260,7 @@ public class WorkflowMgrTest {
 		// Get a valid sample workflow and workflow option from which deviations can be
 		// tested.
 		RestWorkflow testWorkflow = WorkflowUtil
-				.toRestWorkflow(RepositoryService.getWorkflowRepository().findByName(testWorkflowData[0][0]));
+			.toRestWorkflow(RepositoryService.getWorkflowRepository().findByName(testWorkflowData[0][0]));
 		RestWorkflowOption testWorkflowOption = testWorkflow.getWorkflowOptions().get(0);
 
 		logger.trace("testWorkflow is " + testWorkflow);
@@ -295,8 +291,7 @@ public class WorkflowMgrTest {
 		testWorkflow.setWorkflowVersion(testWorkflowData[0][2]);
 
 		// No two workflows can have the same UUID.
-		testWorkflow.setUuid(
-				RepositoryService.getWorkflowRepository().findByName(testWorkflowData[1][0]).getUuid().toString());
+		testWorkflow.setUuid(RepositoryService.getWorkflowRepository().findByName(testWorkflowData[1][0]).getUuid().toString());
 		assertThrows(IllegalArgumentException.class, () -> workflowMgr.createWorkflow(testWorkflow));
 		testWorkflow.setUuid(UUID.randomUUID().toString());
 
@@ -334,17 +329,20 @@ public class WorkflowMgrTest {
 		testWorkflow.setInputProductClass(null);
 		assertThrows(IllegalArgumentException.class, () -> workflowMgr.createWorkflow(testWorkflow));
 		testWorkflow.setInputProductClass(RepositoryService.getProductClassRepository()
-				.findByMissionCodeAndProductType(testMissionData[0], testWorkflowData[0][3]).getProductType());
+			.findByMissionCodeAndProductType(testMissionData[0], testWorkflowData[0][3])
+			.getProductType());
 
 		// A valid outputProductClass must be provided, i.e., the processor class must
 		// be able to generate it.
 		testWorkflow.setOutputProductClass(null);
 		assertThrows(IllegalArgumentException.class, () -> workflowMgr.createWorkflow(testWorkflow));
 		testWorkflow.setOutputProductClass(RepositoryService.getProductClassRepository()
-				.findByMissionCodeAndProductType(testMissionData[0], testWorkflowData[0][3]).getProductType());
+			.findByMissionCodeAndProductType(testMissionData[0], testWorkflowData[0][3])
+			.getProductType());
 		assertThrows(IllegalArgumentException.class, () -> workflowMgr.createWorkflow(testWorkflow));
 		testWorkflow.setOutputProductClass(RepositoryService.getProductClassRepository()
-				.findByMissionCodeAndProductType(testMissionData[0], testWorkflowData[0][4]).getProductType());
+			.findByMissionCodeAndProductType(testMissionData[0], testWorkflowData[0][4])
+			.getProductType());
 
 		// A valid configuredProcessor must be provided.
 		testWorkflow.setConfiguredProcessor(null);
@@ -506,8 +504,7 @@ public class WorkflowMgrTest {
 		logger.trace(">>> testDeleteWorkflowById()");
 
 		// Get a test workflow to delete.
-		RestWorkflow testWorkflow = WorkflowUtil
-				.toRestWorkflow(RepositoryService.getWorkflowRepository().findAll().get(0));
+		RestWorkflow testWorkflow = WorkflowUtil.toRestWorkflow(RepositoryService.getWorkflowRepository().findAll().get(0));
 
 		// Delete workflow and assert success.
 		workflowMgr.deleteWorkflowById(testWorkflow.getId());
@@ -524,8 +521,7 @@ public class WorkflowMgrTest {
 		logger.trace(">>> testGetWorkflowById()");
 
 		// Get a test workflow to retrieve.
-		RestWorkflow testWorkflow = WorkflowUtil
-				.toRestWorkflow(RepositoryService.getWorkflowRepository().findAll().get(0));
+		RestWorkflow testWorkflow = WorkflowUtil.toRestWorkflow(RepositoryService.getWorkflowRepository().findAll().get(0));
 
 		// Retrieve workflow and assert success.
 		assertNotNull("No workflow was retrieved.", workflowMgr.getWorkflowById(testWorkflow.getId()));
@@ -540,10 +536,9 @@ public class WorkflowMgrTest {
 		logger.trace(">>> testModifyWorkflow()");
 
 		// Get a valid sample workflow and workflow option to modify.
-		RestWorkflow originalWorkflow = WorkflowUtil
-				.toRestWorkflow(RepositoryService.getWorkflowRepository().findAll().get(0));
+		RestWorkflow originalWorkflow = WorkflowUtil.toRestWorkflow(RepositoryService.getWorkflowRepository().findAll().get(0));
 		RestWorkflow testWorkflow = WorkflowUtil
-				.toRestWorkflow(RepositoryService.getWorkflowRepository().findById(originalWorkflow.getId()).get());
+			.toRestWorkflow(RepositoryService.getWorkflowRepository().findById(originalWorkflow.getId()).get());
 		RestWorkflowOption testWorkflowOption = testWorkflow.getWorkflowOptions().get(0);
 
 		logger.trace("testWorkflow is " + testWorkflow);
@@ -557,74 +552,63 @@ public class WorkflowMgrTest {
 		// Version is updated automatically and may not be set manually. The workflow
 		// version may be changed.
 		testWorkflow.setVersion(1111L);
-		assertThrows(ConcurrentModificationException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(ConcurrentModificationException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testWorkflow.setVersion(originalWorkflow.getVersion());
 		testWorkflow.setWorkflowVersion("someOtherVersion");
-		assertTrue("Version was not incremented.", workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow)
-				.getVersion() == 1 + originalWorkflow.getVersion());
+		assertTrue("Version was not incremented.",
+				workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow).getVersion() == 1 + originalWorkflow.getVersion());
 		testWorkflow.setVersion(testWorkflow.getVersion() + 1);
 
 		// Mandatory fields may not be null
 
 		// The enabled status must be provided.
 		testWorkflow.setEnabled(null);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testWorkflow.setEnabled(true);
 
 		// The output file class must be provided.
 		testWorkflow.setOutputFileClass(null);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testWorkflow.setOutputFileClass("testOutputFileClass");
 
 		// The processing mode must be provided.
 		testWorkflow.setProcessingMode(null);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testWorkflow.setProcessingMode("NRTI");
 
 		// The workflow version must be provided.
 		testWorkflow.setWorkflowVersion(null);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testWorkflow.setWorkflowVersion(testWorkflowData[0][2]);
 
 		// The slicing type must be provided.
 		testWorkflow.setSlicingType(null);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testWorkflow.setSlicingType(OrderSlicingType.TIME_SLICE.toString());
 
 		// Slice overlap and slice duration must be provided consistently.
 		testWorkflow.setSliceDuration(null);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testWorkflow.setSliceDuration(30l);
 
 		// If changed, configured processor must be valid.
 		testWorkflow.setConfiguredProcessor("invalid");
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testWorkflow.setConfiguredProcessor(testWorkflowData[0][5]);
 
 		// If changed, the new input product class must be valid.
 		testWorkflow.setInputProductClass("invalid");
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testWorkflow.setInputProductClass(testWorkflowData[0][3]);
 
 		// If changed, the new output product class must be valid.
 		testWorkflow.setOutputProductClass("invalid");
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		// ... and match the configured processor. (Here, an input product class is
 		// used,
 		// which the specified processor cannot produce.)
 		testWorkflow.setOutputProductClass(testWorkflowData[0][3]);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testWorkflow.setOutputProductClass(testWorkflowData[0][4]);
 
 		// Deleting workflowOptions is allowed.
@@ -638,8 +622,7 @@ public class WorkflowMgrTest {
 		testWorkflowOption.setWorkflowName("wrongName");
 		testWorkflow.getWorkflowOptions().clear();
 		testWorkflow.getWorkflowOptions().add(testWorkflowOption);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testWorkflowOption.setWorkflowName(testWorkflow.getName());
 
 		// The missionCode, if provided, must match both the respective workflow's
@@ -647,38 +630,33 @@ public class WorkflowMgrTest {
 		testWorkflowOption.setMissionCode("PTM");
 		testWorkflow.getWorkflowOptions().clear();
 		testWorkflow.getWorkflowOptions().add(testWorkflowOption);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testWorkflowOption.setMissionCode(testMissionData[0]);
 
 		// A valid workflowName must be provided.
 		testWorkflowOption.setWorkflowName(null);
 		testWorkflow.getWorkflowOptions().clear();
 		testWorkflow.getWorkflowOptions().add(testWorkflowOption);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 
 		testWorkflowOption.setWorkflowName("invalid");
 		testWorkflow.getWorkflowOptions().clear();
 		testWorkflow.getWorkflowOptions().add(testWorkflowOption);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testWorkflowOption.setWorkflowName(testWorkflow.getName());
 
 		// The workflow option must have a name.
 		testWorkflowOption.setName(null);
 		testWorkflow.getWorkflowOptions().clear();
 		testWorkflow.getWorkflowOptions().add(testWorkflowOption);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testWorkflowOption.setName("optionName");
 
 		// A valid optionType must be provided.
 		testWorkflowOption.setOptionType("invalid");
 		testWorkflow.getWorkflowOptions().clear();
 		testWorkflow.getWorkflowOptions().add(testWorkflowOption);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testWorkflowOption.setOptionType(WorkflowOptionType.NUMBER.toString());
 
 		// If provided, class output parameters must be valid.
@@ -700,35 +678,29 @@ public class WorkflowMgrTest {
 
 		// Product class missing
 		classParam.setProductClass(null);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 
 		// Invalid product class
 		classParam.setProductClass("invalid");
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		classParam.setProductClass(testWorkflowData[0][4]);
 
 		// Output parameters missing
 		classParam.setOutputParameters(null);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		classParam.setOutputParameters(params);
 
 		// Invalid output parameters
 		param.setKey(null);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		param.setKey("someKey");
 
 		param.setParameterType("invalid");
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		param.setParameterType("INSTANT");
 
 		param.setParameterValue("invalid");
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		param.setParameterValue("2013-08-12");
 
 		// If provided, output parameters must be valid.
@@ -741,20 +713,17 @@ public class WorkflowMgrTest {
 
 		// Key missing
 		testOutputParameter.setKey(null);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testOutputParameter.setKey("someKey");
 
 		// Type invalid
 		testOutputParameter.setParameterType("invalid");
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testOutputParameter.setParameterType("boolean");
 
 		// Value invalid
 		testOutputParameter.setParameterValue("invalid");
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testOutputParameter.setParameterValue("true");
 
 		// If provided, input filters must be valid.
@@ -770,26 +739,22 @@ public class WorkflowMgrTest {
 
 		// Key missing
 		testParameter.setKey(null);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testParameter.setKey("someKey");
 
 		// Type invalid
 		testParameter.setParameterType("invalid");
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testParameter.setParameterType("dOuBlE");
 
 		// Value invalid
 		testParameter.setParameterValue("invalid");
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testParameter.setParameterValue("2.0");
 
 		// Product class missing
 		f.setProductClass(null);
-		assertThrows(IllegalArgumentException.class,
-				() -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		f.setProductClass(testWorkflowData[0][4]);
 
 		// Empty value ranges are allowed, so a non-existing value range is quietly
@@ -799,8 +764,8 @@ public class WorkflowMgrTest {
 		testWorkflow.getWorkflowOptions().add(testWorkflowOption);
 
 		// No exception is thrown if nothing was modified.
-		workflowMgr.modifyWorkflow(testWorkflow.getId(), WorkflowUtil
-				.toRestWorkflow(RepositoryService.getWorkflowRepository().findById(originalWorkflow.getId()).get()));
+		workflowMgr.modifyWorkflow(testWorkflow.getId(),
+				WorkflowUtil.toRestWorkflow(RepositoryService.getWorkflowRepository().findById(originalWorkflow.getId()).get()));
 	}
 
 	/**
@@ -823,16 +788,16 @@ public class WorkflowMgrTest {
 				workflowMgr.getWorkflows(testMissionData[0], null, null, null, null, null, 0, 100).size() == 2);
 		assertTrue("More or less workflows retrieved than expected.",
 				workflowMgr.getWorkflows(testMissionData[0], testWorkflowData[0][0], null, null, null, null, null, null)
-						.size() == 1);
+					.size() == 1);
 		assertTrue("More or less workflows retrieved than expected.",
 				workflowMgr.getWorkflows(testMissionData[0], null, testWorkflowData[0][2], null, null, null, null, null)
-						.size() == 1);
+					.size() == 1);
 		assertTrue("More or less workflows retrieved than expected.",
-				workflowMgr.getWorkflows(testMissionData[0], null, null, testWorkflowData[0][4], null, null, null, null)
-						.size() == 1);
+				workflowMgr.getWorkflows(testMissionData[0], null, null, testWorkflowData[0][3], null, null, null, null)
+					.size() == 1);
 		assertTrue("More or less workflows retrieved than expected.",
 				workflowMgr.getWorkflows(testMissionData[0], null, null, null, testWorkflowData[0][5], null, null, null)
-						.size() == 1);
+					.size() == 1);
 		assertTrue("More or less workflows retrieved than expected.",
 				workflowMgr.getWorkflows(null, null, null, null, null, true, null, null).size() == 2);
 	}

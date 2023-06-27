@@ -22,7 +22,12 @@ public enum GeotoolsMessage implements ProseoMessage {
 	POLYGON_NOT_INSIDE_AREAS	(1505, Level.INFO, true, "Polygon {0} is NOT inside areas {1}", ""),
 	POLYGON_OVERLAPS			(1506, Level.INFO, true, "Polygon {0} overlaps areas {1}", ""),
 	POLYGON_NO_OVERLAP			(1507, Level.INFO, true, "Polygon {0} does NOT overlap areas {1}", ""),
-	
+	INVALID_COORDINATES			(1508, Level.ERROR, false, "No or an uneven number of longitude/latitude values were provided", ""),
+	REST_POLYGON_MISSING		(1509, Level.ERROR, false, "No RestPolygon was provided or the provided polygon contained no points", ""),
+	BOUNDS_IO_SHAPE_FILE		(1510, Level.ERROR, false, "An error occured calculating the bounds of shape file {0}: {1}" ,""),
+	ARGUMENT_MISSING			(1511, Level.ERROR, false, "The {0} argument is missing", ""),
+	INVALID_FILE_TYPE			(1512, Level.ERROR, false, "{0} is not a valid shape file type. Valid types are: SHP, KML, GEOJSON", ""),
+
 	;
 
 	private final int code;

@@ -865,35 +865,30 @@ commands:
               type: string
               description: The version of the configuration to delete
     - name: workflow
-      description: Commands for managing workflowes
+      description: Commands for managing workflows
       subcommands:
         - name: show
-          description: Show all workflowes for the current mission or only the selected ones
+          description: Show all workflows for the current mission or only the selected ones
           options:
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
             - name: verbose
               type: boolean
-              description: If set, give workflow details, otherwise show only workflow name
+              description: If set, give workflow details, otherwise show only workflow name and workflow version
               shortForm: v
+            - name: input-product-class
+              type: string
+              description: The input product class of the workflow to show              
           parameters:
-            - name: workflowName
+            - name: name
               type: string
               optional: true
               description: The name of the workflow to show
             - name: workflowVersion
               type: string
               optional: true
-              description: Version number of the workflow to show
-            - name: outputProductClass
-              type: string
-              optional: true
-              description: The output product class of the workflow to show
-            - name: configuredProcessor
-              type: string
-              optional: true
-              description: The configured processor of the workflow to show
+              description: The version of the workflow to show
         - name: create
           description: Create a new workflow for the current mission; 
                        the user will be prompted for mandatory attributes not given on the command line
@@ -913,13 +908,12 @@ commands:
             - name: workflowVersion
               type: string
               optional: true
-              description: Version number applicable to the workflow (mandatory if not read from file)
+              description: The version of the workflow to create (mandatory if not read from file)
             - name: attribute
               type: string
               optional: true
               repeatable: true
               description: A workflow attribute to set in the form "<attribute name>=<attribute value>"
-###
         - name: update
           description: Update a workflow for the current mission; 
                        the user will be prompted for mandatory attributes not given on the command line
@@ -938,27 +932,25 @@ commands:
             - name: name
               type: string
               optional: true
-              description: The name of the workflow to create (mandatory if not read from file)
+              description: The name of the workflow to update (mandatory if not read from file)
             - name: workflowVersion
               type: string
               optional: true
-              description: Version number applicable to the workflow (mandatory if not read from file)
+              description: The version of the workflow to update (mandatory if not read from file)
             - name: attribute
               type: string
               optional: true
               repeatable: true
               description: A workflow attribute to set in the form "<attribute name>=<attribute value>"
         - name: delete
-          description: Delete the named workflow from the current mission
+          description: Delete a workflow from the current mission
           parameters:
-            - name: name
+            - name: workflowClass
               type: string
-              optional: true
-              description: The name of the workflow to create (mandatory if not read from file)
+              description: The name of the workflow to delete
             - name: workflowVersion
               type: string
-              optional: true
-              description: Version number applicable to the workflow (mandatory if not read from file)
+              description: The version of the workflow to delete
                  
     # Commands for the Product Class Manager
     - name: productclass
@@ -1623,4 +1615,81 @@ commands:
             - name: facilityName
               type: string
               description: The name of the facility to delete
+          
+    # Commands for the Product Archive
+    - name: archive
+      description: Commands for managing product archive
+      subcommands:
+        - name: show
+          description: Show all product archives or a specific one
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give product archive details, otherwise show product archive names only (setting archiveName parameter
+                           implies verbose)
+              shortForm: v
+            - name: showPasswords
+              type: boolean
+              description: If set, show passwords for Product Archive users, otherwise show placeholder
+              shortForm: s
+          parameters:
+            - name: archiveName
+              type: string
+              optional: true
+              description: The name of the product archive to show
+        - name: create
+          description: Create a new product archive; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the product archive definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+          parameters:
+            - name: archiveName
+              type: string
+              optional: true
+              description: The name of the archive to create (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A archive attribute to set in the form "<attribute name>=<attribute value>"
+        - name: update
+          description: Update a product archive; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the product archive definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: delete-attributes
+              type: boolean
+              description: Delete non-mandatory attributes not given in the product archive definition file and/or the command parameters
+          parameters:
+            - name: archiveName
+              type: string
+              optional: true
+              description: The name of the archive to update (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A archive attribute to set in the form "<attribute name>=<attribute value>"
+        - name: delete
+          description: Delete the product archive with the given name
+          parameters:
+            - name: archiveName
+              type: string
+              description: The name of the archive to delete
+          
           

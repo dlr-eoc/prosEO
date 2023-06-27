@@ -1,15 +1,12 @@
 /**
  * ProductUtil.java
- * 
+ *
  * (c) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.ingestor.rest.model;
 
 import java.time.DateTimeException;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -24,29 +21,31 @@ import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
- * Utility methods for products, e. g. for conversion between prosEO model and REST model
- * 
+ * Utility methods for products, e. g. for conversion between prosEO model and
+ * REST model
+ *
  * @author Dr. Thomas Bassler
  */
 public class ProductUtil {
-	
+
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductUtil.class);
-		
+
 	/**
 	 * Convert a prosEO model product into a REST product
-	 * 
+	 *
 	 * @param modelProduct the prosEO model product
 	 * @return an equivalent REST product or null, if no model product was given
 	 */
 	public static RestProduct toRestProduct(Product modelProduct) {
-		if (logger.isTraceEnabled()) logger.trace(">>> toRestProduct({})", (null == modelProduct ? "MISSING" : modelProduct.getId()));
+		if (logger.isTraceEnabled())
+			logger.trace(">>> toRestProduct({})", (null == modelProduct ? "MISSING" : modelProduct.getId()));
 
 		if (null == modelProduct)
 			return null;
-		
+
 		RestProduct restProduct = new RestProduct();
-		
+
 		restProduct.setId(modelProduct.getId());
 		restProduct.setVersion(Long.valueOf(modelProduct.getVersion()));
 		if (null != modelProduct.getUuid()) {
@@ -84,7 +83,7 @@ public class ProductUtil {
 		if (null != modelProduct.getEvictionTime()) {
 			restProduct.setEvictionTime(OrbitTimeFormatter.format(modelProduct.getEvictionTime()));
 		}
-		for (DownloadHistory historyEntry: modelProduct.getDownloadHistory()) {
+		for (DownloadHistory historyEntry : modelProduct.getDownloadHistory()) {
 			RestDownloadHistory restHistoryEntry = new RestDownloadHistory();
 			restHistoryEntry.setUsername(historyEntry.getUsername());
 			restHistoryEntry.setProductFileName(historyEntry.getProductFileName());
@@ -95,7 +94,7 @@ public class ProductUtil {
 		if (null != modelProduct.getProductionType()) {
 			restProduct.setProductionType(modelProduct.getProductionType().toString());
 		}
-		for (Product componentProduct: modelProduct.getComponentProducts()) {
+		for (Product componentProduct : modelProduct.getComponentProducts()) {
 			restProduct.getComponentProductIds().add(componentProduct.getId());
 		}
 		if (null != modelProduct.getEnclosingProduct()) {
@@ -108,7 +107,7 @@ public class ProductUtil {
 			restOrbit.setSpacecraftCode(modelOrbit.getSpacecraft().getCode());
 			restProduct.setOrbit(restOrbit);
 		}
-		for (ProductFile modelFile: modelProduct.getProductFile()) {
+		for (ProductFile modelFile : modelProduct.getProductFile()) {
 			restProduct.getProductFile().add(ProductFileUtil.toRestProductFile(modelFile));
 		}
 		if (null != modelProduct.getConfiguredProcessor()) {
@@ -117,51 +116,54 @@ public class ProductUtil {
 			restConfiguredProcessor.setId(modelConfiguredProcessor.getId());
 			restConfiguredProcessor.setVersion(Long.valueOf(modelConfiguredProcessor.getVersion()));
 			restConfiguredProcessor.setIdentifier(modelConfiguredProcessor.getIdentifier());
-			restConfiguredProcessor.setProcessorName(modelConfiguredProcessor.getProcessor().getProcessorClass().getProcessorName());
+			restConfiguredProcessor
+				.setProcessorName(modelConfiguredProcessor.getProcessor().getProcessorClass().getProcessorName());
 			restConfiguredProcessor.setProcessorVersion(modelConfiguredProcessor.getProcessor().getProcessorVersion());
 			restConfiguredProcessor.setConfigurationVersion(modelConfiguredProcessor.getConfiguration().getConfigurationVersion());
 			restProduct.setConfiguredProcessor(restConfiguredProcessor);
 		}
-		for (String productParameterKey: modelProduct.getParameters().keySet()) {
-			RestParameter restParameter = new RestParameter(
-					productParameterKey,
+		for (String productParameterKey : modelProduct.getParameters().keySet()) {
+			RestParameter restParameter = new RestParameter(productParameterKey,
 					modelProduct.getParameters().get(productParameterKey).getParameterType().toString(),
 					modelProduct.getParameters().get(productParameterKey).getParameterValue().toString());
 			restProduct.getParameters().add(restParameter);
 		}
-		
+
 		return restProduct;
 	}
-	
+
 	/**
-	 * Convert a REST product into a prosEO model product (scalar and embedded attributes only, no object references);
-	 * does not create or update the download history.
-	 * 
+	 * Convert a REST product into a prosEO model product (scalar and embedded
+	 * attributes only, no object references); does not create or update the
+	 * download history.
+	 *
 	 * @param restProduct the REST product
-	 * @return a (roughly) equivalent model product or null, if no REST product was given
-	 * @throws IllegalArgumentException if the REST product violates syntax rules for date, enum or numeric values
+	 * @return a (roughly) equivalent model product or null, if no REST product was
+	 *         given
+	 * @throws IllegalArgumentException if the REST product violates syntax rules
+	 *                                  for date, enum or numeric values
 	 */
 	public static Product toModelProduct(RestProduct restProduct) throws IllegalArgumentException {
-		if (logger.isTraceEnabled()) logger.trace(">>> toModelProduct({})", (null == restProduct ? "MISSING" : restProduct.getProductClass()));
+		if (logger.isTraceEnabled())
+			logger.trace(">>> toModelProduct({})", (null == restProduct ? "MISSING" : restProduct.getProductClass()));
 
 		if (null == restProduct)
 			return null;
-		
+
 		Product modelProduct = new Product();
-		
+
 		if (null != restProduct.getId() && 0 != restProduct.getId()) {
 			modelProduct.setId(restProduct.getId());
 			while (modelProduct.getVersion() < restProduct.getVersion()) {
 				modelProduct.incrementVersion();
-			} 
+			}
 		}
 		if (null != restProduct.getUuid()) {
 			try {
 				modelProduct.setUuid(UUID.fromString(restProduct.getUuid()));
 			} catch (IllegalArgumentException e) {
-				throw new IllegalArgumentException(
-						logger.log(IngestorMessage.PRODUCT_UUID_INVALID, restProduct.getUuid()));
-			} 
+				throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_UUID_INVALID, restProduct.getUuid()));
+			}
 		}
 		modelProduct.setFileClass(restProduct.getFileClass());
 		modelProduct.setMode(restProduct.getMode());
@@ -184,11 +186,11 @@ public class ProductUtil {
 			modelProduct.setRawDataAvailabilityTime(null);
 		} else {
 			try {
-				modelProduct.setRawDataAvailabilityTime(
-						Instant.from(OrbitTimeFormatter.parse(restProduct.getRawDataAvailabilityTime())));
+				modelProduct
+					.setRawDataAvailabilityTime(Instant.from(OrbitTimeFormatter.parse(restProduct.getRawDataAvailabilityTime())));
 			} catch (DateTimeException e) {
-				throw new IllegalArgumentException(logger.log(IngestorMessage.INVALID_RAW_DATA_AVAILABILITY_TIME,
-						restProduct.getRawDataAvailabilityTime()));
+				throw new IllegalArgumentException(
+						logger.log(IngestorMessage.INVALID_RAW_DATA_AVAILABILITY_TIME, restProduct.getRawDataAvailabilityTime()));
 			}
 		}
 		try {
@@ -227,7 +229,7 @@ public class ProductUtil {
 						logger.log(IngestorMessage.INVALID_PRODUCTION_TYPE, restProduct.getProductionType()));
 			}
 		}
-		for (RestParameter restParameter: restProduct.getParameters()) {
+		for (RestParameter restParameter : restProduct.getParameters()) {
 			de.dlr.proseo.model.Parameter modelParameter = new de.dlr.proseo.model.Parameter();
 			try {
 				modelParameter.setParameterType(ParameterType.valueOf(restParameter.getParameterType()));
@@ -237,11 +239,21 @@ public class ProductUtil {
 			}
 			try {
 				switch (modelParameter.getParameterType()) {
-				case INTEGER: 	modelParameter.setIntegerValue(Integer.parseInt(restParameter.getParameterValue())); break;
-				case STRING:	modelParameter.setStringValue(restParameter.getParameterValue()); break;
-				case BOOLEAN:	modelParameter.setBooleanValue(Boolean.parseBoolean(restParameter.getParameterValue())); break;
-				case DOUBLE:	modelParameter.setDoubleValue(Double.parseDouble(restParameter.getParameterValue())); break;
-				case INSTANT:	modelParameter.setInstantValue(OrbitTimeFormatter.parseDateTime(restParameter.getParameterValue())); break;
+				case INTEGER:
+					modelParameter.setIntegerValue(Integer.parseInt(restParameter.getParameterValue()));
+					break;
+				case STRING:
+					modelParameter.setStringValue(restParameter.getParameterValue());
+					break;
+				case BOOLEAN:
+					modelParameter.setBooleanValue(Boolean.parseBoolean(restParameter.getParameterValue()));
+					break;
+				case DOUBLE:
+					modelParameter.setDoubleValue(Double.parseDouble(restParameter.getParameterValue()));
+					break;
+				case INSTANT:
+					modelParameter.setInstantValue(OrbitTimeFormatter.parseDateTime(restParameter.getParameterValue()));
+					break;
 				}
 			} catch (Exception e) {
 				throw new IllegalArgumentException(logger.log(IngestorMessage.INVALID_PARAMETER_VALUE,
@@ -249,7 +261,7 @@ public class ProductUtil {
 			}
 			modelProduct.getParameters().put(restParameter.getKey(), modelParameter);
 		}
-		
+
 		return modelProduct;
 	}
 }
