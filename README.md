@@ -94,4 +94,5 @@ All documentation can be found on the [prosEO Wiki](https://github.com/dlr-eoc/p
 ## Contributions
 
 prosEO is currently developed by the German Aerospace Center (DLR) together with Dr. Bassler & Co. Managementberatung (BCM) and
-Prophos Informatik. For contributions to the project please contact [tangobravo62](mailto:thomas.bassler@drbassler.de).
+Prophos Informatik. For contributions to the project please contact [tangobravo62](mailto:thomas.bassler@drbassler.de). For support
+requests, please contact [prosEO-support@drbassler.de](prosEO-support@drbassler.de).
