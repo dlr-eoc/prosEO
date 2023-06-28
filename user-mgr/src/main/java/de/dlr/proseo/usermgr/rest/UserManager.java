@@ -584,23 +584,25 @@ public class UserManager {
 			}
 		}
 
-		// Check parameter
+		// Check mission
 		if (!isRootUser && (null == mission || mission.isBlank())) {
 			throw new IllegalArgumentException(logger.log(UserMgrMessage.MISSION_MISSING));
 		}
 
-		// build query
+		// Build query with a long result and parameters as in the user class
 		CriteriaBuilder cb = em.getCriteriaBuilder();
 		CriteriaQuery<Long> query = cb.createQuery(Long.class);
 		Root<User> userType = query.from(User.class);
 
+		// Only count users of the given mission
 		List<Predicate> predicates = new ArrayList<>();
-
 		if (!isRootUser || !(null == mission || mission.isBlank())) {
+			// Compare the mission prefix with the mission string from the function call
 			predicates.add(cb.equal(cb.substring(userType.get("username"), 0, mission.length()), mission));
 		}
 		query.select(cb.count(userType)).where(predicates.toArray(new Predicate[predicates.size()]));
 
+		// Retrieve the result
 		Long result = em.createQuery(query).getSingleResult();
 
 		logger.log(UserMgrMessage.USERS_COUNTED, result, mission);

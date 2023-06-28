@@ -180,8 +180,8 @@ public class UserControllerImpl implements UserController {
 	 *
 	 * @param missionCode the mission
 	 * @return the number of matching users as a String (may be zero) or HTTP status
-	 *         "FORBIDDEN" and an error message, if a cross-mission data access was
-	 *         attempted
+	 *         "BAD_REQUEST" if the request was not made by the root user or no
+	 *         mission was provided
 	 */
 	@Override
 	public ResponseEntity<String> countUsers(String missionCode) {
@@ -190,9 +190,8 @@ public class UserControllerImpl implements UserController {
 
 		try {
 			return new ResponseEntity<>(userManager.countUsers(missionCode), HttpStatus.OK);
-		} catch (SecurityException e) {
-			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		}
 	}
-
 }

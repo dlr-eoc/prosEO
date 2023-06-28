@@ -582,17 +582,19 @@ public class GroupManager {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> countGroups({})", mission);
 
-		// Check parameter
+		// Check mission
 		if (null == mission || mission.isBlank()) {
 			throw new IllegalArgumentException(logger.log(UserMgrMessage.MISSION_MISSING));
 		}
 
-		// build query
+		// Build query with long results and parameters as in the group class
 		CriteriaBuilder cb = em.getCriteriaBuilder();
 		CriteriaQuery<Long> query = cb.createQuery(Long.class);
 		Root<Group> groupType = query.from(Group.class);
 
+		// Only count groups of the given mission
 		List<Predicate> predicates = new ArrayList<>();
+		// Compare the group's mission prefix with the provided mission string
 		predicates.add(cb.equal(cb.substring(groupType.get("groupName"), 0, mission.length()), mission));
 		query.select(cb.count(groupType)).where(predicates.toArray(new Predicate[predicates.size()]));
 
