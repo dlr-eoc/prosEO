@@ -1,3 +1,8 @@
+/**
+ * PosixDAL.java
+ *
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.version2.posix;
 
 import java.io.File;
@@ -16,10 +21,13 @@ import de.dlr.proseo.storagemgr.version2.FileUtils;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 
 /**
- * Posix Data Access Layer
- * 
- * @author Denys Chaykovskiy
+ * A data access layer for interacting with a POSIX-based storage system. It
+ * provides various methods to perform operations such as retrieving files,
+ * checking file or directory existence, obtaining file content, uploading
+ * files, downloading files, and deleting files or directories within the POSIX
+ * storage system.
  *
+ * @author Denys Chaykovskiy
  */
 public class PosixDAL {
 
@@ -27,8 +35,9 @@ public class PosixDAL {
 	private static ProseoLogger logger = new ProseoLogger(PosixDAL.class);
 
 	/**
-	 * Gets files which match path (prefix)
-	 * 
+	 * Retrieves a list of files that match a given path (or prefix). It recursively
+	 * scans directories and adds the absolute paths of files to the result
+	 *
 	 * @param path path (prefix)
 	 * @return list if files
 	 */
@@ -37,7 +46,7 @@ public class PosixDAL {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFiles({})", path);
 
-		List<String> returnFiles = new ArrayList<String>();
+		List<String> returnFiles = new ArrayList<>();
 
 		File dirOrFile = new File(path);
 
@@ -70,7 +79,7 @@ public class PosixDAL {
 
 	/**
 	 * Gets file name
-	 * 
+	 *
 	 * @param path path
 	 * @return file name
 	 */
@@ -80,7 +89,7 @@ public class PosixDAL {
 
 	/**
 	 * Checks if file physically exists
-	 * 
+	 *
 	 * @param path path
 	 * @return true if file exists
 	 */
@@ -90,7 +99,7 @@ public class PosixDAL {
 
 	/**
 	 * Checks if path is existing directory
-	 * 
+	 *
 	 * @param path path
 	 * @return true if path is directory
 	 */
@@ -100,7 +109,7 @@ public class PosixDAL {
 
 	/**
 	 * Checks if path is existing file
-	 * 
+	 *
 	 * @param path path
 	 * @return true if file exists
 	 */
@@ -109,10 +118,11 @@ public class PosixDAL {
 	}
 
 	/**
-	 * Gets file content
-	 * 
-	 * @param storageFile storage file
+	 * Retrieves the content of a file specified by its path
+	 *
+	 * @param path the path to the storage file
 	 * @return file content
+	 * @throws IOException if an I/O exception occurs
 	 */
 	public String getFileContent(String path) throws IOException {
 
@@ -123,8 +133,9 @@ public class PosixDAL {
 	}
 
 	/**
-	 * Uploads file to posix storage
-	 * 
+	 * Uploads a source file to the POSIX storage system at the specified target
+	 * location
+	 *
 	 * @param sourceFile      source file to upload
 	 * @param targetFileOrDir target file or directory in storage
 	 * @return path of uploaded file
@@ -159,8 +170,8 @@ public class PosixDAL {
 	}
 
 	/**
-	 * Uploads file or directory to storage
-	 * 
+	 * Uploads files or directories recursively to the storage system
+	 *
 	 * @param sourceFileOrDir source file or directory to upload
 	 * @param targetFileOrDir target file or directory in storage
 	 * @return path list of uploaded files
@@ -171,7 +182,7 @@ public class PosixDAL {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> upload({},{})", sourceFileOrDir, targetFileOrDir);
 
-		List<String> uploadedFiles = new ArrayList<String>();
+		List<String> uploadedFiles = new ArrayList<>();
 
 		if (isFile(sourceFileOrDir)) {
 			String uploadedFile = uploadFile(sourceFileOrDir, targetFileOrDir);
@@ -210,8 +221,9 @@ public class PosixDAL {
 	}
 
 	/**
-	 * Downloads file from storage
-	 * 
+	 * Downloads a file from the POSIX storage system to the specified target
+	 * location
+	 *
 	 * @param sourceFile      source file in storage to download
 	 * @param targetFileOrDir target file or directory
 	 * @return path of downloaded file
@@ -246,8 +258,8 @@ public class PosixDAL {
 	}
 
 	/**
-	 * Downloads file or directory from storage
-	 * 
+	 * Downloads files or directories recursively from the storage system
+	 *
 	 * @param sourceFileOrDir source file or directory in storage to download
 	 * @param targetFileOrDir target file or directory
 	 * @return path list of downloaded files
@@ -258,7 +270,7 @@ public class PosixDAL {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> upload({},{})", sourceFileOrDir, targetFileOrDir);
 
-		List<String> downloadedFiles = new ArrayList<String>();
+		List<String> downloadedFiles = new ArrayList<>();
 
 		if (isFile(sourceFileOrDir)) {
 			String downloadedFile = downloadFile(sourceFileOrDir, targetFileOrDir);
@@ -304,7 +316,7 @@ public class PosixDAL {
 
 	/**
 	 * Deletes file in storage
-	 * 
+	 *
 	 * @param sourceFile file to delete in storage
 	 * @return path of deleted file
 	 * @throws IOException true if file cannot be deleted
@@ -319,7 +331,7 @@ public class PosixDAL {
 
 	/**
 	 * Deletes file or directory in storage
-	 * 
+	 *
 	 * @param sourceFileOrDir file or directory to delete
 	 * @return path list of deleted file or directory
 	 * @throws IOException true if file or directory cannot be deleted
@@ -333,8 +345,8 @@ public class PosixDAL {
 	}
 
 	/**
-	 * Creates parent directories
-	 * 
+	 * Create parent directories for a given path if they do not exist
+	 *
 	 * @param path path
 	 */
 	private void createParentDirectories(String path) {

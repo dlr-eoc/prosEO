@@ -1,3 +1,8 @@
+/**
+ * S3Storage.java
+ *
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.version2.s3;
 
 import java.io.File;
@@ -16,14 +21,16 @@ import de.dlr.proseo.storagemgr.version2.model.StorageType;
 import de.dlr.proseo.storagemgr.version2.posix.PosixStorageFile;
 
 /**
- * S3 Storage
- * 
- * @author Denys Chaykovskiy
+ * An implementation of the Storage interface for a S3-based file system,
+ * providing functionality to interact with the storage system, that is
+ * retrieving information about the storage, performing file operations, and
+ * path conversion.
  *
+ * @author Denys Chaykovskiy
  */
 public class S3Storage implements Storage {
 
-	/** s3 data access layer object */
+	/** S3 data access layer object */
 	private S3DAL s3DAL;
 
 	/** A logger for this class */
@@ -31,9 +38,9 @@ public class S3Storage implements Storage {
 
 	/**
 	 * Constructor with bucket, access keys, region and end point
-	 * 
+	 *
 	 * @param cfg s3 configuration
-	 * @throws IOException
+	 * @throws IOException if an I/O exception occurs
 	 */
 	public S3Storage(S3Configuration cfg) throws IOException {
 		s3DAL = new S3DAL(cfg);
@@ -42,9 +49,9 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Gets storage type
-	 * 
-	 * @return storage type
+	 * Gets the storage type.
+	 *
+	 * @return the storage type
 	 */
 	@Override
 	public StorageType getStorageType() {
@@ -52,9 +59,9 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Gets base path
-	 * 
-	 * @return base path
+	 * Gets the base path.
+	 *
+	 * @return the base path
 	 */
 	@Override
 	public String getBasePath() {
@@ -62,23 +69,22 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Gets absolute base path (fs prefix + bucket + base path), depends on fs
-	 * 
-	 * in other words it is absolute path without relative path in this s3 version
-	 * s3://bucket/
-	 * 
-	 * @return absolute base path
+	 * Gets the absolute base path (fs prefix + bucket + base path), depends on fs.
+	 *
+	 * In other words, it is the absolute path without the relative path in this S3
+	 * version. s3://bucket/
+	 *
+	 * @return the absolute base path
 	 */
 	@Override
 	public String getAbsoluteBasePath() {
-
 		return new PathConverter(s3DAL.getBucket()).addS3Prefix().getPath();
 	}
 
 	/**
-	 * Gets source path
-	 * 
-	 * @return source path
+	 * Gets the source path.
+	 *
+	 * @return the source path
 	 */
 	@Override
 	public String getSourcePath() {
@@ -86,10 +92,10 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Sets the bucket
-	 * 
-	 * @param bucket bucket to set
-	 * @throws IOException
+	 * Sets the bucket.
+	 *
+	 * @param bucket the bucket to set
+	 * @throws IOException if an I/O exception occurs
 	 */
 	@Override
 	public void setBucket(String bucket) throws IOException {
@@ -97,9 +103,9 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Gets the bucket
-	 * 
-	 * @return current bucket
+	 * Gets the bucket.
+	 *
+	 * @return the current bucket
 	 */
 	@Override
 	public String getBucket() {
@@ -107,10 +113,10 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Gets buckets from storage
-	 * 
-	 * @return list of buckets
-	 * @throws IOException
+	 * Gets the buckets from storage.
+	 *
+	 * @return the list of buckets
+	 * @throws IOException if an I/O exception occurs
 	 */
 	@Override
 	public List<String> getBuckets() throws IOException {
@@ -118,11 +124,11 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Checks if the bucket exists
-	 * 
+	 * Checks if the bucket exists.
+	 *
 	 * @param bucketName the name of the bucket
 	 * @return true if the bucket exists
-	 * @throws IOException
+	 * @throws IOException if an I/O exception occurs
 	 */
 	@Override
 	public boolean bucketExists(String bucketName) throws IOException {
@@ -130,10 +136,10 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Deletes bucket in storage
-	 * 
-	 * @param bucket bucket to delete
-	 * @throws IOException if bucket cannot be deleted
+	 * Deletes the bucket in storage.
+	 *
+	 * @param bucketName the bucket to delete
+	 * @throws IOException if the bucket cannot be deleted
 	 */
 	@Override
 	public void deleteBucket(String bucketName) throws IOException {
@@ -141,23 +147,22 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Gets files from storage with given prefix (folder)
-	 * 
-	 * @param prefix prefix (folder) for search in storage
-	 * @return list of files with given prefix
-	 * @throws IOException
+	 * Gets the files from storage with the given prefix (folder).
+	 *
+	 * @param folder the prefix (folder) for search in storage
+	 * @return the list of files with the given prefix
+	 * @throws IOException if an I/O exception occurs
 	 */
 	@Override
 	public List<String> getRelativeFiles(String folder) throws IOException {
-
 		return s3DAL.getFiles(folder);
 	}
 
 	/**
-	 * Gets all files from storage
-	 * 
-	 * @return list of all files from storage
-	 * @throws IOException
+	 * Gets all files from storage.
+	 *
+	 * @return the list of all files from storage
+	 * @throws IOException if an I/O exception occurs
 	 */
 	@Override
 	public List<String> getRelativeFiles() throws IOException {
@@ -165,14 +170,14 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Gets files (absolute paths) from storage with given prefix (folder)
-	 * 
-	 * @param prefix prefix (relative path) for search in storage
-	 * @return list of files with given prefix
-	 * @throws IOException
+	 * Gets files (absolute paths) from storage with the given relative path.
+	 *
+	 * @param relativePath the relative path for search in storage
+	 * @return the list of files with the given prefix
+	 * @throws IOException if an I/O exception occurs
 	 */
+	@Override
 	public List<String> getAbsoluteFiles(String relativePath) throws IOException {
-
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getAbsoluteFiles({})", relativePath);
 
@@ -182,25 +187,25 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Gets all files (absolute paths) from storage
-	 * 
-	 * @return list of all files from storage
-	 * @throws IOException
+	 * Gets all files (absolute paths) from storage.
+	 *
+	 * @return the list of all files from storage
+	 * @throws IOException if an I/O exception occurs
 	 */
+	@Override
 	public List<String> getAbsoluteFiles() throws IOException {
 		return getAbsolutePath(s3DAL.getFiles());
 	}
 
 	/**
-	 * Gets relative path from absolute path removing s3 prefix, bucket and left
-	 * slash
-	 * 
-	 * @param absolutePath absolute path
-	 * @return relative path
+	 * Gets the relative path from the absolute path by removing the S3 prefix,
+	 * bucket, and left slash.
+	 *
+	 * @param absolutePath the absolute path
+	 * @return the relative path
 	 */
 	@Override
 	public String getRelativePath(String absolutePath) {
-
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRelativePath({})", absolutePath);
 
@@ -208,24 +213,21 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Gets relative paths from absolute paths removing s3 prefix, bucket and left
-	 * slash
-	 * 
-	 * @param absolutePaths absolute paths
-	 * @return relative paths
+	 * Gets the relative paths from the absolute paths by removing the S3 prefix,
+	 * bucket, and left slash.
+	 *
+	 * @param absolutePaths the absolute paths
+	 * @return the relative paths
 	 */
 	@Override
 	public List<String> getRelativePath(List<String> absolutePaths) {
-
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRelativePath({})", absolutePaths.size());
 
 		List<String> relativePaths = new ArrayList<>();
 
 		for (String absolutePath : absolutePaths) {
-
-			String relativePath = new PathConverter(absolutePath).removeFsPrefix().removeBucket().removeLeftSlash()
-					.getPath();
+			String relativePath = new PathConverter(absolutePath).removeFsPrefix().removeBucket().removeLeftSlash().getPath();
 			relativePaths.add(relativePath);
 		}
 
@@ -233,28 +235,27 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Gets the absolute path (s3://<bucket>/<relativePath>)
-	 * 
-	 * @param relativePath relative path
-	 * @return the absolute file depending on storage file system
+	 * Gets the absolute path (s3://<bucket>/<relativePath>).
+	 *
+	 * @param relativePath the relative path
+	 * @return the absolute file depending on the storage file system
 	 */
+	@Override
 	public String getAbsolutePath(String relativePath) {
-
 		return new PathConverter(s3DAL.getBucket(), relativePath).addS3Prefix().getPath();
 	}
 
 	/**
-	 * Gets absolute paths (s3://<bucket>/<relativePath>)
-	 * 
-	 * @param relativePath relative paths
-	 * @return absolute paths depending on storage file system
+	 * Gets the absolute paths (s3://<bucket>/<relativePath>).
+	 *
+	 * @param relativePaths the relative paths
+	 * @return the absolute paths depending on the storage file system
 	 */
+	@Override
 	public List<String> getAbsolutePath(List<String> relativePaths) {
-
 		List<String> absolutePaths = new ArrayList<>();
 
 		for (String relativePath : relativePaths) {
-
 			String absolutePath = getAbsolutePath(relativePath);
 			absolutePaths.add(absolutePath);
 		}
@@ -263,9 +264,9 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Gets Storage File
-	 * 
-	 * @param relativePath relative path in storage to the file
+	 * Gets the Storage File.
+	 *
+	 * @param relativePath the relative path in storage to the file
 	 * @return the storage file object
 	 */
 	@Override
@@ -274,19 +275,17 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Gets storage files
-	 * 
-	 * @return list of storage files
-	 * @throws IOException
+	 * Gets the storage files.
+	 *
+	 * @return the list of storage files
+	 * @throws IOException if an I/O exception occurs
 	 */
 	@Override
 	public List<StorageFile> getStorageFiles() throws IOException {
-
 		List<String> files = s3DAL.getFiles();
-		List<StorageFile> storageFiles = new ArrayList<StorageFile>();
+		List<StorageFile> storageFiles = new ArrayList<>();
 
 		for (String filePath : files) {
-
 			StorageFile storageFile = new S3StorageFile(s3DAL.getBucket(), filePath);
 			storageFiles.add(storageFile);
 		}
@@ -295,21 +294,19 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Creates physically storage file
-	 * 
-	 * @param relativePath relative path of the file
-	 * @param content      content of the file
-	 * @return storage file object of created file
-	 * @throws IOException if file cannot be created
+	 * Creates the physical storage file.
+	 *
+	 * @param relativePath the relative path of the file
+	 * @param content      the content of the file
+	 * @return the storage file object of the created file
+	 * @throws IOException if the file cannot be created
 	 */
 	@Override
 	public StorageFile createStorageFile(String relativePath, String content) throws IOException {
-
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createStorageFile({},{})", relativePath, content);
 
 		String path = Paths.get(s3DAL.getConfiguration().getBasePath(), relativePath).toString();
-
 		path = new PathConverter(path).fixAbsolutePath().getPath();
 
 		FileUtils fileUtils = new FileUtils(path);
@@ -320,14 +317,10 @@ public class S3Storage implements Storage {
 
 		try {
 			uploadFile(sourceFile, targetFile);
-
 		} catch (IOException e) {
-
 			e.printStackTrace();
 			throw e;
-
 		} finally {
-
 			new File(path).delete();
 		}
 
@@ -335,11 +328,11 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Checks if file exists
-	 * 
-	 * @param storageFile Storage File to check
-	 * @return true if file exists physically
-	 * @throws IOException
+	 * Checks if the file exists.
+	 *
+	 * @param storageFile the storage file to check
+	 * @return true if the file exists physically
+	 * @throws IOException if an I/O exception occurs
 	 */
 	@Override
 	public boolean fileExists(StorageFile storageFile) throws IOException {
@@ -347,11 +340,12 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Checks if Storage file or directory is file (no slash at the end of the path)
-	 * 
-	 * @param storageFileOrDir storage file or directory
-	 * @return true if storage file is file
-	 * @throws IOException
+	 * Checks if the storage file or directory is a file (no slash at the end of the
+	 * path).
+	 *
+	 * @param storageFileOrDir the storage file or directory
+	 * @return true if the storage file is a file
+	 * @throws IOException if an I/O exception occurs
 	 */
 	@Override
 	public boolean isFile(StorageFile storageFileOrDir) throws IOException {
@@ -359,11 +353,11 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Checks if storage file or directory is directory
-	 * 
-	 * @param storageFileOrDir storage file or directory
-	 * @return true if storage file is file
-	 * @throws IOException
+	 * Checks if the storage file or directory is a directory.
+	 *
+	 * @param storageFileOrDir the storage file or directory
+	 * @return true if the storage file is a file
+	 * @throws IOException if an I/O exception occurs
 	 */
 	@Override
 	public boolean isDirectory(StorageFile storageFileOrDir) throws IOException {
@@ -371,11 +365,11 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Gets the file size
-	 * 
-	 * @param storageFile Storage file
+	 * Gets the file size.
+	 *
+	 * @param storageFile the storage file
 	 * @return the file size of the storage file
-	 * @throws IOException
+	 * @throws IOException if an I/O exception occurs
 	 */
 	@Override
 	public long getFileSize(StorageFile storageFile) throws IOException {
@@ -383,14 +377,13 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Gets file content
-	 * 
-	 * @param storageFile storage file
-	 * @return file content
+	 * Gets the file content.
+	 *
+	 * @param storageFile the storage file
+	 * @return the file content
 	 */
 	@Override
 	public String getFileContent(StorageFile storageFile) throws IOException {
-
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFileContent({})", storageFile.getFullPath());
 
@@ -398,16 +391,15 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Uploads file to storage
-	 * 
-	 * @param sourceFile      source file to upload
-	 * @param targetFileOrDir target file or directory in the storage
+	 * Uploads the file to storage.
+	 *
+	 * @param sourceFile      the source file to upload
+	 * @param targetFileOrDir the target file or directory in the storage
 	 * @return the uploaded storage file
 	 * @throws IOException if the file cannot be uploaded
 	 */
 	@Override
 	public String uploadFile(StorageFile sourceFile, StorageFile targetFileOrDir) throws IOException {
-
 		if (logger.isTraceEnabled())
 			logger.trace(">>> uploadFile({},{})", sourceFile.getFullPath(), targetFileOrDir.getFullPath());
 
@@ -415,16 +407,15 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Uploads file or directory recursively to storage
-	 * 
-	 * @param sourceFileOrDir source file or directory
-	 * @param targetFileOrDir target file or directory in the storage
-	 * @return list of uploaded files
-	 * @throws IOException if file or directory cannot be uploaded
+	 * Uploads the file or directory recursively to storage.
+	 *
+	 * @param sourceFileOrDir the source file or directory
+	 * @param targetFileOrDir the target file or directory in the storage
+	 * @return the list of uploaded files
+	 * @throws IOException if the file or directory cannot be uploaded
 	 */
 	@Override
 	public List<String> upload(StorageFile sourceFileOrDir, StorageFile targetFileOrDir) throws IOException {
-
 		if (logger.isTraceEnabled())
 			logger.trace(">>> upload({},{})", sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
 
@@ -432,15 +423,14 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Uploads file or directory recursively to the storage
-	 * 
-	 * @param sourceFileOrDir source file or dir to upload
-	 * @return list of uploaded files
-	 * @throws IOException if file or directory cannot be uploaded
+	 * Uploads the file or directory recursively to the storage.
+	 *
+	 * @param sourceFileOrDir the source file or dir to upload
+	 * @return the list of uploaded files
+	 * @throws IOException if the file or directory cannot be uploaded
 	 */
 	@Override
 	public List<String> upload(StorageFile sourceFileOrDir) throws IOException {
-
 		if (logger.isTraceEnabled())
 			logger.trace(">>> upload({})", sourceFileOrDir.getFullPath());
 
@@ -450,15 +440,14 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Uploads file to the storage
-	 * 
-	 * @param sourceFile source file to upload
-	 * @return path of the uploaded file
-	 * @throws IOException if file cannot be uploaded
+	 * Uploads the file to the storage.
+	 *
+	 * @param sourceFile the source file to upload
+	 * @return the path of the uploaded file
+	 * @throws IOException if the file cannot be uploaded
 	 */
 	@Override
 	public String uploadFile(StorageFile sourceFile) throws IOException {
-
 		if (logger.isTraceEnabled())
 			logger.trace(">>> uploadFile({})", sourceFile.getFullPath());
 
@@ -468,35 +457,32 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Uploads source file or directory recursively to th storage
-	 * 
-	 * @param relativeSourceFileOrDir relative path to source file or directory
-	 * @return list of uploaded to storage source files
-	 * @throws IOException if file cannot be uploaded
+	 * Uploads the source file or directory recursively to the storage.
+	 *
+	 * @param relativeSourceFileOrDir the relative path to source file or directory
+	 * @return the list of uploaded to storage source files
+	 * @throws IOException if the file cannot be uploaded
 	 */
 	@Override
 	public List<String> uploadSourceFileOrDir(String relativeSourceFileOrDir) throws IOException {
-
 		if (logger.isTraceEnabled())
 			logger.trace(">>> upload({})", relativeSourceFileOrDir);
 
-		StorageFile sourceFileOrDir = new PosixStorageFile(s3DAL.getConfiguration().getSourcePath(),
-				relativeSourceFileOrDir);
+		StorageFile sourceFileOrDir = new PosixStorageFile(s3DAL.getConfiguration().getSourcePath(), relativeSourceFileOrDir);
 		StorageFile targetFileOrDir = new S3StorageFile(s3DAL.getBucket(), sourceFileOrDir.getRelativePath());
 
 		return s3DAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getRelativePath());
 	}
 
 	/**
-	 * Uploads source file
-	 * 
-	 * @param relativeSourceFile relative path to source file
-	 * @return uploaded to storage source file
-	 * @throws IOException if file cannot be uploaded
+	 * Uploads the source file.
+	 *
+	 * @param relativeSourceFile the relative path to source file
+	 * @return the uploaded to storage source file
+	 * @throws IOException if the file cannot be uploaded
 	 */
 	@Override
 	public String uploadSourceFile(String relativeSourceFile) throws IOException {
-
 		if (logger.isTraceEnabled())
 			logger.trace(">>> uploadFile({})", relativeSourceFile);
 
@@ -508,16 +494,15 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Downloads file or directory recursively
-	 * 
-	 * @param sourceFileOrDir source file or directory in the storage
-	 * @param targetFileOrDir target file or directory
-	 * @return list of downloaded files
-	 * @throws IOException if file canot be downloaded
+	 * Downloads the file or directory recursively.
+	 *
+	 * @param sourceFileOrDir the source file or directory in the storage
+	 * @param targetFileOrDir the target file or directory
+	 * @return the list of downloaded files
+	 * @throws IOException if the file cannot be downloaded
 	 */
 	@Override
 	public List<String> download(StorageFile sourceFileOrDir, StorageFile targetFileOrDir) throws IOException {
-
 		if (logger.isTraceEnabled())
 			logger.trace(">>> download({},{})", sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
 
@@ -525,16 +510,15 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Downloads file from storage
-	 * 
-	 * @param sourceFile      storage source file to download
-	 * @param targetFileOrDir target file or directory
-	 * @return Storage File object with downloaded file
+	 * Downloads the file from storage.
+	 *
+	 * @param sourceFile      the storage source file to download
+	 * @param targetFileOrDir the target file or directory
+	 * @return the Storage File object with the downloaded file
 	 * @throws IOException if the file cannot be downloaded
 	 */
 	@Override
 	public String downloadFile(StorageFile sourceFile, StorageFile targetFileOrDir) throws IOException {
-
 		if (logger.isTraceEnabled())
 			logger.trace(">>> downloadFile({},{})", sourceFile.getFullPath(), targetFileOrDir.getFullPath());
 
@@ -542,24 +526,23 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Deletes file or directory recursively from the storage
-	 * 
-	 * @param storageFileOrDir Storage file or directory to delete
-	 * @return list of deleted files from storage
-	 * @throws IOException if file or directory cannot be deleted
+	 * Deletes the file or directory recursively from the storage.
+	 *
+	 * @param storageFileOrDir the Storage file or directory to delete
+	 * @return the list of deleted files from storage
+	 * @throws IOException if the file or directory cannot be deleted
 	 */
 	@Override
 	public List<String> delete(StorageFile storageFileOrDir) throws IOException {
-
 		return s3DAL.delete(storageFileOrDir.getRelativePath());
 	}
 
 	/**
-	 * Deletes storage file from storage
-	 * 
-	 * @param storageFileOrDir storage file to delete
-	 * @return deleted storage file
-	 * @throws IOException if file cannot be deleted
+	 * Deletes the storage file from storage.
+	 *
+	 * @param storageFile the storage file to delete
+	 * @return the deleted storage file
+	 * @throws IOException if the file cannot be deleted
 	 */
 	@Override
 	public String deleteFile(StorageFile storageFile) throws IOException {
@@ -567,15 +550,14 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Deletes file or directory recursively from the storage
-	 * 
-	 * @param relativeFileOrDir Storage file or directory to delete
-	 * @return list of deleted files from storage
-	 * @throws IOException if file or directory cannot be deleted
+	 * Deletes the file or directory recursively from the storage.
+	 *
+	 * @param relativeFileOrDir the Storage file or directory to delete
+	 * @return the list of deleted files from storage
+	 * @throws IOException if the file or directory cannot be deleted
 	 */
 	@Override
 	public List<String> delete(String relativeFileOrDir) throws IOException {
-
 		if (logger.isTraceEnabled())
 			logger.trace(">>> delete({})", relativeFileOrDir);
 
@@ -585,26 +567,24 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Adds file system prefix to the path
-	 * 
-	 * @param path path to extend
-	 * @return file system prefix + "|" + path
+	 * Adds the file system prefix to the path.
+	 *
+	 * @param path the path to extend
+	 * @return the file system prefix + "|" + path
 	 */
 	@Override
 	public String addFSPrefix(String path) {
-
 		return StorageType.S3.toString() + "|" + path;
 	}
 
 	/**
-	 * Adds file system prefix to paths
-	 * 
-	 * @param paths paths to extend
-	 * @return list of file system prefix + path
+	 * Adds the file system prefix to paths.
+	 *
+	 * @param paths the paths to extend
+	 * @return the list of file system prefix + path
 	 */
 	@Override
 	public List<String> addFSPrefix(List<String> paths) {
-
 		List<String> pathsWithPrefix = new ArrayList<>();
 
 		for (String path : paths) {
@@ -616,14 +596,13 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Gets input stream from file
-	 * 
-	 * @param storageFile storage file
-	 * @return input stream from file
+	 * Gets the input stream from the file.
+	 *
+	 * @param storageFile the storage file
+	 * @return the input stream from the file
 	 */
 	@Override
 	public InputStream getInputStream(StorageFile storageFile) throws IOException {
-
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getInputStream({})", storageFile.getFullPath());
 

@@ -1,3 +1,8 @@
+/**
+ * S3AtomicFileContentGetter.java
+ *
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.version2.s3;
 
 import java.io.IOException;
@@ -14,52 +19,52 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 /**
  * S3 Atomic File Content Getter
- * 
- * @author Denys Chaykovskiy
  *
+ * @author Denys Chaykovskiy
  */
 public class S3AtomicFileContentGetter implements AtomicCommand<String> {
-	
+
 	/** Info */
 	private static final String INFO = "S3 ATOMIC File Content Getter";
-	
+
 	/** Completed Info */
 	private static final String COMPLETED = "file content GOT";
-	
+
 	/** Failed Info */
 	private static final String FAILED = "file content receiving FAILED";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3AtomicFileContentGetter.class);
-	
+
 	/** path */
-	private String path; 
-	
+	private String path;
+
 	/** S3 Client */
 	private S3Client s3Client;
 
 	/** Bucket */
 	private String bucket;
-	
+
 	/**
-	 * Constructor 
-	 * 
+	 * Constructor
+	 *
 	 * @param s3Client s3 client
-	 * @param bucket bucket
-	 * @param path path
+	 * @param bucket   bucket
+	 * @param path     path
 	 */
 	public S3AtomicFileContentGetter(S3Client s3Client, String bucket, String path) {
-		
-		this.s3Client = s3Client; 
-		this.bucket = bucket; 
-		this.path = path; 
+
+		this.s3Client = s3Client;
+		this.bucket = bucket;
+		this.path = path;
 	}
-	
+
 	/**
 	 * Gets if file exists
-	 * 
-	 * @return "true" if file exists  
+	 *
+	 * @return "true" if file exists
 	 */
+	@Override
 	public String execute() throws IOException {
 
 		if (logger.isTraceEnabled())
@@ -72,7 +77,7 @@ public class S3AtomicFileContentGetter implements AtomicCommand<String> {
 
 			// InputStream stream = new
 			// ByteArrayInputStream(responseInputStream.readAllBytes());
-			
+
 			if (logger.isTraceEnabled())
 				logger.trace("... " + getCompletedInfo());
 
@@ -84,30 +89,33 @@ public class S3AtomicFileContentGetter implements AtomicCommand<String> {
 			throw new IOException(e);
 		}
 	}
-	
+
 	/**
-	 * Gets Information about atomic command (mostly for logs)
-	 * 
-	 * @return Information about atomic command
+	 * Gets information about atomic command (mostly for logs)
+	 *
+	 * @return information about atomic command
 	 */
-	public String getInfo() {	
+	@Override
+	public String getInfo() {
 		return INFO + " ";
 	}
-	
+
 	/**
-	 * Gets Information about completed atomic command (mostly for logs)
-	 * 
-	 * @return Information about completed atomic command
+	 * Gets information about completed atomic command (mostly for logs)
+	 *
+	 * @return information about completed atomic command
 	 */
-	public String getCompletedInfo() {	
+	@Override
+	public String getCompletedInfo() {
 		return INFO + ": " + COMPLETED + " ";
 	}
-	
+
 	/**
-	 * Gets Information about failed atomic command (mostly for logs)
-	 * 
-	 * @return Information about failed atomic command
+	 * Gets information about failed atomic command (mostly for logs)
+	 *
+	 * @return information about failed atomic command
 	 */
+	@Override
 	public String getFailedInfo() {
 		return INFO + ": " + FAILED + " ";
 	}

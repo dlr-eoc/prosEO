@@ -1,3 +1,8 @@
+/**
+ * S3AtomicFileDownloader.java
+ *
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.version2.s3;
 
 import java.io.File;
@@ -10,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.transfer.Download;
 import com.amazonaws.services.s3.transfer.TransferManager;
@@ -22,9 +26,8 @@ import de.dlr.proseo.storagemgr.version2.model.AtomicCommand;
 
 /**
  * S3 Atomic File Downloader
- * 
- * @author Denys Chaykovskiy
  *
+ * @author Denys Chaykovskiy
  */
 public class S3AtomicFileDownloader implements AtomicCommand<String> {
 
@@ -57,38 +60,42 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 
 	/** Bucket */
 	private String bucket;
-	
+
 	/** Max cycles */
 	private long maxCycles;
-	
+
 	/** Wait time */
 	private long waitTime;
 
 	/**
 	 * Constructor
-	 * 
-	 * @param s3ClientV1        s3 client v1
+	 *
+	 * @param s3ClientV1      s3 client v1
 	 * @param bucket          bucket
 	 * @param sourceFile      sourceFile
 	 * @param targetFileOrDir target file or directory
+	 * @param maxCycles		  max cycles
+	 * @param waitTime		  wait time
 	 */
-	public S3AtomicFileDownloader(AmazonS3 s3ClientV1, String bucket, String sourceFile, String targetFileOrDir, long maxCycles, long waitTime) {
+	public S3AtomicFileDownloader(AmazonS3 s3ClientV1, String bucket, String sourceFile, String targetFileOrDir, long maxCycles,
+			long waitTime) {
 
 		this.s3ClientV1 = s3ClientV1;
-		
+
 		this.bucket = bucket;
 		this.sourceFile = sourceFile;
 		this.targetFileOrDir = targetFileOrDir;
-		
-		this.maxCycles = maxCycles; 
-		this.waitTime = waitTime; 
+
+		this.maxCycles = maxCycles;
+		this.waitTime = waitTime;
 	}
 
 	/**
 	 * Executes download of the file to s3
-	 * 
+	 *
 	 * @return downloaded file name
 	 */
+	@Override
 	public String execute() throws IOException {
 
 		if (logger.isTraceEnabled())
@@ -106,13 +113,13 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 
 		// temporary download filename, after download will be renamed
 		String temporaryTargetPosixFile = getTemporaryFilePath(targetPosixFile);
-		try {		
+		try {
 			downloadWithTransferManagerV1(sourceS3File, temporaryTargetPosixFile);
 
 			// rename temporary file if the file downloaded successfully to cache
 			if (!renameFile(temporaryTargetPosixFile, targetPosixFile)) {
-				throw new IOException("Cannot rename file after download to cache " + temporaryTargetPosixFile + " to "
-						+ targetPosixFile);
+				throw new IOException(
+						"Cannot rename file after download to cache " + temporaryTargetPosixFile + " to " + targetPosixFile);
 			}
 
 			if (logger.isTraceEnabled())
@@ -129,35 +136,38 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 	}
 
 	/**
-	 * Gets Information about atomic command (mostly for logs)
-	 * 
-	 * @return Information about atomic command
+	 * Gets information about atomic command (mostly for logs)
+	 *
+	 * @return information about atomic command
 	 */
+	@Override
 	public String getInfo() {
 		return INFO + " ";
 	}
 
 	/**
-	 * Gets Information about completed atomic command (mostly for logs)
-	 * 
-	 * @return Information about completed atomic command
+	 * Gets information about completed atomic command (mostly for logs)
+	 *
+	 * @return information about completed atomic command
 	 */
+	@Override
 	public String getCompletedInfo() {
 		return INFO + ": " + COMPLETED + " ";
 	}
 
 	/**
-	 * Gets Information about failed atomic command (mostly for logs)
-	 * 
-	 * @return Information about failed atomic command
+	 * Gets information about failed atomic command (mostly for logs)
+	 *
+	 * @return information about failed atomic command
 	 */
+	@Override
 	public String getFailedInfo() {
 		return INFO + ": " + FAILED + " ";
 	}
 
 	/**
 	 * Gets file name
-	 * 
+	 *
 	 * @param path path
 	 * @return file name
 	 */
@@ -167,7 +177,7 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 
 	/**
 	 * Gets temporary file path
-	 * 
+	 *
 	 * @param path path
 	 * @return temporary file path
 	 */
@@ -180,15 +190,15 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 
 	/**
 	 * Renames file
-	 * 
+	 *
 	 * @param oldPath old path
 	 * @param newPath new path
 	 * @return true if the file has been renamed successfully
 	 */
 	private boolean renameFile(String oldName, String newName) {
-		
+
 		if (logger.isTraceEnabled())
-			logger.trace(">>> renameFile({}, {})", oldName, newName);	
+			logger.trace(">>> renameFile({}, {})", oldName, newName);
 
 		File oldFile = new File(oldName);
 		File newFile = new File(newName);
@@ -200,13 +210,14 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 	}
 
 	private void downloadWithTransferManagerV1(String s3Key, String targetPath) throws IOException {
-		
+
 		if (logger.isTraceEnabled())
-			logger.trace(">>> downloadWithTransferManagerV1({}, {}, {})", bucket, s3Key, targetPath);	
-		
+			logger.trace(">>> downloadWithTransferManagerV1({}, {}, {})", bucket, s3Key, targetPath);
+
 		File targetFile = new File(targetPath);
 
-		// Download using TransferManager as per https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/examples-s3-transfermanager.html#transfermanager-downloading
+		// Download using TransferManager as per
+		// https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/examples-s3-transfermanager.html#transfermanager-downloading
 		TransferManager transferManager;
 		try {
 			if (targetFile.exists()) {
@@ -214,14 +225,16 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 			}
 
 			transferManager = TransferManagerBuilder.standard()
-					.withMultipartCopyPartSize(MULTIPART_DOWNLOAD_PARTSIZE_BYTES).withS3Client(s3ClientV1).build();
-			
+				.withMultipartCopyPartSize(MULTIPART_DOWNLOAD_PARTSIZE_BYTES)
+				.withS3Client(s3ClientV1)
+				.build();
+
 			if (null == transferManager) {
 				throw new IOException("Unable to create Transfer Manager");
 			}
-			
+
 		} catch (Exception e) {
-			
+
 			logger.error(e.getMessage(), e);
 			throw new IOException(e);
 		}
@@ -237,35 +250,34 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 			// fully written to disk!
 			Long contentLength = download.getObjectMetadata().getContentLength();
 			int i = 0;
-			
+
 			while (Files.size(targetFile.toPath()) < contentLength && i < maxCycles) {
 				logger.info("... waiting to complete writing of {}", targetFile);
 				Thread.sleep(waitTime);
 			}
-			
+
 			if (maxCycles <= i) {
 				throw new IOException("Read timed out after " + (maxCycles * waitTime) + " ms");
 			}
 
 		} catch (InterruptedException e) {
-			logger.error("Interrupted while copying S3 object s3:/{}/{} to file {} (cause: {})", bucket, s3Key,
-					targetFile, e.getMessage());
+			logger.error("Interrupted while copying S3 object s3:/{}/{} to file {} (cause: {})", bucket, s3Key, targetFile,
+					e.getMessage());
 			throw new IOException(e);
-			
+
 		} catch (AmazonServiceException e) {
 			logger.error("Failed to copy S3 object s3:/{}/{} to file {} (cause: {})", bucket, s3Key, targetFile,
 					e.getErrorMessage());
 			throw new IOException(e);
-			
+
 		} catch (IOException | AmazonClientException e) {
-			logger.error("Failed to copy S3 object s3:/{}/{} to file {} (cause: {})", bucket, s3Key, targetFile,
-					e.getMessage());
+			logger.error("Failed to copy S3 object s3:/{}/{} to file {} (cause: {})", bucket, s3Key, targetFile, e.getMessage());
 			throw new IOException(e);
-			
+
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			throw new IOException(e);
-			
+
 		} finally {
 			transferManager.shutdownNow(false);
 		}

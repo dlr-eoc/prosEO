@@ -1,3 +1,8 @@
+/**
+ * S3AtomicFileDeleter.java
+ *
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.version2.s3;
 
 import java.io.IOException;
@@ -17,9 +22,8 @@ import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 
 /**
  * S3 Atomic File Getter
- * 
- * @author Denys Chaykovskiy
  *
+ * @author Denys Chaykovskiy
  */
 public class S3AtomicFileDeleter implements AtomicCommand<String> {
 
@@ -28,7 +32,7 @@ public class S3AtomicFileDeleter implements AtomicCommand<String> {
 
 	/** Completed Info */
 	private static final String COMPLETED = "file DELETED";
-	
+
 	/** Failed Info */
 	private static final String FAILED = "file deletion FAILED";
 
@@ -46,10 +50,10 @@ public class S3AtomicFileDeleter implements AtomicCommand<String> {
 
 	/**
 	 * Constructor
-	 * 
-	 * @param s3Client  s3 client
-	 * @param bucket    bucket
-	 * @param directory directory
+	 *
+	 * @param s3Client s3 client
+	 * @param bucket   bucket
+	 * @param path     the path
 	 */
 	public S3AtomicFileDeleter(S3Client s3Client, String bucket, String path) {
 
@@ -60,27 +64,30 @@ public class S3AtomicFileDeleter implements AtomicCommand<String> {
 
 	/**
 	 * Executes s3 get files
-	 * 
+	 *
 	 * @return uploaded file name
 	 */
+	@Override
 	public String execute() throws IOException {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> execute() - delete file({})", path);
 
 		try {
-			ArrayList<ObjectIdentifier> toDelete = new ArrayList<ObjectIdentifier>();
+			ArrayList<ObjectIdentifier> toDelete = new ArrayList<>();
 			toDelete.add(ObjectIdentifier.builder().key(path).build());
 
-			DeleteObjectsRequest dor = DeleteObjectsRequest.builder().bucket(bucket)
-					.delete(Delete.builder().objects(toDelete).build()).build();
+			DeleteObjectsRequest dor = DeleteObjectsRequest.builder()
+				.bucket(bucket)
+				.delete(Delete.builder().objects(toDelete).build())
+				.build();
 			s3Client.deleteObjects(dor);
 
 			DeleteObjectsResponse deleteResponse = s3Client.deleteObjects(dor);
-			
+
 			if (logger.isTraceEnabled())
 				logger.trace("... " + getCompletedInfo() + " - " + path);
-			
+
 			return toStringDeletedObject(deleteResponse.deleted());
 
 		} catch (Exception e) {
@@ -89,43 +96,46 @@ public class S3AtomicFileDeleter implements AtomicCommand<String> {
 			throw new IOException(e);
 		}
 	}
-	
+
 	/**
-	 * Gets Information about atomic command (mostly for logs)
-	 * 
-	 * @return Information about atomic command
+	 * Gets information about atomic command (mostly for logs)
+	 *
+	 * @return information about atomic command
 	 */
-	public String getInfo() {	
+	@Override
+	public String getInfo() {
 		return INFO + " ";
 	}
-	
+
 	/**
-	 * Gets Information about completed atomic command (mostly for logs)
-	 * 
-	 * @return Information about completed atomic command
+	 * Gets information about completed atomic command (mostly for logs)
+	 *
+	 * @return information about completed atomic command
 	 */
-	public String getCompletedInfo() {	
+	@Override
+	public String getCompletedInfo() {
 		return INFO + ": " + COMPLETED + " ";
 	}
-	
+
 	/**
-	 * Gets Information about failed atomic command (mostly for logs)
-	 * 
-	 * @return Information about failed atomic command
+	 * Gets information about failed atomic command (mostly for logs)
+	 *
+	 * @return information about failed atomic command
 	 */
+	@Override
 	public String getFailedInfo() {
 		return INFO + ": " + FAILED + " ";
 	}
-	
+
 	/**
 	 * Converts deleted object file to deleted file string
-	 * 
+	 *
 	 * @param files files
 	 * @return deleted storage file path
 	 */
 	private String toStringDeletedObject(List<DeletedObject> files) {
 
-		List<String> fileNames = new ArrayList<String>();
+		List<String> fileNames = new ArrayList<>();
 
 		for (DeletedObject f : files) {
 			fileNames.add(f.key());

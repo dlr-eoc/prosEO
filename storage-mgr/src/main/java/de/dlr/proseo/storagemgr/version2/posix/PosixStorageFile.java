@@ -1,3 +1,8 @@
+/**
+ * PosixStorageFile.java
+ *
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.version2.posix;
 
 import java.io.File;
@@ -10,22 +15,23 @@ import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 /**
- * Posix Storage File
+ * Represents a file within a POSIX-based storage system. It implements the
+ * StorageFile interface and provides functionality related to the file's
+ * properties and operations.
  * 
- * full path: "/" + basePath + bucket (optional) + relativePath (with fileName)
+ * Full path: "/" + basePath + bucket (optional) + relativePath (with fileName)
  * 
  * @author Denys Chaykovskiy
- *
  */
 public class PosixStorageFile implements StorageFile {
 
-	/** base path */
+	/** Base path */
 	private String basePath;
 
-	/** bucket */
+	/** Bucket */
 	private String bucket;
 
-	/** relative path */
+	/** Relative path */
 	private String relativePath;
 
 	/** Logger for this class */
