@@ -1,6 +1,6 @@
 /**
  * ProductClassUtil.java
- * 
+ *
  * (c) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.prodclmgr.rest.model;
@@ -17,30 +17,34 @@ import de.dlr.proseo.model.enums.ProcessingLevel;
 import de.dlr.proseo.model.enums.ProductVisibility;
 
 /**
- * Utility methods for product classes, e. g. for conversion between prosEO model and REST model
- * 
+ * Utility methods for product classes, e. g. for conversion between prosEO
+ * model and REST model
+ *
  * @author Dr. Thomas Bassler
  */
 public class ProductClassUtil {
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductClassUtil.class);
-	
+
 	/**
 	 * Convert a prosEO model product class into a REST product class
-	 * 
+	 *
 	 * @param modelProductClass the prosEO model product class
-	 * @return an equivalent REST product class or null, if no model product class was given
+	 * @return an equivalent REST product class or null, if no model product class
+	 *         was given
 	 */
 	public static RestProductClass toRestProductClass(ProductClass modelProductClass) {
-		if (logger.isTraceEnabled()) logger.trace(">>> toRestProductClass({})", (null == modelProductClass ? "MISSING" : modelProductClass.getProductType()));
+		if (logger.isTraceEnabled())
+			logger.trace(">>> toRestProductClass({})",
+					(null == modelProductClass ? "MISSING" : modelProductClass.getProductType()));
 
 		if (null == modelProductClass) {
 			return null;
 		}
-		
+
 		RestProductClass restProductClass = new RestProductClass();
-		
+
 		restProductClass.setId(modelProductClass.getId());
 		restProductClass.setVersion(Long.valueOf(modelProductClass.getVersion()));
 		if (null != modelProductClass.getMission()) {
@@ -66,10 +70,10 @@ public class ProductClassUtil {
 		if (null != modelProductClass.getProcessorClass()) {
 			restProductClass.setProcessorClass(modelProductClass.getProcessorClass().getProcessorName());
 		}
-		for (ProductClass componentClass: modelProductClass.getComponentClasses()) {
+		for (ProductClass componentClass : modelProductClass.getComponentClasses()) {
 			restProductClass.getComponentClasses().add(componentClass.getProductType());
 		}
-		for (SimpleSelectionRule simpleSelectionRule: modelProductClass.getRequiredSelectionRules()) {
+		for (SimpleSelectionRule simpleSelectionRule : modelProductClass.getRequiredSelectionRules()) {
 			RestSimpleSelectionRule restSimpleSelectionRule = new RestSimpleSelectionRule();
 			restSimpleSelectionRule.setId(simpleSelectionRule.getId());
 			restSimpleSelectionRule.setVersion(Long.valueOf(simpleSelectionRule.getVersion()));
@@ -79,22 +83,24 @@ public class ProductClassUtil {
 			if (null != simpleSelectionRule.getSourceProductClass()) {
 				restSimpleSelectionRule.setSourceProductClass(simpleSelectionRule.getSourceProductClass().getProductType());
 			}
-			for (ConfiguredProcessor configuredProcessor: simpleSelectionRule.getConfiguredProcessors()) {
+			for (ConfiguredProcessor configuredProcessor : simpleSelectionRule.getConfiguredProcessors()) {
 				restSimpleSelectionRule.getConfiguredProcessors().add(configuredProcessor.getIdentifier());
 			}
-			for (String filterConditionKey: simpleSelectionRule.getFilterConditions().keySet()) {
-				restSimpleSelectionRule.getFilterConditions().add(
-						new RestParameter(filterConditionKey,
-								simpleSelectionRule.getFilterConditions().get(filterConditionKey).getParameterType().toString(),
-								simpleSelectionRule.getFilterConditions().get(filterConditionKey).getParameterValue().toString()));
+			for (String filterConditionKey : simpleSelectionRule.getFilterConditions().keySet()) {
+				restSimpleSelectionRule.getFilterConditions()
+					.add(new RestParameter(filterConditionKey,
+							simpleSelectionRule.getFilterConditions().get(filterConditionKey).getParameterType().toString(),
+							simpleSelectionRule.getFilterConditions().get(filterConditionKey).getParameterValue().toString()));
 			}
-			for (SimplePolicy simplePolicy: simpleSelectionRule.getSimplePolicies()) {
+			for (SimplePolicy simplePolicy : simpleSelectionRule.getSimplePolicies()) {
 				RestSimplePolicy restSimplePolicy = new RestSimplePolicy();
 				restSimplePolicy.setId(simplePolicy.getId());
 				restSimplePolicy.setVersion(Long.valueOf(simplePolicy.getVersion()));
 				restSimplePolicy.setPolicyType(simplePolicy.getPolicyType().toString());
-				restSimplePolicy.setDeltaTimeT0(new DeltaTimeT0(simplePolicy.getDeltaTimeT0().duration, simplePolicy.getDeltaTimeT0().unit.toString()));
-				restSimplePolicy.setDeltaTimeT1(new DeltaTimeT1(simplePolicy.getDeltaTimeT1().duration, simplePolicy.getDeltaTimeT1().unit.toString()));
+				restSimplePolicy.setDeltaTimeT0(
+						new DeltaTimeT0(simplePolicy.getDeltaTimeT0().duration, simplePolicy.getDeltaTimeT0().unit.toString()));
+				restSimplePolicy.setDeltaTimeT1(
+						new DeltaTimeT1(simplePolicy.getDeltaTimeT1().duration, simplePolicy.getDeltaTimeT1().unit.toString()));
 				restSimpleSelectionRule.getSimplePolicies().add(restSimplePolicy);
 			}
 			restSimpleSelectionRule.setRuleString(simpleSelectionRule.toString());
@@ -103,33 +109,36 @@ public class ProductClassUtil {
 		if (modelProductClass.getProductFileTemplate() != null) {
 			restProductClass.setProductFileTemplate(modelProductClass.getProductFileTemplate());
 		}
-		
+
 		return restProductClass;
 	}
-	
+
 	/**
-	 * Convert a REST product class into a prosEO model product class (scalar and embedded attributes only, no object references)
-	 * 
+	 * Convert a REST product class into a prosEO model product class (scalar and
+	 * embedded attributes only, no object references)
+	 *
 	 * @param restProductClass the REST product class
 	 * @return a (roughly) equivalent model product class
-	 * @throws IllegalArgumentException if the REST product violates syntax rules for date, enum or numeric values
+	 * @throws IllegalArgumentException if the REST product violates syntax rules
+	 *                                  for date, enum or numeric values
 	 */
 	public static ProductClass toModelProductClass(RestProductClass restProductClass) throws IllegalArgumentException {
-		if (logger.isTraceEnabled()) logger.trace(">>> toModelProductClass({})", (null == restProductClass ? "MISSING" : restProductClass.getProductType()));
+		if (logger.isTraceEnabled())
+			logger.trace(">>> toModelProductClass({})", (null == restProductClass ? "MISSING" : restProductClass.getProductType()));
 
 		if (null == restProductClass) {
 			return null;
 		}
-		
+
 		ProductClass modelProductClass = new ProductClass();
-		
+
 		if (null != restProductClass.getId() && 0 != restProductClass.getId()) {
 			modelProductClass.setId(restProductClass.getId());
 			while (modelProductClass.getVersion() < restProductClass.getVersion()) {
 				modelProductClass.incrementVersion();
 			}
 		}
-		
+
 		modelProductClass.setProductType(restProductClass.getProductType());
 		modelProductClass.setDescription(restProductClass.getTypeDescription());
 		if (null != restProductClass.getProcessingLevel()) {
@@ -144,8 +153,9 @@ public class ProductClassUtil {
 		if (null != restProductClass.getDefaultSliceDuration()) {
 			modelProductClass.setDefaultSliceDuration(Duration.ofSeconds(restProductClass.getDefaultSliceDuration()));
 		}
-		// Product file template left out here, because it must not be set, if it is the same as the mission's template
-		
+		// Product file template left out here, because it must not be set, if it is the
+		// same as the mission's template
+
 		return modelProductClass;
 	}
 }
