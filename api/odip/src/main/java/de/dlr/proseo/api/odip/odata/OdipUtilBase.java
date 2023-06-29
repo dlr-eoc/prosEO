@@ -1013,7 +1013,7 @@ public class OdipUtilBase {
 		}
 		if (product == null) {
 			try {
-				RestProduct restProduct = serviceConnection.getFromService(config.getAuxipBaseUri(), URI_PATH_DOWNLOAD_BYNAME + "?filename=" + reference 
+				RestProduct restProduct = serviceConnection.getFromService(config.getAipUrl(), URI_PATH_DOWNLOAD_BYNAME + "?filename=" + reference 
 						+ "&facility=" + config.getFacility(), 
 						RestProduct.class, securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword());
 				if (restProduct != null) {
@@ -1049,7 +1049,7 @@ public class OdipUtilBase {
 		}
 		try {
 			@SuppressWarnings("unchecked")
-			List<RestProduct> restProducts = (List<RestProduct>) serviceConnection.getFromService(config.getAuxipBaseUri(), 
+			List<RestProduct> restProducts = (List<RestProduct>) serviceConnection.getFromService(config.getAipUrl(), 
 					URI_PATH_DOWNLOAD_ALLBYTIME + "?productType=" + productType 
 					+ "&startTime=" + OrbitTimeFormatter.format(start)
 					+ "&stopTime=" +  OrbitTimeFormatter.format(stop)

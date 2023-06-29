@@ -84,6 +84,7 @@ public enum ApiMonitorMessage implements ProseoMessage {
 	CANNOT_READ_DSIB_FILE		(7108, Level.ERROR, false, "Cannot read DSIB file {0} (cause: {1})", ""),
 	DATA_SIZE_MISMATCH			(7109, Level.ERROR, false, "Data size mismatch copying session directory {0}: "
 															+ "expected size {1}, actual size {2}", ""),
+
 	COPY_TIMEOUT				(7110, Level.ERROR, false, "Timeout after {0} s during wait for download of file {1}, download cancelled", ""),
 	XBIP_ENTRY_MALFORMED		(7111, Level.WARN, true, "Malformed XBIP directory entry {0} found - skipped", ""),
 	SKIPPING_SESSION_DIRECTORY	(7112, Level.WARN, true, "Skipping inaccessible session directory {0}", ""),
@@ -104,6 +105,8 @@ public enum ApiMonitorMessage implements ProseoMessage {
 	FILE_SIZE_MISMATCH			(7130, Level.ERROR, false, "File size mismatch for CADU file {0} (expected: {1} Bytes, got {2} Bytes)", ""),
 	SESSION_DOWNLOAD_TIMEOUT	(7131, Level.ERROR, false, "Timeout after {0} s during wait for completion of session {1}, download incomplete", ""),
 	FILE_TRANSFER_COMPLETED		(7132, Level.INFO, true, "Session {0}: Transfer for CADU file {1} completed (size {2} bytes, published {3})", ""),
+	FILE_EVICTED				(7133, Level.ERROR, false, "CADU file {0} already evicted, cancelling session download", ""),
+	FILE_LIST_EMPTY				(7134, Level.ERROR, false, "CADU file list for session {0} empty, cancelling session download", ""),
 	
 	CADIP_START_MESSAGE			(7198, Level.INFO, true, "------  Starting CADIP Monitor  ------\n"
 															+ "CADIP base URI . . . . . . : {0}\n"
