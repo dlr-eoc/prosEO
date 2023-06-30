@@ -56,8 +56,8 @@ import de.dlr.proseo.procmgr.rest.model.RestWorkflowOption;
 import de.dlr.proseo.procmgr.rest.model.WorkflowUtil;
 
 /**
- * Service methods required to create, modify and delete workflows in the prosEO
- * database, and to query the database about such workflows
+ * Service methods required to create, modify and delete workflows in the prosEO database, and to query the database about such
+ * workflows
  *
  * @author Katharina Bassler
  */
@@ -85,14 +85,14 @@ public class WorkflowMgr {
 	private static ProseoLogger logger = new ProseoLogger(WorkflowMgr.class);
 
 	/**
-	 * Count the workflows matching the specified workflowName, workflowVersion,
-	 * inputProductClass, or configured processor.
+	 * Count the workflows matching the specified workflowName, workflowVersion, inputProductClass, or configured processor.
 	 *
 	 * @param missionCode         the mission code
 	 * @param workflowName        the workflow name
 	 * @param workflowVersion     the workflow version
 	 * @param inputProductClass   the input product class
 	 * @param configuredProcessor the configured processor
+	 * @param enabled             whether the workflow is enabled
 	 * @return the number of workflows found as string
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
@@ -145,9 +145,8 @@ public class WorkflowMgr {
 	/**
 	 * Create a new workflow
 	 *
-	 * @param workflow a Json representation of the new workflow
-	 * @return a Json representation of the workflow after creation (with ID and
-	 *         version number)
+	 * @param restWorkflow a Json representation of the new workflow
+	 * @return a Json representation of the workflow after creation (with ID and version number)
 	 * @throws IllegalArgumentException if any of the input data was invalid
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
@@ -541,12 +540,9 @@ public class WorkflowMgr {
 	 * Delete a workflow by ID
 	 *
 	 * @param id the ID of the workflow to delete
-	 * @throws EntityNotFoundException  if the workflow to delete does not exist in
-	 *                                  the database
-	 * @throws RuntimeException         if the deletion was not performed as
-	 *                                  expected
-	 * @throws IllegalArgumentException if the ID of the workflow to delete was not
-	 *                                  given, or if dependent objects exist
+	 * @throws EntityNotFoundException  if the workflow to delete does not exist in the database
+	 * @throws RuntimeException         if the deletion was not performed as expected
+	 * @throws IllegalArgumentException if the ID of the workflow to delete was not given, or if dependent objects exist
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
 	public void deleteWorkflowById(Long id)
@@ -634,18 +630,14 @@ public class WorkflowMgr {
 	/**
 	 * Update a workflow by ID
 	 *
-	 * @param id       the ID of the workflow to update
-	 * @param workflow a Json object containing the modified (and unmodified)
-	 *                 attributes
-	 * @return a response containing a Json object corresponding to the workflow
-	 *         after modification (with ID and version for all contained objects)
-	 * @throws EntityNotFoundException         if no workflow with the given ID
-	 *                                         exists
+	 * @param id           the ID of the workflow to update
+	 * @param restWorkflow a Json object containing the modified (and unmodified) attributes
+	 * @return a response containing a Json object corresponding to the workflow after modification (with ID and version for all
+	 *         contained objects)
+	 * @throws EntityNotFoundException         if no workflow with the given ID exists
 	 * @throws IllegalArgumentException        if any of the input data was invalid
-	 * @throws SecurityException               if a cross-mission data access was
-	 *                                         attempted
-	 * @throws ConcurrentModificationException if the workflow has been modified
-	 *                                         since retrieval by the client
+	 * @throws SecurityException               if a cross-mission data access was attempted
+	 * @throws ConcurrentModificationException if the workflow has been modified since retrieval by the client
 	 */
 	public RestWorkflow modifyWorkflow(Long id, RestWorkflow restWorkflow)
 			throws EntityNotFoundException, IllegalArgumentException, SecurityException, ConcurrentModificationException {
@@ -1297,18 +1289,18 @@ public class WorkflowMgr {
 	}
 
 	/**
-	 * Get workflows by mission, name and version (user-defined version, not
-	 * database version)
+	 * Get workflows by mission, name and version (user-defined version, not database version)
 	 *
 	 * @param missionCode     the mission code
 	 * @param workflowName    the name of the workflow (class)
 	 * @param workflowVersion the workflow version
+	 * @param inputProductClass   the input product class
+	 * @param configuredProcessor the configured processor
+	 * @param enabled             whether the workflow is enabled
 	 * @param recordFrom      first record of filtered and ordered result to return
 	 * @param recordTo        last record of filtered and ordered result to return
-	 * @return a list of Json objects representing workflows satisfying the search
-	 *         criteria
-	 * @throws NoResultException if no workflows matching the given search criteria
-	 *                           could be found
+	 * @return a list of Json objects representing workflows satisfying the search criteria
+	 * @throws NoResultException if no workflows matching the given search criteria could be found
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public List<RestWorkflow> getWorkflows(String missionCode, String workflowName, String workflowVersion,
