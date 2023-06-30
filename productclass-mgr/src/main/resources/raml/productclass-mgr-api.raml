@@ -51,6 +51,20 @@ resourceTypes:
           description: A cross-mission data access was attempted.          
           headers:
             Warning: !include types/error.raml
+        404:
+          description: The requested resource was not found.
+          headers:
+            Warning: !include types/error.raml
+    post?:
+      responses:
+        400:
+          description: The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
+        403:
+          description: A cross-mission data access was attempted.          
+          headers:
+            Warning: !include types/error.raml  
     patch?:
       responses:
         304:
@@ -170,15 +184,7 @@ resourceTypes:
         body:
           application/json:
             type: RestProductClass
-            example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json                 
-      400:
-        description: The request sent to the server contains data which is not as expected e.g. invalid location URI
-        headers:
-          Warning: !include types/error.raml
-      403:
-        description: A cross-mission data access was attempted.          
-        headers:
-          Warning: !include types/error.raml   
+            example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json                  
 
   /count:
     get:
@@ -349,14 +355,6 @@ resourceTypes:
               application/json:
                 type: RestProductClass
                 description: The product class with the added, converted selection rules
-          400:
-            description: The request sent to the server contains data which is not as expected e.g. invalid location URI
-            headers:
-              Warning: !include types/error.raml
-          403:
-            description: A cross-mission data access was attempted.          
-            headers:
-              Warning: !include types/error.raml
 
       /{ruleid}:
         uriParameters:
