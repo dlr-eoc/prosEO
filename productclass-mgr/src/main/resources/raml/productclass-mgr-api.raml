@@ -33,12 +33,12 @@ resourceTypes:
   standard:
     get?:
       responses:
-        404:
-          description: The requested resource was not found.
-          headers:
-            Warning: !include types/error.raml
         403:
           description: A cross-mission data access was attempted.
+          headers:
+            Warning: !include types/error.raml
+        404:
+          description: The requested resource was not found.
           headers:
             Warning: !include types/error.raml
     put?:
@@ -49,10 +49,6 @@ resourceTypes:
             Warning: !include types/error.raml
         403:
           description: A cross-mission data access was attempted.          
-          headers:
-            Warning: !include types/error.raml        
-        404:
-          description: The requested resource on which the modification is being attempted was not found.
           headers:
             Warning: !include types/error.raml
     patch?:
