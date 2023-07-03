@@ -29,6 +29,9 @@ public interface MonProductProductionMonthRepository extends JpaRepository<MonPr
 	/**
 	 * Get a list of products
 	 * 
+	 * @param missionId the mission id
+	 * @param mpt       the production type
+	 * @param datetime  the datetime
 	 * @return a list of products satisfying the search criteria
 	 */
 	@Query("select p from MonProductProductionMonth p where p.mission.id = ?1 and p.productionType = ?2 and p.datetime = ?3")
@@ -37,6 +40,10 @@ public interface MonProductProductionMonthRepository extends JpaRepository<MonPr
 	/**
 	 * Get a list of products
 	 * 
+	 * @param missionId the mission id
+	 * @param mpt       the production type
+	 * @param timeFrom  the earliest datetime
+	 * @param timeTo    the latest datetime
 	 * @return a list of products satisfying the search criteria
 	 */
 	@Query("select p from MonProductProductionMonth p where p.mission.id = ?1 and p.productionType = ?2 and p.datetime >= ?3 and p.datetime < ?4")

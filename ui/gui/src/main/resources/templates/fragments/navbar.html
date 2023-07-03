@@ -1,67 +1,136 @@
 
 <div th:fragment="navbarLeft">
-      <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
-        href="/"><img src="proseo_logo.png" class="rounded" width="50"
-        height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
-      <button class="navbar-toggler position-absolute d-md-none collapsed"
-        type="button" data-toggle="collapse" data-target="#sidebarMenu"
-        aria-controls="sidebarMenu" aria-expanded="false"
-        aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+	<a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
+		href="/"><img src="proseo_logo.png" class="rounded" width="50"
+		height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
+	<button class="navbar-toggler position-absolute d-md-none collapsed"
+		type="button" data-toggle="collapse" data-target="#sidebarMenu"
+		aria-controls="sidebarMenu" aria-expanded="false"
+		aria-label="Toggle navigation">
+		<span class="navbar-toggler-icon"></span>
+	</button>
 </div>
 
 <div th:fragment="navbarRight">
-      <ul class="nav navbar-nav px-3 navbar-right">        
-        <li class="nav-item dropdown text-nowrap btn menu"><a
-          class="nav-link dropdown-toggle" id="dropdown09"
-          data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span
-            data-feather="user"></span><span th:text="${user}"> user</span></a>
-          <div class="dropdown-menu menu dropdown-menu-right menu">
-            <a class="dropdown-item menu" href="/customlogin"><span
-              data-feather="log-out"></span> <span th:text="#{logout}">logout</span>
-            </a>
-            <a class="dropdown-item menu" data-toggle="dropdown" aria-haspopup="true"
-              aria-expanded="false" role="button"><span
-              data-feather="chevron-right"></span> <span th:text="#{roles}">roles</span></a>
-            <div class="dropdown-menu dropdown-menu-right menu">
-              <span th:each="role : ${userroles}" class="dropdown-item enabled"><span
-                th:text="${role}"></span></span>
-            </div>
-          </div>
-        </li>
-        <li class="nav-item dropdown text-nowrap btn menu"><a
-          class="nav-link dropdown-toggle" id="dropdown09"
-          data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span
-            class="flag-icon flag-icon-de"
-            th:class="'flag-icon flag-icon-' + ${#locale.language}"> </span> <span
-            th:text="#{${#locale.language}}"> language</span></a>
-          <div class="dropdown-menu menu dropdown-menu-right">
-            <a class="dropdown-item btn menu" onclick="selectLang('DE')"><span
-              class="flag-icon flag-icon-de"> </span> <span th:text="#{de}">de</span>
-            </a> <a class="dropdown-item btn menu" onclick="selectLang('EN')"><span
-              class="flag-icon flag-icon-en"> </span> <span th:text="#{en}">en</span></a>
-          </div></li>
-      </ul>
+	<ul class="nav navbar-nav px-3 navbar-right">
+		<li class="nav-item dropdown text-nowrap btn menu"><a
+			class="nav-link dropdown-toggle" id="dropdown09"
+			data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span
+				data-feather="user"></span><span th:text="${user}"> user</span></a>
+			<div class="dropdown-menu menu dropdown-menu-right menu">
+				<a class="dropdown-item menu" href="/customlogin"><span
+					data-feather="log-out"></span> <span th:text="#{logout}">logout</span>
+				</a> <a class="dropdown-item menu" data-toggle="dropdown"
+					aria-haspopup="true" aria-expanded="false" role="button"><span
+					data-feather="chevron-right"></span> <span th:text="#{roles}">roles</span></a>
+				<div class="dropdown-menu dropdown-menu-right menu">
+					<span th:each="role : ${userroles}" class="dropdown-item enabled"><span
+						th:text="${role}"></span></span>
+				</div>
+			</div></li>
+		<li class="nav-item dropdown text-nowrap btn menu"><a
+			class="nav-link dropdown-toggle" id="dropdown09"
+			data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span
+				class="flag-icon flag-icon-de"
+				th:class="'flag-icon flag-icon-' + ${#locale.language}"> </span> <span
+				th:text="#{${#locale.language}}"> language</span></a>
+			<div class="dropdown-menu menu dropdown-menu-right">
+				<a class="dropdown-item btn menu" onclick="selectLang('DE')"><span
+					class="flag-icon flag-icon-de"> </span> <span th:text="#{de}">de</span>
+				</a> <a class="dropdown-item btn menu" onclick="selectLang('EN')"><span
+					class="flag-icon flag-icon-en"> </span> <span th:text="#{en}">en</span></a>
+			</div></li>
+	</ul>
 </div>
-        <nav th:unless="${((pageCount==null)?1:pageCount) lt 2}" th:fragment="pagenav" id="pagenav" th:name="${count}" 
-          th:data-page="${page}" th:data-page-size="${pageSize}"
-          aria-label="Page navigation">
-          <ul class="pagination justify-content-center">
-            <li class="page-item" th:classappend="${page eq 1} ? 'disabled'"><a class="page-link" title="1"
-              th:onclick="'retrieveDataPage(0, ' + ${pageSize} + ')'" href="#"
-              tabindex="-1"><span aria-hidden="true" data-feather="chevrons-left"></span></a></li>
-            <li class="page-item" th:classappend="${page eq 1} ? 'disabled'"><a class="page-link"
-                     th:onclick="'retrieveDataPage(' + ${(((page==null)?0:page)-2)*((pageSize==null)?1:pageSize)} + ', ' + ${(((page==null)?0:page)-1)*((pageSize==null)?1:pageSize)} + ')'"
-                     href="#"><span aria-hidden="true" data-feather="chevron-left"></span></a></li>            
-            <li th:each="pageNo : ${showPages}" class="page-item"  th:classappend="${page eq pageNo} ? 'disabled'"><a 
-                  th:onclick="'retrieveDataPage(' + ${(pageNo-1)*pageSize} + ', ' + ${pageNo*pageSize} + ')'" 
-                  class="page-link" href="#" th:text="${pageNo}">1</a></li>
-            <li class="page-item" th:classappend="${page eq pageCount} ? 'disabled'"><a class="page-link" href="#" 
-                  th:onclick="'retrieveDataPage(' + ${(((page==null)?0:page))*((pageSize==null)?1:pageSize)} + ', ' + ${(((page==null)?0:page)+1)*((pageSize==null)?1:pageSize)} + ')'" 
-                  ><span aria-hidden="true" data-feather="chevron-right"></span></a></li>
-            <li class="page-item" th:classappend="${page eq pageCount} ? 'disabled'"><a class="page-link" href="#" th:title="${((pageCount==null)?0:pageCount)}"
-                  th:onclick="'retrieveDataPage(' + ${(((pageCount==null)?0:pageCount)-1)*((pageSize==null)?1:pageSize)} + ', ' + ${((pageCount==null)?0:pageCount)*((pageSize==null)?1:pageSize)} + ')'" 
-                  ><span aria-hidden="true" data-feather="chevrons-right"></span></a></li>
-          </ul>
-        </nav>
+
+<nav th:unless="${((pageCount==null)?1:pageCount) lt 2}"
+	th:fragment="pagenav" id="pagenav" th:name="${count}"
+	th:data-page="${page}" th:data-page-size="${pageSize}"
+	aria-label="Page navigation">
+	<ul class="pagination justify-content-center">
+		<li class="page-item" th:classappend="${page eq 1} ? 'disabled'"><a
+			class="page-link" title="1"
+			th:onclick="'retrieveDataPage(0, ' + ${pageSize} + ')'" href="#"
+			tabindex="-1"><span aria-hidden="true"
+				data-feather="chevrons-left"></span></a></li>
+		<li class="page-item" th:classappend="${page eq 1} ? 'disabled'"><a
+			class="page-link"
+			th:onclick="'retrieveDataPage(' + ${(((page==null)?0:page)-2)*((pageSize==null)?1:pageSize)} + ', ' + ${(((page==null)?0:page)-1)*((pageSize==null)?1:pageSize)} + ')'"
+			href="#"><span aria-hidden="true" data-feather="chevron-left"></span></a></li>
+		<li th:each="pageNo : ${showPages}" class="page-item"
+			th:classappend="${page eq pageNo} ? 'disabled'"><a
+			th:onclick="'retrieveDataPage(' + ${(pageNo-1)*pageSize} + ', ' + ${pageNo*pageSize} + ')'"
+			class="page-link" href="#" th:text="${pageNo}">1</a></li>
+		<li class="page-item"
+			th:classappend="${page eq pageCount} ? 'disabled'"><a
+			class="page-link" href="#"
+			th:onclick="'retrieveDataPage(' + ${(((page==null)?0:page))*((pageSize==null)?1:pageSize)} + ', ' + ${(((page==null)?0:page)+1)*((pageSize==null)?1:pageSize)} + ')'"><span
+				aria-hidden="true" data-feather="chevron-right"></span></a></li>
+		<li class="page-item"
+			th:classappend="${page eq pageCount} ? 'disabled'"><a
+			class="page-link" href="#"
+			th:title="${((pageCount==null)?0:pageCount)}"
+			th:onclick="'retrieveDataPage(' + ${(((pageCount==null)?0:pageCount)-1)*((pageSize==null)?1:pageSize)} + ', ' + ${((pageCount==null)?0:pageCount)*((pageSize==null)?1:pageSize)} + ')'"><span
+				aria-hidden="true" data-feather="chevrons-right"></span></a></li>
+	</ul>
+</nav>
+
+<div th:fragment="alternatePageNav">
+	<nav th:unless="${numberOfPages eq 1}" th:fragment="alternatePageNav"
+		id="alternatePageNav" aria-label="Page navigation">
+
+		<!-- Paging buttons -->
+		<ul class="pagination justify-content-center">
+
+			<!-- First page button -->
+			<li class="page-item"
+				th:classappend="${currentPage eq 1} ? 'disabled'"><a
+				class="page-link" title="1" th:onclick="'updateTable(1)'" href="#"
+				tabindex="-1"> <span aria-hidden="true"
+					data-feather="chevrons-left"></span>
+			</a></li>
+
+			<!-- Previous page button -->
+			<li class="page-item"
+				th:classappend="${currentPage eq 1} ? 'disabled'"><a
+				class="page-link" th:onclick="updateTable(currentPage - 1)" href="#">
+					<span aria-hidden="true" data-feather="chevron-left"></span>
+			</a></li>
+
+			<!-- Buttons with page numbers -->
+			<li th:each="pageNumber : ${showPages}" class="page-item"
+				th:classappend="${currentPage eq pageNumber} ? 'disabled'"><a
+				th:onclick="'updateTable(' + ${pageNumber} + ')'" class="page-link"
+				href="#" th:text="${pageNumber}">1</a></li>
+
+			<!-- Next page button -->
+			<li class="page-item"
+				th:classappend="${currentPage eq numberOfPages} ? 'disabled'"><a
+				class="page-link" href="#"
+				th:onclick="'updateTable(currentPage + 1)'"> <span
+					aria-hidden="true" data-feather="chevron-right"></span>
+			</a></li>
+
+			<!-- Last page button -->
+			<li class="page-item"
+				th:classappend="${currentPage eq numberOfPages} ? 'disabled'">
+				<a class="page-link" href="#" th:title="${numberOfPages}"
+				th:onclick="'updateTable(' + ${numberOfPages} + ')'"> <span
+					aria-hidden="true" data-feather="chevrons-right"></span>
+			</a>
+			</li>
+
+		</ul>
+	</nav>
+
+	<!-- Customize page size -->
+	<div>
+		<label for="pageSizeField"><span th:text="#{show-page-size}"></span></label>
+		<input type="number" id="pageSizeField" placeholder="{{pageSize}}">
+		<button onclick="updatePageSize()"
+			class="btn btn-sm btn-outline-secondary">
+			<span th:text="#{update-page-size}"></span>
+		</button>
+	</div>
+
+</div>

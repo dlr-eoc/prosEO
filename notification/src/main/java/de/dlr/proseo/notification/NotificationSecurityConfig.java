@@ -1,28 +1,31 @@
+/**
+ * NotificationSecurityConfig.java
+ *
+ * (C) 2023 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.notification;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.logging.messages.GeneralMessage;
-
+/**
+ * 
+ * Configures the security settings for the notification system in a Java application using the Spring Security framework.
+ * 
+ * @author Ernst Melchinger
+ */
 @Configuration
 @EnableWebSecurity
 public class NotificationSecurityConfig extends WebSecurityConfigurerAdapter {
-	
-	/** A logger for this class */
-	private static ProseoLogger logger = new ProseoLogger(NotificationSecurityConfig.class);
-	
+
 	/**
-	 * Set the Ingestor security options
-	 * 
+	 * Configures the HTTP security for the application, defining which requests should be allowed or denied
+	 *
 	 * @param http the HTTP security object
 	 */
 	@Override
@@ -31,21 +34,22 @@ public class NotificationSecurityConfig extends WebSecurityConfigurerAdapter {
 //			.httpBasic()
 //				.and()
 			.authorizeRequests()
-			.antMatchers("/**/notify").permitAll()
-			.antMatchers("/**/actuator/health").permitAll()
+			.antMatchers("/**/notify")
+			.permitAll()
+			.antMatchers("/**/actuator/health")
+			.permitAll()
 			.and()
-			.csrf().disable(); // Required for POST requests (or configure CSRF)
+			.csrf()
+			.disable(); // Required for POST requests (or configure CSRF)
 	}
 
 	/**
-	 * Provides the default password encoder for prosEO (BCrypt)
-	 * 
+	 * Provides the default password encoder for prosEO (BCrypt) for hashing and verifying passwords
+	 *
 	 * @return a BCryptPasswordEncoder
 	 */
 	@Bean
 	public PasswordEncoder passwordEncoder() {
-	    return new BCryptPasswordEncoder();
+		return new BCryptPasswordEncoder();
 	}
 }
-
-

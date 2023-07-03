@@ -7,14 +7,12 @@ mediaType: application/json
 
 securitySchemes:
   basicAuth:
-    description: Each request must contain the headers necessary for
-                 basic authentication
+    description: Each request must contain the headers necessary for basic authentication
     type: Basic Authentication
     describedBy:
       headers:
         Authorization:
-          description: Used to send the Base64-encoded "username:password"
-                       credentials
+          description: Used to send the Base64-encoded "username:password" credentials
           type: string
       responses:
         401:
@@ -37,60 +35,133 @@ resourceTypes:
             The request sent to the server contains data which is not as expected e.g. invalid location URI
           headers:
             Warning: !include types/error.raml
-        404:
+    post?:
+      responses:      
+        400:
           description: |
-            The requested resource was not found                     
+            The request sent to the server contains data which is not as expected e.g. invalid location URI
           headers:
             Warning: !include types/error.raml
     patch?:
-      responses:          
+      responses:
+        304:
+          description: |
+            No modification occurred, as the input and database data were equal
+          headers:
+            Warning: !include types/error.raml          
+        400:
+          description: |
+            The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
         404:
           description: |
-            The requested resource on which the modification is being attempted was not found              
+            No entity with the given ID exists.
+          headers:
+            Warning: !include types/error.raml
+        409:
+          description: |
+            The entity has been modified since retrieval by the client.
           headers:
             Warning: !include types/error.raml
     delete?:
-      responses:          
+      responses: 
+        304:
+          description: |
+            The deletion was unsuccessful
+          headers:
+            Warning: !include types/error.raml                   
         404:
           description: | 
             The requested resource to delete was not found 
           headers:
             Warning: !include types/error.raml
-              
+
 /login:
   type: standard
   get:
-    description: Log in to the given mission (using credentials in Basic Auth header); mission may be empty for "root" user
+    description: |
+      Let a user log in to a specific mission (the user is retrieved from the basic
+      authentication information). Mission may be empty for the "root" user.
+      
+      @param mission the code of the mission to log in to
+      @return a list of authorities the user holds for this mission (directly or
+              indirectly)    
     displayName: login
     queryParameters:
-      mission?: string
+      mission?: 
+        type: string
+        description: the mission code
     responses:
       200:
         body:
           application/json:
             type: string[]
             description: A list of authorities granted to the user for the given mission
+      401:
+        description: |
+          If the user is not authorized for some reason, such as an expired password.
+        headers:
+          Warning: !include types/error.raml
+      404:
+        description: |
+          The requested resource was not found                     
+        headers:
+          Warning: !include types/error.raml
+            
 /users:
   type: standard
   get:
-    description: Get users by mission (may be null, if root user sends request)
+    description: |
+      Get users by mission (may be null, if root user sends request)
+      
+      @param mission    the mission code
+      @param recordFrom first record of filtered and ordered result to return
+      @param recordTo   last record of filtered and ordered result to return
+      @return HTTP status "OK" and a list of Json objects representing users
+              authorized for the given mission or HTTP status "NOT_FOUND" and an
+              error message, if no users matching the search criteria were found
+              HTTP status "TOO MANY REQUESTS" if the result list exceeds a
+              configured maximum
     displayName: getUsers
     queryParameters:
-      mission?: string
+      mission?: 
+        type: string
+        description: the mission code
       recordFrom?: 
         type: integer
         format: int32
+        description: the first result to return
       recordTo?:
         type: integer
         format: int32
+        description: the last result to return
     responses:
       200:
         body:
           application/json:
             type: RestUser[]
             example: !include examples/user-list.json
+      404:
+        description: |
+          The requested resource was not found                     
+        headers:
+          Warning: !include types/error.raml
+      429:
+        description: |
+          The result list length exceeds a configured maximum.
+        headers:
+          Warning: !include types/error.raml
   post:
-    description: Create a new user
+    description: |
+      Create a new user
+
+      @param restUser a Json representation of the new user
+      @return HTTP status "CREATED" and a response containing a Json object
+              corresponding to the user after persistence (with ACL security
+              identity ID) or HTTP status "BAD_REQUEST", if any of the input data
+              was invalid
+
     displayName: createUser
     body:
       application/json:
@@ -104,19 +175,38 @@ resourceTypes:
             example: !include examples/user.json
   /count:
     get:
-      description: Count the users with the given mission code
+      description: |
+        Count the users matching the specified mission.
+
+        @param missionCode the mission
+        @return the number of matching users as a String (may be zero) or HTTP status
+                "FORBIDDEN" and an error message, if a cross-mission data access was
+                attempted
       displayName: countUsers
       queryParameters:
-        missionCode?: string
+        missionCode?: 
+          type: string
+          description: the mission code
       responses:
         200:
           body:
             text/plain:
   /{username}:
     uriParameters:
-      username: string
+      username: 
+        type: string
+        description: the user name
     get:
-      description: Get a user by user name
+      description: |
+        Get a user by name
+
+        @param username the user name
+        @return HTTP status "OK" and a Json object corresponding to the user found or
+                HTTP status "BAD_REQUEST" and an error message, if no user name was
+                given, or HTTP status "UNAUTHORIZED" and an error message, if a user
+                (not user mgr) attempted to access the data of another user, or HTTP
+                status "NOT_FOUND" and an error message, if no user with the given
+                name exists
       displayName: getUserByName
       responses:
         200:
@@ -124,8 +214,33 @@ resourceTypes:
             application/json:
               type: RestUser
               example: !include examples/user.json
+        404:
+          description: |
+            The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
+        401:
+          description: |
+            A user attempted to access the data of another user.
+          headers:
+            Warning: !include types/error.raml
     patch:
-      description: Update a user by user name
+      description: |
+        Update a user by name
+
+        @param username the name of the user to update
+        @param restUser a Json object containing the modified (and unmodified)
+                        attributes
+        @return HTTP status "OK" and a response containing a Json object
+                corresponding to the user after modification or HTTP status
+                "NOT_MODIFIED" and a warning message, if the input date was the same
+                as the database data, or HTTP status "NOT_FOUND" and an error
+                message, if no user with the given name exists, or HTTP status
+                "BAD_REQUEST" and an error message, if any of the input data was
+                invalid, or HTTP status "UNAUTHORIZED" and an error message, if a
+                user (not user mgr) attempted to change anything but their own
+                password, or HTTP status "CONFLICT"and an error message, if the user
+                has been modified since retrieval by the client
       displayName: modifyUser
       body:
         application/json:
@@ -137,8 +252,19 @@ resourceTypes:
             application/json:
               type: RestUser
               example: !include examples/user.json
+        401:
+          description: |
+            A user attempted to access the data of another user.
+          headers:
+            Warning: !include types/error.raml
     delete:
-      description: Delete a user by user name
+      description: |
+        Delete a user by user name
+
+        @param username the name of the user to delete
+        @return a response entity with HTTP status "NO_CONTENT", if the deletion was
+                successful, or HTTP status "NOT_FOUND", if the user did not exist, or
+                HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
       displayName: deleteUserByName
       responses:
         204:
@@ -146,25 +272,59 @@ resourceTypes:
 /groups:
   type: standard
   get:
-    description: Get user groups by mission and optionally by name
+    description: |
+      Get user groups by mission and optionally by group name
+      
+      @param mission    the mission code and optionally by group name
+      @param groupName  the group name (optional)
+      @param recordFrom first record of filtered and ordered result to return
+      @param recordTo   last record of filtered and ordered result to return
+      @return HTTP status "OK" and a list of Json objects representing groups
+              authorized for the given mission or HTTP status "TOO MANY REQUESTS"
+              if the result list exceeds a configured maximum HTTP status
+              "NOT_FOUND" and an error message, if no groups matching the search
+              criteria were found    
     displayName: getGroups
     queryParameters:
-      mission: string
-      groupName?: string
+      mission: 
+        type: string
+        description: the mission code
+      groupName?: 
+        type: string
+        description: the name of the user group
       recordFrom?: 
         type: integer
         format: int32
+        description: the first result to return
       recordTo?:
         type: integer
         format: int32
+        description: the last result to return
     responses:
       200:
         body:
           application/json:
             type: RestGroup[]
             example: !include examples/group-list.json
+      404:
+        description: |
+          The requested resource was not found                     
+        headers:
+          Warning: !include types/error.raml
+      429:
+        description: |
+          The result list length exceeds a configured maximum.
+        headers:
+          Warning: !include types/error.raml
   post:
-    description: Create a new user group
+    description: |
+      Create a new user group
+    
+      @param restGroup a Json representation of the new user group
+      @return HTTP status "CREATED" and a response containing a Json object
+              corresponding to the group after persistence (with ACL security
+              identity ID) or HTTP status "BAD_REQUEST", if any of the input data
+              was invalid    
     displayName: createGroup
     body:
       application/json:
@@ -178,10 +338,18 @@ resourceTypes:
             example: !include examples/group.json
   /count:
     get:
-      description: Count the user groups with the given mission code
+      description: |
+        Count the user groups matching the specified mission
+      
+        @param missionCode the mission code
+        @return the number of matching groups as a String (may be zero) or HTTP
+                status "FORBIDDEN" and an error message, if a cross-mission data
+                access was attempted
       displayName: countGroups
       queryParameters:
-        missionCode: string
+        missionCode: 
+          type: string
+          description: the mission code
       responses:
         200:
           body:
@@ -191,8 +359,16 @@ resourceTypes:
       id:
         type: integer
         format: long
+        description: the user group ID
     get:
-      description: Get a user group by ID
+      description: |
+        Get a user group by ID
+      
+        @param id the group ID
+        @return HTTP status "OK" and a Json object corresponding to the group found
+                or HTTP status "BAD_REQUEST" and an error message, if no group ID was
+                given, or HTTP status "NOT_FOUND" and an error message, if no group
+                with the given ID exists 
       displayName: getGroupById
       responses:
         200:
@@ -200,8 +376,26 @@ resourceTypes:
             application/json:
               type: RestGroup
               example: !include examples/group.json
+        404:
+          description: |
+            The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
     patch:
-      description: Update a user group by ID
+      description: |
+        Update a user group by ID
+        
+        @param id        the ID of the group to update
+        @param restGroup a Json object containing the modified (and unmodified)
+                         attributes
+        @return HTTP status "OK" and a response containing a Json object
+                corresponding to the user after modification or HTTP status
+                "NOT_MODIFIED" and a warning message, if the input date was the same
+                as the database data, or HTTP status "NOT_FOUND" and an error
+                message, if no user group with the given ID exists, or HTTP status
+                "BAD_REQUEST" and an error message, if any of the input data was
+                invalid, or HTTP status "CONFLICT" and an error message, if the user
+                has been modified since retrieval by the client      
       displayName: modifyGroup
       body:
         application/json:
@@ -214,13 +408,26 @@ resourceTypes:
               type: RestGroup
               example: !include examples/group.json
     delete:
-      description: Delete a user group by ID
+      description: |
+        Delete a user group by ID
+        
+        @param id the group ID
+        @return a response entity with HTTP status "NO_CONTENT", if the deletion was
+                successful, or HTTP status "NOT_FOUND", if the group did not exist,
+                or HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
+      
       displayName: deleteGroupById
       responses:
         204:
     /members:
       get:
-        description: Get all users in this group
+        description: |
+          Get all members of the given user group
+  
+          @param id the ID of the user group
+          @return HTTP status "OK" and a list of Json objects representing users, which
+                  are members of the given group or HTTP status "NOT_FOUND" and an
+                  error message, if the group has no members        
         displayName: getGroupMembers
         responses:
           200:
@@ -228,8 +435,24 @@ resourceTypes:
               application/json:
                 type: RestUser[]
                 description: The list of users in this group        
+          404:
+            description: |
+              The group has no members                   
+            headers:
+              Warning: !include types/error.raml
       post:
-        description: Add a user to the user group
+        description: |
+          Add a member to the given user group
+
+          @param id       the ID of the group to update
+          @param username the name of the user to add
+          @return HTTP status "OK" and a response containing a Json object
+                  corresponding to the list of users after addition or HTTP status
+                  "NOT_MODIFIED" and a warning message, if the user is already a member
+                  of the group, or HTTP status "NOT_FOUND" and an error message, if no
+                  user group with the given ID or no user with the given name exists,
+                  or HTTP status "BAD_REQUEST" and an error message, if any of the
+                  input data was invalid        
         displayName: addGroupMember
         queryParameters:
           username:
@@ -241,8 +464,27 @@ resourceTypes:
               application/json:
                 type: RestUser[]
                 description: The list of users in this group (after addition)
+          304:
+            description: |
+              No modification occurred, as the input and database data were equal
+            headers:
+              Warning: !include types/error.raml          
+          404:
+            description: |
+              No entity with the given ID exists.
+            headers:
+              Warning: !include types/error.raml
       delete:
-        description: Remove a user from the user group
+        description: |
+          Delete a member from the given user group
+          
+          @param id       the group ID
+          @param username the name of the user to remove
+          @return HTTP status "OK" and a response containing a Json object
+                  corresponding to the list of users after removal or HTTP status
+                  "NOT_MODIFIED" and a warning message, if the user is not a member of
+                  the group, or HTTP status "NOT_FOUND", if the group did not exist, or
+                  HTTP status "NOT_MODIFIED", if the deletion was unsuccessful      
         displayName: removeGroupMember
         queryParameters:
           username:

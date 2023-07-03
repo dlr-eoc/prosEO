@@ -35,7 +35,6 @@ import de.dlr.proseo.usermgr.model.GroupMember;
 import de.dlr.proseo.usermgr.model.User;
 import de.dlr.proseo.usermgr.rest.model.RestGroup;
 
-
 /**
  * Testing UserControllerImpl.class.
  *
@@ -124,7 +123,8 @@ public class GroupControllerImplTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.usermgr.rest.GroupControllerImpl#getGroups(java.lang.String, java.lang.String, java.lang.Integer, java.lang.Integer)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.usermgr.rest.GroupControllerImpl#getGroups(java.lang.String, java.lang.String, java.lang.Integer, java.lang.Integer)}.
 	 */
 	@Test
 	public final void testGetGroups() {
@@ -138,7 +138,8 @@ public class GroupControllerImplTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.usermgr.rest.GroupControllerImpl#createGroup(de.dlr.proseo.usermgr.rest.model.RestGroup)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.usermgr.rest.GroupControllerImpl#createGroup(de.dlr.proseo.usermgr.rest.model.RestGroup)}.
 	 */
 	@Test
 	public final void testCreateGroup() {
@@ -146,7 +147,8 @@ public class GroupControllerImplTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.usermgr.rest.GroupControllerImpl#getGroupById(java.lang.Long)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.usermgr.rest.GroupControllerImpl#getGroupById(java.lang.Long)}.
 	 */
 	@Test
 	public final void testGetGroupById() {
@@ -154,7 +156,8 @@ public class GroupControllerImplTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.usermgr.rest.GroupControllerImpl#deleteGroupById(java.lang.Long)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.usermgr.rest.GroupControllerImpl#deleteGroupById(java.lang.Long)}.
 	 */
 	@Test
 	public final void testDeleteGroupById() {
@@ -162,7 +165,8 @@ public class GroupControllerImplTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.usermgr.rest.GroupControllerImpl#modifyGroup(java.lang.Long, de.dlr.proseo.usermgr.rest.model.RestGroup)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.usermgr.rest.GroupControllerImpl#modifyGroup(java.lang.Long, de.dlr.proseo.usermgr.rest.model.RestGroup)}.
 	 */
 	@Test
 	public final void testModifyGroup() {
@@ -170,7 +174,8 @@ public class GroupControllerImplTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.usermgr.rest.GroupControllerImpl#getGroupMembers(java.lang.Long)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.usermgr.rest.GroupControllerImpl#getGroupMembers(java.lang.Long)}.
 	 */
 	@Test
 	public final void testGetGroupMembers() {
@@ -178,7 +183,8 @@ public class GroupControllerImplTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.usermgr.rest.GroupControllerImpl#addGroupMember(java.lang.Long, java.lang.String)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.usermgr.rest.GroupControllerImpl#addGroupMember(java.lang.Long, java.lang.String)}.
 	 */
 	@Test
 	public final void testAddGroupMember() {
@@ -186,7 +192,8 @@ public class GroupControllerImplTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.usermgr.rest.GroupControllerImpl#removeGroupMember(java.lang.Long, java.lang.String)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.usermgr.rest.GroupControllerImpl#removeGroupMember(java.lang.Long, java.lang.String)}.
 	 */
 	@Test
 	public final void testRemoveGroupMember() {
@@ -194,7 +201,8 @@ public class GroupControllerImplTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.usermgr.rest.GroupControllerImpl#countGroups(java.lang.String)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.usermgr.rest.GroupControllerImpl#countGroups(java.lang.String)}.
 	 */
 	@Test
 	public final void testCountGroups() {

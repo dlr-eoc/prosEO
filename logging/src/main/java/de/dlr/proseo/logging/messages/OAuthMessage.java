@@ -14,10 +14,10 @@ import org.slf4j.event.Level;
  */
 public enum OAuthMessage implements ProseoMessage {
 
-	TOKEN_REQUEST_FAILED				(5901, Level.ERROR, false, "Token request to external API {0} failed", ""),
-	TOKEN_RESPONSE_INVALID				(5902, Level.ERROR, false, "Token response {0} from external API {1} invalid (cause: {2})", ""),
-	ACCESS_TOKEN_MISSING				(5903, Level.ERROR, false, "Token response {0} from external API {1} does not contain access token", ""),
-	TOKEN_RESPONSE_EMPTY				(5904, Level.ERROR, false, "Token response {0} from external API {1} is empty", ""),
+	TOKEN_REQUEST_FAILED				(3801, Level.ERROR, false, "Token request to external API {0} failed", ""),
+	TOKEN_RESPONSE_INVALID				(3802, Level.ERROR, false, "Token response {0} from external API {1} invalid (cause: {2})", ""),
+	ACCESS_TOKEN_MISSING				(3803, Level.ERROR, false, "Token response {0} from external API {1} does not contain access token", ""),
+	TOKEN_RESPONSE_EMPTY				(3804, Level.ERROR, false, "Token response {0} from external API {1} is empty", ""),
 	;
 
 	private final int code;

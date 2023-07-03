@@ -1,11 +1,15 @@
+/**
+ *  StorageFile.java
+ *
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.version2.model;
 
 /**
  * Storage File Structure. The file can exist or it can be just an abstract
- * structure
+ * structure.
  * 
  * @author Denys Chaykovskiy
- *
  */
 public interface StorageFile {
 

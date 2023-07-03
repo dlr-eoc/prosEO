@@ -2,7 +2,8 @@
  * MonitorMessage.java
  * 
  * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
- */package de.dlr.proseo.logging.messages;
+ */
+package de.dlr.proseo.logging.messages;
 
 import org.slf4j.event.Level;
 

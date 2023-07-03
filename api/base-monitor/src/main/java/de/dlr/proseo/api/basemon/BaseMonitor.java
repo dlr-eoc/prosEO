@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -224,7 +225,7 @@ public abstract class BaseMonitor extends Thread {
 					// Parse entry: Consists of <check date>;<transfer object id>
 					String[] historyEntryParts = historyFile.readLine().split(";", 2);
 					if (2 != historyEntryParts.length) {
-						logger.log(ApiMonitorMessage.ILLEGAL_HISTORY_ENTRY_FORMAT, historyEntryParts.toString());
+						logger.log(ApiMonitorMessage.ILLEGAL_HISTORY_ENTRY_FORMAT, Arrays.toString(historyEntryParts));
 						throw new IllegalArgumentException();
 					}
 					
@@ -319,7 +320,7 @@ public abstract class BaseMonitor extends Thread {
 					// Analyse entry: Consists of <check date>;<transfer object id>
 					String[] historyEntryParts = oldHistoryEntry.split(";", 2);
 					if (2 != historyEntryParts.length) {
-						logger.log(ApiMonitorMessage.ILLEGAL_HISTORY_ENTRY_FORMAT, historyEntryParts.toString());
+						logger.log(ApiMonitorMessage.ILLEGAL_HISTORY_ENTRY_FORMAT, Arrays.toString(historyEntryParts));
 						throw new IllegalArgumentException();
 					}
 					

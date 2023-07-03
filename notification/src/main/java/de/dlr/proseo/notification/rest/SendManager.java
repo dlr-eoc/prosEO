@@ -1,3 +1,8 @@
+/**
+ * SendManager.java
+ *
+ * (C) 2023 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.notification.rest;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,52 +19,50 @@ import de.dlr.proseo.notification.service.ServiceConnection;
 import de.dlr.proseo.notification.service.ServiceMail;
 
 /**
- * The send manager prepares the message and send it as HTTP request or mail
- * 
- * @author Ernst Melchinger
+ * This SendManager class is responsible for preparing and sending messages either as HTTP requests or emails. It analyzes the
+ * attributes of a given REST message and determines the appropriate sending protocol based on the message's endpoint. The class
+ * supports sending messages via HTTP, HTTPS, or email (MAIL).
  *
+ * @author Ernst Melchinger
  */
 @Component
 public class SendManager {
-	/**
-	 * Logger of this class
-	 */
+
+	/** Logger of this class */
 	private static ProseoLogger logger = new ProseoLogger(SendManager.class);
 
+	/** Allowed sending protocols, i.e. HTTP, HTTPS, MAIL, as well as UNKNOWN */
 	private enum SendType {
-			HTTP,
-			HTTPS,
-			MAIL,
-			UNKNOWN
-	};
+		HTTP, HTTPS, MAIL, UNKNOWN
+	}
 
 	/** The configuration */
 	@Autowired
 	private NotificationConfiguration config;
-	
-	/** The HTTP service */
+
+	/** The service responsible for handling HTTP/HTTPS */
 	@Autowired
 	private ServiceConnection serviceConnection;
-	
-	/**
-	 * The mail service
-	 */
+
+	/** The service responsible for handling mails */
 	@Autowired
 	private ServiceMail serviceMail;
-	
+
 	/**
-	 * Evaluate the rest message attributes
-	 * 
-	 * @param restMessage The rest message
-	 * @return The response entity
+	 * Evaluate the REST message attributes, parses and validates the message content, formats it where necessary, and delegates the
+	 * sending either to the ServiceConnection class (HTTP/HTTPs) or the ServiceMail class (MAIL)
+	 *
+	 * @param restMessage a REST message
+	 * @return a ResponseEntity representing the response from the sending operation
 	 */
 	public ResponseEntity<?> sendNotification(RestMessage restMessage) {
-		if (logger.isTraceEnabled()) logger.trace(">>> sendNotification({})", restMessage);
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> sendNotification({})", restMessage);
+
 		// Analyze content of message
 		String endpoint = null;
 		SendType type = SendType.UNKNOWN;
-		Boolean raw = false;
+		boolean raw = false;
 		String message = "";
 		String messageCode = null;
 		String subject = config.getSubject();
@@ -67,10 +70,12 @@ public class SendManager {
 		String user = null;
 		String password = null;
 		String sender = config.getSender();
-		
+
+		// Check if the endpoint is provided
 		if (restMessage.getEndpoint() != null) {
 			endpoint = restMessage.getEndpoint();
-			// Detect send type, supported are http(s) and mailto
+
+			// Detect the send type (HTTP, HTTPS, or MAIL)
 			if (endpoint.toLowerCase().startsWith("https:")) {
 				type = SendType.HTTPS;
 			} else if (endpoint.toLowerCase().startsWith("http:")) {
@@ -78,58 +83,73 @@ public class SendManager {
 			} else if (endpoint.toLowerCase().startsWith("mailto:")) {
 				type = SendType.MAIL;
 			}
+
+			// Throw an exception if the send type is unknown
 			if (type == SendType.UNKNOWN) {
 				throw new IllegalArgumentException(
 						logger.log(NotificationMessage.MSG_ENDPOINT_TYPE_UNKNOWN, restMessage.getEndpoint()));
 			}
 		} else {
-			throw new IllegalArgumentException(
-					logger.log(NotificationMessage.MSG_ENDPOINT_NOT_SET));
+			// Throw an exception no send tyoe is set
+			throw new IllegalArgumentException(logger.log(NotificationMessage.MSG_ENDPOINT_NOT_SET));
 		}
+
+		// Check user and password for HTTP-based protocols
 		if (type == SendType.HTTPS || type == SendType.HTTP) {
-			// user and password required
 			if (restMessage.getUser() == null || restMessage.getPassword() == null) {
-				// error, user and password required but not exist
-				throw new IllegalArgumentException(
-						logger.log(NotificationMessage.MSG_USER_PASSWORD_NOT_SET));
+				throw new IllegalArgumentException(logger.log(NotificationMessage.MSG_USER_PASSWORD_NOT_SET));
 			}
+			user = restMessage.getUser();
+			password = restMessage.getPassword();
 		}
+
+		// Check if a content type is provided, otherwise use the default from the configuration
 		if (restMessage.getContentType() != null) {
 			contentType = restMessage.getContentType();
 		}
+
+		// Parse the media type
 		MediaType mediaType = null;
 		try {
-			mediaType = MediaType.parseMediaType(contentType);			
+			mediaType = MediaType.parseMediaType(contentType);
 		} catch (InvalidMediaTypeException e) {
 			try {
-				mediaType = MediaType.parseMediaType(config.getContentType());		
+				// If the provided media type is invalid, fall back to the default from the configuration
+				mediaType = MediaType.parseMediaType(config.getContentType());
 			} catch (InvalidMediaTypeException e2) {
+				// If both provided and default media types are invalid, use TEXT_PLAIN as a fallback
 				mediaType = MediaType.TEXT_PLAIN;
 			}
 			logger.log(NotificationMessage.MSG_INVALID_CONTENT_TYPE, mediaType);
 		}
+
+		// Check if the message content is provided
 		if (restMessage.getMessage() != null) {
 			message = restMessage.getMessage();
-			// Detect the content type of the message
+
+			// Detect the content type of the message and format it if necessary
+			// TODO Right now, raw always evaluates to false
 			if (raw) {
-				// TODO: small check whether contentType fits or correct it
+				// TODO Check whether contentType fits or correct it
 			} else {
-				// format the message if necessary 
+				// TODO Format the message if necessary
 			}
 		} else {
-			// mandatory, return with error
-			throw new IllegalArgumentException(
-					logger.log(NotificationMessage.MSG_MISSING_MESSAGE_CONTENT));
-			
+			// If the message content is missing, throw an exception
+			throw new IllegalArgumentException(logger.log(NotificationMessage.MSG_MISSING_MESSAGE_CONTENT));
 		}
+
+		// Check if a custom subject is provided, otherwise use the default from the configuration
 		if (restMessage.getSubject() != null && !restMessage.getSubject().isBlank()) {
 			subject = restMessage.getSubject();
 		}
+
+		// Check if a custom sender is provided, otherwise use the default from the configuration
 		if (restMessage.getSender() != null && !restMessage.getSender().isBlank()) {
 			sender = restMessage.getSender();
 		}
-		
-		String result = null;
+
+		// Send the message based on the detected send type
 		switch (type) {
 		case HTTPS:
 		case HTTP:
@@ -140,7 +160,7 @@ public class SendManager {
 			break;
 		}
 
-		throw new IllegalArgumentException(
-				logger.log(NotificationMessage.MSG_ENDPOINT_TYPE_UNKNOWN, restMessage.getEndpoint()));
+		// Throw an exception if the send type is unknown
+		throw new IllegalArgumentException(logger.log(NotificationMessage.MSG_ENDPOINT_TYPE_UNKNOWN, restMessage.getEndpoint()));
 	}
 }

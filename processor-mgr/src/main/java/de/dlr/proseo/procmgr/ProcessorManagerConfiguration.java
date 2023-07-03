@@ -1,6 +1,6 @@
 /**
  * ProcessorManagerConfiguration.java
- * 
+ *
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.procmgr;
@@ -12,9 +12,8 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * Configuration class for the prosEO Processor Manager component
- * 
- * @author Dr. Thomas Bassler
  *
+ * @author Dr. Thomas Bassler
  */
 @Configuration
 @ConfigurationProperties(prefix = "proseo")
@@ -35,8 +34,7 @@ public class ProcessorManagerConfiguration {
 	}
 
 	/**
-	 * @param maxResults the maximum number of results to be retrieved by REST
-	 *                   requests
+	 * @param maxResults the maximum number of results to be retrieved by REST requests
 	 */
 	public void setMaxResults(Integer maxResults) {
 		this.maxResults = maxResults;

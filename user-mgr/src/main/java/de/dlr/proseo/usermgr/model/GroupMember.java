@@ -28,13 +28,13 @@ public class GroupMember {
 	@Id
 	@GeneratedValue
 	private long id;
-	
+
 	@ManyToOne
-	@JoinColumn(name="username", nullable=false, updatable=false, foreignKey = @ForeignKey(name = "fk_group_members_user"))
+	@JoinColumn(name = "username", nullable = false, updatable = false, foreignKey = @ForeignKey(name = "fk_group_members_user"))
 	private User user;
-	
+
 	@ManyToOne
-	@JoinColumn(name="group_id", nullable=false, updatable=false, foreignKey = @ForeignKey(name = "fk_group_members_group"))
+	@JoinColumn(name = "group_id", nullable = false, updatable = false, foreignKey = @ForeignKey(name = "fk_group_members_group"))
 	private Group group;
 
 	/**
@@ -105,4 +105,5 @@ public class GroupMember {
 		GroupMember other = (GroupMember) obj;
 		return Objects.equals(group, other.group) && Objects.equals(user, other.user);
 	}
+
 }

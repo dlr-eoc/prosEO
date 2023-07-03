@@ -29,6 +29,9 @@ public interface MonProductProductionDayRepository extends JpaRepository<MonProd
 	/**
 	 * Get a list of products
 	 * 
+	 * @param missionId the mission id
+	 * @param mpt       the production type
+	 * @param datetime  the datetime
 	 * @return a list of products satisfying the search criteria
 	 */
 	@Query("select p from MonProductProductionDay p where p.mission.id = ?1 and p.productionType = ?2 and p.datetime = ?3")
@@ -37,9 +40,14 @@ public interface MonProductProductionDayRepository extends JpaRepository<MonProd
 	/**
 	 * Get a list of products
 	 * 
+	 * @param missionId the mission id
+	 * @param mpt       the production type
+	 * @param timeFrom  earliest datetime
+	 * @param timeTo    latest datetime
 	 * @return a list of products satisfying the search criteria
 	 */
 	@Query("select p from MonProductProductionDay p where p.mission.id = ?1 and p.productionType = ?2 and p.datetime >= ?3 and p.datetime < ?4")
-	public List<MonProductProductionDay> findByMissionCodeAndProductionTypeAndDateTimeBetween(long missionId, String mpt, Instant timeFrom, Instant timeTo);
+	public List<MonProductProductionDay> findByMissionCodeAndProductionTypeAndDateTimeBetween(long missionId, String mpt,
+			Instant timeFrom, Instant timeTo);
 
 }

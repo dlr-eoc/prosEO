@@ -21,11 +21,11 @@ import de.dlr.proseo.model.ProductFile;
  */
 @Repository
 public interface ProductFileRepository extends JpaRepository<ProductFile, Long> {
-	
+
 	/**
 	 * Get all product files for a given product id
 	 * 
-	 * @param productId the database id of the product 
+	 * @param productId the database id of the product
 	 * @return a (possibly empty) list of product files
 	 */
 	@Query("select pf from ProductFile pf where product_id = ?1")
@@ -34,16 +34,16 @@ public interface ProductFileRepository extends JpaRepository<ProductFile, Long> 
 	/**
 	 * Get all product files for a given processing facility id
 	 * 
-	 * @param facilityId the database id of the processing facility 
+	 * @param facilityId the database id of the processing facility
 	 * @return a (possibly empty) list of product files
 	 */
 	@Query("select pf from ProductFile pf where processing_facility_id = ?1")
 	public List<ProductFile> findByProcessingFacilityId(long facilityId);
-	
+
 	/**
-	 * Get all product files for a given processing facility id
+	 * Get all product files for a given file name
 	 * 
-	 * @param facilityId the database id of the processing facility 
+	 * @param fileName the name of the product file
 	 * @return a (possibly empty) list of product files
 	 */
 	@Query("select pf from ProductFile pf where product_file_name = ?1")

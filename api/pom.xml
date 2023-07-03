@@ -19,6 +19,7 @@
 		<module>xbip-monitor</module>
 		<module>edip-monitor</module>
 		<module>auxip-monitor</module>
+        <module>cadip-monitor</module>
 		<module>odip</module>
 		<module>aip-client</module>
         <module>archive-mgr</module>

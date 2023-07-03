@@ -23,6 +23,9 @@ public interface MonServiceStateOperationDayRepository extends JpaRepository<Mon
 	/**
 	 * Get a list of entries
 	 * 
+	 * @param timeFrom     the earliest datetime
+	 * @param timeTo       the latest datetime
+	 * @param monServiceId the service id
 	 * @return a list of services satisfying the search criteria
 	 */
 	@Query("select p from MonServiceStateOperationDay p where p.datetime >= ?1 and p.datetime < ?2 and p.monServiceId = ?3")

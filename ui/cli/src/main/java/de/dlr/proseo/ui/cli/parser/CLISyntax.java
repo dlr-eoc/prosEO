@@ -335,22 +335,37 @@ public class CLISyntax {
 		htmlDoc.append("<h1 id=\"Header\">" + this.title).append(" (" + this.version + ")</h1>")
 				.append("<p>" + this.description.replace("\n\n", "</p><p>") + "</p>");
 
+		// Navigable table of contents:
+		htmlDoc.append("<h2>Table of Contents</h2>").append("<div>");
+
+		htmlDoc.append("<div><a href=\"#global-options\"><b>Global Options</b></a></div>")
+			.append("<div><a href=\"#options\"><b>Options</b></a></div>")
+			.append("<div><a href=\"#commands\"><b>Commands</b></a></div>");
+
+		htmlDoc.append("<ul>");
+
+		for (CLICommand command : this.getCommands()) {
+			htmlDoc.append("<li><a href=\"#").append(command.getName()).append("\">").append(command.getName()).append("</a></li>");
+		}
+
+		htmlDoc.append("</ul>").append("</div>");
+    
 		// Global options:
-		htmlDoc.append("<h2>Global Options</h2>");
+		htmlDoc.append("<h2 id=\"global-options\">Global Options</h2>");
 
 		for (CLIOption globalOption : this.globalOptions) {
 			globalOption.printHTML(htmlDoc);
 		}
 
 		// Options:
-		htmlDoc.append("<h2>Options</h2>");
+		htmlDoc.append("<h2 id=\"options\">Options</h2>");
 
 		for (CLIOption option : this.options) {
 			option.printHTML(htmlDoc);
 		}
 
 		// Commands:
-		htmlDoc.append("<h2>Commands</h2>");
+		htmlDoc.append("<h2 id=\"commands\">Commands</h2>");
 
 		for (CLICommand command : this.commands) {
 			command.printHTML(htmlDoc);

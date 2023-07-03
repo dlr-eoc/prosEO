@@ -33,7 +33,7 @@ public interface WorkflowRepository extends JpaRepository<Workflow, Long> {
 	/**
 	 * Get the workflow with the given name
 	 * 
-	 * @param uuid the name of the workflow
+	 * @param name the name of the workflow
 	 * @return the unique workflow identified by the given name
 	 */
 	public Workflow findByName(String name);
@@ -47,6 +47,5 @@ public interface WorkflowRepository extends JpaRepository<Workflow, Long> {
 	 * @return the unique workflow identified by the search criteria
 	 */
 	@Query("select w from Workflow w where w.configuredProcessor.processor.processorClass.mission.code = ?1 and w.name = ?2 and w.workflowVersion = ?3")
-	public Workflow findByMissionCodeAndWorkflowNameAndWorkflowVersion(String missionCode, String name,
-			String workflowVersion);
+	public Workflow findByMissionCodeAndWorkflowNameAndWorkflowVersion(String missionCode, String name, String workflowVersion);
 }
