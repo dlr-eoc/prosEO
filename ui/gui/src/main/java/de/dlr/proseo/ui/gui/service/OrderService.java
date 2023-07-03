@@ -337,9 +337,9 @@ public class OrderService {
 	 * 
 	 * @param orderId the order id
 	 * @return the order state in string format
+	 * @throws RestClientResponseException if an error occurred
 	 */
-	@SuppressWarnings("unchecked")
-	public String getOrderState(String orderId) {
+	public String getOrderState(String orderId) throws RestClientResponseException {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -352,33 +352,11 @@ public class OrderService {
 			uri += "/0";
 		}
 
-		HashMap<String, Object> result = null;
-		try {
-
-			// Attempt to retrieve the order state from the production planner
-			result = serviceConnection.getFromService(config.getOrderManager(), uri, HashMap.class, auth.getProseoName(),
-					auth.getPassword());
-
-		} catch (RestClientResponseException e) {
-
-			// Handle RestClientReponses
-			switch (e.getRawStatusCode()) {
-			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				logger.log(UIMessage.NO_MISSIONS_FOUND);
-				break;
-			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				logger.log(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
-				break;
-			default:
-				logger.log(UIMessage.EXCEPTION, e.getMessage());
-			}
-
-		} catch (RuntimeException e) {
-			logger.log(UIMessage.EXCEPTION, e.getMessage());
-		}
-
-		return (String) result.get("orderState");
+		// Attempt to retrieve the order state from the production planner
+		return serviceConnection
+			.getFromService(config.getOrderManager(), uri, HashMap.class, auth.getProseoName(), auth.getPassword())
+			.get("orderState")
+			.toString();
 	}
 
 	/**

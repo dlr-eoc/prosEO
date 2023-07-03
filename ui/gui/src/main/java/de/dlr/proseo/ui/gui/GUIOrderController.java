@@ -49,7 +49,7 @@ public class GUIOrderController extends GUIBaseController {
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(GUIOrderController.class);
-	
+
 	/** The GUI configuration */
 	@Autowired
 	private GUIConfiguration config;
@@ -57,16 +57,15 @@ public class GUIOrderController extends GUIBaseController {
 	/** WebClient-Service-Builder */
 	@Autowired
 	private OrderService orderService;
-	
+
 	/** The connector service to the prosEO backend services */
 	@Autowired
 	private ServiceConnection serviceConnection;
-	
+
 	/** The configuration object for the prosEO backend services */
 	@Autowired
 	private ServiceConfiguration serviceConfig;
 
-	
 	/**
 	 * Date formatter for input type date
 	 */
@@ -86,40 +85,40 @@ public class GUIOrderController extends GUIBaseController {
 		responseHeaders.set("error", message.replaceAll("\n", " "));
 		return responseHeaders;
 	}
-	
-	@GetMapping(value ="/order-show")
+
+	@GetMapping(value = "/order-show")
 	public String showOrder() {
 		return "order-show";
 	}
-	@GetMapping(value ="/order-edit")
+
+	@GetMapping(value = "/order-edit")
 	public String editOrder() {
 		return "order-edit";
 	}
-	@GetMapping(value ="/order")
+
+	@GetMapping(value = "/order")
 	public String order() {
 		return "order";
 	}
-    
+
 	/**
 	 * Retrieve the order list filtered by these parameters
 	 * 
 	 * @param identifier The order identifier (name) as pattern
-	 * @param states The order states (seperated by ':')
-	 * @param from The from date of start time
-	 * @param to The to date of start time
-	 * @param products The product class list (seperated by ':')
-	 * @param sortby The sort column
-	 * @param up The sort direction (true for 'up')
-	 * @param model The model to hold the data
+	 * @param states     The order states (seperated by ':')
+	 * @param from       The from date of start time
+	 * @param to         The to date of start time
+	 * @param products   The product class list (seperated by ':')
+	 * @param sortby     The sort column
+	 * @param up         The sort direction (true for 'up')
+	 * @param model      The model to hold the data
 	 * @return The result
 	 */
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/order-show/get")
-	public DeferredResult<String> getIdentifier(
-			@RequestParam(required = false, value = "identifier") String identifier,
+	public DeferredResult<String> getIdentifier(@RequestParam(required = false, value = "identifier") String identifier,
 			@RequestParam(required = false, value = "states") String states,
-			@RequestParam(required = false, value = "from") String from,
-			@RequestParam(required = false, value = "to") String to,
+			@RequestParam(required = false, value = "from") String from, @RequestParam(required = false, value = "to") String to,
 			@RequestParam(required = false, value = "products") String products,
 			@RequestParam(required = false, value = "recordFrom") Long recordFrom,
 			@RequestParam(required = false, value = "recordTo") Long recordTo,
@@ -137,26 +136,23 @@ public class GUIOrderController extends GUIBaseController {
 		} else {
 			fromi = (long) 0;
 		}
-		Long count = countOrdersL(identifier, states, products, from, to, null, null,
-				sortby, up);
+		Long count = countOrdersL(identifier, states, products, from, to, null, null, sortby, up);
 		if (recordFrom != null && fromi != null && recordTo > fromi) {
 			toi = recordTo;
 		} else if (from != null) {
 			toi = count;
 		}
 		Long pageSize = toi - fromi;
-		Long deltaPage = (long) ((count % pageSize)==0?0:1);
+		Long deltaPage = (long) ((count % pageSize) == 0 ? 0 : 1);
 		Long pages = (count / pageSize) + deltaPage;
 		Long page = (fromi / pageSize) + 1;
-		Mono<ClientResponse> mono = orderService.get(identifier, states, products, from, to, 
-				fromi, toi, sortby, up);
+		Mono<ClientResponse> mono = orderService.get(identifier, states, products, from, to, fromi, toi, sortby, up);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> orders = new ArrayList<>();
 		mono.doOnError(e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("order-show :: #errormsg");
-		})
-	 	.subscribe(clientResponse -> {
+		}).subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
@@ -172,7 +168,8 @@ public class GUIOrderController extends GUIBaseController {
 					orders.addAll(orderList);
 					String key = MAPKEY_ID;
 					if (sortby != null) {
-						if (sortby.contentEquals("identifier") || sortby.contentEquals(MAPKEY_ID) || sortby.contentEquals("orderState")) {
+						if (sortby.contentEquals("identifier") || sortby.contentEquals(MAPKEY_ID)
+								|| sortby.contentEquals("orderState")) {
 							key = sortby;
 						}
 					}
@@ -210,8 +207,7 @@ public class GUIOrderController extends GUIBaseController {
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
-		},
-		e -> {
+		}, e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("order-show :: #errormsg");
 		});
@@ -225,19 +221,16 @@ public class GUIOrderController extends GUIBaseController {
 	/**
 	 * Set the new state of an order
 	 * 
-	 * @param id The order id
-	 * @param state The new state
+	 * @param id       The order id
+	 * @param state    The new state
 	 * @param facility The facility (for plan)
-	 * @param model The model to hold the data
+	 * @param model    The model to hold the data
 	 * @return The result
 	 */
 	@RequestMapping(value = "/order-state/post")
-	public DeferredResult<String> setState(
-			@RequestParam(required = true, value = MAPKEY_ID) String id, 
+	public DeferredResult<String> setState(@RequestParam(required = true, value = MAPKEY_ID) String id,
 			@RequestParam(required = true, value = "state") String state,
-			@RequestParam(required = false, value = "facility") String facility,
-			Model model,
-			HttpServletResponse httpResponse) {
+			@RequestParam(required = false, value = "facility") String facility, Model model, HttpServletResponse httpResponse) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> setState({}, {}, model)", id, state, facility);
 		Mono<ClientResponse> mono = orderService.setState(id, state, facility);
@@ -253,25 +246,26 @@ public class GUIOrderController extends GUIBaseController {
 					deferredResult.setResult("order-show :: #warnmsg");
 					httpResponse.setHeader("warnstatus", "nocontent");
 				} else {
-					clientResponse.bodyToMono(HashMap.class).timeout(Duration.ofMillis(config.getTimeout())).subscribe(orderList -> {
-						model.addAttribute("ord", orderList);
-						logger.trace(model.toString() + "MODEL TO STRING");
-						logger.trace(">>>>MONO" + orderList.toString());
-						deferredResult.setResult("order-show :: #ordercontent");
-						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-					});
+					clientResponse.bodyToMono(HashMap.class)
+						.timeout(Duration.ofMillis(config.getTimeout()))
+						.subscribe(orderList -> {
+							model.addAttribute("ord", orderList);
+							logger.trace(model.toString() + "MODEL TO STRING");
+							logger.trace(">>>>MONO" + orderList.toString());
+							deferredResult.setResult("order-show :: #ordercontent");
+							logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
+						});
 				}
 			} else {
 				handleHTTPWarning(clientResponse, model, httpResponse);
 				deferredResult.setResult("order-show :: #warnmsg");
-				clientResponse.bodyToMono(String.class). subscribe(body -> {
+				clientResponse.bodyToMono(String.class).subscribe(body -> {
 					httpResponse.setHeader("warndesc", body);
 				});
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
-		},
-		e -> {
+		}, e -> {
 			model.addAttribute("warnmsg", e.getMessage());
 			// deferredResult.setResult("order-show :: #warnmsg");
 			deferredResult.setErrorResult(model.asMap().get("warnmsg"));
@@ -285,17 +279,14 @@ public class GUIOrderController extends GUIBaseController {
 	/**
 	 * Set the new state of a job
 	 * 
-	 * @param id The job id
+	 * @param id    The job id
 	 * @param state The new state
 	 * @param model The model to hold the data
 	 * @return The result
 	 */
 	@RequestMapping(value = "/job-state/post")
-	public DeferredResult<String> setJobState(
-			@RequestParam(required = true, value = MAPKEY_ID) String id, 
-			@RequestParam(required = true, value = "state") String state,
-			Model model,
-			HttpServletResponse httpResponse) {
+	public DeferredResult<String> setJobState(@RequestParam(required = true, value = MAPKEY_ID) String id,
+			@RequestParam(required = true, value = "state") String state, Model model, HttpServletResponse httpResponse) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> setState({}, {}, model)", id, state);
 		Mono<ClientResponse> mono = orderService.setJobState(id, state);
@@ -311,25 +302,26 @@ public class GUIOrderController extends GUIBaseController {
 					deferredResult.setResult("order-show :: #warnmsg");
 					httpResponse.setHeader("warnstatus", "nocontent");
 				} else {
-					clientResponse.bodyToMono(HashMap.class).timeout(Duration.ofMillis(config.getTimeout())).subscribe(orderList -> {
-						model.addAttribute("ord", orderList);
-						logger.trace(model.toString() + "MODEL TO STRING");
-						logger.trace(">>>>MONO" + orderList.toString());
-						deferredResult.setResult("order-show :: #null");
-						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-					});
+					clientResponse.bodyToMono(HashMap.class)
+						.timeout(Duration.ofMillis(config.getTimeout()))
+						.subscribe(orderList -> {
+							model.addAttribute("ord", orderList);
+							logger.trace(model.toString() + "MODEL TO STRING");
+							logger.trace(">>>>MONO" + orderList.toString());
+							deferredResult.setResult("order-show :: #null");
+							logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
+						});
 				}
 			} else {
 				handleHTTPWarning(clientResponse, model, httpResponse);
 				deferredResult.setResult("order-show :: #warnmsg");
-				clientResponse.bodyToMono(String.class). subscribe(body -> {
+				clientResponse.bodyToMono(String.class).subscribe(body -> {
 					httpResponse.setHeader("warndesc", body);
 				});
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
-		},
-		e -> {
+		}, e -> {
 			model.addAttribute("warnmsg", e.getMessage());
 			// deferredResult.setResult("order-show :: #warnmsg");
 			deferredResult.setErrorResult(model.asMap().get("warnmsg"));
@@ -339,21 +331,18 @@ public class GUIOrderController extends GUIBaseController {
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
 		return deferredResult;
 	}
-	
+
 	/**
 	 * Set the new state of a job step
 	 * 
-	 * @param id The job step id
+	 * @param id    The job step id
 	 * @param state The new state
 	 * @param model The model to hold the data
 	 * @return The result
 	 */
 	@RequestMapping(value = "/jobstep-state/post")
-	public DeferredResult<String> setJobStepState(
-			@RequestParam(required = true, value = MAPKEY_ID) String id, 
-			@RequestParam(required = true, value = "state") String state,
-			Model model,
-			HttpServletResponse httpResponse) {
+	public DeferredResult<String> setJobStepState(@RequestParam(required = true, value = MAPKEY_ID) String id,
+			@RequestParam(required = true, value = "state") String state, Model model, HttpServletResponse httpResponse) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> setState({}, {}, model)", id, state);
 		Mono<ClientResponse> mono = orderService.setJobStepState(id, state);
@@ -369,25 +358,26 @@ public class GUIOrderController extends GUIBaseController {
 					deferredResult.setResult("order-show :: #warnmsg");
 					httpResponse.setHeader("warnstatus", "nocontent");
 				} else {
-					clientResponse.bodyToMono(HashMap.class).timeout(Duration.ofMillis(config.getTimeout())).subscribe(orderList -> {
-						model.addAttribute("job", orderList);
-						logger.trace(model.toString() + "MODEL TO STRING");
-						logger.trace(">>>>MONO" + orderList.toString());
-						deferredResult.setResult("order-show :: #null");
-						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-					});
+					clientResponse.bodyToMono(HashMap.class)
+						.timeout(Duration.ofMillis(config.getTimeout()))
+						.subscribe(orderList -> {
+							model.addAttribute("job", orderList);
+							logger.trace(model.toString() + "MODEL TO STRING");
+							logger.trace(">>>>MONO" + orderList.toString());
+							deferredResult.setResult("order-show :: #null");
+							logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
+						});
 				}
 			} else {
 				handleHTTPWarning(clientResponse, model, httpResponse);
 				deferredResult.setResult("order-show :: #warnmsg");
-				clientResponse.bodyToMono(String.class). subscribe(body -> {
+				clientResponse.bodyToMono(String.class).subscribe(body -> {
 					httpResponse.setHeader("warndesc", body);
 				});
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
-		},
-		e -> {
+		}, e -> {
 			model.addAttribute("warnmsg", e.getMessage());
 			// deferredResult.setResult("order-show :: #warnmsg");
 			deferredResult.setErrorResult(model.asMap().get("warnmsg"));
@@ -397,29 +387,26 @@ public class GUIOrderController extends GUIBaseController {
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
 		return deferredResult;
 	}
-    
+
 	/**
 	 * Retrieve a single order
 	 * 
-	 * @param id The order id.
+	 * @param id    The order id.
 	 * @param model The model to hold the data
 	 * @return The result
 	 */
 	@RequestMapping(value = "/order/get")
-	public DeferredResult<String> getId(
-			@RequestParam(required = true, value = MAPKEY_ID) String id,
-			Model model) {
+	public DeferredResult<String> getId(@RequestParam(required = true, value = MAPKEY_ID) String id, Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getId({}, model)", id);
-    	checkClearCache();
+		checkClearCache();
 		Mono<ClientResponse> mono = orderService.getId(id);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> orders = new ArrayList<>();
 		mono.doOnError(e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("order :: #errormsg");
-		})
-	 	.subscribe(clientResponse -> {
+		}).subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(HashMap.class).subscribe(order -> {
@@ -436,8 +423,7 @@ public class GUIOrderController extends GUIBaseController {
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
-		},
-		e -> {
+		}, e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("order :: #errormsg");
 		});
@@ -447,32 +433,29 @@ public class GUIOrderController extends GUIBaseController {
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
 		return deferredResult;
 	}
-	
+
 	/**
 	 * Retrieve a single order
 	 * 
-	 * @param id The order id.
+	 * @param id    The order id.
 	 * @param model The model to hold the data
 	 * @return The result
 	 */
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/order-edit/get")
-	public DeferredResult<String> getIdForEdit(
-			@RequestParam(required = true, value = MAPKEY_ID) String id,
-			Model model) {
+	public DeferredResult<String> getIdForEdit(@RequestParam(required = true, value = MAPKEY_ID) String id, Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getId({}, model)", id);
-    	checkClearCache();
+		checkClearCache();
 		Mono<ClientResponse> mono = orderService.getId(id);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> orders = new ArrayList<>();
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
 		mono.doOnError(e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("order-edit :: #errormsg");
-		})
-	 	.subscribe(clientResponse -> {
+		}).subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(HashMap.class).subscribe(order -> {
@@ -490,8 +473,7 @@ public class GUIOrderController extends GUIBaseController {
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
-		},
-		e -> {
+		}, e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("order-edit :: #errormsg");
 		});
@@ -501,10 +483,11 @@ public class GUIOrderController extends GUIBaseController {
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
 		return deferredResult;
 	}
+
 	/**
 	 * Retrieve a single order
 	 * 
-	 * @param id The order id.
+	 * @param id    The order id.
 	 * @param model The model to hold the data
 	 * @return The result
 	 */
@@ -513,8 +496,8 @@ public class GUIOrderController extends GUIBaseController {
 	public ResponseEntity<OrderInfo> submitOrder(@RequestBody RestOrder updateOrder) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> order-submit({}, model)", updateOrder);
-    	checkClearCache();
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		checkClearCache();
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		// some checks on updateOrder
 		if (updateOrder.getInputFilters() != null) {
 			List<RestInputFilter> newList = new ArrayList<RestInputFilter>();
@@ -554,31 +537,42 @@ public class GUIOrderController extends GUIBaseController {
 			if (origOrder != null) {
 				if (origOrder.getOrderState().equals(OrderState.INITIAL.toString())) {
 					try {
-						origOrder = serviceConnection.patchToService(serviceConfig.getOrderManagerUrl(), "/orders/" + updateOrder.getId(),
-								updateOrder, RestOrder.class, auth.getProseoName(), auth.getPassword());
-						return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.OK, origOrder.getId().toString(), ""), HttpStatus.OK);
+						origOrder = serviceConnection.patchToService(serviceConfig.getOrderManagerUrl(),
+								"/orders/" + updateOrder.getId(), updateOrder, RestOrder.class, auth.getProseoName(),
+								auth.getPassword());
+						return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.OK, origOrder.getId().toString(), ""),
+								HttpStatus.OK);
 					} catch (RestClientResponseException e) {
-						if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
+						if (logger.isTraceEnabled())
+							logger.trace("Caught HttpClientErrorException " + e.getMessage());
 						String message = null;
 						switch (e.getRawStatusCode()) {
 						case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-							return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.NOT_MODIFIED, "0", ProseoLogger.format(UIMessage.NOT_MODIFIED)), HttpStatus.OK);
+							return new ResponseEntity<OrderInfo>(
+									new OrderInfo(HttpStatus.NOT_MODIFIED, "0", ProseoLogger.format(UIMessage.NOT_MODIFIED)),
+									HttpStatus.OK);
 						case org.apache.http.HttpStatus.SC_NOT_FOUND:
 							message = ProseoLogger.format(UIMessage.ORDER_NOT_FOUND, updateOrder.getIdentifier());
 							break;
 						case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-							message = ProseoLogger.format(UIMessage.ORDER_DATA_INVALID,  e.getMessage());
+							message = ProseoLogger.format(UIMessage.ORDER_DATA_INVALID, e.getMessage());
 							break;
 						case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 						case org.apache.http.HttpStatus.SC_FORBIDDEN:
-							message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, auth.getProseoName(), "orders", auth.getMission());
+							message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, auth.getProseoName(), "orders",
+									auth.getMission());
 							break;
 						default:
 							message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 						}
-						return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.INTERNAL_SERVER_ERROR, "0", message), errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+						return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.INTERNAL_SERVER_ERROR, "0", message),
+								errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 					} catch (RuntimeException e) {
-						return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.INTERNAL_SERVER_ERROR, "0", ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage())), errorHeaders(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage())), HttpStatus.INTERNAL_SERVER_ERROR);
+						return new ResponseEntity<OrderInfo>(
+								new OrderInfo(HttpStatus.INTERNAL_SERVER_ERROR, "0",
+										ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage())),
+								errorHeaders(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage())),
+								HttpStatus.INTERNAL_SERVER_ERROR);
 					}
 				} else {
 					// order not in initial state, can't update, throw error
@@ -587,20 +581,22 @@ public class GUIOrderController extends GUIBaseController {
 				// why does the order not exist any more??
 				// TODO create new one?
 			}
-			
+
 		} else {
 			// this is a new order, create it
 			// first check whether the identifier exists already (should be done by GUI, but anyway...)
 			try {
-				origOrder = serviceConnection.postToService(serviceConfig.getOrderManagerUrl(), "/orders",
-						updateOrder, RestOrder.class, auth.getProseoName(), auth.getPassword());
-				return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.CREATED, origOrder.getId().toString(), ""), HttpStatus.CREATED);
+				origOrder = serviceConnection.postToService(serviceConfig.getOrderManagerUrl(), "/orders", updateOrder,
+						RestOrder.class, auth.getProseoName(), auth.getPassword());
+				return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.CREATED, origOrder.getId().toString(), ""),
+						HttpStatus.CREATED);
 			} catch (RestClientResponseException e) {
-				if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
+				if (logger.isTraceEnabled())
+					logger.trace("Caught HttpClientErrorException " + e.getMessage());
 				String message = null;
 				switch (e.getRawStatusCode()) {
 				case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-					message = ProseoLogger.format(UIMessage.ORDER_DATA_INVALID,  e.getMessage());
+					message = ProseoLogger.format(UIMessage.ORDER_DATA_INVALID, e.getMessage());
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -610,41 +606,43 @@ public class GUIOrderController extends GUIBaseController {
 					message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 				}
 				System.err.println(message);
-				return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.INTERNAL_SERVER_ERROR, "0", message), errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+				return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.INTERNAL_SERVER_ERROR, "0", message),
+						errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 			} catch (RuntimeException e) {
-				return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.INTERNAL_SERVER_ERROR, "0", ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage())), errorHeaders(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage())), HttpStatus.INTERNAL_SERVER_ERROR);
+				return new ResponseEntity<OrderInfo>(
+						new OrderInfo(HttpStatus.INTERNAL_SERVER_ERROR, "0",
+								ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage())),
+						errorHeaders(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage())), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
-		}	
-		
+		}
+
 		return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.OK, "0", ""), HttpStatus.OK);
 	}
 
 	/**
-	 * Retrieve the jobs of an order filtered by following criteria
-	 * If fromIndex is not set the job or job step are used to calculate it.
+	 * Retrieve the jobs of an order filtered by following criteria If fromIndex is not set the job or job step are used to
+	 * calculate it.
 	 * 
-	 * @param id The order id
+	 * @param id        The order id
 	 * @param fromIndex The from index (first row)
-	 * @param toIndex The to index (last row)
-	 * @param jobId The job id 
+	 * @param toIndex   The to index (last row)
+	 * @param jobId     The job id
 	 * @param jobStepId
 	 * @param model
 	 * @return The jobs found
 	 */
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/jobs/get")
-	public DeferredResult<String> getJobsOfOrder(
-			@RequestParam(required = true, value = "orderid") String id,
+	public DeferredResult<String> getJobsOfOrder(@RequestParam(required = true, value = "orderid") String id,
 			@RequestParam(required = false, value = "recordFrom") Long fromIndex,
 			@RequestParam(required = false, value = "recordTo") Long toIndex,
 			@RequestParam(required = false, value = "job") String jobId,
 			@RequestParam(required = false, value = "jobStep") String jobStepId,
 			@RequestParam(required = false, value = "jobstates") String states,
-			@RequestParam(required = false, value = "calcPage") Boolean calcP,
-			Model model) {
+			@RequestParam(required = false, value = "calcPage") Boolean calcP, Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getId({}, model)", id);
-    	checkClearCache();
+		checkClearCache();
 		Long from = null;
 		Long to = null;
 		Boolean calcPage = false;
@@ -668,22 +666,54 @@ public class GUIOrderController extends GUIBaseController {
 			from = page * pageSize;
 			to = from + pageSize;
 		}
-		
-		Long deltaPage = pageSize == 0L ? 0L : ((long) ((count % pageSize)==0?0:1));
+
+		Long deltaPage = pageSize == 0L ? 0L : ((long) ((count % pageSize) == 0 ? 0 : 1));
 		Long pages = pageSize == 0L ? 0L : ((count / pageSize) + deltaPage);
 		Long page = pageSize == 0L ? 0L : ((from / pageSize) + 1);
-		
-		String orderState = orderService.getOrderState(id);
-		
-		// TODO use jobId to find page of job 
+
+
+
+		// TODO use jobId to find page of job
 		Mono<ClientResponse> mono = orderService.getJobsOfOrder(id, from, to, states);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> jobs = new ArrayList<>();
+		
+		// Retrieve the order state from the order manager via the orderService
+		String orderState;
+		try {
+			orderState = orderService.getOrderState(id);
+			
+		} catch (RestClientResponseException e) {
+
+			// Log RestClientReponses
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				logger.log(UIMessage.NO_MISSIONS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				logger.log(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				logger.log(UIMessage.EXCEPTION, e.getMessage());
+			}
+
+			model.addAttribute("errormsg", e.getMessage());
+			deferredResult.setResult("order :: #errormsg");
+			return deferredResult;
+			
+		} catch (Exception e) {
+			logger.log(UIMessage.EXCEPTION, e.getMessage());
+
+			model.addAttribute("errormsg", e.getMessage());
+			deferredResult.setResult("order :: #errormsg");
+			return deferredResult;
+		}
+		
 		mono.doOnError(e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("order :: #errormsg");
-		})
-	 	.subscribe(clientResponse -> {
+		}).subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
 				// this is no error cause only already planned orders have job steps
@@ -697,18 +727,17 @@ public class GUIOrderController extends GUIBaseController {
 				clientResponse.bodyToMono(List.class).subscribe(jobList -> {
 					jobs.addAll(jobList);
 					/*
-					 * for (Object o : jobs) { if (o instanceof HashMap) { HashMap<String, Object> h
-					 * = (HashMap<String, Object>) o; String jobId = h.get("id").toString();
-					 * HashMap<String, Object> result = orderService.getGraphOfJob(jobId, auth);
-					 * h.put("graph", result); } }
-					 */		
+					 * for (Object o : jobs) { if (o instanceof HashMap) { HashMap<String, Object> h = (HashMap<String, Object>) o;
+					 * String jobId = h.get("id").toString(); HashMap<String, Object> result = orderService.getGraphOfJob(jobId,
+					 * auth); h.put("graph", result); } }
+					 */
 					model.addAttribute("jobs", jobs);
 					model.addAttribute("count", count);
 					model.addAttribute("pageSize", pageSize);
 					model.addAttribute("pageCount", pages);
 					model.addAttribute("page", page);
- 					model.addAttribute("orderState", orderState);
-					
+					model.addAttribute("orderState", orderState);
+
 					List<Long> showPages = new ArrayList<Long>();
 					Long start = Math.max(page - 4, 1);
 					Long end = Math.min(page + 4, pages);
@@ -733,33 +762,31 @@ public class GUIOrderController extends GUIBaseController {
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
-		},
-		e -> {
+		}, e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("order :: #errormsg");
 		});
+		
 		logger.trace(model.toString() + "MODEL TO STRING");
 		logger.trace(">>>>MONO" + jobs.toString());
 		logger.trace(">>>>MODEL" + model.toString());
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
+		
 		return deferredResult;
 	}
 
 	@RequestMapping(value = "/jobs/graph")
-	public DeferredResult<String> getGraphOfJob(
-			@RequestParam(required = true, value = "jobid") String id,
-			Model model) {
+	public DeferredResult<String> getGraphOfJob(@RequestParam(required = true, value = "jobid") String id, Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getId({}, model)", id);
-    	checkClearCache();
+		checkClearCache();
 		Mono<ClientResponse> mono = orderService.getGraphOfJob(id);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> jobs = new ArrayList<>();
 		mono.doOnError(e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("order :: #errormsg");
-		})
-	 	.subscribe(clientResponse -> {
+		}).subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(HashMap.class).subscribe(jobgraph -> {
@@ -776,8 +803,7 @@ public class GUIOrderController extends GUIBaseController {
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
-		},
-		e -> {
+		}, e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("order :: #errormsg");
 		});
@@ -787,37 +813,36 @@ public class GUIOrderController extends GUIBaseController {
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
 		return deferredResult;
 	}
-	
+
 	@GetMapping("/hasorbits")
 	public ResponseEntity<?> hasorbits(@RequestParam(required = true, value = "spacecraft") String spacecraft,
-			@RequestParam(required = true, value = "from") Long from,
-			@RequestParam(required = true, value = "to") Long to){
+			@RequestParam(required = true, value = "from") Long from, @RequestParam(required = true, value = "to") Long to) {
 		Boolean result = countOrbits(spacecraft, from, to) > 0;
-	    return new ResponseEntity<>(result.toString(), HttpStatus.OK);
+		return new ResponseEntity<>(result.toString(), HttpStatus.OK);
 	}
 
 	@GetMapping("/hasorder")
 	public ResponseEntity<?> hasorder(@RequestParam(required = true, value = "identifier") String identifier,
-			@RequestParam(required = true, value = "nid") String id){
+			@RequestParam(required = true, value = "nid") String id) {
 		Boolean result = countOrders(identifier, id) > 0;
-	    return new ResponseEntity<>(result.toString(), HttpStatus.OK);
+		return new ResponseEntity<>(result.toString(), HttpStatus.OK);
 	}
-	
-	@GetMapping("/jobsteplog.txt")
-	public ResponseEntity<String> jobsteplog(@RequestParam(required = true, value = "id") String id){
 
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+	@GetMapping("/jobsteplog.txt")
+	public ResponseEntity<String> jobsteplog(@RequestParam(required = true, value = "id") String id) {
+
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String result = "";
 		RestJobStep js;
 
 		try {
-			js = serviceConnection.getFromService(config.getOrderManager(),
-					"/orderjobsteps/" + id, RestJobStep.class, auth.getProseoName(), auth.getPassword());
-			if (js !=  null) {
+			js = serviceConnection.getFromService(config.getOrderManager(), "/orderjobsteps/" + id, RestJobStep.class,
+					auth.getProseoName(), auth.getPassword());
+			if (js != null) {
 				if (js.getJobStepState() == JobStepState.RUNNING) {
-					// update log file before, this does the planner 
-					result = serviceConnection.getFromService(config.getProductionPlanner(),
-							"/jobsteps/log/" + id, String.class, auth.getProseoName(), auth.getPassword());
+					// update log file before, this does the planner
+					result = serviceConnection.getFromService(config.getProductionPlanner(), "/jobsteps/log/" + id, String.class,
+							auth.getProseoName(), auth.getPassword());
 				} else {
 					result = js.getProcessingStdOut();
 				}
@@ -845,12 +870,12 @@ public class GUIOrderController extends GUIBaseController {
 		MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
 		map.add("Content-Type", "text/plain");
 		map.add("Content-Length", String.valueOf(result.length()));
-	    return new ResponseEntity<>(result, map, HttpStatus.OK);
+		return new ResponseEntity<>(result, map, HttpStatus.OK);
 	}
 
 	private List<RestParameter> stripNullInParameterList(List<RestParameter> list) {
 		List<RestParameter> newList = new ArrayList<RestParameter>();
-		if (list!= null) {
+		if (list != null) {
 			for (RestParameter p : list) {
 				if (p != null) {
 					newList.add(p);
@@ -861,14 +886,14 @@ public class GUIOrderController extends GUIBaseController {
 	}
 
 	/**
-	 * Helper function to select orders 
+	 * Helper function to select orders
 	 * 
 	 * @param identifier The order identifier (name) as pattern
-	 * @param orderList The complete list
-	 * @param states The order states (seperated by ':')
-	 * @param from The from date of start time
-	 * @param to The to date of start time
-	 * @param products The product class list (seperated by ':')
+	 * @param orderList  The complete list
+	 * @param states     The order states (seperated by ':')
+	 * @param from       The from date of start time
+	 * @param to         The to date of start time
+	 * @param products   The product class list (seperated by ':')
 	 * @return List of selected orders
 	 */
 //	private List<Object> selectOrders(List<Object> orderList, String identifier, String states, String from, String to, String products) {
@@ -960,33 +985,33 @@ public class GUIOrderController extends GUIBaseController {
 //		return result;
 //	}
 
-    /**
-     * Count the number of jobs in an order.
-     * 
-     * @param id The order id
-     * @return The number of jobs
-     */
-    private Long countJobs(String id, String states)  {	    	
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+	/**
+	 * Count the number of jobs in an order.
+	 * 
+	 * @param id The order id
+	 * @return The number of jobs
+	 */
+	private Long countJobs(String id, String states) {
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String uri = "/orderjobs/count";
 		String divider = "?";
 		if (id != null) {
 			uri += divider + "orderid=" + id;
-			divider ="&";
+			divider = "&";
 		}
 		if (states != null && !states.isEmpty()) {
-			String [] pcs = states.split(":");
+			String[] pcs = states.split(":");
 			for (String pc : pcs) {
 				if (!pc.equalsIgnoreCase("ALL")) {
 					uri += divider + "state=" + pc;
-					divider ="&";
+					divider = "&";
 				}
 			}
 		}
 		Long result = (long) -1;
 		try {
-			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
-					uri, String.class, auth.getProseoName(), auth.getPassword());
+			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(), uri, String.class,
+					auth.getProseoName(), auth.getPassword());
 
 			if (resStr != null && resStr.length() > 0) {
 				result = Long.valueOf(resStr);
@@ -1010,55 +1035,55 @@ public class GUIOrderController extends GUIBaseController {
 			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return result;
 		}
-		
-        return result;
-    }
-    
-    /**
-     * Get the display page of a job in an order
-     * 
-     * @param orderId The order id
-     * @param jobId The job id
-     * @param jobStepId The job step id
-     * @param pageSize The page six
-     * @return The page number
-     */
-    private Long pageOfJob(String orderId, String jobId, String jobStepId, Long pageSize, String states) {    	
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+
+		return result;
+	}
+
+	/**
+	 * Get the display page of a job in an order
+	 * 
+	 * @param orderId   The order id
+	 * @param jobId     The job id
+	 * @param jobStepId The job step id
+	 * @param pageSize  The page six
+	 * @return The page number
+	 */
+	private Long pageOfJob(String orderId, String jobId, String jobStepId, Long pageSize, String states) {
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String uri = "/orderjobs/index";
 		String divider = "?";
 		if (orderId != null) {
 			uri += divider + "orderid=" + orderId;
-			divider ="&";
+			divider = "&";
 		}
 		if (jobId != null) {
 			uri += divider + "jobid=" + jobId;
-			divider ="&";
+			divider = "&";
 		}
 		if (jobStepId != null) {
 			uri += divider + "jobstepid=" + jobStepId;
-			divider ="&";
+			divider = "&";
 		}
 		if (states != null && !states.isEmpty()) {
-			String [] pcs = states.split(":");
+			String[] pcs = states.split(":");
 			for (String pc : pcs) {
 				if (!pc.equalsIgnoreCase("ALL")) {
 					uri += divider + "state=" + pc;
-					divider ="&";
+					divider = "&";
 				}
 			}
 		}
-		divider ="&";
+		divider = "&";
 		try {
-			uri += divider + "orderBy=startTime"  + URLEncoder.encode(" ASC", "UTF-8");
+			uri += divider + "orderBy=startTime" + URLEncoder.encode(" ASC", "UTF-8");
 		} catch (UnsupportedEncodingException e1) {
 			// should not be, but in case of
 			e1.printStackTrace();
 		}
 		Long result = (long) 0;
 		try {
-			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
-					uri, String.class, auth.getProseoName(), auth.getPassword());
+			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(), uri, String.class,
+					auth.getProseoName(), auth.getPassword());
 
 			if (resStr != null && resStr.length() > 0) {
 				result = Long.valueOf(resStr);
@@ -1084,38 +1109,38 @@ public class GUIOrderController extends GUIBaseController {
 			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return result;
 		}
-		
-        return result;
-    }
 
-    /**
-     * Count the existing orbits of a spacecraft between from and to.
-     * 
-     * @param spacecraft The spacecraft code
-     * @param from Orbit number from
-     * @param to Orbit number to
-     * @return The orbit count
-     */
-    private Long countOrbits(String spacecraft, Long from, Long to)  {	    	
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		return result;
+	}
+
+	/**
+	 * Count the existing orbits of a spacecraft between from and to.
+	 * 
+	 * @param spacecraft The spacecraft code
+	 * @param from       Orbit number from
+	 * @param to         Orbit number to
+	 * @return The orbit count
+	 */
+	private Long countOrbits(String spacecraft, Long from, Long to) {
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String uri = "/orbits/count";
 		String divider = "?";
 		if (spacecraft != null) {
 			uri += divider + "spacecraftCode=" + spacecraft;
-			divider ="&";
+			divider = "&";
 		}
 		if (from != null) {
 			uri += divider + "orbitNumberFrom=" + from;
-			divider ="&";
+			divider = "&";
 		}
 		if (to != null) {
 			uri += divider + "orbitNumberTo=" + to;
-			divider ="&";
+			divider = "&";
 		}
 		Long result = (long) -1;
 		try {
-			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
-					uri, String.class, auth.getProseoName(), auth.getPassword());
+			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(), uri, String.class,
+					auth.getProseoName(), auth.getPassword());
 
 			if (resStr != null && resStr.length() > 0) {
 				result = Long.valueOf(resStr);
@@ -1139,86 +1164,87 @@ public class GUIOrderController extends GUIBaseController {
 			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return result;
 		}
-		
-        return result;
-    }
 
-    /**
-     * Count the number of orders
-     * 
-     * @param orderName
-     * @param nid
-     * @return The number of orbits
-     */
-    public Long countOrders(String orderName, String nid) {
-    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
-    	Long result = (long) -1;
-    	String mission = auth.getMission();
-    	String uri = "/orders/count";
-    	String divider = "?";
-    	if(null != mission) {
-    		uri += divider + "mission=" + mission;
-    		divider = "&";
-    	}
-    	if (null != orderName && !orderName.trim().isEmpty()) {
-    		uri += divider + "identifier=" + orderName.trim();
-    	}
-    	if (null != nid && !nid.trim().isEmpty()) {
-    		uri += divider + "nid=" + nid.trim();
-    	}
+		return result;
+	}
 
-    	try {
-    		String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
-    				uri, String.class, auth.getProseoName(), auth.getPassword());
+	/**
+	 * Count the number of orders
+	 * 
+	 * @param orderName
+	 * @param nid
+	 * @return The number of orbits
+	 */
+	public Long countOrders(String orderName, String nid) {
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+		Long result = (long) -1;
+		String mission = auth.getMission();
+		String uri = "/orders/count";
+		String divider = "?";
+		if (null != mission) {
+			uri += divider + "mission=" + mission;
+			divider = "&";
+		}
+		if (null != orderName && !orderName.trim().isEmpty()) {
+			uri += divider + "identifier=" + orderName.trim();
+		}
+		if (null != nid && !nid.trim().isEmpty()) {
+			uri += divider + "nid=" + nid.trim();
+		}
 
-    		if (resStr != null && resStr.length() > 0) {
-    			result = Long.valueOf(resStr);
-    		}
-    	} catch (RestClientResponseException e) {
-    		String message = null;
-    		switch (e.getRawStatusCode()) {
-    		case org.apache.http.HttpStatus.SC_NOT_FOUND:
-    			break;
-    		case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-    		case org.apache.http.HttpStatus.SC_FORBIDDEN:
-    			message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
-    			break;
-    		default:
-    			message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
-    		}
-    		System.err.println(message);
-    		return result;
-    	} catch (RuntimeException e) {
-    		System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
-    		return result;
-    	}
+		try {
+			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(), uri, String.class,
+					auth.getProseoName(), auth.getPassword());
 
-    	return result;
-    }
+			if (resStr != null && resStr.length() > 0) {
+				result = Long.valueOf(resStr);
+			}
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return result;
+		} catch (RuntimeException e) {
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
+			return result;
+		}
 
-	/** Count the orders specified by following parameters
+		return result;
+	}
+
+	/**
+	 * Count the orders specified by following parameters
 	 * 
 	 * @param identifier Identifier pattern
-	 * @param states The states (divided by ':')
-	 * @param products The product classes (divided by ':')
-	 * @param from The earliest start time
-	 * @param to The latest start time
-	 * @param recordFrom 
+	 * @param states     The states (divided by ':')
+	 * @param products   The product classes (divided by ':')
+	 * @param from       The earliest start time
+	 * @param to         The latest start time
+	 * @param recordFrom
 	 * @param recordTo
-	 * @param sortCol The sort criteria
-	 * @param up Ascending if true, otherwise descending
+	 * @param sortCol    The sort criteria
+	 * @param up         Ascending if true, otherwise descending
 	 * @return The number of orders found
 	 */
-	public Long countOrdersL(String identifier, String states, String products, String from, String to, 
-			Long recordFrom, Long recordTo, String sortCol, Boolean up) {
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+	public Long countOrdersL(String identifier, String states, String products, String from, String to, Long recordFrom,
+			Long recordTo, String sortCol, Boolean up) {
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
 		String uri = "/orders/countselect";
-		
+
 		String divider = "?";
 		if (mission != null && !mission.isEmpty()) {
 			uri += divider + "mission=" + mission;
-			divider ="&";
+			divider = "&";
 		}
 		if (identifier != null && !identifier.isEmpty()) {
 			try {
@@ -1227,45 +1253,45 @@ public class GUIOrderController extends GUIBaseController {
 				// TODO Auto-generated catch block
 				logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
-			divider ="&";
+			divider = "&";
 		}
 		if (states != null && !states.isEmpty()) {
-			String [] pcs = states.split(":");
+			String[] pcs = states.split(":");
 			for (String pc : pcs) {
 				uri += divider + "state=" + pc;
-				divider ="&";
+				divider = "&";
 			}
 		}
 
 		if (states != null && !states.isEmpty()) {
-			String [] pcs = states.split(":");
+			String[] pcs = states.split(":");
 			for (String pc : pcs) {
 				uri += divider + "state=" + pc;
-				divider ="&";
+				divider = "&";
 			}
 		}
 		if (products != null && !products.isEmpty()) {
-			String [] pcs = products.split(":");
+			String[] pcs = products.split(":");
 			for (String pc : pcs) {
 				uri += divider + "productClass=" + pc;
-				divider ="&";
+				divider = "&";
 			}
 		}
 		if (from != null && !from.isEmpty()) {
 			uri += divider + "startTime=" + from;
-			divider ="&";
+			divider = "&";
 		}
 		if (to != null && !to.isEmpty()) {
 			uri += divider + "stopTime=" + to;
-			divider ="&";
+			divider = "&";
 		}
 		if (recordFrom != null) {
 			uri += divider + "recordFrom=" + recordFrom;
-			divider ="&";
+			divider = "&";
 		}
 		if (recordTo != null) {
 			uri += divider + "recordTo=" + recordTo;
-			divider ="&";
+			divider = "&";
 		}
 		if (sortCol != null && !sortCol.isEmpty()) {
 			uri += divider + "orderBy=" + sortCol;
@@ -1286,13 +1312,13 @@ public class GUIOrderController extends GUIBaseController {
 					logger.log(UIMessage.EXCEPTION, e.getMessage());
 				}
 			}
-			divider ="&";
+			divider = "&";
 		}
 
 		Long result = (long) -1;
 		try {
-			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
-					uri, String.class, auth.getProseoName(), auth.getPassword());
+			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(), uri, String.class,
+					auth.getProseoName(), auth.getPassword());
 
 			if (resStr != null && resStr.length() > 0) {
 				result = Long.valueOf(resStr);
@@ -1317,28 +1343,27 @@ public class GUIOrderController extends GUIBaseController {
 			return result;
 		}
 		return result;
-		
-	}
-	
-    /**
-     * Normalize the date string
-     * 
-     * @param se The input date string
-     * @param type The type of it
-     * @return The normalized date string
-     */
-    private String normStartEnd(String se, String type) {
-    	String val = se;
-    	if (se != null) {
-    		if (type.equalsIgnoreCase(OrderSlicingType.CALENDAR_DAY.toString())) {
-    			val = val + "T00:00:00.000000";
-    		} else if (type.equalsIgnoreCase(OrderSlicingType.CALENDAR_MONTH.toString())) {
-    			val = val + "-01T00:00:00.000000";
-    		} else if (type.equalsIgnoreCase(OrderSlicingType.CALENDAR_YEAR.toString())) {
-    			val = val + "-01-01T00:00:00.000000";
-    		}
-    	}
-        return val;
-    }
-}
 
+	}
+
+	/**
+	 * Normalize the date string
+	 * 
+	 * @param se   The input date string
+	 * @param type The type of it
+	 * @return The normalized date string
+	 */
+	private String normStartEnd(String se, String type) {
+		String val = se;
+		if (se != null) {
+			if (type.equalsIgnoreCase(OrderSlicingType.CALENDAR_DAY.toString())) {
+				val = val + "T00:00:00.000000";
+			} else if (type.equalsIgnoreCase(OrderSlicingType.CALENDAR_MONTH.toString())) {
+				val = val + "-01T00:00:00.000000";
+			} else if (type.equalsIgnoreCase(OrderSlicingType.CALENDAR_YEAR.toString())) {
+				val = val + "-01-01T00:00:00.000000";
+			}
+		}
+		return val;
+	}
+}
