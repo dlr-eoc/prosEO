@@ -4,7 +4,7 @@
                             |   /---/ |  /-\  |
                             |   \---\ |  | |  |   prosEO - The Processing System for Earth Observation Data
 /----\ /----\ /----\ /----\ |       | |  | |  |
-|    | |    | |    | | ---+ |   /---/ |  | |  |   Facility Manager       ${application.formatted-version}
+|    | |    | |    | | ---+ |   /---/ |  | |  |   Archive Manager       ${application.formatted-version}
 | {} | |  /-/ | {} | \    \ |   \---\ |  \-/  |
 |    | |  |   |    | +--- | |       | |       |   :: Spring Boot ::      ${spring-boot.formatted-version}
 |  /-/ \--/   \----/ \----/ \-------/ \-------/

@@ -1,1 +1,1 @@
-package de.dlr.proseo.facmgr.rest.model;
+package de.dlr.proseo.archivemgr.rest.model;

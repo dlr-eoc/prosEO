@@ -7,6 +7,7 @@
 package de.dlr.proseo.archivemgr.rest;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Optional;
@@ -15,24 +16,27 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.archivemgr.rest.model.ProductArchiveModelMapper;
+import de.dlr.proseo.archivemgr.rest.model.ProductArchiveRestMapper;
 import de.dlr.proseo.archivemgr.rest.model.RestProductArchive;
+import de.dlr.proseo.archivemgr.utils.StringUtils;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.FacilityMgrMessage;
-import de.dlr.proseo.logging.messages.GeneralMessage;
-import de.dlr.proseo.model.ProcessingFacility;
-import de.dlr.proseo.model.enums.FacilityState;
+import de.dlr.proseo.logging.messages.ProductArchiveMgrMessage;
+import de.dlr.proseo.model.ProductArchive;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.service.SecurityService;
 
 /**
- * Service methods required to create, modify and delete product archives in
- * the prosEO database, and to query the database about such archives
+ * Service methods required to create, modify and delete product archives in the
+ * prosEO database, and to query the database about such archives
  * 
- * @author xxx
+ * @author Denys Chaykovskiy
  */
 @Component
 @Transactional
@@ -41,303 +45,397 @@ public class ProductArchiveManager {
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
+	
+	/** Utility class for user authorizations */
+	@Autowired
+	private SecurityService securityService;
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductArchiveManager.class);
 
-	public RestProductArchive createArchive(RestProductArchive facility) throws IllegalArgumentException {
-		if (logger.isTraceEnabled())
-			logger.trace(">>> createArchive({})", (null == facility ? "MISSING" : facility.getName()));
+	/**
+	 * Creation of the product archive
+	 * 
+	 * @param restArchive Rest Product Archive
+	 * @return created Rest Product Archive
+	 * @throws IllegalArgumentException if mandatory parameters missed or wrong
+	 * 
+	 */
+	public RestProductArchive createArchive(RestProductArchive restArchive) throws IllegalArgumentException {
 
-		if (null == facility) {
-			throw new IllegalArgumentException(logger.log(FacilityMgrMessage.FACILITY_MISSING));
+		if (logger.isTraceEnabled())
+			logger.trace(">>> createArchive({})", (null == restArchive ? "MISSING" : restArchive.getCode()));
+
+		if (null == restArchive) {
+			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING));
+		}
+		
+		if (archiveExistsByCode(restArchive.getCode())) {
+			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.DUPLICATED_ARCHIVE, restArchive.getCode()));
+		}
+		
+		// all checks inside
+		ProductArchive modelArchive = new ProductArchiveRestMapper(restArchive, securityService.getMission()).toModel();		
+		
+		try {
+			modelArchive = RepositoryService.getProductArchiveRepository().save(modelArchive);
+		}
+		catch (Exception e) {
+			throw e; 			
+		}
+		
+		logger.log(ProductArchiveMgrMessage.ARCHIVE_CREATED, modelArchive.getCode(), modelArchive.getId());
+		
+		return new ProductArchiveModelMapper(modelArchive).toRest();
+	}
+	
+	/**
+	 * Checks if archive exists, filtered by code
+	 * 
+	 * @param code code of the archive
+	 * @return true if exists
+	 */
+	public boolean archiveExistsByCode(String code) {
+		
+		if (null == code) {
+			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_CODE_MISSING));
+		}
+			
+		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findByCode(code);
+		
+		return modelArchive != null ? true : false; 		
+	}
+	
+	/**
+	 * Checks if archive exists, filtered by id
+	 * 
+	 * @param id id of the archive
+	 * @return true if exists
+	 */
+	public boolean archiveExistsById(Long id) {
+		
+		if (null == id) {
+			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_ID_MISSING));
+		}
+			
+		Optional<ProductArchive> modelArchive = RepositoryService.getProductArchiveRepository().findById(id);
+
+		return !modelArchive.isEmpty() ? true : false; 		
+	}
+	
+	/**
+	 * Gets a product archive, searched by code
+	 * 
+	 * @param code the code of the product archive
+	 * @return product archive
+	 * @throws IllegalArgumentException if no product archive matching the given code could be found
+	 */
+	public RestProductArchive getArchiveByCode(String code) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getArchive({})", code);
+		
+		if (!archiveExistsByCode(code)) {
+			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND, code));
+		}
+		
+		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findByCode(code);
+		
+		logger.log(ProductArchiveMgrMessage.ARCHIVE_RETRIEVED, code);
+		
+		return new ProductArchiveModelMapper(modelArchive).toRest();
+	}
+
+	/**
+	 * List of all product archives archives filtered by code
+	 * 
+	 * @param code the code of the product archive
+	 * @return a list of product archives, if code == null, returns all archives
+	 * @throws NoResultException if no product archives matching the given search
+	 *                           criteria could be found
+	 */
+	public List<RestProductArchive> getArchivesByCode(String code) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getArchives({})", code);
+
+		List<RestProductArchive> result = new ArrayList<>();
+		List<ProductArchive> modelArchives;
+
+		if (null == code) {		
+			modelArchives = RepositoryService.getProductArchiveRepository().findAll();
+		}
+		else {			
+			modelArchives = RepositoryService.getProductArchiveRepository().findArchivesByCode(code);			
+		}
+		
+		for (ProductArchive modelArchive : modelArchives) {
+			
+			if (logger.isDebugEnabled())
+				logger.debug("Found product archive with ID {}", modelArchive.getId());
+
+			RestProductArchive restArchive = new ProductArchiveModelMapper(modelArchive).toRest();
+
+			result.add(restArchive);
+		}
+		
+		if (result.isEmpty()) {
+			throw new NoResultException(logger.log(ProductArchiveMgrMessage.ARCHIVE_LIST_EMPTY));
 		}
 
-		// Make sure the facility does not yet exist
-//		ProcessingFacility modelFacility = RepositoryService.getFacilityRepository().findByName(facility.getName());
-//		if (null != modelFacility) {
-//			throw new IllegalArgumentException(logger.log(FacilityMgrMessage.DUPLICATE_FACILITY, facility.getName()));
-//		}
-//
-//		modelFacility = FacmgrUtil.toModelFacility(facility);
+		logger.log(ProductArchiveMgrMessage.ARCHIVE_LIST_RETRIEVED, result.size(), code);
 
-		// Set default values where possible
-//		if (null == modelFacility.getFacilityState()) {
-//			modelFacility.setFacilityState(FacilityState.DISABLED);
-//		}
-
-		// Ensure that mandatory attributes are set
-//		if (null == modelFacility.getStorageManagerUrl() || modelFacility.getStorageManagerUrl().isBlank()) {
-//			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "StorageManagerUrl", "facility creation"));
-//		}
-//		if (null == modelFacility.getExternalStorageManagerUrl() || modelFacility.getExternalStorageManagerUrl().isBlank())
-//			if (null == modelFacility.getStorageManagerUrl()) {
-//				throw new IllegalArgumentException(
-//						logger.log(GeneralMessage.FIELD_NOT_SET, "ExternalStorageManagerUrl", "facility creation"));
-//			}
-//		if (null == modelFacility.getStorageManagerUser() || modelFacility.getStorageManagerUser().isBlank()) {
-//			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "StorageManagerUser", "facility creation"));
-//		}
-//		if (null == modelFacility.getStorageManagerPassword()) {
-//			throw new IllegalArgumentException(
-//					logger.log(GeneralMessage.FIELD_NOT_SET, "StorageManagerPassword", "facility creation"));
-//		}
-//		if (null == modelFacility.getDefaultStorageType() || modelFacility.getStorageManagerPassword().isBlank()) {
-//			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "DefaultStorageType"));
-//		}
-//
-//		modelFacility = RepositoryService.getFacilityRepository().save(modelFacility);
-//		logger.log(FacilityMgrMessage.FACILITY_CREATED, facility.getName());
-//		return FacmgrUtil.toRestFacility(modelFacility);
-		
-		throw new java.lang.UnsupportedOperationException("createArchive");
+		return result;
 	}
-
+	
 	/**
-	 * List of all facilities filtered by mission and name
-	 * 
-	 * @param name the name of the facility
-	 * @return a list of facilities
-	 * @throws NoResultException if no facilities matching the given search criteria
-	 *                           could be found
-	 */
-
-	public List<RestProductArchive> getArchives(String name) {
-		if (logger.isTraceEnabled())
-			logger.trace(">>> getArchives({})", name);
-		List<RestProductArchive> result = new ArrayList<>();
-
-//		if (null == name) {
-//			// Simple case: no search criteria set
-//			for (ProcessingFacility facility : RepositoryService.getFacilityRepository().findAll()) {
-//				if (logger.isDebugEnabled())
-//					logger.debug("Found facility with ID {}", facility.getId());
-//				RestProductArchive resultFacility = FacmgrUtil.toRestFacility(facility);
-//				if (logger.isDebugEnabled())
-//					logger.debug("Created result facilities with ID {}", resultFacility.getId());
-//
-//				result.add(resultFacility);
-//			}
-//		} else {
-//			// Find using search parameters
-//			String jpqlQuery = "select p from ProcessingFacility p where 1 = 1";
-//			if (null != name) {
-//				jpqlQuery += " and p.name = :name";
-//			}
-//			Query query = em.createQuery(jpqlQuery);
-//			if (null != name) {
-//				query.setParameter("name", name);
-//			}
-//			for (Object resultObject : query.getResultList()) {
-//				if (resultObject instanceof ProcessingFacility) {
-//					result.add(FacmgrUtil.toRestFacility((ProcessingFacility) resultObject));
-//				}
-//			}
-//
-//		}
-//		if (result.isEmpty()) {
-//			throw new NoResultException(logger.log(FacilityMgrMessage.FACILITY_LIST_EMPTY));
-//
-//		}
-//		logger.log(FacilityMgrMessage.FACILITY_LIST_RETRIEVED, result.size(), name);
-//
-//		return result;
-		
-		throw new java.lang.UnsupportedOperationException("getArchive");
-	}
-
-	/**
-	 * Find the facility with the given ID
+	 * Find the product archive with the given ID
 	 * 
 	 * @param id the ID to look for
-	 * @return a Json object corresponding to the facility found
-	 * @throws IllegalArgumentException if no facility ID was given
-	 * @throws NoResultException        if no facility with the given ID exists
+	 * @return a Json object corresponding to the product archive found
+	 * @throws IllegalArgumentException if no product archive ID was given
+	 * @throws NoResultException        if no product archive with the given ID
+	 *                                  exists
 	 */
 	public RestProductArchive getArchiveById(Long id) throws IllegalArgumentException, NoResultException {
+		
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getArchiveById({})", id);
 
-//		if (null == id) {
-//			throw new IllegalArgumentException(logger.log(FacilityMgrMessage.FACILITY_MISSING, id));
-//		}
-//		Optional<ProcessingFacility> modelFacility = RepositoryService.getFacilityRepository().findById(id);
-//
-//		if (modelFacility.isEmpty()) {
-//			throw new NoResultException(logger.log(FacilityMgrMessage.FACILITY_NOT_FOUND, id));
-//		}
-//		logger.log(FacilityMgrMessage.FACILITY_RETRIEVED, id);
-//
-//		return FacmgrUtil.toRestFacility(modelFacility.get());
-
+		if (null == id) {
+			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING, id));
+		}
 		
-		throw new java.lang.UnsupportedOperationException("getArchive");
+		if (!archiveExistsById(id)) {
+			throw new NoResultException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND, id));
+		}
+		
+		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findById(id).get();
+
+		logger.log(ProductArchiveMgrMessage.ARCHIVE_RETRIEVED, id);
+
+		return new ProductArchiveModelMapper(modelArchive).toRest();
 	}
 
 	/**
-	 * Update the facility with the given ID with the attribute values of the given
-	 * Json object. Unchanged values must be provided, too, or they will be changed
-	 * to null.
+	 * Update the product archive with the given ID with the attribute values of the
+	 * given Json object. Unchanged values must be provided, too, or they will be
+	 * changed to null.
 	 * 
-	 * @param id           the ID of the facility to update
-	 * @param restFacility a Json object containing the modified (and unmodified)
-	 *                     attributes
-	 * @return a Json object corresponding to the facility after modification (with
-	 *         ID and version for all contained objects)
+	 * @param id          the ID of the product archive to update
+	 * @param restArchive a Json object containing the modified (and unmodified)
+	 *                    attributes
+	 * @return a Json object corresponding to the product archive after modification
+	 *         (with ID and version for all contained objects)
 	 * @throws EntityNotFoundException         if no product with the given ID
 	 *                                         exists
 	 * @throws IllegalArgumentException        if any of the input data was invalid
 	 * @throws ConcurrentModificationException if the facility has been modified
 	 *                                         since retrieval by the client
 	 */
-	public RestProductArchive modifyArchive(Long id, RestProductArchive restFacility) {
+	public RestProductArchive modifyArchive(Long id, RestProductArchive restArchive) {
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> modifyArchive({})", id);
 
-//		if (null == id) {
-//			throw new IllegalArgumentException(logger.log(FacilityMgrMessage.FACILITY_MISSING, id));
-//		}
-//
-//		Optional<ProcessingFacility> optModelFacility = RepositoryService.getFacilityRepository().findById(id);
-//
-//		if (optModelFacility.isEmpty()) {
-//			throw new EntityNotFoundException(logger.log(FacilityMgrMessage.FACILITY_NOT_FOUND, id));
-//		}
-//		ProcessingFacility modelFacility = optModelFacility.get();
-//
-//		// Check that mandatory attributes are set
-//		if (null == modelFacility.getStorageManagerUrl() || modelFacility.getStorageManagerUrl().isBlank()) {
-//			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "StorageManagerUrl", "facility modifcation"));
-//		}
-//		if (null == modelFacility.getExternalStorageManagerUrl() || modelFacility.getExternalStorageManagerUrl().isBlank())
-//			if (null == modelFacility.getStorageManagerUrl()) {
-//				throw new IllegalArgumentException(
-//						logger.log(GeneralMessage.FIELD_NOT_SET, "ExternalStorageManagerUrl", "facility modifcation"));
-//			}
-//		if (null == modelFacility.getStorageManagerUser() || modelFacility.getStorageManagerUser().isBlank()) {
-//			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "StorageManagerUser", "facility modifcation"));
-//		}
-//		if (null == modelFacility.getStorageManagerPassword()) {
-//			throw new IllegalArgumentException(
-//					logger.log(GeneralMessage.FIELD_NOT_SET, "StorageManagerPassword", "facility modifcation"));
-//		}
-//		if (null == modelFacility.getDefaultStorageType() || modelFacility.getStorageManagerPassword().isBlank()) {
-//			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "DefaultStorageType"));
-//		}
-//
-//		// Update modified attributes
-//		boolean facilityChanged = false;
-//		ProcessingFacility changedFacility = FacmgrUtil.toModelFacility(restFacility);
-//
-//		if (!modelFacility.getName().equals(changedFacility.getName())) {
-//			facilityChanged = true;
-//			modelFacility.setName(changedFacility.getName());
-//		}
-//		if (!modelFacility.getDescription().equals(changedFacility.getDescription())) {
-//			facilityChanged = true;
-//			modelFacility.setDescription(changedFacility.getDescription());
-//		}
-//		if (!modelFacility.getFacilityState().equals(changedFacility.getFacilityState())) {
-//			facilityChanged = true;
-//			try {
-//				modelFacility.setFacilityState(changedFacility.getFacilityState());
-//			} catch (IllegalStateException e) {
-//				throw new IllegalArgumentException(logger.log(GeneralMessage.ILLEGAL_FACILITY_STATE_TRANSITION,
-//						modelFacility.getFacilityState().toString(), changedFacility.getFacilityState().toString()));
-//			}
-//		}
-//		if (!modelFacility.getProcessingEngineUrl().equals(changedFacility.getProcessingEngineUrl())) {
-//			facilityChanged = true;
-//			modelFacility.setProcessingEngineUrl(changedFacility.getProcessingEngineUrl());
-//		}
-//		if (!modelFacility.getProcessingEngineToken().equals(changedFacility.getProcessingEngineToken())) {
-//			facilityChanged = true;
-//			modelFacility.setProcessingEngineToken(changedFacility.getProcessingEngineToken());
-//		}
-//		if (!modelFacility.getMaxJobsPerNode().equals(changedFacility.getMaxJobsPerNode())) {
-//			facilityChanged = true;
-//			modelFacility.setMaxJobsPerNode(changedFacility.getMaxJobsPerNode());
-//		}
-//		if (!modelFacility.getStorageManagerUrl().equals(changedFacility.getStorageManagerUrl())) {
-//			facilityChanged = true;
-//			modelFacility.setStorageManagerUrl(changedFacility.getStorageManagerUrl());
-//		}
-//		if (!modelFacility.getExternalStorageManagerUrl().equals(changedFacility.getExternalStorageManagerUrl())) {
-//			facilityChanged = true;
-//			modelFacility.setExternalStorageManagerUrl(changedFacility.getExternalStorageManagerUrl());
-//		}
-//		if (!modelFacility.getLocalStorageManagerUrl().equals(changedFacility.getLocalStorageManagerUrl())) {
-//			facilityChanged = true;
-//			modelFacility.setLocalStorageManagerUrl(changedFacility.getLocalStorageManagerUrl());
-//		}
-//		if (!modelFacility.getStorageManagerUser().equals(changedFacility.getStorageManagerUser())) {
-//			facilityChanged = true;
-//			modelFacility.setStorageManagerUser(changedFacility.getStorageManagerUser());
-//		}
-//		if (!modelFacility.getStorageManagerPassword().equals(changedFacility.getStorageManagerPassword())) {
-//			facilityChanged = true;
-//			modelFacility.setStorageManagerPassword(changedFacility.getStorageManagerPassword());
-//		}
-//		if (!modelFacility.getDefaultStorageType().equals(changedFacility.getDefaultStorageType())) {
-//			facilityChanged = true;
-//			modelFacility.setDefaultStorageType(changedFacility.getDefaultStorageType());
-//		}
-//		
-//		// Save order only if anything was actually changed
-//		if (facilityChanged) {
-//			modelFacility.incrementVersion();
-//			modelFacility = RepositoryService.getFacilityRepository().save(modelFacility);
-//			logger.log(FacilityMgrMessage.FACILITY_MODIFIED, id);
-//		} else {
-//			logger.log(FacilityMgrMessage.FACILITY_NOT_MODIFIED, id);
-//		}
-//		return FacmgrUtil.toRestFacility(modelFacility);
+		if (null == id) {
+			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING, id));
+		}
 		
-		throw new java.lang.UnsupportedOperationException("modifyArchive");
+		if (null == restArchive) {
+			throw new EntityNotFoundException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING));
+		}
+		
+		if (!archiveExistsById(id)) {
+			throw new EntityNotFoundException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND, id));
+		}
+
+		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findById(id).get();
+		modelArchive = new ProductArchiveModelMapper(modelArchive).get();
+		
+		ProductArchive changedArchive = new ProductArchiveRestMapper(restArchive, securityService.getMission()).toModel();
+		
+		boolean archiveChanged = isArchiveChanged(modelArchive, changedArchive);
+					
+		// Save order only if anything was actually changed
+		if (archiveChanged) {
+			
+			setChangedFields(modelArchive, changedArchive);
+
+			modelArchive.incrementVersion();
+			modelArchive = RepositoryService.getProductArchiveRepository().save(modelArchive);
+			
+			logger.log(ProductArchiveMgrMessage.ARCHIVE_MODIFIED, id);
+			
+		} else {
+			
+			logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_MODIFIED, id);
+		}
+		
+		return new ProductArchiveModelMapper(modelArchive).toRest();
 	}
 
 	/**
-	 * Delete an facility by ID
+	 * Delete a product archive by ID
 	 * 
-	 * @param id the ID of the facility to delete
-	 * @throws EntityNotFoundException  if the facility to delete does not exist in
-	 *                                  the database
-	 * @throws IllegalArgumentException if the facility to delete still has stored
-	 *                                  products
+	 * @param id the ID of the product archive to delete
+	 * @throws EntityNotFoundException  if the product archive to delete does not
+	 *                                  exist in the database
+	 * @throws IllegalArgumentException if the product archive to delete still has
+	 *                                  stored products
 	 * @throws RuntimeException         if the deletion was not performed as
 	 *                                  expected
 	 */
 	public void deleteArchiveById(Long id) throws EntityNotFoundException, IllegalArgumentException, RuntimeException {
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteArchiveById({})", id);
-
-//		// Test whether the facility id is valid
-//		Optional<ProcessingFacility> modelFacility = RepositoryService.getFacilityRepository().findById(id);
-//		if (modelFacility.isEmpty()) {
-//			throw new EntityNotFoundException(logger.log(FacilityMgrMessage.FACILITY_NOT_FOUND));
-//		}
-//
-//		// Test whether the facility still has stored products
-//		if (!RepositoryService.getProductFileRepository().findByProcessingFacilityId(modelFacility.get().getId())
-//				.isEmpty()) {
-//			throw new IllegalArgumentException(
-//					logger.log(FacilityMgrMessage.FACILITY_HAS_PRODUCTS, modelFacility.get().getName()));
-//		}
-//		;
-//
-//		// Delete the facility
-//		RepositoryService.getFacilityRepository().deleteById(id);
-//
-//		// Test whether the deletion was successful
-//		modelFacility = RepositoryService.getFacilityRepository().findById(id);
-//		if (!modelFacility.isEmpty()) {
-//			throw new RuntimeException(logger.log(FacilityMgrMessage.DELETION_UNSUCCESSFUL, id));
-//		}
-//
-//		logger.log(FacilityMgrMessage.FACILITY_DELETED, id);
-
 		
-		throw new java.lang.UnsupportedOperationException("deleteArchiveById");
+		if (null == id) {
+			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_ID_MISSING));
+		}
+
+		if (!archiveExistsById(id)) {
+			throw new EntityNotFoundException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND));
+		}
+			
+		RepositoryService.getProductArchiveRepository().deleteById(id);
+		
+		if (archiveExistsById(id)) {
+			throw new RuntimeException(logger.log(FacilityMgrMessage.DELETION_UNSUCCESSFUL, id));
+		}
+
+		logger.log(ProductArchiveMgrMessage.ARCHIVE_DELETED, id);
+	}
+	
+	/**
+	 * Sets changed fields in modelArchive from changedArchive
+	 *
+	 * @param modelArchive model archive
+	 * @param changedArchive changed archive
+	 */
+	private void setChangedFields(ProductArchive modelArchive, ProductArchive changedArchive) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> setChangedFields({}, {})", modelArchive, changedArchive);
+		
+		if (null == modelArchive || null == changedArchive) {
+			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING));
+		}
+				
+		if (!StringUtils.equalStrings(modelArchive.getCode(), changedArchive.getCode())) {		
+			modelArchive.setCode(changedArchive.getCode());
+		}
+
+		if (!StringUtils.equalStrings(modelArchive.getName(), changedArchive.getName())) {		
+			modelArchive.setName(changedArchive.getName());
+		}
+		
+		if (!modelArchive.getArchiveType().equals(changedArchive.getArchiveType())) {
+			modelArchive.setArchiveType(changedArchive.getArchiveType());
+		}
+		
+		if (!StringUtils.equalStrings(modelArchive.getBaseUri(), changedArchive.getBaseUri())) {		
+			modelArchive.setBaseUri(changedArchive.getBaseUri());
+		}
+		
+		if (!StringUtils.equalStrings(modelArchive.getContext(), changedArchive.getContext())) {		
+			modelArchive.setContext(changedArchive.getContext());
+		}
+		
+		if (!modelArchive.getTokenRequired().equals(changedArchive.getTokenRequired())) {
+			modelArchive.setTokenRequired(changedArchive.getTokenRequired());
+		}
+		
+		if (!StringUtils.equalStrings(modelArchive.getTokenUri(), changedArchive.getTokenUri())) {		
+			modelArchive.setTokenUri(changedArchive.getTokenUri());
+		}
+		
+		if (!StringUtils.equalStrings(modelArchive.getUsername(), changedArchive.getUsername())) {		
+			modelArchive.setUsername(changedArchive.getUsername());
+		}
+		
+		if (!StringUtils.equalStrings(modelArchive.getPassword(), changedArchive.getPassword())) {		
+			modelArchive.setPassword(changedArchive.getPassword());
+		}
+		
+		if (!StringUtils.equalStrings(modelArchive.getClientId(), changedArchive.getClientId())) {		
+			modelArchive.setClientId(changedArchive.getClientId());
+		}
+		
+		if (!StringUtils.equalStrings(modelArchive.getClientSecret(), changedArchive.getClientSecret())) {		
+			modelArchive.setClientSecret(changedArchive.getClientSecret());
+		}
+		
+		if (!modelArchive.getSendAuthInBody().equals(changedArchive.getSendAuthInBody())) {
+			modelArchive.setSendAuthInBody(changedArchive.getSendAuthInBody());
+		}
+		
+		if (!modelArchive.getAvailableProductClasses().equals(changedArchive.getAvailableProductClasses())) {
+			modelArchive.setAvailableProductClasses(changedArchive.getAvailableProductClasses());
+		}
+		
 	}
 
+	/**
+	 * Checks if an archive was changed
+	 * 
+	 * @param modelArchive Model Archive to check
+	 * @param changedArchive changed archive
+	 * @return true, if the changedArchive was changed
+	 */
+	private boolean isArchiveChanged(ProductArchive modelArchive, ProductArchive changedArchive) {
+		
+		boolean archiveChanged = false;
+		
+		if (!modelArchive.getCode().equals(changedArchive.getCode())) {
+			archiveChanged = true;
+		}
+		
+		if (!modelArchive.getName().equals(changedArchive.getName())) {
+			archiveChanged = true;
+		}
+		
+		if (!modelArchive.getArchiveType().equals(changedArchive.getArchiveType())) {
+			archiveChanged = true;
+		}
+		
+		if (!modelArchive.getBaseUri().equals(changedArchive.getBaseUri())) {
+			archiveChanged = true;
+		}
+		
+		if (!modelArchive.getContext().equals(changedArchive.getContext())) {
+			archiveChanged = true;
+		}
+		
+		if (!modelArchive.getTokenRequired().equals(changedArchive.getTokenRequired())) {
+			archiveChanged = true;
+		}
+		
+		if (!StringUtils.equalStrings(modelArchive.getTokenUri(), changedArchive.getTokenUri())) {
+			archiveChanged = true;
+		}
+		
+		if (!StringUtils.equalStrings(modelArchive.getUsername(), changedArchive.getUsername())) {
+			archiveChanged = true;
+		}
+		
+		if (!StringUtils.equalStrings(modelArchive.getClientId(), changedArchive.getClientId())) {
+			archiveChanged = true;
+		}
+
+		if (!StringUtils.equalStrings(modelArchive.getClientSecret(), changedArchive.getClientSecret())) {
+			archiveChanged = true;
+		}
+		
+		if (!modelArchive.getSendAuthInBody().equals(changedArchive.getSendAuthInBody())) {
+			archiveChanged = true;
+		}
+		
+		if (!modelArchive.getAvailableProductClasses().equals(changedArchive.getAvailableProductClasses())) {
+			archiveChanged = true;
+		}
+		
+		return archiveChanged; 
+	}
 }

@@ -1624,3 +1624,80 @@ commands:
               type: string
               description: The name of the facility to delete
           
+    # Commands for the Product Archive
+    - name: archive
+      description: Commands for managing product archive
+      subcommands:
+        - name: show
+          description: Show all product archives or a specific one
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give product archive details, otherwise show product archive names only (setting archiveName parameter
+                           implies verbose)
+              shortForm: v
+            - name: showPasswords
+              type: boolean
+              description: If set, show passwords for Product Archive users, otherwise show placeholder
+              shortForm: s
+          parameters:
+            - name: archiveName
+              type: string
+              optional: true
+              description: The name of the product archive to show
+        - name: create
+          description: Create a new product archive; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the product archive definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+          parameters:
+            - name: archiveName
+              type: string
+              optional: true
+              description: The name of the archive to create (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A archive attribute to set in the form "<attribute name>=<attribute value>"
+        - name: update
+          description: Update a product archive; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the product archive definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: delete-attributes
+              type: boolean
+              description: Delete non-mandatory attributes not given in the product archive definition file and/or the command parameters
+          parameters:
+            - name: archiveName
+              type: string
+              optional: true
+              description: The name of the archive to update (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A archive attribute to set in the form "<attribute name>=<attribute value>"
+        - name: delete
+          description: Delete the product archive with the given name
+          parameters:
+            - name: archiveName
+              type: string
+              description: The name of the archive to delete
+          
+          

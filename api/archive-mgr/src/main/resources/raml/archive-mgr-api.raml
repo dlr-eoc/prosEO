@@ -2,7 +2,7 @@
 title: prosEO Product Archive Manager REST Services API
 version: v0.1
 protocols: [ HTTPS ] 
-baseUri: /proseo/facility-mgr/{version}
+baseUri: /proseo/archive-mgr/{version}
 mediaType: application/json
 
 securitySchemes:
@@ -61,7 +61,7 @@ resourceTypes:
     description: Get product archives by mission and code
     displayName: getArchives
     queryParameters:
-      name?: string
+      code?: string
     responses:
       200:
         body:

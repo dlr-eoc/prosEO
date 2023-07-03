@@ -85,7 +85,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>proseo-facility-mgr</finalName>
+		<finalName>proseo-archive-mgr</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
