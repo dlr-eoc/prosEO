@@ -14,6 +14,8 @@ de.dlr.proseo.storagemgr.version2
 de.dlr.proseo.storagemgr.version2.posix
 de.dlr.proseo.storagemgr.version2.posix
 de.dlr.proseo.storagemgr.version2.posix
+de.dlr.proseo.storagemgr.version2.posix
+de.dlr.proseo.storagemgr.version2.s3
 de.dlr.proseo.storagemgr.version2.s3
 de.dlr.proseo.storagemgr.version2.s3
 de.dlr.proseo.storagemgr.version2.s3
@@ -33,11 +35,14 @@ de.dlr.proseo.storagemgr.version2.s3
 de.dlr.proseo.storagemgr.version2
 de.dlr.proseo.storagemgr.version2
 de.dlr.proseo.storagemgr.version2.Exceptions
+de.dlr.proseo.storagemgr.version2.Exceptions
 de.dlr.proseo.storagemgr.version2.model
 de.dlr.proseo.storagemgr.version2.model
 de.dlr.proseo.storagemgr.version2.model
 de.dlr.proseo.storagemgr.version2.model
 de.dlr.proseo.storagemgr.version2.model
+de.dlr.proseo.storagemgr.version2.model
+de.dlr.proseo.storagemgr.version2
 de.dlr.proseo.storagemgr.version2
 de.dlr.proseo.storagemgr.fs.s3
 de.dlr.proseo.storagemgr.rest
