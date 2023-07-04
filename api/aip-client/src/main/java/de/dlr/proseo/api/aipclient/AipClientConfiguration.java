@@ -21,6 +21,10 @@ import org.springframework.context.annotation.Configuration;
 @EntityScan(basePackages = "de.dlr.proseo.model")
 public class AipClientConfiguration {
 	
+	/** Path to the directory to download files to (must be readable for Storage Manager, see below) */
+	@Value("${proseo.aipclient.targetdir}")
+	private String clientTargetDir;
+	
 	/** The URL of the prosEO Ingestor */
 	@Value("${proseo.ingestor.url}")
 	private String ingestorUrl;
@@ -29,13 +33,13 @@ public class AipClientConfiguration {
 	@Value("${proseo.ingestor.timeout}")
 	private Long ingestorTimeout;
 	
-	/** Source directory for uploads by the prosEO Ingestor */
-	@Value("${proseo.ingestor.sourcedir}")
-	private String ingestorSourceDir;
-	
 	/** The Storage Manager mount point for product ingestion */
-	@Value("${proseo.ingestor.mountpoint}")
-	private String ingestorMountPoint;
+	@Value("${proseo.storagemgr.mountpoint}")
+	private String storageMgrMountPoint;
+	
+	/** Source directory for uploads by the prosEO Storage Manager (Storage Manager perspective on proseo.aipclient.targetdir) */
+	@Value("${proseo.storagemgr.sourcedir}")
+	private String storageMgrSourceDir;
 	
 	/** The interval between product order status checks in milliseconds */
 	@Value("${proseo.order.check.interval}")
@@ -46,6 +50,15 @@ public class AipClientConfiguration {
 	private Long archiveTimeout;
 	
 	
+	/**
+	 * Gets the path to the directory to download files to
+	 * 
+	 * @return the download target directory
+	 */
+	public String getClientTargetDir() {
+		return clientTargetDir;
+	}
+
 	/**
 	 * Gets the URL of the prosEO Ingestor
 	 * 
@@ -65,21 +78,21 @@ public class AipClientConfiguration {
 	}
 
 	/**
-	 * Gets the source directory for uploads by the prosEO Ingestor
-	 * 
-	 * @return the Ingestor source directory
-	 */
-	public String getIngestorSourceDir() {
-		return ingestorSourceDir;
-	}
-
-	/**
 	 * Gets the Storage Manager mount point for product ingestion
 	 * 
 	 * @return the ingestion mount point
 	 */
-	public String getIngestorMountPoint() {
-		return ingestorMountPoint;
+	public String getStorageMgrMountPoint() {
+		return storageMgrMountPoint;
+	}
+
+	/**
+	 * Gets the source directory for uploads by the prosEO Storage Manager
+	 * 
+	 * @return the Ingestor source directory
+	 */
+	public String getStorageMgrSourceDir() {
+		return storageMgrSourceDir;
 	}
 
 	/**

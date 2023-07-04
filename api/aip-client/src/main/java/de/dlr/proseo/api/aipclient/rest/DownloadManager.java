@@ -949,7 +949,7 @@ public class DownloadManager {
 		
 		// Retrieve and store product file
 		RestProductFile restProductFile = product.getProductFile().get(0);
-		File productFile = new File(config.getIngestorSourceDir() + File.separator
+		File productFile = new File(config.getClientTargetDir() + File.separator
 				+ restProductFile.getProductFileName());
 
 		logger.trace("... starting request for URL '{}'", requestUrl);
@@ -982,14 +982,14 @@ public class DownloadManager {
 			throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(), e.getMessage()));
 		}
 
-		// Compare file size with value given by AUXIP 
+		// Compare file size with value given by external archive 
 		Long productFileLength = productFile.length();
 		if (!productFileLength.equals(restProductFile.getFileSize())) {
 			throw new IOException(logger.log(AipClientMessage.FILE_SIZE_MISMATCH, 
 					product.getUuid(), restProductFile.getFileSize(), productFileLength));
 		}
 
-		// Compute checksum and compare with value given by AUXIP
+		// Compute checksum and compare with value given by external archive
 		String md5Hash = MD5Util.md5Digest(productFile);
 		if (!md5Hash.equalsIgnoreCase(restProductFile.getChecksum())) {
 			throw new IOException(logger.log(AipClientMessage.CHECKSUM_MISMATCH,
@@ -1017,8 +1017,8 @@ public class DownloadManager {
 		
 		// Set ingestion-specific attributes
 		ingestorProduct.setSourceStorageType(StorageType.POSIX.toString());
-		ingestorProduct.setMountPoint(config.getIngestorMountPoint());
-		ingestorProduct.setFilePath(config.getIngestorSourceDir());
+		ingestorProduct.setMountPoint(config.getStorageMgrMountPoint());
+		ingestorProduct.setFilePath(config.getStorageMgrSourceDir());
 		ingestorProduct.setProductFileName(restProductFile.getProductFileName());
 		ingestorProduct.setFileSize(restProductFile.getFileSize());
 		ingestorProduct.setChecksum(restProductFile.getChecksum());

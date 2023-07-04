@@ -168,11 +168,24 @@ services:
     platform: linux/amd64
     volumes:
       - /opt/prosEO/log:/proseo/log
+      - /opt/prosEO/data/transfer:/proseo/transfer
     ports:
       - "8092:8080"
     depends_on:
       - proseo-user-mgr
       - proseo-ingestor
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-archive-mgr:
+    image: ${REGISTRY_URL}/proseo-archive-mgr:${VERSION}-proseo
+    platform: linux/amd64
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8093:8080"
     logging:
       driver: local
       options:

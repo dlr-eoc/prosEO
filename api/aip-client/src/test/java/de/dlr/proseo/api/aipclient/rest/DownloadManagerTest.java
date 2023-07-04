@@ -766,11 +766,11 @@ public class DownloadManagerTest {
 		setUpMockLtaService();
 		
 		// Ensure target directory for product downloads exists
-		FileUtils.forceMkdir(new File(config.getIngestorSourceDir()));
+		FileUtils.forceMkdir(new File(config.getClientTargetDir()));
 		
 		// Ensure files to download are not present
-		Files.deleteIfExists(Path.of(config.getIngestorSourceDir(), TEST_FILENAME_1));
-		Files.deleteIfExists(Path.of(config.getIngestorSourceDir(), TEST_FILENAME_2));
+		Files.deleteIfExists(Path.of(config.getClientTargetDir(), TEST_FILENAME_1));
+		Files.deleteIfExists(Path.of(config.getClientTargetDir(), TEST_FILENAME_2));
 		
 		// Mock authentication
 		Authentication auth = new TestingAuthenticationToken(testConfig.getTestMission() + "-" + TEST_USER, TEST_PASSWORD);
@@ -794,8 +794,8 @@ public class DownloadManagerTest {
 		mockLtaService.stop();
 		
 		// Remove downloaded files
-		Files.deleteIfExists(Path.of(config.getIngestorSourceDir(), TEST_FILENAME_1));
-		Files.deleteIfExists(Path.of(config.getIngestorSourceDir(), TEST_FILENAME_2));
+		Files.deleteIfExists(Path.of(config.getClientTargetDir(), TEST_FILENAME_1));
+		Files.deleteIfExists(Path.of(config.getClientTargetDir(), TEST_FILENAME_2));
 
 	}
 
@@ -879,7 +879,7 @@ public class DownloadManagerTest {
 			// Wait for download completion and check existence of file
 			logger.info("Waiting for product download ...");
 			Thread.sleep(2000L);
-			assertTrue("File " + TEST_FILENAME_1 + " not present", Files.exists(Path.of(config.getIngestorSourceDir(), TEST_FILENAME_1)));
+			assertTrue("File " + TEST_FILENAME_1 + " not present", Files.exists(Path.of(config.getClientTargetDir(), TEST_FILENAME_1)));
 			
 		} catch (Exception e) {
 			fail("Unexpected exception when testing successful product download: " + e.getClass().getName() + "/" + e.getMessage());
@@ -1012,7 +1012,7 @@ public class DownloadManagerTest {
 			
 			// Wait for download completion and check existence of file
 			Thread.sleep(2000L);
-			assertTrue("File " + TEST_FILENAME_1 + " not present", Files.exists(Path.of(config.getIngestorSourceDir(), TEST_FILENAME_1)));
+			assertTrue("File " + TEST_FILENAME_1 + " not present", Files.exists(Path.of(config.getClientTargetDir(), TEST_FILENAME_1)));
 			
 		} catch (Exception e) {
 			fail("Unexpected exception when testing successful product download: " + e.getClass().getName() + "/" + e.getMessage());
@@ -1137,8 +1137,8 @@ public class DownloadManagerTest {
 			
 			// Wait for download completion and check existence of file
 			Thread.sleep(2000L);
-			assertTrue("File " + TEST_FILENAME_1 + " not present", Files.exists(Path.of(config.getIngestorSourceDir(), TEST_FILENAME_1)));
-			assertTrue("File " + TEST_FILENAME_2 + " not present", Files.exists(Path.of(config.getIngestorSourceDir(), TEST_FILENAME_2)));
+			assertTrue("File " + TEST_FILENAME_1 + " not present", Files.exists(Path.of(config.getClientTargetDir(), TEST_FILENAME_1)));
+			assertTrue("File " + TEST_FILENAME_2 + " not present", Files.exists(Path.of(config.getClientTargetDir(), TEST_FILENAME_2)));
 			
 		} catch (Exception e) {
 			fail("Unexpected exception when testing successful product download: " + e.getClass().getName() + "/" + e.getMessage());
