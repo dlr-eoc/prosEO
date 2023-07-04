@@ -1,7 +1,14 @@
+/**
+ * ProcessorService.java
+ *
+ * (C) 2020 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ui.gui.service;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -17,17 +24,28 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.ui.gui.GUIAuthenticationToken;
 import de.dlr.proseo.ui.gui.GUIConfiguration;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
+/**
+ * A bridge between the GUI frontend and the backend services related to processors. It provides methods to interact with
+ * processor-related functionalities by making HTTP requests to the appropriate endpoints.
+ *
+ * @author David Mazo
+ */
 @Service
 public class ProcessorService {
+
+	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProcessorService.class);
+
 	/** The GUI configuration */
 	@Autowired
 	private GUIConfiguration config;
@@ -36,97 +54,124 @@ public class ProcessorService {
 	 * Gets a processor class by its name
 	 *
 	 * @param processorName the processor class name to search for
-	 * @return list of processor classes
+	 * @return a Mono\<ClientResponse\> providing access to the response status and headers, and as well as methods to consume the
+	 *         response body
 	 */
 	public Mono<ClientResponse> get(String processorName) {
+
+		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
-		String uri = config.getProcessorManager() + "/processorclasses";
-		String divider = "?";
-		if (null != mission && !mission.isEmpty()) {
-			uri += divider + "mission=" + mission;
-			divider = "&";
-		}
-		if (null != processorName && !processorName.isEmpty()) {
-			uri += divider + "processorName=" + processorName;
-			divider = "&";
-		}
+
+		// Build the request URI
+		URI uri = UriComponentsBuilder.fromUriString(config.getProcessorManager())
+			.path("/processorclasses")
+			.queryParam("mission", Optional.ofNullable(mission.trim()).filter(s -> !s.isEmpty()))
+			.queryParam("processorName", Optional.ofNullable(processorName.trim()).filter(s -> !s.isEmpty()))
+			.build()
+			.toUri();
 		logger.trace("URI " + uri);
+
+		// Create and configure a WebClient to make a HTTP request to the URI
 		Builder webclient = WebClient.builder()
 			.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
 				logger.trace("response:{}", res.status());
 				return HttpResponseStatus.FOUND.equals(res.status());
 			})));
+
 		logger.trace("Found authentication: " + auth);
 		logger.trace("... with username " + auth.getName());
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
+
 		return webclient.build()
 			.get()
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
 			.exchange();
-
 	}
 
 	/**
 	 * Get a processor class by its database ID
 	 *
-	 * @param id the database ID to search for
-	 * @return a processor class
+	 * @param processorId the database ID to search for
+	 * @return a Mono\<ClientResponse\> providing access to the response status and headers, and as well as methods to consume the
+	 *         response body
 	 */
-	public Mono<ClientResponse> getById(String id) {
-		String uri = config.getProcessorManager() + "/processorclasses";
-		if (null != id) {
-			uri += id;
-		}
+	public Mono<ClientResponse> getById(String processorId) {
+
+		// Provide authentication
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) (SecurityContextHolder.getContext().getAuthentication());
+
+		// Build the request URI
+		URI uri = UriComponentsBuilder.fromUriString(config.getProcessorManager())
+			.path("/processorclasses")
+			.path("/" + Optional.ofNullable(processorId.trim()).filter(s -> !s.isEmpty()).orElse("0"))
+			.build()
+			.toUri();
 		logger.trace("URI " + uri);
+
+		// Create and configure a WebClient to make a HTTP request to the URI
 		Builder webclient = WebClient.builder()
 			.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
 				logger.trace("response:{}", res.status());
 				return HttpResponseStatus.FOUND.equals(res.status());
 			})));
-		GUIAuthenticationToken auth = (GUIAuthenticationToken) (SecurityContextHolder.getContext().getAuthentication());
+
 		return webclient.build()
 			.get()
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
 			.exchange();
-
 	}
 
 	/**
-	 * TODO Create a processor class
+	 * Create a processor class
 	 *
-	 * @param mission                    the mission of the new processor class
-	 * @param processorClassName         the name of the new processor class
-	 * @param processorClassProductClass of the new Processor-Class
-	 * @return response from query
+	 * @param missionCode    the code of the mission to which the new processor class belongs
+	 * @param processorName  user-defined processor class name (Processor_Name from Generic IPF Interface Specifications, sec.
+	 *                       4.1.3), unique within a mission
+	 * @param productClasses the product classes a processor of this class can generate
+	 * @return a Mono\<ClientResponse\> providing access to the response status and headers, and as well as methods to consume the
+	 *         response body
+	 *
+	 *         TODO verify
 	 */
-	public Mono<ClientResponse> post(String mission, String processorClassName, String[] processorClassProductClass) {
+	public Mono<ClientResponse> post(String missionCode, String processorName, String[] productClasses) {
+		logger.trace(">>>>>ResponseSpec POST: {}, {}, {},", missionCode, processorName, productClasses);
 
-		logger.trace(">>>>>ResponseSpec POST: {}, {}, {},", mission, processorClassName, processorClassProductClass);
-		String uri = "";
+		// Provide authentication
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+
+		// Build the request URI
+		URI uri = UriComponentsBuilder.fromUriString(config.getProcessorManager()).path("/processorclasses").build().toUri();
+		logger.trace("URI " + uri);
+
+		// Build the request body
 		Map<String, Object> map = new HashMap<>();
-		if (null != mission && null != processorClassName && null != processorClassProductClass) {
-			uri += config.getProcessorManager() + "/processorclasses";
-			logger.trace("URI " + uri);
-			map.put("missionCode", mission);
-			map.put("processorName", processorClassName);
-			map.put("productClasses", processorClassProductClass);
-			logger.trace(">>PRODUCTCLASSES TO STRING: {}", processorClassProductClass.toString());
+		if (null != missionCode && null != processorName && null != productClasses) {
+			map.put("missionCode", missionCode);
+			map.put("processorName", processorName);
+			map.put("productClasses", productClasses);
 
-			logger.trace(">>PARAMETERS IN POST: {}, {}, {},", mission, processorClassName, processorClassProductClass);
+			logger.trace(">>PRODUCTCLASSES TO STRING: {}", productClasses.toString());
+			logger.trace(">>PARAMETERS IN POST: {}, {}, {},", missionCode, processorName, productClasses);
 			logger.trace(">>>MAP AFTER PARAMETERS: {}", map);
+		} else {
+			throw new IllegalArgumentException(logger.log(UIMessage.PROCESSOR_DATA_INVALID,
+					"Either missionCode, or processorName, or productClasses are missing."));
 		}
+
+		// Create and configure a WebClient to make a HTTP request to the URI
 		Builder webclient = WebClient.builder()
 			.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
 				logger.trace("response:{}" + res);
 				return HttpResponseStatus.FOUND.equals(res.status());
 			})));
 
-		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+		// The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
+		// operations on it, such as extracting the response body or handling any errors that may occur during the request.
 		return webclient.build()
 			.post()
 			.uri(uri)
@@ -135,35 +180,53 @@ public class ProcessorService {
 			.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
 			.accept(MediaType.APPLICATION_JSON)
 			.exchange();
-
 	}
 
 	/**
-	 * TODO Update a processor class by id
+	 * Update a processor class by id
 	 *
-	 * @param id                         database ID of processor class to update
-	 * @param mission                    mission of the processor class
-	 * @param processorClassName         name of the processor class
-	 * @param processorClassProductClass array of product classes the processor class is able to create
+	 * @param processorClassId database ID of processor class to update
+	 * @param missionCode      the code of the mission to which the new processor class belongs
+	 * @param processorName    user-defined processor class name (Processor_Name from Generic IPF Interface Specifications, sec.
+	 *                         4.1.3), unique within a mission
+	 * @param productClasses   the product classes a processor of this class can generate
 	 * @return the updated processor class
+	 *
+	 *         TODO verify
 	 */
-	public ResponseSpec patch(String id, String mission, String processorClassName, String[] processorClassProductClass) {
-		String uri = "";
+	public ResponseSpec patch(String processorClassId, String missionCode, String processorName, String[] productClasses) {
+
+		// Provide authentication
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+
+		// Build the request URI
+		URI uri = UriComponentsBuilder.fromUriString(config.getProcessorManager())
+			.path("/processorclasses")
+			.path("/" + Optional.ofNullable(processorClassId.trim())
+				.filter(s -> !s.isEmpty())
+				.orElseThrow(() -> new IllegalArgumentException(
+						logger.log(UIMessage.PARAMETER_MISSING, "processor class id", "processor modification"))))
+			.build()
+			.toUri();
+		logger.trace("URI " + uri);
+
+		// Build the request body
 		MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-		if (null != mission && null != processorClassName && null != processorClassProductClass && null != id) {
-			uri += config.getProcessorManager() + id;
-			logger.trace("URI " + uri);
-			map.add("missionCode", mission);
-			map.add("processorName", processorClassName);
-			map.add("productClasses", processorClassProductClass.toString());
+		if (null != missionCode && null != processorName && null != productClasses && null != processorClassId) {
+			map.add("missionCode", missionCode);
+			map.add("processorName", processorName);
+			map.add("productClasses", productClasses.toString());
 		}
+
+		// Create and configure a WebClient to make a HTTP request to the URI
 		Builder webclient = WebClient.builder()
 			.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
 				logger.trace("response:{}" + res);
 				return HttpResponseStatus.FOUND.equals(res.status());
 			})));
 
-		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+		// The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
+		// operations on it, such as extracting the response body or handling any errors that may occur during the request.
 		return webclient.build()
 			.patch()
 			.uri(uri)
@@ -171,27 +234,40 @@ public class ProcessorService {
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
 			.retrieve();
-
 	}
 
 	/**
-	 * TODO Delete a processor class by id
+	 * Delete a processor class by id
 	 *
 	 * @param id of Processor Class to be removed
-	 * @return response from query
+	 * @return a ResponseSpec that the caller can subscribe to, e.g. for extracting the response body or handling errors
+	 * 
+	 *         TODO verify
 	 */
-	public ResponseSpec delete(String id) {
-		String uri = config.getProcessorManager();
-		if (null != id) {
-			uri += id;
-			logger.trace("URI" + uri);
-		}
+	public ResponseSpec delete(String processorClassId) {
+
+		// Provide authentication
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+
+		// Build the request URI
+		URI uri = UriComponentsBuilder.fromUriString(config.getProcessorManager())
+			.path("/processorclasses")
+			.path("/" + Optional.ofNullable(processorClassId.trim())
+				.filter(s -> !s.isEmpty())
+				.orElseThrow(() -> new IllegalArgumentException(
+						logger.log(UIMessage.PARAMETER_MISSING, "processor class id", "processor deletion"))))
+			.build()
+			.toUri();
+		logger.trace("URI " + uri);
+
+		// Create and configure a WebClient to make a HTTP request to the URI
 		Builder webclient = WebClient.builder()
 			.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
 				logger.trace("response:{}" + res);
 				return HttpResponseStatus.FOUND.equals(res.status());
 			})));
-		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+
+		// The returned ResponseSpec can be subscribed to, e.g. for extracting the response body or handling errors
 		return webclient.build()
 			.delete()
 			.uri(uri)
@@ -201,29 +277,38 @@ public class ProcessorService {
 	}
 
 	/**
-	 * TODO Get a processor by processor class name and processor version
+	 * Get a processor by processor class name and processor version
 	 *
-	 * @param mission          the mission of the processor
+	 * @param missionCode      the mission of the processor
 	 * @param processorName    the processor class name
 	 * @param processorVersion the processor version
-	 * @return responseSpec for processors
+	 * @return a ResponseSpec that the caller can subscribe to, e.g. for extracting the response body or handling errors
+	 * 
+	 *         TODO verify
 	 */
-	public ResponseSpec get(String mission, String processorName, String processorVersion) {
-		String uri = config.getProcessorManager();
-		if (null != mission && null != processorName && null != processorVersion) {
-			uri += "?mission=" + mission + "&processorName=" + processorName + "%processorVersion=" + processorVersion;
-		} else if (null != processorName) {
-			uri += "?processorName=" + processorName;
-		} else if (null != mission) {
-			uri += "?mission=" + mission;
-		}
+	public ResponseSpec get(String missionCode, String processorName, String processorVersion) {
+
+		// Provide authentication
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+
+		// Build the request URI
+		URI uri = UriComponentsBuilder.fromUriString(config.getProcessorManager())
+			.path("/processorclasses")
+			.queryParam("mission", Optional.ofNullable(missionCode.trim()).filter(s -> !s.isEmpty()).orElse(null))
+			.queryParam("processorName", Optional.ofNullable(processorName.trim()).filter(s -> !s.isEmpty()).orElse(null))
+			.queryParam("processorVersion", Optional.ofNullable(processorVersion.trim()).filter(s -> !s.isEmpty()).orElse(null))
+			.build()
+			.toUri();
 		logger.trace("URI " + uri);
+
+		// Create and configure a WebClient to make a HTTP request to the URI
 		Builder webclient = WebClient.builder()
 			.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
 				logger.trace("response:{}", res.status());
 				return HttpResponseStatus.FOUND.equals(res.status());
 			})));
-		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+
+		// The returned ResponseSpec can be subscribed to, e.g. for extracting the response body or handling errors
 		ResponseSpec responseSpec = webclient.build()
 			.get()
 			.uri(uri)
@@ -231,7 +316,6 @@ public class ProcessorService {
 			.accept(MediaType.APPLICATION_JSON)
 			.retrieve();
 		return responseSpec;
-
 	}
 
 }
