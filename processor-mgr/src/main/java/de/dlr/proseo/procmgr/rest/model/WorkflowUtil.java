@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.procmgr.rest.model;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -13,6 +14,7 @@ import de.dlr.proseo.logging.messages.ProcessorMgrMessage;
 import de.dlr.proseo.model.Workflow;
 import de.dlr.proseo.model.WorkflowOption;
 import de.dlr.proseo.model.WorkflowOption.WorkflowOptionType;
+import de.dlr.proseo.model.enums.OrderSlicingType;
 
 /**
  * Utility methods for workflows, i.e. for conversion between prosEO model and
@@ -56,6 +58,9 @@ public class WorkflowUtil {
 		if (null != modelWorkflow.getUuid()) {
 			restWorkflow.setUuid(modelWorkflow.getUuid().toString());
 		}
+		if (null != modelWorkflow.getEnabled()) {
+			restWorkflow.setEnabled(modelWorkflow.getEnabled());
+		}
 		if (null != modelWorkflow.getConfiguredProcessor()) {
 			restWorkflow.setConfiguredProcessor(modelWorkflow.getConfiguredProcessor().getIdentifier());
 			restWorkflow.setMissionCode(
@@ -66,6 +71,21 @@ public class WorkflowUtil {
 		}
 		if (null != modelWorkflow.getOutputProductClass()) {
 			restWorkflow.setOutputProductClass(modelWorkflow.getOutputProductClass().getProductType());
+		}
+		if (null != modelWorkflow.getOutputFileClass()) {
+			restWorkflow.setOutputFileClass(modelWorkflow.getOutputFileClass());
+		}
+		if (null != modelWorkflow.getProcessingMode()) {
+			restWorkflow.setProcessingMode(modelWorkflow.getProcessingMode());
+		}
+		if (null != modelWorkflow.getSliceDuration()) {
+			restWorkflow.setSliceDuration(modelWorkflow.getSliceDuration().toSeconds());
+		}
+		if (null != modelWorkflow.getSliceOverlap()) {
+			restWorkflow.setSliceOverlap(modelWorkflow.getSliceOverlap().toSeconds());
+		}
+		if (null != modelWorkflow.getSlicingType()) {
+			restWorkflow.setSlicingType(modelWorkflow.getSlicingType().toString());
 		}
 
 		if (null != modelWorkflow.getWorkflowOptions() && !modelWorkflow.getWorkflowOptions().isEmpty()) {
@@ -102,6 +122,10 @@ public class WorkflowUtil {
 				restWorkflow.getWorkflowOptions().add(restOption);
 			}
 		}
+		
+		//TODO class output parameters
+		//TODO input filters
+		//TODO output parameters
 
 		return restWorkflow;
 	}
@@ -140,6 +164,24 @@ public class WorkflowUtil {
 		}
 		if (null != restWorkflow.getUuid()) {
 			modelWorkflow.setUuid(UUID.fromString(restWorkflow.getUuid()));
+		}
+		if (null != restWorkflow.getEnabled()) {
+			modelWorkflow.setEnabled(restWorkflow.getEnabled());
+		}
+		if (null != restWorkflow.getOutputFileClass()) {
+			modelWorkflow.setOutputFileClass(restWorkflow.getOutputFileClass());
+		}
+		if (null != restWorkflow.getProcessingMode()) {
+			modelWorkflow.setProcessingMode(restWorkflow.getProcessingMode());
+		}
+		if (null != restWorkflow.getSliceDuration()) {
+			modelWorkflow.setSliceDuration(Duration.ofSeconds(restWorkflow.getSliceDuration()));
+		}
+		if (null != restWorkflow.getSliceOverlap()) {
+			modelWorkflow.setSliceOverlap(Duration.ofSeconds(restWorkflow.getSliceOverlap()));
+		}
+		if (null != restWorkflow.getSlicingType()) {
+			modelWorkflow.setSlicingType(OrderSlicingType.valueOf(restWorkflow.getSlicingType()));
 		}
 
 		if (null != restWorkflow.getWorkflowOptions() && !restWorkflow.getWorkflowOptions().isEmpty()) {
@@ -184,7 +226,11 @@ public class WorkflowUtil {
 				modelWorkflow.getWorkflowOptions().add(modelOption);
 			}
 		}
-
+		
+		//TODO class output parameters
+		//TODO input filters
+		//TODO output parameters
+		
 		return modelWorkflow;
 	}
 }

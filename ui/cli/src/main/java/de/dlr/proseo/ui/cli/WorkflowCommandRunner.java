@@ -19,7 +19,6 @@ import org.springframework.web.client.RestClientResponseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.rest.model.RestWorkflow;
 import de.dlr.proseo.model.rest.model.RestWorkflowOption;
@@ -354,14 +353,14 @@ public class WorkflowCommandRunner {
 			}
 		} else {
 			// Must be a list of workflows
-			String listFormat = "%s %s %s %s";
+			String listFormat = "%-20s %-10s %-25s %s";
 			System.out.println(String.format(listFormat, "Workflow name", "Version", "Output product class",
 					"Configured processor"));
 			for (Object resultObject : (new ObjectMapper()).convertValue(resultList, List.class)) {
 				if (resultObject instanceof Map) {
 					Map<?, ?> resultMap = (Map<?, ?>) resultObject;
 					System.out.println(
-							String.format(listFormat, resultMap.get("workflowName"), resultMap.get("workflowVersion"),
+							String.format(listFormat, resultMap.get("name"), resultMap.get("workflowVersion"),
 									resultMap.get("outputProductClass"), resultMap.get("configuredProcessor")));
 				}
 			}

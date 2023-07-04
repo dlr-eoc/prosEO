@@ -139,6 +139,9 @@ public class WorkflowMgrTest {
 				RepositoryService.getProductClassRepository().findByProductType(workflowData[4]).get(0));
 		workflow.setConfiguredProcessor(RepositoryService.getConfiguredProcessorRepository()
 				.findByMissionCodeAndIdentifier(testMissionData[0], workflowData[5]));
+		workflow.setEnabled(true);
+		workflow.setOutputFileClass("someOutputFileClass");
+		workflow.setProcessingMode("NRTI");
 
 		// save workflow in database
 		workflow = RepositoryService.getWorkflowRepository().save(workflow);
@@ -234,15 +237,17 @@ public class WorkflowMgrTest {
 		
 		// Count workflows and assert success.
 		assertEquals("Wrong workflow count.", "2",
-				workflowMgr.countWorkflows("UTM", null, null, null, null));
+				workflowMgr.countWorkflows("UTM", null, null, null, null, null));
 		assertEquals("Wrong workflow count.", "1",
-				workflowMgr.countWorkflows("UTM", testWorkflowData[0][0], null, null, null));
+				workflowMgr.countWorkflows("UTM", testWorkflowData[0][0], null, null, null, null));
 		assertEquals("Wrong workflow count.", "1",
-				workflowMgr.countWorkflows("UTM", null, testWorkflowData[0][2], null, null));
+				workflowMgr.countWorkflows("UTM", null, testWorkflowData[0][2], null, null, null));
 		assertEquals("Wrong workflow count.", "1",
-				workflowMgr.countWorkflows("UTM", null, null, testWorkflowData[0][4], null));
+				workflowMgr.countWorkflows("UTM", null, null, testWorkflowData[0][4], null, null));
 		assertEquals("Wrong workflow count.", "1",
-				workflowMgr.countWorkflows("UTM", null, null, null, testWorkflowData[0][5]));
+				workflowMgr.countWorkflows("UTM", null, null, null, testWorkflowData[0][5], null));
+		assertEquals("Wrong workflow count.", "2",
+				workflowMgr.countWorkflows("UTM", null, null, null, null, true));
 	}
 
 	/**
@@ -554,17 +559,19 @@ public class WorkflowMgrTest {
 		 * specifying additional parameters returns all workflows for the given mission.
 		 */
 		assertTrue("More or less workflows retrieved than expected.",
-				workflowMgr.getWorkflows(null, null, null, null, null, 0, 10).size() == 2);
+				workflowMgr.getWorkflows(null, null, null, null, null, null, 0, 10).size() == 2);
 		assertTrue("More or less workflows retrieved than expected.",
-				workflowMgr.getWorkflows(testMissionData[0], null, null, null, null, 0, 100).size() == 2);
+				workflowMgr.getWorkflows(testMissionData[0], null, null, null, null, null, 0, 100).size() == 2);
 		assertTrue("More or less workflows retrieved than expected.",
-				workflowMgr.getWorkflows(testMissionData[0], testWorkflowData[0][0], null, null, null, null, null).size() == 1);
+				workflowMgr.getWorkflows(testMissionData[0], testWorkflowData[0][0], null, null, null, null, null, null).size() == 1);
 		assertTrue("More or less workflows retrieved than expected.",
-				workflowMgr.getWorkflows(testMissionData[0], null, testWorkflowData[0][2], null, null, null, null).size() == 1);
+				workflowMgr.getWorkflows(testMissionData[0], null, testWorkflowData[0][2], null, null, null, null, null).size() == 1);
 		assertTrue("More or less workflows retrieved than expected.",
-				workflowMgr.getWorkflows(testMissionData[0], null, null, testWorkflowData[0][4], null, null, null).size() == 1);
+				workflowMgr.getWorkflows(testMissionData[0], null, null, testWorkflowData[0][4], null, null, null, null).size() == 1);
 		assertTrue("More or less workflows retrieved than expected.",
-				workflowMgr.getWorkflows(testMissionData[0], null, null, null, testWorkflowData[0][5], null, null).size() == 1);
+				workflowMgr.getWorkflows(testMissionData[0], null, null, null, testWorkflowData[0][5], null, null, null).size() == 1);		
+		assertTrue("More or less workflows retrieved than expected.",
+						workflowMgr.getWorkflows(null, null, null, null, null, true, null, null).size() == 2);
 	}
 
 }
