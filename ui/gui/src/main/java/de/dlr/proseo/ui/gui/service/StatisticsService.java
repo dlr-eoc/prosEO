@@ -1,7 +1,14 @@
+/**
+ * StatisticsService.java
+ *
+ * (C) 2020 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ui.gui.service;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -13,6 +20,7 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
@@ -23,10 +31,18 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
+/**
+ * A bridge between the GUI frontend and the backend services, providing methods to retrieve statistics related to job steps and
+ * orders by making HTTP requests to the appropriate endpoints
+ *
+ * @author Ernst Melchinger
+ */
 @Service
 public class StatisticsService {
 
+	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(StatisticsService.class);
+
 	/** The GUI configuration */
 	@Autowired
 	private GUIConfiguration config;
@@ -35,97 +51,110 @@ public class StatisticsService {
 	@Autowired
 	private ServiceConnection serviceConnection;
 
+	/**
+	 * Retrieves job steps based on a specified status and optional last parameter
+	 *
+	 * @param status the job step status
+	 * @param last
+	 * @return a Mono\<ClientResponse\> providing access to the response status and headers, and as well as methods to consume the
+	 *         response body
+	 */
 	public Mono<ClientResponse> getJobsteps(String status, Long last) {
+
+		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
-		String uri = config.getOrderManager() + "/orderjobsteps?status=" + status;
-		uri += "&mission=" + mission;
-		if (last != null && last > 0) {
-			uri += "&last=" + last;
-		}
+
+		// Build the request URI
+		URI uri = UriComponentsBuilder.fromUriString(config.getOrderManager())
+			.path("/orderjobsteps")
+			.queryParam("mission", mission)
+			.queryParam("status", Optional.ofNullable(status.trim()).filter(s -> !s.isEmpty()).orElse(null))
+			.queryParam("last", Optional.ofNullable(last).orElse(null))
+			.build()
+			.toUri();
 		logger.trace("URI " + uri);
-		Builder webclient = WebClient.builder()
+
+		// Create and configure a WebClient to make a HTTP request to the URI
+		Builder webClientBuilder = WebClient.builder()
 			.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
 				logger.trace("response:{}", res.status());
 				return HttpResponseStatus.FOUND.equals(res.status());
 			})));
+
 		logger.trace("Found authentication: " + auth);
 		logger.trace("... with username " + auth.getName());
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
-		return webclient.build()
+
+		// The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
+		// operations on it, such as extracting the response body or handling any errors that may occur during the request.
+		return webClientBuilder.build()
 			.get()
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
 			.exchange();
-
 	}
 
-	public String getOrderIdentifierOfJob(String id, GUIAuthenticationToken auth) {
-		String mission = auth.getMission();
+	/**
+	 * Retrieves the order identifier associated with a job based on its ID
+	 *
+	 * @param jobId the job id
+	 * @param auth  a GUIAuthenticationToken
+	 * @return the associated order identifier
+	 * @throws RestClientResponseException if the call to the order manager was unsuccessful
+	 * @throws RunTimeException            if a different error occurred
+	 */
+	public String getOrderIdentifierOfJob(String jobId, GUIAuthenticationToken auth)
+			throws RestClientResponseException, RuntimeException {
 
-		Object result = null;
-		String jobId = "";
-		try {
-			result = serviceConnection.getFromService(config.getOrderManager(), "/orderjobs/" + id, HashMap.class,
-					auth.getProseoName(), auth.getPassword());
-		} catch (RestClientResponseException e) {
-			String message = null;
-			switch (e.getRawStatusCode()) {
-			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.NO_MISSIONS_FOUND);
-				break;
-			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
-				break;
-			default:
-				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
-			}
-			System.err.println(message);
-			return jobId;
-		} catch (RuntimeException e) {
-			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
-			return jobId;
+		// Check arguments
+		if (null == jobId) {
+			throw new IllegalArgumentException(logger.log(UIMessage.NO_IDENTIFIER_GIVEN));
+		}
+		if (null == auth) {
+			throw new IllegalArgumentException(logger.log(UIMessage.AUTHENTICATION_MISSING));
 		}
 
-		if (result instanceof HashMap) {
-			jobId = (String) ((HashMap) result).get("orderIdentifier");
+		// Retrieve job with matching id
+		HashMap<?, ?> result = serviceConnection.getFromService(config.getOrderManager(), "/orderjobs/" + jobId, HashMap.class,
+				auth.getProseoName(), auth.getPassword());
+
+		// Check and return result
+		if (null == result || result.isEmpty()) {
+			throw new RuntimeException(logger.log(UIMessage.NO_ORDERS_FOUND));
 		}
-		return jobId;
+		return result.get("orderIdentifier").toString();
 	}
 
-	public String getOrderIdOfIdentifier(String id, GUIAuthenticationToken auth) {
-		Object result = null;
-		String jobId = "";
-		try {
-			result = serviceConnection.getFromService(config.getOrderManager(), "/orders?identifier=" + id, List.class,
-					auth.getProseoName(), auth.getPassword());
-		} catch (RestClientResponseException e) {
-			String message = null;
-			switch (e.getRawStatusCode()) {
-			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.NO_MISSIONS_FOUND);
-				break;
-			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
-				break;
-			default:
-				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
-			}
-			System.err.println(message);
-			return jobId;
-		} catch (RuntimeException e) {
-			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
-			return jobId;
+	/**
+	 * Retrieves the order ID based on its identifier
+	 *
+	 * @param identifier the order identifier
+	 * @param auth       a GUIAuthenticationToken
+	 * @return the order identifier
+	 * @throws RestClientResponseException if the call to the order manager was unsuccessful
+	 * @throws RunTimeException            if a different error occurred
+	 */
+	public String getOrderIdOfIdentifier(String identifier, GUIAuthenticationToken auth)
+			throws RestClientResponseException, RuntimeException {
+
+		// Check arguments
+		if (null == identifier) {
+			throw new IllegalArgumentException(logger.log(UIMessage.NO_IDENTIFIER_GIVEN));
 		}
-		if (result instanceof List) {
-			List res = (List) result;
-			if (res.size() == 1) {
-				jobId = ((HashMap) (res.get(0))).get("id").toString();
-			}
+		if (null == auth) {
+			throw new IllegalArgumentException(logger.log(UIMessage.AUTHENTICATION_MISSING));
 		}
-		return jobId;
+
+		// Retrieve orders with matching identifier
+		List<?> result = serviceConnection.getFromService(config.getOrderManager(), "/orders?identifier=" + identifier, List.class,
+				auth.getProseoName(), auth.getPassword());
+
+		// Check and return result
+		if (null == result || result.isEmpty()) {
+			throw new RuntimeException(logger.log(UIMessage.NO_ORDERS_FOUND));
+		}
+		return ((HashMap<?, ?>) result.get(0)).get("id").toString();
 	}
 }

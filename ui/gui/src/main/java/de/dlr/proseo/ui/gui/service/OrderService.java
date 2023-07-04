@@ -303,9 +303,15 @@ public class OrderService {
 	 *
 	 * @param orderId the order id
 	 * @return the order state in string format
-	 * @throws RestClientResponseException if an error occurred
+	 * @throws RestClientResponseException if the call to the order manager was unsuccessful
+	 * @throws RunTimeException            if a different error occurred
 	 */
-	public String getOrderState(String orderId) throws RestClientResponseException {
+	public String getOrderState(String orderId) throws RestClientResponseException, RuntimeException {
+
+		// Check argument
+		if (null == orderId) {
+			throw new IllegalArgumentException(logger.log(UIMessage.NO_IDENTIFIER_GIVEN));
+		}
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
