@@ -1,6 +1,6 @@
 /**
  * ProcessorManagerApplication.java
- * 
+ *
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 
@@ -15,14 +15,13 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 /**
  * prosEO Processor Manager application
- * 
+ *
  * @author Dr. Thomas Bassler
- * 
  */
 @Configuration
 @EnableAutoConfiguration
 @EnableConfigurationProperties
-@ComponentScan(basePackages={"de.dlr.proseo"})
+@ComponentScan(basePackages = { "de.dlr.proseo" })
 @EnableJpaRepositories(basePackages = { "de.dlr.proseo.model.dao" })
 public class ProcessorManagerApplication {
 

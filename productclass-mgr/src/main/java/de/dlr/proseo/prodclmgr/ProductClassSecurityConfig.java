@@ -1,6 +1,6 @@
 /**
  * ProductClassSecurityConfig.java
- * 
+ *
  * (c) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.prodclmgr;
@@ -26,7 +26,7 @@ import de.dlr.proseo.model.enums.UserRole;
 
 /**
  * Security configuration for prosEO ProductClassManager module
- * 
+ *
  * @author Dr. Thomas Bassler
  */
 @Configuration
@@ -36,31 +36,35 @@ public class ProductClassSecurityConfig extends WebSecurityConfigurerAdapter {
 	/** Datasource as configured in the application properties */
 	@Autowired
 	private DataSource dataSource;
-	
+
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductClassSecurityConfig.class);
-	
+
 	/**
 	 * Set the ProductClassManager security options
-	 * 
+	 *
 	 * @param http the HTTP security object
 	 */
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http
-			.httpBasic()
-				.and()
+		http.httpBasic()
+			.and()
 			.authorizeRequests()
-				.antMatchers("/**/actuator/health").permitAll()
-				.antMatchers(HttpMethod.GET).hasAnyRole(UserRole.PRODUCTCLASS_READER.toString())
-				.anyRequest().hasAnyRole(UserRole.PRODUCTCLASS_MGR.toString())
-				.and()
-			.csrf().disable(); // Required for POST requests (or configure CSRF)
+			.antMatchers("/**/actuator/health")
+			.permitAll()
+			.antMatchers(HttpMethod.GET)
+			.hasAnyRole(UserRole.PRODUCTCLASS_READER.toString())
+			.anyRequest()
+			.hasAnyRole(UserRole.PRODUCTCLASS_MGR.toString())
+			.and()
+			.csrf()
+			.disable(); // Required for POST requests (or configure CSRF)
 	}
 
 	/**
-	 * Initialize the users, passwords and roles for the ProductClassManager from the prosEO database
-	 * 
+	 * Initialize the users, passwords and roles for the ProductClassManager from
+	 * the prosEO database
+	 *
 	 * @param builder to manage authentications
 	 * @throws Exception if anything goes wrong with JDBC authentication
 	 */
@@ -73,19 +77,21 @@ public class ProductClassSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	/**
 	 * Provides the default password encoder for prosEO (BCrypt)
-	 * 
+	 *
 	 * @return a BCryptPasswordEncoder
 	 */
 	@Bean
 	public PasswordEncoder passwordEncoder() {
-	    return new BCryptPasswordEncoder();
+		return new BCryptPasswordEncoder();
 	}
 
 	/**
-	 * Provides the default user details service for prosEO (based on the standard data model for users and groups)
-	 * 
+	 * Provides the default user details service for prosEO (based on the standard
+	 * data model for users and groups)
+	 *
 	 * @return a JdbcDaoImpl object
 	 */
+	@Override
 	@Bean
 	public UserDetailsService userDetailsService() {
 		logger.log(GeneralMessage.INITIALIZING_USER_DETAILS_SERVICE, dataSource);
@@ -93,7 +99,7 @@ public class ProductClassSecurityConfig extends WebSecurityConfigurerAdapter {
 		JdbcDaoImpl jdbcDaoImpl = new JdbcDaoImpl();
 		jdbcDaoImpl.setDataSource(dataSource);
 		jdbcDaoImpl.setEnableGroups(true);
-		
+
 		return jdbcDaoImpl;
 	}
 }

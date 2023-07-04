@@ -7,8 +7,7 @@ mediaType: application/json
 
 securitySchemes:
   basicAuth:
-    description: Each request must contain the headers necessary for
-                 basic authentication
+    description: Each request must contain the headers necessary for basic authentication
     type: Basic Authentication
     describedBy:
       headers:
@@ -41,46 +40,102 @@ types:
 resourceTypes:
   standard:
     get?:
-      responses:          
-        400:
-          description: |
-            The request sent to the server contains data which is not as expected e.g. invalid location URI
+      responses:
+        403:
+          description: A cross-mission data access was attempted.
           headers:
             Warning: !include types/error.raml
         404:
-          description: |
-            The requested resource was not found                     
+          description: The requested resource was not found.
           headers:
             Warning: !include types/error.raml
     put?:
-      responses:          
+      responses:
+        400:
+          description: The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
+        403:
+          description: A cross-mission data access was attempted.          
+          headers:
+            Warning: !include types/error.raml
         404:
-          description: |
-            The requested resource on which the modification is being attempted was not found              
+          description: The requested resource was not found.
+          headers:
+            Warning: !include types/error.raml
+    post?:
+      responses:
+        400:
+          description: The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
+        403:
+          description: A cross-mission data access was attempted.          
+          headers:
+            Warning: !include types/error.raml  
+    patch?:
+      responses:
+        400:
+          description: The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
+        403:
+          description: A cross-mission data access was attempted.
+          headers:
+            Warning: !include types/error.raml
+        404:
+          description: The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
+        409:
+          description: A concurrent modification was attempted.
           headers:
             Warning: !include types/error.raml
     delete?:
-      responses:          
+      responses:
+        304:
+          description: The resource could not be deleted.
+          headers:
+            Warning: !include types/error.raml
+        403:
+          description: A cross-mission data access was attempted.          
+          headers:
+            Warning: !include types/error.raml
         404:
-          description: | 
-            The requested resource to delete was not found 
+          description: The requested resource to delete was not found.
           headers:
             Warning: !include types/error.raml
               
 /processorclasses:
   type: standard
   get:
-    description: Get processor classes by mission and name
+    description: |
+      Get processor classes by mission and name
+
+      @param mission       the mission code (optional)
+      @param processorName the processor name (optional)
+      @param recordFrom    first record of filtered and ordered result to return
+      @param recordTo      last record of filtered and ordered result to return
+      @return HTTP status "OK" and a list of Json objects representing processor classes satisfying the search criteria or HTTP
+              status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "NOT_FOUND" and
+              an error message, if no processor classes matching the search criteria were found HTTP status "TOO MANY REQUESTS" if
+              the result list exceeds a configured maximum
     displayName: getProcessorClasses
     queryParameters:
-      mission?: string
-      processorName?: string
+      mission?: 
+        type: string
+        description: the mission code
+      processorName?: 
+        type: string
+        description: the processor name
       recordFrom?: 
         type: integer
         format: int32
+        description: first record of filtered and ordered result to return
       recordTo?:
         type: integer
         format: int32
+        description: last record of filtered and ordered result to return
     responses:
       200:
         body:
@@ -88,7 +143,13 @@ resourceTypes:
             type: RestProcessorClass[]
             example: !include ../../../../../model/src/main/resources/raml/examples/processorclass-list.json
   post:
-    description: Create a new processor class
+    description: |
+      Create a new processor class
+
+      @param restProcessorClass a Json representation of the new processor class
+      @return HTTP status "CREATED" and a response containing a Json object corresponding to the processor class after persistence
+              (with ID and version for all contained objects) or HTTP status "FORBIDDEN" and an error message, if a cross-mission
+              data access was attempted, or HTTP status "BAD_REQUEST", if any of the input data was invalid
     displayName: createProcessorClass
     body:
       application/json:
@@ -102,11 +163,21 @@ resourceTypes:
             example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
   /count:
     get:
-      description: Count the processor classes with the given mission code and processor name
+      description: |
+        Count the processor classes matching the specified mission and processor name.
+
+        @param mission              the mission code
+        @param processorName        the processor name
+        @return the number of matching configurations as a String (may be zero) or HTTP status "FORBIDDEN" and an error message, if a
+                cross-mission data access was attempted
       displayName: countProcessorClasses
       queryParameters:
-        missionCode?: string
-        processorName?: string
+        mission?: 
+          type: string
+          description: the mission code
+        processorName?: 
+          type: string
+          description: the processor name
       responses:
         200:
           body:
@@ -117,7 +188,14 @@ resourceTypes:
         type: integer
         format: long
     get:
-      description: Get a processor class by ID
+      description: |
+        Get a processor class by ID
+
+        @param id the processor class ID
+        @return HTTP status "OK" and a Json object corresponding to the processor class found or HTTP status "BAD_REQUEST" and an
+                error message, if no processor class ID was given, or HTTP status "FORBIDDEN" and an error message, if a
+                cross-mission data access was attempted, or HTTP status "NOT_FOUND" and an error message, if no processor class with
+                the given ID exists
       displayName: getProcessorClassById
       responses:
         200:
@@ -125,8 +203,22 @@ resourceTypes:
             application/json:
               type: RestProcessorClass
               example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
+        400:
+          description: The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
     patch:
-      description: Update a processor class by ID
+      description: |
+        Update a processor class by ID
+
+        @param id                 the ID of the processor class to update
+        @param restProcessorClass a Json object containing the modified (and unmodified) attributes
+        @return HTTP status "OK" and a response containing a Json object corresponding to the processor class after modification
+                (with ID and version for all contained objects) or HTTP status "NOT_MODIFIED" and the unchanged product, if no
+                attributes were actually changed, or HTTP status "NOT_FOUND" and an error message, if no processor class with the
+                given ID exists, or HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or HTTP
+                status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "CONFLICT"and
+                an error message, if the processor class has been modified since retrieval by the client
       displayName: modifyProcessorClass
       body:
         application/json:
@@ -144,7 +236,14 @@ resourceTypes:
               type: RestProcessorClass
               example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
     delete:
-      description: Delete a processor class by ID
+      description: |
+        Delete a processor class by ID
+
+        @param id the ID of the processor class to delete
+        @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or HTTP status "NOT_FOUND", if the
+                processor class did not exist, or HTTP status "NOT_MODIFIED", if the deletion was unsuccessful, or HTTP status
+                "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "BAD_REQUEST", if the
+                processor class ID was not given, or if dependent objects exist
       displayName: deleteProcessorClassById
       responses:
         204:
@@ -152,18 +251,37 @@ resourceTypes:
 /processors:
   type: standard
   get:
-    description: Get processors by mission, name and version
+    description: |
+      Get processors by mission, name and version (user-defined version, not database version)
+
+      @param mission          the mission code
+      @param processorName    the name of the processor (class)
+      @param processorVersion the processor version
+      @param recordFrom    first record of filtered and ordered result to return
+      @param recordTo      last record of filtered and ordered result to return
+      @return HTTP status "OK" and a list of Json objects representing processors satisfying the search criteria or HTTP status
+              "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "NOT_FOUND" and an
+              error message, if no processors matching the search criteria were found, or HTTP status "TOO MANY REQUESTS" if the
+              result list exceeds a configured maximum
     displayName: getProcessors
     queryParameters:
-      mission?: string
-      processorName?: string
-      processorVersion?: string
+      mission?: 
+        type: string
+        description: the mission code
+      processorName?: 
+        type: string
+        description: the name of the processor (class)
+      processorVersion?: 
+        type: string
+        description: the processor version
       recordFrom?: 
         type: integer
         format: int32
+        description: first record of filtered and ordered result to return
       recordTo?:
         type: integer
         format: int32
+        description: last record of filtered and ordered result to return
     responses:
       200:
         body:
@@ -171,7 +289,13 @@ resourceTypes:
             type: RestProcessor[]
             example: !include ../../../../../model/src/main/resources/raml/examples/processor-list.json
   post:
-    description: Create a new processor
+    description: |
+      Create a new processor (version)
+
+      @param restProcessor a Json representation of the new processor
+      @return HTTP status "CREATED" and a response containing a Json object corresponding to the processor after persistence (with
+              ID and version for all contained objects) or HTTP status "FORBIDDEN" and an error message, if a cross-mission data
+              access was attempted, or HTTP status "BAD_REQUEST", if any of the input data was invalid
     displayName: createProcessor
     body:
       application/json:
@@ -185,12 +309,25 @@ resourceTypes:
             example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
   /count:
     get:
-      description: Count the processors with the given mission code, processor name and processor version
+      description: |
+        Count the processors matching the specified mission, processor name, and processor version.
+
+        @param mission          the mission code
+        @param processorName    the processor name
+        @param processorVersion the processor version
+        @return the number of matching processors as a String (may be zero) or HTTP status "FORBIDDEN" and an error message, if a
+                cross-mission data access was attempted
       displayName: countProcessors
       queryParameters:
-        missionCode?: string
-        processorName?: string
-        processorVersion?: string
+        mission?: 
+          type: string
+          description: the mission code
+        processorName?: 
+          type: string
+          description: the name of the processor (class)
+        processorVersion?: 
+          type: string
+          description: the processor version
       responses:
         200:
           body:
@@ -201,7 +338,13 @@ resourceTypes:
         type: integer
         format: long
     get:
-      description: Get a processor by ID
+      description: |
+        Get a processor by ID
+
+        @param id the processor ID
+        @return HTTP status "OK" and a Json object corresponding to the processor found or HTTP status "BAD_REQUEST" and an error
+                message, if no processor ID was given, or HTTP status "FORBIDDEN" and an error message, if a cross-mission data
+                access was attempted, or HTTP status "NOT_FOUND" and an error message, if no processor with the given ID exists
       displayName: getProcessorById
       responses:
         200:
@@ -209,8 +352,21 @@ resourceTypes:
             application/json:
               type: RestProcessor
               example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
+        404:
+          description: The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
     patch:
-      description: Update a processor class by ID
+      description: |
+        Update a processor by ID
+
+        @param id        the ID of the processor to update
+        @param restProcessor a Json object containing the modified (and unmodified) attributes
+        @return HTTP status "OK" and a response containing a Json object corresponding to the processor after modification (with ID
+                and version for all contained objects) or HTTP status "NOT_FOUND" and an error message, if no processor with the
+                given ID exists, or HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or HTTP
+                status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "CONFLICT"and
+                an error message, if the processor has been modified since retrieval by the client
       displayName: modifyProcessor
       body:
         application/json:
@@ -228,34 +384,70 @@ resourceTypes:
               type: RestProcessor
               example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
     delete:
-      description: Delete a processor class by ID
+      description: |
+        Delete a processor by ID
+
+        @param id the ID of the processor to delete
+        @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or HTTP status "NOT_FOUND", if the
+                processor did not exist, or HTTP status "NOT_MODIFIED", if the deletion was unsuccessful HTTP status "FORBIDDEN" and
+                an error message, if a cross-mission data access was attempted, or HTTP status "BAD_REQUEST", if the processor class
+                ID was not given, or if dependent objects exist
       displayName: deleteProcessorById
       responses:
-        204:
+        204: 
 
 /configurations:
   type: standard
   get:
-    description: Get configurations by mission, processor name and configuration version
+    description: |
+      Get configurations by mission, processor name and configuration version
+
+      @param mission              the mission code
+      @param processorName        the name of the processor class this configuration belongs to
+      @param configurationVersion the configuration version
+      @param recordFrom           first record of filtered and ordered result to return
+      @param recordTo             last record of filtered and ordered result to return
+      @return HTTP status "OK" and a list of JSON objects representing configurations satisfying the search criteria or HTTP status
+              "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "NOT_FOUND" and an
+              error message, if no configurations matching the search criteria were found, or HTTP status "TOO MANY REQUESTS" if
+              the result list exceeds a configured maximum
     displayName: getConfigurations
     queryParameters:
-      mission?: string
-      processorName?: string
-      configurationVersion?: string
+      mission?: 
+        type: string
+        description: the mission code
+      processorName?: 
+        type: string
+        description: the name of the processor class this configuration belongs to
+      configurationVersion?: 
+        type: string
+        description: the configuration version
       recordFrom?: 
         type: integer
         format: int32
+        description: first record of filtered and ordered result to return
       recordTo?:
         type: integer
         format: int32
+        description: last record of filtered and ordered result to return
     responses:
       200:
         body:
           application/json:
             type: RestConfiguration[]
             example: !include ../../../../../model/src/main/resources/raml/examples/configuration-list.json
+      429:
+        description: The result list length exceeds a configured maximum.
+        headers:
+          Warning: !include types/error.raml
   post:
-    description: Create a new configuration
+    description: |
+      Create a new configuration
+
+      @param restConfiguration a Json representation of the new configuration
+      @return HTTP status "CREATED" and a response containing a Json object corresponding to the configuration after persistence
+              (with ID and version for all contained objects) or HTTP status "FORBIDDEN" and an error message, if a cross-mission
+              data access was attempted, or HTTP status "BAD_REQUEST", if any of the input data was invalid
     displayName: createConfiguration
     body:
       application/json:
@@ -269,12 +461,25 @@ resourceTypes:
             example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
   /count:
     get:
-      description: Count the configurations with the given mission code, processor name and configuration version
+      description: |
+        Count the configurations matching the specified mission, processor name, and configuration version.
+
+        @param missionCode          the mission code
+        @param processorName        the name of the processor class this configuration belongs to
+        @param configurationVersion the configuration version
+        @return the number of matching configurations as a String (may be zero) or HTTP status "FORBIDDEN" and an error message, if a
+                cross-mission data access was attempted
       displayName: countConfigurations
       queryParameters:
-        missionCode?: string
-        processorName?: string
-        configurationVersion?: string
+        missionCode?: 
+          type: string
+          description: the mission code
+        processorName?: 
+          type: string
+          description: the name of the processor class this configuration belongs to
+        configurationVersion?: 
+          type: string
+          description: the configuration version
       responses:
         200:
           body:
@@ -285,7 +490,15 @@ resourceTypes:
         type: integer
         format: long
     get:
-      description: Get a configuration by ID
+      description: |
+        Get a configuration by ID
+
+        @param id the configuration ID
+        @return HTTP status "OK" and a Json object corresponding to the configuration found or HTTP status "BAD_REQUEST" and an error
+                message, if no configuration ID was given, or HTTP status "FORBIDDEN" and an error message, if a cross-mission data
+                access was attempted, or HTTP status "NOT_FOUND" and an error message, if no configuration with the given ID exists,
+                or HTTP status "TOO MANY REQUESTS" if the result list exceeds a configured maximum
+
       displayName: getConfigurationById
       responses:
         200:
@@ -293,8 +506,22 @@ resourceTypes:
             application/json:
               type: RestConfiguration
               example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
+        404:
+          description: The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
     patch:
-      description: Update a configuration by ID
+      description: |
+        Update a configuration by ID
+
+        @param id                the ID of the configuration to update
+        @param restConfiguration a Json object containing the modified (and unmodified) attributes
+        @return HTTP status "OK" and a response containing a Json object corresponding to the configuration after modification (with
+                ID and version for all contained objects) or HTTP status "NOT_MODIFIED" and the unchanged configuration, if no
+                attributes were actually changed, or HTTP status "NOT_FOUND" and an error message, if no configuration with the given
+                ID exists, or HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or HTTP status
+                "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "CONFLICT" and an
+                error message, if the configuration has been modified since retrieval by the client
       displayName: modifyConfiguration
       body:
         application/json:
@@ -312,37 +539,83 @@ resourceTypes:
               type: RestConfiguration
               example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
     delete:
-      description: Delete a configuration by ID
+      description: |
+        Delete a configuration by ID
+
+        @param id the ID of the configuration to delete
+        @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or HTTP status "NOT_FOUND", if the
+                configuration did not exist, or HTTP status "NOT_MODIFIED", if the deletion was unsuccessful HTTP status "FORBIDDEN"
+                and an error message, if a cross-mission data access was attempted, or HTTP status "BAD_REQUEST", if the processor
+                class ID was not given, or if dependent objects exist
       displayName: deleteConfigurationById
       responses:
-        204:
+        204:      
 
 /configuredprocessors:
   type: standard
   get:
-    description: Get configured processors, filtered by mission, identifier, processor name, processor version and/or configuration version
+    description: |
+      Get configured processors, filtered by mission, identifier, processor name, processor version and/or configuration version
+
+      @param mission              the mission code
+      @param identifier           the identifier for the configured processor
+      @param processorName        the processor name
+      @param processorVersion     the processor version
+      @param configurationVersion the configuration version
+      @param uuid                 the UUID of the configured processor
+      @param recordFrom           first record of filtered and ordered result to return
+      @param recordTo             last record of filtered and ordered result to return
+      @return HTTP status "OK" and a list of JSON objects representing configured processors satisfying the search criteria or HTTP
+              status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "NOT_FOUND" and
+              an error message, if no configurations matching the search criteria were found, or HTTP status "TOO MANY REQUESTS" if
+              the result list exceeds a configured maximum
+
     displayName: getConfiguredProcessors
     queryParameters:
-      mission?: string
-      identifier?: string
-      processorName?: string
-      processorVersion?: string
-      configurationVersion?: string
-      uuid?: string
+      mission?: 
+        type: string
+        description: the mission code
+      identifier?: 
+        type: string
+        description: the identifier for the configured processor
+      processorName?: 
+        type: string
+        description: the processor name
+      processorVersion?: 
+        type: string
+        description: the processor version
+      configurationVersion?: 
+        type: string
+        description: the configuration version
+      uuid?: 
+        type: string
+        description: the UUID of the configured processor
       recordFrom?: 
         type: integer
         format: int32
+        description: first record of filtered and ordered result to return
       recordTo?:
         type: integer
         format: int32
+        description: last record of filtered and ordered result to return
     responses:
       200:
         body:
           application/json:
             type: RestConfiguredProcessor[]
             example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor-list.json
+      429:
+        description: The result list length exceeds a configured maximum.
+        headers:
+          Warning: !include types/error.raml
   post:
-    description: Create a new configured processor
+    description: |
+      Create a new configured processor
+
+      @param restConfiguredProcessor a Json representation of the new configured processor
+      @return HTTP status "CREATED" and a response containing a Json object corresponding to the configured processor after
+              persistence (with ID and version for all contained objects) or HTTP status "FORBIDDEN" and an error message, if a
+              cross-mission data access was attempted, or HTTP status "BAD_REQUEST", if any of the input data was invalid
     displayName: createConfiguredProcessor
     body:
       application/json:
@@ -356,13 +629,29 @@ resourceTypes:
             example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
   /count:
     get:
-      description: Count the configured processors with the given mission code, processor name, processor version and configuration version
+      description: |
+        Count the configuredProcessors matching the specified mission, processor name, and configuredProcessor version.
+
+        @param mission              the mission code
+        @param processorName        the processor name
+        @param processorVersion     the processor version
+        @param configurationVersion the configuration version
+        @return the number of matching configuredProcessors as a String (may be zero) or HTTP status "FORBIDDEN" and an error
+                message, if a cross-mission data access was attempted
       displayName: countConfiguredProcessors
       queryParameters:
-        missionCode?: string
-        processorName?: string
-        processorVersion?: string
-        configurationVersion?: string
+        mission?: 
+          type: string
+          description: the mission code
+        processorName?: 
+          type: string
+          description: the processor name
+        processorVersion?: 
+          type: string
+          description: the processor version
+        configurationVersion?: 
+          type: string
+          description: the configuration version
       responses:
         200:
           body:
@@ -373,7 +662,14 @@ resourceTypes:
         type: integer
         format: long
     get:
-      description: Get a configured processor by ID
+      description: |
+        Get a configured processor by ID
+
+        @param id the configured processor ID
+        @return HTTP status "OK" and a Json object corresponding to the configured processor found or HTTP status "BAD_REQUEST" and
+                an error message, if no configured processor ID was given, or HTTP status "FORBIDDEN" and an error message, if a
+                cross-mission data access was attempted, or HTTP status "NOT_FOUND" and an error message, if no configured processor
+                with the given ID exists
       displayName: getConfiguredProcessorById
       responses:
         200:
@@ -381,8 +677,22 @@ resourceTypes:
             application/json:
               type: RestConfiguredProcessor
               example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
+        400:
+          description: The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
     patch:
-      description: Update a configured processor by ID
+      description: |
+        Update a configured processor by ID
+
+        @param id                      the ID of the configured processor to update
+        @param restConfiguredProcessor a Json object containing the modified (and unmodified) attributes
+        @return HTTP status "OK" and a response containing a Json object corresponding to the configured processor after modification
+                (with ID and version for all contained objects) or HTTP status "NOT_MODIFIED" and the unchanged configured processor,
+                if no attributes were actually changed, or HTTP status "NOT_FOUND" and an error message, if no configured processor
+                with the given ID exists, or HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
+                HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status
+                "CONFLICT"and an error message, if the configured processor has been modified since retrieval by the client
       displayName: modifyConfiguredProcessor
       body:
         application/json:
@@ -400,7 +710,13 @@ resourceTypes:
               type: RestConfiguredProcessor
               example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
     delete:
-      description: Delete a configured processor by ID
+      description: |
+        Delete a configured processor by ID
+
+        @param id the ID of the configured processor to delete
+        @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or HTTP status "NOT_FOUND", if the
+                configured processor did not exist, or HTTP status "FORBIDDEN" and an error message, if a cross-mission data access
+                was attempted, or HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
       displayName: deleteConfiguredProcessorById
       responses:
         204:
@@ -408,29 +724,67 @@ resourceTypes:
 /workflows:
   type: standard
   get:
-    description: Get workflows by mission, workflow name, workflow version, outputProductClass and configuredProcessor
+    description: |
+      Get a list of all workflows with the specified mission, workflow name, workflow version, input product class and configured
+      processor
+
+      @param mission             the mission code
+      @param name                the workflow name
+      @param workflowVersion     the workflow version
+      @param inputProductClass   the input product class
+      @param configuredProcessor the configured processor
+      @param enabled             whether the workflow is enabled
+      @param recordFrom          first record of filtered and ordered result to return
+      @param recordTo            last record of filtered and ordered result to return
+      @return HTTP status "OK" and a list of workflows or HTTP status "NOT_FOUND" and an error message, if no workflows match the
+              search criteria, or HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
+              HTTP status "TOO MANY REQUESTS" if the result list exceeds a configured maximum
     displayName: getWorkflows
     queryParameters:
-      mission?: string
-      name?: string
-      workflowVersion?: string
-      inputProductClass?: string
-      configuredProcessor?: string
-      enabled?: boolean
+      mission?: 
+        type: string
+        description: the mission code
+      name?: 
+        type: string
+        description: the workflow name
+      workflowVersion?: 
+        type: string
+        description: the workflow version
+      inputProductClass?: 
+        type: string
+        description: the input product class
+      configuredProcessor?: 
+        type: string
+        description: the configured processor
+      enabled?: 
+        type: boolean
+        description: whether the workflow is enabled
       recordFrom?: 
         type: integer
         format: int32
+        description: first record of filtered and ordered result to return
       recordTo?:
         type: integer
         format: int32
+        description: last record of filtered and ordered result to return
     responses:
       200:
         body:
           application/json:
             type: RestWorkflow[]
             example: !include ../../../../../model/src/main/resources/raml/examples/workflow-list.json
+      429:
+        description: The result list length exceeds a configured maximum.
+        headers:
+          Warning: !include types/error.raml
   post:
-    description: Create a new workflow
+    description: |
+      Create a workflow from the given Json object
+
+      @param restWorkflow the Json object from which to create the workflow
+      @return HTTP status "CREATED" and a response containing a Json object corresponding to the workflow after persistence (with
+              ID and version for all contained objects) or HTTP status "FORBIDDEN" and an error message, if a cross-mission data
+              access was attempted, or HTTP status "BAD_REQUEST", if any of the input data was invalid
     displayName: createWorkflow
     body:
       application/json:
@@ -444,15 +798,37 @@ resourceTypes:
             example: !include ../../../../../model/src/main/resources/raml/examples/workflow.json
   /count:
     get:
-      description: Count the workflows with the given mission, workflow name, workflow version, outputProductClass or configuredProcessor
+      description: |
+        Count the workflows matching the specified name, workflow version, input product class, or configured processor.
+
+        @param mission             the mission code
+        @param name                the workflow name
+        @param workflowVersion     the workflow version
+        @param inputProductClass   the input product class
+        @param configuredProcessor the configured processor
+        @param enabled             whether the workflow is enabled
+        @return the number of matching workflows as a String (may be zero) or HTTP status "FORBIDDEN" and an error message, if a
+                cross-mission data access was attempted
       displayName: countWorkflows
       queryParameters:
-        mission?: string
-        name?: string
-        workflowVersion?: string
-        outputProductClass?: string
-        configuredProcessor?: string
-        enabled?: boolean
+        mission?: 
+          type: string
+          description: the mission code
+        name?: 
+          type: string
+          description: the workflow name
+        workflowVersion?: 
+          type: string
+          description: the workflow version
+        inputProductClass?: 
+          type: string
+          description: the input product class
+        configuredProcessor?: 
+          type: string
+          description: the configured processor
+        enabled?: 
+          type: boolean
+          description: whether the workflow is enabled
       responses:
         200:
           body:
@@ -463,7 +839,12 @@ resourceTypes:
         type: integer
         format: long
     get:
-      description: Get a workflow by ID
+      description: |
+        Find the workflow with the given ID
+
+        @param id the ID to look for
+        @return HTTP status "OK" and a Json object corresponding to the found order or HTTP status "FORBIDDEN" and an error message,
+                if a cross-mission data access was attempted, or HTTP status "NOT_FOUND", if no workflow with the given ID exists
       displayName: getWorkflowById
       responses:
         200:
@@ -471,8 +852,20 @@ resourceTypes:
             application/json:
               type: RestWorkflow
               example: !include ../../../../../model/src/main/resources/raml/examples/workflow.json
+        400:
+          description: The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
     patch:
-      description: Update a workflow by ID
+      description: |
+        Update the workflow with the given ID with the attribute values of the given Json object.
+
+        @param id           the ID of the workflow to update
+        @param restWorkflow a Json object containing the modified (and unmodified) attributes
+        @return a response containing HTTP status "OK" and a Json object corresponding to the workflow after modification (with ID
+                and version for all contained objects) or HTTP status "NOT_MODIFIED" and the unchanged workflow, if no attributes
+                were actually changed, or HTTP status "NOT_FOUND" and an error message, if no workflow with the given ID exists, or
+                HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
       displayName: modifyWorkflow
       body:
         application/json:
@@ -490,7 +883,13 @@ resourceTypes:
               type: RestWorkflow
               example: !include ../../../../../model/src/main/resources/raml/examples/workflow.json
     delete:
-      description: Delete a workflow by ID
+      description: |
+        Delete a workflow by ID
+
+        @param id the ID of the workflow to delete
+        @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or HTTP status "NOT_FOUND" and an
+                error message, if the workflow did not exist, or HTTP status "FORBIDDEN" and an error message, if a cross-mission
+                data access was attempted, or HTTP status "NOT_MODIFIED" and an error message, if the deletion was unsuccessful
       displayName: deleteWorkflowById
       responses:
         204:

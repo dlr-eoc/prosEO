@@ -1,6 +1,6 @@
 /**
  * ProcessorManagerSecurityConfig.java
- * 
+ *
  * (c) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.procmgr;
@@ -26,7 +26,7 @@ import de.dlr.proseo.model.enums.UserRole;
 
 /**
  * Security configuration for prosEO Processor Manager module
- * 
+ *
  * @author Dr. Thomas Bassler
  */
 @Configuration
@@ -36,34 +36,40 @@ public class ProcessorManagerSecurityConfig extends WebSecurityConfigurerAdapter
 	/** Datasource as configured in the application properties */
 	@Autowired
 	private DataSource dataSource;
-	
+
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProcessorManagerSecurityConfig.class);
-	
+
 	/**
 	 * Set the Processor Manager security options
-	 * 
+	 *
 	 * @param http the HTTP security object
 	 */
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http
-			.httpBasic()
-				.and()
+		http.httpBasic()
+			.and()
 			.authorizeRequests()
-				.antMatchers("/**/actuator/health").permitAll()
-				.antMatchers(HttpMethod.GET).hasAnyRole(UserRole.PROCESSOR_READER.toString())
-				.antMatchers("/**/processorclasses", "/**/processors").hasAnyRole(UserRole.PROCESSORCLASS_MGR.toString())
-				.antMatchers("/**/configurations", "/**/configuredprocessors").hasAnyRole(UserRole.CONFIGURATION_MGR.toString())
-				.antMatchers("/**/workflows").hasAnyRole(UserRole.WORKFLOW_MGR.toString())
-				.anyRequest().hasAnyRole(UserRole.PROCESSORCLASS_MGR.toString())
-				.and()
-			.csrf().disable(); // Required for POST requests (or configure CSRF)
+			.antMatchers("/**/actuator/health")
+			.permitAll()
+			.antMatchers(HttpMethod.GET)
+			.hasAnyRole(UserRole.PROCESSOR_READER.toString())
+			.antMatchers("/**/processorclasses", "/**/processors")
+			.hasAnyRole(UserRole.PROCESSORCLASS_MGR.toString())
+			.antMatchers("/**/configurations", "/**/configuredprocessors")
+			.hasAnyRole(UserRole.CONFIGURATION_MGR.toString())
+			.antMatchers("/**/workflows")
+			.hasAnyRole(UserRole.WORKFLOW_MGR.toString())
+			.anyRequest()
+			.hasAnyRole(UserRole.PROCESSORCLASS_MGR.toString())
+			.and()
+			.csrf()
+			.disable(); // Required for POST requests (or configure CSRF)
 	}
 
 	/**
 	 * Initialize the users, passwords and roles for the Processor Manager from the prosEO database
-	 * 
+	 *
 	 * @param builder to manage authentications
 	 * @throws Exception if anything goes wrong with JDBC authentication
 	 */
@@ -76,19 +82,20 @@ public class ProcessorManagerSecurityConfig extends WebSecurityConfigurerAdapter
 
 	/**
 	 * Provides the default password encoder for prosEO (BCrypt)
-	 * 
+	 *
 	 * @return a BCryptPasswordEncoder
 	 */
 	@Bean
 	public PasswordEncoder passwordEncoder() {
-	    return new BCryptPasswordEncoder();
+		return new BCryptPasswordEncoder();
 	}
 
 	/**
 	 * Provides the default user details service for prosEO (based on the standard data model for users and groups)
-	 * 
+	 *
 	 * @return a JdbcDaoImpl object
 	 */
+	@Override
 	@Bean
 	public UserDetailsService userDetailsService() {
 		logger.log(GeneralMessage.INITIALIZING_USER_DETAILS_SERVICE, dataSource);
@@ -96,7 +103,7 @@ public class ProcessorManagerSecurityConfig extends WebSecurityConfigurerAdapter
 		JdbcDaoImpl jdbcDaoImpl = new JdbcDaoImpl();
 		jdbcDaoImpl.setDataSource(dataSource);
 		jdbcDaoImpl.setEnableGroups(true);
-		
+
 		return jdbcDaoImpl;
 	}
 }

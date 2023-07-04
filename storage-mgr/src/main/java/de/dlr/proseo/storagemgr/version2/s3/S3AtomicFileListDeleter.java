@@ -1,3 +1,8 @@
+/**
+ * S3AtomicFileListDeleter.java
+ *
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.version2.s3;
 
 import java.io.IOException;
@@ -20,9 +25,8 @@ import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
 
 /**
  * S3 Atomic File List Deleter
- * 
- * @author Denys Chaykovskiy
  *
+ * @author Denys Chaykovskiy
  */
 public class S3AtomicFileListDeleter implements AtomicCommand<List<String>> {
 
@@ -49,7 +53,7 @@ public class S3AtomicFileListDeleter implements AtomicCommand<List<String>> {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param s3Client  s3 client
 	 * @param bucket    bucket
 	 * @param directory directory
@@ -63,9 +67,10 @@ public class S3AtomicFileListDeleter implements AtomicCommand<List<String>> {
 
 	/**
 	 * Deletes a list of files
-	 * 
+	 *
 	 * @return list of deleted files
 	 */
+	@Override
 	public List<String> execute() throws IOException {
 
 		if (logger.isTraceEnabled())
@@ -75,14 +80,18 @@ public class S3AtomicFileListDeleter implements AtomicCommand<List<String>> {
 			ListObjectsV2Request request = ListObjectsV2Request.builder().bucket(bucket).prefix(directory).build();
 			ListObjectsV2Iterable list = s3Client.listObjectsV2Paginator(request);
 
-			List<ObjectIdentifier> objectIdentifiers = list.stream().flatMap(r -> r.contents().stream())
-					.map(o -> ObjectIdentifier.builder().key(o.key()).build()).collect(Collectors.toList());
+			List<ObjectIdentifier> objectIdentifiers = list.stream()
+				.flatMap(r -> r.contents().stream())
+				.map(o -> ObjectIdentifier.builder().key(o.key()).build())
+				.collect(Collectors.toList());
 
 			if (objectIdentifiers.isEmpty())
-				return new ArrayList<String>();
-			
-			DeleteObjectsRequest deleteObjectsRequest = DeleteObjectsRequest.builder().bucket(bucket)
-					.delete(Delete.builder().objects(objectIdentifiers).build()).build();
+				return new ArrayList<>();
+
+			DeleteObjectsRequest deleteObjectsRequest = DeleteObjectsRequest.builder()
+				.bucket(bucket)
+				.delete(Delete.builder().objects(objectIdentifiers).build())
+				.build();
 
 			DeleteObjectsResponse deleteResponse = s3Client.deleteObjects(deleteObjectsRequest);
 
@@ -97,43 +106,46 @@ public class S3AtomicFileListDeleter implements AtomicCommand<List<String>> {
 			throw new IOException(e);
 		}
 	}
-	
+
 	/**
-	 * Gets Information about atomic command (mostly for logs)
-	 * 
-	 * @return Information about atomic command
+	 * Gets information about atomic command (mostly for logs)
+	 *
+	 * @return information about atomic command
 	 */
-	public String getInfo() {	
+	@Override
+	public String getInfo() {
 		return INFO + " ";
 	}
-	
+
 	/**
-	 * Gets Information about completed atomic command (mostly for logs)
-	 * 
-	 * @return Information about completed atomic command
+	 * Gets information about completed atomic command (mostly for logs)
+	 *
+	 * @return information about completed atomic command
 	 */
-	public String getCompletedInfo() {	
+	@Override
+	public String getCompletedInfo() {
 		return INFO + ": " + COMPLETED + " ";
 	}
-	
+
 	/**
-	 * Gets Information about failed atomic command (mostly for logs)
-	 * 
-	 * @return Information about failed atomic command
+	 * Gets information about failed atomic command (mostly for logs)
+	 *
+	 * @return information about failed atomic command
 	 */
+	@Override
 	public String getFailedInfo() {
 		return INFO + ": " + FAILED + " ";
 	}
 
 	/**
 	 * Converts deleted object file list to deleted file string list
-	 * 
+	 *
 	 * @param files deleted object file list
 	 * @return deleted file string list
 	 */
 	private List<String> toStringDeletedObjects(List<DeletedObject> files) {
 
-		List<String> fileNames = new ArrayList<String>();
+		List<String> fileNames = new ArrayList<>();
 
 		for (DeletedObject f : files) {
 			fileNames.add(f.key());

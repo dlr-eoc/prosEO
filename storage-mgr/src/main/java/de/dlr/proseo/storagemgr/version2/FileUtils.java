@@ -1,3 +1,8 @@
+/**
+ * FileUtils.java
+ *
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.version2;
 
 import java.io.File;
@@ -13,10 +18,11 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.StorageMgrMessage;
 
 /**
- * Common file utilities
- * 
- * @author Denys Chaykovskiy
+ * A utility class for common file operations. It provides methods to create,
+ * manipulate, and delete files and directories, along with supporting
+ * functionalities such as path handling and file property retrieval.
  *
+ * @author Denys Chaykovskiy
  */
 public class FileUtils {
 
@@ -28,7 +34,7 @@ public class FileUtils {
 
 	/**
 	 * Gets the path to file
-	 * 
+	 *
 	 * @return the path to file
 	 */
 	public String getPath() {
@@ -37,8 +43,8 @@ public class FileUtils {
 
 	/**
 	 * Sets the path to file
-	 * 
-	 * @param path
+	 *
+	 * @param path the path to set
 	 */
 	public void setPath(String path) {
 		this.path = path;
@@ -46,7 +52,7 @@ public class FileUtils {
 
 	/**
 	 * Constructor sets the path
-	 * 
+	 *
 	 * @param path Path to file
 	 */
 	public FileUtils(String path) {
@@ -56,7 +62,7 @@ public class FileUtils {
 
 	/**
 	 * Creates the file with the content
-	 * 
+	 *
 	 * @param content Content of the file
 	 * @return true if file was successfully created
 	 */
@@ -84,7 +90,7 @@ public class FileUtils {
 
 	/**
 	 * Gets the file size
-	 * 
+	 *
 	 * @return the file size
 	 */
 	public long getFileSize() {
@@ -95,9 +101,8 @@ public class FileUtils {
 	}
 
 	/**
-	 * Checks if the directory is empty
-	 * 
-	 * @param path full path to the directory
+	 * Checks if the path points to an empty directory
+	 *
 	 * @return true if directory is empty
 	 */
 	public boolean isEmptyDirectory() {
@@ -109,7 +114,7 @@ public class FileUtils {
 
 	/**
 	 * Gets the file content
-	 * 
+	 *
 	 * @return the content of the file
 	 */
 	public String getFileContent() {
@@ -129,10 +134,10 @@ public class FileUtils {
 
 	/**
 	 * Create parent directories
-	 * 
-	 * @param exceptionMessage IllegalStateException if cannot create dir
+	 *
+	 * @throws IllegalStateException if cannot create dir
 	 */
-	public void createParentDirectories() {
+	public void createParentDirectories() throws IllegalArgumentException {
 
 		File targetFile = new File(path);
 		File parent = targetFile.getParentFile();
@@ -144,10 +149,10 @@ public class FileUtils {
 
 	/**
 	 * Create path directories
-	 * 
-	 * @param exceptionMessage IllegalStateException if cannot create dir
+	 *
+	 * @throws IllegalStateException if cannot create dir
 	 */
-	public void createDirectories() {
+	public void createDirectories() throws IllegalArgumentException {
 
 		File file = new File(path);
 
@@ -157,20 +162,28 @@ public class FileUtils {
 	}
 
 	/**
-	 * @return
-	 * @throws IOException
+	 * Delete the file
+	 * 
+	 * @return path to the deleted file
+	 * @throws IOException if the file cannot be deleted
 	 */
 	public String deleteFile() throws IOException {
 		return deleteFile(path);
 	}
 
+	/**
+	 * Delete the file or the directory with its sub-directories and contained files
+	 * 
+	 * @return the paths to the deleted files and directories
+	 * @throws IOException if the file or directory cannot be deleted
+	 */
 	public List<String> delete() throws IOException {
 		return delete(path);
 	}
 
 	/**
 	 * Deletes empty directories recursively in the direction of root
-	 * 
+	 *
 	 * @param directoryToDelete the path to the directory
 	 */
 	public void deleteEmptyDirectoriesToTop(String directoryToDelete) {
@@ -201,7 +214,7 @@ public class FileUtils {
 
 	/**
 	 * Deletes a file
-	 * 
+	 *
 	 * @return path to deleted file
 	 * @throws IOException if file cannot be deleted
 	 */
@@ -212,17 +225,17 @@ public class FileUtils {
 
 		try {
 			String folder = new File(sourceFile).getParent();
-			
+
 			if (folder == null) {
-				throw new IOException("Cannot delete file - no parent folder: " + sourceFile);		
+				throw new IOException("Cannot delete file - no parent folder: " + sourceFile);
 			}
-			
+
 			File file = new File(sourceFile);
-			
+
 			if (!file.exists()) {
-				throw new IOException("Cannot delete file - file does not exist: " + sourceFile);			
+				throw new IOException("Cannot delete file - file does not exist: " + sourceFile);
 			}
-			
+
 			boolean fileDeleted = file.delete();
 
 			if (!fileDeleted) {
@@ -230,7 +243,7 @@ public class FileUtils {
 			}
 
 			deleteEmptyDirectoriesToTop(folder);
-			return sourceFile;			
+			return sourceFile;
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -242,7 +255,7 @@ public class FileUtils {
 
 	/**
 	 * Deletes file or directory with subdirectories
-	 * 
+	 *
 	 * @param sourceFileOrDir file or directory to delete
 	 * @return list of deleted files
 	 * @throws IOException if file or dir cannot be deleted
@@ -252,7 +265,7 @@ public class FileUtils {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> delete({})", sourceFileOrDir);
 
-		List<String> deletedFiles = new ArrayList<String>();
+		List<String> deletedFiles = new ArrayList<>();
 
 		if (isFile(sourceFileOrDir)) {
 
@@ -289,7 +302,7 @@ public class FileUtils {
 
 	/**
 	 * Checks if path is file
-	 * 
+	 *
 	 * @return true if path is file
 	 */
 	private boolean isFile(String sourceFile) {
@@ -298,7 +311,7 @@ public class FileUtils {
 
 	/**
 	 * Checks if path is a file
-	 * 
+	 *
 	 * @param exceptionMessage Exception will be thrown if path is not a file
 	 */
 	private void checkIfFile(String exceptionMessage) {

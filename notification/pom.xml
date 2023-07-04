@@ -58,7 +58,7 @@
     <dependency>
       <groupId>de.dlr.proseo</groupId>
       <artifactId>proseo-logging</artifactId>
-      <version>${project.version}</version>
+      <version>0.9.5-ODIP</version>
     </dependency>
     <dependency>
       <groupId>com.github.docker-java</groupId>
@@ -73,12 +73,10 @@
     <dependency>
         <groupId>javax.mail</groupId>
         <artifactId>javax.mail-api</artifactId>
-        <version>1.6.2</version>
     </dependency>
     <dependency>
         <groupId>com.sun.mail</groupId>
         <artifactId>javax.mail</artifactId>
-        <version>1.6.2</version>
     </dependency>
     <dependency>
       <groupId>com.github.tomakehurst</groupId>

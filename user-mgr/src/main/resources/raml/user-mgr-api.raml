@@ -35,11 +35,6 @@ resourceTypes:
             The request sent to the server contains data which is not as expected e.g. invalid location URI
           headers:
             Warning: !include types/error.raml
-        404:
-          description: |
-            The requested resource was not found                     
-          headers:
-            Warning: !include types/error.raml
     post?:
       responses:      
         400:
@@ -105,7 +100,12 @@ resourceTypes:
             description: A list of authorities granted to the user for the given mission
       401:
         description: |
-          If the user is not authorized for some reason, such as an expored password.
+          If the user is not authorized for some reason, such as an expired password.
+        headers:
+          Warning: !include types/error.raml
+      404:
+        description: |
+          The requested resource was not found                     
         headers:
           Warning: !include types/error.raml
             
@@ -142,6 +142,11 @@ resourceTypes:
           application/json:
             type: RestUser[]
             example: !include examples/user-list.json
+      404:
+        description: |
+          The requested resource was not found                     
+        headers:
+          Warning: !include types/error.raml
       429:
         description: |
           The result list length exceeds a configured maximum.
@@ -209,6 +214,11 @@ resourceTypes:
             application/json:
               type: RestUser
               example: !include examples/user.json
+        404:
+          description: |
+            The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
         401:
           description: |
             A user attempted to access the data of another user.
@@ -296,6 +306,11 @@ resourceTypes:
           application/json:
             type: RestGroup[]
             example: !include examples/group-list.json
+      404:
+        description: |
+          The requested resource was not found                     
+        headers:
+          Warning: !include types/error.raml
       429:
         description: |
           The result list length exceeds a configured maximum.
@@ -361,6 +376,11 @@ resourceTypes:
             application/json:
               type: RestGroup
               example: !include examples/group.json
+        404:
+          description: |
+            The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
     patch:
       description: |
         Update a user group by ID
@@ -415,6 +435,11 @@ resourceTypes:
               application/json:
                 type: RestUser[]
                 description: The list of users in this group        
+          404:
+            description: |
+              The group has no members                   
+            headers:
+              Warning: !include types/error.raml
       post:
         description: |
           Add a member to the given user group

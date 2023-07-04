@@ -27,9 +27,8 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.procmgr.rest.model.RestWorkflow;
 
 /**
- * Spring MVC controller for the prosEO Workflow Manager; implements the
- * services required to manage workflows.
- * 
+ * Spring MVC controller for the prosEO Workflow Manager; implements the services required to manage workflows.
+ *
  * @author Katharina Bassler
  */
 @Component
@@ -48,17 +47,16 @@ public class WorkflowControllerImpl implements WorkflowController {
 	private EntityManager em;
 
 	/**
-	 * Count the workflows matching the specified name, workflow version, input
-	 * product class, or configured processor.
-	 * 
+	 * Count the workflows matching the specified name, workflow version, input product class, or configured processor.
+	 *
 	 * @param missionCode         the mission code
 	 * @param workflowName        the workflow name
 	 * @param workflowVersion     the workflow version
 	 * @param inputProductClass   the input product class
 	 * @param configuredProcessor the configured processor
-	 * @return the number of matching workflows as a String (may be zero) or HTTP
-	 *         status "FORBIDDEN" and an error message, if a cross-mission data
-	 *         access was attempted
+	 * @param enabled             whether the workflow is enabled
+	 * @return the number of matching workflows as a String (may be zero) or HTTP status "FORBIDDEN" and an error message, if a
+	 *         cross-mission data access was attempted
 	 */
 	@Override
 	public ResponseEntity<String> countWorkflows(String missionCode, String workflowName, String workflowVersion,
@@ -76,23 +74,20 @@ public class WorkflowControllerImpl implements WorkflowController {
 	}
 
 	/**
-	 * Get a list of all workflows with the specified mission, workflow name,
-	 * workflow version, input product class and configured processor
+	 * Get a list of all workflows with the specified mission, workflow name, workflow version, input product class and configured
+	 * processor
 	 *
 	 * @param missionCode         the mission code
 	 * @param workflowName        the workflow name
 	 * @param workflowVersion     the workflow version
 	 * @param inputProductClass   the input product class
 	 * @param configuredProcessor the configured processor
-	 * @param recordFrom          first record of filtered and ordered result to
-	 *                            return
-	 * @param recordTo            last record of filtered and ordered result to
-	 *                            return
-	 * @return HTTP status "OK" and a list of workflows or HTTP status "NOT_FOUND"
-	 *         and an error message, if no workflows match the search criteria, or
-	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data
-	 *         access was attempted, or HTTP status "TOO MANY REQUESTS" if the
-	 *         result list exceeds a configured maximum
+	 * @param enabled             whether the workflow is enabled
+	 * @param recordFrom          first record of filtered and ordered result to return
+	 * @param recordTo            last record of filtered and ordered result to return
+	 * @return HTTP status "OK" and a list of workflows or HTTP status "NOT_FOUND" and an error message, if no workflows match the
+	 *         search criteria, or HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
+	 *         HTTP status "TOO MANY REQUESTS" if the result list exceeds a configured maximum
 	 */
 	@Override
 	public ResponseEntity<List<RestWorkflow>> getWorkflows(String missionCode, String workflowName, String workflowVersion,
@@ -117,11 +112,9 @@ public class WorkflowControllerImpl implements WorkflowController {
 	 * Create a workflow from the given Json object
 	 *
 	 * @param workflow the Json object from which to create the workflow
-	 * @return HTTP status "CREATED" and a response containing a Json object
-	 *         corresponding to the workflow after persistence (with ID and version
-	 *         for all contained objects) or HTTP status "FORBIDDEN" and an error
-	 *         message, if a cross-mission data access was attempted, or HTTP status
-	 *         "BAD_REQUEST", if any of the input data was invalid
+	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the workflow after persistence (with
+	 *         ID and version for all contained objects) or HTTP status "FORBIDDEN" and an error message, if a cross-mission data
+	 *         access was attempted, or HTTP status "BAD_REQUEST", if any of the input data was invalid
 	 */
 	@Override
 	public ResponseEntity<RestWorkflow> createWorkflow(@Valid RestWorkflow workflow) {
@@ -141,10 +134,8 @@ public class WorkflowControllerImpl implements WorkflowController {
 	 * Find the workflow with the given ID
 	 *
 	 * @param id the ID to look for
-	 * @return HTTP status "OK" and a Json object corresponding to the found order
-	 *         or HTTP status "FORBIDDEN" and an error message, if a cross-mission
-	 *         data access was attempted, or HTTP status "NOT_FOUND", if no workflow
-	 *         with the given ID exists
+	 * @return HTTP status "OK" and a Json object corresponding to the found order or HTTP status "FORBIDDEN" and an error message,
+	 *         if a cross-mission data access was attempted, or HTTP status "NOT_FOUND", if no workflow with the given ID exists
 	 */
 	@Override
 	public ResponseEntity<RestWorkflow> getWorkflowById(Long id) {
@@ -166,11 +157,9 @@ public class WorkflowControllerImpl implements WorkflowController {
 	 * Delete a workflow by ID
 	 *
 	 * @param id the ID of the workflow to delete
-	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was
-	 *         successful, or HTTP status "NOT_FOUND" and an error message, if the
-	 *         workflow did not exist, or HTTP status "FORBIDDEN" and an error
-	 *         message, if a cross-mission data access was attempted, or HTTP status
-	 *         "NOT_MODIFIED" and an error message, if the deletion was unsuccessful
+	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or HTTP status "NOT_FOUND" and an
+	 *         error message, if the workflow did not exist, or HTTP status "FORBIDDEN" and an error message, if a cross-mission
+	 *         data access was attempted, or HTTP status "NOT_MODIFIED" and an error message, if the deletion was unsuccessful
 	 */
 	@Override
 	public ResponseEntity<?> deleteWorkflowById(Long id) {
@@ -190,19 +179,14 @@ public class WorkflowControllerImpl implements WorkflowController {
 	}
 
 	/**
-	 * Update the workflow with the given ID with the attribute values of the given
-	 * Json object.
+	 * Update the workflow with the given ID with the attribute values of the given Json object.
 	 *
 	 * @param id       the ID of the workflow to update
-	 * @param workflow a Json object containing the modified (and unmodified)
-	 *                 attributes
-	 * @return a response containing HTTP status "OK" and a Json object
-	 *         corresponding to the workflow after modification (with ID and version
-	 *         for all contained objects) or HTTP status "NOT_MODIFIED" and the
-	 *         unchanged workflow, if no attributes were actually changed, or HTTP
-	 *         status "NOT_FOUND" and an error message, if no workflow with the
-	 *         given ID exists, or HTTP status "FORBIDDEN" and an error message, if
-	 *         a cross-mission data access was attempted
+	 * @param workflow a Json object containing the modified (and unmodified) attributes
+	 * @return a response containing HTTP status "OK" and a Json object corresponding to the workflow after modification (with ID
+	 *         and version for all contained objects) or HTTP status "NOT_MODIFIED" and the unchanged workflow, if no attributes
+	 *         were actually changed, or HTTP status "NOT_FOUND" and an error message, if no workflow with the given ID exists, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
 	 */
 	@Override
 	public ResponseEntity<RestWorkflow> modifyWorkflow(Long id, RestWorkflow workflow) {

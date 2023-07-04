@@ -22,8 +22,7 @@ import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
- * Utility methods for workflows, i.e. for conversion between prosEO model and
- * REST workflows
+ * Utility methods for workflows, i.e. for conversion between prosEO model and REST workflows
  *
  * @author Katharina Bassler
  */
@@ -36,8 +35,7 @@ public class WorkflowUtil {
 	 * Convert a prosEO model workflow into a REST workflow
 	 *
 	 * @param modelWorkflow the prosEO model workflow
-	 * @return an equivalent REST workflow or null, if no model processor workflow
-	 *         was given
+	 * @return an equivalent REST workflow or null, if no model processor workflow was given
 	 */
 	public static RestWorkflow toRestWorkflow(Workflow modelWorkflow) {
 		if (logger.isTraceEnabled())
@@ -68,8 +66,8 @@ public class WorkflowUtil {
 		}
 		if (null != modelWorkflow.getConfiguredProcessor()) {
 			restWorkflow.setConfiguredProcessor(modelWorkflow.getConfiguredProcessor().getIdentifier());
-			restWorkflow.setMissionCode(
-					modelWorkflow.getConfiguredProcessor().getProcessor().getProcessorClass().getMission().getCode());
+			restWorkflow
+				.setMissionCode(modelWorkflow.getConfiguredProcessor().getProcessor().getProcessorClass().getMission().getCode());
 		}
 		if (null != modelWorkflow.getInputProductClass()) {
 			restWorkflow.setInputProductClass(modelWorkflow.getInputProductClass().getProductType());
@@ -119,8 +117,8 @@ public class WorkflowUtil {
 					restOption.setDefaultValue(option.getDefaultValue());
 				}
 				if (null != modelWorkflow.getConfiguredProcessor()) {
-					restOption.setMissionCode(modelWorkflow.getConfiguredProcessor().getProcessor().getProcessorClass()
-							.getMission().getCode());
+					restOption.setMissionCode(
+							modelWorkflow.getConfiguredProcessor().getProcessor().getProcessorClass().getMission().getCode());
 				}
 
 				restOption.setWorkflowName(restWorkflow.getName());
@@ -178,12 +176,10 @@ public class WorkflowUtil {
 	}
 
 	/**
-	 * Convert a REST workflow into a prosEO model workflow (scalar and embedded
-	 * attributes only, no object references)
+	 * Convert a REST workflow into a prosEO model workflow (scalar and embedded attributes only, no object references)
 	 *
 	 * @param restWorkflow the REST workflow
-	 * @return a (roughly) equivalent model workflow or null, if no REST workflow
-	 *         was given
+	 * @return a (roughly) equivalent model workflow or null, if no REST workflow was given
 	 *
 	 */
 	public static Workflow toModelWorkflow(RestWorkflow restWorkflow) {
@@ -244,13 +240,11 @@ public class WorkflowUtil {
 							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "In workflow option: workflowName"));
 				}
 				if (null == option.getName()) {
-					throw new IllegalArgumentException(
-							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "In workflow option: name"));
+					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "In workflow option: name"));
 				}
 
 				if ((null != option.getMissionCode() && !option.getMissionCode().equals(restWorkflow.getMissionCode()))
-						|| (null != option.getWorkflowName()
-								&& !option.getWorkflowName().equals(restWorkflow.getName()))) {
+						|| (null != option.getWorkflowName() && !option.getWorkflowName().equals(restWorkflow.getName()))) {
 					throw new IllegalArgumentException(
 							logger.log(ProcessorMgrMessage.WORKFLOW_OPTION_MISMATCH, option.getMissionCode(),
 									option.getWorkflowName(), restWorkflow.getMissionCode(), restWorkflow.getName()));
@@ -292,8 +286,8 @@ public class WorkflowUtil {
 				case "BOOLEAN":
 					if (!restParam.getParameterValue().equalsIgnoreCase("true")
 							&& !restParam.getParameterValue().equalsIgnoreCase("false"))
-						throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
-								restParam.getParameterValue(), "BOOLEAN"));
+						throw new IllegalArgumentException(
+								logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT, restParam.getParameterValue(), "BOOLEAN"));
 					modelParam.setBooleanValue(Boolean.valueOf(restParam.getParameterValue()));
 					modelParam.setParameterValue(restParam.getParameterValue());
 					break;
@@ -302,8 +296,8 @@ public class WorkflowUtil {
 						modelParam.setDoubleValue(Double.valueOf(restParam.getParameterValue()));
 						modelParam.setParameterValue(restParam.getParameterValue());
 					} catch (NumberFormatException e) {
-						throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
-								restParam.getParameterValue(), "DOUBLE"));
+						throw new IllegalArgumentException(
+								logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT, restParam.getParameterValue(), "DOUBLE"));
 					}
 					break;
 				case "INSTANT":
@@ -311,8 +305,8 @@ public class WorkflowUtil {
 						modelParam.setInstantValue(OrbitTimeFormatter.parseDateTime(restParam.getParameterValue()));
 						modelParam.setParameterValue(restParam.getParameterValue());
 					} catch (DateTimeParseException e) {
-						throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
-								restParam.getParameterValue(), "INSTANT"));
+						throw new IllegalArgumentException(
+								logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT, restParam.getParameterValue(), "INSTANT"));
 					}
 					break;
 				case "INTEGER":
@@ -320,8 +314,8 @@ public class WorkflowUtil {
 						modelParam.setIntegerValue(Integer.valueOf(restParam.getParameterValue()));
 						modelParam.setParameterValue(restParam.getParameterValue());
 					} catch (NumberFormatException e) {
-						throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
-								restParam.getParameterValue(), "DOUBLE"));
+						throw new IllegalArgumentException(
+								logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT, restParam.getParameterValue(), "DOUBLE"));
 					}
 					break;
 				case "STRING":
@@ -329,8 +323,8 @@ public class WorkflowUtil {
 					modelParam.setParameterValue(restParam.getParameterValue());
 					break;
 				default:
-					throw new IllegalArgumentException(logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT,
-							restParam.getParameterValue(), "(any)"));
+					throw new IllegalArgumentException(
+							logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT, restParam.getParameterValue(), "(any)"));
 				}
 
 				modelWorkflow.getOutputParameters().put(restParam.getKey(), modelParam);

@@ -1,25 +1,32 @@
+/**
+ * S3Configuration.java
+ *
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.version2.s3;
 
 /**
- * S3 Storage
- * 
- * @author Denys Chaykovskiy
+ * Holds the configuration settings required to connect to and interact with an
+ * S3 storage system. It allows for the customization of various aspects such as
+ * access credentials, region, bucket, paths, and behavior-related settings like
+ * request attempts and file transfer management.
  *
+ * @author Denys Chaykovskiy
  */
 public class S3Configuration {
-			
+
 	/** s3 access key */
-	private String s3AccessKey; 
-	
+	private String s3AccessKey;
+
 	/** s3 secret access key */
-	private String s3SecretAccessKey; 
-	
+	private String s3SecretAccessKey;
+
 	/** s3 region */
-	private String s3Region; 
-	
+	private String s3Region;
+
 	/** s3 end point */
 	private String s3EndPoint;
-	
+
 	/** Bucket */
 	private String bucket;
 
@@ -31,13 +38,13 @@ public class S3Configuration {
 
 	/** max request attempts */
 	private int maxRequestAttempts;
-	
+
 	/** wait time */
 	private long fileCheckWaitTime;
-	
+
 	/** default region */
 	private boolean defaultEndPoint;
-	
+
 	public boolean isDefaultEndPoint() {
 		return defaultEndPoint;
 	}
@@ -60,8 +67,7 @@ public class S3Configuration {
 
 	/** File transferManager */
 	private boolean fileTransferManager;
-	
-	
+
 	public String getS3AccessKey() {
 		return s3AccessKey;
 	}
@@ -77,7 +83,7 @@ public class S3Configuration {
 	public void setS3SecretAccessKey(String s3SecretAccessKey) {
 		this.s3SecretAccessKey = s3SecretAccessKey;
 	}
-	
+
 	public String getS3Region() {
 		return s3Region;
 	}

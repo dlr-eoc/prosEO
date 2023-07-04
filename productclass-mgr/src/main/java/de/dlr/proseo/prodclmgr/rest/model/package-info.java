@@ -4,8 +4,9 @@
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 /**
- * Top-level classes for the prosEO Storage Manager component
+ * Utility classes for the prosEO Product Class Manager component
  * 
  * @author Dr. Thomas Bassler
+ *
  */
-package de.dlr.proseo.storagemgr;
+package de.dlr.proseo.prodclmgr.rest.model;

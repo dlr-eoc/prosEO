@@ -1,15 +1,17 @@
 package de.dlr.proseo.ui.gui.service;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MultiValueMap;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -19,10 +21,6 @@ import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.ui.gui.GUIAuthenticationToken;
 import de.dlr.proseo.ui.gui.GUIConfiguration;
-
-import java.util.HashMap;
-import java.util.Map;
-
 import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
@@ -36,7 +34,7 @@ public class ProcessorService {
 
 	/**
 	 * Gets a processor class by its name
-	 * 
+	 *
 	 * @param processorName the processor class name to search for
 	 * @return list of processor classes
 	 */
@@ -55,21 +53,25 @@ public class ProcessorService {
 		}
 		logger.trace("URI " + uri);
 		Builder webclient = WebClient.builder()
-				.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
-					logger.trace("response:{}", res.status());
-					return HttpResponseStatus.FOUND.equals(res.status());
-				})));
+			.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
+				logger.trace("response:{}", res.status());
+				return HttpResponseStatus.FOUND.equals(res.status());
+			})));
 		logger.trace("Found authentication: " + auth);
 		logger.trace("... with username " + auth.getName());
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
-		return webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
-				.accept(MediaType.APPLICATION_JSON).exchange();
+		return webclient.build()
+			.get()
+			.uri(uri)
+			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
+			.accept(MediaType.APPLICATION_JSON)
+			.exchange();
 
 	}
 
 	/**
 	 * Get a processor class by its database ID
-	 * 
+	 *
 	 * @param id the database ID to search for
 	 * @return a processor class
 	 */
@@ -80,23 +82,26 @@ public class ProcessorService {
 		}
 		logger.trace("URI " + uri);
 		Builder webclient = WebClient.builder()
-				.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
-					logger.trace("response:{}", res.status());
-					return HttpResponseStatus.FOUND.equals(res.status());
-				})));
+			.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
+				logger.trace("response:{}", res.status());
+				return HttpResponseStatus.FOUND.equals(res.status());
+			})));
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) (SecurityContextHolder.getContext().getAuthentication());
-		return webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
-				.accept(MediaType.APPLICATION_JSON).exchange();
+		return webclient.build()
+			.get()
+			.uri(uri)
+			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
+			.accept(MediaType.APPLICATION_JSON)
+			.exchange();
 
 	}
 
 	/**
 	 * TODO Create a processor class
-	 * 
-	 * @param mission the mission of the new processor class
-	 * @param processorClassName the name of the new processor class
-	 * @param processorClassProductClass
-	 *            of the new Processor-Class
+	 *
+	 * @param mission                    the mission of the new processor class
+	 * @param processorClassName         the name of the new processor class
+	 * @param processorClassProductClass of the new Processor-Class
 	 * @return response from query
 	 */
 	public Mono<ClientResponse> post(String mission, String processorClassName, String[] processorClassProductClass) {
@@ -116,24 +121,29 @@ public class ProcessorService {
 			logger.trace(">>>MAP AFTER PARAMETERS: {}", map);
 		}
 		Builder webclient = WebClient.builder()
-				.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
-					logger.trace("response:{}" + res);
-					return HttpResponseStatus.FOUND.equals(res.status());
-				})));
+			.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
+				logger.trace("response:{}" + res);
+				return HttpResponseStatus.FOUND.equals(res.status());
+			})));
 
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-		return webclient.build().post().uri(uri).body(BodyInserters.fromObject(map))
-				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
-				.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE).accept(MediaType.APPLICATION_JSON).exchange();
+		return webclient.build()
+			.post()
+			.uri(uri)
+			.body(BodyInserters.fromObject(map))
+			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
+			.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+			.accept(MediaType.APPLICATION_JSON)
+			.exchange();
 
 	}
 
 	/**
 	 * TODO Update a processor class by id
-	 * 
-	 * @param id database ID of processor class to update
-	 * @param mission mission of the processor class
-	 * @param processorClassName name of the processor class
+	 *
+	 * @param id                         database ID of processor class to update
+	 * @param mission                    mission of the processor class
+	 * @param processorClassName         name of the processor class
 	 * @param processorClassProductClass array of product classes the processor class is able to create
 	 * @return the updated processor class
 	 */
@@ -148,21 +158,25 @@ public class ProcessorService {
 			map.add("productClasses", processorClassProductClass.toString());
 		}
 		Builder webclient = WebClient.builder()
-				.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
-					logger.trace("response:{}" + res);
-					return HttpResponseStatus.FOUND.equals(res.status());
-				})));
+			.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
+				logger.trace("response:{}" + res);
+				return HttpResponseStatus.FOUND.equals(res.status());
+			})));
 
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-		return webclient.build().patch().uri(uri).body(BodyInserters.fromFormData(map))
-				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
-				.accept(MediaType.APPLICATION_JSON).retrieve();
+		return webclient.build()
+			.patch()
+			.uri(uri)
+			.body(BodyInserters.fromFormData(map))
+			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
+			.accept(MediaType.APPLICATION_JSON)
+			.retrieve();
 
 	}
 
 	/**
 	 * TODO Delete a processor class by id
-	 * 
+	 *
 	 * @param id of Processor Class to be removed
 	 * @return response from query
 	 */
@@ -173,21 +187,24 @@ public class ProcessorService {
 			logger.trace("URI" + uri);
 		}
 		Builder webclient = WebClient.builder()
-				.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
-					logger.trace("response:{}" + res);
-					return HttpResponseStatus.FOUND.equals(res.status());
-				})));
+			.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
+				logger.trace("response:{}" + res);
+				return HttpResponseStatus.FOUND.equals(res.status());
+			})));
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-		return webclient.build().delete().uri(uri)
-				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
-				.accept(MediaType.APPLICATION_JSON).retrieve();
+		return webclient.build()
+			.delete()
+			.uri(uri)
+			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
+			.accept(MediaType.APPLICATION_JSON)
+			.retrieve();
 	}
 
 	/**
 	 * TODO Get a processor by processor class name and processor version
-	 * 
-	 * @param mission the mission of the processor
-	 * @param processorName the processor class name
+	 *
+	 * @param mission          the mission of the processor
+	 * @param processorName    the processor class name
 	 * @param processorVersion the processor version
 	 * @return responseSpec for processors
 	 */
@@ -202,14 +219,17 @@ public class ProcessorService {
 		}
 		logger.trace("URI " + uri);
 		Builder webclient = WebClient.builder()
-				.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
-					logger.trace("response:{}", res.status());
-					return HttpResponseStatus.FOUND.equals(res.status());
-				})));
+			.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
+				logger.trace("response:{}", res.status());
+				return HttpResponseStatus.FOUND.equals(res.status());
+			})));
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-		ResponseSpec responseSpec = webclient.build().get().uri(uri)
-				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
-				.accept(MediaType.APPLICATION_JSON).retrieve();
+		ResponseSpec responseSpec = webclient.build()
+			.get()
+			.uri(uri)
+			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
+			.accept(MediaType.APPLICATION_JSON)
+			.retrieve();
 		return responseSpec;
 
 	}

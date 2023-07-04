@@ -1,3 +1,8 @@
+/**
+ * S3AtomicBucketDeleter.java
+ *
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.version2.s3;
 
 import java.io.IOException;
@@ -11,9 +16,8 @@ import software.amazon.awssdk.services.s3.model.DeleteBucketRequest;
 
 /**
  * S3 Atomic Bucket Deleter
- * 
- * @author Denys Chaykovskiy
  *
+ * @author Denys Chaykovskiy
  */
 public class S3AtomicBucketDeleter implements AtomicCommand<String> {
 
@@ -37,7 +41,7 @@ public class S3AtomicBucketDeleter implements AtomicCommand<String> {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param s3Client s3 client
 	 * @param bucket   bucket
 	 */
@@ -49,9 +53,10 @@ public class S3AtomicBucketDeleter implements AtomicCommand<String> {
 
 	/**
 	 * Executes s3 bucket delete
-	 * 
+	 *
 	 * @return deleted bucket name
 	 */
+	@Override
 	public String execute() throws IOException {
 
 		if (logger.isTraceEnabled())
@@ -72,30 +77,33 @@ public class S3AtomicBucketDeleter implements AtomicCommand<String> {
 			throw new IOException(e);
 		}
 	}
-	
+
 	/**
-	 * Gets Information about atomic command (mostly for logs)
-	 * 
-	 * @return Information about atomic command
+	 * Gets information about atomic command (mostly for logs)
+	 *
+	 * @return information about atomic command
 	 */
-	public String getInfo() {	
+	@Override
+	public String getInfo() {
 		return INFO + " ";
 	}
-	
+
 	/**
-	 * Gets Information about completed atomic command (mostly for logs)
-	 * 
-	 * @return Information about completed atomic command
+	 * Gets information about completed atomic command (mostly for logs)
+	 *
+	 * @return information about completed atomic command
 	 */
-	public String getCompletedInfo() {	
+	@Override
+	public String getCompletedInfo() {
 		return INFO + ": " + COMPLETED + " ";
 	}
-	
+
 	/**
-	 * Gets Information about failed atomic command (mostly for logs)
-	 * 
-	 * @return Information about failed atomic command
+	 * Gets information about failed atomic command (mostly for logs)
+	 *
+	 * @return information about failed atomic command
 	 */
+	@Override
 	public String getFailedInfo() {
 		return INFO + ": " + FAILED + " ";
 	}

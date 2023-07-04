@@ -1,6 +1,6 @@
 /**
  * ProcessorClassControllerImpl.java
- * 
+ *
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.procmgr.rest;
@@ -25,9 +25,8 @@ import de.dlr.proseo.procmgr.rest.model.RestProcessorClass;
 
 /**
  * Spring MVC controller for the prosEO Processor Manager; implements the services required to manage processor classes.
- * 
- * @author Dr. Thomas Bassler
  *
+ * @author Dr. Thomas Bassler
  */
 @Component
 public class ProcessorClassControllerImpl implements ProcessorclassController {
@@ -39,28 +38,27 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProcessorClassControllerImpl.class);
 	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.PROCESSOR_MGR);
-	
+
 	/**
 	 * Get processor classes by mission and name
-	 * 
-	 * @param mission the mission code (optional)
+	 *
+	 * @param mission       the mission code (optional)
 	 * @param processorName the processor name (optional)
 	 * @param recordFrom    first record of filtered and ordered result to return
 	 * @param recordTo      last record of filtered and ordered result to return
-	 * @return HTTP status "OK" and a list of Json objects representing processor classes satisfying the search criteria or
-	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
-	 *         HTTP status "NOT_FOUND" and an error message, if no processor classes matching the search criteria were found
-	 *         HTTP status "TOO MANY REQUESTS" if the result list exceeds a configured maximum
+	 * @return HTTP status "OK" and a list of Json objects representing processor classes satisfying the search criteria or HTTP
+	 *         status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "NOT_FOUND" and
+	 *         an error message, if no processor classes matching the search criteria were found HTTP status "TOO MANY REQUESTS" if
+	 *         the result list exceeds a configured maximum
 	 */
 	@Override
-	public ResponseEntity<List<RestProcessorClass>> getProcessorClasses(String mission, String processorName,
-			Integer recordFrom, Integer recordTo) {
+	public ResponseEntity<List<RestProcessorClass>> getProcessorClasses(String mission, String processorName, Integer recordFrom,
+			Integer recordTo) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getProcessorClass({}, {})", mission, processorName);
 
 		try {
-			return new ResponseEntity<>(
-					processorClassManager.getProcessorClasses(mission, processorName, recordFrom, recordTo),
+			return new ResponseEntity<>(processorClassManager.getProcessorClasses(mission, processorName, recordFrom, recordTo),
 					HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
@@ -71,17 +69,17 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 
 	/**
 	 * Create a new processor class
-	 * 
+	 *
 	 * @param processorClass a Json representation of the new processor class
 	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the processor class after persistence
-	 *             (with ID and version for all contained objects) or
-	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
-	 *         HTTP status "BAD_REQUEST", if any of the input data was invalid
+	 *         (with ID and version for all contained objects) or HTTP status "FORBIDDEN" and an error message, if a cross-mission
+	 *         data access was attempted, or HTTP status "BAD_REQUEST", if any of the input data was invalid
 	 */
 	@Override
 	public ResponseEntity<RestProcessorClass> createProcessorClass(@Valid RestProcessorClass processorClass) {
-		if (logger.isTraceEnabled()) logger.trace(">>> createProcessorClass({})", (null == processorClass ? "MISSING" : processorClass.getProcessorName()));
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> createProcessorClass({})", (null == processorClass ? "MISSING" : processorClass.getProcessorName()));
+
 		try {
 			return new ResponseEntity<>(processorClassManager.createProcessorClass(processorClass), HttpStatus.CREATED);
 		} catch (IllegalArgumentException e) {
@@ -93,17 +91,18 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 
 	/**
 	 * Get a processor class by ID
-	 * 
+	 *
 	 * @param id the processor class ID
-	 * @return HTTP status "OK" and a Json object corresponding to the processor class found or 
-	 *         HTTP status "BAD_REQUEST" and an error message, if no processor class ID was given, or
-	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
-	 * 		   HTTP status "NOT_FOUND" and an error message, if no processor class with the given ID exists
+	 * @return HTTP status "OK" and a Json object corresponding to the processor class found or HTTP status "BAD_REQUEST" and an
+	 *         error message, if no processor class ID was given, or HTTP status "FORBIDDEN" and an error message, if a
+	 *         cross-mission data access was attempted, or HTTP status "NOT_FOUND" and an error message, if no processor class with
+	 *         the given ID exists
 	 */
 	@Override
 	public ResponseEntity<RestProcessorClass> getProcessorClassById(Long id) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProcessorClassById({})", id);
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getProcessorClassById({})", id);
+
 		try {
 			return new ResponseEntity<>(processorClassManager.getProcessorClassById(id), HttpStatus.OK);
 		} catch (NoResultException e) {
@@ -117,24 +116,26 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 
 	/**
 	 * Update a processor class by ID
-	 * 
-	 * @param id the ID of the processor class to update
+	 *
+	 * @param id             the ID of the processor class to update
 	 * @param processorClass a Json object containing the modified (and unmodified) attributes
 	 * @return HTTP status "OK" and a response containing a Json object corresponding to the processor class after modification
-	 *             (with ID and version for all contained objects) or 
-	 *         HTTP status "NOT_MODIFIED" and the unchanged product, if no attributes were actually changed, or
-	 * 		   HTTP status "NOT_FOUND" and an error message, if no processor class with the given ID exists, or
-	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
-	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
-	 *         HTTP status "CONFLICT"and an error message, if the processor class has been modified since retrieval by the client
+	 *         (with ID and version for all contained objects) or HTTP status "NOT_MODIFIED" and the unchanged product, if no
+	 *         attributes were actually changed, or HTTP status "NOT_FOUND" and an error message, if no processor class with the
+	 *         given ID exists, or HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or HTTP
+	 *         status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "CONFLICT"and
+	 *         an error message, if the processor class has been modified since retrieval by the client
 	 */
 	@Override
 	public ResponseEntity<RestProcessorClass> modifyProcessorClass(Long id, @Valid RestProcessorClass processorClass) {
-		if (logger.isTraceEnabled()) logger.trace(">>> modifyProcessorClass({}, {})", id, (null == processorClass ? "MISSING" : processorClass.getProcessorName()));
+		if (logger.isTraceEnabled())
+			logger.trace(">>> modifyProcessorClass({}, {})", id,
+					(null == processorClass ? "MISSING" : processorClass.getProcessorName()));
 
 		try {
-			RestProcessorClass changedProcessorClass = processorClassManager.modifyProcessorClass(id, processorClass); 
-			HttpStatus httpStatus = (processorClass.getVersion() == changedProcessorClass.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
+			RestProcessorClass changedProcessorClass = processorClassManager.modifyProcessorClass(id, processorClass);
+			HttpStatus httpStatus = (processorClass.getVersion() == changedProcessorClass.getVersion() ? HttpStatus.NOT_MODIFIED
+					: HttpStatus.OK);
 			return new ResponseEntity<>(changedProcessorClass, httpStatus);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
@@ -149,18 +150,18 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 
 	/**
 	 * Delete a processor class by ID
-	 * 
+	 *
 	 * @param id the ID of the processor class to delete
-	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
-	 *         HTTP status "NOT_FOUND", if the processor class did not exist, or
-	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful, or
-	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
-	 *         HTTP status "BAD_REQUEST", if the processor class ID was not given, or if dependent objects exist
+	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or HTTP status "NOT_FOUND", if the
+	 *         processor class did not exist, or HTTP status "NOT_MODIFIED", if the deletion was unsuccessful, or HTTP status
+	 *         "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "BAD_REQUEST", if the
+	 *         processor class ID was not given, or if dependent objects exist
 	 */
 	@Override
 	public ResponseEntity<?> deleteProcessorClassById(Long id) {
-		if (logger.isTraceEnabled()) logger.trace(">>> deleteProcessorClassById({})", id);
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteProcessorClassById({})", id);
+
 		try {
 			processorClassManager.deleteProcessorClassById(id);
 			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
@@ -177,13 +178,11 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 
 	/**
 	 * Count the processor classes matching the specified mission and processor name.
-	 * 
+	 *
 	 * @param missionCode          the mission code
 	 * @param processorName        the processor name
-	 * @param configurationVersion the configuration version
-	 * @return the number of matching configurations as a String (may be zero) or
-	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data
-	 *         access was attempted
+	 * @return the number of matching configurations as a String (may be zero) or HTTP status "FORBIDDEN" and an error message, if a
+	 *         cross-mission data access was attempted
 	 */
 	@Override
 	public ResponseEntity<String> countProcessorClasses(String missionCode, String processorName) {

@@ -1,12 +1,16 @@
+/**
+ * FileLockedAfterMaxCyclesException.java
+ *
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.version2.Exceptions;
 
 import java.io.IOException;
 
 /**
  * File Locked After Max Cycles Exception
- * 
- * @author Denys Chaykovskiy
  *
+ * @author Denys Chaykovskiy
  */
 public class FileLockedAfterMaxCyclesException extends IOException {
 
@@ -21,7 +25,7 @@ public class FileLockedAfterMaxCyclesException extends IOException {
 
 	/**
 	 * Constructor with message
-	 * 
+	 *
 	 * @param message exception message
 	 */
 	public FileLockedAfterMaxCyclesException(String message) {

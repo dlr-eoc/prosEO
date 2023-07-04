@@ -1,3 +1,8 @@
+/**
+ * S3AtomicFileExistsGetter.java
+ *
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.version2.s3;
 
 import java.io.IOException;
@@ -12,9 +17,8 @@ import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
 /**
  * S3 Atomic File Exists Getter
- * 
- * @author Denys Chaykovskiy
  *
+ * @author Denys Chaykovskiy
  */
 public class S3AtomicFileExistsGetter implements AtomicCommand<String> {
 
@@ -23,7 +27,7 @@ public class S3AtomicFileExistsGetter implements AtomicCommand<String> {
 
 	/** Completed Info */
 	private static final String COMPLETED = "file existence GOT";
-	
+
 	/** Failed Info */
 	private static final String FAILED = "file existence verification FAILED";
 
@@ -41,7 +45,7 @@ public class S3AtomicFileExistsGetter implements AtomicCommand<String> {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param s3Client s3 client
 	 * @param bucket   bucket
 	 * @param path     path
@@ -55,9 +59,10 @@ public class S3AtomicFileExistsGetter implements AtomicCommand<String> {
 
 	/**
 	 * Gets if file exists
-	 * 
+	 *
 	 * @return "true" if file exists
 	 */
+	@Override
 	public String execute() throws IOException {
 
 		if (logger.isTraceEnabled())
@@ -65,17 +70,17 @@ public class S3AtomicFileExistsGetter implements AtomicCommand<String> {
 
 		try {
 			s3Client.headObject(HeadObjectRequest.builder().bucket(bucket).key(path).build());
-			
+
 			if (logger.isTraceEnabled())
 				logger.trace(">>>>> " + getCompletedInfo() + " - exists");
-			
+
 			return String.valueOf(true);
 
 		} catch (NoSuchKeyException e) {
-			
+
 			if (logger.isTraceEnabled())
 				logger.trace("... " + getCompletedInfo() + " - not exists");
-			
+
 			return String.valueOf(false);
 
 		} catch (Exception e) {
@@ -84,31 +89,34 @@ public class S3AtomicFileExistsGetter implements AtomicCommand<String> {
 			throw new IOException(e);
 		}
 	}
-	
+
 	/**
-	 * Gets Information about atomic command (mostly for logs)
-	 * 
-	 * @return Information about atomic command
+	 * Gets information about atomic command (mostly for logs)
+	 *
+	 * @return information about atomic command
 	 */
-	public String getInfo() {	
+	@Override
+	public String getInfo() {
 		return INFO + " ";
 	}
-	
+
 	/**
-	 * Gets Information about completed atomic command (mostly for logs)
-	 * 
-	 * @return Information about completed atomic command
+	 * Gets information about completed atomic command (mostly for logs)
+	 *
+	 * @return information about completed atomic command
 	 */
-	public String getCompletedInfo() {	
+	@Override
+	public String getCompletedInfo() {
 		return INFO + ": " + COMPLETED + " ";
 	}
-	
+
 	/**
-	 * Gets Information about failed atomic command (mostly for logs)
-	 * 
-	 * @return Information about failed atomic command
+	 * Gets information about failed atomic command (mostly for logs)
+	 *
+	 * @return information about failed atomic command
 	 */
+	@Override
 	public String getFailedInfo() {
 		return INFO + ": " + FAILED + " ";
-	}	
+	}
 }
