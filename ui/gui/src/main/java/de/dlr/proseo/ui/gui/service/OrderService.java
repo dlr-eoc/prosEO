@@ -5,8 +5,10 @@
  */
 package de.dlr.proseo.ui.gui.service;
 
+import java.net.URI;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -18,6 +20,7 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
@@ -34,7 +37,7 @@ import reactor.netty.http.client.HttpClient;
 /**
  * A bridge between the GUI frontend and the order management backend, providing methods to retrieve, manipulate, and update
  * order-related data and entities
- * 
+ *
  * @author Ernst Melchinger
  */
 @Service
@@ -53,7 +56,7 @@ public class OrderService {
 
 	/**
 	 * Retrieves a list of orders based on various search parameters
-	 * 
+	 *
 	 * @param identifier    the order identifier
 	 * @param states        the order state
 	 * @param products      the product
@@ -74,55 +77,29 @@ public class OrderService {
 		String mission = auth.getMission();
 
 		// Build the request URI
-		String uri = config.getOrderManager() + "/orders/select";
-		String divider = "?";
-		if (mission != null && !mission.isEmpty()) {
-			uri += divider + "mission=" + mission;
-			divider = "&";
-		}
-		if (identifier != null && !identifier.isEmpty()) {
-			uri += divider + "identifier=" + identifier.replaceAll("[*]", "%");
-			divider = "&";
-		}
-		if (states != null && !states.isEmpty()) {
-			String[] pcs = states.split(":");
-			for (String pc : pcs) {
-				uri += divider + "state=" + pc;
-				divider = "&";
-			}
-		}
-		if (products != null && !products.isEmpty()) {
-			String[] pcs = products.split(":");
-			for (String pc : pcs) {
-				uri += divider + "productClass=" + pc;
-				divider = "&";
-			}
-		}
-		if (startTimeFrom != null && !startTimeFrom.isEmpty()) {
-			uri += divider + "startTime=" + startTimeFrom;
-			divider = "&";
-		}
-		if (startTimeTo != null && !startTimeTo.isEmpty()) {
-			uri += divider + "stopTime=" + startTimeTo;
-			divider = "&";
-		}
-		if (recordFrom != null) {
-			uri += divider + "recordFrom=" + recordFrom;
-			divider = "&";
-		}
-		if (recordTo != null) {
-			uri += divider + "recordTo=" + recordTo;
-			divider = "&";
-		}
-		if (sortCol != null && !sortCol.isEmpty()) {
-			uri += divider + "orderBy=" + sortCol;
-			if (up != null && !up) {
-				uri += " DESC";
-			} else {
-				uri += " ASC";
-			}
-			divider = "&";
-		}
+		URI uri = UriComponentsBuilder.fromUriString(config.getOrderManager())
+			.path("/orders/select")
+			.queryParam("mission", Optional.ofNullable(mission.trim()).filter(s -> !s.isEmpty()).orElse(null))
+			.queryParam("identifier",
+					Optional.ofNullable(identifier.trim())
+						.filter(s -> !s.isEmpty())
+						.map(s -> s.replaceAll("[*]", "%"))
+						.orElse(null))
+			.queryParam("state",
+					Optional.ofNullable(states.trim()).filter(s -> !s.isEmpty()).map(s -> (Object[]) s.split(":")).orElse(null))
+			.queryParam("productClass",
+					Optional.ofNullable(products.trim()).filter(s -> !s.isEmpty()).map(s -> (Object[]) s.split(":")).orElse(null))
+			.queryParam("startTime", Optional.ofNullable(startTimeFrom.trim()).filter(s -> !s.isEmpty()).orElse(null))
+			.queryParam("stopTime", Optional.ofNullable(startTimeTo.trim()).filter(s -> !s.isEmpty()).orElse(null))
+			.queryParam("recordFrom", Optional.ofNullable(recordFrom).orElse(null))
+			.queryParam("recordTo", Optional.ofNullable(recordTo).orElse(null))
+			.queryParam("orderBy",
+					Optional.ofNullable(sortCol.trim())
+						.filter(s -> !s.isEmpty())
+						.map(s -> s + (up != null && up ? " ASC" : " DESC"))
+						.orElse(null))
+			.build()
+			.toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
@@ -148,7 +125,7 @@ public class OrderService {
 
 	/**
 	 * Retrieves information about a specific order based on its ID
-	 * 
+	 *
 	 * @param orderId the order id
 	 * @return a Mono\<ClientResponse\> providing access to the response status and headers, as well as methods to consume the
 	 *         response body
@@ -159,12 +136,11 @@ public class OrderService {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
 		// Build the request URI
-		String uri = config.getOrderManager() + "/orders";
-		if (null != orderId && !orderId.trim().isEmpty()) {
-			uri += "/" + orderId.trim();
-		} else {
-			uri += "/0";
-		}
+		URI uri = UriComponentsBuilder.fromUriString(config.getOrderManager())
+			.path("/orders")
+			.path("/" + Optional.ofNullable(orderId.trim()).filter(s -> !s.isEmpty()).orElse("0"))
+			.build()
+			.toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
@@ -190,7 +166,7 @@ public class OrderService {
 
 	/**
 	 * Retrieves the jobs associated with a specific order
-	 * 
+	 *
 	 * @param orderId    the order id
 	 * @param recordFrom the first result to return
 	 * @param recordTo   the last return to return
@@ -204,32 +180,21 @@ public class OrderService {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
 		// Build the request URI
-		String uri = config.getOrderManager() + "/orderjobs";
-		String divider = "?";
-		if (null != orderId && !orderId.trim().isEmpty()) {
-			uri += divider + "orderid=" + orderId.trim();
-			divider = "&";
-		}
-		if (recordFrom != null) {
-			uri += divider + "recordFrom=" + recordFrom;
-			divider = "&";
-		}
-		if (recordTo != null) {
-			uri += divider + "recordTo=" + recordTo;
-			divider = "&";
-		}
-		uri += divider + "logs=false";
-		divider = "&";
-		if (states != null && !states.isEmpty()) {
-			String[] pcs = states.split(":");
-			for (String pc : pcs) {
-				if (!pc.equalsIgnoreCase("ALL")) {
-					uri += divider + "state=" + pc;
-					divider = "&";
-				}
-			}
-		}
-		uri += divider + "orderBy=startTime ASC";
+		URI uri = UriComponentsBuilder.fromUriString(config.getOrderManager())
+			.path("/orderjobs")
+			.queryParam("orderid", Optional.ofNullable(orderId.trim()).filter(id -> !id.isEmpty()).orElse(null))
+			.queryParam("recordFrom", Optional.ofNullable(recordFrom).orElse(null))
+			.queryParam("recordTo", Optional.ofNullable(recordTo).orElse(null))
+			.queryParam("logs", "false")
+			.queryParam("state",
+					Optional.ofNullable(states.trim())
+						.filter(s -> !s.isEmpty())
+						.filter(s -> !s.toLowerCase().contains("all"))
+						.map(s -> (Object[]) s.split(":"))
+						.orElse(null))
+			.queryParam("orderBy", "startTime ASC")
+			.build()
+			.toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
@@ -255,7 +220,7 @@ public class OrderService {
 
 	/**
 	 * Retrieves the graph of a specific job
-	 * 
+	 *
 	 * @param orderId the job id
 	 * @return a Mono\<ClientResponse\> providing access to the response status and headers, and also methods to consume the
 	 *         response body
@@ -266,10 +231,11 @@ public class OrderService {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
 		// Build the request URI
-		String uri = config.getProductionPlanner() + "/jobs/graph/";
-		if (null != orderId && !orderId.trim().isEmpty()) {
-			uri += orderId.trim();
-		}
+		URI uri = UriComponentsBuilder.fromUriString(config.getOrderManager())
+			.path("/jobs/graph")
+			.path("/" + Optional.ofNullable(orderId.trim()).filter(s -> !s.isEmpty()).orElse("0"))
+			.build()
+			.toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
@@ -295,7 +261,7 @@ public class OrderService {
 
 	/**
 	 * Retrieves the graph of a specific job
-	 * 
+	 *
 	 * @param jobId the job id
 	 * @param auth
 	 * @return the job graph
@@ -334,7 +300,7 @@ public class OrderService {
 
 	/**
 	 * Retrieves the state of a specific order
-	 * 
+	 *
 	 * @param orderId the order id
 	 * @return the order state in string format
 	 * @throws RestClientResponseException if an error occurred
@@ -345,23 +311,23 @@ public class OrderService {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
 		// Build the request URI
-		String uri = "/orders";
-		if (null != orderId && !orderId.trim().isEmpty()) {
-			uri += "/" + orderId.trim();
-		} else {
-			uri += "/0";
-		}
+		URI uri = UriComponentsBuilder.fromUriString(config.getOrderManager())
+			.path("/orders")
+			.path("/" + Optional.ofNullable(orderId.trim()).filter(s -> !s.isEmpty()).orElse("0"))
+			.build()
+			.toUri();
+		logger.trace("URI " + uri);
 
 		// Attempt to retrieve the order state from the production planner
 		return serviceConnection
-			.getFromService(config.getOrderManager(), uri, HashMap.class, auth.getProseoName(), auth.getPassword())
+			.getFromService(config.getOrderManager(), uri.toString(), HashMap.class, auth.getProseoName(), auth.getPassword())
 			.get("orderState")
 			.toString();
 	}
 
 	/**
 	 * Changes the state of an order based on its ID and the desired state
-	 * 
+	 *
 	 * @param orderId  the order id
 	 * @param state    the desired order state
 	 * @param facility the processing facility
@@ -405,7 +371,7 @@ public class OrderService {
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
-		Builder webclient = WebClient.builder()
+		Builder webClientBuilder = WebClient.builder()
 			.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
 				logger.trace("response:{}", res.status());
 				return HttpResponseStatus.FOUND.equals(res.status());
@@ -415,6 +381,7 @@ public class OrderService {
 				.tcpConfiguration(client -> client.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.getTimeout().intValue())
 					.doOnConnected(conn -> conn.addHandlerLast(new ReadTimeoutHandler((int) (config.getTimeout() / 1000)))
 						.addHandlerLast(new WriteTimeoutHandler((int) (config.getTimeout() / 1000)))))));
+		WebClient webClient = webClientBuilder.build();
 
 		logger.trace("Found authentication: " + auth);
 		logger.trace("... with username " + auth.getName());
@@ -423,24 +390,21 @@ public class OrderService {
 		// Build the Mono
 		Mono<ClientResponse> answer = null;
 		if (method.equals("patch")) {
-			answer = webclient.build()
-				.patch()
+			answer = webClient.patch()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
 				.exchange()
 				.timeout(Duration.ofMillis(config.getTimeout()));
 		} else if (method.equals("put")) {
-			answer = webclient.build()
-				.put()
+			answer = webClient.put()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
 				.exchange()
 				.timeout(Duration.ofMillis(config.getTimeout()));
 		} else if (method.equals("delete")) {
-			answer = webclient.build()
-				.delete()
+			answer = webClient.delete()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
@@ -455,7 +419,7 @@ public class OrderService {
 
 	/**
 	 * Changes the state of a job based on its ID and the desired state
-	 * 
+	 *
 	 * @param jobId the job id
 	 * @param state the desired state
 	 * @return a Mono\<ClientResponse\> providing access to the response status and headers, as well as methods to consume the
@@ -485,11 +449,12 @@ public class OrderService {
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
-		Builder webclient = WebClient.builder()
+		Builder webClientBuilder = WebClient.builder()
 			.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
 				logger.trace("response:{}", res.status());
 				return HttpResponseStatus.FOUND.equals(res.status());
 			})));
+		WebClient webClient = webClientBuilder.build();
 
 		logger.trace("Found authentication: " + auth);
 		logger.trace("... with username " + auth.getName());
@@ -498,22 +463,19 @@ public class OrderService {
 		// Build the Mono
 		Mono<ClientResponse> answer = null;
 		if (method.equals("patch")) {
-			answer = webclient.build()
-				.patch()
+			answer = webClient.patch()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
 				.exchange();
 		} else if (method.equals("put")) {
-			answer = webclient.build()
-				.put()
+			answer = webClient.put()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
 				.exchange();
 		} else if (method.equals("delete")) {
-			answer = webclient.build()
-				.delete()
+			answer = webClient.delete()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
@@ -527,7 +489,7 @@ public class OrderService {
 
 	/**
 	 * Changes the state of a job step based on its ID and the desired state
-	 * 
+	 *
 	 * @param jobStepId the job step state
 	 * @param state     the state to set
 	 * @return a Mono\<ClientResponse\> providing access to the response status and headers, as well as methods to consume the
@@ -557,11 +519,12 @@ public class OrderService {
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
-		Builder webclient = WebClient.builder()
+		Builder webClientBuilder = WebClient.builder()
 			.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
 				logger.trace("response:{}", res.status());
 				return HttpResponseStatus.FOUND.equals(res.status());
 			})));
+		WebClient webClient = webClientBuilder.build();
 
 		logger.trace("Found authentication: " + auth);
 		logger.trace("... with username " + auth.getName());
@@ -570,22 +533,19 @@ public class OrderService {
 		// Build the Mono
 		Mono<ClientResponse> answer = null;
 		if (method.equals("patch")) {
-			answer = webclient.build()
-				.patch()
+			answer = webClient.patch()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
 				.exchange();
 		} else if (method.equals("put")) {
-			answer = webclient.build()
-				.put()
+			answer = webClient.put()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
 				.exchange();
 		} else if (method.equals("delete")) {
-			answer = webclient.build()
-				.delete()
+			answer = webClient.delete()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
