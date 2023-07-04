@@ -232,7 +232,8 @@ public class GroupManager {
 					logger.log(GeneralMessage.TOO_MANY_RESULTS, "groups", numberOfResults, config.getMaxResults()));
 		}
 
-		Query query = em.createQuery("select g from groups g where g.groupName like '" + mission + "-%'");
+		Query query = em.createQuery("select g from groups g where g.groupName like concat(:missionCode, '-%')");
+		query.setParameter("missionCode",  mission);
 		query.setFirstResult(recordFrom);
 		query.setMaxResults(recordTo - recordFrom);
 
