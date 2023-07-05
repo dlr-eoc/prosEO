@@ -272,6 +272,7 @@ de.dlr.proseo.prodclmgr
 de.dlr.proseo.prodclmgr.rest
 de.dlr.proseo.prodclmgr.rest
 de.dlr.proseo.prodclmgr.rest.model
+de.dlr.proseo.prodclmgr.rest.model
 de.dlr.proseo.prodclmgr.rest
 de.dlr.proseo.prodclmgr
 de.dlr.proseo.prodclmgr.rest
@@ -293,6 +294,7 @@ de.dlr.proseo.procmgr.rest
 de.dlr.proseo.procmgr.rest
 de.dlr.proseo.procmgr.rest
 de.dlr.proseo.procmgr.rest
+de.dlr.proseo.procmgr.rest.model
 de.dlr.proseo.procmgr.rest.model
 de.dlr.proseo.procmgr.rest.model
 de.dlr.proseo.procmgr.rest.model
@@ -406,6 +408,8 @@ de.dlr.proseo.storagemgr.version2
 de.dlr.proseo.storagemgr.version2.posix
 de.dlr.proseo.storagemgr.version2.posix
 de.dlr.proseo.storagemgr.version2.posix
+de.dlr.proseo.storagemgr.version2.posix
+de.dlr.proseo.storagemgr.version2.s3
 de.dlr.proseo.storagemgr.version2.s3
 de.dlr.proseo.storagemgr.version2.s3
 de.dlr.proseo.storagemgr.version2.s3
@@ -425,11 +429,14 @@ de.dlr.proseo.storagemgr.version2.s3
 de.dlr.proseo.storagemgr.version2
 de.dlr.proseo.storagemgr.version2
 de.dlr.proseo.storagemgr.version2.Exceptions
+de.dlr.proseo.storagemgr.version2.Exceptions
 de.dlr.proseo.storagemgr.version2.model
 de.dlr.proseo.storagemgr.version2.model
 de.dlr.proseo.storagemgr.version2.model
 de.dlr.proseo.storagemgr.version2.model
 de.dlr.proseo.storagemgr.version2.model
+de.dlr.proseo.storagemgr.version2.model
+de.dlr.proseo.storagemgr.version2
 de.dlr.proseo.storagemgr.version2
 de.dlr.proseo.storagemgr.fs.s3
 de.dlr.proseo.storagemgr.rest
@@ -746,12 +753,14 @@ de.dlr.proseo.logging.http
 de.dlr.proseo.logging.http
 de.dlr.proseo.notification
 de.dlr.proseo.notification
-de.dlr.proseo.notification
+de.dlr.proseo.notification.service
 de.dlr.proseo.notification.service
 de.dlr.proseo.notification.service
 de.dlr.proseo.notification
 de.dlr.proseo.notification.rest
 de.dlr.proseo.notification.rest
+de.dlr.proseo.notification.rest
+de.dlr.proseo.notification
 de.dlr.proseo.notification.rest
 de.dlr.proseo.notification.rest.model
 de.dlr.proseo.notification.rest

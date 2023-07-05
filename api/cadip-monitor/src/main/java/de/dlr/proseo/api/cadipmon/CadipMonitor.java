@@ -23,11 +23,11 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -35,8 +35,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Consumer;
-
 import javax.annotation.PostConstruct;
 
 import org.apache.olingo.client.api.ODataClient;
@@ -45,7 +43,6 @@ import org.apache.olingo.client.api.communication.request.retrieve.ODataEntitySe
 import org.apache.olingo.client.api.communication.response.ODataRetrieveResponse;
 import org.apache.olingo.client.api.domain.ClientEntity;
 import org.apache.olingo.client.api.domain.ClientEntitySet;
-import org.apache.olingo.client.api.domain.ClientValue;
 import org.apache.olingo.client.api.uri.QueryOption;
 import org.apache.olingo.client.core.ODataClientFactory;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeException;
@@ -74,7 +71,6 @@ import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.OAuthMessage;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
-import reactor.netty.http.client.HttpClientRequest;
 
 /**
  * Monitor for CADU Interface Points (CADIP)
@@ -151,6 +147,9 @@ public class CadipMonitor extends BaseMonitor {
 		
 		/** Downlink orbit number */
 		private Integer downlinkOrbit;
+		
+		/** Flags whether the session corresponds to a retransfer */
+		private Boolean retransfer;
 		
 		/** Flag indicating completeness of session provisioning */
 		private Boolean sessionComplete = false;
@@ -282,6 +281,24 @@ public class CadipMonitor extends BaseMonitor {
 		 */
 		public void setDownlinkOrbit(Integer downlinkOrbit) {
 			this.downlinkOrbit = downlinkOrbit;
+		}
+
+		/**
+		 * Gets the retransfer flag
+		 * 
+		 * @return true, if this session corresponds to a retransfer, false otherwise
+		 */
+		public Boolean isRetransfer() {
+			return retransfer;
+		}
+
+		/**
+		 * Sets the retransfer flag
+		 * 
+		 * @param retransfer set to true, if this session corresponds to a retransfer, false otherwise
+		 */
+		public void setRetransfer(Boolean retransfer) {
+			this.retransfer = retransfer;
 		}
 
 		/**
@@ -550,8 +567,9 @@ public class CadipMonitor extends BaseMonitor {
 		 * 
 		 * @return true, if this is the final file, false otherwise
 		 */
-		public Boolean isFinalBlock() {
-			return finalBlock;
+		public boolean isFinalBlock() {
+			// Has been found to sometimes be null, although as per ICD this is not allowed, so we play it safe here
+			return Objects.equals(finalBlock, Boolean.TRUE);
 		}
 
 		/**
@@ -1131,11 +1149,17 @@ public class CadipMonitor extends BaseMonitor {
 		if (logger.isTraceEnabled()) logger.trace("... downlink orbit = {}", ts.getDownlinkOrbit());
 		
 		try {
+			ts.setRetransfer(session.getProperty("Retransfer").getPrimitiveValue().toCastValue(Boolean.class));
+		} catch (EdmPrimitiveTypeException | NullPointerException e) {
+			// Ignore, may not yet be set
+		}
+		if (logger.isTraceEnabled()) logger.trace("... retransfer = {}", ts.isRetransfer());
+		
+		try {
 			ts.setDownlinkStart(Instant.parse(
 					session.getProperty("DownlinkStart").getPrimitiveValue().toCastValue(String.class)));
 		} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
-			logger.log(ApiMonitorMessage.SESSION_ELEMENT_MISSING, session.toString(), "DownlinkStart");
-			return null;
+			// Ignore, may not yet be set
 		}
 		if (logger.isTraceEnabled()) logger.trace("... downlink start = {}", ts.getDownlinkStart());
 		
@@ -1143,16 +1167,14 @@ public class CadipMonitor extends BaseMonitor {
 			ts.setDownlinkStop(Instant.parse(
 					session.getProperty("DownlinkStop").getPrimitiveValue().toCastValue(String.class)));
 		} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
-			logger.log(ApiMonitorMessage.SESSION_ELEMENT_MISSING, session.toString(), "DownlinkStop");
-			return null;
+			// Ignore, may not yet be set
 		}
 		if (logger.isTraceEnabled()) logger.trace("... downlink stop = {}", ts.getDownlinkStop());
 		
 		try {
 			ts.setDeliveryPushOk(session.getProperty("DeliveryPushOK").getPrimitiveValue().toCastValue(Boolean.class));
 		} catch (EdmPrimitiveTypeException | NullPointerException e) {
-			logger.log(ApiMonitorMessage.SESSION_ELEMENT_MISSING, session.toString(), "DeliveryPushOK");
-			return null;
+			// Ignore, may not yet be set
 		}
 		if (logger.isTraceEnabled()) logger.trace("... delivery push OK = {}", ts.getDeliveryPushOk());
 		
@@ -1585,10 +1607,17 @@ public class CadipMonitor extends BaseMonitor {
 			throw new IOException(message);
 		}
 		
-		ClientEntity clientEntity = response.getBody();
-		Collection<?> qualityInfos = clientEntity.getProperty("QualityInfo").getValue().asCollection().asJavaCollection();
+		ClientEntity session = response.getBody();
+		
+		// Update session data with downlink information
+		TransferSession newTs = extractTransferSession(session);
+		transferSession.setDownlinkStart(newTs.getDownlinkStart());
+		transferSession.setDownlinkStop(newTs.getDownlinkStop());
+		transferSession.setDeliveryPushOk(newTs.getDeliveryPushOk());
 		
 		// Extract quality info metadata
+		Collection<?> qualityInfos = session.getProperty("QualityInfo").getValue().asCollection().asJavaCollection();
+
 		transferSession.setDownlinkSize(0L);
 		for (Object qualityInfoObject: qualityInfos) {
 			if (qualityInfoObject instanceof Map) {

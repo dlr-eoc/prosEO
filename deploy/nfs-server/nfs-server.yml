@@ -23,3 +23,15 @@
       src: "{{ groups['nfsserver'][0] }}:/exports"
       fstype: nfs
       state: mounted
+
+# Mount transfer directory on brain (for AIP client)
+- hosts: brain
+  remote_user: proseoadmin
+
+  tasks:
+  - name: Mount transfer directory on brain
+    mount:
+      path: /mnt/transfer
+      src: "{{ groups['nfsserver'][0] }}:/exports/transfer"
+      fstype: nfs
+      state: mounted
