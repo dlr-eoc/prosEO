@@ -141,6 +141,7 @@ services:
     image: ${REGISTRY_URL}/proseo-aip-client:${VERSION}-proseo
     volumes:
       - /opt/prosEO/log:/proseo/log
+      - /mnt/transfer:/proseo/transfer
     ports:
       - "8092:8080"
     depends_on:

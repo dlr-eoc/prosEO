@@ -4,7 +4,7 @@
   <parent>
     <groupId>de.dlr.proseo</groupId>
     <artifactId>proseo-api</artifactId>
-    <version>0.9.5-ODIP</version>
+    <version>0.9.5-SNAPSHOT</version>
   </parent>
   
   <artifactId>aip-client</artifactId>
@@ -18,7 +18,7 @@
 	</organization>
 
 	<properties>
-		<module.version>0.9.5-ODIP</module.version>
+		<module.version>0.9.5-SNAPSHOT</module.version>
         <olingo.version>4.7.1</olingo.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/aip-client-api.raml</raml-path>
@@ -189,15 +189,6 @@
                     <excludes>
                        <exclude>**/IngestorproductController*</exclude>
                     </excludes>
-                </configuration>
-            </plugin>
-
-			<!-- Temporarily (to allow for full build of prosEO): Ignore failing unit tests -->
-			<plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <testFailureIgnore>true</testFailureIgnore>
                 </configuration>
             </plugin>
 

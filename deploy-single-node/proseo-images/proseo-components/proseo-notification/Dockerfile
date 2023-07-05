@@ -1,4 +1,4 @@
-FROM localhost:5000/proseo-notification:0.9.5-ODIP
+FROM localhost:5000/proseo-notification:0.9.5-SNAPSHOT
 ADD application.yml /usr/share/notification/application.yml
 WORKDIR /usr/share/notification
 

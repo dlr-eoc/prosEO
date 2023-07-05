@@ -28,5 +28,5 @@ proseo:
     odip:
         facility: Lerchenhof
         
-    # Not sure what this is (AIP client?)
+    # URL for AIP client
     aip.url: http://192.168.20.155:8080/proseo/api/aip-client/v0.1
