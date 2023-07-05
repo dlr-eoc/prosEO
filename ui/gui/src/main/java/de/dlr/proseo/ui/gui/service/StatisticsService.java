@@ -69,7 +69,7 @@ public class StatisticsService {
 		URI uri = UriComponentsBuilder.fromUriString(config.getOrderManager())
 			.path("/orderjobsteps")
 			.queryParam("mission", mission)
-			.queryParam("status", Optional.ofNullable(status.trim()).filter(s -> !s.isEmpty()).orElse(null))
+			.queryParam("status", Optional.ofNullable(status).filter(s -> !s.trim().isEmpty()).orElse(null))
 			.queryParam("last", Optional.ofNullable(last).orElse(null))
 			.build()
 			.toUri();

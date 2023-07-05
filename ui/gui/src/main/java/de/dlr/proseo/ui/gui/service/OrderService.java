@@ -79,23 +79,23 @@ public class OrderService {
 		// Build the request URI
 		URI uri = UriComponentsBuilder.fromUriString(config.getOrderManager())
 			.path("/orders/select")
-			.queryParam("mission", Optional.ofNullable(mission.trim()).filter(s -> !s.isEmpty()).orElse(null))
+			.queryParam("mission", Optional.ofNullable(mission).filter(s -> !s.trim().isEmpty()).orElse(null))
 			.queryParam("identifier",
-					Optional.ofNullable(identifier.trim())
-						.filter(s -> !s.isEmpty())
+					Optional.ofNullable(identifier)
+						.filter(s -> !s.trim().isEmpty())
 						.map(s -> s.replaceAll("[*]", "%"))
 						.orElse(null))
 			.queryParam("state",
-					Optional.ofNullable(states.trim()).filter(s -> !s.isEmpty()).map(s -> (Object[]) s.split(":")).orElse(null))
+					Optional.ofNullable(states).filter(s -> !s.trim().isEmpty()).map(s -> (Object[]) s.split(":")).orElse(null))
 			.queryParam("productClass",
-					Optional.ofNullable(products.trim()).filter(s -> !s.isEmpty()).map(s -> (Object[]) s.split(":")).orElse(null))
-			.queryParam("startTime", Optional.ofNullable(startTimeFrom.trim()).filter(s -> !s.isEmpty()).orElse(null))
-			.queryParam("stopTime", Optional.ofNullable(startTimeTo.trim()).filter(s -> !s.isEmpty()).orElse(null))
+					Optional.ofNullable(products).filter(s -> !s.trim().isEmpty()).map(s -> (Object[]) s.split(":")).orElse(null))
+			.queryParam("startTime", Optional.ofNullable(startTimeFrom).filter(s -> !s.trim().isEmpty()).orElse(null))
+			.queryParam("stopTime", Optional.ofNullable(startTimeTo).filter(s -> !s.trim().isEmpty()).orElse(null))
 			.queryParam("recordFrom", Optional.ofNullable(recordFrom).orElse(null))
 			.queryParam("recordTo", Optional.ofNullable(recordTo).orElse(null))
 			.queryParam("orderBy",
-					Optional.ofNullable(sortCol.trim())
-						.filter(s -> !s.isEmpty())
+					Optional.ofNullable(sortCol)
+						.filter(s -> !s.trim().isEmpty())
 						.map(s -> s + (up != null && up ? " ASC" : " DESC"))
 						.orElse(null))
 			.build()
@@ -138,7 +138,7 @@ public class OrderService {
 		// Build the request URI
 		URI uri = UriComponentsBuilder.fromUriString(config.getOrderManager())
 			.path("/orders")
-			.path("/" + Optional.ofNullable(orderId.trim()).filter(s -> !s.isEmpty()).orElse("0"))
+			.path("/" + Optional.ofNullable(orderId).filter(s -> !s.trim().isEmpty()).orElse("0"))
 			.build()
 			.toUri();
 		logger.trace("URI " + uri);
@@ -182,13 +182,13 @@ public class OrderService {
 		// Build the request URI
 		URI uri = UriComponentsBuilder.fromUriString(config.getOrderManager())
 			.path("/orderjobs")
-			.queryParam("orderid", Optional.ofNullable(orderId.trim()).filter(id -> !id.isEmpty()).orElse(null))
+			.queryParam("orderid", Optional.ofNullable(orderId).filter(id -> !id.trim().isEmpty()).orElse(null))
 			.queryParam("recordFrom", Optional.ofNullable(recordFrom).orElse(null))
 			.queryParam("recordTo", Optional.ofNullable(recordTo).orElse(null))
 			.queryParam("logs", "false")
 			.queryParam("state",
-					Optional.ofNullable(states.trim())
-						.filter(s -> !s.isEmpty())
+					Optional.ofNullable(states)
+						.filter(s -> !s.trim().isEmpty())
 						.filter(s -> !s.toLowerCase().contains("all"))
 						.map(s -> (Object[]) s.split(":"))
 						.orElse(null))
@@ -233,7 +233,7 @@ public class OrderService {
 		// Build the request URI
 		URI uri = UriComponentsBuilder.fromUriString(config.getOrderManager())
 			.path("/jobs/graph")
-			.path("/" + Optional.ofNullable(orderId.trim()).filter(s -> !s.isEmpty()).orElse("0"))
+			.path("/" + Optional.ofNullable(orderId).filter(s -> !s.trim().isEmpty()).orElse("0"))
 			.build()
 			.toUri();
 		logger.trace("URI " + uri);
@@ -319,7 +319,7 @@ public class OrderService {
 		// Build the request URI
 		URI uri = UriComponentsBuilder.fromUriString(config.getOrderManager())
 			.path("/orders")
-			.path("/" + Optional.ofNullable(orderId.trim()).filter(s -> !s.isEmpty()).orElse("0"))
+			.path("/" + Optional.ofNullable(orderId).filter(s -> !s.trim().isEmpty()).orElse("0"))
 			.build()
 			.toUri();
 		logger.trace("URI " + uri);

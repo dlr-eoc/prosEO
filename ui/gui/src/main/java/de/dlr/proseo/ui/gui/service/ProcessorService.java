@@ -66,8 +66,8 @@ public class ProcessorService {
 		// Build the request URI
 		URI uri = UriComponentsBuilder.fromUriString(config.getProcessorManager())
 			.path("/processorclasses")
-			.queryParam("mission", Optional.ofNullable(mission.trim()).filter(s -> !s.isEmpty()))
-			.queryParam("processorName", Optional.ofNullable(processorName.trim()).filter(s -> !s.isEmpty()))
+			.queryParam("mission", Optional.ofNullable(mission).filter(s -> !s.trim().isEmpty()))
+			.queryParam("processorName", Optional.ofNullable(processorName).filter(s -> !s.trim().isEmpty()))
 			.build()
 			.toUri();
 		logger.trace("URI " + uri);
@@ -106,7 +106,7 @@ public class ProcessorService {
 		// Build the request URI
 		URI uri = UriComponentsBuilder.fromUriString(config.getProcessorManager())
 			.path("/processorclasses")
-			.path("/" + Optional.ofNullable(processorId.trim()).filter(s -> !s.isEmpty()).orElse("0"))
+			.path("/" + Optional.ofNullable(processorId).filter(s -> !s.trim().isEmpty()).orElse("0"))
 			.build()
 			.toUri();
 		logger.trace("URI " + uri);
@@ -202,8 +202,8 @@ public class ProcessorService {
 		// Build the request URI
 		URI uri = UriComponentsBuilder.fromUriString(config.getProcessorManager())
 			.path("/processorclasses")
-			.path("/" + Optional.ofNullable(processorClassId.trim())
-				.filter(s -> !s.isEmpty())
+			.path("/" + Optional.ofNullable(processorClassId)
+				.filter(s -> !s.trim().isEmpty())
 				.orElseThrow(() -> new IllegalArgumentException(
 						logger.log(UIMessage.PARAMETER_MISSING, "processor class id", "processor modification"))))
 			.build()
@@ -252,8 +252,8 @@ public class ProcessorService {
 		// Build the request URI
 		URI uri = UriComponentsBuilder.fromUriString(config.getProcessorManager())
 			.path("/processorclasses")
-			.path("/" + Optional.ofNullable(processorClassId.trim())
-				.filter(s -> !s.isEmpty())
+			.path("/" + Optional.ofNullable(processorClassId)
+				.filter(s -> !s.trim().isEmpty())
 				.orElseThrow(() -> new IllegalArgumentException(
 						logger.log(UIMessage.PARAMETER_MISSING, "processor class id", "processor deletion"))))
 			.build()
@@ -294,9 +294,9 @@ public class ProcessorService {
 		// Build the request URI
 		URI uri = UriComponentsBuilder.fromUriString(config.getProcessorManager())
 			.path("/processorclasses")
-			.queryParam("mission", Optional.ofNullable(missionCode.trim()).filter(s -> !s.isEmpty()).orElse(null))
-			.queryParam("processorName", Optional.ofNullable(processorName.trim()).filter(s -> !s.isEmpty()).orElse(null))
-			.queryParam("processorVersion", Optional.ofNullable(processorVersion.trim()).filter(s -> !s.isEmpty()).orElse(null))
+			.queryParam("mission", Optional.ofNullable(missionCode).filter(s -> !s.trim().isEmpty()).orElse(null))
+			.queryParam("processorName", Optional.ofNullable(processorName).filter(s -> !s.trim().isEmpty()).orElse(null))
+			.queryParam("processorVersion", Optional.ofNullable(processorVersion).filter(s -> !s.trim().isEmpty()).orElse(null))
 			.build()
 			.toUri();
 		logger.trace("URI " + uri);
