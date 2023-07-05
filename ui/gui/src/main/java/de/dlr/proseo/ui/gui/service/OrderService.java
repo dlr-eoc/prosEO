@@ -8,7 +8,6 @@ package de.dlr.proseo.ui.gui.service;
 import java.net.URI;
 import java.time.Duration;
 import java.util.HashMap;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -77,29 +76,41 @@ public class OrderService {
 		String mission = auth.getMission();
 
 		// Build the request URI
-		URI uri = UriComponentsBuilder.fromUriString(config.getOrderManager())
-			.path("/orders/select")
-			.queryParam("mission", Optional.ofNullable(mission).filter(s -> !s.trim().isEmpty()).orElse(null))
-			.queryParam("identifier",
-					Optional.ofNullable(identifier)
-						.filter(s -> !s.trim().isEmpty())
-						.map(s -> s.replaceAll("[*]", "%"))
-						.orElse(null))
-			.queryParam("state",
-					Optional.ofNullable(states).filter(s -> !s.trim().isEmpty()).map(s -> (Object[]) s.split(":")).orElse(null))
-			.queryParam("productClass",
-					Optional.ofNullable(products).filter(s -> !s.trim().isEmpty()).map(s -> (Object[]) s.split(":")).orElse(null))
-			.queryParam("startTime", Optional.ofNullable(startTimeFrom).filter(s -> !s.trim().isEmpty()).orElse(null))
-			.queryParam("stopTime", Optional.ofNullable(startTimeTo).filter(s -> !s.trim().isEmpty()).orElse(null))
-			.queryParam("recordFrom", Optional.ofNullable(recordFrom).orElse(null))
-			.queryParam("recordTo", Optional.ofNullable(recordTo).orElse(null))
-			.queryParam("orderBy",
-					Optional.ofNullable(sortCol)
-						.filter(s -> !s.trim().isEmpty())
-						.map(s -> s + (up != null && up ? " ASC" : " DESC"))
-						.orElse(null))
-			.build()
-			.toUri();
+		UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(config.getOrderManager()).path("/orders/select");
+
+		if (mission != null && !mission.isBlank()) {
+			uriBuilder.queryParam("mission", mission.trim());
+		}
+		if (identifier != null && !identifier.isBlank()) {
+			String identifierQueryParam = identifier.replaceAll("[*]", "%");
+			uriBuilder.queryParam("identifier", identifierQueryParam.trim());
+		}
+		if (states != null && !states.isBlank()) {
+			String[] statesQueryParam = states.split(":");
+			uriBuilder.queryParam("state", (Object[]) statesQueryParam);
+		}
+		if (products != null && !products.isBlank()) {
+			String[] productsQueryParam = products.split(":");
+			uriBuilder.queryParam("productClass", (Object[]) productsQueryParam);
+		}
+		if (startTimeFrom != null && !startTimeFrom.isBlank()) {
+			uriBuilder.queryParam("startTime", startTimeFrom.trim());
+		}
+		if (startTimeTo != null && !startTimeTo.isBlank()) {
+			uriBuilder.queryParam("stopTime", startTimeTo.trim());
+		}
+		if (recordFrom != null) {
+			uriBuilder.queryParam("recordFrom", recordFrom);
+		}
+		if (recordTo != null) {
+			uriBuilder.queryParam("recordTo", recordTo);
+		}
+		if (sortCol != null && !sortCol.isBlank()) {
+			String orderByQueryParam = sortCol + (up != null && up ? " ASC" : " DESC");
+			uriBuilder.queryParam("orderBy", orderByQueryParam);
+		}
+
+		URI uri = uriBuilder.build().toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
@@ -138,7 +149,7 @@ public class OrderService {
 		// Build the request URI
 		URI uri = UriComponentsBuilder.fromUriString(config.getOrderManager())
 			.path("/orders")
-			.path("/" + Optional.ofNullable(orderId).filter(s -> !s.trim().isEmpty()).orElse("0"))
+			.path("/" + (orderId != null && !orderId.isBlank() ? orderId.trim() : "0"))
 			.build()
 			.toUri();
 		logger.trace("URI " + uri);
@@ -180,21 +191,24 @@ public class OrderService {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
 		// Build the request URI
-		URI uri = UriComponentsBuilder.fromUriString(config.getOrderManager())
-			.path("/orderjobs")
-			.queryParam("orderid", Optional.ofNullable(orderId).filter(id -> !id.trim().isEmpty()).orElse(null))
-			.queryParam("recordFrom", Optional.ofNullable(recordFrom).orElse(null))
-			.queryParam("recordTo", Optional.ofNullable(recordTo).orElse(null))
-			.queryParam("logs", "false")
-			.queryParam("state",
-					Optional.ofNullable(states)
-						.filter(s -> !s.trim().isEmpty())
-						.filter(s -> !s.toLowerCase().contains("all"))
-						.map(s -> (Object[]) s.split(":"))
-						.orElse(null))
-			.queryParam("orderBy", "startTime ASC")
-			.build()
-			.toUri();
+		UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(config.getOrderManager()).path("/orderjobs");
+
+		if (orderId != null && !orderId.isBlank()) {
+			uriBuilder.queryParam("orderid", orderId);
+		}
+		if (recordFrom != null) {
+			uriBuilder.queryParam("recordFrom", recordFrom);
+		}
+		if (recordTo != null) {
+			uriBuilder.queryParam("recordTo", recordTo);
+		}
+		uriBuilder.queryParam("logs", "false");
+		if (states != null && !states.isBlank() && !states.toLowerCase().contains("all")) {
+			String[] statesQueryParam = states.split(":");
+			uriBuilder.queryParam("state", (Object[]) statesQueryParam);
+		}
+
+		URI uri = uriBuilder.build().toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
@@ -233,7 +247,7 @@ public class OrderService {
 		// Build the request URI
 		URI uri = UriComponentsBuilder.fromUriString(config.getOrderManager())
 			.path("/jobs/graph")
-			.path("/" + Optional.ofNullable(orderId).filter(s -> !s.trim().isEmpty()).orElse("0"))
+			.path("/" + (orderId != null && !orderId.isBlank() ? orderId.trim() : "0"))
 			.build()
 			.toUri();
 		logger.trace("URI " + uri);
@@ -319,7 +333,7 @@ public class OrderService {
 		// Build the request URI
 		URI uri = UriComponentsBuilder.fromUriString(config.getOrderManager())
 			.path("/orders")
-			.path("/" + Optional.ofNullable(orderId).filter(s -> !s.trim().isEmpty()).orElse("0"))
+			.path("/" + (orderId != null && !orderId.isBlank() ? orderId.trim() : "0"))
 			.build()
 			.toUri();
 		logger.trace("URI " + uri);

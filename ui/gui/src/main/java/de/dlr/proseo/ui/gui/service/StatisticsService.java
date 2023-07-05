@@ -23,7 +23,6 @@ import org.springframework.web.reactive.function.client.WebClient.Builder;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.ui.backend.ServiceConnection;
 import de.dlr.proseo.ui.gui.GUIAuthenticationToken;
 import de.dlr.proseo.ui.gui.GUIConfiguration;
@@ -69,7 +68,7 @@ public class StatisticsService {
 		URI uri = UriComponentsBuilder.fromUriString(config.getOrderManager())
 			.path("/orderjobsteps")
 			.queryParam("mission", mission)
-			.queryParam("status", Optional.ofNullable(status).filter(s -> !s.trim().isEmpty()).orElse(null))
+			.queryParam("status", Optional.ofNullable(status).filter(s -> !s.isBlank()).orElse(null))
 			.queryParam("last", Optional.ofNullable(last).orElse(null))
 			.build()
 			.toUri();
@@ -103,27 +102,14 @@ public class StatisticsService {
 	 * @param auth  a GUIAuthenticationToken
 	 * @return the associated order identifier
 	 * @throws RestClientResponseException if the call to the order manager was unsuccessful
-	 * @throws RunTimeException            if a different error occurred
 	 */
 	public String getOrderIdentifierOfJob(String jobId, GUIAuthenticationToken auth)
 			throws RestClientResponseException, RuntimeException {
-
-		// Check arguments
-		if (null == jobId) {
-			throw new IllegalArgumentException(logger.log(UIMessage.NO_IDENTIFIER_GIVEN));
-		}
-		if (null == auth) {
-			throw new IllegalArgumentException(logger.log(UIMessage.AUTHENTICATION_MISSING));
-		}
 
 		// Retrieve job with matching id
 		HashMap<?, ?> result = serviceConnection.getFromService(config.getOrderManager(), "/orderjobs/" + jobId, HashMap.class,
 				auth.getProseoName(), auth.getPassword());
 
-		// Check and return result
-		if (null == result || result.isEmpty()) {
-			throw new RuntimeException(logger.log(UIMessage.NO_ORDERS_FOUND));
-		}
 		return result.get("orderIdentifier").toString();
 	}
 
@@ -134,27 +120,14 @@ public class StatisticsService {
 	 * @param auth       a GUIAuthenticationToken
 	 * @return the order identifier
 	 * @throws RestClientResponseException if the call to the order manager was unsuccessful
-	 * @throws RunTimeException            if a different error occurred
 	 */
 	public String getOrderIdOfIdentifier(String identifier, GUIAuthenticationToken auth)
 			throws RestClientResponseException, RuntimeException {
-
-		// Check arguments
-		if (null == identifier) {
-			throw new IllegalArgumentException(logger.log(UIMessage.NO_IDENTIFIER_GIVEN));
-		}
-		if (null == auth) {
-			throw new IllegalArgumentException(logger.log(UIMessage.AUTHENTICATION_MISSING));
-		}
 
 		// Retrieve orders with matching identifier
 		List<?> result = serviceConnection.getFromService(config.getOrderManager(), "/orders?identifier=" + identifier, List.class,
 				auth.getProseoName(), auth.getPassword());
 
-		// Check and return result
-		if (null == result || result.isEmpty()) {
-			throw new RuntimeException(logger.log(UIMessage.NO_ORDERS_FOUND));
-		}
 		return ((HashMap<?, ?>) result.get(0)).get("id").toString();
 	}
 }

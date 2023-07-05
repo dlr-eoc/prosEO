@@ -8,7 +8,6 @@ package de.dlr.proseo.ui.gui.service;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -64,12 +63,17 @@ public class ProcessorService {
 		String mission = auth.getMission();
 
 		// Build the request URI
-		URI uri = UriComponentsBuilder.fromUriString(config.getProcessorManager())
-			.path("/processorclasses")
-			.queryParam("mission", Optional.ofNullable(mission).filter(s -> !s.trim().isEmpty()))
-			.queryParam("processorName", Optional.ofNullable(processorName).filter(s -> !s.trim().isEmpty()))
-			.build()
-			.toUri();
+		UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(config.getProcessorManager())
+			.path("/processorclasses");
+
+		if (mission != null && !mission.isBlank()) {
+			uriBuilder.queryParam("mission", mission.trim());
+		}
+		if (processorName != null && !processorName.isBlank()) {
+			uriBuilder.queryParam("processorName", processorName.trim());
+		}
+
+		URI uri = uriBuilder.build().toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
@@ -106,7 +110,7 @@ public class ProcessorService {
 		// Build the request URI
 		URI uri = UriComponentsBuilder.fromUriString(config.getProcessorManager())
 			.path("/processorclasses")
-			.path("/" + Optional.ofNullable(processorId).filter(s -> !s.trim().isEmpty()).orElse("0"))
+			.path("/" + (processorId != null && !processorId.isBlank() ? processorId.trim() : "0"))
 			.build()
 			.toUri();
 		logger.trace("URI " + uri);
@@ -200,14 +204,14 @@ public class ProcessorService {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
 		// Build the request URI
-		URI uri = UriComponentsBuilder.fromUriString(config.getProcessorManager())
-			.path("/processorclasses")
-			.path("/" + Optional.ofNullable(processorClassId)
-				.filter(s -> !s.trim().isEmpty())
-				.orElseThrow(() -> new IllegalArgumentException(
-						logger.log(UIMessage.PARAMETER_MISSING, "processor class id", "processor modification"))))
-			.build()
-			.toUri();
+		UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(config.getProcessorManager())
+			.path("/processorclasses");
+
+		if (null != processorClassId && !processorClassId.isBlank()) {
+			uriBuilder.path("/" + processorClassId.trim());
+		}
+
+		URI uri = uriBuilder.build().toUri();
 		logger.trace("URI " + uri);
 
 		// Build the request body
@@ -241,7 +245,7 @@ public class ProcessorService {
 	 *
 	 * @param id of Processor Class to be removed
 	 * @return a ResponseSpec that the caller can subscribe to, e.g. for extracting the response body or handling errors
-	 * 
+	 *
 	 *         TODO verify
 	 */
 	public ResponseSpec delete(String processorClassId) {
@@ -250,14 +254,14 @@ public class ProcessorService {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
 		// Build the request URI
-		URI uri = UriComponentsBuilder.fromUriString(config.getProcessorManager())
-			.path("/processorclasses")
-			.path("/" + Optional.ofNullable(processorClassId)
-				.filter(s -> !s.trim().isEmpty())
-				.orElseThrow(() -> new IllegalArgumentException(
-						logger.log(UIMessage.PARAMETER_MISSING, "processor class id", "processor deletion"))))
-			.build()
-			.toUri();
+		UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(config.getProcessorManager())
+			.path("/processorclasses");
+
+		if (null != processorClassId && !processorClassId.isBlank()) {
+			uriBuilder.path("/" + processorClassId.trim());
+		}
+
+		URI uri = uriBuilder.build().toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
@@ -283,7 +287,7 @@ public class ProcessorService {
 	 * @param processorName    the processor class name
 	 * @param processorVersion the processor version
 	 * @return a ResponseSpec that the caller can subscribe to, e.g. for extracting the response body or handling errors
-	 * 
+	 *
 	 *         TODO verify
 	 */
 	public ResponseSpec get(String missionCode, String processorName, String processorVersion) {
@@ -292,13 +296,20 @@ public class ProcessorService {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
 		// Build the request URI
-		URI uri = UriComponentsBuilder.fromUriString(config.getProcessorManager())
-			.path("/processorclasses")
-			.queryParam("mission", Optional.ofNullable(missionCode).filter(s -> !s.trim().isEmpty()).orElse(null))
-			.queryParam("processorName", Optional.ofNullable(processorName).filter(s -> !s.trim().isEmpty()).orElse(null))
-			.queryParam("processorVersion", Optional.ofNullable(processorVersion).filter(s -> !s.trim().isEmpty()).orElse(null))
-			.build()
-			.toUri();
+		UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(config.getProcessorManager())
+			.path("/processorclasses");
+
+		if (missionCode != null && !missionCode.isBlank()) {
+			uriBuilder.queryParam("mission", missionCode.trim());
+		}
+		if (processorName != null && !processorName.isBlank()) {
+			uriBuilder.queryParam("processorName", processorName.trim());
+		}
+		if (processorVersion != null && !processorVersion.isBlank()) {
+			uriBuilder.queryParam("processorVersion", processorVersion.trim());
+		}
+
+		URI uri = uriBuilder.build().toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
