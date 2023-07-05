@@ -318,29 +318,17 @@ public class OrderService {
 	 * @param orderId the order id
 	 * @return the order state in string format
 	 * @throws RestClientResponseException if the call to the order manager was unsuccessful
-	 * @throws RunTimeException            if a different error occurred
 	 */
 	public String getOrderState(String orderId) throws RestClientResponseException, RuntimeException {
-
-		// Check argument
-		if (null == orderId) {
-			throw new IllegalArgumentException(logger.log(UIMessage.NO_IDENTIFIER_GIVEN));
-		}
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
-		// Build the request URI
-		URI uri = UriComponentsBuilder.fromUriString(config.getOrderManager())
-			.path("/orders")
-			.path("/" + (orderId != null && !orderId.isBlank() ? orderId.trim() : "0"))
-			.build()
-			.toUri();
-		logger.trace("URI " + uri);
-
 		// Attempt to retrieve the order state from the production planner
 		return serviceConnection
-			.getFromService(config.getOrderManager(), uri.toString(), HashMap.class, auth.getProseoName(), auth.getPassword())
+			.getFromService(config.getOrderManager(),
+					"/orders" + (orderId != null && !orderId.isBlank() ? "/" + orderId.trim() : "/0"), HashMap.class,
+					auth.getProseoName(), auth.getPassword())
 			.get("orderState")
 			.toString();
 	}
