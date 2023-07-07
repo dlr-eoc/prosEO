@@ -1,6 +1,6 @@
 /**
  * OrderControllerImpl.java
- * 
+ *
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.ordermgr.rest;
@@ -32,17 +32,18 @@ import de.dlr.proseo.model.rest.model.RestOrder;
 
 /**
  * Spring MVC controller for the prosEO Order Manager; implements the services required to manage processing orders
- * 
- * @author Ranjitha Vignesh
  *
+ * @author Ranjitha Vignesh
  */
 @Component
 public class OrderControllerImpl implements OrderController {
-	
+
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(OrderControllerImpl.class);
+
+	/** HTTP utility class */
 	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.ORDER_MGR);
-	
+
 	/** The processing order manager */
 	@Autowired
 	private ProcessingOrderMgr procOrderManager;
@@ -51,54 +52,53 @@ public class OrderControllerImpl implements OrderController {
 	@PersistenceContext
 	private EntityManager em;
 
-	
 	/**
-	 * Create a order from the given Json object 
-	 * 
+	 * Create a order from the given Json object
+	 *
 	 * @param order the Json object to create the order from
-	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the order after persistence
-	 *             (with ID and version for all contained objects) or
-	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
-	 *         HTTP status "BAD_REQUEST", if any of the input data was invalid
+	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the order after persistence (with ID
+	 *         and version for all contained objects) or HTTP status "FORBIDDEN" and an error message, if a cross-mission data
+	 *         access was attempted, or HTTP status "BAD_REQUEST", if any of the input data was invalid
 	 */
-
 	@Override
-	public ResponseEntity<RestOrder> createOrder(RestOrder order) {	
-		if (logger.isTraceEnabled()) logger.trace(">>> createOrder({})", (null == order ? "MISSING" : order.getIdentifier()));
-		
+	public ResponseEntity<RestOrder> createOrder(RestOrder order) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> createOrder({})", (null == order ? "MISSING" : order.getIdentifier()));
+
 		try {
 			return new ResponseEntity<>(procOrderManager.createOrder(order), HttpStatus.CREATED);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
-		}	
+		}
 	}
+
 	/**
 	 * List of all orders filtered by mission, identifier, productClasses, starttime range
-	 * 
-	 * @param mission the mission code
-	 * @param identifier the unique order identifier string
-	 * @param productclasses an array of product types
-	 * @param startTimeFrom earliest sensing start time
-	 * @param startTimeTo latest sensing start time
+	 *
+	 * @param mission           the mission code
+	 * @param identifier        the unique order identifier string
+	 * @param productclasses    an array of product types
+	 * @param startTimeFrom     earliest sensing start time
+	 * @param startTimeTo       latest sensing start time
 	 * @param executionTimeFrom earliest order execution time
-	 * @param executionTimeTo latest order execution time
-	 * @return HTTP status "OK" and a list of products or
-	 *         HTTP status "NOT_FOUND" and an error message, if no products matching the search criteria were found, or
-	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
+	 * @param executionTimeTo   latest order execution time
+	 * @return HTTP status "OK" and a list of products or HTTP status "NOT_FOUND" and an error message, if no products matching the
+	 *         search criteria were found, or HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was
+	 *         attempted
 	 */
 	@Override
-	public ResponseEntity<List<RestOrder>> getOrders(String mission, String identifier, String[] productclasses, @DateTimeFormat Date startTimeFrom,
-			@DateTimeFormat Date startTimeTo, @DateTimeFormat Date executionTimeFrom,
+	public ResponseEntity<List<RestOrder>> getOrders(String mission, String identifier, String[] productclasses,
+			@DateTimeFormat Date startTimeFrom, @DateTimeFormat Date startTimeTo, @DateTimeFormat Date executionTimeFrom,
 			@DateTimeFormat Date executionTimeTo) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses,
-				startTimeFrom, startTimeTo, executionTimeFrom, executionTimeTo);
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses, startTimeFrom, startTimeTo,
+					executionTimeFrom, executionTimeTo);
+
 		try {
-			return new ResponseEntity<>(
-					procOrderManager.getOrders(mission, identifier, productclasses,
-							startTimeFrom, startTimeTo, executionTimeFrom, executionTimeTo), HttpStatus.OK);
+			return new ResponseEntity<>(procOrderManager.getOrders(mission, identifier, productclasses, startTimeFrom, startTimeTo,
+					executionTimeFrom, executionTimeTo), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {
@@ -106,19 +106,20 @@ public class OrderControllerImpl implements OrderController {
 		}
 	}
 
-	
 	/**
 	 * Retrieve a list of orders satisfying the selection parameters
 	 */
 	@Override
-	public ResponseEntity<List<RestOrder>> getAndSelectOrders(String mission, String identifier, String[] state, 
+	public ResponseEntity<List<RestOrder>> getAndSelectOrders(String mission, String identifier, String[] state,
 			String[] productClass, String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getAndSelectOrders({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, identifier, state, 
-				productClass, startTime, stopTime, recordFrom, recordTo, orderBy);
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getAndSelectOrders({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, identifier, state,
+					productClass, startTime, stopTime, recordFrom, recordTo, orderBy);
+
 		try {
-			List<RestOrder> list = procOrderManager.getAndSelectOrders(mission, identifier, state, productClass, startTime, stopTime, recordFrom, recordTo, orderBy);
-						
+			List<RestOrder> list = procOrderManager.getAndSelectOrders(mission, identifier, state, productClass, startTime,
+					stopTime, recordFrom, recordTo, orderBy);
+
 			return new ResponseEntity<>(list, HttpStatus.OK);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
@@ -126,19 +127,22 @@ public class OrderControllerImpl implements OrderController {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
+
 	/**
 	 * Calculate the amount of orders satisfying the selection parameters
-	 * 
+	 *
 	 */
 	@Override
-	public ResponseEntity<String> countSelectOrders(String mission, String identifier, String[] state, 
-			String[] productClass, String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getAndSelectOrders({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, identifier, state, 
-				productClass, startTime, stopTime, recordFrom, recordTo, orderBy);
-		
+	public ResponseEntity<String> countSelectOrders(String mission, String identifier, String[] state, String[] productClass,
+			String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getAndSelectOrders({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, identifier, state,
+					productClass, startTime, stopTime, recordFrom, recordTo, orderBy);
+
 		try {
-			String count = procOrderManager.countSelectOrders(mission, identifier, state, productClass, startTime, stopTime, recordFrom, recordTo, orderBy);
-						
+			String count = procOrderManager.countSelectOrders(mission, identifier, state, productClass, startTime, stopTime,
+					recordFrom, recordTo, orderBy);
+
 			return new ResponseEntity<>(count, HttpStatus.OK);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
@@ -146,17 +150,18 @@ public class OrderControllerImpl implements OrderController {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
+
 	/**
 	 * Find the order with the given ID
-	 * 
+	 *
 	 * @param id the ID to look for
-	 * @return HTTP status "OK" and a Json object corresponding to the found order or
-	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
-	 * 		   HTTP status "NOT_FOUND", if no orbit with the given ID exists
+	 * @return HTTP status "OK" and a Json object corresponding to the found order or HTTP status "FORBIDDEN" and an error message,
+	 *         if a cross-mission data access was attempted, or HTTP status "NOT_FOUND", if no orbit with the given ID exists
 	 */
 	@Override
 	public ResponseEntity<RestOrder> getOrderById(Long id) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getOrderById({})", id);
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getOrderById({})", id);
 		try {
 			return new ResponseEntity<>(procOrderManager.getOrderById(id), HttpStatus.OK);
 		} catch (IllegalArgumentException e) {
@@ -167,20 +172,20 @@ public class OrderControllerImpl implements OrderController {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
+
 	/**
 	 * Delete an order by ID
-	 * 
+	 *
 	 * @param id the ID of the order to delete
-	 * @return a response entity with
-	 *         HTTP status "NO_CONTENT", if the deletion was successful, or
-	 *         HTTP status "NOT_FOUND" and an error message, if the orbit did not exist, or
-	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
-	 *         HTTP status "NOT_MODIFIED" and an error message, if the deletion was unsuccessful
+	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or HTTP status "NOT_FOUND" and an
+	 *         error message, if the orbit did not exist, or HTTP status "FORBIDDEN" and an error message, if a cross-mission data
+	 *         access was attempted, or HTTP status "NOT_MODIFIED" and an error message, if the deletion was unsuccessful
 	 */
 	@Override
 	public ResponseEntity<?> deleteOrderById(Long id) {
-		
-		if (logger.isTraceEnabled()) logger.trace(">>> deleteOrderById({})", id);
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteOrderById({})", id);
 
 		try {
 			procOrderManager.deleteOrderById(id);
@@ -193,23 +198,22 @@ public class OrderControllerImpl implements OrderController {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}
 	}
-	
-	/**
-	 * Update the order with the given ID with the attribute values of the given Json object. 
-	 * @param id the ID of the order to update
-	 * @param order a Json object containing the modified (and unmodified) attributes
-	 * @return a response containing
-	 *         HTTP status "OK" and a Json object corresponding to the order after modification (with ID and version for all 
-	 * 		   contained objects) or
-	 *         HTTP status "NOT_MODIFIED" and the unchanged order, if no attributes were actually changed, or
-	 * 		   HTTP status "NOT_FOUND" and an error message, if no order with the given ID exists, or
-	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
-	 */
 
+	/**
+	 * Update the order with the given ID with the attribute values of the given Json object.
+	 *
+	 * @param id    the ID of the order to update
+	 * @param order a Json object containing the modified (and unmodified) attributes
+	 * @return a response containing HTTP status "OK" and a Json object corresponding to the order after modification (with ID and
+	 *         version for all contained objects) or HTTP status "NOT_MODIFIED" and the unchanged order, if no attributes were
+	 *         actually changed, or HTTP status "NOT_FOUND" and an error message, if no order with the given ID exists, or HTTP
+	 *         status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
+	 */
 	// To be Tested
 	@Override
 	public ResponseEntity<RestOrder> modifyOrder(Long id, @Valid RestOrder order) {
-		if (logger.isTraceEnabled()) logger.trace(">>> modifyOrder({})", id);
+		if (logger.isTraceEnabled())
+			logger.trace(">>> modifyOrder({})", id);
 		try {
 			RestOrder changedOrder = procOrderManager.modifyOrder(id, order);
 			HttpStatus httpStatus = (order.getVersion() == changedOrder.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
@@ -224,20 +228,21 @@ public class OrderControllerImpl implements OrderController {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
+
 	/**
 	 * Count orders filtered by mission, identifier and id not equal nid.
-	 * 
-	 * @param mission The mission code
+	 *
+	 * @param mission    The mission code
 	 * @param identifier The identifier of an order
-	 * @param nid The ids of orbit(s) found has to be not equal nid 
+	 * @param nid        The ids of orbit(s) found has to be not equal nid
 	 * @return The number of orders found
 	 */
-
 	@Transactional
 	@Override
 	public ResponseEntity<String> countOrders(String mission, String identifier, Long nid) {
-		if (logger.isTraceEnabled()) logger.trace(">>> contOrders{}");
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> contOrders{}");
+
 		// Find using search parameters
 		String jpqlQuery = "select count(x) from ProcessingOrder x ";
 		String divider = " where ";
@@ -264,14 +269,16 @@ public class OrderControllerImpl implements OrderController {
 		if (null != identifier) {
 			query.setParameter("nid", nid);
 		}
+		
 		Object resultObject = query.getSingleResult();
 		if (resultObject instanceof Long) {
-			return new ResponseEntity<>(((Long)resultObject).toString(), HttpStatus.OK);	
+			return new ResponseEntity<>(((Long) resultObject).toString(), HttpStatus.OK);
 		}
 		if (resultObject instanceof String) {
-			return new ResponseEntity<>((String) resultObject, HttpStatus.OK);	
+			return new ResponseEntity<>((String) resultObject, HttpStatus.OK);
 		}
-		return new ResponseEntity<>("0", HttpStatus.OK);	
-			
+		
+		return new ResponseEntity<>("0", HttpStatus.OK);
 	}
+
 }

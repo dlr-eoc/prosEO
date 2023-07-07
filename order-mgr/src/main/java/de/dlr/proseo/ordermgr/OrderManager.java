@@ -57,7 +57,7 @@ public class OrderManager implements CommandLineRunner {
 	/**
 	 * Sets the processing order manager
 	 * 
-	 * @param the processing order manager
+	 * @param procOrderManager the processing order manager
 	 */
 	public void setProcOrderManager(ProcessingOrderMgr procOrderManager) {
 		this.procOrderManager = procOrderManager;
