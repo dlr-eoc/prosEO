@@ -1,6 +1,6 @@
 /**
  * WorkflowCommandRunner.java
- * 
+ *
  * (C) 2023 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.ui.cli;
@@ -19,7 +19,6 @@ import org.springframework.web.client.RestClientResponseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.logging.messages.GeotoolsMessage;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.rest.model.RestWorkflow;
 import de.dlr.proseo.model.rest.model.RestWorkflowOption;
@@ -31,10 +30,9 @@ import de.dlr.proseo.ui.cli.parser.ParsedOption;
 import de.dlr.proseo.ui.cli.parser.ParsedParameter;
 
 /**
- * Run commands for managing prosEO workflows (create, read, update, delete
- * etc.). All methods assume that before invocation a syntax check of the
- * command has been performed, so no extra checks are performed.
- * 
+ * Run commands for managing prosEO workflows (create, read, update, delete etc.). All methods assume that before invocation a
+ * syntax check of the command has been performed, so no extra checks are performed.
+ *
  * @author Katharina Bassler
  */
 @Component
@@ -67,7 +65,7 @@ public class WorkflowCommandRunner {
 	private static final String PROMPT_OUTPUT_FILE_CLASS = "Output file class (empty field cancels): ";
 	private static final String PROMPT_PROCESSING_MODE = "Processing mode (empty field cancels): ";
 	private static final String PROMPT_SLICING_TYPE = "Slicing type (ORBIT, CALENDAR_DAY, CALENDAR_MONTH, CALENDAR_YEAR, TIME_SLICE, or NONE; empty field cancels): ";
-		
+
 	private static final String URI_PATH_WORKFLOWS = "/workflows";
 //	private static final String URI_PATH_WORKFLOW_OPTIONS = "/workflowoptions";
 
@@ -89,9 +87,9 @@ public class WorkflowCommandRunner {
 	private static ProseoLogger logger = new ProseoLogger(WorkflowCommandRunner.class);
 
 	/**
-	 * Create a new workflow ; if the input is not from a file, the user will be
-	 * prompted for mandatory attributes not given on the command line
-	 * 
+	 * Create a new workflow ; if the input is not from a file, the user will be prompted for mandatory attributes not given on the
+	 * command line
+	 *
 	 * @param createCommand the parsed "workflow create" command
 	 */
 	private void createWorkflow(ParsedCommand createCommand) {
@@ -169,7 +167,7 @@ public class WorkflowCommandRunner {
 				return;
 			}
 			restWorkflow.setWorkflowVersion(response);
-		}				
+		}
 		if (null == restWorkflow.getEnabled()) {
 			System.out.print(PROMPT_ENABLED);
 			String response = System.console().readLine();
@@ -277,11 +275,11 @@ public class WorkflowCommandRunner {
 				restWorkflow.getWorkflowOptions().add(restWorkflowOption);
 			}
 		}
-		
+
 		/* Create workflow */
 		try {
-			restWorkflow = serviceConnection.postToService(serviceConfig.getProcessorManagerUrl(), URI_PATH_WORKFLOWS,
-					restWorkflow, RestWorkflow.class, loginManager.getUser(), loginManager.getPassword());
+			restWorkflow = serviceConnection.postToService(serviceConfig.getProcessorManagerUrl(), URI_PATH_WORKFLOWS, restWorkflow,
+					RestWorkflow.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
@@ -306,14 +304,14 @@ public class WorkflowCommandRunner {
 		}
 
 		/* Report success, giving newly assigned workflow ID and version */
-		String message = logger.log(UIMessage.WORKFLOW_CREATED, restWorkflow.getName(),
-				restWorkflow.getWorkflowVersion(), restWorkflow.getId());
+		String message = logger.log(UIMessage.WORKFLOW_CREATED, restWorkflow.getName(), restWorkflow.getWorkflowVersion(),
+				restWorkflow.getId());
 		System.out.println(message);
 	}
 
 	/**
 	 * Show the workflow specified in the command parameters or options
-	 * 
+	 *
 	 * @param showCommand the parsed "workflow show" command
 	 */
 	private void showWorkflow(ParsedCommand showCommand) {
@@ -350,16 +348,16 @@ public class WorkflowCommandRunner {
 				requestURI += "&workflowVersion=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
 			}
 		}
-		
+
 		if (null != requestedInputProductClass) {
 			requestURI += "&inputProductClass=" + URLEncoder.encode(requestedInputProductClass, Charset.defaultCharset());
 		}
-		
+
 		/* Get the workflow information from the Workflow Manager service */
 		List<?> resultList = null;
 		try {
-			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(), requestURI,
-					List.class, loginManager.getUser(), loginManager.getPassword());
+			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(), requestURI, List.class,
+					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
@@ -397,23 +395,21 @@ public class WorkflowCommandRunner {
 		} else {
 			// Must be a list of workflows
 			String listFormat = "%-20s %-10s %-25s %s";
-			System.out.println(String.format(listFormat, "Workflow name", "Version", "Input product class",
-					"Configured processor"));
+			System.out
+				.println(String.format(listFormat, "Workflow name", "Version", "Input product class", "Configured processor"));
 			for (Object resultObject : (new ObjectMapper()).convertValue(resultList, List.class)) {
 				if (resultObject instanceof Map) {
 					Map<?, ?> resultMap = (Map<?, ?>) resultObject;
-					System.out.println(
-							String.format(listFormat, resultMap.get("name"), resultMap.get("workflowVersion"),
-									resultMap.get("inputProductClass"), resultMap.get("configuredProcessor")));
+					System.out.println(String.format(listFormat, resultMap.get("name"), resultMap.get("workflowVersion"),
+							resultMap.get("inputProductClass"), resultMap.get("configuredProcessor")));
 				}
 			}
 		}
 	}
 
 	/**
-	 * Update a workflow from a workflow file or from "attribute=value" pairs
-	 * (overriding any workflow file entries)
-	 * 
+	 * Update a workflow from a workflow file or from "attribute=value" pairs (overriding any workflow file entries)
+	 *
 	 * @param updateCommand the parsed "workflow update" command
 	 */
 	private void updateWorkflow(ParsedCommand updateCommand) {
@@ -460,7 +456,7 @@ public class WorkflowCommandRunner {
 			} else if (1 == i) {
 				// Second parameter is workflow version
 				updatedWorkflow.setWorkflowVersion(param.getValue());
-				;
+
 			} else {
 				// Remaining parameters are "attribute=value" parameters
 				try {
@@ -483,8 +479,7 @@ public class WorkflowCommandRunner {
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
 					URI_PATH_WORKFLOWS + "?mission=" + loginManager.getMission() + "&name="
-							+ URLEncoder.encode(updatedWorkflow.getName(), Charset.defaultCharset())
-							+ "&workflowVersion="
+							+ URLEncoder.encode(updatedWorkflow.getName(), Charset.defaultCharset()) + "&workflowVersion="
 							+ URLEncoder.encode(updatedWorkflow.getWorkflowVersion(), Charset.defaultCharset()),
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
@@ -573,8 +568,8 @@ public class WorkflowCommandRunner {
 		/* Update workflow using Workflow Manager service */
 		try {
 			restWorkflow = serviceConnection.patchToService(serviceConfig.getProcessorManagerUrl(),
-					URI_PATH_WORKFLOWS + "/" + restWorkflow.getId(), restWorkflow, RestWorkflow.class,
-					loginManager.getUser(), loginManager.getPassword());
+					URI_PATH_WORKFLOWS + "/" + restWorkflow.getId(), restWorkflow, RestWorkflow.class, loginManager.getUser(),
+					loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
@@ -611,7 +606,7 @@ public class WorkflowCommandRunner {
 
 	/**
 	 * Delete the given workflow
-	 * 
+	 *
 	 * @param deleteCommand the parsed "workflow delete" command
 	 */
 	private void deleteWorkflow(ParsedCommand deleteCommand) {
@@ -668,8 +663,7 @@ public class WorkflowCommandRunner {
 		/* Delete workflow using Workflow Manager service */
 		try {
 			serviceConnection.deleteFromService(serviceConfig.getProcessorManagerUrl(),
-					URI_PATH_WORKFLOWS + "/" + restWorkflow.getId(), loginManager.getUser(),
-					loginManager.getPassword());
+					URI_PATH_WORKFLOWS + "/" + restWorkflow.getId(), loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
@@ -683,8 +677,7 @@ public class WorkflowCommandRunner {
 						: e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				message = ProseoLogger.format(UIMessage.WORKFLOW_DELETE_FAILED, name, workflowVersion,
-						e.getMessage());
+				message = ProseoLogger.format(UIMessage.WORKFLOW_DELETE_FAILED, name, workflowVersion, e.getMessage());
 				break;
 			default:
 				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
@@ -703,7 +696,7 @@ public class WorkflowCommandRunner {
 
 	/**
 	 * Run the given command
-	 * 
+	 *
 	 * @param command the command to execute
 	 */
 	void executeCommand(ParsedCommand command) {
@@ -757,8 +750,8 @@ public class WorkflowCommandRunner {
 				deleteWorkflow(subcommand);
 				break COMMAND;
 			default:
-				System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED,
-						command.getName() + " " + subcommand.getName()));
+				System.err.println(
+						ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 				return;
 			}
 

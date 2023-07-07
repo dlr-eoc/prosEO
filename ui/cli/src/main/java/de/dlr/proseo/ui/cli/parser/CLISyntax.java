@@ -1,6 +1,6 @@
 /**
  * CLISyntax.java
- * 
+ *
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.ui.cli.parser;
@@ -23,13 +23,12 @@ import org.yaml.snakeyaml.error.YAMLException;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
 
-
 /**
  * Representation of the prosEO Command Line Interface syntax
- * 
- * The command line syntax is based on a YAML specification, which is used to initialize a CLISyntax object. This can be
- * referenced by the CLIParser when parsing CLI commands.
- * 
+ *
+ * The command line syntax is based on a YAML specification, which is used to initialize a CLISyntax object. This can be referenced
+ * by the CLIParser when parsing CLI commands.
+ *
  * @author Dr. Thomas Bassler
  */
 public class CLISyntax {
@@ -46,7 +45,7 @@ public class CLISyntax {
 	private List<CLIOption> options;
 	/** All second-level CLI commands (list from YAML specification) */
 	private List<CLICommand> commands;
-	
+
 	/** Lookup table for options for all CLI commands (based on full name) */
 	private Map<String, CLIOption> globalOptionMap = new HashMap<>();
 	/** Lookup table for options for all CLI commands (based on short form) */
@@ -55,19 +54,19 @@ public class CLISyntax {
 	private Map<String, CLIOption> topLevelOptions = new HashMap<>();
 	/** Lookup table for all CLI commands */
 	private Map<String, CLICommand> commandMap = new HashMap<>();
-	
+
 	/** The syntax used in this program run (the last one parsed) */
 	/* package */ static CLISyntax inputSyntax;
-	
+
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(CLISyntax.class);
-	
+
 	/** Allowed type names in syntax file */
 	/* package */ static final Set<String> allowedTypes = new HashSet<>(Arrays.asList("string", "integer", "datetime", "boolean"));
-	
+
 	/**
 	 * Gets the title of the syntax file
-	 * 
+	 *
 	 * @return the title
 	 */
 	public String getTitle() {
@@ -76,7 +75,7 @@ public class CLISyntax {
 
 	/**
 	 * Gets the title of the syntax file
-	 * 
+	 *
 	 * @param title the title to set
 	 */
 	public void setTitle(String title) {
@@ -85,7 +84,7 @@ public class CLISyntax {
 
 	/**
 	 * Gets the syntax file version
-	 * 
+	 *
 	 * @return the version
 	 */
 	public String getVersion() {
@@ -94,7 +93,7 @@ public class CLISyntax {
 
 	/**
 	 * sets the syntax file version
-	 * 
+	 *
 	 * @param version the version to set
 	 */
 	public void setVersion(String version) {
@@ -103,7 +102,7 @@ public class CLISyntax {
 
 	/**
 	 * Gets the syntax description
-	 * 
+	 *
 	 * @return the description
 	 */
 	public String getDescription() {
@@ -112,7 +111,7 @@ public class CLISyntax {
 
 	/**
 	 * Sets the syntax description
-	 * 
+	 *
 	 * @param description the description to set
 	 */
 	public void setDescription(String description) {
@@ -121,7 +120,7 @@ public class CLISyntax {
 
 	/**
 	 * Gets the options valid for all commands
-	 * 
+	 *
 	 * @return the globalOptions
 	 */
 	public List<CLIOption> getGlobalOptions() {
@@ -130,7 +129,7 @@ public class CLISyntax {
 
 	/**
 	 * Sets the options valid for all commands
-	 * 
+	 *
 	 * @param globalOptions the globalOptions to set
 	 */
 	public void setGlobalOptions(List<CLIOption> globalOptions) {
@@ -139,7 +138,7 @@ public class CLISyntax {
 
 	/**
 	 * Gets the top-level options
-	 * 
+	 *
 	 * @return the options
 	 */
 	public List<CLIOption> getOptions() {
@@ -148,7 +147,7 @@ public class CLISyntax {
 
 	/**
 	 * Sets the top-level options
-	 * 
+	 *
 	 * @param options the options to set
 	 */
 	public void setOptions(List<CLIOption> options) {
@@ -157,7 +156,7 @@ public class CLISyntax {
 
 	/**
 	 * Gets the available commands
-	 * 
+	 *
 	 * @return the commands
 	 */
 	public List<CLICommand> getCommands() {
@@ -166,7 +165,7 @@ public class CLISyntax {
 
 	/**
 	 * Sets the available commands
-	 * 
+	 *
 	 * @param commands the commands to set
 	 */
 	public void setCommands(List<CLICommand> commands) {
@@ -175,7 +174,7 @@ public class CLISyntax {
 
 	/**
 	 * Gets the options valid for all commands as a map by full name
-	 * 
+	 *
 	 * @return the globalOptionMap
 	 */
 	public Map<String, CLIOption> getGlobalOptionMap() {
@@ -184,7 +183,7 @@ public class CLISyntax {
 
 	/**
 	 * Sets the global option map (full name)
-	 * 
+	 *
 	 * @param globalOptionMap the globalOptionMap to set
 	 */
 	public void setGlobalOptionMap(Map<String, CLIOption> globalOptionMap) {
@@ -193,7 +192,7 @@ public class CLISyntax {
 
 	/**
 	 * Gets the options valid for all commands as a map by short form
-	 * 
+	 *
 	 * @return the globalOptionsShortForm
 	 */
 	public Map<String, CLIOption> getGlobalOptionsShortForm() {
@@ -202,7 +201,7 @@ public class CLISyntax {
 
 	/**
 	 * Sets the global option map (short form)
-	 * 
+	 *
 	 * @param globalOptionsShortForm the globalOptionsShortForm to set
 	 */
 	public void setGlobalOptionsShortForm(Map<String, CLIOption> globalOptionsShortForm) {
@@ -211,7 +210,7 @@ public class CLISyntax {
 
 	/**
 	 * Gets the top-level options as a map by full name
-	 * 
+	 *
 	 * @return the topLevelOptions
 	 */
 	public Map<String, CLIOption> getTopLevelOptions() {
@@ -220,7 +219,7 @@ public class CLISyntax {
 
 	/**
 	 * Sets the top-level option map (full name)
-	 * 
+	 *
 	 * @param topLevelOptions the topLevelOptions to set
 	 */
 	public void setTopLevelOptions(Map<String, CLIOption> topLevelOptions) {
@@ -229,7 +228,7 @@ public class CLISyntax {
 
 	/**
 	 * Gets the available commands as a lookup map by command name
-	 * 
+	 *
 	 * @return the commandMap
 	 */
 	public Map<String, CLICommand> getCommandMap() {
@@ -238,7 +237,7 @@ public class CLISyntax {
 
 	/**
 	 * Sets the command lookup map
-	 * 
+	 *
 	 * @param commandMap the commandMap to set
 	 */
 	public void setCommandMap(Map<String, CLICommand> commandMap) {
@@ -247,93 +246,98 @@ public class CLISyntax {
 
 	/**
 	 * Load the CLI syntax file from the given file path
-	 * 
+	 *
 	 * @param syntaxFileName the path to a YAML format syntax file
 	 * @return a CLISyntax object construct from the YAML specification
 	 * @throws FileNotFoundException if the given file could not be read
-	 * @throws YAMLException if the given file could not be parsed
+	 * @throws YAMLException         if the given file could not be parsed
 	 */
 	public static CLISyntax fromSyntaxFile(String syntaxFileName) throws FileNotFoundException, YAMLException {
-		if (logger.isTraceEnabled()) logger.trace(">>> fromSyntaxFile({})", syntaxFileName);
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> fromSyntaxFile({})", syntaxFileName);
+
 		// Parse YAML syntax file
-	    InputStream input = CLISyntax.class.getClassLoader()
-	    		  .getResourceAsStream(syntaxFileName);
-	    
-	    Constructor syntaxConstructor = new Constructor(CLISyntax.class);
-	    TypeDescription syntaxTypeDescription = new TypeDescription(CLISyntax.class);
-	    syntaxTypeDescription.addPropertyParameters("globalOptions", CLIOption.class);
-	    syntaxTypeDescription.addPropertyParameters("options", CLIOption.class);
-	    syntaxTypeDescription.addPropertyParameters("commands", CLICommand.class);
-	    TypeDescription commandTypeDescription = new TypeDescription(CLICommand.class);
-	    commandTypeDescription.addPropertyParameters("subcommands", CLICommand.class);
-	    commandTypeDescription.addPropertyParameters("options", CLIOption.class);
-	    commandTypeDescription.addPropertyParameters("parameters", CLIParameter.class);
-	    
-	    Yaml yaml = new Yaml(syntaxConstructor);
-	    yaml.addTypeDescription(commandTypeDescription);
-	    inputSyntax = yaml.load(input);
-	    
-	    // Check semantic constraints
-	    // TODO
-	    
-	    // Return parsed syntax object
-	    logger.log(UIMessage.SYNTAX_LOADED, syntaxFileName);
-		//if (logger.isDebugEnabled()) logger.debug("Syntax definition: " + inputSyntax);
-		
+		InputStream input = CLISyntax.class.getClassLoader().getResourceAsStream(syntaxFileName);
+
+		Constructor syntaxConstructor = new Constructor(CLISyntax.class);
+		TypeDescription syntaxTypeDescription = new TypeDescription(CLISyntax.class);
+		syntaxTypeDescription.addPropertyParameters("globalOptions", CLIOption.class);
+		syntaxTypeDescription.addPropertyParameters("options", CLIOption.class);
+		syntaxTypeDescription.addPropertyParameters("commands", CLICommand.class);
+		TypeDescription commandTypeDescription = new TypeDescription(CLICommand.class);
+		commandTypeDescription.addPropertyParameters("subcommands", CLICommand.class);
+		commandTypeDescription.addPropertyParameters("options", CLIOption.class);
+		commandTypeDescription.addPropertyParameters("parameters", CLIParameter.class);
+
+		Yaml yaml = new Yaml(syntaxConstructor);
+		yaml.addTypeDescription(commandTypeDescription);
+		inputSyntax = yaml.load(input);
+
+		// Check semantic constraints
+		// TODO
+
+		// Return parsed syntax object
+		logger.log(UIMessage.SYNTAX_LOADED, syntaxFileName);
+		// if (logger.isDebugEnabled()) logger.debug("Syntax definition: " + inputSyntax);
+
 		return inputSyntax;
 	}
 
 	/**
 	 * Print help information for this command on the given print stream
-	 * 
+	 *
 	 * @param out the print stream to write to
 	 */
 	public void printHelp(PrintStream out) {
 		out.println(description);
 		out.println("Options for the 'proseo' command:");
-		for (CLIOption option: options) {
-			out.println(String.format("    %s --%-10s  %s", 
-					(null == option.getShortForm() ? "   " : "-" + option.getShortForm() + ","), 
-					option.getName(), 
-					option.getDescription().replace('\n', ' ')));
+		for (CLIOption option : options) {
+			out.println(
+					String.format("    %s --%-10s  %s", (null == option.getShortForm() ? "   " : "-" + option.getShortForm() + ","),
+							option.getName(), option.getDescription().replace('\n', ' ')));
 		}
 		out.println("Options for all commands:");
-		for (CLIOption option: globalOptions) {
-			out.println(String.format("    %s --%-10s  %s", 
-					(null == option.getShortForm() ? "   " : "-" + option.getShortForm() + ","), 
-					option.getName(), 
-					option.getDescription().replace('\n', ' ')));
+		for (CLIOption option : globalOptions) {
+			out.println(
+					String.format("    %s --%-10s  %s", (null == option.getShortForm() ? "   " : "-" + option.getShortForm() + ","),
+							option.getName(), option.getDescription().replace('\n', ' ')));
 		}
 		out.println("Commands:");
-		for (CLICommand command: commands) {
+		for (CLICommand command : commands) {
 			out.println(String.format("    %-16s  %s", command.getName(), command.getDescription().replace('\n', ' ')));
 		}
 	}
-	
+
+	/**
+	 * Returns a String representation of the syntax
+	 *
+	 * @return a String representation of the syntax
+	 */
 	@Override
 	public String toString() {
-		return "CLISyntax [\n  title=" + title + ",\n  version=" + version + ",\n  description=" + description + ",\n  globalOptions="
-				+ globalOptions + ",\n  options=" + options + ",\n  commands=" + commands + "\n]";
+		return "CLISyntax [\n  title=" + title + ",\n  version=" + version + ",\n  description=" + description
+				+ ",\n  globalOptions=" + globalOptions + ",\n  options=" + options + ",\n  commands=" + commands + "\n]";
 	}
-	
+
 	/**
-	 * Generates a StringBuilder, appends it with HTML code that prints a title and
-	 * description, calls the respective printHTML() methods for all global options,
-	 * options and commands from the respective Documentation class fields.
-	 * 
+	 * Generates a StringBuilder, appends it with HTML code that prints a title and description, calls the respective printHTML()
+	 * methods for all global options, options and commands from the respective Documentation class fields.
+	 *
 	 * @return StringBuilder
 	 */
 	public StringBuilder printHTML() {
 
 		StringBuilder htmlDoc = new StringBuilder();
 
-		htmlDoc.append("<!DOCTYPE html><html><head>" + "<title>ProsEO CLI Documentation</title>"
-				+ "<link rel=\"stylesheet\" href=\"css/syntax.css\">" + "</head>").append("<body>");
+		htmlDoc
+			.append("<!DOCTYPE html><html><head>" + "<title>ProsEO CLI Documentation</title>"
+					+ "<link rel=\"stylesheet\" href=\"css/syntax.css\">" + "</head>")
+			.append("<body>");
 
 		// Title and descriptions:
-		htmlDoc.append("<h1 id=\"Header\">" + this.title).append(" (" + this.version + ")</h1>")
-				.append("<p>" + this.description.replace("\n\n", "</p><p>") + "</p>");
+		htmlDoc.append("<h1 id=\"Header\">" + this.title)
+			.append(" (" + this.version + ")</h1>")
+			.append("<p>" + this.description.replace("\n\n", "</p><p>") + "</p>");
 
 		// Navigable table of contents:
 		htmlDoc.append("<h2>Table of Contents</h2>").append("<div>");
@@ -349,7 +353,7 @@ public class CLISyntax {
 		}
 
 		htmlDoc.append("</ul>").append("</div>");
-    
+
 		// Global options:
 		htmlDoc.append("<h2 id=\"global-options\">Global Options</h2>");
 
