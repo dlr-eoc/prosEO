@@ -1,6 +1,6 @@
 /**
  * ServiceConfiguration.java
- * 
+ *
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.ui.backend;
@@ -11,52 +11,52 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * Configuration class for the prosEO User Interface (both GUI and CLI)
- * 
+ *
  * @author Dr. Thomas Bassler
  */
 @Configuration
-@ConfigurationProperties(prefix="proseo")
+@ConfigurationProperties(prefix = "proseo")
 public class ServiceConfiguration {
-	
+
 	/** The URL of the prosEO User Manager */
 	@Value("${proseo.userManager.url}")
 	private String userManagerUrl;
-	
+
 	/** The URL of the prosEO Production Planner */
 	@Value("${proseo.productionPlanner.url}")
 	private String productionPlannerUrl;
-	
+
 	/** The URL of the prosEO Ingestor */
 	@Value("${proseo.ingestor.url}")
 	private String ingestorUrl;
-	
+
 	/** The URL of the prosEO Order Manager */
 	@Value("${proseo.orderManager.url}")
 	private String orderManagerUrl;
-	
+
 	/** The URL of the prosEO Processor Manager */
 	@Value("${proseo.processorManager.url}")
 	private String processorManagerUrl;
-	
+
 	/** The URL of the prosEO Product Class Manager */
 	@Value("${proseo.productClassManager.url}")
 	private String productClassManagerUrl;
-	
+
 	/** The URL of the prosEO Facility Manager */
 	@Value("${proseo.facilityManager.url}")
 	private String facilityManagerUrl;
-	
+
 	/** The URL of the prosEO Archive Manager */
 	@Value("${proseo.archiveManager.url}")
 	private String archiveManagerUrl;
-	
+
 	/** Timeout for HTTP connections */
 	@Value("${proseo.http.timeout}")
 	private Long httpTimeout;
-	
+
 	/**
 	 * Gets the URL of the prosEO User Manager component
-	 * 
+	 *
 	 * @return the userManagerUrl
 	 */
 	public String getUserManagerUrl() {
@@ -65,7 +65,7 @@ public class ServiceConfiguration {
 
 	/**
 	 * Gets the URL of the prosEO Production Planner component
-	 * 
+	 *
 	 * @return the productionPlannerUrl the URL of the Production Planner
 	 */
 	public String getProductionPlannerUrl() {
@@ -74,7 +74,7 @@ public class ServiceConfiguration {
 
 	/**
 	 * Gets the URL of the prosEO Ingestor component
-	 * 
+	 *
 	 * @return the ingestorUrl
 	 */
 	public String getIngestorUrl() {
@@ -83,7 +83,7 @@ public class ServiceConfiguration {
 
 	/**
 	 * Gets the URL of the prosEO Order Manager component
-	 * 
+	 *
 	 * @return the orderManagerUrl
 	 */
 	public String getOrderManagerUrl() {
@@ -92,7 +92,7 @@ public class ServiceConfiguration {
 
 	/**
 	 * Gets the URL of the prosEO Processor Manager component
-	 * 
+	 *
 	 * @return the processorManagerUrl
 	 */
 	public String getProcessorManagerUrl() {
@@ -101,7 +101,7 @@ public class ServiceConfiguration {
 
 	/**
 	 * Gets the URL of the prosEO Product Class Manager component
-	 * 
+	 *
 	 * @return the productClassManagerUrl
 	 */
 	public String getProductClassManagerUrl() {
@@ -110,7 +110,7 @@ public class ServiceConfiguration {
 
 	/**
 	 * Gets the URL of the prosEO Facility Manager component
-	 * 
+	 *
 	 * @return the facilityManagerUrl
 	 */
 	public String getFacilityManagerUrl() {
@@ -119,7 +119,7 @@ public class ServiceConfiguration {
 
 	/**
 	 * Gets the URL of the prosEO Archive Manager component
-	 * 
+	 *
 	 * @return the archiveManagerUrl
 	 */
 	public String getArchiveManagerUrl() {
@@ -128,7 +128,7 @@ public class ServiceConfiguration {
 
 	/**
 	 * Gets the default timeout for HTTP connections
-	 * 
+	 *
 	 * @return the httpTimeout
 	 */
 	public Long getHttpTimeout() {
