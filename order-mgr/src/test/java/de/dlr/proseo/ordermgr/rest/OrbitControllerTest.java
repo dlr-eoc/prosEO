@@ -12,7 +12,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,7 +55,7 @@ public class OrbitControllerTest {
 	/** The OrbitControllerImpl under test */
 	@Autowired
 	private OrbitControllerImpl oci;
-	
+
 	// Test data
 	private static String[] testMissionData =
 			// id, version, code, name, processing_mode, file_class, product_file_template
@@ -152,18 +151,20 @@ public class OrbitControllerTest {
 		logger.trace("... creating orbit no. {}", orbitData[2]);
 		Orbit testOrbit = new Orbit();
 
-		if (null != RepositoryService.getOrbitRepository().findByMissionCodeAndSpacecraftCodeAndOrbitNumber(
-				testMissionData[2], testSpacecraftData[1], Integer.valueOf(orbitData[2]))) {
-			return RepositoryService.getOrbitRepository().findByMissionCodeAndSpacecraftCodeAndOrbitNumber(
-					testMissionData[2], testSpacecraftData[1], Integer.valueOf(orbitData[2]));
+		if (null != RepositoryService.getOrbitRepository()
+			.findByMissionCodeAndSpacecraftCodeAndOrbitNumber(testMissionData[2], testSpacecraftData[1],
+					Integer.valueOf(orbitData[2]))) {
+			return RepositoryService.getOrbitRepository()
+				.findByMissionCodeAndSpacecraftCodeAndOrbitNumber(testMissionData[2], testSpacecraftData[1],
+						Integer.valueOf(orbitData[2]));
 		}
 
 		// adding orbit parameters
 		testOrbit.setOrbitNumber(Integer.valueOf(orbitData[2]));
 		testOrbit.setStartTime(Instant.from(OrbitTimeFormatter.parse(orbitData[3])));
 		testOrbit.setStopTime(Instant.from(OrbitTimeFormatter.parse(orbitData[4])));
-		testOrbit.setSpacecraft(RepositoryService.getSpacecraftRepository().findByMissionAndCode(testMissionData[2],
-				testSpacecraftData[1]));
+		testOrbit.setSpacecraft(
+				RepositoryService.getSpacecraftRepository().findByMissionAndCode(testMissionData[2], testSpacecraftData[1]));
 
 		testOrbit = RepositoryService.getOrbitRepository().save(testOrbit);
 
@@ -177,8 +178,8 @@ public class OrbitControllerTest {
 	@Test
 	public final void testGetOrbits() {
 		logger.trace(">>> testGetOrbits()");
-		ResponseEntity<List<RestOrbit>> retrievedOrbits = oci.getOrbits(testSpacecraftData[1], null, null, null, null,
-				null, null, null);
+		ResponseEntity<List<RestOrbit>> retrievedOrbits = oci.getOrbits(testSpacecraftData[1], null, null, null, null, null, null,
+				null);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedOrbits.getStatusCode());
 		assertTrue("Not all orbits found.", retrievedOrbits.getBody().size() == testOrbitData.length);
 	}
@@ -196,8 +197,7 @@ public class OrbitControllerTest {
 	}
 
 	/**
-	 * Test method for
-	 * {@link de.dlr.proseo.ordermgr.rest.OrbitControllerImpl#createOrbits(java.util.List)}.
+	 * Test method for {@link de.dlr.proseo.ordermgr.rest.OrbitControllerImpl#createOrbits(java.util.List)}.
 	 */
 	@Test
 	public final void testCreateOrbits() {
@@ -214,13 +214,11 @@ public class OrbitControllerTest {
 
 		ResponseEntity<List<RestOrbit>> createdOrbits = oci.createOrbits(orbitsToCreate);
 		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, createdOrbits.getStatusCode());
-		assertTrue("Error during orbit creation.",
-				createdOrbits.getBody().get(0).getOrbitNumber() == toCreate.getOrbitNumber());
+		assertTrue("Error during orbit creation.", createdOrbits.getBody().get(0).getOrbitNumber() == toCreate.getOrbitNumber());
 	}
 
 	/**
-	 * Test method for
-	 * {@link de.dlr.proseo.ordermgr.rest.OrbitControllerImpl#getOrbitById(java.lang.Long)}.
+	 * Test method for {@link de.dlr.proseo.ordermgr.rest.OrbitControllerImpl#getOrbitById(java.lang.Long)}.
 	 */
 	@Test
 	public final void testGetOrbitById() {
@@ -251,8 +249,7 @@ public class OrbitControllerTest {
 	}
 
 	/**
-	 * Test method for
-	 * {@link de.dlr.proseo.ordermgr.rest.OrbitControllerImpl#deleteOrbitById(java.lang.Long)}.
+	 * Test method for {@link de.dlr.proseo.ordermgr.rest.OrbitControllerImpl#deleteOrbitById(java.lang.Long)}.
 	 */
 	@Test
 	public final void testDeleteOrbitById() {
@@ -264,7 +261,6 @@ public class OrbitControllerTest {
 		assertEquals("Wrong HTTP status: ", HttpStatus.NO_CONTENT, deletion.getStatusCode());
 
 		List<Orbit> afterDeletion = RepositoryService.getOrbitRepository().findAll();
-		assertTrue("After deletion, repository does not contain less orbits.",
-				afterDeletion.size() < beforeDeletion.size());
+		assertTrue("After deletion, repository does not contain less orbits.", afterDeletion.size() < beforeDeletion.size());
 	}
 }
