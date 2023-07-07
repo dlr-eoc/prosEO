@@ -27,7 +27,7 @@ public class OrderInfo {
 	 * A constructor which sets the order's status, id and error message
 	 *
 	 * @param status  the order status to set
-	 * @param id      the order id to set
+	 * @param orderId the order id to set
 	 * @param message the error message to set
 	 */
 	public OrderInfo(HttpStatus status, String orderId, String message) {
@@ -81,7 +81,11 @@ public class OrderInfo {
 		this.status = status;
 	}
 
-	/** @param message the message to set */
+	/**
+	 * Sets the error message
+	 * 
+	 * @param message the message to set
+	 */
 	public void setMessage(String message) {
 		this.message = message;
 	}

@@ -54,8 +54,8 @@ public class StatisticsService {
 	 * Retrieves job steps based on a specified status and optional last parameter
 	 *
 	 * @param status the job step status
-	 * @param last
-	 * @return a Mono\<ClientResponse\> providing access to the response status and headers, and as well as methods to consume the
+	 * @param last the last job step to return
+	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, and as well as methods to consume the
 	 *         response body
 	 */
 	public Mono<ClientResponse> getJobsteps(String status, Long last) {

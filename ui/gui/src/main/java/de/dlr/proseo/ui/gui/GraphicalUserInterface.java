@@ -24,7 +24,15 @@ import org.springframework.context.annotation.ComponentScan;
 //@EnableAutoConfiguration
 @EnableConfigurationProperties
 public class GraphicalUserInterface {
+
+	/**
+	 * The entry point of the Graphical User Interface application.
+	 * 
+	 * @param args the command-line arguments
+	 * @throws Exception if an error occurs during the application execution
+	 */
 	public static void main(String[] args) throws Exception {
 		SpringApplication.run(GraphicalUserInterface.class, args);
 	}
+
 }

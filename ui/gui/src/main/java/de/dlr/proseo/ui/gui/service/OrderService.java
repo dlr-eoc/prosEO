@@ -65,7 +65,7 @@ public class OrderService {
 	 * @param recordTo      the last result to return
 	 * @param sortCol       the column on which to base the sorting
 	 * @param up            true if the sorting should be ascending, false if it should be descending
-	 * @return a Mono\<ClientResponse\> providing access to the response status and headers, and as well as methods to consume the
+	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, and as well as methods to consume the
 	 *         response body
 	 */
 	public Mono<ClientResponse> get(String identifier, String states, String products, String startTimeFrom, String startTimeTo,
@@ -138,7 +138,7 @@ public class OrderService {
 	 * Retrieves information about a specific order based on its ID
 	 *
 	 * @param orderId the order id
-	 * @return a Mono\<ClientResponse\> providing access to the response status and headers, as well as methods to consume the
+	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, as well as methods to consume the
 	 *         response body
 	 */
 	public Mono<ClientResponse> getId(String orderId) {
@@ -182,7 +182,7 @@ public class OrderService {
 	 * @param recordFrom the first result to return
 	 * @param recordTo   the last return to return
 	 * @param states     the permitted job states
-	 * @return a Mono\<ClientResponse\> providing access to the response status and headers, and also methods to consume the
+	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, and also methods to consume the
 	 *         response body
 	 */
 	public Mono<ClientResponse> getJobsOfOrder(String orderId, Long recordFrom, Long recordTo, String states) {
@@ -236,7 +236,7 @@ public class OrderService {
 	 * Retrieves the graph of a specific job
 	 *
 	 * @param orderId the job id
-	 * @return a Mono\<ClientResponse\> providing access to the response status and headers, and also methods to consume the
+	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, and also methods to consume the
 	 *         response body
 	 */
 	public Mono<ClientResponse> getGraphOfJob(String orderId) {
@@ -277,7 +277,7 @@ public class OrderService {
 	 * Retrieves the graph of a specific job
 	 *
 	 * @param jobId the job id
-	 * @param auth
+	 * @param auth the GUI authentication token
 	 * @return the job graph
 	 */
 	@SuppressWarnings("unchecked")
@@ -339,7 +339,7 @@ public class OrderService {
 	 * @param orderId  the order id
 	 * @param state    the desired order state
 	 * @param facility the processing facility
-	 * @return a Mono\<ClientResponse\> providing access to the response status and headers, as well as methods to consume the
+	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, as well as methods to consume the
 	 *         response body
 	 */
 	public Mono<ClientResponse> setState(String orderId, String state, String facility) {
@@ -430,7 +430,7 @@ public class OrderService {
 	 *
 	 * @param jobId the job id
 	 * @param state the desired state
-	 * @return a Mono\<ClientResponse\> providing access to the response status and headers, as well as methods to consume the
+	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, as well as methods to consume the
 	 *         response body
 	 */
 	public Mono<ClientResponse> setJobState(String jobId, String state) {
@@ -500,7 +500,7 @@ public class OrderService {
 	 *
 	 * @param jobStepId the job step state
 	 * @param state     the state to set
-	 * @return a Mono\<ClientResponse\> providing access to the response status and headers, as well as methods to consume the
+	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, as well as methods to consume the
 	 *         response body
 	 */
 	public Mono<ClientResponse> setJobStepState(String jobStepId, String state) {

@@ -1,3 +1,8 @@
+/**
+ * GUIOrderController.java
+ *
+ * (C) 2021 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ui.gui;
 
 import java.io.UnsupportedEncodingException;
@@ -6,6 +11,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,14 +41,19 @@ import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.rest.model.JobStepState;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestInputFilter;
-import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestJobStep;
+import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
 import de.dlr.proseo.ui.gui.service.OrderService;
 import reactor.core.publisher.Mono;
 
+/**
+ * A controller for retrieving and handling order data
+ *
+ * @author David Mazo
+ */
 @Controller
 public class GUIOrderController extends GUIBaseController {
 	private static final String MAPKEY_ID = "id";
@@ -66,16 +77,15 @@ public class GUIOrderController extends GUIBaseController {
 	@Autowired
 	private ServiceConfiguration serviceConfig;
 
-	/**
-	 * Date formatter for input type date
-	 */
-//	private static final SimpleDateFormat simpleDateFormatter = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);	
+	/** Date formatter for input type date */
+	// private static final SimpleDateFormat simpleDateFormatter = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
 
+	/** HTTP Warning header */
 	private static final String HTTP_HEADER_WARNING = "Warning";
 
 	/**
 	 * Create an HTTP "Warning" header with the given text message
-	 * 
+	 *
 	 * @param message the message text
 	 * @return an HttpHeaders object with a warning message
 	 */
@@ -86,33 +96,50 @@ public class GUIOrderController extends GUIBaseController {
 		return responseHeaders;
 	}
 
+	/**
+	 * Show the order view
+	 *
+	 * @return the name of the order view template
+	 */
 	@GetMapping(value = "/order-show")
 	public String showOrder() {
 		return "order-show";
 	}
 
+	/**
+	 * Show the order edit view
+	 *
+	 * @return the name of the order edit view template
+	 */
 	@GetMapping(value = "/order-edit")
 	public String editOrder() {
 		return "order-edit";
 	}
 
+	/**
+	 * Show the order view
+	 *
+	 * @return the name of the order view template
+	 */
 	@GetMapping(value = "/order")
 	public String order() {
 		return "order";
 	}
 
 	/**
-	 * Retrieve the order list filtered by these parameters
-	 * 
-	 * @param identifier The order identifier (name) as pattern
-	 * @param states     The order states (seperated by ':')
-	 * @param from       The from date of start time
-	 * @param to         The to date of start time
-	 * @param products   The product class list (seperated by ':')
-	 * @param sortby     The sort column
-	 * @param up         The sort direction (true for 'up')
-	 * @param model      The model to hold the data
-	 * @return The result
+	 * Retrieve the order list filtered by the specified parameters.
+	 *
+	 * @param identifier The order identifier (name) as a pattern.
+	 * @param states     The order states (separated by ':').
+	 * @param from       The start date of the time period.
+	 * @param to         The end date of the time period.
+	 * @param products   The product class list (separated by ':').
+	 * @param recordFrom the first record to retrieve
+	 * @param recordTo   the last record to retrieve
+	 * @param sortby     The sort column.
+	 * @param up         The sort direction (true for 'up').
+	 * @param model      The model to hold the data.
+	 * @return The deferred result containing the result.
 	 */
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/order-show/get")
@@ -124,6 +151,7 @@ public class GUIOrderController extends GUIBaseController {
 			@RequestParam(required = false, value = "recordTo") Long recordTo,
 			@RequestParam(required = false, value = "sortby") String sortby,
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getIdentifier({}, {}, model)", identifier, identifier);
 
@@ -131,32 +159,38 @@ public class GUIOrderController extends GUIBaseController {
 
 		Long fromi = null;
 		Long toi = null;
+
 		if (recordFrom != null && recordFrom >= 0) {
 			fromi = recordFrom;
 		} else {
 			fromi = (long) 0;
 		}
+
 		Long count = countOrdersL(identifier, states, products, from, to, null, null, sortby, up);
+
 		if (recordFrom != null && fromi != null && recordTo > fromi) {
 			toi = recordTo;
 		} else if (from != null) {
 			toi = count;
 		}
+
 		Long pageSize = toi - fromi;
-		Long deltaPage = (long) ((count % pageSize) == 0 ? 0 : 1);
+		long deltaPage = (count % pageSize) == 0 ? 0 : 1;
 		Long pages = (count / pageSize) + deltaPage;
 		Long page = (fromi / pageSize) + 1;
+
 		Mono<ClientResponse> mono = orderService.get(identifier, states, products, from, to, fromi, toi, sortby, up);
-		DeferredResult<String> deferredResult = new DeferredResult<String>();
+		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> orders = new ArrayList<>();
+
 		mono.doOnError(e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("order-show :: #errormsg");
 		}).subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
-			logger.trace("Now in Consumer::accept({})", clientResponse);
+
 			if (clientResponse.statusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
-				// this is no error cause only already planned orders have job steps
+				// This is not an error because only already planned orders have job steps
 				model.addAttribute("count", 0);
 				model.addAttribute("pageSize", 0);
 				model.addAttribute("pageCount", 0);
@@ -166,6 +200,7 @@ public class GUIOrderController extends GUIBaseController {
 				clientResponse.bodyToMono(List.class).subscribe(orderList -> {
 					// orders.addAll(selectOrders(orderList, identifier, states, from, to, products));
 					orders.addAll(orderList);
+
 					String key = MAPKEY_ID;
 					if (sortby != null) {
 						if (sortby.contentEquals("identifier") || sortby.contentEquals(MAPKEY_ID)
@@ -174,8 +209,11 @@ public class GUIOrderController extends GUIBaseController {
 						}
 					}
 					Boolean isUp = (null == up ? true : up);
-//					MapComparator oc = new MapComparator(key, isUp);
-//					orders.sort(oc);
+
+					// Sort the orders based on the selected key and sort direction
+					// MapComparator oc = new MapComparator(key, isUp);
+					// orders.sort(oc);
+
 					model.addAttribute("orders", orders);
 					model.addAttribute("selcol", key);
 					model.addAttribute("selorder", (isUp ? "select-up" : "select-down"));
@@ -183,19 +221,25 @@ public class GUIOrderController extends GUIBaseController {
 					model.addAttribute("pageSize", pageSize);
 					model.addAttribute("pageCount", pages);
 					model.addAttribute("page", page);
-					List<Long> showPages = new ArrayList<Long>();
+
+					List<Long> showPages = new ArrayList<>();
 					Long start = Math.max(page - 4, 1);
 					Long end = Math.min(page + 4, pages);
+
 					if (page < 5) {
 						end = Math.min(end + (5 - page), pages);
 					}
+
 					if (pages - page < 5) {
 						start = Math.max(start - (4 - (pages - page)), 1);
 					}
+
 					for (Long i = start; i <= end; i++) {
 						showPages.add(i);
 					}
+
 					model.addAttribute("showPages", showPages);
+
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + orders.toString());
 					deferredResult.setResult("order-show :: #orderscontent");
@@ -206,26 +250,28 @@ public class GUIOrderController extends GUIBaseController {
 				deferredResult.setResult("order-show :: #errormsg");
 			}
 			logger.trace(">>>>MODEL" + model.toString());
-
 		}, e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("order-show :: #errormsg");
 		});
+
 		logger.trace(model.toString() + "MODEL TO STRING");
 		logger.trace(">>>>MONO" + orders.toString());
 		logger.trace(">>>>MODEL" + model.toString());
-		logger.trace("DEREFFERED STRING: {}", deferredResult);
+		logger.trace("DEFERRED STRING: {}", deferredResult);
+
 		return deferredResult;
 	}
 
 	/**
-	 * Set the new state of an order
-	 * 
-	 * @param id       The order id
-	 * @param state    The new state
-	 * @param facility The facility (for plan)
-	 * @param model    The model to hold the data
-	 * @return The result
+	 * Set the new state of an order.
+	 *
+	 * @param id           The order id.
+	 * @param state        The new state.
+	 * @param facility     The facility (for plan).
+	 * @param model        The model to hold the data.
+	 * @param httpResponse The HTTP response object.
+	 * @return The deferred result containing the result.
 	 */
 	@RequestMapping(value = "/order-state/post")
 	public DeferredResult<String> setState(@RequestParam(required = true, value = MAPKEY_ID) String id,
@@ -234,7 +280,7 @@ public class GUIOrderController extends GUIBaseController {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> setState({}, {}, model)", id, state, facility);
 		Mono<ClientResponse> mono = orderService.setState(id, state, facility);
-		DeferredResult<String> deferredResult = new DeferredResult<String>();
+		DeferredResult<String> deferredResult = new DeferredResult<>();
 		mono.timeout(Duration.ofMillis(config.getTimeout())).doOnError(e -> {
 			model.addAttribute("warnmsg", e.getMessage());
 			// deferredResult.setResult("order-show :: #warnmsg");
@@ -278,11 +324,12 @@ public class GUIOrderController extends GUIBaseController {
 
 	/**
 	 * Set the new state of a job
-	 * 
-	 * @param id    The job id
-	 * @param state The new state
-	 * @param model The model to hold the data
-	 * @return The result
+	 *
+	 * @param id           The job id
+	 * @param state        The new state
+	 * @param model        The model to hold the data
+	 * @param httpResponse The HTTP Servlet Response
+	 * @return The deferred result containing the result
 	 */
 	@RequestMapping(value = "/job-state/post")
 	public DeferredResult<String> setJobState(@RequestParam(required = true, value = MAPKEY_ID) String id,
@@ -290,7 +337,7 @@ public class GUIOrderController extends GUIBaseController {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> setState({}, {}, model)", id, state);
 		Mono<ClientResponse> mono = orderService.setJobState(id, state);
-		DeferredResult<String> deferredResult = new DeferredResult<String>();
+		DeferredResult<String> deferredResult = new DeferredResult<>();
 		mono.timeout(Duration.ofMillis(config.getTimeout())).doOnError(e -> {
 			model.addAttribute("warnmsg", e.getMessage());
 			// deferredResult.setResult("order-show :: #warnmsg");
@@ -334,11 +381,12 @@ public class GUIOrderController extends GUIBaseController {
 
 	/**
 	 * Set the new state of a job step
-	 * 
-	 * @param id    The job step id
-	 * @param state The new state
-	 * @param model The model to hold the data
-	 * @return The result
+	 *
+	 * @param id           The job step id
+	 * @param state        The new state
+	 * @param model        The model to hold the data
+	 * @param httpResponse The HTTP Servlet Response
+	 * @return The deferred result containing the result
 	 */
 	@RequestMapping(value = "/jobstep-state/post")
 	public DeferredResult<String> setJobStepState(@RequestParam(required = true, value = MAPKEY_ID) String id,
@@ -346,7 +394,7 @@ public class GUIOrderController extends GUIBaseController {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> setState({}, {}, model)", id, state);
 		Mono<ClientResponse> mono = orderService.setJobStepState(id, state);
-		DeferredResult<String> deferredResult = new DeferredResult<String>();
+		DeferredResult<String> deferredResult = new DeferredResult<>();
 		mono.timeout(Duration.ofMillis(config.getTimeout())).doOnError(e -> {
 			model.addAttribute("warnmsg", e.getMessage());
 			// deferredResult.setResult("order-show :: #warnmsg");
@@ -390,10 +438,10 @@ public class GUIOrderController extends GUIBaseController {
 
 	/**
 	 * Retrieve a single order
-	 * 
+	 *
 	 * @param id    The order id.
 	 * @param model The model to hold the data
-	 * @return The result
+	 * @return The deferred result containing the result
 	 */
 	@RequestMapping(value = "/order/get")
 	public DeferredResult<String> getId(@RequestParam(required = true, value = MAPKEY_ID) String id, Model model) {
@@ -401,7 +449,7 @@ public class GUIOrderController extends GUIBaseController {
 			logger.trace(">>> getId({}, model)", id);
 		checkClearCache();
 		Mono<ClientResponse> mono = orderService.getId(id);
-		DeferredResult<String> deferredResult = new DeferredResult<String>();
+		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> orders = new ArrayList<>();
 		mono.doOnError(e -> {
 			model.addAttribute("errormsg", e.getMessage());
@@ -436,10 +484,10 @@ public class GUIOrderController extends GUIBaseController {
 
 	/**
 	 * Retrieve a single order
-	 * 
+	 *
 	 * @param id    The order id.
 	 * @param model The model to hold the data
-	 * @return The result
+	 * @return The deferred result containing the result
 	 */
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/order-edit/get")
@@ -448,7 +496,7 @@ public class GUIOrderController extends GUIBaseController {
 			logger.trace(">>> getId({}, model)", id);
 		checkClearCache();
 		Mono<ClientResponse> mono = orderService.getId(id);
-		DeferredResult<String> deferredResult = new DeferredResult<String>();
+		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> orders = new ArrayList<>();
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
@@ -485,10 +533,9 @@ public class GUIOrderController extends GUIBaseController {
 	}
 
 	/**
-	 * Retrieve a single order
-	 * 
-	 * @param id    The order id.
-	 * @param model The model to hold the data
+	 * Submit a single order
+	 *
+	 * @param updateOrder the updated order
 	 * @return The result
 	 */
 	@RequestMapping(value = "/order-submit", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -500,7 +547,7 @@ public class GUIOrderController extends GUIBaseController {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		// some checks on updateOrder
 		if (updateOrder.getInputFilters() != null) {
-			List<RestInputFilter> newList = new ArrayList<RestInputFilter>();
+			List<RestInputFilter> newList = new ArrayList<>();
 			for (RestInputFilter ele : updateOrder.getInputFilters()) {
 				if (ele != null) {
 					ele.setFilterConditions(stripNullInParameterList(ele.getFilterConditions()));
@@ -510,7 +557,7 @@ public class GUIOrderController extends GUIBaseController {
 			updateOrder.setInputFilters(newList);
 		}
 		if (updateOrder.getClassOutputParameters() != null) {
-			List<RestClassOutputParameter> newList = new ArrayList<RestClassOutputParameter>();
+			List<RestClassOutputParameter> newList = new ArrayList<>();
 			for (RestClassOutputParameter ele : updateOrder.getClassOutputParameters()) {
 				if (ele != null) {
 					ele.setOutputParameters(stripNullInParameterList(ele.getOutputParameters()));
@@ -540,15 +587,14 @@ public class GUIOrderController extends GUIBaseController {
 						origOrder = serviceConnection.patchToService(serviceConfig.getOrderManagerUrl(),
 								"/orders/" + updateOrder.getId(), updateOrder, RestOrder.class, auth.getProseoName(),
 								auth.getPassword());
-						return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.OK, origOrder.getId().toString(), ""),
-								HttpStatus.OK);
+						return new ResponseEntity<>(new OrderInfo(HttpStatus.OK, origOrder.getId().toString(), ""), HttpStatus.OK);
 					} catch (RestClientResponseException e) {
 						if (logger.isTraceEnabled())
 							logger.trace("Caught HttpClientErrorException " + e.getMessage());
 						String message = null;
 						switch (e.getRawStatusCode()) {
 						case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-							return new ResponseEntity<OrderInfo>(
+							return new ResponseEntity<>(
 									new OrderInfo(HttpStatus.NOT_MODIFIED, "0", ProseoLogger.format(UIMessage.NOT_MODIFIED)),
 									HttpStatus.OK);
 						case org.apache.http.HttpStatus.SC_NOT_FOUND:
@@ -565,10 +611,10 @@ public class GUIOrderController extends GUIBaseController {
 						default:
 							message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 						}
-						return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.INTERNAL_SERVER_ERROR, "0", message),
+						return new ResponseEntity<>(new OrderInfo(HttpStatus.INTERNAL_SERVER_ERROR, "0", message),
 								errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 					} catch (RuntimeException e) {
-						return new ResponseEntity<OrderInfo>(
+						return new ResponseEntity<>(
 								new OrderInfo(HttpStatus.INTERNAL_SERVER_ERROR, "0",
 										ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage())),
 								errorHeaders(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage())),
@@ -588,7 +634,7 @@ public class GUIOrderController extends GUIBaseController {
 			try {
 				origOrder = serviceConnection.postToService(serviceConfig.getOrderManagerUrl(), "/orders", updateOrder,
 						RestOrder.class, auth.getProseoName(), auth.getPassword());
-				return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.CREATED, origOrder.getId().toString(), ""),
+				return new ResponseEntity<>(new OrderInfo(HttpStatus.CREATED, origOrder.getId().toString(), ""),
 						HttpStatus.CREATED);
 			} catch (RestClientResponseException e) {
 				if (logger.isTraceEnabled())
@@ -606,36 +652,38 @@ public class GUIOrderController extends GUIBaseController {
 					message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
 				}
 				System.err.println(message);
-				return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.INTERNAL_SERVER_ERROR, "0", message),
-						errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+				return new ResponseEntity<>(new OrderInfo(HttpStatus.INTERNAL_SERVER_ERROR, "0", message), errorHeaders(message),
+						HttpStatus.INTERNAL_SERVER_ERROR);
 			} catch (RuntimeException e) {
-				return new ResponseEntity<OrderInfo>(
+				return new ResponseEntity<>(
 						new OrderInfo(HttpStatus.INTERNAL_SERVER_ERROR, "0",
 								ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage())),
 						errorHeaders(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage())), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 		}
 
-		return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.OK, "0", ""), HttpStatus.OK);
+		return new ResponseEntity<>(new OrderInfo(HttpStatus.OK, "0", ""), HttpStatus.OK);
 	}
 
 	/**
-	 * Retrieve the jobs of an order filtered by following criteria If fromIndex is not set the job or job step are used to
+	 * Retrieve the jobs of an order filtered by following criteria. If recordFrom is not set the job or job step are used to
 	 * calculate it.
-	 * 
-	 * @param id        The order id
-	 * @param fromIndex The from index (first row)
-	 * @param toIndex   The to index (last row)
-	 * @param jobId     The job id
-	 * @param jobStepId
-	 * @param model
-	 * @return The jobs found
+	 *
+	 * @param id         the order id
+	 * @param recordFrom the first record to retrieve
+	 * @param recordTo   the last record to retrieve
+	 * @param jobId      the job id
+	 * @param jobStepId  the job step id
+	 * @param states     the job states
+	 * @param calcP      whether to calculate the page
+	 * @param model      the attributes to return
+	 * @return the result
 	 */
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/jobs/get")
 	public DeferredResult<String> getJobsOfOrder(@RequestParam(required = true, value = "orderid") String id,
-			@RequestParam(required = false, value = "recordFrom") Long fromIndex,
-			@RequestParam(required = false, value = "recordTo") Long toIndex,
+			@RequestParam(required = false, value = "recordFrom") Long recordFrom,
+			@RequestParam(required = false, value = "recordTo") Long recordTo,
 			@RequestParam(required = false, value = "job") String jobId,
 			@RequestParam(required = false, value = "jobStep") String jobStepId,
 			@RequestParam(required = false, value = "jobstates") String states,
@@ -645,9 +693,9 @@ public class GUIOrderController extends GUIBaseController {
 		checkClearCache();
 		Long from = null;
 		Long to = null;
-		Boolean calcPage = false;
-		if (fromIndex != null && fromIndex >= 0) {
-			from = fromIndex;
+		boolean calcPage = false;
+		if (recordFrom != null && recordFrom >= 0) {
+			from = recordFrom;
 		} else {
 			from = (long) 0;
 		}
@@ -655,8 +703,8 @@ public class GUIOrderController extends GUIBaseController {
 			calcPage = true;
 		}
 		Long count = countJobs(id, states);
-		if (toIndex != null && from != null && toIndex > from) {
-			to = toIndex;
+		if (recordTo != null && from != null && recordTo > from) {
+			to = recordTo;
 		} else if (from != null) {
 			to = count;
 		}
@@ -667,22 +715,20 @@ public class GUIOrderController extends GUIBaseController {
 			to = from + pageSize;
 		}
 
-		Long deltaPage = pageSize == 0L ? 0L : ((long) ((count % pageSize) == 0 ? 0 : 1));
+		long deltaPage = pageSize == 0L ? 0L : ((long) ((count % pageSize) == 0 ? 0 : 1));
 		Long pages = pageSize == 0L ? 0L : ((count / pageSize) + deltaPage);
 		Long page = pageSize == 0L ? 0L : ((from / pageSize) + 1);
 
-
-
 		// TODO use jobId to find page of job
 		Mono<ClientResponse> mono = orderService.getJobsOfOrder(id, from, to, states);
-		DeferredResult<String> deferredResult = new DeferredResult<String>();
+		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> jobs = new ArrayList<>();
-		
+
 		// Retrieve the order state from the order manager via the orderService
 		String orderState;
 		try {
 			orderState = orderService.getOrderState(id);
-			
+
 		} catch (RestClientResponseException e) {
 
 			// Log RestClientReponses
@@ -701,7 +747,7 @@ public class GUIOrderController extends GUIBaseController {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("order :: #errormsg");
 			return deferredResult;
-			
+
 		} catch (Exception e) {
 			logger.log(UIMessage.EXCEPTION, e.getMessage());
 
@@ -709,7 +755,7 @@ public class GUIOrderController extends GUIBaseController {
 			deferredResult.setResult("order :: #errormsg");
 			return deferredResult;
 		}
-		
+
 		mono.doOnError(e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("order :: #errormsg");
@@ -738,7 +784,7 @@ public class GUIOrderController extends GUIBaseController {
 					model.addAttribute("page", page);
 					model.addAttribute("orderState", orderState);
 
-					List<Long> showPages = new ArrayList<Long>();
+					List<Long> showPages = new ArrayList<>();
 					Long start = Math.max(page - 4, 1);
 					Long end = Math.min(page + 4, pages);
 					if (page < 5) {
@@ -766,22 +812,29 @@ public class GUIOrderController extends GUIBaseController {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("order :: #errormsg");
 		});
-		
+
 		logger.trace(model.toString() + "MODEL TO STRING");
 		logger.trace(">>>>MONO" + jobs.toString());
 		logger.trace(">>>>MODEL" + model.toString());
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
-		
+
 		return deferredResult;
 	}
 
+	/**
+	 * Return the job graph
+	 *
+	 * @param jobId the job id
+	 * @param model the model
+	 * @return the job graph
+	 */
 	@RequestMapping(value = "/jobs/graph")
-	public DeferredResult<String> getGraphOfJob(@RequestParam(required = true, value = "jobid") String id, Model model) {
+	public DeferredResult<String> getGraphOfJob(@RequestParam(required = true, value = "jobid") String jobId, Model model) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getId({}, model)", id);
+			logger.trace(">>> getId({}, model)", jobId);
 		checkClearCache();
-		Mono<ClientResponse> mono = orderService.getGraphOfJob(id);
-		DeferredResult<String> deferredResult = new DeferredResult<String>();
+		Mono<ClientResponse> mono = orderService.getGraphOfJob(jobId);
+		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> jobs = new ArrayList<>();
 		mono.doOnError(e -> {
 			model.addAttribute("errormsg", e.getMessage());
@@ -814,22 +867,43 @@ public class GUIOrderController extends GUIBaseController {
 		return deferredResult;
 	}
 
+	/**
+	 * Return whether a spacecraft has orbits between the numbers denoted by from and to
+	 * 
+	 * @param spacecraft the spacecraft
+	 * @param from       the first permitted orbit number
+	 * @param to         the last permitted orbit number
+	 * @return true if the spacecraft has orbits between the specified parameters
+	 */
 	@GetMapping("/hasorbits")
 	public ResponseEntity<?> hasorbits(@RequestParam(required = true, value = "spacecraft") String spacecraft,
 			@RequestParam(required = true, value = "from") Long from, @RequestParam(required = true, value = "to") Long to) {
-		Boolean result = countOrbits(spacecraft, from, to) > 0;
-		return new ResponseEntity<>(result.toString(), HttpStatus.OK);
+		boolean result = countOrbits(spacecraft, from, to) > 0;
+		return new ResponseEntity<>(Boolean.toString(result), HttpStatus.OK);
 	}
 
+	/**
+	 * Checks if there is an order with the specified identifier and id.
+	 * 
+	 * @param identifier The order identifier
+	 * @param id         The id
+	 * @return ResponseEntity containing a boolean value indicating if the order exists, with HTTP status OK
+	 */
 	@GetMapping("/hasorder")
-	public ResponseEntity<?> hasorder(@RequestParam(required = true, value = "identifier") String identifier,
+	public ResponseEntity<?> hasOrder(@RequestParam(required = true, value = "identifier") String identifier,
 			@RequestParam(required = true, value = "nid") String id) {
-		Boolean result = countOrders(identifier, id) > 0;
-		return new ResponseEntity<>(result.toString(), HttpStatus.OK);
+		boolean result = countOrders(identifier, id) > 0;
+		return new ResponseEntity<>(Boolean.toString(result), HttpStatus.OK);
 	}
 
+	/**
+	 * Retrieves the job step log for the specified id.
+	 * 
+	 * @param id The id of the job step
+	 * @return ResponseEntity containing the job step log as a String, with appropriate HTTP headers and status OK
+	 */
 	@GetMapping("/jobsteplog.txt")
-	public ResponseEntity<String> jobsteplog(@RequestParam(required = true, value = "id") String id) {
+	public ResponseEntity<String> jobStepLog(@RequestParam(required = true, value = "id") String id) {
 
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String result = "";
@@ -840,7 +914,7 @@ public class GUIOrderController extends GUIBaseController {
 					auth.getProseoName(), auth.getPassword());
 			if (js != null) {
 				if (js.getJobStepState() == JobStepState.RUNNING) {
-					// update log file before, this does the planner
+					// Update log file before, this does the planner
 					result = serviceConnection.getFromService(config.getProductionPlanner(), "/jobsteps/log/" + id, String.class,
 							auth.getProseoName(), auth.getPassword());
 				} else {
@@ -867,14 +941,21 @@ public class GUIOrderController extends GUIBaseController {
 		} catch (RuntimeException e) {
 			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 		}
+		
 		MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
 		map.add("Content-Type", "text/plain");
 		map.add("Content-Length", String.valueOf(result.length()));
 		return new ResponseEntity<>(result, map, HttpStatus.OK);
 	}
 
+	/**
+	 * Strips null elements from the given list of RestParameter objects.
+	 * 
+	 * @param list The list of RestParameter objects
+	 * @return The list with null elements removed
+	 */
 	private List<RestParameter> stripNullInParameterList(List<RestParameter> list) {
-		List<RestParameter> newList = new ArrayList<RestParameter>();
+		List<RestParameter> newList = new ArrayList<>();
 		if (list != null) {
 			for (RestParameter p : list) {
 				if (p != null) {
@@ -887,7 +968,7 @@ public class GUIOrderController extends GUIBaseController {
 
 	/**
 	 * Helper function to select orders
-	 * 
+	 *
 	 * @param identifier The order identifier (name) as pattern
 	 * @param orderList  The complete list
 	 * @param states     The order states (seperated by ':')
@@ -908,7 +989,7 @@ public class GUIOrderController extends GUIBaseController {
 //			if (states != null) {
 //				// build array of selected states
 //				stateArray = new ArrayList<String>();
-//				String[] x = states.split(":");				
+//				String[] x = states.split(":");
 //				for (int i = 0; i < x.length; i++) {
 //					stateArray.add(x[i]);
 //				}
@@ -916,28 +997,26 @@ public class GUIOrderController extends GUIBaseController {
 //			ArrayList<String> productArray = null;
 //			if (products != null) {
 //				productArray = new ArrayList<String>();
-//				String[] x = products.split(":");		
+//				String[] x = products.split(":");
 //				for (int i = 0; i < x.length; i++) {
 //					productArray.add(x[i]);
 //				}
 //			}
 //			Date fromTime = null;
-//			if (from != null) {			
+//			if (from != null) {
 //				try {
 //					fromTime = simpleDateFormatter.parse(from);
 //				} catch (ParseException e) {
-//					// TODO Auto-generated catch block
 //					e.printStackTrace();
 //				}
 //			}
 //			Date toTime = null;
-//			if (to != null) {		
+//			if (to != null) {
 //				try {
 //					toTime = simpleDateFormatter.parse(to);
 //					Instant t = toTime.toInstant().plus(Duration.ofDays(1));
 //					toTime = Date.from(t);
 //				} catch (ParseException e) {
-//					// TODO Auto-generated catch block
 //					e.printStackTrace();
 //				}
 //			}
@@ -949,7 +1028,7 @@ public class GUIOrderController extends GUIBaseController {
 //					RestOrder order =  mapper.convertValue(o, RestOrder.class);
 //					if (order != null) {
 //						if (found && identifier != null) {
-//							if (!order.getIdentifier().matches(myident)) found = false;					
+//							if (!order.getIdentifier().matches(myident)) found = false;
 //						}
 //						if (stateArray != null) {
 //							if (!stateArray.contains(order.getOrderState())) found = false;
@@ -978,7 +1057,7 @@ public class GUIOrderController extends GUIBaseController {
 //					e.printStackTrace();
 //				}
 //			}
-//			
+//
 //		} else {
 //			return orderList;
 //		}
@@ -987,7 +1066,7 @@ public class GUIOrderController extends GUIBaseController {
 
 	/**
 	 * Count the number of jobs in an order.
-	 * 
+	 *
 	 * @param id The order id
 	 * @return The number of jobs
 	 */
@@ -1041,7 +1120,7 @@ public class GUIOrderController extends GUIBaseController {
 
 	/**
 	 * Get the display page of a job in an order
-	 * 
+	 *
 	 * @param orderId   The order id
 	 * @param jobId     The job id
 	 * @param jobStepId The job step id
@@ -1115,7 +1194,7 @@ public class GUIOrderController extends GUIBaseController {
 
 	/**
 	 * Count the existing orbits of a spacecraft between from and to.
-	 * 
+	 *
 	 * @param spacecraft The spacecraft code
 	 * @param from       Orbit number from
 	 * @param to         Orbit number to
@@ -1170,9 +1249,9 @@ public class GUIOrderController extends GUIBaseController {
 
 	/**
 	 * Count the number of orders
-	 * 
-	 * @param orderName
-	 * @param nid
+	 *
+	 * @param orderName the order name
+	 * @param nid       excluded id
 	 * @return The number of orbits
 	 */
 	public Long countOrders(String orderName, String nid) {
@@ -1223,14 +1302,14 @@ public class GUIOrderController extends GUIBaseController {
 
 	/**
 	 * Count the orders specified by following parameters
-	 * 
+	 *
 	 * @param identifier Identifier pattern
 	 * @param states     The states (divided by ':')
 	 * @param products   The product classes (divided by ':')
 	 * @param from       The earliest start time
 	 * @param to         The latest start time
-	 * @param recordFrom
-	 * @param recordTo
+	 * @param recordFrom the first record to retrieve
+	 * @param recordTo   the last record to retrieve
 	 * @param sortCol    The sort criteria
 	 * @param up         Ascending if true, otherwise descending
 	 * @return The number of orders found
@@ -1250,7 +1329,6 @@ public class GUIOrderController extends GUIBaseController {
 			try {
 				uri += divider + "identifier=" + URLEncoder.encode(identifier.replaceAll("[*]", "%"), "UTF-8");
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
 				logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
 			divider = "&";
@@ -1299,7 +1377,6 @@ public class GUIOrderController extends GUIBaseController {
 				try {
 					uri += URLEncoder.encode(" DESC", "UTF-8");
 				} catch (UnsupportedEncodingException e) {
-					// TODO Auto-generated catch block
 					uri += "%20DESC";
 					logger.log(UIMessage.EXCEPTION, e.getMessage());
 				}
@@ -1307,7 +1384,6 @@ public class GUIOrderController extends GUIBaseController {
 				try {
 					uri += URLEncoder.encode(" ASC", "UTF-8");
 				} catch (UnsupportedEncodingException e) {
-					// TODO Auto-generated catch block
 					uri += "%20ASC";
 					logger.log(UIMessage.EXCEPTION, e.getMessage());
 				}
@@ -1348,22 +1424,23 @@ public class GUIOrderController extends GUIBaseController {
 
 	/**
 	 * Normalize the date string
-	 * 
-	 * @param se   The input date string
-	 * @param type The type of it
+	 *
+	 * @param startOrEndDate The input date string
+	 * @param dateType       The type of it
 	 * @return The normalized date string
 	 */
-	private String normStartEnd(String se, String type) {
-		String val = se;
-		if (se != null) {
-			if (type.equalsIgnoreCase(OrderSlicingType.CALENDAR_DAY.toString())) {
+	private String normStartEnd(String startOrEndDate, String dateType) {
+		String val = startOrEndDate;
+		if (startOrEndDate != null) {
+			if (dateType.equalsIgnoreCase(OrderSlicingType.CALENDAR_DAY.toString())) {
 				val = val + "T00:00:00.000000";
-			} else if (type.equalsIgnoreCase(OrderSlicingType.CALENDAR_MONTH.toString())) {
+			} else if (dateType.equalsIgnoreCase(OrderSlicingType.CALENDAR_MONTH.toString())) {
 				val = val + "-01T00:00:00.000000";
-			} else if (type.equalsIgnoreCase(OrderSlicingType.CALENDAR_YEAR.toString())) {
+			} else if (dateType.equalsIgnoreCase(OrderSlicingType.CALENDAR_YEAR.toString())) {
 				val = val + "-01-01T00:00:00.000000";
 			}
 		}
 		return val;
 	}
+
 }

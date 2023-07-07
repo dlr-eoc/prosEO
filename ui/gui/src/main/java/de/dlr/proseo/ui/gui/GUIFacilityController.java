@@ -1,3 +1,8 @@
+/**
+ * GUIFacilityController.java
+ *
+ * (C) 2021 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ui.gui;
 
 import java.util.ArrayList;
@@ -23,6 +28,12 @@ import de.dlr.proseo.ui.gui.service.MapComparator;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
+
+/**
+ * A controller for retrieving and handling facility data
+ *
+ * @author David Mazo
+ */
 @Controller
 public class GUIFacilityController extends GUIBaseController {
 
@@ -32,89 +43,105 @@ public class GUIFacilityController extends GUIBaseController {
 	/** The configuration object for the prosEO backend services */
 	@Autowired
 	private ServiceConfiguration serviceConfig;
-			    
-	    @RequestMapping(value = "/facility-show")
-	    public String showFacility() {
-	    
-	    return "facility-show";
-	    }
 
-		/**
-		 * Retrieve the defined processing facilities
-		 * 
-		 * @param sortby The sort column
-		 * @param up The sort direction (true for up)
-		 * @param model The model to hold the data
-		 * @return
-		 */
-		@SuppressWarnings("unchecked")
-		@RequestMapping(value = "/facilities/get")
-		public DeferredResult<String> getFacilities(
-				@RequestParam(required = false, value = "sortby") String sortby,
-				@RequestParam(required = false, value = "up") Boolean up, Model model) {
-			if (logger.isTraceEnabled())
-				logger.trace(">>> getFacilities(model)");
-			Mono<ClientResponse> mono = get();
-			DeferredResult<String> deferredResult = new DeferredResult<String>();
-			List<Object> facilities = new ArrayList<>();
-			mono.doOnError(e -> {
-				model.addAttribute("errormsg", e.getMessage());
-				deferredResult.setResult("facility-show :: #errormsg");
-			})
-		 	.subscribe(clientResponse -> {
-				logger.trace("Now in Consumer::accept({})", clientResponse);
-				if (clientResponse.statusCode().is2xxSuccessful()) {
-					clientResponse.bodyToMono(List.class).subscribe(pcList -> {
-						facilities.addAll(pcList);
-						
-						MapComparator oc = new MapComparator("name", true);
-						facilities.sort(oc);
-					
-						model.addAttribute("facilities", facilities);
-						logger.trace(model.toString() + "MODEL TO STRING");
-						logger.trace(">>>>MONO" + facilities.toString());
-						deferredResult.setResult("facility-show :: #facilitycontent");
-						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-					});
-				} else {
-					handleHTTPError(clientResponse, model);
-					deferredResult.setResult("facility-show :: #errormsg");
-				}
-				logger.trace(">>>>MODEL" + model.toString());
-
-			},
-			e -> {
-				model.addAttribute("errormsg", e.getMessage());
-				deferredResult.setResult("facility-show :: #errormsg");
-			});
-			logger.trace(model.toString() + "MODEL TO STRING");
-			logger.trace(">>>>MONO" + facilities.toString());
-			logger.trace(">>>>MODEL" + model.toString());
-			logger.trace("DEREFFERED STRING: {}", deferredResult);
-			return deferredResult;
-		}
-
-		private Mono<ClientResponse> get() {
-			GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
-			String uri = serviceConfig.getFacilityManagerUrl() + "/facilities";
-			
-			logger.trace("URI " + uri);
-			Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(
-					HttpClient.create().followRedirect((req, res) -> {
-						logger.trace("response:{}", res.status());
-						return HttpResponseStatus.FOUND.equals(res.status());
-					})
-				));
-			logger.trace("Found authentication: " + auth);
-			logger.trace("... with username " + auth.getName());
-			logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]" ) );
-			return  webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
-
-		}
-	   
+	/**
+	 * Show the facility view
+	 *
+	 * @return the name of the facility view template
+	 */
+	@RequestMapping(value = "/facility-show")
+	public String showFacility() {
+		return "facility-show";
 	}
 
+	/**
+	 * Retrieve the defined processing facilities
+	 *
+	 * @param sortby The sort column
+	 * @param up     The sort direction (true for up)
+	 * @param model  The model to hold the data
+	 * @return The deferred result containing the result
+	 */
+	@SuppressWarnings("unchecked")
+	@RequestMapping(value = "/facilities/get")
+	public DeferredResult<String> getFacilities(@RequestParam(required = false, value = "sortby") String sortby,
+			@RequestParam(required = false, value = "up") Boolean up, Model model) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getFacilities(model)");
+		Mono<ClientResponse> mono = get();
+		DeferredResult<String> deferredResult = new DeferredResult<>();
+		List<Object> facilities = new ArrayList<>();
+		mono.doOnError(e -> {
+			model.addAttribute("errormsg", e.getMessage());
+			deferredResult.setResult("facility-show :: #errormsg");
+		}).subscribe(clientResponse -> {
+			logger.trace("Now in Consumer::accept({})", clientResponse);
+			if (clientResponse.statusCode().is2xxSuccessful()) {
+				clientResponse.bodyToMono(List.class).subscribe(pcList -> {
+					facilities.addAll(pcList);
 
+					MapComparator oc = new MapComparator("name", true);
+					facilities.sort(oc);
 
+					model.addAttribute("facilities", facilities);
+					logger.trace(model.toString() + "MODEL TO STRING");
+					logger.trace(">>>>MONO" + facilities.toString());
+					deferredResult.setResult("facility-show :: #facilitycontent");
+					logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
+				});
+			} else {
+				handleHTTPError(clientResponse, model);
+				deferredResult.setResult("facility-show :: #errormsg");
+			}
+			logger.trace(">>>>MODEL" + model.toString());
 
+		}, e -> {
+			model.addAttribute("errormsg", e.getMessage());
+			deferredResult.setResult("facility-show :: #errormsg");
+		});
+		logger.trace(model.toString() + "MODEL TO STRING");
+		logger.trace(">>>>MONO" + facilities.toString());
+		logger.trace(">>>>MODEL" + model.toString());
+		logger.trace("DEREFFERED STRING: {}", deferredResult);
+		return deferredResult;
+	}
 
+	/**
+	 * Makes an HTTP GET request to retrieve facilities.
+	 *
+	 * @return a Mono containing the HTTP response
+	 */
+	private Mono<ClientResponse> get() {
+
+		// Provide authentication
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+
+		// Build the request URI
+		String uri = serviceConfig.getFacilityManagerUrl() + "/facilities";
+		logger.trace("URI " + uri);
+
+		// Create and configure a WebClient to make a HTTP request to the URI
+		Builder webclient = WebClient.builder()
+			.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
+				logger.trace("response:{}", res.status());
+				return HttpResponseStatus.FOUND.equals(res.status());
+			})));
+
+		logger.trace("Found authentication: " + auth);
+		logger.trace("... with username " + auth.getName());
+		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
+		/*
+		 * The returned Mono<ClientResponse> can be subscribed to in order to retrieve
+		 * the actual response and perform additional operations on it, such as
+		 * extracting the response body or handling any errors that may occur during the
+		 * request.
+		 */
+		return webclient.build()
+			.get()
+			.uri(uri)
+			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
+			.accept(MediaType.APPLICATION_JSON)
+			.exchange();
+	}
+
+}

@@ -53,8 +53,8 @@ public class ProcessorService {
 	 * Gets a processor class by its name
 	 *
 	 * @param processorName the processor class name to search for
-	 * @return a Mono\<ClientResponse\> providing access to the response status and headers, and as well as methods to consume the
-	 *         response body
+	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, and as well as methods to consume
+	 *         the response body
 	 */
 	public Mono<ClientResponse> get(String processorName) {
 
@@ -99,8 +99,8 @@ public class ProcessorService {
 	 * Get a processor class by its database ID
 	 *
 	 * @param processorId the database ID to search for
-	 * @return a Mono\<ClientResponse\> providing access to the response status and headers, and as well as methods to consume the
-	 *         response body
+	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, and as well as methods to consume
+	 *         the response body
 	 */
 	public Mono<ClientResponse> getById(String processorId) {
 
@@ -137,8 +137,8 @@ public class ProcessorService {
 	 * @param processorName  user-defined processor class name (Processor_Name from Generic IPF Interface Specifications, sec.
 	 *                       4.1.3), unique within a mission
 	 * @param productClasses the product classes a processor of this class can generate
-	 * @return a Mono\<ClientResponse\> providing access to the response status and headers, and as well as methods to consume the
-	 *         response body
+	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, and as well as methods to consume
+	 *         the response body
 	 *
 	 *         TODO verify
 	 */
@@ -243,7 +243,7 @@ public class ProcessorService {
 	/**
 	 * Delete a processor class by id
 	 *
-	 * @param id of Processor Class to be removed
+	 * @param processorClassId of Processor Class to be removed
 	 * @return a ResponseSpec that the caller can subscribe to, e.g. for extracting the response body or handling errors
 	 *
 	 *         TODO verify
