@@ -1,3 +1,8 @@
+/**
+ * OrderManager.java
+ *
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ordermgr.rest.model;
 
 import java.util.ArrayList;
@@ -22,128 +27,151 @@ import de.dlr.proseo.model.rest.model.StdoutLogLevel;
 import de.dlr.proseo.ordermgr.OrderManager;
 
 /**
- * Build REST objects
- * 
- * @author Ernst Melchinger
+ * A utility class for converting REST jobs, job steps and parameter lists from their model equivalent.
  *
+ *
+ * @author Ernst Melchinger
  */
 @Component
 public class RestUtil {
 
-
 	/**
-	 * Build RestJob of Job
-	 * @param job
-	 * @return RestJob
+	 * Convert a model job to a REST job
+	 *
+	 * @param modelJob the model job
+	 * @param logs     whether or not to include logs in the REST job step
+	 * @return the REST job
 	 */
 	@Transactional
-	public static RestJob createRestJob(Job job, Boolean logs) {
+	public static RestJob createRestJob(Job modelJob, Boolean logs) {
+
 		RestJob rj = new RestJob();
-		if (job != null) {
-			rj.setId(Long.valueOf(job.getId()));
-			if (job.getJobState() != null) {
-				rj.setJobState(JobState.valueOf(job.getJobState().toString()));
+
+		if (modelJob != null) {
+			rj.setId(Long.valueOf(modelJob.getId()));
+
+			if (modelJob.getJobState() != null) {
+				rj.setJobState(JobState.valueOf(modelJob.getJobState().toString()));
 			}
-			if (job.getOrbit() == null) {
+			if (modelJob.getOrbit() == null) {
 				rj.setOrbit(null);
 			} else {
-				rj.setOrbit(OrbitUtil.toRestOrbit(job.getOrbit()));
+				rj.setOrbit(OrbitUtil.toRestOrbit(modelJob.getOrbit()));
 			}
-			List<RestJobStep> jobSteps = new ArrayList<RestJobStep>();
-			for (JobStep js : job.getJobSteps()) {
+
+			List<RestJobStep> jobSteps = new ArrayList<>();
+			for (JobStep js : modelJob.getJobSteps()) {
 				jobSteps.add(RestUtil.createRestJobStep(js, logs));
 			}
 			rj.setJobSteps(jobSteps);
-			if (job.getPriority() != null) {
-				rj.setPriority(Long.valueOf(job.getPriority()));
-			}
-			if (job.getHasFailedJobSteps() != null) {
-				rj.setHasFailedJobSteps(job.getHasFailedJobSteps());
-			}
-			if (job.getProcessingFacility() != null) {
-				rj.setProcessingFacilityName(job.getProcessingFacility().getName());
-			}
-			if (job.getStartTime() != null) {
-				rj.setStartTime(Date.from(job.getStartTime()));
-			}
-			if (job.getStopTime() != null) {
-				rj.setStopTime(Date.from(job.getStopTime()));
-			}
-			rj.setVersion(Long.valueOf(job.getVersion()));
 
-			if (job.getProcessingOrder() != null) {
-				rj.setOrderIdentifier(job.getProcessingOrder().getIdentifier());
+			if (modelJob.getPriority() != null) {
+				rj.setPriority(Long.valueOf(modelJob.getPriority()));
 			}
+			if (modelJob.getHasFailedJobSteps() != null) {
+				rj.setHasFailedJobSteps(modelJob.getHasFailedJobSteps());
+			}
+			if (modelJob.getProcessingFacility() != null) {
+				rj.setProcessingFacilityName(modelJob.getProcessingFacility().getName());
+			}
+			if (modelJob.getStartTime() != null) {
+				rj.setStartTime(Date.from(modelJob.getStartTime()));
+			}
+			if (modelJob.getStopTime() != null) {
+				rj.setStopTime(Date.from(modelJob.getStopTime()));
+			}
+			rj.setVersion(Long.valueOf(modelJob.getVersion()));
+
+			if (modelJob.getProcessingOrder() != null) {
+				rj.setOrderIdentifier(modelJob.getProcessingOrder().getIdentifier());
+			}
+
 		}
+
 		return rj;
 	}
 
 	/**
-	 * Build RestJobStep of JobStep
-	 * 
-	 * @param js
-	 * @return RestJobStep
+	 * Creates a REST job step based on the provided model job step.
+	 *
+	 * @param modelJobStep The model job step to convert.
+	 * @param logs         Determines whether to include logs in the REST job step.
+	 * @return The REST job step.
 	 */
 	@Transactional
-	public static RestJobStep createRestJobStep(JobStep js, Boolean logs) {
+	public static RestJobStep createRestJobStep(JobStep modelJobStep, Boolean logs) {
 		RestJobStep pjs = new RestJobStep();
-		if (js != null) {
-			pjs.setId(Long.valueOf(js.getId()));
-			pjs.setName(OrderManager.jobNamePrefix + js.getId());
-			if (js.getJobStepState() != null) {
-				pjs.setJobStepState(JobStepState.valueOf(js.getJobStepState().toString()));
-			}
-			pjs.setVersion((long) js.getVersion());
-			pjs.setProcessingMode(js.getProcessingMode());
-			pjs.setOutputParameters(RestUtil.createRestParameterList(js.getOutputParameters()));
-			if (js.getProcessingStartTime() != null) { 
-				pjs.setProcessingStartTime(Date.from(js.getProcessingStartTime()));
-			}
-			if (js.getProcessingCompletionTime() != null) { 
-				pjs.setProcessingCompletionTime(Date.from(js.getProcessingCompletionTime()));
+		if (modelJobStep != null) {
+			pjs.setId(Long.valueOf(modelJobStep.getId()));
+			pjs.setName(OrderManager.jobNamePrefix + modelJobStep.getId());
+
+			if (modelJobStep.getJobStepState() != null) {
+				pjs.setJobStepState(JobStepState.valueOf(modelJobStep.getJobStepState().toString()));
 			}
 
-			if (logs && js.getProcessingStdOut() != null) {
-				pjs.setProcessingStdOut(js.getProcessingStdOut());
+			pjs.setVersion((long) modelJobStep.getVersion());
+			pjs.setProcessingMode(modelJobStep.getProcessingMode());
+			pjs.setOutputParameters(RestUtil.createRestParameterList(modelJobStep.getOutputParameters()));
+
+			if (modelJobStep.getProcessingStartTime() != null) {
+				pjs.setProcessingStartTime(Date.from(modelJobStep.getProcessingStartTime()));
 			}
-			if (logs && js.getProcessingStdErr() != null) {
-				pjs.setProcessingStdErr(js.getProcessingStdErr());
+
+			if (modelJobStep.getProcessingCompletionTime() != null) {
+				pjs.setProcessingCompletionTime(Date.from(modelJobStep.getProcessingCompletionTime()));
 			}
-			if (js.getJobOrderFilename() != null) {
-				pjs.setJobOrderFilename(js.getJobOrderFilename());
+
+			if (logs && modelJobStep.getProcessingStdOut() != null) {
+				pjs.setProcessingStdOut(modelJobStep.getProcessingStdOut());
 			}
-			pjs.setStderrLogLevel(StderrLogLevel.fromValue(js.getStderrLogLevel().toString()));
-			pjs.setStdoutLogLevel(StdoutLogLevel.fromValue(js.getStdoutLogLevel().toString()));
-			pjs.setIsFailed(js.getIsFailed() == null ? false : js.getIsFailed());
-			pjs.setJobId(js.getJob() == null ? null : js.getJob().getId());
-			if (js.getOutputProduct() != null && js.getOutputProduct().getProductClass() != null && js.getOutputProduct().getProductClass().getProductType() != null) {
-				pjs.setOutputProductClass(js.getOutputProduct().getProductClass().getProductType());
+
+			if (logs && modelJobStep.getProcessingStdErr() != null) {
+				pjs.setProcessingStdErr(modelJobStep.getProcessingStdErr());
 			}
-			for (ProductQuery pq : js.getInputProductQueries()) {
+
+			if (modelJobStep.getJobOrderFilename() != null) {
+				pjs.setJobOrderFilename(modelJobStep.getJobOrderFilename());
+			}
+
+			pjs.setStderrLogLevel(StderrLogLevel.fromValue(modelJobStep.getStderrLogLevel().toString()));
+			pjs.setStdoutLogLevel(StdoutLogLevel.fromValue(modelJobStep.getStdoutLogLevel().toString()));
+			pjs.setIsFailed(modelJobStep.getIsFailed() == null ? false : modelJobStep.getIsFailed());
+			pjs.setJobId(modelJobStep.getJob() == null ? null : modelJobStep.getJob().getId());
+
+			if (modelJobStep.getOutputProduct() != null && modelJobStep.getOutputProduct().getProductClass() != null
+					&& modelJobStep.getOutputProduct().getProductClass().getProductType() != null) {
+				pjs.setOutputProductClass(modelJobStep.getOutputProduct().getProductClass().getProductType());
+			}
+
+			for (ProductQuery pq : modelJobStep.getInputProductQueries()) {
 				String pt = pq.getRequestedProductClass().getProductType();
 				if (!pjs.getInputProductClasses().contains(pt)) {
 					pjs.getInputProductClasses().add(pt);
 				}
 			}
-			if (js.getOutputProduct() != null) {
-				pjs.setOutputProduct(js.getOutputProduct().getId());
-				if (js.getOutputProduct().getConfiguredProcessor() != null) {
-					pjs.setConfiguredProcessor(js.getOutputProduct().getConfiguredProcessor().getIdentifier());
+
+			if (modelJobStep.getOutputProduct() != null) {
+				pjs.setOutputProduct(modelJobStep.getOutputProduct().getId());
+				if (modelJobStep.getOutputProduct().getConfiguredProcessor() != null) {
+					pjs.setConfiguredProcessor(modelJobStep.getOutputProduct().getConfiguredProcessor().getIdentifier());
 				}
 			}
-			pjs.setOrderIdentifier(js.getJob().getProcessingOrder().getIdentifier());
-			pjs.setOrderId(js.getJob().getProcessingOrder().getId());
-		} 
+
+			pjs.setOrderIdentifier(modelJobStep.getJob().getProcessingOrder().getIdentifier());
+			pjs.setOrderId(modelJobStep.getJob().getProcessingOrder().getId());
+		}
+
 		return pjs;
 	}
 
 	/**
-	 * Build a List of RestParameters out of a Map of Parameters
-	 * @param paramMap
-	 * @return List of RestParameters
+	 * Convert a model parameter list to list of REST parameters
+	 *
+	 * @param paramMap a list of model parameters
+	 * @return a list of REST parameters
 	 */
 	public static List<RestParameter> createRestParameterList(Map<String, Parameter> paramMap) {
-		List<RestParameter> restParams = new ArrayList<RestParameter>();
+		List<RestParameter> restParams = new ArrayList<>();
 		if (paramMap != null) {
 			for (Map.Entry<String, Parameter> entry : paramMap.entrySet()) {
 				RestParameter rp = new RestParameter();
