@@ -251,20 +251,20 @@ public class GUIWorkflowController extends GUIBaseController {
 		} catch (RestClientResponseException e) {
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				System.err.println(ProseoLogger.format(UIMessage.NO_MISSIONS_FOUND));
+				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				System.err.println(ProseoLogger.format(UIMessage.NOT_AUTHORIZED, auth.getProseoName(), "workflows", mission));
+				logger.log(UIMessage.NOT_AUTHORIZED, auth.getProseoName(), "workflows", mission);
 				break;
 			default:
-				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
+				logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
 
 			// Return a result of -1 to indicate that an error occurred
 			return result;
 		} catch (RuntimeException e) {
-			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
+			logger.log(UIMessage.EXCEPTION, e.getMessage());
 
 			// Return a result of -1 to indicate that an error occurred
 			return result;

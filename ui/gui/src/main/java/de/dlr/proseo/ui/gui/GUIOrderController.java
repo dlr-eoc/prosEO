@@ -591,26 +591,28 @@ public class GUIOrderController extends GUIBaseController {
 					} catch (RestClientResponseException e) {
 						if (logger.isTraceEnabled())
 							logger.trace("Caught HttpClientErrorException " + e.getMessage());
-						String message = null;
+
+						String message;
+						
 						switch (e.getRawStatusCode()) {
 						case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 							return new ResponseEntity<>(
 									new OrderInfo(HttpStatus.NOT_MODIFIED, "0", ProseoLogger.format(UIMessage.NOT_MODIFIED)),
 									HttpStatus.OK);
 						case org.apache.http.HttpStatus.SC_NOT_FOUND:
-							message = ProseoLogger.format(UIMessage.ORDER_NOT_FOUND, updateOrder.getIdentifier());
+							message = logger.log(UIMessage.ORDER_NOT_FOUND, updateOrder.getIdentifier());
 							break;
 						case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-							message = ProseoLogger.format(UIMessage.ORDER_DATA_INVALID, e.getMessage());
+							message = logger.log(UIMessage.ORDER_DATA_INVALID, e.getMessage());
 							break;
 						case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 						case org.apache.http.HttpStatus.SC_FORBIDDEN:
-							message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, auth.getProseoName(), "orders",
-									auth.getMission());
+							message = logger.log(UIMessage.NOT_AUTHORIZED, auth.getProseoName(), "orders", auth.getMission());
 							break;
 						default:
-							message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
+							message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 						}
+						
 						return new ResponseEntity<>(new OrderInfo(HttpStatus.INTERNAL_SERVER_ERROR, "0", message),
 								errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 					} catch (RuntimeException e) {
@@ -639,19 +641,21 @@ public class GUIOrderController extends GUIBaseController {
 			} catch (RestClientResponseException e) {
 				if (logger.isTraceEnabled())
 					logger.trace("Caught HttpClientErrorException " + e.getMessage());
-				String message = null;
+
+				String message;
+				
 				switch (e.getRawStatusCode()) {
 				case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-					message = ProseoLogger.format(UIMessage.ORDER_DATA_INVALID, e.getMessage());
+					message = logger.log(UIMessage.ORDER_DATA_INVALID, e.getMessage());
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				case org.apache.http.HttpStatus.SC_FORBIDDEN:
-					message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, auth.getProseoName(), "orders", auth.getMission());
+					message = logger.log(UIMessage.NOT_AUTHORIZED, auth.getProseoName(), "orders", auth.getMission());
 					break;
 				default:
-					message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
+					message = logger.log(UIMessage.EXCEPTION, e.getMessage());
 				}
-				System.err.println(message);
+
 				return new ResponseEntity<>(new OrderInfo(HttpStatus.INTERNAL_SERVER_ERROR, "0", message), errorHeaders(message),
 						HttpStatus.INTERNAL_SERVER_ERROR);
 			} catch (RuntimeException e) {
@@ -869,7 +873,7 @@ public class GUIOrderController extends GUIBaseController {
 
 	/**
 	 * Return whether a spacecraft has orbits between the numbers denoted by from and to
-	 * 
+	 *
 	 * @param spacecraft the spacecraft
 	 * @param from       the first permitted orbit number
 	 * @param to         the last permitted orbit number
@@ -884,7 +888,7 @@ public class GUIOrderController extends GUIBaseController {
 
 	/**
 	 * Checks if there is an order with the specified identifier and id.
-	 * 
+	 *
 	 * @param identifier The order identifier
 	 * @param id         The id
 	 * @return ResponseEntity containing a boolean value indicating if the order exists, with HTTP status OK
@@ -898,7 +902,7 @@ public class GUIOrderController extends GUIBaseController {
 
 	/**
 	 * Retrieves the job step log for the specified id.
-	 * 
+	 *
 	 * @param id The id of the job step
 	 * @return ResponseEntity containing the job step log as a String, with appropriate HTTP headers and status OK
 	 */
@@ -925,23 +929,23 @@ public class GUIOrderController extends GUIBaseController {
 				result = "";
 			}
 		} catch (RestClientResponseException e) {
-			String message = null;
+
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.NO_MISSIONS_FOUND);
+				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
+				logger.log(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
 				break;
 			default:
-				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
+				logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
-			System.err.println(message);
+
 		} catch (RuntimeException e) {
-			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
+			logger.log(UIMessage.EXCEPTION, e.getMessage());
 		}
-		
+
 		MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
 		map.add("Content-Type", "text/plain");
 		map.add("Content-Length", String.valueOf(result.length()));
@@ -950,7 +954,7 @@ public class GUIOrderController extends GUIBaseController {
 
 	/**
 	 * Strips null elements from the given list of RestParameter objects.
-	 * 
+	 *
 	 * @param list The list of RestParameter objects
 	 * @return The list with null elements removed
 	 */
@@ -1096,22 +1100,22 @@ public class GUIOrderController extends GUIBaseController {
 				result = Long.valueOf(resStr);
 			}
 		} catch (RestClientResponseException e) {
-			String message = null;
+
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.NO_MISSIONS_FOUND);
+				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
+				logger.log(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
 				break;
 			default:
-				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
+				logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
-			System.err.println(message);
+
 			return result;
 		} catch (RuntimeException e) {
-			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
+			logger.log(UIMessage.EXCEPTION, e.getMessage());
 			return result;
 		}
 
@@ -1170,22 +1174,22 @@ public class GUIOrderController extends GUIBaseController {
 				result = (result) / pageSize;
 			}
 		} catch (RestClientResponseException e) {
-			String message = null;
+
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.NO_MISSIONS_FOUND);
+				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
+				logger.log(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
 				break;
 			default:
-				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
+				logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
-			System.err.println(message);
+
 			return result;
 		} catch (RuntimeException e) {
-			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
+			logger.log(UIMessage.EXCEPTION, e.getMessage());
 			return result;
 		}
 
@@ -1225,22 +1229,22 @@ public class GUIOrderController extends GUIBaseController {
 				result = Long.valueOf(resStr);
 			}
 		} catch (RestClientResponseException e) {
-			String message = null;
+
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.NO_MISSIONS_FOUND);
+				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
+				logger.log(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
 				break;
 			default:
-				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
+				logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
-			System.err.println(message);
+
 			return result;
 		} catch (RuntimeException e) {
-			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
+			logger.log(UIMessage.EXCEPTION, e.getMessage());
 			return result;
 		}
 
@@ -1279,21 +1283,21 @@ public class GUIOrderController extends GUIBaseController {
 				result = Long.valueOf(resStr);
 			}
 		} catch (RestClientResponseException e) {
-			String message = null;
+
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
+				logger.log(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
 				break;
 			default:
-				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
+				logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
-			System.err.println(message);
+
 			return result;
 		} catch (RuntimeException e) {
-			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
+			logger.log(UIMessage.EXCEPTION, e.getMessage());
 			return result;
 		}
 
@@ -1400,22 +1404,22 @@ public class GUIOrderController extends GUIBaseController {
 				result = Long.valueOf(resStr);
 			}
 		} catch (RestClientResponseException e) {
-			String message = null;
+
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.NO_MISSIONS_FOUND);
+				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
+				logger.log(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
 				break;
 			default:
-				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
+				logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
-			System.err.println(message);
+
 			return result;
 		} catch (RuntimeException e) {
-			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
+			logger.log(UIMessage.EXCEPTION, e.getMessage());
 			return result;
 		}
 		return result;

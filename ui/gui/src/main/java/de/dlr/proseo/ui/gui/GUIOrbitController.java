@@ -255,22 +255,22 @@ public class GUIOrbitController extends GUIBaseController {
 				result = Long.valueOf(resStr);
 			}
 		} catch (RestClientResponseException e) {
-			String message = null;
+			
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.NO_MISSIONS_FOUND);
+				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
+				logger.log(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
 				break;
 			default:
-				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
+				logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
-			System.err.println(message);
+			
 			return result;
 		} catch (RuntimeException e) {
-			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
+			logger.log(UIMessage.EXCEPTION, e.getMessage());
 			return result;
 		}
 
