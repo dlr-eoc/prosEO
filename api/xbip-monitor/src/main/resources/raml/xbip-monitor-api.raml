@@ -14,7 +14,13 @@ types:
     xbipid:
       description: XBIP Monitor identifier
   get:
-    description: Get status info for this XBIP Monitor
+    description: |
+      Get the interface status for the given XBIP Monitor
+     
+      @param xbipid      the XBIP Monitor identifier
+      @param httpHeaders the HTTP request headers (injected)
+      @return HTTP status "OK" and the Json representation of the interface status information, or HTTP status "FORBIDDEN" and an
+              error message, if an invalid XBIP Monitor identifier was passed
     responses:
       200:
         body:
