@@ -42,45 +42,111 @@ types:
 resourceTypes:
   standard:
     get?:
-      responses:          
-        400:
-          description: |
-            The request sent to the server contains data which is not as expected e.g. invalid location URI
+      responses:
+        403:
+          description: A cross-mission data access was attempted.
           headers:
             Warning: !include types/error.raml
         404:
-          description: |
-            The requested resource was not found                     
+          description: The requested resource was not found.
           headers:
             Warning: !include types/error.raml
     put?:
-      responses:          
+      responses:
+        400:
+          description: The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
+        403:
+          description: A cross-mission data access was attempted.          
+          headers:
+            Warning: !include types/error.raml
         404:
-          description: |
-            The requested resource on which the modification is being attempted was not found              
+          description: The requested resource was not found.
+          headers:
+            Warning: !include types/error.raml
+    post?:
+      responses:
+        400:
+          description: The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
+        403:
+          description: A cross-mission data access was attempted.          
+          headers:
+            Warning: !include types/error.raml  
+    patch?:
+      responses:
+        400:
+          description: The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
+        403:
+          description: A cross-mission data access was attempted.
+          headers:
+            Warning: !include types/error.raml
+        404:
+          description: The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
+        409:
+          description: A concurrent modification was attempted.
           headers:
             Warning: !include types/error.raml
     delete?:
-      responses:          
+      responses:
+        304:
+          description: The resource could not be deleted.
+          headers:
+            Warning: !include types/error.raml
+        403:
+          description: A cross-mission data access was attempted.          
+          headers:
+            Warning: !include types/error.raml
         404:
-          description: | 
-            The requested resource to delete was not found 
+          description: The requested resource to delete was not found.
           headers:
             Warning: !include types/error.raml
               
 /orders:
   type: standard
   get:
-    description: Get orders by mission, user-defined identifier, requested product classes or execution start time range
+    description: |
+      List of all orders filtered by mission, identifier, productClasses, starttime range
+     
+      @param mission           the mission code
+      @param identifier        the unique order identifier string
+      @param productClasses    an array of product types
+      @param startTimeFrom     earliest sensing start time
+      @param startTimeTo       latest sensing start time
+      @param executionTimeFrom earliest order execution time
+      @param executionTimeTo   latest order execution time
+      @return HTTP status "OK" and a list of products or HTTP status "NOT_FOUND" and an error message, if no products matching the
+              search criteria were found, or HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was
+              attempted
     displayName: getOrders
     queryParameters:
-      mission?: string
-      identifier?: string
-      productClasses?: string[]
-      startTimeFrom?: datetime-only
-      startTimeTo?: datetime-only
-      executionTimeFrom?: datetime-only
-      executionTimeTo?: datetime-only
+      mission?: 
+        description: the mission code
+        type: string
+      identifier?: 
+        description: the unique order identifier string
+        type: string
+      productClasses?: 
+        description: an array of product types
+        type: string[]
+      startTimeFrom?:
+        description: earliest sensing start time
+        type: datetime-only
+      startTimeTo?:
+        description: latest sensing start time
+        type: datetime-only
+      executionTimeFrom?: 
+        description: earliest order execution time
+        type: datetime-only
+      executionTimeTo?:
+        description: latest order execution time
+        type: datetime-only
     responses:
       200:
         body:
@@ -88,7 +154,13 @@ resourceTypes:
             type: RestOrder[]
             example: !include ../../../../../model/src/main/resources/raml/examples/order-list.json
   post:
-    description: Create a new order
+    description: |
+      Create an order from the given JSON object
+     
+      @param restOrder the JSON object to create the order from
+      @return HTTP status "CREATED" and a response containing a JSON object corresponding to the order after persistence (with ID
+              and version for all contained objects) or HTTP status "FORBIDDEN" and an error message, if a cross-mission data
+              access was attempted, or HTTP status "BAD_REQUEST", if any of the input data was invalid
     displayName: createOrder
     body:
       application/json:
@@ -103,48 +175,122 @@ resourceTypes:
   /count:
     type: standard
     get:
-      description: Get number of orders, filtered by mission, user-defined identifier and id not equal nid
+      description: |
+        Count orders filtered by mission, identifier and id not equal nid.
+     
+        @param mission    The mission code
+        @param identifier The unique order identifier string
+        @param nid        The ids of orbit(s) found has to be unequal to nid
+        @return The number of orders found
       displayName: countOrders
       queryParameters:
-        mission?: string
-        identifier?: string
-        nid?: integer
+        mission?: 
+          description: the mission code
+          type: string
+        identifier?: 
+          description: the unique order identifier string
+          type: string
+        nid?: 
+          description: the ids of orbit(s) found has to be unequal to nid
+          type: integer
       responses:
         200:
           body:
             text/plain:
   /countselect:
     get:
-      description: Get all processing orders selected by parameters
+      description: |
+        Calculate the amount of orders satisfying the selection parameters. Mission code is mandatory.
+       
+        @param mission                 the mission code
+        @param identifier              the unique order identifier string
+        @param state                   an array of order states
+        @param productClass            an array of product types
+        @param startTime               earliest sensing start time
+        @param stopTime                latest sensing start time
+        @param recordFrom              first record of filtered and ordered result to return
+        @param recordTo                last record of filtered and ordered result to return
+        @param orderBy                 an array of strings containing a column name and an optional sort direction (ASC/DESC)
+       
+        @return The order count
       displayName: countSelectOrders
       queryParameters:
-        mission?: string
-        identifier?: string
-        state?: string[]
-        productClass?: string[]
-        startTime?: string
-        stopTime?: string
-        recordFrom?: integer
-        recordTo?: integer
-        orderBy?: string[]
+        mission?: 
+          description: the mission code
+          type: string
+        identifier?: 
+          description: the unique order identifier string
+          type: string
+        state?: 
+          description: an array of order states
+          type: string[]
+        productClass?: 
+          description: an array of product types
+          type: string[]
+        startTime?: 
+          description: earliest sensing start time
+          type: string
+        stopTime?: 
+          description: latest sensing start time
+          type: string
+        recordFrom?: 
+          description: first record of filtered and ordered result to return
+          type: integer
+        recordTo?: 
+          description: last record of filtered and ordered result to return
+          type: integer
+        orderBy?: 
+          description: an array of strings containing a column name and an optional sort direction (ASC/DESC)
+          type: string[]
       responses:
         200:
           body:
             text/plain:
   /select:
     get:
-      description: Get all processing orders selected by parameters
+      description: |
+        Retrieve a list of orders satisfying the selection parameters
+       
+        @param mission      the mission code
+        @param identifier   the unique order identifier string
+        @param state        an array of order states
+        @param productClass an array of product types
+        @param startTime    earliest sensing start time
+        @param stopTime     latest sensing start time
+        @param recordFrom   first record of filtered and ordered result to return
+        @param recordTo     last record of filtered and ordered result to return
+        @param orderBy      an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by
+                            white space
+        @return the result list
       displayName: getAndSelectOrders
       queryParameters:
-        mission?: string
-        identifier?: string
-        state?: string[]
-        productClass?: string[]
-        startTime?: string
-        stopTime?: string
-        recordFrom?: integer
-        recordTo?: integer
-        orderBy?: string[]
+        mission?: 
+          description: the mission code
+          type: string
+        identifier?: 
+          description: the unique order identifier string
+          type: string
+        state?: 
+          description: an array of order states
+          type: string[]
+        productClass?: 
+          description: an array of product types
+          type: string[]
+        startTime?: 
+          description: earliest sensing start time
+          type: string
+        stopTime?: 
+          description: latest sensing start time
+          type: string
+        recordFrom?: 
+          description: first record of filtered and ordered result to return
+          type: integer
+        recordTo?: 
+          description: last record of filtered and ordered result to return
+          type: integer
+        orderBy?: 
+          description: an array of strings containing a column name and an optional sort direction (ASC/DESC)
+          type: string[]
       responses:
         200:
           body:
@@ -157,7 +303,12 @@ resourceTypes:
         type: integer
         format: long
     get:
-      description: Get a processing order by ID
+      description: |
+        Find the order with the given ID
+       
+        @param id the ID to look for
+        @return HTTP status "OK" and a JSON object corresponding to the found order or HTTP status "FORBIDDEN" and an error message,
+                if a cross-mission data access was attempted, or HTTP status "NOT_FOUND", if no orbit with the given ID exists
       displayName: getOrderById
       responses:
         200:
@@ -165,8 +316,20 @@ resourceTypes:
             application/json:
               type: RestOrder
               example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+        404:
+          description: The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
     patch:
-      description: Update a processing order by ID
+      description: |
+        Update the order with the given ID with the attribute values of the given JSON object.
+       
+        @param id        the ID of the order to update
+        @param restOrder a JSON object containing the modified (and unmodified) attributes
+        @return a response containing HTTP status "OK" and a JSON object corresponding to the order after modification (with ID and
+                version for all contained objects) or HTTP status "NOT_MODIFIED" and the unchanged order, if no attributes were
+                actually changed, or HTTP status "NOT_FOUND" and an error message, if no order with the given ID exists, or HTTP
+                status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
       displayName: modifyOrder
       body:
         application/json:
@@ -178,8 +341,18 @@ resourceTypes:
             application/json:
               type: RestOrder
               example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+        304:
+          description: The resource was not modified.
+          headers:
+            Warning: !include types/error.raml
     delete:
-      description: Delete a processing order by ID
+      description: |
+        Delete an order by ID
+       
+        @param id the ID of the order to delete
+        @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or HTTP status "NOT_FOUND" and an
+                error message, if the orbit did not exist, or HTTP status "FORBIDDEN" and an error message, if a cross-mission data
+                access was attempted, or HTTP status "NOT_MODIFIED" and an error message, if the deletion was unsuccessful
       displayName: deleteOrderById
       responses:
         204:
@@ -187,24 +360,40 @@ resourceTypes:
 /orderjobs:
   type: standard
   get:
-    description: Get order jobs by state
+    description: |
+      Retrieves production planner jobs, optionally filtered by job state and/or order ID.
+     
+      @param state      The job states to filter by.
+      @param orderid    The order ID to filter by.
+      @param recordFrom The first record of the filtered and ordered result to return.
+      @param recordTo   The last record of the filtered and ordered result to return.
+      @param logs		Whether or not logs are included in the REST job step.
+      @param orderBy    An array of strings containing a column name and an optional sort direction (ASC/DESC), separated by
+                        whitespace.
+      @return A list of JSON objects describing jobs.
     displayName: getJobs
     queryParameters:
-      orderid?: 
+      orderid?:
         type: integer
         format: long
-        description: The persistent id of the processing order
+        description: The order ID to filter by.
       recordFrom?: 
+        description: The first record of the filtered and ordered result to return.
         type: integer
         format: int32
       recordTo?:
+        description: The last record of the filtered and ordered result to return.
         type: integer
         format: int32
-      logs?: boolean
-      state?: string[]
+      logs?: 
+        description: Whether or not logs are included in the REST job step.
+        type: boolean
+      state?: 
+        description: The job states to filter by.
+        type: string[]
       orderBy?:
         type: string[]
-        description: an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+        description: An array of strings containing a column name and an optional sort direction (ASC/DESC), separated by whitespace.
     responses:
       200:
         body:
@@ -214,14 +403,21 @@ resourceTypes:
   /count:
     type: standard
     get:
-      description: Get number of jobs, possibly filtered by state and processing order 
+      description: |
+        Retrieves the number of production planner jobs based on the specified states and order ID.
+       
+        @param state   The permitted job states.
+        @param orderid The order ID of the jobs.
+        @return The number of jobs.
       displayName: countJobs
       queryParameters:
-        state?: string[]
-        orderid?: 
+        state?: 
+          description: The permitted job states.
+          type: string[]
+        orderid?:
           type: integer
           format: long
-          description: The persistent id of the processing order
+          description: The order ID of the jobs.
       responses:
         200:
           body:
@@ -229,42 +425,63 @@ resourceTypes:
   /index:
     type: standard
     get:
-      description: Get index of job in job list of order 
+      description: |
+        Retrieves the index of a job in an ordered list of all jobs of an order.
+       
+        @param state     The permitted job states (COMPLETED, NON-COMPLETED).
+        @param orderid   The persistent id of the processing order.
+        @param jobid     The persistent id of the job.
+        @param jobstepid The persistent id of the job step.
+        @param orderBy   An array of strings containing a column name and an optional sort direction (ASC/DESC), separated by
+                         whitespace.
+        @return The index of the job in the ordered list (0 based).
       displayName: indexOfJob
       queryParameters:
         orderid: 
           type: integer
           format: long
-          description: The persistent id of the processing order
-        jobid?: 
+          description: The persistent id of the processing order.
+        jobid?:
           type: integer
           format: long
-          description: The persistent id of the job to show
+          description: The persistent id of the job.
         jobstepid?: 
           type: integer
           format: long
-          description: The persistent id of the job step to show
-        state?: 
+          description: The persistent id of the job step.
+        state?:
           type: string[]
-          description: The state group of job (COMPLETED, NON-COMPLETED)
+          description: The permitted job states (COMPLETED, NON-COMPLETED).
         orderBy?:
           type: string[]
-          description: an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+          description: An array of strings containing a column name and an optional sort direction (ASC/DESC), separated by whitespace.
       responses:
         200:
           body:
             text/plain:
+
 /orderjobsteps:
   type: standard
   get:
-    description: Get production planner jobsteps
+    description: |
+      Get production planner job steps by status, mission, and latest of size "last".
+     
+      @param status  The status of the job steps to retrieve
+      @param mission The mission for which to retrieve the job steps
+      @param last    The number of latest job steps to retrieve
+      @return A ResponseEntity containing the list of RestJobStep objects and the HTTP status code
     displayName: getJobSteps
     queryParameters:
       status?:
+        description: The status of the job steps to retrieve
         type: string
         enum: [ INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED, NONE ]
-      mission?: string
-      last?: integer
+      mission?: 
+        description: The mission for which to retrieve the job steps
+        type: string
+      last?: 
+        description: The number of latest job steps to retrieve
+        type: integer
     responses:
       200:
         body:
@@ -273,7 +490,11 @@ resourceTypes:
             example: !include ../../../../../model/src/main/resources/raml/examples/jobstep-list.json
   /{name}:
     get:
-      description: Get production planner jobstep
+      description: |
+        Get a production planner job step identified by name or id.
+       
+        @param name The name or id of the job step to retrieve
+        @return A ResponseEntity containing the RestJobStep object and the HTTP status code
       displayName: getJobStep
       responses:
         200:
@@ -281,14 +502,25 @@ resourceTypes:
             application/json:
               type: RestJobStep
               example: !include ../../../../../model/src/main/resources/raml/examples/jobstep.json
+        404:
+          description: The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
         
 /missions:
   type: standard
   get:
-    description: Get all missions
+    description: |
+      Retrieves a list of all missions or a mission with a specific code.
+     
+      @param mission The code of the mission to retrieve.
+      @return A response entity with either a list of missions and HTTP status OK or an error message and an HTTP status indicating
+              failure.
     displayName: getMissions
     queryParameters:
-      mission?: string
+      mission?: 
+        description: The code of the mission to retrieve.
+        type: string
     responses:
       200:
         body:
@@ -296,7 +528,13 @@ resourceTypes:
             type: RestMission[]
             example: !include ../../../../../model/src/main/resources/raml/examples/mission-list.json
   post:
-    description: Create a new mission
+    description: |
+      Creates a new mission with the provided data.
+     
+      @param restMission The JSON object representing the mission to be created.
+      @return A response entity containing the JSON object corresponding to the created mission (with ID and version for all
+              contained objects) and HTTP status "CREATED" or an error message and an HTTP status indicating failure.
+      @throws IllegalArgumentException If any of the input data is invalid.
     displayName: createMission
     body:
       application/json:
@@ -314,7 +552,12 @@ resourceTypes:
         type: integer
         format: long
     get:
-      description: Get a mission by ID
+      description: |
+        Retrieves the mission with the specified ID.
+        
+        @param id The ID of the mission to retrieve.
+        @return A response entity corresponding to the found mission and HTTP status "OK", or an error message and HTTP status
+               "NOT_FOUND" if no mission with the given ID exists.
       displayName: getMissionById
       responses:
         200:
@@ -322,8 +565,19 @@ resourceTypes:
             application/json:
               type: RestMission
               example: !include ../../../../../model/src/main/resources/raml/examples/mission.json
+        404:
+          description: The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
     patch:
-      description: Update a mission by ID (including changes to the spacecraft list)
+      description: |
+        Updates the mission with the specified ID using the attribute values of the given JSON object.
+       
+        @param id          The ID of the mission to update.
+        @param restMission A JSON object containing the modified (and unmodified) attributes.
+        @return A response entity containing a JSON object corresponding to the mission after modification (with ID and version for
+                all contained objects) and HTTP status "OK", or HTTP status "FORBIDDEN" and an error message if a cross-mission data
+                access was attempted, or HTTP status "NOT_FOUND" and an error message if no mission with the given ID exists.
       displayName: modifyMission
       body:
         application/json:
@@ -335,8 +589,20 @@ resourceTypes:
             application/json:
               type: RestMission
               example: !include ../../../../../model/src/main/resources/raml/examples/mission.json
+        304:
+          description: The resource was not modified.
+          headers:
+            Warning: !include types/error.raml
     delete:
-      description: Delete a mission by ID
+      description: |
+        Delete a mission by ID.
+       
+        @param id             the ID of the mission to delete
+        @param force          flag whether to also delete all configured items (but not products)
+        @param deleteProducts flag whether to also delete all stored products (also from all processing facilities, requires "force")
+        @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, "BAD_REQUEST" if "deleteProducts"
+                was specified without "force" or if dependent objects exist for the mission, "NOT_FOUND" if the mission did not
+                exist, or "NOT_MODIFIED" if the deletion was unsuccessful
       displayName: deleteMissionById
       queryParameters:
         force?:
@@ -349,27 +615,55 @@ resourceTypes:
           description: Also delete all products for this mission (requires "force")
       responses:
         204:
+
 /orbits:
   type: standard
   get:
-    description: Get orbits for a specific mission and spacecraft;
-        if both an orbit number range and a time frame are set, the orbit range takes precedence
+    description: |
+      Retrieves a list of all orbits filtered by spacecraft code, orbit number range, and start time range.
+     
+      @param spacecraftCode  The spacecraft code to filter by.
+      @param orbitNumberFrom The minimum orbit number requested.
+      @param orbitNumberTo   The maximum orbit number requested.
+      @param startTimeFrom   The earliest sensing start time requested.
+      @param startTimeTo     The latest sensing start time requested.
+      @param recordFrom      The first record of the filtered and ordered result to return.
+      @param recordTo        The last record of the filtered and ordered result to return.
+      @param orderBy         An array of strings containing a column name and an optional sort direction (ASC/DESC), separated by
+                             white space.
+      @return HTTP status "OK" and a list of orbits if successful, or HTTP status "NOT_FOUND" and an error message if no orbits
+              matching the search criteria were found, or HTTP status "BAD_REQUEST" and an error message if the request parameters
+              were inconsistent, or HTTP status "FORBIDDEN" and an error message if a cross-mission data access was attempted, or
+              HTTP status "INTERNAL_SERVER_ERROR" on any unexpected exception, or HTTP status "TOO MANY REQUESTS" if the result
+              list exceeds a configured maximum.
     displayName: getOrbits
     queryParameters:
-      spacecraftCode: string
-      orbitNumberFrom?: integer
-      orbitNumberTo?: integer
-      startTimeFrom?: string
-      startTimeTo?: string
+      spacecraftCode: 
+        type: string
+        description: The spacecraft code to filter by.
+      orbitNumberFrom?: 
+        description: The minimum orbit number requested.
+        type: integer
+      orbitNumberTo?: 
+        description: The maximum orbit number requested.
+        type: integer
+      startTimeFrom?: 
+        description: The earliest sensing start time requested.
+        type: string
+      startTimeTo?: 
+        description: The latest sensing start time requested.
+        type: string
       recordFrom?: 
+        description: The first record of the filtered and ordered result to return.
         type: integer
         format: int32
       recordTo?:
+        description: The last record of the filtered and ordered result to return.
         type: integer
         format: int32
       orderBy?:
         type: string[]
-        description: an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+        description: An array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space.
     responses:
       200:
         body:
@@ -377,7 +671,14 @@ resourceTypes:
             type: RestOrbit[]
             example: !include ../../../../../model/src/main/resources/raml/examples/orbit-list.json
   post:
-    description: Create new orbits
+    description: |
+      Creates one or more orbits based on the provided JSON objects.
+       
+      @param restOrbit The list of JSON objects representing the orbits to create.
+      @return HTTP status "CREATED" and a list of JSON objects corresponding to the created orbits if successful, or HTTP status
+              "FORBIDDEN" and an error message if a cross-mission data access was attempted, or HTTP status "BAD_REQUEST" and an
+              error message if the orbit data was invalid, or HTTP status "INTERNAL_SERVER_ERROR" and an error message if any other
+              error occurred.
     displayName: createOrbits
     body:
       application/json:
@@ -392,14 +693,35 @@ resourceTypes:
   /count:
     type: standard
     get:
-      description: Get number of orbits, possibly filtered by spaceraft, orbit number and time range
+      description: |
+        Retrieves the number of orbits matching the specified search criteria.
+       
+        @param spacecraftCode  The spacecraft code to filter by.
+        @param orbitNumberFrom The minimum orbit number requested.
+        @param orbitNumberTo   The maximum orbit number requested.
+        @param starttimefrom   The earliest sensing start time requested.
+        @param starttimeto     The latest sensing start time requested.
+        @return HTTP status "OK" and the number of retrieved orbits if successful, or HTTP status "NOT_FOUND" and an error message if
+                no orbits matching the search criteria were found, or HTTP status "BAD_REQUEST" and an error message if the request
+                parameters were inconsistent, or HTTP status "FORBIDDEN" and an error message if a cross-mission data access was
+                attempted, or HTTP status "INTERNAL_SERVER_ERROR" on any unexpected exception.
       displayName: countOrbits
       queryParameters:
-        spacecraftCode: string
-        orbitNumberFrom?: integer
-        orbitNumberTo?: integer
-        starttimefrom?: string
-        starttimeto?: string
+        spacecraftCode: 
+          description: The spacecraft code to filter by.
+          type: string
+        orbitNumberFrom?: 
+          description: The minimum orbit number requested.
+          type: integer
+        orbitNumberTo?: 
+          description: The maximum orbit number requested.
+          type: integer
+        starttimefrom?: 
+          description: The earliest sensing start time requested.
+          type: string
+        starttimeto?: 
+          description: The latest sensing start time requested.
+          type: string
       responses:
         200:
           body:
@@ -410,7 +732,14 @@ resourceTypes:
         type: integer
         format: long
     get:
-      description: Get an orbit by ID
+      description: |
+        Retrieves the orbit with the given ID.
+       
+        @param id The ID of the orbit to retrieve.
+        @return HTTP status "OK" and a JSON object corresponding to the retrieved orbit if successful, or HTTP status "NOT_FOUND" and
+                an error message if no orbit with the given ID exists, or HTTP status "FORBIDDEN" and an error message if a
+                cross-mission data access was attempted, or HTTP status "INTERNAL_SERVER_ERROR" and an error message if any other
+                error occurred.
       displayName: getOrbitById
       responses:
         200:
@@ -418,8 +747,20 @@ resourceTypes:
             application/json:
               type: RestOrbit
               example: !include ../../../../../model/src/main/resources/raml/examples/orbit.json
+        404:
+          description: The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
     patch:
-      description: Update an orbit by ID
+      description: |
+        Updates the orbit with the given ID using the attribute values from the provided JSON object.
+       
+        @param id        The ID of the orbit to update.
+        @param restOrbit The JSON object containing the modified (and unmodified) attributes.
+        @return HTTP status "OK" and a JSON object corresponding to the updated orbit if successful, or HTTP status "NOT_FOUND" and
+                an error message if no orbit with the given ID exists, or HTTP status "FORBIDDEN" and an error message if a
+                cross-mission data access was attempted, or HTTP status "NOT_MODIFIED" if the update was unsuccessful, or HTTP status
+                "INTERNAL_SERVER_ERROR" and an error message if any other error occurred.
       displayName: modifyOrbit
       body:
         application/json:
@@ -431,8 +772,18 @@ resourceTypes:
             application/json:
               type: RestOrbit
               example: !include ../../../../../model/src/main/resources/raml/examples/orbit.json
+        304:
+          description: The resource was not modified.
+          headers:
+            Warning: !include types/error.raml
     delete:
-      description: Delete an orbit by ID
+      description: |
+        Deletes the orbit with the given ID.
+       
+        @param id The ID of the orbit to delete.
+        @return HTTP status "NO_CONTENT" if successful, or HTTP status "NOT_FOUND" and an error message if no orbit with the given ID
+                exists, or HTTP status "FORBIDDEN" and an error message if a cross-mission data access was attempted, or HTTP status
+                "INTERNAL_SERVER_ERROR" and an error message if any other error occurred.
       displayName: deleteOrbitById
       responses:
         204:

@@ -83,6 +83,11 @@ public class OrderManager implements CommandLineRunner {
 		spa.run(args);
 	}
 
+	/**
+	 * Run the dispatcher of the clean-up thread
+	 * 
+	 * @param args The command-line arguments passed to the application.
+	 */
 	@Override
 	public void run(String... args) throws Exception {
 		this.startDispatcher();

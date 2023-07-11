@@ -41,7 +41,8 @@ import de.dlr.proseo.ordermgr.OrdermgrConfiguration;
 import de.dlr.proseo.ordermgr.rest.model.OrbitUtil;
 
 /**
- * Spring MVC controller for the prosEO Order Manager; implements the services required to manage spacecraft orbits
+ * Spring MVC controller for the prosEO Order Manager; implements the services required to manage spacecraft orbits. This class
+ * provides endpoints for creating, retrieving, updating, and deleting spacecraft orbits.
  *
  * @author Ranjitha Vignesh
  */
@@ -71,29 +72,29 @@ public class OrbitControllerImpl implements OrbitController {
 	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.ORDER_MGR);
 
 	/**
-	 * List of all orbits filtered by spacecraft code, orbit number range, starttime range
+	 * Retrieves a list of all orbits filtered by spacecraft code, orbit number range, and start time range.
 	 *
-	 * @param spacecraftCode  the spacecraft code to filter by (may be null)
-	 * @param orbitNumberFrom the minimum order number requested (may be null)
-	 * @param orbitNumberTo   the maximum order number requested (may be null)
-	 * @param startTimeFrom   earliest sensing start time requested (may be null)
-	 * @param startTimeTo     latest sensing start time requested (may be null)
-	 * @param recordFrom      first record of filtered and ordered result to return
-	 * @param recordTo        last record of filtered and ordered result to return
-	 * @param orderBy         an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by
-	 *                        white space
-	 * @return HTTP status "OK" and a list of orbits or HTTP status "NOT_FOUND" and an error message, if no orbits matching the
-	 *         search criteria were found, or HTTP status "BAD_REQUEST" and an error message, if the request parameters were
-	 *         inconsistent, or HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP
-	 *         status "INTERNAL_SERVER_ERROR" on any unexpected exception HTTP status "TOO MANY REQUESTS" if the result list exceeds
-	 *         a configured maximum
+	 * @param spacecraftCode  The spacecraft code to filter by.
+	 * @param orbitNumberFrom The minimum orbit number requested.
+	 * @param orbitNumberTo   The maximum orbit number requested.
+	 * @param startTimeFrom   The earliest sensing start time requested.
+	 * @param startTimeTo     The latest sensing start time requested.
+	 * @param recordFrom      The first record of the filtered and ordered result to return.
+	 * @param recordTo        The last record of the filtered and ordered result to return.
+	 * @param orderBy         An array of strings containing a column name and an optional sort direction (ASC/DESC), separated by
+	 *                        white space.
+	 * @return HTTP status "OK" and a list of orbits if successful, or HTTP status "NOT_FOUND" and an error message if no orbits
+	 *         matching the search criteria were found, or HTTP status "BAD_REQUEST" and an error message if the request parameters
+	 *         were inconsistent, or HTTP status "FORBIDDEN" and an error message if a cross-mission data access was attempted, or
+	 *         HTTP status "INTERNAL_SERVER_ERROR" on any unexpected exception, or HTTP status "TOO MANY REQUESTS" if the result
+	 *         list exceeds a configured maximum.
 	 */
 	@Transactional
 	@Override
 	public ResponseEntity<List<RestOrbit>> getOrbits(String spacecraftCode, Long orbitNumberFrom, Long orbitNumberTo,
 			String startTimeFrom, String startTimeTo, Integer recordFrom, Integer recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getOrbit{}");
+			logger.trace(">>> getOrbits()");
 
 		/* Check arguments */
 		if (null == spacecraftCode || "".equals(spacecraftCode)) {
@@ -147,24 +148,24 @@ public class OrbitControllerImpl implements OrbitController {
 	}
 
 	/**
-	 * List of all orbits filtered by spacecraft code, orbit number range, starttime range
+	 * Retrieves the number of orbits matching the specified search criteria.
 	 *
-	 * @param spacecraftCode  the spacecraft code to filter by (may be null)
-	 * @param orbitNumberFrom the minimum order number requested (may be null)
-	 * @param orbitNumberTo   the maximum order number requested (may be null)
-	 * @param startTimeFrom   earliest sensing start time requested (may be null)
-	 * @param startTimeTo     latest sensing start time requested (may be null) sort direction (ASC/DESC), separated by white space
-	 * @return HTTP status "OK" and the number of retrieved orbits or HTTP status "NOT_FOUND" and an error message, if no orbits
-	 *         matching the search criteria were found, or HTTP status "BAD_REQUEST" and an error message, if the request parameters
-	 *         were inconsistent, or HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
-	 *         HTTP status "INTERNAL_SERVER_ERROR" on any unexpected exception
+	 * @param spacecraftCode  The spacecraft code to filter by.
+	 * @param orbitNumberFrom The minimum orbit number requested.
+	 * @param orbitNumberTo   The maximum orbit number requested.
+	 * @param startTimeFrom   The earliest sensing start time requested.
+	 * @param startTimeTo     The latest sensing start time requested.
+	 * @return HTTP status "OK" and the number of retrieved orbits if successful, or HTTP status "NOT_FOUND" and an error message if
+	 *         no orbits matching the search criteria were found, or HTTP status "BAD_REQUEST" and an error message if the request
+	 *         parameters were inconsistent, or HTTP status "FORBIDDEN" and an error message if a cross-mission data access was
+	 *         attempted, or HTTP status "INTERNAL_SERVER_ERROR" on any unexpected exception.
 	 */
 	@Transactional
 	@Override
 	public ResponseEntity<String> countOrbits(String spacecraftCode, Long orbitNumberFrom, Long orbitNumberTo, String startTimeFrom,
 			String startTimeTo) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getOrbit{}");
+			logger.trace(">>> countOrbits()");
 
 		/* Check arguments */
 		if (null == spacecraftCode || "".equals(spacecraftCode)) {
@@ -186,18 +187,18 @@ public class OrbitControllerImpl implements OrbitController {
 	}
 
 	/**
-	 * Create orbit/s from the given Json object
+	 * Creates one or more orbits based on the provided JSON objects.
 	 *
-	 * @param orbits the List of Json object to create the orbit from
-	 * @return a response containing HTTP status "CREATED" and a List of Json object corresponding to the orbit after persistence
-	 *         (with ID and version for all contained objects) or HTTP status "FORBIDDEN" and an error message, if a cross-mission
-	 *         data access was attempted, or HTTP status "BAD_REQUEST" and an error message, if the orbit data was invalid, or HTTP
-	 *         status "INTERNAL_SERVER_ERROR" and an error message, if any other error occurred
+	 * @param orbits The list of JSON objects representing the orbits to create.
+	 * @return HTTP status "CREATED" and a list of JSON objects corresponding to the created orbits if successful, or HTTP status
+	 *         "FORBIDDEN" and an error message if a cross-mission data access was attempted, or HTTP status "BAD_REQUEST" and an
+	 *         error message if the orbit data was invalid, or HTTP status "INTERNAL_SERVER_ERROR" and an error message if any other
+	 *         error occurred.
 	 */
 	@Override
 	public ResponseEntity<List<RestOrbit>> createOrbits(@Valid List<RestOrbit> orbits) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> createOrbit({})", orbits.getClass());
+			logger.trace(">>> createOrbits()");
 
 		/* Check argument */
 		if (null == orbits || orbits.isEmpty()) {
@@ -275,13 +276,13 @@ public class OrbitControllerImpl implements OrbitController {
 	}
 
 	/**
-	 * Find the orbit with the given ID
+	 * Retrieves the orbit with the given ID.
 	 *
-	 * @param id the ID to look for
-	 * @return a response entity containing HTTP status "OK" and a Json object corresponding to the found orbit or HTTP status
-	 *         "NOT_FOUND" and an error message, if no orbit with the given ID exists, or HTTP status "FORBIDDEN" and an error
-	 *         message, if a cross-mission data access was attempted, or HTTP status "INTERNAL_SERVER_ERROR" and an error message,
-	 *         if any other error occurred
+	 * @param id The ID of the orbit to retrieve.
+	 * @return HTTP status "OK" and a JSON object corresponding to the retrieved orbit if successful, or HTTP status "NOT_FOUND" and
+	 *         an error message if no orbit with the given ID exists, or HTTP status "FORBIDDEN" and an error message if a
+	 *         cross-mission data access was attempted, or HTTP status "INTERNAL_SERVER_ERROR" and an error message if any other
+	 *         error occurred.
 	 */
 	@Override
 	public ResponseEntity<RestOrbit> getOrbitById(Long id) {
@@ -321,13 +322,14 @@ public class OrbitControllerImpl implements OrbitController {
 	}
 
 	/**
-	 * Update the orbit with the given ID with the attribute values of the given Json object.
+	 * Updates the orbit with the given ID using the attribute values from the provided JSON object.
 	 *
-	 * @param id    the ID of the orbit to update
-	 * @param orbit a Json object containing the modified (and unmodified) attributes
-	 * @return a response containing a Json object corresponding to the obit after modification (with ID and version for all
-	 *         contained objects) and HTTP status "OK" or an error message and HTTP status "NOT_FOUND", if no orbit with the given
-	 *         ID exists
+	 * @param id    The ID of the orbit to update.
+	 * @param orbit The JSON object containing the modified (and unmodified) attributes.
+	 * @return HTTP status "OK" and a JSON object corresponding to the updated orbit if successful, or HTTP status "NOT_FOUND" and
+	 *         an error message if no orbit with the given ID exists, or HTTP status "FORBIDDEN" and an error message if a
+	 *         cross-mission data access was attempted, or HTTP status "NOT_MODIFIED" if the update was unsuccessful, or HTTP status
+	 *         "INTERNAL_SERVER_ERROR" and an error message if any other error occurred.
 	 */
 	@Override
 	public ResponseEntity<RestOrbit> modifyOrbit(Long id, @Valid RestOrbit orbit) {
@@ -428,11 +430,12 @@ public class OrbitControllerImpl implements OrbitController {
 	}
 
 	/**
-	 * Delete an orbit by ID
+	 * Deletes the orbit with the given ID.
 	 *
-	 * @param id the ID of the orbit to delete
-	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or HTTP status "NOT_FOUND", if the
-	 *         orbit did not exist, or HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
+	 * @param id The ID of the orbit to delete.
+	 * @return HTTP status "NO_CONTENT" if successful, or HTTP status "NOT_FOUND" and an error message if no orbit with the given ID
+	 *         exists, or HTTP status "FORBIDDEN" and an error message if a cross-mission data access was attempted, or HTTP status
+	 *         "INTERNAL_SERVER_ERROR" and an error message if any other error occurred.
 	 */
 	@Override
 	public ResponseEntity<?> deleteOrbitById(Long id) {
@@ -483,18 +486,19 @@ public class OrbitControllerImpl implements OrbitController {
 	}
 
 	/**
-	 * Creates a JPA query object for retrieving orbits based on the provided search parameters.
+	 * Creates a JPA query for retrieving orbits based on the provided search parameters.
 	 *
-	 * @param spacecraftCode  The spacecraft code to filter orbits by.
-	 * @param orbitNumberFrom The minimum orbit number.
-	 * @param orbitNumberTo   The maximum orbit number.
-	 * @param startTimeFrom   The minimum start time.
-	 * @param startTimeTo     The maximum start time.
-	 * @param recordFrom      The starting record index for pagination.
-	 * @param recordTo        The ending record index for pagination.
-	 * @param orderBy         An array of fields to order the results by.
-	 * @param count           Determines whether to include a count query instead of retrieving actual orbits.
-	 * @return The created JPA query object.
+	 * @param spacecraftCode  The spacecraft code to filter by.
+	 * @param orbitNumberFrom The minimum orbit number requested.
+	 * @param orbitNumberTo   The maximum orbit number requested.
+	 * @param startTimeFrom   The earliest sensing start time requested.
+	 * @param startTimeTo     The latest sensing start time requested.
+	 * @param recordFrom      The first record of the filtered and ordered result to return.
+	 * @param recordTo        The last record of the filtered and ordered result to return.
+	 * @param orderBy         An array of strings containing a column name and an optional sort direction (ASC/DESC), separated by
+	 *                        white space.
+	 * @param countOnly       Specifies whether only the count of matching orbits should be returned.
+	 * @return A JPA query object.
 	 */
 	private Query createOrbitsQuery(String spacecraftCode, Long orbitNumberFrom, Long orbitNumberTo, String startTimeFrom,
 			String startTimeTo, Integer recordFrom, Integer recordTo, String[] orderBy, Boolean count) {

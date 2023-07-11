@@ -56,7 +56,8 @@ import de.dlr.proseo.ordermgr.OrdermgrConfiguration;
 import de.dlr.proseo.ordermgr.rest.model.MissionUtil;
 
 /**
- * Spring MVC controller for the prosEO Order Manager; implements the services required to manage missions
+ * Spring MVC controller for the prosEO Order Manager; implements the services required to manage missions. Handles the HTTP requests
+ * related to mission management.
  *
  * @author Ranjitha Vignesh
  */
@@ -90,13 +91,14 @@ public class MissionControllerImpl implements MissionController {
 	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.ORDER_MGR);
 
 	/**
-	 * List of all missions with no search criteria
+	 * Retrieves a list of all missions or a mission with a specific code.
 	 *
-	 * @return a response entity with either a list of missions and HTTP status OK or an error message and an HTTP status indicating
-	 *         failure
+	 * @param missionCode The code of the mission to retrieve.
+	 * @return A response entity with either a list of missions and HTTP status OK or an error message and an HTTP status indicating
+	 *         failure.
 	 */
 	@Override
-	public ResponseEntity<List<RestMission>> getMissions(String code) {
+	public ResponseEntity<List<RestMission>> getMissions(String missionCode) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getMissions");
 
@@ -106,10 +108,10 @@ public class MissionControllerImpl implements MissionController {
 		try {
 			result = transactionTemplate.execute((status) -> {
 				List<RestMission> resultList = new ArrayList<>();
-				if (code != null) {
-					Mission mission = RepositoryService.getMissionRepository().findByCode(code);
+				if (missionCode != null) {
+					Mission mission = RepositoryService.getMissionRepository().findByCode(missionCode);
 					if (mission == null) {
-						throw new NoResultException(logger.log(OrderMgrMessage.MISSION_NOT_FOUND, code));
+						throw new NoResultException(logger.log(OrderMgrMessage.MISSION_NOT_FOUND, missionCode));
 					}
 
 					if (logger.isDebugEnabled())
@@ -150,12 +152,12 @@ public class MissionControllerImpl implements MissionController {
 	}
 
 	/**
-	 * Create a mission from the given Json object
+	 * Creates a new mission with the provided data.
 	 *
-	 * @param mission the Json object to create the mission from
-	 * @return a response containing a Json object corresponding to the mission after persistence (with ID and version for all
-	 *         contained objects) and HTTP status "CREATED"
-	 * @throws IllegalArgumentException if any of the input data is invalid
+	 * @param mission The JSON object representing the mission to be created.
+	 * @return A response entity containing the JSON object corresponding to the created mission (with ID and version for all
+	 *         contained objects) and HTTP status "CREATED" or an error message and an HTTP status indicating failure.
+	 * @throws IllegalArgumentException If any of the input data is invalid.
 	 */
 	@Override
 	public ResponseEntity<RestMission> createMission(@Valid RestMission mission) throws IllegalArgumentException {
@@ -174,7 +176,7 @@ public class MissionControllerImpl implements MissionController {
 			restMission = transactionTemplate.execute((status) -> {
 				Mission modelMission = MissionUtil.toModelMission(mission);
 
-				// Check, whether mission exists already
+				// Check if mission already exists
 				if (null != RepositoryService.getMissionRepository().findByCode(mission.getCode())) {
 					throw new IllegalArgumentException(logger.log(OrderMgrMessage.MISSION_EXISTS, mission.getCode()));
 				}
@@ -242,15 +244,14 @@ public class MissionControllerImpl implements MissionController {
 		logger.log(OrderMgrMessage.MISSION_CREATED, restMission.getCode());
 
 		return new ResponseEntity<>(restMission, HttpStatus.CREATED);
-
 	}
 
 	/**
-	 * Find the mission with the given ID
+	 * Retrieves the mission with the specified ID.
 	 *
-	 * @param id the ID to look for
-	 * @return a response entity corresponding to the found mission and HTTP status "OK" or an error message and HTTP status
-	 *         "NOT_FOUND", if no mission with the given ID exists
+	 * @param id The ID of the mission to retrieve.
+	 * @return A response entity corresponding to the found mission and HTTP status "OK", or an error message and HTTP status
+	 *         "NOT_FOUND" if no mission with the given ID exists.
 	 */
 	@Override
 	public ResponseEntity<RestMission> getMissionById(Long id) {
@@ -282,13 +283,13 @@ public class MissionControllerImpl implements MissionController {
 	}
 
 	/**
-	 * Update the mission with the given ID with the attribute values of the given Json object.
+	 * Updates the mission with the specified ID using the attribute values of the given JSON object.
 	 *
-	 * @param id      the ID of the mission to update
-	 * @param mission a Json object containing the modified (and unmodified) attributes
-	 * @return a response containing a Json object corresponding to the mission after modification (with ID and version for all
-	 *         contained objects) and HTTP status "OK" or HTTP status "FORBIDDEN" and an error message, if a cross-mission data
-	 *         access was attempted, or HTTP status "NOT_FOUND" and an error message, if no mission with the given ID exists
+	 * @param id      The ID of the mission to update.
+	 * @param mission A JSON object containing the modified (and unmodified) attributes.
+	 * @return A response entity containing a JSON object corresponding to the mission after modification (with ID and version for
+	 *         all contained objects) and HTTP status "OK", or HTTP status "FORBIDDEN" and an error message if a cross-mission data
+	 *         access was attempted, or HTTP status "NOT_FOUND" and an error message if no mission with the given ID exists.
 	 */
 	@Override
 	public ResponseEntity<RestMission> modifyMission(Long id, @Valid RestMission mission) {
@@ -421,6 +422,7 @@ public class MissionControllerImpl implements MissionController {
 					newSpacecrafts.add(modelSpacecraft);
 					missionChanged = true;
 				}
+				
 				/* Check for deleted spacecrafts */
 				for (Spacecraft oldSpacecraft : modelMission.getSpacecrafts()) {
 					if (!newSpacecrafts.contains(oldSpacecraft)) {
@@ -455,11 +457,10 @@ public class MissionControllerImpl implements MissionController {
 		}
 
 		return new ResponseEntity<>(restMission, httpStatus);
-
 	}
 
 	/**
-	 * Update a spacecraft's list of payloads from the REST spacecraft's list of payloads
+	 * Update a spacecraft's list of payloads from the REST spacecraft's list of payloads.
 	 *
 	 * @param modelPayloads the spacecraft's list of payloads
 	 * @param restPayloads  the REST spacecraft's list of payloads
@@ -493,14 +494,14 @@ public class MissionControllerImpl implements MissionController {
 	}
 
 	/**
-	 * Delete a mission by ID
+	 * Delete a mission by ID.
 	 *
 	 * @param id             the ID of the mission to delete
 	 * @param force          flag whether to also delete all configured items (but not products)
 	 * @param deleteProducts flag whether to also delete all stored products (also from all processing facilities, requires "force")
-	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, "BAD_REQUEST", if "deleteProducts"
-	 *         was specified without "force" or if dependent objects exist for the mission, "NOT_FOUND", if the mission did not
-	 *         exist, or "NOT_MODIFIED", if the deletion was unsuccessful
+	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, "BAD_REQUEST" if "deleteProducts"
+	 *         was specified without "force" or if dependent objects exist for the mission, "NOT_FOUND" if the mission did not
+	 *         exist, or "NOT_MODIFIED" if the deletion was unsuccessful
 	 */
 	@Override
 	public ResponseEntity<?> deleteMissionById(Long id, Boolean force, Boolean deleteProducts) {
@@ -512,6 +513,7 @@ public class MissionControllerImpl implements MissionController {
 		try {
 			// Transaction to check the delete preconditions
 			transactionTemplate.execute((status) -> {
+				
 				// Test whether the mission id is valid
 				Optional<de.dlr.proseo.model.Mission> modelMission = RepositoryService.getMissionRepository().findById(id);
 				if (modelMission.isEmpty()) {
@@ -574,6 +576,7 @@ public class MissionControllerImpl implements MissionController {
 				}
 
 				return null;
+				
 			});
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
@@ -593,7 +596,7 @@ public class MissionControllerImpl implements MissionController {
 	}
 
 	/**
-	 * Delete a mission and all (!) its dependent elements. Note that most deletes are performed in a loop, since JPA discourages
+	 * Delete a mission and all (!) its dependent elements. Note that most deletes are performed in a loop since JPA discourages
 	 * bulk deletes (JPA Spec 2.0, sec. 4.10) and Hibernate does not handle implicit joins in delete statements correctly (although
 	 * syntactically correct).
 	 *
@@ -617,7 +620,7 @@ public class MissionControllerImpl implements MissionController {
 		if (logger.isDebugEnabled())
 			logger.debug("... products deleted");
 
-		// Delete the production history
+		// Delete the production history per hour
 		jpqlQuery = "select mpph from MonProductProductionHour mpph where mpph.mission.id = " + missionId;
 		query = em.createQuery(jpqlQuery);
 		for (Object resultObject : query.getResultList()) {
@@ -628,6 +631,7 @@ public class MissionControllerImpl implements MissionController {
 		if (logger.isDebugEnabled())
 			logger.debug("... production history per hour deleted");
 
+		// Delete the production history per day
 		jpqlQuery = "select mppd from MonProductProductionDay mppd where mppd.mission.id = " + missionId;
 		query = em.createQuery(jpqlQuery);
 		for (Object resultObject : query.getResultList()) {
@@ -638,6 +642,7 @@ public class MissionControllerImpl implements MissionController {
 		if (logger.isDebugEnabled())
 			logger.debug("... production history per day deleted");
 
+		// Delete the production history per month
 		jpqlQuery = "select mppm from MonProductProductionMonth mppm where mppm.mission.id = " + missionId;
 		query = em.createQuery(jpqlQuery);
 		for (Object resultObject : query.getResultList()) {
@@ -648,7 +653,7 @@ public class MissionControllerImpl implements MissionController {
 		if (logger.isDebugEnabled())
 			logger.debug("... production history per month deleted");
 
-		// Delete all processing orders, jobs, job steps and product queries (by cascade)
+		// Delete all processing orders, jobs, job steps, and product queries (by cascade)
 		jpqlQuery = "select po from ProcessingOrder po where po.mission.id = " + missionId;
 		query = em.createQuery(jpqlQuery);
 		for (Object resultObject : query.getResultList()) {
@@ -726,7 +731,7 @@ public class MissionControllerImpl implements MissionController {
 		if (logger.isDebugEnabled())
 			logger.debug("... spacecrafts deleted");
 
-		// Delete all user-group associations for this mission (bulk delete using Native SQL, since we have no implicit joins, and
+		// Delete all user-group associations for this mission (bulk delete using Native SQL since we have no implicit joins, and
 		// the User object is not mapped)
 		String sqlQuery = "delete from users_group_memberships where users_username like '" + mission.getCode() + "-%'";
 		query = em.createNativeQuery(sqlQuery);
@@ -741,7 +746,7 @@ public class MissionControllerImpl implements MissionController {
 		if (logger.isDebugEnabled())
 			logger.debug("... group memberships deleted");
 
-		// Delete all groups for this mission (bulk delete using Native SQL, since we have no implicit joins, and the Group object
+		// Delete all groups for this mission (bulk delete using Native SQL since we have no implicit joins, and the Group object
 		// is not mapped)
 		sqlQuery = "delete from group_authorities where group_id in (select id from groups where group_name like '"
 				+ mission.getCode() + "-%')";
@@ -753,7 +758,7 @@ public class MissionControllerImpl implements MissionController {
 		if (logger.isDebugEnabled())
 			logger.debug("... groups deleted");
 
-		// Delete all users for this mission (bulk delete using Native SQL, since we have no implicit joins, and the User object is
+		// Delete all users for this mission (bulk delete using Native SQL since we have no implicit joins, and the User object is
 		// not mapped)
 		sqlQuery = "delete from authorities where username like '" + mission.getCode() + "-%'";
 		query = em.createNativeQuery(sqlQuery);
@@ -761,15 +766,15 @@ public class MissionControllerImpl implements MissionController {
 		sqlQuery = "delete from users where username like '" + mission.getCode() + "-%'";
 		query = em.createNativeQuery(sqlQuery);
 		query.executeUpdate();
+		
 		if (logger.isDebugEnabled())
 			logger.debug("... users deleted");
-
 	}
 
 	/**
-	 * Delete product, after all component products have been deleted (this would have happened through the CASCADE annotation
-	 * anyway, but in the bulk delete this is error-prone, therefore we control it programmatically); deletes all product files for
-	 * this product (CASCADE)
+	 * Delete a product, after all component products have been deleted (this would have happened through the CASCADE annotation
+	 * anyway, but in the bulk delete, this is error-prone, therefore we control it programmatically); deletes all product files for
+	 * this product (CASCADE).
 	 *
 	 * @param product           the product to delete
 	 * @param deletedProductIds the products deleted so far (may contain the current product!!)

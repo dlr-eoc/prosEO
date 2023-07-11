@@ -33,7 +33,9 @@ import de.dlr.proseo.ordermgr.OrdermgrConfiguration;
 import de.dlr.proseo.ordermgr.rest.model.RestUtil;
 
 /**
- * Controller for the prosEO Order Manager, implements the services required to manage jobs.
+ * Controller for the prosEO Order Manager, implements the services required to manage jobs. Provides methods for retrieving and
+ * counting jobs, as well as finding the index of a job within an ordered list. The class also includes utility methods for creating
+ * JPA queries.
  *
  * @author Ernst Melchinger
  */
@@ -59,15 +61,16 @@ public class OrderjobControllerImpl implements OrderjobController {
 	private OrdermgrConfiguration config;
 
 	/**
-	 * Get production planner jobs, optionally filtered by job state and/or order ID
+	 * Retrieves production planner jobs, optionally filtered by job state and/or order ID.
 	 *
-	 * @param states     the job states to filter by (optional)
-	 * @param orderId    the order ID to filter by (optional)
-	 * @param recordFrom first record of filtered and ordered result to return (optional; mandatory if "recordTo" is given)
-	 * @param recordTo   last record of filtered and ordered result to return (optional)
-	 * @param orderBy    an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white
-	 *                   space
-	 * @return a list of JSON objects describing jobs
+	 * @param states     The job states to filter by.
+	 * @param orderId    The order ID to filter by.
+	 * @param recordFrom The first record of the filtered and ordered result to return.
+	 * @param recordTo   The last record of the filtered and ordered result to return.
+	 * @param logs       Whether or not logs are included in the REST job step.
+	 * @param orderBy    An array of strings containing a column name and an optional sort direction (ASC/DESC), separated by
+	 *                   whitespace.
+	 * @return A list of JSON objects describing jobs.
 	 */
 	@Override
 	@Transactional(readOnly = true)
@@ -124,11 +127,11 @@ public class OrderjobControllerImpl implements OrderjobController {
 	}
 
 	/**
-	 * Get production planner number of jobs by order id and state
+	 * Retrieves the number of production planner jobs based on the specified states and order ID.
 	 *
-	 * @param states  permitted job states
-	 * @param orderId order id of jobs
-	 * @return number of jobs
+	 * @param states  The permitted job states.
+	 * @param orderId The order ID of the jobs.
+	 * @return The number of jobs.
 	 */
 	@Transactional(readOnly = true)
 	@Override
@@ -157,15 +160,15 @@ public class OrderjobControllerImpl implements OrderjobController {
 	}
 
 	/**
-	 * Get the index of a job in ordered list of all jobs of order
+	 * Retrieves the index of a job in an ordered list of all jobs of an order.
 	 *
-	 * @param states    permitted job states
-	 * @param orderId   order id
-	 * @param jobId     job id
-	 * @param jobStepId job step id
-	 * @param orderBy   an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white
-	 *                  space
-	 * @return index of job in ordered list (0 based)
+	 * @param states    The permitted job states (COMPLETED, NON-COMPLETED).
+	 * @param orderId   The persistent id of the processing order.
+	 * @param jobId     The persistent id of the job.
+	 * @param jobStepId The persistent id of the job step.
+	 * @param orderBy   An array of strings containing a column name and an optional sort direction (ASC/DESC), separated by
+	 *                  whitespace.
+	 * @return The index of the job in the ordered list (0 based).
 	 */
 	@Transactional(readOnly = true)
 	@Override
@@ -232,16 +235,17 @@ public class OrderjobControllerImpl implements OrderjobController {
 	}
 
 	/**
-	 * Create a JPQL query for jobs, filtering by the mission the user is logged in to, and optionally by job state and/or order ID
+	 * Creates a JPQL query for jobs, filtering by the mission the user is logged in to, and optionally by job state and/or order
+	 * ID.
 	 *
-	 * @param states     the job states to filter by (optional)
-	 * @param orderId    the order ID to filter by (optional)
-	 * @param recordFrom first record of filtered and ordered result to return
-	 * @param recordTo   last record of filtered and ordered result to return
-	 * @param orderBy    an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white
-	 *                   space
-	 * @param count      indicates whether just a count of the orders shall be retrieved or the orders as such
-	 * @return a JPQL query object
+	 * @param states     The job states to filter by.
+	 * @param orderId    The order ID to filter by.
+	 * @param recordFrom The first record of the filtered and ordered result to return.
+	 * @param recordTo   The last record of the filtered and ordered result to return.
+	 * @param orderBy    An array of strings containing a column name and an optional sort direction (ASC/DESC), separated by
+	 *                   whitespace.
+	 * @param count      Indicates whether just a count of the orders shall be retrieved or the orders as such.
+	 * @return A JPQL query object.
 	 */
 	private Query createJobsQuery(String[] states, Long orderId, Integer recordFrom, Integer recordTo, String[] orderBy,
 			Boolean count) {

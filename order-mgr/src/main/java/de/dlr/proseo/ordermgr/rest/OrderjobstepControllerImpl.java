@@ -56,7 +56,12 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 	private EntityManager em;
 
 	/**
-	 * Get production planner job steps by status, mission and latest of size "last"
+	 * Get production planner job steps by status, mission, and latest of size "last".
+	 *
+	 * @param status  The status of the job steps to retrieve
+	 * @param mission The mission for which to retrieve the job steps
+	 * @param last    The number of latest job steps to retrieve
+	 * @return A ResponseEntity containing the list of RestJobStep objects and the HTTP status code
 	 */
 	@Override
 	@Transactional(readOnly = true)
@@ -112,8 +117,10 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 	}
 
 	/**
-	 * Get production planner job step identified by name or id
+	 * Get a production planner job step identified by name or id.
 	 *
+	 * @param name The name or id of the job step to retrieve
+	 * @return A ResponseEntity containing the RestJobStep object and the HTTP status code
 	 */
 	@Override
 	@Transactional(readOnly = true)
@@ -136,14 +143,13 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 			String message = logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-
 	}
 
 	/**
-	 * Get job step identified by name or id.
+	 * Find a job step by name or id.
 	 *
-	 * @param nameOrId
-	 * @return Job step found
+	 * @param nameOrId The name or id of the job step to find
+	 * @return The found JobStep object
 	 */
 	@Transactional(readOnly = true)
 	private JobStep findJobStepByNameOrIdPrim(String nameOrId) {
@@ -178,6 +184,12 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 		return jsx;
 	}
 
+	/**
+	 * Find a job step by name or id.
+	 *
+	 * @param nameOrId The name or id of the job step to find
+	 * @return The found JobStep object
+	 */
 	private JobStep findJobStepByNameOrId(String nameOrId) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> findJobStepByNameOrId({})", nameOrId);
@@ -190,6 +202,13 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 		return js;
 	}
 
+	/**
+	 * Get a RestJobStep object for a given job step ID.
+	 *
+	 * @param id   The ID of the job step
+	 * @param logs Whether to include the logs in the RestJobStep object
+	 * @return The RestJobStep object
+	 */
 	@Transactional(readOnly = true)
 	private RestJobStep getRestJobStep(long id, Boolean logs) {
 		RestJobStep rj = null;
@@ -203,12 +222,12 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 	}
 
 	/**
-	 * Find job steps of specific job step state. The result is ordered by processingCompletionTime descending and returns the first
-	 * 'limit' entries.
+	 * Find job steps of a specific job step state. The result is ordered by processingCompletionTime descending and returns the
+	 * first 'limit' entries.
 	 *
 	 * @param state   The job step state
 	 * @param mission The mission code
-	 * @param limit   The length of result entry list
+	 * @param limit   The length of the result entry list
 	 * @return The found job steps
 	 */
 	@Transactional(readOnly = true)
@@ -216,9 +235,9 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> findOrderedByJobStepStateAndMission({}, {}, {})", state, mission, limit);
 
-		String query = "select js from JobStep js " + " inner join Job j on js.job.id = j.id "
-				+ " inner join ProcessingOrder o on j.processingOrder.id = o.id" + " inner join Mission m on o.mission.id = m.id "
-				+ " where js.processingStartTime is not null and js.jobStepState = '" + state + "' and m.code = '" + mission
+		String query = "select js from JobStep js " + "inner join Job j on js.job.id = j.id "
+				+ "inner join ProcessingOrder o on j.processingOrder.id = o.id " + "inner join Mission m on o.mission.id = m.id "
+				+ "where js.processingStartTime is not null and js.jobStepState = '" + state + "' and m.code = '" + mission
 				+ "' order by js.processingCompletionTime desc";
 		// em.createNativeQ
 		return em.createQuery(query, JobStep.class).setMaxResults(limit).getResultList();

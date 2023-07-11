@@ -53,20 +53,20 @@ public class OrderControllerImpl implements OrderController {
 	private EntityManager em;
 
 	/**
-	 * Create a order from the given Json object
+	 * Create an order from the given JSON object
 	 *
-	 * @param order the Json object to create the order from
-	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the order after persistence (with ID
+	 * @param restOrder the JSON object to create the order from
+	 * @return HTTP status "CREATED" and a response containing a JSON object corresponding to the order after persistence (with ID
 	 *         and version for all contained objects) or HTTP status "FORBIDDEN" and an error message, if a cross-mission data
 	 *         access was attempted, or HTTP status "BAD_REQUEST", if any of the input data was invalid
 	 */
 	@Override
-	public ResponseEntity<RestOrder> createOrder(RestOrder order) {
+	public ResponseEntity<RestOrder> createOrder(RestOrder restOrder) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> createOrder({})", (null == order ? "MISSING" : order.getIdentifier()));
+			logger.trace(">>> createOrder({})", (null == restOrder ? "MISSING" : restOrder.getIdentifier()));
 
 		try {
-			return new ResponseEntity<>(procOrderManager.createOrder(order), HttpStatus.CREATED);
+			return new ResponseEntity<>(procOrderManager.createOrder(restOrder), HttpStatus.CREATED);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (SecurityException e) {
@@ -79,7 +79,7 @@ public class OrderControllerImpl implements OrderController {
 	 *
 	 * @param mission           the mission code
 	 * @param identifier        the unique order identifier string
-	 * @param productclasses    an array of product types
+	 * @param productClasses    an array of product types
 	 * @param startTimeFrom     earliest sensing start time
 	 * @param startTimeTo       latest sensing start time
 	 * @param executionTimeFrom earliest order execution time
@@ -89,15 +89,15 @@ public class OrderControllerImpl implements OrderController {
 	 *         attempted
 	 */
 	@Override
-	public ResponseEntity<List<RestOrder>> getOrders(String mission, String identifier, String[] productclasses,
+	public ResponseEntity<List<RestOrder>> getOrders(String mission, String identifier, String[] productClasses,
 			@DateTimeFormat Date startTimeFrom, @DateTimeFormat Date startTimeTo, @DateTimeFormat Date executionTimeFrom,
 			@DateTimeFormat Date executionTimeTo) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses, startTimeFrom, startTimeTo,
+			logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productClasses, startTimeFrom, startTimeTo,
 					executionTimeFrom, executionTimeTo);
 
 		try {
-			return new ResponseEntity<>(procOrderManager.getOrders(mission, identifier, productclasses, startTimeFrom, startTimeTo,
+			return new ResponseEntity<>(procOrderManager.getOrders(mission, identifier, productClasses, startTimeFrom, startTimeTo,
 					executionTimeFrom, executionTimeTo), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
@@ -108,17 +108,29 @@ public class OrderControllerImpl implements OrderController {
 
 	/**
 	 * Retrieve a list of orders satisfying the selection parameters
+	 *
+	 * @param mission       the mission code
+	 * @param identifier    the unique order identifier string
+	 * @param state         an array of order states
+	 * @param productClass  an array of product types
+	 * @param startTimeFrom earliest sensing start time
+	 * @param startTimeTo   latest sensing start time
+	 * @param recordFrom    first record of filtered and ordered result to return
+	 * @param recordTo      last record of filtered and ordered result to return
+	 * @param orderBy       an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by
+	 *                      white space
+	 * @return the result list
 	 */
 	@Override
 	public ResponseEntity<List<RestOrder>> getAndSelectOrders(String mission, String identifier, String[] state,
-			String[] productClass, String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {
+			String[] productClass, String startTimeFrom, String startTimeTo, Long recordFrom, Long recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getAndSelectOrders({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, identifier, state,
-					productClass, startTime, stopTime, recordFrom, recordTo, orderBy);
+					productClass, startTimeFrom, startTimeTo, recordFrom, recordTo, orderBy);
 
 		try {
-			List<RestOrder> list = procOrderManager.getAndSelectOrders(mission, identifier, state, productClass, startTime,
-					stopTime, recordFrom, recordTo, orderBy);
+			List<RestOrder> list = procOrderManager.getAndSelectOrders(mission, identifier, state, productClass, startTimeFrom,
+					startTimeTo, recordFrom, recordTo, orderBy);
 
 			return new ResponseEntity<>(list, HttpStatus.OK);
 		} catch (SecurityException e) {
@@ -129,18 +141,29 @@ public class OrderControllerImpl implements OrderController {
 	}
 
 	/**
-	 * Calculate the amount of orders satisfying the selection parameters
+	 * Calculate the amount of orders satisfying the selection parameters. Mission code is mandatory.
 	 *
+	 * @param mission       the mission code
+	 * @param identifier    the unique order identifier string
+	 * @param state         an array of order states
+	 * @param productClass  an array of product types
+	 * @param startTimeFrom earliest sensing start time
+	 * @param startTimeTo   latest sensing start time
+	 * @param recordFrom    first record of filtered and ordered result to return
+	 * @param recordTo      last record of filtered and ordered result to return
+	 * @param orderBy       an array of strings containing a column name and an optional sort direction (ASC/DESC),separated by
+	 *                      white space
+	 * @return The order count
 	 */
 	@Override
 	public ResponseEntity<String> countSelectOrders(String mission, String identifier, String[] state, String[] productClass,
-			String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {
+			String startTimeFrom, String startTimeTo, Long recordFrom, Long recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getAndSelectOrders({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, identifier, state,
-					productClass, startTime, stopTime, recordFrom, recordTo, orderBy);
+					productClass, startTimeFrom, startTimeTo, recordFrom, recordTo, orderBy);
 
 		try {
-			String count = procOrderManager.countSelectOrders(mission, identifier, state, productClass, startTime, stopTime,
+			String count = procOrderManager.countSelectOrders(mission, identifier, state, productClass, startTimeFrom, startTimeTo,
 					recordFrom, recordTo, orderBy);
 
 			return new ResponseEntity<>(count, HttpStatus.OK);
@@ -155,7 +178,7 @@ public class OrderControllerImpl implements OrderController {
 	 * Find the order with the given ID
 	 *
 	 * @param id the ID to look for
-	 * @return HTTP status "OK" and a Json object corresponding to the found order or HTTP status "FORBIDDEN" and an error message,
+	 * @return HTTP status "OK" and a JSON object corresponding to the found order or HTTP status "FORBIDDEN" and an error message,
 	 *         if a cross-mission data access was attempted, or HTTP status "NOT_FOUND", if no orbit with the given ID exists
 	 */
 	@Override
@@ -200,23 +223,23 @@ public class OrderControllerImpl implements OrderController {
 	}
 
 	/**
-	 * Update the order with the given ID with the attribute values of the given Json object.
+	 * Update the order with the given ID with the attribute values of the given JSON object.
 	 *
-	 * @param id    the ID of the order to update
-	 * @param order a Json object containing the modified (and unmodified) attributes
-	 * @return a response containing HTTP status "OK" and a Json object corresponding to the order after modification (with ID and
+	 * @param id        the ID of the order to update
+	 * @param restOrder a JSON object containing the modified (and unmodified) attributes
+	 * @return a response containing HTTP status "OK" and a JSON object corresponding to the order after modification (with ID and
 	 *         version for all contained objects) or HTTP status "NOT_MODIFIED" and the unchanged order, if no attributes were
 	 *         actually changed, or HTTP status "NOT_FOUND" and an error message, if no order with the given ID exists, or HTTP
 	 *         status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
 	 */
-	// To be Tested
+	// TODO To be Tested
 	@Override
-	public ResponseEntity<RestOrder> modifyOrder(Long id, @Valid RestOrder order) {
+	public ResponseEntity<RestOrder> modifyOrder(Long id, @Valid RestOrder restOrder) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> modifyOrder({})", id);
 		try {
-			RestOrder changedOrder = procOrderManager.modifyOrder(id, order);
-			HttpStatus httpStatus = (order.getVersion() == changedOrder.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
+			RestOrder changedOrder = procOrderManager.modifyOrder(id, restOrder);
+			HttpStatus httpStatus = (restOrder.getVersion() == changedOrder.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
 			return new ResponseEntity<>(changedOrder, httpStatus);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
@@ -233,8 +256,8 @@ public class OrderControllerImpl implements OrderController {
 	 * Count orders filtered by mission, identifier and id not equal nid.
 	 *
 	 * @param mission    The mission code
-	 * @param identifier The identifier of an order
-	 * @param nid        The ids of orbit(s) found has to be not equal nid
+	 * @param identifier The unique order identifier string
+	 * @param nid        The ids of orbit(s) found has to be unequal to nid
 	 * @return The number of orders found
 	 */
 	@Transactional
@@ -269,7 +292,7 @@ public class OrderControllerImpl implements OrderController {
 		if (null != identifier) {
 			query.setParameter("nid", nid);
 		}
-		
+
 		Object resultObject = query.getSingleResult();
 		if (resultObject instanceof Long) {
 			return new ResponseEntity<>(((Long) resultObject).toString(), HttpStatus.OK);
@@ -277,7 +300,7 @@ public class OrderControllerImpl implements OrderController {
 		if (resultObject instanceof String) {
 			return new ResponseEntity<>((String) resultObject, HttpStatus.OK);
 		}
-		
+
 		return new ResponseEntity<>("0", HttpStatus.OK);
 	}
 
