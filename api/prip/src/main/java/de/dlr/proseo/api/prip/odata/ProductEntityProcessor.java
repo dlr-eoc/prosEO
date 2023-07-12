@@ -588,8 +588,8 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	}
 
 	/*
-	 * ------------------------------------------------------------------------------------ The methods below are not available on
-	 * the PRIP, since this is a read-only interface
+	 * ------------------------------------------------------------------------------------ 
+	 * The methods below are not available on the PRIP, since this is a read-only interface
 	 * ------------------------------------------------------------------------------------
 	 */
 
