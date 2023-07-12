@@ -1,3 +1,8 @@
+/**
+ * ServiceConnection.java
+ *
+ * (C) 2023 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.api.odip.service;
 
 import java.io.IOException;
@@ -43,18 +48,17 @@ import de.dlr.proseo.logging.messages.OdipMessage;
 
 /**
  * Service class to connect to the prosEO backend services from odip
- * 
+ *
  * @author Dr. Thomas Bassler, Ernst Melchinger
  */
 @Service
 public class ServiceConnection {
-	
+
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ServiceConnection.class);
-	
+
 	private static String HTTP_PREFIX = "199 proseo-odip ";
 	private static OdipHttp http = new OdipHttp(logger, HTTP_PREFIX);
-
 
 	/** REST template builder */
 	@Autowired
@@ -65,31 +69,34 @@ public class ServiceConnection {
 	 */
 	@Autowired
 	OdipConfiguration config;
-	
+
 	/**
 	 * Calls a prosEO service at the given location with HTTP GET
-	 * 
-	 * @param <T> the class of the REST object to return
-	 * @param serviceUrl the base URL of the service (protocol, hostname, port, base URI)
+	 *
+	 * @param <T>         the class of the REST object to return
+	 * @param serviceUrl  the base URL of the service (protocol, hostname, port, base URI)
 	 * @param requestPath the specific request path including request parameters
-	 * @param clazz the class of the return object
-	 * @param username the username for basic HTTP authentication (optional)
-	 * @param password the password for basic HTTP authentication (optional)
+	 * @param clazz       the class of the return object
+	 * @param username    the username for basic HTTP authentication (optional)
+	 * @param password    the password for basic HTTP authentication (optional)
 	 * @return the body of the HTTP response converted into an object of the expected class
 	 * @throws RestClientException if an error (HTTP status code 4xx or 5xx) occurred in the communication to the service
-	 * @throws RuntimeException if the service returned an HTTP status different from OK (200)
+	 * @throws RuntimeException    if the service returned an HTTP status different from OK (200)
 	 */
-	public <T> T getFromService(String serviceUrl, String requestPath, Class<T> clazz, String username, String password) throws RestClientException, RuntimeException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getFromService({}, {}, {}, user, password)", serviceUrl, requestPath, clazz);
-		
+	public <T> T getFromService(String serviceUrl, String requestPath, Class<T> clazz, String username, String password)
+			throws RestClientException, RuntimeException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getFromService({}, {}, {}, user, password)", serviceUrl, requestPath, clazz);
+
 		// Attempt connection to service
 		ResponseEntity<T> entity = null;
 		try {
-			RestTemplate restTemplate = ( null == username ? rtb : rtb.basicAuthentication(username, password) )
-					.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
-					.build();
+			RestTemplate restTemplate = (null == username ? rtb : rtb.basicAuthentication(username, password))
+				.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+				.build();
 			URI requestUrl = URI.create(serviceUrl + requestPath);
-			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
+			if (logger.isTraceEnabled())
+				logger.trace("... calling service URL {} with GET", requestUrl);
 			entity = restTemplate.getForEntity(requestUrl, clazz);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
 			String message = http.createMessageFromHeaders(e.getStatusCode(), e.getResponseHeaders());
@@ -97,10 +104,10 @@ public class ServiceConnection {
 			throw new HttpClientErrorException(e.getStatusCode(), message);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
 			String warningMessage = http.extractProseoMessage(e.getResponseHeaders().getFirst(HttpHeaders.WARNING));
-			if (warningMessage == null) 
+			if (warningMessage == null)
 				logger.log(OdipMessage.EXTRACTED_MESSAGE, warningMessage);
-				else
-					logger.log(OdipMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
+			else
+				logger.log(OdipMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
 			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
 		} catch (RestClientResponseException e) {
 			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getMessage());
@@ -110,43 +117,47 @@ public class ServiceConnection {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
 			throw new RuntimeException(e);
 		}
-		
+
 		// All GET requests should return HTTP status OK
 		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
 			String message = http.createMessageFromHeaders(entity.getStatusCode(), entity.getHeaders());
 			logger.log(OdipMessage.EXTRACTED_MESSAGE, message);
 			throw new RuntimeException(message);
 		}
-		
+
 		// Check connection result
-		if (logger.isTraceEnabled()) logger.trace("<<< getFromService()");
+		if (logger.isTraceEnabled())
+			logger.trace("<<< getFromService()");
 		return entity.getBody();
 	}
 
 	/**
 	 * Calls a prosEO service at the given location with HTTP PUT
-	 * 
-	 * @param <T> the class of the REST object to use as PUT data
-	 * @param serviceUrl the base URL of the service (protocol, hostname, port, base URI)
+	 *
+	 * @param <T>         the class of the REST object to use as PUT data
+	 * @param serviceUrl  the base URL of the service (protocol, hostname, port, base URI)
 	 * @param requestPath the specific request path including request parameters
-	 * @param clazz the class of the return object
-	 * @param username the username for basic HTTP authentication (optional)
-	 * @param password the password for basic HTTP authentication (optional)
+	 * @param clazz       the class of the return object
+	 * @param username    the username for basic HTTP authentication (optional)
+	 * @param password    the password for basic HTTP authentication (optional)
 	 * @return the body of the HTTP response converted into an object of the expected class
 	 * @throws RestClientException if an error (HTTP status code 4xx or 5xx) occurred in the communication to the service
-	 * @throws RuntimeException if the service returned an HTTP status different from OK (200)
+	 * @throws RuntimeException    if the service returned an HTTP status different from OK (200)
 	 */
-	public <T> T putToService(String serviceUrl, String requestPath, Class<T> clazz, String username, String password) throws RestClientException, RuntimeException {
-		if (logger.isTraceEnabled()) logger.trace(">>> putToService({}, {}, {}, user, password)", serviceUrl, requestPath, clazz);
-		
+	public <T> T putToService(String serviceUrl, String requestPath, Class<T> clazz, String username, String password)
+			throws RestClientException, RuntimeException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> putToService({}, {}, {}, user, password)", serviceUrl, requestPath, clazz);
+
 		// Attempt connection to service
 		ResponseEntity<T> entity = null;
 		try {
-			RestTemplate restTemplate = ( null == username ? rtb : rtb.basicAuthentication(username, password) )
-					.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
-					.build();
+			RestTemplate restTemplate = (null == username ? rtb : rtb.basicAuthentication(username, password))
+				.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+				.build();
 			RequestEntity<Void> requestEntity = RequestEntity.put(URI.create(serviceUrl + requestPath)).build();
-			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestEntity.getUrl());
+			if (logger.isTraceEnabled())
+				logger.trace("... calling service URL {} with GET", requestEntity.getUrl());
 			entity = restTemplate.exchange(requestEntity, clazz);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
 			String message = http.createMessageFromHeaders(e.getStatusCode(), e.getResponseHeaders());
@@ -154,10 +165,10 @@ public class ServiceConnection {
 			throw new HttpClientErrorException(e.getStatusCode(), message);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
 			String warningMessage = http.extractProseoMessage(e.getResponseHeaders().getFirst(HttpHeaders.WARNING));
-			if (warningMessage == null) 
+			if (warningMessage == null)
 				logger.log(OdipMessage.EXTRACTED_MESSAGE, warningMessage);
-				else
-					logger.log(OdipMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
+			else
+				logger.log(OdipMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
 			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
 		} catch (RestClientResponseException e) {
 			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getMessage());
@@ -167,45 +178,48 @@ public class ServiceConnection {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
 			throw new RuntimeException(e);
 		}
-		
+
 		// All PUT requests should return HTTP status OK (for updates) or CREATED (for newly created items)
 		if (!HttpStatus.OK.equals(entity.getStatusCode()) && !HttpStatus.CREATED.equals(entity.getStatusCode())) {
 			String message = http.createMessageFromHeaders(entity.getStatusCode(), entity.getHeaders());
 			logger.log(OdipMessage.EXTRACTED_MESSAGE, message);
 			throw new RuntimeException(message);
 		}
-		
+
 		// Check connection result
-		if (logger.isTraceEnabled()) logger.trace("<<< putToService()");
+		if (logger.isTraceEnabled())
+			logger.trace("<<< putToService()");
 		return entity.getBody();
 	}
-	
+
 	/**
 	 * Calls a prosEO service at the given location with HTTP Post
-	 * 
-	 * @param <T> the class of the REST object to use as POST data
-	 * @param serviceUrl the base URL of the service (protocol, hostname, port, base URI)
+	 *
+	 * @param <T>         the class of the REST object to use as POST data
+	 * @param serviceUrl  the base URL of the service (protocol, hostname, port, base URI)
 	 * @param requestPath the specific request path including request parameters
-	 * @param restObject the object to post to the service
-	 * @param clazz the class of the expected result object
-	 * @param username the username for basic HTTP authentication (optional)
-	 * @param password the password for basic HTTP authentication (optional)
+	 * @param restObject  the object to post to the service
+	 * @param clazz       the class of the expected result object
+	 * @param username    the username for basic HTTP authentication (optional)
+	 * @param password    the password for basic HTTP authentication (optional)
 	 * @return the body of the HTTP response converted into an object of the expected class
 	 * @throws RestClientException if an error (HTTP status code 4xx or 5xx) occurred in the communication to the service
-	 * @throws RuntimeException if the service returned an HTTP status different from OK (200)
+	 * @throws RuntimeException    if the service returned an HTTP status different from OK (200)
 	 */
-	public <T> T postToService(String serviceUrl, String requestPath, Object restObject, Class<T> clazz, String username, String password)
-			throws RestClientException, RuntimeException {
-		if (logger.isTraceEnabled()) logger.trace(">>> postToService({}, {}, object, user, password)", serviceUrl, requestPath);
-		
+	public <T> T postToService(String serviceUrl, String requestPath, Object restObject, Class<T> clazz, String username,
+			String password) throws RestClientException, RuntimeException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> postToService({}, {}, object, user, password)", serviceUrl, requestPath);
+
 		// Attempt connection to service
 		ResponseEntity<T> entity = null;
 		try {
-			RestTemplate restTemplate = ( null == username ? rtb : rtb.basicAuthentication(username, password) )
-					.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
-					.build();
+			RestTemplate restTemplate = (null == username ? rtb : rtb.basicAuthentication(username, password))
+				.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+				.build();
 			URI requestUrl = URI.create(serviceUrl + requestPath);
-			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with POST", requestUrl);
+			if (logger.isTraceEnabled())
+				logger.trace("... calling service URL {} with POST", requestUrl);
 			entity = restTemplate.postForEntity(requestUrl, restObject, clazz);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
 			String message = http.createMessageFromHeaders(e.getStatusCode(), e.getResponseHeaders());
@@ -213,10 +227,10 @@ public class ServiceConnection {
 			throw new HttpClientErrorException(e.getStatusCode(), message);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
 			String warningMessage = http.extractProseoMessage(e.getResponseHeaders().getFirst(HttpHeaders.WARNING));
-			if (warningMessage == null) 
+			if (warningMessage == null)
 				logger.log(OdipMessage.EXTRACTED_MESSAGE, warningMessage);
-				else
-					logger.log(OdipMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
+			else
+				logger.log(OdipMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
 			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
 		} catch (RestClientResponseException e) {
 			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getMessage());
@@ -226,45 +240,49 @@ public class ServiceConnection {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
 			throw new RuntimeException(e);
 		}
-		
+
 		// Check for NOT_MODIFIED (POST used for creating sub-objects)
 		if (HttpStatus.NOT_MODIFIED.equals(entity.getStatusCode())) {
-			throw new RestClientResponseException(entity.getHeaders().getFirst(HttpHeaders.WARNING), HttpStatus.NOT_MODIFIED.value(),
-					HttpStatus.NOT_MODIFIED.toString(), entity.getHeaders(), "".getBytes(), Charset.defaultCharset());
+			throw new RestClientResponseException(entity.getHeaders().getFirst(HttpHeaders.WARNING),
+					HttpStatus.NOT_MODIFIED.value(), HttpStatus.NOT_MODIFIED.toString(), entity.getHeaders(), "".getBytes(),
+					Charset.defaultCharset());
 		}
-		
+
 		// All successful POST requests should return HTTP status CREATED
 		if (!HttpStatus.CREATED.equals(entity.getStatusCode())) {
 			String message = http.createMessageFromHeaders(entity.getStatusCode(), entity.getHeaders());
 			logger.log(OdipMessage.EXTRACTED_MESSAGE, message);
 			throw new RuntimeException(message);
 		}
-		
+
 		// Check connection result
-		if (logger.isTraceEnabled()) logger.trace("<<< getFromService()");
+		if (logger.isTraceEnabled())
+			logger.trace("<<< getFromService()");
 		return entity.getBody();
 	}
-	
+
 	/**
 	 * Calls a prosEO service at the given location with HTTP Patch
-	 * 
-	 * @param <T> the class of the REST object to use as PATCH data
-	 * @param serviceUrl the base URL of the service (protocol, hostname, port, base URI)
+	 *
+	 * @param <T>         the class of the REST object to use as PATCH data
+	 * @param serviceUrl  the base URL of the service (protocol, hostname, port, base URI)
 	 * @param requestPath the specific request path including request parameters
-	 * @param restObject the object to patch to the service
-	 * @param clazz the class of the expected result object
-	 * @param username the username for basic HTTP authentication (optional)
-	 * @param password the password for basic HTTP authentication (optional)
+	 * @param restObject  the object to patch to the service
+	 * @param clazz       the class of the expected result object
+	 * @param username    the username for basic HTTP authentication (optional)
+	 * @param password    the password for basic HTTP authentication (optional)
 	 * @return the body of the HTTP response converted into an object of the expected class
 	 * @throws RestClientException if an error (HTTP status code 4xx or 5xx) occurred in the communication to the service
-	 * @throws RuntimeException if the service returned an HTTP status different from OK (200) or another unrecoverable error occurred
+	 * @throws RuntimeException    if the service returned an HTTP status different from OK (200) or another unrecoverable error
+	 *                             occurred
 	 */
-	public <T> T patchToService(String serviceUrl, String requestPath, Object restObject, Class<T> clazz, String username, String password)
-			throws RestClientException, RuntimeException {
-		if (logger.isTraceEnabled()) logger.trace(">>> patchToService({}, {}, object, user, password)", serviceUrl, requestPath);
-		
+	public <T> T patchToService(String serviceUrl, String requestPath, Object restObject, Class<T> clazz, String username,
+			String password) throws RestClientException, RuntimeException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> patchToService({}, {}, object, user, password)", serviceUrl, requestPath);
+
 		// Implementation does not rely on RestTemplate, as this seems to be buggy for PATCH!
-		
+
 		// Build an HTTP request
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setSerializationInclusion(JsonInclude.Include.NON_ABSENT);
@@ -277,11 +295,13 @@ public class ServiceConnection {
 			String message = logger.log(OdipMessage.INVALID_URL, serviceUrl + requestPath, e.getMessage());
 			throw new RuntimeException(message, e);
 		}
-		req.addHeader(new BasicHeader(AUTH.WWW_AUTH_RESP, AuthSchemes.BASIC + " " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes())));
+		req.addHeader(new BasicHeader(AUTH.WWW_AUTH_RESP,
+				AuthSchemes.BASIC + " " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes())));
 		req.addHeader(new BasicHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_JSON.toString()));
 		try {
 			String jsonObject = mapper.writeValueAsString(restObject);
-			if (logger.isTraceEnabled()) logger.trace("... serialized Json object: " + jsonObject);
+			if (logger.isTraceEnabled())
+				logger.trace("... serialized Json object: " + jsonObject);
 			req.setEntity(new StringEntity(jsonObject));
 		} catch (Exception e) {
 			String message = logger.log(OdipMessage.SERIALIZATION_FAILED, e.getMessage());
@@ -289,12 +309,13 @@ public class ServiceConnection {
 		}
 		// Execute the HTTP request
 		try {
-			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with PATCH", serviceUrl + requestPath);
-			
-			String responseContent =  httpclient.execute(req, httpResponse -> {
+			if (logger.isTraceEnabled())
+				logger.trace("... calling service URL {} with PATCH", serviceUrl + requestPath);
+
+			String responseContent = httpclient.execute(req, httpResponse -> {
 				int httpStatusCode = httpResponse.getStatusLine().getStatusCode();
 				Header warningHeader = httpResponse.getFirstHeader(HttpHeaders.WARNING);
-				
+
 				String message = null;
 				String proseoMessage = null;
 				if (null == warningHeader) {
@@ -309,14 +330,14 @@ public class ServiceConnection {
 						message = proseoMessage;
 					}
 				}
-				
+
 				if (HttpStatus.UNAUTHORIZED.value() == httpStatusCode || HttpStatus.FORBIDDEN.value() == httpStatusCode) {
 					if (null != httpResponse.getEntity())
 						httpResponse.getEntity().getContent().close();
-					if (proseoMessage == null) 
+					if (proseoMessage == null)
 						logger.log(OdipMessage.EXTRACTED_MESSAGE, proseoMessage);
-						else
-							logger.log(OdipMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
+					else
+						logger.log(OdipMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
 					throw new HttpClientErrorException(HttpStatus.UNAUTHORIZED, proseoMessage);
 				} else if (HttpStatus.NOT_FOUND.value() == httpStatusCode || HttpStatus.BAD_REQUEST.value() == httpStatusCode) {
 					if (null != httpResponse.getEntity())
@@ -327,9 +348,9 @@ public class ServiceConnection {
 					if (null != httpResponse.getEntity())
 						httpResponse.getEntity().getContent().close();
 					logger.log(OdipMessage.NOT_MODIFIED);
-					throw new RestClientResponseException(message, httpStatusCode, 
-							HttpStatus.NOT_MODIFIED.getReasonPhrase(), null, null, null);
-				} else if (300 <= httpStatusCode){
+					throw new RestClientResponseException(message, httpStatusCode, HttpStatus.NOT_MODIFIED.getReasonPhrase(), null,
+							null, null);
+				} else if (300 <= httpStatusCode) {
 					String reasonPhrase = httpResponse.getStatusLine().getReasonPhrase();
 					if (null != httpResponse.getEntity())
 						httpResponse.getEntity().getContent().close();
@@ -338,10 +359,10 @@ public class ServiceConnection {
 				}
 				return IOUtils.toString(httpResponse.getEntity().getContent(), StandardCharsets.UTF_8);
 			});
-			
+
 			// Convert Json response to object of requested class
 			return mapper.readValue(responseContent, clazz);
-			
+
 		} catch (IOException e) {
 			String message = logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getMessage());
 			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e);
@@ -355,28 +376,31 @@ public class ServiceConnection {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	/**
 	 * Calls a prosEO service at the given location with HTTP DELETE
-	 * 
-	 * @param serviceUrl the base URL of the service (protocol, hostname, port, base URI)
+	 *
+	 * @param serviceUrl  the base URL of the service (protocol, hostname, port, base URI)
 	 * @param requestPath the specific request path including request parameters
-	 * @param username the username for basic HTTP authentication (optional)
-	 * @param password the password for basic HTTP authentication (optional)
+	 * @param username    the username for basic HTTP authentication (optional)
+	 * @param password    the password for basic HTTP authentication (optional)
 	 * @throws RestClientException if an error (HTTP status code 304, 4xx or 5xx) occurred in the communication to the service
 	 */
-	public void deleteFromService(String serviceUrl, String requestPath, String username, String password) throws RestClientException {
-		if (logger.isTraceEnabled()) logger.trace(">>> deleteFromService({}, {}, user, password)", serviceUrl, requestPath);
-		
+	public void deleteFromService(String serviceUrl, String requestPath, String username, String password)
+			throws RestClientException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteFromService({}, {}, user, password)", serviceUrl, requestPath);
+
 		// Attempt connection to service
 		ResponseEntity<Object> entity = null;
 		try {
-			RestTemplate restTemplate = ( null == username ? rtb : rtb.basicAuthentication(username, password) )
-					.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
-					.build();
+			RestTemplate restTemplate = (null == username ? rtb : rtb.basicAuthentication(username, password))
+				.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+				.build();
 			URI requestUrl = URI.create(serviceUrl + requestPath);
-			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with DELETE", requestUrl);
-			//restTemplate.delete(requestUrl);
+			if (logger.isTraceEnabled())
+				logger.trace("... calling service URL {} with DELETE", requestUrl);
+			// restTemplate.delete(requestUrl);
 			entity = restTemplate.exchange(requestUrl, HttpMethod.DELETE, null, Object.class);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
 			String message = http.createMessageFromHeaders(e.getStatusCode(), e.getResponseHeaders());
@@ -385,10 +409,10 @@ public class ServiceConnection {
 					e.getResponseHeaders(), e.getResponseBodyAsByteArray(), StandardCharsets.UTF_8);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
 			String warningMessage = http.extractProseoMessage(e.getResponseHeaders().getFirst(HttpHeaders.WARNING));
-			if (warningMessage == null) 
+			if (warningMessage == null)
 				logger.log(OdipMessage.EXTRACTED_MESSAGE, warningMessage);
-				else
-					logger.log(OdipMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
+			else
+				logger.log(OdipMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
 			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
 		} catch (RestClientResponseException e) {
 			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getMessage());
@@ -401,7 +425,7 @@ public class ServiceConnection {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
 			throw new RuntimeException(e);
 		}
-		
+
 		// Check for deletion failure indicated by 304 NOT_MODIFIED
 		if (HttpStatus.NOT_MODIFIED.equals(entity.getStatusCode())) {
 			String message = http.createMessageFromHeaders(entity.getStatusCode(), entity.getHeaders());
@@ -412,9 +436,9 @@ public class ServiceConnection {
 			// Ignore unexpected status code, but log it as warning
 			logger.log(OdipMessage.WARN_UNEXPECTED_STATUS, entity.getStatusCode().getReasonPhrase());
 		}
-		
-		if (logger.isTraceEnabled()) logger.trace("<<< deleteFromService()");
-	}
-	
-}
 
+		if (logger.isTraceEnabled())
+			logger.trace("<<< deleteFromService()");
+	}
+
+}

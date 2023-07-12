@@ -1,3 +1,8 @@
+/**
+ * OdipHttp.java
+ *
+ * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.api.odip;
 
 import org.springframework.http.HttpHeaders;
