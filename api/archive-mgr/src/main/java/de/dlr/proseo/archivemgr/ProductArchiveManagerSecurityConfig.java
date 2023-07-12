@@ -1,6 +1,6 @@
 /**
  * ProductArchiveManagerSecurityConfig.java
- * 
+ *
  * (c) 2023 DLR
  */
 package de.dlr.proseo.archivemgr;
@@ -26,7 +26,7 @@ import de.dlr.proseo.model.enums.UserRole;
 
 /**
  * Security configuration for prosEO Product Archive Manager module
- * 
+ *
  * @author Ranjitha Vignesh
  */
 @Configuration
@@ -39,28 +39,31 @@ public class ProductArchiveManagerSecurityConfig extends WebSecurityConfigurerAd
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductArchiveManagerSecurityConfig.class);
-	
+
 	/**
 	 * Set the Facility Manager security options
-	 * 
+	 *
 	 * @param http the HTTP security object
 	 */
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http
-			.httpBasic()
-				.and()
+		http.httpBasic()
+			.and()
 			.authorizeRequests()
-				.antMatchers("/**/actuator/health").permitAll()
-				.antMatchers(HttpMethod.GET).hasAnyRole(UserRole.ARCHIVE_READER.toString())
-				.anyRequest().hasAnyRole(UserRole.ARCHIVE_MGR.toString())
-				.and()
-			.csrf().disable(); // Required for POST requests (or configure CSRF)
+			.antMatchers("/**/actuator/health")
+			.permitAll()
+			.antMatchers(HttpMethod.GET)
+			.hasAnyRole(UserRole.ARCHIVE_READER.toString())
+			.anyRequest()
+			.hasAnyRole(UserRole.ARCHIVE_MGR.toString())
+			.and()
+			.csrf()
+			.disable(); // Required for POST requests (or configure CSRF)
 	}
 
 	/**
 	 * Initialize the users, passwords and roles for the Facility Manager from the prosEO database
-	 * 
+	 *
 	 * @param builder to manage authentications
 	 * @throws Exception if anything goes wrong with JDBC authentication
 	 */
@@ -73,19 +76,20 @@ public class ProductArchiveManagerSecurityConfig extends WebSecurityConfigurerAd
 
 	/**
 	 * Provides the default password encoder for prosEO (BCrypt)
-	 * 
+	 *
 	 * @return a BCryptPasswordEncoder
 	 */
 	@Bean
 	public PasswordEncoder passwordEncoder() {
-	    return new BCryptPasswordEncoder();
+		return new BCryptPasswordEncoder();
 	}
 
 	/**
 	 * Provides the default user details service for prosEO (based on the standard data model for users and groups)
-	 * 
+	 *
 	 * @return a JdbcDaoImpl object
 	 */
+	@Override
 	@Bean
 	public UserDetailsService userDetailsService() {
 		logger.log(GeneralMessage.INITIALIZING_USER_DETAILS_SERVICE, dataSource);
@@ -93,7 +97,8 @@ public class ProductArchiveManagerSecurityConfig extends WebSecurityConfigurerAd
 		JdbcDaoImpl jdbcDaoImpl = new JdbcDaoImpl();
 		jdbcDaoImpl.setDataSource(dataSource);
 		jdbcDaoImpl.setEnableGroups(true);
-		
+
 		return jdbcDaoImpl;
 	}
+
 }
