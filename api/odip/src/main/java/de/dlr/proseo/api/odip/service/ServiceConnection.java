@@ -41,8 +41,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.api.odip.OdipConfiguration;
-import de.dlr.proseo.api.odip.OdipHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.http.ProseoHttp;
+import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.OdipMessage;
 
@@ -57,8 +58,8 @@ public class ServiceConnection {
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ServiceConnection.class);
 
-	private static String HTTP_PREFIX = "199 proseo-odip ";
-	private static OdipHttp http = new OdipHttp(logger, HTTP_PREFIX);
+	/** HTTP utility class */
+	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.ODIP);
 
 	/** REST template builder */
 	@Autowired
