@@ -378,6 +378,14 @@ public class AttributeLambdaExpressionVisitor implements ExpressionVisitor<Attri
 				HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
 	}
 
+	/**
+	 * Visits a literal in the attribute lambda expression.
+	 *
+	 * @param literal The literal.
+	 * @return An {@link AttributeCondition} representing the literal.
+	 * @throws ExpressionVisitException  If an error occurs while visiting the literal.
+	 * @throws ODataApplicationException If an unsupported literal type is encountered.
+	 */
 	@Override
 	public AttributeCondition visitLiteral(Literal literal) throws ExpressionVisitException, ODataApplicationException {
 		if (logger.isTraceEnabled())

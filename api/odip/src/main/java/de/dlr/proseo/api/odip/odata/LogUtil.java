@@ -27,7 +27,7 @@ public class LogUtil {
 	 *
 	 * @param statusCode the HTTP status code to set
 	 * @param message    the message to set
-	 * @return
+	 * @return the created ODataServerError
 	 */
 	public static ODataServerError oDataServerError(int statusCode, String message) {
 		ODataServerError serverError = new ODataServerError();

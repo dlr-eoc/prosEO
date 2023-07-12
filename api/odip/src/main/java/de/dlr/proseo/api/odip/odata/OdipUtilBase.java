@@ -944,12 +944,11 @@ public class OdipUtilBase {
 	}
 
 	/**
-	 * Send the new order to order manager, then approve, plan and release the new order. Plan and release is done in sequence by
-	 * the planner.
+	 * Sends an order to the production planner and releases it.
 	 *
-	 * @param order the new order
-	 * @return
-	 * @throws OdipException
+	 * @param order The order to be sent and released.
+	 * @return The created order after sending and releasing.
+	 * @throws OdipException If an error occurs during the process of sending and releasing the order.
 	 */
 	@Transactional
 	public RestOrder sendAndReleaseOrder(RestOrder order) throws OdipException {
@@ -1107,6 +1106,12 @@ public class OdipUtilBase {
 		return createdOrder;
 	}
 
+	/**
+	 * Finds a product by its reference.
+	 *
+	 * @param reference The reference of the product.
+	 * @return The product matching the reference, or null if not found.
+	 */
 	public Product findProductByReference(String reference) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> findProductByReference({})", reference);

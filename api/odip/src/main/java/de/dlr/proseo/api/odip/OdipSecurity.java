@@ -57,6 +57,7 @@ public class OdipSecurity {
 	 * Parse an HTTP authentication header into mission, username and password and set the respective thread-local attributes
 	 *
 	 * @param authHeader the authentication header to parse, expected format: "Basic base64(mission&#92;username:password)"
+	 * @return the parsed UserInfo
 	 * @throws IllegalArgumentException if the authentication header cannot be parsed into the three parts expected
 	 */
 	/* package */ UserInfo parseAuthenticationHeader(String authHeader) throws IllegalArgumentException {

@@ -57,6 +57,8 @@ public class OdipConfiguration {
 	private String aipUrl;
 
 	/**
+	 * Gets the AIP URL
+	 * 
 	 * @return the aipUrl
 	 */
 	public String getAipUrl() {
@@ -64,6 +66,8 @@ public class OdipConfiguration {
 	}
 
 	/**
+	 * Gets the processing facility
+	 * 
 	 * @return the facility
 	 */
 	public String getFacility() {
@@ -71,6 +75,8 @@ public class OdipConfiguration {
 	}
 
 	/**
+	 * Gets the timeout for HTTP connections
+	 * 
 	 * @return the httpTimeout
 	 */
 	public Long getHttpTimeout() {
@@ -78,6 +84,8 @@ public class OdipConfiguration {
 	}
 
 	/**
+	 * Gets the production planner URL
+	 * 
 	 * @return the productionPlannerUrl
 	 */
 	public String getProductionPlannerUrl() {
@@ -85,6 +93,8 @@ public class OdipConfiguration {
 	}
 
 	/**
+	 * Gets the order manager URL
+	 * 
 	 * @return the orderManagerUrl
 	 */
 	public String getOrderManagerUrl() {

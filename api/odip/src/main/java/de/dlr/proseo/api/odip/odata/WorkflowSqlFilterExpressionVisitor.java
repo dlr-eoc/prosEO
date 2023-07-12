@@ -322,7 +322,8 @@ public class WorkflowSqlFilterExpressionVisitor implements ExpressionVisitor<Str
 	 * Visits a binary operator expression.
 	 *
 	 * @param operator The binary operator kind
-	 * @param operand  The operand
+	 * @param left     The left operand
+	 * @param right    The list of right operands
 	 * @return The SQL representation of the binary operator expression
 	 * @throws ExpressionVisitException  If an error occurs while visiting the expression
 	 * @throws ODataApplicationException If an invalid binary operator type is encountered

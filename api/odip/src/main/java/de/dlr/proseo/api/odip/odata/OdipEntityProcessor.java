@@ -166,8 +166,7 @@ public class OdipEntityProcessor implements EntityProcessor {
 	/**
 	 * Get the metadata for a single production order from the prosEO Order Manager service
 	 *
-	 * @param productionOrderUuid the UUID of the production order to retrieve
-	 *
+	 * @param productionOrderIdentifier the UUID of the production order to retrieve
 	 * @return a production order object
 	 * @throws NoResultException if a production order with the requested UUID could not be found in the database
 	 * @throws SecurityException if the logged in user is not authorized to access the requested production order
