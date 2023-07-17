@@ -703,7 +703,7 @@ public class DownloadManager {
 		
 		String authorizationHeader = archive.isTokenRequired() ?
 				"Bearer " + getBearerToken(archive) : 
-    			"Basic " + Base64.getEncoder().encode((archive.getUsername() + ":" + archive.getPassword()).getBytes());
+    			"Basic " + Base64.getEncoder().encodeToString((archive.getUsername() + ":" + archive.getPassword()).getBytes());
 		request = request.header(HttpHeaders.AUTHORIZATION, authorizationHeader);
 				
 		// Perform product order request
@@ -762,7 +762,7 @@ public class DownloadManager {
 
 		String authorizationHeader = archive.isTokenRequired() ?
 				"Bearer " + getBearerToken(archive) : 
-    			"Basic " + Base64.getEncoder().encode((archive.getUsername() + ":" + archive.getPassword()).getBytes());
+    			"Basic " + Base64.getEncoder().encodeToString((archive.getUsername() + ":" + archive.getPassword()).getBytes());
 		
 		// Retrieve products
 		if (logger.isTraceEnabled()) logger.trace("... requesting {} list at URL '{}'", queryEntity, oDataServiceRoot);
@@ -878,10 +878,11 @@ public class DownloadManager {
 	 * 
 	 * @param archive the archive to download from
 	 * @param product the product to download
+	 * @param missionCode TODO
 	 * @return a product representation useful for product ingestion (including the target file path of the download)
 	 * @throws IOException if any error occurs during the download process
 	 */
-	private IngestorProduct downloadProduct(ProductArchive archive, RestProduct product) throws IOException {
+	private IngestorProduct downloadProduct(ProductArchive archive, RestProduct product, String missionCode) throws IOException {
 		if (logger.isTraceEnabled()) logger.trace(">>> downloadProduct({}, {})",
 				(null == archive ? "NULL" : archive.getCode()),
 				(null == product ? "NULL" : product.getUuid()));
@@ -1004,7 +1005,7 @@ public class DownloadManager {
 		
 		// Create product representation for Ingestor
 		IngestorProduct ingestorProduct = new IngestorProduct();
-		ingestorProduct.setMissionCode(securityService.getMission());
+		ingestorProduct.setMissionCode(missionCode);
 		ingestorProduct.setUuid(product.getUuid());
 		ingestorProduct.setProductClass(product.getProductClass());
 		ingestorProduct.setProductQuality(ProductQuality.NOMINAL.toString());
@@ -1109,8 +1110,9 @@ public class DownloadManager {
 			return;
 		}
 
-		// Get the user from the current security context (not preserved to spawned thread)
+		// Get the user and mission code from the current security context (not preserved to spawned thread)
 		String user = securityService.getUser();
+		String missionCode = securityService.getMission();
 		
 		// Create a new thread
 		Thread downloadThread = new Thread() {
@@ -1133,7 +1135,7 @@ public class DownloadManager {
 					
 					// Download the product by product UUID
 					IngestorProduct ingestorProduct = null;
-					ingestorProduct = downloadProduct(archive, product);
+					ingestorProduct = downloadProduct(archive, product, missionCode);
 					
 					// Ingest product to prosEO
 					ingestProduct(ingestorProduct, facility, user, password);
@@ -1169,7 +1171,7 @@ public class DownloadManager {
 		// Request the product from the archive
 		List<ClientEntity> productList = null;
 		try {
-			productList = queryArchive(archive, ODATA_ENTITY_PRODUCTS, ODATA_FILTER_NAME + filename);
+			productList = queryArchive(archive, ODATA_ENTITY_PRODUCTS, ODATA_FILTER_NAME + "'" + filename + "'");
 		} catch (IOException e) {
 			// Already logged
 			return null;
