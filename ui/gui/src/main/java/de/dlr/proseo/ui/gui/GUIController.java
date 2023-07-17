@@ -1,3 +1,8 @@
+/**
+ * GUIController.java
+ *
+ * (C) 2021 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ui.gui;
 
 import java.util.ArrayList;
@@ -10,6 +15,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.client.RestClientResponseException;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -17,72 +23,96 @@ import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.rest.model.RestMission;
 import de.dlr.proseo.ui.backend.ServiceConnection;
 
+/**
+ * A bridge between the GUI application and the prosEO backend services, used for testing purposes, displaying custom login pages,
+ * and retrieving missions
+ * 
+ * @author David Mazo
+ */
 @Controller
-
 public class GUIController {
+
+	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(GUIController.class);
+
 	/** The GUI configuration */
 	@Autowired
 	private GUIConfiguration config;
-	
+
 	/** The connector service to the prosEO backend services */
 	@Autowired
 	private ServiceConnection serviceConnection;
-		
+
+	/**
+	 * Show the test view
+	 *
+	 * @return the name of the test view template
+	 */
 	@GetMapping("/test")
-    public String index1() {
-        return "Greetings from Spring Boot!";
-        
-    }
+	public String index1() {
+		return "Greetings from Spring Boot!";
+	}
 
-    @GetMapping("/customlogin") 
-    public String index12(Model model) {
-    	return "customlogin.html";
+	/**
+	 * Show the custom login view
+	 *
+	 * @param model the attributes to return
+	 * @return the name of the custom login view template
+	 */
+	@GetMapping("/customlogin")
+	public String index12(Model model) {
+		return "customlogin.html";
+	}
 
-    }
-    /**
-     * Retrieve the defined missions.
-     * 
-     * @return List of missions
-     */
-    @ModelAttribute("missions")
-    public List<String> missioncodes() {
-    	List<String> missions = new ArrayList<String>();   
+	/**
+	 * Retrieve the defined missions.
+	 *
+	 * @return List of missions
+	 */
+	@ModelAttribute("missions")
+	public List<String> missioncodes() {
+		List<String> missions = new ArrayList<>();
 		List<?> resultList = null;
 		try {
-			resultList = serviceConnection.getFromService(config.getOrderManager(),
-					"/missions", List.class, null, null);
+			// Retrieve the list of missions from the service using the Order Manager URL
+			resultList = serviceConnection.getFromService(config.getOrderManager(), "/missions", List.class, null, null);
 		} catch (RestClientResponseException e) {
-			String message = null;
+
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.NO_MISSIONS_FOUND);
+				// Handle the case when no missions are found
+				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
+				// Handle the case when the user is not authorized to access missions
+				logger.log(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
 				break;
 			default:
-				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
+				// Handle other exceptions and log the error message
+				logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
-			System.err.println(message);
 			return missions;
 		} catch (RuntimeException e) {
-			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
+			// Handle runtime exceptions and log the error message
+			logger.log(UIMessage.EXCEPTION, e.getMessage());
 			return missions;
 		}
-		
+
 		if (resultList != null) {
 			ObjectMapper mapper = new ObjectMapper();
-			for (Object object: resultList) {
+			// Convert each object in the result list to a RestMission object
+			for (Object object : resultList) {
 				RestMission restMission = mapper.convertValue(object, RestMission.class);
+				// Add the mission code to the missions list
 				missions.add(restMission.getCode());
 			}
 		}
 
 		Comparator<String> c = Comparator.comparing((String x) -> x);
+		// Sort the missions list in ascending order
 		missions.sort(c);
-        return missions;
-    }
-    
+		return missions;
+	}
+
 }

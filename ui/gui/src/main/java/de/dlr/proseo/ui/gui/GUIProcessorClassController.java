@@ -1,3 +1,8 @@
+/**
+ * GUIProcessorClassController.java
+ *
+ * (C) 2021 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ui.gui;
 
 import java.util.ArrayList;
@@ -20,6 +25,11 @@ import de.dlr.proseo.ui.gui.service.MapComparator;
 import de.dlr.proseo.ui.gui.service.ProcessorService;
 import reactor.core.publisher.Mono;
 
+/**
+ * A controller for retrieving and handling processor class data
+ *
+ * @author David Mazo
+ */
 @Controller
 public class GUIProcessorClassController extends GUIBaseController {
 	/** A logger for this class */
@@ -29,17 +39,21 @@ public class GUIProcessorClassController extends GUIBaseController {
 	@Autowired
 	private ProcessorService processorService;
 
-
+	/**
+	 * Show the processor class view
+	 *
+	 * @return the name of the processor class view template
+	 */
 	@RequestMapping(value = "/processor-class-show")
 	public String showProcessorClass() {
 		return "processor-class-show";
-	}	    
+	}
 
 	/**
 	 * Get a processor class by name
-	 * 
+	 *
 	 * @param processorClassName the processor class name to look for
-	 * @param model the model to prepare for Thymeleaf
+	 * @param model              the model to prepare for Thymeleaf
 	 * @return Thymeleaf fragment with result from the query
 	 */
 	@SuppressWarnings("unchecked")
@@ -49,21 +63,20 @@ public class GUIProcessorClassController extends GUIBaseController {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getProcessorClassName({}, {}, model)", processorClassName);
 		Mono<ClientResponse> mono = processorService.get(processorClassName);
-		DeferredResult<String> deferredResult = new DeferredResult<String>();
+		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> procs = new ArrayList<>();
 		mono.doOnError(e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("processor-class-show :: #errormsg");
-		})
-	 	.subscribe(clientResponse -> {
+		}).subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(List.class).subscribe(processorClassList -> {
 					procs.addAll(processorClassList);
-					
+
 					MapComparator oc = new MapComparator("processorName", true);
 					procs.sort(oc);
-					
+
 					model.addAttribute("procs", procs);
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + procs.toString());
@@ -76,8 +89,7 @@ public class GUIProcessorClassController extends GUIBaseController {
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
-		},
-		e -> {
+		}, e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("processor-class-show :: #errormsg");
 		});
@@ -90,17 +102,13 @@ public class GUIProcessorClassController extends GUIBaseController {
 
 	/**
 	 * Handler for web client exceptions
-	 * 
+	 *
 	 * @param ex the exception to handle
 	 * @return the exception converted into a response entity
 	 */
 	@ExceptionHandler(WebClientResponseException.class)
 	public ResponseEntity<String> handleWebClientResponseException(WebClientResponseException ex) {
-		logger.log(UIMessage.WEBCLIENT_ERROR, ex.getRawStatusCode(), ex.getResponseBodyAsString(),
-				ex);
+		logger.log(UIMessage.WEBCLIENT_ERROR, ex.getRawStatusCode(), ex.getResponseBodyAsString(), ex);
 		return ResponseEntity.status(ex.getRawStatusCode()).body(ex.getResponseBodyAsString());
 	}
-
 }
-
-

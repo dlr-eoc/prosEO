@@ -69,6 +69,7 @@ types:
           The requested resource was not found (i. e. the URI does not exist; not synonymous to "no data found")
         headers:
           Warning: !include types/error.raml
+
 /ProductionOrder:
   description: ProductionOrder submission according to ESA's On-Demand Production Interface Delivery Point (ODIP) API
   post:
@@ -84,6 +85,7 @@ types:
           application/json:
             type: CscProductionOrder
             example: !include examples/productionorder.json
+
 /ProductionOrders:
   description: Methods for production orders according to ESA's On-Demand Production Interface Delivery Point (ODIP) API
   get:
@@ -122,6 +124,7 @@ types:
           The requested resource was not found (i. e. the URI does not exist; not synonymous to "no data found")
         headers:
           Warning: !include types/error.raml
+
 /ProductionOrders('{Id}'):
   description: Methods for production orders according to ESA's On-Demand Production Interface Delivery Point (ODIP) API
   displayName: getProductionOrderById

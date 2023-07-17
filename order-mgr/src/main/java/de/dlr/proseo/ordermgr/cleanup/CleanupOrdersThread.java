@@ -1,3 +1,8 @@
+/**
+ * OrderManager.java
+ *
+ * (C) 2021 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ordermgr.cleanup;
 
 import java.time.Instant;
@@ -10,60 +15,57 @@ import de.dlr.proseo.ordermgr.OrderManager;
 
 /**
  * Thread to look for deletable processing orders
- * 
- * @author Ernst Melchinger
  *
+ * @author Ernst Melchinger
  */
-public class CleanupOrdersThread  extends Thread {
+public class CleanupOrdersThread extends Thread {
 
-	/**
-	 * Logger for this class
-	 */
+	/** Logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(CleanupOrdersThread.class);
 
-	/**
-	 * The order manager instance
-	 */
+	/** The order manager instance */
 	private OrderManager orderMgr;
-	
+
 	/**
-	 * Create new CleanupOrdersThread for for order manager
-	 * 
+	 * Create new CleanupOrdersThread for the order manager
+	 *
 	 * @param orderMgr the order manager application
 	 */
 	public CleanupOrdersThread(OrderManager orderMgr) {
 		super("CleanupOrders");
 		this.setDaemon(true);
 		this.orderMgr = orderMgr;
-	}	
+	}
 
 	/**
 	 * Start the cleanup cycle thread to look for deletable orders every cleanupCycleTime hours
-	 * 
+	 *
 	 * @see java.lang.Thread#run()
 	 */
-    public void run() {
-		if (logger.isTraceEnabled()) logger.trace(">>> run()");
-		
+	@Override
+	public void run() {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> run()");
+
 		// default wait is one day 24h * 60' * 60'' * 1000 millis
 		long wait = 24;
 		if (this.orderMgr.getOrderManagerConfig().getCleanupCycleTime() != null) {
 			wait = this.orderMgr.getOrderManagerConfig().getCleanupCycleTime();
-		};
+		}
 		wait = wait * 60 * 60 * 1000;
-		
+
 		while (!this.isInterrupted()) {
 			try {
 				logger.log(OrderMgrMessage.ORDER_CLEANUP_CYCLE);
 
 				Instant evictionTime = Instant.now();
 				List<Long> orderIdsToDelete = orderMgr.getProcOrderManager().findOrdersWithEvictionTimeLessThan(evictionTime);
-			
-				for (Long orderId: orderIdsToDelete) {
+
+				for (Long orderId : orderIdsToDelete) {
 					// One transaction per delete operation
 					orderMgr.getProcOrderManager().deleteExpiredOrderById(orderId, evictionTime);
 				}
-			
+
 				logger.log(OrderMgrMessage.ORDER_CLEANUP_SLEEP, wait);
 				sleep(wait);
 			} catch (InterruptedException e) {
@@ -75,4 +77,5 @@ public class CleanupOrdersThread  extends Thread {
 			}
 		}
 	}
+
 }

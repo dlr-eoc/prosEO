@@ -276,7 +276,7 @@ public class CLIUtil {
 					permissions = Files.getPosixFilePermissions(filePath);
 				} catch (UnsupportedOperationException e) {
 					// On file systems not supporting POSIX permissions (e. g. Windows FAT) we shrug and just log a warning
-					String message = logger.log(UIMessage.WARN_CREDENTIALS_INSECURE, filePathString);
+					logger.log(UIMessage.WARN_CREDENTIALS_INSECURE, filePathString);
 					permissions = null;
 				}
 				if (null != permissions && 

@@ -1,6 +1,6 @@
 /**
  * OrdermgrSecurityConfig.java
- * 
+ *
  * (c) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.ordermgr;
@@ -26,7 +26,7 @@ import de.dlr.proseo.model.enums.UserRole;
 
 /**
  * Security configuration for prosEO OrderManager module
- * 
+ *
  * @author Ranjitha Vignesh
  */
 @Configuration
@@ -39,41 +39,49 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(OrdermgrSecurityConfig.class);
-	
+
 	/**
-	 * Set the Ordermgr security options
-	 * 
+	 * Set the order manager's security options
+	 *
 	 * @param http the HTTP security object
 	 */
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http
-			.httpBasic()
-				.and()
+		http.httpBasic()
+			.and()
 			.authorizeRequests()
-				.antMatchers("/**/actuator/health").permitAll()
-				.antMatchers(HttpMethod.GET, "/**/missions").permitAll()
-				.antMatchers(HttpMethod.POST, "/**/missions").hasAnyRole(UserRole.ROOT.toString())
-				.antMatchers(HttpMethod.DELETE, "/**/missions").hasAnyRole(UserRole.ROOT.toString())
-				.antMatchers("/**/missions").hasAnyRole(UserRole.MISSION_MGR.toString())
+			.antMatchers("/**/actuator/health")
+			.permitAll()
+			.antMatchers(HttpMethod.GET, "/**/missions")
+			.permitAll()
+			.antMatchers(HttpMethod.POST, "/**/missions")
+			.hasAnyRole(UserRole.ROOT.toString())
+			.antMatchers(HttpMethod.DELETE, "/**/missions")
+			.hasAnyRole(UserRole.ROOT.toString())
+			.antMatchers("/**/missions")
+			.hasAnyRole(UserRole.MISSION_MGR.toString())
 
-				.antMatchers(HttpMethod.GET, "/**/orders").hasAnyRole(UserRole.ORDER_READER.toString())
-				.antMatchers(HttpMethod.PATCH, "/**/orders/*").hasAnyRole(
-						UserRole.ORDER_MGR.toString(),
-						UserRole.ORDER_APPROVER.toString(),
-						UserRole.ORDER_PLANNER.toString())
-				.antMatchers(HttpMethod.DELETE, "/**/orders/*").hasAnyRole(UserRole.ORDER_MGR.toString())
-				.antMatchers("/**/orders").hasAnyRole(UserRole.ORDER_MGR.toString())
+			.antMatchers(HttpMethod.GET, "/**/orders")
+			.hasAnyRole(UserRole.ORDER_READER.toString())
+			.antMatchers(HttpMethod.PATCH, "/**/orders/*")
+			.hasAnyRole(UserRole.ORDER_MGR.toString(), UserRole.ORDER_APPROVER.toString(), UserRole.ORDER_PLANNER.toString())
+			.antMatchers(HttpMethod.DELETE, "/**/orders/*")
+			.hasAnyRole(UserRole.ORDER_MGR.toString())
+			.antMatchers("/**/orders")
+			.hasAnyRole(UserRole.ORDER_MGR.toString())
 
-				.antMatchers(HttpMethod.GET, "/**/orbits").hasAnyRole(UserRole.MISSION_READER.toString())
-				.antMatchers("/**/orbits").hasAnyRole(UserRole.MISSION_MGR.toString())
-				.and()
-			.csrf().disable(); // Required for POST requests (or configure CSRF)
+			.antMatchers(HttpMethod.GET, "/**/orbits")
+			.hasAnyRole(UserRole.MISSION_READER.toString())
+			.antMatchers("/**/orbits")
+			.hasAnyRole(UserRole.MISSION_MGR.toString())
+			.and()
+			.csrf()
+			.disable(); // Required for POST requests (or configure CSRF)
 	}
 
 	/**
 	 * Initialize the users, passwords and roles for the Ordermgr from the prosEO database
-	 * 
+	 *
 	 * @param builder to manage authentications
 	 * @throws Exception if anything goes wrong with JDBC authentication
 	 */
@@ -86,19 +94,20 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	/**
 	 * Provides the default password encoder for prosEO (BCrypt)
-	 * 
+	 *
 	 * @return a BCryptPasswordEncoder
 	 */
 	@Bean
 	public PasswordEncoder passwordEncoder() {
-	    return new BCryptPasswordEncoder();
+		return new BCryptPasswordEncoder();
 	}
 
 	/**
 	 * Provides the default user details service for prosEO (based on the standard data model for users and groups)
-	 * 
+	 *
 	 * @return a JdbcDaoImpl object
 	 */
+	@Override
 	@Bean
 	public UserDetailsService userDetailsService() {
 		logger.log(GeneralMessage.INITIALIZING_USER_DETAILS_SERVICE, dataSource);
@@ -106,7 +115,8 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 		JdbcDaoImpl jdbcDaoImpl = new JdbcDaoImpl();
 		jdbcDaoImpl.setDataSource(dataSource);
 		jdbcDaoImpl.setEnableGroups(true);
-		
+
 		return jdbcDaoImpl;
 	}
+
 }

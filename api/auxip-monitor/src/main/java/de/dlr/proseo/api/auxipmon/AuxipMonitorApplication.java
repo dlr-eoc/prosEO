@@ -1,6 +1,6 @@
 /**
  * AuxipMonitorApplication.java
- * 
+ *
  * (C) 2021 Dr. Bassler & Co. Managementberatung GmbH
  */
 
@@ -17,20 +17,20 @@ import org.springframework.core.task.TaskExecutor;
 
 /**
  * prosEO AUXIP Monitor application
- * 
+ *
  * @author Dr. Thomas Bassler
- * 
+ *
  */
 @SpringBootApplication
 @EnableConfigurationProperties
-@ComponentScan(basePackages={"de.dlr.proseo"})
+@ComponentScan(basePackages = { "de.dlr.proseo" })
 public class AuxipMonitorApplication implements CommandLineRunner {
-	
-    @Autowired
-    private ApplicationContext applicationContext;
 
-    @Autowired
-    private TaskExecutor taskExecutor;
+	@Autowired
+	private ApplicationContext applicationContext;
+
+	@Autowired
+	private TaskExecutor taskExecutor;
 
 	public static void main(String[] args) throws Exception {
 		SpringApplication.run(AuxipMonitorApplication.class, args);
@@ -38,9 +38,9 @@ public class AuxipMonitorApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		
+
 		Thread auxipMonitor = (AuxipMonitor) applicationContext.getBean("auxipMonitor");
-		
+
 		taskExecutor.execute(auxipMonitor);
 	}
 

@@ -15,7 +15,13 @@ types:
       type: string
       description: CADIP Monitor identifier
   get:
-    description: Get status info for this CADIP Monitor
+    description: |
+      Get the interface status for the given CADIP Monitor
+     
+      @param cadipid     the CADIP Monitor identifier
+      @param httpHeaders the HTTP request headers (injected)
+      @return HTTP status "OK" and the Json representation of the interface status information, or HTTP status "FORBIDDEN" and an
+              error message, if an invalid CADIP Monitor identifier was passed
     responses:
       200:
         body:
