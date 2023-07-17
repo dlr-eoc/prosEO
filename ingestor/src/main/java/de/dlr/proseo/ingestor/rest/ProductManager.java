@@ -13,6 +13,7 @@ import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -366,9 +367,6 @@ public class ProductManager {
 		if (null == product.getProductClass() || product.getProductClass().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "productClass", "product creation"));
 		}
-		if (null == product.getFileClass() || product.getFileClass().isBlank()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "fileClass", "product creation"));
-		}
 		if (null == product.getSensingStartTime() || product.getSensingStartTime().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "sensingStartTime", "product creation"));
 		}
@@ -484,7 +482,8 @@ public class ProductManager {
 			modelProduct.setOrbit(orbit);
 		}
 		// Check validity of scalar attributes
-		if (!modelProductClass.getMission().getFileClasses().contains(modelProduct.getFileClass())) {
+		if (null != modelProduct.getFileClass()
+				&& !modelProductClass.getMission().getFileClasses().contains(modelProduct.getFileClass())) {
 			throw new IllegalArgumentException(
 					logger.log(IngestorMessage.FILE_CLASS_INVALID, product.getFileClass(), product.getMissionCode()));
 		}
@@ -577,9 +576,6 @@ public class ProductManager {
 		if (null == product.getProductClass() || product.getProductClass().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "productClass", "product modification"));
 		}
-		if (null == product.getFileClass() || product.getFileClass().isBlank()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "fileClass", "product modification"));
-		}
 		if (null == product.getSensingStartTime() || product.getSensingStartTime().isBlank()) {
 			throw new IllegalArgumentException(
 					logger.log(GeneralMessage.FIELD_NOT_SET, "sensingStartTime", "product modification"));
@@ -620,8 +616,9 @@ public class ProductManager {
 			productChanged = true;
 			modelProduct.setProductClass(modelProductClass);
 		}
-		if (!modelProduct.getFileClass().equals(changedProduct.getFileClass())) {
-			if (!modelProduct.getProductClass().getMission().getFileClasses().contains(changedProduct.getFileClass())) {
+		if (!Objects.equals(modelProduct.getFileClass(), changedProduct.getFileClass())) {
+			if (null != changedProduct.getFileClass() 
+					&& !modelProduct.getProductClass().getMission().getFileClasses().contains(changedProduct.getFileClass())) {
 				throw new IllegalArgumentException(
 						logger.log(IngestorMessage.FILE_CLASS_INVALID, product.getFileClass(), product.getMissionCode()));
 			}
@@ -630,8 +627,7 @@ public class ProductManager {
 				logger.trace("Changing file class from {} to {}", modelProduct.getFileClass(), changedProduct.getFileClass());
 			modelProduct.setFileClass(changedProduct.getFileClass());
 		}
-		if ((null != modelProduct.getMode() && !modelProduct.getMode().equals(changedProduct.getMode()))
-				|| (null == modelProduct.getMode() && null != changedProduct.getMode())) {
+		if (!Objects.equals(modelProduct.getMode(), changedProduct.getMode())) {
 			if (null != changedProduct.getMode()
 					&& !modelProduct.getProductClass().getMission().getProcessingModes().contains(changedProduct.getMode())) {
 				throw new IllegalArgumentException(
