@@ -53,8 +53,8 @@ public class OdipConfiguration {
 	@Value("${proseo.odip.facility}")
 	private String facility;
 
-	/** The base URI of the AIP client (protocol, host name, port; no terminating slash) */
-	@Value("${proseo.aipclient.baseuri}")
+	/** The URI of the AIP client (protocol, host name, port, context; no terminating slash) */
+	@Value("${proseo.aip.url}")
 	private String aipUrl;
 	
 	/**
