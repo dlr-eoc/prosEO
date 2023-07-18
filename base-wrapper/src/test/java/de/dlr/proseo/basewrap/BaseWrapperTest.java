@@ -124,7 +124,9 @@ public class BaseWrapperTest {
 		try {
 			setEnv(envmap);
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 		}
 		logger.info(ANSI_YELLOW + "**TEST: working run using POSIX-JOF " + envmap + ANSI_RESET);
 
@@ -145,7 +147,9 @@ public class BaseWrapperTest {
 		try {
 			setEnv(envmap);
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 		}
 		logger.info(ANSI_YELLOW + "**TEST: JOF-path is wrong " + envmap + ANSI_RESET);
 		int rc = (new BaseWrapper()).run();
@@ -165,7 +169,9 @@ public class BaseWrapperTest {
 		try {
 			setEnv(envmap);
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 		}
 		
 		logger.info(ANSI_YELLOW + "**TEST: FS_TYPE is wrong " + envmap + ANSI_RESET);
@@ -186,7 +192,9 @@ public class BaseWrapperTest {
 		try {
 			setEnv(envmap);
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 		}
 		logger.info(ANSI_YELLOW + "**TEST: FS_TYPE is S3, but JOBORDER_FILE refers to non s3 URI " + envmap + ANSI_RESET);
 		rc = (new BaseWrapper()).run();
@@ -205,7 +213,9 @@ public class BaseWrapperTest {
 		try {
 			setEnv(envmap);
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 		}
 		logger.info(ANSI_YELLOW + "**TEST: working run using S3-JOF " + envmap + ANSI_RESET);
 //		TEST SKIPPED, DOES NOT WORK
@@ -225,7 +235,9 @@ public class BaseWrapperTest {
 		try {
 			setEnv(envmap);
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 		}
 		logger.info(ANSI_YELLOW + "**TEST: S3-JOF but using wrong s3-credentials " + envmap + ANSI_RESET);
 		rc = (new BaseWrapper()).run();
@@ -244,7 +256,9 @@ public class BaseWrapperTest {
 		try {
 			setEnv(envmap);
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 		}
 		logger.info(ANSI_YELLOW + "**TEST: S3-JOF but using wrong s3-URI " + envmap + ANSI_RESET);
 

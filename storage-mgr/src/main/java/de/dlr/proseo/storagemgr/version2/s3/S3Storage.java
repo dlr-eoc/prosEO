@@ -318,7 +318,9 @@ public class S3Storage implements Storage {
 		try {
 			uploadFile(sourceFile, targetFile);
 		} catch (IOException e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+				logger.debug("An exception occurred. Cause: ", e);
+			}
 			throw e;
 		} finally {
 			new File(path).delete();

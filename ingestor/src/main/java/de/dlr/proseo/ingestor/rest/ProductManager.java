@@ -1108,7 +1108,9 @@ public class ProductManager {
 			}
 			uriBuilder.addParameter("token", downloadToken);
 		} catch (URISyntaxException e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 			throw new RuntimeException(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e));
 		}
 

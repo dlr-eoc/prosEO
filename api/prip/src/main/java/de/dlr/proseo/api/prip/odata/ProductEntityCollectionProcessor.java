@@ -362,7 +362,9 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 				return;
 			} catch (Exception e) {
 				String message = logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
-				e.printStackTrace();
+				if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 				response.setContent(
 						serializer.error(LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message))
 							.getContent());
@@ -449,7 +451,9 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 			serializedContent = new ByteArrayInputStream(cleanedOutput.toByteArray());
 		} catch (Exception e) {
 			String message = logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 			response.setContent(
 					serializer.error(LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message))
 						.getContent());

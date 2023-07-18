@@ -329,7 +329,9 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 				return;
 			} catch (Exception e) {
 				String message = logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
-				e.printStackTrace();
+				if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 				response.setContent(
 						serializer.error(LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message))
 							.getContent());
@@ -464,7 +466,9 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			return;
 		} catch (Exception e) {
 			String message = logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 			response.setContent(
 					serializer.error(LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message))
 						.getContent());
@@ -511,7 +515,9 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			return;
 		} catch (Exception e) {
 			String message = logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 			response.setContent(
 					serializer.error(LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message))
 						.getContent());
@@ -531,7 +537,9 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			uriBuilder.addParameter("token", downloadToken);
 		} catch (URISyntaxException e) {
 			String message = logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 			response.setContent(
 					serializer.error(LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message))
 						.getContent());

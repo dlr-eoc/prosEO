@@ -162,7 +162,9 @@ public class PosixDAL {
 			return copiedPath.toString();
 
 		} catch (IOException e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+				logger.debug("An exception occurred. Cause: ", e);
+			}
 			if (logger.isTraceEnabled())
 				logger.log(StorageMgrMessage.FILE_NOT_UPLOADED, sourceFile, targetFileOrDir, e.getMessage());
 			throw e;
@@ -250,7 +252,9 @@ public class PosixDAL {
 			return copiedPath.toString();
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 			if (logger.isTraceEnabled())
 				logger.log(StorageMgrMessage.FILE_NOT_DOWNLOADED, sourceFile, targetFileOrDir, e.getMessage());
 			throw e;

@@ -361,7 +361,9 @@ public final class FTPClientExample
                 }
             }
             System.err.println("Could not connect to server.");
-            e.printStackTrace();
+            if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
             System.exit(1);
         }
 
@@ -518,12 +520,16 @@ __main:
         {
             error = true;
             System.err.println("Server closed connection.");
-            e.printStackTrace();
+            if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
         }
         catch (final IOException e)
         {
             error = true;
-            e.printStackTrace();
+            if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
         }
         finally
         {

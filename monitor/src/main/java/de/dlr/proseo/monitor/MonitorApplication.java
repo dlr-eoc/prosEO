@@ -124,7 +124,9 @@ public class MonitorApplication implements CommandLineRunner {
 				try {
 					wait(100);
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					if (logger.isDebugEnabled()) {
+						logger.debug("An exception occurred. Cause: ", e);
+					}
 				}
 			}
 		}
@@ -162,7 +164,9 @@ public class MonitorApplication implements CommandLineRunner {
 				try {
 					wait(100);
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 				}
 			}
 		}
@@ -201,7 +205,9 @@ public class MonitorApplication implements CommandLineRunner {
 				try {
 					wait(100);
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 				}
 			}
 		}
@@ -240,7 +246,9 @@ public class MonitorApplication implements CommandLineRunner {
 				try {
 					wait(100);
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 				}
 			}
 		}
@@ -265,7 +273,9 @@ public class MonitorApplication implements CommandLineRunner {
 				return null;
 			});
 		} catch (TransactionException e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 		}
 
 		startMonitorServices();
