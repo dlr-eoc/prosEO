@@ -14,11 +14,10 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 /**
- * Representation of the Ipf_Proc (IPF = Instrument Processing Facility) job
- * order element
+ * Representation of the Ipf_Proc (IPF = Instrument Processing Facility) job order element, i.e., a processing task with name and
+ * version, as well as input/output and breakpoint files
  *
- * For details see Generic IPF Interface Specification issue 1 revision 8 -
- * 03/08/2009 MMFI-GSEG-EOPG-TN-07-0003
+ * For details see Generic IPF Interface Specification issue 1 revision 8 - 03/08/2009 MMFI-GSEG-EOPG-TN-07-0003
  *
  * @author Ernst Melchinger
  */
