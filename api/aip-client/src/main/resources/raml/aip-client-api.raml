@@ -93,13 +93,6 @@ resourceTypes:
         nothing and just return the product metadata. If it is not available locally, query all configured LTAs for a product
         with the given file name, the first response is returned to the caller, then download from the LTA and ingested
         at the given processing facility.
-
-        @param filename    The (unique) product file name to search for
-        @param facility    The processing facility to use
-        @param httpHeaders the HTTP request headers (injected)
-        @return HTTP status "CREATED" and a Json representation of the product provided or HTTP status "BAD_REQUEST", if an invalid
-                processing facility was given, or HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Ingestor failed or
-                an unexpected exception occurred
       displayName: downloadByName
       queryParameters:
         filename:
@@ -107,7 +100,7 @@ resourceTypes:
           description: The (unique) product file name to search for
         facility:
           type: string
-          description: The processing facility to use
+          description: The processing facility to store the downloaded product files in
       responses:
         200:
           body:
@@ -127,16 +120,6 @@ resourceTypes:
         the product with the greatest file name (alphanumeric string comparison) will be used.
         The product metadata is returned to the caller, then the product is downloaded from the LTA and ingested
         at the given processing facility.
-        
-        @param productType The product type
-        @param startTime   The start of the sensing time interval
-        @param stopTime    The end of the sensing time interval
-        @param facility    The processing facility to use
-        @param httpHeaders the HTTP request headers (injected)
-        @return HTTP status "CREATED" and a Json representation of the product provided or HTTP status "NOT_FOUND", if no product
-                matching the given selection criteria was found, or HTTP status "BAD_REQUEST", if an invalid facility name, product
-                type or sensing time was given, or HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Ingestor failed
-                or an unexpected exception occurred
       displayName: downloadBySensingTime
       queryParameters:
         productType:
@@ -148,9 +131,9 @@ resourceTypes:
         stopTime:
           type: string
           description: The requested sensing (or validity) stop time
-        facility?:
+        facility:
           type: string
-          description: The processing facility to use
+          description: The processing facility to store the downloaded product files in
       responses:
         200:
           body:
@@ -167,16 +150,6 @@ resourceTypes:
         Query all configured LTAs for products with the given search criteria, the first response is evaluated.
         The product metadata is returned to the caller, then the products are downloaded from the LTA and ingested
         at the given processing facility, unless they are already available there.
-
-        @param productType The product type
-        @param startTime   The start of the sensing time interval
-        @param stopTime    The end of the sensing time interval
-        @param facility    The processing facility to use
-        @param httpHeaders the HTTP request headers (injected)
-        @return HTTP status "CREATED" and a list of Json representations of the products provided or HTTP status "NOT_FOUND", if no
-                products matching the given selection criteria were found, or HTTP status "BAD_REQUEST", if an invalid facility name,
-                product type or sensing time was given, or HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Ingestor
-                failed or an unexpected exception occurred
       displayName: downloadAllBySensingTime
       queryParameters:
         productType:
@@ -188,9 +161,9 @@ resourceTypes:
         stopTime:
           type: string
           description: The end of the sensing time interval
-        facility?:
+        facility:
           type: string
-          description: The processing facility to use
+          description: The processing facility to store the downloaded product files in
       responses:
         200:
           body:

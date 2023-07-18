@@ -52,12 +52,12 @@ public class BytimeControllerImpl implements BytimeController {
 	 * @param productType The product type
 	 * @param startTime   The start of the sensing time interval
 	 * @param stopTime    The end of the sensing time interval
-	 * @param facility    The processing facility to use
+	 * @param facility    The processing facility to store the downloaded product files in
 	 * @param httpHeaders the HTTP request headers (injected)
-	 * @return HTTP status "CREATED" and a Json representation of the product provided or HTTP status "NOT_FOUND", if no product
-	 *         matching the given selection criteria was found, or HTTP status "BAD_REQUEST", if an invalid facility name, product
-	 *         type or sensing time was given, or HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Ingestor failed
-	 *         or an unexpected exception occurred
+	 * @return HTTP status "OK" and a Json representation of the product provided or 
+	 *         HTTP status "NOT_FOUND", if no product matching the given selection criteria was found, or 
+	 *         HTTP status "BAD_REQUEST", if an invalid facility name, product type or sensing time was given, or 
+	 *         HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Ingestor failed or an unexpected exception occurred
 	 */
 	@Override
 	public ResponseEntity<RestProduct> downloadBySensingTime(String productType, String startTime, String stopTime, String facility,
@@ -65,13 +65,13 @@ public class BytimeControllerImpl implements BytimeController {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> downloadBySensingTime({}, {}, {}, {})", productType, startTime, stopTime, facility);
 
-		// Get username and password from HTTP Authentication header for authentication with Production Planner
+		// Get username and password from HTTP Authentication header for authentication with Ingestor
 		String[] userPassword = securityConfig.parseAuthenticationHeader(httpHeaders.getFirst(HttpHeaders.AUTHORIZATION));
 
 		try {
 			return new ResponseEntity<>(
 					downloadManager.downloadBySensingTime(productType, startTime, stopTime, facility, userPassword[1]),
-					HttpStatus.CREATED);
+					HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
