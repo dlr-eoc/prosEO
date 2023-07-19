@@ -96,11 +96,6 @@ public class KubeJob {
 	/** The processing facility running job step */
 	private KubeConfig kubeConfig;
 
-	/** Information constants on the update result */
-	private enum UpdateInfoResult {
-		TRUE, FALSE, CHANGED;
-	}
-
 	/**
 	 * Returns the job ID.
 	 *
@@ -760,7 +755,7 @@ public class KubeJob {
 	 * @return The result of the update operation: TRUE if the update was successful, FALSE if an error occurred, and CHANGED if the
 	 *         job step was modified by others during the update process
 	 */
-	public UpdateInfoResult updateInfo(String jobName) {
+	public Boolean updateInfo(String jobName) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> updateInfo({})", jobName);
 
@@ -769,7 +764,7 @@ public class KubeJob {
 			if (logger.isTraceEnabled())
 				logger.trace("<<< updateInfo({})", jobName);
 
-			return UpdateInfoResult.FALSE;
+			return Boolean.FALSE;
 		}
 
 		// Check whether a job can be found under the provided name
@@ -779,7 +774,7 @@ public class KubeJob {
 				logger.trace("    updateInfo: job not found");
 
 			// TODO Why are we returning true?
-			return UpdateInfoResult.TRUE;
+			return Boolean.TRUE;
 		}
 
 		// If not already known, search for associated pods
@@ -790,7 +785,7 @@ public class KubeJob {
 			if (logger.isTraceEnabled())
 				logger.trace("    updateInfo: pod not found");
 
-			return UpdateInfoResult.FALSE;
+			return Boolean.FALSE;
 		}
 
 		// Retrieve the latest associated pod
@@ -800,17 +795,17 @@ public class KubeJob {
 			if (logger.isTraceEnabled())
 				logger.trace("    updateInfo: pod with name {} not found", podNames.get(podNames.size() - 1));
 
-			return UpdateInfoResult.FALSE;
+			return Boolean.FALSE;
 		}
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(this.kubeConfig.getProductionPlanner().getTxManager());
 		return transactionTemplate.execute((status) -> {
 
-			UpdateInfoResult success = UpdateInfoResult.FALSE;
+			Boolean success = Boolean.FALSE;
 			Long jobStepId = this.getJobId();
 			Optional<JobStep> jobStep = RepositoryService.getJobStepRepository().findById(jobStepId);
 
-			if (jobStep.isPresent()) {
+			if (!jobStep.isPresent()) {
 				// No job step present, everything up to date
 				if (logger.isTraceEnabled())
 					logger.trace("<<< updateInfo({})", jobName);
@@ -875,7 +870,7 @@ public class KubeJob {
 									jobStep.get().setProcessingCompletionTime(completionTime.toInstant());
 								}
 
-								success = UpdateInfoResult.TRUE;
+								success = Boolean.TRUE;
 							} else if ((jobCondition.getType().equalsIgnoreCase("failed")
 									|| jobCondition.getType().equalsIgnoreCase("failure"))
 									&& jobCondition.getStatus().equalsIgnoreCase("true")) {
@@ -900,7 +895,7 @@ public class KubeJob {
 									jobStep.get().setProcessingCompletionTime(completionTime.toInstant());
 								}
 
-								success = UpdateInfoResult.TRUE;
+								success = Boolean.TRUE;
 							}
 						}
 
@@ -925,24 +920,10 @@ public class KubeJob {
 			}
 
 			// Update the log and save the modified job step
-			int oldVersion = jobStep.get().getVersion();
 			updateJobLog(jobStep.get());
-			RepositoryService.getJobStepRepository().save(jobStep.get());
-
-			// Update version and check for concurrent modifications
-			Optional<JobStep> updatedJobStep = RepositoryService.getJobStepRepository().findById(jobStepId);
-			if (updatedJobStep.isPresent()) {
-				// TODO Why would it be not present?
-				if (oldVersion == updatedJobStep.get().getVersion()) {
-					if (success == UpdateInfoResult.TRUE) {
-						jobStep.get().incrementVersion();
-						RepositoryService.getJobStepRepository().save(jobStep.get());
-					}
-				} else {
-					if (logger.isTraceEnabled())
-						logger.trace("    updateInfo: job step changed by others");
-					success = UpdateInfoResult.CHANGED;
-				}
+			if (success == Boolean.TRUE) {
+				jobStep.get().incrementVersion();
+				RepositoryService.getJobStepRepository().save(jobStep.get());
 			}
 
 			if (logger.isTraceEnabled())
@@ -963,11 +944,10 @@ public class KubeJob {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> updateFinishInfoAndDelete({})", jobName);
 
-		UpdateInfoResult success = UpdateInfoResult.FALSE;
-		success = updateInfo(jobName);
+		Boolean success = updateInfo(jobName);
 
 		// If the updateInfo was successful, perform additional operations
-		if (success.equals(UpdateInfoResult.TRUE)) {
+		if (success.equals(Boolean.TRUE)) {
 			TransactionTemplate transactionTemplate = new TransactionTemplate(
 					this.kubeConfig.getProductionPlanner().getTxManager());
 			transactionTemplate.execute((status) -> {
@@ -984,12 +964,12 @@ public class KubeJob {
 		}
 
 		// If the updateInfo was successful or some other change occurred, delete the Kubernetes job
-		if (!success.equals(UpdateInfoResult.FALSE)) {
+		if (!success.equals(Boolean.FALSE)) {
 			kubeConfig.deleteJob(jobName);
 			logger.log(PlannerMessage.KUBEJOB_FINISHED, kubeConfig.getId(), jobName);
 		}
 
-		return !success.equals(UpdateInfoResult.FALSE);
+		return !success.equals(Boolean.FALSE);
 	}
 
 	/**
