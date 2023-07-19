@@ -268,7 +268,7 @@ public class PosixStorage implements Storage {
 	}
 
 	/**
-	 * Gets the absolute path (POSIX: /<storagePath>/<relativePath>).
+	 * Gets the absolute path (POSIX: /&lt;storagePath&gt;/&lt;relativePath&gt;).
 	 * 
 	 * @param relativePath the relative path
 	 * @return the absolute file depending on the storage file system
@@ -281,7 +281,7 @@ public class PosixStorage implements Storage {
 	}
 
 	/**
-	 * Gets the absolute paths (POSIX: /<storagePath>/<relativePath>).
+	 * Gets the absolute paths (POSIX: /&lt;storagePath&gt;/&lt;relativePath&gt;).
 	 * 
 	 * @param relativePaths the relative paths
 	 * @return the absolute paths depending on the storage file system

@@ -235,7 +235,7 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Gets the absolute path (s3://<bucket>/<relativePath>).
+	 * Gets the absolute path (s3://&lt;bucket&gt;/&lt;relativePath&gt;).
 	 *
 	 * @param relativePath the relative path
 	 * @return the absolute file depending on the storage file system
@@ -246,7 +246,7 @@ public class S3Storage implements Storage {
 	}
 
 	/**
-	 * Gets the absolute paths (s3://<bucket>/<relativePath>).
+	 * Gets the absolute paths (s3://&lt;bucket&gt;/&lt;relativePath&gt;).
 	 *
 	 * @param relativePaths the relative paths
 	 * @return the absolute paths depending on the storage file system
