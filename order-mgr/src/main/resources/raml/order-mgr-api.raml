@@ -113,17 +113,6 @@ resourceTypes:
   get:
     description: |
       List of all orders filtered by mission, identifier, productClasses, starttime range
-     
-      @param mission           the mission code
-      @param identifier        the unique order identifier string
-      @param productClasses    an array of product types
-      @param startTimeFrom     earliest sensing start time
-      @param startTimeTo       latest sensing start time
-      @param executionTimeFrom earliest order execution time
-      @param executionTimeTo   latest order execution time
-      @return HTTP status "OK" and a list of products or HTTP status "NOT_FOUND" and an error message, if no products matching the
-              search criteria were found, or HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was
-              attempted
     displayName: getOrders
     queryParameters:
       mission?: 
@@ -156,11 +145,6 @@ resourceTypes:
   post:
     description: |
       Create an order from the given JSON object
-     
-      @param restOrder the JSON object to create the order from
-      @return HTTP status "CREATED" and a response containing a JSON object corresponding to the order after persistence (with ID
-              and version for all contained objects) or HTTP status "FORBIDDEN" and an error message, if a cross-mission data
-              access was attempted, or HTTP status "BAD_REQUEST", if any of the input data was invalid
     displayName: createOrder
     body:
       application/json:
@@ -177,11 +161,6 @@ resourceTypes:
     get:
       description: |
         Count orders filtered by mission, identifier and id not equal nid.
-     
-        @param mission    The mission code
-        @param identifier The unique order identifier string
-        @param nid        The ids of orbit(s) found has to be unequal to nid
-        @return The number of orders found
       displayName: countOrders
       queryParameters:
         mission?: 
@@ -201,18 +180,6 @@ resourceTypes:
     get:
       description: |
         Calculate the amount of orders satisfying the selection parameters. Mission code is mandatory.
-       
-        @param mission                 the mission code
-        @param identifier              the unique order identifier string
-        @param state                   an array of order states
-        @param productClass            an array of product types
-        @param startTime               earliest sensing start time
-        @param stopTime                latest sensing start time
-        @param recordFrom              first record of filtered and ordered result to return
-        @param recordTo                last record of filtered and ordered result to return
-        @param orderBy                 an array of strings containing a column name and an optional sort direction (ASC/DESC)
-       
-        @return The order count
       displayName: countSelectOrders
       queryParameters:
         mission?: 
@@ -250,18 +217,6 @@ resourceTypes:
     get:
       description: |
         Retrieve a list of orders satisfying the selection parameters
-       
-        @param mission      the mission code
-        @param identifier   the unique order identifier string
-        @param state        an array of order states
-        @param productClass an array of product types
-        @param startTime    earliest sensing start time
-        @param stopTime     latest sensing start time
-        @param recordFrom   first record of filtered and ordered result to return
-        @param recordTo     last record of filtered and ordered result to return
-        @param orderBy      an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by
-                            white space
-        @return the result list
       displayName: getAndSelectOrders
       queryParameters:
         mission?: 
@@ -305,10 +260,6 @@ resourceTypes:
     get:
       description: |
         Find the order with the given ID
-       
-        @param id the ID to look for
-        @return HTTP status "OK" and a JSON object corresponding to the found order or HTTP status "FORBIDDEN" and an error message,
-                if a cross-mission data access was attempted, or HTTP status "NOT_FOUND", if no orbit with the given ID exists
       displayName: getOrderById
       responses:
         200:
@@ -323,13 +274,6 @@ resourceTypes:
     patch:
       description: |
         Update the order with the given ID with the attribute values of the given JSON object.
-       
-        @param id        the ID of the order to update
-        @param restOrder a JSON object containing the modified (and unmodified) attributes
-        @return a response containing HTTP status "OK" and a JSON object corresponding to the order after modification (with ID and
-                version for all contained objects) or HTTP status "NOT_MODIFIED" and the unchanged order, if no attributes were
-                actually changed, or HTTP status "NOT_FOUND" and an error message, if no order with the given ID exists, or HTTP
-                status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
       displayName: modifyOrder
       body:
         application/json:
@@ -348,11 +292,6 @@ resourceTypes:
     delete:
       description: |
         Delete an order by ID
-       
-        @param id the ID of the order to delete
-        @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or HTTP status "NOT_FOUND" and an
-                error message, if the orbit did not exist, or HTTP status "FORBIDDEN" and an error message, if a cross-mission data
-                access was attempted, or HTTP status "NOT_MODIFIED" and an error message, if the deletion was unsuccessful
       displayName: deleteOrderById
       responses:
         204:
@@ -362,15 +301,6 @@ resourceTypes:
   get:
     description: |
       Retrieves production planner jobs, optionally filtered by job state and/or order ID.
-     
-      @param state      The job states to filter by.
-      @param orderid    The order ID to filter by.
-      @param recordFrom The first record of the filtered and ordered result to return.
-      @param recordTo   The last record of the filtered and ordered result to return.
-      @param logs		Whether or not logs are included in the REST job step.
-      @param orderBy    An array of strings containing a column name and an optional sort direction (ASC/DESC), separated by
-                        whitespace.
-      @return A list of JSON objects describing jobs.
     displayName: getJobs
     queryParameters:
       orderid?:
@@ -405,10 +335,6 @@ resourceTypes:
     get:
       description: |
         Retrieves the number of production planner jobs based on the specified states and order ID.
-       
-        @param state   The permitted job states.
-        @param orderid The order ID of the jobs.
-        @return The number of jobs.
       displayName: countJobs
       queryParameters:
         state?: 
@@ -427,14 +353,6 @@ resourceTypes:
     get:
       description: |
         Retrieves the index of a job in an ordered list of all jobs of an order.
-       
-        @param state     The permitted job states (COMPLETED, NON-COMPLETED).
-        @param orderid   The persistent id of the processing order.
-        @param jobid     The persistent id of the job.
-        @param jobstepid The persistent id of the job step.
-        @param orderBy   An array of strings containing a column name and an optional sort direction (ASC/DESC), separated by
-                         whitespace.
-        @return The index of the job in the ordered list (0 based).
       displayName: indexOfJob
       queryParameters:
         orderid: 
@@ -465,11 +383,6 @@ resourceTypes:
   get:
     description: |
       Get production planner job steps by status, mission, and latest of size "last".
-     
-      @param status  The status of the job steps to retrieve
-      @param mission The mission for which to retrieve the job steps
-      @param last    The number of latest job steps to retrieve
-      @return A ResponseEntity containing the list of RestJobStep objects and the HTTP status code
     displayName: getJobSteps
     queryParameters:
       status?:
@@ -492,9 +405,6 @@ resourceTypes:
     get:
       description: |
         Get a production planner job step identified by name or id.
-       
-        @param name The name or id of the job step to retrieve
-        @return A ResponseEntity containing the RestJobStep object and the HTTP status code
       displayName: getJobStep
       responses:
         200:
@@ -512,10 +422,6 @@ resourceTypes:
   get:
     description: |
       Retrieves a list of all missions or a mission with a specific code.
-     
-      @param mission The code of the mission to retrieve.
-      @return A response entity with either a list of missions and HTTP status OK or an error message and an HTTP status indicating
-              failure.
     displayName: getMissions
     queryParameters:
       mission?: 
@@ -530,11 +436,6 @@ resourceTypes:
   post:
     description: |
       Creates a new mission with the provided data.
-     
-      @param restMission The JSON object representing the mission to be created.
-      @return A response entity containing the JSON object corresponding to the created mission (with ID and version for all
-              contained objects) and HTTP status "CREATED" or an error message and an HTTP status indicating failure.
-      @throws IllegalArgumentException If any of the input data is invalid.
     displayName: createMission
     body:
       application/json:
@@ -554,10 +455,6 @@ resourceTypes:
     get:
       description: |
         Retrieves the mission with the specified ID.
-        
-        @param id The ID of the mission to retrieve.
-        @return A response entity corresponding to the found mission and HTTP status "OK", or an error message and HTTP status
-               "NOT_FOUND" if no mission with the given ID exists.
       displayName: getMissionById
       responses:
         200:
@@ -572,12 +469,6 @@ resourceTypes:
     patch:
       description: |
         Updates the mission with the specified ID using the attribute values of the given JSON object.
-       
-        @param id          The ID of the mission to update.
-        @param restMission A JSON object containing the modified (and unmodified) attributes.
-        @return A response entity containing a JSON object corresponding to the mission after modification (with ID and version for
-                all contained objects) and HTTP status "OK", or HTTP status "FORBIDDEN" and an error message if a cross-mission data
-                access was attempted, or HTTP status "NOT_FOUND" and an error message if no mission with the given ID exists.
       displayName: modifyMission
       body:
         application/json:
@@ -596,13 +487,6 @@ resourceTypes:
     delete:
       description: |
         Delete a mission by ID.
-       
-        @param id             the ID of the mission to delete
-        @param force          flag whether to also delete all configured items (but not products)
-        @param deleteProducts flag whether to also delete all stored products (also from all processing facilities, requires "force")
-        @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, "BAD_REQUEST" if "deleteProducts"
-                was specified without "force" or if dependent objects exist for the mission, "NOT_FOUND" if the mission did not
-                exist, or "NOT_MODIFIED" if the deletion was unsuccessful
       displayName: deleteMissionById
       queryParameters:
         force?:
@@ -621,21 +505,6 @@ resourceTypes:
   get:
     description: |
       Retrieves a list of all orbits filtered by spacecraft code, orbit number range, and start time range.
-     
-      @param spacecraftCode  The spacecraft code to filter by.
-      @param orbitNumberFrom The minimum orbit number requested.
-      @param orbitNumberTo   The maximum orbit number requested.
-      @param startTimeFrom   The earliest sensing start time requested.
-      @param startTimeTo     The latest sensing start time requested.
-      @param recordFrom      The first record of the filtered and ordered result to return.
-      @param recordTo        The last record of the filtered and ordered result to return.
-      @param orderBy         An array of strings containing a column name and an optional sort direction (ASC/DESC), separated by
-                             white space.
-      @return HTTP status "OK" and a list of orbits if successful, or HTTP status "NOT_FOUND" and an error message if no orbits
-              matching the search criteria were found, or HTTP status "BAD_REQUEST" and an error message if the request parameters
-              were inconsistent, or HTTP status "FORBIDDEN" and an error message if a cross-mission data access was attempted, or
-              HTTP status "INTERNAL_SERVER_ERROR" on any unexpected exception, or HTTP status "TOO MANY REQUESTS" if the result
-              list exceeds a configured maximum.
     displayName: getOrbits
     queryParameters:
       spacecraftCode: 
@@ -673,12 +542,6 @@ resourceTypes:
   post:
     description: |
       Creates one or more orbits based on the provided JSON objects.
-       
-      @param restOrbit The list of JSON objects representing the orbits to create.
-      @return HTTP status "CREATED" and a list of JSON objects corresponding to the created orbits if successful, or HTTP status
-              "FORBIDDEN" and an error message if a cross-mission data access was attempted, or HTTP status "BAD_REQUEST" and an
-              error message if the orbit data was invalid, or HTTP status "INTERNAL_SERVER_ERROR" and an error message if any other
-              error occurred.
     displayName: createOrbits
     body:
       application/json:
@@ -695,16 +558,6 @@ resourceTypes:
     get:
       description: |
         Retrieves the number of orbits matching the specified search criteria.
-       
-        @param spacecraftCode  The spacecraft code to filter by.
-        @param orbitNumberFrom The minimum orbit number requested.
-        @param orbitNumberTo   The maximum orbit number requested.
-        @param starttimefrom   The earliest sensing start time requested.
-        @param starttimeto     The latest sensing start time requested.
-        @return HTTP status "OK" and the number of retrieved orbits if successful, or HTTP status "NOT_FOUND" and an error message if
-                no orbits matching the search criteria were found, or HTTP status "BAD_REQUEST" and an error message if the request
-                parameters were inconsistent, or HTTP status "FORBIDDEN" and an error message if a cross-mission data access was
-                attempted, or HTTP status "INTERNAL_SERVER_ERROR" on any unexpected exception.
       displayName: countOrbits
       queryParameters:
         spacecraftCode: 
@@ -734,12 +587,6 @@ resourceTypes:
     get:
       description: |
         Retrieves the orbit with the given ID.
-       
-        @param id The ID of the orbit to retrieve.
-        @return HTTP status "OK" and a JSON object corresponding to the retrieved orbit if successful, or HTTP status "NOT_FOUND" and
-                an error message if no orbit with the given ID exists, or HTTP status "FORBIDDEN" and an error message if a
-                cross-mission data access was attempted, or HTTP status "INTERNAL_SERVER_ERROR" and an error message if any other
-                error occurred.
       displayName: getOrbitById
       responses:
         200:
@@ -754,13 +601,6 @@ resourceTypes:
     patch:
       description: |
         Updates the orbit with the given ID using the attribute values from the provided JSON object.
-       
-        @param id        The ID of the orbit to update.
-        @param restOrbit The JSON object containing the modified (and unmodified) attributes.
-        @return HTTP status "OK" and a JSON object corresponding to the updated orbit if successful, or HTTP status "NOT_FOUND" and
-                an error message if no orbit with the given ID exists, or HTTP status "FORBIDDEN" and an error message if a
-                cross-mission data access was attempted, or HTTP status "NOT_MODIFIED" if the update was unsuccessful, or HTTP status
-                "INTERNAL_SERVER_ERROR" and an error message if any other error occurred.
       displayName: modifyOrbit
       body:
         application/json:
@@ -779,11 +619,6 @@ resourceTypes:
     delete:
       description: |
         Deletes the orbit with the given ID.
-       
-        @param id The ID of the orbit to delete.
-        @return HTTP status "NO_CONTENT" if successful, or HTTP status "NOT_FOUND" and an error message if no orbit with the given ID
-                exists, or HTTP status "FORBIDDEN" and an error message if a cross-mission data access was attempted, or HTTP status
-                "INTERNAL_SERVER_ERROR" and an error message if any other error occurred.
       displayName: deleteOrbitById
       responses:
         204:

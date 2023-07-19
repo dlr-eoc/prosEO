@@ -60,10 +60,6 @@ resourceTypes:
   get:
     description: |
       List of all product archives with no search criteria
-     
-      @param code the unique product archive name
-      @return a response entity with either a list of product archives and HTTP status OK or an error message and an HTTP status
-              indicating failure
     displayName: getArchives
     queryParameters:
       code?: 
@@ -78,10 +74,6 @@ resourceTypes:
   post:
     description: |
       Create a product archive from the given Json object
-     
-      @param restProductArchive the Json object to create the product archive from
-      @return HTTP status "CREATED" and a response containing a Json object corresponding to the product archive after persistence
-              (with ID and version for all contained objects) or HTTP status "BAD_REQUEST", if any of the input data was invalid
     displayName: createArchive
     body:
       application/json:
@@ -101,10 +93,6 @@ resourceTypes:
     get:
       description: |
         Find the product archive with the given ID
-       
-        @param id the ID to look for
-        @return a response entity corresponding to the found product archive and HTTP status "OK" or an error message and HTTP status
-                "NOT_FOUND", if no product archive with the given ID exists
       displayName: getArchiveById
       responses:
         200:
@@ -115,13 +103,6 @@ resourceTypes:
     patch:
       description: |
         Update the product archive with the given ID with the attribute values of the given Json object.
-       
-        @param id                 the ID of the product archive to update
-        @param restProductArchive a Json object containing the modified (and unmodified) attributes
-        @return a response containing HTTP status "OK" and a Json object corresponding to the product archive after modification
-                (with ID and version for all contained objects) or HTTP status "NOT_MODIFIED" and the unchanged product archive, if
-                no attributes were actually changed, or HTTP status "NOT_FOUND" and an error message, if no product archive with the
-                given ID exists
       displayName: modifyArchive
       body:
         application/json:
@@ -141,11 +122,6 @@ resourceTypes:
     delete:
       description: |
         Delete a product archive by ID
-       
-        @param id the ID of the facility to delete
-        @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, "BAD_REQUEST", if the archive still
-                has stored products, TODO: Check dependencies "NOT_FOUND", if the archive did not exist, or "NOT_MODIFIED", if the
-                deletion was unsuccessful
       displayName: deleteArchiveById
       responses:
         204:
