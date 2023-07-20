@@ -66,34 +66,35 @@ import io.kubernetes.client.openapi.models.V1ResourceRequirements;
  */
 @Component
 public class KubeJob {
+
 	/** Logger of this class */
 	private static ProseoLogger logger = new ProseoLogger(KubeJob.class);
 
-	/** The job id of DB */
+	/** The job's database id */
 	private long jobId;
 
-	/** The generated job name (job prefix + jobId) */
+	/** The generated job name (job prefix + job ID) */
 	private String jobName;
 
-	/** The pod name found */
+	/** The list of pod names associated with the job */
 	private ArrayList<String> podNames;
 
-	/** The container name generated (container prefix + jobId) */
+	/** The generated container name (container prefix + job ID) */
 	private String containerName;
 
 	/** The processor image name */
 	private String imageName;
 
-	/** The job order file */
+	/** The job order file (JOF) */
 	private String jobOrderFileName;
 
-	/** Arguments of command */
+	/** Additional commands for the kube job (command arguments) */
 	private ArrayList<String> args = new ArrayList<>();
 
-	/** The order of job step */
+	/** The processing order to which the job step is associated */
 	private JobOrder jobOrder;
 
-	/** The processing facility running job step */
+	/** The processing facility running the job step */
 	private KubeConfig kubeConfig;
 
 	/**
@@ -128,7 +129,7 @@ public class KubeJob {
 	}
 
 	/**
-	 * Returns the container name associated with the job.
+	 * Returns the name of the container associated with the job.
 	 *
 	 * @return the containerName
 	 */
@@ -137,7 +138,7 @@ public class KubeJob {
 	}
 
 	/**
-	 * Returns the name of the job order file.
+	 * Returns the name of the job order file (JOF).
 	 *
 	 * @return the jobOrderFileName
 	 */
@@ -146,7 +147,7 @@ public class KubeJob {
 	}
 
 	/**
-	 * Sets the name of the job order file.
+	 * Sets the name of the job order file (JOF).
 	 *
 	 * @param jobOrderFileName the jobOrderFileName to set
 	 */
@@ -155,7 +156,7 @@ public class KubeJob {
 	}
 
 	/**
-	 * Returns the job order associated with the job.
+	 * Returns the processing order to which the job is associated.
 	 *
 	 * @return the jobOrder
 	 */
@@ -173,7 +174,7 @@ public class KubeJob {
 	}
 
 	/**
-	 * Add argument to the list of command arguments
+	 * Add an argument to the list of command arguments.
 	 *
 	 * @param arg The command argument to add
 	 */
@@ -192,14 +193,14 @@ public class KubeJob {
 	 * Instantiate a Kubernetes job with the specified parameters.
 	 *
 	 * @param id               The database ID of the job
-	 * @param name             The name for the job (optional)
-	 * @param processor        The processor image for the job
-	 * @param jobOrderFileName The file name of the job order
+	 * @param namePrefix       The name for the job
+	 * @param processorImage   The processor image for the job
+	 * @param jobOrderFileName The file name of the job order file
 	 * @param args             Additional command arguments for the job
 	 */
-	public KubeJob(int id, String name, String processor, String jobOrderFileName, ArrayList<String> args) {
+	public KubeJob(int id, String namePrefix, String processorImage, String jobOrderFileName, ArrayList<String> args) {
 
-		this.imageName = processor;
+		this.imageName = processorImage;
 		this.jobOrderFileName = jobOrderFileName;
 		this.podNames = new ArrayList<>();
 
@@ -214,14 +215,15 @@ public class KubeJob {
 		jobId = jobStep.getId();
 
 		// Set the job name and container name
-		if (name != null) {
-			jobName = name + jobId;
+		if (namePrefix != null) {
+			jobName = namePrefix + jobId;
 		} else {
 			jobName = ProductionPlanner.jobNamePrefix + jobId;
 		}
 		containerName = ProductionPlanner.jobContainerPrefix + jobId;
 
 		// Update the JobStep with the processing mode and save it
+		// TODO Why is the job name the processing mode?
 		jobStep.setProcessingMode(jobName);
 		RepositoryService.getJobStepRepository().save(jobStep);
 	}
@@ -267,9 +269,11 @@ public class KubeJob {
 					jobId = Long.valueOf(jobName.substring(ProductionPlanner.jobNamePrefix.length()));
 					containerName = ProductionPlanner.jobContainerPrefix + jobId;
 				} catch (NumberFormatException e) {
+
 					if (logger.isDebugEnabled()) {
 						logger.debug("An exception occurred. Cause: ", e);
 					}
+
 					return null;
 				}
 			} else {
@@ -277,6 +281,7 @@ public class KubeJob {
 				return null;
 			}
 
+			// Search for associated pods
 			searchPod();
 		}
 
@@ -389,7 +394,7 @@ public class KubeJob {
 		String localMountPoint = ProductionPlanner.config.getPosixWorkerMountPoint();
 
 		// Configure the compute resource requirements
-		V1ResourceRequirements reqs = new V1ResourceRequirements();
+		V1ResourceRequirements requirements = new V1ResourceRequirements();
 		String cpus = jobStep.getOutputProduct()
 			.getConfiguredProcessor()
 			.getConfiguration()
@@ -413,7 +418,7 @@ public class KubeJob {
 		} catch (NumberFormatException ex) {
 			mem = getMinMemory(jobStep.getOutputProduct().getConfiguredProcessor().getProcessor(), 1).toString() + "Gi";
 		}
-		reqs.putRequestsItem("cpu", new Quantity(cpus))
+		requirements.putRequestsItem("cpu", new Quantity(cpus))
 			.putRequestsItem("memory", new Quantity(mem))
 			.putRequestsItem("ephemeral-storage", new Quantity(minDiskSpace));
 		V1EnvVarSource es = new V1EnvVarSourceBuilder().withNewFieldRef().withFieldPath("status.hostIP").endFieldRef().build();
@@ -506,7 +511,7 @@ public class KubeJob {
 			.withName("proseo-mnt")
 			.withMountPath(localMountPoint)
 			.endVolumeMount()
-			.withResources(reqs)
+			.withResources(requirements)
 			.endContainer()
 			.addNewVolume()
 			.withName("proseo-mnt")
@@ -712,9 +717,9 @@ public class KubeJob {
 				return jobStep.get();
 			});
 		} catch (LockAcquisitionException e) {
-			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 		} catch (Exception e) {
-			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 		} finally {
 			// Release the thread semaphore for "finish" operation
 			kubeConfig.getProductionPlanner().releaseThreadSemaphore("finish");
@@ -728,20 +733,26 @@ public class KubeJob {
 	}
 
 	/*
-	 * TODO analyze pod
-	 *
-	 * phase string The phase of a Pod is a simple, high-level summary of where the Pod is in its lifecycle. The conditions array,
-	 * the reason and message fields, and the individual container status arrays contain more detail about the pod's status. There
-	 * are five possible phase values: Pending: The pod has been accepted by the Kubernetes system, but one or more of the container
-	 * images has not been created. This includes time before being scheduled as well as time spent downloading images over the
-	 * network, which could take a while. Running: The pod has been bound to a node, and all of the containers have been created. At
-	 * least one container is still running, or is in the process of starting or restarting. Succeeded: All containers in the pod
-	 * have terminated in success, and will not be restarted. Failed: All containers in the pod have terminated, and at least one
-	 * container has terminated in failure. The container either exited with non-zero status or was terminated by the system.
+	 * TODO Analyze pod. The phase of a Pod is a simple, high-level summary of where the Pod is in its lifecycle. The conditions
+	 * array, the reason and message fields, and the individual container status arrays contain more detail about the pod's status.
+	 * There are five possible phase values:
+	 * 
+	 * Pending: The pod has been accepted by the Kubernetes system, but one or more of the container images has not been created.
+	 * This includes time before being scheduled as well as time spent downloading images over the network, which could take a
+	 * while.
+	 * 
+	 * Running: The pod has been bound to a node, and all of the containers have been created. At least one container is still
+	 * running, or is in the process of starting or restarting.
+	 * 
+	 * Succeeded: All containers in the pod have terminated in success, and will not be restarted.
+	 * 
+	 * Failed: All containers in the pod have terminated, and at least one container has terminated in failure. The container either
+	 * exited with non-zero status or was terminated by the system. *
+	 * 
 	 * Unknown: For some reason the state of the pod could not be obtained, typically due to an error in communicating with the host
 	 * of the pod. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#pod-phase
 	 *
-	 * conditions: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-conditions
+	 * Conditions: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-conditions
 	 */
 
 	/**
@@ -947,7 +958,7 @@ public class KubeJob {
 		Boolean success = updateInfo(jobName);
 
 		// If the updateInfo was successful, perform additional operations
-		if (success.equals(Boolean.TRUE)) {
+		if (success) {
 			TransactionTemplate transactionTemplate = new TransactionTemplate(
 					this.kubeConfig.getProductionPlanner().getTxManager());
 			transactionTemplate.execute((status) -> {
@@ -961,15 +972,13 @@ public class KubeJob {
 
 				return null;
 			});
-		}
 
-		// If the updateInfo was successful or some other change occurred, delete the Kubernetes job
-		if (!success.equals(Boolean.FALSE)) {
+			// Delete the Kubernetes job
 			kubeConfig.deleteJob(jobName);
 			logger.log(PlannerMessage.KUBEJOB_FINISHED, kubeConfig.getId(), jobName);
 		}
 
-		return !success.equals(Boolean.FALSE);
+		return success;
 	}
 
 	/**
@@ -1022,6 +1031,8 @@ public class KubeJob {
 				// Acquire a pessimistic write lock on the product
 				em.lock(product, LockModeType.PESSIMISTIC_WRITE, properties);
 			} catch (Exception e) {
+				logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+
 				if (logger.isDebugEnabled()) {
 					logger.debug("An exception occurred. Cause: ", e);
 				}
@@ -1065,10 +1076,8 @@ public class KubeJob {
 	private Integer getMinMemory(Processor processor, Integer defaultMemoryMin) {
 		if (processor != null) {
 			for (Task task : processor.getTasks()) {
-				if (task.getMinMemory() != null) {
-					if (task.getMinMemory() > defaultMemoryMin) {
-						defaultMemoryMin = task.getMinMemory();
-					}
+				if (task.getMinMemory() != null && task.getMinMemory() > defaultMemoryMin) {
+					defaultMemoryMin = task.getMinMemory();
 				}
 			}
 		}
