@@ -326,7 +326,16 @@ public class FacilityCommandRunner {
 		if (!showCommand.getParameters().isEmpty()) {
 			// Only facility name allowed as parameter
 			RestProcessingFacility restFacility = retrieveFacilityByName(showCommand.getParameters().get(0).getValue());
+			
 			if (null != restFacility) {
+				
+				// Hide passwords
+				if (!showPasswords) {
+					restFacility.setProcessingEngineToken(PWD_PLACEHOLDER);
+					restFacility.setStorageManagerPassword(PWD_PLACEHOLDER);
+				}
+				
+				// print the requested facility				
 				try {
 					CLIUtil.printObject(System.out, restFacility, facilityOutputFormat);
 				} catch (IllegalArgumentException e) {
@@ -373,7 +382,7 @@ public class FacilityCommandRunner {
 			// Must be a list of processing facilities
 			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
 				if (resultObject instanceof Map) {
-					((Map<String, Object>) resultObject).put("processingEnginePassword", PWD_PLACEHOLDER);
+					((Map<String, Object>) resultObject).put("processingEngineToken", PWD_PLACEHOLDER);
 					((Map<String, Object>) resultObject).put("storageManagerPassword", PWD_PLACEHOLDER);
 				}
 			}
