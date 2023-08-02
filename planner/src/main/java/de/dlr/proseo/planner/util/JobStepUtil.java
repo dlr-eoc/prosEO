@@ -6,6 +6,7 @@
 package de.dlr.proseo.planner.util;
 
 import java.math.BigInteger;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -16,21 +17,30 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import java.time.Duration;
+import java.time.Instant;
+
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.OdipMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.model.Job;
@@ -41,13 +51,20 @@ import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.ProductQuery;
+import de.dlr.proseo.model.SimplePolicy;
+import de.dlr.proseo.model.enums.OrderSource;
 import de.dlr.proseo.model.enums.OrderState;
+import de.dlr.proseo.model.rest.model.RestProduct;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.service.ProductQueryService;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.planner.ProductionPlanner;
+import de.dlr.proseo.planner.ProductionPlannerConfiguration;
+import de.dlr.proseo.planner.ProductionPlannerSecurityConfig;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.kubernetes.KubeJob;
+import de.dlr.proseo.planner.service.ServiceConnection;
 
 /**
  * Handle job steps 
@@ -64,6 +81,8 @@ public class JobStepUtil {
 	 */
 	private static ProseoLogger logger = new ProseoLogger(JobStepUtil.class);
 
+	private final String URI_PATH_DOWNLOAD_ALLBYTIME = "/download/allbytime";
+
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
@@ -72,6 +91,15 @@ public class JobStepUtil {
 	private ProductQueryService productQueryService;
 	@Autowired
 	private ProductionPlanner productionPlanner;
+	@Autowired
+	private ServiceConnection serviceConnection;
+	/** 
+	 * Planner configuration 
+	 */
+	@Autowired
+	ProductionPlannerConfiguration config;
+	@Autowired
+	ProductionPlannerSecurityConfig securityConfig;
 	
 	/** REST template builder */
 	@Autowired
@@ -857,6 +885,14 @@ public class JobStepUtil {
 							//							RepositoryService.getProductRepository().save(jsx.getOutputProduct());
 						} else {
 							hasUnsatisfiedInputQueries = true;
+							if (js.getJob().getProcessingOrder().getOrderSource() == OrderSource.ODIP) {
+								// call aip client to download possible files
+								if (!pq.getInDownload()) {
+									pq.setInDownload(true);
+									RepositoryService.getProductQueryRepository().save(pq);
+									startAipDownload(pq);
+								}
+							}
 						}
 					}
 				}
@@ -1414,4 +1450,52 @@ public class JobStepUtil {
 			return false;
 		}
 	}
+	
+	private void startAipDownload(ProductQuery pq) {
+		if (logger.isTraceEnabled()) logger.trace(">>> ProductQuery({})", pq);
+		// calculate start and stop time
+		// analyze sql query for times
+		Instant startTime = pq.getJobStep().getJob().getStartTime();
+		Instant stopTime = pq.getJobStep().getJob().getStopTime();
+		List<SimplePolicy> simplePolicies = pq.getGeneratingRule().getSimplePolicies();
+		for (SimplePolicy simplePolicy : simplePolicies) {
+			startTime = startTime.isAfter(startTime.minusMillis(simplePolicy.getDeltaTimeT0().toMilliseconds())) ?
+					startTime.minusMillis(simplePolicy.getDeltaTimeT0().toMilliseconds()) : startTime;
+			stopTime = stopTime.isBefore(startTime.plusMillis(simplePolicy.getDeltaTimeT0().toMilliseconds())) ?
+					stopTime.plusMillis(simplePolicy.getDeltaTimeT0().toMilliseconds()) : stopTime;
+		}
+		String user = "";
+		String pw = "";
+		if (Thread.currentThread() instanceof OrderReleaseThread) {
+			user = ((OrderReleaseThread) Thread.currentThread()).getUser();
+			pw = ((OrderReleaseThread) Thread.currentThread()).getPw();
+		}
+		try {
+			if (logger.isTraceEnabled()) logger.trace("  {}{})", config.getAipUrl(),
+					URI_PATH_DOWNLOAD_ALLBYTIME + "?productType=" + pq.getRequestedProductClass().getProductType() + "&startTime=" + OrbitTimeFormatter.format(startTime)
+					+ "&stopTime=" + OrbitTimeFormatter.format(stopTime) + "&facility=" 
+					+ pq.getJobStep().getJob().getProcessingFacility().getName());
+			@SuppressWarnings("unchecked")
+			List<RestProduct> restProducts = (List<RestProduct>) serviceConnection.getFromService(
+					config.getAipUrl(),
+					URI_PATH_DOWNLOAD_ALLBYTIME + "?productType=" + pq.getRequestedProductClass().getProductType() + "&startTime=" + OrbitTimeFormatter.format(startTime)
+							+ "&stopTime=" + OrbitTimeFormatter.format(stopTime) + "&facility=" 
+							+ pq.getJobStep().getJob().getProcessingFacility().getName(),
+					RestProduct.class,
+					user, 
+					pw);
+		} catch (HttpClientErrorException e) {
+			if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+				// nothing to do, perhaps it is optional
+			} else {
+				String message = logger.log(OdipMessage.MSG_EXCEPTION, e.getMessage(), e);
+				// throw new Exception(message);
+			}
+		} catch (Exception e) {
+			String message = logger.log(OdipMessage.MSG_EXCEPTION, e.getMessage(), e);
+			// throw new Exception(message);
+		}
+	}
+	
+
 }

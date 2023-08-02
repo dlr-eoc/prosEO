@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -74,7 +75,7 @@ public class JobstepControllerImpl implements JobstepController {
      */
 	@Override
 	@Transactional
-    public ResponseEntity<List<RestJobStep>> getJobSteps(Status status, String mission, Long last) {		
+    public ResponseEntity<List<RestJobStep>> getJobSteps(Status status, String mission, Long last, HttpHeaders httpHeaders) {		
 		if (logger.isTraceEnabled()) logger.trace(">>> getJobSteps({}, {}, {})", status, mission, last);
 		
 		if (null == mission || mission.isBlank()) {
@@ -129,7 +130,7 @@ public class JobstepControllerImpl implements JobstepController {
      * 
      */
 	@Override
-	public ResponseEntity<RestJobStep> getJobStep(String name) {
+	public ResponseEntity<RestJobStep> getJobStep(String name, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getJobStep({})", name);
 		
 		try {
@@ -182,7 +183,7 @@ public class JobstepControllerImpl implements JobstepController {
      * 
      */
 	@Override
-	public ResponseEntity<String> getJobStepLog(String name) {
+	public ResponseEntity<String> getJobStepLog(String name, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getJobStep({})", name);
 		try {
 			JobStep js = this.findJobStepByNameOrIdPrim(name);
@@ -236,7 +237,7 @@ public class JobstepControllerImpl implements JobstepController {
      * 
      */
 	@Override 
-	public ResponseEntity<RestJobStep> resumeJobStep(String jobstepId) {
+	public ResponseEntity<RestJobStep> resumeJobStep(String jobstepId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> resumeJobStep({})", jobstepId);
 		
 		try {
@@ -317,7 +318,7 @@ public class JobstepControllerImpl implements JobstepController {
      * 
      */
 	@Override 
-	public ResponseEntity<RestJobStep> cancelJobStep(String jobstepId) {
+	public ResponseEntity<RestJobStep> cancelJobStep(String jobstepId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> cancelJobStep({})", jobstepId);
 
 		try {
@@ -379,7 +380,7 @@ public class JobstepControllerImpl implements JobstepController {
      * 
      */
 	@Override 
-	public ResponseEntity<RestJobStep> suspendJobStep(String jobstepId, Boolean forceP) {
+	public ResponseEntity<RestJobStep> suspendJobStep(String jobstepId, Boolean forceP, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> suspendJobStep({}, force: {})", jobstepId, forceP);
 
 		final Boolean force = (null == forceP ? false : forceP);
@@ -530,7 +531,7 @@ public class JobstepControllerImpl implements JobstepController {
      * 
      */
 	@Override
-	public ResponseEntity<RestJobStep> retryJobStep(String jobstepId) {
+	public ResponseEntity<RestJobStep> retryJobStep(String jobstepId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> retryJobStep({})", jobstepId);
 		
 		try {

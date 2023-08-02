@@ -9,6 +9,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -58,7 +59,7 @@ public class ProductControllerImpl implements ProductController {
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> getObjectByProductidAndFacilityId(String productid, Long facilityId) {
+	public ResponseEntity<?> getObjectByProductidAndFacilityId(String productid, Long facilityId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getObjectByProductid({})", productid);
 		
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);

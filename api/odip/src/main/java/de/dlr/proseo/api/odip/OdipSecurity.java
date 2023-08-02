@@ -78,6 +78,12 @@ public class OdipSecurity {
 		}
 		String[] missionUserPassword = (new String(Base64.getDecoder().decode(authParts[1]))).split("\\\\"); // --> regex "\\" --> matches "\"
 		if (2 != missionUserPassword.length) {
+			missionUserPassword = (new String(Base64.getDecoder().decode(authParts[1]))).split("-");
+		}
+		if (2 != missionUserPassword.length) {
+			missionUserPassword = (new String(Base64.getDecoder().decode(authParts[1]))).split("-");
+		}
+		if (2 != missionUserPassword.length) {
 			String message = logger.log(OdipMessage.MSG_AUTH_MISSING_OR_INVALID, authHeader);
 			throw new IllegalArgumentException(message);
 		}

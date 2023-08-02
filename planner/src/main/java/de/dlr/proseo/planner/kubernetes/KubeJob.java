@@ -781,11 +781,11 @@ public class KubeJob {
 					}
 					return success;
 				});
-				if (logger.isTraceEnabled()) logger.trace("<<< updateInfo({})", aJobName);
+				if (logger.isTraceEnabled()) logger.trace("<<< updateInfo({}, {})", aJobName, successx);
 				return successx;
 			}
 		}
-		if (logger.isTraceEnabled()) logger.trace("<<< updateInfo({})", aJobName);
+		if (logger.isTraceEnabled()) logger.trace("<<< updateInfo({}, {})", aJobName, UpdateInfoResult.FALSE);
 		return UpdateInfoResult.FALSE;
 	}
 

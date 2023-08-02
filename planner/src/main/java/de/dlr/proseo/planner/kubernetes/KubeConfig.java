@@ -718,24 +718,33 @@ public class KubeConfig {
 		if (logger.isTraceEnabled()) logger.trace(">>> getV1Job({})", name);
 		
 		V1Job aV1Job = null;
-		try {
-			aV1Job = batchApiV1.readNamespacedJob(name, namespace, null, null, null);
-		} catch (ApiException e) {
-			if (e.getCode() == 404) {
-				// do nothing
-				logger.log(PlannerMessage.KUBECONFIG_JOB_NOT_FOUND, name);
-				return null;			
-			} else {
-				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
-				return null;				
+		int i = 0;
+		while (i < 10 && aV1Job == null) {
+			i++;
+			try {
+				aV1Job = batchApiV1.readNamespacedJob(name, namespace, null, null, null);
+			} catch (ApiException e) {
+				if (e.getCode() == 404) {
+					// do nothing
+					logger.log(PlannerMessage.KUBECONFIG_JOB_NOT_FOUND, name);
+					i = 10;
+				} else {
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
+				}
+			} catch (Exception e) {
+				if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
+					// nothing to do 
+					// cause there is a bug in Kubernetes API
+				} else {
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
+				}
 			}
-		} catch (Exception e) {
-			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
-				// nothing to do 
-				// cause there is a bug in Kubernetes API
-			} else {
-				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
-				return null;
+			if ((i < 10 && aV1Job == null)) {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e1) {
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e1);
+				}
 			}
 		}
 		return aV1Job;
@@ -750,18 +759,28 @@ public class KubeConfig {
 		if (logger.isTraceEnabled()) logger.trace(">>> getV1Pod({})", name);
 		
 		V1Pod aV1Pod = null;
-		try {
-			aV1Pod = apiV1.readNamespacedPod(name, namespace, null, null, null);
-		} catch (Exception e) {
-			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
-				// nothing to do 
-				// cause there is a bug in Kubernetes API
-			} else if (e instanceof ApiException && ((ApiException) e).getCode() == 404) {
-				// pod not found
-				return null;
-			} else {
-				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
-				return null;
+		int i = 0;
+		while (i < 10 && aV1Pod == null) {
+			i++;
+			try {
+				aV1Pod = apiV1.readNamespacedPod(name, namespace, null, null, null);
+			} catch (Exception e) {
+				if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
+					// nothing to do 
+					// cause there is a bug in Kubernetes API
+				} else if (e instanceof ApiException && ((ApiException) e).getCode() == 404) {
+					// pod not found
+					i = 10;
+				} else {
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
+				}
+			}
+			if ((i < 10 && aV1Pod == null)) {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e1) {
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e1);
+				}
 			}
 		}
 		return aV1Pod;

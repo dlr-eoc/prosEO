@@ -12,6 +12,7 @@ logging:
 proseo:
     http.timeout: 10000
     notification:
+        url: http://192.168.20.155:8099/proseo/notification/v0.1
         subject: "Message from prosEO"
         contentType: "text/html"
         mail:

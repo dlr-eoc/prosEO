@@ -91,6 +91,19 @@ public class ProductionPlannerConfiguration {
 	@Value("${proseo.http.timeout}")
 	private Integer httpTimeout;
 
+	/** The URI of the AIP client (protocol, host name, port, context; no terminating slash) */
+	@Value("${proseo.aip.url}")
+	private String aipUrl;
+
+	/**
+	 * Gets the AIP URL
+	 * 
+	 * @return the aipUrl
+	 */
+	public String getAipUrl() {
+		return aipUrl;
+	}
+
 	/**
 	 * @return the httpTimeout
 	 */

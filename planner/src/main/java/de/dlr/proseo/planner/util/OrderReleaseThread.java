@@ -64,6 +64,23 @@ public class OrderReleaseThread extends Thread {
 	 */
 	private PlannerResultMessage resultMessage;
 	
+	private String user;
+	private String pw;
+	
+	/**
+	 * @return the user
+	 */
+	public String getUser() {
+		return user;
+	}
+
+	/**
+	 * @return the pw
+	 */
+	public String getPw() {
+		return pw;
+	}
+
 	/**
 	 * @return the resultMessage
 	 */
@@ -79,12 +96,15 @@ public class OrderReleaseThread extends Thread {
 	 * @param order The processing order to plan
 	 * @param name The thread name
 	 */
-	public OrderReleaseThread(ProductionPlanner productionPlanner, EntityManager em, JobUtil jobUtil, ProcessingOrder order, String name) {
+	public OrderReleaseThread(ProductionPlanner productionPlanner, EntityManager em, JobUtil jobUtil, ProcessingOrder order, 
+			String name, String user, String pw) {
 		super(name);
 		this.productionPlanner = productionPlanner;
 		this.em = em;
 		this.jobUtil = jobUtil;
 		this.order = order;
+		this.user = user;
+		this.pw = pw;
 	}
 	
     /**

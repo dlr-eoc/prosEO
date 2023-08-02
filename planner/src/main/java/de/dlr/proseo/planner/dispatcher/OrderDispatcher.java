@@ -667,7 +667,11 @@ public class OrderDispatcher {
 				productionPlanner.acquireThreadSemaphore("createJobSteps");
 				PlannerResultMessage answer1 = transactionTemplate.execute((status) -> {
 					curJSList.set(0, 0);
-				    ProcessingOrder locOrder =  RepositoryService.getOrderRepository().getOne(orderId);
+					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+				    ProcessingOrder locOrder = null;
+					if (orderOpt.isPresent()) { 
+						locOrder = orderOpt.get();
+					}
 					while (curJList.get(0) < jCount && curJSList.get(0) < packetSize) {
 						if (thread.isInterrupted()) {
 							return new PlannerResultMessage(PlannerMessage.PLANNING_INTERRUPTED);
