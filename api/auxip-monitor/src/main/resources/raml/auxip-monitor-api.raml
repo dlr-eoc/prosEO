@@ -14,7 +14,13 @@ types:
     auxipid:
       description: AUXIP Monitor identifier
   get:
-    description: Get status info for this AUXIP Monitor
+    description: |
+      Get the interface status for the given AUXIP Monitor
+
+      @param auxipid     the AUXIP Monitor identifier
+      @param httpHeaders the HTTP request headers (injected)
+      @return HTTP status "OK" and the Json representation of the interface status information, or HTTP status "FORBIDDEN" and an
+              error message, if an invalid AUXIP Monitor identifier was passed
     responses:
       200:
         body:

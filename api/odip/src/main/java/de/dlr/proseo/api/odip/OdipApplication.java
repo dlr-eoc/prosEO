@@ -1,9 +1,8 @@
 /**
  * OdipApplication.java
- * 
+ *
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
-
 package de.dlr.proseo.api.odip;
 
 import java.util.Arrays;
@@ -22,14 +21,13 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 
 /**
  * prosEO Processor Manager application
- * 
+ *
  * @author Dr. Thomas Bassler
- * 
  */
 @Configuration
 @EnableAutoConfiguration
 @EnableConfigurationProperties
-@ComponentScan(basePackages={"de.dlr.proseo"})
+@ComponentScan(basePackages = { "de.dlr.proseo" })
 @EnableJpaRepositories(basePackages = { "de.dlr.proseo.model.dao" })
 public class OdipApplication extends OdipApplicationBase implements CommandLineRunner {
 
@@ -38,15 +36,17 @@ public class OdipApplication extends OdipApplicationBase implements CommandLineR
 
 	@Autowired
 	private OdipUtil odipUtil;
-	
+
 	public static void main(String[] args) throws Exception {
 		SpringApplication.run(OdipApplication.class, args);
 	}
 
 	@Override
 	public void run(String... args) throws Exception {
-		if (logger.isTraceEnabled()) logger.trace(">>> run({})", Arrays.asList(args));
+		if (logger.isTraceEnabled())
+			logger.trace(">>> run({})", Arrays.asList(args));
 		application = this;
 		util = odipUtil;
 	}
+
 }

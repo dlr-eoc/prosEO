@@ -1,3 +1,8 @@
+/**
+ * GUIWorkflowController.java
+ *
+ * (C) 2021 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ui.gui;
 
 import java.util.ArrayList;
@@ -27,6 +32,11 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
+/**
+ * A controller for retrieving and handling workflows
+ *
+ * @author Katharina Bassler
+ */
 @Controller
 public class GUIWorkflowController extends GUIBaseController {
 
@@ -41,15 +51,19 @@ public class GUIWorkflowController extends GUIBaseController {
 	@Autowired
 	private ServiceConnection serviceConnection;
 
+	/**
+	 * Show the workflow view
+	 *
+	 * @return the name of the workflow view template
+	 */
 	@RequestMapping(value = "/workflow-show")
 	public String showWorkflow() {
 		return "workflow-show";
 	}
 
 	/**
-	 * Fetch and return workflows from the processor manager to be handled by
-	 * Thymeleaf
-	 * 
+	 * Fetch and return workflows from the processor manager
+	 *
 	 * @param id                the workflow id
 	 * @param name              the workflow name
 	 * @param workflowVersion   the workflow version
@@ -184,14 +198,12 @@ public class GUIWorkflowController extends GUIBaseController {
 	}
 
 	/**
-	 * Retrieve the number of workflows matching a given name, workflow version, and
-	 * input product class.
+	 * Retrieve the number of workflows matching a given name, workflow version, and input product class.
 	 *
 	 * @param name              the workflow name
 	 * @param workflowVersion   the workflow version
 	 * @param inputProductClass the input product class
-	 * @return the number of workflows with the respective name, version, and input
-	 *         product class
+	 * @return the number of workflows with the respective name, version, and input product class
 	 */
 	private Long countWorkflows(String name, String workflowVersion, String inputProductClass) {
 
@@ -239,20 +251,20 @@ public class GUIWorkflowController extends GUIBaseController {
 		} catch (RestClientResponseException e) {
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				System.err.println(ProseoLogger.format(UIMessage.NO_MISSIONS_FOUND));
+				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				System.err.println(ProseoLogger.format(UIMessage.NOT_AUTHORIZED, auth.getProseoName(), "workflows", mission));
+				logger.log(UIMessage.NOT_AUTHORIZED, auth.getProseoName(), "workflows", mission);
 				break;
 			default:
-				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
+				logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
 
 			// Return a result of -1 to indicate that an error occurred
 			return result;
 		} catch (RuntimeException e) {
-			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
+			logger.log(UIMessage.EXCEPTION, e.getMessage());
 
 			// Return a result of -1 to indicate that an error occurred
 			return result;
@@ -260,8 +272,7 @@ public class GUIWorkflowController extends GUIBaseController {
 	}
 
 	/**
-	 * Makes an HTTP GET request to retrieve workflows based on the provided
-	 * parameters.
+	 * Makes an HTTP GET request to retrieve workflows based on the provided parameters.
 	 *
 	 * @param id                the ID of the workflow (optional)
 	 * @param name              the name of the workflow (optional)
@@ -332,10 +343,8 @@ public class GUIWorkflowController extends GUIBaseController {
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
 
 		/*
-		 * The returned Mono<ClientResponse> can be subscribed to in order to retrieve
-		 * the actual response and perform additional operations on it, such as
-		 * extracting the response body or handling any errors that may occur during the
-		 * request.
+		 * The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
+		 * operations on it, such as extracting the response body or handling any errors that may occur during the request.
 		 */
 		return webclient.build()
 			.get()

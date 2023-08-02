@@ -1,3 +1,8 @@
+/**
+ * OrderjobstepControllerImpl.java
+ *
+ * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ordermgr.rest;
 
 import java.util.ArrayList;
@@ -6,6 +11,7 @@ import java.util.Optional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,56 +35,61 @@ import de.dlr.proseo.ordermgr.rest.model.RestUtil;
 
 /**
  * Controller for the prosEO Order Manager, implements the services required to manage job steps.
- * 
- * @author Ernst Melchinger
  *
+ * @author Ernst Melchinger
  */
 @Component
 public class OrderjobstepControllerImpl implements OrderjobstepController {
-	/**
-	 * Logger of this class
-	 */
+
+	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(OrderjobstepControllerImpl.class);
+
+	/** HTTP utility class */
 	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.ORDER_MGR);
 
 	/** Utility class for user authorizations */
 	@Autowired
 	private SecurityService securityService;
-    
+
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
-	
-    /**
-     * Get production planner job steps by status, mission and latest of size "last"
-     * 
-     */
+
+	/**
+	 * Get production planner job steps by status, mission, and latest of size "last".
+	 *
+	 * @param status  The status of the job steps to retrieve
+	 * @param mission The mission for which to retrieve the job steps
+	 * @param last    The number of latest job steps to retrieve
+	 * @return A ResponseEntity containing the list of RestJobStep objects and the HTTP status code
+	 */
 	@Override
 	@Transactional(readOnly = true)
-    public ResponseEntity<List<RestJobStep>> getJobSteps(Status status, String mission, Long last) {		
-		if (logger.isTraceEnabled()) logger.trace(">>> getJobSteps({}, {}, {})", status, mission, last);
-		
+	public ResponseEntity<List<RestJobStep>> getJobSteps(Status status, String mission, Long last) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getJobSteps({}, {}, {})", status, mission, last);
+
 		if (null == mission || mission.isBlank()) {
 			mission = securityService.getMission();
 		} else if (!mission.equals(securityService.getMission())) {
 			String message = logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, mission, securityService.getMission());
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.FORBIDDEN);
 		}
-		
+
 		try {
-			List<RestJobStep> list = new ArrayList<RestJobStep>(); 
+			List<RestJobStep> list = new ArrayList<>();
 			List<JobStep> it;
 			if (status == null || status.value().equalsIgnoreCase("NONE")) {
 				List<JobStep> allJobSteps = RepositoryService.getJobStepRepository().findAll();
 				it = new ArrayList<>();
-				for (JobStep js: allJobSteps) {
+				for (JobStep js : allJobSteps) {
 					if (js.getJob().getProcessingOrder().getMission().getCode().equals(mission)) {
 						it.add(js);
 					}
 				}
 			} else {
 				JobStepState state = JobStepState.valueOf(status.toString());
-				//it = new ArrayList<JobStep>();
+				// it = new ArrayList<JobStep>();
 				if (last != null && last > 0) {
 					List<JobStep> itall = findOrderedByJobStepStateAndMission(state, mission, last.intValue());
 					if (last < itall.size()) {
@@ -92,28 +103,31 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 			}
 			for (JobStep js : it) {
 				RestJobStep pjs = RestUtil.createRestJobStep(js, false);
-				list.add(pjs);			
+				list.add(pjs);
 			}
-			
+
 			logger.log(OrderMgrMessage.JOBSTEPS_RETRIEVED, status, mission);
 
 			return new ResponseEntity<>(list, HttpStatus.OK);
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
-			
+
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
-    /**
-     * Get production planner job step identified by name or id
-     * 
-     */
+	/**
+	 * Get a production planner job step identified by name or id.
+	 *
+	 * @param name The name or id of the job step to retrieve
+	 * @return A ResponseEntity containing the RestJobStep object and the HTTP status code
+	 */
 	@Override
 	@Transactional(readOnly = true)
 	public ResponseEntity<RestJobStep> getJobStep(String name) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getJobStep({})", name);
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getJobStep({})", name);
+
 		try {
 			JobStep js = this.findJobStepByNameOrId(name);
 			if (js != null) {
@@ -129,18 +143,18 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 			String message = logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		
 	}
 
-
 	/**
-	 * Get job step identified by name or id.
-	 * @param nameOrId
-	 * @return Job step found
+	 * Find a job step by name or id.
+	 *
+	 * @param nameOrId The name or id of the job step to find
+	 * @return The found JobStep object
 	 */
 	@Transactional(readOnly = true)
 	private JobStep findJobStepByNameOrIdPrim(String nameOrId) {
-		if (logger.isTraceEnabled()) logger.trace(">>> findJobStepByNameOrIdPrim({})", nameOrId);
+		if (logger.isTraceEnabled())
+			logger.trace(">>> findJobStepByNameOrIdPrim({})", nameOrId);
 
 		JobStep jsx = null;
 		Long id = null;
@@ -165,22 +179,36 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 			if (!missionCode.equals(orderMissionCode)) {
 				logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, orderMissionCode, missionCode);
 				return null;
-			} 
+			}
 		}
 		return jsx;
 	}
 
+	/**
+	 * Find a job step by name or id.
+	 *
+	 * @param nameOrId The name or id of the job step to find
+	 * @return The found JobStep object
+	 */
 	private JobStep findJobStepByNameOrId(String nameOrId) {
-		if (logger.isTraceEnabled()) logger.trace(">>> findJobStepByNameOrId({})", nameOrId);
+		if (logger.isTraceEnabled())
+			logger.trace(">>> findJobStepByNameOrId({})", nameOrId);
 		JobStep js = null;
 		try {
 			js = this.findJobStepByNameOrIdPrim(nameOrId);
 		} catch (Exception e) {
-			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);	
+			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
 		}
 		return js;
 	}
 
+	/**
+	 * Get a RestJobStep object for a given job step ID.
+	 *
+	 * @param id   The ID of the job step
+	 * @param logs Whether to include the logs in the RestJobStep object
+	 * @return The RestJobStep object
+	 */
 	@Transactional(readOnly = true)
 	private RestJobStep getRestJobStep(long id, Boolean logs) {
 		RestJobStep rj = null;
@@ -194,27 +222,25 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 	}
 
 	/**
-	 * Find job steps of specific job step state. The result is ordered by processingCompletionTime descending and returns the first 'limit' entries.
-	 *  
-	 * @param state The job step state
+	 * Find job steps of a specific job step state. The result is ordered by processingCompletionTime descending and returns the
+	 * first 'limit' entries.
+	 *
+	 * @param state   The job step state
 	 * @param mission The mission code
-	 * @param limit The length of result entry list
+	 * @param limit   The length of the result entry list
 	 * @return The found job steps
 	 */
 	@Transactional(readOnly = true)
 	private List<JobStep> findOrderedByJobStepStateAndMission(JobStepState state, String mission, int limit) {
-		if (logger.isTraceEnabled()) logger.trace(">>> findOrderedByJobStepStateAndMission({}, {}, {})", state, mission, limit);
+		if (logger.isTraceEnabled())
+			logger.trace(">>> findOrderedByJobStepStateAndMission({}, {}, {})", state, mission, limit);
 
-		String query = "select js from JobStep js " + 
-				" inner join Job j on js.job.id = j.id " + 
-				" inner join ProcessingOrder o on j.processingOrder.id = o.id" + 
-				" inner join Mission m on o.mission.id = m.id " + 
-				" where js.processingStartTime is not null and js.jobStepState = '" + state + "' and m.code = '" + mission + 
-				"' order by js.processingCompletionTime desc";
+		String query = "select js from JobStep js " + "inner join Job j on js.job.id = j.id "
+				+ "inner join ProcessingOrder o on j.processingOrder.id = o.id " + "inner join Mission m on o.mission.id = m.id "
+				+ "where js.processingStartTime is not null and js.jobStepState = '" + state + "' and m.code = '" + mission
+				+ "' order by js.processingCompletionTime desc";
 		// em.createNativeQ
-		return em.createQuery(query,
-			JobStep.class)
-				.setMaxResults(limit)
-				.getResultList();
+		return em.createQuery(query, JobStep.class).setMaxResults(limit).getResultList();
 	}
+
 }

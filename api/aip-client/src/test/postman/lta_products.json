@@ -1,0 +1,52 @@
+[
+    {
+        "missionCode": "PTM",
+        "productClass": "PTM_L0",
+        "fileClass": "OPER",
+        "mode": "OPER",
+        "productQuality": "TEST",
+        "sensingStartTime": "2019-11-04T19:30:00.000000",
+        "sensingStopTime": "2019-11-04T20:15:00.000000",
+        "generationTime": "2019-11-04T21:02:00.000000",
+        "parameters": [
+            {
+                "key": "revision",
+                "parameterType": "INTEGER",
+                "parameterValue": "1"
+            }
+        ],
+        "sourceStorageType": "POSIX",
+        "mountPoint": "/mnt",
+        "filePath": "PTM/import",
+        "productFileName": "PTM_L0_20191104193000_20191104201500_20191104210200.RAW",
+        "auxFileNames": [],
+        "fileSize": 80,
+        "checksum": "8d171db24550418a022be25b5331c21c",
+        "checksumTime": "2019-11-04T21:02:10.000000"
+    },
+    {
+		"missionCode": "PTM",
+        "productClass": "AUX_IERS_B",
+        "fileClass": "OPER",
+        "mode": "OPER",
+        "productQuality": "TEST",
+        "sensingStartTime": "2019-10-01T00:00:00.000000",
+        "sensingStopTime": "2019-11-01T00:00:00.000000",
+        "generationTime": "2019-11-01T12:00:00.000000",
+        "parameters": [
+            {
+                "key": "revision",
+                "parameterType": "INTEGER",
+                "parameterValue": "1"
+            }
+        ],
+        "sourceStorageType": "POSIX",
+        "mountPoint": "/mnt",
+        "filePath": "PTM/import",
+        "productFileName": "bulletinb-381.xml",
+        "auxFileNames": [],
+    	"fileSize": 50854,
+    	"checksum": "71f44ee1988101997acf9cbca760ce1a",
+    	"checksumTime": "2019-11-01T12:01:00.000000"
+    }
+]

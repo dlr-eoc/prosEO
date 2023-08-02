@@ -714,8 +714,14 @@ public class KubeJob {
 												}
 												if (JobStepState.READY.equals(js.get().getJobStepState())) {
 													// Sometimes we don't get the state transition to RUNNING
+													if (logger.isTraceEnabled())
+														logger.trace("... fixing state {} of job step {} to RUNNING", js.get().getJobStepState(), js.get().getId());
 													js.get().setJobStepState(JobStepState.RUNNING); // otherwise we cannot set it to COMPLETED
-												} else if (JobStepState.PLANNED.equals(js.get().getJobStepState())) {
+												} else if (JobStepState.PLANNED.equals(js.get().getJobStepState())
+														|| JobStepState.WAITING_INPUT.equals(js.get().getJobStepState())) {
+													// Sometimes we don't even get the state transition to READY
+													if (logger.isTraceEnabled())
+														logger.trace("... fixing state {} of job step {} to RUNNING", js.get().getJobStepState(), js.get().getId());
 													js.get().setJobStepState(JobStepState.READY);
 													js.get().setJobStepState(JobStepState.RUNNING);
 												}
@@ -732,8 +738,14 @@ public class KubeJob {
 											} else if ((jc.getType().equalsIgnoreCase("failed") || jc.getType().equalsIgnoreCase("failure")) && jc.getStatus().equalsIgnoreCase("true")) {
 												if (JobStepState.READY.equals(js.get().getJobStepState())) {
 													// Sometimes we don't get the state transition to RUNNING
+													if (logger.isTraceEnabled())
+														logger.trace("... fixing state {} of job step {} to RUNNING", js.get().getJobStepState(), js.get().getId());
 													js.get().setJobStepState(JobStepState.RUNNING); // otherwise we cannot set it to COMPLETED
-												} else if (JobStepState.PLANNED.equals(js.get().getJobStepState())) {
+												} else if (JobStepState.PLANNED.equals(js.get().getJobStepState())
+														|| JobStepState.WAITING_INPUT.equals(js.get().getJobStepState())) {
+													// Sometimes we don't even get the state transition to READY
+													if (logger.isTraceEnabled())
+														logger.trace("... fixing state {} of job step {} to RUNNING", js.get().getJobStepState(), js.get().getId());
 													js.get().setJobStepState(JobStepState.READY);
 													js.get().setJobStepState(JobStepState.RUNNING);
 												}

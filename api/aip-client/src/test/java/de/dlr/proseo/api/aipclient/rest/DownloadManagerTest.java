@@ -104,13 +104,13 @@ public class DownloadManagerTest {
 	private static final String URL_INGESTOR = "/proseo/ingestor/v0.1/ingest/" + TEST_FACILITY;
 	
 	private static final String LTA_QUERY_BY_NAME = 
-			"Products?%24filter=Name%20eq%20" 
+			"Products?%24filter=Name%20eq%20'" 
 				+ TEST_FILENAME_1
-				+ "&%24count=true&%24top=1000&%24expand=Attributes"; 
+				+ "'&%24count=true&%24top=1000&%24expand=Attributes"; 
 	private static final String LTA_QUERY_BY_INVALID_NAME = 
-			"Products?%24filter=Name%20eq%20" 
+			"Products?%24filter=Name%20eq%20'" 
 				+ TEST_NON_EXISTENT_FILENAME
-				+ "&%24count=true&%24top=1000&%24expand=Attributes"; 
+				+ "'&%24count=true&%24top=1000&%24expand=Attributes"; 
 	private static final String LTA_QUERY_BY_TIME = 
 			"Products?%24filter=ContentDate%2FStart%20eq%20" 
 				+ TEST_START_TIME.replaceAll(":", "%3A")

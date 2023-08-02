@@ -1,0 +1,1825 @@
+<?xml version="1.0" encoding="UTF-8"?><EOP xmlns="http://www.iers.org/2003/schema/iers">
+  <version>
+    <product>Bulletin B</product>
+    <date>2019-11-05</date>
+    <volume>new</volume>
+    <number>381</number>
+  </version>
+  <metaFileName/>
+  <headerLine>
+    <headerLineDate>
+      <sYear>Year</sYear>
+      <sMonth>Month</sMonth>
+      <sDay>Day</sDay>
+      <sMJD>MJD</sMJD>
+    </headerLineDate>
+    <headerLineEOP>
+      <product>
+        <sX>X</sX>
+        <ssigma_X>sigma_X</ssigma_X>
+        <sY>Y</sY>
+        <ssigma_Y>sigma_Y</ssigma_Y>
+        <sUT1-UTC>UT1-UTC</sUT1-UTC>
+        <ssigma_UT1-UTC>sigma_UT1-UTC</ssigma_UT1-UTC>
+        <sLOD>LOD</sLOD>
+        <ssigma_LOD>sigma_LOD</ssigma_LOD>
+        <sdPsi>dPsi</sdPsi>
+        <ssigma_dPsi>sigma_dPsi</ssigma_dPsi>
+        <sdEpsilon>dEpsilon</sdEpsilon>
+        <ssigma_dEpsilon>sigma_dEpsilon</ssigma_dEpsilon>
+        <sdX>dX</sdX>
+        <ssigma_dX>sigma_dX</ssigma_dX>
+        <sdY>dY</sdY>
+        <ssigma_dY>sigma_dY</ssigma_dY>
+      </product>
+    </headerLineEOP>
+    <headerLineUnits>
+      <product>
+        <X>marcsec</X>
+        <sigma_X>marcsec</sigma_X>
+        <Y>marcsec</Y>
+        <sigma_Y>marcsec</sigma_Y>
+        <UT1-UTC>msec</UT1-UTC>
+        <sigma_UT1-UTC>msec</sigma_UT1-UTC>
+        <LOD>msec</LOD>
+        <sigma_LOD>msec</sigma_LOD>
+        <dPsi>marcsec</dPsi>
+        <sigma_dPsi>marcsec</sigma_dPsi>
+        <dEpsilon>marcsec</dEpsilon>
+        <sigma_dEpsilon>marcsec</sigma_dEpsilon>
+        <dX>marcsec</dX>
+        <sigma_dX>marcsec</sigma_dX>
+        <dY>marcsec</dY>
+        <sigma_dY>marcsec</sigma_dY>
+      </product>
+    </headerLineUnits>
+  </headerLine>
+  <data product="BulletinB_format2009">
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>2</dateDay>
+        <MJD>58728</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>214.229</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>349.770</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-154.2362</UT1-UTC>
+          <sigma_UT1-UTC>0.0063</sigma_UT1-UTC>
+          <LOD>0.6158</LOD>
+          <sigma_LOD>0.0095</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-117.894</dPsi>
+          <sigma_dPsi>0.085</sigma_dPsi>
+          <dEpsilon>-10.650</dEpsilon>
+          <sigma_dEpsilon>0.027</sigma_dEpsilon>
+          <dX>-0.195</dX>
+          <sigma_dX>0.034</sigma_dX>
+          <dY>0.061</dY>
+          <sigma_dY>0.027</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>3</dateDay>
+        <MJD>58729</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>213.821</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>348.481</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-154.8126</UT1-UTC>
+          <sigma_UT1-UTC>0.0063</sigma_UT1-UTC>
+          <LOD>0.5143</LOD>
+          <sigma_LOD>0.0095</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-118.327</dPsi>
+          <sigma_dPsi>0.128</sigma_dPsi>
+          <dEpsilon>-10.654</dEpsilon>
+          <sigma_dEpsilon>0.027</sigma_dEpsilon>
+          <dX>-0.220</dX>
+          <sigma_dX>0.051</sigma_dX>
+          <dY>0.068</dY>
+          <sigma_dY>0.027</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>4</dateDay>
+        <MJD>58730</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>213.451</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>346.759</Y>
+          <sigma_Y>0.029</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-155.2653</UT1-UTC>
+          <sigma_UT1-UTC>0.0064</sigma_UT1-UTC>
+          <LOD>0.3387</LOD>
+          <sigma_LOD>0.0095</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-118.569</dPsi>
+          <sigma_dPsi>0.128</sigma_dPsi>
+          <dEpsilon>-10.512</dEpsilon>
+          <sigma_dEpsilon>0.027</sigma_dEpsilon>
+          <dX>-0.236</dX>
+          <sigma_dX>0.051</sigma_dX>
+          <dY>0.142</dY>
+          <sigma_dY>0.027</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>5</dateDay>
+        <MJD>58731</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>213.287</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>345.150</Y>
+          <sigma_Y>0.029</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-155.5174</UT1-UTC>
+          <sigma_UT1-UTC>0.0064</sigma_UT1-UTC>
+          <LOD>0.1664</LOD>
+          <sigma_LOD>0.0095</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-118.452</dPsi>
+          <sigma_dPsi>0.131</sigma_dPsi>
+          <dEpsilon>-10.598</dEpsilon>
+          <sigma_dEpsilon>0.028</sigma_dEpsilon>
+          <dX>-0.216</dX>
+          <sigma_dX>0.052</sigma_dX>
+          <dY>0.113</dY>
+          <sigma_dY>0.028</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>6</dateDay>
+        <MJD>58732</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>213.284</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>343.292</Y>
+          <sigma_Y>0.029</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-155.5427</UT1-UTC>
+          <sigma_UT1-UTC>0.0064</sigma_UT1-UTC>
+          <LOD>-0.0562</LOD>
+          <sigma_LOD>0.0095</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-118.131</dPsi>
+          <sigma_dPsi>0.131</sigma_dPsi>
+          <dEpsilon>-10.923</dEpsilon>
+          <sigma_dEpsilon>0.028</sigma_dEpsilon>
+          <dX>-0.185</dX>
+          <sigma_dX>0.052</sigma_dX>
+          <dY>0.049</dY>
+          <sigma_dY>0.028</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>7</dateDay>
+        <MJD>58733</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>213.605</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>341.584</Y>
+          <sigma_Y>0.029</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-155.3511</UT1-UTC>
+          <sigma_UT1-UTC>0.0065</sigma_UT1-UTC>
+          <LOD>-0.2258</LOD>
+          <sigma_LOD>0.0095</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-117.909</dPsi>
+          <sigma_dPsi>0.090</sigma_dPsi>
+          <dEpsilon>-11.238</dEpsilon>
+          <sigma_dEpsilon>0.028</sigma_dEpsilon>
+          <dX>-0.155</dX>
+          <sigma_dX>0.036</sigma_dX>
+          <dY>0.023</dY>
+          <sigma_dY>0.028</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>8</dateDay>
+        <MJD>58734</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>213.748</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>340.214</Y>
+          <sigma_Y>0.029</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-155.1104</UT1-UTC>
+          <sigma_UT1-UTC>0.0065</sigma_UT1-UTC>
+          <LOD>-0.3264</LOD>
+          <sigma_LOD>0.0095</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-117.937</dPsi>
+          <sigma_dPsi>0.090</sigma_dPsi>
+          <dEpsilon>-11.370</dEpsilon>
+          <sigma_dEpsilon>0.027</sigma_dEpsilon>
+          <dX>-0.129</dX>
+          <sigma_dX>0.036</sigma_dX>
+          <dY>0.009</dY>
+          <sigma_dY>0.027</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>9</dateDay>
+        <MJD>58735</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>213.582</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>338.873</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-154.7174</UT1-UTC>
+          <sigma_UT1-UTC>0.0065</sigma_UT1-UTC>
+          <LOD>-0.3835</LOD>
+          <sigma_LOD>0.0094</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-118.032</dPsi>
+          <sigma_dPsi>0.093</sigma_dPsi>
+          <dEpsilon>-11.329</dEpsilon>
+          <sigma_dEpsilon>0.027</sigma_dEpsilon>
+          <dX>-0.103</dX>
+          <sigma_dX>0.037</sigma_dX>
+          <dY>-0.004</dY>
+          <sigma_dY>0.027</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>10</dateDay>
+        <MJD>58736</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>212.916</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>337.633</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-154.3020</UT1-UTC>
+          <sigma_UT1-UTC>0.0065</sigma_UT1-UTC>
+          <LOD>-0.3792</LOD>
+          <sigma_LOD>0.0094</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-117.937</dPsi>
+          <sigma_dPsi>0.093</sigma_dPsi>
+          <dEpsilon>-11.245</dEpsilon>
+          <sigma_dEpsilon>0.027</sigma_dEpsilon>
+          <dX>-0.077</dX>
+          <sigma_dX>0.037</sigma_dX>
+          <dY>-0.017</dY>
+          <sigma_dY>0.027</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>11</dateDay>
+        <MJD>58737</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>211.643</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>336.271</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-153.9400</UT1-UTC>
+          <sigma_UT1-UTC>0.0066</sigma_UT1-UTC>
+          <LOD>-0.3457</LOD>
+          <sigma_LOD>0.0093</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-117.730</dPsi>
+          <sigma_dPsi>0.096</sigma_dPsi>
+          <dEpsilon>-11.124</dEpsilon>
+          <sigma_dEpsilon>0.027</sigma_dEpsilon>
+          <dX>-0.095</dX>
+          <sigma_dX>0.038</sigma_dX>
+          <dY>0.016</dY>
+          <sigma_dY>0.027</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>12</dateDay>
+        <MJD>58738</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>210.279</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>334.464</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-153.5993</UT1-UTC>
+          <sigma_UT1-UTC>0.0066</sigma_UT1-UTC>
+          <LOD>-0.3023</LOD>
+          <sigma_LOD>0.0094</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-117.510</dPsi>
+          <sigma_dPsi>0.096</sigma_dPsi>
+          <dEpsilon>-10.926</dEpsilon>
+          <sigma_dEpsilon>0.027</sigma_dEpsilon>
+          <dX>-0.124</dX>
+          <sigma_dX>0.038</sigma_dX>
+          <dY>0.060</dY>
+          <sigma_dY>0.027</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>13</dateDay>
+        <MJD>58739</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>209.357</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>332.511</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-153.3809</UT1-UTC>
+          <sigma_UT1-UTC>0.0065</sigma_UT1-UTC>
+          <LOD>-0.1592</LOD>
+          <sigma_LOD>0.0093</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-117.403</dPsi>
+          <sigma_dPsi>0.093</sigma_dPsi>
+          <dEpsilon>-10.612</dEpsilon>
+          <sigma_dEpsilon>0.027</sigma_dEpsilon>
+          <dX>-0.154</dX>
+          <sigma_dX>0.037</sigma_dX>
+          <dY>0.104</dY>
+          <sigma_dY>0.027</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>14</dateDay>
+        <MJD>58740</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>208.780</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>330.745</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-153.2910</UT1-UTC>
+          <sigma_UT1-UTC>0.0066</sigma_UT1-UTC>
+          <LOD>-0.0117</LOD>
+          <sigma_LOD>0.0092</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-117.292</dPsi>
+          <sigma_dPsi>0.093</sigma_dPsi>
+          <dEpsilon>-10.327</dEpsilon>
+          <sigma_dEpsilon>0.026</sigma_dEpsilon>
+          <dX>-0.139</dX>
+          <sigma_dX>0.037</sigma_dX>
+          <dY>0.100</dY>
+          <sigma_dY>0.026</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>15</dateDay>
+        <MJD>58741</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>208.414</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>329.530</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-153.3171</UT1-UTC>
+          <sigma_UT1-UTC>0.0066</sigma_UT1-UTC>
+          <LOD>0.0314</LOD>
+          <sigma_LOD>0.0092</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-117.159</dPsi>
+          <sigma_dPsi>0.093</sigma_dPsi>
+          <dEpsilon>-10.194</dEpsilon>
+          <sigma_dEpsilon>0.026</sigma_dEpsilon>
+          <dX>-0.108</dX>
+          <sigma_dX>0.037</sigma_dX>
+          <dY>0.077</dY>
+          <sigma_dY>0.026</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>16</dateDay>
+        <MJD>58742</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>207.861</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>328.404</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-153.3320</UT1-UTC>
+          <sigma_UT1-UTC>0.0066</sigma_UT1-UTC>
+          <LOD>-0.0025</LOD>
+          <sigma_LOD>0.0092</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-116.963</dPsi>
+          <sigma_dPsi>0.093</sigma_dPsi>
+          <dEpsilon>-10.221</dEpsilon>
+          <sigma_dEpsilon>0.026</sigma_dEpsilon>
+          <dX>-0.077</dX>
+          <sigma_dX>0.037</sigma_dX>
+          <dY>0.054</dY>
+          <sigma_dY>0.026</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>17</dateDay>
+        <MJD>58743</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>207.375</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>326.891</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-153.3303</UT1-UTC>
+          <sigma_UT1-UTC>0.0066</sigma_UT1-UTC>
+          <LOD>-0.0354</LOD>
+          <sigma_LOD>0.0092</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-116.701</dPsi>
+          <sigma_dPsi>0.093</sigma_dPsi>
+          <dEpsilon>-10.274</dEpsilon>
+          <sigma_dEpsilon>0.027</sigma_dEpsilon>
+          <dX>-0.047</dX>
+          <sigma_dX>0.037</sigma_dX>
+          <dY>0.056</dY>
+          <sigma_dY>0.027</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>18</dateDay>
+        <MJD>58744</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>206.919</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>325.493</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-153.2853</UT1-UTC>
+          <sigma_UT1-UTC>0.0066</sigma_UT1-UTC>
+          <LOD>-0.0746</LOD>
+          <sigma_LOD>0.0092</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-116.513</dPsi>
+          <sigma_dPsi>0.096</sigma_dPsi>
+          <dEpsilon>-10.288</dEpsilon>
+          <sigma_dEpsilon>0.028</sigma_dEpsilon>
+          <dX>-0.033</dX>
+          <sigma_dX>0.038</sigma_dX>
+          <dY>0.063</dY>
+          <sigma_dY>0.028</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>19</dateDay>
+        <MJD>58745</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>206.058</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>324.124</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-153.1654</UT1-UTC>
+          <sigma_UT1-UTC>0.0067</sigma_UT1-UTC>
+          <LOD>-0.1887</LOD>
+          <sigma_LOD>0.0092</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-116.548</dPsi>
+          <sigma_dPsi>0.098</sigma_dPsi>
+          <dEpsilon>-10.302</dEpsilon>
+          <sigma_dEpsilon>0.029</sigma_dEpsilon>
+          <dX>-0.024</dX>
+          <sigma_dX>0.039</sigma_dX>
+          <dY>0.076</dY>
+          <sigma_dY>0.029</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>20</dateDay>
+        <MJD>58746</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>204.867</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>323.038</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-152.9207</UT1-UTC>
+          <sigma_UT1-UTC>0.0067</sigma_UT1-UTC>
+          <LOD>-0.3054</LOD>
+          <sigma_LOD>0.0092</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-116.863</dPsi>
+          <sigma_dPsi>0.098</sigma_dPsi>
+          <dEpsilon>-10.404</dEpsilon>
+          <sigma_dEpsilon>0.029</sigma_dEpsilon>
+          <dX>-0.015</dX>
+          <sigma_dX>0.039</sigma_dX>
+          <dY>0.089</dY>
+          <sigma_dY>0.029</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>21</dateDay>
+        <MJD>58747</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>203.740</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>321.672</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-152.5495</UT1-UTC>
+          <sigma_UT1-UTC>0.0067</sigma_UT1-UTC>
+          <LOD>-0.4187</LOD>
+          <sigma_LOD>0.0091</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-117.274</dPsi>
+          <sigma_dPsi>0.098</sigma_dPsi>
+          <dEpsilon>-10.571</dEpsilon>
+          <sigma_dEpsilon>0.031</sigma_dEpsilon>
+          <dX>-0.010</dX>
+          <sigma_dX>0.039</sigma_dX>
+          <dY>0.100</dY>
+          <sigma_dY>0.031</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>22</dateDay>
+        <MJD>58748</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>202.952</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>320.373</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-152.1046</UT1-UTC>
+          <sigma_UT1-UTC>0.0068</sigma_UT1-UTC>
+          <LOD>-0.4659</LOD>
+          <sigma_LOD>0.0090</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-117.496</dPsi>
+          <sigma_dPsi>0.098</sigma_dPsi>
+          <dEpsilon>-10.675</dEpsilon>
+          <sigma_dEpsilon>0.031</sigma_dEpsilon>
+          <dX>-0.023</dX>
+          <sigma_dX>0.039</sigma_dX>
+          <dY>0.107</dY>
+          <sigma_dY>0.031</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>23</dateDay>
+        <MJD>58749</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>202.247</X>
+          <sigma_X>0.041</sigma_X>
+          <Y>319.367</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-151.6530</UT1-UTC>
+          <sigma_UT1-UTC>0.0068</sigma_UT1-UTC>
+          <LOD>-0.4642</LOD>
+          <sigma_LOD>0.0090</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-117.349</dPsi>
+          <sigma_dPsi>0.096</sigma_dPsi>
+          <dEpsilon>-10.636</dEpsilon>
+          <sigma_dEpsilon>0.032</sigma_dEpsilon>
+          <dX>-0.029</dX>
+          <sigma_dX>0.038</sigma_dX>
+          <dY>0.115</dY>
+          <sigma_dY>0.032</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>24</dateDay>
+        <MJD>58750</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>201.645</X>
+          <sigma_X>0.041</sigma_X>
+          <Y>318.571</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-151.2166</UT1-UTC>
+          <sigma_UT1-UTC>0.0068</sigma_UT1-UTC>
+          <LOD>-0.3760</LOD>
+          <sigma_LOD>0.0090</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-117.007</dPsi>
+          <sigma_dPsi>0.098</sigma_dPsi>
+          <dEpsilon>-10.500</dEpsilon>
+          <sigma_dEpsilon>0.030</sigma_dEpsilon>
+          <dX>-0.035</dX>
+          <sigma_dX>0.039</sigma_dX>
+          <dY>0.123</dY>
+          <sigma_dY>0.030</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>25</dateDay>
+        <MJD>58751</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>201.081</X>
+          <sigma_X>0.041</sigma_X>
+          <Y>317.719</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-150.8992</UT1-UTC>
+          <sigma_UT1-UTC>0.0069</sigma_UT1-UTC>
+          <LOD>-0.1448</LOD>
+          <sigma_LOD>0.0090</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-116.553</dPsi>
+          <sigma_dPsi>0.098</sigma_dPsi>
+          <dEpsilon>-10.327</dEpsilon>
+          <sigma_dEpsilon>0.030</sigma_dEpsilon>
+          <dX>0.000</dX>
+          <sigma_dX>0.039</sigma_dX>
+          <dY>0.112</dY>
+          <sigma_dY>0.030</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>26</dateDay>
+        <MJD>58752</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>200.117</X>
+          <sigma_X>0.041</sigma_X>
+          <Y>317.175</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-150.8833</UT1-UTC>
+          <sigma_UT1-UTC>0.0069</sigma_UT1-UTC>
+          <LOD>0.1342</LOD>
+          <sigma_LOD>0.0090</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-116.152</dPsi>
+          <sigma_dPsi>0.101</sigma_dPsi>
+          <dEpsilon>-10.056</dEpsilon>
+          <sigma_dEpsilon>0.030</sigma_dEpsilon>
+          <dX>0.046</dX>
+          <sigma_dX>0.040</sigma_dX>
+          <dY>0.096</dY>
+          <sigma_dY>0.030</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>27</dateDay>
+        <MJD>58753</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>199.438</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>316.242</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-151.2096</UT1-UTC>
+          <sigma_UT1-UTC>0.0069</sigma_UT1-UTC>
+          <LOD>0.4442</LOD>
+          <sigma_LOD>0.0090</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-115.917</dPsi>
+          <sigma_dPsi>0.101</sigma_dPsi>
+          <dEpsilon>-9.696</dEpsilon>
+          <sigma_dEpsilon>0.030</sigma_dEpsilon>
+          <dX>0.091</dX>
+          <sigma_dX>0.040</sigma_dX>
+          <dY>0.080</dY>
+          <sigma_dY>0.030</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>28</dateDay>
+        <MJD>58754</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>199.098</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>315.587</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-151.8123</UT1-UTC>
+          <sigma_UT1-UTC>0.0070</sigma_UT1-UTC>
+          <LOD>0.6651</LOD>
+          <sigma_LOD>0.0090</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-116.093</dPsi>
+          <sigma_dPsi>0.103</sigma_dPsi>
+          <dEpsilon>-9.437</dEpsilon>
+          <sigma_dEpsilon>0.031</sigma_dEpsilon>
+          <dX>0.060</dX>
+          <sigma_dX>0.041</sigma_dX>
+          <dY>0.088</dY>
+          <sigma_dY>0.031</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>29</dateDay>
+        <MJD>58755</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>198.877</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>314.648</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-152.5147</UT1-UTC>
+          <sigma_UT1-UTC>0.0070</sigma_UT1-UTC>
+          <LOD>0.7296</LOD>
+          <sigma_LOD>0.0090</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-116.456</dPsi>
+          <sigma_dPsi>0.103</sigma_dPsi>
+          <dEpsilon>-9.483</dEpsilon>
+          <sigma_dEpsilon>0.032</sigma_dEpsilon>
+          <dX>0.002</dX>
+          <sigma_dX>0.041</sigma_dX>
+          <dY>0.104</dY>
+          <sigma_dY>0.032</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>9</dateMonth>
+        <dateDay>30</dateDay>
+        <MJD>58756</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>198.843</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>313.481</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-153.2050</UT1-UTC>
+          <sigma_UT1-UTC>0.0071</sigma_UT1-UTC>
+          <LOD>0.6466</LOD>
+          <sigma_LOD>0.0090</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-116.762</dPsi>
+          <sigma_dPsi>0.106</sigma_dPsi>
+          <dEpsilon>-9.713</dEpsilon>
+          <sigma_dEpsilon>0.033</sigma_dEpsilon>
+          <dX>-0.057</dX>
+          <sigma_dX>0.042</sigma_dX>
+          <dY>0.121</dY>
+          <sigma_dY>0.033</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>1</dateDay>
+        <MJD>58757</MJD>
+      </time>
+      <dataEOP>
+        <pole type="final">
+          <X>198.420</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>312.164</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="final">
+          <UT1-UTC>-153.7486</UT1-UTC>
+          <sigma_UT1-UTC>0.0072</sigma_UT1-UTC>
+          <LOD>0.3940</LOD>
+          <sigma_LOD>0.0090</sigma_LOD>
+        </UT>
+        <nutation type="final">
+          <dPsi>-116.972</dPsi>
+          <sigma_dPsi>0.106</sigma_dPsi>
+          <dEpsilon>-9.816</dEpsilon>
+          <sigma_dEpsilon>0.033</sigma_dEpsilon>
+          <dX>-0.116</dX>
+          <sigma_dX>0.042</sigma_dX>
+          <dY>0.138</dY>
+          <sigma_dY>0.033</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>2</dateDay>
+        <MJD>58758</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>197.555</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>311.074</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-153.9883</UT1-UTC>
+          <sigma_UT1-UTC>0.0072</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>-0.091</dX>
+          <sigma_dX>0.043</sigma_dX>
+          <dY>0.125</dY>
+          <sigma_dY>0.034</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>3</dateDay>
+        <MJD>58759</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>196.516</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>309.985</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-153.9123</UT1-UTC>
+          <sigma_UT1-UTC>0.0073</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>-0.072</dX>
+          <sigma_dX>0.043</sigma_dX>
+          <dY>0.119</dY>
+          <sigma_dY>0.035</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>4</dateDay>
+        <MJD>58760</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>195.491</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>308.761</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-153.6859</UT1-UTC>
+          <sigma_UT1-UTC>0.0074</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>-0.063</dX>
+          <sigma_dX>0.044</sigma_dX>
+          <dY>0.120</dY>
+          <sigma_dY>0.035</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>5</dateDay>
+        <MJD>58761</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>194.662</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>307.564</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-153.2978</UT1-UTC>
+          <sigma_UT1-UTC>0.0075</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>-0.054</dX>
+          <sigma_dX>0.044</sigma_dX>
+          <dY>0.120</dY>
+          <sigma_dY>0.036</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>6</dateDay>
+        <MJD>58762</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>193.598</X>
+          <sigma_X>0.042</sigma_X>
+          <Y>306.199</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-152.8333</UT1-UTC>
+          <sigma_UT1-UTC>0.0075</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>-0.045</dX>
+          <sigma_dX>0.045</sigma_dX>
+          <dY>0.120</dY>
+          <sigma_dY>0.036</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>7</dateDay>
+        <MJD>58763</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>192.701</X>
+          <sigma_X>0.043</sigma_X>
+          <Y>304.904</Y>
+          <sigma_Y>0.028</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-152.3685</UT1-UTC>
+          <sigma_UT1-UTC>0.0075</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>-0.036</dX>
+          <sigma_dX>0.045</sigma_dX>
+          <dY>0.120</dY>
+          <sigma_dY>0.037</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>8</dateDay>
+        <MJD>58764</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>191.613</X>
+          <sigma_X>0.043</sigma_X>
+          <Y>303.615</Y>
+          <sigma_Y>0.029</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-151.9644</UT1-UTC>
+          <sigma_UT1-UTC>0.0076</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>-0.027</dX>
+          <sigma_dX>0.046</sigma_dX>
+          <dY>0.121</dY>
+          <sigma_dY>0.038</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>9</dateDay>
+        <MJD>58765</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>190.552</X>
+          <sigma_X>0.043</sigma_X>
+          <Y>301.918</Y>
+          <sigma_Y>0.029</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-151.6532</UT1-UTC>
+          <sigma_UT1-UTC>0.0076</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>-0.017</dX>
+          <sigma_dX>0.046</sigma_dX>
+          <dY>0.121</dY>
+          <sigma_dY>0.038</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>10</dateDay>
+        <MJD>58766</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>189.429</X>
+          <sigma_X>0.043</sigma_X>
+          <Y>300.750</Y>
+          <sigma_Y>0.029</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-151.4464</UT1-UTC>
+          <sigma_UT1-UTC>0.0076</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>-0.046</dX>
+          <sigma_dX>0.047</sigma_dX>
+          <dY>0.154</dY>
+          <sigma_dY>0.039</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>11</dateDay>
+        <MJD>58767</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>188.644</X>
+          <sigma_X>0.044</sigma_X>
+          <Y>299.643</Y>
+          <sigma_Y>0.029</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-151.3805</UT1-UTC>
+          <sigma_UT1-UTC>0.0076</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>-0.084</dX>
+          <sigma_dX>0.047</sigma_dX>
+          <dY>0.197</dY>
+          <sigma_dY>0.039</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>12</dateDay>
+        <MJD>58768</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>187.836</X>
+          <sigma_X>0.044</sigma_X>
+          <Y>299.412</Y>
+          <sigma_Y>0.029</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-151.4617</UT1-UTC>
+          <sigma_UT1-UTC>0.0077</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>-0.060</dX>
+          <sigma_dX>0.048</sigma_dX>
+          <dY>0.184</dY>
+          <sigma_dY>0.040</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>13</dateDay>
+        <MJD>58769</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>186.272</X>
+          <sigma_X>0.044</sigma_X>
+          <Y>299.233</Y>
+          <sigma_Y>0.029</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-151.6517</UT1-UTC>
+          <sigma_UT1-UTC>0.0078</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>-0.012</dX>
+          <sigma_dX>0.049</sigma_dX>
+          <dY>0.151</dY>
+          <sigma_dY>0.041</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>14</dateDay>
+        <MJD>58770</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>184.357</X>
+          <sigma_X>0.045</sigma_X>
+          <Y>298.584</Y>
+          <sigma_Y>0.030</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-151.9119</UT1-UTC>
+          <sigma_UT1-UTC>0.0079</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>0.035</dX>
+          <sigma_dX>0.050</sigma_dX>
+          <dY>0.118</dY>
+          <sigma_dY>0.042</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>15</dateDay>
+        <MJD>58771</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>182.689</X>
+          <sigma_X>0.045</sigma_X>
+          <Y>297.732</Y>
+          <sigma_Y>0.030</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-152.2345</UT1-UTC>
+          <sigma_UT1-UTC>0.0080</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>0.083</dX>
+          <sigma_dX>0.050</sigma_dX>
+          <dY>0.085</dY>
+          <sigma_dY>0.043</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>16</dateDay>
+        <MJD>58772</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>181.434</X>
+          <sigma_X>0.046</sigma_X>
+          <Y>297.220</Y>
+          <sigma_Y>0.030</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-152.5643</UT1-UTC>
+          <sigma_UT1-UTC>0.0081</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>0.077</dX>
+          <sigma_dX>0.051</sigma_dX>
+          <dY>0.108</dY>
+          <sigma_dY>0.045</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>17</dateDay>
+        <MJD>58773</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>179.953</X>
+          <sigma_X>0.047</sigma_X>
+          <Y>296.625</Y>
+          <sigma_Y>0.031</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-152.8796</UT1-UTC>
+          <sigma_UT1-UTC>0.0082</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>0.057</dX>
+          <sigma_dX>0.052</sigma_dX>
+          <dY>0.147</dY>
+          <sigma_dY>0.046</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>18</dateDay>
+        <MJD>58774</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>178.247</X>
+          <sigma_X>0.047</sigma_X>
+          <Y>295.698</Y>
+          <sigma_Y>0.031</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-153.1443</UT1-UTC>
+          <sigma_UT1-UTC>0.0082</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>0.038</dX>
+          <sigma_dX>0.053</sigma_dX>
+          <dY>0.185</dY>
+          <sigma_dY>0.048</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>19</dateDay>
+        <MJD>58775</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>176.784</X>
+          <sigma_X>0.048</sigma_X>
+          <Y>294.464</Y>
+          <sigma_Y>0.032</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-153.3266</UT1-UTC>
+          <sigma_UT1-UTC>0.0084</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>0.027</dX>
+          <sigma_dX>0.054</sigma_dX>
+          <dY>0.189</dY>
+          <sigma_dY>0.050</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>20</dateDay>
+        <MJD>58776</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>175.203</X>
+          <sigma_X>0.049</sigma_X>
+          <Y>293.513</Y>
+          <sigma_Y>0.032</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-153.4305</UT1-UTC>
+          <sigma_UT1-UTC>0.0085</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>0.019</dX>
+          <sigma_dX>0.055</sigma_dX>
+          <dY>0.179</dY>
+          <sigma_dY>0.053</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>21</dateDay>
+        <MJD>58777</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>173.611</X>
+          <sigma_X>0.050</sigma_X>
+          <Y>292.334</Y>
+          <sigma_Y>0.033</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-153.5058</UT1-UTC>
+          <sigma_UT1-UTC>0.0086</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>0.011</dX>
+          <sigma_dX>0.056</sigma_dX>
+          <dY>0.169</dY>
+          <sigma_dY>0.056</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>22</dateDay>
+        <MJD>58778</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>172.403</X>
+          <sigma_X>0.051</sigma_X>
+          <Y>291.339</Y>
+          <sigma_Y>0.033</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-153.6141</UT1-UTC>
+          <sigma_UT1-UTC>0.0087</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>0.004</dX>
+          <sigma_dX>0.057</sigma_dX>
+          <dY>0.159</dY>
+          <sigma_dY>0.059</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>23</dateDay>
+        <MJD>58779</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>171.346</X>
+          <sigma_X>0.051</sigma_X>
+          <Y>290.360</Y>
+          <sigma_Y>0.034</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-153.8244</UT1-UTC>
+          <sigma_UT1-UTC>0.0088</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>0.056</dX>
+          <sigma_dX>0.500</sigma_dX>
+          <dY>0.128</dY>
+          <sigma_dY>0.500</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>24</dateDay>
+        <MJD>58780</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>170.098</X>
+          <sigma_X>0.052</sigma_X>
+          <Y>290.025</Y>
+          <sigma_Y>0.034</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-154.2362</UT1-UTC>
+          <sigma_UT1-UTC>0.0090</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>0.067</dX>
+          <sigma_dX>0.500</sigma_dX>
+          <dY>0.118</dY>
+          <sigma_dY>0.500</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>25</dateDay>
+        <MJD>58781</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>168.782</X>
+          <sigma_X>0.053</sigma_X>
+          <Y>289.121</Y>
+          <sigma_Y>0.035</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-154.9020</UT1-UTC>
+          <sigma_UT1-UTC>0.0091</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>0.068</dX>
+          <sigma_dX>0.500</sigma_dX>
+          <dY>0.114</dY>
+          <sigma_dY>0.500</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>26</dateDay>
+        <MJD>58782</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>167.801</X>
+          <sigma_X>0.053</sigma_X>
+          <Y>287.906</Y>
+          <sigma_Y>0.035</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-155.8035</UT1-UTC>
+          <sigma_UT1-UTC>0.0093</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>0.058</dX>
+          <sigma_dX>0.500</sigma_dX>
+          <dY>0.117</dY>
+          <sigma_dY>0.500</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>27</dateDay>
+        <MJD>58783</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>167.254</X>
+          <sigma_X>0.054</sigma_X>
+          <Y>286.492</Y>
+          <sigma_Y>0.036</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-156.8108</UT1-UTC>
+          <sigma_UT1-UTC>0.0095</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>0.040</dX>
+          <sigma_dX>0.500</sigma_dX>
+          <dY>0.127</dY>
+          <sigma_dY>0.500</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>28</dateDay>
+        <MJD>58784</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>167.102</X>
+          <sigma_X>0.055</sigma_X>
+          <Y>285.582</Y>
+          <sigma_Y>0.036</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-157.7392</UT1-UTC>
+          <sigma_UT1-UTC>0.0096</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>0.023</dX>
+          <sigma_dX>0.500</sigma_dX>
+          <dY>0.141</dY>
+          <sigma_dY>0.500</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>29</dateDay>
+        <MJD>58785</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>166.888</X>
+          <sigma_X>0.055</sigma_X>
+          <Y>284.317</Y>
+          <sigma_Y>0.037</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-158.4665</UT1-UTC>
+          <sigma_UT1-UTC>0.0098</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>0.014</dX>
+          <sigma_dX>0.500</sigma_dX>
+          <dY>0.157</dY>
+          <sigma_dY>0.500</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>30</dateDay>
+        <MJD>58786</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>166.968</X>
+          <sigma_X>0.056</sigma_X>
+          <Y>283.146</Y>
+          <sigma_Y>0.037</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-158.9229</UT1-UTC>
+          <sigma_UT1-UTC>0.0100</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>0.016</dX>
+          <sigma_dX>0.500</sigma_dX>
+          <dY>0.170</dY>
+          <sigma_dY>0.500</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>10</dateMonth>
+        <dateDay>31</dateDay>
+        <MJD>58787</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>166.606</X>
+          <sigma_X>0.057</sigma_X>
+          <Y>282.068</Y>
+          <sigma_Y>0.038</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-159.1325</UT1-UTC>
+          <sigma_UT1-UTC>0.0103</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>0.028</dX>
+          <sigma_dX>0.500</sigma_dX>
+          <dY>0.177</dY>
+          <sigma_dY>0.500</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+    <timeSeries>
+      <time>
+        <dateYear>2019</dateYear>
+        <dateMonth>11</dateMonth>
+        <dateDay>1</dateDay>
+        <MJD>58788</MJD>
+      </time>
+      <dataEOP>
+        <pole type="prediction">
+          <X>165.965</X>
+          <sigma_X>0.058</sigma_X>
+          <Y>281.132</Y>
+          <sigma_Y>0.039</sigma_Y>
+        </pole>
+        <UT type="prediction">
+          <UT1-UTC>-159.2054</UT1-UTC>
+          <sigma_UT1-UTC>0.0106</sigma_UT1-UTC>
+        </UT>
+        <nutation type="prediction">
+          <dX>0.046</dX>
+          <sigma_dX>0.500</sigma_dX>
+          <dY>0.176</dY>
+          <sigma_dY>0.500</sigma_dY>
+        </nutation>
+      </dataEOP>
+    </timeSeries>
+  </data>
+</EOP>

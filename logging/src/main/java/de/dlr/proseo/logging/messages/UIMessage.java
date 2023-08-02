@@ -136,7 +136,7 @@ public enum UIMessage implements ProseoMessage {
 	NO_FILECLASSES_FOUND					(6119, Level.ERROR, false, "No file classes found for given search criteria", ""),
 	NO_GROUPNAME_GIVEN						(6120, Level.ERROR, false, "No group name given", ""),
 	NO_GROUPS_FOUND							(6121, Level.ERROR, false, "No user groups found for mission {0}", ""),
-	NO_IDENTIFIER_GIVEN						(6122, Level.ERROR, false, "No order identifier or database ID given", ""),
+	NO_IDENTIFIER_GIVEN						(6122, Level.ERROR, false, "No identifier or database ID given", ""),
 	NO_JOB_DBID_GIVEN						(6123, Level.ERROR, false, "No job database ID given", ""),
 	NO_JOBS_FOUND							(6124, Level.ERROR, false, "No jobs found for given search criteria", ""),
 	NO_JOBSTEP_DBID_GIVEN					(6125, Level.ERROR, false, "No job step database ID given", ""),
@@ -230,7 +230,7 @@ public enum UIMessage implements ProseoMessage {
 	PRODUCTCLASS_NOT_FOUND					(6214, Level.ERROR, false, "Product class {0} not found", ""),
 	PRODUCTCLASS_NOT_FOUND_BY_ID			(6215, Level.ERROR, false, "Product class with database ID {0} not found", ""),
 	PRODUCTCLASS_UPDATED					(6216, Level.INFO, true, "Product class with database ID {0} updated (new version {1})", ""),
-	PRODUCTFILE_DELETED						(6217, Level.INFO, true, "Product file for product database ID {0} and processing facility {2} deleted", ""),
+	PRODUCTFILE_DELETED						(6217, Level.INFO, true, "Product file for product database ID {0} and processing facility {1} deleted", ""),
 	PRODUCTFILE_NOT_FOUND					(6218, Level.ERROR, false, "No product file found for product database ID {0} and processing facility {1}", ""),
 	PRODUCTS_INGESTED						(6219, Level.INFO, true, "{0} products ingested to processing facility {1}", ""),
 	REFLECTION_EXCEPTION					(6220, Level.ERROR, false, "Reflection exception setting attribute {0} (cause: {2})", ""),
@@ -296,6 +296,7 @@ public enum UIMessage implements ProseoMessage {
 	ARCHIVE_UPDATED							(6280, Level.INFO,  true,  "Product archive with database ID {0} updated (new version {1})", ""),	
 	NO_ARCHIVE_CODE_GIVEN					(6281, Level.ERROR, false, "No product archive code given", ""),
 	NO_ARCHIVES_FOUND						(6282, Level.ERROR, false, "No product archives found", ""),
+	AUTHENTICATION_MISSING					(6283, Level.ERROR, false, "No authentication was provided", ""),
 	
 	;
 
