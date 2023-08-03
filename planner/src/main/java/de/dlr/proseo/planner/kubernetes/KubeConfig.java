@@ -661,7 +661,7 @@ public class KubeConfig {
 	 */
 	public V1JobList getJobList() {
 		V1JobList jobList = null;
-		
+
 		try {
 			jobList = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
 		} catch (ApiException e) {
@@ -807,30 +807,44 @@ public class KubeConfig {
 	 * @return the job found or null
 	 */
 	public V1Job getV1Job(String name) {
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getV1Job({})", name);
 
 		V1Job foundJob = null;
+		int retryNumber = 0;
 
-		try {
-			foundJob = batchApiV1.readNamespacedJob(name, namespace, null, null, null);
-		} catch (ApiException e) {
-			if (e.getCode() == 404) {
-				logger.log(PlannerMessage.KUBECONFIG_JOB_NOT_FOUND, name);
+		while (retryNumber < 10 && foundJob == null) {
+			retryNumber++;
+
+			try {
+				foundJob = batchApiV1.readNamespacedJob(name, namespace, null, null, null);
+			} catch (ApiException e) {
+				if (e.getCode() == 404) {
+					logger.log(PlannerMessage.KUBECONFIG_JOB_NOT_FOUND, name);
+					retryNumber = 10;
+				} else {
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+				}
+			} catch (Exception e) {
+				if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException) {
+					// Nothing to do, as there is a bug in the Kubernetes API
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+				}
+
+				logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+
+				if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred: ", e);
+				}
 			}
 
-			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
-		} catch (RuntimeException e) {
-//			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException) {
-//				// There is a bug in Kubernetes API
-//			}
-
-			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
-		} catch (Exception e) {
-			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
-
-			if (logger.isDebugEnabled()) {
-				logger.debug("An exception occurred: ", e);
+			if ((retryNumber < 10 && foundJob == null)) {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+				}
 			}
 		}
 
@@ -844,28 +858,35 @@ public class KubeConfig {
 	 * @return the pod found or null
 	 */
 	public V1Pod getV1Pod(String name) {
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getV1Pod({})", name);
 
 		V1Pod retrievedPod = null;
+		int retryNumber = 0;
 
-		try {
-			retrievedPod = apiV1.readNamespacedPod(name, namespace, null, null, null);
-		} catch (Exception e) {
-//			TODO Log or delete the differentiation.
-//
-//			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException) {
-//				// There is a bug in Kubernetes API
-//			}
-//
-//			if (e instanceof ApiException && ((ApiException) e).getCode() == 404) {
-//				// Pod not found
-//			}
-
-			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
-
-			if (logger.isDebugEnabled()) {
-				logger.debug("An exception occurred: ", e);
+		while (retryNumber < 10 && retrievedPod == null) {
+			retryNumber++;
+			
+			try {
+				retrievedPod = apiV1.readNamespacedPod(name, namespace, null, null, null);
+			} catch (Exception e) {
+				if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException) {
+					// Nothing to do, as there is a bug in the Kubernetes API
+				} else if (e instanceof ApiException && ((ApiException) e).getCode() == 404) {
+					// Pod not found
+					retryNumber = 10;
+				} else {
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+				}
+			}
+			
+			if ((retryNumber < 10 && retrievedPod == null)) {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+				}
 			}
 		}
 

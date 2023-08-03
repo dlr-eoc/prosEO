@@ -390,21 +390,38 @@ public class ProductUtil {
 			// with comma separation)
 			String footprintPosList = footprintParameter.getStringValue().replaceAll(",", " ");
 
-			// Convert GML posList to OData list of Point
+			// Convert GML posList to OData LineString (via list of Point)
 			String[] pointValues = footprintPosList.split("\\s+");
-			List<Point> exteriorRing = new ArrayList<>();
+			List<Point> pointList = new ArrayList<>();
 			for (int i = 0; i < pointValues.length / 2; ++i) {
 				// OData has longitude as x-value and latitude as y-value, in contrast to GML
 				Point p = new Point(Geospatial.Dimension.GEOGRAPHY, null);
 				p.setY(Double.parseDouble(pointValues[2 * i])); // Latitude
 				p.setX(Double.parseDouble(pointValues[2 * i + 1])); // Longitude
-				exteriorRing.add(p);
+				pointList.add(p);
+			}
+			LineString lineString = new LineString(Geospatial.Dimension.GEOGRAPHY, null, pointList);
+			
+			// Check geometry type
+			Geospatial footprint = null;
+			if (3 > pointList.size() || (3 == pointList.size() && pointList.get(0).equals(pointList.get(2)))) {
+				// Create the footprint as LineString
+				footprint = lineString;
+				if (logger.isTraceEnabled())
+					logger.trace("... created line string {} with primitive type kind {}", footprint,
+						footprint.getEdmPrimitiveTypeKind().getFullQualifiedName());
+			} else {
+				// Create the footprint as Polygon
+				footprint = new Polygon(Geospatial.Dimension.GEOGRAPHY, null, new ArrayList<LineString>(), lineString);
+				if (logger.isTraceEnabled())
+					logger.trace("... created polygon {} with primitive type kind {}",
+						((Polygon) footprint).getExterior().toString(),
+						footprint.getEdmPrimitiveTypeKind().getFullQualifiedName());
 			}
 
-			// Create the footprint polygon
-			Polygon footprint = new Polygon(Geospatial.Dimension.GEOGRAPHY, null, new ArrayList<LineString>(),
-					new LineString(Geospatial.Dimension.GEOGRAPHY, null, exteriorRing));
-			product.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_FOOTPRINT, ValueType.PRIMITIVE, footprint));
+			// Create footprint properties (note that Footprint has to be Polygon in all cases)
+			product.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_FOOTPRINT, ValueType.PRIMITIVE, 
+					new Polygon(Geospatial.Dimension.GEOGRAPHY, null, new ArrayList<LineString>(), lineString)));
 
 			product
 				.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_GEO_FOOTPRINT, ValueType.GEOSPATIAL, footprint));

@@ -65,9 +65,8 @@ public class CadipStatusControllerImpl implements StatusController {
 
 		RestInterfaceStatus restInterfaceStatus = new RestInterfaceStatus();
 		restInterfaceStatus.setId(config.getCadipId());
-
-		Path cadipSatelliteDirectory = Paths.get(config.getCadipBaseUri()).resolve(config.getCadipContext());
-		if (Files.isDirectory(cadipSatelliteDirectory) && Files.isReadable(cadipSatelliteDirectory)) {
+		
+		if (monitor.checkStatus()) {
 			restInterfaceStatus.setAvailable(true);
 			restInterfaceStatus.setPerformance(monitor.getLastCopyPerformance());
 		} else {

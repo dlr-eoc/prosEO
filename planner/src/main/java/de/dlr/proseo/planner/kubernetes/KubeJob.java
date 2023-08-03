@@ -859,9 +859,19 @@ public class KubeJob {
 
 								// Run ready job steps
 								if (JobStepState.READY.equals(jobStep.get().getJobStepState())) {
+									// Sometimes we don't get the state transition to RUNNING
+									if (logger.isTraceEnabled())
+										logger.trace("... fixing state {} of job step {} to RUNNING",
+												jobStep.get().getJobStepState(), jobStep.get().getId());
+
 									jobStep.get().setJobStepState(JobStepState.RUNNING);
-								} else if (JobStepState.PLANNED.equals(jobStep.get().getJobStepState())) {
-									// TODO Why do we only look state PLANNED if the state is not READY?
+								} else if (JobStepState.PLANNED.equals(jobStep.get().getJobStepState())
+										|| JobStepState.WAITING_INPUT.equals(jobStep.get().getJobStepState())) {
+									// Sometimes we don't even get the state transition to READY
+									if (logger.isTraceEnabled())
+										logger.trace("... fixing state {} of job step {} to RUNNING",
+												jobStep.get().getJobStepState(), jobStep.get().getId());
+
 									jobStep.get().setJobStepState(JobStepState.READY);
 									jobStep.get().setJobStepState(JobStepState.RUNNING);
 								}
@@ -938,7 +948,7 @@ public class KubeJob {
 			}
 
 			if (logger.isTraceEnabled())
-				logger.trace("<<< updateInfo({})", jobName);
+				logger.trace("<<< updateInfo({}, {})", jobName, success);
 
 			return success;
 		});

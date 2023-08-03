@@ -420,7 +420,16 @@ public class ProductArchiveCommandRunner {
 		if (!showCommand.getParameters().isEmpty()) {
 			// Only archive name allowed as parameter
 			RestProductArchive restArchive = retrieveArchiveByCode(showCommand.getParameters().get(0).getValue());
+						
 			if (null != restArchive) {
+				
+				// Hide passwords
+				if (!showPasswords) {
+					restArchive.setPassword(PWD_PLACEHOLDER);
+					restArchive.setClientSecret(PWD_PLACEHOLDER);
+				}
+				
+				// print the requested archive
 				try {
 					CLIUtil.printObject(System.out, restArchive, archiveOutputFormat);
 				} catch (IllegalArgumentException e) {

@@ -788,6 +788,9 @@ public class AuxipMonitor extends BaseMonitor {
 					.build();
 
 				// Retrieve and store product file
+				
+				// TODO Fails with large files --> increas JVM memory or change method to multipart download
+				
 				Instant copyStart = Instant.now();
 				File productFile = new File(config.getAuxipDirectoryPath() + File.separator + transferProduct.getName());
 
@@ -823,7 +826,7 @@ public class AuxipMonitor extends BaseMonitor {
 					return false;
 				} catch (Exception e) {
 					oldLogger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED,
-							transferProduct.getName(), e.getMessage()));
+							transferProduct.getName(), e.getClass().getName() + " / " + e.getMessage()));
 					return false;
 				}
 

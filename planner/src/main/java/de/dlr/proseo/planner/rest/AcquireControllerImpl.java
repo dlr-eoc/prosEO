@@ -1,6 +1,7 @@
 package de.dlr.proseo.planner.rest;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -25,7 +26,7 @@ public class AcquireControllerImpl implements AcquireController {
 	 * Ingestor asks for 'thread' semaphore to synchronize product changes
 	 */
 	@Override
-	public ResponseEntity<?> acquireSemaphore() {
+	public ResponseEntity<?> acquireSemaphore(HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> acquireSemaphore()");
 		try {
 			productionPlanner.acquireThreadSemaphore("ingestorSemaphore");

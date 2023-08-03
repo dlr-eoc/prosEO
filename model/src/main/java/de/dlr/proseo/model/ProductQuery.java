@@ -83,6 +83,9 @@ public class ProductQuery extends PersistentObject {
 	
 	/** Indicates whether this query is fully satisfied by the satisfying products. */
 	private Boolean isSatisfied = false;
+
+	/** Indicates whether possible satisfying products are in download. */
+	private Boolean inDownload = false;
 	
 	/**
 	 * Products satisfying this query condition
@@ -276,6 +279,20 @@ public class ProductQuery extends PersistentObject {
 	 */
 	public Boolean isSatisfied() {
 		return this.getIsSatisfied();
+	}
+
+	/**
+	 * @return the inDownload
+	 */
+	public Boolean getInDownload() {
+		return inDownload;
+	}
+
+	/**
+	 * @param inDownload the inDownload to set
+	 */
+	public void setInDownload(Boolean inDownload) {
+		this.inDownload = inDownload;
 	}
 
 	/**

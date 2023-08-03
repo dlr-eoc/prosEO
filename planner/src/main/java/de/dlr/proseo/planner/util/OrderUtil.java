@@ -530,7 +530,7 @@ public class OrderUtil {
 	 * @param order The processing Order
 	 * @return Result message
 	 */
-	public PlannerResultMessage resume(ProcessingOrder order, Boolean wait) {
+	public PlannerResultMessage resume(ProcessingOrder order, Boolean wait, String user, String pw) {
 		if (logger.isTraceEnabled()) logger.trace(">>> resume({})", (null == order ? "null" : order.getId()));
 		
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
@@ -580,7 +580,7 @@ public class OrderUtil {
 						if (ordery != null) {
 							String threadName = ProductionPlanner.RELEASE_THREAD_PREFIX + ordery.getId();
 							if (!productionPlanner.getReleaseThreads().containsKey(threadName)) {
-								rt = new OrderReleaseThread(productionPlanner, em, jobUtil, ordery, threadName);
+								rt = new OrderReleaseThread(productionPlanner, em, jobUtil, ordery, threadName, user, pw);
 								productionPlanner.getReleaseThreads().put(threadName, rt);
 							}
 							logOrderState(order);
@@ -1541,7 +1541,7 @@ public class OrderUtil {
 		Optional<ProcessingOrder> order = RepositoryService.getOrderRepository().findById(id);
 		if (order.isPresent()) {
 			// resume the order
-			UtilService.getOrderUtil().resume(order.get(), false);
+			UtilService.getOrderUtil().resume(order.get(), false, "", "");
 		}
 	}
 

@@ -47,18 +47,19 @@ public class BynameControllerImpl implements BynameController {
 	 * facility.
 	 *
 	 * @param filename    The (unique) product file name to search for
-	 * @param facility    The processing facility to use
+	 * @param facility    The processing facility to store the downloaded product files in
 	 * @param httpHeaders the HTTP request headers (injected)
-	 * @return HTTP status "CREATED" and a Json representation of the product provided or HTTP status "BAD_REQUEST", if an invalid
-	 *         processing facility was given, or HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Ingestor failed or
-	 *         an unexpected exception occurred
+	 * @return HTTP status "OK" and a Json representation of the product provided or 
+	 *         HTTP status "NOT_FOUND", if no file with the given name could be found either locally or in any configured LTA, or
+	 *         HTTP status "BAD_REQUEST", if an invalid processing facility was given, or 
+	 *         HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Ingestor failed or an unexpected exception occurred
 	 */
 	@Override
 	public ResponseEntity<RestProduct> downloadByName(String filename, String facility, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> downloadByName({}, {})", filename, facility);
 
-		// Get username and password from HTTP Authentication header for authentication with Production Planner
+		// Get username and password from HTTP Authentication header for authentication with Ingestor
 		String[] userPassword = securityConfig.parseAuthenticationHeader(httpHeaders.getFirst(HttpHeaders.AUTHORIZATION));
 
 		try {

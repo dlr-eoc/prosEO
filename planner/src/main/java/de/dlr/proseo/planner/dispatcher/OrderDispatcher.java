@@ -818,7 +818,8 @@ public class OrderDispatcher {
 
 				PlannerResultMessage plannerResponse = transactionTemplate.execute((status) -> {
 					currentJobStepList.set(0, 0);
-					ProcessingOrder locOrder = RepositoryService.getOrderRepository().getOne(orderId);
+
+					ProcessingOrder locOrder = RepositoryService.getOrderRepository().findById(orderId).orElse(null);
 
 					while (currentJobList.get(0) < jobCount && currentJobStepList.get(0) < packetSize) {
 						if (thread.isInterrupted()) {
@@ -1016,15 +1017,17 @@ public class OrderDispatcher {
 
 			// The current selection rule is valid for the processing order
 
-			// Check if the job step already has a product query for the given product class
+			// Check whether the job step already has a product query for the given product class
 			boolean exist = false;
 			for (ProductQuery productQuery : jobStep.getInputProductQueries()) {
 				if (productQuery.getGeneratingRule().getSourceProductClass().equals(selectionRule.getSourceProductClass())) {
 					// Make sure selection rules match (there may be multiple applicable selection rules/configured processors)
 					if (!selectionRule.toString().equals(productQuery.getGeneratingRule().toString())) {
-						if (logger.isDebugEnabled()) {
-							logger.debug("Selection rule from product query does not match selection rule from product class");
-						}
+						if (logger.isDebugEnabled())
+							logger.debug(String.format(
+									"Selection rule %s from product query does not match selection rule %s from product class %s",
+									productQuery.getGeneratingRule().toString(), selectionRule.toString(),
+									productClass.getProductType()));
 						continue SELECTION_RULE; // Skip to the next selection rule
 					}
 					exist = true; // Product query already exists
@@ -1234,8 +1237,8 @@ public class OrderDispatcher {
 		// Add the component classes of the current product class
 		productClasses.addAll(productClass.getComponentClasses());
 		// Recursively add the component classes of the sub-product classes
-		for (ProductClass subPC : productClass.getComponentClasses()) {
-			productClasses.addAll(getAllComponentClasses(subPC));
+		for (ProductClass subProductClass : productClass.getComponentClasses()) {
+			productClasses.addAll(getAllComponentClasses(subProductClass));
 		}
 		return productClasses;
 	}
@@ -1318,6 +1321,7 @@ public class OrderDispatcher {
 					(null == jobStep ? "null" : jobStep), fileClass, startTime, stopTime);
 
 		Product product = new Product();
+		// Do not set UUID before checking for existing products, otherwise Product::equals() will always fail!
 		product.getParameters().clear();
 		product.getParameters().putAll(job.getProcessingOrder().getOutputParameters(productClass));
 		product.setProductClass(productClass);
@@ -1343,6 +1347,7 @@ public class OrderDispatcher {
 		for (Product foundProduct : foundProducts) {
 			logger.trace("... testing product with ID {}", foundProduct.getId());
 			if (foundProduct.equals(product)) {
+				logger.trace("    ... fulfills 'equals'");
 				if (!foundProduct.getProductFile().isEmpty()) {
 					logger.trace("    ... has product files");
 					for (ProductFile foundFile : foundProduct.getProductFile()) {
@@ -1430,12 +1435,13 @@ public class OrderDispatcher {
 
 		if (!foundConfiguredProcessors.isEmpty() && processingMode != null && !processingMode.isBlank()) {
 			// Search for configured processors with the expected processing mode
-			List<ConfiguredProcessor> configuredProcessorsWithMode = new ArrayList<>();
+
+			List<ConfiguredProcessor> cplistFoundWithMode = new ArrayList<>();
 
 			for (ConfiguredProcessor configuredProcessor : foundConfiguredProcessors) {
 				String configProcessingMode = configuredProcessor.getConfiguration().getMode();
 				if (null != configProcessingMode && configProcessingMode.equals(processingMode)) {
-					configuredProcessorsWithMode.add(configuredProcessor);
+					cplistFoundWithMode.add(configuredProcessor);
 					if (logger.isDebugEnabled())
 						logger.debug("Candidate configured processor {} intended for mode {}", configuredProcessor.getIdentifier(),
 								processingMode);
@@ -1443,10 +1449,10 @@ public class OrderDispatcher {
 			}
 
 			// If no configured processors are found with the expected mode, select ones without a mode
-			if (configuredProcessorsWithMode.isEmpty()) {
+			if (cplistFoundWithMode.isEmpty()) {
 				for (ConfiguredProcessor configuredProcessor : foundConfiguredProcessors) {
 					if (null == configuredProcessor.getConfiguration().getMode()) {
-						configuredProcessorsWithMode.add(configuredProcessor);
+						cplistFoundWithMode.add(configuredProcessor);
 						if (logger.isDebugEnabled())
 							logger.debug("Candidate configured processor {} suitable for mode {}",
 									configuredProcessor.getIdentifier(), processingMode);
@@ -1454,7 +1460,7 @@ public class OrderDispatcher {
 				}
 			}
 			foundConfiguredProcessors.clear();
-			foundConfiguredProcessors.addAll(configuredProcessorsWithMode);
+			foundConfiguredProcessors.addAll(cplistFoundWithMode);
 		}
 
 		// Search for the newest processor

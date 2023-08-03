@@ -230,7 +230,7 @@ public enum UIMessage implements ProseoMessage {
 	PRODUCTCLASS_NOT_FOUND					(6214, Level.ERROR, false, "Product class {0} not found", ""),
 	PRODUCTCLASS_NOT_FOUND_BY_ID			(6215, Level.ERROR, false, "Product class with database ID {0} not found", ""),
 	PRODUCTCLASS_UPDATED					(6216, Level.INFO, true, "Product class with database ID {0} updated (new version {1})", ""),
-	PRODUCTFILE_DELETED						(6217, Level.INFO, true, "Product file for product database ID {0} and processing facility {2} deleted", ""),
+	PRODUCTFILE_DELETED						(6217, Level.INFO, true, "Product file for product database ID {0} and processing facility {1} deleted", ""),
 	PRODUCTFILE_NOT_FOUND					(6218, Level.ERROR, false, "No product file found for product database ID {0} and processing facility {1}", ""),
 	PRODUCTS_INGESTED						(6219, Level.INFO, true, "{0} products ingested to processing facility {1}", ""),
 	REFLECTION_EXCEPTION					(6220, Level.ERROR, false, "Reflection exception setting attribute {0} (cause: {2})", ""),

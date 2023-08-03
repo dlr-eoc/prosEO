@@ -1,6 +1,7 @@
 package de.dlr.proseo.planner.rest;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -25,7 +26,7 @@ public class ReleaseControllerImpl implements ReleaseController {
 	 * Ingestor releases 'thread' semaphore
 	 */
 	@Override
-	public ResponseEntity<?> releaseSemaphore() {
+	public ResponseEntity<?> releaseSemaphore(HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> releaseSemaphore()");
 		try {
 			productionPlanner.releaseThreadSemaphore("ingestorSemaphore");

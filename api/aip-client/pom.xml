@@ -20,6 +20,7 @@
 	<properties>
 		<module.version>0.9.5-SNAPSHOT</module.version>
         <olingo.version>4.7.1</olingo.version>
+        <netty.version>4.1.48.Final</netty.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/aip-client-api.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.api.aipclient.rest</raml-base-package>

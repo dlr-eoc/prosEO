@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -55,7 +56,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      */
 	@Override
 	@Transactional
-    public ResponseEntity<List<RestProcessingFacility>> getRestProcessingFacilities() {
+    public ResponseEntity<List<RestProcessingFacility>> getRestProcessingFacilities(HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getRestProcessingFacilities()");
 		
 		try {
@@ -104,7 +105,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      */
 	@Override
 	@Transactional
-	public ResponseEntity<RestProcessingFacility> getRestProcessingFacilityByName(String name) {
+	public ResponseEntity<RestProcessingFacility> getRestProcessingFacilityByName(String name, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getRestProcessingFacilityByName({})", name);
 		
 		de.dlr.proseo.planner.kubernetes.KubeConfig kc = productionPlanner.getKubeConfig(name);
@@ -146,7 +147,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      * @return a JSON object describing the processing facility that was synchronized
      */
 	@Override
-	public ResponseEntity<RestProcessingFacility> synchronizeFacility(String name) {
+	public ResponseEntity<RestProcessingFacility> synchronizeFacility(String name, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> synchronizeFacility({})", name);
 		
 		productionPlanner.updateKubeConfig(name);
@@ -202,7 +203,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      * @return a JSON object describing the finished pod (currently not implemented)
      */
 	@Override
-    public ResponseEntity<PlannerPod> finishKubeJob(String podname, String name, String status) {
+    public ResponseEntity<PlannerPod> finishKubeJob(String podname, String name, String status, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> finishKubeJob({}, {}, {})", podname, name, status);
 		
 		de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = productionPlanner.getKubeConfig(name);

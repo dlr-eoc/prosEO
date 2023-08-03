@@ -161,15 +161,6 @@ public class IngestorCommandRunner {
 			}
 			restProduct.setProductClass(response);
 		}
-		if (null == restProduct.getFileClass() || 0 == restProduct.getFileClass().length()) {
-			System.out.print(PROMPT_FILE_CLASS);
-			String response = System.console().readLine();
-			if (response.isBlank()) {
-				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
-				return;
-			}
-			restProduct.setFileClass(response);
-		}
 		while (null == restProduct.getSensingStartTime() || 0 == restProduct.getSensingStartTime().length()) {
 			System.out.print(PROMPT_START_TIME);
 			String response = System.console().readLine();

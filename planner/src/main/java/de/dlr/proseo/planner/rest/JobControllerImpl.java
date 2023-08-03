@@ -15,6 +15,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -86,7 +87,7 @@ public class JobControllerImpl implements JobController {
 	@Transactional
 	@Override
     public ResponseEntity<List<RestJob>> getJobs(String state, Long orderId,
-			Long recordFrom, Long recordTo, Boolean logs, String[] orderBy) {
+			Long recordFrom, Long recordTo, Boolean logs, String[] orderBy, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getJobs({}, {}, {}, {}, {}, {})",
 				state, orderId, recordFrom, recordTo, (null == orderBy ? "null" : Arrays.asList(orderBy)));
 		
@@ -130,7 +131,7 @@ public class JobControllerImpl implements JobController {
      */
 	@Transactional
 	@Override
-    public ResponseEntity<String> countJobs(String state, Long orderId) {
+    public ResponseEntity<String> countJobs(String state, Long orderId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> countJobs({}, {})", state, orderId);
 		
 		try {
@@ -161,7 +162,7 @@ public class JobControllerImpl implements JobController {
 	 */
 	@Transactional
 	@Override
-    public ResponseEntity<RestJob> getJob(String jobId) {
+    public ResponseEntity<RestJob> getJob(String jobId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getJob({})", jobId);
 		
 		try {
@@ -190,7 +191,7 @@ public class JobControllerImpl implements JobController {
 	 */
 	@Transactional
 	@Override
-    public ResponseEntity<RestJobGraph> graphJobSteps(String jobId) {
+    public ResponseEntity<RestJobGraph> graphJobSteps(String jobId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> graphJobSteps({})", jobId);
 		
 		try {
@@ -219,7 +220,7 @@ public class JobControllerImpl implements JobController {
 	 * @param jobId
 	 */
 	@Override 
-	public ResponseEntity<RestJob> resumeJob(String jobId) {
+	public ResponseEntity<RestJob> resumeJob(String jobId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> resumeJob({})", jobId);
 		
 		try {
@@ -295,7 +296,7 @@ public class JobControllerImpl implements JobController {
 	 * @param jobId
 	 */
 	@Override 
-	public ResponseEntity<RestJob> cancelJob(String jobId){
+	public ResponseEntity<RestJob> cancelJob(String jobId, HttpHeaders httpHeaders){
 		if (logger.isTraceEnabled()) logger.trace(">>> cancelJob({})", jobId);
 		
 		try {
@@ -341,7 +342,7 @@ public class JobControllerImpl implements JobController {
 	 * @param force If true, kill job, otherweise wait until end of job
 	 */
 	@Override 
-	public ResponseEntity<RestJob> suspendJob(String jobId, Boolean forceP) {
+	public ResponseEntity<RestJob> suspendJob(String jobId, Boolean forceP, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> suspendJob({}, force: {})", jobId, forceP);
 		
 		final Boolean force = (null == forceP ? false : forceP);
@@ -490,7 +491,7 @@ public class JobControllerImpl implements JobController {
 	 * @param jobId
 	 */
 	@Override
-	public ResponseEntity<RestJob> retryJob(String id) {
+	public ResponseEntity<RestJob> retryJob(String id, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> retryJob({})", id);
 		
 		try {

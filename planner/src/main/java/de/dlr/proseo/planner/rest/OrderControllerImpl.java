@@ -26,6 +26,7 @@ import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.planner.ProductionPlanner;
+import de.dlr.proseo.planner.ProductionPlannerSecurityConfig;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.model.rest.OrderController;
 import de.dlr.proseo.model.rest.model.RestOrder;
@@ -34,6 +35,7 @@ import de.dlr.proseo.planner.util.OrderUtil;
 
 import org.slf4j.event.Level;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -62,6 +64,8 @@ public class OrderControllerImpl implements OrderController {
 	/** The Production Planner instance */
     @Autowired
     private ProductionPlanner productionPlanner;
+	@Autowired
+	ProductionPlannerSecurityConfig securityConfig;
 
     @Autowired
     private OrderUtil orderUtil;
@@ -72,7 +76,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	public ResponseEntity<List<RestOrder>> getOrders() {
+	public ResponseEntity<List<RestOrder>> getOrders(HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrders()");
 		
 		try {
@@ -109,7 +113,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	public ResponseEntity<RestOrder> getOrder(String orderId) {
+	public ResponseEntity<RestOrder> getOrder(String orderId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrder({})", orderId);
 		
 		try {
@@ -137,7 +141,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	public ResponseEntity<RestOrder> approveOrder(String orderId) {
+	public ResponseEntity<RestOrder> approveOrder(String orderId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> approveOrder({})", orderId);
 
 		ProcessingOrder order = this.findOrder(orderId);
@@ -178,7 +182,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	public ResponseEntity<RestOrder> resetOrder(String orderId) {
+	public ResponseEntity<RestOrder> resetOrder(String orderId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> resetOrder({})", orderId);
 		
 		try {
@@ -215,7 +219,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	public ResponseEntity<RestOrder> deleteOrder(String orderId) {
+	public ResponseEntity<RestOrder> deleteOrder(String orderId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteOrder({})", orderId);
 		
 		try {
@@ -263,7 +267,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	public ResponseEntity<RestOrder> planOrder(String releaseId, String facility, Boolean wait) {
+	public ResponseEntity<RestOrder> planOrder(String releaseId, String facility, Boolean wait, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> planOrder({}, {})", releaseId, facility);
 		
 		if (null == releaseId || null == facility) {
@@ -331,9 +335,10 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	public ResponseEntity<RestOrder> releaseOrder(String orderId, Boolean wait) {
+	public ResponseEntity<RestOrder> releaseOrder(String orderId, Boolean wait, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> releaseOrder({})", orderId);
 		
+		String[] userPassword = securityConfig.parseAuthenticationHeader(httpHeaders.getFirst(HttpHeaders.AUTHORIZATION));
 		try {
 			ProcessingOrder order = this.findOrder(orderId);
 			
@@ -345,7 +350,7 @@ public class OrderControllerImpl implements OrderController {
 			if (wait == null) {
 				wait = false;
 			}
-			PlannerResultMessage msg = orderUtil.resume(order, wait);
+			PlannerResultMessage msg = orderUtil.resume(order, wait, userPassword[0], userPassword[1]);
 			
 			// Check whether the release triggers any job steps
 			// This is already done during RELEASING
@@ -379,37 +384,38 @@ public class OrderControllerImpl implements OrderController {
 							return null;
 						});
 					} catch (Exception e) {
-						logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+						String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 					} finally {
 						productionPlanner.releaseThreadSemaphore("resumeOdip");					
 					}
-					if (orderName != null) {
-						// suspend and cancel the order
-						PlannerResultMessage message = orderUtil.suspend(order.getId(), true);
-						try {
-							productionPlanner.acquireThreadSemaphore("resumeOdip2");	
-							PlannerResultMessage dummy = transactionTemplate.execute((status) -> {
-								PlannerResultMessage lamdaMsg = new PlannerResultMessage(GeneralMessage.FALSE);
-								Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
-								if (opt.isPresent()) {
-									ProcessingOrder orderx = opt.get();
-									lamdaMsg = orderUtil.cancel(orderx);
-								}
-								return lamdaMsg;
-							});
-							message.copy(dummy);
-						} catch (Exception e) {
-							logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
-						} finally {
-							productionPlanner.releaseThreadSemaphore("resumeOdip2");					
-						}
-						if (message.getSuccess()) {
-							return new ResponseEntity<>(http.errorHeaders(logger.log(PlannerMessage.MSG_NO_INPUTPRODUCT, orderName)), HttpStatus.NOT_FOUND);
-						} else {
-							message.setText(logger.log(PlannerMessage.MSG_NO_INPUTPRODUCT, orderName));
-							return new ResponseEntity<>(http.errorHeaders(message.getText()), HttpStatus.NOT_FOUND);
-						}
-					}
+//					if (orderName != null) {
+//						// suspend and cancel the order
+//						PlannerResultMessage message = orderUtil.suspend(order.getId(), true);
+//						try {
+//							productionPlanner.acquireThreadSemaphore("resumeOdip2");	
+//							PlannerResultMessage dummy = transactionTemplate.execute((status) -> {
+//								PlannerResultMessage lamdaMsg = new PlannerResultMessage(GeneralMessage.FALSE);
+//								Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
+//								if (opt.isPresent()) {
+//									ProcessingOrder orderx = opt.get();
+//									lamdaMsg = orderUtil.cancel(orderx);
+//								}
+//								return lamdaMsg;
+//							});
+//							message.copy(dummy);
+//						} catch (Exception e) {
+//							logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+//						} finally {
+//							productionPlanner.releaseThreadSemaphore("resumeOdip2");					
+//						}
+//						if (message.getSuccess()) {
+//							return new ResponseEntity<>(http.errorHeaders(logger.log(PlannerMessage.MSG_NO_INPUTPRODUCT, orderName)), HttpStatus.NOT_FOUND);
+//						} else {
+//							message.setText(logger.log(PlannerMessage.MSG_NO_INPUTPRODUCT, orderName));
+//							return new ResponseEntity<>(http.errorHeaders(message.getText()), HttpStatus.NOT_FOUND);
+//						}
+//					}
 				}
 
 				return new ResponseEntity<>(ro, HttpStatus.OK);
@@ -428,13 +434,13 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	public ResponseEntity<RestOrder> resumeOrder(String orderId, Boolean wait) {
+	public ResponseEntity<RestOrder> resumeOrder(String orderId, Boolean wait, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> resumeOrder({})", orderId);
 		
 		if (wait == null) {
 			wait = false;
 	}
-		return releaseOrder(orderId, wait);
+		return releaseOrder(orderId, wait, httpHeaders);
 	}
 
 	/**
@@ -442,7 +448,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	public ResponseEntity<RestOrder> cancelOrder(String orderId) {
+	public ResponseEntity<RestOrder> cancelOrder(String orderId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> cancelOrder({})", orderId);
 
 		ProcessingOrder order = this.findOrder(orderId);
@@ -484,7 +490,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	public ResponseEntity<RestOrder> closeOrder(String orderId) {
+	public ResponseEntity<RestOrder> closeOrder(String orderId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> closeOrder({})", orderId);
 
 		ProcessingOrder order = this.findOrder(orderId);
@@ -522,7 +528,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	public ResponseEntity<RestOrder> suspendOrder(String orderId, Boolean force) {
+	public ResponseEntity<RestOrder> suspendOrder(String orderId, Boolean force, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> suspendOrder({}, force: {})", orderId, force);
 		
 		try {
@@ -585,7 +591,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	public ResponseEntity<RestOrder> retryOrder(String orderId) {
+	public ResponseEntity<RestOrder> retryOrder(String orderId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> retryOrder({})", orderId);
 		
 		try {

@@ -1911,4 +1911,23 @@ public class CadipMonitor extends BaseMonitor {
 		return true;
 	}
 
+	/**
+	 * Check the CADIP status (by querying all available sessions)
+	 * 
+	 * @return true, if the CADIP is reachable and has session data, false otherwise
+	 */
+	public boolean checkStatus() {
+		if (logger.isTraceEnabled()) logger.trace(">>> checkStatus()");
+		
+		boolean isCadipOk = false;
+		
+		try {
+			TransferControl tc = checkAvailableSessions(Instant.parse("1970-01-01T00:00:00Z"));
+			isCadipOk = !tc.transferObjects.isEmpty();
+		} catch (Exception e) {
+			// Never mind
+		}
+		
+		return isCadipOk;
+	}
 }
