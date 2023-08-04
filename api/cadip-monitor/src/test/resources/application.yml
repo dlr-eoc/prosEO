@@ -1,0 +1,50 @@
+logging:
+    file: target/test/proseo-cadip-monitor.log
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE
+ #      org.apache.http: DEBUG
+ #      org.springframework.web.client: DEBUG
+proseo:
+    # The Ingestor URI (protocol, host name, port, context; no terminating slash)
+    ingestor.url: http://localhost:9876/proseo/ingestor/v1 
+
+    # CADIP Monitor configuration
+    cadip:
+        # CADIP Monitor identifier (must be unique for all CADIP monitors on the same host)
+        id: PTM-CADIP
+        # Satellite identifier (e. g. "PTS", "S5P" ...)
+        satellite: PTS
+        # The base URI of the CADIP (protocol, host name, port; no terminating slash)
+        baseuri: http://localhost:9876
+        # The CADIP context, if any ("service root", any URI component(s) before "odata"; no starting or terminating slash)
+        context: cadip
+        # The CADIP username (for Basic Authentication, optional)
+        user: myuser
+        # The CADIP password (for Basic Authentication, mandatory, if CADIP user is set)
+        password: mypassword
+        
+        # Interval between pickup point checks in milliseconds (e. g. every 5 s for test)
+        check.interval: 5000
+        # Interval between checks for available session files in milliseconds (e. g. every 200 ms for test)
+        session.interval: 200
+        # Retrieval delay in milliseconds (to avoid concurrent CADIP access by multiple PDGSs, e. g. 30 min; default 0)
+        #retrieval.delay: 1800000
+        # Maximum allowed duration for download of a single session in milliseconds (e. g. 60 min)
+        retrieval.timeout: 3600000
+        
+        # Handling of history file
+        history:
+            # Path to the file for storing transfer history (on a persistent volume)
+            file: target/test/history.file
+            # Interval to truncate transfer history file in milliseconds (e. g. daily)
+            truncate.interval: 86400000
+            # Period to retain transfer history entries for, in milliseconds (e. g. one week)
+            retention: 604800000
+            
+        # Minimum size in bytes of a file to be used for performance measurements (e. g. 20 MiB = 20 * 1024 * 1024 Bytes)
+        performance.minsize: 20971520
+            
+    l0:
+        # Path to the target CADU directory (for L0 processing)
+        directory.cadu: target/test/cadu

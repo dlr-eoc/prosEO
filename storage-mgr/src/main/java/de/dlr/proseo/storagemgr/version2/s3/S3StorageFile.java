@@ -1,3 +1,8 @@
+/**
+ * S3StorageFile.java
+ *
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.version2.s3;
 
 import java.io.File;
@@ -10,12 +15,13 @@ import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 /**
- * S3 Storage File
- * 
- * full path: "s3:/" + bucket + relativePath (with fileName)
- * 
- * @author Denys Chaykovskiy
+ * Represents a file within a S3-based storage system. It implements the
+ * StorageFile interface and provides functionality related to the file's
+ * properties and operations.
  *
+ * Full path: "s3:/" + bucket + relativePath (with fileName)
+ *
+ * @author Denys Chaykovskiy
  */
 public class S3StorageFile implements StorageFile {
 
@@ -33,8 +39,7 @@ public class S3StorageFile implements StorageFile {
 
 	/**
 	 * Constructor
-	 * 
-	 * @param basePath     base path
+	 *
 	 * @param bucket       bucket
 	 * @param relativePath relative path
 	 */
@@ -46,7 +51,7 @@ public class S3StorageFile implements StorageFile {
 
 	/**
 	 * Copy Constructor
-	 * 
+	 *
 	 * @param storageFile Storage file
 	 */
 	public S3StorageFile(StorageFile storageFile) {
@@ -55,7 +60,7 @@ public class S3StorageFile implements StorageFile {
 
 	/**
 	 * Gets the full path
-	 * 
+	 *
 	 * @return the full path
 	 */
 	@Override
@@ -66,7 +71,7 @@ public class S3StorageFile implements StorageFile {
 
 	/**
 	 * Gets the base path
-	 * 
+	 *
 	 * @return the base path
 	 */
 	@Override
@@ -76,7 +81,7 @@ public class S3StorageFile implements StorageFile {
 
 	/**
 	 * Sets the base path
-	 * 
+	 *
 	 * @param basePath base path
 	 */
 	@Override
@@ -85,7 +90,7 @@ public class S3StorageFile implements StorageFile {
 
 	/**
 	 * Gets the bucket
-	 * 
+	 *
 	 * @return the bucket
 	 */
 	@Override
@@ -95,7 +100,7 @@ public class S3StorageFile implements StorageFile {
 
 	/**
 	 * Sets the bucket
-	 * 
+	 *
 	 * @param bucket the bucket
 	 */
 	@Override
@@ -105,7 +110,7 @@ public class S3StorageFile implements StorageFile {
 
 	/**
 	 * Gets relative path
-	 * 
+	 *
 	 * @return relative path
 	 */
 	@Override
@@ -115,7 +120,7 @@ public class S3StorageFile implements StorageFile {
 
 	/**
 	 * Sets relative path
-	 * 
+	 *
 	 * @param relativePath relative path
 	 */
 	@Override
@@ -125,7 +130,7 @@ public class S3StorageFile implements StorageFile {
 
 	/**
 	 * Gets file name
-	 * 
+	 *
 	 * @return file name
 	 */
 	@Override
@@ -135,7 +140,7 @@ public class S3StorageFile implements StorageFile {
 
 	/**
 	 * Gets storage type
-	 * 
+	 *
 	 * @return storage type
 	 */
 	@Override
@@ -145,7 +150,7 @@ public class S3StorageFile implements StorageFile {
 
 	/**
 	 * Gets extension from file name
-	 * 
+	 *
 	 * @return extension
 	 */
 	@Override
@@ -155,7 +160,7 @@ public class S3StorageFile implements StorageFile {
 
 	/**
 	 * Checks if path is a directory path
-	 * 
+	 *
 	 * @return true if directory
 	 */
 	@Override
@@ -166,7 +171,7 @@ public class S3StorageFile implements StorageFile {
 
 	/**
 	 * Adds s3 prefix to the path
-	 * 
+	 *
 	 * @param path path
 	 * @return s3 prefix + path
 	 */

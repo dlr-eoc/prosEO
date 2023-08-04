@@ -23,7 +23,7 @@ import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
-import de.dlr.proseo.logging.messages.ProseoMessage;
+import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
@@ -245,7 +245,7 @@ public class JobstepControllerImpl implements JobstepController {
 
 			JobStep js = this.findJobStepByNameOrId(jobstepId);
 			if (js != null) {
-				List<ProseoMessage> msg = new ArrayList<ProseoMessage>();
+				List<PlannerResultMessage> msg = new ArrayList<PlannerResultMessage>();
 				try {
 					productionPlanner.acquireThreadSemaphore("resumeJobStep");
 					final ResponseEntity<RestJobStep> msgF = transactionTemplate.execute((status) -> {
@@ -299,7 +299,7 @@ public class JobstepControllerImpl implements JobstepController {
 					return msgS;
 				} else {
 					// illegal state for resume
-					String message = logger.log(msg.get(0), jobstepId);
+					String message = logger.log(msg.get(0).getMessage(), jobstepId);
 
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}
@@ -325,7 +325,7 @@ public class JobstepControllerImpl implements JobstepController {
 			JobStep js = this.findJobStepByNameOrId(jobstepId);
 			if (js != null) {
 				Job job = js.getJob();
-				ProseoMessage msg = null;
+				PlannerResultMessage msg = new PlannerResultMessage(null);
 				try {
 					productionPlanner.acquireThreadSemaphore("cancelJobStep");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -360,7 +360,7 @@ public class JobstepControllerImpl implements JobstepController {
 					return new ResponseEntity<>(pjs, HttpStatus.OK);
 				} else {
 					// illegal state for cancel
-					String message = logger.log(msg, jobstepId);
+					String message = logger.log(msg.getMessage(), jobstepId);
 
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}
@@ -412,7 +412,7 @@ public class JobstepControllerImpl implements JobstepController {
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
-				ProseoMessage msg = GeneralMessage.FALSE; 
+				PlannerResultMessage msg = new PlannerResultMessage(GeneralMessage.FALSE); 
 				try {
 					productionPlanner.acquireThreadSemaphore("suspendJobStep");
 					msg = transactionTemplate.execute((status) -> {
@@ -432,7 +432,7 @@ public class JobstepControllerImpl implements JobstepController {
 					return new ResponseEntity<>(pjs, HttpStatus.OK);
 				} else {
 					// illegal state for suspend
-					String message = logger.log(msg, jobstepId);
+					String message = logger.log(msg.getMessage(), jobstepId);
 
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}
@@ -536,7 +536,7 @@ public class JobstepControllerImpl implements JobstepController {
 		try {
 			JobStep js = this.findJobStepByNameOrId(jobstepId);
 			if (js != null) {
-				ProseoMessage msg = null;
+				PlannerResultMessage msg = new PlannerResultMessage(null);
 				try {
 					productionPlanner.acquireThreadSemaphore("retryJobStep");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -556,7 +556,7 @@ public class JobstepControllerImpl implements JobstepController {
 
 					return new ResponseEntity<>(pjs, HttpStatus.OK);
 				} else {
-					String message = logger.log(msg, jobstepId);
+					String message = logger.log(msg.getMessage(), jobstepId);
 
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}

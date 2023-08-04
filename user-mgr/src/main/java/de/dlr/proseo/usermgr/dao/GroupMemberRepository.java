@@ -1,6 +1,6 @@
 /**
  * GroupMemberRepository.java
- * 
+ *
  * (C) 2020 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.usermgr.dao;
@@ -12,11 +12,9 @@ import de.dlr.proseo.usermgr.model.GroupMember;
 
 /**
  * Data Access Object for the GroupMember class
- * 
- * @author Dr. Thomas Bassler
  *
+ * @author Dr. Thomas Bassler
  */
 @Repository
 public interface GroupMemberRepository extends JpaRepository<GroupMember, Long> {
-
 }

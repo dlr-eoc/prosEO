@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport"
+	content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title th:text="#{workflow} + ' | ' + #{proseo}">proseo</title>
+
+<!-- Bootstrap core CSS -->
+<link rel="stylesheet"
+	href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+	integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
+	crossorigin="anonymous" />
+
+<!-- Custom styles for prosEO -->
+<link href="../static/fragments/proseo.css"
+	th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css" />
+<link rel="stylesheet"
+	href="../static/fragments/bootstrap-multiselect.css"
+	th:href="@{/fragments/bootstrap-multiselect.css}" type="text/css" />
+</head>
+
+<body>
+
+	<div style="display: none;" class="loading">
+		<div class="loader"></div>
+	</div>
+
+	<nav id="proseo-nav"
+		class="navbar bg-light fixed-top flex-md-nowrap p-0 shadow navbar-expand-md">
+		<div class="container-fluid pl-0 pr-0">
+			<a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
+				href="/"><img src="proseo_logo.png" class="rounded" width="50"
+				height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
+
+			<button class="navbar-toggler position-absolute d-md-none collapsed"
+				type="button" data-toggle="collapse" data-target="#sidebarMenu"
+				aria-controls="sidebarMenu" aria-expanded="false"
+				aria-label="Toggle navigation">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+
+			<ul class="navbar-nav mr-auto navbar-left">
+				<li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
+						th:text="${missioncode}">mission</span></a></li>
+				<li class="p-breadcrumb-item"><span th:text="#{workflow}">workflow</span></li>
+			</ul>
+
+			<div th:replace="fragments/navbar.html :: navbarRight"></div>
+		</div>
+	</nav>
+
+	<div class="container-fluid">
+
+		<div class="row">
+			<div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
+			<div class="proseo-top-div"></div>
+
+			<!-- Show an error message if the user is not authorized to view workflows -->
+			<main th:unless="${hasroleprocessorreader}" role="main"
+				class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+				<h5 class="FAILED">
+					<br> <span th:text="#{noroleright}"></span> (PROCESSOR_READER)
+					<br>&nbsp;
+				</h5>
+			</main>
+
+			<!-- Show workflows if the user is authorized -->
+			<main th:if="${hasroleprocessorreader}" role="main"
+				class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+
+				<div th:if="${errormsg != null}" id="errormsg" class="FAILED">
+					<h5>
+						<br> <span th:text="${errormsg}"></span>
+					</h5>
+				</div>
+
+
+				<!-- Filter workflows -->
+				<form id="workflowFilters">
+					<div class="row py-lg-1">
+
+						<!-- Filter id -->
+						<div class="col-1 pr-lg-0">
+							<p class="input-group-text word-wrap" th:text="#{id}"></p>
+						</div>
+						<div class="col-1 pl-lg-0">
+							<input type="number" class="form-control" name="id" id="id">
+						</div>
+
+						<!-- Filter name -->
+						<div class="col-1 pr-lg-0">
+							<p class="input-group-text word-wrap" th:text="#{name}"></p>
+						</div>
+						<div class="col-3 pl-lg-0">
+							<input type="text" class="form-control" name="name" id="name">
+						</div>
+
+						<!-- Filter version -->
+						<div class="col-2 pr-lg-0">
+							<p class="input-group-text word-wrap"
+								th:text="#{workflowversion}"></p>
+						</div>
+						<div class="col-1 pl-lg-0">
+							<input type="text" class="form-control" name="workflowVersion"
+								id="workflowVersion">
+						</div>
+
+					</div>
+					<div class="row py-lg-1">
+
+						<!-- Submit button -->
+						<div class="col-3">
+							<button type="submit" class="btn btn-sm btn-outline-secondary">
+								<span th:text="#{workflow-show}"></span>
+							</button>
+						</div>
+
+						<!-- Filter input product class -->
+						<div class="col-3 pr-lg-0">
+							<p class="input-group-text word-wrap"
+								th:text="#{inputproductclass}"></p>
+						</div>
+						<div class="col-3 pl-lg-0">
+							<input type="text" class="form-control" name="inputProductClass"
+								id="inputProductClass">
+						</div>
+
+					</div>
+				</form>
+
+				<!-- The actual workflow table -->
+				<div id="workflowcontent" name="workflowcontent">
+					<table class="table" id="workflowTable">
+
+						<!-- Table header (parts that are always visible) -->
+						<thead class="thead-proseo" id="proseo-thead">
+							<tr>
+								<th><span>&nbsp;</span></th>
+								<th><span th:text="#{id}">id</span></th>
+								<th><span th:text="#{name}">name</span></th>
+								<th><span th:text="#{workflowversion}">workflowversion</span></th>
+								<th><span th:text="#{inputproductclass}">inputproductclass</span></th>
+								<th><span th:text="#{outputproductclass}">outputproductclass</span></th>
+								<th><span th:text="#{description}">description</span></th>
+								<th><span th:text="#{processingmode}">processingmode</span></th>
+							</tr>
+						</thead>
+
+						<div th:unless="${workflows} == null">
+							<div th:each="workflow : ${workflows}">
+
+								<!-- Workflow content that is always visible -->
+								<tbody>
+									<tr>
+										<td th:id="'togglewf' + ${workflow.id}"
+											class="cursorpointer first-row no-right-border"
+											th:onclick="'toggleWorkflow('+${workflow.id}+')'">
+											<div class="hideworkflow" th:id="'hidewf' + ${workflow.id}"
+												th:style="${'display: none;'}">
+												<span data-feather="minus-circle"></span>
+											</div>
+											<div class="showworkflow" th:id="'showwf' + ${workflow.id}"
+												th:style="${'display: block;'}">
+												<span data-feather="plus-circle"></span>
+											</div>
+										</td>
+										<td class="cursorpointer first-row no-left-border"
+											th:onclick="'toggleWorkflow('+${workflow.id}+')'"
+											th:text="${workflow.id}"></td>
+										<td class="first-row" th:text="${workflow.name}"></td>
+										<td class="first-row" th:text="${workflow.workflowVersion}"></td>
+										<td class="first-row"><a th:if="${hasroleproductreader}"
+											th:href="'/productclass-show?productClass=' + ${workflow.inputProductClass}"
+											th:text="${workflow.inputProductClass}"></a><span
+											th:unless="${hasroleproductreader}"
+											th:text="${workflow.inputProductClass}"></span></td>
+										<td class="first-row"><a th:if="${hasroleproductreader}"
+											th:href="'/productclass-show?productClass=' + ${workflow.outputProductClass}"
+											th:text="${workflow.outputProductClass}"></a><span
+											th:unless="${hasroleproductreader}"
+											th:text="${workflow.outputProductClass}"></span></td>
+										<td class="first-row" th:text="${workflow.description}"></td>
+										<td class="first-row" th:text="${workflow.processingMode}"></td>
+									</tr>
+								</tbody>
+
+								<!-- Workflow headers and content that can be hidden -->
+								<tbody class="filtercontent" th:id="'wfcontent'+${workflow.id}">
+
+									<!-- Table header (parts that are hidden by default) -->
+									<tr class="th-row">
+										<th class="tr-rowspan"><span>&nbsp;</span></th>
+										<th><span th:text="#{slicingtype}">slicingtype</span></th>
+										<th><span th:text="#{sliceduration}">sliceduration</span></th>
+										<th><span th:text="#{sliceoverlap}">sliceoverlap</span></th>
+										<th><span th:text="#{configuredprocessor}">configuredprocessor</span></th>
+										<th><span th:text="#{outputfileclass}">outputfileclass</span></th>
+										<th><span th:text="#{uuid}">uuid</span></th>
+										<th><span th:text="#{version}">version</span></th>
+									</tr>
+
+									<!-- Hidden content -->
+									<tr class="proseo-row-divider">
+										<td class="tr-rowspan">&nbsp;</td>
+										<td class="first-row" th:text="${workflow.slicingType}"></td>
+										<td class="first-row" th:text="${workflow.sliceDuration}"></td>
+										<td class="first-row" th:text="${workflow.sliceOverlap}"></td>
+										<td class="first-row"
+											th:text="${workflow.configuredProcessor}"></td>
+										<td class="first-row" th:text="${workflow.outputFileClass}"></td>
+										<td class="first-row" th:text="${workflow.uuid}"></td>
+										<td class="first-row" th:text="${workflow.version}"></td>
+									</tr>
+
+									<!-- More hidden table headers -->
+									<tr class="th-row">
+										<th class="tr-rowspan"><span>&nbsp;</span></th>
+										<th><span th:text="#{enabled}">enabled</span></th>
+										<th><span th:text="#{inputfilters}">inputfilters</span></th>
+										<th><span th:text="#{workflowoptions}">workflowoptions</span></th>
+										<th><span th:text="#{classoutputparameters}">classoutputparameters</span></th>
+										<th><span th:text="#{outputparameters}">outputparameters</span></th>
+									</tr>
+
+									<!-- More hidden table content -->
+									<tr class="proseo-row-divider">
+										<td class="tr-rowspan">&nbsp;</td>
+										<td class="first-row" th:text="${workflow.enabled}"></td>
+										<td class="first-row">
+											<table class="table">
+												<tbody>
+													<tr th:each="elem : ${workflow?.inputFilters}">
+														<td th:text="${elem?.key}"></td>
+														<td th:text="${elem?.value}"></td>
+													</tr>
+												</tbody>
+											</table>
+										</td>
+										<td class="first-row">
+											<table class="table">
+												<tbody>
+													<tr th:each="elem : ${workflow?.workflowOptions}">
+														<td th:text="${elem?.name}"></td>
+														<td th:text="${elem?.defaultValue}"></td>
+													</tr>
+												</tbody>
+											</table>
+										</td>
+										<td class="first-row">
+											<table class="table">
+												<tbody>
+													<tr th:each="elem : ${workflow?.classOutputParameters}">
+														<td th:text="${elem?.key}"></td>
+														<td th:text="${elem?.value}"></td>
+													</tr>
+												</tbody>
+											</table>
+										</td>
+										<td class="first-row">
+											<table class="table">
+												<tbody>
+													<tr th:each="elem : ${workflow?.outputParameters}">
+														<td th:text="${elem?.key}"></td>
+														<td th:text="${elem?.parameterValue}"></td>
+													</tr>
+												</tbody>
+											</table>
+										</td>
+									</tr>
+
+								</tbody>
+
+						</div>
+						</div>
+
+					</table>
+
+					<div th:replace="fragments/navbar.html :: alternatePageNav"></div>
+				</div>
+				<div th:insert="fragments/footer.html :: footer"></div>
+			</main>
+
+		</div>
+
+	</div>
+
+	<!-- Imports -->
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="https://unpkg.com/feather-icons"></script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.5.1.js"
+		integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+		crossorigin="anonymous"></script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+		integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+		crossorigin="anonymous"></script>
+	<script
+		src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+		integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+		crossorigin="anonymous"></script>
+	<script
+		src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
+	<script src="../static/fragments/proseo.js"
+		th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
+	<script src="../static/fragments/bootstrap-multiselect.js"
+		th:src="@{/fragments/bootstrap-multiselect.js}" type="text/javascript"></script>
+
+	<script type="text/javascript" th:inline="javascript">
+		// Global variables
+		var currentPage = 1; // Current page number
+		var pageSize = 50; // Maximum objects per page
+		
+		// Workflow filters
+		var id = null;
+		var name = null;
+		var workflowVersion = null;
+		var inputProductClass = null;
+		
+		// Function to fetch objects from the REST controller
+		function updateTable(newPage) {
+			currentPage = newPage;
+			
+			var recordFrom = (currentPage - 1) * pageSize;
+			var recordTo = currentPage * pageSize;			
+			
+			var url = "/workflow/get?recordFrom=" + recordFrom 
+					+ "&recordTo=" + recordTo 
+					+ "&currentPage=" + currentPage 
+					+ "&pageSize=" + pageSize;
+			
+			if (id != null && id != "null")
+				url += "&id=" + id;
+			
+			if (name != null && name != "null")
+				url += "&name=" + name;
+					
+			if (workflowVersion != null && workflowVersion != "null")
+				url += "&workflowVersion=" + workflowVersion;
+			
+			if (inputProductClass != null && inputProductClass != "null")
+				url += "&inputProductClass=" + inputProductClass;
+			
+			console.log(url);
+			
+			fetch(url)
+			  .then(response => response.text()) // Extract the response body as text
+			  .then(html => {
+				  $("#workflowcontent").html(html); // Set the HTML content of the element
+				  feather.replace(); // Display the arrows on the buttons
+                  document.getElementById("pageSizeField").placeholder = pageSize; //Display correct page size
+                  })
+			  .catch(console.error);
+		}
+		
+		// Function to fetch and apply filters
+		function setFilters(event) {	
+			// Allow for custom form handling
+			event.preventDefault();
+			
+			// Retrieve the values from the form inputs
+			id = document.getElementById("id").value.trim() === "" ? null : document.getElementById("id").value;
+			name = document.getElementById("name").value.trim() === "" ? null : document.getElementById("name").value;
+			workflowVersion = document.getElementById("workflowVersion").value.trim() === "" ? null : document.getElementById("workflowVersion").value;
+			inputProductClass = document.getElementById("inputProductClass").value.trim() === "" ? null : document.getElementById("inputProductClass").value;
+		    
+		    // Update the table according to the new filters
+		    updateTable(currentPage);
+		}
+		
+		// Function to hide or show workflow details
+	    function toggleWorkflow(id) {
+		      var content = document.getElementById("wfcontent" + id);
+		      var eleshow = document.getElementById("showwf" + id);
+		      var elehide = document.getElementById("hidewf" + id);
+		      $(content).toggleClass("filtercontent");
+		      if ($(content).css("display") === "none") {
+		          $(eleshow).show();
+		          $(elehide).hide();
+		      } else {
+		          $(eleshow).hide();
+		          $(elehide).show();
+		      }
+		  }
+		
+		// Function to customize the page size
+	    function updatePageSize() {
+			
+			// Retrieve the new page size
+			var newPageSize = document.getElementById("pageSizeField").value;
+			pageSize = (!isNaN(newPageSize) && newPageSize > 0) ? parseInt(newPageSize) : pageSize;console.log("New page size: " + pageSize);
+	        
+	        // Call the function to update the table with the new page size	        
+	        updateTable(currentPage);
+	    }
+	</script>
+
+	<script>
+    window.onload = function init() {					
+		// Call the updateTable(currentPage) function initially to populate the table on page load
+		updateTable(currentPage);
+		
+		// Add an event listener to the form so that the filters will be applied
+		document.getElementById("workflowFilters").addEventListener("submit", setFilters);
+		}
+	</script>
+</body>
+
+</html>

@@ -68,8 +68,8 @@ public class OdipUtilBase {
 
 	// TODO where to get the settings?
 	private final String ORDER_PROCESSING_MODE = "OPER";
-	private final String ORDER_OUTPUT_FILE_CLASS = "OPER";
 	private final String ORDER_SLICING_TYPE = "NONE";
+	private final String ORDER_OUTPUT_FILE_CLASS = "OPER";
 
 	private final String URI_PATH_ORBITS = "/orbits";
 	private final String ORBITS = "orbits";
@@ -158,6 +158,7 @@ public class OdipUtilBase {
 	
 	/**
 	 * Create a ODIP interface production order from a prosEO interface processing order.
+	 * Replace password  by "*****"
 	 * 
 	 * @param modelOrder the prosEO model order to convert
 	 * @return an OData entity object representing the prosEO interface production order
@@ -257,7 +258,9 @@ public class OdipUtilBase {
 			}
 			if (modelOrder.getNotificationEndpoint().getPassword() != null) {
 			order.addProperty(new Property(null, OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONEPPASSWORD, ValueType.PRIMITIVE,
-					modelOrder.getNotificationEndpoint().getPassword()));
+					// modelOrder.getNotificationEndpoint().getPassword()
+					"*****"
+					));
 			}
 		}
 		return order;
@@ -634,8 +637,23 @@ public class OdipUtilBase {
 				}				
 			}
 		}
-		restOrder.setProcessingMode(ORDER_PROCESSING_MODE);
-		restOrder.setSlicingType(ORDER_SLICING_TYPE);
+		if (workflow.getProcessingMode() != null && !workflow.getProcessingMode().isEmpty()) {
+			restOrder.setProcessingMode(workflow.getProcessingMode());
+		} else {
+			restOrder.setProcessingMode(ORDER_PROCESSING_MODE);
+		}
+		if (workflow.getSlicingType() != null) {
+			restOrder.setSlicingType(workflow.getSlicingType().toString());
+		} else {
+			restOrder.setSlicingType(ORDER_SLICING_TYPE);
+		}
+		if (workflow.getSliceDuration() != null) {
+			restOrder.setSliceDuration(workflow.getSliceDuration().getSeconds());
+		}
+		if (workflow.getSliceOverlap() != null) {
+			restOrder.setSliceOverlap(workflow.getSliceOverlap().getSeconds());
+		}
+		
 		restOrder.setOrderSource(OrderSource.ODIP.toString());
 		
 		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_NOTIFICATIONENDPOINT) != null) {
@@ -806,7 +824,11 @@ public class OdipUtilBase {
 		List<String> requestedProductClasses = new ArrayList<String>();
 		requestedProductClasses.add(workflow.getOutputProductClass().getProductType());
 		restOrder.setRequestedProductClasses(requestedProductClasses);
-		restOrder.setOutputFileClass(ORDER_OUTPUT_FILE_CLASS);
+		if (workflow.getOutputFileClass() != null && !workflow.getOutputFileClass().isEmpty()) {
+			restOrder.setOutputFileClass(workflow.getOutputFileClass());
+		} else {
+			restOrder.setOutputFileClass(ORDER_OUTPUT_FILE_CLASS);
+		}
 		List<String> confProcs = new ArrayList<String>();
 		if (workflow.getConfiguredProcessor() != null) {
 			confProcs.add(workflow.getConfiguredProcessor().getIdentifier());
@@ -852,6 +874,7 @@ public class OdipUtilBase {
 					case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 						status = HttpStatusCode.BAD_REQUEST;
 						message = logger.log(OdipMessage.ORDER_DATA_INVALID, e.getStatusText());
+						status = HttpStatusCode.BAD_REQUEST;
 						break;
 					case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 					case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -886,12 +909,14 @@ public class OdipUtilBase {
 					switch (e.getRawStatusCode()) {
 					case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 						message = logger.log(OdipMessage.ORDER_DATA_INVALID, e.getStatusText());
+						status = HttpStatusCode.BAD_REQUEST;
 						break;
 					case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 					case org.apache.http.HttpStatus.SC_FORBIDDEN:
 						message = (null == e.getStatusText() ?
 								ProseoLogger.format(OdipMessage.NOT_AUTHORIZED, securityConfig.getUser(), ORDERS, securityConfig.getMission()) :
 									e.getStatusText());
+						status = HttpStatusCode.UNAUTHORIZED;
 						break;
 					default:
 						message = logger.log(OdipMessage.EXCEPTION, e.getMessage());
@@ -918,12 +943,14 @@ public class OdipUtilBase {
 					switch (e.getRawStatusCode()) {
 					case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 						message = logger.log(OdipMessage.ORDER_DATA_INVALID, e.getStatusText());
+						status = HttpStatusCode.BAD_REQUEST;
 						break;
 					case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 					case org.apache.http.HttpStatus.SC_FORBIDDEN:
 						message = (null == e.getStatusText() ?
 								ProseoLogger.format(OdipMessage.NOT_AUTHORIZED, securityConfig.getUser(), ORDERS, securityConfig.getMission()) :
 									e.getStatusText());
+						status = HttpStatusCode.UNAUTHORIZED;
 						break;
 					default:
 						message = logger.log(OdipMessage.EXCEPTION, e.getMessage());
@@ -950,12 +977,14 @@ public class OdipUtilBase {
 					switch (e.getRawStatusCode()) {
 					case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 						message = logger.log(OdipMessage.ORDER_DATA_INVALID, e.getStatusText());
+						status = HttpStatusCode.BAD_REQUEST;
 						break;
 					case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 					case org.apache.http.HttpStatus.SC_FORBIDDEN:
 						message = (null == e.getStatusText() ?
 								ProseoLogger.format(OdipMessage.NOT_AUTHORIZED, securityConfig.getUser(), ORDERS, securityConfig.getMission()) :
 									e.getStatusText());
+						status = HttpStatusCode.UNAUTHORIZED;
 						break;
 					default:
 						message = logger.log(OdipMessage.EXCEPTION, e.getMessage());
@@ -984,8 +1013,8 @@ public class OdipUtilBase {
 		}
 		if (product == null) {
 			try {
-				RestProduct restProduct = serviceConnection.getFromService(config.getAuxipBaseUri(), URI_PATH_DOWNLOAD_BYNAME + "&filename=" + reference 
-						+ "?facility=" + config.getFacility(), 
+				RestProduct restProduct = serviceConnection.getFromService(config.getAipUrl(), URI_PATH_DOWNLOAD_BYNAME + "?filename=" + reference 
+						+ "&facility=" + config.getFacility(), 
 						RestProduct.class, securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword());
 				if (restProduct != null) {
 					product = ProductUtil.toModelProduct(restProduct);
@@ -1020,11 +1049,11 @@ public class OdipUtilBase {
 		}
 		try {
 			@SuppressWarnings("unchecked")
-			List<RestProduct> restProducts = (List<RestProduct>) serviceConnection.getFromService(config.getAuxipBaseUri(), 
-					URI_PATH_DOWNLOAD_ALLBYTIME + "&productType=" + productType 
-					+ "?startTime=" + OrbitTimeFormatter.format(start)
-					+ "?stopTime=" +  OrbitTimeFormatter.format(stop)
-					+ "?facility=" + config.getFacility(), 
+			List<RestProduct> restProducts = (List<RestProduct>) serviceConnection.getFromService(config.getAipUrl(), 
+					URI_PATH_DOWNLOAD_ALLBYTIME + "?productType=" + productType 
+					+ "&startTime=" + OrbitTimeFormatter.format(start)
+					+ "&stopTime=" +  OrbitTimeFormatter.format(stop)
+					+ "&facility=" + config.getFacility(), 
 					RestProduct.class, securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword());
 			if (restProducts != null) {
 				for (RestProduct restProduct : restProducts) {

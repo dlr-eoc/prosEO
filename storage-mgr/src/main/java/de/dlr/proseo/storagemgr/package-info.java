@@ -7,6 +7,5 @@
  * Top-level classes for the prosEO Storage Manager component
  * 
  * @author Dr. Thomas Bassler
- *
  */
 package de.dlr.proseo.storagemgr;

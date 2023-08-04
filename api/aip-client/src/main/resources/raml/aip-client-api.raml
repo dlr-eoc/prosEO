@@ -2,7 +2,7 @@
 title: prosEO AIP Client REST Services API
 version: v0.1
 protocols: [ HTTPS ] 
-baseUri: /proseo/ingestor/{version}
+baseUri: /proseo/api/aip-client/{version}
 baseUriParameters:
   port:
     description: The port the application is running on
@@ -30,6 +30,7 @@ types:
   RestProduct: !include ../../../../../../model/src/main/resources/raml/types/product.raml
   RestProductFile: !include ../../../../../../model/src/main/resources/raml/types/productfile.raml
   RestParameter: !include ../../../../../../model/src/main/resources/raml/types/parameter.raml
+  IngestorProduct: !include ../../../../../../interfaces/src/main/resources/raml/types/ingestorproduct.raml
 
 resourceTypes:
   standard:
@@ -51,7 +52,7 @@ resourceTypes:
           description: |
             The request contained invalid data
           headers:
-            Waring: !include types/error.raml      
+            Warning: !include types/error.raml      
         404:
           description: |
             The requested resource on which the modification is being attempted was not found              
@@ -63,7 +64,7 @@ resourceTypes:
           description: |
             The request contained invalid data
           headers:
-            Waring: !include types/error.raml      
+            Warning: !include types/error.raml      
         404:
           description: |
             The requested resource on which the modification is being attempted was not found              
@@ -73,7 +74,7 @@ resourceTypes:
           description: |
             The resource was modified since retrieval by the client
           headers:
-            Waring: !include types/error.raml      
+            Warning: !include types/error.raml      
     delete?:
       responses:          
         404:
@@ -169,3 +170,14 @@ resourceTypes:
             application/json:
               type: RestProduct[]
               example: !include ../../../../../../model/src/main/resources/raml/examples/product-list.json
+
+/dummy:
+  /ingestorproducts:
+    type: standard
+    description: Dummy entry to force interface class generation - ignore!
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: IngestorProduct

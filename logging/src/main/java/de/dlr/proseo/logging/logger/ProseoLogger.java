@@ -1,6 +1,6 @@
 /**
  * ProseoLogger.java
- * 
+ *
  * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.logging.logger;
@@ -8,6 +8,7 @@ package de.dlr.proseo.logging.logger;
 import java.text.MessageFormat;
 
 import org.slf4j.LoggerFactory;
+
 import ch.qos.logback.classic.Logger;
 import de.dlr.proseo.logging.messages.ProseoMessage;
 
@@ -22,7 +23,7 @@ public final class ProseoLogger {
 
 	/**
 	 * Generates a new logger named as the fully qualified class name.
-	 * 
+	 *
 	 * @param clazz The fully qualified class name.
 	 */
 	public ProseoLogger(Class<?> clazz) {
@@ -31,7 +32,7 @@ public final class ProseoLogger {
 
 	/**
 	 * Logging with automatic formatting including level, code, and message.
-	 * 
+	 *
 	 * @param type          The enum specifying the type of the message.
 	 * @param msgParameters The message's parameters.
 	 * @return Returns the logged message.
@@ -40,9 +41,9 @@ public final class ProseoLogger {
 		if (type == null) {
 			throw new IllegalArgumentException("Please specify the type of the message.");
 		}
-		
+
 		String logged = format(type, msgParameters);
-		
+
 		switch (type.getLevel()) {
 		case INFO:
 			if (logger.isInfoEnabled())
@@ -70,7 +71,7 @@ public final class ProseoLogger {
 
 	/**
 	 * Automatic formatting including level, code, and message.
-	 * 
+	 *
 	 * @param type          The enum specifying the type of the message.
 	 * @param msgParameters The message's parameters.
 	 * @return Returns the logged message.
@@ -79,42 +80,42 @@ public final class ProseoLogger {
 		if (type == null) {
 			throw new IllegalArgumentException("Please specify the type of the message.");
 		}
-		
+
 		String formatted = "";
-		
+
 		try {
-		
-		switch (type.getLevel()) {
-		case INFO:
+
+			switch (type.getLevel()) {
+			case INFO:
 				formatted = MessageFormat.format("(I" + type.getCode() + ") " + type.getMessage(), msgParameters);
-			break;
-		case WARN:
+				break;
+			case WARN:
 				formatted = MessageFormat.format("(W" + type.getCode() + ") " + type.getMessage(), msgParameters);
-			break;
-		case ERROR:
+				break;
+			case ERROR:
 				formatted = MessageFormat.format("(E" + type.getCode() + ") " + type.getMessage(), msgParameters);
-			break;
-		case DEBUG:
+				break;
+			case DEBUG:
 				formatted = MessageFormat.format("(D" + type.getCode() + ") " + type.getMessage(), msgParameters);
-			break;
-		case TRACE:
+				break;
+			case TRACE:
 				formatted = MessageFormat.format("(T" + type.getCode() + ") " + type.getMessage(), msgParameters);
-			break;
-		}
-		
+				break;
+			}
+
 		} catch (Exception e) {
 			Logger errorLogger = (Logger) LoggerFactory.getLogger(ProseoLogger.class);
 			errorLogger.error("A message format error occured with message type " + type);
 			return "A message format error occured with message type " + type;
 		}
-		
+
 		return formatted;
 	}
 
 	/**
 	 * Logging logic provided by Logback.
-	 * 
-	 * @param msg
+	 *
+	 * @param msg the message to log
 	 */
 	public void debug(String msg) {
 		logger.debug(msg);
@@ -122,9 +123,9 @@ public final class ProseoLogger {
 
 	/**
 	 * Logging logic provided by Logback.
-	 * 
-	 * @param format
-	 * @param arguments
+	 *
+	 * @param format    the format string
+	 * @param arguments the arguments to insert
 	 */
 	public void debug(String format, Object... arguments) {
 		logger.debug(format, arguments);
@@ -132,9 +133,9 @@ public final class ProseoLogger {
 
 	/**
 	 * Logging logic provided by Logback.
-	 * 
-	 * @param msg
-	 * @param t
+	 *
+	 * @param msg the message to log
+	 * @param t   the exception (throwable) to log
 	 */
 	public void debug(String msg, Throwable t) {
 		logger.debug(msg, t);
@@ -142,8 +143,8 @@ public final class ProseoLogger {
 
 	/**
 	 * Logging logic provided by Logback.
-	 * 
-	 * @param msg
+	 *
+	 * @param msg the message to log
 	 */
 	public void trace(String msg) {
 		logger.trace(msg);
@@ -151,9 +152,9 @@ public final class ProseoLogger {
 
 	/**
 	 * Logging logic provided by Logback.
-	 * 
-	 * @param format
-	 * @param arguments
+	 *
+	 * @param format    the format string
+	 * @param arguments the arguments to insert
 	 */
 	public void trace(String format, Object... arguments) {
 		logger.trace(format, arguments);
@@ -161,9 +162,9 @@ public final class ProseoLogger {
 
 	/**
 	 * Logging logic provided by Logback.
-	 * 
-	 * @param msg
-	 * @param t
+	 *
+	 * @param msg the message to log
+	 * @param t   the exception (throwable) to log
 	 */
 	public void trace(String msg, Throwable t) {
 		logger.trace(msg, t);
@@ -171,7 +172,7 @@ public final class ProseoLogger {
 
 	/**
 	 * Returns the logger's name.
-	 * 
+	 *
 	 * @return The logger's name as a String.
 	 */
 	public String getName() {
@@ -180,7 +181,7 @@ public final class ProseoLogger {
 
 	/**
 	 * Indicates whether the logger is trace enabled.
-	 * 
+	 *
 	 * @return The logging level.
 	 */
 	public boolean isTraceEnabled() {
@@ -189,7 +190,7 @@ public final class ProseoLogger {
 
 	/**
 	 * Indicates whether the logger is debug enabled.
-	 * 
+	 *
 	 * @return The logging level.
 	 */
 	public boolean isDebugEnabled() {
@@ -198,7 +199,7 @@ public final class ProseoLogger {
 
 	/**
 	 * Indicates whether the logger is info enabled.
-	 * 
+	 *
 	 * @return The logging level.
 	 */
 	public boolean isInfoEnabled() {
@@ -207,7 +208,7 @@ public final class ProseoLogger {
 
 	/**
 	 * Indicates whether the logger is warn enabled.
-	 * 
+	 *
 	 * @return The logging level.
 	 */
 	public boolean isWarnEnabled() {
@@ -216,7 +217,7 @@ public final class ProseoLogger {
 
 	/**
 	 * Indicates whether the logger is error enabled.
-	 * 
+	 *
 	 * @return The logging level.
 	 */
 	public boolean isErrorEnabled() {

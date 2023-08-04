@@ -7,14 +7,12 @@ mediaType: application/json
 
 securitySchemes:
   basicAuth:
-    description: Each request must contain the headers necessary for
-                 basic authentication
+    description: Each request must contain the headers necessary for basic authentication
     type: Basic Authentication
     describedBy:
       headers:
         Authorization:
-          description: Used to send the Base64-encoded "username:password"
-                       credentials
+          description: Used to send the Base64-encoded "username:password" credentials
           type: string
       responses:
         401:
@@ -42,13 +40,28 @@ resourceTypes:
             Warning: !include types/error.raml
     patch?:
       responses:          
+        400:
+          description: |
+            The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml          
         404:
           description: |
             The requested resource on which the modification is being attempted was not found              
           headers:
-            Warning: !include types/error.raml
+            Warning: !include types/error.raml          
+        409:
+          description: |
+            The request sent to the server could not be completed due to a conflict with the current state of the target resource
+          headers:
+            Warning: !include types/error.raml        
     delete?:
-      responses:          
+      responses:              
+        400:
+          description: |
+            The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml           
         404:
           description: | 
             The requested resource to delete was not found 
@@ -58,10 +71,15 @@ resourceTypes:
 /facilities:
   type: standard
   get:
-    description: Get processing facilities by mission and facility name
+    description: | 
+      Get processing facilities by mission and facility name
+      @param name the name of the facility
+      @return a response entity with either a list of facilities and HTTP status "OK" or an error message and HTTP status "NOT_FOUND" if no matching facilities were found
     displayName: getFacilities
     queryParameters:
-      name?: string
+      name?: 
+        type: string
+        description: The processing facility name (unique key)
     responses:
       200:
         body:
@@ -69,7 +87,10 @@ resourceTypes:
             type: RestProcessingFacility[]
             example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility-list.json
   post:
-    description: Create a new processing facility
+    description: | 
+      Create a new processing facility
+      @param restProcessingFacility the Json object to create the facility from
+      @return HTTP status "CREATED" and a response containing a Json object corresponding to the facility after persistence (with ID and version for all contained objects) or HTTP status "BAD_REQUEST", if any of the input data was invalid
     displayName: createFacility
     body:
       application/json:
@@ -86,8 +107,12 @@ resourceTypes:
       id:
         type: integer
         format: long
+        description: The persistent id of this object
     get:
-      description: Get a processing facility by ID
+      description: |
+        Get a processing facility by ID
+        @param id the ID to look for
+        @return a response entity corresponding to the found facility and HTTP status "OK" or an error message and HTTP status "NOT_FOUND", if no facility with the given ID exists
       displayName: getFacilityById
       responses:
         200:
@@ -96,7 +121,11 @@ resourceTypes:
               type: RestProcessingFacility
               example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
     patch:
-      description: Update a processing facility by ID
+      description: |
+        Update a processing facility by ID
+        @param id the ID of the facility to update
+        @param restProcessingFacility a Json object containing the modified and unmodified attributes
+        @return a response containing HTTP status "OK" and a Json object corresponding to the facility after modification (with ID and version for all contained objects) or HTTP status "NOT_MODIFIED" and the unchanged facility, if no attributes were actually changed, or HTTP status "NOT_FOUND" and an error message, if no facility with the given ID exists
       displayName: modifyFacility
       body:
         application/json:
@@ -114,7 +143,10 @@ resourceTypes:
               type: RestProcessingFacility
               example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
     delete:
-      description: Delete a processing facility by ID
+      description: | 
+        Delete a processing facility by ID
+        @param id the ID of the facility to delete
+        @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, "BAD_REQUEST", if the facility still has stored products, "NOT_FOUND", if the facility did not exist, or "NOT_MODIFIED", if the deletion was unsuccessful
       displayName: deleteFacilityById
       responses:
         204:

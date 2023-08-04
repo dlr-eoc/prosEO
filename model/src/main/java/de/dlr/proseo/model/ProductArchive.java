@@ -45,7 +45,7 @@ public class ProductArchive extends PersistentObject {
 	/** Base URI to access the archive (of the form "http[s]://<hostname>[:<port>]", no trailing slash) */
 	private String baseUri;
 	
-	/** The context path of the archive service endpoint */
+	/** The context path of the archive service endpoint (excluding "odata/v1" where applicable, no leading or trailing slashes) */
 	private String context;
 	
 	/** Flag indicating whether token-based authentication shall be used */

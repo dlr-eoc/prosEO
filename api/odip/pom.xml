@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo-api</artifactId>
-		<version>0.9.5-ODIP</version>
+		<version>0.9.5-SNAPSHOT</version>
 	</parent>
 
   <artifactId>odip</artifactId>
@@ -19,7 +19,7 @@
 
 	<properties>
 		<olingo.version>4.7.1</olingo.version>
-		<module.version>0.9.5-ODIP</module.version>
+		<module.version>0.9.5-SNAPSHOT</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path-query>src/main/resources/raml/odip-query.raml</raml-path-query>
         <raml-path-oauth2>src/main/resources/raml/odip-oauth2.raml</raml-path-oauth2>
@@ -126,6 +126,11 @@
 			<groupId>com.phoenixnap.oss</groupId>
 			<artifactId>springmvc-raml-plugin</artifactId>
             <type>maven-plugin</type>
+		</dependency>
+		<dependency>
+			<groupId>de.dlr.proseo</groupId>
+			<artifactId>proseo-planner</artifactId>
+			<version>0.9.5-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 

@@ -1,0 +1,291 @@
+{
+	"info": {
+		"_postman_id": "b34e25ed-8a2b-4ef4-9976-595a2436ea51",
+		"name": "prosEO ODIP S1A",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "11367849"
+	},
+	"item": [
+		{
+			"name": "Get workflows",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{service-root-uri}}/odata/v1/Workflows?$count=true&$top=1&$skip=0",
+					"host": [
+						"{{service-root-uri}}"
+					],
+					"path": [
+						"odata",
+						"v1",
+						"Workflows"
+					],
+					"query": [
+						{
+							"key": "$count",
+							"value": "true"
+						},
+						{
+							"key": "$top",
+							"value": "1"
+						},
+						{
+							"key": "$skip",
+							"value": "0"
+						},
+						{
+							"key": "$filter",
+							"value": "WorkflowName eq 'PTML2-to-L3'",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create order by input file name",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"InputProductReference\": {\n        \"Reference\": \"PTM_TEST_PTM_L2_A_20191104T090000_20191104T104110_03000_99_0.1.0_20230209T092714.nc\"\n    },\n    \"Priority\": 50,\n    \"WorkflowId\": \"{{WorkflowId}}\",\n    \"WorkflowName\": \"IW_RAW-to-IW_SLC\",\n    \"NotificationEndpoint\": \"mailto:thomas.bassler@drbassler.de\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{service-root-uri}}/odata/v1/ProductionOrders/OData.CSC.ProductionOrder",
+					"host": [
+						"{{service-root-uri}}"
+					],
+					"path": [
+						"odata",
+						"v1",
+						"ProductionOrders",
+						"OData.CSC.ProductionOrder"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create order by input time range",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"InputProductReference\": {\n        \"ContentDate\":\n        {\n            \"Start\": \"2019-11-04T09:00:00.200Z\",\n            \"End\": \"2019-11-04T10:41:10.300Z\"\n        }\n    },\n    \"Priority\": 50,\n    \"WorkflowId\": \"{{WorkflowId}}\",\n    \"WorkflowName\": \"IW_RAW-to-IW_SLC\",\n    \"NotificationEndpoint\": \"mailto:thomas.bassler@drbassler.de\"\n}"
+				},
+				"url": {
+					"raw": "{{service-root-uri}}/odata/v1/ProductionOrders/OData.CSC.ProductionOrder",
+					"host": [
+						"{{service-root-uri}}"
+					],
+					"path": [
+						"odata",
+						"v1",
+						"ProductionOrders",
+						"OData.CSC.ProductionOrder"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get orders (Basic Auth)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{service-root-uri}}/odata/v1/ProductionOrders?$count=true&$top=1",
+					"host": [
+						"{{service-root-uri}}"
+					],
+					"path": [
+						"odata",
+						"v1",
+						"ProductionOrders"
+					],
+					"query": [
+						{
+							"key": "$count",
+							"value": "true"
+						},
+						{
+							"key": "$top",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get orders (Bearer Token)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{bearer-token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{service-root-uri}}/odata/v1/ProductionOrders?$count=true&$top=1",
+					"host": [
+						"{{service-root-uri}}"
+					],
+					"path": [
+						"odata",
+						"v1",
+						"ProductionOrders"
+					],
+					"query": [
+						{
+							"key": "$count",
+							"value": "true"
+						},
+						{
+							"key": "$top",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Authorization Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{service-root-uri}}/v1/token?grant_type=client_credentials",
+					"host": [
+						"{{service-root-uri}}"
+					],
+					"path": [
+						"v1",
+						"token"
+					],
+					"query": [
+						{
+							"key": "grant_type",
+							"value": "password",
+							"disabled": true
+						},
+						{
+							"key": "username",
+							"value": "{{username}}",
+							"disabled": true
+						},
+						{
+							"key": "password",
+							"value": "{{password}}",
+							"disabled": true
+						},
+						{
+							"key": "grant_type",
+							"value": "client_credentials"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get OData Metadata Description",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8090/proseo/odip/odata/v1/$metadata",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"proseo",
+						"odip",
+						"odata",
+						"v1",
+						"$metadata"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "basic",
+		"basic": [
+			{
+				"key": "password",
+				"value": "{{password}}",
+				"type": "string"
+			},
+			{
+				"key": "username",
+				"value": "{{username}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

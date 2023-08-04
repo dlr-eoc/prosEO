@@ -1,4 +1,4 @@
-FROM localhost:5000/proseo-planner:0.9.5-ODIP
+FROM localhost:5000/proseo-planner:0.9.5-SNAPSHOT
 ADD application.yml /usr/share/planner/application.yml
 
 # Uncomment the next line, if a fixed login to a Kubernetes instance is required, and provide kube_config from the template file

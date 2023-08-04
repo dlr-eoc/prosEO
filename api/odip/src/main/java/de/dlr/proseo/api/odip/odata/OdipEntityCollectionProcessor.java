@@ -136,7 +136,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 	private StringBuilder createProcessingOrderSqlQueryFilter(UriInfo uriInfo, boolean countOnly) throws ODataApplicationException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createProcessingOrderSqlQueryFilter({})", uriInfo.getUriResourceParts());
 
-		SqlFilterExpressionVisitor expressionVisitor = new SqlFilterExpressionVisitor();
+		OrderSqlFilterExpressionVisitor expressionVisitor = new OrderSqlFilterExpressionVisitor();
 		StringBuilder sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(countOnly));
 
 		// Test filter option
@@ -182,8 +182,8 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 	private StringBuilder createWorkflowSqlQueryFilter(UriInfo uriInfo, boolean countOnly) throws ODataApplicationException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createWorkflowSqlQueryFilter({})", uriInfo.getUriResourceParts());
 
-		SqlFilterExpressionVisitor expressionVisitor = new SqlFilterExpressionVisitor();
-		StringBuilder sqlCommand = new StringBuilder(expressionVisitor.getWorkflowSqlCommand(countOnly));
+		WorkflowSqlFilterExpressionVisitor expressionVisitor = new WorkflowSqlFilterExpressionVisitor();
+		StringBuilder sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(countOnly));
 
 		// Test filter option
 		FilterOption filterOption = uriInfo.getFilterOption();
@@ -197,7 +197,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 		        if (null == result) {
 					throw new NullPointerException("Unexpected null result from expressionVisitor");
 				}
-		        sqlCommand = new StringBuilder(expressionVisitor.getWorkflowSqlCommand(countOnly)); // The number of parameters requested may have changed!
+		        sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(countOnly)); // The number of parameters requested may have changed!
 				sqlCommand.append(result);
 			} catch (ODataApplicationException | ExpressionVisitException e) {
 		        throw new ODataApplicationException("Exception thrown in filter expression: " + e.getMessage(),
@@ -228,7 +228,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 	private String createProcessingOrderSqlQuery(UriInfo uriInfo) throws ODataApplicationException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createProcessingOrderSqlQuery({})", uriInfo.getUriResourceParts());
 
-		SqlFilterExpressionVisitor expressionVisitor = new SqlFilterExpressionVisitor();
+		OrderSqlFilterExpressionVisitor expressionVisitor = new OrderSqlFilterExpressionVisitor();
 		StringBuilder sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(false));
 
 		sqlCommand = createProcessingOrderSqlQueryFilter(uriInfo, false);
@@ -248,7 +248,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 					orderByClause.append(", ");
 				}
 				try {
-					String orderExpression = orderByItem.getExpression().accept(new SqlFilterExpressionVisitor());
+					String orderExpression = orderByItem.getExpression().accept(new OrderSqlFilterExpressionVisitor());
 					orderByClause.append(orderExpression).append(" ").append(orderByItem.isDescending() ? "DESC" : "ASC");
 				} catch (ExpressionVisitException | ODataApplicationException e) {
 			        throw new ODataApplicationException("Exception thrown in orderBy expression: " + e.getMessage(),
@@ -287,8 +287,8 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 	private String createWorkflowSqlQuery(UriInfo uriInfo) throws ODataApplicationException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createWorkflowSqlQuery({})", uriInfo.getUriResourceParts());
 
-		SqlFilterExpressionVisitor expressionVisitor = new SqlFilterExpressionVisitor();
-		StringBuilder sqlCommand = new StringBuilder(expressionVisitor.getWorkflowSqlCommand(false));
+		WorkflowSqlFilterExpressionVisitor expressionVisitor = new WorkflowSqlFilterExpressionVisitor();
+		StringBuilder sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(false));
 
 		sqlCommand = createWorkflowSqlQueryFilter(uriInfo, false);
 
@@ -306,7 +306,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 					orderByClause.append(", ");
 				}
 				try {
-					String orderExpression = orderByItem.getExpression().accept(new SqlFilterExpressionVisitor());
+					String orderExpression = orderByItem.getExpression().accept(new WorkflowSqlFilterExpressionVisitor());
 					orderByClause.append(orderExpression).append(" ").append(orderByItem.isDescending() ? "DESC" : "ASC");
 				} catch (ExpressionVisitException | ODataApplicationException e) {
 			        throw new ODataApplicationException("Exception thrown in orderBy expression: " + e.getMessage(),

@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo</artifactId>
-		<version>0.9.5-ODIP</version>
+		<version>0.9.5-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>proseo-api</artifactId>
@@ -19,6 +19,7 @@
 		<module>xbip-monitor</module>
 		<module>edip-monitor</module>
 		<module>auxip-monitor</module>
+        <module>cadip-monitor</module>
 		<module>odip</module>
 		<module>aip-client</module>
         <module>archive-mgr</module>

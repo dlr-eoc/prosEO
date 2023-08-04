@@ -1,0 +1,24 @@
+#%RAML 1.0
+title: prosEO CADIP Monitor REST Services
+version: v0.1
+protocols: [ HTTP, HTTPS ]
+baseUri: /proseo/cadip-monitor/{version}/{cadipid}
+mediaType: application/json
+
+
+types:
+  RestInterfaceStatus: !include ../../../../../../interfaces/src/main/resources/raml/types/interfaceStatus.raml
+
+/status:
+  uriParameters:
+    cadipid:
+      type: string
+      description: CADIP Monitor identifier
+  get:
+    description: Get status info for this CADIP Monitor
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestInterfaceStatus
+            example: !include ../../../../../../interfaces/src/main/resources/raml/examples/interfaceStatus.json

@@ -29,7 +29,7 @@ import reactor.netty.http.client.HttpClient;
 public class GUIOrbitController extends GUIBaseController {
 
 	/** A logger for this class */
-	private static ProseoLogger logger = new ProseoLogger(GUIConfigurationController.class);
+	private static ProseoLogger logger = new ProseoLogger(GUIOrbitController.class);
 
 	/** The configuration object for the prosEO backend services */
 	@Autowired

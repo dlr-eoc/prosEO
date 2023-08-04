@@ -1,25 +1,29 @@
 /**
  * WorkflowUtil.java
- * 
+ *
  * (c) 2023 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.procmgr.rest.model;
 
 import java.time.Duration;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.UUID;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.ProcessorMgrMessage;
+import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Workflow;
 import de.dlr.proseo.model.WorkflowOption;
 import de.dlr.proseo.model.WorkflowOption.WorkflowOptionType;
 import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.ParameterType;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
- * Utility methods for workflows, i.e. for conversion between prosEO model and
- * REST workflows
- * 
+ * Utility methods for workflows, i.e. for conversion between prosEO model and REST workflows
+ *
  * @author Katharina Bassler
  */
 public class WorkflowUtil {
@@ -29,10 +33,9 @@ public class WorkflowUtil {
 
 	/**
 	 * Convert a prosEO model workflow into a REST workflow
-	 * 
+	 *
 	 * @param modelWorkflow the prosEO model workflow
-	 * @return an equivalent REST workflow or null, if no model processor workflow
-	 *         was given
+	 * @return an equivalent REST workflow or null, if no model processor workflow was given
 	 */
 	public static RestWorkflow toRestWorkflow(Workflow modelWorkflow) {
 		if (logger.isTraceEnabled())
@@ -63,8 +66,8 @@ public class WorkflowUtil {
 		}
 		if (null != modelWorkflow.getConfiguredProcessor()) {
 			restWorkflow.setConfiguredProcessor(modelWorkflow.getConfiguredProcessor().getIdentifier());
-			restWorkflow.setMissionCode(
-					modelWorkflow.getConfiguredProcessor().getProcessor().getProcessorClass().getMission().getCode());
+			restWorkflow
+				.setMissionCode(modelWorkflow.getConfiguredProcessor().getProcessor().getProcessorClass().getMission().getCode());
 		}
 		if (null != modelWorkflow.getInputProductClass()) {
 			restWorkflow.setInputProductClass(modelWorkflow.getInputProductClass().getProductType());
@@ -114,30 +117,70 @@ public class WorkflowUtil {
 					restOption.setDefaultValue(option.getDefaultValue());
 				}
 				if (null != modelWorkflow.getConfiguredProcessor()) {
-					restOption.setMissionCode(modelWorkflow.getConfiguredProcessor().getProcessor().getProcessorClass()
-							.getMission().getCode());
+					restOption.setMissionCode(
+							modelWorkflow.getConfiguredProcessor().getProcessor().getProcessorClass().getMission().getCode());
 				}
 
 				restOption.setWorkflowName(restWorkflow.getName());
 				restWorkflow.getWorkflowOptions().add(restOption);
 			}
 		}
-		
-		//TODO class output parameters
-		//TODO input filters
-		//TODO output parameters
+
+		if (null != modelWorkflow.getClassOutputParameters() && !modelWorkflow.getClassOutputParameters().isEmpty()) {
+			modelWorkflow.getClassOutputParameters().forEach((productClass, parameter) -> {
+				RestClassOutputParameter restClassParam = new RestClassOutputParameter();
+
+				if (null != productClass) {
+					restClassParam.setProductClass(productClass.getProductType());
+				}
+				if (null != parameter) {
+					parameter.getOutputParameters().forEach((key, param) -> {
+						RestParameter restParam = new RestParameter();
+						restParam.setKey(key);
+						restParam.setParameterType(param.getParameterType().toString());
+						restParam.setParameterValue(param.getParameterValue());
+						restClassParam.getOutputParameters().add(restParam);
+					});
+				}
+				restWorkflow.getClassOutputParameters().add(restClassParam);
+			});
+		}
+
+		if (null != modelWorkflow.getOutputParameters() && !modelWorkflow.getOutputParameters().isEmpty()) {
+			modelWorkflow.getOutputParameters().forEach((key, param) -> {
+				RestParameter restParam = new RestParameter();
+				restParam.setKey(key);
+				restParam.setParameterType(param.getParameterType().toString());
+				restParam.setParameterValue(param.getParameterValue());
+				restWorkflow.getOutputParameters().add(restParam);
+			});
+		}
+
+		if (null != modelWorkflow.getInputFilters() && !modelWorkflow.getInputFilters().isEmpty()) {
+			modelWorkflow.getInputFilters().forEach((productClass, filter) -> {
+				RestInputFilter restFilter = new RestInputFilter();
+				restFilter.setProductClass(productClass.getProductType());
+
+				filter.getFilterConditions().forEach((key, param) -> {
+					RestParameter restParam = new RestParameter();
+					restParam.setKey(key);
+					restParam.setParameterType(param.getParameterType().toString());
+					restParam.setParameterValue(param.getParameterValue());
+					restFilter.getFilterConditions().add(restParam);
+				});
+				restWorkflow.getInputFilters().add(restFilter);
+			});
+		}
 
 		return restWorkflow;
 	}
 
 	/**
-	 * Convert a REST workflow into a prosEO model workflow (scalar and embedded
-	 * attributes only, no object references)
-	 * 
+	 * Convert a REST workflow into a prosEO model workflow (scalar and embedded attributes only, no object references)
+	 *
 	 * @param restWorkflow the REST workflow
-	 * @return a (roughly) equivalent model workflow or null, if no REST workflow
-	 *         was given
-	 * 
+	 * @return a (roughly) equivalent model workflow or null, if no REST workflow was given
+	 *
 	 */
 	public static Workflow toModelWorkflow(RestWorkflow restWorkflow) {
 		if (logger.isTraceEnabled())
@@ -187,7 +230,7 @@ public class WorkflowUtil {
 		if (null != restWorkflow.getWorkflowOptions() && !restWorkflow.getWorkflowOptions().isEmpty()) {
 			for (RestWorkflowOption option : restWorkflow.getWorkflowOptions()) {
 				WorkflowOption modelOption = new WorkflowOption();
-				
+
 				if (null == option.getMissionCode()) {
 					throw new IllegalArgumentException(
 							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "In workflow option: missionCode"));
@@ -197,14 +240,14 @@ public class WorkflowUtil {
 							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "In workflow option: workflowName"));
 				}
 				if (null == option.getName()) {
-					throw new IllegalArgumentException(
-							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "In workflow option: name"));
+					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "In workflow option: name"));
 				}
 
 				if ((null != option.getMissionCode() && !option.getMissionCode().equals(restWorkflow.getMissionCode()))
-				|| (null != option.getWorkflowName() && !option.getWorkflowName().equals(restWorkflow.getName()))) {
-					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.WORKFLOW_OPTION_MISMATCH, 
-							option.getMissionCode(), option.getWorkflowName(), restWorkflow.getMissionCode(), restWorkflow.getName()));
+						|| (null != option.getWorkflowName() && !option.getWorkflowName().equals(restWorkflow.getName()))) {
+					throw new IllegalArgumentException(
+							logger.log(ProcessorMgrMessage.WORKFLOW_OPTION_MISMATCH, option.getMissionCode(),
+									option.getWorkflowName(), restWorkflow.getMissionCode(), restWorkflow.getName()));
 				}
 				if (null != option.getName()) {
 					modelOption.setName(option.getName());
@@ -226,11 +269,68 @@ public class WorkflowUtil {
 				modelWorkflow.getWorkflowOptions().add(modelOption);
 			}
 		}
-		
-		//TODO class output parameters
-		//TODO input filters
-		//TODO output parameters
-		
+
+		if (null != restWorkflow.getOutputParameters() && !restWorkflow.getOutputParameters().isEmpty()) {
+			for (RestParameter restParam : restWorkflow.getOutputParameters()) {
+				Parameter modelParam = new Parameter();
+
+				restParam.setParameterType(restParam.getParameterType().toUpperCase());
+				modelParam.setParameterType(ParameterType.valueOf(restParam.getParameterType()));
+
+				if (null == restParam.getParameterValue()) {
+					throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
+							"For classOutputParameter creation, output parameter value"));
+				}
+
+				switch (restParam.getParameterType()) {
+				case "BOOLEAN":
+					if (!restParam.getParameterValue().equalsIgnoreCase("true")
+							&& !restParam.getParameterValue().equalsIgnoreCase("false"))
+						throw new IllegalArgumentException(
+								logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT, restParam.getParameterValue(), "BOOLEAN"));
+					modelParam.setBooleanValue(Boolean.valueOf(restParam.getParameterValue()));
+					modelParam.setParameterValue(restParam.getParameterValue());
+					break;
+				case "DOUBLE":
+					try {
+						modelParam.setDoubleValue(Double.valueOf(restParam.getParameterValue()));
+						modelParam.setParameterValue(restParam.getParameterValue());
+					} catch (NumberFormatException e) {
+						throw new IllegalArgumentException(
+								logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT, restParam.getParameterValue(), "DOUBLE"));
+					}
+					break;
+				case "INSTANT":
+					try {
+						modelParam.setInstantValue(OrbitTimeFormatter.parseDateTime(restParam.getParameterValue()));
+						modelParam.setParameterValue(restParam.getParameterValue());
+					} catch (DateTimeParseException e) {
+						throw new IllegalArgumentException(
+								logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT, restParam.getParameterValue(), "INSTANT"));
+					}
+					break;
+				case "INTEGER":
+					try {
+						modelParam.setIntegerValue(Integer.valueOf(restParam.getParameterValue()));
+						modelParam.setParameterValue(restParam.getParameterValue());
+					} catch (NumberFormatException e) {
+						throw new IllegalArgumentException(
+								logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT, restParam.getParameterValue(), "DOUBLE"));
+					}
+					break;
+				case "STRING":
+					modelParam.setStringValue(restParam.getParameterValue());
+					modelParam.setParameterValue(restParam.getParameterValue());
+					break;
+				default:
+					throw new IllegalArgumentException(
+							logger.log(GeneralMessage.INVALID_PARAMETER_FORMAT, restParam.getParameterValue(), "(any)"));
+				}
+
+				modelWorkflow.getOutputParameters().put(restParam.getKey(), modelParam);
+			}
+		}
+
 		return modelWorkflow;
 	}
 }

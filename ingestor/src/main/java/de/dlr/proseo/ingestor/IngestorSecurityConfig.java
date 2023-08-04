@@ -1,6 +1,6 @@
 /**
  * IngestorSecurityConfig.java
- * 
+ *
  * (c) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.ingestor;
@@ -28,7 +28,7 @@ import de.dlr.proseo.model.enums.UserRole;
 
 /**
  * Security configuration for prosEO Ingestor module
- * 
+ *
  * @author Dr. Thomas Bassler
  */
 @Configuration
@@ -38,59 +38,68 @@ public class IngestorSecurityConfig extends WebSecurityConfigurerAdapter {
 	/** Datasource as configured in the application properties */
 	@Autowired
 	private DataSource dataSource;
-	
+
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(IngestorSecurityConfig.class);
-		
+
 	/**
 	 * Parse an HTTP authentication header into username and password
+	 *
 	 * @param authHeader the authentication header to parse
 	 * @return a string array containing the username and the password
-	 * @throws IllegalArgumentException if the authentication header cannot be parsed
+	 * @throws IllegalArgumentException if the authentication header cannot be
+	 *                                  parsed
 	 */
 	public String[] parseAuthenticationHeader(String authHeader) throws IllegalArgumentException {
-		if (logger.isTraceEnabled()) logger.trace(">>> parseAuthenticationHeader({})", authHeader);
+		if (logger.isTraceEnabled())
+			logger.trace(">>> parseAuthenticationHeader({})", authHeader);
 
 		if (null == authHeader) {
 			String message = logger.log(IngestorMessage.AUTH_MISSING_OR_INVALID, authHeader);
-			throw new IllegalArgumentException (message);
+			throw new IllegalArgumentException(message);
 		}
 		String[] authParts = authHeader.split(" ");
 		if (2 != authParts.length || !"Basic".equals(authParts[0])) {
 			String message = logger.log(IngestorMessage.AUTH_MISSING_OR_INVALID, authHeader);
-			throw new IllegalArgumentException (message);
+			throw new IllegalArgumentException(message);
 		}
-		String[] userPassword = (new String(Base64.getDecoder().decode(authParts[1]))).split(":"); // guaranteed to work as per BasicAuth specification
+		// The following is guaranteed to work as per BasicAuth specification (but split
+		// limited, because password may contain ':')
+		String[] userPassword = (new String(Base64.getDecoder().decode(authParts[1]))).split(":", 2);
 		return userPassword;
 	}
 
 	/**
 	 * Set the Ingestor security options
-	 * 
+	 *
 	 * @param http the HTTP security object
 	 */
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http
-			.httpBasic()
-				.and()
+		http.httpBasic()
+			.and()
 			.authorizeRequests()
-				.antMatchers("/**/actuator/health").permitAll()
-				.antMatchers(HttpMethod.GET, "/**/products", "/**/products/*", "/**/products/*/*", "/**/products/*/*/*", "/**/ingest/*/*")
-					.hasAnyRole(
-						UserRole.PRODUCT_READER.toString(),
-						UserRole.PRODUCT_READER_RESTRICTED.toString(),
-						UserRole.PRODUCT_READER_ALL.toString())
-				.antMatchers(HttpMethod.POST, "/**/ingest/*").hasAnyRole(UserRole.PRODUCT_INGESTOR.toString())
-				.antMatchers(HttpMethod.POST, "/**/ingest/*/*").hasAnyRole(UserRole.PRODUCT_GENERATOR.toString())
-				.anyRequest().hasAnyRole(UserRole.PRODUCT_MGR.toString())
-				.and()
-			.csrf().disable(); // Required for POST requests (or configure CSRF)
+			.antMatchers("/**/actuator/health")
+			.permitAll()
+			.antMatchers(HttpMethod.GET, "/**/products", "/**/products/*", "/**/products/*/*", "/**/products/*/*/*",
+					"/**/ingest/*/*")
+			.hasAnyRole(UserRole.PRODUCT_READER.toString(), UserRole.PRODUCT_READER_RESTRICTED.toString(),
+					UserRole.PRODUCT_READER_ALL.toString())
+			.antMatchers(HttpMethod.POST, "/**/ingest/*")
+			.hasAnyRole(UserRole.PRODUCT_INGESTOR.toString())
+			.antMatchers(HttpMethod.POST, "/**/ingest/*/*")
+			.hasAnyRole(UserRole.PRODUCT_GENERATOR.toString())
+			.anyRequest()
+			.hasAnyRole(UserRole.PRODUCT_MGR.toString())
+			.and()
+			.csrf()
+			.disable(); // Required for POST requests (or configure CSRF)
 	}
 
 	/**
-	 * Initialize the users, passwords and roles for the Ingestor from the prosEO database
-	 * 
+	 * Initialize the users, passwords and roles for the Ingestor from the prosEO
+	 * database
+	 *
 	 * @param builder to manage authentications
 	 * @throws Exception if anything goes wrong with JDBC authentication
 	 */
@@ -103,19 +112,21 @@ public class IngestorSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	/**
 	 * Provides the default password encoder for prosEO (BCrypt)
-	 * 
+	 *
 	 * @return a BCryptPasswordEncoder
 	 */
 	@Bean
 	public PasswordEncoder passwordEncoder() {
-	    return new BCryptPasswordEncoder();
+		return new BCryptPasswordEncoder();
 	}
 
 	/**
-	 * Provides the default user details service for prosEO (based on the standard data model for users and groups)
-	 * 
+	 * Provides the default user details service for prosEO (based on the standard
+	 * data model for users and groups)
+	 *
 	 * @return a JdbcDaoImpl object
 	 */
+	@Override
 	@Bean
 	public UserDetailsService userDetailsService() {
 		logger.log(IngestorMessage.INITIALIZE_USER_INFO, dataSource);
@@ -123,7 +134,7 @@ public class IngestorSecurityConfig extends WebSecurityConfigurerAdapter {
 		JdbcDaoImpl jdbcDaoImpl = new JdbcDaoImpl();
 		jdbcDaoImpl.setDataSource(dataSource);
 		jdbcDaoImpl.setEnableGroups(true);
-		
+
 		return jdbcDaoImpl;
 	}
 }

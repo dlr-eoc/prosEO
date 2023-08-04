@@ -1,3 +1,8 @@
+/**
+ * PathConverter.java
+ *
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.version2;
 
 import java.io.File;
@@ -9,17 +14,18 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 /**
- * Path Converter
- * 
- * @author Denys Chaykovskiy
+ * A set of methods to convert and manipulate file paths based on different
+ * conventions and requirements. It handles Windows paths, Linux paths, and S3
+ * paths, and offers functionality to work with base paths and relative paths.
  *
+ * @author Denys Chaykovskiy
  */
 public class PathConverter {
 
-	/** path */
+	/** The path */
 	private String p;
 
-	/** base pathes, which are used to make relative path */
+	/** The base paths used to create relative paths */
 	private List<String> basePaths = new ArrayList<>();
 
 	/** Logger for this class */
@@ -31,61 +37,59 @@ public class PathConverter {
 	private static String BACKSLASH = "\\";
 
 	/**
-	 * no ":" is allowed in s3, that's why transformation of windows path to s3
-	 * compatible path
+	 * The prefix used to convert Windows paths to S3-compatible paths (necessary as
+	 * the ":" character is not allowed in S3 paths)
 	 */
 	private static String WINPATH_IN_S3 = "-WIN-PATH-";
 
 	/**
-	 * Simple Constructor with path
-	 * 
-	 * @param path
+	 * Simple constructor with a path
+	 *
+	 * @param path The path
 	 */
 	public PathConverter(String path) {
-
 		p = path;
 		init(path);
 	}
 
 	/**
-	 * Constructor with 2 paths to merge
-	 * 
-	 * @param path1 begin of the path
-	 * @param path2 end of the path
+	 * Constructor to merge two paths
+	 *
+	 * @param path1 The beginning of the path
+	 * @param path2 The end of the path
 	 */
 	public PathConverter(String path1, String path2) {
-
 		p = Paths.get(path1, path2).toString();
 		init(path2);
 	}
 
 	/**
-	 * Constructor with 3 paths to merge
-	 * 
-	 * @param path1 begin of the path
-	 * @param path2 middle of the path
-	 * @param path3 end of the path
+	 * Constructor to merge three paths
+	 *
+	 * @param path1 The beginning of the path
+	 * @param path2 The middle of the path
+	 * @param path3 The end of the path
 	 */
 	public PathConverter(String path1, String path2, String path3) {
-
 		p = Paths.get(path1, path2, path3).toString();
 		init(path3);
 	}
 
 	/**
-	 * Slash at the end will not be lost, replaces backslash and empty symbols
-	 * 
-	 * @param endPath
+	 * Initializes the path by replacing backslashes with slashes and ensuring a
+	 * trailing slash for directories.
+	 *
+	 * @param endPath The last part of the path
 	 */
 	private void init(String endPath) {
-		p = p.replace(BACKSLASH, SLASH); // convertToSlash
+		p = p.replace(BACKSLASH, SLASH); // Convert backslashes to slashes
 		p = p.trim();
-		
+
 		if (p.endsWith(SLASH)) {
 			return;
 		}
 
-		if (endPath.endsWith(SLASH)) { // do not forget directory at end
+		if (endPath.endsWith(SLASH)) { // Ensure directory path ends with a slash
 			p = p + SLASH;
 		}
 	}
@@ -93,12 +97,11 @@ public class PathConverter {
 	/**
 	 * Constructor with path and base paths, which will be used to create relative
 	 * path
-	 * 
-	 * @param path
-	 * @param basePaths
+	 *
+	 * @param path      The path
+	 * @param basePaths The base paths used for relative paths
 	 */
 	public PathConverter(String path, List<String> basePaths) {
-
 		this(path);
 		this.basePaths = correctBasePaths(basePaths);
 
@@ -107,28 +110,26 @@ public class PathConverter {
 	}
 
 	/**
-	 * Corrects base paths (replaces backslash with slash) 
-	 * 
-	 * @param basePaths
-	 * @return
+	 * Corrects base paths by replacing backslashes with slashes.
+	 *
+	 * @param basePaths The base paths to be corrected
+	 * @return The corrected base paths
 	 */
 	private List<String> correctBasePaths(List<String> basePaths) {
-		
 		List<String> correctedBasePaths = new ArrayList<>();
-		
-		for (String basePath : basePaths) { 
-			
-			String correctedBasePath = replaceBackslashWithSlash(basePath); 	
+
+		for (String basePath : basePaths) {
+			String correctedBasePath = replaceBackslashWithSlash(basePath);
 			correctedBasePaths.add(correctedBasePath);
 		}
-		
+
 		return correctedBasePaths;
 	}
 
 	/**
-	 * Copy object constructor
-	 * 
-	 * @param pathConverter
+	 * Copy constructor
+	 *
+	 * @param pathConverter The PathConverter object to be copied
 	 */
 	public PathConverter(PathConverter pathConverter) {
 		this(pathConverter.getPath());
@@ -136,43 +137,41 @@ public class PathConverter {
 	}
 
 	/**
-	 * Added base path to base path list, which are used for relative path
-	 * 
-	 * @param basePath
+	 * Adds a base path to the list of base paths used for relative paths.
+	 *
+	 * @param basePath The base path to be added
 	 */
 	public void addBasePath(String basePath) {
 		String path = new PathConverter(basePath).removeLeftSlash().getPath();
-		path = replaceBackslashWithSlash(basePath); 
+		path = replaceBackslashWithSlash(basePath);
 		basePaths.add(path);
 	}
 
 	/**
-	 * Gets path
-	 * 
-	 * @return path
+	 * Gets the current path.
+	 *
+	 * @return The path
 	 */
 	public String getPath() {
 		return p;
 	}
 
 	/**
-	 * Replaces backslashes with slashes
-	 * 
-	 * @return path with slashes only
+	 * Converts backslashes to slashes in the path.
+	 *
+	 * @return A new PathConverter object with the converted path
 	 */
 	public PathConverter convertToSlash() {
 		return new PathConverter(p.replace(BACKSLASH, SLASH), basePaths);
 	}
 
 	/**
-	 * Gets first folder
-	 * 
-	 * @return path with first folder only
+	 * Gets the first folder from the path.
+	 *
+	 * @return A new PathConverter object representing the first folder
 	 */
 	public PathConverter getFirstFolder() {
-
 		String path = new PathConverter(p).removeLeftSlash().getPath();
-
 		File file = new File(path);
 
 		if (file.getParent() == null) {
@@ -183,14 +182,12 @@ public class PathConverter {
 	}
 
 	/**
-	 * Removes first folder
-	 * 
-	 * @return path without first folder
+	 * Removes the first folder from the path.
+	 *
+	 * @return A new PathConverter object without the first folder
 	 */
 	public PathConverter removeFirstFolder() {
-
 		String path = new PathConverter(p).removeLeftSlash().getPath();
-
 		File file = new File(path);
 
 		if (file.getParent() == null) {
@@ -201,22 +198,20 @@ public class PathConverter {
 	}
 
 	/**
-	 * Checks if path is S3
-	 * 
-	 * @return true if s3 path
+	 * Checks if the path is an S3 path.
+	 *
+	 * @return true if the path is an S3 path, false otherwise
 	 */
 	public boolean isS3Path() {
-
-		return p.startsWith(S3PREFIX) ? true : false;
+		return p.startsWith(S3PREFIX);
 	}
 
 	/**
-	 * Removes FS-Prefixes
-	 * 
-	 * @return path without FS prefixes
+	 * Removes the file system prefixes from the path.
+	 *
+	 * @return A new PathConverter object without the file system prefixes
 	 */
 	public PathConverter removeFsPrefix() {
-
 		if (p.startsWith(S3PREFIX)) {
 			return new PathConverter(p.substring(S3PREFIX.length()), basePaths);
 		}
@@ -225,14 +220,12 @@ public class PathConverter {
 	}
 
 	/**
-	 * Removes base Path from path if base path is in the list.
-	 * 
-	 * @return path without base path
+	 * Removes the base paths from the path.
+	 *
+	 * @return A new PathConverter object without the base paths
 	 */
 	public PathConverter removeBasePaths() {
-
 		for (String basePath : basePaths) {
-
 			if (p.startsWith(basePath)) {
 				return new PathConverter(p.substring(basePath.length()), basePaths);
 			}
@@ -242,14 +235,12 @@ public class PathConverter {
 	}
 
 	/**
-	 * Checks if path is part from one of base paths
-	 * 
-	 * @return true if path is part of one of base paths
+	 * Checks if the path has any base paths.
+	 *
+	 * @return true if the path has any base paths, false otherwise
 	 */
 	public boolean hasBasePaths() {
-
 		for (String basePath : basePaths) {
-
 			if (p.startsWith(basePath)) {
 				return true;
 			}
@@ -259,22 +250,20 @@ public class PathConverter {
 	}
 
 	/**
-	 * Removes bucket as a first folder from path
-	 * 
-	 * @return path without bucket
+	 * Removes the bucket as the first folder from the path.
+	 *
+	 * @return A new PathConverter object without the bucket as the first folder
 	 */
 	public PathConverter removeBucket() {
-
 		return new PathConverter(p.substring(p.indexOf(SLASH)), basePaths);
 	}
 
 	/**
-	 * Removes left slash from path
-	 * 
-	 * @return path without left slash
+	 * Removes the leading slash from the path.
+	 *
+	 * @return A new PathConverter object without the leading slash
 	 */
 	public PathConverter removeLeftSlash() {
-
 		String path = p;
 
 		while (path.startsWith(SLASH)) {
@@ -283,28 +272,23 @@ public class PathConverter {
 
 		return new PathConverter(path, basePaths);
 	}
-	
+
 	/**
-	 * Checks if path starts with slash (absolute path)
-	 * 
-	 * @return true if path starts with slash
+	 * Checks if the path starts with a slash (absolute path).
+	 *
+	 * @return true if the path starts with a slash, false otherwise
 	 */
 	public boolean startsWithSlash() {
-
 		return p.startsWith(SLASH);
 	}
 
 	/**
-	 * Adds slash at end of path
-	 * 
-	 * @return path with slash at the end
+	 * Adds a slash at the end of the path.
+	 *
+	 * @return A new PathConverter object with a slash at the end of the path
 	 */
 	public PathConverter addSlashAtEnd() {
-
-		if (p.endsWith(SLASH))
-			return this;
-
-		if (p.endsWith(BACKSLASH))
+		if (p.endsWith(SLASH) || p.endsWith(BACKSLASH))
 			return this;
 
 		if (p.contains(BACKSLASH))
@@ -314,13 +298,12 @@ public class PathConverter {
 	}
 
 	/**
-	 * Fixes absolute path - 1) adds slash at end if directory 2) adds slash at
-	 * begin if linux-path
-	 * 
-	 * @return fixed absolute path
+	 * Fixes the absolute path by adding a slash at the end for directories and a
+	 * slash at the beginning for Linux paths.
+	 *
+	 * @return A new PathConverter object with the fixed absolute path
 	 */
 	public PathConverter fixAbsolutePath() {
-
 		PathConverter pathConverter = this;
 
 		if (isDirectory())
@@ -333,22 +316,20 @@ public class PathConverter {
 	}
 
 	/**
-	 * Checks if directory - if path ends with slash or backslash
-	 * 
-	 * @return true if path is directory
+	 * Checks if the path is a directory.
+	 *
+	 * @return true if the path is a directory, false otherwise
 	 */
 	public boolean isDirectory() {
-
-		return (p.endsWith(SLASH) || p.endsWith(BACKSLASH)) ? true : false;
+		return (p.endsWith(SLASH) || p.endsWith(BACKSLASH));
 	}
 
 	/**
-	 * Adds slash at the beginning of the path
-	 * 
-	 * @return path with the slash at the beginning
+	 * Adds a slash at the beginning of the path.
+	 *
+	 * @return A new PathConverter object with a slash at the beginning of the path
 	 */
 	public PathConverter addSlashAtBegin() {
-
 		if (p.startsWith(SLASH))
 			return this;
 
@@ -356,23 +337,24 @@ public class PathConverter {
 	}
 
 	/**
-	 * Checks if path is windows, no s3 and has ":" symbol
-	 * 
-	 * @return true if path is windows, no s3 and has ":" symbol
+	 * Checks if the path is a Windows path.
+	 *
+	 * @return true if the path is a Windows path, false otherwise
 	 */
 	public boolean isWindowsPath() {
-
 		if (isS3Path())
 			return false;
 
 		if ((p.indexOf(':') == 1) && Character.isLetter(p.charAt(0))) // "c:"
 			return true;
-		
-		// TODO: remove after integration, for compatibility with v1 only, path like "/c:"
+
+		// TODO: Remove after integration, only for compatibility with v1, path like
+		// "/c:"
 		if ((p.indexOf(':') == 2) && Character.isLetter(p.charAt(1)) && p.startsWith("/"))
 			return true;
-		
-		// TODO: remove after integration, for compatibility with v1 only, path like "POSIX|/c:"
+
+		// TODO: Remove after integration, only for compatibility with v1, path like
+		// "POSIX|/c:"
 		if ((p.indexOf(':') == 8) && Character.isLetter(p.charAt(7)) && p.startsWith("POSIX|/"))
 			return true;
 
@@ -380,90 +362,78 @@ public class PathConverter {
 	}
 
 	/**
-	 * Checks if path is linux, no windows and no s3 path
-	 * 
-	 * @return true if path is linux, no windows and no s3 path
+	 * Checks if the path is a Linux path.
+	 *
+	 * @return true if the path is a Linux path, false otherwise
 	 */
 	public boolean isLinuxPath() {
-
-		if (isS3Path())
-			return false;
-
-		if (isWindowsPath())
+		if (isS3Path() || isWindowsPath())
 			return false;
 
 		return true;
 	}
 
 	/**
-	 * Converts posix path (windows also) to compatible path for s3 storage
-	 * 
-	 * @return compatible path for s3 storage
+	 * Converts the path to a compatible S3 path by replacing ":" in Windows paths.
+	 *
+	 * @return A new PathConverter object with the S3-compatible path
 	 */
 	public PathConverter posixToS3Path() {
-
-		// windows - replace ":"
 		if (isWindowsPath()) {
 			return new PathConverter(p.replace(":", WINPATH_IN_S3), basePaths);
 		}
 
-		// Linux - no action
 		return this;
 	}
 
 	/**
-	 * Converts s3 path to posix compatible path (windows also)
-	 * 
-	 * @return posix compatible path (windows also)
+	 * Converts the S3 path to a compatible POSIX path by restoring ":" in Windows
+	 * paths.
+	 *
+	 * @return A new PathConverter object with the POSIX-compatible path
 	 */
 	public PathConverter s3ToPosixPath() {
-
-		// windows - restore ":"
 		if (isWinPathInS3()) {
 			return new PathConverter(p.replace(WINPATH_IN_S3, ":"), basePaths);
 		}
 
-		// Linux - no action
 		return this;
 	}
 
 	/**
-	 * Checks if path is converted windows path for s3
-	 * 
-	 * @return true if path is converted windows path for s3
+	 * Checks if the path is a converted Windows path for S3.
+	 *
+	 * @return true if the path is a converted Windows path for S3, false otherwise
 	 */
 	public boolean isWinPathInS3() {
-
-		return (p.indexOf(WINPATH_IN_S3) >= 0) ? true : false;
+		return (p.indexOf(WINPATH_IN_S3) >= 0);
 	}
 
 	/**
-	 * Removes double slash from path
-	 * 
-	 * @return path with slash, no double slash
+	 * Removes double slashes from the path.
+	 *
+	 * @return A new PathConverter object with single slashes (no double slashes)
 	 */
 	public PathConverter removeDoubleSlash() {
-
 		return new PathConverter(p.replace(DOUBLESLASH, SLASH), basePaths);
 	}
-	
+
 	/**
-	 * Replaces Backslash with slash
-	 * 
-	 * @return path with slash, no backslash
+	 * Replaces backslashes with slashes in the given string.
+	 *
+	 * @param str The string to be modified
+	 * @return The modified string with slashes instead of backslashes
 	 */
 	public String replaceBackslashWithSlash(String str) {
-		
-		return str.replace(BACKSLASH, SLASH); 
+		return str.replace(BACKSLASH, SLASH);
 	}
 
 	/**
-	 * Gets relative path from path using base path list
-	 * 
-	 * @return relative path from path using base path list
+	 * Gets the relative path from the path using the base path list.
+	 *
+	 * @return The relative path from the path using the base path list
 	 */
 	public PathConverter getRelativePath() {
-
 		PathConverter pathConverter = new PathConverter(this).removeFsPrefix().removeBasePaths();
 
 		if (isS3Path()) {
@@ -472,61 +442,56 @@ public class PathConverter {
 
 		return pathConverter.removeLeftSlash();
 	}
-	
+
 	/**
-	 * Adds s3 prefix to the path
-	 * 
-	 * @return s3 prefix + path
+	 * Adds the S3 prefix to the path.
+	 *
+	 * @return The path with the S3 prefix
 	 */
 	public PathConverter addS3Prefix() {
-		
-		 String pathWithoutLeftSlash = new PathConverter(this).removeLeftSlash().getPath();
-		 
-		 return new PathConverter(S3PREFIX + pathWithoutLeftSlash, basePaths);
+		String pathWithoutLeftSlash = new PathConverter(this).removeLeftSlash().getPath();
+
+		return new PathConverter(S3PREFIX + pathWithoutLeftSlash, basePaths);
 	}
-	
+
 	/**
-	 * Gets file name from path
-	 * 
-	 * @return file name
+	 * Gets the file name from the path.
+	 *
+	 * @return The file name
 	 */
 	public String getFileName() {
-		
 		return new File(p).getName();
 	}
 
 	/**
-	 * Gets storage type from path
-	 * 
-	 * @return storageType
+	 * Gets the storage type (S3 or POSIX) from the path.
+	 *
+	 * @return The storage type
 	 */
 	public StorageType getStorageType() {
-		
 		if (isS3Path()) {
 			return StorageType.S3;
-		}
-		else {
+		} else {
 			return StorageType.POSIX;
 		}
 	}
 
 	/**
-	 * Normalizes windows path (removes slash at the beginning) 
-	 * 
-	 * @return normalized windows path
+	 * Normalizes the Windows path by removing the leading slash.
+	 *
+	 * @return The normalized Windows path
 	 */
 	public PathConverter normalizeWindowsPath() {
-		
-		if (isWindowsPath() && p.startsWith(SLASH)) { 
+		if (isWindowsPath() && p.startsWith(SLASH)) {
 			p = p.substring(1); // "/c:/blabla" => "c:/blabla"
 		}
-		
-		// TODO: Remove after integration, only for compatibility with the existing code 
-		if (isWindowsPath() && p.startsWith("POSIX|/")) { 
+
+		// TODO: Remove after integration, only for compatibility with the existing code
+		if (isWindowsPath() && p.startsWith("POSIX|/")) {
 			int i = 6;
-			p = p.substring(0,i) + p.substring(i+1); // "POSIX|/c:/" => "POSIX|c:/"
+			p = p.substring(0, i) + p.substring(i + 1); // "POSIX|/c:/" => "POSIX|c:/"
 		}
-		
+
 		return new PathConverter(p, basePaths);
 	}
 }

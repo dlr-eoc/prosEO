@@ -42,7 +42,7 @@ import de.dlr.proseo.usermgr.rest.model.RestUser;
 @SpringBootTest(classes = UserManagerApplication.class)
 @AutoConfigureTestEntityManager
 @Transactional
-@WithMockUser(username = "UTM-testuser", roles = {"USERMGR"})
+@WithMockUser(username = "UTM-testuser", roles = { "USERMGR" })
 public class UserControllerImplTest {
 
 	/** A logger for this class */
@@ -167,9 +167,9 @@ public class UserControllerImplTest {
 	@Test
 	public final void testCountUsers() {
 		logger.trace(">>> testCountUsers()");
-		
+
 		ResponseEntity<String> response = gci.countUsers("UTM");
-		
+
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, response.getStatusCode());
 		assertEquals("Wrong number of users retrieved: ", "1", response.getBody());
 	}

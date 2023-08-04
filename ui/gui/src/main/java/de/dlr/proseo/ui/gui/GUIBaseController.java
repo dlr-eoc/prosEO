@@ -38,6 +38,7 @@ import de.dlr.proseo.model.rest.model.RestProcessingFacility;
 import de.dlr.proseo.model.rest.model.RestProcessorClass;
 import de.dlr.proseo.model.rest.model.RestProductClass;
 import de.dlr.proseo.model.rest.model.RestSpacecraft;
+import de.dlr.proseo.model.rest.model.RestWorkflow;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
 
@@ -316,6 +317,59 @@ public class GUIBaseController {
 		Comparator<String> c = Comparator.comparing((String x) -> x);
 		auth.getDataCache().getConfiguredProcessors().sort(c);
         return auth.getDataCache().getConfiguredProcessors();
+    }
+
+    /**
+     * Retrieve the workflows of mission
+     * 
+     * @return String list
+     */
+    @ModelAttribute("workflownames")
+    public List<String> workflows() {
+    	if (!hasroleprocessorreader()) {
+    		return new ArrayList<String>();
+    	}
+    	checkClearCache();
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+    	if (auth.getDataCache().getWorkflows() != null && !auth.getDataCache().getWorkflows().isEmpty()) return auth.getDataCache().getWorkflows();
+
+    	logger.trace("Get workflows");
+    	auth.getDataCache().setWorkflows(new ArrayList<String>());   
+		List<?> resultList = null;
+		
+		try {
+			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
+					"/workflows?mission=" + auth.getMission(), List.class, auth.getProseoName(), auth.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = ProseoLogger.format(UIMessage.NO_WORKFLOWS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = ProseoLogger.format(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return auth.getDataCache().getWorkflows();
+		} catch (RuntimeException e) {
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
+			return auth.getDataCache().getWorkflows();
+		}
+		
+		if (resultList != null) {
+			ObjectMapper mapper = new ObjectMapper();
+			for (Object object: resultList) {
+				RestWorkflow restWorkflowClass = mapper.convertValue(object, RestWorkflow.class);
+				auth.getDataCache().getWorkflows().add(restWorkflowClass.getName());
+			}
+		}
+		Comparator<String> c = Comparator.comparing((String x) -> x);
+		auth.getDataCache().getWorkflows().sort(c);
+        return auth.getDataCache().getWorkflows();
     }
     
     /**

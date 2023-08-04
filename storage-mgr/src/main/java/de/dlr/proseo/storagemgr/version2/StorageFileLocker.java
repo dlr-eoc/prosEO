@@ -1,3 +1,8 @@
+/**
+ * StorageFileLocker.java
+ *
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.version2;
 
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -6,33 +11,38 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.storagemgr.version2.Exceptions.FileLockedAfterMaxCyclesException;
 
 /**
- * Storage File Locker Locks files currently being downloaded from external
- * storage
- * 
- * @author Denys Chaykovskiy
+ * A mechanism to lock and unlock files during the download process. It helps
+ * manage concurrent access to files by ensuring that only one process or thread
+ * can access a file at a time.
  *
+ * @author Denys Chaykovskiy
  */
 public class StorageFileLocker {
 
-	/** List of currently being downloaded files, which are locked */
+	/**
+	 * Stores the paths of files that are currently being downloaded and thus are
+	 * locked
+	 */
 	private static ConcurrentSkipListSet<String> productLockSet = new ConcurrentSkipListSet<>();
 
 	/** Logger */
 	private static ProseoLogger logger = new ProseoLogger(StorageFileLocker.class);
 
-	/** File check max cycles */
+	/** The maximum number of cycles for checking if a file is locked */
 	private long fileCheckMaxCycles;
 
-	/** Wait time */
+	/** The wait time between each cycle of checking the file lock status */
 	private long waitTime;
 
-	/** file path to lock */
+	/** The path of the file that needs to be locked */
 	private String path;
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param path               path of the file
+	 * @param waitTime           the wait time between each cycle of checking the
+	 *                           file lock status
 	 * @param fileCheckMaxCycles file check max cycles
 	 */
 	public StorageFileLocker(String path, long waitTime, long fileCheckMaxCycles) {
@@ -43,11 +53,17 @@ public class StorageFileLocker {
 	}
 
 	/**
-	 * Locks the file
-	 * 
-	 * @throws FileLockedAfterMaxCyclesException
-	 * @throws InterruptedException
-	 * 
+	 * Acquires a lock on the file. The method checks if the file is already locked
+	 * by checking if it exists in the productLockSet. If it's not locked, it adds
+	 * the file path to the set and breaks out of the loop. Otherwise, it waits for
+	 * the specified waitTime and checks again. This process continues for a maximum
+	 * of fileCheckMaxCycles cycles.
+	 *
+	 * @throws FileLockedAfterMaxCyclesException if the file is still locked after a
+	 *                                           maximum number of checks
+	 * @throws InterruptedException              if the thread is interrupted while
+	 *                                           waiting for the concurrent access
+	 *                                           to terminate
 	 */
 	public void lock() throws FileLockedAfterMaxCyclesException, InterruptedException {
 
@@ -73,8 +89,8 @@ public class StorageFileLocker {
 	}
 
 	/**
-	 * Unlocks the file
-	 * 
+	 * Releases the lock on the file by removing the file path from the
+	 * productLockSet.
 	 */
 	public void unlock() {
 		productLockSet.remove(path);

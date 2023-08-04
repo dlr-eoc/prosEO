@@ -31,6 +31,8 @@ public enum GeneralMessage implements ProseoMessage {
 	TOO_MANY_RESULTS					(9015, Level.ERROR, false, "The number of {0} matching the search criteria ({1}) exceeds the configured maximum number of results ({2})", ""),
 	FIELD_NOT_SET						(9016, Level.ERROR, false, "Specification of {0} is mandatory for {1}", ""),
 	NO_UUID_MODIFICATION				(9017, Level.ERROR, false, "UUID may not be modified", ""),
+	INVALID_PARAMETER_FORMAT			(9018, Level.ERROR, false, "\"{0}\" does not conform to parameter format", ""),
+	CONCURRENT_MODIFICATION			(9019, Level.ERROR, false, "Entity of type \"{0}\" with id {1} was modified concurrently", ""),
 	
 	;
 

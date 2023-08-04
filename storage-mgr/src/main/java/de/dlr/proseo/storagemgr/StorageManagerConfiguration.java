@@ -145,6 +145,8 @@ public class StorageManagerConfiguration {
 
 	/**
 	 * Sets the singleton object for this class
+	 * 
+	 * @param the default storage type
 	 */
 	public void setDefaultStorageType(String storageType) {
 		mountedDefaultStorageType = storageType;

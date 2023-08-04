@@ -8,38 +8,13 @@ mediaType: application/json
 types:
   RestMessage: !include ../../../../../interfaces/src/main/resources/raml/types/message.raml
 
-resourceTypes:
-  standard:
-    get?:
-      responses:
-        400:
-          description: |
-            The request sent to the server contains data which is not as expected e.g. invalid location URI
-          headers:
-            Warning: !include types/error.raml
-        404:
-          description: |
-            The requested resource was not found                     
-          headers:
-            Warning: !include types/error.raml
-    put?:
-      responses:          
-        404:
-          description: |
-            The requested resource on which the modification is being attempted was not found              
-          headers:
-            Warning: !include types/error.raml
-    delete?:
-      responses:          
-        404:
-          description: | 
-            The requested resource to delete was not found 
-          headers:
-            Warning: !include types/error.raml
 /notify:
-  type: standard
   post:
-    description: Send notification message
+    description: |
+      Process and send the REST message
+
+      @param restMessage the REST message to send
+      @return The response entity
     displayName: notifyx
     body:
       application/json:
@@ -49,4 +24,15 @@ resourceTypes:
       201:
         body:
           text/plain:
-          
+      400:
+        description: The request sent to the server contains data which is not as expected e.g. invalid location URI
+        headers:
+          Warning: !include types/error.raml
+      403:
+        description: A cross-mission data access was attempted.
+        headers:
+          Warning: !include types/error.raml
+      500:
+        description: An internal service error occured.
+        headers:
+          Warning: !include types/error.raml
