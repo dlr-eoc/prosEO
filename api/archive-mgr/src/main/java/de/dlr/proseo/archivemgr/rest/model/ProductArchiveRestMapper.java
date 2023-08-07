@@ -155,7 +155,7 @@ public class ProductArchiveRestMapper {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "BaseUri", "product archive model checker"));
 		}
 		
-		if (StringUtils.isNullOrBlank(restArchive.getContext())) {
+		if (null == restArchive.getContext()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Context", "product archive model checker"));
 		}
 		

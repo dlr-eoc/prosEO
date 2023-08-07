@@ -140,7 +140,7 @@ public class ProductArchiveModelMapper {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "BaseUri", "product archive model checker"));
 		}
 		
-		if (StringUtils.isNullOrBlank(modelArchive.getContext())) {
+		if (null == modelArchive.getContext()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Context", "product archive model checker"));
 		}
 		

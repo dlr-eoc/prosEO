@@ -158,7 +158,7 @@ public class ProductArchiveCommandRunner {
 			restArchive.setBaseUri(updatedArchive.getBaseUri());
 		}
 		
-		if (!StringUtils.isNullOrBlank(updatedArchive.getContext())) { 
+		if (null != updatedArchive.getContext()) { 
 			restArchive.setContext(updatedArchive.getContext());
 		}
 		if (null != updatedArchive.getTokenRequired()) {
@@ -328,7 +328,7 @@ public class ProductArchiveCommandRunner {
 			restArchive.setBaseUri(response);
 		}
 		
-		if (StringUtils.isNullOrBlank(restArchive.getContext())) {
+		if (null == restArchive.getContext()) {
 			System.out.print(PROMPT_ARCHIVE_CONTEXT);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
