@@ -327,17 +327,11 @@ public class ProductArchiveCommandRunner {
 			}
 			restArchive.setBaseUri(response);
 		}
-		
-		if (null == restArchive.getContext()) {
-			System.out.print(PROMPT_ARCHIVE_CONTEXT);
-			String response = System.console().readLine();
-			if (response.isBlank()) {
-				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
-				return;
-			}
-			restArchive.setContext(response);
+			
+		if (null == restArchive.getContext()) {	
+			restArchive.setContext("");
 		}
-		
+			
 		if (StringUtils.isNullOrBlank(restArchive.getArchiveType())) {
 			System.out.print(PROMPT_ARCHIVE_TYPE);
 			String response = System.console().readLine();
