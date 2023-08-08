@@ -57,7 +57,7 @@ public class ProductArchiveCommandRunner {
 	private static final String PROMPT_ARCHIVE_NAME = "Archive name (empty field cancels): ";
 	private static final String PROMPT_ARCHIVE_CODE = "Archive code (empty field cancels): ";
 	private static final String PROMPT_ARCHIVE_BASE_URI = "Base URI(empty field cancels): ";	
-	private static final String PROMPT_ARCHIVE_CONTEXT = "Archive context (empty field cancels): ";
+	private static final String PROMPT_ARCHIVE_CONTEXT = "Archive context (empty field means no context): ";
 	private static final String PROMPT_ARCHIVE_TYPE = "Archive type (empty field cancels): ";
 	private static final String PROMPT_ARCHIVE_TOKEN_REQUIRED = "Archive token required (empty field cancels): ";
 
@@ -327,11 +327,16 @@ public class ProductArchiveCommandRunner {
 			}
 			restArchive.setBaseUri(response);
 		}
-			
-		if (null == restArchive.getContext()) {	
-			restArchive.setContext("");
+		
+		if (null == restArchive.getContext()) {
+			System.out.print(PROMPT_ARCHIVE_CONTEXT);
+			String response = System.console().readLine();
+			if (null == response) {
+				response = "";
+			}
+			restArchive.setContext(response);
 		}
-			
+							
 		if (StringUtils.isNullOrBlank(restArchive.getArchiveType())) {
 			System.out.print(PROMPT_ARCHIVE_TYPE);
 			String response = System.console().readLine();
