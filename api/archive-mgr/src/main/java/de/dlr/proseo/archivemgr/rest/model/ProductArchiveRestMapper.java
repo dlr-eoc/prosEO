@@ -41,7 +41,7 @@ public class ProductArchiveRestMapper {
 	 * Constructor with restArchive parameter
 	 *
 	 * @param restArchive rest archive
-	 * @param mission the mission code
+	 * @param mission     the mission code
 	 */
 	public ProductArchiveRestMapper(RestProductArchive restArchive, String mission) {
 
@@ -157,7 +157,7 @@ public class ProductArchiveRestMapper {
 					logger.log(GeneralMessage.FIELD_NOT_SET, "BaseUri", "product archive model checker"));
 		}
 
-		if (StringUtils.isNullOrBlank(restArchive.getContext())) {
+		if (null == restArchive.getContext()) {
 			throw new IllegalArgumentException(
 					logger.log(GeneralMessage.FIELD_NOT_SET, "Context", "product archive model checker"));
 		}

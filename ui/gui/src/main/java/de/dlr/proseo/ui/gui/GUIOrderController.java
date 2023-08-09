@@ -1011,7 +1011,9 @@ public class GUIOrderController extends GUIBaseController {
 //				try {
 //					fromTime = simpleDateFormatter.parse(from);
 //				} catch (ParseException e) {
-//					e.printStackTrace();
+//					if (logger.isDebugEnabled()) {
+//					logger.debug("An exception occurred. Cause: ", e);
+//				}
 //				}
 //			}
 //			Date toTime = null;
@@ -1021,7 +1023,9 @@ public class GUIOrderController extends GUIBaseController {
 //					Instant t = toTime.toInstant().plus(Duration.ofDays(1));
 //					toTime = Date.from(t);
 //				} catch (ParseException e) {
-//					e.printStackTrace();
+//					if (logger.isDebugEnabled()) {
+//					logger.debug("An exception occurred. Cause: ", e);
+//				}
 //				}
 //			}
 //			ObjectMapper mapper = new ObjectMapper();
@@ -1058,7 +1062,9 @@ public class GUIOrderController extends GUIBaseController {
 //						result.add(o);
 //					}
 //				} catch (Exception e) {
-//					e.printStackTrace();
+//					if (logger.isDebugEnabled()) {
+//					logger.debug("An exception occurred. Cause: ", e);
+//				}
 //				}
 //			}
 //

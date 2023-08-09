@@ -30,7 +30,6 @@ resourceTypes:
   get:
     description: | 
       Get information about known region types
-      @return HttpStatus 200 and the requested information OR HttpStatus 400 and an error message if the input was invalid OR HttpStatus 500 and an error message if the input was valid but the implementation is pending or a problem occurred while trying to process a shape file      
     displayName: getInfo
     responses:
       200:
@@ -41,9 +40,6 @@ resourceTypes:
   get:
     description: | 
       Tests whether the polygon is completly contained in any region of type(s)
-      @param poly String array containing latitude (uneven fields)/longitude (uneven fields) pairs in Double format, which together describe an area to be compared to a number of specified regions
-      @param type String array used to determine which regions (specified in application.yml) to check. If the array parameter is null or empty, all available region types will be considered
-      @return HttpStatus 200 and true if the polygon is contained in one or more of the specified regions (all known regions if none were specified), false otherwise OR HttpStatus 400 and an error message if the input was invalid OR HttpStatus 500 and an error message if the input was valid but the implementation is pending or a problem occurred while trying to process a shape file
     displayName: contains
     queryParameters:
       poly: 
@@ -60,9 +56,6 @@ resourceTypes:
   post:
     description: |
       Tests whether the polygon is completly contained in any region of type(s) 
-      @param restPolygon RestPolygon describing an area to be compared to a number of specified regions
-      @param type String array used to determine which regions (specified in application.yml) to check. If the array parameter is null or empty, all available region types will be considered
-      @return HttpStatus 200 and true if the polygon is contained in one or more of the specified regions (all known regions if none were specified), false otherwise OR HttpStatus 400 and an error message if the input was invalid OR HttpStatus 500 and an error message if the input was valid but the implementation is pending or a problem occurred while trying to process a shape file
     displayName: containspoly
     queryParameters:
       type?: 
@@ -82,9 +75,6 @@ resourceTypes:
   get:
     description: |
       Tests whether the polygon is overlaps any region of type(s) 
-      @param poly String array containing latitude (uneven fields)/longitude (uneven fields) pairs in Double format, which together describe an area to be compared to a number of specified regions
-      @param type String array used to determine which regions (specified in application.yml) to check. If the array parameter is null or empty, all available region types will be considered
-      @return HttpStatus 200 and true if the polygon overlaps one or more of the specified regions (all known regions if none were specified), false otherwise OR HttpStatus 400 and an error message if the input was invalid OR HttpStatus 500 and an error message if the input was valid but the implementation is pending or a problem occurred while trying to process a shape file
     displayName: overlaps
     queryParameters:
       poly: 
@@ -101,9 +91,6 @@ resourceTypes:
   post:
     description: |
       Tests whether the polygon is overlaps any region of type(s) 
-      @param restPolygon RestPolygon describing an area to be compared to a number of specified regions
-      @param type String array used to determine which regions (specified in application.yml) to check. If the array parameter is null or empty, all available region types will be considered
-      @return HttpStatus 200 and true if the polygon overlaps one or more of the specified regions (all known regions if none were specified), false otherwise OR HttpStatus 400 and an error message if the input was invalid OR HttpStatus 500 and an error message if the input was valid but the implementation is pending or a problem occurred while trying to process a shape file
     displayName: overlapspoly
     queryParameters: 
       type?: 

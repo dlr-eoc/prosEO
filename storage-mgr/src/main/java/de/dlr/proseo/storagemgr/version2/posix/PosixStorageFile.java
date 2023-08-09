@@ -82,7 +82,9 @@ public class PosixStorageFile implements StorageFile {
 			return new PathConverter(basePath, bucket, relativePath).fixAbsolutePath().getPath();
 		} catch (Exception e) {
 
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+				logger.debug("An exception occurred. Cause: ", e);
+			}
 			throw e;
 		}
 	}

@@ -245,7 +245,9 @@ public class IngestControllerImpl implements IngestController {
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		} catch (LockAcquisitionException e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		} finally {
 			semaphoreClient.releaseSemaphore(userPassword[0], userPassword[1]);

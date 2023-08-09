@@ -434,7 +434,9 @@ public class OdipEntityProcessor implements EntityProcessor {
 			return;
 		} catch (Exception e) {
 			String message = logger.log(OdipMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 			response.setContent(
 					serializer.error(LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message))
 						.getContent());
@@ -586,7 +588,9 @@ public class OdipEntityProcessor implements EntityProcessor {
 			return;
 		} catch (Exception e) {
 			String message = logger.log(OdipMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 			response.setContent(
 					serializer.error(LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message))
 						.getContent());

@@ -1,16 +1,16 @@
 /**
  * KubeConfig.java
- * 
+ *
  * © 2019 Prophos Informatik GmbH
  */
 package de.dlr.proseo.planner.kubernetes;
-
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,9 +20,9 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.model.JobStep;
+import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
-import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -45,10 +45,9 @@ import io.kubernetes.client.openapi.models.V1Taint;
 import io.kubernetes.client.util.Config;
 
 /**
- * Represents the connection to a Kubernetes API 
- * 
- * @author Ernst Melchinger
+ * Represents the connection to a Kubernetes API
  *
+ * @author Ernst Melchinger
  */
 @Component
 public class KubeConfig {
@@ -56,293 +55,304 @@ public class KubeConfig {
 	/** Dummy Job Order file name (only used in development environment) **/
 	private static final String DUMMY_JOF_FILENAME = "/testdata/test1.pl";
 
-	/**
-	 * Logger of this class 
-	 */
+	/** Logger of this class */
 	private static ProseoLogger logger = new ProseoLogger(KubeConfig.class);
 
-	/**
-	 * The production planner instance
-	 */
+	/** The production planner instance */
 	private ProductionPlanner productionPlanner;
-	
-	/**
-	 * Map containing the created Kubernetes jobs
-	 */
+
+	/** Map containing the created Kubernetes jobs */
 	private HashMap<String, KubeJob> kubeJobList = null;
-	
-	/**
-	 * List of Kubernetes nodes
-	 */
+
+	/** List of Kubernetes nodes */
 	private V1NodeList kubeNodes = null;
-	
-	/**
-	 * Number of ready Kubernetes worker nodes
-	 */
+
+	/** Number of ready Kubernetes worker nodes */
 	private int workerCnt = 0;
-	
-	/**
-	 * The Kubernetes API client
-	 */
+
+	/** The Kubernetes API client */
 	private ApiClient client;
-	
-	/**
-	 * The Kubernetes core API V1 
-	 */
+
+	/** The Kubernetes core API V1 */
 	private CoreV1Api apiV1;
-	
-	/**
-	 * The Kubernetes batch API V1 
-	 */
+
+	/** The Kubernetes batch API V1 */
 	private BatchV1Api batchApiV1;
-	
+
 	/**
+	 * TODO If that is correct, maybe change parameter name to "name"
+	 *
 	 * The name of the facility
 	 */
 	private String id;
 
-	/**
-	 * The id of the facility
-	 */
+	/** The id of the facility */
 	private long longId;
 
-	/**
-	 * The version of the facility
-	 */
+	/** The version of the facility */
 	private long version;
-	
-	/**
-	 * The facility description 
-	 */
+
+	/** The facility description */
 	private String description;
-	
-	/**
-	 * The run state the facility currently is in 
-	 */
+
+	/** The run state the facility currently is in */
 	private FacilityState facilityState;
-	
-	/**
-	 * The maximum of jobs per node
-	 */
+
+	/** The maximum of jobs per node */
 	private Integer maxJobsPerNode;
-	
-	/**
-	 * The url of the facility 
-	 */
+
+	/** The URL of the facility */
 	private String url;
-	
-	/**
-	 * The storage manager url
-	 */
+
+	/** The storage manager URL */
 	private String storageManagerUrl;
-	
-	/**
-	 * The URL to access this facility's storage manager from an external client (via PRIP API)
-	 */
+
+	/** The URL to access this facility's storage manager from an external client (via PRIP API) */
 	private String externalStorageManagerUrl;
-	
-	/**
-	 * The default storage type 
-	 */
+
+	/** The default storage type */
 	private StorageType storageType;
-	
+
 	/** Authentication token for connecting to this facility's processing engine (Kubernetes instance) */
 	private String processingEngineToken;
-	
+
 	/**
 	 * URL of the locally accessible Storage Manager instance on a specific processing node (to be used by the Processing Engine).
 	 * This URL shall contain the string "%NODE_IP%", which will be replaced by the actual node IP of the Kubernetes worker node.
 	 */
 	private String localStorageManagerUrl;
-	
+
 	/** User name for connecting to the Storage Manager (locally and from external services) */
 	private String storageManagerUser;
-	
+
 	/** Password for connecting to the Storage Manager (locally and from external services) */
 	private String storageManagerPassword;
 
+	/** The processing facility */
+	private ProcessingFacility processingFacility;
+
+	/** TODO Please define. */
+	private int nodesDelta = 0;
+
+	// No need to create own namespace, as there is only one "user" (prosEO)
+	/** The namespace */
+	private String namespace = "default";
+
 	/**
-	 * @return the productionPlanner
+	 * Returns the production planner.
+	 *
+	 * @return the production planner
 	 */
 	public ProductionPlanner getProductionPlanner() {
 		return productionPlanner;
 	}
 
 	/**
-	 * @return the maxJobsPerNode
+	 * Returns the maximum number of jobs per node.
+	 *
+	 * @return the maximum number of jobs per node
 	 */
 	public Integer getMaxJobsPerNode() {
 		return maxJobsPerNode;
 	}
 
 	/**
-	 * @param maxJobsPerNode the maxJobsPerNode to set
+	 * Sets the maximum number of jobs per node.
+	 *
+	 * @param maxJobsPerNode the maximum number of jobs per node to set
 	 */
 	public void setMaxJobsPerNode(Integer maxJobsPerNode) {
 		this.maxJobsPerNode = maxJobsPerNode;
 	}
 
 	/**
-	 * @return the storageManagerPassword
+	 * Returns the storage manager password.
+	 *
+	 * @return the storage manager password
 	 */
 	public String getStorageManagerPassword() {
 		return storageManagerPassword;
 	}
 
 	/**
-	 * @param storageManagerPassword the storageManagerPassword to set
+	 * Sets the storage manager password.
+	 *
+	 * @param storageManagerPassword the storage manager password to set
 	 */
 	public void setStorageManagerPassword(String storageManagerPassword) {
 		this.storageManagerPassword = storageManagerPassword;
 	}
 
 	/**
-	 * @return the processingEngineToken
+	 * Returns the processing engine token.
+	 *
+	 * @return the processing engine token
 	 */
 	public String getProcessingEngineToken() {
 		return processingEngineToken;
 	}
 
 	/**
-	 * @return the localStorageManagerUrl
+	 * Returns the local storage manager URL.
+	 *
+	 * @return the local storage manager URL
 	 */
 	public String getLocalStorageManagerUrl() {
 		return localStorageManagerUrl;
 	}
 
 	/**
-	 * @return the storageManagerUser
+	 * Returns the storage manager user.
+	 *
+	 * @return the storage manager user
 	 */
 	public String getStorageManagerUser() {
 		return storageManagerUser;
 	}
 
 	/**
-	 * @param storageManagerUrl the storageManagerUrl to set
+	 * Sets the storage manager URL.
+	 *
+	 * @param storageManagerUrl the storage manager URL to set
 	 */
 	public void setStorageManagerUrl(String storageManagerUrl) {
 		this.storageManagerUrl = storageManagerUrl;
 	}
 
 	/**
-	 * @return the externalStorageManagerUrl
+	 * Returns the external storage manager URL.
+	 *
+	 * @return the external storage manager URL
 	 */
 	public String getExternalStorageManagerUrl() {
 		return externalStorageManagerUrl;
 	}
 
 	/**
-	 * @param externalStorageManagerUrl the externalStorageManagerUrl to set
+	 * Sets the external storage manager URL.
+	 *
+	 * @param externalStorageManagerUrl the external storage manager URL to set
 	 */
 	public void setExternalStorageManagerUrl(String externalStorageManagerUrl) {
 		this.externalStorageManagerUrl = externalStorageManagerUrl;
 	}
 
 	/**
-	 * @param processingEngineToken the processingEngineToken to set
+	 * Sets the processing engine token.
+	 *
+	 * @param processingEngineToken the processing engine token to set
 	 */
 	public void setProcessingEngineToken(String processingEngineToken) {
 		this.processingEngineToken = processingEngineToken;
 	}
 
 	/**
-	 * @param localStorageManagerUrl the localStorageManagerUrl to set
+	 * Sets the local storage manager URL.
+	 *
+	 * @param localStorageManagerUrl the local storage manager URL to set
 	 */
 	public void setLocalStorageManagerUrl(String localStorageManagerUrl) {
 		this.localStorageManagerUrl = localStorageManagerUrl;
 	}
 
 	/**
-	 * @param storageManagerUser the storageManagerUser to set
+	 * Sets the storage manager user.
+	 *
+	 * @param storageManagerUser the storage manager user to set
 	 */
 	public void setStorageManagerUser(String storageManagerUser) {
 		this.storageManagerUser = storageManagerUser;
 	}
 
 	/**
-	 * @return the storageType
+	 * Returns the storage type.
+	 *
+	 * @return the storage type
 	 */
 	public StorageType getStorageType() {
 		return storageType;
 	}
 
 	/**
-	 * @param storageType the storageType to set
+	 * Sets the storage type.
+	 *
+	 * @param storageType the storage type to set
 	 */
 	public void setStorageType(StorageType storageType) {
 		this.storageType = storageType;
 	}
 
-	private ProcessingFacility processingFacility;
-	private int nodesDelta = 0;
-	
 	/**
-	 * @return the processingFacility
+	 * Returns the processing facility.
+	 *
+	 * @return the processing facility
 	 */
 	public ProcessingFacility getProcessingFacility() {
 		return processingFacility;
 	}
 
 	/**
-	 * @param processingFacility the processingFacility to set
+	 * Sets the processing facility.
+	 *
+	 * @param processingFacility the processing facility to set
 	 */
 	public void setProcessingFacility(ProcessingFacility processingFacility) {
 		this.processingFacility = processingFacility;
 	}
 
-	// no need to create own namespace, because only one "user" (prosEO) 
-	private String namespace = "default";
-	
 	/**
-	 * Look for the kube job of name.
-	 * 
-	 * @param name The name of a kube job
-	 * @return The kube job found or null
+	 * Looks for the Kubernetes job with the specified name.
+	 *
+	 * @param name the name of the Kubernetes job
+	 * @return the found Kubernetes job or null if not found
 	 */
 	public KubeJob getKubeJob(String name) {
 		return kubeJobList.get(name);
 	}
-	
-	/**
-	 * Instantiate a KubeConfig object without arguments
-	 */
 
+	/**
+	 * Instantiates a new KubeConfig object without arguments.
+	 */
 	public KubeConfig() {
 	}
 
 	/**
-	 * Instantiate a KubeConfig object with a processing facility
-	 * @param pf the processing facility to set
+	 * Instantiates a new KubeConfig object with a processing facility.
+	 *
+	 * @param processingFacility the processing facility to set
+	 * @param planner            the production planner
 	 */
-	public KubeConfig(ProcessingFacility pf, ProductionPlanner planner) {
-		setFacility(pf);
+	public KubeConfig(ProcessingFacility processingFacility, ProductionPlanner planner) {
+		setFacility(processingFacility);
 		productionPlanner = planner;
 	}
-	
+
 	/**
-	 * Set all locally stored variables
-	 * 
-	 * @param pf The processing facility
+	 * Sets all locally stored variables based on the provided processing facility.
+	 *
+	 * @param processingFacility the processing facility
 	 */
-	public void setFacility(ProcessingFacility pf) {
-		id = pf.getName();
-		longId = pf.getId();
-		version = pf.getVersion();
-		description = pf.getDescription();
-		facilityState = pf.getFacilityState();
-		url = pf.getProcessingEngineUrl();
-		storageManagerUrl = pf.getStorageManagerUrl();
-		storageType = pf.getDefaultStorageType();
-		localStorageManagerUrl = pf.getLocalStorageManagerUrl();
-		externalStorageManagerUrl = pf.getExternalStorageManagerUrl();
-		processingEngineToken = pf.getProcessingEngineToken();
-		storageManagerUser = pf.getStorageManagerUser();
-		storageManagerPassword = pf.getStorageManagerPassword();
-		maxJobsPerNode = pf.getMaxJobsPerNode();
-		processingFacility = pf;
+	public void setFacility(ProcessingFacility processingFacility) {
+		id = processingFacility.getName();
+		longId = processingFacility.getId();
+		version = processingFacility.getVersion();
+		description = processingFacility.getDescription();
+		facilityState = processingFacility.getFacilityState();
+		url = processingFacility.getProcessingEngineUrl();
+		storageManagerUrl = processingFacility.getStorageManagerUrl();
+		storageType = processingFacility.getDefaultStorageType();
+		localStorageManagerUrl = processingFacility.getLocalStorageManagerUrl();
+		externalStorageManagerUrl = processingFacility.getExternalStorageManagerUrl();
+		processingEngineToken = processingFacility.getProcessingEngineToken();
+		storageManagerUser = processingFacility.getStorageManagerUser();
+		storageManagerPassword = processingFacility.getStorageManagerPassword();
+		maxJobsPerNode = processingFacility.getMaxJobsPerNode();
+		this.processingFacility = processingFacility;
 	}
-	
+
 	/**
+	 * Returns the storage manager URL.
+	 *
 	 * @return the storage manager URL
 	 */
 	public String getStorageManagerUrl() {
@@ -350,13 +360,17 @@ public class KubeConfig {
 	}
 
 	/**
-	 * @return the ApiClient
+	 * Returns the API client.
+	 *
+	 * @return the API client
 	 */
 	public ApiClient getClient() {
 		return client;
 	}
 
 	/**
+	 * Returns the CoreV1Api.
+	 *
 	 * @return the CoreV1Api
 	 */
 	public CoreV1Api getApiV1() {
@@ -364,478 +378,587 @@ public class KubeConfig {
 	}
 
 	/**
+	 * Returns the BatchV1Api.
+	 *
 	 * @return the BatchV1Api
 	 */
 	public BatchV1Api getBatchApiV1() {
 		return batchApiV1;
 	}
-	
+
 	/**
-	 * @return the workerCnt
+	 * Returns the worker count.
+	 *
+	 * @return the worker count
 	 */
 	public int getWorkerCnt() {
 		return workerCnt;
 	}
 
 	/**
-	 * Connect to the Kubernetes cluster
-	 * 
+	 * Connects to the Kubernetes cluster.
+	 *
 	 * @return true if connected, otherwise false
 	 */
 	public boolean connect() {
-		if (logger.isTraceEnabled()) logger.trace(">>> connect()");
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> connect()");
+
+		// If the facility is disabled or stopped, no need to connect.
 		if (getFacilityState() == FacilityState.DISABLED || getFacilityState() == FacilityState.STOPPED)
-			// nothing to do
 			return false;
-		
+
+		// Check if already connected
 		if (isConnected()) {
 			return true;
 		} else {
-			kubeJobList = new HashMap<String, KubeJob>();
+			// Initialize the kubeJobList
+			kubeJobList = new HashMap<>();
+
+			// Try to connect using processingEngineToken if available
 			if (processingEngineToken != null && !processingEngineToken.isEmpty()) {
 				try {
 					client = null;
-					client = Config.fromToken(url, 
-						 processingEngineToken, 
-						 false);
-				} catch (Exception ex) {
-					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, ex.getMessage());
+					client = Config.fromToken(url, processingEngineToken, false);
+				} catch (Exception e) {
+					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 				}
 			}
+
+			// If connection using processingEngineToken failed, try other methods
 			if (client == null) {
-                try {
-                	// describes Kubernetes in Docker
-                	String kconf = ProductionPlanner.config.getProductionPlannerKubeConfig();
-                	if (kconf == null || kconf.isEmpty()) {
-                		kconf = "kube_config";
-                	}
-                    client = Config.fromConfig(kconf);
-                } catch (IOException e) {
-                	logger.log(PlannerMessage.CONFIGURATION_ACCESS_FAILED, e.getMessage());
-                }
-                if (client == null) {
-                    client = Config.fromUrl(url, false);
-                }
+				try {
+					// Describes Kubernetes in Docker
+					String kubeConfig = ProductionPlanner.config.getProductionPlannerKubeConfig();
+					if (kubeConfig == null || kubeConfig.isEmpty()) {
+						kubeConfig = "kube_config";
+					}
+					client = Config.fromConfig(kubeConfig);
+				} catch (IOException e) {
+					logger.log(PlannerMessage.CONFIGURATION_ACCESS_FAILED, e.getClass() + " - " + e.getMessage());
+
+					if (logger.isDebugEnabled()) {
+						logger.debug("IO exception encountered: ", e);
+					}
+				}
+
+				// If connection using kube_config failed, try connecting directly using the URL
+				if (client == null) {
+					client = Config.fromUrl(url, false);
+				}
 			}
+
+			// If all connection attempts failed, log the failure
 			if (client == null) {
 				logger.log(PlannerMessage.FACILITY_CONNECTION_FAILED, url);
 			}
+
+			// Enable debugging if trace level logging is enabled
 			if (logger.isTraceEnabled()) {
 				client.setDebugging(true);
 			}
+
+			// Set the default API client configuration
 			Configuration.setDefaultApiClient(client);
+
+			// Initialize CoreV1Api and BatchV1Api
 			apiV1 = new CoreV1Api();
 			batchApiV1 = new BatchV1Api();
 			if (apiV1 == null || batchApiV1 == null) {
+				// TODO Is that even possible?
 				apiV1 = null;
 				batchApiV1 = null;
 				return false;
-			} else {								
-				// allow more response time and enhance time out 
+			} else {
+				// Allow more response time and enhance time out
 				client.setReadTimeout(100000);
 				client.setWriteTimeout(100000);
 				client.setConnectTimeout(100000);
 
-				// get node info
+				// Synchronize the Kubernetes cluster and the planner
 				sync();
 			}
+
 			return true;
 		}
 	}
-	
+
 	/**
+	 * Checks if the connection to the Kubernetes cluster is established.
+	 *
 	 * @return true if connected, otherwise false
 	 */
 	public boolean isConnected() {
 		if (getFacilityState() == FacilityState.DISABLED || apiV1 == null) {
-	    	return false;
-	    } else {
-	    	return true;
-	    }		
+			return false;
+		} else {
+			return true;
+		}
 	}
 
 	/**
-	 * Check whether a new Kubernetes job could run.
-	 * TODO At the moment simple check against worker count. Could possibly be improved
-	 * @return
+	 * Checks whether a new Kubernetes job could run.
+	 *
+	 * @return true if a new job could run, otherwise false
 	 */
 	public boolean couldJobRun() {
-		if (logger.isTraceEnabled()) logger.trace(">>> couldJobRun()");
-		
-		if (getFacilityState() == FacilityState.DISABLED || getFacilityState() == FacilityState.STOPPED 
+		if (logger.isTraceEnabled())
+			logger.trace(">>> couldJobRun()");
+
+		// Check the facility state
+		if (getFacilityState() == FacilityState.DISABLED || getFacilityState() == FacilityState.STOPPED
 				|| getFacilityState() == FacilityState.STOPPING || getFacilityState() == FacilityState.STARTING) {
 			// not available for jobs
 			return false;
 		}
-		Integer mJPN = 1;
+
+		// Check the maximum number of jobs per node
+		Integer maxJobsPerNode = 1;
 		if (getMaxJobsPerNode() != null) {
-			mJPN = getMaxJobsPerNode();
+			maxJobsPerNode = getMaxJobsPerNode();
 		}
-		return (kubeJobList.size() < ((getWorkerCnt() * mJPN) + nodesDelta));
+
+		return (kubeJobList.size() < ((getWorkerCnt() * maxJobsPerNode) + nodesDelta));
 	}
 
-	/**
-	 * Synchronize Kubernetes cluster and planner 
-	 */
+	/** Synchronizes the Kubernetes jobs and the internal KubeJob list with the Planner. */
 	public void sync() {
-		if (logger.isTraceEnabled()) logger.trace(">>> sync()");
-		
-		if (getFacilityState() == FacilityState.DISABLED || getFacilityState() == FacilityState.STOPPED || getFacilityState() == FacilityState.STARTING)
-			// nothing to do
+		if (logger.isTraceEnabled())
+			logger.trace(">>> sync()");
+
+		// Step 1: Check facility state
+		if (getFacilityState() == FacilityState.DISABLED || getFacilityState() == FacilityState.STOPPED
+				|| getFacilityState() == FacilityState.STARTING) {
+			// Nothing to do if facility state is disabled, stopped, or starting
 			return;
-		
-		// rebuild runtime data 
+		}
+
+		// Step 2: Rebuild runtime data by retrieving all jobs from all namespaces
 		V1JobList k8sJobList = null;
-		getNodeInfo();
+		getNodeInfo(); // TODO Should this info be processed?
 		try {
 			k8sJobList = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
 		} catch (ApiException e) {
-			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
+			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 			return;
 		}
-		// update kubeJob list
-		Map<String, V1Job> kJobs = new HashMap<String, V1Job>();
-		for (V1Job aJob : k8sJobList.getItems()) {
-			String kName = aJob.getMetadata().getName();
-			kJobs.put(kName, aJob);
-			if (getKubeJob(kName) == null) {
-				if (!kubeJobList.containsKey(aJob.getMetadata().getName())) {
-					KubeJob kj = new KubeJob();
-					kj = kj.rebuild(this, aJob);
-					if (kj != null) {
-						kubeJobList.put(kj.getJobName(), kj);
+
+		// Step 3: Update kubeJob list
+		Map<String, V1Job> kubeJobs = new HashMap<>();
+		for (V1Job kubeJob : k8sJobList.getItems()) {
+			String kubeJobName = kubeJob.getMetadata().getName();
+			kubeJobs.put(kubeJobName, kubeJob);
+
+			// Ensure that the kube job is contained in the configuration's map of kube jobs
+			if (getKubeJob(kubeJobName) == null) {
+				if (!kubeJobList.containsKey(kubeJob.getMetadata().getName())) {
+					KubeJob newKubeJob = new KubeJob();
+					newKubeJob = newKubeJob.rebuild(this, kubeJob);
+					if (newKubeJob != null) {
+						kubeJobList.put(newKubeJob.getJobName(), newKubeJob);
 					}
 				}
 			}
 		}
-		// now are all existing Kubernetes jobs synchronized with KubeJob list.
-		// walk through KubeJob list and remove elements without existing Kubernetes job
-		List<KubeJob> kjList = new ArrayList<KubeJob>();
+
+		// Step 4: Remove elements from KubeJob list without existing Kubernetes jobs
+		List<KubeJob> kjList = new ArrayList<>();
 		kjList.addAll(kubeJobList.values());
 		for (KubeJob kj : kjList) {
-			if (!kJobs.containsKey(kj.getJobName())) {
+			if (!kubeJobs.containsKey(kj.getJobName())) {
+				// TODO Did we not just add missing jobs to kubeJobList in step 3? If this is about non-prosEO jobs, we could have
+				// removed them before.
 				kubeJobList.remove(kj.getJobName());
 			}
 		}
-		// Look whether Kubernetes job is running or has already finished without message event to Planner
-		// Walk through Kubernetes job list (to manipulate KubeJob list)
-		for (V1Job aJob : k8sJobList.getItems()) {
-			String kName = aJob.getMetadata().getName();
-			KubeJob kj = kubeJobList.get(kName);
-			if (kj != null && !getProductionPlanner().getFinishThreads().containsKey(kName)) {
-				if (kj.updateFinishInfoAndDelete(kName)) {
 
-				}	
-			}			
+		// Step 5: Check if any Kubernetes job has finished without triggering a message event to the Planner
+		for (V1Job aJob : k8sJobList.getItems()) {
+			String kubeJobName = aJob.getMetadata().getName();
+			KubeJob kubeJob = kubeJobList.get(kubeJobName);
+			if (kubeJob != null && !getProductionPlanner().getFinishThreads().containsKey(kubeJobName)) {
+				kubeJob.updateFinishInfoAndDelete(kubeJobName);
+			}
 		}
-		// get all job steps of DB with states RUNNING
+
+		// Step 6: Update the state of job steps in the database
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
-		final String dummy = transactionTemplate.execute((status) -> {
+		transactionTemplate.execute((status) -> {
+
 			List<de.dlr.proseo.model.JobStep.JobStepState> jobStepStates = new ArrayList<>();
 			jobStepStates.add(de.dlr.proseo.model.JobStep.JobStepState.RUNNING);
-			List<JobStep> runningJobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(processingFacility.getId(), jobStepStates);
-			// These job steps has to be in Kubernetes job list. If not, there was a problem. Set it to failed.
-			for (JobStep js : runningJobSteps) {
-				String aName = ProductionPlanner.jobNamePrefix + js.getId();
-				// If no job with this name is running, change state to FAILED and set info in log
-				if (!kJobs.containsKey(aName)) {
-					Product jsp = js.getOutputProduct();
-					Boolean wasFailed = true;
+			List<JobStep> runningJobSteps = RepositoryService.getJobStepRepository()
+				.findAllByProcessingFacilityAndJobStepStateIn(processingFacility.getId(), jobStepStates);
 
-					if (jsp != null) {
-						// collect output products
-						List<Product> jspList = new ArrayList<Product>();
-						UtilService.getJobStepUtil().collectProducts(jsp, jspList);
-						if (UtilService.getJobStepUtil().checkProducts(jspList, js.getJob().getProcessingFacility())) {
-							js.setJobStepState(JobStepState.COMPLETED);
+			// These job steps have to be in the Kubernetes job list. If not, there was a problem. Set it to failed.
+			for (JobStep jobStep : runningJobSteps) {
+				String jobName = ProductionPlanner.jobNamePrefix + jobStep.getId();
+
+				// If no job with this name is running, change state to FAILED and set info in log
+				if (!kubeJobs.containsKey(jobName)) {
+					Product outputProduct = jobStep.getOutputProduct();
+					boolean wasFailed = true;
+
+					if (outputProduct != null) {
+						// Check whether the expected products were already generated
+						List<Product> collectedProducts = new ArrayList<>();
+						UtilService.getJobStepUtil().collectProducts(outputProduct, collectedProducts);
+						if (UtilService.getJobStepUtil()
+							.checkProducts(collectedProducts, jobStep.getJob().getProcessingFacility())) {
+							jobStep.setJobStepState(JobStepState.COMPLETED);
 							wasFailed = false;
 						} else {
-							js.setJobStepState(JobStepState.FAILED);
+							jobStep.setJobStepState(JobStepState.FAILED);
 						}
 					} else {
-						js.setJobStepState(JobStepState.FAILED);
+						jobStep.setJobStepState(JobStepState.FAILED);
 					}
 
-					js.incrementVersion();
-					String stdout = js.getProcessingStdOut();
+					jobStep.incrementVersion();
+
+					// Save the information on what happened
+					String stdout = jobStep.getProcessingStdOut();
 					if (stdout == null) {
 						stdout = "";
 					}
 					if (wasFailed) {
-						js.setProcessingStdOut("Job on Processing Facility was deleted/canceled by others (e.g. operator) or crashed\n\n" + stdout);
+						jobStep.setProcessingStdOut(
+								"Job on Processing Facility was deleted/canceled by others (e.g. operator) or crashed\n\n"
+										+ stdout);
 					}
-					js = RepositoryService.getJobStepRepository().save(js);
-					UtilService.getJobStepUtil().checkFinish(js);
-				}			
-			}	
+					jobStep = RepositoryService.getJobStepRepository().save(jobStep);
+
+					// Check whether the job step is now finished, potentially do something accordingly
+					UtilService.getJobStepUtil().checkFinish(jobStep);
+				}
+			}
+
 			return null;
 		});
 	}
+
 	/**
-	 * Retrieve all pods of cluster
-	 * 
-	 * @return List of pods
+	 * Retrieves the list of pods in the cluster.
+	 *
+	 * @return the list of pods
 	 */
 	public V1PodList getPodList() {
-		V1PodList list = null;
+		V1PodList podList = null;
+
 		try {
-			list = apiV1.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
+			podList = apiV1.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
 		} catch (ApiException e) {
-			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
-			return null;
+			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 		}
-		return list;
+
+		return podList;
 	}
 
 	/**
-	 * Retrieve all jobs of cluster
-	 * 
-	 * @return List of jobs
+	 * Retrieves the list of jobs in the cluster.
+	 *
+	 * @return the list of jobs
 	 */
 	public V1JobList getJobList() {
-		V1JobList list = null;
+		V1JobList jobList = null;
+
 		try {
-			list =  batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
-			
+			jobList = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
 		} catch (ApiException e) {
-			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
-			return null;
+			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 		}
-		return list;
+
+		return jobList;
 	}
 
 	/**
-	 * Create a new job on cluster
-	 * 
-	 * @param name of new job
-	 * @return new job or null
+	 * Creates a new job on the cluster with the specified name and log levels.
+	 *
+	 * @param name           the name of the new job
+	 * @param stdoutLogLevel the log level for stdout
+	 * @param stderrLogLevel the log level for stderr
+	 * @return the created job or null
 	 */
 	@Transactional
 	public KubeJob createJob(String name, String stdoutLogLevel, String stderrLogLevel) {
-		if (logger.isTraceEnabled()) logger.trace(">>> createJob({}, {}, {})", name, stdoutLogLevel, stderrLogLevel);
-		
-		KubeJob aJob = new KubeJob(Long.parseLong(name), DUMMY_JOF_FILENAME);
+		if (logger.isTraceEnabled())
+			logger.trace(">>> createJob({}, {}, {})", name, stdoutLogLevel, stderrLogLevel);
+
+		KubeJob newJob = new KubeJob(Long.parseLong(name), DUMMY_JOF_FILENAME);
+
 		try {
-			aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
+			newJob = newJob.createJob(this, stdoutLogLevel, stderrLogLevel);
+		} catch (RuntimeException e) {
+			logger.log(PlannerMessage.JOB_CREATION_FAILED, e.getClass() + " - " + e.getMessage());
+
+			newJob = null;
 		} catch (Exception e) {
-			if (e instanceof RuntimeException) {
-				// We did not throw this one!
-				logger.log(PlannerMessage.JOB_CREATION_FAILED, e);
+			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+
+			if (logger.isDebugEnabled()) {
+				logger.debug("An exception occurred. Cause: ", e);
 			}
-			aJob = null;
+
+			newJob = null;
 		}
-		if (aJob != null) {
-			kubeJobList.put(aJob.getJobName(), aJob);
+
+		if (newJob != null) {
+			kubeJobList.put(newJob.getJobName(), newJob);
 		}
-		return aJob;
+
+		return newJob;
 	}
 
 	/**
-	 * Create a new job on cluster
-	 * 
-	 * @param id the job ID
-	 * @param stdoutLogLevel the log level to set for stdout
-	 * @param stderrLogLevel the log level to set for stderr
-	 * @return
+	 * Creates a new job on the cluster with the specified ID and log levels.
+	 *
+	 * @param id             the ID of the job
+	 * @param stdoutLogLevel the log level for stdout
+	 * @param stderrLogLevel the log level for stderr
+	 * @return the created job or null
 	 */
 	@Transactional
 	public KubeJob createJob(long id, String stdoutLogLevel, String stderrLogLevel) {
-		if (logger.isTraceEnabled()) logger.trace(">>> createJob({}, {}, {})", id, stdoutLogLevel, stderrLogLevel);
-		
-		KubeJob aJob = new KubeJob(id, DUMMY_JOF_FILENAME);
+		if (logger.isTraceEnabled())
+			logger.trace(">>> createJob({}, {}, {})", id, stdoutLogLevel, stderrLogLevel);
+
+		KubeJob newJob = new KubeJob(id, DUMMY_JOF_FILENAME);
+
 		try {
-			aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
+			newJob = newJob.createJob(this, stdoutLogLevel, stderrLogLevel);
 		} catch (Exception e) {
-			aJob = null;
+			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+
+			if (logger.isDebugEnabled()) {
+				logger.debug("An exception occurred. Cause: ", e);
+			}
+
+			newJob = null;
 		}
-		if (aJob != null) {
-			kubeJobList.put(aJob.getJobName(), aJob);
+
+		if (newJob != null) {
+			kubeJobList.put(newJob.getJobName(), newJob);
 		}
-		return aJob;
+
+		return newJob;
 	}
 
 	/**
-	 * Delete a job from cluster
-	 * 
-	 * @param aJob to delete
-	 * @return true after success, otherwise false
+	 * Deletes a job from the cluster.
+	 *
+	 * @param jobToDelete the job to delete
+	 * @return true if the job was successfully deleted, otherwise false
 	 */
-	public boolean deleteJob(KubeJob aJob) {
-		if (logger.isTraceEnabled()) logger.trace(">>> deleteJob({})", (null == aJob ? "null" : aJob.getJobId()));
-		
-		if (aJob != null) {
-			return (deleteJob(aJob.getJobName()));
+	public boolean deleteJob(KubeJob jobToDelete) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteJob({})", (null == jobToDelete ? "null" : jobToDelete.getJobId()));
+
+		if (jobToDelete != null) {
+			return (deleteJob(jobToDelete.getJobName()));
 		} else {
 			return false;
 		}
 	}
 
 	/**
-	 * Delete a named job from cluster
-	 * 
-	 * @param name of job to delete
-	 * @return true after success, otherwise false
+	 * Deletes a named job from the cluster.
+	 *
+	 * @param name the name of the job to delete
+	 * @return true if the job was successfully deleted, otherwise false
 	 */
 	public boolean deleteJob(String name) {
-		if (logger.isTraceEnabled()) logger.trace(">>> deleteJob({})", name);
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteJob({})", name);
+
+		// Configure deletion options
 		V1DeleteOptions opt = new V1DeleteOptions();
 		opt.setApiVersion("batchV1");
 		opt.setPropagationPolicy("Foreground");
 		opt.setGracePeriodSeconds((long) 0);
+
+		// Attempt deletion
 		try {
 			batchApiV1.deleteNamespacedJob(name, namespace, "false", null, 0, null, "Foreground", opt);
 		} catch (Exception e) {
-			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
-				// nothing to do 
-				// cause there is a bug in Kubernetes API
-			} else if (e instanceof ApiException) {
-				if (((ApiException) e).getCode() == HttpStatus.NOT_FOUND.value()) {
-					// Already gone (for whatever reason, maybe Kubernetes breakdown, maybe manual intervention)
-					return true;
-				} else {
-					e.printStackTrace();
-					return false;
-				}
-			} else {
-				e. printStackTrace();
-				return false;
+			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+
+			if ((e instanceof ApiException && ((ApiException) e).getCode() == HttpStatus.NOT_FOUND.value())
+					|| e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException) {
+				// Nothing to do, because there is a bug in Kubernetes API (IllegalState) or the job is already gone (Api)
+				return true;
 			}
+
+			if (logger.isDebugEnabled()) {
+				logger.debug("An exception occurred. Cause: ", e);
+			}
+
+			return false;
 		} finally {
 			kubeJobList.remove(name);
 		}
+
 		return true;
-	}
-	
-	/**
-	 * Retrieve a Kubernetes job
-	 * 
-	 * @param name of job
-	 * @return job found or null
-	 */
-	public V1Job getV1Job(String name) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getV1Job({})", name);
-		
-		V1Job aV1Job = null;
-		int i = 0;
-		while (i < 10 && aV1Job == null) {
-			i++;
-			try {
-				aV1Job = batchApiV1.readNamespacedJob(name, namespace, null, null, null);
-			} catch (ApiException e) {
-				if (e.getCode() == 404) {
-					// do nothing
-					logger.log(PlannerMessage.KUBECONFIG_JOB_NOT_FOUND, name);
-					i = 10;
-				} else {
-					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
-				}
-			} catch (Exception e) {
-				if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
-					// nothing to do 
-					// cause there is a bug in Kubernetes API
-				} else {
-					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
-				}
-			}
-			if ((i < 10 && aV1Job == null)) {
-				try {
-					Thread.sleep(100);
-				} catch (InterruptedException e1) {
-					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e1);
-				}
-			}
-		}
-		return aV1Job;
-	}
-	/**
-	 * Retrieve a Kubernetes Pod
-	 * 
-	 * @param name of Pod
-	 * @return pod found or null
-	 */
-	public V1Pod getV1Pod(String name) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getV1Pod({})", name);
-		
-		V1Pod aV1Pod = null;
-		int i = 0;
-		while (i < 10 && aV1Pod == null) {
-			i++;
-			try {
-				aV1Pod = apiV1.readNamespacedPod(name, namespace, null, null, null);
-			} catch (Exception e) {
-				if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
-					// nothing to do 
-					// cause there is a bug in Kubernetes API
-				} else if (e instanceof ApiException && ((ApiException) e).getCode() == 404) {
-					// pod not found
-					i = 10;
-				} else {
-					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
-				}
-			}
-			if ((i < 10 && aV1Pod == null)) {
-				try {
-					Thread.sleep(100);
-				} catch (InterruptedException e1) {
-					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e1);
-				}
-			}
-		}
-		return aV1Pod;
 	}
 
 	/**
-	 * @return namespace
+	 * Retrieves a Kubernetes job with the specified name.
+	 *
+	 * @param name the name of the job
+	 * @return the job found or null
+	 */
+	public V1Job getV1Job(String name) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getV1Job({})", name);
+
+		V1Job foundJob = null;
+		int retryNumber = 0;
+
+		while (retryNumber < 10 && foundJob == null) {
+			retryNumber++;
+
+			try {
+				foundJob = batchApiV1.readNamespacedJob(name, namespace, null, null, null);
+			} catch (ApiException e) {
+				if (e.getCode() == 404) {
+					logger.log(PlannerMessage.KUBECONFIG_JOB_NOT_FOUND, name);
+					retryNumber = 10;
+				} else {
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+				}
+			} catch (Exception e) {
+				if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException) {
+					// Nothing to do, as there is a bug in the Kubernetes API
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+				}
+
+				logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+
+				if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred: ", e);
+				}
+			}
+
+			if ((retryNumber < 10 && foundJob == null)) {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+				}
+			}
+		}
+
+		return foundJob;
+	}
+
+	/**
+	 * Retrieves a Kubernetes pod with the specified name.
+	 *
+	 * @param name the name of the pod
+	 * @return the pod found or null
+	 */
+	public V1Pod getV1Pod(String name) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getV1Pod({})", name);
+
+		V1Pod retrievedPod = null;
+		int retryNumber = 0;
+
+		while (retryNumber < 10 && retrievedPod == null) {
+			retryNumber++;
+			
+			try {
+				retrievedPod = apiV1.readNamespacedPod(name, namespace, null, null, null);
+			} catch (Exception e) {
+				if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException) {
+					// Nothing to do, as there is a bug in the Kubernetes API
+				} else if (e instanceof ApiException && ((ApiException) e).getCode() == 404) {
+					// Pod not found
+					retryNumber = 10;
+				} else {
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+				}
+			}
+			
+			if ((retryNumber < 10 && retrievedPod == null)) {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+				}
+			}
+		}
+
+		return retrievedPod;
+	}
+
+	/**
+	 * Retrieves the namespace.
+	 *
+	 * @return the namespace
 	 */
 	public String getNamespace() {
 		return namespace;
 	}
 
 	/**
-	 * @return id
+	 * Retrieves the ID.
+	 *
+	 * @return the ID
 	 */
 	public String getId() {
 		return id;
 	}
 
 	/**
-	 * @return longId
+	 * Retrieves the long ID.
+	 *
+	 * @return the long ID
 	 */
 	public long getLongId() {
 		return longId;
 	}
 
 	/**
-	 * @return version
+	 * Retrieves the version.
+	 *
+	 * @return the version
 	 */
 	public long getVersion() {
 		return version;
 	}
-	
+
 	/**
-	 * @return url
+	 * Retrieves the URL.
+	 *
+	 * @return the URL
 	 */
 	public String getUrl() {
 		return url;
 	}
-	
+
 	/**
-	 * @return url
+	 * Retrieves the processing engine URL.
+	 *
+	 * @return the processing engine URL
 	 */
 	public String getProcessingEngineUrl() {
 		return url;
 	}
-	
+
 	/**
-	 * @return description
+	 * Retrieves the description.
+	 *
+	 * @return the description
 	 */
 	public String getDescription() {
 		return description;
 	}
-	
+
 	/**
+	 * Retrieves the facility state.
+	 *
 	 * @return the facility state
 	 */
 	public FacilityState getFacilityState() {
@@ -843,6 +966,8 @@ public class KubeConfig {
 	}
 
 	/**
+	 * Sets the facility state.
+	 *
 	 * @param facilityState the facility state to set
 	 */
 	public void setFacilityState(FacilityState facilityState) {
@@ -850,80 +975,102 @@ public class KubeConfig {
 	}
 
 	/**
-	 * Delete a job
-	 * 
-	 * @param name of pod/job
-	 * @return true after success, otherwise false
+	 * Deletes a job.
+	 *
+	 * @param name the name of the pod/job
+	 * @return true if the job was successfully deleted, otherwise false
 	 */
 	public boolean deletePodNamed(String name) {
-		if (logger.isTraceEnabled()) logger.trace(">>> deletePodNamed({})", name);
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deletePodNamed({})", name);
+
 		if (this.isConnected()) {
 			return this.deleteJob(name);
 		}
 		return false;
 	}
-	
+
 	/**
-	 * Delete all pods of status
-	 * 
-	 * @param status of pods to delete
-	 * @return true after success, otherwise false
+	 * Deletes all pods with the specified status.
+	 *
+	 * @param status the status of the pods to delete
+	 * @return true if the pods were successfully deleted, otherwise false
 	 */
 	public boolean deletePodsStatus(String status) {
-		if (logger.isTraceEnabled()) logger.trace(">>> deletePodsStatus({})", status);
-		
-		if (this.isConnected()) {		 
-			V1JobList list = this.getJobList();
-			if (list != null) {
-				for (V1Job item : list.getItems()) {
-					PodKube pk = new PodKube(item);
-					if (pk != null && pk.hasStatus(status)) {
-						this.deleteJob(pk.getName());
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deletePodsStatus({})", status);
+
+		// Check if the Kubernetes cluster is connected
+		if (this.isConnected()) {
+			// Get the list of jobs in the cluster
+			V1JobList jobList = this.getJobList();
+
+			if (jobList != null) {
+				for (V1Job job : jobList.getItems()) {
+					// Create a PodKube object from the job
+					PodKube podKube = new PodKube(job);
+
+					// Check if the PodKube object is not null and has the specified status
+					if (podKube != null && podKube.hasStatus(status)) {
+						// Delete the job (which corresponds to the pod)
+						this.deleteJob(podKube.getName());
 					}
 				}
+				// Pods with the specified status have been successfully deleted
 				return true;
 			}
 		}
+
 		return false;
 	}
-	
+
 	/**
-	 * Search ready worker nodes on Kubernetes cluster
-	 * 
-	 * @return true if at least one worker node is ready
+	 * Searches for ready worker nodes on the Kubernetes cluster.
+	 *
+	 * @return true if at least one worker node is ready, otherwise false
 	 */
 	public boolean getNodeInfo() {
-		if (logger.isTraceEnabled()) logger.trace(">>> getNodeInfo()");
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getNodeInfo()");
+
 		kubeNodes = null;
 		workerCnt = 0;
+
 		try {
+			// Retrieve the list of nodes from the Kubernetes API
 			kubeNodes = apiV1.listNode(null, null, null, null, null, null, null, null, null, null);
+
 			if (kubeNodes != null) {
 				for (V1Node node : kubeNodes.getItems()) {
 					if (node.getSpec() != null) {
 						if (node.getSpec().getTaints() != null) {
+							// Check the taints of the node and exclude nodes with specific taint effects
 							for (V1Taint taint : node.getSpec().getTaints()) {
 								if (taint.getEffect() != null) {
-									if (!taint.getEffect().equalsIgnoreCase("NoSchedule") && !taint.getEffect().equalsIgnoreCase("NoExecute")) {
+									if (!taint.getEffect().equalsIgnoreCase("NoSchedule")
+											&& !taint.getEffect().equalsIgnoreCase("NoExecute")) {
+										// Increment the worker count as the node is ready
 										workerCnt++;
 									}
 								}
 							}
 						} else {
+							// Increment the worker count as the node is ready
 							workerCnt++;
 						}
 					} else {
+						// Increment the worker count as the node is ready
 						workerCnt++;
 					}
-				}						
+				}
 			}
 		} catch (ApiException e) {
-			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e);
+			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 			return false;
 		}
-		
+
+		// Return true if at least one worker node is ready
 		return workerCnt > 0;
 	}
+
 }

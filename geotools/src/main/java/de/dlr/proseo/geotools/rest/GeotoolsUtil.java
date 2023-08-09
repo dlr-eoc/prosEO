@@ -528,7 +528,9 @@ public class GeotoolsUtil {
 							} catch (ParseException e) {
 								// If there's an error parsing the geometry (not expected), print the stack
 								// trace
-								e.printStackTrace();
+								if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 							}
 						}
 					}

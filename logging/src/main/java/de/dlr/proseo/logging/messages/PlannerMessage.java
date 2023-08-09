@@ -147,7 +147,7 @@ public enum PlannerMessage implements ProseoMessage {
 	HTTP_REQUEST						(4130, Level.INFO, true, "HTTP-Request: {0}", ""),
 	HTTP_RESPONSE						(4131, Level.INFO, true, "... response is {0}", ""),
 	SENDING_JOB_EXCEPTION				(4132, Level.ERROR, false, "Exception sending job order to Storage Manager: {0}", ""),
-	JOB_CREATION_FAILED					(4133, Level.ERROR, false, "Job creation failed with exception: ", ""),
+	JOB_CREATION_FAILED					(4133, Level.ERROR, false, "Job creation failed with exception: {0}", ""),
 	FACILITY_CONNECTION_FAILED			(4134, Level.ERROR, false, "Could not connect with facility {0}", ""),
 	CONFIGURATION_ACCESS_FAILED			(4135, Level.INFO, true, "Cannot access Kubernetes Configuration file: {0}", ""),
 	MALFORMED_HOST_ALIAS				(4136, Level.WARN, true, "Found malformed host alias parameter {0}", ""),
