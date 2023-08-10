@@ -55,7 +55,7 @@ public class UserControllerImplTest {
 	/** Test password */
 	private static final String TEST_PASSWORD = "$2a$04$nXMQTg2ZMY6k8yDvL5jD2.lthiKrmWZpOVgyu0l7tbm.JKKzyRpQW";
 
-	/** The WorkflowControllerImpl under test */
+	/** The UserControllerImpl under test */
 	@Autowired
 	private UserControllerImpl uci;
 

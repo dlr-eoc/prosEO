@@ -52,7 +52,7 @@ public class GroupControllerImplTest {
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(GroupControllerImplTest.class);
 
-	/** The WorkflowControllerImpl under test */
+	/** The GroupControllerImpl under test */
 	@Autowired
 	private GroupControllerImpl gci;
 
