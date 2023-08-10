@@ -447,6 +447,7 @@ public class UserManager {
 		}
 
 		// Apply changed attributes (no change of the username allowed)
+		// TODO Maybe log something if a change in name was attempted.
 		User changedUser = toModelUser(restUser);
 
 		boolean userChanged = false;
@@ -496,6 +497,9 @@ public class UserManager {
 		}
 		if (null == modelUser.getQuota() && null != changedUser.getQuota() || null != modelUser.getQuota()
 				&& !modelUser.getQuota().getAssigned().equals(changedUser.getQuota().getAssigned())) {
+			if (null == modelUser.getQuota())
+				modelUser.setQuota(new Quota());
+			
 			userChanged = true;
 			modelUser.getQuota().setAssigned(changedUser.getQuota().getAssigned());
 			// "used" and "lastAccessDate" cannot be changed, because they are managed
@@ -503,6 +507,7 @@ public class UserManager {
 		}
 
 		// Apply changed authorities
+		// TODO Should the authorities be validated? 
 		Set<Authority> newAuthorities = new HashSet<>();
 		for (Authority modelAuthority : modelUser.getAuthorities()) {
 			boolean authorityChanged = true;
