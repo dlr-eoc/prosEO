@@ -6,7 +6,6 @@
 package de.dlr.proseo.planner.util;
 
 import java.math.BigInteger;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -17,30 +16,25 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import java.time.Duration;
 import java.time.Instant;
-
+import java.time.temporal.ChronoUnit;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
-import de.dlr.proseo.logging.messages.OdipMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.model.Job;
@@ -1470,30 +1464,75 @@ public class JobStepUtil {
 			user = ((OrderReleaseThread) Thread.currentThread()).getUser();
 			pw = ((OrderReleaseThread) Thread.currentThread()).getPw();
 		}
-		try {
-			if (logger.isTraceEnabled()) logger.trace("  {}{})", config.getAipUrl(),
-					URI_PATH_DOWNLOAD_ALLBYTIME + "?productType=" + pq.getRequestedProductClass().getProductType() + "&startTime=" + OrbitTimeFormatter.format(startTime)
-					+ "&stopTime=" + OrbitTimeFormatter.format(stopTime) + "&facility=" 
-					+ pq.getJobStep().getJob().getProcessingFacility().getName());
-			@SuppressWarnings("unchecked")
-			List<RestProduct> restProducts = (List<RestProduct>) serviceConnection.getFromService(
-					config.getAipUrl(),
-					URI_PATH_DOWNLOAD_ALLBYTIME + "?productType=" + pq.getRequestedProductClass().getProductType() + "&startTime=" + OrbitTimeFormatter.format(startTime)
-							+ "&stopTime=" + OrbitTimeFormatter.format(stopTime) + "&facility=" 
-							+ pq.getJobStep().getJob().getProcessingFacility().getName(),
-					RestProduct.class,
-					user, 
-					pw);
-		} catch (HttpClientErrorException e) {
-			if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-				// nothing to do, perhaps it is optional
-			} else {
-				String message = logger.log(OdipMessage.MSG_EXCEPTION, e.getMessage(), e);
+		Boolean retry = false;
+		for (SimplePolicy simplePolicy : pq.getGeneratingRule().getSimplePolicies()) {
+			// simple interpretation of policies
+			switch (simplePolicy.getPolicyType()) {
+			case LatestValidity:
+			case LatestStartValidity:
+				retry = true;
+				break;
+			case LatestStopValidity:
+				retry = true;
+				break;
+			case ClosestStartValidity:
+			case LatestValidityClosest:
+				retry = true;
+				break;
+			case ClosestStopValidity:
+				retry = true;
+				break;
+			case LatestValCover:
+				break;
+			case ValIntersect:
+			case ValIntersectWithoutDuplicates:
+				break;
+			case LatestValIntersect:
+				break;
+			case LastCreated:
+				break;
+			default:
+				break;
+			}
+		}
+		Integer retryCount = 1;
+		if (retry) {
+			retryCount = 10;
+		}
+		while (retryCount > 0) {
+			try {
+				if (logger.isTraceEnabled()) logger.trace("  {}{})", config.getAipUrl(),
+						URI_PATH_DOWNLOAD_ALLBYTIME + "?productType=" + pq.getRequestedProductClass().getProductType() + "&startTime=" + OrbitTimeFormatter.format(startTime)
+						+ "&stopTime=" + OrbitTimeFormatter.format(stopTime) + "&facility=" 
+						+ pq.getJobStep().getJob().getProcessingFacility().getName());
+				@SuppressWarnings("unchecked")
+				RestProduct[] restProducts = (RestProduct[]) serviceConnection.getFromService(
+						config.getAipUrl(),
+						URI_PATH_DOWNLOAD_ALLBYTIME + "?productType=" + pq.getRequestedProductClass().getProductType() + "&startTime=" + OrbitTimeFormatter.format(startTime)
+						+ "&stopTime=" + OrbitTimeFormatter.format(stopTime) + "&facility=" 
+						+ pq.getJobStep().getJob().getProcessingFacility().getName(),
+						RestProduct[].class,
+						user, 
+						pw);
+				// products found, break retry loop
+				break;
+			} catch (HttpClientErrorException e) {
+				if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+					if (retry) {
+						// expand time range to find input product(s)
+						// TODO: to discuss
+						startTime = startTime.minus(1, ChronoUnit.DAYS);
+						stopTime = stopTime.plus(1, ChronoUnit.DAYS);
+					}
+				} else {
+					String message = logger.log(PlannerMessage.MSG_EXCEPTION, e.getMessage(), e);
+					// throw new Exception(message);
+				}
+			} catch (Exception e) {
+				String message = logger.log(PlannerMessage.MSG_EXCEPTION, e.getMessage(), e);
 				// throw new Exception(message);
 			}
-		} catch (Exception e) {
-			String message = logger.log(OdipMessage.MSG_EXCEPTION, e.getMessage(), e);
-			// throw new Exception(message);
+			retryCount--;
 		}
 	}
 	

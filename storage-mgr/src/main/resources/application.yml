@@ -24,9 +24,9 @@ proseo:
 
     posix:
       # Mount point for backend storage (must be different from cachePath)
-      backendPath: /proseo/testdata/backend
+      backendPath: /proseo/data/backend
       # Mount point for file cache
-      cachePath: /proseo/testdata/cache
+      cachePath: /proseo/data/cache
       
     joborder:
       bucket: internal
