@@ -1087,12 +1087,12 @@ public class WorkflowMgr {
 							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "In outputParameter, parameter value"));
 				}
 
-				// Check whether the new outputParameter is in fact an old
-				// outputParameter
+				// Check whether the new outputParameter is in fact an old outputParameter
 				if (modelWorkflow.getOutputParameters().containsKey(restOutputParameter.getKey())) {
 					modelOutputParameter = modelWorkflow.getOutputParameters().get(restOutputParameter.getKey());
 				} else {
 					isNew = true;
+					modelOutputParameter = new Parameter();
 				}
 
 				// Potentially override old values
