@@ -51,6 +51,9 @@ proseo:
     notification:
         # URL for notification service
         url: http://proseo-notification/proseo/notification/v0.1
+    aip:
+        # URL for AIP client
+        url: http://proseo-aip-client/proseo/api/aip-client/v0.1
     posix:
         workerMountPoint: /proseo/data
         
