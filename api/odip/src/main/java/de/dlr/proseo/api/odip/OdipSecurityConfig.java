@@ -43,7 +43,7 @@ public class OdipSecurityConfig extends WebSecurityConfigurerAdapter {
 			.antMatchers("/**/actuator/health")
 			.permitAll()
 			.anyRequest()
-			.hasAnyRole(UserRole.WORKFLOW_MGR.toString())
+			.hasAnyRole(UserRole.PROCESSOR_READER.toString())
 			.and()
 			.csrf()
 			.disable(); // Required for POST requests (or configure CSRF)
