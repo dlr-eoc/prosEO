@@ -29,8 +29,8 @@ import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.service.RepositoryService;
 
 /**
- * Service methods required to create, modify and delete processing facility in
- * the prosEO database, and to query the database about such facilities
+ * Service methods required to create, modify and delete processing facility in the prosEO database, and to query the database about
+ * such facilities
  * 
  * @author Ranjitha Vignesh
  */
@@ -59,6 +59,9 @@ public class FacmgrManager {
 		if (null == restFacility) {
 			throw new IllegalArgumentException(logger.log(FacilityMgrMessage.FACILITY_MISSING));
 		}
+		if (null == restFacility.getName() || restFacility.getName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "name", "facility creation"));
+		}
 
 		// Make sure the facility does not yet exist
 		ProcessingFacility modelFacility = RepositoryService.getFacilityRepository().findByName(restFacility.getName());
@@ -82,6 +85,7 @@ public class FacmgrManager {
 				throw new IllegalArgumentException(
 						logger.log(GeneralMessage.FIELD_NOT_SET, "ExternalStorageManagerUrl", "facility creation"));
 			}
+			// TODO Set to storage manager URL if empty?
 		}
 		if (null == modelFacility.getStorageManagerUser() || modelFacility.getStorageManagerUser().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "StorageManagerUser", "facility creation"));
@@ -94,7 +98,7 @@ public class FacmgrManager {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "DefaultStorageType"));
 		}
 
-		// Save and return the new faciltiy
+		// Save and return the new facility
 		modelFacility = RepositoryService.getFacilityRepository().save(modelFacility);
 
 		logger.log(FacilityMgrMessage.FACILITY_CREATED, restFacility.getName());
@@ -107,8 +111,7 @@ public class FacmgrManager {
 	 * 
 	 * @param name the name of the facility
 	 * @return a list of facilities matching mission and name
-	 * @throws NoResultException if no facilities matching the given search criteria
-	 *                           could be found
+	 * @throws NoResultException if no facilities matching the given search criteria could be found
 	 */
 	public List<RestProcessingFacility> getFacility(String name) throws NoResultException {
 		if (logger.isTraceEnabled())
@@ -191,20 +194,15 @@ public class FacmgrManager {
 	}
 
 	/**
-	 * Update the facility with the given ID with the attribute values of the given
-	 * Json object. Unchanged values must be provided, too, or they will be changed
-	 * to null.
+	 * Update the facility with the given ID with the attribute values of the given Json object. Unchanged values must be provided,
+	 * too, or they will be changed to null.
 	 * 
 	 * @param id           the ID of the facility to update
-	 * @param restFacility a Json object containing the modified and unmodified
-	 *                     attributes
-	 * @return a Json object corresponding to the facility after modification (with
-	 *         ID and version for all contained objects)
-	 * @throws EntityNotFoundException         if no facility with the given ID
-	 *                                         exists
+	 * @param restFacility a Json object containing the modified and unmodified attributes
+	 * @return a Json object corresponding to the facility after modification (with ID and version for all contained objects)
+	 * @throws EntityNotFoundException         if no facility with the given ID exists
 	 * @throws IllegalArgumentException        if any of the input data was invalid
-	 * @throws ConcurrentModificationException if the facility has been modified
-	 *                                         since retrieval by the client
+	 * @throws ConcurrentModificationException if the facility has been modified since retrieval by the client
 	 */
 	public RestProcessingFacility modifyFacility(Long id, RestProcessingFacility restFacility)
 			throws IllegalArgumentException, EntityNotFoundException, ConcurrentModificationException {
@@ -227,25 +225,26 @@ public class FacmgrManager {
 		ProcessingFacility modelFacility = optModelFacility.get();
 
 		// Check that mandatory attributes are set
-		if (null == modelFacility.getStorageManagerUrl() || modelFacility.getStorageManagerUrl().isBlank()) {
+		if (null == restFacility.getStorageManagerUrl() || restFacility.getStorageManagerUrl().isBlank()) {
 			throw new IllegalArgumentException(
 					logger.log(GeneralMessage.FIELD_NOT_SET, "StorageManagerUrl", "facility modifcation"));
 		}
-		if (null == modelFacility.getExternalStorageManagerUrl() || modelFacility.getExternalStorageManagerUrl().isBlank())
-			if (null == modelFacility.getStorageManagerUrl()) {
+		if (null == restFacility.getExternalStorageManagerUrl() || restFacility.getExternalStorageManagerUrl().isBlank())
+			if (null == restFacility.getStorageManagerUrl()) {
 				throw new IllegalArgumentException(
 						logger.log(GeneralMessage.FIELD_NOT_SET, "ExternalStorageManagerUrl", "facility modifcation"));
 			}
-		if (null == modelFacility.getStorageManagerUser() || modelFacility.getStorageManagerUser().isBlank()) {
+		if (null == restFacility.getStorageManagerUser() || restFacility.getStorageManagerUser().isBlank()) {
 			throw new IllegalArgumentException(
 					logger.log(GeneralMessage.FIELD_NOT_SET, "StorageManagerUser", "facility modifcation"));
 		}
-		if (null == modelFacility.getStorageManagerPassword()) {
+		if (null == restFacility.getStorageManagerPassword()) {
 			throw new IllegalArgumentException(
 					logger.log(GeneralMessage.FIELD_NOT_SET, "StorageManagerPassword", "facility modifcation"));
 		}
-		if (null == modelFacility.getDefaultStorageType() || modelFacility.getStorageManagerPassword().isBlank()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "DefaultStorageType"));
+		if (null == restFacility.getDefaultStorageType() || restFacility.getStorageManagerPassword().isBlank()) {
+			throw new IllegalArgumentException(
+					logger.log(GeneralMessage.FIELD_NOT_SET, "DefaultStorageType", "facility modification"));
 		}
 
 		// Update modified attributes and keep track of change status
@@ -256,6 +255,7 @@ public class FacmgrManager {
 		if (!modelFacility.getName().equals(changedFacility.getName())) {
 			facilityChanged = true;
 			modelFacility.setName(changedFacility.getName());
+			// TODO Is that indeed allowed?
 		}
 		if (!modelFacility.getDescription().equals(changedFacility.getDescription())) {
 			facilityChanged = true;
@@ -309,9 +309,9 @@ public class FacmgrManager {
 
 		// Check for concurrent modification
 		if (modelFacility.getVersion() != RepositoryService.getFacilityRepository().findById(id).get().getVersion()) {
-		    throw new ConcurrentModificationException(logger.log(GeneralMessage.CONCURRENT_MODIFICATION, "facility", id));
+			throw new ConcurrentModificationException(logger.log(GeneralMessage.CONCURRENT_MODIFICATION, "facility", id));
 		}
-		
+
 		// Save order only if anything was actually changed
 		if (facilityChanged) {
 			modelFacility.incrementVersion();
@@ -328,12 +328,9 @@ public class FacmgrManager {
 	 * Delete the facility with the given ID.
 	 * 
 	 * @param id the ID of the facility to delete
-	 * @throws EntityNotFoundException  if the facility to delete does not exist in
-	 *                                  the database
-	 * @throws IllegalArgumentException if the facility to delete still has stored
-	 *                                  products
-	 * @throws RuntimeException         if the deletion was not performed as
-	 *                                  expected
+	 * @throws EntityNotFoundException  if the facility to delete does not exist in the database
+	 * @throws IllegalArgumentException if the facility to delete still has stored products
+	 * @throws RuntimeException         if the deletion was not performed as expected
 	 */
 	public void deleteFacilityById(Long id) throws EntityNotFoundException, IllegalArgumentException, RuntimeException {
 		if (logger.isTraceEnabled())
