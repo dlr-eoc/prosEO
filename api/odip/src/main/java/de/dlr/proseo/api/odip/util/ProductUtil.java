@@ -136,11 +136,15 @@ public class ProductUtil {
 
 		for (RestParameter restParameter : restProduct.getParameters()) {
 			de.dlr.proseo.model.Parameter modelParameter = new de.dlr.proseo.model.Parameter();
-			try {
-				modelParameter.setParameterType(ParameterType.valueOf(restParameter.getParameterType()));
-			} catch (Exception e) {
-				throw new IllegalArgumentException(
-						logger.log(IngestorMessage.INVALID_PARAMETER_TYPE, restParameter.getParameterType()));
+			if (restParameter.getParameterType() != null && !restParameter.getParameterType().equals("null")) {
+				try {
+					modelParameter.setParameterType(ParameterType.valueOf(restParameter.getParameterType()));
+				} catch (Exception e) {
+					throw new IllegalArgumentException(
+							logger.log(IngestorMessage.INVALID_PARAMETER_TYPE, restParameter.getParameterType()));
+				}
+			} else {
+				modelParameter.setParameterType(ParameterType.STRING);
 			}
 			try {
 				switch (modelParameter.getParameterType()) {
