@@ -143,6 +143,8 @@ public class ProductUtil {
 					throw new IllegalArgumentException(
 							logger.log(IngestorMessage.INVALID_PARAMETER_TYPE, restParameter.getParameterType()));
 				}
+			} else {
+				modelParameter.setParameterType(ParameterType.STRING);
 			}
 			try {
 				switch (modelParameter.getParameterType()) {
@@ -160,9 +162,6 @@ public class ProductUtil {
 					break;
 				case INSTANT:
 					modelParameter.setInstantValue(OrbitTimeFormatter.parseDateTime(restParameter.getParameterValue()));
-					break;
-				default:
-					modelParameter.setStringValue(restParameter.getParameterValue());
 					break;
 				}
 			} catch (Exception e) {
