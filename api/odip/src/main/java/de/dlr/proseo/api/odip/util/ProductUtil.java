@@ -136,11 +136,13 @@ public class ProductUtil {
 
 		for (RestParameter restParameter : restProduct.getParameters()) {
 			de.dlr.proseo.model.Parameter modelParameter = new de.dlr.proseo.model.Parameter();
-			try {
-				modelParameter.setParameterType(ParameterType.valueOf(restParameter.getParameterType()));
-			} catch (Exception e) {
-				throw new IllegalArgumentException(
-						logger.log(IngestorMessage.INVALID_PARAMETER_TYPE, restParameter.getParameterType()));
+			if (restParameter.getParameterType() != null && !restParameter.getParameterType().equals("null")) {
+				try {
+					modelParameter.setParameterType(ParameterType.valueOf(restParameter.getParameterType()));
+				} catch (Exception e) {
+					throw new IllegalArgumentException(
+							logger.log(IngestorMessage.INVALID_PARAMETER_TYPE, restParameter.getParameterType()));
+				}
 			}
 			try {
 				switch (modelParameter.getParameterType()) {
@@ -158,6 +160,9 @@ public class ProductUtil {
 					break;
 				case INSTANT:
 					modelParameter.setInstantValue(OrbitTimeFormatter.parseDateTime(restParameter.getParameterValue()));
+					break;
+				default:
+					modelParameter.setStringValue(restParameter.getParameterValue());
 					break;
 				}
 			} catch (Exception e) {
