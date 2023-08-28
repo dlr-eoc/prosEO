@@ -15,7 +15,7 @@
     create: yes
     state: present
 
-- name: Disable rkhunter SSH root users
+- name: Disallow SSH root users
   lineinfile:
     path: /etc/rkhunter.conf
     regexp: "^ALLOW_SSH_ROOT_USER=.*"
@@ -23,10 +23,10 @@
     create: yes
     state: present
 
-- name: Disable rkhunter SSH protocol
+- name: Prevent warning for missing SSH protocol entry
   lineinfile:
     path: /etc/rkhunter.conf
     regexp: "^ALLOW_SSH_PROT_V1=.*"
-    line: "ALLOW_SSH_PROT_V1=0"
+    line: "ALLOW_SSH_PROT_V1=2"
     create: yes
     state: present
