@@ -207,6 +207,7 @@ public class OrderService {
 			String[] statesQueryParam = states.split(":");
 			uriBuilder.queryParam("state", (Object[]) statesQueryParam);
 		}
+		uriBuilder.queryParam("orderBy", "startTime ASC");
 
 		URI uri = uriBuilder.build().toUri();
 		logger.trace("URI " + uri);
