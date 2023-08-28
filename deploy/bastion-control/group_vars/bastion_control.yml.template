@@ -3,6 +3,7 @@ nginx_users:
 - proseoadmin: put_password_here
 
 rkhunter_email: <rkhunter alert email address>
+yumcron_email: <yum-cron alert email address>
 
 inner_nodes:
     - { name: brain, ip: "{{ groups['brain'][0] }}" }

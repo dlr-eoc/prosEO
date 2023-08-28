@@ -2,7 +2,8 @@
 nginx_users:
 - proseoadmin: VVRVOzcXe1PsvpWnFpqbPWoB
 
-rkhunter_email: thomas.bassler@dlr.de
+rkhunter_email: proseo-support@drbassler.de
+yumcron_email: proseo-support@drbassler.de
 
 inner_nodes:
     - { name: brain, ip: "{{ groups['brain'][0] }}" }

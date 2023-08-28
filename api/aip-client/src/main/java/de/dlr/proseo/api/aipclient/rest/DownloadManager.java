@@ -150,6 +150,7 @@ public class DownloadManager {
 	{
 		ODATA_TO_PARAMTYPE_MAP.put("String", ParameterType.STRING.toString());
 		ODATA_TO_PARAMTYPE_MAP.put("Integer", ParameterType.INTEGER.toString());
+		ODATA_TO_PARAMTYPE_MAP.put("Int64", ParameterType.INTEGER.toString());
 		ODATA_TO_PARAMTYPE_MAP.put("Double", ParameterType.DOUBLE.toString());
 		ODATA_TO_PARAMTYPE_MAP.put("Boolean", ParameterType.BOOLEAN.toString());
 		ODATA_TO_PARAMTYPE_MAP.put("DateTimeOffset", ParameterType.INSTANT.toString());
