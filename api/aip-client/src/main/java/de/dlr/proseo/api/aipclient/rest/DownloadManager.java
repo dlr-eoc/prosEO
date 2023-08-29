@@ -879,7 +879,7 @@ public class DownloadManager {
 		StringBuilder requestUrl = new StringBuilder(archive.getBaseUri());
 		requestUrl.append('/')
 			.append(archive.getContext())
-			.append('/')
+			.append(archive.getContext().isEmpty()?"":'/')
 			.append(ODATA_CONTEXT)
 			.append('/')
 			.append(ODATA_ENTITY_PRODUCTS)
