@@ -122,7 +122,7 @@ public class OrderSqlFilterExpressionVisitor implements ExpressionVisitor<String
 	 *
 	 * @return a partial SQL command string
 	 */
-	public String getSqlCommand(boolean countOnly) {
+	public String getSqlCommand(boolean countOnly, String missionCode) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getSqlCommand()");
 
