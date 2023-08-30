@@ -136,7 +136,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 			logger.trace(">>> createProcessingOrderSqlQueryFilter({})", uriInfo.getUriResourceParts());
 
 		OrderSqlFilterExpressionVisitor expressionVisitor = new OrderSqlFilterExpressionVisitor();
-		StringBuilder sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(countOnly));
+		StringBuilder sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(countOnly, securityConfig.getMission()));
 
 		// Test filter option
 		FilterOption filterOption = uriInfo.getFilterOption();
@@ -150,7 +150,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 				if (null == result) {
 					throw new NullPointerException("Unexpected null result from expressionVisitor");
 				}
-				sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(countOnly)); // The number of parameters requested
+				sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(countOnly, securityConfig.getMission())); // The number of parameters requested
 																							// may have changed!
 				sqlCommand.append(result);
 			} catch (ODataApplicationException | ExpressionVisitException e) {
@@ -184,7 +184,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 			logger.trace(">>> createWorkflowSqlQueryFilter({})", uriInfo.getUriResourceParts());
 
 		WorkflowSqlFilterExpressionVisitor expressionVisitor = new WorkflowSqlFilterExpressionVisitor();
-		StringBuilder sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(countOnly));
+		StringBuilder sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(countOnly, securityConfig.getMission()));
 
 		// Test filter option
 		FilterOption filterOption = uriInfo.getFilterOption();
@@ -198,7 +198,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 				if (null == result) {
 					throw new NullPointerException("Unexpected null result from expressionVisitor");
 				}
-				sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(countOnly)); // The number of parameters requested
+				sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(countOnly, securityConfig.getMission())); // The number of parameters requested
 																							// may have changed!
 				sqlCommand.append(result);
 			} catch (ODataApplicationException | ExpressionVisitException e) {
@@ -232,7 +232,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 			logger.trace(">>> createProcessingOrderSqlQuery({})", uriInfo.getUriResourceParts());
 
 		OrderSqlFilterExpressionVisitor expressionVisitor = new OrderSqlFilterExpressionVisitor();
-		StringBuilder sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(false));
+		StringBuilder sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(false, securityConfig.getMission()));
 
 		sqlCommand = createProcessingOrderSqlQueryFilter(uriInfo, false);
 
@@ -293,7 +293,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 			logger.trace(">>> createWorkflowSqlQuery({})", uriInfo.getUriResourceParts());
 
 		WorkflowSqlFilterExpressionVisitor expressionVisitor = new WorkflowSqlFilterExpressionVisitor();
-		StringBuilder sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(false));
+		StringBuilder sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(false, securityConfig.getMission()));
 
 		sqlCommand = createWorkflowSqlQueryFilter(uriInfo, false);
 
@@ -336,7 +336,7 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 			sqlCommand.append("\nOFFSET ").append(skipOption.getValue());
 		}
 
-		logger.trace("<<< createProcessingOrderSqlQuery() -> SQL command:\n" + sqlCommand);
+		logger.trace("<<< createWorkflowSqlQuery() -> SQL command:\n" + sqlCommand);
 		return sqlCommand.toString();
 	}
 

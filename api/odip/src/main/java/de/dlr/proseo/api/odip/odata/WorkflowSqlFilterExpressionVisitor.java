@@ -46,7 +46,9 @@ import org.apache.olingo.server.api.uri.queryoption.expression.Literal;
 import org.apache.olingo.server.api.uri.queryoption.expression.Member;
 import org.apache.olingo.server.api.uri.queryoption.expression.MethodKind;
 import org.apache.olingo.server.api.uri.queryoption.expression.UnaryOperatorKind;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import de.dlr.proseo.api.odip.OdipSecurity;
 import de.dlr.proseo.api.odip.odata.AttributeLambdaExpressionVisitor.AttributeCondition;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.enums.OrderState;
@@ -69,10 +71,12 @@ public class WorkflowSqlFilterExpressionVisitor implements ExpressionVisitor<Str
 	private static final String FROM_CLAUSE = "FROM workflow p\n" + "JOIN workflow_option wo ON wo.workflow_id = p.id\n"
 			+ "LEFT OUTER JOIN product_class ipc ON p.input_product_class_id = ipc.id\n"
 			+ "LEFT OUTER JOIN product_class opc ON p.output_product_class_id = opc.id\n"
-			+ "LEFT OUTER JOIN configured_processor cp ON p.configured_processor_id = cp.id\n";
+			+ "LEFT OUTER JOIN configured_processor cp ON p.configured_processor_id = cp.id\n"
+			+ "LEFT OUTER JOIN processor proc ON cp.processor_id = proc.id\n"
+			+ "LEFT OUTER JOIN processor_class procclass ON proc.processor_class_id = procclass.id\n";
 	// "LEFT OUTER JOIN workflow_option_value_range wovr ON wo.id = wovr.workflow_option_id\n";
 	private static final String OPTION_JOIN_TEMPLATE = "LEFT OUTER JOIN workflow_option pp%d ON p.id = pp%d.workflow_id\n";
-	private static final String WHERE_CLAUSE = "WHERE ";
+	private static final String WHERE_CLAUSE = "WHERE procclass.mission_id = (SELECT id FROM mission mis WHERE mis.code = '%s') AND ";
 	private static final String OPTION_WHERE_TEMPLATE = "(pp%d.name = '%s')";
 
 	/** Mapping from OData member names to SQL schema names */
@@ -88,6 +92,11 @@ public class WorkflowSqlFilterExpressionVisitor implements ExpressionVisitor<Str
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(OrderSqlFilterExpressionVisitor.class);
+
+	/** The security utilities for the ODIP API */
+	@Autowired
+	protected OdipSecurity securityConfig;
+
 
 	/* Initialize OData-to-SQL name mapping */
 	{
@@ -107,7 +116,7 @@ public class WorkflowSqlFilterExpressionVisitor implements ExpressionVisitor<Str
 	 * @return a partial SQL command string
 	 */
 
-	public String getSqlCommand(boolean countOnly) {
+	public String getSqlCommand(boolean countOnly, String missionCode) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getSqlCommand()");
 
@@ -118,7 +127,7 @@ public class WorkflowSqlFilterExpressionVisitor implements ExpressionVisitor<Str
 			result.append(String.format(OPTION_JOIN_TEMPLATE, i, i));
 		}
 
-		result.append(WHERE_CLAUSE);
+		result.append(String.format(WHERE_CLAUSE, missionCode));
 
 		return result.toString();
 	}

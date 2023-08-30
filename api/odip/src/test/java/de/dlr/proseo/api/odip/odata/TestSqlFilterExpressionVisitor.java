@@ -114,7 +114,7 @@ public class TestSqlFilterExpressionVisitor {
 					return;
 				}
 			}
-			String sqlCommand = expressionVisitor.getSqlCommand(false) + result;
+			String sqlCommand = expressionVisitor.getSqlCommand(false, "PTM") + result;
 
 			// Test order option
 			OrderByOption orderByOption = uriInfo.getOrderByOption();
