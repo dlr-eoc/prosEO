@@ -19,5 +19,7 @@ public enum ArchiveType {
 	/** Precise Orbit Determination Interface Delivery Point (see AUXIP for reference) */
 	PODIP,
 	/** Production Service Interface Point (see "CSC – Production Interface Delivery Point Specification", ESA-EOPG-EOPGC-IF-3) */
-	PRIP
+	PRIP,
+	/** Simple (attributes are not indexed in database) Archive Interface Point (see "CSC – Long Term Archive Interface Control Document", ESA-EOPG-EOPGC-IF-2) */
+	SIMPLEAIP
 }

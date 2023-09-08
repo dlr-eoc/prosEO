@@ -38,7 +38,15 @@ import javax.persistence.NoResultException;
 import javax.transaction.Transactional;
 import javax.validation.constraints.Pattern;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.olingo.client.api.ODataClient;
+import org.apache.olingo.client.api.communication.request.retrieve.ODataEntityRequest;
 import org.apache.olingo.client.api.communication.request.retrieve.ODataEntitySetRequest;
 import org.apache.olingo.client.api.communication.response.ODataRetrieveResponse;
 import org.apache.olingo.client.api.domain.ClientEntity;
@@ -49,7 +57,6 @@ import org.apache.olingo.client.core.ODataClientFactory;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeException;
 import org.apache.olingo.commons.api.format.ContentType;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -453,9 +460,10 @@ public class DownloadManager {
 	 *
 	 * @param product  the product to convert
 	 * @param facility the processing facility to link the REST interface product to
+	 * @param attributes flag to fill attributes
 	 * @return the corresponding REST interface product
 	 */
-	private RestProduct toRestProduct(ClientEntity product, ProcessingFacility facility) {
+	private RestProduct toRestProduct(ClientEntity product, ProcessingFacility facility, Boolean attributes) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> toRestProduct({})", (null == product ? "MISSING" : product.getProperty("Id")));
 
@@ -544,39 +552,40 @@ public class DownloadManager {
 			restProduct.getProductFile().add(restProductFile);
 
 			// Gather values from "Attributes" list
-			try {
-				if (logger.isTraceEnabled())
-					logger.trace("... Attributes = {} ", product.getProperty("Attributes"));
-				if (logger.isTraceEnabled())
-					logger.trace("... collection value = {} ", product.getProperty("Attributes").getCollectionValue());
-
-				product.getProperty("Attributes").getCollectionValue().forEach(clientValue -> {
-					String attributeName = clientValue.asComplex().get("Name").getValue().toString();
-					String attributeType = clientValue.asComplex().get("ValueType").getValue().toString();
-					String attributeValue = clientValue.asComplex().get("Value").getValue().toString();
+			if (attributes) {
+				try {
 					if (logger.isTraceEnabled())
-						logger.trace("... found attribute {}", clientValue);
+						logger.trace("... Attributes = {} ", product.getProperty("Attributes"));
 					if (logger.isTraceEnabled())
-						logger.trace("    ... with Name {}", attributeName);
-					switch (attributeName) {
-					case "processingDate":
-						restProduct.setGenerationTime(OrbitTimeFormatter.format(Instant.parse(attributeValue)));
-						break;
-					case "productType":
-						restProduct.setProductClass(attributeValue);
-						break;
-					default:
-						RestParameter param = new RestParameter(attributeName, ODATA_TO_PARAMTYPE_MAP.get(attributeType),
-								attributeValue);
-						restProduct.getParameters().add(param);
-					}
+						logger.trace("... collection value = {} ", product.getProperty("Attributes").getCollectionValue());
 
-				});
-			} catch (NullPointerException e) {
-				logger.log(AipClientMessage.PRODUCT_ATTRIBUTES_MISSING, product.toString());
-				return null;
+					product.getProperty("Attributes").getCollectionValue().forEach(clientValue -> {
+						String attributeName = clientValue.asComplex().get("Name").getValue().toString();
+						String attributeType = clientValue.asComplex().get("ValueType").getValue().toString();
+						String attributeValue = clientValue.asComplex().get("Value").getValue().toString();
+						if (logger.isTraceEnabled())
+							logger.trace("... found attribute {}", clientValue);
+						if (logger.isTraceEnabled())
+							logger.trace("    ... with Name {}", attributeName);
+						switch (attributeName) {
+						case "processingDate":
+							restProduct.setGenerationTime(OrbitTimeFormatter.format(Instant.parse(attributeValue)));
+							break;
+						case "productType":
+							restProduct.setProductClass(attributeValue);
+							break;
+						default:
+							RestParameter param = new RestParameter(attributeName, ODATA_TO_PARAMTYPE_MAP.get(attributeType),
+									attributeValue);
+							restProduct.getParameters().add(param);
+						}
+
+					});
+				} catch (NullPointerException e) {
+					logger.log(AipClientMessage.PRODUCT_ATTRIBUTES_MISSING, product.toString());
+					return null;
+				}
 			}
-
 		} catch (DateTimeException e) {
 			logger.log(AipClientMessage.DATE_NOT_PARSEABLE, product);
 			return null;
@@ -726,12 +735,15 @@ public class DownloadManager {
 	 * @param archive     the archive to address
 	 * @param queryEntity the entity to query for
 	 * @param queryFilter the query filter to send
+	 * @param expandAttributes flag to expand the attributes
 	 * @return a possibly empty list of products (as attribute maps) or null, if an invalid response was received
 	 * @throws IOException in case of a communication error
 	 */
-	private List<ClientEntity> queryArchive(ProductArchive archive, String queryEntity, String queryFilter) throws IOException {
+	private List<ClientEntity> queryArchive(ProductArchive archive, String queryEntity, String queryFilter,
+			Boolean expandAttributes) throws IOException {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> queryArchive({}, {}, {})", (null == archive ? "NULL" : archive.getCode()), queryEntity, queryFilter);
+			logger.trace(">>> queryArchive({}, {}, {}, {})", (null == archive ? "NULL" : archive.getCode()), 
+					queryEntity, queryFilter, expandAttributes);
 
 		// Prepare OData request
 		ODataClient oDataClient = ODataClientFactory.getClient();
@@ -746,7 +758,7 @@ public class DownloadManager {
 			.addQueryOption(QueryOption.COUNT, "true")
 			.top(ODATA_TOP_COUNT);
 
-		if (ODATA_ENTITY_PRODUCTS.equals(queryEntity)) {
+		if (expandAttributes && ODATA_ENTITY_PRODUCTS.equals(queryEntity)) {
 			uriBuilder = uriBuilder.expand(ODATA_EXPAND_ATTRIBUTES);
 		}
 
@@ -789,6 +801,77 @@ public class DownloadManager {
 		logger.log(AipClientMessage.RETRIEVAL_RESULT, entitySet.getEntities().size(), entitySet.getCount());
 
 		return entitySet.getEntities();
+	}
+
+	/**
+	 * Send the given request to an archive
+	 *
+	 * @param archive     the archive to address
+	 * @param queryEntity the entity to query for
+	 * @param uuid the uuid to send
+	 * @param expandAttributes flag to expand the attributes
+	 * @return a possibly empty list of products (as attribute maps) or null, if an invalid response was received
+	 * @throws IOException in case of a communication error
+	 */
+	private ClientEntity queryArchiveForSingleEntity(ProductArchive archive, String queryEntity, String uuid,
+			Boolean expandAttributes) throws IOException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> queryArchiveForSingleEntity({}, {}, {}, {})", (null == archive ? "NULL" : archive.getCode()), 
+					queryEntity, uuid, expandAttributes);
+
+		// Prepare OData request
+		ODataClient oDataClient = ODataClientFactory.getClient();
+		oDataClient.getConfiguration().setDefaultPubFormat(ContentType.APPLICATION_JSON);
+
+		String oDataServiceRoot = archive.getBaseUri() + "/" + (archive.getContext().isBlank() ? "" : archive.getContext() + "/")
+				+ ODATA_CONTEXT
+				+ "/" + queryEntity + "(" + uuid + ")";
+
+		URIBuilder uriBuilder = oDataClient.newURIBuilder(oDataServiceRoot);
+
+		if (expandAttributes && ODATA_ENTITY_PRODUCTS.equals(queryEntity)) {
+			uriBuilder = uriBuilder.expand(ODATA_EXPAND_ATTRIBUTES);
+		}
+
+		String authorizationHeader = archive.isTokenRequired() ?
+				"Bearer " + getBearerToken(archive) : 
+    			"Basic " + Base64.getEncoder().encodeToString((archive.getUsername() + ":" + archive.getPassword()).getBytes());
+		
+		// Retrieve products
+		if (logger.isTraceEnabled())
+			logger.trace("... requesting {} list at URL '{}'", queryEntity, oDataServiceRoot);
+
+		ODataEntityRequest<ClientEntity> request = oDataClient.getRetrieveRequestFactory()
+			.getEntityRequest(uriBuilder.build());
+		request.addCustomHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
+
+		if (logger.isTraceEnabled())
+			logger.trace("... sending OData request '{}'", request.getURI());
+
+		Future<ODataRetrieveResponse<ClientEntity>> futureResponse = request.asyncExecute();
+		ODataRetrieveResponse<ClientEntity> response = null;
+		try {
+			response = futureResponse.get(config.getArchiveTimeout(), TimeUnit.MILLISECONDS);
+		} catch (InterruptedException | ExecutionException | TimeoutException e) {
+			throw new IOException(
+					logger.log(AipClientMessage.ODATA_REQUEST_ABORTED, request.getURI(), e.getClass().getName(), e.getMessage()));
+		}
+
+		if (HttpStatus.OK.value() != response.getStatusCode()) {
+			String message = null;
+			try {
+				message = logger.log(AipClientMessage.ODATA_REQUEST_FAILED, request.getURI(), response.getStatusCode(),
+						new String(response.getRawResponse().readAllBytes()));
+			} catch (IOException e) {
+				message = logger.log(AipClientMessage.ODATA_RESPONSE_UNREADABLE);
+			}
+			throw new IOException(message);
+		}
+
+		ClientEntity entity = response.getBody();
+		logger.log(AipClientMessage.RETRIEVAL_RESULT, "1", entity==null?"0":"1");
+
+		return entity;
 	}
 
 	/**
@@ -839,7 +922,7 @@ public class DownloadManager {
 			// Check order status
 			List<ClientEntity> orderList = null;
 			try {
-				orderList = queryArchive(archive, ODATA_ENTITY_ORDERS, ODATA_FILTER_ID + orderUuid);
+				orderList = queryArchive(archive, ODATA_ENTITY_ORDERS, ODATA_FILTER_ID + orderUuid, true);
 			} catch (IOException e) {
 				// Already logged
 				throw new IOException(e.getMessage());
@@ -871,6 +954,108 @@ public class DownloadManager {
 	 * @throws IOException if any error occurs during the download process
 	 */
 	private IngestorProduct downloadProduct(ProductArchive archive, RestProduct product, String missionCode) throws IOException {
+		if (logger.isTraceEnabled()) logger.trace(">>> downloadProduct({}, {})",
+				(null == archive ? "NULL" : archive.getCode()),
+				(null == product ? "NULL" : product.getUuid()));
+
+		// Build the request URL
+		StringBuilder requestUrl = new StringBuilder(archive.getBaseUri());
+		requestUrl.append('/')
+			.append(archive.getContext())
+			.append(archive.getContext().isEmpty()?"":'/')
+			.append(ODATA_CONTEXT)
+			.append('/')
+			.append(ODATA_ENTITY_PRODUCTS)
+			.append('(')
+			.append(product.getUuid())
+			.append(')')
+			.append('/')
+			.append("$value");
+
+		CloseableHttpClient httpClient = HttpClients.createDefault();
+		RestProductFile restProductFile = product.getProductFile().get(0);
+		File productFile = new File(config.getClientTargetDir() + File.separator + restProductFile.getProductFileName());
+		HttpGet httpGet = new HttpGet(requestUrl.toString());
+		if (archive.getTokenRequired()) {
+			httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken(archive));
+		} else {
+			httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Basic "
+					+ Base64.getEncoder().encodeToString((archive.getUsername() + ":" + archive.getPassword()).getBytes()));
+		}
+		CloseableHttpResponse httpResponse = null;
+
+		try {
+			httpResponse = httpClient.execute(httpGet);
+			HttpEntity httpEntity = httpResponse.getEntity();
+
+			logger.trace("... starting request for URL '{}'", requestUrl);
+			if (httpEntity != null) {
+				FileUtils.copyInputStreamToFile(httpEntity.getContent(), productFile);
+			}
+		} catch (FileNotFoundException e) {
+			throw new IOException(logger.log(AipClientMessage.FILE_NOT_WRITABLE, productFile));
+		} catch (WebClientResponseException e) {
+			throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(),
+					e.getMessage() + " / " + e.getResponseBodyAsString()));
+		} catch (Exception e) {
+			throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(), e.getMessage()));
+		}
+
+
+		// Compare file size with value given by external archive
+		Long productFileLength = productFile.length();
+		if (!productFileLength.equals(restProductFile.getFileSize())) {
+			throw new IOException(logger.log(AipClientMessage.FILE_SIZE_MISMATCH, product.getUuid(), restProductFile.getFileSize(),
+					productFileLength));
+		}
+
+		// Compute checksum and compare with value given by external archive
+		String md5Hash = MD5Util.md5Digest(productFile);
+		if (!md5Hash.equalsIgnoreCase(restProductFile.getChecksum())) {
+			throw new IOException(
+					logger.log(AipClientMessage.CHECKSUM_MISMATCH, product.getUuid(), restProductFile.getChecksum(), md5Hash));
+		}
+
+		// Log download with UUID, file name, size, checksum, publication date
+		logger.log(AipClientMessage.PRODUCT_TRANSFER_COMPLETED, product.getUuid(), restProductFile.getProductFileName(),
+				restProductFile.getFileSize(), restProductFile.getChecksum(), product.getPublicationTime());
+
+		// Create product representation for Ingestor
+		IngestorProduct ingestorProduct = new IngestorProduct();
+		ingestorProduct.setMissionCode(missionCode);
+		ingestorProduct.setUuid(product.getUuid());
+		ingestorProduct.setProductClass(product.getProductClass());
+		ingestorProduct.setProductQuality(ProductQuality.NOMINAL.toString());
+		ingestorProduct.setSensingStartTime(product.getSensingStartTime());
+		ingestorProduct.setSensingStopTime(product.getSensingStopTime());
+		ingestorProduct.setGenerationTime(product.getGenerationTime());
+		ingestorProduct.setPublicationTime(product.getPublicationTime());
+		ingestorProduct.setProductionType(product.getProductionType());
+		ingestorProduct.getParameters().addAll(product.getParameters());
+
+		// Set ingestion-specific attributes
+		ingestorProduct.setSourceStorageType(StorageType.POSIX.toString());
+		ingestorProduct.setMountPoint(config.getStorageMgrMountPoint());
+		ingestorProduct.setFilePath(config.getStorageMgrSourceDir());
+		ingestorProduct.setProductFileName(restProductFile.getProductFileName());
+		ingestorProduct.setFileSize(restProductFile.getFileSize());
+		ingestorProduct.setChecksum(restProductFile.getChecksum());
+		ingestorProduct.setChecksumTime(restProductFile.getChecksumTime());
+
+		return ingestorProduct;
+	}
+
+
+	/**
+	 * Download a product by UUID from the given archive
+	 *
+	 * @param archive the archive to download from
+	 * @param product the product to download
+	 * @param missionCode the mission code to set for ingestion
+	 * @return a product representation useful for product ingestion (including the target file path of the download)
+	 * @throws IOException if any error occurs during the download process
+	 */
+	private IngestorProduct downloadProductOrig(ProductArchive archive, RestProduct product, String missionCode) throws IOException {
 		if (logger.isTraceEnabled()) logger.trace(">>> downloadProduct({}, {})",
 				(null == archive ? "NULL" : archive.getCode()),
 				(null == product ? "NULL" : product.getUuid()));
@@ -1149,7 +1334,7 @@ public class DownloadManager {
 		// Request the product from the archive
 		List<ClientEntity> productList = null;
 		try {
-			productList = queryArchive(archive, ODATA_ENTITY_PRODUCTS, ODATA_FILTER_NAME + "'" + filename + "'");
+			productList = queryArchive(archive, ODATA_ENTITY_PRODUCTS, ODATA_FILTER_NAME + "'" + filename + "'", true);
 		} catch (IOException e) {
 			// Already logged
 			return null;
@@ -1163,7 +1348,7 @@ public class DownloadManager {
 			logger.log(AipClientMessage.MULTIPLE_PRODUCTS_FOUND_BY_NAME, filename, archive);
 		}
 
-		RestProduct restProduct = toRestProduct(productList.get(0), facility);
+		RestProduct restProduct = toRestProduct(productList.get(0), facility, true);
 
 		// Start download and ingestion thread
 		downloadAndIngest(archive, restProduct, facility, password);
@@ -1194,12 +1379,26 @@ public class DownloadManager {
 
 		// Request the product from the archive
 		List<ClientEntity> productList = null;
-		String queryFilter = "ContentDate/Start eq " + ODATA_DF.format(earliestStart)
-				+ " and ContentDate/End eq " + ODATA_DF.format(earliestStop)
+		Boolean expandAttributes = true;
+		
+		String queryFilter = "";
+		switch (archive.getArchiveType()) {
+		case SIMPLEAIP:
+			expandAttributes = false;
+		 	queryFilter = "startswith(Name,'" + securityService.getMission() + "')"
+		 		+ " and contains(Name,'" + productType + "')"
+		 		+ " and ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
+				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart);
+			break;
+			default:
+		 	queryFilter = "ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
+				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart)
 				+ " and Attributes/OData.CSC.StringAttribute/any(" + "att:att/Name eq 'productType' "
 				+ "and att/OData.CSC.StringAttribute/Value eq '" + productType + "')";
+				break;
+		}
 		try {
-			productList = queryArchive(archive, ODATA_ENTITY_PRODUCTS, queryFilter);
+			productList = queryArchive(archive, ODATA_ENTITY_PRODUCTS, queryFilter, expandAttributes);
 		} catch (IOException e) {
 			// Already logged
 			return null;
@@ -1212,9 +1411,21 @@ public class DownloadManager {
 		if (1 < productList.size()) {
 			logger.log(AipClientMessage.MULTIPLE_PRODUCTS_FOUND_BY_TIME, productType, earliestStart, earliestStop, archive);
 		}
-
-		RestProduct restProduct = toRestProduct(productList.get(0), processingFacility);
-
+		ClientEntity odataProduct = productList.get(0);
+		RestProduct restProduct = null; 
+		if (archive.getArchiveType().equals(ArchiveType.SIMPLEAIP)) {
+			// the attributes where not expanded in first query cause slow reaction
+			// query the product directly and expand the attributes
+			restProduct = toRestProduct(odataProduct, processingFacility, false);
+			try {
+				ClientEntity secondOdataProduct = queryArchiveForSingleEntity(archive, ODATA_ENTITY_PRODUCTS, restProduct.getUuid(), true);
+				restProduct = toRestProduct(secondOdataProduct, processingFacility, true);
+			} catch (IOException e) {
+				// already logged
+			}
+		} else {
+			restProduct = toRestProduct(odataProduct, processingFacility, true);
+		}
 		// Start download and ingestion thread
 		downloadAndIngest(archive, restProduct, processingFacility, password);
 
@@ -1242,15 +1453,29 @@ public class DownloadManager {
 			logger.trace(">>> downloadAllBySensingTime({}, {}, {}, {}, {}, ********)",
 					(null == archive ? "NULL" : archive.getCode()), productType, earliestStart, earliestStop,
 					(null == processingFacility ? "NULL" : processingFacility.getName()));
-
 		// Request the product from the archive
 		List<ClientEntity> productList = null;
-		String queryFilter = "ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
+
+		Boolean expandAttributes = true;
+		
+		String queryFilter = "";
+		switch (archive.getArchiveType()) {
+		case SIMPLEAIP:
+			expandAttributes = false;
+		 	queryFilter = "startswith(Name,'" + securityService.getMission() + "')"
+		 		+ " and contains(Name,'" + productType + "')"
+		 		+ " and ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
+				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart);
+			break;
+			default:
+		 	queryFilter = "ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
 				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart)
 				+ " and Attributes/OData.CSC.StringAttribute/any(" + "att:att/Name eq 'productType' "
 				+ "and att/OData.CSC.StringAttribute/Value eq '" + productType + "')";
+				break;
+		}
 		try {
-			productList = queryArchive(archive, ODATA_ENTITY_PRODUCTS, queryFilter);
+			productList = queryArchive(archive, ODATA_ENTITY_PRODUCTS, queryFilter, expandAttributes);
 		} catch (IOException e) {
 			// Already logged
 			return new ArrayList<>();
@@ -1264,8 +1489,21 @@ public class DownloadManager {
 		List<RestProduct> restProducts = new ArrayList<>();
 
 		for (ClientEntity odataProduct : productList) {
-			RestProduct restProduct = toRestProduct(odataProduct, processingFacility);
-
+			RestProduct restProduct = null; 
+			if (archive.getArchiveType().equals(ArchiveType.SIMPLEAIP)) {
+				// the attributes where not expanded in first query cause slow reaction
+				// query the product directly and expand the attributes
+				restProduct = toRestProduct(odataProduct, processingFacility, false);
+				try {
+					ClientEntity secondOdataProduct = queryArchiveForSingleEntity(archive, ODATA_ENTITY_PRODUCTS, restProduct.getUuid(), true);
+					restProduct = toRestProduct(secondOdataProduct, processingFacility, true);
+				} catch (IOException e) {
+					// already logged
+					break;
+				}
+			} else {
+				restProduct = toRestProduct(odataProduct, processingFacility, true);
+			}
 			// Start download and ingestion thread
 			downloadAndIngest(archive, restProduct, processingFacility, password);
 			if (logger.isTraceEnabled())
