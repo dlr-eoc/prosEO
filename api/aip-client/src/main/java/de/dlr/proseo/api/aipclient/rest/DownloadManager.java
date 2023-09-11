@@ -38,7 +38,15 @@ import javax.persistence.NoResultException;
 import javax.transaction.Transactional;
 import javax.validation.constraints.Pattern;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.olingo.client.api.ODataClient;
+import org.apache.olingo.client.api.communication.request.retrieve.ODataEntityRequest;
 import org.apache.olingo.client.api.communication.request.retrieve.ODataEntitySetRequest;
 import org.apache.olingo.client.api.communication.response.ODataRetrieveResponse;
 import org.apache.olingo.client.api.domain.ClientEntity;
@@ -49,7 +57,6 @@ import org.apache.olingo.client.core.ODataClientFactory;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeException;
 import org.apache.olingo.commons.api.format.ContentType;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -453,9 +460,10 @@ public class DownloadManager {
 	 *
 	 * @param product  the product to convert
 	 * @param facility the processing facility to link the REST interface product to
+	 * @param attributes flag to fill attributes
 	 * @return the corresponding REST interface product
 	 */
-	private RestProduct toRestProduct(ClientEntity product, ProcessingFacility facility) {
+	private RestProduct toRestProduct(ClientEntity product, ProcessingFacility facility, Boolean attributes) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> toRestProduct({})", (null == product ? "MISSING" : product.getProperty("Id")));
 
@@ -544,39 +552,40 @@ public class DownloadManager {
 			restProduct.getProductFile().add(restProductFile);
 
 			// Gather values from "Attributes" list
-			try {
-				if (logger.isTraceEnabled())
-					logger.trace("... Attributes = {} ", product.getProperty("Attributes"));
-				if (logger.isTraceEnabled())
-					logger.trace("... collection value = {} ", product.getProperty("Attributes").getCollectionValue());
-
-				product.getProperty("Attributes").getCollectionValue().forEach(clientValue -> {
-					String attributeName = clientValue.asComplex().get("Name").getValue().toString();
-					String attributeType = clientValue.asComplex().get("ValueType").getValue().toString();
-					String attributeValue = clientValue.asComplex().get("Value").getValue().toString();
+			if (attributes) {
+				try {
 					if (logger.isTraceEnabled())
-						logger.trace("... found attribute {}", clientValue);
+						logger.trace("... Attributes = {} ", product.getProperty("Attributes"));
 					if (logger.isTraceEnabled())
-						logger.trace("    ... with Name {}", attributeName);
-					switch (attributeName) {
-					case "processingDate":
-						restProduct.setGenerationTime(OrbitTimeFormatter.format(Instant.parse(attributeValue)));
-						break;
-					case "productType":
-						restProduct.setProductClass(attributeValue);
-						break;
-					default:
-						RestParameter param = new RestParameter(attributeName, ODATA_TO_PARAMTYPE_MAP.get(attributeType),
-								attributeValue);
-						restProduct.getParameters().add(param);
-					}
+						logger.trace("... collection value = {} ", product.getProperty("Attributes").getCollectionValue());
 
-				});
-			} catch (NullPointerException e) {
-				logger.log(AipClientMessage.PRODUCT_ATTRIBUTES_MISSING, product.toString());
-				return null;
+					product.getProperty("Attributes").getCollectionValue().forEach(clientValue -> {
+						String attributeName = clientValue.asComplex().get("Name").getValue().toString();
+						String attributeType = clientValue.asComplex().get("ValueType").getValue().toString();
+						String attributeValue = clientValue.asComplex().get("Value").getValue().toString();
+						if (logger.isTraceEnabled())
+							logger.trace("... found attribute {}", clientValue);
+						if (logger.isTraceEnabled())
+							logger.trace("    ... with Name {}", attributeName);
+						switch (attributeName) {
+						case "processingDate":
+							restProduct.setGenerationTime(OrbitTimeFormatter.format(Instant.parse(attributeValue)));
+							break;
+						case "productType":
+							restProduct.setProductClass(attributeValue);
+							break;
+						default:
+							RestParameter param = new RestParameter(attributeName, ODATA_TO_PARAMTYPE_MAP.get(attributeType),
+									attributeValue);
+							restProduct.getParameters().add(param);
+						}
+
+					});
+				} catch (NullPointerException e) {
+					logger.log(AipClientMessage.PRODUCT_ATTRIBUTES_MISSING, product.toString());
+					return null;
+				}
 			}
-
 		} catch (DateTimeException e) {
 			logger.log(AipClientMessage.DATE_NOT_PARSEABLE, product);
 			return null;
@@ -726,12 +735,15 @@ public class DownloadManager {
 	 * @param archive     the archive to address
 	 * @param queryEntity the entity to query for
 	 * @param queryFilter the query filter to send
+	 * @param expandAttributes flag to expand the attributes
 	 * @return a possibly empty list of products (as attribute maps) or null, if an invalid response was received
 	 * @throws IOException in case of a communication error
 	 */
-	private List<ClientEntity> queryArchive(ProductArchive archive, String queryEntity, String queryFilter) throws IOException {
+	private List<ClientEntity> queryArchive(ProductArchive archive, String queryEntity, String queryFilter,
+			Boolean expandAttributes) throws IOException {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> queryArchive({}, {}, {})", (null == archive ? "NULL" : archive.getCode()), queryEntity, queryFilter);
+			logger.trace(">>> queryArchive({}, {}, {}, {})", (null == archive ? "NULL" : archive.getCode()), 
+					queryEntity, queryFilter, expandAttributes);
 
 		// Prepare OData request
 		ODataClient oDataClient = ODataClientFactory.getClient();
@@ -746,7 +758,7 @@ public class DownloadManager {
 			.addQueryOption(QueryOption.COUNT, "true")
 			.top(ODATA_TOP_COUNT);
 
-		if (ODATA_ENTITY_PRODUCTS.equals(queryEntity)) {
+		if (expandAttributes && ODATA_ENTITY_PRODUCTS.equals(queryEntity)) {
 			uriBuilder = uriBuilder.expand(ODATA_EXPAND_ATTRIBUTES);
 		}
 
@@ -789,6 +801,77 @@ public class DownloadManager {
 		logger.log(AipClientMessage.RETRIEVAL_RESULT, entitySet.getEntities().size(), entitySet.getCount());
 
 		return entitySet.getEntities();
+	}
+
+	/**
+	 * Send the given request to an archive
+	 *
+	 * @param archive     the archive to address
+	 * @param queryEntity the entity to query for
+	 * @param uuid the uuid to send
+	 * @param expandAttributes flag to expand the attributes
+	 * @return a possibly empty list of products (as attribute maps) or null, if an invalid response was received
+	 * @throws IOException in case of a communication error
+	 */
+	private ClientEntity queryArchiveForSingleEntity(ProductArchive archive, String queryEntity, String uuid,
+			Boolean expandAttributes) throws IOException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> queryArchiveForSingleEntity({}, {}, {}, {})", (null == archive ? "NULL" : archive.getCode()), 
+					queryEntity, uuid, expandAttributes);
+
+		// Prepare OData request
+		ODataClient oDataClient = ODataClientFactory.getClient();
+		oDataClient.getConfiguration().setDefaultPubFormat(ContentType.APPLICATION_JSON);
+
+		String oDataServiceRoot = archive.getBaseUri() + "/" + (archive.getContext().isBlank() ? "" : archive.getContext() + "/")
+				+ ODATA_CONTEXT
+				+ "/" + queryEntity + "(" + uuid + ")";
+
+		URIBuilder uriBuilder = oDataClient.newURIBuilder(oDataServiceRoot);
+
+		if (expandAttributes && ODATA_ENTITY_PRODUCTS.equals(queryEntity)) {
+			uriBuilder = uriBuilder.expand(ODATA_EXPAND_ATTRIBUTES);
+		}
+
+		String authorizationHeader = archive.isTokenRequired() ?
+				"Bearer " + getBearerToken(archive) : 
+    			"Basic " + Base64.getEncoder().encodeToString((archive.getUsername() + ":" + archive.getPassword()).getBytes());
+		
+		// Retrieve products
+		if (logger.isTraceEnabled())
+			logger.trace("... requesting {} list at URL '{}'", queryEntity, oDataServiceRoot);
+
+		ODataEntityRequest<ClientEntity> request = oDataClient.getRetrieveRequestFactory()
+			.getEntityRequest(uriBuilder.build());
+		request.addCustomHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
+
+		if (logger.isTraceEnabled())
+			logger.trace("... sending OData request '{}'", request.getURI());
+
+		Future<ODataRetrieveResponse<ClientEntity>> futureResponse = request.asyncExecute();
+		ODataRetrieveResponse<ClientEntity> response = null;
+		try {
+			response = futureResponse.get(config.getArchiveTimeout(), TimeUnit.MILLISECONDS);
+		} catch (InterruptedException | ExecutionException | TimeoutException e) {
+			throw new IOException(
+					logger.log(AipClientMessage.ODATA_REQUEST_ABORTED, request.getURI(), e.getClass().getName(), e.getMessage()));
+		}
+
+		if (HttpStatus.OK.value() != response.getStatusCode()) {
+			String message = null;
+			try {
+				message = logger.log(AipClientMessage.ODATA_REQUEST_FAILED, request.getURI(), response.getStatusCode(),
+						new String(response.getRawResponse().readAllBytes()));
+			} catch (IOException e) {
+				message = logger.log(AipClientMessage.ODATA_RESPONSE_UNREADABLE);
+			}
+			throw new IOException(message);
+		}
+
+		ClientEntity entity = response.getBody();
+		logger.log(AipClientMessage.RETRIEVAL_RESULT, "1", entity==null?"0":"1");
+
+		return entity;
 	}
 
 	/**
@@ -839,7 +922,7 @@ public class DownloadManager {
 			// Check order status
 			List<ClientEntity> orderList = null;
 			try {
-				orderList = queryArchive(archive, ODATA_ENTITY_ORDERS, ODATA_FILTER_ID + orderUuid);
+				orderList = queryArchive(archive, ODATA_ENTITY_ORDERS, ODATA_FILTER_ID + orderUuid, true);
 			} catch (IOException e) {
 				// Already logged
 				throw new IOException(e.getMessage());
@@ -889,82 +972,26 @@ public class DownloadManager {
 			.append('/')
 			.append("$value");
 
-		HttpClient httpClient = HttpClient.create()
-//				.secure()
-			.headers(httpHeaders -> {
-				if (archive.getTokenRequired()) {
-					httpHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken(archive));
-				} else {
-					httpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic "
-							+ Base64.getEncoder().encodeToString((archive.getUsername() + ":" + archive.getPassword()).getBytes()));
-				}
-			})
-			.followRedirect((request, response) -> {
-				if (logger.isTraceEnabled())
-					logger.trace("... checking redirect for response status code {}", response.status());
-				switch (response.status().code()) {
-				case 301:
-				case 302:
-				case 307:
-				case 308:
-					String redirectLocation = response.responseHeaders().get(HttpHeaders.LOCATION);
-					if (null == redirectLocation) {
-						return false;
-					}
-					// Prevent sending authorization header, if target is S3 and credentials are already given in URL
-					if (redirectLocation.contains(S3_CREDENTIAL_PARAM)) {
-						if (logger.isTraceEnabled())
-							logger.trace(
-									"... redirect credentials given in location header, removing authorization header from request");
-						request.requestHeaders().remove(HttpHeaders.AUTHORIZATION);
-					}
-					return true;
-				default:
-					return false;
-				}
-			}, null)
-			.doAfterResponse((response, connection) -> {
-				if (logger.isTraceEnabled()) {
-					logger.trace("... response code: {}", response.status());
-					logger.trace("... response redirections: {}", Arrays.asList(response.redirectedFrom()));
-					logger.trace("... response headers: {}", response.responseHeaders());
-				}
-			})
-//				.wiretap(logger.isDebugEnabled())
-		;
-
-		WebClient webClient = WebClient.builder()
-			.baseUrl(archive.getBaseUri())
-			.clientConnector(new ReactorClientHttpConnector(httpClient))
-			.build();
-
-		// Retrieve and store product file
+		CloseableHttpClient httpClient = HttpClients.createDefault();
 		RestProductFile restProductFile = product.getProductFile().get(0);
 		File productFile = new File(config.getClientTargetDir() + File.separator + restProductFile.getProductFileName());
+		HttpGet httpGet = new HttpGet(requestUrl.toString());
+		if (archive.getTokenRequired()) {
+			httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken(archive));
+		} else {
+			httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Basic "
+					+ Base64.getEncoder().encodeToString((archive.getUsername() + ":" + archive.getPassword()).getBytes()));
+		}
+		CloseableHttpResponse httpResponse = null;
 
-		logger.trace("... starting request for URL '{}'", requestUrl);
+		try {
+			httpResponse = httpClient.execute(httpGet);
+			HttpEntity httpEntity = httpResponse.getEntity();
 
-		try (FileOutputStream fileOutputStream = new FileOutputStream(productFile)) {
-
-			Mono<byte[]> dataBuffer = webClient.get()
-				.uri(URI.create(requestUrl.toString()))
-				.accept(MediaType.APPLICATION_OCTET_STREAM)
-				.retrieve()
-				.bodyToMono(byte[].class);
-
-			if (logger.isTraceEnabled())
-				logger.trace("... after webClient...bodyToMono()");
-
-			byte[] buffer = dataBuffer.block();
-
-			if (logger.isTraceEnabled())
-				logger.trace("... got buffer of size {}", buffer.length);
-
-			fileOutputStream.write(buffer);
-
-			if (logger.isTraceEnabled())
-				logger.trace("... buffer written to file {}", productFile);
-
+			logger.trace("... starting request for URL '{}'", requestUrl);
+			if (httpEntity != null) {
+				FileUtils.copyInputStreamToFile(httpEntity.getContent(), productFile);
+			}
 		} catch (FileNotFoundException e) {
 			throw new IOException(logger.log(AipClientMessage.FILE_NOT_WRITABLE, productFile));
 		} catch (WebClientResponseException e) {
@@ -973,6 +1000,7 @@ public class DownloadManager {
 		} catch (Exception e) {
 			throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(), e.getMessage()));
 		}
+
 
 		// Compare file size with value given by external archive
 		Long productFileLength = productFile.length();
@@ -1149,7 +1177,7 @@ public class DownloadManager {
 		// Request the product from the archive
 		List<ClientEntity> productList = null;
 		try {
-			productList = queryArchive(archive, ODATA_ENTITY_PRODUCTS, ODATA_FILTER_NAME + "'" + filename + "'");
+			productList = queryArchive(archive, ODATA_ENTITY_PRODUCTS, ODATA_FILTER_NAME + "'" + filename + "'", true);
 		} catch (IOException e) {
 			// Already logged
 			return null;
@@ -1163,7 +1191,7 @@ public class DownloadManager {
 			logger.log(AipClientMessage.MULTIPLE_PRODUCTS_FOUND_BY_NAME, filename, archive);
 		}
 
-		RestProduct restProduct = toRestProduct(productList.get(0), facility);
+		RestProduct restProduct = toRestProduct(productList.get(0), facility, true);
 
 		// Start download and ingestion thread
 		downloadAndIngest(archive, restProduct, facility, password);
@@ -1194,12 +1222,26 @@ public class DownloadManager {
 
 		// Request the product from the archive
 		List<ClientEntity> productList = null;
-		String queryFilter = "ContentDate/Start eq " + ODATA_DF.format(earliestStart)
-				+ " and ContentDate/End eq " + ODATA_DF.format(earliestStop)
+		Boolean expandAttributes = true;
+		
+		String queryFilter = "";
+		switch (archive.getArchiveType()) {
+		case SIMPLEAIP:
+			expandAttributes = false;
+		 	queryFilter = "startswith(Name,'" + securityService.getMission() + "')"
+		 		+ " and contains(Name,'" + productType + "')"
+		 		+ " and ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
+				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart);
+			break;
+			default:
+		 	queryFilter = "ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
+				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart)
 				+ " and Attributes/OData.CSC.StringAttribute/any(" + "att:att/Name eq 'productType' "
 				+ "and att/OData.CSC.StringAttribute/Value eq '" + productType + "')";
+				break;
+		}
 		try {
-			productList = queryArchive(archive, ODATA_ENTITY_PRODUCTS, queryFilter);
+			productList = queryArchive(archive, ODATA_ENTITY_PRODUCTS, queryFilter, expandAttributes);
 		} catch (IOException e) {
 			// Already logged
 			return null;
@@ -1212,9 +1254,21 @@ public class DownloadManager {
 		if (1 < productList.size()) {
 			logger.log(AipClientMessage.MULTIPLE_PRODUCTS_FOUND_BY_TIME, productType, earliestStart, earliestStop, archive);
 		}
-
-		RestProduct restProduct = toRestProduct(productList.get(0), processingFacility);
-
+		ClientEntity odataProduct = productList.get(0);
+		RestProduct restProduct = null; 
+		if (archive.getArchiveType().equals(ArchiveType.SIMPLEAIP)) {
+			// the attributes where not expanded in first query cause slow reaction
+			// query the product directly and expand the attributes
+			restProduct = toRestProduct(odataProduct, processingFacility, false);
+			try {
+				ClientEntity secondOdataProduct = queryArchiveForSingleEntity(archive, ODATA_ENTITY_PRODUCTS, restProduct.getUuid(), true);
+				restProduct = toRestProduct(secondOdataProduct, processingFacility, true);
+			} catch (IOException e) {
+				// already logged
+			}
+		} else {
+			restProduct = toRestProduct(odataProduct, processingFacility, true);
+		}
 		// Start download and ingestion thread
 		downloadAndIngest(archive, restProduct, processingFacility, password);
 
@@ -1242,15 +1296,29 @@ public class DownloadManager {
 			logger.trace(">>> downloadAllBySensingTime({}, {}, {}, {}, {}, ********)",
 					(null == archive ? "NULL" : archive.getCode()), productType, earliestStart, earliestStop,
 					(null == processingFacility ? "NULL" : processingFacility.getName()));
-
 		// Request the product from the archive
 		List<ClientEntity> productList = null;
-		String queryFilter = "ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
+
+		Boolean expandAttributes = true;
+		
+		String queryFilter = "";
+		switch (archive.getArchiveType()) {
+		case SIMPLEAIP:
+			expandAttributes = false;
+		 	queryFilter = "startswith(Name,'" + securityService.getMission() + "')"
+		 		+ " and contains(Name,'" + productType + "')"
+		 		+ " and ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
+				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart);
+			break;
+			default:
+		 	queryFilter = "ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
 				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart)
 				+ " and Attributes/OData.CSC.StringAttribute/any(" + "att:att/Name eq 'productType' "
 				+ "and att/OData.CSC.StringAttribute/Value eq '" + productType + "')";
+				break;
+		}
 		try {
-			productList = queryArchive(archive, ODATA_ENTITY_PRODUCTS, queryFilter);
+			productList = queryArchive(archive, ODATA_ENTITY_PRODUCTS, queryFilter, expandAttributes);
 		} catch (IOException e) {
 			// Already logged
 			return new ArrayList<>();
@@ -1264,8 +1332,21 @@ public class DownloadManager {
 		List<RestProduct> restProducts = new ArrayList<>();
 
 		for (ClientEntity odataProduct : productList) {
-			RestProduct restProduct = toRestProduct(odataProduct, processingFacility);
-
+			RestProduct restProduct = null; 
+			if (archive.getArchiveType().equals(ArchiveType.SIMPLEAIP)) {
+				// the attributes where not expanded in first query cause slow reaction
+				// query the product directly and expand the attributes
+				restProduct = toRestProduct(odataProduct, processingFacility, false);
+				try {
+					ClientEntity secondOdataProduct = queryArchiveForSingleEntity(archive, ODATA_ENTITY_PRODUCTS, restProduct.getUuid(), true);
+					restProduct = toRestProduct(secondOdataProduct, processingFacility, true);
+				} catch (IOException e) {
+					// already logged
+					break;
+				}
+			} else {
+				restProduct = toRestProduct(odataProduct, processingFacility, true);
+			}
 			// Start download and ingestion thread
 			downloadAndIngest(archive, restProduct, processingFacility, password);
 			if (logger.isTraceEnabled())

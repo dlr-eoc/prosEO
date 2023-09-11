@@ -13,6 +13,7 @@ logging:
     level:
         root: INFO
         de.dlr.proseo: INFO
+        org.apache: WARN
         org.hibernate.engine.jdbc.env.internal: WARN
 proseo:
     aipclient:
