@@ -985,10 +985,11 @@ public class DownloadManager {
 		CloseableHttpResponse httpResponse = null;
 
 		try {
+			logger.trace("... starting request for URL '{}'", requestUrl);
+
 			httpResponse = httpClient.execute(httpGet);
 			HttpEntity httpEntity = httpResponse.getEntity();
 
-			logger.trace("... starting request for URL '{}'", requestUrl);
 			if (httpEntity != null) {
 				FileUtils.copyInputStreamToFile(httpEntity.getContent(), productFile);
 			}
@@ -1343,6 +1344,11 @@ public class DownloadManager {
 				} catch (IOException e) {
 					// already logged
 					break;
+				}
+				// For SIMPLEAIP an exact match between requested product type and product type found is not guaranteed
+				if (!productType.equals(restProduct.getProductClass())) {
+					logger.log(AipClientMessage.PRODUCT_TYPE_MISMATCH, restProduct.getProductClass(), productType);
+					restProduct.setProductClass(productType);
 				}
 			} else {
 				restProduct = toRestProduct(odataProduct, processingFacility, true);
