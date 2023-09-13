@@ -3,8 +3,9 @@ logging:
     level:
         root: INFO
         de.dlr.proseo: TRACE
- #       org.apache.http: DEBUG
- #       org.springframework.web.client: DEBUG
+        org.apache.http.headers: INFO
+        org.springframework.web.client: INFO
+        org.apache.olingo: INFO
 proseo:
     # The Ingestor URI (protocol, host name, port, context; no terminating slash)
     ingestor.url: http://localhost:8081/proseo/ingestor/v1 

@@ -29,6 +29,13 @@ import java.util.concurrent.TimeoutException;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.HttpResponseException;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.olingo.client.api.ODataClient;
 import org.apache.olingo.client.api.communication.request.retrieve.ODataEntitySetRequest;
 import org.apache.olingo.client.api.communication.response.ODataRetrieveResponse;
@@ -42,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
+//import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -739,94 +747,45 @@ public class AuxipMonitor extends BaseMonitor {
 				}
 
 				// Create retrieval request
-				String requestUri = (config.getAuxipContext().isBlank() ? "" : config.getAuxipContext() + "/") + "odata/v1/"
-						+ "Products(" + transferProduct.getUuid() + ")" + "/$value";
+				String requestUri = config.getAuxipBaseUri() + "/" 
+						+ (config.getAuxipContext().isBlank() ? "" : config.getAuxipContext() + "/") 
+						+ "odata/v1/Products(" + transferProduct.getUuid() + ")" + "/$value";
 
-				HttpClient httpClient = HttpClient.create().secure().headers(httpHeaders -> {
-					if (config.getAuxipUseToken()) {
-						httpHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
-					} else {
-						httpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder()
-							.encodeToString((config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
-					}
-				}).followRedirect((request, response) -> {
-					if (logger.isTraceEnabled())
-						logger.trace("... checking redirect for response status code {}", response.status());
-					switch (response.status().code()) {
-					case 301:
-					case 302:
-					case 307:
-					case 308:
-						String redirectLocation = response.responseHeaders().get(HttpHeaders.LOCATION);
-						if (null == redirectLocation) {
-							return false;
-						}
-						// Prevent sending authorization header, if target is S3 and credentials are already given in URL
-						if (redirectLocation.contains(S3_CREDENTIAL_PARAM)) {
-							if (logger.isTraceEnabled())
-								logger.trace(
-										"... redirect credentials given in location header, removing authorization header from request");
-							request.requestHeaders().remove(HttpHeaders.AUTHORIZATION);
-						}
-						return true;
-					default:
-						return false;
-					}
-				}, null).doAfterResponse((response, connection) -> {
-					if (logger.isTraceEnabled()) {
-						logger.trace("... response code: {}", response.status());
-						logger.trace("... response redirections: {}", Arrays.asList(response.redirectedFrom()));
-						logger.trace("... response headers: {}", response.responseHeaders());
-					}
-				})
-//						.wiretap(logger.isDebugEnabled())
-				;
-
-				WebClient webClient = WebClient.builder()
-					.baseUrl(config.getAuxipBaseUri())
-					.clientConnector(new ReactorClientHttpConnector(httpClient))
-					.build();
-
-				// Retrieve and store product file
-				
-				// TODO Fails with large files --> increas JVM memory or change method to multipart download
+				File productFile = new File(config.getAuxipDirectoryPath() + File.separator + transferProduct.getName());
 				
 				Instant copyStart = Instant.now();
-				File productFile = new File(config.getAuxipDirectoryPath() + File.separator + transferProduct.getName());
+				
+				try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+					logger.trace("... starting request for URL '{}'", requestUri);
 
-				logger.trace("... starting request for URL '{}'", requestUri);
+					HttpGet httpGet = new HttpGet(requestUri);
 
-				try (FileOutputStream fileOutputStream = new FileOutputStream(productFile)) {
+					if (config.getAuxipUseToken()) {
+						httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
+					} else {
+						httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Basic "
+							+ Base64.getEncoder().encodeToString((config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
+					}
 
-					Mono<byte[]> dataBuffer = webClient.get()
-						.uri(requestUri)
-						.accept(MediaType.APPLICATION_OCTET_STREAM)
-						.retrieve()
-						.bodyToMono(byte[].class);
-
-					if (logger.isTraceEnabled())
-						logger.trace("... after webClient...bodyToMono()");
-
-					byte[] buffer = dataBuffer.block();
-
-					if (logger.isTraceEnabled())
-						logger.trace("... got buffer of size {}", buffer.length);
-
-					fileOutputStream.write(buffer);
-
-					if (logger.isTraceEnabled())
-						logger.trace("... buffer written to file {}", productFile);
+					CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
+					HttpEntity httpEntity = httpResponse.getEntity();
+					
+					if (httpEntity != null) {
+						FileUtils.copyInputStreamToFile(httpEntity.getContent(), productFile);
+					}
+				
+					httpResponse.close();
 
 				} catch (FileNotFoundException e) {
 					oldLogger.error(String.format(MSG_FILE_NOT_WRITABLE, MSG_ID_FILE_NOT_WRITABLE, productFile.toString()));
 					return false;
-				} catch (WebClientResponseException e) {
+				} catch (HttpResponseException e) {
 					oldLogger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED,
-							transferProduct.getName(), e.getMessage() + " / " + e.getResponseBodyAsString()));
+							transferProduct.getName(), e.getMessage() + " / " + e.getReasonPhrase()));
 					return false;
 				} catch (Exception e) {
 					oldLogger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED,
-							transferProduct.getName(), e.getClass().getName() + " / " + e.getMessage()));
+							transferProduct.getName(), e.getClass().getName() + " / " + e.getMessage()), e);
 					return false;
 				}
 
