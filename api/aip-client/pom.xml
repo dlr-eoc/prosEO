@@ -68,23 +68,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.projectreactor</groupId>
-            <artifactId>reactor-core</artifactId>
-            <version>3.2.16.RELEASE</version><!-- Dependency of reactor-netty 0.8.17 -->
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.projectreactor</groupId>
-            <artifactId>reactor-test</artifactId>
-            <version>3.2.16.RELEASE</version><!-- Dependency of reactor-netty 0.8.17 -->
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.projectreactor.netty</groupId>
-            <artifactId>reactor-netty</artifactId>
-            <version>0.8.17.RELEASE</version><!-- Minimum version required for correct redirecting -->
-        </dependency>
-        <dependency>
             <groupId>org.apache.olingo</groupId>
             <artifactId>odata-client-core</artifactId>
             <version>${olingo.version}</version>

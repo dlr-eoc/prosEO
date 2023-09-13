@@ -7,10 +7,8 @@ package de.dlr.proseo.api.aipclient.rest;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URI;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
@@ -41,6 +39,7 @@ import javax.validation.constraints.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
+import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -101,7 +100,6 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 /**
@@ -112,9 +110,6 @@ import reactor.netty.http.client.HttpClient;
 @Component
 @Transactional
 public class DownloadManager {
-
-	/** Header marker for S3 redirects */
-	private static final String S3_CREDENTIAL_PARAM = "Amz-Credential";
 
 	// OData URL components for AIP and PRIP
 	private static final String ODATA_CONTEXT = "odata/v1";
@@ -972,32 +967,35 @@ public class DownloadManager {
 			.append('/')
 			.append("$value");
 
-		CloseableHttpClient httpClient = HttpClients.createDefault();
 		RestProductFile restProductFile = product.getProductFile().get(0);
 		File productFile = new File(config.getClientTargetDir() + File.separator + restProductFile.getProductFileName());
-		HttpGet httpGet = new HttpGet(requestUrl.toString());
-		if (archive.getTokenRequired()) {
-			httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken(archive));
-		} else {
-			httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Basic "
-					+ Base64.getEncoder().encodeToString((archive.getUsername() + ":" + archive.getPassword()).getBytes()));
-		}
-		CloseableHttpResponse httpResponse = null;
 
-		try {
+		try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
 			logger.trace("... starting request for URL '{}'", requestUrl);
 
-			httpResponse = httpClient.execute(httpGet);
+			HttpGet httpGet = new HttpGet(requestUrl.toString());
+			
+			if (archive.getTokenRequired()) {
+				httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken(archive));
+			} else {
+				httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Basic "
+						+ Base64.getEncoder().encodeToString((archive.getUsername() + ":" + archive.getPassword()).getBytes()));
+			}
+			
+			CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
 			HttpEntity httpEntity = httpResponse.getEntity();
 
 			if (httpEntity != null) {
 				FileUtils.copyInputStreamToFile(httpEntity.getContent(), productFile);
 			}
+			
+			httpResponse.close();
+
 		} catch (FileNotFoundException e) {
 			throw new IOException(logger.log(AipClientMessage.FILE_NOT_WRITABLE, productFile));
-		} catch (WebClientResponseException e) {
+		} catch (HttpResponseException e) {
 			throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(),
-					e.getMessage() + " / " + e.getResponseBodyAsString()));
+					e.getMessage() + " / " + e.getReasonPhrase()));
 		} catch (Exception e) {
 			throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(), e.getMessage()));
 		}
