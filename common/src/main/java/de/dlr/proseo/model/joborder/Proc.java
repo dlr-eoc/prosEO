@@ -101,6 +101,15 @@ public class Proc {
 	public List<InputOutput> getListOfInputs() {
 		return listOfInputs;
 	}
+	
+	/**
+	 * Sets the list of Input Files for the List_of_Inputs element
+	 *
+	 * @param listOfInputs the the list of Input Files to set
+	 */
+	public void setListOfInputs(List<InputOutput> listOfInputs) {
+		this.listOfInputs = listOfInputs;
+	}
 
 	/**
 	 * Gets the outputs for the List_of_Outputs element
@@ -109,6 +118,15 @@ public class Proc {
 	 */
 	public List<InputOutput> getListOfOutputs() {
 		return listOfOutputs;
+	}
+	
+	/**
+	 * Sets the list of Output Files for the List_of_Outputs element
+	 *
+	 * @param listOfOutputs the the list of Output Files to set
+	 */
+	public void setListOfOutputs(List<InputOutput> listOfOutputs) {
+		this.listOfOutputs = listOfOutputs;
 	}
 
 	/**
