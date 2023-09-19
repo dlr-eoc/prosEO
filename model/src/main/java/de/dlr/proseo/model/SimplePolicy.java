@@ -577,7 +577,7 @@ public class SimplePolicy extends PersistentObject {
 	}
 	
 	/**
-	 * Select the latest item (by generation time) from the given collection that covers partly the given time interval.
+	 * Select the latest item (by generation time) from the given collection.
 	 * For all items the item type must match the given productType.
 	 * 
 	 * @param items the collection of items to be searched
