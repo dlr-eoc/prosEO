@@ -94,10 +94,10 @@ public class WorkflowMgrTest {
 	public void setUp() throws Exception {
 		logger.trace(">>> Starting to create test data in the database");
 
-		fillDatabase();
+		Mission testMission = fillDatabase();
 
-		createTestWorkflow(testWorkflowData[0], testWorkflowOptions[0]);
-		createTestWorkflow(testWorkflowData[1], testWorkflowOptions[1]);
+		createTestWorkflow(testMission, testWorkflowData[0], testWorkflowOptions[0]);
+		createTestWorkflow(testMission, testWorkflowData[1], testWorkflowOptions[1]);
 
 		logger.trace("<<< Finished creating test data in database");
 	}
@@ -124,16 +124,19 @@ public class WorkflowMgrTest {
 
 	/**
 	 * Create a test workflow in the database
-	 *
+	 * 
+	 * @param mission the mission to which the workflow belongs
 	 * @param workflowData The data from which to create the workflow
+	 *
 	 * @returns the created workflow
 	 */
-	private static Workflow createTestWorkflow(String[] workflowData, String[] workflowOptionData) {
-		logger.trace("... creating a test workflow in the database");
+	private static Workflow createTestWorkflow(Mission mission, String[] workflowData, String[] workflowOptionData) {
+		logger.trace("... creating a test workflow in the database for mission {}", mission.getCode());
 
 		Workflow workflow = new Workflow();
 
 		// set workflow attributes
+		workflow.setMission(mission);
 		workflow.setName(workflowData[0]);
 		workflow.setUuid(UUID.fromString(workflowData[1]));
 		workflow.setWorkflowVersion(workflowData[2]);
@@ -165,10 +168,9 @@ public class WorkflowMgrTest {
 	/**
 	 * Filling the database with some initial data for testing purposes
 	 *
-	 * @param mission the mission to be referenced by the data filled in the
-	 *                database
+	 * @return the test mission created
 	 */
-	private static void fillDatabase() {
+	private static Mission fillDatabase() {
 		logger.trace("... creating testMission {}", testMissionData[0]);
 		Mission testMission = new Mission();
 		testMission.setCode(testMissionData[0]);
@@ -176,7 +178,7 @@ public class WorkflowMgrTest {
 		testMission.getProcessingModes().add(testMissionData[2]);
 		testMission.getFileClasses().add(testMissionData[3]);
 		testMission.setProductFileTemplate(testMissionData[4]);
-		testMission.setId(RepositoryService.getMissionRepository().save(testMission).getId());
+		testMission = RepositoryService.getMissionRepository().save(testMission);
 
 		logger.debug("... adding input product classes");
 		ProductClass productClass0 = new ProductClass();
@@ -226,6 +228,8 @@ public class WorkflowMgrTest {
 		configProc1.setProcessor(processor);
 		configProc1.setIdentifier(testWorkflowData[1][5]);
 		RepositoryService.getConfiguredProcessorRepository().save(configProc1);
+		
+		return testMission;
 	}
 
 	/**
@@ -260,7 +264,8 @@ public class WorkflowMgrTest {
 		// Get a valid sample workflow and workflow option from which deviations can be
 		// tested.
 		RestWorkflow testWorkflow = WorkflowUtil
-			.toRestWorkflow(RepositoryService.getWorkflowRepository().findByName(testWorkflowData[0][0]));
+			.toRestWorkflow(RepositoryService.getWorkflowRepository().findByMissionCodeAndNameAndVersion(
+					testMissionData[0], testWorkflowData[0][0], testWorkflowData[0][2]));
 		RestWorkflowOption testWorkflowOption = testWorkflow.getWorkflowOptions().get(0);
 
 		logger.trace("testWorkflow is " + testWorkflow);
@@ -291,7 +296,10 @@ public class WorkflowMgrTest {
 		testWorkflow.setWorkflowVersion(testWorkflowData[0][2]);
 
 		// No two workflows can have the same UUID.
-		testWorkflow.setUuid(RepositoryService.getWorkflowRepository().findByName(testWorkflowData[1][0]).getUuid().toString());
+		testWorkflow.setUuid(RepositoryService.getWorkflowRepository()
+				.findByMissionCodeAndNameAndVersion(testMissionData[0], testWorkflowData[1][0], testWorkflowData[1][2])
+				.getUuid()
+				.toString());
 		assertThrows(IllegalArgumentException.class, () -> workflowMgr.createWorkflow(testWorkflow));
 		testWorkflow.setUuid(UUID.randomUUID().toString());
 

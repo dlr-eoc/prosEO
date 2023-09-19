@@ -100,6 +100,7 @@ public class OrderControllerTest {
 	private static String[][] testWorkflow =
 			// name, UUID
 			{ { "testWorkflow", UUID.randomUUID().toString() }, { "otherTestWorkflow", UUID.randomUUID().toString() } };
+	private static String testWorkflowVersion = "1.0";
 	private static String[][] testReqOrbits = {
 			// spacecraft_code, orbitNumber from, orbitNumber to
 			{ "S5P", "8132", "8138" }, { "S5P", "8136", "8141" } };
@@ -336,11 +337,15 @@ public class OrderControllerTest {
 
 		logger.debug("... adding workflows");
 		Workflow workflow0 = new Workflow();
+		workflow0.setMission(mission);
 		workflow0.setName(testWorkflow[0][0]);
+		workflow0.setWorkflowVersion(testWorkflowVersion);
 		workflow0.setUuid(UUID.fromString(testWorkflow[0][1]));
 		RepositoryService.getWorkflowRepository().save(workflow0);
 		Workflow workflow1 = new Workflow();
+		workflow1.setMission(mission);
 		workflow1.setName(testWorkflow[1][0]);
+		workflow1.setWorkflowVersion(testWorkflowVersion);
 		workflow1.setUuid(UUID.fromString(testWorkflow[1][1]));
 		RepositoryService.getWorkflowRepository().save(workflow1);
 

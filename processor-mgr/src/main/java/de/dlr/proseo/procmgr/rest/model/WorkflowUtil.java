@@ -46,14 +46,17 @@ public class WorkflowUtil {
 
 		RestWorkflow restWorkflow = new RestWorkflow();
 
-		if (null != modelWorkflow.getName()) {
-			restWorkflow.setName(modelWorkflow.getName());
-		}
 		if (0 != modelWorkflow.getId()) {
 			restWorkflow.setId(modelWorkflow.getId());
 		}
 		if (0 != modelWorkflow.getVersion()) {
 			restWorkflow.setVersion(Long.valueOf(modelWorkflow.getVersion()));
+		}
+		if (null != modelWorkflow.getMission()) {
+			restWorkflow.setMissionCode(modelWorkflow.getMission().getCode());
+		}
+		if (null != modelWorkflow.getName()) {
+			restWorkflow.setName(modelWorkflow.getName());
 		}
 		if (null != modelWorkflow.getWorkflowVersion()) {
 			restWorkflow.setWorkflowVersion(modelWorkflow.getWorkflowVersion());
@@ -191,9 +194,6 @@ public class WorkflowUtil {
 
 		Workflow modelWorkflow = new Workflow();
 
-		if (null != restWorkflow.getName()) {
-			modelWorkflow.setName(restWorkflow.getName());
-		}
 		if (null != restWorkflow.getId()) {
 			modelWorkflow.setId(restWorkflow.getId());
 		}
@@ -201,6 +201,9 @@ public class WorkflowUtil {
 			while (modelWorkflow.getVersion() < restWorkflow.getVersion()) {
 				modelWorkflow.incrementVersion();
 			}
+		}
+		if (null != restWorkflow.getName()) {
+			modelWorkflow.setName(restWorkflow.getName());
 		}
 		if (null != restWorkflow.getWorkflowVersion()) {
 			modelWorkflow.setWorkflowVersion(restWorkflow.getWorkflowVersion());

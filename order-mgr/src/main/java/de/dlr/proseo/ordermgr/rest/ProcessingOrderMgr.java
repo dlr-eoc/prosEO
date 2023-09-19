@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -261,33 +262,7 @@ public class ProcessingOrderMgr {
 				modelOrder.getInputFilters().put(productClass, inputFilter);
 			}
 
-			// Retrieve workflow if specified and check consistency if over-specified
-			Workflow workflowFromName = null;
-			Workflow workflowFromUuid = null;
-			if (null != order.getWorkflowName()) {
-				workflowFromName = RepositoryService.getWorkflowRepository().findByName(order.getWorkflowName());
-				if (null == workflowFromName)
-					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_WORKFLOW_NAME, order.getWorkflowName()));
-			}
-			if (null != order.getWorkflowUuid()) {
-				workflowFromUuid = RepositoryService.getWorkflowRepository().findByUuid(UUID.fromString(order.getWorkflowUuid()));
-				if (null == workflowFromUuid)
-					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_WORKFLOW_UUID, order.getWorkflowUuid()));
-			}
-			if (null != workflowFromName && null == workflowFromUuid) {
-				modelOrder.setWorkflow(workflowFromName);
-			}
-			if (null != workflowFromUuid && null == workflowFromName) {
-				modelOrder.setWorkflow(workflowFromUuid);
-			}
-			if (null != workflowFromName && null != workflowFromUuid) {
-				if (workflowFromName.equals(workflowFromUuid)) {
-					modelOrder.setWorkflow(workflowFromUuid);
-				} else
-					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_WORKFLOW_SPECIFICATION,
-							order.getWorkflowName(), order.getWorkflowUuid()));
-			}
-
+			// Create class output parameters
 			for (RestClassOutputParameter restClassOutputParameter : order.getClassOutputParameters()) {
 				ClassOutputParameter classOutputParameter = new ClassOutputParameter();
 				classOutputParameter = RepositoryService.getClassOutputParameterRepository().save(classOutputParameter);
@@ -327,6 +302,18 @@ public class ProcessingOrderMgr {
 							logger.log(OrderMgrMessage.INVALID_INPUT_CLASS, productType, mission.getCode()));
 				}
 				modelOrder.getInputProductClasses().add(productClass);
+			}
+
+			// Retrieve workflow if specified and check consistency if over-specified
+			if (null != order.getWorkflowUuid()) {
+				Workflow workflow = RepositoryService.getWorkflowRepository().findByUuid(UUID.fromString(order.getWorkflowUuid()));
+				if (null == workflow)
+					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_WORKFLOW_UUID, order.getWorkflowUuid()));
+				if (null != order.getWorkflowName() && !workflow.getName().equals(order.getWorkflowName())) {
+					throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_WORKFLOW_SPECIFICATION,
+							order.getWorkflowName(), order.getWorkflowUuid()));
+				}
+				modelOrder.setWorkflow(workflow);
 			}
 
 			// Find requested configured processors
@@ -978,6 +965,28 @@ public class ProcessingOrderMgr {
 			orderChanged = true;
 			stateChangeOnly = false;
 			modelOrder.setProcessingMode(changedOrder.getProcessingMode());
+		}
+		
+		// Check for workflow change
+		if (null == order.getWorkflowUuid()) {
+			if (null != modelOrder.getWorkflow()) {
+				orderChanged = true;
+				stateChangeOnly = false;
+				modelOrder.setWorkflow(null);
+			}
+		} else if (null == modelOrder.getWorkflow() ||
+				!order.getWorkflowUuid().equals(modelOrder.getWorkflow().getUuid().toString())) {
+			Workflow workflow = RepositoryService.getWorkflowRepository().findByUuid(UUID.fromString(order.getWorkflowUuid()));
+			if (null == workflow) {
+				throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_WORKFLOW_UUID, order.getWorkflowUuid()));
+			}
+			if (null != order.getWorkflowName() && !workflow.getName().equals(order.getWorkflowName())) {
+				throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_WORKFLOW_SPECIFICATION,
+						order.getWorkflowName(), order.getWorkflowUuid()));
+			}
+			orderChanged = true;
+			stateChangeOnly = false;
+			modelOrder.setWorkflow(workflow);
 		}
 
 		// Check for new configured processors

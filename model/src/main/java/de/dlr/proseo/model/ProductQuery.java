@@ -78,7 +78,10 @@ public class ProductQuery extends PersistentObject {
 	
 	/**
 	 * Minimum percentage of coverage of the desired validity period for fulfilment of this query
+	 * 
+	 * Deprecated, use getGeneratingRule().getMinimumCoverage() instead
 	 */
+	@Deprecated
 	private Short minimumCoverage = 0;
 	
 	/** Indicates whether this query is fully satisfied by the satisfying products. */
@@ -247,8 +250,11 @@ public class ProductQuery extends PersistentObject {
 	/**
 	 * Gets the minimum percentage of coverage of the desired validity period
 	 * 
+	 * Deprecated, use getGeneratingRule().getMinimumCoverage() instead
+	 * 
 	 * @return the minimumCoverage
 	 */
+	@Deprecated
 	public Short getMinimumCoverage() {
 		return minimumCoverage;
 	}
@@ -256,8 +262,11 @@ public class ProductQuery extends PersistentObject {
 	/**
 	 * Sets the minimum percentage of coverage of the desired validity period
 	 * 
+	 * Deprecated, use getGeneratingRule().setMinimumCoverage() instead
+	 * 
 	 * @param minimumCoverage the minimumCoverage to set
 	 */
+	@Deprecated
 	public void setMinimumCoverage(Short minimumCoverage) {
 		this.minimumCoverage = minimumCoverage;
 		calcHash();
