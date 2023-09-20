@@ -174,7 +174,7 @@ public class WorkflowMgr {
 		// Ensure a workflow with the same mission, name and version, or the same
 		// UUID, does not yet exist
 		if ((null != RepositoryService.getWorkflowRepository()
-			.findByMissionCodeAndWorkflowNameAndWorkflowVersion(restWorkflow.getMissionCode(), restWorkflow.getName(),
+			.findByMissionCodeAndNameAndVersion(restWorkflow.getMissionCode(), restWorkflow.getName(),
 					restWorkflow.getWorkflowVersion())
 				|| (null != restWorkflow.getUuid() && null != RepositoryService.getWorkflowRepository()
 					.findByUuid(UUID.fromString(restWorkflow.getUuid()))))) {
@@ -194,6 +194,9 @@ public class WorkflowMgr {
 		}
 
 		Workflow modelWorkflow = WorkflowUtil.toModelWorkflow(restWorkflow);
+		
+		// Set the mission (assuming the mission must exist, since the login succeeded)
+		modelWorkflow.setMission(RepositoryService.getMissionRepository().findByCode(restWorkflow.getMissionCode()));
 
 		// If no UUID was given, a random one is assigned
 		if (null == restWorkflow.getUuid()) {

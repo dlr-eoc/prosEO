@@ -102,6 +102,7 @@ public class ProcessingOrderMgrTest {
 	private static String[][] testWorkflow =
 			// name, UUID
 			{ { "testWorkflow", UUID.randomUUID().toString() }, { "otherTestWorkflow", UUID.randomUUID().toString() } };
+	private static String testWorkflowVersion = "1.0";
 	private static String[][] testReqOrbits = {
 			// spacecraft_code, orbitNumber from, orbitNumber to
 			{ "S5P", "8132", "8138" }, { "S5P", "8136", "8141" } };
@@ -338,11 +339,15 @@ public class ProcessingOrderMgrTest {
 
 		logger.debug("... adding workflows");
 		Workflow workflow0 = new Workflow();
+		workflow0.setMission(mission);
 		workflow0.setName(testWorkflow[0][0]);
+		workflow0.setWorkflowVersion(testWorkflowVersion);
 		workflow0.setUuid(UUID.fromString(testWorkflow[0][1]));
 		RepositoryService.getWorkflowRepository().save(workflow0);
 		Workflow workflow1 = new Workflow();
+		workflow1.setMission(mission);
 		workflow1.setName(testWorkflow[1][0]);
+		workflow1.setWorkflowVersion(testWorkflowVersion);
 		workflow1.setUuid(UUID.fromString(testWorkflow[1][1]));
 		RepositoryService.getWorkflowRepository().save(workflow1);
 
@@ -677,7 +682,8 @@ public class ProcessingOrderMgrTest {
 
 		// Workflow may not be updated
 		ProcessingOrder po = OrderUtil.toModelOrder(testOrder);
-		po.setWorkflow(RepositoryService.getWorkflowRepository().findByName(testWorkflow[0][0]));
+		po.setWorkflow(RepositoryService.getWorkflowRepository()
+				.findByMissionCodeAndNameAndVersion("UTM", testWorkflow[0][0], testWorkflowVersion));
 		testOrder.setId(RepositoryService.getOrderRepository().save(po).getId());
 		testOrder.setWorkflowName(testWorkflow[0][0]);
 		testOrder.setWorkflowUuid(testWorkflow[0][1]);

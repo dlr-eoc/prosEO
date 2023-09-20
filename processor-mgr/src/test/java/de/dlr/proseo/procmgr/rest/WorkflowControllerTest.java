@@ -91,10 +91,10 @@ public class WorkflowControllerTest {
 	public void setUp() throws Exception {
 		logger.trace(">>> Starting to create test data in the database");
 
-		fillDatabase();
+		Mission testMission = fillDatabase();
 
-		createTestWorkflow(testWorkflowData[0], testWorkflowOptions[0]);
-		createTestWorkflow(testWorkflowData[1], testWorkflowOptions[1]);
+		createTestWorkflow(testMission, testWorkflowData[0], testWorkflowOptions[0]);
+		createTestWorkflow(testMission, testWorkflowData[1], testWorkflowOptions[1]);
 
 		logger.trace("<<< Finished creating test data in database");
 	}
@@ -120,16 +120,19 @@ public class WorkflowControllerTest {
 
 	/**
 	 * Create a test workflow in the database
-	 *
+	 * 
+	 * @param mission the mission to which the workflow belongs
 	 * @param workflowData The data from which to create the workflow
+	 *
 	 * @returns the created workflow
 	 */
-	private static Workflow createTestWorkflow(String[] workflowData, String[] workflowOptionData) {
-		logger.trace("... creating a test workflow in the database");
+	private static Workflow createTestWorkflow(Mission mission, String[] workflowData, String[] workflowOptionData) {
+		logger.trace("... creating a test workflow in the database for mission {}", mission.getCode());
 
 		Workflow workflow = new Workflow();
 
 		// set workflow attributes
+		workflow.setMission(mission);
 		workflow.setName(workflowData[0]);
 		workflow.setUuid(UUID.fromString(workflowData[1]));
 		workflow.setWorkflowVersion(workflowData[2]);
@@ -164,10 +167,9 @@ public class WorkflowControllerTest {
 	/**
 	 * Filling the database with some initial data for testing purposes
 	 *
-	 * @param mission the mission to be referenced by the data filled in the
-	 *                database
+	 * @return the test mission created
 	 */
-	private static void fillDatabase() {
+	private static Mission fillDatabase() {
 		logger.trace("... creating testMission {}", testMissionData[0]);
 		Mission testMission = new Mission();
 		testMission.setCode(testMissionData[0]);
@@ -175,7 +177,7 @@ public class WorkflowControllerTest {
 		testMission.getProcessingModes().add(testMissionData[2]);
 		testMission.getFileClasses().add(testMissionData[3]);
 		testMission.setProductFileTemplate(testMissionData[4]);
-		testMission.setId(RepositoryService.getMissionRepository().save(testMission).getId());
+		testMission = RepositoryService.getMissionRepository().save(testMission);
 		
 		logger.debug("... adding input product classes");
 		ProductClass productClass0 = new ProductClass();
@@ -225,6 +227,8 @@ public class WorkflowControllerTest {
 		configProc1.setProcessor(processor);
 		configProc1.setIdentifier(testWorkflowData[1][5]);
 		RepositoryService.getConfiguredProcessorRepository().save(configProc1);
+		
+		return testMission;
 	}
 
 	/**

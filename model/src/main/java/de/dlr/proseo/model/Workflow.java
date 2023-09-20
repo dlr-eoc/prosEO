@@ -40,10 +40,14 @@ import de.dlr.proseo.model.enums.OrderSlicingType;
  */
 @Entity
 @Table(indexes = {
-	@Index(unique = true, columnList = "name"),
-	@Index(unique = true, columnList = "uuid") 
+	@Index(unique = true, columnList = "uuid"),
+	@Index(unique = true, columnList = "mission_id,name,workflow_version")
 })
 public class Workflow extends PersistentObject {
+	
+	/** The mission this workflow belongs to */
+	@ManyToOne
+	private Mission mission;
 
 	/** The unique identifier of the workflow */
 	@Column(nullable = false)
@@ -60,6 +64,7 @@ public class Workflow extends PersistentObject {
 	private String description = "";
 	
 	/** Version number applicable to the workflow */
+	@Column(name = "workflow_version", nullable = false) // For whatever reason the column is not found during index creation unless explicitly specified
 	private String workflowVersion;
 	
 	/** Flag indicating whether this workflow is available for use (disabled workflows are not visible on the ODIP) */
@@ -126,6 +131,24 @@ public class Workflow extends PersistentObject {
 	@ElementCollection
 	private Map<String, Parameter> outputParameters = new HashMap<>();
 	
+	/**
+	 * Gets the mission this workflow belongs to
+	 * 
+	 * @return the enclosing mission
+	 */
+	public Mission getMission() {
+		return mission;
+	}
+
+	/**
+	 * Sets the mission this workflow belongs to
+	 * 
+	 * @param mission the enclosing mission to set
+	 */
+	public void setMission(Mission mission) {
+		this.mission = mission;
+	}
+
 	/**
 	 * Gets the workflow UUID
 	 * 

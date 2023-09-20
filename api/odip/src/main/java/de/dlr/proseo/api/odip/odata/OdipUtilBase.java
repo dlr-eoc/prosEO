@@ -606,17 +606,11 @@ public class OdipUtilBase {
 			restOrder
 				.setPriority(((Long) (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_PRIORITY).getValue())).intValue());
 		}
-		if (restOrder.getWorkflowUuid() != null && restOrder.getWorkflowName() != null) {
+		if (restOrder.getWorkflowUuid() != null) {
 			workflow = RepositoryService.getWorkflowRepository().findByUuid(UUID.fromString(restOrder.getWorkflowUuid()));
-			if (workflow != null) {
-				if (!workflow.getName().equals(restOrder.getWorkflowName())) {
-					workflow = null;
-				}
+			if (null != restOrder.getWorkflowName() && !workflow.getName().equals(restOrder.getWorkflowName())) {
+				workflow = null;
 			}
-		} else if (restOrder.getWorkflowUuid() != null) {
-			workflow = RepositoryService.getWorkflowRepository().findByUuid(UUID.fromString(restOrder.getWorkflowUuid()));
-		} else {
-			workflow = RepositoryService.getWorkflowRepository().findByName(restOrder.getWorkflowName());
 		}
 		if (workflow == null) {
 			// no workflow reference, return error
