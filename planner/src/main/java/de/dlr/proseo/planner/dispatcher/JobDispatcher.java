@@ -154,8 +154,8 @@ public class JobDispatcher {
 
 					for (String fileName : confInputFile.getFileNames()) {
 						inputOutputInfo.getFileNames().add(new IpfFileName(fileName));
-						processingTask.getListOfInputs().add(inputOutputInfo);
 					}
+					processingTask.getListOfInputs().add(inputOutputInfo);
 				}
 
 				// Add the dynamic input files (i.e., prior inputs needed to create the desired inputs)
