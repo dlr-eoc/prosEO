@@ -807,6 +807,11 @@ public class WorkflowMgr {
 		}
 
 		// Check for changes in non-mandatory attributes
+		
+		if (null != restWorkflow.getDescription() && !restWorkflow.getDescription().equals(modelWorkflow.getDescription())) {
+			workflowChanged = true;
+			modelWorkflow.setDescription(restWorkflow.getDescription());
+		}
 
 		// If input filters where provided, update old filters
 		// Remember old values
@@ -1246,6 +1251,7 @@ public class WorkflowMgr {
 				}
 				modelOption.setType(WorkflowOptionType.get(newOption.getOptionType().toLowerCase()));
 				modelOption.setValueRange(newOption.getValueRange());
+				modelOption.setDescription(newOption.getDescription());
 				if (null == modelOption.getValueRange()) {
 					// Quietly restore value range as empty list
 					modelOption.setValueRange(new ArrayList<>());
