@@ -26,6 +26,7 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -61,7 +62,6 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
  * @author Dr. Thomas Bassler
  */
 @Component
-@Transactional
 public class ProductIngestor {
 
 	/* URLs for Storage Manager and Production Planner */
@@ -94,13 +94,13 @@ public class ProductIngestor {
 
 	/**
 	 * 
-	 * /** Find a processing facility by name (transaction wrapper for repository
-	 * method)
+	 * /** Find a processing facility by name (transaction wrapper for repository method)
 	 *
 	 * @param facilityName the name of the facility to retrieve
 	 * @return the processing facility found or null, if no such processing facility
 	 *         exists
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public ProcessingFacility getFacilityByName(String facilityName) {
 		return RepositoryService.getFacilityRepository().findByName(facilityName);
 	}
@@ -127,7 +127,7 @@ public class ProductIngestor {
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
 
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public RestProduct ingestProduct(ProcessingFacility facility, Boolean copyFiles, IngestorProduct ingestorProduct, String user,
 			String password) throws IllegalArgumentException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled())
@@ -296,6 +296,7 @@ public class ProductIngestor {
 	 *                           at the given processing facility
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public RestProductFile getProductFile(Long productId, ProcessingFacility facility) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getProductFile({}, {})", productId, facility.getName());
@@ -349,6 +350,7 @@ public class ProductIngestor {
 	 *                                  facility already exists)
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public RestProductFile ingestProductFile(Long productId, ProcessingFacility facility, RestProductFile productFile, String user,
 			String password) throws IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled())
@@ -412,6 +414,7 @@ public class ProductIngestor {
 	 *                                  query for the given processing facility
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void deleteProductFile(Long productId, ProcessingFacility facility, Boolean eraseFiles)
 			throws EntityNotFoundException, RuntimeException, ProcessingException, IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled())
@@ -538,6 +541,7 @@ public class ProductIngestor {
 	 *
 	 * @param t The Instant for eviction time
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void deleteProductFilesOlderThan(Instant t) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteProductFilesOlderThan({})", t);
@@ -582,6 +586,7 @@ public class ProductIngestor {
 	 * @throws SecurityException               if a cross-mission data access was
 	 *                                         attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public RestProductFile modifyProductFile(Long productId, ProcessingFacility facility, RestProductFile productFile)
 			throws EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException, SecurityException {
 		if (logger.isTraceEnabled())
@@ -713,6 +718,7 @@ public class ProductIngestor {
 	 *                                  Planner fails
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public void notifyPlanner(String user, String password, IngestorProduct ingestorProduct, long facilityId)
 			throws IllegalArgumentException, RestClientException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled())
@@ -773,6 +779,7 @@ public class ProductIngestor {
 	 *                                  Planner fails
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public void notifyPlanner(String user, String password, RestProductFile restProductFile, long facilityId)
 			throws IllegalArgumentException, RestClientException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled())

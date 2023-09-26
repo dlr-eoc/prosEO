@@ -29,6 +29,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 
@@ -73,7 +74,6 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
  * @author Dr. Thomas Bassler
  */
 @Component
-@Transactional
 public class ProductManager {
 
 	/* Other string constants */
@@ -153,6 +153,7 @@ public class ProductManager {
 	 * @throws SecurityException       if a cross-mission data access was attempted
 	 * @throws RuntimeException        if the deletion was not performed as expected
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void deleteProductById(Long id)
 			throws EntityNotFoundException, IllegalStateException, SecurityException, RuntimeException {
 		if (logger.isTraceEnabled())
@@ -235,6 +236,7 @@ public class ProductManager {
 	 *                           could be found
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public List<RestProduct> getProducts(String mission, String[] productClass, String mode, String fileClass, String quality,
 			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, Integer recordFrom, Integer recordTo,
 			Long jobStepId, String[] orderBy) throws NoResultException, SecurityException {
@@ -311,6 +313,7 @@ public class ProductManager {
 	 * @return the number of products found as string
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public String countProducts(String mission, String[] productClass, String mode, String fileClass, String quality,
 			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, Long jobStepId)
 			throws SecurityException {
@@ -349,6 +352,7 @@ public class ProductManager {
 	 * @throws IllegalArgumentException if any of the input data was invalid
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public RestProduct createProduct(RestProduct product) throws IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createProduct({})", (null == product ? "MISSING" : product.getProductClass()));
@@ -521,6 +525,7 @@ public class ProductManager {
 	 * @throws NoResultException        if no product with the given ID exists
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public RestProduct getProductById(Long id) throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getProductById({})", id);
@@ -549,6 +554,7 @@ public class ProductManager {
 	 * @throws SecurityException               if a cross-mission data access was
 	 *                                         attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public RestProduct modifyProduct(Long id, RestProduct product)
 			throws EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException, SecurityException {
 		if (logger.isTraceEnabled())
@@ -851,6 +857,7 @@ public class ProductManager {
 	 * @throws NoResultException        if no product with the given UUID exists
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public RestProduct getProductByUuid(String uuid) throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getProductByUuid({})", uuid);
@@ -1068,6 +1075,7 @@ public class ProductManager {
 	 *                                  it does not have a data file
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public String downloadProductById(Long id, Long fromByte, Long toByte)
 			throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
@@ -1164,6 +1172,7 @@ public class ProductManager {
 	 *                                  with the given name exists
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public String getDownloadTokenById(Long id, String fileName)
 			throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
