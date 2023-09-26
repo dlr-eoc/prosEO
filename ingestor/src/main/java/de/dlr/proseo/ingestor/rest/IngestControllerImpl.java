@@ -7,7 +7,6 @@ package de.dlr.proseo.ingestor.rest;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 
@@ -24,7 +23,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.ingestor.IngestorSecurityConfig;
-import de.dlr.proseo.ingestor.PlannerSemaphoreClient;
 import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.ingestor.rest.model.RestProductFile;
@@ -48,10 +46,6 @@ public class IngestControllerImpl implements IngestController {
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(IngestControllerImpl.class);
 	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.INGESTOR);
-
-	/** Client to request/release semaphores from Production Planner */
-	@Autowired
-	private PlannerSemaphoreClient semaphoreClient;
 
 	/** Product ingestor */
 	@Autowired
@@ -107,46 +101,26 @@ public class IngestControllerImpl implements IngestController {
 					HttpStatus.BAD_REQUEST);
 		}
 
+		// Default is to copy files, if query parameter is not set
+		if (null == copyFiles) {
+			copyFiles = true;
+		}
+
 		// Get username and password from HTTP Authentication header for authentication
 		// with Production Planner
 		String[] userPassword = securityConfig.parseAuthenticationHeader(httpHeaders.getFirst(HttpHeaders.AUTHORIZATION));
 
-		// Loop over all products to ingest
-		List<RestProduct> result = new ArrayList<>();
-
-		for (IngestorProduct ingestorProduct : ingestorProducts) {
-			try {
-				semaphoreClient.acquireSemaphore(userPassword[0], userPassword[1]);
-				RestProduct restProduct = productIngestor.ingestProduct(facility, copyFiles, ingestorProduct, userPassword[0],
-						userPassword[1]);
-				result.add(restProduct);
-				ingestorProduct.setId(restProduct.getId());
-				if (logger.isTraceEnabled())
-					logger.trace("... product ingested, now notifying planner");
-			} catch (ProcessingException e) {
-				return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
-			} catch (IllegalArgumentException e) {
-				return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
-			} catch (SecurityException e) {
-				return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
-			} finally {
-				semaphoreClient.releaseSemaphore(userPassword[0], userPassword[1]);
-			}
-
-			try {
-				productIngestor.notifyPlanner(userPassword[0], userPassword[1], ingestorProduct, facility.getId());
-				if (logger.isTraceEnabled())
-					logger.trace("... planner notification successful");
-			} catch (Exception e) {
-				// If notification fails, log warning, but otherwise ignore
-				logger.log(IngestorMessage.NOTIFICATION_FAILED, e.getMessage());
-			}
+		// Perform product ingestion
+		try {
+			return new ResponseEntity<>(productIngestor.ingestProducts(facility, copyFiles, ingestorProducts, userPassword[0],
+					userPassword[1]), HttpStatus.CREATED);
+		} catch (ProcessingException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
-
-		logger.log(IngestorMessage.PRODUCTS_INGESTED, result.size(), processingFacility);
-
-		return new ResponseEntity<>(result, HttpStatus.CREATED);
-
 	}
 
 	/**
@@ -234,10 +208,10 @@ public class IngestControllerImpl implements IngestController {
 		// with Production Planner
 		String[] userPassword = securityConfig.parseAuthenticationHeader(httpHeaders.getFirst(HttpHeaders.AUTHORIZATION));
 
-		RestProductFile restProductFile = null;
 		try {
-			semaphoreClient.acquireSemaphore(userPassword[0], userPassword[1]);
-			restProductFile = productIngestor.ingestProductFile(productId, facility, productFile, userPassword[0], userPassword[1]);
+			return new ResponseEntity<>(
+					productIngestor.ingestProductFile(productId, facility, productFile, userPassword[0], userPassword[1]),
+					HttpStatus.CREATED);
 		} catch (ProcessingException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		} catch (IllegalArgumentException e) {
@@ -249,18 +223,7 @@ public class IngestControllerImpl implements IngestController {
 					logger.debug("An exception occurred. Cause: ", e);
 				}
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
-		} finally {
-			semaphoreClient.releaseSemaphore(userPassword[0], userPassword[1]);
 		}
-
-		try {
-			productIngestor.notifyPlanner(userPassword[0], userPassword[1], restProductFile, facility.getId());
-		} catch (Exception e) {
-			// If notification fails, log warning, but otherwise ignore
-			logger.log(IngestorMessage.NOTIFICATION_FAILED, e);
-		}
-
-		return new ResponseEntity<>(restProductFile, HttpStatus.CREATED);
 	}
 
 	/**

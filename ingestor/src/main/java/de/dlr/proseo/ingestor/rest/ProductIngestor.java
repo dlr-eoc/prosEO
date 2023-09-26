@@ -35,6 +35,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.net.HttpHeaders;
 
 import de.dlr.proseo.ingestor.IngestorConfiguration;
+import de.dlr.proseo.ingestor.PlannerSemaphoreClient;
 import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
 import de.dlr.proseo.ingestor.rest.model.ProductFileUtil;
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
@@ -88,6 +89,10 @@ public class ProductIngestor {
 	@Autowired
 	ProductManager productManager;
 
+	/** Client to request/release semaphores from Production Planner */
+	@Autowired
+	private PlannerSemaphoreClient semaphoreClient;
+
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
@@ -110,12 +115,14 @@ public class ProductIngestor {
 	 * facility. If the ID of a product to ingest is null or 0 (zero), then the
 	 * product will be created, otherwise a matching product will be looked up and
 	 * updated
+	 * 
+	 * NOTE: Datatabase transactions are indirect, therefore no '@Transactional' annotation here.
 	 *
 	 * @param facility        the processing facility to ingest products to
 	 * @param copyFiles       indicates, whether to copy the files to a different
 	 *                        storage area (default "true"; only applicable if
 	 *                        source and target storage type are the same)
-	 * @param ingestorProduct a product description with product file locations
+	 * @param ingestorProducts a list of product descriptions with product file locations
 	 * @param user            the username to pass on to the Production Planner
 	 * @param password        the password to pass on to the Production Planner
 	 * @return a Json representation of the product updated and/or created including
@@ -126,96 +133,110 @@ public class ProductIngestor {
 	 *                                  Manager fails
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
-
-	@Transactional(isolation = Isolation.REPEATABLE_READ)
-	public RestProduct ingestProduct(ProcessingFacility facility, Boolean copyFiles, IngestorProduct ingestorProduct, String user,
+	public List<RestProduct> ingestProducts(ProcessingFacility facility, boolean copyFiles, List<IngestorProduct> ingestorProducts, String user,
 			String password) throws IllegalArgumentException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> ingestProduct({}, {}, {}, PWD)", facility.getName(), ingestorProduct.getProductClass(), user);
+			logger.trace(">>> ingestProducts({}, {}, IngestorProduct[{}], {}, PWD)",
+					facility.getName(), copyFiles, ingestorProducts.size(), user);
 
-		// Ensure user is authorized for the product's mission
-		if (!securityService.isAuthorizedForMission(ingestorProduct.getMissionCode())) {
-			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, ingestorProduct.getMissionCode(),
-					securityService.getMission()));
+		// Ensure we have a list of products to process
+		if (null == ingestorProducts || ingestorProducts.isEmpty()) {
+			throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_LIST_MISSING));
 		}
 
-		// Ensure that mandatory attributes are set
-		if (null == ingestorProduct.getGenerationTime()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "generationTime", "product ingestion"));
-		}
+		// Loop over all products to check for existing products or create new ones
+		List<Long> productsCreated = new ArrayList<>();
+		
+		for (IngestorProduct ingestorProduct: ingestorProducts) {
+			
+			// Ensure user is authorized for the product's mission
+			if (!securityService.isAuthorizedForMission(ingestorProduct.getMissionCode())) {
+				throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, ingestorProduct.getMissionCode(),
+						securityService.getMission()));
+			}
 
-		// Default is to copy files, if query parameter is not set
-		if (null == copyFiles) {
-			copyFiles = true;
-		}
-		// If the list of auxiliary file names has been set to null, we assume an empty
-		// list
-		if (null == ingestorProduct.getAuxFileNames()) {
-			ingestorProduct.setAuxFileNames(new ArrayList<>());
-		}
+			// Create a new product or test for existing product in the metadata database
+			try {
+				if (null == ingestorProduct.getId() || 0 == ingestorProduct.getId()) {
+					RestProduct newProduct = productManager.createProduct(ingestorProduct);
+					ingestorProduct.setId(newProduct.getId());
+					productsCreated.add(newProduct.getId());
+				} else {
+					productManager.getProductById(ingestorProduct.getId());
+				}
+			} catch (Exception e) {
+				throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_INGESTION_FAILED, e.getMessage()));
+			}
 
-		// Create a new product or find an existing product in the metadata database
-		RestProduct newProduct;
+		}
+		
+		// Upload all products to Storage Manager
 		try {
-			if (null == ingestorProduct.getId() || 0 == ingestorProduct.getId()) {
-				newProduct = productManager.createProduct(ingestorProduct);
-			} else {
-				newProduct = productManager.getProductById(ingestorProduct.getId());
+			for (IngestorProduct ingestorProduct: ingestorProducts) {
+				RestProductFile newProductFile = new RestProductFile();
+
+				if (copyFiles || !ingestorProduct.getSourceStorageType().equals(facility.getDefaultStorageType().toString())) {
+					// Ingest product file and auxiliary files to Storage Manager
+					String targetFilePath = ingestToStorageManager(facility, ingestorProduct, copyFiles);
+
+					ingestorProduct.getProductFile().clear();
+					newProductFile.setFilePath(targetFilePath);
+				} else {
+					// No ingestion required, the files will be used as provided
+					newProductFile.setFilePath(ingestorProduct.getMountPoint() + "/" + ingestorProduct.getFilePath());
+				}
+
+				ingestorProduct.getProductFile().add(newProductFile);
 			}
 		} catch (Exception e) {
-			throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_INGESTION_FAILED, e.getMessage()));
+			// If even only part of the upload failed, remove products created earlier and fail completely
+			for (Long productId: productsCreated) {
+				productManager.deleteProductById(productId);
+			}
+			throw e;
 		}
-
-		// Create product file object in database for the stored files
-		de.dlr.proseo.model.ProductFile newProductFile = new de.dlr.proseo.model.ProductFile();
-		newProductFile.setProcessingFacility(facility);
-
-		if (copyFiles || !ingestorProduct.getSourceStorageType().equals(facility.getDefaultStorageType().toString())) {
-			// Ingest product file and auxiliary files to Storage Manager
-			String targetFilePath = ingestToStorageManager(facility, ingestorProduct, newProduct, copyFiles);
-
-			newProductFile.setFilePath(targetFilePath);
-		} else {
-			// No ingestion required, the files will be used as provided
-			newProductFile.setFilePath(ingestorProduct.getMountPoint() + "/" + ingestorProduct.getFilePath());
-		}
-
-		newProductFile.setProductFileName(ingestorProduct.getProductFileName());
-		for (String auxFile : ingestorProduct.getAuxFileNames()) {
-			newProductFile.getAuxFileNames().add(auxFile);
-		}
+		
+		// NOTE: No local database access so far, but indirect database reads and writes
+		
+		// Now we know all uploads were successful, and we can update the database metadata in one single transaction
+		List<RestProduct> result = new ArrayList<>();
+		
 		try {
-			newProductFile.setStorageType(StorageType.valueOf(facility.getDefaultStorageType().toString()));
-		} catch (Exception e) {
-			newProductFile.setStorageType(StorageType.OTHER);
+			semaphoreClient.acquireSemaphore(user, password);
+
+			result = ingestToDatabase(ingestorProducts, facility);
+		} finally {
+			semaphoreClient.releaseSemaphore(user, password);
 		}
-		newProductFile.setFileSize(ingestorProduct.getFileSize());
-		newProductFile.setChecksum(ingestorProduct.getChecksum());
-		newProductFile.setChecksumTime(Instant.from(OrbitTimeFormatter.parse(ingestorProduct.getChecksumTime())));
-		Product newModelProduct = RepositoryService.getProductRepository().findById(newProduct.getId()).get();
-		newProductFile.setProduct(newModelProduct);
-		newProductFile = RepositoryService.getProductFileRepository().save(newProductFile);
-
-		newModelProduct.getProductFile().add(newProductFile);
-		// Check for first time ingestion (defines publication time)
-		if (null == newModelProduct.getPublicationTime()) {
-			newModelProduct.setPublicationTime(Instant.now().truncatedTo(ChronoUnit.MILLIS));
+		
+		// Database updated, notifying Production Planner if requested
+		if (ingestorConfig.getNotifyPlanner()) {
+			if (logger.isTraceEnabled()) logger.trace("... products ingested, now notifying planner");
+			for (RestProduct product: result) {
+				try {
+					notifyPlanner(user, password, product, facility.getId());
+					if (logger.isTraceEnabled())
+						logger.trace("... planner notification successful for product {}", product.getId());
+				} catch (Exception e) {
+					// If notification fails, log warning, but otherwise ignore
+					logger.log(IngestorMessage.NOTIFICATION_FAILED, e.getMessage());
+				} 
+			}
+		} else {
+			if (logger.isDebugEnabled()) logger.debug("... skipping Planner notification due to configuration setting");
 		}
-		newModelProduct = RepositoryService.getProductRepository().save(newModelProduct);
-
-		// Product ingestion successful
-		logger.log(IngestorMessage.NEW_PRODUCT_ADDED, newModelProduct.getId(), newModelProduct.getProductClass().getProductType());
-
-		return ProductUtil.toRestProduct(newModelProduct);
+		
+		logger.log(IngestorMessage.PRODUCTS_INGESTED, result.size(), facility.getName());
+		
+		return result;
 	}
-
+	
 	/**
 	 * Store the given model product with the location information from the ingestor
 	 * product at the given processing facility
 	 *
 	 * @param facility        the processing facility to store to
 	 * @param ingestorProduct product description including file paths for upload
-	 * @param modelProduct    product model from metadata database
 	 * @param copyFiles       indicates, whether to copy the files to a different
 	 *                        storage area
 	 * @return path to the ingested product in the processing facility
@@ -224,15 +245,13 @@ public class ProductIngestor {
 	 * @throws IllegalArgumentException if the result object from the Storage
 	 *                                  Manager cannot be mapped to the return class
 	 */
-	private String ingestToStorageManager(ProcessingFacility facility, IngestorProduct ingestorProduct, RestProduct modelProduct,
-			Boolean copyFiles) throws ProcessingException, IllegalArgumentException {
+	private String ingestToStorageManager(ProcessingFacility facility, IngestorProduct ingestorProduct, Boolean copyFiles) throws ProcessingException, IllegalArgumentException {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> ingestToStorageManager({}, {}, {})", facility.getName(), ingestorProduct.getProductClass(),
-					modelProduct.getId());
-
+			logger.trace(">>> ingestToStorageManager({}, {})", facility.getName(), ingestorProduct.getProductClass());
+	
 		// Build post data for storage manager
 		Map<String, Object> postData = new HashMap<>();
-		postData.put("productId", String.valueOf(modelProduct.getId()));
+		postData.put("productId", String.valueOf(ingestorProduct.getId()));
 		List<String> filePaths = new ArrayList<>();
 		filePaths.add(
 				ingestorProduct.getMountPoint() + "/" + ingestorProduct.getFilePath() + "/" + ingestorProduct.getProductFileName());
@@ -242,12 +261,12 @@ public class ProductIngestor {
 		postData.put("sourceFilePaths", filePaths);
 		postData.put("sourceStorageType", ingestorProduct.getSourceStorageType());
 		postData.put("targetStorageType", facility.getDefaultStorageType());
-
+	
 		// Store the product in the storage manager for the given processing facility
 		String storageManagerUrl = facility.getStorageManagerUrl() + URL_STORAGE_MANAGER_REGISTER;
 		if (logger.isDebugEnabled())
 			logger.debug("Calling Storage Manager with URL " + storageManagerUrl + " and data " + postData);
-
+	
 		RestTemplate restTemplate = rtb.setConnectTimeout(Duration.ofMillis(ingestorConfig.getStorageManagerTimeout()))
 			.basicAuthentication(facility.getStorageManagerUser(), facility.getStorageManagerPassword())
 			.build();
@@ -267,11 +286,11 @@ public class ProductIngestor {
 		}
 		if (logger.isTraceEnabled())
 			logger.trace("... Call to Storage Manager successful");
-
+	
 		// Extract the product file paths from the response
 		ObjectMapper mapper = new ObjectMapper();
 		RestProductFS restProductFs = mapper.convertValue(responseEntity.getBody(), RestProductFS.class);
-
+	
 		List<String> responseFilePaths = restProductFs.getRegisteredFilesList();
 		if (null == responseFilePaths || responseFilePaths.size() != filePaths.size()) {
 			throw new ProcessingException(logger.log(IngestorMessage.UNEXPECTED_NUMBER_OF_FILE_PATHS,
@@ -283,6 +302,111 @@ public class ProductIngestor {
 			s = s.substring(0, last);
 		}
 		return s;
+	}
+
+	/**
+	 * Add the metadata for all ingested products into the database.
+	 * 
+	 * Method is public to enable @Transactional annotation. It is not actually part of the public interface of this class.
+	 * 
+	 * @param ingestorProducts the list of products ingested
+	 * @param facility the processing facility, to which the products were ingested
+	 * 
+	 * @return the update metadata list for the products
+	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
+	public List<RestProduct> ingestToDatabase(List<IngestorProduct> ingestorProducts, ProcessingFacility facility) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> ingestToDatabase(IngestorProduct[{}], {}", ingestorProducts.size(), facility.getName());
+		
+		List<RestProduct> result = new ArrayList<>();
+		
+		for (IngestorProduct ingestorProduct: ingestorProducts) {
+			
+			// Create product file object in database for the stored files
+			de.dlr.proseo.model.ProductFile newProductFile = new de.dlr.proseo.model.ProductFile();
+			newProductFile.setProcessingFacility(facility);
+
+			// We put a single product file into the ingestor product before just to pass on the file path from the Storage Manager
+			newProductFile.setFilePath(ingestorProduct.getProductFile().get(0).getFilePath());
+			
+			newProductFile.setProductFileName(ingestorProduct.getProductFileName());
+			for (String auxFile : ingestorProduct.getAuxFileNames()) {
+				newProductFile.getAuxFileNames().add(auxFile);
+			}
+			try {
+				newProductFile.setStorageType(StorageType.valueOf(facility.getDefaultStorageType().toString()));
+			} catch (Exception e) {
+				newProductFile.setStorageType(StorageType.OTHER);
+			}
+			newProductFile.setFileSize(ingestorProduct.getFileSize());
+			newProductFile.setChecksum(ingestorProduct.getChecksum());
+			newProductFile.setChecksumTime(Instant.from(OrbitTimeFormatter.parse(ingestorProduct.getChecksumTime())));
+			Product newModelProduct = RepositoryService.getProductRepository().findById(ingestorProduct.getId()).get();
+			newProductFile.setProduct(newModelProduct);
+			newProductFile = RepositoryService.getProductFileRepository().save(newProductFile);
+
+			newModelProduct.getProductFile().add(newProductFile);
+			// Check for first time ingestion (defines publication time)
+			if (null == newModelProduct.getPublicationTime()) {
+				newModelProduct.setPublicationTime(Instant.now().truncatedTo(ChronoUnit.MILLIS));
+			}
+			newModelProduct = RepositoryService.getProductRepository().save(newModelProduct);
+
+			// Product ingestion successful
+			logger.log(IngestorMessage.NEW_PRODUCT_ADDED, newModelProduct.getId(), newModelProduct.getProductClass().getProductType());
+
+			result.add(ProductUtil.toRestProduct(newModelProduct));
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * Notify the Production Planner component of newly ingested products
+	 *
+	 * @param user            the username to pass on to the Production Planner
+	 * @param password        the password to pass on to the Production Planner
+	 * @param ingestorProduct a product description with product file locations
+	 * @param facilityId      the id of the processing facility
+	 * @throws IllegalArgumentException if the mission code and/or the product type
+	 *                                  are invalid
+	 * @throws RestClientException      if an error in the REST API occurs
+	 * @throws ProcessingException      if the communication with the Production
+	 *                                  Planner fails
+	 * @throws SecurityException        if a cross-mission data access was attempted
+	 */
+	private void notifyPlanner(String user, String password, RestProduct ingestorProduct, long facilityId)
+			throws IllegalArgumentException, RestClientException, ProcessingException, SecurityException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> notifyPlanner({}, PWD, {})", user, ingestorProduct.getProductClass());
+	
+		// Retrieve the product class from the database
+		ProductClass modelProductClass = RepositoryService.getProductClassRepository()
+			.findByMissionCodeAndProductType(ingestorProduct.getMissionCode(), ingestorProduct.getProductClass());
+		if (null == modelProductClass) {
+			throw new IllegalArgumentException(
+					logger.log(IngestorMessage.PRODUCT_CLASS_INVALID, ingestorProduct.getProductClass()));
+		}
+	
+		// Check whether there are open product queries for this product type
+		List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
+			.findUnsatisfiedByProductClass(modelProductClass.getId());
+		if (!productQueries.isEmpty()) {
+			// If so, inform the production planner of the new product
+			String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl()
+					+ String.format(URL_PLANNER_NOTIFY, ingestorProduct.getId());
+			productionPlannerUrl += "?facility=" + facilityId;
+	
+			RestTemplate restTemplate = rtb.setConnectTimeout(Duration.ofMillis(ingestorConfig.getProductionPlannerTimeout()))
+				.basicAuthentication(user, password)
+				.build();
+			ResponseEntity<String> response = restTemplate.getForEntity(productionPlannerUrl, String.class);
+			if (!HttpStatus.OK.equals(response.getStatusCode())) {
+				throw new ProcessingException(logger.log(IngestorMessage.ERROR_NOTIFYING_PLANNER, ingestorProduct.getId(),
+						ingestorProduct.getProductClass(), response.getStatusCode().toString()));
+			}
+		}
 	}
 
 	/**
@@ -356,44 +480,60 @@ public class ProductIngestor {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> ingestProductFile({}, {}, {}, {}, PWD)", productId, facility, productFile.getProductFileName(), user);
 
-		// Find the product with the given ID
-		Optional<Product> product = RepositoryService.getProductRepository().findById(productId);
+		try {
+			semaphoreClient.acquireSemaphore(user, password);
 
-		if (product.isEmpty()) {
-			throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_NOT_FOUND, productId));
-		}
-		Product modelProduct = product.get();
+			// Find the product with the given ID
+			Optional<Product> product = RepositoryService.getProductRepository().findById(productId);
 
-		// Ensure user is authorized for the product's mission
-		if (!securityService.isAuthorizedForMission(modelProduct.getProductClass().getMission().getCode())) {
-			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
-					modelProduct.getProductClass().getMission().getCode(), securityService.getMission()));
-		}
-
-		// Error, if a database product file for the given facility exists already
-		for (ProductFile modelProductFile : modelProduct.getProductFile()) {
-			if (facility.equals(modelProductFile.getProcessingFacility())) {
-				throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_FILE_EXISTS, facility));
+			if (product.isEmpty()) {
+				throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_NOT_FOUND, productId));
 			}
+			Product modelProduct = product.get();
+
+			// Ensure user is authorized for the product's mission
+			if (!securityService.isAuthorizedForMission(modelProduct.getProductClass().getMission().getCode())) {
+				throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
+						modelProduct.getProductClass().getMission().getCode(), securityService.getMission()));
+			}
+
+			// Error, if a database product file for the given facility exists already
+			for (ProductFile modelProductFile : modelProduct.getProductFile()) {
+				if (facility.equals(modelProductFile.getProcessingFacility())) {
+					throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_FILE_EXISTS, facility));
+				}
+			}
+			// OK, not found!
+
+			// Create the database product file
+			ProductFile modelProductFile = ProductFileUtil.toModelProductFile(productFile);
+			modelProductFile.setProcessingFacility(facility);
+			modelProductFile.setProduct(product.get());
+			modelProductFile = RepositoryService.getProductFileRepository().save(modelProductFile);
+
+			// Check for first time ingestion (defines publication time)
+			if (null == modelProduct.getPublicationTime()) {
+				modelProduct.setPublicationTime(Instant.now().truncatedTo(ChronoUnit.MILLIS));
+			}
+			modelProduct.getProductFile().add(modelProductFile); // Autosave with commit
+
+			// Database updated, notifying Production Planner if requested
+			if (ingestorConfig.getNotifyPlanner()) {
+				try {
+					notifyPlanner(user, password, ProductUtil.toRestProduct(modelProduct), facility.getId());
+				} catch (Exception e) {
+					// If notification fails, log warning, but otherwise ignore
+					logger.log(IngestorMessage.NOTIFICATION_FAILED, e);
+				}
+			}
+
+			// Return the updated REST product file
+			logger.log(IngestorMessage.PRODUCT_FILE_INGESTED, productFile.getProductFileName(), productId, facility.getName());
+
+			return ProductFileUtil.toRestProductFile(modelProductFile);
+		} finally {
+			semaphoreClient.releaseSemaphore(user, password);
 		}
-		// OK, not found!
-
-		// Create the database product file
-		ProductFile modelProductFile = ProductFileUtil.toModelProductFile(productFile);
-		modelProductFile.setProcessingFacility(facility);
-		modelProductFile.setProduct(product.get());
-		modelProductFile = RepositoryService.getProductFileRepository().save(modelProductFile);
-
-		// Check for first time ingestion (defines publication time)
-		if (null == modelProduct.getPublicationTime()) {
-			modelProduct.setPublicationTime(Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		}
-		modelProduct.getProductFile().add(modelProductFile); // Autosave with commit
-
-		// Return the updated REST product file
-		logger.log(IngestorMessage.PRODUCT_FILE_INGESTED, productFile.getProductFileName(), productId, facility.getName());
-
-		return ProductFileUtil.toRestProductFile(modelProductFile);
 	}
 
 	/**
@@ -702,109 +842,6 @@ public class ProductIngestor {
 
 		// Return the updated REST product file
 		return ProductFileUtil.toRestProductFile(modelProductFile);
-	}
-
-	/**
-	 * Notify the Production Planner component of newly ingested products
-	 *
-	 * @param user            the username to pass on to the Production Planner
-	 * @param password        the password to pass on to the Production Planner
-	 * @param ingestorProduct a product description with product file locations
-	 * @param facilityId      the id of the processing facility
-	 * @throws IllegalArgumentException if the mission code and/or the product type
-	 *                                  are invalid
-	 * @throws RestClientException      if an error in the REST API occurs
-	 * @throws ProcessingException      if the communication with the Production
-	 *                                  Planner fails
-	 * @throws SecurityException        if a cross-mission data access was attempted
-	 */
-	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
-	public void notifyPlanner(String user, String password, IngestorProduct ingestorProduct, long facilityId)
-			throws IllegalArgumentException, RestClientException, ProcessingException, SecurityException {
-		if (logger.isTraceEnabled())
-			logger.trace(">>> notifyPlanner({}, PWD, {})", user, ingestorProduct.getProductClass());
-
-		// Check whether Planner notification is desirable at all
-		if (!ingestorConfig.getNotifyPlanner()) {
-			if (logger.isDebugEnabled())
-				logger.debug("... skipping Planner notification due to configuration setting");
-			return;
-		}
-
-		// Ensure user is authorized for the product's mission
-		if (!securityService.isAuthorizedForMission(ingestorProduct.getMissionCode())) {
-			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, ingestorProduct.getMissionCode(),
-					securityService.getMission()));
-		}
-
-		// Retrieve the product class from the database
-		ProductClass modelProductClass = RepositoryService.getProductClassRepository()
-			.findByMissionCodeAndProductType(ingestorProduct.getMissionCode(), ingestorProduct.getProductClass());
-		if (null == modelProductClass) {
-			throw new IllegalArgumentException(
-					logger.log(IngestorMessage.PRODUCT_CLASS_INVALID, ingestorProduct.getProductClass()));
-		}
-
-		// Check whether there are open product queries for this product type
-		List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
-			.findUnsatisfiedByProductClass(modelProductClass.getId());
-		if (!productQueries.isEmpty()) {
-			// If so, inform the production planner of the new product
-			String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl()
-					+ String.format(URL_PLANNER_NOTIFY, ingestorProduct.getId());
-			productionPlannerUrl += "?facility=" + facilityId;
-
-			RestTemplate restTemplate = rtb.setConnectTimeout(Duration.ofMillis(ingestorConfig.getProductionPlannerTimeout()))
-				.basicAuthentication(user, password)
-				.build();
-			ResponseEntity<String> response = restTemplate.getForEntity(productionPlannerUrl, String.class);
-			if (!HttpStatus.OK.equals(response.getStatusCode())) {
-				throw new ProcessingException(logger.log(IngestorMessage.ERROR_NOTIFYING_PLANNER, ingestorProduct.getId(),
-						ingestorProduct.getProductClass(), response.getStatusCode().toString()));
-			}
-		}
-	}
-
-	/**
-	 * Notify the Production Planner component of newly ingested products
-	 *
-	 * @param user            the username to pass on to the Production Planner
-	 * @param password        the password to pass on to the Production Planner
-	 * @param restProductFile the product file that has been ingested
-	 * @param facilityId      the id of the processing facility
-	 * @throws IllegalArgumentException if the mission code and/or the product type
-	 *                                  are invalid
-	 * @throws RestClientException      if an error in the REST API occurs
-	 * @throws ProcessingException      if the communication with the Production
-	 *                                  Planner fails
-	 * @throws SecurityException        if a cross-mission data access was attempted
-	 */
-	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
-	public void notifyPlanner(String user, String password, RestProductFile restProductFile, long facilityId)
-			throws IllegalArgumentException, RestClientException, ProcessingException, SecurityException {
-		if (logger.isTraceEnabled())
-			logger.trace(">>> notifyPlanner({}, PWD, {})", user, restProductFile.getProductFileName());
-
-		// Retrieve the product for the given product file
-		Optional<Product> modelProduct = RepositoryService.getProductRepository().findById(restProductFile.getProductId());
-		if (modelProduct.isEmpty()) {
-			throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_NOT_FOUND, restProductFile.getProductId()));
-		}
-
-		// Ensure user is authorized for the product's mission
-		if (!securityService.isAuthorizedForMission(modelProduct.get().getProductClass().getMission().getCode())) {
-			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
-					modelProduct.get().getProductClass().getMission().getCode(), securityService.getMission()));
-		}
-
-		// Copy the relevant attributes to an IngestorProduct
-		IngestorProduct ingestorProduct = new IngestorProduct();
-		ingestorProduct.setId(modelProduct.get().getId());
-		ingestorProduct.setMissionCode(modelProduct.get().getProductClass().getMission().getCode());
-		ingestorProduct.setProductClass(modelProduct.get().getProductClass().getProductType());
-
-		// Notify planner
-		notifyPlanner(user, password, ingestorProduct, facilityId);
 	}
 
 }
