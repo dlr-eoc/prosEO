@@ -61,6 +61,9 @@ public class WorkflowUtil {
 		if (null != modelWorkflow.getWorkflowVersion()) {
 			restWorkflow.setWorkflowVersion(modelWorkflow.getWorkflowVersion());
 		}
+		if (null != modelWorkflow.getDescription()) {
+			restWorkflow.setDescription(modelWorkflow.getDescription());
+		}
 		if (null != modelWorkflow.getUuid()) {
 			restWorkflow.setUuid(modelWorkflow.getUuid().toString());
 		}
@@ -122,6 +125,9 @@ public class WorkflowUtil {
 				if (null != modelWorkflow.getConfiguredProcessor()) {
 					restOption.setMissionCode(
 							modelWorkflow.getConfiguredProcessor().getProcessor().getProcessorClass().getMission().getCode());
+				}
+				if (null != option.getDescription()) {
+					restOption.setDescription(option.getDescription());
 				}
 
 				restOption.setWorkflowName(restWorkflow.getName());
@@ -208,6 +214,9 @@ public class WorkflowUtil {
 		if (null != restWorkflow.getWorkflowVersion()) {
 			modelWorkflow.setWorkflowVersion(restWorkflow.getWorkflowVersion());
 		}
+		if (null != restWorkflow.getDescription()) {
+			modelWorkflow.setDescription(restWorkflow.getDescription());
+		}
 		if (null != restWorkflow.getUuid()) {
 			modelWorkflow.setUuid(UUID.fromString(restWorkflow.getUuid()));
 		}
@@ -266,6 +275,9 @@ public class WorkflowUtil {
 				}
 				if (null != option.getDefaultValue()) {
 					modelOption.setDefaultValue(option.getDefaultValue());
+				}
+				if (null != option.getDescription()) {
+					modelOption.setDescription(option.getDescription());
 				}
 
 				modelOption.setWorkflow(modelWorkflow);
