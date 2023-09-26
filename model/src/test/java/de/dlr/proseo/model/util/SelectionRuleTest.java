@@ -211,8 +211,8 @@ public class SelectionRuleTest {
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(1 D, 1 D) MANDATORY",
 				"FOR " + TEST_PRODUCT_TYPE_IR + " SELECT LatestValidityClosest(0 D, 0 D) MANDATORY", // normalized delta times
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT LatestValCover(10 M, 10 M) MANDATORY",
-				"FOR " + TEST_PRODUCT_TYPE_IR + " SELECT ClosestStartValidity(4400 MS, 0 D) MANDATORY", // normalized delta times
-				"FOR " + TEST_PRODUCT_TYPE_IR + " SELECT ClosestStopValidity(0 D, 0 D) MANDATORY", // normalized delta times
+				"FOR " + TEST_PRODUCT_TYPE_IR + " SELECT ClosestStartValidity(8800 MS, 4400 MS) MANDATORY", // normalized delta times
+				"FOR " + TEST_PRODUCT_TYPE_IR + " SELECT ClosestStopValidity(10 M, 10 M) MANDATORY", // normalized delta times
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT LatestStartValidity MANDATORY",
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT LatestStopValidity MANDATORY",
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersectWithoutDuplicates(10 M, 10 M) MANDATORY",
@@ -575,15 +575,15 @@ public class SelectionRuleTest {
 				  itemObjects[1] },
 				// ClosestStartValidity asymmetrical (1 h, 0)
 				{ itemObjects[3],
-				  itemObjects[2],
+				  itemObjects[0],
 				  itemObjects[0],
 				  itemObjects[2],
 				  itemObjects[2],
-				  itemObjects[3],
+				  itemObjects[1],
 				  itemObjects[3] },	// specially constructed test case for LatestValidityClosest
 				// ClosestStopValidity asymmetrical (1 h, 0)
 				{ itemObjects[0],
-				  itemObjects[0],
+				  itemObjects[2],
 				  itemObjects[0],
 				  itemObjects[2],
 				  itemObjects[2],
@@ -803,15 +803,15 @@ public class SelectionRuleTest {
 
 				// ClosestStartValidity asymmetrical (1 h, 0)
 				{ itemObjects[3],
-				  itemObjects[2],
+				  itemObjects[0],
 				  itemObjects[0],
 				  itemObjects[2],
 				  itemObjects[2],
-				  itemObjects[3],
+				  itemObjects[1],
 				  itemObjects[3] },	// specially constructed test case for LatestValidityClosest
 				// ClosestStopValidity asymmetrical (1 h, 0)
 				{ itemObjects[0],
-				  itemObjects[0],
+				  itemObjects[2],
 				  itemObjects[0],
 				  itemObjects[2],
 				  itemObjects[2],
