@@ -270,6 +270,16 @@ public class Conf {
 	public List<ProcessingParameter> getDynamicProcessingParameters() {
 		return dynamicProcessingParameters;
 	}
+	
+	/**
+	 * Sets the Processing_Parameter values for the Dynamic_Processing_Parameters
+	 * element
+	 *
+	 * @param dynamicProcessingParameters the dynamic processing parameters to set
+	 */
+	public void setDynamicProcessingParameters(List<ProcessingParameter> dynamicProcessingParameters) {
+		this.dynamicProcessingParameters = dynamicProcessingParameters;
+	}
 
 	/**
 	 * Gets the Processing_Parameter values for the given key (ignoring case)
@@ -484,6 +494,7 @@ public class Conf {
 					break;
 				case "dynamic_processing_parameters":
 				case "list_of_dyn_processing_parameters":
+				case "list_of_dynamic_processing_parameters":
 					Node dpp = child.getFirstChild();
 					while (dpp != null) {
 						ProcessingParameter pp = new ProcessingParameter();

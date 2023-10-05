@@ -104,6 +104,15 @@ public class JobOrder {
 	public List<Proc> getListOfProcs() {
 		return listOfProcs;
 	}
+	
+	/**
+	 * Sets the List_of_Ipf_Procs element
+	 *
+	 * @param the list of processors
+	 */
+	public void setListOfProcs(List<Proc> listOfProcs) {	
+		this.listOfProcs = listOfProcs;
+	}
 
 	/**
 	 * Constructor with Ipf_Conf argument
