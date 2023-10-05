@@ -111,15 +111,6 @@ resourceTypes:
   get:
     description: |
       Get processor classes by mission and name
-
-      @param mission       the mission code (optional)
-      @param processorName the processor name (optional)
-      @param recordFrom    first record of filtered and ordered result to return
-      @param recordTo      last record of filtered and ordered result to return
-      @return HTTP status "OK" and a list of Json objects representing processor classes satisfying the search criteria or HTTP
-              status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "NOT_FOUND" and
-              an error message, if no processor classes matching the search criteria were found HTTP status "TOO MANY REQUESTS" if
-              the result list exceeds a configured maximum
     displayName: getProcessorClasses
     queryParameters:
       mission?: 
@@ -145,11 +136,6 @@ resourceTypes:
   post:
     description: |
       Create a new processor class
-
-      @param restProcessorClass a Json representation of the new processor class
-      @return HTTP status "CREATED" and a response containing a Json object corresponding to the processor class after persistence
-              (with ID and version for all contained objects) or HTTP status "FORBIDDEN" and an error message, if a cross-mission
-              data access was attempted, or HTTP status "BAD_REQUEST", if any of the input data was invalid
     displayName: createProcessorClass
     body:
       application/json:
@@ -165,11 +151,6 @@ resourceTypes:
     get:
       description: |
         Count the processor classes matching the specified mission and processor name.
-
-        @param mission              the mission code
-        @param processorName        the processor name
-        @return the number of matching configurations as a String (may be zero) or HTTP status "FORBIDDEN" and an error message, if a
-                cross-mission data access was attempted
       displayName: countProcessorClasses
       queryParameters:
         mission?: 
@@ -190,12 +171,6 @@ resourceTypes:
     get:
       description: |
         Get a processor class by ID
-
-        @param id the processor class ID
-        @return HTTP status "OK" and a Json object corresponding to the processor class found or HTTP status "BAD_REQUEST" and an
-                error message, if no processor class ID was given, or HTTP status "FORBIDDEN" and an error message, if a
-                cross-mission data access was attempted, or HTTP status "NOT_FOUND" and an error message, if no processor class with
-                the given ID exists
       displayName: getProcessorClassById
       responses:
         200:
@@ -210,15 +185,6 @@ resourceTypes:
     patch:
       description: |
         Update a processor class by ID
-
-        @param id                 the ID of the processor class to update
-        @param restProcessorClass a Json object containing the modified (and unmodified) attributes
-        @return HTTP status "OK" and a response containing a Json object corresponding to the processor class after modification
-                (with ID and version for all contained objects) or HTTP status "NOT_MODIFIED" and the unchanged product, if no
-                attributes were actually changed, or HTTP status "NOT_FOUND" and an error message, if no processor class with the
-                given ID exists, or HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or HTTP
-                status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "CONFLICT"and
-                an error message, if the processor class has been modified since retrieval by the client
       displayName: modifyProcessorClass
       body:
         application/json:
@@ -238,12 +204,6 @@ resourceTypes:
     delete:
       description: |
         Delete a processor class by ID
-
-        @param id the ID of the processor class to delete
-        @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or HTTP status "NOT_FOUND", if the
-                processor class did not exist, or HTTP status "NOT_MODIFIED", if the deletion was unsuccessful, or HTTP status
-                "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "BAD_REQUEST", if the
-                processor class ID was not given, or if dependent objects exist
       displayName: deleteProcessorClassById
       responses:
         204:
@@ -253,16 +213,6 @@ resourceTypes:
   get:
     description: |
       Get processors by mission, name and version (user-defined version, not database version)
-
-      @param mission          the mission code
-      @param processorName    the name of the processor (class)
-      @param processorVersion the processor version
-      @param recordFrom    first record of filtered and ordered result to return
-      @param recordTo      last record of filtered and ordered result to return
-      @return HTTP status "OK" and a list of Json objects representing processors satisfying the search criteria or HTTP status
-              "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "NOT_FOUND" and an
-              error message, if no processors matching the search criteria were found, or HTTP status "TOO MANY REQUESTS" if the
-              result list exceeds a configured maximum
     displayName: getProcessors
     queryParameters:
       mission?: 
@@ -291,11 +241,6 @@ resourceTypes:
   post:
     description: |
       Create a new processor (version)
-
-      @param restProcessor a Json representation of the new processor
-      @return HTTP status "CREATED" and a response containing a Json object corresponding to the processor after persistence (with
-              ID and version for all contained objects) or HTTP status "FORBIDDEN" and an error message, if a cross-mission data
-              access was attempted, or HTTP status "BAD_REQUEST", if any of the input data was invalid
     displayName: createProcessor
     body:
       application/json:
@@ -311,12 +256,6 @@ resourceTypes:
     get:
       description: |
         Count the processors matching the specified mission, processor name, and processor version.
-
-        @param mission          the mission code
-        @param processorName    the processor name
-        @param processorVersion the processor version
-        @return the number of matching processors as a String (may be zero) or HTTP status "FORBIDDEN" and an error message, if a
-                cross-mission data access was attempted
       displayName: countProcessors
       queryParameters:
         mission?: 
@@ -340,11 +279,6 @@ resourceTypes:
     get:
       description: |
         Get a processor by ID
-
-        @param id the processor ID
-        @return HTTP status "OK" and a Json object corresponding to the processor found or HTTP status "BAD_REQUEST" and an error
-                message, if no processor ID was given, or HTTP status "FORBIDDEN" and an error message, if a cross-mission data
-                access was attempted, or HTTP status "NOT_FOUND" and an error message, if no processor with the given ID exists
       displayName: getProcessorById
       responses:
         200:
@@ -359,14 +293,6 @@ resourceTypes:
     patch:
       description: |
         Update a processor by ID
-
-        @param id        the ID of the processor to update
-        @param restProcessor a Json object containing the modified (and unmodified) attributes
-        @return HTTP status "OK" and a response containing a Json object corresponding to the processor after modification (with ID
-                and version for all contained objects) or HTTP status "NOT_FOUND" and an error message, if no processor with the
-                given ID exists, or HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or HTTP
-                status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "CONFLICT"and
-                an error message, if the processor has been modified since retrieval by the client
       displayName: modifyProcessor
       body:
         application/json:
@@ -386,12 +312,6 @@ resourceTypes:
     delete:
       description: |
         Delete a processor by ID
-
-        @param id the ID of the processor to delete
-        @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or HTTP status "NOT_FOUND", if the
-                processor did not exist, or HTTP status "NOT_MODIFIED", if the deletion was unsuccessful HTTP status "FORBIDDEN" and
-                an error message, if a cross-mission data access was attempted, or HTTP status "BAD_REQUEST", if the processor class
-                ID was not given, or if dependent objects exist
       displayName: deleteProcessorById
       responses:
         204: 
@@ -401,16 +321,6 @@ resourceTypes:
   get:
     description: |
       Get configurations by mission, processor name and configuration version
-
-      @param mission              the mission code
-      @param processorName        the name of the processor class this configuration belongs to
-      @param configurationVersion the configuration version
-      @param recordFrom           first record of filtered and ordered result to return
-      @param recordTo             last record of filtered and ordered result to return
-      @return HTTP status "OK" and a list of JSON objects representing configurations satisfying the search criteria or HTTP status
-              "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "NOT_FOUND" and an
-              error message, if no configurations matching the search criteria were found, or HTTP status "TOO MANY REQUESTS" if
-              the result list exceeds a configured maximum
     displayName: getConfigurations
     queryParameters:
       mission?: 
@@ -443,11 +353,6 @@ resourceTypes:
   post:
     description: |
       Create a new configuration
-
-      @param restConfiguration a Json representation of the new configuration
-      @return HTTP status "CREATED" and a response containing a Json object corresponding to the configuration after persistence
-              (with ID and version for all contained objects) or HTTP status "FORBIDDEN" and an error message, if a cross-mission
-              data access was attempted, or HTTP status "BAD_REQUEST", if any of the input data was invalid
     displayName: createConfiguration
     body:
       application/json:
@@ -463,12 +368,6 @@ resourceTypes:
     get:
       description: |
         Count the configurations matching the specified mission, processor name, and configuration version.
-
-        @param missionCode          the mission code
-        @param processorName        the name of the processor class this configuration belongs to
-        @param configurationVersion the configuration version
-        @return the number of matching configurations as a String (may be zero) or HTTP status "FORBIDDEN" and an error message, if a
-                cross-mission data access was attempted
       displayName: countConfigurations
       queryParameters:
         missionCode?: 
@@ -492,13 +391,6 @@ resourceTypes:
     get:
       description: |
         Get a configuration by ID
-
-        @param id the configuration ID
-        @return HTTP status "OK" and a Json object corresponding to the configuration found or HTTP status "BAD_REQUEST" and an error
-                message, if no configuration ID was given, or HTTP status "FORBIDDEN" and an error message, if a cross-mission data
-                access was attempted, or HTTP status "NOT_FOUND" and an error message, if no configuration with the given ID exists,
-                or HTTP status "TOO MANY REQUESTS" if the result list exceeds a configured maximum
-
       displayName: getConfigurationById
       responses:
         200:
@@ -513,15 +405,6 @@ resourceTypes:
     patch:
       description: |
         Update a configuration by ID
-
-        @param id                the ID of the configuration to update
-        @param restConfiguration a Json object containing the modified (and unmodified) attributes
-        @return HTTP status "OK" and a response containing a Json object corresponding to the configuration after modification (with
-                ID and version for all contained objects) or HTTP status "NOT_MODIFIED" and the unchanged configuration, if no
-                attributes were actually changed, or HTTP status "NOT_FOUND" and an error message, if no configuration with the given
-                ID exists, or HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or HTTP status
-                "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "CONFLICT" and an
-                error message, if the configuration has been modified since retrieval by the client
       displayName: modifyConfiguration
       body:
         application/json:
@@ -541,12 +424,6 @@ resourceTypes:
     delete:
       description: |
         Delete a configuration by ID
-
-        @param id the ID of the configuration to delete
-        @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or HTTP status "NOT_FOUND", if the
-                configuration did not exist, or HTTP status "NOT_MODIFIED", if the deletion was unsuccessful HTTP status "FORBIDDEN"
-                and an error message, if a cross-mission data access was attempted, or HTTP status "BAD_REQUEST", if the processor
-                class ID was not given, or if dependent objects exist
       displayName: deleteConfigurationById
       responses:
         204:      
@@ -556,20 +433,6 @@ resourceTypes:
   get:
     description: |
       Get configured processors, filtered by mission, identifier, processor name, processor version and/or configuration version
-
-      @param mission              the mission code
-      @param identifier           the identifier for the configured processor
-      @param processorName        the processor name
-      @param processorVersion     the processor version
-      @param configurationVersion the configuration version
-      @param uuid                 the UUID of the configured processor
-      @param recordFrom           first record of filtered and ordered result to return
-      @param recordTo             last record of filtered and ordered result to return
-      @return HTTP status "OK" and a list of JSON objects representing configured processors satisfying the search criteria or HTTP
-              status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "NOT_FOUND" and
-              an error message, if no configurations matching the search criteria were found, or HTTP status "TOO MANY REQUESTS" if
-              the result list exceeds a configured maximum
-
     displayName: getConfiguredProcessors
     queryParameters:
       mission?: 
@@ -611,11 +474,6 @@ resourceTypes:
   post:
     description: |
       Create a new configured processor
-
-      @param restConfiguredProcessor a Json representation of the new configured processor
-      @return HTTP status "CREATED" and a response containing a Json object corresponding to the configured processor after
-              persistence (with ID and version for all contained objects) or HTTP status "FORBIDDEN" and an error message, if a
-              cross-mission data access was attempted, or HTTP status "BAD_REQUEST", if any of the input data was invalid
     displayName: createConfiguredProcessor
     body:
       application/json:
@@ -631,13 +489,6 @@ resourceTypes:
     get:
       description: |
         Count the configuredProcessors matching the specified mission, processor name, and configuredProcessor version.
-
-        @param mission              the mission code
-        @param processorName        the processor name
-        @param processorVersion     the processor version
-        @param configurationVersion the configuration version
-        @return the number of matching configuredProcessors as a String (may be zero) or HTTP status "FORBIDDEN" and an error
-                message, if a cross-mission data access was attempted
       displayName: countConfiguredProcessors
       queryParameters:
         mission?: 
@@ -664,12 +515,6 @@ resourceTypes:
     get:
       description: |
         Get a configured processor by ID
-
-        @param id the configured processor ID
-        @return HTTP status "OK" and a Json object corresponding to the configured processor found or HTTP status "BAD_REQUEST" and
-                an error message, if no configured processor ID was given, or HTTP status "FORBIDDEN" and an error message, if a
-                cross-mission data access was attempted, or HTTP status "NOT_FOUND" and an error message, if no configured processor
-                with the given ID exists
       displayName: getConfiguredProcessorById
       responses:
         200:
@@ -684,15 +529,6 @@ resourceTypes:
     patch:
       description: |
         Update a configured processor by ID
-
-        @param id                      the ID of the configured processor to update
-        @param restConfiguredProcessor a Json object containing the modified (and unmodified) attributes
-        @return HTTP status "OK" and a response containing a Json object corresponding to the configured processor after modification
-                (with ID and version for all contained objects) or HTTP status "NOT_MODIFIED" and the unchanged configured processor,
-                if no attributes were actually changed, or HTTP status "NOT_FOUND" and an error message, if no configured processor
-                with the given ID exists, or HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
-                HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status
-                "CONFLICT"and an error message, if the configured processor has been modified since retrieval by the client
       displayName: modifyConfiguredProcessor
       body:
         application/json:
@@ -712,11 +548,6 @@ resourceTypes:
     delete:
       description: |
         Delete a configured processor by ID
-
-        @param id the ID of the configured processor to delete
-        @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or HTTP status "NOT_FOUND", if the
-                configured processor did not exist, or HTTP status "FORBIDDEN" and an error message, if a cross-mission data access
-                was attempted, or HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
       displayName: deleteConfiguredProcessorById
       responses:
         204:
@@ -727,18 +558,6 @@ resourceTypes:
     description: |
       Get a list of all workflows with the specified mission, workflow name, workflow version, input product class and configured
       processor
-
-      @param mission             the mission code
-      @param name                the workflow name
-      @param workflowVersion     the workflow version
-      @param inputProductClass   the input product class
-      @param configuredProcessor the configured processor
-      @param enabled             whether the workflow is enabled
-      @param recordFrom          first record of filtered and ordered result to return
-      @param recordTo            last record of filtered and ordered result to return
-      @return HTTP status "OK" and a list of workflows or HTTP status "NOT_FOUND" and an error message, if no workflows match the
-              search criteria, or HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
-              HTTP status "TOO MANY REQUESTS" if the result list exceeds a configured maximum
     displayName: getWorkflows
     queryParameters:
       mission?: 
@@ -780,11 +599,6 @@ resourceTypes:
   post:
     description: |
       Create a workflow from the given Json object
-
-      @param restWorkflow the Json object from which to create the workflow
-      @return HTTP status "CREATED" and a response containing a Json object corresponding to the workflow after persistence (with
-              ID and version for all contained objects) or HTTP status "FORBIDDEN" and an error message, if a cross-mission data
-              access was attempted, or HTTP status "BAD_REQUEST", if any of the input data was invalid
     displayName: createWorkflow
     body:
       application/json:
@@ -800,15 +614,6 @@ resourceTypes:
     get:
       description: |
         Count the workflows matching the specified name, workflow version, input product class, or configured processor.
-
-        @param mission             the mission code
-        @param name                the workflow name
-        @param workflowVersion     the workflow version
-        @param inputProductClass   the input product class
-        @param configuredProcessor the configured processor
-        @param enabled             whether the workflow is enabled
-        @return the number of matching workflows as a String (may be zero) or HTTP status "FORBIDDEN" and an error message, if a
-                cross-mission data access was attempted
       displayName: countWorkflows
       queryParameters:
         mission?: 
@@ -841,10 +646,6 @@ resourceTypes:
     get:
       description: |
         Find the workflow with the given ID
-
-        @param id the ID to look for
-        @return HTTP status "OK" and a Json object corresponding to the found order or HTTP status "FORBIDDEN" and an error message,
-                if a cross-mission data access was attempted, or HTTP status "NOT_FOUND", if no workflow with the given ID exists
       displayName: getWorkflowById
       responses:
         200:
@@ -859,13 +660,6 @@ resourceTypes:
     patch:
       description: |
         Update the workflow with the given ID with the attribute values of the given Json object.
-
-        @param id           the ID of the workflow to update
-        @param restWorkflow a Json object containing the modified (and unmodified) attributes
-        @return a response containing HTTP status "OK" and a Json object corresponding to the workflow after modification (with ID
-                and version for all contained objects) or HTTP status "NOT_MODIFIED" and the unchanged workflow, if no attributes
-                were actually changed, or HTTP status "NOT_FOUND" and an error message, if no workflow with the given ID exists, or
-                HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
       displayName: modifyWorkflow
       body:
         application/json:
@@ -885,11 +679,6 @@ resourceTypes:
     delete:
       description: |
         Delete a workflow by ID
-
-        @param id the ID of the workflow to delete
-        @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or HTTP status "NOT_FOUND" and an
-                error message, if the workflow did not exist, or HTTP status "FORBIDDEN" and an error message, if a cross-mission
-                data access was attempted, or HTTP status "NOT_MODIFIED" and an error message, if the deletion was unsuccessful
       displayName: deleteWorkflowById
       responses:
         204:

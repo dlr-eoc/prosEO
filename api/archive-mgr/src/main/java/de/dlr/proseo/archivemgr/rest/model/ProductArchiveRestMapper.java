@@ -1,9 +1,8 @@
 /**
  * ProductArchiveUtil.java
- * 
+ *
  * (C) 2023 DLR
  */
-
 package de.dlr.proseo.archivemgr.rest.model;
 
 import java.util.HashSet;
@@ -21,204 +20,211 @@ import de.dlr.proseo.model.service.RepositoryService;
 
 /**
  * Rest - Model Mapper for Product Archive
- * 
+ *
  * @author Denys Chaykovskiy
  */
-
 public class ProductArchiveRestMapper {
-	
+
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductArchiveRestMapper.class);
-	
+
 	/** Rest Archive as input parameter */
-	private RestProductArchive restArchive;  
-	
+	private RestProductArchive restArchive;
+
 	/** Mission */
 	String mission;
-	
+
 	/** Product Archive as output parameter */
 	private ProductArchive modelArchive = new ProductArchive();
-	
+
 	/**
 	 * Constructor with restArchive parameter
-	 * 
+	 *
 	 * @param restArchive rest archive
+	 * @param mission     the mission code
 	 */
 	public ProductArchiveRestMapper(RestProductArchive restArchive, String mission) {
-		
-		if (logger.isTraceEnabled()) logger.trace(">>> Constructor({})", (null == restArchive ? "MISSING" : restArchive.getId()));
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> Constructor({})", (null == restArchive ? "MISSING" : restArchive.getId()));
 
 		if (null == restArchive) {
 			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING));
 		}
-		
+
 		if (null == mission) {
 			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSION_MISSING));
 		}
-		
-		this.restArchive = restArchive; 
-		
-		this.mission = mission; 
-		
+
+		this.restArchive = restArchive;
+
+		this.mission = mission;
+
 		setDefaultValuesIfNull();
-		
+
 		checkMandatoryFields();
 	}
-	
+
 	/**
 	 * Gets checked in constructor rest product archive
-	 * 
+	 *
 	 * @return rest product archive
 	 */
 	public RestProductArchive get() {
-		
+
 		return restArchive;
 	}
-						
+
 	/**
-	 * Convert a REST ProductArchive into a prosEO model ProductArchive 
-	 * AvailableProductClasses will not be set here, the field will be null
-	 * 
+	 * Convert a REST ProductArchive into a prosEO model ProductArchive AvailableProductClasses will not be set here, the field will
+	 * be null
+	 *
 	 * @return model Product Archive
 	 * @throws IllegalArgumentException if the REST Product Archive has a wrong archive type
 	 */
 	public ProductArchive toModel() throws IllegalArgumentException {
-		
-		if (logger.isTraceEnabled()) logger.trace(">>> toModel({})", (null == restArchive ? "MISSING" : restArchive.getId()));
-			
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> toModel({})", (null == restArchive ? "MISSING" : restArchive.getId()));
+
 		try {
-			modelArchive.setArchiveType(ArchiveType.valueOf(restArchive.getArchiveType()));	
-	    } catch (IllegalArgumentException e) {	    	 
-	    	throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_TYPE_WRONG));	    	 
-	    }
-		
+			modelArchive.setArchiveType(ArchiveType.valueOf(restArchive.getArchiveType()));
+		} catch (IllegalArgumentException e) {
+			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_TYPE_WRONG));
+		}
+
 		setAvailableProductClasses();
-		
-		modelArchive.setBaseUri(restArchive.getBaseUri());		
+
+		modelArchive.setBaseUri(restArchive.getBaseUri());
 		modelArchive.setClientId(restArchive.getClientId());
 		modelArchive.setClientSecret(restArchive.getClientSecret());
-		
+
 		modelArchive.setCode(restArchive.getCode());
 		modelArchive.setContext(restArchive.getContext());
 		// modelArchive.setId(restArchive.getId());
-		
+
 		modelArchive.setName(restArchive.getName());
-		modelArchive.setPassword(restArchive.getPassword());	
+		modelArchive.setPassword(restArchive.getPassword());
 		modelArchive.setSendAuthInBody(restArchive.getSendAuthInBody());
-		
+
 		modelArchive.setTokenRequired(restArchive.getTokenRequired());
 		modelArchive.setTokenUri(restArchive.getTokenUri());
 		modelArchive.setUsername(restArchive.getUsername());
-			
+
 		return modelArchive;
 	}
 
 	/**
-	 * Sets Default values of the product archive 
-	 * 
+	 * Sets Default values of the product archive
+	 *
 	 */
 	private void setDefaultValuesIfNull() {
-		
+
 		if (null == restArchive.getArchiveType()) {
 			restArchive.setArchiveType(ArchiveType.AIP.toString());
 		}
-		
+
 		if (null == restArchive.getTokenRequired()) {
 			restArchive.setTokenRequired(false);
 		}
-		
+
 		if (null == restArchive.getSendAuthInBody()) {
 			restArchive.setSendAuthInBody(false);
 		}
 	}
-	
 
 	/**
 	 * Checks mandatory fields in product archive
-	 * 
+	 *
 	 */
 	private void checkMandatoryFields() {
-		
+
 		if (StringUtils.isNullOrBlank(restArchive.getCode())) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Code", "product archive model checker"));
 		}
-		
+
 		if (StringUtils.isNullOrBlank(restArchive.getName())) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Name", "product archive model checker"));
 		}
-		
+
 		if (null == restArchive.getArchiveType()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "ArchiveType", "product archive model checker"));
+			throw new IllegalArgumentException(
+					logger.log(GeneralMessage.FIELD_NOT_SET, "ArchiveType", "product archive model checker"));
 		}
-		
+
 		if (StringUtils.isNullOrBlank(restArchive.getBaseUri())) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "BaseUri", "product archive model checker"));
+			throw new IllegalArgumentException(
+					logger.log(GeneralMessage.FIELD_NOT_SET, "BaseUri", "product archive model checker"));
 		}
-		
+
 		if (null == restArchive.getContext()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Context", "product archive model checker"));
+			throw new IllegalArgumentException(
+					logger.log(GeneralMessage.FIELD_NOT_SET, "Context", "product archive model checker"));
 		}
-		
+
 		if (restArchive.getTokenRequired()) {
-			if (StringUtils.isNullOrBlank(restArchive.getTokenUri())) { 
-				throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "TokenUri", "product archive model checker"));
+			if (StringUtils.isNullOrBlank(restArchive.getTokenUri())) {
+				throw new IllegalArgumentException(
+						logger.log(GeneralMessage.FIELD_NOT_SET, "TokenUri", "product archive model checker"));
 			}
 		}
-		
+
 		if (restArchive.getSendAuthInBody()) {
 			if (StringUtils.isNullOrBlank(restArchive.getUsername())) {
-				throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Username", "product archive model checker"));
+				throw new IllegalArgumentException(
+						logger.log(GeneralMessage.FIELD_NOT_SET, "Username", "product archive model checker"));
 			}
 			if (null == restArchive.getPassword()) {
-				throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Password", "product archive model checker"));
+				throw new IllegalArgumentException(
+						logger.log(GeneralMessage.FIELD_NOT_SET, "Password", "product archive model checker"));
 			}
 		}
 	}
-		
+
 	/**
 	 * Sets available product classes of the product archive model
-	 * 
+	 *
 	 */
-	private void setAvailableProductClasses()
-	{
+	private void setAvailableProductClasses() {
 		ProductClassRepository repository = RepositoryService.getProductClassRepository();
-		
-		// TODO: FOR DEBUGGING, remove in release 
+
+		// TODO: FOR DEBUGGING, remove in release
 //		int i = 0;
 //		System.out.println("ProductClass Count = " + repository.count());
-//		
+//
 //		for (ProductClass productClass : repository.findAll()) {
-//			
+//
 //			String str = i + "=" + productClass.getProductType() + ", " + productClass.getId();
-//			
+//
 //			System.out.println(str);
-//			
+//
 //			if (i==3) break;
-//			
-//			
+//
+//
 //		}
-		
+
 		Set<ProductClass> modelProductClasses = new HashSet<>();
-		
-		for (String productType : restArchive.getAvailableProductClasses() ) {
-			
+
+		for (String productType : restArchive.getAvailableProductClasses()) {
+
 			ProductClass productClass = repository.findByMissionCodeAndProductType(mission, productType);
 
 			// ProductClass with such code and productType not found
 			if (null == productClass) {
-				
+
 				throw new IllegalArgumentException(
-						logger.log(ProductArchiveMgrMessage.PRODUCT_CLASS_NOT_FOUND, mission, productType));			
+						logger.log(ProductArchiveMgrMessage.PRODUCT_CLASS_NOT_FOUND, mission, productType));
 			}
-			
+
 			// adding product class, if not duplicated
 			if (!modelProductClasses.add(productClass)) {
-				
-				throw new IllegalArgumentException(
-						logger.log(ProductArchiveMgrMessage.DUPLICATED_PRODUCT_CLASS, productClass.getProductType(), restArchive.getCode()));			
+
+				throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.DUPLICATED_PRODUCT_CLASS,
+						productClass.getProductType(), restArchive.getCode()));
 			}
 		}
-				
+
 		modelArchive.setAvailableProductClasses(modelProductClasses);
 	}
+
 }

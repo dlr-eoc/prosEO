@@ -57,8 +57,8 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.util.OrderUtil;
 
 /**
- * Testing the service methods required to create, modify and delete processing
- * order in the prosEO database, and to query the database about such orders
+ * Testing the service methods required to create, modify and delete processing order in the prosEO database, and to query the
+ * database about such orders
  *
  * @author Katharina Bassler
  */
@@ -88,8 +88,7 @@ public class ProcessingOrderMgrTest {
 			{ "1", "S_TDX1", "Tandom-X" };
 	private static String[][] testFilterConditions = {
 			// filter_conditions_key, parameter_type, parameter_value
-			{ "copernicusCollection", "STRING", "99" }, { "revision", "INTEGER", "1" },
-			{ "productColour", "STRING", "blue" } };
+			{ "copernicusCollection", "STRING", "99" }, { "revision", "INTEGER", "1" }, { "productColour", "STRING", "blue" } };
 	private static String[][] testOutputParam = {
 			// filter_conditions_key, parameter_type, parameter_value
 			{ "copernicusCollection", "STRING", "99" }, { "copernicusCollection1", "INTEGER", "9" },
@@ -103,6 +102,7 @@ public class ProcessingOrderMgrTest {
 	private static String[][] testWorkflow =
 			// name, UUID
 			{ { "testWorkflow", UUID.randomUUID().toString() }, { "otherTestWorkflow", UUID.randomUUID().toString() } };
+	private static String testWorkflowVersion = "1.0";
 	private static String[][] testReqOrbits = {
 			// spacecraft_code, orbitNumber from, orbitNumber to
 			{ "S5P", "8132", "8138" }, { "S5P", "8136", "8141" } };
@@ -169,8 +169,8 @@ public class ProcessingOrderMgrTest {
 		ProcessingOrder testOrder = new ProcessingOrder();
 
 		if (null != RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(missionCode, testData[3])) {
-			return OrderUtil.toRestOrder(
-					RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(missionCode, testData[3]));
+			return OrderUtil
+				.toRestOrder(RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(missionCode, testData[3]));
 		} else {
 
 			// Adding processing order parameters
@@ -208,27 +208,25 @@ public class ProcessingOrderMgrTest {
 
 			for (String element : testConfProc) {
 				ConfiguredProcessor reqProc = RepositoryService.getConfiguredProcessorRepository()
-						.findByMissionCodeAndIdentifier(missionCode, element);
+					.findByMissionCodeAndIdentifier(missionCode, element);
 				if (null != reqProc) {
 					testOrder.getRequestedConfiguredProcessors().add(reqProc);
 				}
 			}
 
-			for (ProductClass prodClass : RepositoryService.getProductClassRepository()
-					.findByProductType(testInputProdClass)) {
+			for (ProductClass prodClass : RepositoryService.getProductClassRepository().findByProductType(testInputProdClass)) {
 				testOrder.getInputProductClasses().add(prodClass);
 			}
 
 			for (String element : testReqProdClass) {
-				Set<ProductClass> set = new HashSet<>(
-						RepositoryService.getProductClassRepository().findByProductType(element));
+				Set<ProductClass> set = new HashSet<>(RepositoryService.getProductClassRepository().findByProductType(element));
 				testOrder.setRequestedProductClasses(set);
 			}
 
 			for (String[] testReqOrbit : testReqOrbits) {
 				List<Orbit> orbits = RepositoryService.getOrbitRepository()
-						.findByMissionCodeAndSpacecraftCodeAndOrbitNumberBetween(missionCode, testReqOrbit[0],
-								Integer.valueOf(testReqOrbit[1]), Integer.valueOf(testReqOrbit[2]));
+					.findByMissionCodeAndSpacecraftCodeAndOrbitNumberBetween(missionCode, testReqOrbit[0],
+							Integer.valueOf(testReqOrbit[1]), Integer.valueOf(testReqOrbit[2]));
 				testOrder.setRequestedOrbits(orbits);
 			}
 
@@ -320,8 +318,7 @@ public class ProcessingOrderMgrTest {
 	/**
 	 * Filling the database with some initial data for testing purposes
 	 *
-	 * @param mission The mission that is referenced by the data filled in the
-	 *                database
+	 * @param mission The mission that is referenced by the data filled in the database
 	 */
 	private static void fillDatabase(Mission mission) {
 		logger.debug("... adding product classes");
@@ -342,11 +339,15 @@ public class ProcessingOrderMgrTest {
 
 		logger.debug("... adding workflows");
 		Workflow workflow0 = new Workflow();
+		workflow0.setMission(mission);
 		workflow0.setName(testWorkflow[0][0]);
+		workflow0.setWorkflowVersion(testWorkflowVersion);
 		workflow0.setUuid(UUID.fromString(testWorkflow[0][1]));
 		RepositoryService.getWorkflowRepository().save(workflow0);
 		Workflow workflow1 = new Workflow();
+		workflow1.setMission(mission);
 		workflow1.setName(testWorkflow[1][0]);
+		workflow1.setWorkflowVersion(testWorkflowVersion);
 		workflow1.setUuid(UUID.fromString(testWorkflow[1][1]));
 		RepositoryService.getWorkflowRepository().save(workflow1);
 
@@ -373,8 +374,7 @@ public class ProcessingOrderMgrTest {
 	}
 
 	/**
-	 * Test method for
-	 * {@link de.dlr.proseo.ordermgr.rest.ProcessingOrderMgr#createOrder(de.dlr.proseo.model.rest.model.RestOrder)}.
+	 * Test method for {@link de.dlr.proseo.ordermgr.rest.ProcessingOrderMgr#createOrder(de.dlr.proseo.model.rest.model.RestOrder)}.
 	 */
 	@Test
 	@WithMockUser(username = "UTM-testuser", roles = {})
@@ -457,8 +457,7 @@ public class ProcessingOrderMgrTest {
 		testOrder.getInputProductClasses().add("invalidInputProductClass");
 		assertThrows(IllegalArgumentException.class, () -> pom.createOrder(testOrder));
 		testOrder.getInputProductClasses().clear();
-		for (ProductClass prodClass : RepositoryService.getProductClassRepository()
-				.findByProductType(testInputProdClass)) {
+		for (ProductClass prodClass : RepositoryService.getProductClassRepository().findByProductType(testInputProdClass)) {
 			testOrder.getInputProductClasses().add(prodClass.toString());
 		}
 
@@ -522,8 +521,7 @@ public class ProcessingOrderMgrTest {
 	}
 
 	/**
-	 * Test method for
-	 * {@link de.dlr.proseo.ordermgr.rest.ProcessingOrderMgr#deleteOrderById(java.lang.Long)}.
+	 * Test method for {@link de.dlr.proseo.ordermgr.rest.ProcessingOrderMgr#deleteOrderById(java.lang.Long)}.
 	 */
 	@Test
 	@WithMockUser(username = "UTM-testuser", roles = {})
@@ -536,28 +534,7 @@ public class ProcessingOrderMgrTest {
 	}
 
 	/**
-	 * Test method for
-	 * {@link de.dlr.proseo.ordermgr.rest.ProcessingOrderMgr#deleteOrdersWithEvictionTimeLessThan(java.time.Instant)}.
-	 */
-	@Test
-	@WithMockUser(username = "UTM-testuser", roles = {})
-	public final void testDeleteOrdersWithEvictionTimeLessThan() {
-		logger.debug(">>> testDeleteOrdersWithEvictionTimeLessThan()");
-
-		ProcessingOrder testOrder = new ProcessingOrder();
-		testOrder.setMission(RepositoryService.getMissionRepository().findByCode("UTM"));
-		testOrder.setIdentifier("testDeleteOrdersWithEvictionTimeLessThan");
-		testOrder.setUuid(UUID.randomUUID());
-		testOrder.setOrderState(OrderState.CLOSED);
-		testOrder.setEvictionTime(Instant.ofEpochMilli(0));
-		RepositoryService.getOrderRepository().save(testOrder);
-
-		pom.deleteOrdersWithEvictionTimeLessThan(Instant.now());
-	}
-
-	/**
-	 * Test method for
-	 * {@link de.dlr.proseo.ordermgr.rest.ProcessingOrderMgr#getOrderById(java.lang.Long)}.
+	 * Test method for {@link de.dlr.proseo.ordermgr.rest.ProcessingOrderMgr#getOrderById(java.lang.Long)}.
 	 */
 	@Test
 	@WithMockUser(username = "UTM-testuser", roles = {})
@@ -705,7 +682,8 @@ public class ProcessingOrderMgrTest {
 
 		// Workflow may not be updated
 		ProcessingOrder po = OrderUtil.toModelOrder(testOrder);
-		po.setWorkflow(RepositoryService.getWorkflowRepository().findByName(testWorkflow[0][0]));
+		po.setWorkflow(RepositoryService.getWorkflowRepository()
+				.findByMissionCodeAndNameAndVersion("UTM", testWorkflow[0][0], testWorkflowVersion));
 		testOrder.setId(RepositoryService.getOrderRepository().save(po).getId());
 		testOrder.setWorkflowName(testWorkflow[0][0]);
 		testOrder.setWorkflowUuid(testWorkflow[0][1]);
@@ -728,10 +706,9 @@ public class ProcessingOrderMgrTest {
 		assertThrows(SecurityException.class, () -> pom.getOrders("PTM", null, null, null, null, null, null));
 
 		/*
-		 * Using values from the test order data which was used to initialize the order
-		 * repository means that the query must return at least one order. If no mission
-		 * was specified, it is acquired from the security service. Not specifying
-		 * additional parameters returns all orders for the given mission.
+		 * Using values from the test order data which was used to initialize the order repository means that the query must return
+		 * at least one order. If no mission was specified, it is acquired from the security service. Not specifying additional
+		 * parameters returns all orders for the given mission.
 		 */
 		assertTrue(pom.getOrders(null, null, null, null, null, null, null).size() >= 1);
 		assertTrue(pom.getOrders("UTM", null, null, null, null, null, null).size() >= 1);
@@ -760,24 +737,19 @@ public class ProcessingOrderMgrTest {
 		Instant stop = ZonedDateTime.of(2030, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault()).toInstant();
 
 		/*
-		 * Using values from the test order data which was used to initialize the order
-		 * repository means that the query must return at least one order. Mission code
-		 * is obligatory.
+		 * Using values from the test order data which was used to initialize the order repository means that the query must return
+		 * at least one order. Mission code is obligatory.
 		 */
 		assertThrows(IllegalArgumentException.class,
 				() -> pom.getAndSelectOrders(null, null, null, null, null, null, null, null, null));
 		assertTrue(pom.getAndSelectOrders("PTM", null, null, null, null, null, null, null, null).size() >= 1);
 		assertTrue(pom.getAndSelectOrders("UTM", null, null, null, null, null, null, null, null).size() >= 1);
-		assertTrue(pom.getAndSelectOrders("UTM", testOrderData[0][3], null, null, null, null, null, null, null)
-				.size() >= 1);
-		assertTrue(pom.getAndSelectOrders("UTM", null, new String[] { "RUNNING", "PLANNED" }, null, null, null, null,
-				null, null).size() >= 1);
-		assertTrue(
-				pom.getAndSelectOrders("UTM", null, null, testReqProdClass, null, null, null, null, null).size() >= 1);
-		assertTrue(
-				pom.getAndSelectOrders("UTM", null, null, null, start.toString(), null, null, null, null).size() >= 1);
-		assertTrue(
-				pom.getAndSelectOrders("UTM", null, null, null, null, stop.toString(), null, null, null).size() >= 1);
+		assertTrue(pom.getAndSelectOrders("UTM", testOrderData[0][3], null, null, null, null, null, null, null).size() >= 1);
+		assertTrue(pom.getAndSelectOrders("UTM", null, new String[] { "RUNNING", "PLANNED" }, null, null, null, null, null, null)
+			.size() >= 1);
+		assertTrue(pom.getAndSelectOrders("UTM", null, null, testReqProdClass, null, null, null, null, null).size() >= 1);
+		assertTrue(pom.getAndSelectOrders("UTM", null, null, null, start.toString(), null, null, null, null).size() >= 1);
+		assertTrue(pom.getAndSelectOrders("UTM", null, null, null, null, stop.toString(), null, null, null).size() >= 1);
 		assertTrue(pom.getAndSelectOrders("UTM", null, null, null, null, null, 0L, null, null).size() >= 1);
 		assertTrue(pom.getAndSelectOrders("UTM", null, null, null, null, null, null, Long.MAX_VALUE, null).size() >= 1);
 		assertTrue(pom.getAndSelectOrders("UTM", null, null, null, null, null, null, null, null).size() >= 1);
@@ -800,27 +772,21 @@ public class ProcessingOrderMgrTest {
 		Instant stop = ZonedDateTime.of(2030, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault()).toInstant();
 
 		/*
-		 * Using values from the test order data which was used to initialize the order
-		 * repository means that the query must return at least one order. Mission code
-		 * is obligatory.
+		 * Using values from the test order data which was used to initialize the order repository means that the query must return
+		 * at least one order. Mission code is obligatory.
 		 */
 		assertThrows(IllegalArgumentException.class,
 				() -> pom.countSelectOrders(null, null, null, null, null, null, null, null, null));
 		assertTrue(Long.valueOf(pom.countSelectOrders("PTM", null, null, null, null, null, null, null, null)) >= 1);
 		assertTrue(Long.valueOf(pom.countSelectOrders("UTM", null, null, null, null, null, null, null, null)) >= 1);
-		assertTrue(Long.valueOf(
-				pom.countSelectOrders("UTM", testOrderData[0][3], null, null, null, null, null, null, null)) >= 1);
-		assertTrue(Long.valueOf(pom.countSelectOrders("UTM", null, new String[] { "RUNNING", "PLANNED" }, null, null,
-				null, null, null, null)) >= 1);
-		assertTrue(Long.valueOf(
-				pom.countSelectOrders("UTM", null, null, testReqProdClass, null, null, null, null, null)) >= 1);
-		assertTrue(Long.valueOf(
-				pom.countSelectOrders("UTM", null, null, null, start.toString(), null, null, null, null)) >= 1);
-		assertTrue(Long
-				.valueOf(pom.countSelectOrders("UTM", null, null, null, null, stop.toString(), null, null, null)) >= 1);
+		assertTrue(Long.valueOf(pom.countSelectOrders("UTM", testOrderData[0][3], null, null, null, null, null, null, null)) >= 1);
+		assertTrue(Long.valueOf(pom.countSelectOrders("UTM", null, new String[] { "RUNNING", "PLANNED" }, null, null, null, null,
+				null, null)) >= 1);
+		assertTrue(Long.valueOf(pom.countSelectOrders("UTM", null, null, testReqProdClass, null, null, null, null, null)) >= 1);
+		assertTrue(Long.valueOf(pom.countSelectOrders("UTM", null, null, null, start.toString(), null, null, null, null)) >= 1);
+		assertTrue(Long.valueOf(pom.countSelectOrders("UTM", null, null, null, null, stop.toString(), null, null, null)) >= 1);
 		assertTrue(Long.valueOf(pom.countSelectOrders("UTM", null, null, null, null, null, 0L, null, null)) >= 1);
-		assertTrue(Long
-				.valueOf(pom.countSelectOrders("UTM", null, null, null, null, null, null, Long.MAX_VALUE, null)) >= 1);
+		assertTrue(Long.valueOf(pom.countSelectOrders("UTM", null, null, null, null, null, null, Long.MAX_VALUE, null)) >= 1);
 		assertTrue(Long.valueOf(pom.countSelectOrders("UTM", null, null, null, null, null, null, null, null)) >= 1);
 	}
 }

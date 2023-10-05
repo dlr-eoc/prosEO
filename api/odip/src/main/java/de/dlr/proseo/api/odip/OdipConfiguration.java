@@ -1,6 +1,6 @@
 /**
  * OdipConfiguration.java
- * 
+ *
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.api.odip;
@@ -12,19 +12,18 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * Configuration class for the prosEO Processor Manager component
- * 
- * @author Dr. Thomas Bassler
  *
+ * @author Dr. Thomas Bassler
  */
 @Configuration
-@ConfigurationProperties(prefix="proseo")
+@ConfigurationProperties(prefix = "proseo")
 @EntityScan(basePackages = "de.dlr.proseo.model")
 public class OdipConfiguration {
-	
+
 	/** The URL of the prosEO User Manager */
 	@Value("${proseo.userManager.url}")
 	private String userMgrUrl;
-	
+
 	/** The URL of the prosEO Ingestor */
 	@Value("${proseo.ingestor.url}")
 	private String ingestorUrl;
@@ -36,11 +35,11 @@ public class OdipConfiguration {
 	/** The URL of the prosEO Order Manager */
 	@Value("${proseo.orderManager.url}")
 	private String orderManagerUrl;
-	
+
 	/** Validity period for OAuth2 tokens */
 	@Value("${proseo.token.expiration}")
 	private Long tokenExpirationPeriod;
-	
+
 	/** Maximum number of objects to retrieve in a single query */
 	@Value("${proseo.quota}")
 	private Long quota;
@@ -53,11 +52,13 @@ public class OdipConfiguration {
 	@Value("${proseo.odip.facility}")
 	private String facility;
 
-	/** The base URI of the AIP client (protocol, host name, port; no terminating slash) */
-	@Value("${proseo.aipclient.baseuri}")
+	/** The URI of the AIP client (protocol, host name, port, context; no terminating slash) */
+	@Value("${proseo.aip.url}")
 	private String aipUrl;
-	
+
 	/**
+	 * Gets the AIP URL
+	 * 
 	 * @return the aipUrl
 	 */
 	public String getAipUrl() {
@@ -65,6 +66,8 @@ public class OdipConfiguration {
 	}
 
 	/**
+	 * Gets the processing facility
+	 * 
 	 * @return the facility
 	 */
 	public String getFacility() {
@@ -72,6 +75,8 @@ public class OdipConfiguration {
 	}
 
 	/**
+	 * Gets the timeout for HTTP connections
+	 * 
 	 * @return the httpTimeout
 	 */
 	public Long getHttpTimeout() {
@@ -79,6 +84,8 @@ public class OdipConfiguration {
 	}
 
 	/**
+	 * Gets the production planner URL
+	 * 
 	 * @return the productionPlannerUrl
 	 */
 	public String getProductionPlannerUrl() {
@@ -86,6 +93,8 @@ public class OdipConfiguration {
 	}
 
 	/**
+	 * Gets the order manager URL
+	 * 
 	 * @return the orderManagerUrl
 	 */
 	public String getOrderManagerUrl() {
@@ -94,7 +103,7 @@ public class OdipConfiguration {
 
 	/**
 	 * Gets the URL of the prosEO User Manager component
-	 * 
+	 *
 	 * @return the User Manager URL
 	 */
 	public String getUserMgrUrl() {
@@ -103,7 +112,7 @@ public class OdipConfiguration {
 
 	/**
 	 * Gets the URL of the prosEO Ingestor component
-	 * 
+	 *
 	 * @return the Ingestor URL
 	 */
 	public String getIngestorUrl() {
@@ -112,7 +121,7 @@ public class OdipConfiguration {
 
 	/**
 	 * Gets the token validity period
-	 * 
+	 *
 	 * @return the token expiration period
 	 */
 	public Long getTokenExpirationPeriod() {
@@ -121,7 +130,7 @@ public class OdipConfiguration {
 
 	/**
 	 * Gets the maximum number of objects to retrieve in a single query
-	 * 
+	 *
 	 * @return the quota
 	 */
 	public Long getQuota() {

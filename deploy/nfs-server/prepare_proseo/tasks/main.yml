@@ -6,6 +6,12 @@
     mode: 0755
     state: directory
     
+- name: Prepare exchange directory for AIP client
+  file:
+    path: /exports/transfer/aip/downloads
+    mode: 0777
+    state: directory
+    
 - name: Install prosEO scripts
   copy:
     src: "{{ item }}"

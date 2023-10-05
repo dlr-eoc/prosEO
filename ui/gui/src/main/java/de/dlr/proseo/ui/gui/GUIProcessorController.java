@@ -1,3 +1,8 @@
+/**
+ * GUIProcessorController.java
+ *
+ * (C) 2021 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ui.gui;
 
 import java.util.ArrayList;
@@ -24,8 +29,12 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
+/**
+ * A controller for retrieving and handling processors
+ *
+ * @author David Mazo
+ */
 @Controller
-
 public class GUIProcessorController extends GUIBaseController {
 
 	/** A logger for this class */
@@ -34,54 +43,64 @@ public class GUIProcessorController extends GUIBaseController {
 	/** The configuration object for the prosEO backend services */
 	@Autowired
 	private ServiceConfiguration serviceConfig;
-    
-    @RequestMapping(value = "/processor-show")
-    public String showProcessor() {
-   
-    return "processor-show";
-    }
-    @RequestMapping(value = "/configured-processor-show")
-    public String showConfiguredProcessor() {
-   
-    return "configured-processor-show";
-    }
+
+	/**
+	 * Show the processor view
+	 *
+	 * @return the name of the processor view template
+	 */
+	@RequestMapping(value = "/processor-show")
+	public String showProcessor() {
+		return "processor-show";
+	}
+
+	/**
+	 * Show the configured processor view
+	 *
+	 * @return the name of the configured processor view template
+	 */
+	@RequestMapping(value = "/configured-processor-show")
+	public String showConfiguredProcessor() {
+
+		return "configured-processor-show";
+	}
 
 	/**
 	 * Retrieve the processor with name or all if name is null
-	 * 
+	 *
 	 * @param processorName The processor name or null
-	 * @param sortby The sort column
-	 * @param up The sort direction (true for up)
-	 * @param model The model to hold the data
+	 * @param sortby        The sort column
+	 * @param up            The sort direction (true for up)
+	 * @param model         The model to hold the data
 	 * @return The result
 	 */
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/processor-show/get")
-	public DeferredResult<String> getProcessors(
-			@RequestParam(required = false, value = "processorName") String processorName,
+	public DeferredResult<String> getProcessors(@RequestParam(required = false, value = "processorName") String processorName,
 			@RequestParam(required = false, value = "sortby") String sortby,
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
-		
+
 		logger.trace(">>> getProcessors(model)");
 		Mono<ClientResponse> mono = get(processorName);
-		DeferredResult<String> deferredResult = new DeferredResult<String>();
+		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> processors = new ArrayList<>();
 		mono.doOnError(e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("processor-show :: #errormsg");
-		})
-	 	.subscribe(clientResponse -> {
+		}).subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(List.class).subscribe(pList -> {
 					processors.addAll(pList);
-					
+
 					MapComparator oc = new MapComparator("processorName", true);
 					processors.sort(oc);
-					
+
 					model.addAttribute("processors", processors);
-					if (logger.isTraceEnabled()) logger.trace(model.toString() + "MODEL TO STRING");
-					if (logger.isTraceEnabled()) logger.trace(">>>>MONO" + processors.toString());
+					if (logger.isTraceEnabled())
+						logger.trace(model.toString() + "MODEL TO STRING");
+					if (logger.isTraceEnabled())
+						logger.trace(">>>>MONO" + processors.toString());
 					deferredResult.setResult("processor-show :: #processorcontent");
 					logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
 				});
@@ -91,8 +110,7 @@ public class GUIProcessorController extends GUIBaseController {
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
-		},
-		e -> {
+		}, e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("processor-show :: #errormsg");
 		});
@@ -105,11 +123,11 @@ public class GUIProcessorController extends GUIBaseController {
 
 	/**
 	 * Retrieve the configured processors of a processor or all if processor is null
-	 * 
+	 *
 	 * @param processorName The processor name or null
-	 * @param sortby The sort column
-	 * @param up The sort direction (true for up)
-	 * @param model The model to hold the data
+	 * @param sortby        The sort column
+	 * @param up            The sort direction (true for up)
+	 * @param model         The model to hold the data
 	 * @return The result
 	 */
 	@SuppressWarnings("unchecked")
@@ -118,27 +136,28 @@ public class GUIProcessorController extends GUIBaseController {
 			@RequestParam(required = false, value = "processorName") String processorName,
 			@RequestParam(required = false, value = "sortby") String sortby,
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
-		
+
 		logger.trace(">>> getConfiguredProcessors(model)");
 		Mono<ClientResponse> mono = getCP(processorName);
-		DeferredResult<String> deferredResult = new DeferredResult<String>();
+		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> configuredprocessors = new ArrayList<>();
 		mono.doOnError(e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("configured-processor-show :: #errormsg");
-		})
-	 	.subscribe(clientResponse -> {
+		}).subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(List.class).subscribe(pList -> {
 					configuredprocessors.addAll(pList);
-					
+
 					MapComparator oc = new MapComparator("identifier", true);
 					configuredprocessors.sort(oc);
-				
+
 					model.addAttribute("configuredprocessors", configuredprocessors);
-					if (logger.isTraceEnabled()) logger.trace(model.toString() + "MODEL TO STRING");
-					if (logger.isTraceEnabled()) logger.trace(">>>>MONO" + configuredprocessors.toString());
+					if (logger.isTraceEnabled())
+						logger.trace(model.toString() + "MODEL TO STRING");
+					if (logger.isTraceEnabled())
+						logger.trace(">>>>MONO" + configuredprocessors.toString());
 					deferredResult.setResult("configured-processor-show :: #configuredprocessorcontent");
 					logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
 				});
@@ -148,8 +167,7 @@ public class GUIProcessorController extends GUIBaseController {
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
-		},
-		e -> {
+		}, e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("configured-processor-show :: #errormsg");
 		});
@@ -159,52 +177,95 @@ public class GUIProcessorController extends GUIBaseController {
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
 		return deferredResult;
 	}
-	
+
+	/**
+	 * Makes an HTTP GET request to retrieve the processors with the given name.
+	 *
+	 * @param processorName the processor name
+	 * @return a Mono containing the HTTP response
+	 */
 	private Mono<ClientResponse> get(String processorName) {
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+
+		// Provide authentication
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
+
+		// Build the request URI
 		String uri = serviceConfig.getProcessorManagerUrl() + "/processors";
 		String divider = "?";
 		uri += divider + "mission=" + mission;
-		divider ="&";
+		divider = "&";
 		if (processorName != null) {
 			uri += divider + "processorName=" + processorName;
 		}
 		logger.trace("URI " + uri);
-		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(
-				HttpClient.create().followRedirect((req, res) -> {
-					logger.trace("response:{}", res.status());
-					return HttpResponseStatus.FOUND.equals(res.status());
-				})
-			));
+
+		// Create and configure a WebClient to make a HTTP request to the URI
+		Builder webclient = WebClient.builder()
+			.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
+				logger.trace("response:{}", res.status());
+				return HttpResponseStatus.FOUND.equals(res.status());
+			})));
+
 		logger.trace("Found authentication: " + auth);
 		logger.trace("... with username " + auth.getName());
-		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]" ) );
-		return  webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
+		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
 
+		/*
+		 * The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
+		 * operations on it, such as extracting the response body or handling any errors that may occur during the request.
+		 */
+		return webclient.build()
+			.get()
+			.uri(uri)
+			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
+			.accept(MediaType.APPLICATION_JSON)
+			.exchange();
 	}
 
+	/**
+	 * Makes an HTTP GET request to retrieve the configured processors with the given processor name.
+	 *
+	 * @param processorName the processor name
+	 * @return a Mono containing the HTTP response
+	 */
 	private Mono<ClientResponse> getCP(String processorName) {
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+
+		// Provide authentication
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
+
+		// Build the request URI
 		String uri = serviceConfig.getProcessorManagerUrl() + "/configuredprocessors";
 		String divider = "?";
 		uri += divider + "mission=" + mission;
-		divider ="&";
+		divider = "&";
 		if (processorName != null) {
 			uri += divider + "identifier=" + processorName;
 		}
 		logger.trace("URI " + uri);
-		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(
-				HttpClient.create().followRedirect((req, res) -> {
-					logger.trace("response:{}", res.status());
-					return HttpResponseStatus.FOUND.equals(res.status());
-				})
-			));
+
+		// Create and configure a WebClient to make a HTTP request to the URI
+		Builder webclient = WebClient.builder()
+			.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {
+				logger.trace("response:{}", res.status());
+				return HttpResponseStatus.FOUND.equals(res.status());
+			})));
+
 		logger.trace("Found authentication: " + auth);
 		logger.trace("... with username " + auth.getName());
-		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]" ) );
-		return  webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
+		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
 
+		/*
+		 * The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
+		 * operations on it, such as extracting the response body or handling any errors that may occur during the request.
+		 */
+		return webclient.build()
+			.get()
+			.uri(uri)
+			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
+			.accept(MediaType.APPLICATION_JSON)
+			.exchange();
 	}
+
 }

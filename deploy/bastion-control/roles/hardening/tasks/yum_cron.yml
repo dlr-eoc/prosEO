@@ -1,7 +1,9 @@
 ---
-- name: Install yum-cron
+- name: Install yum-cron and postfix for notifications
   yum:
-    name: yum-cron
+    name:
+    - yum-cron
+    - postfix
     state: latest
 
 - name: Enable YUM security updates
@@ -23,6 +25,20 @@
   - update_messages
   - download_updates
   - apply_updates
+
+- name: Set YUM cron mail notification recipient
+  lineinfile:
+    path: /etc/yum/yum-cron.conf
+    regexp: "^email_to *=.*"
+    line: "email_to = {{ yumcron_email|default('root@localhost') }}"
+    create: yes
+    state: present
+
+- name: Enable postfix
+  service:
+    name: postfix
+    state: started
+    enabled: true
 
 - name: Enable yum-cron
   service:

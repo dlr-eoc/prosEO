@@ -1,0 +1,445 @@
+{
+	"info": {
+		"_postman_id": "e1b37fd1-1f1a-40c0-a403-f88e219e6c7a",
+		"name": "prosEO AIP Client",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "11367849"
+	},
+	"item": [
+		{
+			"name": "Check health",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Status is UP\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.status).to.eql(\"UP\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/actuator/health",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"actuator",
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Download by name/local",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Product class is PTM_L0\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.productClass).to.eql(\"PTM_L0\");",
+							"});",
+							"pm.test(\"Sensing start time\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.sensingStartTime).to.eql(\"2019-11-04T09:00:00.000000\");",
+							"});",
+							"pm.test(\"Mission code is PTM\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.missionCode).to.eql(\"PTM\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{service-root-uri}}/download/byname?filename=PTM_L0_20191104090000_20191104094500_20191104120000.RAW&facility=localhost",
+					"host": [
+						"{{service-root-uri}}"
+					],
+					"path": [
+						"download",
+						"byname"
+					],
+					"query": [
+						{
+							"key": "filename",
+							"value": "PTM_L0_20191104090000_20191104094500_20191104120000.RAW"
+						},
+						{
+							"key": "facility",
+							"value": "localhost"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Download by name/remote",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Product class is PTM_L0\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.productClass).to.eql(\"PTM_L0\");",
+							"});",
+							"pm.test(\"Sensing start time\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.sensingStartTime).to.eql(\"2019-11-04T19:30:00.000000\");",
+							"});",
+							"pm.test(\"Database ID is 0\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.id).to.eql(0);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{service-root-uri}}/download/byname?filename=PTM_L0_20191104193000_20191104201500_20191104210200.RAW&facility=localhost",
+					"host": [
+						"{{service-root-uri}}"
+					],
+					"path": [
+						"download",
+						"byname"
+					],
+					"query": [
+						{
+							"key": "filename",
+							"value": "PTM_L0_20191104193000_20191104201500_20191104210200.RAW"
+						},
+						{
+							"key": "facility",
+							"value": "localhost"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Download by time/local",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Product class is PTM_L0\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.productClass).to.eql(\"PTM_L0\");",
+							"});",
+							"pm.test(\"Sensing start time\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.sensingStartTime).to.eql(\"2019-11-04T09:00:00.000000\");",
+							"});",
+							"pm.test(\"Mission code is PTM\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.missionCode).to.eql(\"PTM\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{service-root-uri}}/download/bytime?productType=PTM_L0&facility=localhost&startTime=2019-11-04T09:00:00.000000&stopTime=2019-11-04T09:45:00.000000",
+					"host": [
+						"{{service-root-uri}}"
+					],
+					"path": [
+						"download",
+						"bytime"
+					],
+					"query": [
+						{
+							"key": "productType",
+							"value": "PTM_L0"
+						},
+						{
+							"key": "facility",
+							"value": "localhost"
+						},
+						{
+							"key": "startTime",
+							"value": "2019-11-04T09:00:00.000000"
+						},
+						{
+							"key": "stopTime",
+							"value": "2019-11-04T09:45:00.000000"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Download by time/remote",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Product class is AUX_IERS_B\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.productClass).to.eql(\"AUX_IERS_B\");",
+							"});",
+							"pm.test(\"Sensing start time\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.sensingStartTime).to.eql(\"2019-10-01T00:00:00.000000\");",
+							"});",
+							"pm.test(\"File name\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.productFile[0].productFileName).to.eql(\"bulletinb-381.xml\");",
+							"});",
+							"pm.test(\"Database ID is 0\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.id).to.eql(0);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{service-root-uri}}/download/bytime?productType=AUX_IERS_B&facility=localhost&startTime=2019-10-01T00:00:00&stopTime=2019-11-01T00:00:00",
+					"host": [
+						"{{service-root-uri}}"
+					],
+					"path": [
+						"download",
+						"bytime"
+					],
+					"query": [
+						{
+							"key": "productType",
+							"value": "AUX_IERS_B"
+						},
+						{
+							"key": "facility",
+							"value": "localhost"
+						},
+						{
+							"key": "startTime",
+							"value": "2019-10-01T00:00:00"
+						},
+						{
+							"key": "stopTime",
+							"value": "2019-11-01T00:00:00"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Download all by time/local",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Array size\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.length).to.eql(4); // Includes border case 12:00:00.000000, because selection actually ends at 12:00:00.000999",
+							"});",
+							"pm.test(\"Product class is PTM_L0\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData[0].productClass).to.eql(\"PTM_L0\");",
+							"});",
+							"pm.test(\"Sensing start time\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData[0].sensingStartTime).to.eql(\"2019-11-04T09:45:00.000000\");",
+							"});",
+							"pm.test(\"Mission code is PTM\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData[0].missionCode).to.eql(\"PTM\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{service-root-uri}}/download/allbytime?productType=PTM_L0&facility=localhost&startTime=2019-11-04T10:00:00.000000&stopTime=2019-11-04T12:00:00.000000",
+					"host": [
+						"{{service-root-uri}}"
+					],
+					"path": [
+						"download",
+						"allbytime"
+					],
+					"query": [
+						{
+							"key": "productType",
+							"value": "PTM_L0"
+						},
+						{
+							"key": "facility",
+							"value": "localhost"
+						},
+						{
+							"key": "startTime",
+							"value": "2019-11-04T10:00:00.000000"
+						},
+						{
+							"key": "stopTime",
+							"value": "2019-11-04T12:00:00.000000"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Download all by time/remote",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Array size\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.length).to.eql(1);",
+							"});",
+							"pm.test(\"Product class is PTM_L0\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData[0].productClass).to.eql(\"PTM_L0\");",
+							"});",
+							"pm.test(\"Sensing start time\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData[0].sensingStartTime).to.eql(\"2019-11-04T19:30:00.000000\");",
+							"});",
+							"pm.test(\"Database ID is 0\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData[0].id).to.eql(0);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{service-root-uri}}/download/allbytime?productType=PTM_L0&facility=localhost&startTime=2019-11-04T20:00:00.000000&stopTime=2019-11-04T21:00:00.000000",
+					"host": [
+						"{{service-root-uri}}"
+					],
+					"path": [
+						"download",
+						"allbytime"
+					],
+					"query": [
+						{
+							"key": "productType",
+							"value": "PTM_L0"
+						},
+						{
+							"key": "facility",
+							"value": "localhost"
+						},
+						{
+							"key": "startTime",
+							"value": "2019-11-04T20:00:00.000000"
+						},
+						{
+							"key": "stopTime",
+							"value": "2019-11-04T21:00:00.000000"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "basic",
+		"basic": [
+			{
+				"key": "password",
+				"value": "{{password}}",
+				"type": "string"
+			},
+			{
+				"key": "username",
+				"value": "{{username}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

@@ -763,7 +763,9 @@ public class BaseWrapper {
 							Files.createDirectories(filePath);
 						} catch (IOException | SecurityException e) {
 							logger.error(MSG_UNABLE_TO_CREATE_DIRECTORY, filePath, e.getClass().getName(), e.getMessage());
-							e.printStackTrace();
+							if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 							throw new WrapperException();
 						}
 					} else {
@@ -777,7 +779,9 @@ public class BaseWrapper {
 						} catch (IOException | SecurityException e) {
 							logger.error(MSG_UNABLE_TO_CREATE_DIRECTORY, filePath.getParent(), e.getClass().getName(),
 									e.getMessage());
-							e.printStackTrace();
+							if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 							throw new WrapperException();
 						}
 					}
@@ -1138,7 +1142,9 @@ public class BaseWrapper {
 				}
 			});
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 			logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, wrapperDataDirectory, e.getClass().getName() + " / " + e.getMessage());
 		}
 	}
@@ -1293,7 +1299,9 @@ public class BaseWrapper {
 		try {
 			System.exit(((BaseWrapper) clazz.getDeclaredConstructor().newInstance()).run());
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 			logger.error(MSG_WRAPPER_CANNOT_BE_LAUNCHED, clazz.getName(), e.getMessage());
 			System.exit(EXIT_CODE_FAILURE);
 		}

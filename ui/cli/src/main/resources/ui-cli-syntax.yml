@@ -1284,7 +1284,9 @@ commands:
               optional: true
               description: The name of the user account to show (without mission prefix)
         - name: create
-          description: Create a new user account within the given mission
+          description: Create a new user account within the given mission. Unless the --identFile/-i option is given,
+                       the user will be prompted for a password (specifying the password in the user account file or
+                       on the command line is not supported for security reasons)
           options:
             - name: file
               type: string
@@ -1314,10 +1316,11 @@ commands:
               optional: true
               repeatable: true
               description: A user attribute to set in the form "<attribute name>=<attribute value>"
-                           (if a password is specified here, it must be unencrypted, while in the file it must be encrypted)
         - name: update
           description: Update the given user account;
-                       the user will be prompted for mandatory attributes not given on the command line
+                       the user will be prompted for mandatory attributes not given on the command line.
+                       For security reasons, this command does not support changing passwords,
+                       please use the "password" command.
           options:
             - name: file
               type: string
@@ -1339,7 +1342,6 @@ commands:
               optional: true
               repeatable: true
               description: A user account attribute to set in the form "<attribute name>=<attribute value>"
-                           (if a password is specified here, it must be unencrypted, while in the file it must be encrypted)
         - name: delete
           description: Delete the user account with the given name
           options:

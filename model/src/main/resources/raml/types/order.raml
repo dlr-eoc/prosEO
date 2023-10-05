@@ -99,11 +99,11 @@
         description: Parameters to set for the generated products (may be empty)
       workflowUuid?:
         type: string
-        description: Universally unique workflow identifier (only for orders generated through ODIP)
+        description: Universally unique workflow identifier (only for orders generated through ODIP, mandatory for these)
         pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$
       workflowName?:
         type: string
-        description: Unique short name of the applicable workflow (only for orders generated through ODIP)
+        description: Short name of the applicable workflow (not suitable for identification; only for orders generated through ODIP)
       configuredProcessors:
         type: string[]
         description: List of identifiers of the configured processors (may be empty)

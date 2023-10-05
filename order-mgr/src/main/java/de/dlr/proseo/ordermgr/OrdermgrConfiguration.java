@@ -1,6 +1,6 @@
 /**
  * OrdermgrConfiguration.java
- * 
+ *
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.ordermgr;
@@ -10,16 +10,13 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-import de.dlr.proseo.logging.logger.ProseoLogger;
-
 /**
  * Configuration class for the prosEO Order Manager component
- * 
- * @author Dr. Thomas Bassler
  *
+ * @author Dr. Thomas Bassler
  */
 @Configuration
-@ConfigurationProperties(prefix="proseo")
+@ConfigurationProperties(prefix = "proseo")
 @EntityScan(basePackages = "de.dlr.proseo.model")
 public class OrdermgrConfiguration {
 
@@ -27,16 +24,13 @@ public class OrdermgrConfiguration {
 	@Value("${proseo.orderManager.cleanupCycleTime}")
 	private Integer cleanupCycleTime;
 
-	/**
-	 * The maximum number of results to be retrieved by REST requests
-	 */
+	/** The maximum number of results to be retrieved by REST requests */
 	@Value("${spring.maxResults}")
 	public Integer maxResults;
 
-	/** A logger for this class */
-	private static ProseoLogger logger = new ProseoLogger(OrdermgrConfiguration.class);
-		
 	/**
+	 * Return the clea-up cycle time
+	 *
 	 * @return the cleanupCycleTime
 	 */
 	public Integer getCleanupCycleTime() {
@@ -44,6 +38,8 @@ public class OrdermgrConfiguration {
 	}
 
 	/**
+	 * Set the clean-up cycle time
+	 *
 	 * @param cleanupCycleTime the cleanupCycleTime to set
 	 */
 	public void setCleanupCycleTime(Integer cleanupCycleTime) {
@@ -51,6 +47,8 @@ public class OrdermgrConfiguration {
 	}
 
 	/**
+	 * Return the maximum number of results to be retrieved by REST requests
+	 *
 	 * @return the maximum number of results to be retrieved by REST requests
 	 */
 	public Integer getMaxResults() {

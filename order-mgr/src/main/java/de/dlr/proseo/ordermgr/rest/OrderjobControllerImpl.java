@@ -1,3 +1,8 @@
+/**
+ * OrderjobControllerImpl.java
+ *
+ * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ordermgr.rest;
 
 import java.util.ArrayList;
@@ -28,45 +33,53 @@ import de.dlr.proseo.ordermgr.OrdermgrConfiguration;
 import de.dlr.proseo.ordermgr.rest.model.RestUtil;
 
 /**
- * Controller for the prosEO Order Manager, implements the services required to manage jobs.
- * 
- * @author Ernst Melchinger
+ * Controller for the prosEO Order Manager, implements the services required to manage jobs. Provides methods for retrieving and
+ * counting jobs, as well as finding the index of a job within an ordered list. The class also includes utility methods for creating
+ * JPA queries.
  *
+ * @author Ernst Melchinger
  */
 @Component
 public class OrderjobControllerImpl implements OrderjobController {
+
+	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(OrderjobControllerImpl.class);
-	private static ProseoHttp http = new ProseoHttp(logger,HttpPrefix.ORDER_MGR);
+
+	/** HTTP utility class */
+	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.ORDER_MGR);
 
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
-	
+
 	/** Utility class for user authorizations */
 	@Autowired
 	private SecurityService securityService;
-	
+
 	/** The order manager configuration */
 	@Autowired
 	private OrdermgrConfiguration config;
-	
-    /**
-     * Get production planner jobs, optionally filtered by job state and/or order ID
-     * 
-	 * @param state the job state to filter by (optional)
-	 * @param orderId the order ID to filter by (optional)
-	 * @param recordFrom first record of filtered and ordered result to return (optional; mandatory if "recordTo" is given)
-	 * @param recordTo last record of filtered and ordered result to return (optional)
-	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
-	 * @return a list of JSON objects describing jobs
-     */
+
+	/**
+	 * Retrieves production planner jobs, optionally filtered by job state and/or order ID.
+	 *
+	 * @param states     The job states to filter by.
+	 * @param orderId    The order ID to filter by.
+	 * @param recordFrom The first record of the filtered and ordered result to return.
+	 * @param recordTo   The last record of the filtered and ordered result to return.
+	 * @param logs       Whether or not logs are included in the REST job step.
+	 * @param orderBy    An array of strings containing a column name and an optional sort direction (ASC/DESC), separated by
+	 *                   whitespace.
+	 * @return A list of JSON objects describing jobs.
+	 */
 	@Override
 	@Transactional(readOnly = true)
-    public ResponseEntity<List<RestJob>> getJobs(Long orderId, Integer recordFrom, Integer recordTo,
-			Boolean logs, String[] states, String[] orderBy) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getJobs({}, {}, {}, {}, {}, {})",
-				states, orderId, recordFrom, recordTo, (null == orderBy ? "null" : Arrays.asList(orderBy)));
-		
+	public ResponseEntity<List<RestJob>> getJobs(Long orderId, Integer recordFrom, Integer recordTo, Boolean logs, String[] states,
+			String[] orderBy) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getJobs({}, {}, {}, {}, {}, {})", states, orderId, recordFrom, recordTo,
+					(null == orderBy ? "null" : Arrays.asList(orderBy)));
+
 		try {
 			if (logs == null) {
 				logs = true;
@@ -87,44 +100,45 @@ public class OrderjobControllerImpl implements OrderjobController {
 				throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS,
 						logger.log(GeneralMessage.TOO_MANY_RESULTS, "jobs", numberOfResults, config.getMaxResults()));
 			}
-			
+
 			Query query = createJobsQuery(states, orderId, recordFrom, recordTo, orderBy, false);
 
-			for (Object resultObject: query.getResultList()) {
+			for (Object resultObject : query.getResultList()) {
 				if (resultObject instanceof Job) {
-					Job job = (Job) resultObject;					
+					Job job = (Job) resultObject;
 					resultList.add(RestUtil.createRestJob(job, logs));
 				}
-			}		
+			}
 
 			if (resultList.isEmpty()) {
 				String message = logger.log(OrderMgrMessage.JOBS_FOR_ORDER_NOT_EXIST, String.valueOf(orderId));
 				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 			}
-			
+
 			logger.log(OrderMgrMessage.JOBS_RETRIEVED, orderId);
 
 			return new ResponseEntity<>(resultList, HttpStatus.OK);
 		} catch (HttpClientErrorException.TooManyRequests e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.TOO_MANY_REQUESTS);
 		} catch (Exception e) {
-			String message = logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e); 
+			String message = logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
-    /**
-     * Get production planner number of jobs by order id and state
-     * 
-	 * @param state state of jobs
-	 * @param orderId order id of jobs
-	 * @return number of jobs
-     */
+	/**
+	 * Retrieves the number of production planner jobs based on the specified states and order ID.
+	 *
+	 * @param states  The permitted job states.
+	 * @param orderId The order ID of the jobs.
+	 * @return The number of jobs.
+	 */
 	@Transactional(readOnly = true)
 	@Override
-    public ResponseEntity<String> countJobs(String[] states, Long orderId) {
-		if (logger.isTraceEnabled()) logger.trace(">>> countJobs({}, {})", states, orderId);
-		
+	public ResponseEntity<String> countJobs(String[] states, Long orderId) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> countJobs({}, {})", states, orderId);
+
 		try {
 			// Find using search parameters
 			Query query = createJobsQuery(states, orderId, null, null, null, true);
@@ -133,32 +147,35 @@ public class OrderjobControllerImpl implements OrderjobController {
 			logger.log(OrderMgrMessage.JOBCOUNT_RETRIEVED, orderId);
 
 			if (resultObject instanceof Long) {
-				return new ResponseEntity<>(((Long)resultObject).toString(), HttpStatus.OK);	
+				return new ResponseEntity<>(((Long) resultObject).toString(), HttpStatus.OK);
 			}
 			if (resultObject instanceof String) {
-				return new ResponseEntity<>((String) resultObject, HttpStatus.OK);	
+				return new ResponseEntity<>((String) resultObject, HttpStatus.OK);
 			}
 			return new ResponseEntity<>("0", HttpStatus.OK);
 		} catch (Exception e) {
-			return new ResponseEntity<>(http.errorHeaders(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e)), HttpStatus.INTERNAL_SERVER_ERROR);
-		}	
+			return new ResponseEntity<>(http.errorHeaders(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e)),
+					HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
-	
-    /**
-     * Get the index of a job in ordered list of all jobs of order
-     * 
-	 * @param state state of jobs
-	 * @param orderId order id
-	 * @param jobId job id
-	 * @param jobStepId job step id
-	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
-	 * @return index of job in ordered list (0 based)
-     */
+
+	/**
+	 * Retrieves the index of a job in an ordered list of all jobs of an order.
+	 *
+	 * @param states    The permitted job states (COMPLETED, NON-COMPLETED).
+	 * @param orderId   The persistent id of the processing order.
+	 * @param jobId     The persistent id of the job.
+	 * @param jobStepId The persistent id of the job step.
+	 * @param orderBy   An array of strings containing a column name and an optional sort direction (ASC/DESC), separated by
+	 *                  whitespace.
+	 * @return The index of the job in the ordered list (0 based).
+	 */
 	@Transactional(readOnly = true)
 	@Override
-    public ResponseEntity<String> indexOfJob(Long orderId, Long jobId, Long jobStepId, String[] states, String[] orderBy) {
-		if (logger.isTraceEnabled()) logger.trace(">>> indexOfJob({}, {}, {})", orderId, jobId, jobStepId);
-		
+	public ResponseEntity<String> indexOfJob(Long orderId, Long jobId, Long jobStepId, String[] states, String[] orderBy) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> indexOfJob({}, {}, {})", orderId, jobId, jobStepId);
+
 		try {
 			// Find using search parameters
 			String jpqlQuery = null;
@@ -183,7 +200,8 @@ public class OrderjobControllerImpl implements OrderjobController {
 			if (null != orderBy && 0 < orderBy.length) {
 				jpqlQuery += " order by ";
 				for (int i = 0; i < orderBy.length; ++i) {
-					if (0 < i) jpqlQuery += ", ";
+					if (0 < i)
+						jpqlQuery += ", ";
 					jpqlQuery += "j.";
 					jpqlQuery += orderBy[i];
 				}
@@ -191,47 +209,50 @@ public class OrderjobControllerImpl implements OrderjobController {
 			if (jobId == null && jobStepId != null) {
 				Object res = em.createQuery("select js.job.id from JobStep js where js.id = " + jobStepId).getSingleResult();
 				if (res instanceof Long) {
-					jobId = (Long)res;
+					jobId = (Long) res;
 				}
 			}
 			if (jobId == null) {
 				return new ResponseEntity<>("0", HttpStatus.OK);
 			}
-			
+
 			Object resultObject = (long) em.createQuery(jpqlQuery).getResultList().indexOf(jobId);
 
 			logger.log(OrderMgrMessage.JOBINDEX_RETRIEVED, orderId);
 
 			if (resultObject instanceof Long) {
-				return new ResponseEntity<>(((Long)resultObject).toString(), HttpStatus.OK);	
+				return new ResponseEntity<>(((Long) resultObject).toString(), HttpStatus.OK);
 			}
 			if (resultObject instanceof String) {
-				return new ResponseEntity<>((String) resultObject, HttpStatus.OK);	
+				return new ResponseEntity<>((String) resultObject, HttpStatus.OK);
 			}
 			return new ResponseEntity<>("0", HttpStatus.OK);
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
-			
+
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
-		}	
+		}
 	}
 
 	/**
-	 * Create a JPQL query for jobs, filtering by the mission the user is logged in to, and optionally by job state and/or order ID
-	 * 
-	 * @param state the job state to filter by (optional)
-	 * @param orderId the order ID to filter by (optional)
-	 * @param recordFrom first record of filtered and ordered result to return
-	 * @param recordTo last record of filtered and ordered result to return
-	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
-	 * @param count indicates whether just a count of the orders shall be retrieved or the orders as such
-	 * @return a JPQL query object
+	 * Creates a JPQL query for jobs, filtering by the mission the user is logged in to, and optionally by job state and/or order
+	 * ID.
+	 *
+	 * @param states     The job states to filter by.
+	 * @param orderId    The order ID to filter by.
+	 * @param recordFrom The first record of the filtered and ordered result to return.
+	 * @param recordTo   The last record of the filtered and ordered result to return.
+	 * @param orderBy    An array of strings containing a column name and an optional sort direction (ASC/DESC), separated by
+	 *                   whitespace.
+	 * @param count      Indicates whether just a count of the orders shall be retrieved or the orders as such.
+	 * @return A JPQL query object.
 	 */
-	private Query createJobsQuery(String[] states, Long orderId,
-			Integer recordFrom, Integer recordTo, String[] orderBy, Boolean count) {
-		if (logger.isTraceEnabled()) logger.trace(">>> createJobsQuery({}, {}, {}, {}, {}, {}, count: {})",
-				states, orderId, recordFrom, recordTo, (null == orderBy ? "null" : Arrays.asList(orderBy)), count);
-		
+	private Query createJobsQuery(String[] states, Long orderId, Integer recordFrom, Integer recordTo, String[] orderBy,
+			Boolean count) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> createJobsQuery({}, {}, {}, {}, {}, {}, count: {})", states, orderId, recordFrom, recordTo,
+					(null == orderBy ? "null" : Arrays.asList(orderBy)), count);
+
 		// Find using search parameters
 		String jpqlQuery = null;
 		if (count) {
@@ -254,7 +275,8 @@ public class OrderjobControllerImpl implements OrderjobController {
 		if (null != orderBy && 0 < orderBy.length) {
 			jpqlQuery += " order by ";
 			for (int i = 0; i < orderBy.length; ++i) {
-				if (0 < i) jpqlQuery += ", ";
+				if (0 < i)
+					jpqlQuery += ", ";
 				jpqlQuery += "x.";
 				jpqlQuery += orderBy[i];
 			}
@@ -266,7 +288,7 @@ public class OrderjobControllerImpl implements OrderjobController {
 		if (null != orderId) {
 			query.setParameter("orderId", orderId);
 		}
-		
+
 		// length of record list
 		if (recordFrom != null && recordFrom >= 0) {
 			query.setFirstResult(recordFrom.intValue());
@@ -276,4 +298,5 @@ public class OrderjobControllerImpl implements OrderjobController {
 		}
 		return query;
 	}
+
 }

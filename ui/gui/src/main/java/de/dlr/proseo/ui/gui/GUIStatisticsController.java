@@ -1,10 +1,14 @@
+/**
+ * GUIStatisticsController.java
+ *
+ * (C) 2021 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ui.gui;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,10 +18,14 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.ui.backend.ServiceConnection;
 import de.dlr.proseo.ui.gui.service.StatisticsService;
 import reactor.core.publisher.Mono;
 
+/**
+ * A controller for retrieving the dashboard and prosEO home view, as well as the latest successful and failed job steps
+ *
+ * @author David Mazo
+ */
 @Controller
 public class GUIStatisticsController extends GUIBaseController {
 
@@ -28,21 +36,30 @@ public class GUIStatisticsController extends GUIBaseController {
 	@Autowired
 	private StatisticsService statisticsService;
 
+	/**
+	 * Show the dashboard view
+	 *
+	 * @return the name of the dashboard view template
+	 */
 	@GetMapping(value = "/dashboard")
 	public String dashboard() {
-
 		return "dashboard";
 	}
 
+	/**
+	 * Show the prosEO home view
+	 * 
+	 * @param model the attributes to return
+	 * @return the name of the prosEO home view template
+	 */
 	@GetMapping("/")
 	public String index(Model model) {
 		return "proseo-home";
-
 	}
 
 	/**
 	 * Gets the latest failed job steps
-	 * 
+	 *
 	 * @param count the maximum number of failed job steps to return
 	 * @param model the Thymeleaf model to update
 	 * @return a Thymeleaf fragment
@@ -53,13 +70,12 @@ public class GUIStatisticsController extends GUIBaseController {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getIdentifier({}, model)", count);
 		Mono<ClientResponse> mono = statisticsService.getJobsteps("FAILED", count.longValue());
-		DeferredResult<String> deferredResult = new DeferredResult<String>();
+		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> jobsteps = new ArrayList<>();
 		mono.doOnError(e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("dashboard :: #errormsg");
-		})
-	 	.subscribe(clientResponse -> {
+		}).subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(List.class).subscribe(jobstepList -> {
@@ -82,8 +98,7 @@ public class GUIStatisticsController extends GUIBaseController {
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
-		},
-		e -> {
+		}, e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("dashboard :: #errormsg");
 		});
@@ -96,7 +111,7 @@ public class GUIStatisticsController extends GUIBaseController {
 
 	/**
 	 * Gets the latest job steps completed successfully
-	 * 
+	 *
 	 * @param count the maximum number of completed job steps to return
 	 * @param model the Thymeleaf model to update
 	 * @return a Thymeleaf fragment
@@ -108,13 +123,12 @@ public class GUIStatisticsController extends GUIBaseController {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getIdentifier({}, model)", count);
 		Mono<ClientResponse> mono = statisticsService.getJobsteps("COMPLETED", count.longValue());
-		DeferredResult<String> deferredResult = new DeferredResult<String>();
+		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> jobsteps = new ArrayList<>();
 		mono.doOnError(e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("dashboard :: #errormsg");
-		})
-	 	.subscribe(clientResponse -> {
+		}).subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(List.class).subscribe(jobstepList -> {
@@ -137,8 +151,7 @@ public class GUIStatisticsController extends GUIBaseController {
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
-		},
-		e -> {
+		}, e -> {
 			model.addAttribute("errormsg", e.getMessage());
 			deferredResult.setResult("dashboard :: #errormsg");
 		});
@@ -148,4 +161,5 @@ public class GUIStatisticsController extends GUIBaseController {
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
 		return deferredResult;
 	}
+
 }

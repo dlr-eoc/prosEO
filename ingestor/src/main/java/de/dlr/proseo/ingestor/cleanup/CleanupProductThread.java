@@ -68,7 +68,9 @@ public class CleanupProductThread extends Thread {
 			try {
 				sleep(wait);
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 			}
 		}
 	}

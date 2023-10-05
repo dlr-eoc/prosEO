@@ -105,7 +105,9 @@ public class DefaultRetryStrategy<T> {
 		try {
 			Thread.sleep(waitTime);
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+				logger.debug("An exception occurred. Cause: ", e);
+			}
 		}
 	}
 }

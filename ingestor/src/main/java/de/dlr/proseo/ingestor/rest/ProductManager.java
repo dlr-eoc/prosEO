@@ -13,6 +13,7 @@ import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -28,6 +29,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 
@@ -72,7 +74,6 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
  * @author Dr. Thomas Bassler
  */
 @Component
-@Transactional
 public class ProductManager {
 
 	/* Other string constants */
@@ -152,6 +153,7 @@ public class ProductManager {
 	 * @throws SecurityException       if a cross-mission data access was attempted
 	 * @throws RuntimeException        if the deletion was not performed as expected
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void deleteProductById(Long id)
 			throws EntityNotFoundException, IllegalStateException, SecurityException, RuntimeException {
 		if (logger.isTraceEnabled())
@@ -234,6 +236,7 @@ public class ProductManager {
 	 *                           could be found
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public List<RestProduct> getProducts(String mission, String[] productClass, String mode, String fileClass, String quality,
 			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, Integer recordFrom, Integer recordTo,
 			Long jobStepId, String[] orderBy) throws NoResultException, SecurityException {
@@ -310,6 +313,7 @@ public class ProductManager {
 	 * @return the number of products found as string
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public String countProducts(String mission, String[] productClass, String mode, String fileClass, String quality,
 			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, Long jobStepId)
 			throws SecurityException {
@@ -348,6 +352,7 @@ public class ProductManager {
 	 * @throws IllegalArgumentException if any of the input data was invalid
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public RestProduct createProduct(RestProduct product) throws IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createProduct({})", (null == product ? "MISSING" : product.getProductClass()));
@@ -365,9 +370,6 @@ public class ProductManager {
 		// Ensure that mandatory attributes are set
 		if (null == product.getProductClass() || product.getProductClass().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "productClass", "product creation"));
-		}
-		if (null == product.getFileClass() || product.getFileClass().isBlank()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "fileClass", "product creation"));
 		}
 		if (null == product.getSensingStartTime() || product.getSensingStartTime().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "sensingStartTime", "product creation"));
@@ -484,7 +486,8 @@ public class ProductManager {
 			modelProduct.setOrbit(orbit);
 		}
 		// Check validity of scalar attributes
-		if (!modelProductClass.getMission().getFileClasses().contains(modelProduct.getFileClass())) {
+		if (null != modelProduct.getFileClass()
+				&& !modelProductClass.getMission().getFileClasses().contains(modelProduct.getFileClass())) {
 			throw new IllegalArgumentException(
 					logger.log(IngestorMessage.FILE_CLASS_INVALID, product.getFileClass(), product.getMissionCode()));
 		}
@@ -522,6 +525,7 @@ public class ProductManager {
 	 * @throws NoResultException        if no product with the given ID exists
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public RestProduct getProductById(Long id) throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getProductById({})", id);
@@ -550,6 +554,7 @@ public class ProductManager {
 	 * @throws SecurityException               if a cross-mission data access was
 	 *                                         attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public RestProduct modifyProduct(Long id, RestProduct product)
 			throws EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException, SecurityException {
 		if (logger.isTraceEnabled())
@@ -576,9 +581,6 @@ public class ProductManager {
 		// Ensure that mandatory attributes are set
 		if (null == product.getProductClass() || product.getProductClass().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "productClass", "product modification"));
-		}
-		if (null == product.getFileClass() || product.getFileClass().isBlank()) {
-			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "fileClass", "product modification"));
 		}
 		if (null == product.getSensingStartTime() || product.getSensingStartTime().isBlank()) {
 			throw new IllegalArgumentException(
@@ -620,8 +622,9 @@ public class ProductManager {
 			productChanged = true;
 			modelProduct.setProductClass(modelProductClass);
 		}
-		if (!modelProduct.getFileClass().equals(changedProduct.getFileClass())) {
-			if (!modelProduct.getProductClass().getMission().getFileClasses().contains(changedProduct.getFileClass())) {
+		if (!Objects.equals(modelProduct.getFileClass(), changedProduct.getFileClass())) {
+			if (null != changedProduct.getFileClass() 
+					&& !modelProduct.getProductClass().getMission().getFileClasses().contains(changedProduct.getFileClass())) {
 				throw new IllegalArgumentException(
 						logger.log(IngestorMessage.FILE_CLASS_INVALID, product.getFileClass(), product.getMissionCode()));
 			}
@@ -630,8 +633,7 @@ public class ProductManager {
 				logger.trace("Changing file class from {} to {}", modelProduct.getFileClass(), changedProduct.getFileClass());
 			modelProduct.setFileClass(changedProduct.getFileClass());
 		}
-		if ((null != modelProduct.getMode() && !modelProduct.getMode().equals(changedProduct.getMode()))
-				|| (null == modelProduct.getMode() && null != changedProduct.getMode())) {
+		if (!Objects.equals(modelProduct.getMode(), changedProduct.getMode())) {
 			if (null != changedProduct.getMode()
 					&& !modelProduct.getProductClass().getMission().getProcessingModes().contains(changedProduct.getMode())) {
 				throw new IllegalArgumentException(
@@ -855,6 +857,7 @@ public class ProductManager {
 	 * @throws NoResultException        if no product with the given UUID exists
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public RestProduct getProductByUuid(String uuid) throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getProductByUuid({})", uuid);
@@ -1072,6 +1075,7 @@ public class ProductManager {
 	 *                                  it does not have a data file
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public String downloadProductById(Long id, Long fromByte, Long toByte)
 			throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
@@ -1108,7 +1112,9 @@ public class ProductManager {
 			}
 			uriBuilder.addParameter("token", downloadToken);
 		} catch (URISyntaxException e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 			throw new RuntimeException(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e));
 		}
 
@@ -1166,6 +1172,7 @@ public class ProductManager {
 	 *                                  with the given name exists
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public String getDownloadTokenById(Long id, String fileName)
 			throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled())

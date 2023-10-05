@@ -100,7 +100,7 @@ resourceTypes:
           description: The (unique) product file name to search for
         facility:
           type: string
-          description: The processing facility to use
+          description: The processing facility to store the downloaded product files in
       responses:
         200:
           body:
@@ -131,9 +131,9 @@ resourceTypes:
         stopTime:
           type: string
           description: The requested sensing (or validity) stop time
-        facility?:
+        facility:
           type: string
-          description: The processing facility to use
+          description: The processing facility to store the downloaded product files in
       responses:
         200:
           body:
@@ -161,9 +161,9 @@ resourceTypes:
         stopTime:
           type: string
           description: The end of the sensing time interval
-        facility?:
+        facility:
           type: string
-          description: The processing facility to use
+          description: The processing facility to store the downloaded product files in
       responses:
         200:
           body:

@@ -20,6 +20,7 @@
 	<properties>
 		<module.version>0.9.5-SNAPSHOT</module.version>
         <olingo.version>4.7.1</olingo.version>
+        <netty.version>4.1.48.Final</netty.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/aip-client-api.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.api.aipclient.rest</raml-base-package>
@@ -65,23 +66,6 @@
             <artifactId>wiremock-jre8</artifactId>
             <version>2.35.0</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.projectreactor</groupId>
-            <artifactId>reactor-core</artifactId>
-            <version>3.2.16.RELEASE</version><!-- Dependency of reactor-netty 0.8.17 -->
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.projectreactor</groupId>
-            <artifactId>reactor-test</artifactId>
-            <version>3.2.16.RELEASE</version><!-- Dependency of reactor-netty 0.8.17 -->
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.projectreactor.netty</groupId>
-            <artifactId>reactor-netty</artifactId>
-            <version>0.8.17.RELEASE</version><!-- Minimum version required for correct redirecting -->
         </dependency>
         <dependency>
             <groupId>org.apache.olingo</groupId>

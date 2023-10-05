@@ -26,11 +26,8 @@
 		<raml-base-package>de.dlr.proseo.storagemgr.rest</raml-base-package>
 
         <nimbus.jwt.version>9.10</nimbus.jwt.version>
-        <!-- <awssdk1.version>1.11.799</awssdk1.version> -->
-        <awssdk1.version>1.12.311</awssdk1.version>
-        <!-- <awssdk2.version>2.13.30</awssdk2.version> -->
-        <awssdk2.version>2.17.282</awssdk2.version>
-        <!-- <alluxio.version>2.2.1</alluxio.version> -->
+        <awssdk1.version>1.12.557</awssdk1.version>
+        <awssdk2.version>2.20.154</awssdk2.version>
 	</properties>
 
 
@@ -39,7 +36,7 @@
 			<dependency>
 				<groupId>software.amazon.awssdk</groupId>
 				<artifactId>bom</artifactId>
-				<version>2.17.123</version>
+				<version>${awssdk2.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>

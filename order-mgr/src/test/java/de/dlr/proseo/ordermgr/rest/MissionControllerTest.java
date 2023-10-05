@@ -134,8 +134,7 @@ public class MissionControllerTest {
 	}
 
 	/**
-	 * Test method for
-	 * {@link de.dlr.proseo.ordermgr.rest.MissionControllerImpl#getMissions(java.lang.String)}.
+	 * Test method for {@link de.dlr.proseo.ordermgr.rest.MissionControllerImpl#getMissions(java.lang.String)}.
 	 */
 	@Test
 	public final void testGetMissions() {
@@ -181,8 +180,7 @@ public class MissionControllerTest {
 	}
 
 	/**
-	 * Test method for
-	 * {@link de.dlr.proseo.ordermgr.rest.MissionControllerImpl#getMissionById(java.lang.Long)}.
+	 * Test method for {@link de.dlr.proseo.ordermgr.rest.MissionControllerImpl#getMissionById(java.lang.Long)}.
 	 */
 	@Test
 	public final void testGetMissionById() {
@@ -234,15 +232,14 @@ public class MissionControllerTest {
 
 		// Delete spacecraft referencing mission
 		missionToDelete.getSpacecrafts()
-				.forEach(spacecraft -> RepositoryService.getSpacecraftRepository().deleteById(spacecraft.getId()));
+			.forEach(spacecraft -> RepositoryService.getSpacecraftRepository().deleteById(spacecraft.getId()));
 
 		// Delete a mission with MissionControllerImpl
 		mci.deleteMissionById(missionToDelete.getId(), false, false);
 
 		// Assert that the mission was deleted
 		List<Mission> afterDeletion = RepositoryService.getMissionRepository().findAll();
-		assertTrue("After deletion, repository does not contain less missions.",
-				afterDeletion.size() < beforeDeletion.size());
+		assertTrue("After deletion, repository does not contain less missions.", afterDeletion.size() < beforeDeletion.size());
 		assertFalse("Deleted mission is still in the repository.", afterDeletion.contains(missionToDelete));
 	}
 

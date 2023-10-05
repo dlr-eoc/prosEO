@@ -244,6 +244,7 @@
                 <include>de/dlr/proseo/api/odip/OdipSecurity.class</include>
                 <include>de/dlr/proseo/api/odip/odata/*.class</include>
                 <include>de/dlr/proseo/api/odip/service/*.class</include>
+                <include>de/dlr/proseo/api/odip/util/*.class</include>
                 <include>de/dlr/proseo/api/odip/rest/**</include>
               </includes>
             </configuration>

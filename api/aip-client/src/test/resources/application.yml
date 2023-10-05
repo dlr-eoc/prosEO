@@ -13,15 +13,21 @@ logging:
         root: INFO
         de.dlr.proseo: TRACE
 proseo:
+    aipclient:
+        # Path to the directory to download files to (must be readable for Storage Manager, see below)
+        targetdir: target/test/downloads
+        
     ingestor:
         # URL of the Ingestor Service
         url: http://localhost:9876/proseo/ingestor/v0.1
-        # The directory for the Ingestor Service to upload from
-        sourcedir: target/test/downloads
         # Timeout for Ingestor connections in milliseconds (e. g. 30 s)
         timeout: 30000
+        
+    storagemgr:
         # The Storage Manager mount point for product ingestion
         mountpoint: /mnt 
+        # The directory for the Storage Manager to upload from (Storage Manager perspective on proseo.aipclient.targetdir)
+        sourcedir: aip/downloads
         
     order:
         # Interval between product order status checks in milliseconds (e. g. every second)

@@ -1,13 +1,13 @@
 /**
  * CLIOption.java
- * 
+ *
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.ui.cli.parser;
 
 /**
  * Class representing a prosEO CLI command option
- * 
+ *
  * @author Dr. Thomas Bassler
  */
 public class CLIOption {
@@ -26,88 +26,118 @@ public class CLIOption {
 	private String description = "";
 	/** Option short form */
 	private Character shortForm = null;
-	
+
 	/**
+	 * Gets the option's name
+	 *
 	 * @return the name
 	 */
 	public String getName() {
 		return name;
 	}
+
 	/**
+	 * Sets the option's name
+	 *
 	 * @param name the name to set
 	 */
 	public void setName(String name) {
 		this.name = name;
 	}
+
 	/**
+	 * Gets the option's type
+	 *
 	 * @return the type
 	 */
 	public String getType() {
 		return type;
 	}
+
 	/**
+	 * Sets the option's type
+	 *
 	 * @param type the type to set
 	 */
 	public void setType(String type) {
 		if (CLISyntax.allowedTypes.contains(type)) {
 			this.type = type;
 		} else {
-			throw new IllegalArgumentException(String.format(MSG_ILLEGAL_OPTION_TYPE,
-					MSG_ID_ILLEGAL_OPTION_TYPE, type, CLISyntax.allowedTypes.toString()));
+			throw new IllegalArgumentException(
+					String.format(MSG_ILLEGAL_OPTION_TYPE, MSG_ID_ILLEGAL_OPTION_TYPE, type, CLISyntax.allowedTypes.toString()));
 		}
 	}
+
 	/**
+	 * Gets the option's description
+	 *
 	 * @return the description
 	 */
 	public String getDescription() {
 		return description;
 	}
+
 	/**
+	 * Sets the option's description
+	 *
 	 * @param description the description to set
 	 */
 	public void setDescription(String description) {
 		this.description = description;
 	}
+
 	/**
+	 * Gets the option's short form
+	 *
 	 * @return the shortForm
 	 */
 	public Character getShortForm() {
 		return shortForm;
 	}
+
 	/**
+	 * Sets the option's short form
+	 *
 	 * @param shortForm the shortForm to set
 	 */
 	public void setShortForm(Character shortForm) {
 		this.shortForm = shortForm;
 	}
-	
+
+	/**
+	 * Returns the option in string format
+	 *
+	 * @return the option in string format
+	 */
 	@Override
 	public String toString() {
-		return "CLIOption [\n  name=" + name + ",\n  type=" + type + ",\n  description=" + description + ",\n  shortForm=" + shortForm + "\n]";
+		return "CLIOption [\n  name=" + name + ",\n  type=" + type + ",\n  description=" + description + ",\n  shortForm="
+				+ shortForm + "\n]";
 	}
-	
+
 	/**
-	 * Appends the StringBuilder provided by the caller with HTML code that prints a
-	 * table with the option's name, short form (if applicable) and description.
-	 * 
+	 * Appends the StringBuilder provided by the caller with HTML code that prints a table with the option's name, short form (if
+	 * applicable) and description.
+	 *
 	 * @param htmlDoc A StringBuilder that may already contain information.
 	 * @return The same StringBuilder, appended information on the option.
 	 */
 	public StringBuilder printHTML(StringBuilder htmlDoc) {
 
-		htmlDoc.append("<table>").append("<tr>" + "<td>" + "Option" + "</td>" + "<td>" + "<strong>" + this.name
-				+ "</strong>" + "</td>" + "</tr>");
+		htmlDoc.append("<table>")
+			.append("<tr>" + "<td>" + "Option" + "</td>" + "<td>" + "<strong>" + this.name + "</strong>" + "</td>" + "</tr>");
 
 		if (this.shortForm != null) {
-			htmlDoc.append("<tr>" + "<td>" + "Short form" + "</td>" + "<td>" + "<em>" + this.shortForm + "</em>"
-					+ "</td>" + "</tr>");
+			htmlDoc
+				.append("<tr>" + "<td>" + "Short form" + "</td>" + "<td>" + "<em>" + this.shortForm + "</em>" + "</td>" + "</tr>");
 		}
 
 		htmlDoc.append("<tr>" + "<td>" + "Type" + "</td>" + "<td>" + this.type + "</td>" + "</tr>")
-				.append("<tr>" + "<td>" + "Description" + "</td>" + "<td>" + this.description + "." + "</td>" + "</tr>")
-				.append("</table>").append("<br>");
+			.append("<tr>" + "<td>" + "Description" + "</td>" + "<td>" + this.description + "." + "</td>" + "</tr>")
+			.append("</table>")
+			.append("<br>");
 
 		return htmlDoc;
 	}
-	
+
 }

@@ -14,9 +14,9 @@ proseo:
       sourcePath: default
 
     s3:
-      s3AccessKey: short_access_key
-      s3SecretAccessKey: short_secret_key
-      s3EndPoint: http://192.168.20.191:9000
+      s3AccessKey: MINIO_ROOT_USER
+      s3SecretAccessKey: MINIO_ROOT_PASSWORD
+      s3EndPoint: http://192.168.20.155:9000
       s3Region: eu-central-1
       s3MaxNumberOfBuckets: 50
       s3DefaultBucket: proseo-data-001
@@ -24,9 +24,9 @@ proseo:
 
     posix:
       # Mount point for backend storage (must be different from cachePath)
-      backendPath: /proseo/testdata/backend
+      backendPath: /proseo/data/backend
       # Mount point for file cache
-      cachePath: /proseo/testdata/cache
+      cachePath: /proseo/data/cache
       
     joborder:
       bucket: internal

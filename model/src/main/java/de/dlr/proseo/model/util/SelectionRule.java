@@ -464,11 +464,8 @@ public class SelectionRule {
 			simplePolicy.setDeltaTimeT1(parseDeltaTime(deltaTimeT1,
 					offset + simplePolicyString.indexOf(policyParts[1]) + commaPos + 1
 					+ simplePolicyString.substring(simplePolicyString.indexOf(policyParts[1]) + commaPos + 1).indexOf(deltaTimeT1)));
-			// Normalize delta times for LatestValidityClosest, ClosestStartValidity and ClosestStopValidity so that at least 
-			// one of the delta times is zero
-			if (SimplePolicy.PolicyType.LatestValidityClosest.equals(simplePolicy.getPolicyType())
-			||  SimplePolicy.PolicyType.ClosestStartValidity.equals(simplePolicy.getPolicyType())
-			||  SimplePolicy.PolicyType.ClosestStopValidity.equals(simplePolicy.getPolicyType())) {
+			// Normalize delta times for LatestValidityClosest so that at least one of the delta times is zero
+			if (SimplePolicy.PolicyType.LatestValidityClosest.equals(simplePolicy.getPolicyType())) {
 				long diffMillis = simplePolicy.getDeltaTimeT1().toMilliseconds() - simplePolicy.getDeltaTimeT0().toMilliseconds();
 				if (0 < diffMillis) {
 					simplePolicy.getDeltaTimeT0().duration = 0;

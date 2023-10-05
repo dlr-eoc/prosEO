@@ -500,7 +500,9 @@ public class S3DAL {
 
 		} catch (S3Exception e) {
 			System.err.println(e.awsErrorDetails().errorMessage());
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+				logger.debug("An exception occurred. Cause: ", e);
+			}
 			throw e;
 		}
 	}

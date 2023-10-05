@@ -174,7 +174,7 @@ public class WorkflowMgr {
 		// Ensure a workflow with the same mission, name and version, or the same
 		// UUID, does not yet exist
 		if ((null != RepositoryService.getWorkflowRepository()
-			.findByMissionCodeAndWorkflowNameAndWorkflowVersion(restWorkflow.getMissionCode(), restWorkflow.getName(),
+			.findByMissionCodeAndNameAndVersion(restWorkflow.getMissionCode(), restWorkflow.getName(),
 					restWorkflow.getWorkflowVersion())
 				|| (null != restWorkflow.getUuid() && null != RepositoryService.getWorkflowRepository()
 					.findByUuid(UUID.fromString(restWorkflow.getUuid()))))) {
@@ -194,6 +194,9 @@ public class WorkflowMgr {
 		}
 
 		Workflow modelWorkflow = WorkflowUtil.toModelWorkflow(restWorkflow);
+		
+		// Set the mission (assuming the mission must exist, since the login succeeded)
+		modelWorkflow.setMission(RepositoryService.getMissionRepository().findByCode(restWorkflow.getMissionCode()));
 
 		// If no UUID was given, a random one is assigned
 		if (null == restWorkflow.getUuid()) {
@@ -804,6 +807,11 @@ public class WorkflowMgr {
 		}
 
 		// Check for changes in non-mandatory attributes
+		
+		if (null != restWorkflow.getDescription() && !restWorkflow.getDescription().equals(modelWorkflow.getDescription())) {
+			workflowChanged = true;
+			modelWorkflow.setDescription(restWorkflow.getDescription());
+		}
 
 		// If input filters where provided, update old filters
 		// Remember old values
@@ -1087,12 +1095,12 @@ public class WorkflowMgr {
 							logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "In outputParameter, parameter value"));
 				}
 
-				// Check whether the new outputParameter is in fact an old
-				// outputParameter
+				// Check whether the new outputParameter is in fact an old outputParameter
 				if (modelWorkflow.getOutputParameters().containsKey(restOutputParameter.getKey())) {
 					modelOutputParameter = modelWorkflow.getOutputParameters().get(restOutputParameter.getKey());
 				} else {
 					isNew = true;
+					modelOutputParameter = new Parameter();
 				}
 
 				// Potentially override old values
@@ -1243,6 +1251,7 @@ public class WorkflowMgr {
 				}
 				modelOption.setType(WorkflowOptionType.get(newOption.getOptionType().toLowerCase()));
 				modelOption.setValueRange(newOption.getValueRange());
+				modelOption.setDescription(newOption.getDescription());
 				if (null == modelOption.getValueRange()) {
 					// Quietly restore value range as empty list
 					modelOption.setValueRange(new ArrayList<>());

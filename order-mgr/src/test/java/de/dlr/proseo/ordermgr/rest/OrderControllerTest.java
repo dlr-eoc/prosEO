@@ -61,7 +61,7 @@ import de.dlr.proseo.ordermgr.OrderManager;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = OrderManager.class)
-@WithMockUser(username = "UTM-testuser", roles = {"ORDER_APPROVER","ORDER_MGR"})
+@WithMockUser(username = "UTM-testuser", roles = { "ORDER_APPROVER", "ORDER_MGR" })
 @AutoConfigureTestEntityManager
 @Transactional
 public class OrderControllerTest {
@@ -76,9 +76,9 @@ public class OrderControllerTest {
 	/** A REST template builder for this class */
 	@MockBean
 	RestTemplateBuilder rtb;
-	
+
 	// Test data
-	private static String[] testMissionData = 
+	private static String[] testMissionData =
 			// id, version, code, name, processing_mode, file_class, product_file_template
 			{ "1", "0", "UTM", "ABCD Testing", "NRTI", "OPER", "test_file_temp" };
 	private static String[] testSpacecraftData =
@@ -86,8 +86,7 @@ public class OrderControllerTest {
 			{ "1", "S_TDX1", "Tandom-X" };
 	private static String[][] testFilterConditions = {
 			// filter_conditions_key, parameter_type, parameter_value
-			{ "copernicusCollection", "STRING", "99" }, { "revision", "INTEGER", "1" },
-			{ "productColour", "STRING", "blue" } };
+			{ "copernicusCollection", "STRING", "99" }, { "revision", "INTEGER", "1" }, { "productColour", "STRING", "blue" } };
 	private static String[][] testOutputParam = {
 			// filter_conditions_key, parameter_type, parameter_value
 			{ "copernicusCollection", "STRING", "99" }, { "copernicusCollection1", "INTEGER", "9" },
@@ -101,6 +100,7 @@ public class OrderControllerTest {
 	private static String[][] testWorkflow =
 			// name, UUID
 			{ { "testWorkflow", UUID.randomUUID().toString() }, { "otherTestWorkflow", UUID.randomUUID().toString() } };
+	private static String testWorkflowVersion = "1.0";
 	private static String[][] testReqOrbits = {
 			// spacecraft_code, orbitNumber from, orbitNumber to
 			{ "S5P", "8132", "8138" }, { "S5P", "8136", "8141" } };
@@ -167,8 +167,8 @@ public class OrderControllerTest {
 		ProcessingOrder testOrder = new ProcessingOrder();
 
 		if (null != RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(missionCode, testData[3])) {
-			return OrderUtil.toRestOrder(
-					RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(missionCode, testData[3]));
+			return OrderUtil
+				.toRestOrder(RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(missionCode, testData[3]));
 		} else {
 
 			// Adding processing order parameters
@@ -206,27 +206,25 @@ public class OrderControllerTest {
 
 			for (String element : testConfProc) {
 				ConfiguredProcessor reqProc = RepositoryService.getConfiguredProcessorRepository()
-						.findByMissionCodeAndIdentifier(missionCode, element);
+					.findByMissionCodeAndIdentifier(missionCode, element);
 				if (null != reqProc) {
 					testOrder.getRequestedConfiguredProcessors().add(reqProc);
 				}
 			}
 
-			for (ProductClass prodClass : RepositoryService.getProductClassRepository()
-					.findByProductType(testInputProdClass)) {
+			for (ProductClass prodClass : RepositoryService.getProductClassRepository().findByProductType(testInputProdClass)) {
 				testOrder.getInputProductClasses().add(prodClass);
 			}
 
 			for (String element : testReqProdClass) {
-				Set<ProductClass> set = new HashSet<>(
-						RepositoryService.getProductClassRepository().findByProductType(element));
+				Set<ProductClass> set = new HashSet<>(RepositoryService.getProductClassRepository().findByProductType(element));
 				testOrder.setRequestedProductClasses(set);
 			}
 
 			for (String[] testReqOrbit : testReqOrbits) {
 				List<Orbit> orbits = RepositoryService.getOrbitRepository()
-						.findByMissionCodeAndSpacecraftCodeAndOrbitNumberBetween(missionCode, testReqOrbit[0],
-								Integer.valueOf(testReqOrbit[1]), Integer.valueOf(testReqOrbit[2]));
+					.findByMissionCodeAndSpacecraftCodeAndOrbitNumberBetween(missionCode, testReqOrbit[0],
+							Integer.valueOf(testReqOrbit[1]), Integer.valueOf(testReqOrbit[2]));
 				testOrder.setRequestedOrbits(orbits);
 			}
 
@@ -318,8 +316,7 @@ public class OrderControllerTest {
 	/**
 	 * Filling the database with some initial data for testing purposes
 	 *
-	 * @param mission The mission that is referenced by the data filled in the
-	 *                database
+	 * @param mission The mission that is referenced by the data filled in the database
 	 */
 	private static void fillDatabase(Mission mission) {
 		logger.debug("... adding product classes");
@@ -340,11 +337,15 @@ public class OrderControllerTest {
 
 		logger.debug("... adding workflows");
 		Workflow workflow0 = new Workflow();
+		workflow0.setMission(mission);
 		workflow0.setName(testWorkflow[0][0]);
+		workflow0.setWorkflowVersion(testWorkflowVersion);
 		workflow0.setUuid(UUID.fromString(testWorkflow[0][1]));
 		RepositoryService.getWorkflowRepository().save(workflow0);
 		Workflow workflow1 = new Workflow();
+		workflow1.setMission(mission);
 		workflow1.setName(testWorkflow[1][0]);
+		workflow1.setWorkflowVersion(testWorkflowVersion);
 		workflow1.setUuid(UUID.fromString(testWorkflow[1][1]));
 		RepositoryService.getWorkflowRepository().save(workflow1);
 
@@ -409,8 +410,8 @@ public class OrderControllerTest {
 
 		List<ProcessingOrder> expectedOrders = RepositoryService.getOrderRepository().findAll();
 		expectedOrders.removeIf(po -> "UTM" != po.getMission().getCode());
-		ResponseEntity<List<RestOrder>> retrievedOrders = oci.getAndSelectOrders("UTM", null, null, null, null, null,
-				null, null, null);
+		ResponseEntity<List<RestOrder>> retrievedOrders = oci.getAndSelectOrders("UTM", null, null, null, null, null, null, null,
+				null);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedOrders.getStatusCode());
 		assertTrue("Wrong number of orders retrieved.", expectedOrders.size() == retrievedOrders.getBody().size());
 	}
@@ -425,20 +426,17 @@ public class OrderControllerTest {
 
 		List<ProcessingOrder> expectedOrders = RepositoryService.getOrderRepository().findAll();
 		expectedOrders.removeIf(po -> "UTM" != po.getMission().getCode());
-		ResponseEntity<String> retrievedOrders = oci.countSelectOrders("UTM", null, null, null, null, null, null, null,
-				null);
+		ResponseEntity<String> retrievedOrders = oci.countSelectOrders("UTM", null, null, null, null, null, null, null, null);
 
 		logger.trace("Expected amount is " + expectedOrders.size());
 		logger.trace("Retrieved size is " + retrievedOrders.getBody());
 
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedOrders.getStatusCode());
-		assertTrue("Wrong number of orders retrieved.",
-				expectedOrders.size() == Long.valueOf(retrievedOrders.getBody()));
+		assertTrue("Wrong number of orders retrieved.", expectedOrders.size() == Long.valueOf(retrievedOrders.getBody()));
 	}
 
 	/**
-	 * Test method for
-	 * {@link de.dlr.proseo.ordermgr.rest.OrderControllerImpl#getOrderById(java.lang.Long)}.
+	 * Test method for {@link de.dlr.proseo.ordermgr.rest.OrderControllerImpl#getOrderById(java.lang.Long)}.
 	 */
 	@Test
 	public final void testGetOrderById() {
@@ -448,13 +446,11 @@ public class OrderControllerTest {
 
 		ResponseEntity<RestOrder> retrievedOrder = oci.getOrderById(expectedOrder.getId());
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedOrder.getStatusCode());
-		assertTrue("Wrong order retrieved.",
-				expectedOrder.getIdentifier().equals(retrievedOrder.getBody().getIdentifier()));
+		assertTrue("Wrong order retrieved.", expectedOrder.getIdentifier().equals(retrievedOrder.getBody().getIdentifier()));
 	}
 
 	/**
-	 * Test method for
-	 * {@link de.dlr.proseo.ordermgr.rest.OrderControllerImpl#deleteOrderById(java.lang.Long)}.
+	 * Test method for {@link de.dlr.proseo.ordermgr.rest.OrderControllerImpl#deleteOrderById(java.lang.Long)}.
 	 */
 	@Test
 	public final void testDeleteOrderById() {
@@ -500,8 +496,7 @@ public class OrderControllerTest {
 
 		ResponseEntity<String> retrievedOrders = oci.countOrders("UTM", null, null);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedOrders.getStatusCode());
-		assertTrue("Wrong number of orders retrieved.",
-				expectedOrders.size() == Long.valueOf(retrievedOrders.getBody()));
+		assertTrue("Wrong number of orders retrieved.", expectedOrders.size() == Long.valueOf(retrievedOrders.getBody()));
 
 	}
 

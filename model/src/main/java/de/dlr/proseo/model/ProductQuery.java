@@ -78,11 +78,17 @@ public class ProductQuery extends PersistentObject {
 	
 	/**
 	 * Minimum percentage of coverage of the desired validity period for fulfilment of this query
+	 * 
+	 * Deprecated, use getGeneratingRule().getMinimumCoverage() instead
 	 */
+	@Deprecated
 	private Short minimumCoverage = 0;
 	
 	/** Indicates whether this query is fully satisfied by the satisfying products. */
 	private Boolean isSatisfied = false;
+
+	/** Indicates whether possible satisfying products are in download. */
+	private Boolean inDownload = false;
 	
 	/**
 	 * Products satisfying this query condition
@@ -244,8 +250,11 @@ public class ProductQuery extends PersistentObject {
 	/**
 	 * Gets the minimum percentage of coverage of the desired validity period
 	 * 
+	 * Deprecated, use getGeneratingRule().getMinimumCoverage() instead
+	 * 
 	 * @return the minimumCoverage
 	 */
+	@Deprecated
 	public Short getMinimumCoverage() {
 		return minimumCoverage;
 	}
@@ -253,8 +262,11 @@ public class ProductQuery extends PersistentObject {
 	/**
 	 * Sets the minimum percentage of coverage of the desired validity period
 	 * 
+	 * Deprecated, use getGeneratingRule().setMinimumCoverage() instead
+	 * 
 	 * @param minimumCoverage the minimumCoverage to set
 	 */
+	@Deprecated
 	public void setMinimumCoverage(Short minimumCoverage) {
 		this.minimumCoverage = minimumCoverage;
 		calcHash();
@@ -276,6 +288,20 @@ public class ProductQuery extends PersistentObject {
 	 */
 	public Boolean isSatisfied() {
 		return this.getIsSatisfied();
+	}
+
+	/**
+	 * @return the inDownload
+	 */
+	public Boolean getInDownload() {
+		return inDownload;
+	}
+
+	/**
+	 * @param inDownload the inDownload to set
+	 */
+	public void setInDownload(Boolean inDownload) {
+		this.inDownload = inDownload;
 	}
 
 	/**

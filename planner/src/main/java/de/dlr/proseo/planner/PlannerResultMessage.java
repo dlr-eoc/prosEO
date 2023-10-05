@@ -1,32 +1,40 @@
+/**
+ * package-info.java
+ * 
+ * (C) 2023 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.planner;
 
 import org.slf4j.event.Level;
 
-import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.ProseoMessage;
 
+/**
+ * Wrapper class for ProseoMessages
+ * 
+ * @author Ernst Melchinger
+ */
 public class PlannerResultMessage {
-	private static ProseoLogger logger = new ProseoLogger(PlannerResultMessage.class);
-	
-	/**
-	 * The resulting proseo message
-	 */
+
+	/** The resulting prosEO message. */
 	private ProseoMessage message;
-	
-	/**
-	 * The complete message text
-	 */
+
+	/** The complete message text. */
 	private String text;
 
 	/**
-	 * @return the message
+	 * Get the prosEO message.
+	 *
+	 * @return The prosEO message.
 	 */
 	public ProseoMessage getMessage() {
 		return message;
 	}
 
 	/**
-	 * @return the text
+	 * Get the complete message text.
+	 *
+	 * @return The complete message text.
 	 */
 	public String getText() {
 		if (text == null) {
@@ -42,14 +50,18 @@ public class PlannerResultMessage {
 	}
 
 	/**
-	 * @param message the message to set
+	 * Set the prosEO message.
+	 *
+	 * @param message The prosEO message to set.
 	 */
 	public void setMessage(ProseoMessage message) {
 		this.message = message;
 	}
 
 	/**
-	 * @param text the text to set
+	 * Set the complete message text.
+	 *
+	 * @param text The complete message text to set.
 	 */
 	public void setText(String text) {
 		if (this.text != null && text != null) {
@@ -58,20 +70,32 @@ public class PlannerResultMessage {
 			this.text = text;
 		}
 	}
-	
+
+	/**
+	 * Create a new instance of PlannerResultMessage with a given prosEO message.
+	 *
+	 * @param msg The prosEO message.
+	 */
 	public PlannerResultMessage(ProseoMessage msg) {
 		message = msg;
 	}
 
+	/**
+	 * Copy the contents of another PlannerResultMessage to this instance.
+	 *
+	 * @param msg The PlannerResultMessage to copy.
+	 * @return This PlannerResultMessage instance.
+	 */
 	public PlannerResultMessage copy(PlannerResultMessage msg) {
 		setMessage(msg.getMessage());
 		setText(msg.getText());
 		return this;
 	}
+
 	/**
-	 * In most cases, a message is considered successful unless its level is error.
-	 * 
-	 * @return The message success.
+	 * Check if the message is considered successful. A message is considered successful unless its level is error.
+	 *
+	 * @return True if the message is successful, false otherwise.
 	 */
 	public boolean getSuccess() {
 		if (message == null) {
@@ -82,8 +106,8 @@ public class PlannerResultMessage {
 	}
 
 	/**
-	 * Get the message's code.
-	 * 
+	 * Get the message code.
+	 *
 	 * @return The message code.
 	 */
 	public int getCode() {
@@ -93,10 +117,10 @@ public class PlannerResultMessage {
 			return message.getCode();
 		}
 	}
-	
+
 	/**
-	 * Get the message's level.
-	 * 
+	 * Get the message level.
+	 *
 	 * @return The message level.
 	 */
 	public Level getLevel() {
@@ -106,7 +130,5 @@ public class PlannerResultMessage {
 			return message.getLevel();
 		}
 	}
-	
-		
 
 }

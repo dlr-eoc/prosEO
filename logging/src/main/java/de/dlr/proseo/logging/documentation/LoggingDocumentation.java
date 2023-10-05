@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.HashSet;
 
 import de.dlr.proseo.logging.messages.*;
+import de.dlr.proseo.logging.logger.ProseoLogger;
 
 /**
  * Collects and aggregates the messages used by the services for documentation
@@ -29,6 +30,9 @@ public class LoggingDocumentation {
 	 */
 	private static Set<Integer> messageCodes = new HashSet<Integer>();
 
+	/** A logger for this class */
+	private static ProseoLogger logger = new ProseoLogger(LoggingDocumentation.class);
+	
 	public static void main(String[] args) {
 
 		// target_file = "src/site/resources/logging.html"
@@ -48,7 +52,9 @@ public class LoggingDocumentation {
 			htmlWriter.write(loggingDoc.toString());
 
 		} catch (IOException e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
 		}
 
 	}

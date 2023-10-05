@@ -8,4 +8,4 @@ spring:
         username: <db_user>
         password: <db_pwd>
 logging:
-    file: planner.log
+    file: /proseo/log/proseo-model.log

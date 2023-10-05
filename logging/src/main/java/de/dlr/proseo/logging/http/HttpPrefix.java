@@ -33,6 +33,7 @@ public enum HttpPrefix {
 	XBIP_MONITOR 	("199 proseo-xbip-monitor "),
 	NOTIFICATION	("199 proseo-notification "),
 	AIP_CLIENT		("199 proseo-aip-client "),
+	ODIP			("199 proseo-odip "),
 
 	;
 

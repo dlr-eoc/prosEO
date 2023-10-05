@@ -1,6 +1,9 @@
+/**
+ * GUIConfiguration.java
+ *
+ * (C) 2021 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ui.gui;
-
-
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -13,8 +16,14 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 
+/**
+ * Configuration properties and beans related to the GUI (Graphical User Interface) of an application, used to configure various
+ * aspects of the GUI, such as the base URIs for different services and components, timeout settings, and localization.
+ *
+ * @author David Mazo
+ */
 @Configuration
-@ConfigurationProperties(prefix="proseo")
+@ConfigurationProperties(prefix = "proseo")
 @EntityScan(basePackages = "de.dlr.proseo.model")
 public class GUIConfiguration implements WebMvcConfigurer {
 
@@ -33,19 +42,19 @@ public class GUIConfiguration implements WebMvcConfigurer {
 	/** The timeout in ms used for long order actions (asynchronous requests) */
 	@Value("${proseo.gui.timeout}")
 	private Long timeout;
-	
+
 	/**
-	 * Gets the timeout for asynchronous requests in ms
-	 * 
-	 * @return the timeout in ms
+	 * Gets the timeout for asynchronous requests in milliseconds.
+	 *
+	 * @return the timeout in milliseconds
 	 */
 	public Long getTimeout() {
 		return timeout;
 	}
 
 	/**
-	 * Gets the Production Planner base URI
-	 * 
+	 * Gets the Production Planner base URI.
+	 *
 	 * @return the Production Planner URI
 	 */
 	public String getProductionPlanner() {
@@ -53,8 +62,8 @@ public class GUIConfiguration implements WebMvcConfigurer {
 	}
 
 	/**
-	 * Gets the Order Manager base URI
-	 * 
+	 * Gets the Order Manager base URI.
+	 *
 	 * @return the Order Manager URI
 	 */
 	public String getOrderManager() {
@@ -62,30 +71,44 @@ public class GUIConfiguration implements WebMvcConfigurer {
 	}
 
 	/**
-	 * Gets the Processor Manager base URI
-	 * 
+	 * Gets the Processor Manager base URI.
+	 *
 	 * @return the Processor Manager URI
 	 */
 	public String getProcessorManager() {
 		return processorManager;
 	}
-	
+
+	/**
+	 * Creates a locale resolver bean for handling localization.
+	 *
+	 * @return the locale resolver bean
+	 */
 	@Bean
 	public LocaleResolver localeResolver() {
 		return new CookieLocaleResolver();
 	}
-	
+
+	/**
+	 * Creates a locale change interceptor bean for handling language change.
+	 *
+	 * @return the locale change interceptor bean
+	 */
 	@Bean
 	public LocaleChangeInterceptor localChangeInterceptor() {
 		LocaleChangeInterceptor lci = new LocaleChangeInterceptor();
-		lci.setParamName("lang");
+		lci.setParamName("lang"); // The request parameter name for language change
 		return lci;
 	}
-	
+
+	/**
+	 * Adds the locale change interceptor to the interceptor registry.
+	 *
+	 * @param registry the interceptor registry
+	 */
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 		registry.addInterceptor(localChangeInterceptor());
 	}
-
 
 }

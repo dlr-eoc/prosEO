@@ -1,6 +1,6 @@
 /**
  * ProductEntityProcessor.java
- * 
+ *
  * (C) 2020 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.api.prip.odata;
@@ -60,9 +60,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.api.prip.ProductionInterfaceConfiguration;
@@ -73,13 +70,11 @@ import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.enums.UserRole;
 
-
 /**
- * Retrieve product information from the prosEO metadata database (via the Ingestor component) and download product data 
- * from the prosEO Storage Manager
- * 
- * @author Dr. Thomas Bassler
+ * Retrieve product information from the prosEO metadata database (via the Ingestor component) and download product data from the
+ * prosEO Storage Manager
  *
+ * @author Dr. Thomas Bassler
  */
 @Component
 @Transactional
@@ -87,7 +82,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 
 	// Unformatted message
 	private static final String MSG_CANNOT_FILTER_SERIALIZED_OUTPUT = "Cannot filter serialized output";
-	
+
 	/* Other string constants */
 	private static final String HTTP_HEADER_WARNING = "Warning";
 
@@ -99,48 +94,50 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
-	
+
 	/** REST template builder */
 	@Autowired
 	private RestTemplateBuilder rtb;
-	
+
 	/** The configuration for the PRIP API */
 	@Autowired
 	private ProductionInterfaceConfiguration config;
-	
+
 	/** The security utilities for the PRIP API */
 	@Autowired
 	private ProductionInterfaceSecurity securityConfig;
-	
+
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductEntityProcessor.class);
 
 	/**
-	 * Initializes the processor for each HTTP request - response cycle
-	 * (Copied from interface definition)
-	 * 
-	 * @param odata Olingo's root object, acting as a factory for various object types
-	 * @param serviceMetadata metadata of the OData service like the EDM that have to be created before the OData request handling takes place
+	 * Initializes the processor for each HTTP request - response cycle (Copied from interface definition)
+	 *
+	 * @param odata           Olingo's root object, acting as a factory for various object types
+	 * @param serviceMetadata metadata of the OData service like the EDM that have to be created before the OData request handling
+	 *                        takes place
 	 */
 	@Override
 	public void init(OData odata, ServiceMetadata serviceMetadata) {
-		if (logger.isTraceEnabled()) logger.trace(">>> init({}, {})", odata, serviceMetadata);
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> init({}, {})", odata, serviceMetadata);
+
 		this.odata = odata;
 		this.serviceMetadata = serviceMetadata;
 	}
 
-
 	/**
 	 * Get the metadata for a single product from the prosEO Ingestor service
+	 *
 	 * @param productUuid the UUID of the product to retrieve
-	 * 
+	 *
 	 * @return a product object
 	 * @throws NoResultException if a product with the requested UUID could not be found in the database
 	 * @throws SecurityException if the logged in user is not authorized to access the requested product
 	 */
 	private Product getProduct(String productUuid) throws NoResultException, SecurityException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProduct({})", productUuid);
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getProduct({})", productUuid);
 
 		// Request product metadata from database
 		Query query = em.createQuery("select p from Product p where p.uuid = :uuid", Product.class);
@@ -148,7 +145,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		Object resultObject;
 		try {
 			resultObject = query.getSingleResult();
-			if (null == resultObject || ! (resultObject instanceof Product)) {
+			if (null == resultObject || !(resultObject instanceof Product)) {
 				throw new NoResultException();
 			}
 		} catch (NoResultException e) {
@@ -156,13 +153,13 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			throw new NoResultException(message);
 		}
 		Product modelProduct = (Product) resultObject;
-		
+
 		// Check mission
 		if (!securityConfig.getMission().equals(modelProduct.getProductClass().getMission().getCode())) {
 			String message = logger.log(PripMessage.MSG_NOT_AUTHORIZED_FOR_PRODUCT, productUuid);
 			throw new SecurityException(message);
 		}
-		
+
 		// Check access permission to product
 		switch (modelProduct.getProductClass().getVisibility()) {
 		case PUBLIC:
@@ -177,71 +174,77 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			if (securityConfig.hasRole(UserRole.PRODUCT_READER_ALL)) {
 				break;
 			}
-			String message = logger.log(PripMessage.MSG_NOT_AUTHORIZED_FOR_PRODUCT, 
+			String message = logger.log(PripMessage.MSG_NOT_AUTHORIZED_FOR_PRODUCT,
 					securityConfig.getMission() + "\\" + securityConfig.getUser(), productUuid);
 			throw new SecurityException(message);
 		}
-		
-		if (logger.isDebugEnabled()) logger.debug("... product found: " + modelProduct.getId());
+
+		if (logger.isDebugEnabled())
+			logger.debug("... product found: " + modelProduct.getId());
 		return modelProduct;
 	}
 
 	/**
 	 * Download the requested product from the prosEO Storage Manager
+	 *
 	 * @param productUuid the UUID of the product to retrieve
-	 * 
+	 *
 	 * @return a binary stream containing the product data
-	 * @throws URISyntaxException if a valid URI cannot be generated from any product UUID
+	 * @throws URISyntaxException       if a valid URI cannot be generated from any product UUID
 	 * @throws IllegalArgumentException if mandatory information is missing from the prosEO interface product
-	 * @throws NoResultException if a product with the requested UUID could not be found in the database
-	 * @throws SecurityException if the logged in user is not authorized to access the requested product
+	 * @throws NoResultException        if a product with the requested UUID could not be found in the database
+	 * @throws SecurityException        if the logged in user is not authorized to access the requested product
 	 */
-	private Entity getProductAsEntity(String productUuid) throws URISyntaxException, IllegalArgumentException,
-			NoSuchElementException, SecurityException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProductAsEntity({})", productUuid);
-		
+	private Entity getProductAsEntity(String productUuid)
+			throws URISyntaxException, IllegalArgumentException, NoSuchElementException, SecurityException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getProductAsEntity({})", productUuid);
+
 		// Get the product information from the Database
 		Product modelProduct = getProduct(productUuid);
 
 		// Create output product
 		Entity product = ProductUtil.toPripProduct(modelProduct);
 
-		if (logger.isTraceEnabled()) logger.trace("<<< getProductAsEntity()");
+		if (logger.isTraceEnabled())
+			logger.trace("<<< getProductAsEntity()");
 		return product;
 	}
 
 	/**
 	 * Retrieve a download token for the requested product ID and file name from the Ingestor service
-	 * 
-	 * @param id the product ID
+	 *
+	 * @param id              the product ID
 	 * @param productFileName the product file name
 	 * @return a JSON Web Token for authentication with the Storage Manager
 	 * @throws HttpClientErrorException if an error is returned from the Ingestor service
-	 * @throws RestClientException if the request to the Ingestor fails for some other reason
-	 * @throws RuntimeException if any other exception occurs
-	 * @throws SecurityException if the logged in user is not authorized to access the requested product
+	 * @throws RestClientException      if the request to the Ingestor fails for some other reason
+	 * @throws RuntimeException         if any other exception occurs
+	 * @throws SecurityException        if the logged in user is not authorized to access the requested product
 	 */
 	private String retrieveDownloadToken(long id, String productFileName)
 			throws HttpClientErrorException, RestClientException, RuntimeException, SecurityException {
-		if (logger.isTraceEnabled()) logger.trace(">>> retrieveDownloadToken({}, {})", id, productFileName);
+		if (logger.isTraceEnabled())
+			logger.trace(">>> retrieveDownloadToken({}, {})", id, productFileName);
 
 		// Request product metadata from Ingestor service
-		
+
 		// Attempt connection to service
 		ResponseEntity<String> entity = null;
 		try {
-			RestTemplate restTemplate = rtb.basicAuthentication(
-					securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword())
+			RestTemplate restTemplate = rtb
+				.basicAuthentication(securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword())
 				.build();
 			String requestUrl = config.getIngestorUrl() + "/products/" + id + "/download/token?fileName=" + productFileName;
-			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
+			if (logger.isTraceEnabled())
+				logger.trace("... calling service URL {} with GET", requestUrl);
 			entity = restTemplate.getForEntity(requestUrl, String.class);
 		} catch (HttpClientErrorException.Unauthorized e) {
 			String message = logger.log(PripMessage.MSG_NOT_AUTHORIZED_FOR_SERVICE, securityConfig.getUser());
 			throw new SecurityException(message);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
-			logger.log(PripMessage.MSG_SERVICE_REQUEST_FAILED, 
-					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING));
+			logger.log(PripMessage.MSG_SERVICE_REQUEST_FAILED, e.getStatusCode().value(), e.getStatusCode().toString(),
+					e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING));
 			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING));
 		} catch (RestClientException e) {
 			String message = logger.log(PripMessage.MSG_HTTP_REQUEST_FAILED, e.getMessage());
@@ -250,94 +253,104 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			logger.log(PripMessage.MSG_EXCEPTION, e.getMessage(), e);
 			throw new RuntimeException(e);
 		}
-		
+
 		// All GET requests should return HTTP status OK
 		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
-			String message = logger.log(PripMessage.MSG_SERVICE_REQUEST_FAILED,  
-					entity.getStatusCodeValue(), entity.getStatusCode().toString(), entity.getHeaders().getFirst(HTTP_HEADER_WARNING));
+			String message = logger.log(PripMessage.MSG_SERVICE_REQUEST_FAILED, entity.getStatusCodeValue(),
+					entity.getStatusCode().toString(), entity.getHeaders().getFirst(HTTP_HEADER_WARNING));
 			throw new RuntimeException(message);
 		}
-		
+
 		String downloadToken = entity.getBody();
-		if (logger.isDebugEnabled()) logger.debug("... token generated: " + downloadToken);
+		if (logger.isDebugEnabled())
+			logger.debug("... token generated: " + downloadToken);
 		return downloadToken;
 	}
 
 	/**
 	 * Reads entities data from persistence and puts serialized content and status into the response.
-	 * 
-	 * @param request OData request object containing raw HTTP information
-	 * @param response OData response object for collecting response data
-	 * @param uriInfo information of a parsed OData URI
+	 *
+	 * @param request        OData request object containing raw HTTP information
+	 * @param response       OData response object for collecting response data
+	 * @param uriInfo        information of a parsed OData URI
 	 * @param responseFormat requested content type after content negotiation
 	 * @throws ODataApplicationException if the service implementation encounters a failure
-	 * @throws ODataLibraryException if an error during serialization occurs
+	 * @throws ODataLibraryException     if an error during serialization occurs
 	 */
 	@Override
 	public void readEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat)
 			throws ODataApplicationException, ODataLibraryException {
-		if (logger.isTraceEnabled()) logger.trace(">>> readEntity({}, {}, {}, {})", request, response, uriInfo, responseFormat);
+		if (logger.isTraceEnabled())
+			logger.trace(">>> readEntity({}, {}, {}, {})", request, response, uriInfo, responseFormat);
 
 		// Prepare the output
 		ODataSerializer serializer = odata.createSerializer(responseFormat);
-		
+
 		// [1] Retrieve the requested EntitySet from the uriInfo object (representation of the parsed service URI)
 		List<UriResource> resourcePaths = uriInfo.getUriResourceParts();
-		UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) resourcePaths.get(0); // in our example, the first segment is the EntitySet
+		UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) resourcePaths.get(0); // in our example, the first
+																									// segment is the EntitySet
 		EdmEntitySet edmEntitySet = uriResourceEntitySet.getEntitySet();
 
 		// [2] Fetch the data from backend for this requested EntitySetName (has to be delivered as Entity object)
-	    List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
-	    
+		List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
+
 		Entity entity;
 		if (edmEntitySet.getEntityType().getFullQualifiedName().equals(ProductEdmProvider.ET_PRODUCT_FQN)) {
 			try {
 				entity = getProductAsEntity(keyPredicates.get(0).getText());
 			} catch (SecurityException e) {
-				response.setContent(serializer.error(
-						LogUtil.oDataServerError(HttpStatusCode.UNAUTHORIZED.getStatusCode(), e.getMessage())).getContent());
+				response.setContent(
+						serializer.error(LogUtil.oDataServerError(HttpStatusCode.UNAUTHORIZED.getStatusCode(), e.getMessage()))
+							.getContent());
 				response.setStatusCode(HttpStatusCode.UNAUTHORIZED.getStatusCode());
 				response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 				return;
 			} catch (URISyntaxException e) {
 				String message = logger.log(PripMessage.MSG_URI_GENERATION_FAILED, e.getMessage());
-				response.setContent(serializer.error(
-						LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), message)).getContent());
+				response.setContent(serializer.error(LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), message))
+					.getContent());
 				response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
 				response.setHeader(HTTP_HEADER_WARNING, message);
 				return;
 			} catch (IllegalArgumentException e) {
-				response.setContent(serializer.error(
-						LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), e.getMessage())).getContent());
+				response.setContent(
+						serializer.error(LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), e.getMessage()))
+							.getContent());
 				response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
 				response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 				return;
 			} catch (NoResultException e) {
-				response.setContent(serializer.error(
-						LogUtil.oDataServerError(HttpStatusCode.NOT_FOUND.getStatusCode(), e.getMessage())).getContent());
+				response
+					.setContent(serializer.error(LogUtil.oDataServerError(HttpStatusCode.NOT_FOUND.getStatusCode(), e.getMessage()))
+						.getContent());
 				response.setStatusCode(HttpStatusCode.NOT_FOUND.getStatusCode());
 				response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 				return;
 			} catch (Exception e) {
 				String message = logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
-				e.printStackTrace();
-				response.setContent(serializer.error(
-						LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message)).getContent());
+				if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
+				response.setContent(
+						serializer.error(LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message))
+							.getContent());
 				response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
 				response.setHeader(HTTP_HEADER_WARNING, message);
 				return;
 			}
 		} else {
 			String message = logger.log(PripMessage.MSG_INVALID_ENTITY_TYPE, edmEntitySet.getEntityType().getFullQualifiedName());
-			response.setContent(serializer.error(
-					LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), message)).getContent());
+			response.setContent(
+					serializer.error(LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), message)).getContent());
 			response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, message);
 			return;
 		}
 
-		if (logger.isDebugEnabled()) logger.debug("... preparing data for response");
-		
+		if (logger.isDebugEnabled())
+			logger.debug("... preparing data for response");
+
 		// [3] Check for system query options
 		SelectOption selectOption = uriInfo.getSelectOption();
 		ExpandOption expandOption = uriInfo.getExpandOption();
@@ -346,8 +359,8 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		if (!ContentType.APPLICATION_JSON.isCompatible(responseFormat)) {
 			// Any other format currently throws an exception (see Github issue #122)
 			String message = logger.log(PripMessage.MSG_UNSUPPORTED_FORMAT, responseFormat.toContentTypeString());
-			response.setContent(serializer.error(
-					LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), message)).getContent());
+			response.setContent(
+					serializer.error(LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), message)).getContent());
 			response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, message);
 			return;
@@ -356,28 +369,28 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		// [5] Now serialize the content: transform from the Entity object to InputStream
 		EdmEntityType edmEntityType = edmEntitySet.getEntityType();
 		ContextURL contextUrl = ContextURL.with()
-				.entitySet(edmEntitySet)
-				.selectList(odata.createUriHelper().buildContextURLSelectList(edmEntityType, expandOption, selectOption))
-				.suffix(Suffix.ENTITY)
-				.build();
+			.entitySet(edmEntitySet)
+			.selectList(odata.createUriHelper().buildContextURLSelectList(edmEntityType, expandOption, selectOption))
+			.suffix(Suffix.ENTITY)
+			.build();
 
 		EntitySerializerOptions opts = EntitySerializerOptions.with()
-				.contextURL(contextUrl)
-				.expand(expandOption)
-				.select(selectOption)
-				.build();
+			.contextURL(contextUrl)
+			.expand(expandOption)
+			.select(selectOption)
+			.build();
 		SerializerResult serializerResult = serializer.entity(serviceMetadata, edmEntityType, entity, opts);
-		
+
 		// Filter out elements with "null" content (i. e. empty optional fields like Footprint and GeoFootprint)
 		// Workaround because there is no way to get Olingo to do this (see also https://issues.apache.org/jira/browse/OLINGO-1361)
 		InputStream intermediateContent = serializerResult.getContent();
 		InputStream serializedContent = null;
-		
+
 		try {
 			// Deserialize JSON output
 			ObjectMapper om = new ObjectMapper();
 			Map<?, ?> intermediateMap = om.readValue(intermediateContent, Map.class);
-			
+
 			// Remove all fields with null values
 			Iterator<?> productMapKeyIter = intermediateMap.keySet().iterator();
 			while (productMapKeyIter.hasNext()) {
@@ -385,124 +398,137 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 					productMapKeyIter.remove();
 				}
 			}
-			
+
 			// Re-serialize into JSON
 			ByteArrayOutputStream cleanedOutput = new ByteArrayOutputStream();
 			om.writeValue(cleanedOutput, intermediateMap);
-			
+
 			serializedContent = new ByteArrayInputStream(cleanedOutput.toByteArray());
 		} catch (IOException e) {
 			// Highly unlikely given that we transform JSON to Map to JSON using the same ObjectMapper
-			throw new ODataApplicationException(MSG_CANNOT_FILTER_SERIALIZED_OUTPUT, 
-					HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Locale.ROOT, e);
+			throw new ODataApplicationException(MSG_CANNOT_FILTER_SERIALIZED_OUTPUT, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					Locale.ROOT, e);
 		}
 
 		// Finally: configure the response object: set the body, headers and status code
 		response.setContent(serializedContent);
 		response.setStatusCode(HttpStatusCode.OK.getStatusCode());
 		response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
-		
-		if (logger.isTraceEnabled()) logger.trace("<<< readEntity()");
+
+		if (logger.isTraceEnabled())
+			logger.trace("<<< readEntity()");
 	}
 
 	/**
-	 * Download a product from the prosEO Storage Manager (any Storage Manager instance will do, because in the case
-	 * of multiple copies of the product on various facilities, these should be identical); the Storage Manager is
-	 * identified via the Facility Manager component
+	 * Download a product from the prosEO Storage Manager (any Storage Manager instance will do, because in the case of multiple
+	 * copies of the product on various facilities, these should be identical); the Storage Manager is identified via the Facility
+	 * Manager component
 	 * <p>
-	 * This method does not actually return the data stream for the product, but rather redirects to the download
-	 * URI at the Storage Manager
-	 * 
-	 * @param request OData request object containing raw HTTP information
-	 * @param response OData response object for collecting response data
-	 * @param uriInfo information of a parsed OData URI
+	 * This method does not actually return the data stream for the product, but rather redirects to the download URI at the Storage
+	 * Manager
+	 *
+	 * @param request        OData request object containing raw HTTP information
+	 * @param response       OData response object for collecting response data
+	 * @param uriInfo        information of a parsed OData URI
 	 * @param responseFormat requested content type after content negotiation
 	 * @throws ODataApplicationException if the service implementation encounters a failure
-	 * @throws ODataLibraryException if an error during serialization occurs
+	 * @throws ODataLibraryException     if an error during serialization occurs
 	 */
 	@Override
 	public void readMediaEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat)
 			throws ODataApplicationException, ODataLibraryException {
-		if (logger.isTraceEnabled()) logger.trace(">>> readMediaEntity({}, {}, {}, {})", request, response, uriInfo, responseFormat);
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> readMediaEntity({}, {}, {}, {})", request, response, uriInfo, responseFormat);
+
 		// Find the requested product
-		UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriInfo.getUriResourceParts().get(0); // in our example, the first segment is the EntitySet
-	    List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
+		UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriInfo.getUriResourceParts().get(0); // in our example,
+																													// the first
+																													// segment is
+																													// the EntitySet
+		List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
 		Product modelProduct;
 
 		ODataSerializer serializer = odata.createSerializer(ContentType.JSON); // Serializer for error messages only
 		try {
 			modelProduct = getProduct(keyPredicates.get(0).getText());
 		} catch (NoResultException e) {
-			response.setContent(serializer.error(
-					LogUtil.oDataServerError(HttpStatusCode.NOT_FOUND.getStatusCode(), e.getMessage())).getContent());
+			response.setContent(serializer.error(LogUtil.oDataServerError(HttpStatusCode.NOT_FOUND.getStatusCode(), e.getMessage()))
+				.getContent());
 			response.setStatusCode(HttpStatusCode.NOT_FOUND.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 			return;
 		} catch (SecurityException e) {
-			response.setContent(serializer.error(
-					LogUtil.oDataServerError(HttpStatusCode.UNAUTHORIZED.getStatusCode(), e.getMessage())).getContent());
+			response
+				.setContent(serializer.error(LogUtil.oDataServerError(HttpStatusCode.UNAUTHORIZED.getStatusCode(), e.getMessage()))
+					.getContent());
 			response.setStatusCode(HttpStatusCode.UNAUTHORIZED.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 			return;
 		} catch (Exception e) {
 			String message = logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
-			e.printStackTrace();
-			response.setContent(serializer.error(
-					LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message)).getContent());
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
+			response.setContent(
+					serializer.error(LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message))
+						.getContent());
 			response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, message);
 			return;
 		}
-		
+
 		// Check whether the product is actually available on some processing facility
 		if (modelProduct.getProductFile().isEmpty()) {
 			String message = logger.log(PripMessage.MSG_PRODUCT_NOT_AVAILABLE, keyPredicates.get(0).getText());
-			response.setContent(serializer.error(
-					LogUtil.oDataServerError(HttpStatusCode.NOT_FOUND.getStatusCode(), message)).getContent());
+			response.setContent(
+					serializer.error(LogUtil.oDataServerError(HttpStatusCode.NOT_FOUND.getStatusCode(), message)).getContent());
 			response.setStatusCode(HttpStatusCode.NOT_FOUND.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, message);
 		}
 		// Select the first product file to transfer (they should be identical anyway)
 		ProductFile productFile = modelProduct.getProductFile().iterator().next();
-		
+
 		// Retrieve a download token from the Ingestor
-		String productFileName =
-				(null == productFile.getZipFileName() ? productFile.getProductFileName() : productFile.getZipFileName());
+		String productFileName = (null == productFile.getZipFileName() ? productFile.getProductFileName()
+				: productFile.getZipFileName());
 		String downloadToken;
 		try {
 			downloadToken = retrieveDownloadToken(modelProduct.getId(), productFileName);
 		} catch (HttpClientErrorException e) {
-			response.setContent(serializer.error(
-					LogUtil.oDataServerError(e.getRawStatusCode(), e.getMessage())).getContent());
+			response.setContent(serializer.error(LogUtil.oDataServerError(e.getRawStatusCode(), e.getMessage())).getContent());
 			response.setStatusCode(e.getRawStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 			return;
 		} catch (RestClientException e) {
-			response.setContent(serializer.error(
-					LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), e.getMessage())).getContent());
+			response
+				.setContent(serializer.error(LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), e.getMessage()))
+					.getContent());
 			response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 			return;
 		} catch (SecurityException e) {
-			response.setContent(serializer.error(
-					LogUtil.oDataServerError(HttpStatusCode.UNAUTHORIZED.getStatusCode(), e.getMessage())).getContent());
+			response
+				.setContent(serializer.error(LogUtil.oDataServerError(HttpStatusCode.UNAUTHORIZED.getStatusCode(), e.getMessage()))
+					.getContent());
 			response.setStatusCode(HttpStatusCode.UNAUTHORIZED.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 			return;
 		} catch (Exception e) {
 			String message = logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
-			e.printStackTrace();
-			response.setContent(serializer.error(
-					LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message)).getContent());
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
+			response.setContent(
+					serializer.error(LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message))
+						.getContent());
 			response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, message);
 			return;
 		}
-		
+
 		// Get the service URI of the Storage Manager service
 		String storageManagerUrl = productFile.getProcessingFacility().getExternalStorageManagerUrl();
-		
+
 		// Build the download URI: Set pathInfo to zipped file if available, to product file otherwise
 		URIBuilder uriBuilder = null;
 		try {
@@ -511,9 +537,12 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			uriBuilder.addParameter("token", downloadToken);
 		} catch (URISyntaxException e) {
 			String message = logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
-			e.printStackTrace();
-			response.setContent(serializer.error(
-					LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message)).getContent());
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
+			response.setContent(
+					serializer.error(LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message))
+						.getContent());
 			response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, message);
 			return;
@@ -554,71 +583,142 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 				}
 			} else {
 				logger.log(PripMessage.MSG_INVALID_RANGE_HEADER, rangeHeader);
-			} 
+			}
 		}
 		// Redirect the request to the download URI
 		logger.log(PripMessage.MSG_REDIRECT, uriBuilder.toString());
 		response.setStatusCode(HttpStatusCode.TEMPORARY_REDIRECT.getStatusCode());
 		response.setHeader(HttpHeader.LOCATION, uriBuilder.toString());
 		response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
-		
-		if (logger.isTraceEnabled()) logger.trace("<<< readMediaEntity()");
+
+		if (logger.isTraceEnabled())
+			logger.trace("<<< readMediaEntity()");
 	}
 
-	/* ------------------------------------------------------------------------------------
-	 * The methods below are not available on the PRIP, since this is a read-only interface 
-	 * ------------------------------------------------------------------------------------ */
-	
+	/*
+	 * ------------------------------------------------------------------------------------ 
+	 * The methods below are not available on the PRIP, since this is a read-only interface
+	 * ------------------------------------------------------------------------------------
+	 */
+
+	/**
+	 * Creates an entity.
+	 *
+	 * @param request        The OData request.
+	 * @param response       The OData response.
+	 * @param uriInfo        The URI information.
+	 * @param requestFormat  The request content type.
+	 * @param responseFormat The response content type.
+	 * @throws ODataApplicationException If there is an error in the OData application.
+	 * @throws ODataLibraryException     If there is an error in the OData library.
+	 */
 	@Override
 	public void createEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType requestFormat,
 			ContentType responseFormat) throws ODataApplicationException, ODataLibraryException {
-		if (logger.isTraceEnabled()) logger.trace(">>> createEntity({}, {}, {}, {}, {})", request, response, uriInfo, requestFormat, responseFormat);
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> createEntity({}, {}, {}, {}, {})", request, response, uriInfo, requestFormat, responseFormat);
+
 		response.setStatusCode(HttpStatusCode.FORBIDDEN.getStatusCode());
 		response.setHeader(HTTP_HEADER_WARNING, logger.log(PripMessage.MSG_FORBIDDEN));
 	}
 
+	/**
+	 * Deletes an entity.
+	 *
+	 * @param request  The OData request.
+	 * @param response The OData response.
+	 * @param uriInfo  The URI information.
+	 * @throws ODataApplicationException If there is an error in the OData application.
+	 * @throws ODataLibraryException     If there is an error in the OData library.
+	 */
 	@Override
 	public void deleteEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo)
 			throws ODataApplicationException, ODataLibraryException {
-		if (logger.isTraceEnabled()) logger.trace(">>> deleteEntity({}, {}, {})", request, response, uriInfo);
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteEntity({}, {}, {})", request, response, uriInfo);
+
 		response.setStatusCode(HttpStatusCode.FORBIDDEN.getStatusCode());
 		response.setHeader(HTTP_HEADER_WARNING, logger.log(PripMessage.MSG_FORBIDDEN));
 	}
 
+	/**
+	 * Updates an entity.
+	 *
+	 * @param request        The OData request.
+	 * @param response       The OData response.
+	 * @param uriInfo        The URI information.
+	 * @param requestFormat  The request content type.
+	 * @param responseFormat The response content type.
+	 * @throws ODataApplicationException If there is an error in the OData application.
+	 * @throws ODataLibraryException     If there is an error in the OData library.
+	 */
 	@Override
 	public void updateEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType requestFormat,
 			ContentType responseFormat) throws ODataApplicationException, ODataLibraryException {
-		if (logger.isTraceEnabled()) logger.trace(">>> updateEntity({}, {}, {}, {}, {})", request, response, uriInfo, requestFormat, responseFormat);
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> updateEntity({}, {}, {}, {}, {})", request, response, uriInfo, requestFormat, responseFormat);
+
 		response.setStatusCode(HttpStatusCode.FORBIDDEN.getStatusCode());
 		response.setHeader(HTTP_HEADER_WARNING, logger.log(PripMessage.MSG_FORBIDDEN));
 	}
 
+	/**
+	 * Creates a media entity.
+	 *
+	 * @param request        The OData request.
+	 * @param response       The OData response.
+	 * @param uriInfo        The URI information.
+	 * @param requestFormat  The request content type.
+	 * @param responseFormat The response content type.
+	 * @throws ODataApplicationException If there is an error in the OData application.
+	 * @throws ODataLibraryException     If there is an error in the OData library.
+	 */
 	@Override
 	public void createMediaEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType requestFormat,
 			ContentType responseFormat) throws ODataApplicationException, ODataLibraryException {
-		if (logger.isTraceEnabled()) logger.trace(">>> createMediaEntity({}, {}, {}, {}, {})", request, response, uriInfo, requestFormat, responseFormat);
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> createMediaEntity({}, {}, {}, {}, {})", request, response, uriInfo, requestFormat, responseFormat);
+
 		response.setStatusCode(HttpStatusCode.FORBIDDEN.getStatusCode());
 		response.setHeader(HTTP_HEADER_WARNING, logger.log(PripMessage.MSG_FORBIDDEN));
 	}
 
+	/**
+	 * Deletes a media entity.
+	 *
+	 * @param request  The OData request.
+	 * @param response The OData response.
+	 * @param uriInfo  The URI information.
+	 * @throws ODataApplicationException If there is an error in the OData application.
+	 * @throws ODataLibraryException     If there is an error in the OData library.
+	 */
 	@Override
 	public void deleteMediaEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo)
 			throws ODataApplicationException, ODataLibraryException {
-		if (logger.isTraceEnabled()) logger.trace(">>> deleteMediaEntity({}, {}, {})", request, response, uriInfo);
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteMediaEntity({}, {}, {})", request, response, uriInfo);
+
 		response.setStatusCode(HttpStatusCode.FORBIDDEN.getStatusCode());
 		response.setHeader(HTTP_HEADER_WARNING, logger.log(PripMessage.MSG_FORBIDDEN));
 	}
 
+	/**
+	 * Updates a media entity.
+	 *
+	 * @param request        The OData request.
+	 * @param response       The OData response.
+	 * @param uriInfo        The URI information.
+	 * @param requestFormat  The request content type.
+	 * @param responseFormat The response content type.
+	 * @throws ODataApplicationException If there is an error in the OData application.
+	 * @throws ODataLibraryException     If there is an error in the OData library.
+	 */
 	@Override
 	public void updateMediaEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType requestFormat,
 			ContentType responseFormat) throws ODataApplicationException, ODataLibraryException {
-		if (logger.isTraceEnabled()) logger.trace(">>> updateMediaEntity({}, {}, {}, {}, {})", request, response, uriInfo, requestFormat, responseFormat);
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> updateMediaEntity({}, {}, {}, {}, {})", request, response, uriInfo, requestFormat, responseFormat);
+
 		response.setStatusCode(HttpStatusCode.FORBIDDEN.getStatusCode());
 		response.setHeader(HTTP_HEADER_WARNING, logger.log(PripMessage.MSG_FORBIDDEN));
 	}

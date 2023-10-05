@@ -83,7 +83,9 @@ public class FileUtils {
 
 		} catch (IOException e) {
 
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+				logger.debug("An exception occurred. Cause: ", e);
+			}
 			return false;
 		}
 	}
@@ -126,7 +128,9 @@ public class FileUtils {
 		try {
 			content = new String(Files.readAllBytes(Paths.get(path)));
 		} catch (IOException e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+				logger.debug("An exception occurred. Cause: ", e);
+			}
 		}
 
 		return content;
@@ -246,7 +250,9 @@ public class FileUtils {
 			return sourceFile;
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) {
+				logger.debug("An exception occurred. Cause: ", e);
+			}
 			if (logger.isTraceEnabled())
 				logger.log(StorageMgrMessage.FILE_NOT_DELETED, sourceFile, e.getMessage());
 			throw e;
