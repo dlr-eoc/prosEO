@@ -124,15 +124,30 @@ public class ProductfileControllerImpl implements ProductfileController {
 				if (!cache.containsKey(targetFile.getFullPath())) {
 
 					fileLocker.lock();
+					
+					// After lock the active thread downloaded the file and put it to the cache (see below)
+					// After lock the passive thread did nothing, but the file has been downloaded
+					// 	and the cache has been updated - need to check if file contains in the cache again
+					if (!cache.containsKey(targetFile.getFullPath())) {
 
-					storageProvider.getStorage().downloadFile(sourceFile, targetFile);
-					cache.put(targetFile.getFullPath());
+						// download-thread
+						storageProvider.getStorage().downloadFile(sourceFile, targetFile);
+						logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED, targetFile.getFullPath());
+						
+						cache.put(targetFile.getFullPath());
+					}
+					else {
+						
+						// waiting-thread when the file downloaded and use it from cache
+						logger.debug("... waiting-thread when the file downloaded and use it from cache: ", targetFile.getFullPath());		
+					}
+					
+				} else {
+					logger.debug("... no download and no lock - the file is in cache: ", targetFile.getFullPath());
 				}
 
 				RestFileInfo restFileInfo = convertToRestFileInfo(targetFile,
 						storageProvider.getCacheFileSize(sourceFile.getRelativePath()));
-
-				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED, targetFile.getFullPath());
 
 				return new ResponseEntity<>(restFileInfo, HttpStatus.OK);
 
@@ -157,6 +172,8 @@ public class ProductfileControllerImpl implements ProductfileController {
 			finally {
 
 				fileLocker.unlock();
+				logger.debug("... unlocked the file: ", pathInfo);
+
 			}
 		} // end version 2
 
