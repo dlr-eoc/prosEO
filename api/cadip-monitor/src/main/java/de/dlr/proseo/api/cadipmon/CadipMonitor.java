@@ -988,9 +988,10 @@ public class CadipMonitor extends BaseMonitor {
 	 * paging)
 	 *
 	 * @param referenceTimeStamp the reference time stamp to check against
+	 * @param maxEntries the maximum number of entries to retrieve
 	 * @return a transfer control object containing a list of sessions available for download (may be empty)
 	 */
-	private TransferControl checkAvailableSessions(Instant referenceTimeStamp) {
+	private TransferControl checkAvailableSessions(Instant referenceTimeStamp, Integer maxEntries) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> checkAvailableProducts({})", referenceTimeStamp);
 
@@ -1026,7 +1027,7 @@ public class CadipMonitor extends BaseMonitor {
 				.appendEntitySetSegment("Sessions")
 				.addQueryOption(QueryOption.FILTER, queryFilter.toString())
 				.addQueryOption(QueryOption.COUNT, "true")
-				.top(MAX_ENTRY_COUNT)
+				.top(null == maxEntries || 1 > maxEntries ? MAX_ENTRY_COUNT : maxEntries)
 				.orderBy("PublicationDate asc")
 				.build());
 		request.addCustomHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
@@ -1216,7 +1217,7 @@ public class CadipMonitor extends BaseMonitor {
 		try {
 
 			// Retrieve all available sessions
-			transferControl = checkAvailableSessions(referenceTimeStamp);
+			transferControl = checkAvailableSessions(referenceTimeStamp, MAX_ENTRY_COUNT);
 
 			logger.log(ApiMonitorMessage.AVAILABLE_DOWNLOADS_FOUND, transferControl.transferObjects.size());
 		} catch (Exception e) {
@@ -1922,7 +1923,7 @@ public class CadipMonitor extends BaseMonitor {
 		boolean isCadipOk = false;
 		
 		try {
-			TransferControl tc = checkAvailableSessions(Instant.parse("1970-01-01T00:00:00Z"));
+			TransferControl tc = checkAvailableSessions(Instant.ofEpochSecond(0), 1 /* just test the interface */);
 			isCadipOk = !tc.transferObjects.isEmpty();
 		} catch (Exception e) {
 			// Never mind
