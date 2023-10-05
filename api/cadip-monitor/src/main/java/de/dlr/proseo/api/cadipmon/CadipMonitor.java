@@ -24,11 +24,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -95,11 +93,17 @@ public class CadipMonitor extends BaseMonitor {
 	/** Maximum number of parallel file download threads within a download session (default 1 = no parallel downloads) */
 	private int maxFileDownloadThreads = 1;
 
-	/** Interval in millliseconds to check for completed file downloads (default 500 ms) */
-	private int fileWaitInterval = 500;
+	/** Interval in millliseconds to check for completed file downloads (default 2000 ms) */
+	private int fileWaitInterval = 2000;
 
-	/** Maximum number of wait cycles for file download completion checks (default 3600 = total timeout of 30 min) */
-	private int maxFileWaitCycles = 3600;
+	/** Maximum number of wait cycles for file download completion checks (default 900 = total timeout of 30 min) */
+	private int maxFileWaitCycles = 900;
+
+	/** Interval in millliseconds to check for completed quality info requests (default 500 ms) */
+	private int qualityRetryInterval = 2000;
+
+	/** Maximum number of wait cycles for quality info completeness checks (default 300 = total timeout of 10 min) */
+	private int maxQualityRetries = 300;
 
 	/** Header marker for S3 redirects */
 	private static final String S3_CREDENTIAL_PARAM = "Amz-Credential";
@@ -1413,13 +1417,13 @@ public class CadipMonitor extends BaseMonitor {
 	 * Download a single CADU (DSDB) file from the CADIP
 	 *
 	 * @param transferFile   metadata for the file to download
-	 * @param sessionDirName name of the session directory to download to
+	 * @param caduFile file path in the session directory to download to
 	 * @throws IOException if any failure occurs during the download
 	 */
-	private void downloadCaduFile(TransferFile transferFile, String sessionDirName) throws IOException {
+	private void downloadCaduFile(TransferFile transferFile, File caduFile) throws IOException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> downloadCaduFile({}, {})", null == transferFile ? "null" : transferFile.getFilename(),
-					sessionDirName);
+					caduFile);
 
 		// Create retrieval request
 		String requestUri = (config.getCadipContext().isBlank() ? "" : config.getCadipContext() + "/") + "odata/v1/" + "Files("
@@ -1479,9 +1483,6 @@ public class CadipMonitor extends BaseMonitor {
 
 		// Retrieve and store product file
 		Instant downloadStart = Instant.now();
-		File caduFile = caduDirectoryPath
-			.resolve(Path.of(sessionDirName, CHANNEL_PREFIX + transferFile.getChannel(), transferFile.getFilename()))
-			.toFile();
 
 		if (logger.isTraceEnabled())
 			logger.trace("... starting request for URL '{}'", requestUri);
@@ -1677,9 +1678,6 @@ public class CadipMonitor extends BaseMonitor {
 				// Optimistically we assume success (actually: it's an AND condition)
 				copySuccess.put(transferSession.getIdentifier(), true);
 
-				// Create empty "done" list
-				Set<String> filesDone = new HashSet<>();
-
 				// Create session and channel directories
 				if (!Files.isWritable(caduDirectoryPath)) {
 					logger.log(ApiMonitorMessage.TARGET_DIR_NOT_WRITABLE, caduDirectoryPath);
@@ -1722,22 +1720,28 @@ public class CadipMonitor extends BaseMonitor {
 
 					// Download files in parallel, unless in "done" list
 					for (TransferFile transferFile : transferFiles) {
-						if (filesDone.contains(transferFile.getFilename())) {
-							continue;
-						} else {
-							filesDone.add(transferFile.getFilename());
+						// If CADU file is marked as "final block", set session as completed
+						// (check before skipping, may change over time for any given CADU file)
+						if (transferFile.isFinalBlock()) {
+							transferSession.setSessionComplete(true);
 						}
 
+						// Skip files, which have already been downloaded (but count to session download size)
+						final File caduFile = caduDirectoryPath
+								.resolve(Path.of(sessionDirName, CHANNEL_PREFIX + transferFile.getChannel(), transferFile.getFilename()))
+								.toFile();
+						if (caduFile.exists() && caduFile.length() == transferFile.getFileSize().longValue()) {
+							if (logger.isTraceEnabled())
+								logger.trace("... skipping file {} - already downloaded!", transferFile.getFilename());
+							addToSessionDataSize(transferSession.getIdentifier(), transferFile.getFileSize());
+							continue;
+						}
+						
 						// Fail if at least one file has been evicted
 						if (Instant.now().isAfter(transferFile.getEvictionTime())) {
 							logger.log(ApiMonitorMessage.FILE_EVICTED, transferFile.getFilename());
 							transferSession.setSessionComplete(true);
 							break;
-						}
-
-						// If CADU file is marked as "final block", set session as completed
-						if (transferFile.isFinalBlock()) {
-							transferSession.setSessionComplete(true);
 						}
 
 						// Prepare the download task
@@ -1762,7 +1766,7 @@ public class CadipMonitor extends BaseMonitor {
 									int maxRetry = 3;
 									for (int i = 0; i < maxRetry; i++) {
 										try {
-											downloadCaduFile(transferFile, sessionDirName);
+											downloadCaduFile(transferFile, caduFile);
 											break;
 										} catch (Exception e) {
 											// Already logged
@@ -1846,8 +1850,29 @@ public class CadipMonitor extends BaseMonitor {
 					}
 				}
 
-				// Check session quality information (esp. no. of chunks and total volume/transfer data size)
-				retrieveQualityInfo(transferSession);
+				// Check session quality information (esp. no. of chunks and total volume/transfer data size) with retries
+				int qualityRetries = 0;
+				transferSession.setDownlinkSize(0L);
+				while (0L == transferSession.getDownlinkSize() && qualityRetries < maxQualityRetries) {
+					++qualityRetries;
+					
+					retrieveQualityInfo(transferSession);
+					
+					if (0L == transferSession.getDownlinkSize()) {
+						try {
+							if (logger.isTraceEnabled())
+								logger.trace("... waiting {} ms before next check of quality info", qualityRetryInterval);
+							Thread.sleep(qualityRetryInterval);
+						} catch (InterruptedException e) {
+							logger.log(ApiMonitorMessage.QUALITY_WAIT_INTERRUPTED, transferSession.getSessionIdentifier());
+							return false;
+						}
+					}
+				}
+				if (0L == transferSession.getDownlinkSize()) {
+					logger.log(ApiMonitorMessage.QUALITY_WAIT_TIMEOUT, (maxQualityRetries * qualityRetryInterval) / 1000,
+							transferSession.getSessionIdentifier());
+				}
 
 				// Check the total session data size
 				if (!transferSession.getDownlinkSize().equals(sessionDataSizes.get(transferSession.getIdentifier()))) {
