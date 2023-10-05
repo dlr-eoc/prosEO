@@ -151,14 +151,32 @@ public class InputOutput {
 	public List<IpfFileName> getFileNames() {
 		return fileNames;
 	}
-
+		
+	/**
+	 * Sets file names
+	 *
+	 * @param fileNames file names to set
+	 */
+	public void setFileNames(List<IpfFileName> fileNames) {
+		this.fileNames = fileNames;
+	}
+	
 	/**
 	 * @return the timeIntervals
 	 */
 	public List<TimeInterval> getTimeIntervals() {
 		return timeIntervals;
 	}
-
+	
+	/**
+	 * Sets time intervals
+	 *
+	 * @param timeIntervals the time intervals to set
+	 */
+	public void setTimeIntervals(List<TimeInterval> timeIntervals) {
+		this.timeIntervals = timeIntervals;
+	}
+	
 	/**
 	 * Create an Input/Output element of the given type
 	 *
