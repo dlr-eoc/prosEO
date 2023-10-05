@@ -133,6 +133,7 @@ public class ProductIngestor {
 	 *                                  Manager fails
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public List<RestProduct> ingestProducts(ProcessingFacility facility, boolean copyFiles, List<IngestorProduct> ingestorProducts, String user,
 			String password) throws IllegalArgumentException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled())
@@ -314,8 +315,7 @@ public class ProductIngestor {
 	 * 
 	 * @return the update metadata list for the products
 	 */
-	@Transactional(isolation = Isolation.REPEATABLE_READ)
-	public List<RestProduct> ingestToDatabase(List<IngestorProduct> ingestorProducts, ProcessingFacility facility) {
+	private List<RestProduct> ingestToDatabase(List<IngestorProduct> ingestorProducts, ProcessingFacility facility) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> ingestToDatabase(IngestorProduct[{}], {}", ingestorProducts.size(), facility.getName());
 		
