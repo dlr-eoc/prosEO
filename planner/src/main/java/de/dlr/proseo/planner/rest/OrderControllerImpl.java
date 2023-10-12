@@ -39,6 +39,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -76,6 +78,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
+	@Deprecated
 	public ResponseEntity<List<RestOrder>> getOrders(HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrders()");
 		
@@ -84,6 +87,8 @@ public class OrderControllerImpl implements OrderController {
 			try {
 				productionPlanner.acquireThreadSemaphore("getOrders");
 				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+				transactionTemplate.setReadOnly(true);
 				transactionTemplate.execute((status) -> {
 					Iterable<ProcessingOrder> orders = RepositoryService.getOrderRepository().findAll();
 					for (ProcessingOrder po : orders) {
@@ -113,6 +118,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
+	@Deprecated
 	public ResponseEntity<RestOrder> getOrder(String orderId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrder({})", orderId);
 		
@@ -141,6 +147,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
+	@Deprecated
 	public ResponseEntity<RestOrder> approveOrder(String orderId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> approveOrder({})", orderId);
 
@@ -647,6 +654,8 @@ public class OrderControllerImpl implements OrderController {
 
 		ProcessingOrder order = null;
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+		transactionTemplate.setReadOnly(true);
 		order = transactionTemplate.execute((status) -> {
 			ProcessingOrder orderx = null;
 			try {
@@ -695,6 +704,8 @@ public class OrderControllerImpl implements OrderController {
 		try {
 			productionPlanner.acquireThreadSemaphore("getRestOrder");
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+			transactionTemplate.setReadOnly(true);
 			answer = transactionTemplate.execute((status) -> {
 				RestOrder ro = null;
 				ProcessingOrder order = null;
