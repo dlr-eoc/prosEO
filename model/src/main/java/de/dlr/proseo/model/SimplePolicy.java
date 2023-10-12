@@ -50,13 +50,12 @@ public class SimplePolicy extends PersistentObject {
 
 	/**
 	 * Available policy types as defined in ESA's Generic IPF Interface Specifications and other sources (e. g. Sentinel-1/3 IPF ICDs).
-	 * 
-	 * Note: For Sentinel-5P only the policies LatestValCover, LatestValIntersect, ValIntersect, LatestValidityClosest, LatestValidity are used.
 	 */
 	public enum PolicyType {
 		// Standard policies according to the Generic IPF Interface Specifications
 		ValCover, LatestValCover, ValIntersect, LatestValIntersect, LatestValidityClosest,
-		BestCenteredCover, LatestValCoverClosest, LargestOverlap, LargestOverlap85, LatestValidity, LatestValCoverNewestValidity,
+		BestCenteredCover, LatestValCoverClosest, LargestOverlap, LargestOverlap85,
+		LatestValidity, LatestValCoverNewestValidity,
 		// Additional policies for Sentinel-1 and Sentinel-3
 		ClosestStartValidity, ClosestStopValidity, LatestStartValidity, LatestStopValidity, ValIntersectWithoutDuplicates, LastCreated
 	}
@@ -610,6 +609,107 @@ public class SimplePolicy extends PersistentObject {
 	}
 	
 	/**
+	 * Select the item from the given collection that has the largest overlap with the given time interval.
+	 * If multiple items have the same overlap, the product with the start time that is closest to t0-dt0 is chosen.
+	 * If multiple items with the same overlap and equally close start times exist, the one with the most recent
+	 * generation time is selected.
+	 * 
+	 * @param items the collection of items to be searched
+	 * @param startTime the start time of the time interval to check against
+	 * @param stopTime the end time of the time interval to check against
+	 * @return a list containing the selected item, or an empty list, if no qualifying item exists in the collection
+	 */
+	public Set<SelectionItem> selectLargestOverlap(Collection<SelectionItem> items, Instant startTime, Instant stopTime) {
+		
+		// First select the items that actually intersect the given interval
+		Set<SelectionItem> intersectingItems = selectValIntersect(items, startTime, stopTime);
+		
+		// Test each of the items against the time interval and select the one with the latest generation time
+		Instant selectionStartTime = startTime.minusMillis(getDeltaTimeT0().toMilliseconds());
+		Instant selectionStopTime = stopTime.plusMillis(getDeltaTimeT1().toMilliseconds());
+		SelectionItem largestOverlapItem = null;
+		Duration maxOverlap = Duration.ZERO;
+		
+		for (SelectionItem item: intersectingItems) {
+			Instant overlapStart = item.startTime.isAfter(selectionStartTime) ? item.startTime : selectionStartTime;
+			Instant overlapEnd = item.stopTime.isBefore(selectionStopTime) ? item.stopTime : selectionStopTime;
+
+			Duration overlap = Duration.between(overlapStart, overlapEnd);
+			
+			if (1 == overlap.compareTo(maxOverlap)) {
+				maxOverlap = overlap;
+				largestOverlapItem = item;
+			} else if (0 == overlap.compareTo(maxOverlap)) {
+				long itemDistance = Math.abs(item.startTime.toEpochMilli() - selectionStartTime.toEpochMilli());
+				long largestOverlapItemDistance =
+						Math.abs(largestOverlapItem.startTime.toEpochMilli() - selectionStartTime.toEpochMilli());
+				if (itemDistance < largestOverlapItemDistance  || 
+						itemDistance == largestOverlapItemDistance
+						&& item.generationTime.isAfter(largestOverlapItem.generationTime)) {
+					largestOverlapItem = item;
+				}
+			}
+		}
+		
+		// Prepare the zero-to-one-element result list
+		Set<SelectionItem> selectedItems = new HashSet<>();
+		if (null != largestOverlapItem) {
+			selectedItems.add(largestOverlapItem);
+		}
+		return selectedItems;
+	}
+
+	/**
+	 * Select the item from the given collection that has the largest overlap with the given time interval,
+	 * where the item covers at least 85 % of the time interval.
+	 * If multiple items have the same overlap, the product with the start time that is closest to t0-dt0 is chosen.
+	 * If multiple items with the same overlap and equally close start times exist, the one with the most recent
+	 * generation time is selected.
+	 * 
+	 * @param items the collection of items to be searched
+	 * @param startTime the start time of the time interval to check against
+	 * @param stopTime the end time of the time interval to check against
+	 * @return a list containing the selected item, or an empty list, if no qualifying item exists in the collection
+	 */
+	public Set<SelectionItem> selectLargestOverlap85(Collection<SelectionItem> items, Instant startTime, Instant stopTime) {
+
+		// Get the largest overlapping item
+		Set<SelectionItem> overlappingItems = selectLargestOverlap(items, startTime, stopTime);
+		
+		if (overlappingItems.isEmpty()) {
+			return overlappingItems;
+		}
+		
+		// Check whether the resulting item covers at least 85 % of the given time interval
+		SelectionItem largestOverlappingItem = overlappingItems.iterator().next();
+		
+		Instant selectionStartTime = startTime.minusMillis(getDeltaTimeT0().toMilliseconds());
+		Instant selectionStopTime = stopTime.plusMillis(getDeltaTimeT1().toMilliseconds());
+		
+		Instant overlapStart = largestOverlappingItem.startTime.isAfter(selectionStartTime) ?
+				largestOverlappingItem.startTime : selectionStartTime;
+		Instant overlapEnd = largestOverlappingItem.stopTime.isBefore(selectionStopTime) ?
+				largestOverlappingItem.stopTime : selectionStopTime;
+
+		Duration overlap = Duration.between(overlapStart, overlapEnd);
+		
+		if (logger.isTraceEnabled()) {
+			logger.trace("... checking whether duration of {} ms is at least 85 % of duration of {} ms ...",
+					Long.valueOf(overlap.toMillis()).doubleValue(),
+					Long.valueOf(Duration.between(selectionStartTime, selectionStopTime).toMillis()).doubleValue());
+		}
+		
+		if (0.85 > (Long.valueOf(overlap.toMillis()).doubleValue() / 
+				Long.valueOf(Duration.between(selectionStartTime, selectionStopTime).toMillis()).doubleValue())) {
+			if (logger.isTraceEnabled()) logger.trace("... false!");
+			return new HashSet<>();
+		}
+		if (logger.isTraceEnabled()) logger.trace("... true!");
+		
+		return overlappingItems;
+	}
+
+	/**
 	 * Select the latest item (by generation time) from the given collection.
 	 * For all items the item type must match the given productType.
 	 * 
@@ -656,6 +756,8 @@ public class SimplePolicy extends PersistentObject {
 		case LatestValidityClosest:	return selectLatestValidityClosest(items, startTime, stopTime);
 		case ClosestStartValidity:	return selectClosestStartValidity(items, startTime);
 		case ClosestStopValidity:	return selectClosestStopValidity(items, stopTime);
+		case LargestOverlap:		return selectLargestOverlap(items, startTime, stopTime);
+		case LargestOverlap85:		return selectLargestOverlap85(items, startTime, stopTime);
 		case LastCreated:			return selectLastCreated(items);
 		default:
 			throw new UnsupportedOperationException(String.format(MSG_POLICY_TYPE_NOT_IMPLEMENTED, policyType.toString()));
@@ -667,8 +769,18 @@ public class SimplePolicy extends PersistentObject {
 	 * class is denoted as "select ... from Product p ..." in the JPQL query, to which the resulting condition is to be
 	 * appended.
 	 * <p>
-	 * Limitation [TBC]: For LatestValidityClosest the query may return two products, one to each side of the centre of the
+	 * Limitations:
+	 * <ul>
+	 * <li>
+	 * For LatestValidityClosest the query may return two products, one to each side of the centre of the
 	 * given time interval. It is up to the calling program to select the applicable product.
+	 * </li>
+	 * <li>
+	 * For LargestOverlap and LargestOverlap85 the query returns all items intersecting the interal (like ValIntersect),
+	 * further selection by the calling program using either selectLargestOverlap(...) or selectLargestOverlap85(...)
+	 * is required.
+	 * </li>
+	 * </ul>
 	 * 
 	 * @param sourceProductClass the source product class to use for the query (only required for LatestValidity and LatestValidityClosest)
 	 * @param startTime the start time to use in the condition
@@ -819,6 +931,9 @@ public class SimplePolicy extends PersistentObject {
 			break;
 		case ValIntersect:
 		case ValIntersectWithoutDuplicates:
+		// With limitations, see method comment:
+		case LargestOverlap:
+		case LargestOverlap85:
 			simplePolicyQuery.append("p.sensingStartTime < '")
 				.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
 				.append("' and p.sensingStopTime > '")
@@ -861,8 +976,18 @@ public class SimplePolicy extends PersistentObject {
 	 * classes are denoted as "SELECT ... FROM product p JOIN product_class pc ON p.product_class_id = pc.id" in the SQL query,
 	 * to which the resulting condition is to be appended.
 	 * <p>
-	 * Limitation [TBC]: For LatestValidityClosest the query may return two products, one to each side of the centre of the
+	 * Limitations:
+	 * <ul>
+	 * <li>
+	 * For LatestValidityClosest the query may return two products, one to each side of the centre of the
 	 * given time interval. It is up to the calling program to select the applicable product.
+	 * </li>
+	 * <li>
+	 * For LargestOverlap and LargestOverlap85 the query returns all items intersecting the interal (like ValIntersect),
+	 * further selection by the calling program using either selectLargestOverlap(...) or selectLargestOverlap85(...)
+	 * is required.
+	 * </li>
+	 * </ul>
 	 * 
 	 * @param sourceProductClass the source product class to use for the query (only required for LatestValidity and LatestValidityClosest)
 	 * @param startTime the start time to use in the condition
@@ -1028,6 +1153,9 @@ public class SimplePolicy extends PersistentObject {
 			break;
 		case ValIntersect:
 		case ValIntersectWithoutDuplicates:
+		// With limitations, see method comment:
+		case LargestOverlap:
+		case LargestOverlap85:
 			simplePolicyQuery.append("p.sensing_start_time < '")
 				.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
 				.append("' AND p.sensing_stop_time > '")
