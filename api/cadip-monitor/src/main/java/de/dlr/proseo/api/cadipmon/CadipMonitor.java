@@ -856,7 +856,7 @@ public class CadipMonitor extends BaseMonitor {
 	private void init() {
 		
 		if (logger.isTraceEnabled())
-			logger.trace("... init() called for class {}", this.getClass().getName());
+			logger.trace("... init() called for object {} of class {}", this.toString(), this.getClass().getName());
 		
 		// Set parameters in base monitor
 		this.setTransferHistoryFile(Paths.get(config.getCadipHistoryPath()));
@@ -906,6 +906,7 @@ public class CadipMonitor extends BaseMonitor {
 	/**
 	 * Thread-safe method to calculate total session download size
 	 *
+	 * @param sessionId the identifier of the session to calculate the size for
 	 * @param caduSize the size of the CADU chunk to add to the session download size
 	 */
 	synchronized private void addToSessionDataSize(String sessionId, long caduSize) {
@@ -914,6 +915,20 @@ public class CadipMonitor extends BaseMonitor {
 		} else {
 			sessionDataSizes.put(sessionId, sessionDataSizes.get(sessionId) + caduSize);
 		}
+	}
+
+	/**
+	 * Kill all open subtasks (e. g. in case of error)
+	 * 
+	 * @param downloadTasks the list of tasks to kill
+	 */
+	private void killTasks(List<Thread> downloadTasks) {
+		if (logger.isTraceEnabled()) logger.trace(">>> killTasks(Thread[{}])", (null == downloadTasks ? "null" : downloadTasks.size()));
+		
+		for (Thread task: downloadTasks) {
+			task.interrupt();
+		}
+		
 	}
 
 	/**
@@ -1070,6 +1085,9 @@ public class CadipMonitor extends BaseMonitor {
 			if (!config.isCadipRetransfer()) {
 				transferControl.referenceTime = Instant.now();
 			}
+			
+			if (logger.isTraceEnabled())
+				logger.trace("<<< checkAvailableSessions()");
 			return transferControl;
 		}
 
@@ -1678,6 +1696,8 @@ public class CadipMonitor extends BaseMonitor {
 
 		if (object instanceof TransferSession) {
 
+			List<Thread> downloadTasks = new ArrayList<>();
+			
 			try {
 				TransferSession transferSession = (TransferSession) object;
 
@@ -1703,7 +1723,6 @@ public class CadipMonitor extends BaseMonitor {
 				// Repeat downloads until session is complete or timeout reached
 				final Semaphore semaphore = new Semaphore(maxFileDownloadThreads, true);
 				if (logger.isDebugEnabled()) logger.debug("... file download semaphore {} created", semaphore);
-				List<Thread> downloadTasks = new ArrayList<>();
 				
 				// Prevent parallel downloads of the same file
 				final Set<File> filesInDownload = new HashSet<>();
@@ -1718,6 +1737,7 @@ public class CadipMonitor extends BaseMonitor {
 						transferFiles = retrieveSessionFiles(transferSession);
 					} catch (IOException e) {
 						// Already logged
+						killTasks(downloadTasks);
 						return false;
 					}
 
@@ -1788,7 +1808,7 @@ public class CadipMonitor extends BaseMonitor {
 											// Already logged
 											if (i < maxRetry - 1) {
 												if (logger.isTraceEnabled())
-													logger.trace("... download attempt {} of {} failed, waiting 1 s", i + 1,
+													logger.trace("... download attempt {} of {} failed, waiting 5 s", i + 1,
 															maxRetry);
 												try {
 													Thread.sleep(5000);
@@ -1845,6 +1865,37 @@ public class CadipMonitor extends BaseMonitor {
 					}
 				}
 
+				// Check session quality information (esp. no. of chunks and total volume/transfer data size) with retries
+				int qualityRetries = 0;
+				transferSession.setDownlinkSize(0L);
+				while (0L == transferSession.getDownlinkSize() && qualityRetries < maxQualityRetries) {
+					++qualityRetries;
+					
+					retrieveQualityInfo(transferSession);
+					
+					if (0L == transferSession.getDownlinkSize()) {
+						try {
+							if (logger.isTraceEnabled())
+								logger.trace("... waiting {} ms before next check of quality info", qualityRetryInterval);
+							Thread.sleep(qualityRetryInterval);
+						} catch (InterruptedException e) {
+							logger.log(ApiMonitorMessage.QUALITY_WAIT_INTERRUPTED, transferSession.getSessionIdentifier());
+							return false;
+						}
+					}
+				}
+				if (0L == transferSession.getDownlinkSize()) {
+					logger.log(ApiMonitorMessage.QUALITY_WAIT_TIMEOUT, (maxQualityRetries * qualityRetryInterval) / 1000,
+							transferSession.getSessionIdentifier());
+				}
+
+				// Start parallel processing action
+				boolean parallelActionSuccess = triggerParallelAction(transferSession);
+				if (!parallelActionSuccess) {
+					// We assume error already logged
+					copySuccess.put(transferSession.getIdentifier(), false);
+				}
+
 				// Wait for all download subtasks
 				if (logger.isTraceEnabled())
 					logger.trace("... waiting for all file downloads to complete");
@@ -1871,30 +1922,6 @@ public class CadipMonitor extends BaseMonitor {
 
 				if (logger.isDebugEnabled()) logger.debug("... file download semaphore status: {}", semaphore);
 				
-				// Check session quality information (esp. no. of chunks and total volume/transfer data size) with retries
-				int qualityRetries = 0;
-				transferSession.setDownlinkSize(0L);
-				while (0L == transferSession.getDownlinkSize() && qualityRetries < maxQualityRetries) {
-					++qualityRetries;
-					
-					retrieveQualityInfo(transferSession);
-					
-					if (0L == transferSession.getDownlinkSize()) {
-						try {
-							if (logger.isTraceEnabled())
-								logger.trace("... waiting {} ms before next check of quality info", qualityRetryInterval);
-							Thread.sleep(qualityRetryInterval);
-						} catch (InterruptedException e) {
-							logger.log(ApiMonitorMessage.QUALITY_WAIT_INTERRUPTED, transferSession.getSessionIdentifier());
-							return false;
-						}
-					}
-				}
-				if (0L == transferSession.getDownlinkSize()) {
-					logger.log(ApiMonitorMessage.QUALITY_WAIT_TIMEOUT, (maxQualityRetries * qualityRetryInterval) / 1000,
-							transferSession.getSessionIdentifier());
-				}
-
 				// Check the total session data size
 				if (!transferSession.getDownlinkSize().equals(sessionDataSizes.get(transferSession.getIdentifier()))) {
 					logger.log(ApiMonitorMessage.DATA_SIZE_MISMATCH, transferSession.getIdentifier(),
@@ -1926,6 +1953,7 @@ public class CadipMonitor extends BaseMonitor {
 
 			} catch (Exception e) {
 				logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass().getName() + " / " + e.getMessage());
+				killTasks(downloadTasks);
 				return false;
 			}
 
@@ -1933,6 +1961,26 @@ public class CadipMonitor extends BaseMonitor {
 			logger.log(ApiMonitorMessage.INVALID_TRANSFER_OBJECT_TYPE, object.getIdentifier());
 			return false;
 		}
+	}
+
+	/**
+	 * Trigger any necessary parallel action on the transfer session (e. g. L0 processing)
+	 *
+	 * @param transferSession the transfer session to start the action on
+	 * @return true, if starting the action succeeded (not necessarily the action itself), false otherwise
+	 */
+	protected boolean triggerParallelAction(TransferSession transferSession) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> triggerParallelAction({})", null == transferSession ? "null" : transferSession.getIdentifier());
+
+		if (null == transferSession) {
+			logger.log(ApiMonitorMessage.TRANSFER_OBJECT_IS_NULL);
+			return false;
+		}
+
+		logger.log(ApiMonitorMessage.PARALLEL_ACTION_STARTED, transferSession.getIdentifier(), "NOT IMPLEMENTED");
+
+		return true;
 	}
 
 	/*
