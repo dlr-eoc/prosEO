@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -83,6 +84,7 @@ import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.AipClientMessage;
+import de.dlr.proseo.logging.messages.ApiMonitorMessage;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.OAuthMessage;
 import de.dlr.proseo.model.ConfiguredProcessor;
@@ -141,6 +143,8 @@ public class DownloadManager {
 
 	/** Lookup table for products currently being downloaded from some archive */
 	private static ConcurrentSkipListSet<String> productDownloads = new ConcurrentSkipListSet<>();
+
+	private static Semaphore semaphore = null;
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(DownloadManager.class);
@@ -1116,6 +1120,13 @@ public class DownloadManager {
 			return;
 		}
 
+		// Restrict number of parallel downloads
+		if (null == semaphore) {
+			semaphore = new Semaphore(config.getArchiveThreads(), true);
+			if (logger.isDebugEnabled())
+				logger.debug("... file download semaphore {} created", semaphore);
+		}
+		
 		// Get the user and mission code from the current security context (not preserved to spawned thread)
 		String user = securityService.getUser();
 		String missionCode = securityService.getMission();
@@ -1132,6 +1143,17 @@ public class DownloadManager {
 				// Log download in lookup table
 				productDownloads.add(product.getUuid());
 
+				// Check whether parallel execution is allowed
+				try {
+					semaphore.acquire();
+					if (logger.isDebugEnabled())
+						logger.debug("... file download semaphore {} acquired, {} permits remaining",
+								semaphore, semaphore.availablePermits());
+				} catch (InterruptedException e) {
+					logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString());
+					return;
+				}
+				
 				try {
 					// For long-term archives, create a product order first and wait for its completion
 					if (ArchiveType.AIP.equals(archive.getArchiveType())) {
@@ -1151,6 +1173,13 @@ public class DownloadManager {
 					if (logger.isDebugEnabled())
 						logger.debug("Stack trace: ", e);
 				} finally {
+					// Release parallel thread
+					semaphore.release();
+					if (logger.isDebugEnabled())
+						logger.debug("... file download semaphore {} released, {} permits now available",
+								semaphore, semaphore.availablePermits());
+
+					// Remove download from lookup table
 					productDownloads.remove(product.getUuid());
 				}
 			}
