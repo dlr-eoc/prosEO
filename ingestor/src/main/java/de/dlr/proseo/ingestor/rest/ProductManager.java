@@ -1069,7 +1069,7 @@ public class ProductManager {
 	 *                 default is file start, i.e. byte 0)
 	 * @param toByte   the last byte of the data stream to download (optional,
 	 *                 default is file end, i.e. file size - 1)
-	 * @return a redirect URL in the HTTP Location header
+	 * @return a redirect URL for the HTTP Location header
 	 * @throws IllegalArgumentException if no product ID was given
 	 * @throws NoResultException        if no product with the given ID exists or if
 	 *                                  it does not have a data file
@@ -1172,7 +1172,7 @@ public class ProductManager {
 	 *                                  with the given name exists
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
-	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public String getDownloadTokenById(Long id, String fileName)
 			throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
@@ -1191,8 +1191,7 @@ public class ProductManager {
 			ProductFile productFile = product.getProductFile().iterator().next();
 			fileName = (null == productFile.getZipFileName() ? productFile.getProductFileName() : productFile.getZipFileName());
 		} else {
-			// Check whether any of the product files has a data, ZIP or auxiliary file of
-			// that name
+			// Check whether any of the product files has a data, ZIP or auxiliary file of that name
 			boolean found = false;
 			for (ProductFile productFile : product.getProductFile()) {
 				if (fileName.equals(productFile.getProductFileName()) || fileName.equals(productFile.getZipFileName())
@@ -1200,9 +1199,11 @@ public class ProductManager {
 					found = true;
 
 					// Create download history entry
+					// TODO Misplaced! Will not work if no product file name is given, or if the downloadProductById() method is used
 					DownloadHistory historyEntry = new DownloadHistory();
 					historyEntry.setProductFile(productFile);
 					historyEntry.setProductFileName(productFile.getProductFileName());
+					// TODO If downloads are done in chunks, only the chunk size may be registered, not the full file size
 					historyEntry.setProductFileSize(productFile.getFileSize());
 					historyEntry.setUsername(securityService.getUser());
 					historyEntry.setDateTime(Instant.now());
