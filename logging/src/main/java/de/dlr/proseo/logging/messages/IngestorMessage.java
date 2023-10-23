@@ -82,6 +82,7 @@ public enum IngestorMessage implements ProseoMessage {
 	PRODUCTS_INGESTED					(2067, Level.INFO, true, "{0} products ingested in processing facility {1}", ""),
 	UNEXPECTED_NUMBER_OF_FILE_PATHS		(2068, Level.ERROR, false, "Unexpected number of file paths ({0}, expected: {1}) received from Storage Manager at {2}", ""),
 	VISIBILITY_VIOLATION				(2069, Level.ERROR, false, "User not authorized for read access to product class {0}", ""),
+	PRODUCT_LIST_MISSING				(2070, Level.ERROR, false, "No product list given for ingestion", ""),
 	
 	;
 

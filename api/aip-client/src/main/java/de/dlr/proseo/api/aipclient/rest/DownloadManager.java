@@ -1529,20 +1529,6 @@ public class DownloadManager {
 		for (ProductArchive archive : productArchives) {
 			if (logger.isTraceEnabled()) logger.trace("Checking archive {} with product classes {}", archive.getCode(),
 					Arrays.asList(archive.getAvailableProductClasses().stream().map(pc -> { return pc.getProductType(); }).toArray()));
-			
-			logger.trace("... looking for mission code {} and product type {}",
-					productClass.getMission().getCode(), productClass.getProductType());
-			logger.trace("... archive mission codes: {}", 
-					Arrays.asList(archive.getAvailableProductClasses().stream().map(
-							pc -> { return pc.getMission().getCode(); })
-							.toArray()));
-			logger.trace("... archive contains product type: {}",
-					Arrays.asList(archive.getAvailableProductClasses().stream().map(
-							pc -> { return pc.getProductType(); })
-							.toArray())
-					.contains(productClass.getProductType()));
-			logger.trace("... archive contains product class: {}", archive.getAvailableProductClasses().contains(productClass));
-			
 			if (archive.getAvailableProductClasses().contains(productClass)) {
 				if (logger.isTraceEnabled()) logger.trace("Querying archive for product class {}", productClass.getProductType());
 				List<RestProduct> result = downloadAllBySensingTime(archive, productType, earliestStart, earliestStop,

@@ -10,7 +10,7 @@
 ALTER TABLE public.product_query
   ADD COLUMN in_download boolean;
 
-UPDATE public.processing_order SET in_download = false;
+UPDATE public.product_query SET in_download = false;
 
 --
 -- Add mission relationship to workflow
@@ -19,7 +19,7 @@ UPDATE public.workflow SET workflow_version = '1.0' WHERE workflow_version IS NU
 
 ALTER TABLE public.workflow
   ADD COLUMN mission_id bigint,
-  ALTER COLUMN workflow_version NOT NULL;
+  ALTER COLUMN workflow_version SET NOT NULL;
 
 ALTER TABLE ONLY public.workflow
     ADD CONSTRAINT fksbdoolsgnxt5ji4bfnmpe14y8 FOREIGN KEY (mission_id) REFERENCES public.mission(id);

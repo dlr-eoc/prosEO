@@ -1,0 +1,15 @@
+{
+    "code": "code",
+    "name": "name-upd",
+    "archiveType": "PRIP",
+    "baseUri": "https://prip.proseo-domain.de:8443-upd",
+    "context": "proseo/prip/odata/v1-upd",
+    "tokenRequired": true,
+    "tokenUri": "Uri-upd",
+    "username": "PTM\\proseo-upd",
+    "password": "mypwd-upd",
+    "clientId": "id-upd",
+    "clientSecret": "secret-upd",
+    "sendAuthInBody": true,
+    "availableProductClasses": [ "L0________", "AUX_IERS_B" ]
+}

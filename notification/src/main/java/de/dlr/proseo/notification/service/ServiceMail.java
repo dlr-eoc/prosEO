@@ -35,7 +35,7 @@ import de.dlr.proseo.notification.NotificationConfiguration;
 public class ServiceMail {
 
 	/** A logger for this class */
-	private static ProseoLogger logger = new ProseoLogger(ServiceConnection.class);
+	private static ProseoLogger logger = new ProseoLogger(ServiceMail.class);
 
 	/** The configuration of the notification service */
 	@Autowired

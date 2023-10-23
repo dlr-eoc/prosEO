@@ -497,7 +497,7 @@ public abstract class BaseMonitor extends Thread {
 						try {
 							semaphore.acquire();
 							if (logger.isDebugEnabled())
-								logger.debug("... task semaphore acquired, {} permits remaining", semaphore.availablePermits());
+								logger.debug("... task semaphore {} acquired, {} permits remaining", semaphore, semaphore.availablePermits());
 						} catch (InterruptedException e) {
 							logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString());
 							return;
@@ -527,12 +527,12 @@ public abstract class BaseMonitor extends Thread {
 							logger.log(ApiMonitorMessage.EXCEPTION_IN_TRANSFER_OR_ACTION, e.getClass().getName(), e.getMessage());
 							logger.debug("Exception Stack Trace:", e);
 							// continue, releasing semaphore
+						} finally {
+							// Release parallel thread
+							semaphore.release();
+							if (logger.isDebugEnabled())
+								logger.debug("... task semaphore {} released, {} permits now available", semaphore, semaphore.availablePermits());
 						}
-
-						// Release parallel thread
-						semaphore.release();
-						if (logger.isDebugEnabled())
-							logger.debug("... task semaphore released, {} permits now available", semaphore.availablePermits());
 					}
 				};
 				transferTasks.add(transferTask);
