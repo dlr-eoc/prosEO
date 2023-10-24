@@ -1177,7 +1177,8 @@ public class DownloadManager {
 				
 				try {
 					// For long-term archives, create a product order first and wait for its completion
-					if (ArchiveType.AIP.equals(archive.getArchiveType())) {
+					if (ArchiveType.AIP.equals(archive.getArchiveType()) 
+							|| ArchiveType.SIMPLEAIP.equals(archive.getArchiveType())) {
 						createProductOrderAndWait(archive, product.getUuid());
 					}
 
