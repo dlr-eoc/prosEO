@@ -123,6 +123,11 @@ public class DownloadManager {
 	private static final int ODATA_TOP_COUNT = 1000;
 	private static final String ODATA_CSC_ORDER = "OData.CSC.Order";
 
+	/** Maximum number of retries for product download */
+	private static final int DOWNLOAD_MAX_RETRIES = 3;
+	/** Retry interval for product downloads in ms */
+	private static final int DOWNLOAD_RETRY_INTERVAL = 5000;
+	
 	/** OData request body for production order creation */
 	private static final String ODATA_ORDER_REQUEST_BODY = "{ \"Priority\": 50 }";
 	
@@ -974,51 +979,67 @@ public class DownloadManager {
 		RestProductFile restProductFile = product.getProductFile().get(0);
 		File productFile = new File(config.getClientTargetDir() + File.separator + restProductFile.getProductFileName());
 
-		try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-			logger.trace("... starting request for URL '{}'", requestUrl);
+		for (int i = 0; i < DOWNLOAD_MAX_RETRIES; i++) {
+			try {
+				try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+					logger.trace("... starting request for URL '{}'", requestUrl);
 
-			HttpGet httpGet = new HttpGet(requestUrl.toString());
-			
-			if (archive.getTokenRequired()) {
-				httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken(archive));
-			} else {
-				httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Basic "
-						+ Base64.getEncoder().encodeToString((archive.getUsername() + ":" + archive.getPassword()).getBytes()));
-			}
-			
-			CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
-			HttpEntity httpEntity = httpResponse.getEntity();
+					HttpGet httpGet = new HttpGet(requestUrl.toString());
 
-			if (httpEntity != null) {
-				FileUtils.copyInputStreamToFile(httpEntity.getContent(), productFile);
-			}
-			
-			httpResponse.close();
+					if (archive.getTokenRequired()) {
+						httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken(archive));
+					} else {
+						httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder()
+								.encodeToString((archive.getUsername() + ":" + archive.getPassword()).getBytes()));
+					}
 
-		} catch (FileNotFoundException e) {
-			throw new IOException(logger.log(AipClientMessage.FILE_NOT_WRITABLE, productFile));
-		} catch (HttpResponseException e) {
-			throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(),
-					e.getMessage() + " / " + e.getReasonPhrase()));
-		} catch (Exception e) {
-			throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(), e.getMessage()));
+					CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
+					HttpEntity httpEntity = httpResponse.getEntity();
+
+					if (httpEntity != null) {
+						FileUtils.copyInputStreamToFile(httpEntity.getContent(), productFile);
+					}
+
+					httpResponse.close();
+
+				} catch (FileNotFoundException e) {
+					throw new IOException(logger.log(AipClientMessage.FILE_NOT_WRITABLE, productFile));
+				} catch (HttpResponseException e) {
+					throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(),
+							e.getMessage() + " / " + e.getReasonPhrase()));
+				} catch (Exception e) {
+					throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(), e.getMessage()));
+				}
+
+				// Compare file size with value given by external archive
+				Long productFileLength = productFile.length();
+				if (!productFileLength.equals(restProductFile.getFileSize())) {
+					throw new IOException(logger.log(AipClientMessage.FILE_SIZE_MISMATCH, product.getUuid(),
+							restProductFile.getFileSize(), productFileLength));
+				}
+
+				// Compute checksum and compare with value given by external archive
+				String md5Hash = MD5Util.md5Digest(productFile);
+				if (!md5Hash.equalsIgnoreCase(restProductFile.getChecksum())) {
+					throw new IOException(logger.log(AipClientMessage.CHECKSUM_MISMATCH, product.getUuid(),
+							restProductFile.getChecksum(), md5Hash));
+				}
+			} catch (Exception e) {
+				if ((i + 1) < DOWNLOAD_MAX_RETRIES) {
+					if (logger.isTraceEnabled())
+						logger.trace("... download attempt {} of {} failed, waiting {} s", i + 1, DOWNLOAD_MAX_RETRIES,
+								(double) DOWNLOAD_RETRY_INTERVAL / 1000.0);
+					try {
+						Thread.sleep(DOWNLOAD_RETRY_INTERVAL);
+					} catch (InterruptedException e1) {
+						logger.log(AipClientMessage.DOWNLOAD_RETRY_INTERRUPTED, restProductFile.getProductFileName());
+						throw e;
+					}
+				} else {
+					throw e;
+				}
+			} 
 		}
-
-
-		// Compare file size with value given by external archive
-		Long productFileLength = productFile.length();
-		if (!productFileLength.equals(restProductFile.getFileSize())) {
-			throw new IOException(logger.log(AipClientMessage.FILE_SIZE_MISMATCH, product.getUuid(), restProductFile.getFileSize(),
-					productFileLength));
-		}
-
-		// Compute checksum and compare with value given by external archive
-		String md5Hash = MD5Util.md5Digest(productFile);
-		if (!md5Hash.equalsIgnoreCase(restProductFile.getChecksum())) {
-			throw new IOException(
-					logger.log(AipClientMessage.CHECKSUM_MISMATCH, product.getUuid(), restProductFile.getChecksum(), md5Hash));
-		}
-
 		// Log download with UUID, file name, size, checksum, publication date
 		logger.log(AipClientMessage.PRODUCT_TRANSFER_COMPLETED, product.getUuid(), restProductFile.getProductFileName(),
 				restProductFile.getFileSize(), restProductFile.getChecksum(), product.getPublicationTime());
