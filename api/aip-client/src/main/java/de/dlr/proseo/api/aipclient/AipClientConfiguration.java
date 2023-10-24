@@ -48,6 +48,10 @@ public class AipClientConfiguration {
 	@Value("${proseo.archive.timeout}")
 	private Long archiveTimeout;
 
+	/** Maximum number of parallel download threads */
+	@Value("${proseo.archive.threads}")
+	private Integer archiveThreads;
+
 	/**
 	 * Gets the path to the directory to download files to
 	 *
@@ -109,6 +113,15 @@ public class AipClientConfiguration {
 	 */
 	public Long getArchiveTimeout() {
 		return archiveTimeout;
+	}
+
+	/**
+	 * Gets the maximum number of parallel download threads
+	 * 
+	 * @return the archiveThreads
+	 */
+	public Integer getArchiveThreads() {
+		return archiveThreads;
 	}
 	
 }
