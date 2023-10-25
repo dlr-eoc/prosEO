@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -34,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -76,7 +76,6 @@ import de.dlr.proseo.model.util.OrderUtil;
  * @author Ranjitha Vignesh
  */
 @Component
-@Transactional
 public class ProcessingOrderMgr {
 
 	/** Utility class for user authorizations */
@@ -102,6 +101,7 @@ public class ProcessingOrderMgr {
 	 * @throws IllegalArgumentException if any of the input data was invalid
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public RestOrder createOrder(RestOrder order) throws IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createOrder({})", (null == order ? "MISSING" : order.getIdentifier()));
@@ -449,6 +449,7 @@ public class ProcessingOrderMgr {
 	 * @throws SecurityException       if a cross-mission data access was attempted
 	 * @throws RuntimeException        if the deletion was not performed as expected
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void deleteOrderById(Long id) throws EntityNotFoundException, SecurityException, RuntimeException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteOrderById({})", id);
@@ -476,6 +477,7 @@ public class ProcessingOrderMgr {
 	 * @throws SecurityException       if a cross-mission data access was attempted
 	 * @throws RuntimeException        if the deletion was not performed as expected
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void deleteExpiredOrderById(Long id, Instant evictionTime)
 			throws EntityNotFoundException, SecurityException, RuntimeException {
 		if (logger.isTraceEnabled())
@@ -533,6 +535,7 @@ public class ProcessingOrderMgr {
 	 * @param evictionTime the time to compare to
 	 * @return a list of database IDs for evictable orders
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public List<Long> findOrdersWithEvictionTimeLessThan(Instant evictionTime) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> findOrdersWithEvictionTimeLessThan({})", evictionTime);
@@ -549,6 +552,7 @@ public class ProcessingOrderMgr {
 	 * @throws NoResultException        if no order with the given ID exists
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public RestOrder getOrderById(Long id) throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getOrderById({})", id);
@@ -603,6 +607,7 @@ public class ProcessingOrderMgr {
 	 * @throws SecurityException               if a cross-mission data access was attempted
 	 * @throws ConcurrentModificationException if the order has been modified since retrieval by the client
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public RestOrder modifyOrder(Long id, RestOrder order)
 			throws EntityNotFoundException, IllegalArgumentException, SecurityException, ConcurrentModificationException {
 		if (logger.isTraceEnabled())
@@ -1170,6 +1175,7 @@ public class ProcessingOrderMgr {
 	 * @throws NoResultException if no orders matching the given search criteria could be found
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public List<RestOrder> getOrders(String mission, String identifier, String[] requestedProductClasses,
 			@DateTimeFormat Date startTimeFrom, @DateTimeFormat Date startTimeTo, @DateTimeFormat Date executionTimeFrom,
 			@DateTimeFormat Date executionTimeTo) throws NoResultException, SecurityException {
@@ -1269,9 +1275,12 @@ public class ProcessingOrderMgr {
 	 *
 	 * @return The result list
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public List<RestOrder> getAndSelectOrders(String mission, String identifier, String[] state, String[] requestedProductClasses,
 			String startTimeFrom, String startTimeTo, Long recordFrom, Long recordTo, String[] orderBy) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getAndSelectOrders({}, {}, {}, {}, {}, {}, {}, {}, {})", mission, identifier, state, 
+					requestedProductClasses, startTimeFrom, startTimeTo, recordFrom, recordTo, orderBy);
 
 		if (null == mission)
 			throw new IllegalArgumentException(logger.log(OrderMgrMessage.MISSION_CODE_MISSING));
@@ -1338,9 +1347,12 @@ public class ProcessingOrderMgr {
 	 *
 	 * @return The order count
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public String countSelectOrders(String mission, String identifier, String[] state, String[] requestedProductClasses,
 			String startTimeFrom, String startTimeTo, Long recordFrom, Long recordTo, String[] orderBy) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getAndSelectOrders({}, {}, {}, {}, {}, {}, {}, {}, {})", mission, identifier, state, 
+					requestedProductClasses, startTimeFrom, startTimeTo, recordFrom, recordTo, orderBy);
 
 		if (null == mission)
 			throw new IllegalArgumentException(logger.log(OrderMgrMessage.MISSION_CODE_MISSING));

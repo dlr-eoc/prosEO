@@ -21,6 +21,8 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -79,6 +81,7 @@ public class OrderDispatcher {
 
 		// Create a transaction template using the production planner's transaction manager
 		TransactionTemplate transactionTemplate = new TransactionTemplate(ProductionPlanner.productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		// Initialize the result message (of the method) with a default value of FALSE
 		PlannerResultMessage resultMessage = new PlannerResultMessage(GeneralMessage.FALSE);
@@ -673,7 +676,7 @@ public class OrderDispatcher {
 	 * @param pf        The processing facility to run the job.
 	 * @return The result message indicating the success (or cause for failure) of job creation.
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public PlannerResultMessage createJobForOrbitOrTime(ProcessingOrder order, Orbit orbit, Instant startTime, Instant stopTime,
 			ProcessingFacility pf) {
 		if (logger.isTraceEnabled())
@@ -762,7 +765,10 @@ public class OrderDispatcher {
 			OrderPlanThread thread) throws InterruptedException {
 
 		ProcessingOrder order = null;
+
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+
 		final List<Job> jobList = new ArrayList<>();
 
 		try {

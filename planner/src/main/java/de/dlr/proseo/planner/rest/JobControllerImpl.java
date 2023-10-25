@@ -19,6 +19,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -84,7 +86,7 @@ public class JobControllerImpl implements JobController {
 	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
 	 * @return a list of JSON objects describing jobs
      */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	@Override
     public ResponseEntity<List<RestJob>> getJobs(String state, Long orderId,
 			Long recordFrom, Long recordTo, Boolean logs, String[] orderBy, HttpHeaders httpHeaders) {
@@ -129,7 +131,7 @@ public class JobControllerImpl implements JobController {
 	 * @param orderId order id of jobs
 	 * @return number of jobs
      */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	@Override
     public ResponseEntity<String> countJobs(String state, Long orderId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> countJobs({}, {})", state, orderId);
@@ -160,7 +162,7 @@ public class JobControllerImpl implements JobController {
 	 * 
 	 * @param jobId
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	@Override
     public ResponseEntity<RestJob> getJob(String jobId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getJob({})", jobId);
@@ -189,7 +191,7 @@ public class JobControllerImpl implements JobController {
 	 * 
 	 * @param jobId
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	@Override
     public ResponseEntity<RestJobGraph> graphJobSteps(String jobId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> graphJobSteps({})", jobId);
@@ -225,6 +227,7 @@ public class JobControllerImpl implements JobController {
 		
 		try {
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 			Job job = this.findJobById(jobId);
 			if (job != null) {
@@ -305,11 +308,15 @@ public class JobControllerImpl implements JobController {
 				PlannerResultMessage msg = new PlannerResultMessage(null);
 				try {
 					productionPlanner.acquireThreadSemaphore("cancelJob");
+					
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+					
 					msg = transactionTemplate.execute((status) -> {
 						Job jobx = this.findJobByIdPrim(jobId);
 						return jobUtil.cancel(jobx);
 					});
+					
 					productionPlanner.releaseThreadSemaphore("cancelJob");	
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("cancelJob");	
@@ -350,6 +357,7 @@ public class JobControllerImpl implements JobController {
 		try {
 			Job job = this.findJobById(jobId);
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 			if (job != null) {
 
 				PlannerResultMessage msg = new PlannerResultMessage(null);
@@ -420,6 +428,7 @@ public class JobControllerImpl implements JobController {
 		
 		Job job = null;
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		job = transactionTemplate.execute((status) -> {
 			Job jobx = null;
 			Long id = null;
@@ -468,6 +477,7 @@ public class JobControllerImpl implements JobController {
 		try {
 			productionPlanner.acquireThreadSemaphore("getRestJob");
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 			answer = transactionTemplate.execute((status) -> {
 				RestJob rj = null;
 				Job job = null;
@@ -501,6 +511,7 @@ public class JobControllerImpl implements JobController {
 				try {
 					productionPlanner.acquireThreadSemaphore("retryJob");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 					msg = transactionTemplate.execute((status) -> {
 						Job jobx = this.findJobByIdPrim(id);
 						return jobUtil.retry(jobx);

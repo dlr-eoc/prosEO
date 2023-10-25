@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -96,6 +98,7 @@ public class KubeJobFinish extends Thread {
 
 						// Start a transaction to fetch the job step details and retrieve associated product classes
 						TransactionTemplate transactionTemplate = new TransactionTemplate(planner.getTxManager());
+						transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 						final List<Long> productClassIds = transactionTemplate.execute((status) -> {
 							Optional<JobStep> jobStep = RepositoryService.getJobStepRepository().findById(jobStepId);
 							List<Long> componentProductClassIds = new ArrayList<>();
@@ -152,13 +155,14 @@ public class KubeJobFinish extends Thread {
 	 * @param productClass The product class.
 	 * @return The collected component classes.
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	private List<ProductClass> getAllComponentClasses(ProductClass productClass) {
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> getAllComponentClasses({})", (null == productClass ? "null" : productClass.getProductType()));
 		}
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(ProductionPlanner.productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		final List<ProductClass> componentProducts = new ArrayList<>();
 
 		// Get the component product information from the product class repository

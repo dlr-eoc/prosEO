@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.Parameter;
@@ -42,7 +40,6 @@ public class RestUtil {
 	 * @param logs     whether or not to include logs in the REST job step
 	 * @return the REST job
 	 */
-	@Transactional
 	public static RestJob createRestJob(Job modelJob, Boolean logs) {
 
 		RestJob rj = new RestJob();
@@ -98,7 +95,6 @@ public class RestUtil {
 	 * @param logs         Determines whether to include logs in the REST job step.
 	 * @return The REST job step.
 	 */
-	@Transactional
 	public static RestJobStep createRestJobStep(JobStep modelJobStep, Boolean logs) {
 		RestJobStep pjs = new RestJobStep();
 		if (modelJobStep != null) {

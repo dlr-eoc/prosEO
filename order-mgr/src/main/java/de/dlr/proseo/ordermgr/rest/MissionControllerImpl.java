@@ -25,6 +25,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -103,6 +104,8 @@ public class MissionControllerImpl implements MissionController {
 			logger.trace(">>> getMissions");
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+		transactionTemplate.setReadOnly(true);
 
 		List<RestMission> result = null;
 		try {
@@ -170,6 +173,7 @@ public class MissionControllerImpl implements MissionController {
 		}
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		RestMission restMission = null;
 		try {
@@ -259,6 +263,8 @@ public class MissionControllerImpl implements MissionController {
 			logger.trace(">>> getMissionById({})", id);
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+		transactionTemplate.setReadOnly(true);
 
 		RestMission restMission = null;
 		try {
@@ -304,6 +310,7 @@ public class MissionControllerImpl implements MissionController {
 		}
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		RestMission restMission = null;
 
@@ -509,6 +516,7 @@ public class MissionControllerImpl implements MissionController {
 			logger.trace(">>> deleteMissionById({})", id);
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		try {
 			// Transaction to check the delete preconditions

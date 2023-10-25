@@ -10,6 +10,7 @@ package de.dlr.proseo.planner.util;
 
 import java.util.Optional;
 
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -88,6 +89,7 @@ public class OrderPlanThread extends Thread {
     public void run() {
 		if (logger.isTraceEnabled()) logger.trace(">>> run({})", this.getName());
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		if (orderId != 0 && productionPlanner != null && orderDispatcher != null) {
@@ -179,6 +181,7 @@ public class OrderPlanThread extends Thread {
 		ProcessingOrder order = null;
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		order = transactionTemplate.execute((status) -> {
 			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);

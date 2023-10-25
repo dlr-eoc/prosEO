@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -63,6 +64,7 @@ public class ProductControllerImpl implements ProductController {
 		if (logger.isTraceEnabled()) logger.trace(">>> getObjectByProductid({})", productid);
 		
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		try {
 			productionPlanner.acquireThreadSemaphore("getObjectByProductidAndFacilityId");

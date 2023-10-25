@@ -16,6 +16,8 @@ import java.util.Optional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -114,6 +116,7 @@ public class OrderReleaseThread extends Thread {
 		if (logger.isTraceEnabled()) logger.trace(">>> run({})", this.getName());
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		if (order != null && productionPlanner != null && jobUtil != null) {
@@ -201,6 +204,8 @@ public class OrderReleaseThread extends Thread {
 		ProcessingOrder order = null;
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+
 		final List<Job> jobList = new ArrayList<Job>();
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		PlannerResultMessage releaseAnswer = new PlannerResultMessage(GeneralMessage.FALSE);

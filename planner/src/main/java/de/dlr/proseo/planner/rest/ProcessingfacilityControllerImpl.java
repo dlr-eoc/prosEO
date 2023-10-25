@@ -15,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.logging.http.HttpPrefix;
@@ -55,7 +56,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      * @return a list of JSON objects describing the processing facilities
      */
 	@Override
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
     public ResponseEntity<List<RestProcessingFacility>> getRestProcessingFacilities(HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getRestProcessingFacilities()");
 		
@@ -104,7 +105,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      * @return a JSON object describing the processing facility
      */
 	@Override
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public ResponseEntity<RestProcessingFacility> getRestProcessingFacilityByName(String name, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getRestProcessingFacilityByName({})", name);
 		

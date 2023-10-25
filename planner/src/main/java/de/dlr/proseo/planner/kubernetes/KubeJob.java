@@ -20,6 +20,8 @@ import javax.persistence.LockModeType;
 
 import org.hibernate.exception.LockAcquisitionException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -300,7 +302,8 @@ public class KubeJob {
 	 * @return The kube job
 	 * @throws Exception if an error occurs during job creation
 	 */
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRES_NEW)
+	//@Transactional(readOnly = false, propagation = Propagation.REQUIRES_NEW)
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public KubeJob createJob(KubeConfig kubeConfig, String stdoutLogLevel, String stderrLogLevel) throws Exception {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createJob({}, {}, {})", kubeConfig, stdoutLogLevel, stderrLogLevel);
@@ -648,6 +651,7 @@ public class KubeJob {
 			kubeConfig.getProductionPlanner().acquireThreadSemaphore("finish");
 
 			TransactionTemplate transactionTemplate = new TransactionTemplate(kubeConfig.getProductionPlanner().getTxManager());
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 			transactionTemplate.execute((status) -> {
 
 				// Retrieve the kube job information
@@ -810,6 +814,7 @@ public class KubeJob {
 		}
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(this.kubeConfig.getProductionPlanner().getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		return transactionTemplate.execute((status) -> {
 
 			Boolean success = Boolean.FALSE;
@@ -971,6 +976,7 @@ public class KubeJob {
 		if (success) {
 			TransactionTemplate transactionTemplate = new TransactionTemplate(
 					this.kubeConfig.getProductionPlanner().getTxManager());
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 			transactionTemplate.execute((status) -> {
 				Long jobStepId = this.getJobId();
 				Optional<JobStep> jobStep = RepositoryService.getJobStepRepository().findById(jobStepId);

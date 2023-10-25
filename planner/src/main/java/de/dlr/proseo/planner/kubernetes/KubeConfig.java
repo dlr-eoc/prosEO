@@ -13,6 +13,8 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -583,6 +585,7 @@ public class KubeConfig {
 
 		// Step 6: Update the state of job steps in the database
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		transactionTemplate.execute((status) -> {
 
 			List<de.dlr.proseo.model.JobStep.JobStepState> jobStepStates = new ArrayList<>();
@@ -679,7 +682,7 @@ public class KubeConfig {
 	 * @param stderrLogLevel the log level for stderr
 	 * @return the created job or null
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public KubeJob createJob(String name, String stdoutLogLevel, String stderrLogLevel) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createJob({}, {}, {})", name, stdoutLogLevel, stderrLogLevel);
@@ -717,7 +720,7 @@ public class KubeConfig {
 	 * @param stderrLogLevel the log level for stderr
 	 * @return the created job or null
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public KubeJob createJob(long id, String stdoutLogLevel, String stderrLogLevel) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createJob({}, {}, {})", id, stdoutLogLevel, stderrLogLevel);

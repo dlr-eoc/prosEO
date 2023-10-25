@@ -16,6 +16,8 @@ import javax.persistence.Query;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -57,7 +59,7 @@ public class JobUtil {
 	 * @param force 
 	 * @return Result message
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public PlannerResultMessage suspend(Job job, Boolean force) {
 		if (logger.isTraceEnabled()) logger.trace(">>> suspend({}, {})", (null == job ? "null" : job.getId()), force);
 
@@ -122,6 +124,7 @@ public class JobUtil {
 		if (logger.isTraceEnabled()) logger.trace(">>> close({})", (null == id ? "null" : id));
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		List<Long> jobStepIds = new ArrayList<Long>();
 
 		final JobState jobState = transactionTemplate.execute((status) -> {
@@ -186,7 +189,7 @@ public class JobUtil {
 	 * @param job The job
 	 * @return Result message
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public PlannerResultMessage retry(Job job) {
 		if (logger.isTraceEnabled()) logger.trace(">>> retry({})", (null == job ? "null" : job.getId()));
 
@@ -269,7 +272,7 @@ public class JobUtil {
 	 * @param job The job
 	 * @return Result message
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public PlannerResultMessage cancel(Job job) {
 		if (logger.isTraceEnabled()) logger.trace(">>> cancel({})", (null == job ? "null" : job.getId()));
 
@@ -324,6 +327,7 @@ public class JobUtil {
 
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 //		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+//		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 //
 //		final Job job = transactionTemplate.execute((status) -> {
 //			Optional<Job> opt = RepositoryService.getJobRepository().findById(jobId);
@@ -393,7 +397,7 @@ public class JobUtil {
 	 * @param job The job
 	 * @return true after success
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public Boolean startJob(Job job) {
 		if (logger.isTraceEnabled()) logger.trace(">>> startJob({})", (null == job ? "null" : job.getId()));
 
@@ -444,7 +448,7 @@ public class JobUtil {
 	 * @param job The job
 	 * @return true after success
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public Boolean delete(Job job) {
 		if (logger.isTraceEnabled()) logger.trace(">>> delete({})", (null == job ? "null" : job.getId()));
 
@@ -493,7 +497,7 @@ public class JobUtil {
 	 * @param job The job
 	 * @return true after success
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public Boolean deleteForced(Job job) {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteForced({})", (null == job ? "null" : job.getId()));
 
@@ -540,7 +544,7 @@ public class JobUtil {
 	 * @param job The job
 	 * @return true after success
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public Boolean checkFinish(Long jobId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkFinish({})", jobId);
 
@@ -661,7 +665,7 @@ public class JobUtil {
 	 * @param job The job
 	 * @param failed
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void setHasFailedJobSteps(Job job, Boolean failed) {
 		if (logger.isTraceEnabled()) logger.trace(">>> setHasFailedJobSteps({}, {})", (null == job ? "null" : job.getId()), failed);
 

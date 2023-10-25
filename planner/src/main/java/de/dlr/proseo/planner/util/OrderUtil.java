@@ -26,6 +26,8 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClientException;
@@ -102,7 +104,7 @@ public class OrderUtil {
 	 * @param order The processing Order
 	 * @return Result message
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public PlannerResultMessage cancel(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> cancel({})", (null == order ? "null" : order.getId()));
 		
@@ -162,6 +164,7 @@ public class OrderUtil {
 	public PlannerResultMessage reset(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> reset({})", (null == order ? "null" : order.getId()));
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		if (order != null) {
@@ -309,7 +312,7 @@ public class OrderUtil {
 	 * @param order The processing Order
 	 * @return Result message
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public PlannerResultMessage delete(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> delete({})", (null == order ? "null" : order.getId()));
 		
@@ -373,7 +376,7 @@ public class OrderUtil {
 	 * @param order The processing Order
 	 * @return Result message
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public PlannerResultMessage approve(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> approve({})", (null == order ? "null" : order.getId()));
 		
@@ -433,6 +436,7 @@ public class OrderUtil {
 	 */
 	public PlannerResultMessage plan(long id,  ProcessingFacility procFacility, Boolean wait) {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		final ProcessingOrder order = transactionTemplate.execute((status) -> {
 			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
@@ -546,6 +550,7 @@ public class OrderUtil {
 			case PLANNED:
 			case RELEASING:
 				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 				Boolean doIt = false;
 				try {
 					productionPlanner.acquireThreadSemaphore("resume");	
@@ -638,7 +643,7 @@ public class OrderUtil {
 	 * @param order The processing Order
 	 * @return Result message
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public PlannerResultMessage startOrder(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> startOrder({})", (null == order ? "null" : order.getId()));
 		
@@ -697,6 +702,7 @@ public class OrderUtil {
 	 */
 	public PlannerResultMessage suspend(long id, Boolean force) {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		final ProcessingOrder order = transactionTemplate.execute((status) -> {
 			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
@@ -880,7 +886,11 @@ public class OrderUtil {
 	 * @return Result message
 	 */
 	public PlannerResultMessage prepareSuspend(long id, Boolean force) {
+		if (logger.isTraceEnabled()) logger.trace(">>> prepareSuspend({}, {})", id, force);
+
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+
 		final ProcessingOrder order = transactionTemplate.execute((status) -> {
 			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
 			if (orderOpt.isPresent()) {
@@ -999,7 +1009,7 @@ public class OrderUtil {
 	 * @param order The processing Order
 	 * @return Result message
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public PlannerResultMessage retry(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> retry({})", (null == order ? "null" : order.getId()));
 		
@@ -1086,6 +1096,8 @@ public class OrderUtil {
 		if (logger.isTraceEnabled()) logger.trace(">>> close({})", (null == orderId ? "null" : orderId));
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+
 		List<Long> jobIds = new ArrayList<Long>();
 		
 		final OrderState orderState = transactionTemplate.execute((status) -> {
@@ -1287,7 +1299,7 @@ public class OrderUtil {
 	 * @param order The processing order
 	 * @return true if closed
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public Boolean checkAutoClose(ProcessingOrder order) {
 		Duration retPeriod = order.getMission().getOrderRetentionPeriod();
 		if (retPeriod != null && order.getProductionType() == ProductionType.SYSTEMATIC) {
@@ -1310,7 +1322,7 @@ public class OrderUtil {
 	 *  
 	 * @param order The processing order
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void setTimes(ProcessingOrder order) {
 		if (order != null) {
 			Instant timeNow = Instant.now();
@@ -1326,14 +1338,14 @@ public class OrderUtil {
 	 *  
 	 * @param order The processing order
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void setStateMessage(ProcessingOrder order, String stateMessage) {
 		if (order != null && stateMessage != null) {
 			order.setStateMessage(stateMessage);
 		}
 	}
 	
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public Boolean 
 	sendNotification(ProcessingOrder order) {
 		if (order.getNotificationEndpoint() != null) {
@@ -1421,7 +1433,7 @@ public class OrderUtil {
 	 * @param order The processing order
 	 * @return List of processinig facilities
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public List<ProcessingFacility> getProcessingFacilities(long id) {
 		ProcessingOrder order = null;
 		Optional<ProcessingOrder> oOrder = RepositoryService.getOrderRepository().findById(id);
@@ -1447,7 +1459,7 @@ public class OrderUtil {
 	 * @param order the order to update
 	 * @param failed indicates whether a job step has failed
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void setHasFailedJobSteps(ProcessingOrder order, Boolean failed) {
 		if (logger.isTraceEnabled()) logger.trace(">>> setHasFailedJobSteps({}, {})", (null == order ? "null" : order.getId()), failed);
 		
@@ -1496,11 +1508,12 @@ public class OrderUtil {
 	/**
 	 * restart the corresponding thread.
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	private void restartPlanningOrder(long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> restartPlanningOrder({})", id);
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 			// Find the processing facility
 			final ProcessingFacility pf = transactionTemplate.execute((status) -> {

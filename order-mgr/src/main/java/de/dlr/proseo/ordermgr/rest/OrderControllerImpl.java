@@ -22,6 +22,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.logging.http.HttpPrefix;
@@ -260,7 +261,7 @@ public class OrderControllerImpl implements OrderController {
 	 * @param nid        The ids of orbit(s) found has to be unequal to nid
 	 * @return The number of orders found
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	@Override
 	public ResponseEntity<String> countOrders(String mission, String identifier, Long nid) {
 		if (logger.isTraceEnabled())

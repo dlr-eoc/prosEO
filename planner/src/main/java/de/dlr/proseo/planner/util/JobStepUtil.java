@@ -26,6 +26,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.HttpClientErrorException;
@@ -67,7 +69,7 @@ import de.dlr.proseo.planner.service.ServiceConnection;
  *
  */
 @Component
-// @Transactional
+// @Transactional(isolation = Isolation.REPEATABLE_READ)
 public class JobStepUtil {
 	
 	/**
@@ -130,9 +132,10 @@ public class JobStepUtil {
 	 * @param processingFacility
 	 * @param pc Product class
 	 */
-	// @Transactional
+	// @Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void searchForJobStepsToRun(long pfId, long pcId, boolean onlyWaiting) {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		
 		// TODO Replace findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime() by native SQL query
 
@@ -276,7 +279,7 @@ public class JobStepUtil {
 	 * @param force Force 
 	 * @return Result message
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public PlannerResultMessage suspend(JobStep js, Boolean force) {
 		if (logger.isTraceEnabled()) logger.trace(">>> suspend({}, {})",
 				(null == js ? "null" : js.getId()), force);
@@ -371,7 +374,7 @@ public class JobStepUtil {
 	 * @param js Job step
 	 * @return Result message
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public PlannerResultMessage cancel(JobStep js) {
 		if (logger.isTraceEnabled()) logger.trace(">>> cancel({})", (null == js ? "null" : js.getId()));
 
@@ -434,6 +437,7 @@ public class JobStepUtil {
 		if (logger.isTraceEnabled()) logger.trace(">>> close({})", (null == id ? "null" : id));
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		
 		final JobStepState jobStepState = transactionTemplate.execute((status) -> {
 			String sqlQuery = "select job_step_state from job_step where id = " + id + ";";
@@ -483,7 +487,7 @@ public class JobStepUtil {
 	 * @param js Job step
 	 * @return Result message
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public PlannerResultMessage retry(JobStep js) {
 		if (logger.isTraceEnabled()) logger.trace(">>> retry({})", (null == js ? "null" : js.getId()));
 
@@ -548,7 +552,7 @@ public class JobStepUtil {
 	 * @param js Job step
 	 * @return true if finished
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public Boolean checkFinish(JobStep js) {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkFinish({})", (null == js ? "null" : js.getId()));
 
@@ -588,7 +592,7 @@ public class JobStepUtil {
 	 * @param js Job step
 	 * @return true  if deleted
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public Boolean delete(JobStep js) {
 		if (logger.isTraceEnabled()) logger.trace(">>> delete({})", (null == js ? "null" : js.getId()));
 
@@ -644,6 +648,7 @@ public class JobStepUtil {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteSatisfiedProductQueries({})", (null == jsId ? "null" : jsId));
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		
 		final JobStep js = transactionTemplate.execute((status) -> {
 			Optional<JobStep> jsOpt = RepositoryService.getJobStepRepository().findById(jsId);
@@ -712,7 +717,7 @@ public class JobStepUtil {
 	 * @param js Job step
 	 * @return true if deleted
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public Boolean deleteForced(JobStep js) {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteForced({})", (null == js ? "null" : js.getId()));
 
@@ -813,7 +818,7 @@ public class JobStepUtil {
 	 * @param js Job step
 	 * @return Result message
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public Boolean startJobStep(JobStep js) {
 		if (logger.isTraceEnabled()) logger.trace(">>> startJobStep({})", (null == js ? "null" : js.getId()));
 
@@ -853,7 +858,7 @@ public class JobStepUtil {
 	 * @param id Job step id
 	 * @param force 
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void checkJobStepQueries(JobStep js, Boolean force) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> checkJobStepQueries({}, {}), jobStep state: {}", (null == js ? "null" : js.getId()), force, js.getJobStepState());
@@ -924,7 +929,7 @@ public class JobStepUtil {
 	 * Delete product tree. Used during delete of job step.
 	 * @param p
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	private void deleteProduct(Product p) {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProduct({})", (null == p ? "null" : p.getId()));
 
@@ -944,7 +949,7 @@ public class JobStepUtil {
 	/**
 	 * Check all unsatisfied queries of all job steps on all facilities whether they can be started.
 	 */
-	// @Transactional
+	// @Transactional(isolation = Isolation.REPEATABLE_READ)
     public void checkForJobStepsToRun() {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkForJobStepsToRun()");
 
@@ -979,6 +984,7 @@ public class JobStepUtil {
 
 		if (productionPlanner != null) {
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 			if (kc != null) {
 				try {
 					productionPlanner.acquireReleaseSemaphore("checkForJobStepsToRun");
@@ -1074,7 +1080,7 @@ public class JobStepUtil {
 	 * @param kc KubeConfig
 	 * @param jsId JobStep id
 	 */
-	// @Transactional
+	// @Transactional(isolation = Isolation.REPEATABLE_READ)
     public Boolean checkJobStepToRun(KubeConfig kc, long jsId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkForJobStepsToRun({}, {})",
 				(null == kc ? "null" : kc.getId()),
@@ -1084,6 +1090,7 @@ public class JobStepUtil {
 		if (productionPlanner != null) {
 			if (kc != null && jsId != 0) {
 				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 				final ProcessingFacility pfo = transactionTemplate.execute((status) -> {
 					Optional<ProcessingFacility> opt = RepositoryService.getFacilityRepository().findById(kc.getLongId());
 					if (opt.isPresent()) {
@@ -1153,6 +1160,7 @@ public class JobStepUtil {
 				(0 == jobId ? "null" : jobId));
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		if (productionPlanner != null) {
 			if (kc != null && jobId != 0) {
 				final ProcessingFacility pfo = transactionTemplate.execute((status) -> {
@@ -1203,7 +1211,7 @@ public class JobStepUtil {
 	 * @param kc KubeConfig
 	 * @param order ProcessingOrder
 	 */
-	// @Transactional
+	// @Transactional(isolation = Isolation.REPEATABLE_READ)
     public void checkOrderToRun(KubeConfig kc, long orderId) {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkOrderToRun({}, {})",
 				(null == kc ? "null" : kc.getId()),
@@ -1212,6 +1220,7 @@ public class JobStepUtil {
 		if (productionPlanner != null) {
 			if (kc != null && orderId != 0) {
 				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 				final ProcessingFacility pfo = transactionTemplate.execute((status) -> {
 					Optional<ProcessingFacility> opt = RepositoryService.getFacilityRepository().findById(kc.getLongId());
 					if (opt.isPresent()) {
@@ -1270,7 +1279,7 @@ public class JobStepUtil {
 	 * @param js job step
 	 * @return true if all products are generated
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void checkCreatedProducts(JobStep js) {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkCreatedProducts({})", (null == js ? "null" : js.getId()));
 
@@ -1303,7 +1312,7 @@ public class JobStepUtil {
 		}
 	}
 
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	private List<Product> checkCreatedProduct(Product p, ProcessingFacility pf) {
 		List<Product> productsToRemove = new ArrayList<Product>();
 		if (logger.isTraceEnabled()) logger.trace(">>> checkCreatedProduct({})",
@@ -1383,7 +1392,7 @@ public class JobStepUtil {
 	 * @param p Root product
 	 * @param list Product list
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void collectProducts(Product p, List<Product> list) {
 		if (p != null) {
 			list.add(p);
@@ -1399,7 +1408,7 @@ public class JobStepUtil {
 	 * @param pf ProcessingFacility
 	 * @return true if all products are generated
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public Boolean checkProducts(List<Product> list, ProcessingFacility pf) {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkCreatedProduct(Product[{}], {})",
 				(null == list ? "null" : list.size()),

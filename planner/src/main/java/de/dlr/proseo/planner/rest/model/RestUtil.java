@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Job;
@@ -64,7 +65,7 @@ public class RestUtil {
 	 * @param job
 	 * @return RestJob
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public static RestJob createRestJob(Job job, Boolean logs) {
 		RestJob rj = new RestJob();
 		if (job != null) {
@@ -107,7 +108,7 @@ public class RestUtil {
 	 * @param job
 	 * @return RestJobGraph
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public static RestJobGraph createRestJobGraph(Job job) {
 		RestJobGraph rj = new RestJobGraph();
 		if (job != null) {
@@ -158,7 +159,7 @@ public class RestUtil {
 	 * @param js
 	 * @return RestJobStep
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public static RestJobStep createRestJobStep(JobStep js, Boolean logs) {
 		RestJobStep pjs = new RestJobStep();
 		if (js != null) {
@@ -217,7 +218,7 @@ public class RestUtil {
 	 * @param js
 	 * @return RestJobStep
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public static RestJobStepGraph createRestJobStepGraph(JobStep js) {
 		RestJobStepGraph pjs = new RestJobStepGraph();
 		if (js != null) {

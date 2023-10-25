@@ -161,6 +161,7 @@ public class OrderControllerImpl implements OrderController {
 			try {
 				productionPlanner.acquireThreadSemaphore("approveOrder");
 				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 				msg = transactionTemplate.execute((status) -> {
 					ProcessingOrder orderx = this.findOrderPrim(orderId);
 					return orderUtil.approve(orderx);
@@ -241,6 +242,7 @@ public class OrderControllerImpl implements OrderController {
 				try {
 					productionPlanner.acquireThreadSemaphore("deleteOrder");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 					msg = transactionTemplate.execute((status) -> {
 						ProcessingOrder orderx = this.findOrderPrim(orderId);
 						return orderUtil.delete(orderx);
@@ -371,6 +373,8 @@ public class OrderControllerImpl implements OrderController {
 					// They have to be released and not waiting input
 
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+
 					// used to identify the order and missing input (if not null) as well 
 					String orderName = null;
 					try {
@@ -470,6 +474,7 @@ public class OrderControllerImpl implements OrderController {
 		try {
 			productionPlanner.acquireThreadSemaphore("cancelOrder");
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 			msg = transactionTemplate.execute((status) -> {
 				ProcessingOrder orderx = this.findOrderPrim(orderId);
 				return orderUtil.cancel(orderx);
@@ -554,6 +559,7 @@ public class OrderControllerImpl implements OrderController {
 				// "Suspend force" is only allowed, if the processing facilities are available
 				for (ProcessingFacility pf : orderUtil.getProcessingFacilities(order.getId())) {
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 					final String message = transactionTemplate.execute((status) -> {
 						Optional<ProcessingFacility> pfopt = RepositoryService.getFacilityRepository().findById(pf.getId());
 						if (pfopt.isPresent()) {
@@ -614,6 +620,7 @@ public class OrderControllerImpl implements OrderController {
 			try {
 				productionPlanner.acquireThreadSemaphore("retryOrder");
 				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 				msg = transactionTemplate.execute((status) -> {
 					ProcessingOrder orderx = this.findOrderPrim(orderId);
 					return orderUtil.retry(orderx);
