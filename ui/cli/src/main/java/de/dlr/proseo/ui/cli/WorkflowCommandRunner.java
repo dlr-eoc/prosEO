@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.rest.model.RestWorkflow;
-import de.dlr.proseo.model.rest.model.RestWorkflowOption;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -57,10 +56,6 @@ public class WorkflowCommandRunner {
 	private static final String PROMPT_WORKFLOW_OUTPUT = "Workflow input product class (empty field cancels): ";
 	private static final String PROMPT_WORKFLOW_CONFIGURED_PROCESSOR = "Workflow configured processor (empty field cancels): ";
 	private static final String PROMPT_WORKFLOW_INPUT = "Workflow input product class (empty field cancels): ";
-	private static final String PROMPT_WORKFLOW_OPTIONS = "WorkflowOption names (comma-separated list; empty field cancels): ";
-	private static final String PROMPT_WORKFLOW_OPTION_TYPE = "WorkflowOption type (STRING, NUMBER, or DATENUMBER) for %s (empty field cancels): ";
-	private static final String PROMPT_WORKFLOW_OPTION_DEFAULT = "WorkflowOption default value for %s (empty field means no default): ";
-	private static final String PROMPT_WORKFLOW_OPTION_RANGE = "WorkflowOption value range for %s (comma-separated list): ";
 	private static final String PROMPT_ENABLED = "Enabled status (either TRUE or FALSE; empty field cancels): ";
 	private static final String PROMPT_OUTPUT_FILE_CLASS = "Output file class (empty field cancels): ";
 	private static final String PROMPT_PROCESSING_MODE = "Processing mode (empty field cancels): ";
@@ -230,50 +225,6 @@ public class WorkflowCommandRunner {
 				return;
 			}
 			restWorkflow.setOutputProductClass(response);
-		}
-		if (null == restWorkflow.getWorkflowOptions() || restWorkflow.getWorkflowOptions().isEmpty()) {
-			System.out.print(PROMPT_WORKFLOW_OPTIONS);
-			String response = System.console().readLine();
-			if (response.isBlank()) {
-				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
-				return;
-			}
-			String[] workflowOptions = response.split(",");
-			for (String workflowOption : workflowOptions) {
-				RestWorkflowOption restWorkflowOption = new RestWorkflowOption();
-				restWorkflowOption.setName(workflowOption);
-
-				/* Set mission and workflow name */
-				restWorkflowOption.setMissionCode(loginManager.getMission());
-				restWorkflowOption.setWorkflowName(restWorkflow.getName());
-
-				/* Prompt user for workflow option attributes */
-				System.out.print(String.format(PROMPT_WORKFLOW_OPTION_TYPE, workflowOption));
-				response = System.console().readLine();
-				if (response.isBlank()) {
-					System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
-					return;
-				}
-				restWorkflowOption.setOptionType(response);
-
-				System.out.print(String.format(PROMPT_WORKFLOW_OPTION_DEFAULT, workflowOption));
-				response = System.console().readLine();
-				if (response.isBlank()) {
-					response = null;
-				}
-				restWorkflowOption.setDefaultValue(response);
-
-				System.out.print(String.format(PROMPT_WORKFLOW_OPTION_RANGE, workflowOption));
-				response = System.console().readLine();
-				if (!response.isBlank()) {
-					String[] range = response.split(",");
-					for (String element : range) {
-						restWorkflowOption.getValueRange().add(element);
-					}
-				}
-
-				restWorkflow.getWorkflowOptions().add(restWorkflowOption);
-			}
 		}
 
 		/* Create workflow */
