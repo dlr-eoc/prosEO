@@ -19,6 +19,7 @@ proseo:
     ingestor.url: http://localhost:8081/proseo/ingestor/v0.1
     orderManager.url: http://192.168.20.155:8082/proseo/order-mgr/v0.1
     productionPlanner.url: http://192.168.20.155:8080/proseo/planner/v0.1
+    prip.url: http://localhost:8091/proseo/prip/odata/v1
     # Timeout for outgoing HTTP connections
     http.timeout: 10000
     # Expiration time for OAuth2 tokens in seconds

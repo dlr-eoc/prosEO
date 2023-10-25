@@ -56,6 +56,17 @@ public class OdipConfiguration {
 	@Value("${proseo.aip.url}")
 	private String aipUrl;
 
+	/** The URL of the prosEO prip api */
+	@Value("${proseo.prip.url}")
+	private String pripUrl;
+	
+	/**
+	 * @return the pripUrl
+	 */
+	public String getPripUrl() {
+		return pripUrl;
+	}
+
 	/**
 	 * Gets the AIP URL
 	 * 

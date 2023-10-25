@@ -20,6 +20,7 @@ import org.apache.olingo.commons.api.edm.provider.CsdlEntitySet;
 import org.apache.olingo.commons.api.edm.provider.CsdlEntityType;
 import org.apache.olingo.commons.api.edm.provider.CsdlEnumMember;
 import org.apache.olingo.commons.api.edm.provider.CsdlEnumType;
+import org.apache.olingo.commons.api.edm.provider.CsdlNavigationProperty;
 import org.apache.olingo.commons.api.edm.provider.CsdlNavigationPropertyBinding;
 import org.apache.olingo.commons.api.edm.provider.CsdlProperty;
 import org.apache.olingo.commons.api.edm.provider.CsdlPropertyRef;
@@ -76,6 +77,7 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 	public static final String ET_PRODUCTIONORDER_PROP_STATUS = "Status";
 	public static final String ET_PRODUCTIONORDER_PROP_STATUSMESSAGE = "StatusMessage";
 	public static final String ET_PRODUCTIONORDER_PROP_ORDEROUTPUTSIZE = "OrderOutputSize";
+	public static final String ET_PRODUCTIONORDER_PROP_PRODUCTID = "ProductId";
 	public static final String ET_PRODUCTIONORDER_PROP_SUBMISSIONDATE = "SubmissionDate";
 	public static final String ET_PRODUCTIONORDER_PROP_ESTIMATEDDATE = "EstimatedDate";
 	public static final String ET_PRODUCTIONORDER_PROP_COMPLETEDDATE = "CompletedDate";
@@ -88,6 +90,9 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 	public static final String ET_PRODUCTIONORDER_PROP_NOTIFICATIONENDPOINT = "NotificationEndpoint";
 	public static final String ET_PRODUCTIONORDER_PROP_NOTIFICATIONEPUSERNAME = "NotificationEpUsername";
 	public static final String ET_PRODUCTIONORDER_PROP_NOTIFICATIONEPPASSWORD = "NotificationEpPassword";
+	public static final String ET_PRODUCTIONORDER_PROP_PRODUCT = "Product";
+	public static final String ET_PRODUCT_NAME = "Product";
+	public static final FullQualifiedName ET_PRODUCT_FQN = new FullQualifiedName(NAMESPACE, ET_PRODUCT_NAME);
 
 	public static final String ET_ATTRIBUTE_NAME = "Attribute";
 	public static final FullQualifiedName ET_ATTRIBUTE_FQN = new FullQualifiedName(NAMESPACE, ET_ATTRIBUTE_NAME);
@@ -555,6 +560,8 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 				.setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
 			CsdlProperty orderOutputSize = new CsdlProperty().setName(ET_PRODUCTIONORDER_PROP_ORDEROUTPUTSIZE)
 				.setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName());
+			CsdlProperty orderProductId = new CsdlProperty().setName(ET_PRODUCTIONORDER_PROP_PRODUCTID)
+					.setType(EdmPrimitiveTypeKind.Guid.getFullQualifiedName());
 			CsdlProperty submissionDate = new CsdlProperty().setName(ET_PRODUCTIONORDER_PROP_SUBMISSIONDATE)
 				.setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName())
 				.setPrecision(3);
@@ -589,8 +596,8 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 				.setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
 
 			// Add navigation properties
-//			CsdlNavigationProperty attributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_ATTRIBUTES)
-//					.setType(ET_ATTRIBUTE_FQN).setCollection(true);
+			CsdlNavigationProperty productProp = new CsdlNavigationProperty().setName(ET_PRODUCTIONORDER_PROP_PRODUCT)
+					.setType(ET_PRODUCT_FQN).setCollection(false);
 //			CsdlNavigationProperty stringAttributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_STRING_ATTRIBUTES)
 //					.setType(ET_STRINGATTRIBUTE_FQN).setCollection(true);
 //			CsdlNavigationProperty intAttributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_INT_ATTRIBUTES)
@@ -616,8 +623,8 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 			productType.setProperties(Arrays.asList(id, status, statusMessage, orderOutputSize, submissionDate, estimatedDate,
 					completedDate, evictionDate, priority, inputProductReference, workflowId, workflowName, workflowOptions,
 					notificationEndPolint, notificationUserName, notificationPassword));
-//			productType.setNavigationProperties(Arrays.asList(attributes, stringAttributes, intAttributes, doubleAttributes,
-//					boolAttributes, dateAttributes));
+			
+			productType.setNavigationProperties(Arrays.asList(productProp));
 			productType.setKey(Collections.singletonList(idRef));
 
 			if (logger.isTraceEnabled())
@@ -669,6 +676,25 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 			if (logger.isTraceEnabled())
 				logger.trace("<<< getEntityType({})", entityTypeName);
 			return productType;
+		} else if (entityTypeName.equals(ET_PRODUCT_FQN)) {
+			// Create Attribute properties
+			CsdlProperty name = new CsdlProperty().setName(GENERIC_PROP_NAME)
+				.setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
+
+			// Create CsdlPropertyRef for Key element
+			CsdlPropertyRef idRef = new CsdlPropertyRef();
+			idRef.setName(GENERIC_PROP_NAME);
+
+			// Configure Attributes entity type
+			CsdlEntityType attributesType = new CsdlEntityType();
+			attributesType.setName(ET_PRODUCT_NAME);
+			attributesType.setProperties(Arrays.asList(name));
+			attributesType.setKey(Collections.singletonList(idRef));
+			attributesType.setHasStream(true);
+
+			if (logger.isTraceEnabled())
+				logger.trace("<<< getEntityType({})", entityTypeName);
+			return attributesType;
 		} else if (entityTypeName.equals(ET_ATTRIBUTE_FQN)) {
 			// Create Attribute properties
 			CsdlProperty name = new CsdlProperty().setName(GENERIC_PROP_NAME)
@@ -790,6 +816,7 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 		entityTypes.add(getEntityType(ET_STRINGATTRIBUTE_FQN));
 		entityTypes.add(getEntityType(ET_DATEATTRIBUTE_FQN));
 		entityTypes.add(getEntityType(ET_INTEGERATTRIBUTE_FQN));
+	    entityTypes.add(getEntityType(ET_PRODUCT_FQN));
 		schema.setEntityTypes(entityTypes);
 
 		// add EntityContainer

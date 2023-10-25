@@ -7,18 +7,22 @@ mediaType: application/octet-stream
 
 securitySchemes:
   basicAuth:
-    description: Each request must contain the headers necessary for basic authentication
+    description: Each request must contain the headers necessary for
+                 basic authentication
     type: Basic Authentication
     describedBy:
       headers:
         Authorization:
-          description: Used to send the Base64-encoded "username:password" credentials
+          description: Used to send the Base64-encoded "username:password"
+                       credentials
           type: string
       responses:
         401:
           description: |
-            Unauthorized. Either the provided username and password combination is invalid, or the user is not allowed to access
+            Unauthorized. Either the provided username and password
+            combination is invalid, or the user is not allowed to access
             the content provided by the requested URL.
+
 
 types:
   OAuth2Response: !include types/oauth2-response.raml
@@ -26,7 +30,7 @@ types:
 
 /token:
   post:
-    description: 
+    description: |
       Create an authentication token and a refresh token for the user identified in the Basic Auth header
     displayName: getToken
     queryParameters:
