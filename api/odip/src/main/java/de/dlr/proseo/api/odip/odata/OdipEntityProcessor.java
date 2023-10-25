@@ -453,14 +453,14 @@ public class OdipEntityProcessor implements EntityProcessor, PrimitiveProcessor,
 			// find product uuid and forward request to prip 
 			try {
 				String productUuid = getProductUuidProductionOrder(keyPredicates.get(0).getText());
-				String result = serviceConnection.getFromService(config.getPripUrl(), 
-						"/Products(" + productUuid + ")", 
-						String.class, 
-						securityConfig.getMission() + "\\" + securityConfig.getUser(), 
-						securityConfig.getPassword());
-				InputStream resStream = new ByteArrayInputStream(result.getBytes());
-				response.setContent(resStream);
-				response.setStatusCode(HttpStatusCode.OK.getStatusCode());
+				String uri = config.getPripUrl() + "/Products(" + productUuid + ")";
+				logger.log(PripMessage.MSG_REDIRECT, uri);
+				response.setStatusCode(HttpStatusCode.TEMPORARY_REDIRECT.getStatusCode());
+				response.setHeader(HttpHeader.LOCATION, uri);
+				BasicHeader token = new BasicHeader(AUTH.WWW_AUTH_RESP,
+						AuthSchemes.BASIC + " " + Base64.getEncoder().encodeToString((securityConfig.getMission() + "\\" 
+								+ securityConfig.getUser() + ":" + securityConfig.getPassword()).getBytes()));
+				response.setHeader(HttpHeader.AUTHORIZATION, token.getValue());
 				response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
 				
 			} catch (NoResultException e) {
