@@ -245,28 +245,98 @@ public class OdipEntityProcessor implements EntityProcessor, PrimitiveProcessor,
 				+ "LEFT OUTER JOIN job_step js ON p.job_step_id = js.id "
 				+ "LEFT OUTER JOIN job j ON js.job_id = j.id "
 				+ "LEFT OUTER JOIN processing_order o ON j.processing_order_id = o.id "
-				+ "LEFT OUTER JOIN workflow wf ON o.workflow_id = wf.id "
 				+ "WHERE o.uuid = '"
 				+ productionOrderUuid 
-				+ "' AND wf.output_product_class_id = p.product_class_id";
+				+ "'";
 		Query query = em.createNativeQuery(sqlQuery, Product.class);
-		Object resultObject;
+		List<Object> resultObjectList;
 		try {
-			resultObject = query.getSingleResult();
-			if (null == resultObject || !(resultObject instanceof Product)) {
+			resultObjectList = query.getResultList();
+			if (null == resultObjectList || resultObjectList.isEmpty()) {
 				throw new NoResultException();
 			}
 		} catch (NoResultException e) {
-			String message = logger.log(OdipMessage.MSG_PRODUCTIONORDER_NOT_FOUND, productionOrderUuid);
+			String message = logger.log(OdipMessage.MSG_PRODUCTIONORDERPRODUCT_NOT_FOUND, productionOrderUuid);
 			throw new NoResultException(message);
 		}
-		Product modelProduct = (Product) resultObject;
+		
+		sqlQuery = "SELECT wf.* FROM workflow wf "
+				+ "LEFT OUTER JOIN processing_order o ON wf.id = o.workflow_id "
+				+ "WHERE o.uuid = '"
+				+ productionOrderUuid 
+				+ "'";
+		query = em.createNativeQuery(sqlQuery, Workflow.class);
+		Object resultObject;
+		try {
+			resultObject = query.getSingleResult();
+			if (null == resultObject || !(resultObject instanceof Workflow)) {
+				throw new NoResultException();
+			}
+		} catch (NoResultException e) {
+			String message = logger.log(OdipMessage.MSG_PRODUCTIONORDERWORKFLOW_NOT_FOUND, productionOrderUuid);
+			throw new NoResultException(message);
+		}
+		Workflow workflow = (Workflow) resultObject;
+		Product modelProduct = null;
+		
+		for (Object o : resultObjectList) {
+			 if (o instanceof Product) {
+				 Product p = (Product) o;
+				 String productType = workflow.getOutputProductClass().getProductType();
+				 if (p.getProductClass().getProductType().equals(productType)) {
+					 modelProduct = p;
+					 break;
+				 } else {
+					 p = getRootProduct(p);
+					 p = getComponentOfType(p, productType);
+					 if (p != null) {
+						 modelProduct = p;
+						 break;
+					 }
+				 }
+			 }
+		}
 
+		if (modelProduct == null) {
+			String message = logger.log(OdipMessage.MSG_PRODUCTIONORDERPRODUCT_NOT_FOUND, productionOrderUuid);
+			throw new NoResultException(message);
+		}
+		if (modelProduct.getProductFile().isEmpty()) {
+			String message = logger.log(OdipMessage.MSG_PRODUCTIONORDERPRODUCT_NO_FILES, productionOrderUuid);
+			throw new NoResultException(message);
+		}
+		
 		if (logger.isDebugEnabled())
 			logger.debug("... product found: " + modelProduct.getUuid());
 		return modelProduct.getUuid().toString();
 	}
 
+	private Product getRootProduct(Product product) {
+		if ((product.getEnclosingProduct() != null)) {
+			return getRootProduct(product.getEnclosingProduct());
+		} else {
+			return product;
+		}
+	}
+	
+	private Product getComponentOfType(Product p, String type) {
+		Product result = null;
+		if (p.getProductClass().getProductType().equals(type)) {
+			return p;
+		}
+		for (Product pc : p.getComponentProducts()) {
+			if (pc.getProductClass().getProductType().equals(type)) {
+				return pc;
+			} else {
+				result = getComponentOfType(pc, type);
+				if (result != null) {
+					return result;
+				}
+			}
+		}
+		return null;
+	}
+	
 	/**
 	 * Get the metadata for a single workflow from the prosEO service
 	 *
