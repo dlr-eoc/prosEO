@@ -76,6 +76,9 @@ public enum OdipMessage implements ProseoMessage {
 	MSG_WORKFLOW_NOT_FOUND					(7260, Level.ERROR, false, "No workflow found with UUID {0}", ""),
 	MSG_NOT_AUTHORIZED_FOR_WORKFLOW 		(7261, Level.ERROR, false, "User {0} not authorized to access requested production order {1}", ""),
 	MSG_JSON_PARSE_ERROR					(7262, Level.ERROR, false, "JSON parse error: {0}", ""),
+	MSG_PRODUCTIONORDERPRODUCT_NOT_FOUND	(7263, Level.ERROR, false, "No product found for production order with UUID {0}", ""),
+	MSG_PRODUCTIONORDERWORKFLOW_NOT_FOUND	(7264, Level.ERROR, false, "No workflow found for production order with UUID {0}", ""),
+	MSG_PRODUCTIONORDERPRODUCT_NO_FILES 	(7265, Level.ERROR, false, "Requested product of production order with UUID {0} has no files", ""),
 	;
 
 	private final int code;
