@@ -102,17 +102,22 @@ public class ProductQueryService {
 	}
 	
 	/**
-	 * Check whether the product query is optional, and set it to satisfied, if so
+	 * Check whether the product query is optional, and set it to satisfied, if so, unless "check only" is requested
 	 * 
 	 * @param productQuery the product query to check
+	 * @param checkOnly indicates whether to store check result and satisfying products for future reference
 	 * @return true, if the product query is optional and therefore satisfied, false otherwise
 	 */
 	private boolean testOptionalSatisfied(ProductQuery productQuery, boolean checkOnly) {
 		if (productQuery.getGeneratingRule().isMandatory()) {
-			productQuery.setIsSatisfied(false);
+			if (!checkOnly) {
+				productQuery.setIsSatisfied(false);
+			}
 			return false;
 		} else {
-			productQuery.setIsSatisfied(true);
+			if (!checkOnly) {
+				productQuery.setIsSatisfied(false);
+			}
 			return true;
 		}
 	}
@@ -122,9 +127,9 @@ public class ProductQueryService {
 	 * If successful, the query and its satisfying products are updated (these updates must be persisted by the calling method).
 	 * 
 	 * @param productQuery the product query to execute
-	 * @param checkOnly if true, checks satisfaction, but does not store satisfying products, if false, will store satisfying products
-	 *            for future reference
-	 * @return true, if the query is satisfied (its list of satisfying products will then be set), false otherwise
+	 * @param checkOnly indicates whether to store check result and satisfying products for future reference
+	 * @return true, if the query is satisfied (its list of satisfying products will then be set, unless checkOnly is true),
+	 * 		   false otherwise
 	 * @throws IllegalArgumentException if the product query is incomplete
 	 */
 	public boolean executeQuery(ProductQuery productQuery, boolean checkOnly) throws IllegalArgumentException {

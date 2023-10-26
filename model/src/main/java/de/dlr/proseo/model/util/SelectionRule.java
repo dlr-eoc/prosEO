@@ -146,12 +146,13 @@ public class SelectionRule {
 	private static final String RULE_POLICY_INVALID_ERROR = "Syntax error: Allowed policies are '" + RULE_POLICY_VALINT
 			+ "', '" + RULE_POLICY_LATVALINT + "', '" + RULE_POLICY_LATVAL + "', '" + RULE_POLICY_LATVALCLO
 			+ "', '" + RULE_POLICY_LATVALCOV + "', '" + RULE_POLICY_CLOSTA + "', '" + RULE_POLICY_CLOSTO 
-			+ "', '" + RULE_POLICY_LATSTA + "', '" + RULE_POLICY_LATSTO + "' and '" + RULE_POLICY_VALINTNOD 
-			+ "', '" + RULE_POLICY_LASCRE + "', found: ";
+			+ "', '" + RULE_POLICY_LATSTA + "', '" + RULE_POLICY_LATSTO + "', '" + RULE_POLICY_VALINTNOD 
+			+ "', '" + RULE_POLICY_LASCRE + "', '" + RULE_POLICY_OVERLAP + "' and '" + RULE_POLICY_OVERLAP85 + "', found: ";
 	private static final String RULE_POLICY_TIMES_ERROR = "Error: For policies '" + RULE_POLICY_VALINT + "', '"
 			+ RULE_POLICY_LATVALINT + "', '" + RULE_POLICY_LATVALCLO + "', '"
-			+ RULE_POLICY_LATVALCOV + "', '" + RULE_POLICY_CLOSTA + "' and '"
-			+ RULE_POLICY_CLOSTO + "' delta times must be specified as parameter, found: ";
+			+ RULE_POLICY_LATVALCOV + "', '" + RULE_POLICY_CLOSTA + "', '"
+			+ RULE_POLICY_CLOSTO + "', '" + RULE_POLICY_OVERLAP + "' and '" + RULE_POLICY_OVERLAP85
+			+ "' delta times must be specified as parameter, found: ";
 	private static final String RULE_POLICY_LATVAL_ERROR = "Error: For the policies '" + RULE_POLICY_LATVAL
 			+ "', '" + RULE_POLICY_LATSTA + "', '" + RULE_POLICY_LATSTO + "' and '" + RULE_POLICY_LASCRE 
 			+ "' no delta times may be specified, found: ";
@@ -426,6 +427,12 @@ public class SelectionRule {
 			case RULE_POLICY_LATSTO:
 				simplePolicy.setPolicyType(SimplePolicy.PolicyType.LatestStopValidity);
 				break;
+			case RULE_POLICY_OVERLAP:
+				simplePolicy.setPolicyType(SimplePolicy.PolicyType.LargestOverlap);
+				break;
+			case RULE_POLICY_OVERLAP85:
+				simplePolicy.setPolicyType(SimplePolicy.PolicyType.LargestOverlap85);
+				break;
 			case RULE_POLICY_VALINTNOD:
 				simplePolicy.setPolicyType(SimplePolicy.PolicyType.ValIntersectWithoutDuplicates);
 				break;
@@ -442,6 +449,7 @@ public class SelectionRule {
 			if (RULE_POLICY_VALINT.equals(policyParts[0])    || RULE_POLICY_LATVALINT.equals(policyParts[0])
 			||  RULE_POLICY_LATVALCLO.equals(policyParts[0]) || RULE_POLICY_LATVALCOV.equals(policyParts[0])
 			||  RULE_POLICY_CLOSTA.equals(policyParts[0])    || RULE_POLICY_CLOSTO.equals(policyParts[0])
+			||  RULE_POLICY_OVERLAP.equals(policyParts[0])   || RULE_POLICY_OVERLAP85.equals(policyParts[0])
 			||  RULE_POLICY_VALINTNOD.equals(policyParts[0])) {
 				throw new ParseException(RULE_POLICY_TIMES_ERROR + "<none>", offset + simplePolicyString.length());
 			}

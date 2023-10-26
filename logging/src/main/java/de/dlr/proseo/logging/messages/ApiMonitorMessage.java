@@ -109,6 +109,7 @@ public enum ApiMonitorMessage implements ProseoMessage {
 	FILE_LIST_EMPTY				(7134, Level.ERROR, false, "CADU file list for session {0} empty, cancelling session download", ""),
 	QUALITY_WAIT_INTERRUPTED	(7135, Level.ERROR, false, "Wait for quality info of session {0} failed due to interrupt", ""),
 	QUALITY_WAIT_TIMEOUT		(7136, Level.ERROR, false, "Timeout after {0} s during wait for quality info of session {1}, session download cancelled", ""),
+	PARALLEL_ACTION_STARTED		(7137, Level.INFO, true, "Parallel action for session {0} started with command {1}", ""),
 	
 	CADIP_START_MESSAGE			(7198, Level.INFO, true, "------  Starting CADIP Monitor  ------\n"
 															+ "CADIP base URI . . . . . . : {0}\n"

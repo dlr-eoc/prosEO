@@ -57,7 +57,9 @@ public class SimpleSelectionRuleTest {
 			"FOR " + TEST_PRODUCT_TYPE_IR + " SELECT LatestStartValidity",
 			"FOR " + TEST_PRODUCT_TYPE_IR + " SELECT LatestStopValidity",
 			"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersectWithoutDuplicates(1 H, 1 H)",
-			"FOR " + TEST_PRODUCT_TYPE_IR + " SELECT LastCreated"
+			"FOR " + TEST_PRODUCT_TYPE_IR + " SELECT LastCreated",
+			"FOR " + TEST_PRODUCT_TYPE + " SELECT LargestOverlap(1 H, 1 H)",
+			"FOR " + TEST_PRODUCT_TYPE + " SELECT LargestOverlap85(1 H, 1 H)"
 	};
 	private static final Instant TEST_START_TIME = Instant.parse("2016-11-02T00:00:00Z");
 	private static final Instant TEST_STOP_TIME = Instant.parse("2016-11-02T00:00:05Z");
@@ -190,7 +192,13 @@ public class SimpleSelectionRuleTest {
 					+ "key(pp20) = 'revision' and pp20.parameterValue = '2.0') "
 				+ "and "
 				+ "p.fileClass = 'UVN' and "
-				+ "key(pp0) = 'revision' and pp0.parameterValue = '2.0')"
+				+ "key(pp0) = 'revision' and pp0.parameterValue = '2.0')",
+			"select p from Product p where (p.productClass.id = 4711 and "
+					+ "p.sensingStartTime < '" + EXPECTED_STOP_TIME + "' and "
+					+ "p.sensingStopTime > '" + EXPECTED_START_TIME + "')",
+			"select p from Product p where (p.productClass.id = 4711 and "
+					+ "p.sensingStartTime < '" + EXPECTED_STOP_TIME + "' and "
+					+ "p.sensingStopTime > '" + EXPECTED_START_TIME + "')"
 	};
 
 	private static final String[] expectedSqlQueries = {
@@ -317,7 +325,13 @@ public class SimpleSelectionRuleTest {
 					+ "pp20.parameters_key = 'revision' AND pp20.parameter_value = '2.0') "
 				+ "AND "
 				+ "p.file_class = 'UVN' AND "
-				+ "pp0.parameters_key = 'revision' AND pp0.parameter_value = '2.0')"
+				+ "pp0.parameters_key = 'revision' AND pp0.parameter_value = '2.0')",
+			"SELECT * FROM product p WHERE (p.product_class_id = 4711 AND "
+					+ "p.sensing_start_time < '" + EXPECTED_STOP_TIME + "' AND "
+					+ "p.sensing_stop_time > '" + EXPECTED_START_TIME + "')",
+			"SELECT * FROM product p WHERE (p.product_class_id = 4711 AND "
+					+ "p.sensing_start_time < '" + EXPECTED_STOP_TIME + "' AND "
+					+ "p.sensing_stop_time > '" + EXPECTED_START_TIME + "')"
 	};
 	
 	/* Mapping from Product attributes to SQL column names */

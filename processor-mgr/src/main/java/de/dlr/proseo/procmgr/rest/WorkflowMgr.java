@@ -247,13 +247,13 @@ public class WorkflowMgr {
 		if (null == restWorkflow.getOutputProductClass()) {
 			throw new IllegalArgumentException(
 					logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For workflow creation, outputProductClass"));
-		} else if (!modelWorkflow.getConfiguredProcessor()
-			.getProcessor()
-			.getProcessorClass()
-			.getProductClasses()
-			.contains(RepositoryService.getProductClassRepository()
-				.findByMissionCodeAndProductType(restWorkflow.getMissionCode(), restWorkflow.getOutputProductClass()))) {
-			throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.PROCESSOR_PRODUCT_MISMATCH));
+//		} else if (!modelWorkflow.getConfiguredProcessor()
+//			.getProcessor()
+//			.getProcessorClass()
+//			.getProductClasses()
+//			.contains(RepositoryService.getProductClassRepository()
+//				.findByMissionCodeAndProductType(restWorkflow.getMissionCode(), restWorkflow.getOutputProductClass()))) {
+//			throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.PROCESSOR_PRODUCT_MISMATCH));
 		} else {
 			modelWorkflow.setOutputProductClass(RepositoryService.getProductClassRepository()
 				.findByMissionCodeAndProductType(restWorkflow.getMissionCode(), restWorkflow.getOutputProductClass()));
@@ -755,13 +755,13 @@ public class WorkflowMgr {
 				throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_MISSSPECIFIED, "output product class",
 						restWorkflow.getMissionCode(), restWorkflow.getOutputProductClass()));
 			}
-			if (!modelWorkflow.getConfiguredProcessor()
-				.getProcessor()
-				.getProcessorClass()
-				.getProductClasses()
-				.contains(newOutputProductClass)) {
-				throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.PROCESSOR_PRODUCT_MISMATCH));
-			}
+//			if (!modelWorkflow.getConfiguredProcessor()
+//				.getProcessor()
+//				.getProcessorClass()
+//				.getProductClasses()
+//				.contains(newOutputProductClass)) {
+//				throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.PROCESSOR_PRODUCT_MISMATCH));
+//			}
 			modelWorkflow.setOutputProductClass(newOutputProductClass);
 		}
 

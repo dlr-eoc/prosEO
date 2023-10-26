@@ -36,6 +36,8 @@ proseo:
     archive:
         # Timeout for archive connections in milliseconds (e. g. 30 s)
         timeout: 30000
+        # Maximum number of parallel download threads
+        threads: 6
 
     test:
         # Test mission (UTM = Unit Test Mission)

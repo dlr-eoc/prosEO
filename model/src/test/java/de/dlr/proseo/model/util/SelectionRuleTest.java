@@ -68,7 +68,9 @@ public class SelectionRuleTest {
 			"FOR " + TEST_PRODUCT_TYPE + " SELECT LatestStartValidity MANDATORY",
 			"FOR " + TEST_PRODUCT_TYPE + " SELECT LatestStopValidity MANDATORY",
 			"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersectWithoutDuplicates(0 H, 0 H) MANDATORY",
-			"FOR " + TEST_PRODUCT_TYPE + " SELECT LastCreated"
+			"FOR " + TEST_PRODUCT_TYPE + " SELECT LastCreated",
+			"FOR " + TEST_PRODUCT_TYPE + " SELECT LargestOverlap(1 H, 0)",
+			"FOR " + TEST_PRODUCT_TYPE + " SELECT LargestOverlap85(1 H, 0)"
 	};
 	/**
 	 *  Selection intervals, for items see {@link SelectionRuleTest#createSelectionItems()}
@@ -198,7 +200,9 @@ public class SelectionRuleTest {
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT LatestStartValidity",
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT LatestStopValidity",
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersectWithoutDuplicates(10 m, 10 m)",
-				"FOR " + TEST_PRODUCT_TYPE + " SELECT LastCreated"
+				"FOR " + TEST_PRODUCT_TYPE + " SELECT LastCreated",
+				"FOR " + TEST_PRODUCT_TYPE + " SELECT LargestOverlap(10 m, 10 m)",
+				"FOR " + TEST_PRODUCT_TYPE + " SELECT LargestOverlap85(10 m, 10 m)"
 		};
 		String[] legalResults = {
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(0 D, 0 D) MINCOVER(50)",
@@ -216,7 +220,9 @@ public class SelectionRuleTest {
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT LatestStartValidity MANDATORY",
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT LatestStopValidity MANDATORY",
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersectWithoutDuplicates(10 M, 10 M) MANDATORY",
-				"FOR " + TEST_PRODUCT_TYPE + " SELECT LastCreated MANDATORY"
+				"FOR " + TEST_PRODUCT_TYPE + " SELECT LastCreated MANDATORY",
+				"FOR " + TEST_PRODUCT_TYPE + " SELECT LargestOverlap(10 M, 10 M) MANDATORY",
+				"FOR " + TEST_PRODUCT_TYPE + " SELECT LargestOverlap85(10 M, 10 M) MANDATORY"
 		};
 
 		String[] illegalRules = {
@@ -241,6 +247,8 @@ public class SelectionRuleTest {
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(0), 0",		// Invalid policy parameter syntax
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(0, 0) MANDATORY OPTIONAL", // Too many options
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(0, 0) MINCOVER(200)", // Invalid coverage percentage
+				"FOR " + TEST_PRODUCT_TYPE + " SELECT LargestOverlap",		// Policy parameter missing
+				"FOR " + TEST_PRODUCT_TYPE + " SELECT LargestOverlap85",		// Policy parameter missing
 				"",														// empty input
 				"FOR Unknown.Type SELECT LatestValidity"				// Unknown product type
 		};
@@ -267,10 +275,12 @@ public class SelectionRuleTest {
 				"policy must follow",									// RULE_POLICY_SYNTAX_ERROR
 				"Expected end of text or",								// RULE_POLICY_END_ERROR
 				"Invalid minimum coverage",								// RULE_MINCOVER_ERROR
+				"delta times must be specified",						// RULE_POLICY_TIMES_ERROR
+				"delta times must be specified",						// RULE_POLICY_TIMES_ERROR
 				"rule string is empty",									// RULE_EMPTY_ERROR
 				"Source product class not found"						// RULE_SOURCE_PRODUCT_CLASS_NOT_FOUND
 		};
-		int[] illegalOffsets = { 0, 32, 32, 38, 0, 12, 12, 13, 44, 31, 37, 39, 38, 48, 33, 38, 37, 30, 32, 38, 47, 0, 4 };
+		int[] illegalOffsets = { 0, 32, 32, 38, 0, 12, 12, 13, 44, 31, 37, 39, 38, 48, 33, 38, 37, 30, 32, 38, 47, 33, 35, 0, 4 };
 		
 		// Test legal rules
 		for (int i = 0; i < legalRules.length; ++i) {
@@ -620,7 +630,23 @@ public class SelectionRuleTest {
 				  itemObjects[2],
 				  itemObjects[2],
 				  itemObjects[2],
-				  itemObjects[2] }
+				  itemObjects[2] },
+				// LargestOverlap
+				{ itemObjects[3],
+				  itemObjects[0],
+				  itemObjects[0],
+				  itemObjects[2],
+				  ERROR_RESULT,
+				  itemObjects[1],
+				  itemObjects[3] },
+				// LargestOverlap85
+				{ itemObjects[3],
+				  ERROR_RESULT, // item 0?
+				  ERROR_RESULT,
+				  itemObjects[2],
+				  ERROR_RESULT,
+				  itemObjects[1],
+				  itemObjects[3] }
 		};
 
 		// Perform tests on valid input
@@ -835,12 +861,12 @@ public class SelectionRuleTest {
 				  itemObjects[2] },
 				// ValIntersectWithoutDuplicates
 				{ concatenate(itemObjects[0], itemObjects[1],                 itemObjects[3]),
-					  concatenate(itemObjects[0], itemObjects[1], itemObjects[2], itemObjects[3]),
-					  concatenate(itemObjects[0], itemObjects[1]                                ),
-					  concatenate(                                itemObjects[2]                ),
-					  ERROR_RESULT,
-					  concatenate(itemObjects[0], itemObjects[1],                 itemObjects[3]),
-					  concatenate(itemObjects[0], itemObjects[1],                 itemObjects[3]) },
+				  concatenate(itemObjects[0], itemObjects[1], itemObjects[2], itemObjects[3]),
+				  concatenate(itemObjects[0], itemObjects[1]                                ),
+				  concatenate(                                itemObjects[2]                ),
+				  ERROR_RESULT,
+				  concatenate(itemObjects[0], itemObjects[1],                 itemObjects[3]),
+				  concatenate(itemObjects[0], itemObjects[1],                 itemObjects[3]) },
 				// LastCreated
 				{ itemObjects[2],
 				  itemObjects[2],
@@ -848,7 +874,23 @@ public class SelectionRuleTest {
 				  itemObjects[2],
 				  itemObjects[2],
 				  itemObjects[2],
-				  itemObjects[2] }
+				  itemObjects[2] },
+				// LargestOverlap
+				{ itemObjects[3],
+				  itemObjects[0],
+				  itemObjects[0],
+				  itemObjects[2],
+				  ERROR_RESULT,
+				  itemObjects[1],
+				  itemObjects[3] },
+				// LargestOverlap85
+				{ itemObjects[3],
+				  ERROR_RESULT, // item 0?
+				  ERROR_RESULT,
+				  itemObjects[2],
+				  ERROR_RESULT,
+				  itemObjects[1],
+				  itemObjects[3] }
 		};
 		
 		// Perform tests on valid input

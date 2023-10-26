@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -83,6 +84,7 @@ import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.AipClientMessage;
+import de.dlr.proseo.logging.messages.ApiMonitorMessage;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.OAuthMessage;
 import de.dlr.proseo.model.ConfiguredProcessor;
@@ -121,6 +123,11 @@ public class DownloadManager {
 	private static final int ODATA_TOP_COUNT = 1000;
 	private static final String ODATA_CSC_ORDER = "OData.CSC.Order";
 
+	/** Maximum number of retries for product download */
+	private static final int DOWNLOAD_MAX_RETRIES = 3;
+	/** Retry interval for product downloads in ms */
+	private static final int DOWNLOAD_RETRY_INTERVAL = 5000;
+	
 	/** OData request body for production order creation */
 	private static final String ODATA_ORDER_REQUEST_BODY = "{ \"Priority\": 50 }";
 	
@@ -141,6 +148,8 @@ public class DownloadManager {
 
 	/** Lookup table for products currently being downloaded from some archive */
 	private static ConcurrentSkipListSet<String> productDownloads = new ConcurrentSkipListSet<>();
+
+	private static Semaphore semaphore = null;
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(DownloadManager.class);
@@ -970,51 +979,67 @@ public class DownloadManager {
 		RestProductFile restProductFile = product.getProductFile().get(0);
 		File productFile = new File(config.getClientTargetDir() + File.separator + restProductFile.getProductFileName());
 
-		try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-			logger.trace("... starting request for URL '{}'", requestUrl);
+		for (int i = 0; i < DOWNLOAD_MAX_RETRIES; i++) {
+			try {
+				try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+					logger.trace("... starting request for URL '{}'", requestUrl);
 
-			HttpGet httpGet = new HttpGet(requestUrl.toString());
-			
-			if (archive.getTokenRequired()) {
-				httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken(archive));
-			} else {
-				httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Basic "
-						+ Base64.getEncoder().encodeToString((archive.getUsername() + ":" + archive.getPassword()).getBytes()));
-			}
-			
-			CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
-			HttpEntity httpEntity = httpResponse.getEntity();
+					HttpGet httpGet = new HttpGet(requestUrl.toString());
 
-			if (httpEntity != null) {
-				FileUtils.copyInputStreamToFile(httpEntity.getContent(), productFile);
-			}
-			
-			httpResponse.close();
+					if (archive.getTokenRequired()) {
+						httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken(archive));
+					} else {
+						httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder()
+								.encodeToString((archive.getUsername() + ":" + archive.getPassword()).getBytes()));
+					}
 
-		} catch (FileNotFoundException e) {
-			throw new IOException(logger.log(AipClientMessage.FILE_NOT_WRITABLE, productFile));
-		} catch (HttpResponseException e) {
-			throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(),
-					e.getMessage() + " / " + e.getReasonPhrase()));
-		} catch (Exception e) {
-			throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(), e.getMessage()));
+					CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
+					HttpEntity httpEntity = httpResponse.getEntity();
+
+					if (httpEntity != null) {
+						FileUtils.copyInputStreamToFile(httpEntity.getContent(), productFile);
+					}
+
+					httpResponse.close();
+
+				} catch (FileNotFoundException e) {
+					throw new IOException(logger.log(AipClientMessage.FILE_NOT_WRITABLE, productFile));
+				} catch (HttpResponseException e) {
+					throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(),
+							e.getMessage() + " / " + e.getReasonPhrase()));
+				} catch (Exception e) {
+					throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(), e.getMessage()));
+				}
+
+				// Compare file size with value given by external archive
+				Long productFileLength = productFile.length();
+				if (!productFileLength.equals(restProductFile.getFileSize())) {
+					throw new IOException(logger.log(AipClientMessage.FILE_SIZE_MISMATCH, product.getUuid(),
+							restProductFile.getFileSize(), productFileLength));
+				}
+
+				// Compute checksum and compare with value given by external archive
+				String md5Hash = MD5Util.md5Digest(productFile);
+				if (!md5Hash.equalsIgnoreCase(restProductFile.getChecksum())) {
+					throw new IOException(logger.log(AipClientMessage.CHECKSUM_MISMATCH, product.getUuid(),
+							restProductFile.getChecksum(), md5Hash));
+				}
+			} catch (Exception e) {
+				if ((i + 1) < DOWNLOAD_MAX_RETRIES) {
+					if (logger.isTraceEnabled())
+						logger.trace("... download attempt {} of {} failed, waiting {} s", i + 1, DOWNLOAD_MAX_RETRIES,
+								(double) DOWNLOAD_RETRY_INTERVAL / 1000.0);
+					try {
+						Thread.sleep(DOWNLOAD_RETRY_INTERVAL);
+					} catch (InterruptedException e1) {
+						logger.log(AipClientMessage.DOWNLOAD_RETRY_INTERRUPTED, restProductFile.getProductFileName());
+						throw e;
+					}
+				} else {
+					throw e;
+				}
+			} 
 		}
-
-
-		// Compare file size with value given by external archive
-		Long productFileLength = productFile.length();
-		if (!productFileLength.equals(restProductFile.getFileSize())) {
-			throw new IOException(logger.log(AipClientMessage.FILE_SIZE_MISMATCH, product.getUuid(), restProductFile.getFileSize(),
-					productFileLength));
-		}
-
-		// Compute checksum and compare with value given by external archive
-		String md5Hash = MD5Util.md5Digest(productFile);
-		if (!md5Hash.equalsIgnoreCase(restProductFile.getChecksum())) {
-			throw new IOException(
-					logger.log(AipClientMessage.CHECKSUM_MISMATCH, product.getUuid(), restProductFile.getChecksum(), md5Hash));
-		}
-
 		// Log download with UUID, file name, size, checksum, publication date
 		logger.log(AipClientMessage.PRODUCT_TRANSFER_COMPLETED, product.getUuid(), restProductFile.getProductFileName(),
 				restProductFile.getFileSize(), restProductFile.getChecksum(), product.getPublicationTime());
@@ -1116,6 +1141,13 @@ public class DownloadManager {
 			return;
 		}
 
+		// Restrict number of parallel downloads
+		if (null == semaphore) {
+			semaphore = new Semaphore(config.getArchiveThreads(), true);
+			if (logger.isDebugEnabled())
+				logger.debug("... file download semaphore {} created", semaphore);
+		}
+		
 		// Get the user and mission code from the current security context (not preserved to spawned thread)
 		String user = securityService.getUser();
 		String missionCode = securityService.getMission();
@@ -1132,9 +1164,21 @@ public class DownloadManager {
 				// Log download in lookup table
 				productDownloads.add(product.getUuid());
 
+				// Check whether parallel execution is allowed
+				try {
+					semaphore.acquire();
+					if (logger.isDebugEnabled())
+						logger.debug("... file download semaphore {} acquired, {} permits remaining",
+								semaphore, semaphore.availablePermits());
+				} catch (InterruptedException e) {
+					logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString());
+					return;
+				}
+				
 				try {
 					// For long-term archives, create a product order first and wait for its completion
-					if (ArchiveType.AIP.equals(archive.getArchiveType())) {
+					if (ArchiveType.AIP.equals(archive.getArchiveType()) 
+							|| ArchiveType.SIMPLEAIP.equals(archive.getArchiveType())) {
 						createProductOrderAndWait(archive, product.getUuid());
 					}
 
@@ -1151,6 +1195,13 @@ public class DownloadManager {
 					if (logger.isDebugEnabled())
 						logger.debug("Stack trace: ", e);
 				} finally {
+					// Release parallel thread
+					semaphore.release();
+					if (logger.isDebugEnabled())
+						logger.debug("... file download semaphore {} released, {} permits now available",
+								semaphore, semaphore.availablePermits());
+
+					// Remove download from lookup table
 					productDownloads.remove(product.getUuid());
 				}
 			}
