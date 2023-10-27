@@ -868,6 +868,18 @@ public class JobStepUtil {
 				for (ProductQuery pq : js.getInputProductQueries()) {
 					if (!pq.isSatisfied()) {
 						if (productQueryService.executeQuery(pq, false)) {
+							if (js.getJob().getProcessingOrder().getOrderSource() == OrderSource.ODIP
+									&& !pq.getInDownload() && pq.getSatisfyingProducts().isEmpty()) {
+								// An optional query will be satisfied, even if there are no input products (locally)
+								// Try to fetch more input products from some external archive
+								pq.setInDownload(true);
+								startAipDownload(pq);
+								// Prevent immediate start of job step without completion of download
+								// TODO The download state must be annotated with the product, the current implementation is not safe
+								pq.setIsSatisfied(false);
+								hasUnsatisfiedInputQueries = true;
+							}
+
 							RepositoryService.getProductQueryRepository().save(pq);
 							// we do not need to save the product in this transaction
 							// only the satisfied product queries are updated but this relation is also saved by the product query
@@ -1455,7 +1467,7 @@ public class JobStepUtil {
 		for (SimplePolicy simplePolicy : simplePolicies) {
 			startTime = startTime.isAfter(startTime.minusMillis(simplePolicy.getDeltaTimeT0().toMilliseconds())) ?
 					startTime.minusMillis(simplePolicy.getDeltaTimeT0().toMilliseconds()) : startTime;
-			stopTime = stopTime.isBefore(startTime.plusMillis(simplePolicy.getDeltaTimeT0().toMilliseconds())) ?
+			stopTime = stopTime.isBefore(stopTime.plusMillis(simplePolicy.getDeltaTimeT0().toMilliseconds())) ?
 					stopTime.plusMillis(simplePolicy.getDeltaTimeT0().toMilliseconds()) : stopTime;
 		}
 		String user = "";

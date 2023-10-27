@@ -72,6 +72,11 @@ public class JobstepControllerImpl implements JobstepController {
     /**
      * Get production planner job steps by status
      * 
+     * @param status TODO
+     * @param mission TODO
+     * @param last TODO
+     * @param httpHeaders TODO
+     * @return TODO
      */
 	@Override
 	@Transactional
@@ -87,30 +92,30 @@ public class JobstepControllerImpl implements JobstepController {
 		
 		try {
 			List<RestJobStep> list = new ArrayList<RestJobStep>(); 
-			List<JobStep> it;
+			List<JobStep> jsList;
 			if (status == null || status.value().equalsIgnoreCase("NONE")) {
 				List<JobStep> allJobSteps = RepositoryService.getJobStepRepository().findAll();
-				it = new ArrayList<>();
+				jsList = new ArrayList<>();
 				for (JobStep js: allJobSteps) {
 					if (js.getJob().getProcessingOrder().getMission().getCode().equals(mission)) {
-						it.add(js);
+						jsList.add(js);
 					}
 				}
 			} else {
 				JobStepState state = JobStepState.valueOf(status.toString());
-				//it = new ArrayList<JobStep>();
+
 				if (last != null && last > 0) {
-					List<JobStep> itall = jobStepUtil.findOrderedByJobStepStateAndMission(state, mission, last.intValue());
-					if (last < itall.size()) {
-						it = itall.subList(0, last.intValue());
+					List<JobStep> jsListAll = jobStepUtil.findOrderedByJobStepStateAndMission(state, mission, last.intValue());
+					if (last < jsListAll.size()) {
+						jsList = jsListAll.subList(0, last.intValue());
 					} else {
-						it = itall;
+						jsList = jsListAll;
 					}
 				} else {
-					it = RepositoryService.getJobStepRepository().findAllByJobStepStateAndMissionOrderByDate(state, mission);
+					jsList = RepositoryService.getJobStepRepository().findAllByJobStepStateAndMissionOrderByDate(state, mission);
 				}
 			}
-			for (JobStep js : it) {
+			for (JobStep js : jsList) {
 				RestJobStep pjs = RestUtil.createRestJobStep(js, false);
 				list.add(pjs);			
 			}
@@ -142,6 +147,8 @@ public class JobstepControllerImpl implements JobstepController {
 					transactionTemplate.execute((status) -> {
 						JobStep jsx = this.findJobStepByNameOrIdPrim(name);
 						Job job = jsx.getJob();
+						
+						// TODO Check whether loading/updating of log info is still necessary
 						if (jsx.getJobStepState() == JobStepState.RUNNING && job != null) {
 							if (job.getProcessingFacility() != null) {
 								KubeConfig kc = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());

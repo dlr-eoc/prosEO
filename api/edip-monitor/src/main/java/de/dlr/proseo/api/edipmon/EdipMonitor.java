@@ -6,7 +6,6 @@
 package de.dlr.proseo.api.edipmon;
 
 import java.io.IOException;
-import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,8 +36,7 @@ import de.dlr.proseo.logging.messages.ApiMonitorMessage;
 /**
  * Monitor for EDRS Interface Points
  *
- * EDRS Interface Points are FTP-S servers. FTP-S connection is based on the Apache Commons Net library. TODO Workaround for now:
- * Mount the FTP-S directory as a network volume using "rclone".
+ * EDRS Interface Points are FTP-S servers. The FTP-S directory must be mounted as a network volume (e. g. using "rclone").
  *
  * @author Dr. Thomas Bassler
  */
@@ -64,7 +62,7 @@ public class EdipMonitor extends BaseMonitor {
 	/** Maximum number of parallel file download threads within a download session (default 1 = no parallel downloads) */
 	private int maxFileDownloadThreads = 1;
 
-	/** Interval in millliseconds to check for completed file downloads (default 500 ms) */
+	/** Interval in milliseconds to check for completed file downloads (default 500 ms) */
 	private int fileWaitInterval = 500;
 
 	/** Maximum number of wait cycles for file download completion checks (default 3600 = total timeout of 30 min) */
@@ -311,6 +309,7 @@ public class EdipMonitor extends BaseMonitor {
 	/**
 	 * Thread-safe method to calculate total session download size
 	 *
+	 * @param sessionId the identifier of the session to calculate the size for
 	 * @param caduSize the size of the CADU chunk to add to the session download size
 	 */
 	synchronized private void addToSessionDataSize(String sessionId, long caduSize) {
@@ -521,8 +520,21 @@ public class EdipMonitor extends BaseMonitor {
 									}
 
 									if (sessionChannelFile.toString().toLowerCase().endsWith("raw")) {
+										// Check whether this is the first download to complete
+										boolean isFirstDownload = (null == sessionDataSizes.get(transferSession.getIdentifier())
+												|| 0 == sessionDataSizes.get(transferSession.getIdentifier()));
+										
 										// Calculate total download size
 										addToSessionDataSize(transferSession.getIdentifier(), sessionChannelFile.toFile().length());
+
+										// If this is the first download to complete, start parallel processing action
+										if (isFirstDownload) {
+											boolean parallelActionSuccess = triggerParallelAction(transferSession);
+											if (!parallelActionSuccess) {
+												// We assume error already logged
+												copySuccess.put(transferSession.getIdentifier(), false);
+											}
+										}
 									}
 									if (logger.isTraceEnabled())
 										logger.trace("... Copying of file {} complete, duration {}, speed {} MiB/s",
@@ -600,8 +612,27 @@ public class EdipMonitor extends BaseMonitor {
 	}
 
 	/**
-	 * Trigger L0 processing on the given downlink session transfer object (spawns a separate process taking just the path to the
-	 * session CADU data as parameter)
+	 * Trigger any necessary parallel action on the transfer session (e. g. L0 processing)
+	 *
+	 * @param transferSession the transfer session to start the action on
+	 * @return true, if starting the action succeeded (not necessarily the action itself), false otherwise
+	 */
+	protected boolean triggerParallelAction(TransferSession transferSession) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> triggerParallelAction({})", null == transferSession ? "null" : transferSession.getIdentifier());
+
+		if (null == transferSession) {
+			logger.log(ApiMonitorMessage.TRANSFER_OBJECT_IS_NULL);
+			return false;
+		}
+
+		logger.log(ApiMonitorMessage.PARALLEL_ACTION_STARTED, transferSession.getIdentifier(), "NOT IMPLEMENTED");
+
+		return true;
+	}
+
+	/*
+	 * (non-Javadoc) Trigger follow-on action (dummy implementation, to be overridden by subclass)
 	 */
 	@Override
 	protected boolean triggerFollowOnAction(TransferObject transferObject) {
@@ -613,47 +644,14 @@ public class EdipMonitor extends BaseMonitor {
 			return false;
 		}
 
-		if (transferObject instanceof TransferSession) {
-			TransferSession transferSession = (TransferSession) transferObject;
-
-			// Determine the correct target directory
-			Path sessionDirectory = transferSession.sessionPath.getFileName();
-			Path caduDirectory = caduDirectoryPath.resolve(sessionDirectory);
-
-			// Parse DSIB file of channel 1 for time stamps
-			Path dsibFilePath = transferSession.getDsibFileForChannel("ch_1");
-			DataSessionInformationBlock dsib = null;
-			try {
-				dsib = (new XmlMapper()).readValue(dsibFilePath.toFile(), DataSessionInformationBlock.class);
-			} catch (IOException e) {
-				logger.log(ApiMonitorMessage.CANNOT_READ_DSIB_FILE, dsibFilePath.toString(), e.getMessage());
-				return false;
-			}
-
-			// Call external process
-			ProcessBuilder processBuilder = new ProcessBuilder();
-
-			String command = config.getL0Command() + " " + caduDirectory.toString() + " " + dsib.time_start.replace("Z", "") + " "
-					+ dsib.time_finished.replace("Z", "");
-			processBuilder.command(command.split(" "));
-			processBuilder.redirectErrorStream(true);
-			processBuilder.redirectOutput(Redirect.DISCARD);
-
-			try {
-
-				processBuilder.start();
-
-				logger.log(ApiMonitorMessage.FOLLOW_ON_ACTION_STARTED, transferSession.getIdentifier(), command);
-
-			} catch (IOException e) {
-				logger.log(ApiMonitorMessage.COMMAND_START_FAILED, command, e.getMessage());
-				return false;
-			}
-
-		} else {
+		if (!(transferObject instanceof TransferSession)) {
 			logger.log(ApiMonitorMessage.INVALID_TRANSFER_OBJECT_TYPE, transferObject.getIdentifier());
 			return false;
 		}
+
+		TransferSession transferSession = (TransferSession) transferObject;
+
+		logger.log(ApiMonitorMessage.FOLLOW_ON_ACTION_STARTED, transferSession.getIdentifier(), "NOT IMPLEMENTED");
 
 		return true;
 	}
