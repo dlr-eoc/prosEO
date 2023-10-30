@@ -128,6 +128,8 @@ public class JobstepControllerImpl implements JobstepController {
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -169,6 +171,9 @@ public class JobstepControllerImpl implements JobstepController {
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("getJobStep");	
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 				RestJobStep pjs = getRestJobStep(js.getId(), true);
@@ -182,6 +187,8 @@ public class JobstepControllerImpl implements JobstepController {
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -225,6 +232,9 @@ public class JobstepControllerImpl implements JobstepController {
 					});
 				} catch (Exception e) {
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 				if (logx == null) {
@@ -238,6 +248,8 @@ public class JobstepControllerImpl implements JobstepController {
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -282,6 +294,9 @@ public class JobstepControllerImpl implements JobstepController {
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("resumeJobStep");	
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 				// Already logged
@@ -299,6 +314,9 @@ public class JobstepControllerImpl implements JobstepController {
 									productionPlanner.releaseThreadSemaphore("resumeJobStep");
 								} catch (Exception e) {
 									String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+									
+									if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 									productionPlanner.releaseThreadSemaphore("resumeJobStep");
 									return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 								}
@@ -322,6 +340,9 @@ public class JobstepControllerImpl implements JobstepController {
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -352,6 +373,9 @@ public class JobstepControllerImpl implements JobstepController {
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("cancelJobStep");	
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 				if (msg.getSuccess()) {
@@ -364,6 +388,9 @@ public class JobstepControllerImpl implements JobstepController {
 								productionPlanner.releaseThreadSemaphore("cancelJobStep");
 							} catch (Exception e) {
 								String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+								
+								if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 								productionPlanner.releaseThreadSemaphore("cancelJobStep");
 								return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 							}
@@ -384,6 +411,9 @@ public class JobstepControllerImpl implements JobstepController {
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -426,6 +456,9 @@ public class JobstepControllerImpl implements JobstepController {
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("suspendJobStep");	
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 				PlannerResultMessage msg = new PlannerResultMessage(GeneralMessage.FALSE); 
@@ -438,6 +471,9 @@ public class JobstepControllerImpl implements JobstepController {
 					productionPlanner.releaseThreadSemaphore("suspendJobStep");
 				} catch (Exception e) {
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 					productionPlanner.releaseThreadSemaphore("suspendJobStep");
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
@@ -459,6 +495,8 @@ public class JobstepControllerImpl implements JobstepController {
 		} catch (Exception e) {
 			e.printStackTrace();
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -517,6 +555,8 @@ public class JobstepControllerImpl implements JobstepController {
 		} catch (Exception e) {
 			productionPlanner.releaseThreadSemaphore("findJobStepByNameOrId");	
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());	
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 		}
 		return js;
 	}
@@ -540,6 +580,8 @@ public class JobstepControllerImpl implements JobstepController {
 			});
 		} catch (Exception e) {
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());	
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 		} finally {
 			productionPlanner.releaseThreadSemaphore("getRestJobStep");
 		}
@@ -569,6 +611,9 @@ public class JobstepControllerImpl implements JobstepController {
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("retryJobStep");	
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 				
@@ -587,6 +632,8 @@ public class JobstepControllerImpl implements JobstepController {
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}

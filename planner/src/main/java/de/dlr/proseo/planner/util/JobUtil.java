@@ -363,6 +363,8 @@ public class JobUtil {
 					answer.setMessage(PlannerMessage.JOB_RELEASED);
 				} catch (Exception e) {
 					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 				}
 				break;
 			case RELEASED:

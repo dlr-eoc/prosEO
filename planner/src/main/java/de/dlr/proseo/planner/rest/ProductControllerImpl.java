@@ -89,6 +89,8 @@ public class ProductControllerImpl implements ProductController {
 			productionPlanner.releaseThreadSemaphore("getObjectByProductidAndFacilityId");	
 			productionPlanner.releaseReleaseSemaphore("getObjectByProductidAndFacilityId");	
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 		}
 		return new ResponseEntity<>("Checked", HttpStatus.OK);
 	}

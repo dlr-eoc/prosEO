@@ -94,6 +94,8 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -138,6 +140,8 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -169,6 +173,8 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			} catch (Exception e) {
 				productionPlanner.releaseThreadSemaphore("synchronizeFacility");		
 				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+				
+				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			}
 			
 			RestProcessingFacility pf = new RestProcessingFacility(
@@ -190,6 +196,8 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			return new ResponseEntity<>(pf, HttpStatus.OK);
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -235,6 +243,10 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.OK);
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}

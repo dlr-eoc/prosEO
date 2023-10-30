@@ -17,6 +17,7 @@ import java.util.Optional;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -38,6 +39,11 @@ import de.dlr.proseo.planner.kubernetes.KubeConfig;
  *
  */
 public class OrderReleaseThread extends Thread {
+
+	/** Maximum number of retries for database concurrency issues */
+	private static final int DB_MAX_RETRY = 3;
+	/** Wait interval in ms before retrying database operation */
+	private static final int DB_WAIT = 1000;
 
 	/**
 	 * Logger of this class
@@ -94,9 +100,12 @@ public class OrderReleaseThread extends Thread {
 	 * Create new thread
 	 * 
 	 * @param productionPlanner The production planner instance
+	 * @param em Entity manager for native queries
 	 * @param jobUtil The job utility instance
 	 * @param order The processing order to plan
 	 * @param name The thread name
+	 * @param user the username for calling other prosEO services (e. g. AIP Client)
+	 * @param pw the password for calling other prosEO services (e. g. AIP Client)
 	 */
 	public OrderReleaseThread(ProductionPlanner productionPlanner, EntityManager em, JobUtil jobUtil, ProcessingOrder order, 
 			String name, String user, String pw) {
@@ -113,7 +122,7 @@ public class OrderReleaseThread extends Thread {
      * Start and initialize the release thread
      */
     public void run() {
-		if (logger.isTraceEnabled()) logger.trace(">>> run({})", this.getName());
+		if (logger.isTraceEnabled()) logger.trace(">>> run() for thread {}", this.getName());
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
@@ -135,6 +144,7 @@ public class OrderReleaseThread extends Thread {
 				answer.setText(logger.log(answer.getMessage(), this.getName(), order.getIdentifier()));
 			} 
 			catch(IllegalStateException e) {
+				transactionTemplate.setReadOnly(true);
 				final ProcessingOrder order = transactionTemplate.execute((status) -> {
 					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
 					if (orderOpt.isPresent()) {
@@ -148,9 +158,9 @@ public class OrderReleaseThread extends Thread {
 					answer.setMessage(PlannerMessage.ORDER_RELEASING_EXCEPTION);
 					answer.setText(logger.log(PlannerMessage.ORDER_RELEASING_EXCEPTION, this.getName(), order.getIdentifier()));
 					answer.setText(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage()));
-					productionPlanner.acquireThreadSemaphore("runRelease1");	
-					@SuppressWarnings("unused")
-					Object dummy = transactionTemplate.execute((status) -> {
+					productionPlanner.acquireThreadSemaphore("runRelease1");
+					transactionTemplate.setReadOnly(false);
+					transactionTemplate.execute((status) -> {
 						ProcessingOrder lambdaOrder = null;
 						Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
 						if (orderOpt.isPresent()) {
@@ -170,8 +180,8 @@ public class OrderReleaseThread extends Thread {
 				answer.setText(logger.log(PlannerMessage.ORDER_RELEASING_EXCEPTION, this.getName(), order.getIdentifier()));
 				answer.setText(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage()));
 				productionPlanner.acquireThreadSemaphore("runRelease2");
-				@SuppressWarnings("unused")
-				Object dummy = transactionTemplate.execute((status) -> {
+				transactionTemplate.setReadOnly(false);
+				transactionTemplate.execute((status) -> {
 					ProcessingOrder lambdaOrder = null;
 					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
 					if (orderOpt.isPresent()) {
@@ -187,7 +197,7 @@ public class OrderReleaseThread extends Thread {
 		}
 		this.resultMessage = answer;
 		productionPlanner.getReleaseThreads().remove(this.getName());
-		if (logger.isTraceEnabled()) logger.trace("<<< run({})", this.getName());
+		if (logger.isTraceEnabled()) logger.trace("<<< run() for thread {}", this.getName());
 		productionPlanner.checkNextForRestart();				
     }
     
@@ -210,7 +220,8 @@ public class OrderReleaseThread extends Thread {
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		PlannerResultMessage releaseAnswer = new PlannerResultMessage(GeneralMessage.FALSE);
 		try {
-			productionPlanner.acquireThreadSemaphore("release1");	
+			productionPlanner.acquireThreadSemaphore("release1");
+			transactionTemplate.setReadOnly(true);
 			order = transactionTemplate.execute((status) -> {
 				Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
 				if (orderOpt.isPresent()) {
@@ -230,6 +241,9 @@ public class OrderReleaseThread extends Thread {
 		} catch (Exception e) {
 			answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
 			answer.setText(logger.log(answer.getMessage(), e.getMessage()));
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 			productionPlanner.releaseThreadSemaphore("release1");
 			return answer;
 		}
@@ -245,40 +259,73 @@ public class OrderReleaseThread extends Thread {
 			curJSList.add(0);
 			try {
 				while (curJList.get(0) < jCount) {
-					try {
-						productionPlanner.acquireThreadSemaphore("releaseOrder");	
-						if (logger.isTraceEnabled()) logger.trace(">>> releaseJobBlock({})", curJList.get(0));
-						Object answer1 = transactionTemplate.execute((status) -> {
-							curJSList.set(0, 0);
-							PlannerResultMessage locAnswer = new PlannerResultMessage(GeneralMessage.TRUE);
-							while (curJList.get(0) < jCount && curJSList.get(0) < packetSize) {
-								if (this.isInterrupted()) {
-									return PlannerMessage.ORDER_RELEASING_INTERRUPTED;
+
+					// Prepare for transaction retry, if "org.springframework.dao.CannotAcquireLockException" is thrown
+					for (int i = 0; i < DB_MAX_RETRY; i++) {
+						try {
+							productionPlanner.acquireThreadSemaphore("releaseOrder");
+							if (logger.isTraceEnabled())
+								logger.trace(">>> releaseJobBlock({})", curJList.get(0));
+
+							transactionTemplate.setReadOnly(false);
+							Object answer1 = transactionTemplate.execute((status) -> {
+								curJSList.set(0, 0);
+								PlannerResultMessage locAnswer = new PlannerResultMessage(GeneralMessage.TRUE);
+								while (curJList.get(0) < jCount && curJSList.get(0) < packetSize) {
+									if (this.isInterrupted()) {
+										return PlannerMessage.ORDER_RELEASING_INTERRUPTED;
+									}
+									if (jobList.get(curJList.get(0)).getJobState() == JobState.PLANNED) {
+										Job locJob = RepositoryService.getJobRepository()
+												.getOne(jobList.get(curJList.get(0)).getId());
+										try {
+											locAnswer = jobUtil.resume(locJob);
+										} catch (Exception e) {
+											if (logger.isDebugEnabled())
+												logger.debug("... exception in resume(" + locJob.getId() + "): ", e);
+											throw e;
+										}
+										curJSList.set(0, curJSList.get(0) + locJob.getJobSteps().size());
+									}
+									curJList.set(0, curJList.get(0) + 1);
 								}
-								if (jobList.get(curJList.get(0)).getJobState() == JobState.PLANNED) {
-									Job locJob = RepositoryService.getJobRepository().getOne(jobList.get(curJList.get(0)).getId());
-									locAnswer = jobUtil.resume(locJob);
-									curJSList.set(0, curJSList.get(0) + locJob.getJobSteps().size());
+								return locAnswer;
+							});
+
+							if (answer1 instanceof PlannerResultMessage) {
+								answer = (PlannerResultMessage) answer1;
+								if (answer.getCode() == PlannerMessage.ORDER_RELEASING_INTERRUPTED.getCode()) {
+									break;
 								}
-								curJList.set(0, curJList.get(0) + 1);		
 							}
-							return locAnswer;					
-						});
-						if(answer1 instanceof PlannerResultMessage) {
-							answer = (PlannerResultMessage) answer1;
-							if (answer.getCode() == PlannerMessage.ORDER_RELEASING_INTERRUPTED.getCode()) {
-								break;
+						} catch (CannotAcquireLockException e) {
+							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+							if ((i + 1) < DB_MAX_RETRY) {
+								if (logger.isDebugEnabled()) logger.debug("... retrying in {} ms!", DB_WAIT);
+								Thread.sleep(DB_WAIT);
+							} else {
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", DB_MAX_RETRY);
+								throw e;
 							}
-						}
-					} catch (Exception e) {	
-						throw e;
-					} finally {
-						productionPlanner.releaseThreadSemaphore("releaseOrder");
+						} catch (Exception e) {
+							if (logger.isDebugEnabled())
+								logger.debug("... exception in release::doInTransaction1(" + orderId + "): ", e);
+
+							throw e;
+						} finally {
+							productionPlanner.releaseThreadSemaphore("releaseOrder");
+						} 
 					}
+					
 					try {
-						productionPlanner.acquireThreadSemaphore("releaseOrder2");	
-						@SuppressWarnings("unused")
-						Object answer2 = transactionTemplate.execute((status) -> {
+						productionPlanner.acquireThreadSemaphore("releaseOrder2");
+
+						// TODO Add transaction retry here, but need to find the retry condition first
+						// This one requires special handling, because as a "side effect" the Kubernetes job is started
+						// and must be cancelled, if the transaction fails
+						transactionTemplate.setReadOnly(false);
+						transactionTemplate.execute((status) -> {
 							
 							String nativeQuery = "SELECT j.start_time, js.id, pf.name "
 									+ "FROM processing_order o "
@@ -310,6 +357,7 @@ public class OrderReleaseThread extends Thread {
 									
 									if (null == jsId || null == pfName) {
 										logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, "Invalid query result: " + Arrays.asList(jobStep));
+
 										throw new RuntimeException("Invalid query result");
 									}
 									
@@ -320,6 +368,9 @@ public class OrderReleaseThread extends Thread {
 										}
 										UtilService.getJobStepUtil().checkJobStepToRun(kc, jsId);
 									} catch (Exception e) {
+										if (logger.isDebugEnabled())
+											logger.debug("... exception in checkJobStepToRun(" + pfName + ", " + jsId + "): ", e);
+
 										logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 										throw e;
 									} 
@@ -333,6 +384,8 @@ public class OrderReleaseThread extends Thread {
 							return null;					
 						});
 					} catch (Exception e) {
+						if (logger.isDebugEnabled())
+							logger.debug("... exception in release::doInTransaction2(" + orderId + "): ", e);
 						throw e;
 					} finally {
 						productionPlanner.releaseThreadSemaphore("releaseOrder2");
@@ -340,6 +393,9 @@ public class OrderReleaseThread extends Thread {
 				}
 			} catch (Exception e) {	
 				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+				
+				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 				throw e;
 			}
 			if (this.isInterrupted()) {
@@ -350,6 +406,9 @@ public class OrderReleaseThread extends Thread {
 			final PlannerResultMessage finalAnswer = new PlannerResultMessage(releaseAnswer.getMessage());
 			try {
 				productionPlanner.acquireThreadSemaphore("releaseOrder3");	
+
+				// TODO Add transaction retry here, but need to find the retry condition first
+				transactionTemplate.setReadOnly(false);
 				answer = transactionTemplate.execute((status) -> {
 					ProcessingOrder lambdaOrder = null;
 					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
@@ -385,7 +444,13 @@ public class OrderReleaseThread extends Thread {
 						}
 						lambdaAnswer.setText(logger.log(lambdaAnswer.getMessage(), lambdaOrder.getIdentifier()));
 						lambdaOrder.incrementVersion();
-						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
+						try {
+							lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
+						} catch (Exception e) {
+							if (logger.isDebugEnabled())
+								logger.debug("... exception in getOrderRepository.save1(" + lambdaOrder.getIdentifier() + "): ", e);
+							throw e;
+						}
 					} else {
 						// the order is also released
 						Boolean running = false;
@@ -405,12 +470,21 @@ public class OrderReleaseThread extends Thread {
 						}
 						lambdaAnswer.setMessage(PlannerMessage.ORDER_RELEASED);
 						lambdaAnswer.setText(logger.log(lambdaAnswer.getMessage(), lambdaOrder.getIdentifier(), this.getName()));
-						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
+						try {
+							lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
+						} catch (Exception e) {
+							if (logger.isDebugEnabled())
+								logger.debug("... exception in getOrderRepository.save2(" + lambdaOrder.getIdentifier() + "): ", e);
+							throw e;
+						}
 					}
 					return lambdaAnswer;
 				});
 
 			} catch (Exception e) {	
+				if (logger.isDebugEnabled())
+					logger.debug("... exception in release::doInTransaction3(" + orderId + "): ", e);
+
 				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 				throw e;
 			} finally {

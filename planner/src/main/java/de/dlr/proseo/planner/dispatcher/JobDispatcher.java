@@ -178,9 +178,7 @@ public class JobDispatcher {
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 
-			if (logger.isDebugEnabled()) {
-				logger.debug("An exception occurred. Cause: ", e);
-			}
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 
 			throw e;
 		}
@@ -467,9 +465,9 @@ public class JobDispatcher {
 			}
 		} catch (Exception e) {
 			logger.log(PlannerMessage.SENDING_JOB_EXCEPTION, e.getMessage());
-			if (logger.isDebugEnabled()) {
-				logger.debug("An exception occurred. Cause: ", e);
-			}
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 			return null;
 		}
 

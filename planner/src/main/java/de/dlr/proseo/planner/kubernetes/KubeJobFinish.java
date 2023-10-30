@@ -139,9 +139,13 @@ public class KubeJobFinish extends Thread {
 				} catch (Exception e) {
 					planner.releaseThreadSemaphore("KubeJobFinish.run");
 					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 				}
 			} catch (InterruptedException e) {
-				// TODO Handle interruption exception
+				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+								
+				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			}
 		}
 

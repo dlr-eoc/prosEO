@@ -424,6 +424,8 @@ public class KubeConfig {
 					client = Config.fromToken(url, processingEngineToken, false);
 				} catch (Exception e) {
 					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 				}
 			}
 
@@ -694,13 +696,13 @@ public class KubeConfig {
 		} catch (RuntimeException e) {
 			logger.log(PlannerMessage.JOB_CREATION_FAILED, e.getClass() + " - " + e.getMessage());
 
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 			newJob = null;
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
-
-			if (logger.isDebugEnabled()) {
-				logger.debug("An exception occurred. Cause: ", e);
-			}
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 
 			newJob = null;
 		}
@@ -731,10 +733,8 @@ public class KubeConfig {
 			newJob = newJob.createJob(this, stdoutLogLevel, stderrLogLevel);
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
-
-			if (logger.isDebugEnabled()) {
-				logger.debug("An exception occurred. Cause: ", e);
-			}
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 
 			newJob = null;
 		}
@@ -790,10 +790,8 @@ public class KubeConfig {
 				// Nothing to do, because there is a bug in Kubernetes API (IllegalState) or the job is already gone (Api)
 				return true;
 			}
-
-			if (logger.isDebugEnabled()) {
-				logger.debug("An exception occurred. Cause: ", e);
-			}
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 
 			return false;
 		} finally {
@@ -837,9 +835,7 @@ public class KubeConfig {
 
 				logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 
-				if (logger.isDebugEnabled()) {
-					logger.debug("An exception occurred: ", e);
-				}
+				if (logger.isDebugEnabled())  logger.debug("... exception stack trace: ", e);
 			}
 
 			if ((retryNumber < 10 && foundJob == null)) {
@@ -881,6 +877,8 @@ public class KubeConfig {
 					retryNumber = 10;
 				} else {
 					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 				}
 			}
 			

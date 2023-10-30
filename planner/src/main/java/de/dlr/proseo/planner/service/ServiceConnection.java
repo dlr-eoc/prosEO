@@ -109,6 +109,9 @@ public class ServiceConnection {
 			throw e;
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 			throw new RuntimeException(e);
 		}
 		
@@ -166,6 +169,9 @@ public class ServiceConnection {
 			throw e;
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 			throw new RuntimeException(e);
 		}
 		
@@ -225,6 +231,9 @@ public class ServiceConnection {
 			throw e;
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 			throw new RuntimeException(e);
 		}
 		
@@ -286,6 +295,9 @@ public class ServiceConnection {
 			req.setEntity(new StringEntity(jsonObject));
 		} catch (Exception e) {
 			String message = logger.log(PlannerMessage.SERIALIZATION_FAILED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 			throw new RuntimeException(message, e);
 		}
 		// Execute the HTTP request
@@ -353,6 +365,9 @@ public class ServiceConnection {
 			throw e;
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 			throw new RuntimeException(e);
 		}
 	}
@@ -400,6 +415,9 @@ public class ServiceConnection {
 			throw new RuntimeException(message, e);
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 			throw new RuntimeException(e);
 		}
 		

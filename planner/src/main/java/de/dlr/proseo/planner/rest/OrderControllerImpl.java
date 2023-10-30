@@ -22,7 +22,6 @@ import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.enums.OrderSource;
-import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.planner.ProductionPlanner;
@@ -40,7 +39,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -101,6 +99,9 @@ public class OrderControllerImpl implements OrderController {
 			} catch (Exception e) {
 				productionPlanner.releaseThreadSemaphore("getOrders");	
 				String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+				
+				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 			}			
 			logger.log(PlannerMessage.ORDERS_RETRIEVED);
@@ -108,6 +109,8 @@ public class OrderControllerImpl implements OrderController {
 			return new ResponseEntity<>(list, HttpStatus.OK);
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -138,6 +141,8 @@ public class OrderControllerImpl implements OrderController {
 			}
 		} catch (Exception e) {	
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -170,6 +175,9 @@ public class OrderControllerImpl implements OrderController {
 			} catch (Exception e) {
 				productionPlanner.releaseThreadSemaphore("approveOrder");	
 				String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+				
+				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 			if (msg.getSuccess()) {
@@ -217,6 +225,8 @@ public class OrderControllerImpl implements OrderController {
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -251,6 +261,9 @@ public class OrderControllerImpl implements OrderController {
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("deleteOrder");	
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 
@@ -267,6 +280,8 @@ public class OrderControllerImpl implements OrderController {
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -274,6 +289,15 @@ public class OrderControllerImpl implements OrderController {
 	/**
 	 * Plan processing order of id on processing facility
 	 * 
+	 * @param releaseId the processing order database ID
+	 * @param facility the processing facility name
+	 * @param wait indicates whether to wait for the order planning to complete
+	 * @param httpHeaders the HTTP request headers (injected)
+	 * @return HTTP status "CREATED" and the updated REST order, if the planning succeeded, or
+	 *         HTTP status "NOT MODIFIED", an error message and the original REST order, if a warning was issued, or
+	 *         HTTP status "NOT FOUND" and an error message, if either the order or the facility cannot be found, or
+	 *         HTTP status "BAD REQUEST" and an error message, if the planning failed for some reason, or
+	 *         HTTP status "INTERNAL SERVER ERROR" and an error message, if any unforeseen error occurred
 	 */
 	@Override
 	public ResponseEntity<RestOrder> planOrder(String releaseId, String facility, Boolean wait, HttpHeaders httpHeaders) {
@@ -335,6 +359,8 @@ public class OrderControllerImpl implements OrderController {
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -342,6 +368,13 @@ public class OrderControllerImpl implements OrderController {
 	/**
 	 * Release processing order of id (at the moment the same functionality as resumeOrder)
 	 * 
+	 * @param orderId the processing order database ID
+	 * @param wait indicates whether to wait for the order releasing to complete
+	 * @param httpHeaders the HTTP request headers (injected)
+	 * @return HTTP status "OK" and the updated REST order, if the releasing succeeded, or
+	 *         HTTP status "NOT FOUND" and an error message, if the order cannot be found, or
+	 *         HTTP status "BAD REQUEST" and an error message, if the releasing failed for some reason, or
+	 *         HTTP status "INTERNAL SERVER ERROR" and an error message, if any unforeseen error occurred
 	 */
 	@Override
 	public ResponseEntity<RestOrder> releaseOrder(String orderId, Boolean wait, HttpHeaders httpHeaders) {
@@ -359,6 +392,8 @@ public class OrderControllerImpl implements OrderController {
 			if (wait == null) {
 				wait = false;
 			}
+			
+			// Release the order (same as resume)
 			PlannerResultMessage msg = orderUtil.resume(order, wait, userPassword[0], userPassword[1]);
 			
 			// Check whether the release triggers any job steps
@@ -371,6 +406,9 @@ public class OrderControllerImpl implements OrderController {
 				if (ro.getOrderSource().equals(OrderSource.ODIP.toString())) {
 					// read database object and check state of job steps. 
 					// They have to be released and not waiting input
+					
+					// TODO Check: Since the code below (from "if (orderName != null)") has been commented out, the following
+					// lines have no meaning any more - or have they?
 
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
@@ -378,7 +416,8 @@ public class OrderControllerImpl implements OrderController {
 					// used to identify the order and missing input (if not null) as well 
 					String orderName = null;
 					try {
-						productionPlanner.acquireThreadSemaphore("resumeOdip");	
+						productionPlanner.acquireThreadSemaphore("resumeOdip");
+						transactionTemplate.setReadOnly(true);
 						orderName = transactionTemplate.execute((status) -> {
 							Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
 							if (opt.isPresent()) {
@@ -396,6 +435,9 @@ public class OrderControllerImpl implements OrderController {
 						});
 					} catch (Exception e) {
 						String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+						
+						if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 					} finally {
 						productionPlanner.releaseThreadSemaphore("resumeOdip");					
@@ -417,6 +459,8 @@ public class OrderControllerImpl implements OrderController {
 //							message.copy(dummy);
 //						} catch (Exception e) {
 //							logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+//					
+//							if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 //						} finally {
 //							productionPlanner.releaseThreadSemaphore("resumeOdip2");					
 //						}
@@ -436,6 +480,9 @@ public class OrderControllerImpl implements OrderController {
 			}
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -483,6 +530,9 @@ public class OrderControllerImpl implements OrderController {
 		} catch (Exception e) {
 			productionPlanner.releaseThreadSemaphore("cancelOrder");	
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
@@ -521,6 +571,9 @@ public class OrderControllerImpl implements OrderController {
 		} catch (Exception e) {
 			productionPlanner.releaseThreadSemaphore("closeOrder");	
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
@@ -595,6 +648,8 @@ public class OrderControllerImpl implements OrderController {
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -629,6 +684,9 @@ public class OrderControllerImpl implements OrderController {
 			} catch (Exception e) {
 				productionPlanner.releaseThreadSemaphore("retryOrder");	
 				String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+				
+				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 			if (msg.getSuccess()) {
@@ -642,6 +700,8 @@ public class OrderControllerImpl implements OrderController {
 			}
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -702,6 +762,8 @@ public class OrderControllerImpl implements OrderController {
 		} catch (Exception e) {
 			productionPlanner.releaseThreadSemaphore("findOrder");	
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());	
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 		}
 		return order;
 	}
@@ -725,6 +787,8 @@ public class OrderControllerImpl implements OrderController {
 			});
 		} catch (Exception e) {
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());	
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 		} finally {
 			productionPlanner.releaseThreadSemaphore("getRestOrder");
 		}
