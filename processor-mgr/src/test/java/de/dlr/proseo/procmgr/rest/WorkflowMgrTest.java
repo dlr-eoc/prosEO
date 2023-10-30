@@ -341,16 +341,16 @@ public class WorkflowMgrTest {
 			.getProductType());
 
 		// A valid outputProductClass must be provided, i.e., the processor class must
-		// be able to generate it.
-		testWorkflow.setOutputProductClass(null);
-		assertThrows(IllegalArgumentException.class, () -> workflowMgr.createWorkflow(testWorkflow));
-		testWorkflow.setOutputProductClass(RepositoryService.getProductClassRepository()
-			.findByMissionCodeAndProductType(testMissionData[0], testWorkflowData[0][3])
-			.getProductType());
-		assertThrows(IllegalArgumentException.class, () -> workflowMgr.createWorkflow(testWorkflow));
-		testWorkflow.setOutputProductClass(RepositoryService.getProductClassRepository()
-			.findByMissionCodeAndProductType(testMissionData[0], testWorkflowData[0][4])
-			.getProductType());
+		// be able to generate it. --> TODO This check was removed, create a new unit test for the new functionality
+//		testWorkflow.setOutputProductClass(null);
+//		assertThrows(IllegalArgumentException.class, () -> workflowMgr.createWorkflow(testWorkflow));
+//		testWorkflow.setOutputProductClass(RepositoryService.getProductClassRepository()
+//			.findByMissionCodeAndProductType(testMissionData[0], testWorkflowData[0][3])
+//			.getProductType());
+//		assertThrows(IllegalArgumentException.class, () -> workflowMgr.createWorkflow(testWorkflow));
+//		testWorkflow.setOutputProductClass(RepositoryService.getProductClassRepository()
+//			.findByMissionCodeAndProductType(testMissionData[0], testWorkflowData[0][4])
+//			.getProductType());
 
 		// A valid configuredProcessor must be provided.
 		testWorkflow.setConfiguredProcessor(null);
@@ -609,15 +609,15 @@ public class WorkflowMgrTest {
 		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testWorkflow.setInputProductClass(testWorkflowData[0][3]);
 
-		// If changed, the new output product class must be valid.
-		testWorkflow.setOutputProductClass("invalid");
-		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+		// If changed, the new output product class must be valid. --> TODO Check removed in code, update unit test
+//		testWorkflow.setOutputProductClass("invalid");
+//		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		// ... and match the configured processor. (Here, an input product class is
 		// used,
 		// which the specified processor cannot produce.)
-		testWorkflow.setOutputProductClass(testWorkflowData[0][3]);
-		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
-		testWorkflow.setOutputProductClass(testWorkflowData[0][4]);
+//		testWorkflow.setOutputProductClass(testWorkflowData[0][3]);
+//		assertThrows(IllegalArgumentException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
+//		testWorkflow.setOutputProductClass(testWorkflowData[0][4]);
 
 		// Deleting workflowOptions is allowed.
 		testWorkflow.getWorkflowOptions().clear();
