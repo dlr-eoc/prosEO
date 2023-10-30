@@ -18,7 +18,6 @@ import java.util.Set;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.ws.rs.ProcessingException;
 import javax.ws.rs.core.MediaType;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,24 +32,24 @@ import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.interfaces.rest.model.RestMessage;
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.planner.PlannerResultMessage;
-import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.logging.messages.GeneralMessage;
-import de.dlr.proseo.logging.messages.IngestorMessage;
+import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.model.Job;
+import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductFile;
+import de.dlr.proseo.model.enums.OrderSource;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ProductionType;
-import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.planner.ProductionPlanner;
-import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 import de.dlr.proseo.planner.ProductionPlannerConfiguration;
 import de.dlr.proseo.planner.ProductionPlannerSecurityConfig;
+import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 
 /**
  * Handle processing orders
@@ -1336,9 +1335,11 @@ public class OrderUtil {
 	@Transactional
 	public Boolean 
 	sendNotification(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> sendNotification({})", order.getIdentifier());
 		if (order.getNotificationEndpoint() != null) {
 			switch (order.getOrderSource()) {
 			case ODIP:
+				if (logger.isTraceEnabled()) logger.trace(">>> sendNotification({})", OrderSource.ODIP);
 				// create the message content as String
 				// first check whether product is generated, 
 				// use output product of first job step
@@ -1392,6 +1393,7 @@ public class OrderUtil {
 						RestTemplate restTemplate = new RestTemplate();
 						ResponseEntity<String> response = null;
 						try {
+							if (logger.isTraceEnabled()) logger.trace(">>> notify({}, {})", url, restMessage.);
 							response = restTemplate.postForEntity(url, restMessage, String.class);
 						} catch (RestClientException rce) {
 							String msg = logger.log(PlannerMessage.NOTIFY_FAILED, url, rce.getMessage());
