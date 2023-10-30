@@ -20,6 +20,7 @@ public enum NotificationMessage implements ProseoMessage {
 	MSG_MISSING_MESSAGE_CONTENT	(1703, Level.ERROR, false, "Message content is missed", ""),
 	MSG_INVALID_CONTENT_TYPE	(1704, Level.WARN, false, "Invalid content type, set to {}", ""),
 	MESSAGING_EXCEPTION			(1705, Level.ERROR, false, "Error sending MIME message: {}", ""),
+	UNKNOWN_MEDIATYPE			(1706, Level.ERROR, false, "The MediaType {} is unknown, use simple message", ""),
 	;
 	
 	private final int code;

@@ -22,11 +22,11 @@ public enum OdipMessage implements ProseoMessage {
 	MSG_PRODUCTIONORDER_NOT_FOUND			(7206, Level.ERROR, false, "No production order found with UUID {0}", ""),
 	MSG_NOT_AUTHORIZED_FOR_PRODUCTIONORDER 	(7207, Level.ERROR, false, "User {0} not authorized to access requested production order {1}", ""),
 	MSG_EXCEPTION 							(7208, Level.ERROR, false, "Request failed (cause {0}: {1})", ""),
-	MSG_FORBIDDEN 							(7209, Level.ERROR, false, "Creation, update and deletion of products not allowed through PRIP", ""),
+	MSG_FORBIDDEN 							(7209, Level.ERROR, false, "Creation, update and deletion of objects not allowed through ODPRIP", ""),
 	MSG_PRODUCT_NOT_AVAILABLE 				(7210, Level.ERROR, false, "Product {0} not available on any Processing Facility", ""),
 	MSG_UNSUPPORTED_FORMAT 					(7211, Level.ERROR, false, "Unsupported response format {0}", ""),
 	MSG_INVALID_RANGE_HEADER 				(7212, Level.WARN, 	true, "Ignoring invalid HTTP range header {0}", ""),
-	MSG_REDIRECT 							(7213, Level.INFO, 	true, "Redirecting download request to Storage Manger URL {0}", ""),
+	MSG_REDIRECT 							(7213, Level.INFO, 	true, "Redirecting download request to Prip URL {0}", ""),
 	MSG_TOKEN_CREATED 						(7214, Level.INFO, 	true, "OAuth2 token created for user {0}", ""),
 	MSG_TOKEN_INVALID 						(7215, Level.ERROR, false, "Authentication token {0} invalid (cause: {1})", ""),
 	MSG_TOKEN_EXPIRED 						(7216, Level.ERROR, false, "Authentication token expired at {0}", ""),
@@ -76,6 +76,9 @@ public enum OdipMessage implements ProseoMessage {
 	MSG_WORKFLOW_NOT_FOUND					(7260, Level.ERROR, false, "No workflow found with UUID {0}", ""),
 	MSG_NOT_AUTHORIZED_FOR_WORKFLOW 		(7261, Level.ERROR, false, "User {0} not authorized to access requested production order {1}", ""),
 	MSG_JSON_PARSE_ERROR					(7262, Level.ERROR, false, "JSON parse error: {0}", ""),
+	MSG_PRODUCTIONORDERPRODUCT_NOT_FOUND	(7263, Level.ERROR, false, "No product found for production order with UUID {0}", ""),
+	MSG_PRODUCTIONORDERWORKFLOW_NOT_FOUND	(7264, Level.ERROR, false, "No workflow found for production order with UUID {0}", ""),
+	MSG_PRODUCTIONORDERPRODUCT_NO_FILES 	(7265, Level.ERROR, false, "Requested product of production order with UUID {0} has no files", ""),
 	;
 
 	private final int code;
