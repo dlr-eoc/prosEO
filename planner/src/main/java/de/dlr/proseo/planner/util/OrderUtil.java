@@ -1393,7 +1393,7 @@ public class OrderUtil {
 						RestTemplate restTemplate = new RestTemplate();
 						ResponseEntity<String> response = null;
 						try {
-							if (logger.isTraceEnabled()) logger.trace(">>> notify({}, {})", url, restMessage.);
+							if (logger.isTraceEnabled()) logger.trace(">>> notify({}, {})", url, restMessage);
 							response = restTemplate.postForEntity(url, restMessage, String.class);
 						} catch (RestClientException rce) {
 							String msg = logger.log(PlannerMessage.NOTIFY_FAILED, url, rce.getMessage());
