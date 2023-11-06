@@ -85,7 +85,7 @@ import de.dlr.proseo.model.rest.model.RestOrder;
  */
 @Component
 @Transactional
-public class OdipEntityProcessor implements EntityProcessor, PrimitiveProcessor, MediaEntityProcessor {
+public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcessor {
 
 	/* Other string constants */
 	private static final String HTTP_HEADER_WARNING = "Warning";
@@ -524,7 +524,7 @@ public class OdipEntityProcessor implements EntityProcessor, PrimitiveProcessor,
 			try {
 				String productUuid = getProductUuidProductionOrder(keyPredicates.get(0).getText());
 				String uri = config.getPripUrl() + "/Products(" + productUuid + ")";
-				logger.log(PripMessage.MSG_REDIRECT, uri);
+				logger.log(OdipMessage.MSG_REDIRECT, uri);
 				response.setStatusCode(HttpStatusCode.TEMPORARY_REDIRECT.getStatusCode());
 				response.setHeader(HttpHeader.LOCATION, uri);
 				BasicHeader token = new BasicHeader(AUTH.WWW_AUTH_RESP,
@@ -811,7 +811,7 @@ public class OdipEntityProcessor implements EntityProcessor, PrimitiveProcessor,
 		try {
 			String productUuid = getProductUuidProductionOrder(keyPredicates.get(0).getText());
 			String uri = config.getPripUrl() + "/Products(" + productUuid + ")/$value";
-			logger.log(PripMessage.MSG_REDIRECT, uri);
+			logger.log(OdipMessage.MSG_REDIRECT, uri);
 			response.setStatusCode(HttpStatusCode.TEMPORARY_REDIRECT.getStatusCode());
 			response.setHeader(HttpHeader.LOCATION, uri);
 			BasicHeader token = new BasicHeader(AUTH.WWW_AUTH_RESP,
@@ -870,34 +870,6 @@ public class OdipEntityProcessor implements EntityProcessor, PrimitiveProcessor,
 		response.setHeader(HTTP_HEADER_WARNING, logger.log(OdipMessage.MSG_FORBIDDEN));
 	}
 
-	@Override
-	public void readPrimitive(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat)
-			throws ODataApplicationException, ODataLibraryException {
-		if (logger.isTraceEnabled())
-			logger.trace(">>> readPrimitive({}, {}, {}, {})", request, response, uriInfo, responseFormat);
-		
-	}
-
-	@Override
-	public void updatePrimitive(ODataRequest request, ODataResponse response, UriInfo uriInfo,
-			ContentType requestFormat, ContentType responseFormat)
-			throws ODataApplicationException, ODataLibraryException {
-		if (logger.isTraceEnabled())
-			logger.trace(">>> updatePrimitive({}, {}, {})", request, response, uriInfo);
-
-		response.setStatusCode(HttpStatusCode.FORBIDDEN.getStatusCode());
-		response.setHeader(HTTP_HEADER_WARNING, logger.log(OdipMessage.MSG_FORBIDDEN));
-	}
-
-	@Override
-	public void deletePrimitive(ODataRequest request, ODataResponse response, UriInfo uriInfo)
-			throws ODataApplicationException, ODataLibraryException {
-		if (logger.isTraceEnabled())
-			logger.trace(">>> deletePrimitive({}, {}, {})", request, response, uriInfo);
-
-		response.setStatusCode(HttpStatusCode.FORBIDDEN.getStatusCode());
-		response.setHeader(HTTP_HEADER_WARNING, logger.log(OdipMessage.MSG_FORBIDDEN));		
-	}
 	/**
 	 * Creates a media entity.
 	 *
@@ -916,7 +888,7 @@ public class OdipEntityProcessor implements EntityProcessor, PrimitiveProcessor,
 			logger.trace(">>> createMediaEntity({}, {}, {}, {}, {})", request, response, uriInfo, requestFormat, responseFormat);
 
 		response.setStatusCode(HttpStatusCode.FORBIDDEN.getStatusCode());
-		response.setHeader(HTTP_HEADER_WARNING, logger.log(PripMessage.MSG_FORBIDDEN));
+		response.setHeader(HTTP_HEADER_WARNING, logger.log(OdipMessage.MSG_FORBIDDEN));
 	}
 
 	/**
@@ -935,7 +907,7 @@ public class OdipEntityProcessor implements EntityProcessor, PrimitiveProcessor,
 			logger.trace(">>> deleteMediaEntity({}, {}, {})", request, response, uriInfo);
 
 		response.setStatusCode(HttpStatusCode.FORBIDDEN.getStatusCode());
-		response.setHeader(HTTP_HEADER_WARNING, logger.log(PripMessage.MSG_FORBIDDEN));
+		response.setHeader(HTTP_HEADER_WARNING, logger.log(OdipMessage.MSG_FORBIDDEN));
 	}
 
 	/**
@@ -956,7 +928,7 @@ public class OdipEntityProcessor implements EntityProcessor, PrimitiveProcessor,
 			logger.trace(">>> updateMediaEntity({}, {}, {}, {}, {})", request, response, uriInfo, requestFormat, responseFormat);
 
 		response.setStatusCode(HttpStatusCode.FORBIDDEN.getStatusCode());
-		response.setHeader(HTTP_HEADER_WARNING, logger.log(PripMessage.MSG_FORBIDDEN));
+		response.setHeader(HTTP_HEADER_WARNING, logger.log(OdipMessage.MSG_FORBIDDEN));
 	}
 
 }

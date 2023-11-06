@@ -11,8 +11,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.Orbit;
@@ -34,6 +37,7 @@ import de.dlr.proseo.model.rest.model.StderrLogLevel;
 import de.dlr.proseo.model.rest.model.StdoutLogLevel;
 import de.dlr.proseo.model.util.OrderUtil;
 import de.dlr.proseo.planner.ProductionPlanner;
+import de.dlr.proseo.planner.util.OrderPlanThread;
 /**
  * Build REST objects
  * 
@@ -43,7 +47,11 @@ import de.dlr.proseo.planner.ProductionPlanner;
 @Component
 public class RestUtil {
 
-
+	/**
+	 * Logger of this class
+	 */
+	private static ProseoLogger logger = new ProseoLogger(RestUtil.class);
+    
 	/**
 	 * Build RestOrder of ProcessingOrder
 	 * 
@@ -64,7 +72,7 @@ public class RestUtil {
 	 * @param job
 	 * @return RestJob
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public static RestJob createRestJob(Job job, Boolean logs) {
 		RestJob rj = new RestJob();
 		if (job != null) {
@@ -107,7 +115,7 @@ public class RestUtil {
 	 * @param job
 	 * @return RestJobGraph
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public static RestJobGraph createRestJobGraph(Job job) {
 		RestJobGraph rj = new RestJobGraph();
 		if (job != null) {
@@ -137,8 +145,10 @@ public class RestUtil {
 			try {
 				ro.setSpacecraftCode(orbit.getSpacecraft().getCode());
 				ro.setMissionCode(orbit.getSpacecraft().getMission().getCode());
-			} catch (Exception ex) {
+			} catch (Exception e) {
+				logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
 				
+				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			}
 			ro.setOrbitNumber(Long.valueOf(orbit.getOrbitNumber()));
 			if (orbit.getStartTime() != null) {
@@ -158,7 +168,7 @@ public class RestUtil {
 	 * @param js
 	 * @return RestJobStep
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public static RestJobStep createRestJobStep(JobStep js, Boolean logs) {
 		RestJobStep pjs = new RestJobStep();
 		if (js != null) {
@@ -217,7 +227,7 @@ public class RestUtil {
 	 * @param js
 	 * @return RestJobStep
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public static RestJobStepGraph createRestJobStepGraph(JobStep js) {
 		RestJobStepGraph pjs = new RestJobStepGraph();
 		if (js != null) {

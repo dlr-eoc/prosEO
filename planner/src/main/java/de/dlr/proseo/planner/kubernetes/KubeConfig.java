@@ -13,6 +13,8 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -422,6 +424,8 @@ public class KubeConfig {
 					client = Config.fromToken(url, processingEngineToken, false);
 				} catch (Exception e) {
 					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 				}
 			}
 
@@ -583,6 +587,7 @@ public class KubeConfig {
 
 		// Step 6: Update the state of job steps in the database
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		transactionTemplate.execute((status) -> {
 
 			List<de.dlr.proseo.model.JobStep.JobStepState> jobStepStates = new ArrayList<>();
@@ -679,7 +684,7 @@ public class KubeConfig {
 	 * @param stderrLogLevel the log level for stderr
 	 * @return the created job or null
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public KubeJob createJob(String name, String stdoutLogLevel, String stderrLogLevel) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createJob({}, {}, {})", name, stdoutLogLevel, stderrLogLevel);
@@ -691,13 +696,13 @@ public class KubeConfig {
 		} catch (RuntimeException e) {
 			logger.log(PlannerMessage.JOB_CREATION_FAILED, e.getClass() + " - " + e.getMessage());
 
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 			newJob = null;
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
-
-			if (logger.isDebugEnabled()) {
-				logger.debug("An exception occurred. Cause: ", e);
-			}
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 
 			newJob = null;
 		}
@@ -717,7 +722,7 @@ public class KubeConfig {
 	 * @param stderrLogLevel the log level for stderr
 	 * @return the created job or null
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public KubeJob createJob(long id, String stdoutLogLevel, String stderrLogLevel) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createJob({}, {}, {})", id, stdoutLogLevel, stderrLogLevel);
@@ -728,10 +733,8 @@ public class KubeConfig {
 			newJob = newJob.createJob(this, stdoutLogLevel, stderrLogLevel);
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
-
-			if (logger.isDebugEnabled()) {
-				logger.debug("An exception occurred. Cause: ", e);
-			}
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 
 			newJob = null;
 		}
@@ -787,10 +790,8 @@ public class KubeConfig {
 				// Nothing to do, because there is a bug in Kubernetes API (IllegalState) or the job is already gone (Api)
 				return true;
 			}
-
-			if (logger.isDebugEnabled()) {
-				logger.debug("An exception occurred. Cause: ", e);
-			}
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 
 			return false;
 		} finally {
@@ -834,9 +835,7 @@ public class KubeConfig {
 
 				logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 
-				if (logger.isDebugEnabled()) {
-					logger.debug("An exception occurred: ", e);
-				}
+				if (logger.isDebugEnabled())  logger.debug("... exception stack trace: ", e);
 			}
 
 			if ((retryNumber < 10 && foundJob == null)) {
@@ -878,6 +877,8 @@ public class KubeConfig {
 					retryNumber = 10;
 				} else {
 					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 				}
 			}
 			

@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
  * @author Ernst Melchinger
  */
 @Configuration
-@ConfigurationProperties(prefix = "proseo.monitor")
+@ConfigurationProperties(prefix = "proseo.notification")
 public class NotificationConfiguration {
 
 	/** Default subject */
@@ -23,9 +23,6 @@ public class NotificationConfiguration {
 
 	/** Default HTML content type */
 	private String contentType;
-
-	/** Default sender */
-	private String sender;
 
 	/** Default mail sender */
 	@Value("${proseo.notification.mail.sender}")
@@ -89,20 +86,6 @@ public class NotificationConfiguration {
 	 */
 	public void setContentType(String contentType) {
 		this.contentType = contentType;
-	}
-
-	/**
-	 * @return the sender
-	 */
-	public String getSender() {
-		return sender;
-	}
-
-	/**
-	 * @param sender the sender to set
-	 */
-	public void setSender(String sender) {
-		this.sender = sender;
 	}
 
 	/**

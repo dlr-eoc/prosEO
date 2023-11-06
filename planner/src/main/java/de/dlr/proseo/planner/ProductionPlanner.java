@@ -14,7 +14,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionException;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -52,7 +54,7 @@ import de.dlr.proseo.planner.util.UtilService;
 @SpringBootApplication
 @EnableConfigurationProperties
 @ComponentScan(basePackages={"de.dlr.proseo"})
-//@Transactional
+//@Transactional(isolation = Isolation.REPEATABLE_READ)
 @EnableJpaRepositories("de.dlr.proseo.model.dao")
 public class ProductionPlanner implements CommandLineRunner {
 	
@@ -241,7 +243,7 @@ public class ProductionPlanner implements CommandLineRunner {
 	 */
 	public void acquireReleaseSemaphore(String here) {
 		if (logger.isTraceEnabled()) logger.trace(">>> acquireReleaseSemaphore({})", here == null ? "null" : here);
-		getReleaseSemaphore().acquireUninterruptibly();
+//		getReleaseSemaphore().acquireUninterruptibly();
 		if (logger.isTraceEnabled()) logger.trace("<<< acquireReleaseSemaphore({})", here == null ? "null" : here);
 	}
 	
@@ -253,7 +255,7 @@ public class ProductionPlanner implements CommandLineRunner {
 		if (logger.isTraceEnabled()) logger.trace(">>> releaseReleaseSemaphore({})", here == null ? "null" : here);
 		if (getReleaseSemaphore().availablePermits() <= 0) {
 			if (logger.isTraceEnabled()) logger.trace("    released({})", here);
-			getReleaseSemaphore().release();
+//			getReleaseSemaphore().release();
 		} else {
 			if (logger.isTraceEnabled()) logger.trace("    nothing to release({})", here == null ? "null" : here);
 		}
@@ -265,7 +267,7 @@ public class ProductionPlanner implements CommandLineRunner {
 	 */
 	public void acquireThreadSemaphore(String here) {
 		if (logger.isTraceEnabled()) logger.trace(">>> acquireThreadSemaphore({})", here == null ? "null" : here);
-		getThreadSemaphore().acquireUninterruptibly();
+//		getThreadSemaphore().acquireUninterruptibly();
 		if (logger.isTraceEnabled()) logger.trace("<<< acquireThreadSemaphore({})", here == null ? "null" : here);
 	}
 	
@@ -277,7 +279,7 @@ public class ProductionPlanner implements CommandLineRunner {
 		if (logger.isTraceEnabled()) logger.trace(">>> releaseThreadSemaphore({})", here == null ? "null" : here);
 		if (getThreadSemaphore().availablePermits() <= 0) {
 			if (logger.isTraceEnabled()) logger.trace("    released({})", here);
-			getThreadSemaphore().release();
+//			getThreadSemaphore().release();
 		} else {
 			if (logger.isTraceEnabled()) logger.trace("    nothing to release({})", here == null ? "null" : here);
 		}
@@ -349,7 +351,7 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * Walk through ProcessingFacility list of DB and try to connect each.
 	 * Disconnect and remove KubeConfigs not defined in this list.
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public void updateKubeConfigs() {
 		if (logger.isTraceEnabled()) logger.trace(">>> updateKubeConfigs()");
 		
@@ -391,7 +393,7 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * @param facilityName the name of the processing facility to connect
 	 * @return the KubeConfig object for this processing facility, or null, if the facility is not connected
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public KubeConfig updateKubeConfig(String facilityName) {
 		if (logger.isTraceEnabled()) logger.trace(">>> updateKubeConfig({})", facilityName);
 		
@@ -491,7 +493,9 @@ public class ProductionPlanner implements CommandLineRunner {
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
+
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		try {
 			@SuppressWarnings("unused")
@@ -502,6 +506,7 @@ public class ProductionPlanner implements CommandLineRunner {
 		} catch (TransactionException e) {
 			e.printStackTrace();
 		}
+
 		// continue suspend first
 		checkForRestartSuspend();
 		

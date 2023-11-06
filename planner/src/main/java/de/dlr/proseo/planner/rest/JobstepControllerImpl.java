@@ -14,6 +14,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -79,7 +81,7 @@ public class JobstepControllerImpl implements JobstepController {
      * @return TODO
      */
 	@Override
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
     public ResponseEntity<List<RestJobStep>> getJobSteps(Status status, String mission, Long last, HttpHeaders httpHeaders) {		
 		if (logger.isTraceEnabled()) logger.trace(">>> getJobSteps({}, {}, {})", status, mission, last);
 		
@@ -126,6 +128,8 @@ public class JobstepControllerImpl implements JobstepController {
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -144,6 +148,7 @@ public class JobstepControllerImpl implements JobstepController {
 				try {
 					productionPlanner.acquireThreadSemaphore("getJobStep");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 					transactionTemplate.execute((status) -> {
 						JobStep jsx = this.findJobStepByNameOrIdPrim(name);
 						Job job = jsx.getJob();
@@ -166,6 +171,9 @@ public class JobstepControllerImpl implements JobstepController {
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("getJobStep");	
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 				RestJobStep pjs = getRestJobStep(js.getId(), true);
@@ -179,6 +187,8 @@ public class JobstepControllerImpl implements JobstepController {
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -198,6 +208,8 @@ public class JobstepControllerImpl implements JobstepController {
 				String logx = null;
 				try {
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+					transactionTemplate.setReadOnly(true);
 					logx = transactionTemplate.execute((status) -> {
 						String log = null;
 						JobStep jsx = this.findJobStepByNameOrIdPrim(name);
@@ -220,6 +232,9 @@ public class JobstepControllerImpl implements JobstepController {
 					});
 				} catch (Exception e) {
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 				if (logx == null) {
@@ -233,6 +248,8 @@ public class JobstepControllerImpl implements JobstepController {
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -250,6 +267,7 @@ public class JobstepControllerImpl implements JobstepController {
 		try {
 			// wait until finish of concurrent createJob
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 			JobStep js = this.findJobStepByNameOrId(jobstepId);
 			if (js != null) {
@@ -276,6 +294,9 @@ public class JobstepControllerImpl implements JobstepController {
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("resumeJobStep");	
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 				// Already logged
@@ -293,6 +314,9 @@ public class JobstepControllerImpl implements JobstepController {
 									productionPlanner.releaseThreadSemaphore("resumeJobStep");
 								} catch (Exception e) {
 									String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+									
+									if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 									productionPlanner.releaseThreadSemaphore("resumeJobStep");
 									return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 								}
@@ -316,6 +340,9 @@ public class JobstepControllerImpl implements JobstepController {
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -337,6 +364,7 @@ public class JobstepControllerImpl implements JobstepController {
 				try {
 					productionPlanner.acquireThreadSemaphore("cancelJobStep");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 					msg = transactionTemplate.execute((status) -> {
 						JobStep jsx = this.findJobStepByNameOrIdPrim(jobstepId);
 						return jobStepUtil.cancel(jsx);
@@ -345,6 +373,9 @@ public class JobstepControllerImpl implements JobstepController {
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("cancelJobStep");	
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 				if (msg.getSuccess()) {
@@ -357,6 +388,9 @@ public class JobstepControllerImpl implements JobstepController {
 								productionPlanner.releaseThreadSemaphore("cancelJobStep");
 							} catch (Exception e) {
 								String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+								
+								if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 								productionPlanner.releaseThreadSemaphore("cancelJobStep");
 								return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 							}
@@ -377,6 +411,9 @@ public class JobstepControllerImpl implements JobstepController {
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -396,6 +433,7 @@ public class JobstepControllerImpl implements JobstepController {
 			JobStep js = this.findJobStepByNameOrId(jobstepId);
 			if (js != null) {
 				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 				try {
 					productionPlanner.acquireThreadSemaphore("suspendJobStep");
 					final ResponseEntity<RestJobStep> msgF = transactionTemplate.execute((status) -> {
@@ -418,6 +456,9 @@ public class JobstepControllerImpl implements JobstepController {
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("suspendJobStep");	
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 				PlannerResultMessage msg = new PlannerResultMessage(GeneralMessage.FALSE); 
@@ -430,6 +471,9 @@ public class JobstepControllerImpl implements JobstepController {
 					productionPlanner.releaseThreadSemaphore("suspendJobStep");
 				} catch (Exception e) {
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 					productionPlanner.releaseThreadSemaphore("suspendJobStep");
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
@@ -452,6 +496,8 @@ public class JobstepControllerImpl implements JobstepController {
 			e.printStackTrace();
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -466,6 +512,8 @@ public class JobstepControllerImpl implements JobstepController {
 		
 		JobStep js = null;
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+		transactionTemplate.setReadOnly(true);
 		js = transactionTemplate.execute((status) -> {
 			JobStep jsx = null;
 			Long id = null;
@@ -507,6 +555,8 @@ public class JobstepControllerImpl implements JobstepController {
 		} catch (Exception e) {
 			productionPlanner.releaseThreadSemaphore("findJobStepByNameOrId");	
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());	
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 		}
 		return js;
 	}
@@ -516,6 +566,8 @@ public class JobstepControllerImpl implements JobstepController {
 		try {
 			productionPlanner.acquireThreadSemaphore("getRestJobStep");
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+			transactionTemplate.setReadOnly(true);
 			answer = transactionTemplate.execute((status) -> {
 				RestJobStep rj = null;
 				JobStep js = null;
@@ -528,6 +580,8 @@ public class JobstepControllerImpl implements JobstepController {
 			});
 		} catch (Exception e) {
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());	
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 		} finally {
 			productionPlanner.releaseThreadSemaphore("getRestJobStep");
 		}
@@ -548,6 +602,7 @@ public class JobstepControllerImpl implements JobstepController {
 				try {
 					productionPlanner.acquireThreadSemaphore("retryJobStep");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 					msg = transactionTemplate.execute((status) -> {
 						JobStep jsx = this.findJobStepByNameOrIdPrim(jobstepId);
 						return jobStepUtil.retry(jsx);
@@ -556,6 +611,9 @@ public class JobstepControllerImpl implements JobstepController {
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("retryJobStep");	
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 				
@@ -574,6 +632,8 @@ public class JobstepControllerImpl implements JobstepController {
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}

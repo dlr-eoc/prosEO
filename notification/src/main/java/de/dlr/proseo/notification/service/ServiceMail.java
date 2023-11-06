@@ -103,13 +103,14 @@ public class ServiceMail {
 		// Send the message according to media type
 		if (mediaType.equals(MediaType.TEXT_PLAIN)) {
 			return sendSimpleMessage(to, user, password, subject, messageCode, message, sender);
+		} else if (mediaType.equals(MediaType.APPLICATION_JSON_VALUE)) {
+			return sendSimpleMessage(to, user, password, subject, messageCode, message, sender);
 		} else if (mediaType.equals(MediaType.TEXT_HTML)) {
 			return sendMimeMessage(to, user, password, subject, messageCode, message, sender);
+		} else {
+			logger.log(NotificationMessage.UNKNOWN_MEDIATYPE, mediaType);
+			return sendSimpleMessage(to, user, password, subject, messageCode, message, sender);
 		}
-
-		// TODO error handling
-
-		return null;
 	}
 
 	/**

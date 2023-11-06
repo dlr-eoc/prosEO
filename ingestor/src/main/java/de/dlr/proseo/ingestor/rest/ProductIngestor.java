@@ -26,8 +26,11 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -88,6 +91,10 @@ public class ProductIngestor {
 	/** Product Manager */
 	@Autowired
 	ProductManager productManager;
+	
+	/** Database transaction manager */
+	@Autowired
+	private PlatformTransactionManager txManager;
 
 	/** Client to request/release semaphores from Production Planner */
 	@Autowired
@@ -133,7 +140,6 @@ public class ProductIngestor {
 	 *                                  Manager fails
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
-	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public List<RestProduct> ingestProducts(ProcessingFacility facility, boolean copyFiles, List<IngestorProduct> ingestorProducts, String user,
 			String password) throws IllegalArgumentException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled())
@@ -147,29 +153,39 @@ public class ProductIngestor {
 
 		// Loop over all products to check for existing products or create new ones
 		List<Long> productsCreated = new ArrayList<>();
+
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		
-		for (IngestorProduct ingestorProduct: ingestorProducts) {
+		transactionTemplate.execute(status -> {
+			// Wrap in transaction to ensure that either all product creates succeed or all fail
 			
-			// Ensure user is authorized for the product's mission
-			if (!securityService.isAuthorizedForMission(ingestorProduct.getMissionCode())) {
-				throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, ingestorProduct.getMissionCode(),
-						securityService.getMission()));
-			}
-
-			// Create a new product or test for existing product in the metadata database
-			try {
-				if (null == ingestorProduct.getId() || 0 == ingestorProduct.getId()) {
-					RestProduct newProduct = productManager.createProduct(ingestorProduct);
-					ingestorProduct.setId(newProduct.getId());
-					productsCreated.add(newProduct.getId());
-				} else {
-					productManager.getProductById(ingestorProduct.getId());
+			for (IngestorProduct ingestorProduct: ingestorProducts) {
+				
+				// Ensure user is authorized for the product's mission
+				if (!securityService.isAuthorizedForMission(ingestorProduct.getMissionCode())) {
+					throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, ingestorProduct.getMissionCode(),
+							securityService.getMission()));
 				}
-			} catch (Exception e) {
-				throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_INGESTION_FAILED, e.getMessage()));
-			}
 
-		}
+				// Create a new product or test for existing product in the metadata database
+				try {
+					if (null == ingestorProduct.getId() || 0 == ingestorProduct.getId()) {
+						RestProduct newProduct = productManager.createProduct(ingestorProduct);
+						ingestorProduct.setId(newProduct.getId());
+						productsCreated.add(newProduct.getId());
+					} else {
+						productManager.getProductById(ingestorProduct.getId());
+					}
+				} catch (Exception e) {
+					throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_INGESTION_FAILED, e.getMessage()));
+				}
+
+			}
+			
+			return true;
+		});
+		
 		
 		// Upload all products to Storage Manager
 		try {
@@ -197,18 +213,16 @@ public class ProductIngestor {
 			throw e;
 		}
 		
-		// NOTE: No local database access so far, but indirect database reads and writes
-		
 		// Now we know all uploads were successful, and we can update the database metadata in one single transaction
-		List<RestProduct> result = new ArrayList<>();
-		
-		try {
-			semaphoreClient.acquireSemaphore(user, password);
+		List<RestProduct> result = transactionTemplate.execute(status -> {
+			try {
+				semaphoreClient.acquireSemaphore(user, password);
 
-			result = ingestToDatabase(ingestorProducts, facility);
-		} finally {
-			semaphoreClient.releaseSemaphore(user, password);
-		}
+				return ingestToDatabase(ingestorProducts, facility);
+			} finally {
+				semaphoreClient.releaseSemaphore(user, password);
+			}
+		});
 		
 		// Database updated, notifying Production Planner if requested
 		if (ingestorConfig.getNotifyPlanner()) {

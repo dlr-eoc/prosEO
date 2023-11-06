@@ -88,6 +88,9 @@ public class KubeDispatcher extends Thread {
 					// Release the thread semaphore for the kubeConfig's production planner
 					kubeConfig.getProductionPlanner().releaseThreadSemaphore("run");
 				} catch (Exception e) {
+					if (logger.isDebugEnabled())
+						logger.debug("... exception in checkForJobStepsToRun(" + kubeConfig.getId() + ", " + 0 + ", " + onlyRun + ", true): ", e);
+
 					// Release the thread semaphore in case of an exception
 					kubeConfig.getProductionPlanner().releaseThreadSemaphore("run");
 					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
@@ -116,6 +119,8 @@ public class KubeDispatcher extends Thread {
 						// Release the thread semaphore in case of an exception
 						productionPlanner.releaseThreadSemaphore("run");
 						logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+						
+						if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 					}
 				} else {
 					while (!this.isInterrupted()) {
@@ -134,6 +139,9 @@ public class KubeDispatcher extends Thread {
 								// Release the thread semaphore for the production planner
 								productionPlanner.releaseThreadSemaphore("run");
 							} catch (Exception e) {
+								if (logger.isDebugEnabled())
+									logger.debug("... exception in checkForJobStepsToRun(" + kubeConfig.getId() + ", " + 0 + ", " + onlyRun + ", true): ", e);
+
 								// Release the thread semaphore in case of an exception
 								productionPlanner.releaseThreadSemaphore("run");
 								logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());

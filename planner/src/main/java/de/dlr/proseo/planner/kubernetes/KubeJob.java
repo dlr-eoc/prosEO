@@ -10,18 +10,12 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-
-import javax.persistence.EntityManager;
-import javax.persistence.LockModeType;
 
 import org.hibernate.exception.LockAcquisitionException;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -96,6 +90,19 @@ public class KubeJob {
 
 	/** The processing facility running the job step */
 	private KubeConfig kubeConfig;
+	
+	/**
+	 * Internal class to store data for Job Order creation
+	 */
+	private static class JobOrderData {
+		public JobOrder jobOrder;
+		public JobOrderVersion jobOrderVersion;
+		
+		public JobOrderData(JobOrder jobOrder, JobOrderVersion jobOrderVersion) {
+			this.jobOrder = jobOrder;
+			this.jobOrderVersion = jobOrderVersion;
+		}
+	}
 
 	/**
 	 * Returns the job ID.
@@ -290,9 +297,8 @@ public class KubeJob {
 
 	/**
 	 * Creates a Kubernetes job on the processing facility based on the provided parameters.
-	 *
-	 * The method is synchronized to prevent interference between different threads (background dispatching and event-triggered
-	 * dispatching). // TODO Is it?
+	 * 
+	 * TODO Add retry of database update after job has been sent to Kubernetes
 	 *
 	 * @param kubeConfig     The processing facility's kube configuration
 	 * @param stdoutLogLevel The log level for stdout
@@ -300,12 +306,10 @@ public class KubeJob {
 	 * @return The kube job
 	 * @throws Exception if an error occurs during job creation
 	 */
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRES_NEW)
+	//@Transactional(readOnly = false, propagation = Propagation.REQUIRES_NEW)
 	public KubeJob createJob(KubeConfig kubeConfig, String stdoutLogLevel, String stderrLogLevel) throws Exception {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createJob({}, {}, {})", kubeConfig, stdoutLogLevel, stderrLogLevel);
-
-		JobOrder jobOrder = null; // TODO Should this indeed be a local and not an instance variable?
 
 		// Ensure that the kube configuration is given
 		this.kubeConfig = kubeConfig;
@@ -314,226 +318,255 @@ public class KubeJob {
 			return null;
 		}
 
-//		EntityManager entityManager = this.kubeConfig.getProductionPlanner().getEm();
+		TransactionTemplate transactionTemplate = new TransactionTemplate(this.kubeConfig.getProductionPlanner().getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
-		// Find the job step in the database
-		Optional<JobStep> jobStepOptional = RepositoryService.getJobStepRepository().findById(this.getJobId());
-		if (jobStepOptional.isEmpty()) {
-			logger.log(PlannerMessage.JOB_STEP_NOT_FOUND, this.getJobId());
-			return null;
-		}
-		JobStep jobStep = jobStepOptional.get();
-
-		// Retrieve the configured processor
-		ConfiguredProcessor configuredProcessor = jobStep.getOutputProduct().getConfiguredProcessor();
-		if (null == configuredProcessor || !configuredProcessor.getEnabled()) {
-			logger.log(PlannerMessage.CONFIG_PROC_DISABLED, jobStep.getOutputProduct().getConfiguredProcessor().getIdentifier());
-			return null;
-		}
-
-		// Find the execution time
-		Instant execTime = jobStep.getJob().getProcessingOrder().getExecutionTime();
-		if (execTime != null) {
-			if (Instant.now().isBefore(execTime)) {
-				if (logger.isTraceEnabled())
-					logger.trace(">>> execution time of order is after now.");
+		transactionTemplate.setReadOnly(false);
+		final JobDispatcher jobDispatcher = new JobDispatcher();
+		final JobOrderData jobOrderData = transactionTemplate.execute(status -> {
+			
+			// Find the job step in the database
+			Optional<JobStep> jobStepOptional = RepositoryService.getJobStepRepository().findById(this.getJobId());
+			if (jobStepOptional.isEmpty()) {
+				logger.log(PlannerMessage.JOB_STEP_NOT_FOUND, this.getJobId());
 				return null;
 			}
-		}
+			JobStep jobStep = jobStepOptional.get();
 
-		// Set the log levels if provided, otherwise use default values
-		if (stdoutLogLevel != null && !stdoutLogLevel.isEmpty()) {
-			jobStep.setStdoutLogLevel(JobStep.StdLogLevel.valueOf(stdoutLogLevel));
-		} else if (jobStep.getStdoutLogLevel() == null) {
-			jobStep.setStdoutLogLevel(StdLogLevel.INFO);
-		}
-		if (stderrLogLevel != null && !stderrLogLevel.isEmpty()) {
-			jobStep.setStderrLogLevel(JobStep.StdLogLevel.valueOf(stderrLogLevel));
-		} else if (jobStep.getStdoutLogLevel() == null) {
-			jobStep.setStderrLogLevel(StdLogLevel.INFO);
-		}
-		// Set the generation time
-		Instant generationTime = Instant.now();
-		Duration retentionPeriod = jobStep.getJob().getProcessingOrder().getProductRetentionPeriod();
-		if (retentionPeriod == null) {
-			retentionPeriod = jobStep.getJob().getProcessingOrder().getMission().getProductRetentionPeriod();
-		}
-		setGenerationTime(jobStep.getOutputProduct(), generationTime, retentionPeriod);
-
-		// Attempt to create the job order for the job step
-		JobDispatcher jobDispatcher = new JobDispatcher();
-		try {
-			jobOrder = jobDispatcher.createJobOrder(jobStep);
-		} catch (Exception e) {
-			logger.log(PlannerMessage.JOB_STEP_CREATION_FAILED_EXCEPTION, jobStep.getId(), e.getMessage());
-
-			jobStep.setProcessingStartTime(generationTime);
-			jobStep.setProcessingStdOut(String.format("Exception: creation of job order for job step %d failed", jobStep.getId())
-					+ "\n" + e.getMessage()); // TODO Maybe also add the exception class for added information?
-			jobStep.setJobStepState(JobStepState.RUNNING);
-			jobStep.setJobStepState(JobStepState.FAILED);
-			RepositoryService.getJobStepRepository().save(jobStep);
-			return null;
-		}
-		if (jobOrder == null) {
-			throw new Exception(logger.log(PlannerMessage.JOB_STEP_CREATION_FAILED, jobStep.getId()));
-		}
-
-		// Send the job order to the storage manager
-		JobOrderVersion jobOrderVersion = configuredProcessor.getProcessor().getJobOrderVersion();
-		jobOrder = jobDispatcher.sendJobOrderToStorageManager(this.kubeConfig, jobOrder, jobOrderVersion);
-		if (jobOrder == null) {
-			throw new Exception(logger.log(PlannerMessage.SENDING_JOB_STEP_FAILED, jobStep.getId()));
-		}
-		jobStep.setJobOrderFilename(jobOrder.getFileName());
-
-		// Construct the environment variables and configuration for the Kubernetes job
-		String missionCode = jobStep.getJob().getProcessingOrder().getMission().getCode();
-		String wrapUser = missionCode + "-" + ProductionPlanner.config.getWrapperUser();
-		imageName = jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getDockerImage();
-		String localMountPoint = ProductionPlanner.config.getPosixWorkerMountPoint();
-
-		// Configure the compute resource requirements
-		V1ResourceRequirements requirements = new V1ResourceRequirements();
-		String cpus = jobStep.getOutputProduct()
-			.getConfiguredProcessor()
-			.getConfiguration()
-			.getDockerRunParameters()
-			.getOrDefault("cpu", "1");
-		String mem = jobStep.getOutputProduct()
-			.getConfiguredProcessor()
-			.getConfiguration()
-			.getDockerRunParameters()
-			.getOrDefault("memory", "1");
-		String minDiskSpace = jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getMinDiskSpace().toString()
-				+ "Mi";
-		try {
-			cpus = getCPUs(jobStep.getOutputProduct().getConfiguredProcessor().getProcessor(), Integer.parseInt(cpus)).toString();
-		} catch (NumberFormatException ex) {
-			cpus = getCPUs(jobStep.getOutputProduct().getConfiguredProcessor().getProcessor(), 1).toString();
-		}
-		try {
-			mem = getMinMemory(jobStep.getOutputProduct().getConfiguredProcessor().getProcessor(), Integer.parseInt(mem)).toString()
-					+ "Gi";
-		} catch (NumberFormatException ex) {
-			mem = getMinMemory(jobStep.getOutputProduct().getConfiguredProcessor().getProcessor(), 1).toString() + "Gi";
-		}
-		requirements.putRequestsItem("cpu", new Quantity(cpus))
-			.putRequestsItem("memory", new Quantity(mem))
-			.putRequestsItem("ephemeral-storage", new Quantity(minDiskSpace));
-		V1EnvVarSource es = new V1EnvVarSourceBuilder().withNewFieldRef().withFieldPath("status.hostIP").endFieldRef().build();
-		String localStorageManagerUrl = this.kubeConfig.getLocalStorageManagerUrl();
-
-		// Create a host alias, if given in the config file, for use in the Planner and Ingestor URLs
-		List<V1HostAlias> hostAliases = new ArrayList<>();
-		if (null != ProductionPlanner.config.getHostAlias()) {
-			String[] hostAliasParts = ProductionPlanner.config.getHostAlias().split(":");
-			if (2 != hostAliasParts.length) {
-				logger.log(PlannerMessage.MALFORMED_HOST_ALIAS, ProductionPlanner.config.getHostAlias());
-			} else {
-				V1HostAlias hostAlias = new V1HostAlias().ip(hostAliasParts[0])
-					.hostnames(Arrays.asList(hostAliasParts[1].split(",")));
-				hostAliases.add(hostAlias);
+			// Retrieve the configured processor
+			ConfiguredProcessor configuredProcessor = jobStep.getOutputProduct().getConfiguredProcessor();
+			if (null == configuredProcessor || !configuredProcessor.getEnabled()) {
+				logger.log(PlannerMessage.CONFIG_PROC_DISABLED, jobStep.getOutputProduct().getConfiguredProcessor().getIdentifier());
+				return null;
 			}
+
+			// Find the execution time
+			Instant execTime = jobStep.getJob().getProcessingOrder().getExecutionTime();
+			if (execTime != null) {
+				if (Instant.now().isBefore(execTime)) {
+					if (logger.isTraceEnabled())
+						logger.trace(">>> execution time of order is after now.");
+					return null;
+				}
+			}
+			
+			// Set the log levels if provided, otherwise use default values
+			if (stdoutLogLevel != null && !stdoutLogLevel.isEmpty()) {
+				jobStep.setStdoutLogLevel(JobStep.StdLogLevel.valueOf(stdoutLogLevel));
+			} else if (jobStep.getStdoutLogLevel() == null) {
+				jobStep.setStdoutLogLevel(StdLogLevel.INFO);
+			}
+			if (stderrLogLevel != null && !stderrLogLevel.isEmpty()) {
+				jobStep.setStderrLogLevel(JobStep.StdLogLevel.valueOf(stderrLogLevel));
+			} else if (jobStep.getStdoutLogLevel() == null) {
+				jobStep.setStderrLogLevel(StdLogLevel.INFO);
+			}
+			// Set the generation time
+			Instant generationTime = Instant.now();
+			Duration retentionPeriod = jobStep.getJob().getProcessingOrder().getProductRetentionPeriod();
+			if (retentionPeriod == null) {
+				retentionPeriod = jobStep.getJob().getProcessingOrder().getMission().getProductRetentionPeriod();
+			}
+			setGenerationTime(jobStep.getOutputProduct(), generationTime, retentionPeriod);
+
+			// Attempt to create the job order for the job step
+			JobOrder jobOrder = null;
+
+			try {
+				jobOrder = jobDispatcher.createJobOrder(jobStep);
+			} catch (Exception e) {
+				logger.log(PlannerMessage.JOB_STEP_CREATION_FAILED_EXCEPTION, jobStep.getId(), e.getMessage());
+				
+				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
+				jobStep.setProcessingStartTime(generationTime);
+				jobStep.setProcessingCompletionTime(generationTime);
+				jobStep.setProcessingStdOut(
+						String.format("Exception: creation of job order for job step %d failed", jobStep.getId())
+						+ "\n" + e.getClass().getName() + " / " + e.getMessage());
+				jobStep.setJobStepState(JobStepState.RUNNING);
+				jobStep.setJobStepState(JobStepState.FAILED);
+				RepositoryService.getJobStepRepository().save(jobStep);
+				return null;
+			}
+			if (jobOrder == null) {
+				return null;
+			}
+
+			return new JobOrderData(jobOrder, configuredProcessor.getProcessor().getJobOrderVersion());
+		});
+		if (null == jobOrderData || null == jobOrderData.jobOrder) {
+			throw new Exception(logger.log(PlannerMessage.JOB_STEP_CREATION_FAILED, this.getJobId()));
 		}
+		
 
-		// Build the job specification
-		V1JobSpec jobSpec = new V1JobSpecBuilder().withNewTemplate()
-			.withNewMetadata()
-			.withName(jobName + "spec")
-			.addToLabels("jobgroup", jobName + "spec")
-			.endMetadata()
-			.withNewSpec()
-			.addToImagePullSecrets(new V1LocalObjectReference().name("proseo-regcred"))
-			.addAllToHostAliases(hostAliases)
-			.addNewContainer()
-			.withName(containerName)
-			.withImage(imageName)
-			.withImagePullPolicy("Always")
-			.addNewEnv()
-			.withName("NODE_IP")
-			.withValueFrom(es)
-			.endEnv()
-			.addNewEnv()
-			.withName("JOBORDER_FILE")
-			.withValue(jobOrder.getFileName())
-			.endEnv()
-			.addNewEnv()
-			.withName("JOBORDER_VERSION")
-			.withValue(jobOrderVersion.toString())
-			.endEnv()
-			.addNewEnv()
-			.withName("STORAGE_ENDPOINT")
-			.withValue(localStorageManagerUrl)
-			.endEnv()
-			.addNewEnv()
-			.withName("STORAGE_USER")
-			.withValue(wrapUser)
-			.endEnv()
-			.addNewEnv()
-			.withName("STORAGE_PASSWORD")
-			.withValue(ProductionPlanner.config.getWrapperPassword())
-			.endEnv()
-			.addNewEnv()
-			.withName("STATE_CALLBACK_ENDPOINT")
-			.withValue(ProductionPlanner.config.getProductionPlannerUrl() + "/processingfacilities/" + this.kubeConfig.getId()
-					+ "/finish/" + jobName)
-			.endEnv()
-			.addNewEnv()
-			.withName("PROCESSING_FACILITY_NAME")
-			.withValue(this.kubeConfig.getId())
-			.endEnv()
-			.addNewEnv()
-			.withName("INGESTOR_ENDPOINT")
-			.withValue(ProductionPlanner.config.getIngestorUrl())
-			.endEnv()
-			.addNewEnv()
-			.withName("PROSEO_USER")
-			.withValue(wrapUser)
-			.endEnv()
-			.addNewEnv()
-			.withName("PROSEO_PW")
-			.withValue(ProductionPlanner.config.getWrapperPassword())
-			.endEnv()
-			.addNewEnv()
-			.withName("LOCAL_FS_MOUNT")
-			.withValue(localMountPoint)
-			.endEnv()
-			.addNewEnv()
-			.withName("FILECHECK_MAX_CYCLES")
-			.withValue(ProductionPlanner.config.getProductionPlannerFileCheckMaxCycles().toString())
-			.endEnv()
-			.addNewEnv()
-			.withName("FILECHECK_WAIT_TIME")
-			.withValue(ProductionPlanner.config.getProductionPlannerFileCheckWaitTime().toString())
-			.endEnv()
-			.addNewVolumeMount()
-			.withName("proseo-mnt")
-			.withMountPath(localMountPoint)
-			.endVolumeMount()
-			.withResources(requirements)
-			.endContainer()
-			.addNewVolume()
-			.withName("proseo-mnt")
-			.withNewPersistentVolumeClaim()
-			.withClaimName("proseo-nfs")
-			.endPersistentVolumeClaim()
-			.endVolume()
-			.withRestartPolicy("Never")
-			.withHostNetwork(true)
-			.withDnsPolicy("ClusterFirstWithHostNet")
-			.endSpec()
-			.endTemplate()
-			.withBackoffLimit(0)
-			.build();
+		// Send the job order to the storage manager (outside of database transaction)
+		jobOrderData.jobOrder = jobDispatcher.sendJobOrderToStorageManager(this.kubeConfig, jobOrderData.jobOrder, jobOrderData.jobOrderVersion);
+		if (jobOrderData.jobOrder == null) {
+			throw new Exception(logger.log(PlannerMessage.SENDING_JOB_STEP_FAILED, this.getJobId()));
+		}
+		
+		V1Job job = transactionTemplate.execute(status -> {
+			// Find the job step in the database
+			Optional<JobStep> jobStepOptional = RepositoryService.getJobStepRepository().findById(this.getJobId());
+			if (jobStepOptional.isEmpty()) {
+				logger.log(PlannerMessage.JOB_STEP_NOT_FOUND, this.getJobId());
+				return null;
+			}
+			JobStep jobStep = jobStepOptional.get();
 
-		// Build the job object
-		V1Job job = new V1JobBuilder().withNewMetadata()
-			.withName(jobName)
-			.addToLabels("jobgroup", jobName + "spec")
-			.endMetadata()
-			.withSpec(jobSpec)
-			.build();
+			jobStep.setJobOrderFilename(jobOrderData.jobOrder.getFileName());
+
+			// Construct the environment variables and configuration for the Kubernetes job
+			String missionCode = jobStep.getJob().getProcessingOrder().getMission().getCode();
+			String wrapUser = missionCode + "-" + ProductionPlanner.config.getWrapperUser();
+			imageName = jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getDockerImage();
+			String localMountPoint = ProductionPlanner.config.getPosixWorkerMountPoint();
+
+			// Configure the compute resource requirements
+			V1ResourceRequirements requirements = new V1ResourceRequirements();
+			String cpus = jobStep.getOutputProduct()
+				.getConfiguredProcessor()
+				.getConfiguration()
+				.getDockerRunParameters()
+				.getOrDefault("cpu", "1");
+			String mem = jobStep.getOutputProduct()
+				.getConfiguredProcessor()
+				.getConfiguration()
+				.getDockerRunParameters()
+				.getOrDefault("memory", "1");
+			String minDiskSpace = jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getMinDiskSpace().toString()
+					+ "Mi";
+			try {
+				cpus = getCPUs(jobStep.getOutputProduct().getConfiguredProcessor().getProcessor(), Integer.parseInt(cpus)).toString();
+			} catch (NumberFormatException ex) {
+				cpus = getCPUs(jobStep.getOutputProduct().getConfiguredProcessor().getProcessor(), 1).toString();
+			}
+			try {
+				mem = getMinMemory(jobStep.getOutputProduct().getConfiguredProcessor().getProcessor(), Integer.parseInt(mem)).toString()
+						+ "Gi";
+			} catch (NumberFormatException ex) {
+				mem = getMinMemory(jobStep.getOutputProduct().getConfiguredProcessor().getProcessor(), 1).toString() + "Gi";
+			}
+			requirements.putRequestsItem("cpu", new Quantity(cpus))
+				.putRequestsItem("memory", new Quantity(mem))
+				.putRequestsItem("ephemeral-storage", new Quantity(minDiskSpace));
+			V1EnvVarSource es = new V1EnvVarSourceBuilder().withNewFieldRef().withFieldPath("status.hostIP").endFieldRef().build();
+			String localStorageManagerUrl = this.kubeConfig.getLocalStorageManagerUrl();
+
+			// Create a host alias, if given in the config file, for use in the Planner and Ingestor URLs
+			List<V1HostAlias> hostAliases = new ArrayList<>();
+			if (null != ProductionPlanner.config.getHostAlias()) {
+				String[] hostAliasParts = ProductionPlanner.config.getHostAlias().split(":");
+				if (2 != hostAliasParts.length) {
+					logger.log(PlannerMessage.MALFORMED_HOST_ALIAS, ProductionPlanner.config.getHostAlias());
+				} else {
+					V1HostAlias hostAlias = new V1HostAlias().ip(hostAliasParts[0])
+						.hostnames(Arrays.asList(hostAliasParts[1].split(",")));
+					hostAliases.add(hostAlias);
+				}
+			}
+
+			// Build the job specification
+			V1JobSpec jobSpec = new V1JobSpecBuilder().withNewTemplate()
+				.withNewMetadata()
+				.withName(jobName + "spec")
+				.addToLabels("jobgroup", jobName + "spec")
+				.endMetadata()
+				.withNewSpec()
+				.addToImagePullSecrets(new V1LocalObjectReference().name("proseo-regcred"))
+				.addAllToHostAliases(hostAliases)
+				.addNewContainer()
+				.withName(containerName)
+				.withImage(imageName)
+				.withImagePullPolicy("Always")
+				.addNewEnv()
+				.withName("NODE_IP")
+				.withValueFrom(es)
+				.endEnv()
+				.addNewEnv()
+				.withName("JOBORDER_FILE")
+				.withValue(jobOrderData.jobOrder.getFileName())
+				.endEnv()
+				.addNewEnv()
+				.withName("JOBORDER_VERSION")
+				.withValue(jobOrderData.jobOrderVersion.toString())
+				.endEnv()
+				.addNewEnv()
+				.withName("STORAGE_ENDPOINT")
+				.withValue(localStorageManagerUrl)
+				.endEnv()
+				.addNewEnv()
+				.withName("STORAGE_USER")
+				.withValue(wrapUser)
+				.endEnv()
+				.addNewEnv()
+				.withName("STORAGE_PASSWORD")
+				.withValue(ProductionPlanner.config.getWrapperPassword())
+				.endEnv()
+				.addNewEnv()
+				.withName("STATE_CALLBACK_ENDPOINT")
+				.withValue(ProductionPlanner.config.getProductionPlannerUrl() + "/processingfacilities/" + this.kubeConfig.getId()
+						+ "/finish/" + jobName)
+				.endEnv()
+				.addNewEnv()
+				.withName("PROCESSING_FACILITY_NAME")
+				.withValue(this.kubeConfig.getId())
+				.endEnv()
+				.addNewEnv()
+				.withName("INGESTOR_ENDPOINT")
+				.withValue(ProductionPlanner.config.getIngestorUrl())
+				.endEnv()
+				.addNewEnv()
+				.withName("PROSEO_USER")
+				.withValue(wrapUser)
+				.endEnv()
+				.addNewEnv()
+				.withName("PROSEO_PW")
+				.withValue(ProductionPlanner.config.getWrapperPassword())
+				.endEnv()
+				.addNewEnv()
+				.withName("LOCAL_FS_MOUNT")
+				.withValue(localMountPoint)
+				.endEnv()
+				.addNewEnv()
+				.withName("FILECHECK_MAX_CYCLES")
+				.withValue(ProductionPlanner.config.getProductionPlannerFileCheckMaxCycles().toString())
+				.endEnv()
+				.addNewEnv()
+				.withName("FILECHECK_WAIT_TIME")
+				.withValue(ProductionPlanner.config.getProductionPlannerFileCheckWaitTime().toString())
+				.endEnv()
+				.addNewVolumeMount()
+				.withName("proseo-mnt")
+				.withMountPath(localMountPoint)
+				.endVolumeMount()
+				.withResources(requirements)
+				.endContainer()
+				.addNewVolume()
+				.withName("proseo-mnt")
+				.withNewPersistentVolumeClaim()
+				.withClaimName("proseo-nfs")
+				.endPersistentVolumeClaim()
+				.endVolume()
+				.withRestartPolicy("Never")
+				.withHostNetwork(true)
+				.withDnsPolicy("ClusterFirstWithHostNet")
+				.endSpec()
+				.endTemplate()
+				.withBackoffLimit(0)
+				.build();
+
+			// Build the job object
+			return new V1JobBuilder().withNewMetadata()
+				.withName(jobName)
+				.addToLabels("jobgroup", jobName + "spec")
+				.endMetadata()
+				.withSpec(jobSpec)
+				.build();
+			
+		});
+		
 
 		try {
 			if (logger.isTraceEnabled()) {
@@ -544,10 +577,23 @@ public class KubeJob {
 			job = kubeConfig.getBatchApiV1().createNamespacedJob(kubeConfig.getNamespace(), job, null, null, null);
 			logger.log(PlannerMessage.JOB_CREATED, job.getMetadata().getName(), job.getStatus().toString());
 
-			// Start the job step
-			jobStep.setProcessingStartTime(generationTime);
-			UtilService.getJobStepUtil().startJobStep(jobStep);
-			logger.log(PlannerMessage.KUBEJOB_CREATED, this.kubeConfig.getId(), jobName);
+			transactionTemplate.execute(status -> {
+				// Find the job step in the database
+				Optional<JobStep> jobStepOptional = RepositoryService.getJobStepRepository().findById(this.getJobId());
+				if (jobStepOptional.isEmpty()) {
+					logger.log(PlannerMessage.JOB_STEP_NOT_FOUND, this.getJobId());
+					return null;
+				}
+				JobStep jobStep = jobStepOptional.get();
+
+				// Start the job step
+				jobStep.setProcessingStartTime(Instant.now());
+				UtilService.getJobStepUtil().startJobStep(jobStep);
+				logger.log(PlannerMessage.KUBEJOB_CREATED, this.kubeConfig.getId(), jobName);
+
+				return null;
+				
+			});
 
 			// Wait for the time span configured for K8 job creation
 			Integer cycle = ProductionPlanner.config.getProductionPlannerJobCreatedWaitTime();
@@ -556,16 +602,32 @@ public class KubeJob {
 			}
 			Thread.sleep(cycle);
 
-			// Search for pods associated with the kube job, update the job log, and save the job step to the repository.
-			searchPod();
-			updateJobLog(jobStep);
-			RepositoryService.getJobStepRepository().save(jobStep);
+			transactionTemplate.execute(status -> {
+				// Find the job step in the database
+				Optional<JobStep> jobStepOptional = RepositoryService.getJobStepRepository().findById(this.getJobId());
+				if (jobStepOptional.isEmpty()) {
+					logger.log(PlannerMessage.JOB_STEP_NOT_FOUND, this.getJobId());
+					return null;
+				}
+				JobStep jobStep = jobStepOptional.get();
+
+				// Search for pods associated with the kube job, update the job log, and save the job step to the repository.
+				searchPod();
+				updateJobLog(jobStep);
+				RepositoryService.getJobStepRepository().save(jobStep);
+
+				return null;
+				
+			});
 		} catch (ApiException e) {
-			logger.log(PlannerMessage.KUBERNETES_API_EXCEPTION, jobStep.getId(), e.getMessage(), e.getCode(), e.getResponseBody(),
+			logger.log(PlannerMessage.KUBERNETES_API_EXCEPTION, this.getJobId(), e.getMessage(), e.getCode(), e.getResponseBody(),
 					e.getResponseHeaders());
 			throw e;
 		} catch (Exception e) {
-			logger.log(PlannerMessage.JOB_STEP_CREATION_EXCEPTION, jobStep.getId(), e.getMessage());
+			logger.log(PlannerMessage.JOB_STEP_CREATION_EXCEPTION, this.getJobId(), e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 			throw e;
 		}
 
@@ -610,6 +672,8 @@ public class KubeJob {
 				}
 			} catch (ApiException e) {
 				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+				
+				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			}
 		}
 
@@ -648,6 +712,7 @@ public class KubeJob {
 			kubeConfig.getProductionPlanner().acquireThreadSemaphore("finish");
 
 			TransactionTemplate transactionTemplate = new TransactionTemplate(kubeConfig.getProductionPlanner().getTxManager());
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 			transactionTemplate.execute((status) -> {
 
 				// Retrieve the kube job information
@@ -701,10 +766,8 @@ public class KubeJob {
 					}
 				} catch (Exception e) {
 					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
-
-					if (logger.isDebugEnabled()) {
-						logger.debug("An exception occurred. Cause: ", e);
-					}
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 				}
 
 				// Save the updated job step in the repository
@@ -718,8 +781,12 @@ public class KubeJob {
 			});
 		} catch (LockAcquisitionException e) {
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 		} catch (Exception e) {
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 		} finally {
 			// Release the thread semaphore for "finish" operation
 			kubeConfig.getProductionPlanner().releaseThreadSemaphore("finish");
@@ -810,6 +877,7 @@ public class KubeJob {
 		}
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(this.kubeConfig.getProductionPlanner().getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		return transactionTemplate.execute((status) -> {
 
 			Boolean success = Boolean.FALSE;
@@ -931,10 +999,8 @@ public class KubeJob {
 				}
 			} catch (Exception e) {
 				logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
-
-				if (logger.isDebugEnabled()) {
-					logger.debug("An exception occurred. Cause: ", e);
-				}
+				
+				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 
 				// Re-throw to roll back the transaction
 				throw e;
@@ -971,6 +1037,7 @@ public class KubeJob {
 		if (success) {
 			TransactionTemplate transactionTemplate = new TransactionTemplate(
 					this.kubeConfig.getProductionPlanner().getTxManager());
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 			transactionTemplate.execute((status) -> {
 				Long jobStepId = this.getJobId();
 				Optional<JobStep> jobStep = RepositoryService.getJobStepRepository().findById(jobStepId);
@@ -1028,32 +1095,30 @@ public class KubeJob {
 	 * @param product The product to lock
 	 * @param em      The EntityManager used for locking
 	 */
-	private void lockProduct(Product product, EntityManager em) {
-		// Set the lock timeout to 10,000 milliseconds
-		Map<String, Object> properties = new HashMap<>();
-		properties.put("javax.persistence.lock.timeout", 10000L);
-
-		if (product != null) {
-			if (logger.isTraceEnabled())
-				logger.trace("  lock product {}", product.getId());
-
-			try {
-				// Acquire a pessimistic write lock on the product
-				em.lock(product, LockModeType.PESSIMISTIC_WRITE, properties);
-			} catch (Exception e) {
-				logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
-
-				if (logger.isDebugEnabled()) {
-					logger.debug("An exception occurred. Cause: ", e);
-				}
-			}
-
-			// Recursively lock the component products
-			for (Product p : product.getComponentProducts()) {
-				lockProduct(p, em);
-			}
-		}
-	}
+//	private void lockProduct(Product product, EntityManager em) {
+//		// Set the lock timeout to 10,000 milliseconds
+//		Map<String, Object> properties = new HashMap<>();
+//		properties.put("javax.persistence.lock.timeout", 10000L);
+//
+//		if (product != null) {
+//			if (logger.isTraceEnabled())
+//				logger.trace("  lock product {}", product.getId());
+//
+//			try {
+//				// Acquire a pessimistic write lock on the product
+//				em.lock(product, LockModeType.PESSIMISTIC_WRITE, properties);
+//			} catch (Exception e) {
+//				logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+//				
+//				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+//			}
+//
+//			// Recursively lock the component products
+//			for (Product p : product.getComponentProducts()) {
+//				lockProduct(p, em);
+//			}
+//		}
+//	}
 
 	/**
 	 * Retrieves the maximum value of CPUs required by the processor tasks.
@@ -1146,6 +1211,8 @@ public class KubeJob {
 				}
 			} catch (ApiException e) {
 				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+				
+				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			}
 		}
 
@@ -1163,6 +1230,8 @@ public class KubeJob {
 					logger.trace("    updateInfo: ApiException ignore, normally the pod has no log");
 			} catch (Exception e) {
 				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+				
+				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			}
 		} else {
 			if (logger.isTraceEnabled())

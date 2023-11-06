@@ -18,7 +18,6 @@ import java.util.Set;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.ws.rs.ProcessingException;
 import javax.ws.rs.core.MediaType;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +25,8 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClientException;
@@ -33,24 +34,24 @@ import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.interfaces.rest.model.RestMessage;
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.planner.PlannerResultMessage;
-import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.logging.messages.GeneralMessage;
-import de.dlr.proseo.logging.messages.IngestorMessage;
+import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.model.Job;
+import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductFile;
+import de.dlr.proseo.model.enums.OrderSource;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ProductionType;
-import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.planner.ProductionPlanner;
-import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 import de.dlr.proseo.planner.ProductionPlannerConfiguration;
 import de.dlr.proseo.planner.ProductionPlannerSecurityConfig;
+import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 
 /**
  * Handle processing orders
@@ -102,7 +103,7 @@ public class OrderUtil {
 	 * @param order The processing Order
 	 * @return Result message
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public PlannerResultMessage cancel(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> cancel({})", (null == order ? "null" : order.getId()));
 		
@@ -162,6 +163,7 @@ public class OrderUtil {
 	public PlannerResultMessage reset(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> reset({})", (null == order ? "null" : order.getId()));
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		if (order != null) {
@@ -204,6 +206,8 @@ public class OrderUtil {
 				} catch (Exception e) {
 					answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
 					answer.setText(logger.log(answer.getMessage(), e.getMessage()));
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 				} finally {
 					productionPlanner.releaseThreadSemaphore("OrderUtil.reset");
 				}
@@ -229,6 +233,8 @@ public class OrderUtil {
 				} catch (Exception e) {
 					answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
 					answer.setText(logger.log(answer.getMessage(), e.getMessage()));
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 				} finally {
 					productionPlanner.releaseThreadSemaphore("OrderUtil.reset");
 				}
@@ -272,6 +278,8 @@ public class OrderUtil {
 				} catch (Exception e) {
 					answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
 					answer.setText(logger.log(answer.getMessage(), e.getMessage()));
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 				} finally {
 					productionPlanner.releaseThreadSemaphore("OrderUtil.reset");
 				}
@@ -309,7 +317,7 @@ public class OrderUtil {
 	 * @param order The processing Order
 	 * @return Result message
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public PlannerResultMessage delete(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> delete({})", (null == order ? "null" : order.getId()));
 		
@@ -373,7 +381,7 @@ public class OrderUtil {
 	 * @param order The processing Order
 	 * @return Result message
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public PlannerResultMessage approve(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> approve({})", (null == order ? "null" : order.getId()));
 		
@@ -429,11 +437,17 @@ public class OrderUtil {
 	 * 
 	 * @param order The processing order
 	 * @param procFacility The processing facility to run the order
+	 * @param wait indicates whether to wait for the order planning to complete
 	 * @return Result message
 	 */
 	public PlannerResultMessage plan(long id,  ProcessingFacility procFacility, Boolean wait) {
-		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		if (logger.isTraceEnabled()) logger.trace(">>> plan({}, {}, {})", id, 
+				(null == procFacility ? "null" : procFacility.getName()), wait);
 
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+
+		transactionTemplate.setReadOnly(true);
 		final ProcessingOrder order = transactionTemplate.execute((status) -> {
 			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
 			if (orderOpt.isPresent()) {
@@ -441,86 +455,104 @@ public class OrderUtil {
 			}
 			return null;
 		});
-		if (logger.isTraceEnabled()) logger.trace(">>> plan({}, {})", (null == order ? "null" : order.getId()),
-				(null == procFacility ? "null" : procFacility.getName()));
+		
+		if (null == order || null == procFacility) {
+			PlannerResultMessage answer = new PlannerResultMessage(PlannerMessage.ORDER_NOT_EXIST);
+			answer.setText(logger.log(answer.getMessage(), id));
+			return answer;
+		}
 		
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
-		if (order != null && procFacility != null) {
-			switch (order.getOrderState()) {
-			case INITIAL:
-				answer.setMessage(PlannerMessage.ORDER_HASTOBE_APPROVED);
-				break;
-			case APPROVED:
-			case PLANNING:
-			case PLANNING_FAILED:
-				try {
-					productionPlanner.acquireThreadSemaphore("plan");
-					answer = transactionTemplate.execute((status) -> {
-						PlannerResultMessage answerx = new PlannerResultMessage(GeneralMessage.FALSE);
-						Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
-						if (orderOpt.isPresent()) {
-							orderOpt.get().setOrderState(OrderState.PLANNING);
-							setStateMessage(order, ProductionPlanner.STATE_MESSAGE_QUEUED);
-							orderOpt.get().incrementVersion();
-							RepositoryService.getOrderRepository().save(orderOpt.get());
-							answerx.setMessage(PlannerMessage.ORDER_PLANNING);
-						} else {
-							answerx.setMessage(PlannerMessage.ORDER_PLANNING_FAILED);
-						}
-						return answerx;
-					});
-				} catch (Exception e) {
-					answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
-				} finally {
-					productionPlanner.releaseThreadSemaphore("plan");
-				}
-				if (answer.getSuccess()) {
-					String threadName = ProductionPlanner.PLAN_THREAD_PREFIX + order.getId();
-					if (!productionPlanner.getPlanThreads().containsKey(threadName)) {
-						OrderPlanThread pt = new OrderPlanThread(productionPlanner, orderDispatcher, id, procFacility, threadName);
-						productionPlanner.getPlanThreads().put(threadName, pt);
-						pt.start();
-						if (wait) {
-							try {
-								pt.join();
-								answer = pt.getResultMessage();
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-								answer.setMessage(PlannerMessage.PLANNING_INTERRUPTED);
-							}
-						}
+
+		switch (order.getOrderState()) {
+		case INITIAL:
+			answer.setMessage(PlannerMessage.ORDER_HASTOBE_APPROVED);
+			break;
+		case APPROVED:
+		case PLANNING_FAILED:
+			// Set order state to PLANNING
+			try {
+				productionPlanner.acquireThreadSemaphore("plan");
+				
+				transactionTemplate.setReadOnly(false);
+				answer = transactionTemplate.execute((status) -> {
+					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+					if (orderOpt.isPresent()) {
+						orderOpt.get().setOrderState(OrderState.PLANNING);
+						orderOpt.get().incrementVersion();
+						RepositoryService.getOrderRepository().save(orderOpt.get());
+
+						return new PlannerResultMessage(PlannerMessage.ORDER_PLANNING);
+					} else {
+						return new PlannerResultMessage(PlannerMessage.ORDER_NOT_EXIST);
 					}
-				}
-				break;	
-			case PLANNED:	
-				answer.setMessage(PlannerMessage.ORDER_ALREADY_PLANNED);
-				break;
-			case RELEASING:
-				answer.setMessage(PlannerMessage.ORDER_ALREADY_RELEASING);
-				break;
-			case RELEASED:
-				answer.setMessage(PlannerMessage.ORDER_ALREADY_RELEASED);
-				break;
-			case RUNNING:
-				answer.setMessage(PlannerMessage.ORDER_ALREADY_RUNNING);
-				break;
-			case SUSPENDING:
-				answer.setMessage(PlannerMessage.ORDER_ALREADY_SUSPENDING);
-				break;
-			case COMPLETED:
-				answer.setMessage(PlannerMessage.ORDER_ALREADY_COMPLETED);
-				break;
-			case FAILED:
-				answer.setMessage(PlannerMessage.ORDER_ALREADY_FAILED);
-				break;
-			case CLOSED:
-				answer.setMessage(PlannerMessage.ORDER_ALREADY_CLOSED);
-				break;
-			default:
+				});
+			} catch (Exception e) {
+				answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
+				answer.setText(logger.log(answer.getMessage(), e.getMessage()));
+				
+				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+			} finally {
+				productionPlanner.releaseThreadSemaphore("plan");
+			}
+			if (!answer.getSuccess()) {
 				break;
 			}
-			answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
+			
+			// Fall through
+		case PLANNING:
+			// Moved here from the transaction above, because it does not affect the transaction
+			// TODO Check whether "orderOpt.get()" should be in place of "order"? (and then it should be within the transaction!)
+			// "order" is local to this method and is never updated in the database!
+			order.setStateMessage(ProductionPlanner.STATE_MESSAGE_QUEUED);
+
+			// Create a planning thread for this order, if required
+			String threadName = ProductionPlanner.PLAN_THREAD_PREFIX + order.getId();
+			if (!productionPlanner.getPlanThreads().containsKey(threadName)) {
+				OrderPlanThread pt = new OrderPlanThread(productionPlanner, orderDispatcher, id, procFacility, threadName);
+				productionPlanner.getPlanThreads().put(threadName, pt);
+				pt.start();
+				if (wait) {
+					try {
+						pt.join();
+						answer = pt.getResultMessage();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+						answer.setMessage(PlannerMessage.PLANNING_INTERRUPTED);
+					}
+				}
+			}
+
+			break;	
+		case PLANNED:	
+			answer.setMessage(PlannerMessage.ORDER_ALREADY_PLANNED);
+			break;
+		case RELEASING:
+			answer.setMessage(PlannerMessage.ORDER_ALREADY_RELEASING);
+			break;
+		case RELEASED:
+			answer.setMessage(PlannerMessage.ORDER_ALREADY_RELEASED);
+			break;
+		case RUNNING:
+			answer.setMessage(PlannerMessage.ORDER_ALREADY_RUNNING);
+			break;
+		case SUSPENDING:
+			answer.setMessage(PlannerMessage.ORDER_ALREADY_SUSPENDING);
+			break;
+		case COMPLETED:
+			answer.setMessage(PlannerMessage.ORDER_ALREADY_COMPLETED);
+			break;
+		case FAILED:
+			answer.setMessage(PlannerMessage.ORDER_ALREADY_FAILED);
+			break;
+		case CLOSED:
+			answer.setMessage(PlannerMessage.ORDER_ALREADY_CLOSED);
+			break;
+		default:
+			break;
 		}
+		answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
+
 		return answer;
 	}
 
@@ -528,6 +560,9 @@ public class OrderUtil {
 	 * Resume the processing order and it jobs and job steps.
 	 * 
 	 * @param order The processing Order
+	 * @param wait indicates whether to wait for the order releasing to complete
+	 * @param user the username for calling other prosEO services (e. g. AIP Client)
+	 * @param pw the password for calling other prosEO services (e. g. AIP Client)
 	 * @return Result message
 	 */
 	public PlannerResultMessage resume(ProcessingOrder order, Boolean wait, String user, String pw) {
@@ -546,15 +581,17 @@ public class OrderUtil {
 			case PLANNED:
 			case RELEASING:
 				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 				Boolean doIt = false;
 				try {
 					productionPlanner.acquireThreadSemaphore("resume");	
+					transactionTemplate.setReadOnly(false);
 					doIt = transactionTemplate.execute((status) -> {
 						Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
 						if (opt.isPresent()) {
 							ProcessingOrder orderx = opt.get();
 							orderx.setOrderState(OrderState.RELEASING);
-							setStateMessage(order, ProductionPlanner.STATE_MESSAGE_RUNNING);
+							//setStateMessage(order, ProductionPlanner.STATE_MESSAGE_RUNNING); // moved out of transaction, see below
 							orderx.incrementVersion();
 							orderx = RepositoryService.getOrderRepository().save(orderx);
 							return true;
@@ -563,13 +600,21 @@ public class OrderUtil {
 					});
 				} catch (Exception e) {
 					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 				} finally {
 					productionPlanner.releaseThreadSemaphore("resume");					
 				}
 				if (doIt) {
+					// Moved here from the transaction above, because it does not affect the transaction
+					// TODO Check whether "orderOpt.get()" should be in place of "order"? (and then it should be within the transaction!)
+					// "order" is local to this method and is never updated in the database!
+					order.setStateMessage(ProductionPlanner.STATE_MESSAGE_RUNNING);
+
 					OrderReleaseThread rt = null; 
 					try {
-						productionPlanner.acquireThreadSemaphore("resume");	
+						productionPlanner.acquireThreadSemaphore("resume");
+						transactionTemplate.setReadOnly(true);
 						final ProcessingOrder ordery = transactionTemplate.execute((status) -> {
 							Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(order.getId());
 							if (orderOpt.isPresent()) {
@@ -588,6 +633,8 @@ public class OrderUtil {
 						}
 					} catch (Exception e) {
 						logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+						
+						if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 					} finally {
 						productionPlanner.releaseThreadSemaphore("resume");					
 					}
@@ -638,7 +685,7 @@ public class OrderUtil {
 	 * @param order The processing Order
 	 * @return Result message
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public PlannerResultMessage startOrder(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> startOrder({})", (null == order ? "null" : order.getId()));
 		
@@ -697,6 +744,7 @@ public class OrderUtil {
 	 */
 	public PlannerResultMessage suspend(long id, Boolean force) {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		final ProcessingOrder order = transactionTemplate.execute((status) -> {
 			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
@@ -812,6 +860,8 @@ public class OrderUtil {
 					});
 				} catch (Exception e) {
 					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 				} finally {
 					productionPlanner.releaseThreadSemaphore("suspend");
 					productionPlanner.checkNextForRestart();					
@@ -849,6 +899,8 @@ public class OrderUtil {
 					});
 				} catch (Exception e) {
 					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+					
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 				} finally {
 					productionPlanner.releaseThreadSemaphore("suspend");	
 					productionPlanner.checkNextForRestart();				
@@ -880,7 +932,11 @@ public class OrderUtil {
 	 * @return Result message
 	 */
 	public PlannerResultMessage prepareSuspend(long id, Boolean force) {
+		if (logger.isTraceEnabled()) logger.trace(">>> prepareSuspend({}, {})", id, force);
+
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+
 		final ProcessingOrder order = transactionTemplate.execute((status) -> {
 			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
 			if (orderOpt.isPresent()) {
@@ -971,6 +1027,8 @@ public class OrderUtil {
 						answer.setMessage(PlannerMessage.ORDER_SUSPEND_PREPARED);
 					} catch (Exception e) {
 						logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+						
+						if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 					} finally {
 						productionPlanner.releaseThreadSemaphore("prepareSuspend");					
 					}
@@ -999,7 +1057,7 @@ public class OrderUtil {
 	 * @param order The processing Order
 	 * @return Result message
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public PlannerResultMessage retry(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> retry({})", (null == order ? "null" : order.getId()));
 		
@@ -1086,6 +1144,8 @@ public class OrderUtil {
 		if (logger.isTraceEnabled()) logger.trace(">>> close({})", (null == orderId ? "null" : orderId));
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+
 		List<Long> jobIds = new ArrayList<Long>();
 		
 		final OrderState orderState = transactionTemplate.execute((status) -> {
@@ -1287,7 +1347,7 @@ public class OrderUtil {
 	 * @param order The processing order
 	 * @return true if closed
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public Boolean checkAutoClose(ProcessingOrder order) {
 		Duration retPeriod = order.getMission().getOrderRetentionPeriod();
 		if (retPeriod != null && order.getProductionType() == ProductionType.SYSTEMATIC) {
@@ -1310,7 +1370,7 @@ public class OrderUtil {
 	 *  
 	 * @param order The processing order
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void setTimes(ProcessingOrder order) {
 		if (order != null) {
 			Instant timeNow = Instant.now();
@@ -1326,19 +1386,21 @@ public class OrderUtil {
 	 *  
 	 * @param order The processing order
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void setStateMessage(ProcessingOrder order, String stateMessage) {
 		if (order != null && stateMessage != null) {
 			order.setStateMessage(stateMessage);
 		}
 	}
 	
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public Boolean 
 	sendNotification(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> sendNotification({})", order.getIdentifier());
 		if (order.getNotificationEndpoint() != null) {
 			switch (order.getOrderSource()) {
 			case ODIP:
+				if (logger.isTraceEnabled()) logger.trace(">>> sendNotification({})", OrderSource.ODIP);
 				// create the message content as String
 				// first check whether product is generated, 
 				// use output product of first job step
@@ -1392,12 +1454,16 @@ public class OrderUtil {
 						RestTemplate restTemplate = new RestTemplate();
 						ResponseEntity<String> response = null;
 						try {
+							if (logger.isTraceEnabled()) logger.trace(">>> notify({}, {})", url, restMessage);
 							response = restTemplate.postForEntity(url, restMessage, String.class);
 						} catch (RestClientException rce) {
 							String msg = logger.log(PlannerMessage.NOTIFY_FAILED, url, rce.getMessage());
 							return false;
 						} catch (Exception e) {
 							String msg = logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage());
+							
+							if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 							return false;
 						}
 						if (!(HttpStatus.OK.equals(response.getStatusCode()) || (HttpStatus.CREATED.equals(response.getStatusCode())))) {
@@ -1421,7 +1487,7 @@ public class OrderUtil {
 	 * @param order The processing order
 	 * @return List of processinig facilities
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public List<ProcessingFacility> getProcessingFacilities(long id) {
 		ProcessingOrder order = null;
 		Optional<ProcessingOrder> oOrder = RepositoryService.getOrderRepository().findById(id);
@@ -1447,7 +1513,7 @@ public class OrderUtil {
 	 * @param order the order to update
 	 * @param failed indicates whether a job step has failed
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void setHasFailedJobSteps(ProcessingOrder order, Boolean failed) {
 		if (logger.isTraceEnabled()) logger.trace(">>> setHasFailedJobSteps({}, {})", (null == order ? "null" : order.getId()), failed);
 		
@@ -1496,11 +1562,12 @@ public class OrderUtil {
 	/**
 	 * restart the corresponding thread.
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	private void restartPlanningOrder(long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> restartPlanningOrder({})", id);
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 			// Find the processing facility
 			final ProcessingFacility pf = transactionTemplate.execute((status) -> {
