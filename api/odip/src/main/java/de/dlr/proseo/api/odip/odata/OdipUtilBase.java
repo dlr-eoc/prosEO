@@ -934,6 +934,12 @@ public class OdipUtilBase {
 		Date d = Date.from(now);
 		restOrder.setSubmissionTime(d);
 		restOrder.setOrderSource(OrderSource.ODIP.toString());
+		if (config.getExecutionDelay() != null) {
+			Instant execTime = Instant.now();
+			Long execDelay = config.getExecutionDelay() * 60L * 1000L;
+			execTime = execTime.plusMillis(execDelay);
+			restOrder.setExecutionTime(Date.from(execTime));
+		}
 		return restOrder;
 	}
 
