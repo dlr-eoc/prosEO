@@ -1277,18 +1277,30 @@ public class DownloadManager {
 		String queryFilter = "";
 		switch (archive.getArchiveType()) {
 		case SIMPLEAIP:
+			// CAUTION: Code for SIMPLEAIP is Sentinel-1-specific!
 			expandAttributes = false;
-		 	queryFilter = "startswith(Name,'" + securityService.getMission() + "')"
-		 		+ " and contains(Name,'" + productType + "')"
-		 		+ " and ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
+			queryFilter =
+				"(startswith(Name,'" + securityService.getMission() + "')"
+					+ " or startswith(Name,'" + securityService.getMission().substring(0, 2) + "_'))"
+				+ " and (contains(Name,'" + productType + "')"
+				+ (securityService.getMission().startsWith("S1") && productType.startsWith("SM") ?
+						" or contains(Name,'S1" + productType.substring(2) + ")" +
+						" or contains(Name,'S2" + productType.substring(2) + ")" +
+						" or contains(Name,'S3" + productType.substring(2) + ")" +
+						" or contains(Name,'S4" + productType.substring(2) + ")" +
+						" or contains(Name,'S5" + productType.substring(2) + ")" +
+						" or contains(Name,'S6" + productType.substring(2) + ")"
+						: "")
+				+ ")"
+				+ " and ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
 				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart);
 			break;
-			default:
-		 	queryFilter = "ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
+		default:
+			queryFilter = "ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
 				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart)
 				+ " and Attributes/OData.CSC.StringAttribute/any(" + "att:att/Name eq 'productType' "
 				+ "and att/OData.CSC.StringAttribute/Value eq '" + productType + "')";
-				break;
+			break;
 		}
 		try {
 			productList = queryArchive(archive, ODATA_ENTITY_PRODUCTS, queryFilter, expandAttributes);
@@ -1355,17 +1367,28 @@ public class DownloadManager {
 		switch (archive.getArchiveType()) {
 		case SIMPLEAIP:
 			expandAttributes = false;
-		 	queryFilter = "startswith(Name,'" + securityService.getMission() + "')"
-		 		+ " and contains(Name,'" + productType + "')"
-		 		+ " and ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
+			queryFilter =
+				"(startswith(Name,'" + securityService.getMission() + "')"
+					+ " or startswith(Name,'" + securityService.getMission().substring(0, 2) + "_'))"
+				+ " and (contains(Name,'" + productType + "')"
+				+ (securityService.getMission().startsWith("S1") && productType.startsWith("SM") ?
+						" or contains(Name,'S1" + productType.substring(2) + ")" +
+						" or contains(Name,'S2" + productType.substring(2) + ")" +
+						" or contains(Name,'S3" + productType.substring(2) + ")" +
+						" or contains(Name,'S4" + productType.substring(2) + ")" +
+						" or contains(Name,'S5" + productType.substring(2) + ")" +
+						" or contains(Name,'S6" + productType.substring(2) + ")"
+						: "")
+				+ ")"
+				+ " and ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
 				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart);
 			break;
-			default:
-		 	queryFilter = "ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
+		default:
+			queryFilter = "ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
 				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart)
 				+ " and Attributes/OData.CSC.StringAttribute/any(" + "att:att/Name eq 'productType' "
 				+ "and att/OData.CSC.StringAttribute/Value eq '" + productType + "')";
-				break;
+			break;
 		}
 		try {
 			productList = queryArchive(archive, ODATA_ENTITY_PRODUCTS, queryFilter, expandAttributes);
