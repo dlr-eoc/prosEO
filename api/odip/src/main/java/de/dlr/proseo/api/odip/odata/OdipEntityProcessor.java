@@ -696,12 +696,35 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 			return;
 		}
 		// the rest order is created, now create the processing order
+		modelOrder.setUuid(UUID.randomUUID().toString());
 		try {
-			modelOrder = OdipApplicationBase.util.sendAndReleaseOrder(modelOrder);
-		} catch (OdipException e) {
-			response.setStatusCode((e.getHttpStatus() != null ? e.getHttpStatus() : HttpStatusCode.NOT_FOUND).getStatusCode());
-			response.setHeader(HTTP_HEADER_WARNING, e.getMessage());
-			return;
+			RestOrder orderLoc = modelOrder;
+			Thread sendAndReleaseThread = new Thread(modelOrder.getIdentifier()) {
+
+				@Override
+				public void run() {
+					if (logger.isTraceEnabled())
+						logger.trace(">>> sendAndReleaseThread:run()");
+					try {
+						OdipApplicationBase.util.sendAndReleaseOrder(orderLoc);
+					} catch (OdipException e) {
+						response.setStatusCode((e.getHttpStatus() != null ? e.getHttpStatus() : HttpStatusCode.NOT_FOUND).getStatusCode());
+						response.setHeader(HTTP_HEADER_WARNING, e.getMessage());
+						return;
+					} catch (Exception e) {
+						response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
+						response.setHeader(HTTP_HEADER_WARNING, logger.log(OdipMessage.MSG_EXCEPTION,
+								e.getMessage() + (e.getCause() == null ? "" : (": " + e.getCause().getMessage()))));
+						return;
+					} finally {
+
+						if (logger.isTraceEnabled())
+							logger.trace("<<< sendAndReleaseThread");
+					}
+				}
+			};
+			sendAndReleaseThread.setName(modelOrder.getIdentifier());
+			sendAndReleaseThread.start();
 		} catch (Exception e) {
 			response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, logger.log(OdipMessage.MSG_EXCEPTION,
