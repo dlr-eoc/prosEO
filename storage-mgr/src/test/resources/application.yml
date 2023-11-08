@@ -15,7 +15,7 @@ proseo:
     s3:
       s3AccessKey: short_access_key
       s3SecretAccessKey: short_secret_key
-      s3EndPoint: http://localhost:9000
+      s3EndPoint: http://127.0.0.1:9000
       s3Region: eu-de
       s3MaxNumberOfBuckets: 50
       s3DefaultBucket: proseo-data-001
