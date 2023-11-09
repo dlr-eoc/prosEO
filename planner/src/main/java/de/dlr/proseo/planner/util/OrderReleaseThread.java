@@ -49,32 +49,32 @@ public class OrderReleaseThread extends Thread {
 	 * Logger of this class
 	 */
 	private static ProseoLogger logger = new ProseoLogger(OrderReleaseThread.class);
-    
+
 	/**
 	 * The job utility instance 
 	 */
 	private JobUtil jobUtil;
 
 	/** The Production Planner instance */
-    private ProductionPlanner productionPlanner;
-	
+	private ProductionPlanner productionPlanner;
+
 	/**
 	 * The processing order to plan.
 	 */
 	private ProcessingOrder order;
-	
+
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
-	
+
 	/**
 	 * The result of the planning
 	 */
 	private PlannerResultMessage resultMessage;
-	
+
 	private String user;
 	private String pw;
-	
+
 	/**
 	 * @return the user
 	 */
@@ -117,16 +117,16 @@ public class OrderReleaseThread extends Thread {
 		this.user = user;
 		this.pw = pw;
 	}
-	
-    /**
-     * Start and initialize the release thread
-     */
-    public void run() {
+
+	/**
+	 * Start and initialize the release thread
+	 */
+	public void run() {
 		if (logger.isTraceEnabled()) logger.trace(">>> run() for thread {}", this.getName());
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-		
+
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		if (order != null && productionPlanner != null && jobUtil != null) {
 			answer = new PlannerResultMessage(GeneralMessage.TRUE);
@@ -199,17 +199,17 @@ public class OrderReleaseThread extends Thread {
 		productionPlanner.getReleaseThreads().remove(this.getName());
 		if (logger.isTraceEnabled()) logger.trace("<<< run() for thread {}", this.getName());
 		productionPlanner.checkNextForRestart();				
-    }
-    
-    
-    /**
-     * Release the processing order 
-     * 
-     * @param orderId The id of the order
-     * @return The result message
-     * @throws InterruptedException
-     */
-    public PlannerResultMessage release(long orderId) throws InterruptedException {
+	}
+
+
+	/**
+	 * Release the processing order 
+	 * 
+	 * @param orderId The id of the order
+	 * @return The result message
+	 * @throws InterruptedException
+	 */
+	public PlannerResultMessage release(long orderId) throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> release({})", (null == order ? "null" : order.getId()));
 		ProcessingOrder order = null;
 
@@ -232,7 +232,7 @@ public class OrderReleaseThread extends Thread {
 						public int compare(Job o1, Job o2) {
 							return o1.getStartTime().compareTo(o2.getStartTime());
 						}});
-					
+
 					return orderOpt.get();
 				}
 				return null;
@@ -241,7 +241,7 @@ public class OrderReleaseThread extends Thread {
 		} catch (Exception e) {
 			answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
 			answer.setText(logger.log(answer.getMessage(), e.getMessage()));
-			
+
 			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 
 			productionPlanner.releaseThreadSemaphore("release1");
@@ -249,7 +249,7 @@ public class OrderReleaseThread extends Thread {
 		}
 		if (order != null && 
 				(order.getOrderState() == OrderState.RELEASING || order.getOrderState() == OrderState.PLANNED)) {
-			
+
 
 			int packetSize = ProductionPlanner.config.getPlanningBatchSize();
 			final Long jCount = (long) jobList.size();
@@ -261,7 +261,7 @@ public class OrderReleaseThread extends Thread {
 				while (curJList.get(0) < jCount) {
 
 					// Prepare for transaction retry, if "org.springframework.dao.CannotAcquireLockException" is thrown
-					for (int i = 0; i < DB_MAX_RETRY; i++) {
+					for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
 						try {
 							productionPlanner.acquireThreadSemaphore("releaseOrder");
 							if (logger.isTraceEnabled())
@@ -294,18 +294,15 @@ public class OrderReleaseThread extends Thread {
 
 							if (answer1 instanceof PlannerResultMessage) {
 								answer = (PlannerResultMessage) answer1;
-								if (answer.getCode() == PlannerMessage.ORDER_RELEASING_INTERRUPTED.getCode()) {
-									break;
-								}
 							}
+							break;
 						} catch (CannotAcquireLockException e) {
 							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-							if ((i + 1) < DB_MAX_RETRY) {
-								if (logger.isDebugEnabled()) logger.debug("... retrying in {} ms!", DB_WAIT);
-								Thread.sleep(DB_WAIT);
+							if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+								ProductionPlanner.productionPlanner.dbWait();
 							} else {
-								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", DB_MAX_RETRY);
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
 								throw e;
 							}
 						} catch (Exception e) {
@@ -316,84 +313,101 @@ public class OrderReleaseThread extends Thread {
 						} finally {
 							productionPlanner.releaseThreadSemaphore("releaseOrder");
 						} 
+						if (answer == null || answer.getCode() == PlannerMessage.ORDER_RELEASING_INTERRUPTED.getCode()) {
+							break;
+						}
 					}
-					
-					try {
-						productionPlanner.acquireThreadSemaphore("releaseOrder2");
+					// Prepare for transaction retry, if "org.springframework.dao.CannotAcquireLockException" is thrown
+					for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+						try {
 
-						// TODO Add transaction retry here, but need to find the retry condition first
-						// This one requires special handling, because as a "side effect" the Kubernetes job is started
-						// and must be cancelled, if the transaction fails
-						transactionTemplate.setReadOnly(false);
-						transactionTemplate.execute((status) -> {
-							
-							String nativeQuery = "SELECT j.start_time, js.id, pf.name "
-									+ "FROM processing_order o "
-									+ "JOIN job j ON o.id = j.processing_order_id "
-									+ "JOIN job_step js ON j.id = js.job_id "
-									+ "JOIN processing_facility pf ON j.processing_facility_id = pf.id "
-									+ "WHERE o.id = :orderId "
-									+ "AND js.job_step_state = :jsState "
-									+ "ORDER BY js.priority desc, j.start_time, js.id";
-							
-							List<?> jobStepList = em.createNativeQuery(nativeQuery)
-									.setParameter("orderId", orderId)
-									.setParameter("jsState", JobStepState.READY.toString())
-									.getResultList();
-							
-							for (Object jobStepObject: jobStepList) {
-								if (jobStepObject instanceof Object[]) {
-									
-									Object[] jobStep = (Object[]) jobStepObject;
-									
-									if (logger.isTraceEnabled()) logger.trace("... found job step info {}", Arrays.asList(jobStep));
-									
-									// jobStep[0] is only used for ordering the result list
-									Object jsIdObject = jobStep[1];
-									Object pfNameObject = jobStep[2];
-									
-									Long jsId = jsIdObject instanceof BigInteger ? ((BigInteger) jsIdObject).longValue() : null;
-									String pfName = pfNameObject instanceof String ? (String) pfNameObject : null;
-									
-									if (null == jsId || null == pfName) {
-										logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, "Invalid query result: " + Arrays.asList(jobStep));
+							productionPlanner.acquireThreadSemaphore("releaseOrder2");
 
+							// TODO Add transaction retry here, but need to find the retry condition first
+							// This one requires special handling, because as a "side effect" the Kubernetes job is started
+							// and must be cancelled, if the transaction fails
+							transactionTemplate.setReadOnly(false);
+
+							transactionTemplate.execute((status) -> {
+
+								String nativeQuery = "SELECT j.start_time, js.id, pf.name "
+										+ "FROM processing_order o "
+										+ "JOIN job j ON o.id = j.processing_order_id "
+										+ "JOIN job_step js ON j.id = js.job_id "
+										+ "JOIN processing_facility pf ON j.processing_facility_id = pf.id "
+										+ "WHERE o.id = :orderId "
+										+ "AND js.job_step_state = :jsState "
+										+ "ORDER BY js.priority desc, j.start_time, js.id";
+
+								List<?> jobStepList = em.createNativeQuery(nativeQuery)
+										.setParameter("orderId", orderId)
+										.setParameter("jsState", JobStepState.READY.toString())
+										.getResultList();
+
+								for (Object jobStepObject: jobStepList) {
+									if (jobStepObject instanceof Object[]) {
+
+										Object[] jobStep = (Object[]) jobStepObject;
+
+										if (logger.isTraceEnabled()) logger.trace("... found job step info {}", Arrays.asList(jobStep));
+
+										// jobStep[0] is only used for ordering the result list
+										Object jsIdObject = jobStep[1];
+										Object pfNameObject = jobStep[2];
+
+										Long jsId = jsIdObject instanceof BigInteger ? ((BigInteger) jsIdObject).longValue() : null;
+										String pfName = pfNameObject instanceof String ? (String) pfNameObject : null;
+
+										if (null == jsId || null == pfName) {
+											logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, "Invalid query result: " + Arrays.asList(jobStep));
+
+											throw new RuntimeException("Invalid query result");
+										}
+
+										try {
+											KubeConfig kc = productionPlanner.getKubeConfig(pfName);
+											if (!kc.couldJobRun(null)) {
+												break;
+											}
+											UtilService.getJobStepUtil().checkJobStepToRun(kc, jsId);
+										} catch (Exception e) {
+											if (logger.isDebugEnabled())
+												logger.debug("... exception in checkJobStepToRun(" + pfName + ", " + jsId + "): ", e);
+
+											logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+											throw e;
+										} 
+
+									} else {
+										logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, "Invalid query result: " + jobStepObject);
 										throw new RuntimeException("Invalid query result");
 									}
-									
-									try {
-										KubeConfig kc = productionPlanner.getKubeConfig(pfName);
-										if (!kc.couldJobRun()) {
-											break;
-										}
-										UtilService.getJobStepUtil().checkJobStepToRun(kc, jsId);
-									} catch (Exception e) {
-										if (logger.isDebugEnabled())
-											logger.debug("... exception in checkJobStepToRun(" + pfName + ", " + jsId + "): ", e);
-
-										logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
-										throw e;
-									} 
-									
-								} else {
-									logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, "Invalid query result: " + jobStepObject);
-									throw new RuntimeException("Invalid query result");
 								}
+
+								return null;					
+							});
+							break;
+						} catch (CannotAcquireLockException e) {
+							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+							if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+								ProductionPlanner.productionPlanner.dbWait();
+							} else {
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+								throw e;
 							}
-							
-							return null;					
-						});
-					} catch (Exception e) {
-						if (logger.isDebugEnabled())
-							logger.debug("... exception in release::doInTransaction2(" + orderId + "): ", e);
-						throw e;
-					} finally {
-						productionPlanner.releaseThreadSemaphore("releaseOrder2");
+						} catch (Exception e) {
+							if (logger.isDebugEnabled())
+								logger.debug("... exception in release::doInTransaction2(" + orderId + "): ", e);
+							throw e;
+						} finally {
+							productionPlanner.releaseThreadSemaphore("releaseOrder2");
+						}
 					}
 				}
 			} catch (Exception e) {	
 				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
-				
+
 				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 
 				throw e;
@@ -494,5 +508,5 @@ public class OrderReleaseThread extends Thread {
 
 		return answer;
 	}
-	
+
 }

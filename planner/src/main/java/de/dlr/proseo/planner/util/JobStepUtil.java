@@ -1044,11 +1044,18 @@ public class JobStepUtil {
 									throw new RuntimeException("Invalid query result: " + Arrays.asList(jobStep));
 								}
 
-								if (kc.couldJobRun()) {
+								if (kc.couldJobRun(jsId)) {
 									// Job creation is transacational in KubeJob, therefore removed from transaction above
 									// TODO Add retrying for concurrent updates, taking into account side effect of
 									// Kubernetes job creation
-									kc.createJob(String.valueOf(jsId), null, null);
+									try {
+										kc.getJobCreatingList().put(jsId, jsId);
+										kc.createJob(String.valueOf(jsId), null, null);
+									} catch (Exception e) {
+										throw e;
+									} finally {
+										kc.getJobCreatingList().remove(jsId);
+									}
 								} else {
 									// at the moment no further job could be started
 									break;
@@ -1138,8 +1145,15 @@ public class JobStepUtil {
 							if ((js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)
 									&& js.getJob().getProcessingOrder().getOrderState() != OrderState.SUSPENDING
 									&& js.getJob().getProcessingOrder().getOrderState() != OrderState.PLANNED) {
-								if (kc.couldJobRun()) {
-									kc.createJob(String.valueOf(js.getId()), null, null);
+								if (kc.couldJobRun(js.getId())) {
+									try {
+										kc.getJobCreatingList().put(js.getId(), js.getId());
+										kc.createJob(String.valueOf(js.getId()), null, null);
+									} catch (Exception e) {
+										throw e;
+									} finally {
+										kc.getJobCreatingList().remove(js.getId());
+									}
 								} else {
 									return false;
 								}

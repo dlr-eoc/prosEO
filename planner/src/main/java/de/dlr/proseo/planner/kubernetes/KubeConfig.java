@@ -65,6 +65,9 @@ public class KubeConfig {
 
 	/** Map containing the created Kubernetes jobs */
 	private HashMap<String, KubeJob> kubeJobList = null;
+	
+	/** Map containing the creating Kubernetes jobs */
+	private HashMap<Long, Long> jobCreatingList = null;
 
 	/** List of Kubernetes nodes */
 	private V1NodeList kubeNodes = null;
@@ -139,6 +142,20 @@ public class KubeConfig {
 	// No need to create own namespace, as there is only one "user" (prosEO)
 	/** The namespace */
 	private String namespace = "default";
+
+	/**
+	 * @return the jobCreatingList
+	 */
+	public HashMap<Long, Long> getJobCreatingList() {
+		return jobCreatingList;
+	}
+
+	/**
+	 * @param jobCreatingList the jobCreatingList to set
+	 */
+	public void setJobCreatingList(HashMap<Long, Long> jobCreatingList) {
+		this.jobCreatingList = jobCreatingList;
+	}
 
 	/**
 	 * Returns the production planner.
@@ -327,6 +344,7 @@ public class KubeConfig {
 	public KubeConfig(ProcessingFacility processingFacility, ProductionPlanner planner) {
 		setFacility(processingFacility);
 		productionPlanner = planner;
+		jobCreatingList = new HashMap<>();
 	}
 
 	/**
@@ -350,6 +368,7 @@ public class KubeConfig {
 		storageManagerPassword = processingFacility.getStorageManagerPassword();
 		maxJobsPerNode = processingFacility.getMaxJobsPerNode();
 		this.processingFacility = processingFacility;
+		jobCreatingList = new HashMap<>();
 	}
 
 	/**
@@ -505,10 +524,15 @@ public class KubeConfig {
 	 *
 	 * @return true if a new job could run, otherwise false
 	 */
-	public boolean couldJobRun() {
+	public boolean couldJobRun(Long jsId) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> couldJobRun()");
 
+		if (jsId != null) {
+			if (jobCreatingList.containsKey(jsId)) {
+				return false;
+			}
+		}
 		// Check the facility state
 		if (getFacilityState() == FacilityState.DISABLED || getFacilityState() == FacilityState.STOPPED
 				|| getFacilityState() == FacilityState.STOPPING || getFacilityState() == FacilityState.STARTING) {
