@@ -56,7 +56,6 @@ public class StorageUtilityTest {
 				
 		// change type to show another storage
 		StorageType storageType = StorageType.POSIX; 
-		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 		
 		Storage storage = storageProvider.getStorage();
