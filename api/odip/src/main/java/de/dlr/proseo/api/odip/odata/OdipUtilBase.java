@@ -950,12 +950,13 @@ public class OdipUtilBase {
 	 * @return The created order after sending and releasing.
 	 * @throws OdipException If an error occurs during the process of sending and releasing the order.
 	 */
-	@Transactional
-	public RestOrder sendAndReleaseOrder(RestOrder order) throws OdipException {
+	public RestOrder createOrder(RestOrder order) throws OdipException {
 		RestOrder createdOrder = null;
+		String message = null;
+		HttpStatusCode status = HttpStatusCode.INTERNAL_SERVER_ERROR;
 		if (order != null) {
 			if (logger.isTraceEnabled())
-				logger.trace(">>> sendAndReleaseOrder({})", order.getIdentifier());
+				logger.trace(">>> createOrder({})", order.getIdentifier());
 			// send order to order manager
 			int i = 0;
 			while (3 > i++) {
@@ -965,14 +966,13 @@ public class OdipUtilBase {
 							securityConfig.getPassword());
 					break;
 				} catch (RestClientResponseException e) {
-					String message = null;
-					HttpStatusCode status = HttpStatusCode.INTERNAL_SERVER_ERROR;
+					message = null;
+					status = HttpStatusCode.INTERNAL_SERVER_ERROR;
 					switch (e.getRawStatusCode()) {
 					case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 						status = HttpStatusCode.BAD_REQUEST;
 						message = logger.log(OdipMessage.ORDER_DATA_INVALID, e.getStatusText());
 						status = HttpStatusCode.BAD_REQUEST;
-						break;
 					case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 					case org.apache.http.HttpStatus.SC_FORBIDDEN:
 						status = HttpStatusCode.UNAUTHORIZED;
@@ -980,27 +980,40 @@ public class OdipUtilBase {
 								? ProseoLogger.format(OdipMessage.NOT_AUTHORIZED, securityConfig.getUser(), ORDERS,
 										securityConfig.getMission())
 								: e.getStatusText());
-						break;
 					default:
 						message = logger.log(OdipMessage.EXCEPTION, e.getMessage());
 					}
 					throw new OdipException(message, status);
 				} catch (RuntimeException e) {
-					String message = ProseoLogger.format(OdipMessage.EXCEPTION, e.getMessage());
+					message = ProseoLogger.format(OdipMessage.EXCEPTION, e.getMessage());
 					throw new OdipException(message, HttpStatusCode.INTERNAL_SERVER_ERROR);
 				}
 			}
-			// TODO change to > 2
-			if (i > 2) {
-				return createdOrder;
-			}
+		}
+		return createdOrder;
+	}
+
+	/**
+	 * Sends an order to the production planner and releases it.
+	 *
+	 * @param order The order to be sent and released.
+	 * @return The created order after sending and releasing.
+	 * @throws OdipException If an error occurs during the process of sending and releasing the order.
+	 */
+	@Transactional
+	public RestOrder planAndReleaseOrder(RestOrder order, String mission, String user, String password) throws OdipException {
+		RestOrder createdOrder = null;
+		if (order != null) {
+			if (logger.isTraceEnabled())
+				logger.trace(">>> planAndReleaseOrder({})", order.getIdentifier());
+			// send order to order manager
+			int i = 0;
 			// approve, plan, release the order
-			i = 0;
 			while (3 > i++) {
 				try {
 					createdOrder = serviceConnection.patchToService(config.getProductionPlannerUrl(),
-							URI_PATH_ORDERS_APPROVE + "/" + createdOrder.getId(), createdOrder, RestOrder.class,
-							securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword());
+							URI_PATH_ORDERS_APPROVE + "/" + order.getId(), order, RestOrder.class,
+							mission + "-" + user, password);
 					break;
 				} catch (RestClientResponseException e) {
 					HttpStatusCode status = HttpStatusCode.INTERNAL_SERVER_ERROR;
@@ -1036,8 +1049,7 @@ public class OdipUtilBase {
 				try {
 					createdOrder = serviceConnection.putToService(config.getProductionPlannerUrl(),
 							URI_PATH_ORDERS_PLAN + "/" + createdOrder.getId() + "?facility=" + config.getFacility() + "&wait=true",
-							RestOrder.class, securityConfig.getMission() + "-" + securityConfig.getUser(),
-							securityConfig.getPassword());
+							RestOrder.class, mission + "-" + user, password);
 					break;
 				} catch (RestClientResponseException e) {
 					HttpStatusCode status = HttpStatusCode.INTERNAL_SERVER_ERROR;
@@ -1073,7 +1085,7 @@ public class OdipUtilBase {
 				try {
 					createdOrder = serviceConnection.patchToService(config.getProductionPlannerUrl(),
 							URI_PATH_ORDERS_RESUME + "/" + createdOrder.getId() + "?wait=true", createdOrder, RestOrder.class,
-							securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword());
+							mission + "-" + user, password);
 					break;
 				} catch (RestClientResponseException e) {
 					HttpStatusCode status = HttpStatusCode.INTERNAL_SERVER_ERROR;
