@@ -59,66 +59,26 @@ public class ProductfileControllerImplTest_download {
 
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/productfiles";
 
-	/**
-	 * Retrieve file from Storage Manager into locally accessible file system // DOWNLOAD TEST
-	 * 
-	 * GET /productfiles pathInfo="/.."
-	 * 
-	 * @return RestFileInfo
-	 */
 	@Test
-	public void testDownload_v1Posix() throws Exception {
-				
-		StorageType storageType = StorageType.POSIX; 
-		storageProvider.loadVersion1();
-		storageProvider.setStorage(storageType);
-
-		download("v1Posix");
-		
-		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-
-	@Test
-	public void testDownload_v2Posix() throws Exception {
+	public void testDownload_posix() throws Exception {
 		
 		StorageType storageType = StorageType.POSIX; 
-		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 
-		download("v2Posix");
+		download("Posix");
 		
-		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
 	
-	
 	@Test
-	public void testDownload_v1S3() throws Exception {
-				
-		StorageType storageType = StorageType.S3; 
-		storageProvider.loadVersion1();
-		storageProvider.setStorage(storageType);
-
-		download("v1S3");
-		
-		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-
-	@Test
-	public void testDownload_v2S3() throws Exception {
+	public void testDownload_S3() throws Exception {
 		
 		StorageType storageType = StorageType.S3; 
-		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 
-		download("v2S3");
+		download("S3");
 		
-		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
@@ -173,7 +133,6 @@ public class ProductfileControllerImplTest_download {
 		TestUtils.printMvcResult(REQUEST_STRING, mvcResult); 
 
 		storageTestUtils.printCache();
-		storageTestUtils.printVersion("FINISHED download-Test");
 		
 		// check real with expected absolute cache path 
 		String expectedAbsoluteCachePath = new PathConverter(storageProvider.getCachePath(), relativePath).getPath();

@@ -64,15 +64,13 @@ public class ProductControllerImplTest_delete {
 	 * @return RestProductFS
 	 */
 	@Test
-	public void testDelete_v1Posix() throws Exception {
+	public void testDelete_posix() throws Exception {
 
 		StorageType storageType = StorageType.POSIX;
-		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
 
 		delete(storageProvider);
 
-		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
@@ -85,57 +83,13 @@ public class ProductControllerImplTest_delete {
 	 * @return RestProductFS
 	 */
 	@Test
-	public void testDelete_v2Posix() throws Exception {
-
-		StorageType storageType = StorageType.POSIX;
-		storageProvider.loadVersion2();
-		storageProvider.setStorage(storageType);
-
-		delete(storageProvider);
-
-		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-
-	/**
-	 * Delete/remove product by product path info from prosEO storage
-	 * 
-	 * DELETE /products pathInfo="/.."
-	 * 
-	 * @return RestProductFS
-	 */
-	@Test
-	public void testDelete_v1S3() throws Exception {
+	public void testDelete_S3() throws Exception {
 
 		StorageType storageType = StorageType.S3;
-		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
 
 		delete(storageProvider);
 
-		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-
-	/**
-	 * Delete/remove product by product path info from prosEO storage
-	 * 
-	 * DELETE /products pathInfo="/.."
-	 * 
-	 * @return RestProductFS
-	 */
-	@Test
-	public void testDelete_v2S3() throws Exception {
-
-		StorageType storageType = StorageType.S3;
-		storageProvider.loadVersion2();
-		storageProvider.setStorage(storageType);
-
-		delete(storageProvider);
-
-		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}

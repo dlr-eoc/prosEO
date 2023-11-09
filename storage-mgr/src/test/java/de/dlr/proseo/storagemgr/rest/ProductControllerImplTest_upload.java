@@ -57,7 +57,6 @@ public class ProductControllerImplTest_upload {
 	private StorageProvider storageProvider;
 
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/products";
-
 	
 	/**
 	 * Register products/files/dirs from unstructered storage in prosEO-storage
@@ -67,19 +66,17 @@ public class ProductControllerImplTest_upload {
 	 * @return RestProductFS
 	 */
 	@Test
-	public void testUpload_v1Posix() throws Exception {
+	public void testUpload_posix() throws Exception {
 		
 		StorageType storageType = StorageType.POSIX; 
-		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
 		
 		uploadRestProductFS();
 		
-		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
-	
+		
 	/**
 	 * Register products/files/dirs from unstructered storage in prosEO-storage
 	 * 
@@ -88,57 +85,13 @@ public class ProductControllerImplTest_upload {
 	 * @return RestProductFS
 	 */
 	@Test
-	public void testUpload_v2Posix() throws Exception {
-		
-		StorageType storageType = StorageType.POSIX; 
-		storageProvider.loadVersion2();
-		storageProvider.setStorage(storageType);
-		
-		uploadRestProductFS();
-		
-		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-	
-	/**
-	 * Register products/files/dirs from unstructered storage in prosEO-storage
-	 * 
-	 * POST /products RestProductFS
-	 * 
-	 * @return RestProductFS
-	 */
-	@Test
-	public void testUpload_v1S3() throws Exception {
+	public void testUpload_S3() throws Exception {
 		
 		StorageType storageType = StorageType.S3; 
-		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
 		
 		uploadRestProductFS();
 		
-		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-	
-	/**
-	 * Register products/files/dirs from unstructered storage in prosEO-storage
-	 * 
-	 * POST /products RestProductFS
-	 * 
-	 * @return RestProductFS
-	 */
-	@Test
-	public void testUpload_v2S3() throws Exception {
-		
-		StorageType storageType = StorageType.S3; 
-		storageProvider.loadVersion2();
-		storageProvider.setStorage(storageType);
-		
-		uploadRestProductFS();
-		
-		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}

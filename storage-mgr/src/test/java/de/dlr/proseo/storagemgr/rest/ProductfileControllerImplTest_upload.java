@@ -57,57 +57,25 @@ public class ProductfileControllerImplTest_upload {
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/productfiles";
 
 	@Test
-	public void testUpload_v1Posix() throws Exception {
-
-		StorageType storageType = StorageType.POSIX;
-		storageProvider.loadVersion1();
-		storageProvider.setStorage(storageType);
-
-		upload();
-
-		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-
-	@Test
 	public void testUpload_v2Posix() throws Exception {
 
 		StorageType storageType = StorageType.POSIX;
-		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 
 		upload();
 
-		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-
-	@Test
-	public void testUpload_v1S3() throws Exception {
-
-		StorageType storageType = StorageType.S3;
-		storageProvider.loadVersion1();
-		storageProvider.setStorage(storageType);
-
-		upload();
-
-		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
 
 	@Test
 	public void testUpload_v2S3() throws Exception {
 
 		StorageType storageType = StorageType.S3;
-		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 
 		upload();
 
-		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
