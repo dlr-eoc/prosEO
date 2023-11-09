@@ -52,9 +52,6 @@ public class StorageProvider {
 	/** Base Paths are used to get relative path from absolute path */
 	List<String> basePaths = new ArrayList<>();
 
-	/** For smooth integration only, will be removed */
-	private boolean version2;
-
 	/** Logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(StorageProvider.class);
 
@@ -96,8 +93,6 @@ public class StorageProvider {
 	private void init() throws IOException {
 		theStorageProvider = this;
 		storage = createStorage(StorageType.valueOf(cfg.getDefaultStorageType()), cfg.getPosixBackendPath());
-
-		version2 = cfg.getStorageManagerVersion2().equals("true") ? true : false;
 
 		basePaths.add(storage.getBasePath());
 		basePaths.add(cfg.getDefaultSourcePath());
@@ -225,41 +220,6 @@ public class StorageProvider {
 	 */
 	public List<String> getBasePaths() {
 		return basePaths;
-	}
-
-	// all ..version.. methods will be removed in release, for smooth integration
-	// only
-
-	/**
-	 * Loads version 1 of the storage manager (currently used).
-	 */
-	public void loadVersion1() {
-		version2 = false;
-	}
-
-	/**
-	 * Loads version 2 of the storage manager (new source code).
-	 */
-	public void loadVersion2() {
-		version2 = true;
-	}
-
-	/**
-	 * Checks if version 2 of the storage manager is currently used.
-	 *
-	 * @return true if version 2 is used, false otherwise
-	 */
-	public boolean isVersion2() {
-		return version2;
-	}
-
-	/**
-	 * Checks if version 1 of the storage manager is currently used.
-	 *
-	 * @return true if version 1 is used, false otherwise
-	 */
-	public boolean isVersion1() {
-		return !version2;
 	}
 
 	/**
