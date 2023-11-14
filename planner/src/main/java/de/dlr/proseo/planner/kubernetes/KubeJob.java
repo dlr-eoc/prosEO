@@ -616,12 +616,16 @@ public class KubeJob {
 				break;
 			} catch (ApiException e) {
 				// look whether job was created or the exception was "real"
+				if (logger.isTraceEnabled()) 
+					logger.trace("    createNamespacedJob: ApiException, retry {0} of {1}", i, jobName);
 				if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
 					Thread.sleep(cycle);
 					// search job/pod
 					searchPod();
 					if (podNames.get(podNames.size() - 1).startsWith(jobName)) {
 						// job was created
+						if (logger.isTraceEnabled()) 
+							logger.trace("    createNamespacedJob: retry {0} of {1} successful", i, jobName);
 						break;
 					}
 				} else {
