@@ -609,7 +609,26 @@ public class KubeJob {
 		}
 
 		// Create the Kubernetes job
-		job = kubeConfig.getBatchApiV1().createNamespacedJob(kubeConfig.getNamespace(), job, null, null, null);
+		Integer cycle = ProductionPlanner.config.getProductionPlannerJobCreatedWaitTime();
+		for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+			try {
+				job = kubeConfig.getBatchApiV1().createNamespacedJob(kubeConfig.getNamespace(), job, null, null, null);
+				break;
+			} catch (ApiException e) {
+				// look whether job was created or the exception was "real"
+				if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+					Thread.sleep(cycle);
+					// search job/pod
+					searchPod();
+					if (podNames.get(podNames.size() - 1).startsWith(jobName)) {
+						// job was created
+						break;
+					}
+				} else {
+					throw e;
+				}
+			}
+		}
 		logger.log(PlannerMessage.JOB_CREATED, job.getMetadata().getName(), job.getStatus().toString());
 		// Prepare for transaction retry, if "org.springframework.dao.CannotAcquireLockException" is thrown
 		for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
@@ -652,7 +671,6 @@ public class KubeJob {
 			}
 		}
 		// Wait for the time span configured for K8 job creation
-		Integer cycle = ProductionPlanner.config.getProductionPlannerJobCreatedWaitTime();
 		if (cycle == null) {
 			cycle = 2000;
 		}
@@ -778,80 +796,84 @@ public class KubeJob {
 
 			TransactionTemplate transactionTemplate = new TransactionTemplate(kubeConfig.getProductionPlanner().getTxManager());
 			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-			transactionTemplate.execute((status) -> {
-
-				// Retrieve the kube job information
-				V1Job job = kubeConfig.getV1Job(jobName);
-				if (job == null) {
-					return null;
-				}
-
-				// Find the job step in the database
-				Long jobStepId = this.getJobId();
-				Optional<JobStep> jobStep = RepositoryService.getJobStepRepository().findById(jobStepId);
-				if (jobStep.isEmpty()) {
-					return null;
-				}
-
-				// Update the job log
-				updateJobLog(jobStep.get());
-
+			for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
 				try {
-					if (job.getStatus() != null) {
-						// Set the processing start time
-						OffsetDateTime startTime = job.getStatus().getStartTime();
-						if (startTime != null) {
-							jobStep.get().setProcessingStartTime(startTime.toInstant());
+					transactionTemplate.execute((status) -> {
+
+						// Retrieve the kube job information
+						V1Job job = kubeConfig.getV1Job(jobName);
+						if (job == null) {
+							return null;
 						}
 
-						// Set the processing completion time
-						OffsetDateTime completionTime = job.getStatus().getCompletionTime();
-						if (completionTime != null) {
-							jobStep.get().setProcessingCompletionTime(completionTime.toInstant());
+						// Find the job step in the database
+						Long jobStepId = this.getJobId();
+						Optional<JobStep> jobStep = RepositoryService.getJobStepRepository().findById(jobStepId);
+						if (jobStep.isEmpty()) {
+							return null;
 						}
 
-						// Set the job conditions
-						if (job.getStatus().getConditions() != null) {
-							List<V1JobCondition> jobConditions = job.getStatus().getConditions();
+						// Update the job log
+						updateJobLog(jobStep.get());
 
-							for (V1JobCondition jobCondition : jobConditions) {
-								if ((jobCondition.getType().equalsIgnoreCase("complete")
-										|| jobCondition.getType().equalsIgnoreCase("completed"))
-										&& jobCondition.getStatus().equalsIgnoreCase("true")) {
-									jobStep.get().setJobStepState(JobStepState.COMPLETED);
-									UtilService.getJobStepUtil().checkCreatedProducts(jobStep.get());
-									jobStep.get().incrementVersion();
-								} else if (jobCondition.getType().equalsIgnoreCase("failed")
-										|| jobCondition.getType().equalsIgnoreCase("failure")) {
-									jobStep.get().setJobStepState(JobStepState.FAILED);
-									jobStep.get().incrementVersion();
+						if (job.getStatus() != null) {
+							// Set the processing start time
+							OffsetDateTime startTime = job.getStatus().getStartTime();
+							if (startTime != null) {
+								jobStep.get().setProcessingStartTime(startTime.toInstant());
+							}
+
+							// Set the processing completion time
+							OffsetDateTime completionTime = job.getStatus().getCompletionTime();
+							if (completionTime != null) {
+								jobStep.get().setProcessingCompletionTime(completionTime.toInstant());
+							}
+
+							// Set the job conditions
+							if (job.getStatus().getConditions() != null) {
+								List<V1JobCondition> jobConditions = job.getStatus().getConditions();
+
+								for (V1JobCondition jobCondition : jobConditions) {
+									if ((jobCondition.getType().equalsIgnoreCase("complete")
+											|| jobCondition.getType().equalsIgnoreCase("completed"))
+											&& jobCondition.getStatus().equalsIgnoreCase("true")) {
+										jobStep.get().setJobStepState(JobStepState.COMPLETED);
+										UtilService.getJobStepUtil().checkCreatedProducts(jobStep.get());
+										jobStep.get().incrementVersion();
+									} else if (jobCondition.getType().equalsIgnoreCase("failed")
+											|| jobCondition.getType().equalsIgnoreCase("failure")) {
+										jobStep.get().setJobStepState(JobStepState.FAILED);
+										jobStep.get().incrementVersion();
+									}
 								}
 							}
 						}
+
+						// Save the updated job step in the repository
+						RepositoryService.getJobStepRepository().save(jobStep.get());
+
+						// Log the order state for the job step's processing order
+						UtilService.getOrderUtil().logOrderState(jobStep.get().getJob().getProcessingOrder());
+
+						jobSteps.add(jobStep.get());
+						return jobStep.get();
+					});
+					break;
+				} catch (CannotAcquireLockException e) {
+					if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+					if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+						ProductionPlanner.productionPlanner.dbWait();
+					} else {
+						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+						throw e;
 					}
 				} catch (Exception e) {
-					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
-					
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+
 					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 				}
-
-				// Save the updated job step in the repository
-				RepositoryService.getJobStepRepository().save(jobStep.get());
-
-				// Log the order state for the job step's processing order
-				UtilService.getOrderUtil().logOrderState(jobStep.get().getJob().getProcessingOrder());
-
-				jobSteps.add(jobStep.get());
-				return jobStep.get();
-			});
-		} catch (LockAcquisitionException e) {
-			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
-			
-			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-		} catch (Exception e) {
-			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
-			
-			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+			} 
 		} finally {
 			// Release the thread semaphore for "finish" operation
 			kubeConfig.getProductionPlanner().releaseThreadSemaphore("finish");
@@ -943,146 +965,161 @@ public class KubeJob {
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(this.kubeConfig.getProductionPlanner().getTxManager());
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-		return transactionTemplate.execute((status) -> {
-
-			Boolean success = Boolean.FALSE;
-			Long jobStepId = this.getJobId();
-			Optional<JobStep> jobStep = RepositoryService.getJobStepRepository().findById(jobStepId);
-
-			if (!jobStep.isPresent()) {
-				// No job step present, everything up to date
-				if (logger.isTraceEnabled())
-					logger.trace("<<< updateInfo({})", jobName);
-
-				return success;
-			}
-
+		for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
 			try {
-				if (job.getStatus() != null) {
-					if (logger.isTraceEnabled())
-						logger.trace("    updateInfo: analyze job state");
+				return transactionTemplate.execute((status) -> {
 
-					// Set start time
-					OffsetDateTime startTime = job.getStatus().getStartTime();
-					if (startTime != null) {
-						jobStep.get().setProcessingStartTime(startTime.toInstant());
+					Boolean success = Boolean.FALSE;
+					Long jobStepId = this.getJobId();
+					Optional<JobStep> jobStep = RepositoryService.getJobStepRepository().findById(jobStepId);
+
+					if (!jobStep.isPresent()) {
+						// No job step present, everything up to date
+						if (logger.isTraceEnabled())
+							logger.trace("<<< updateInfo({})", jobName);
+
+						return success;
 					}
 
-					// Set completion time
-					OffsetDateTime completionTime = job.getStatus().getCompletionTime();
-					if (completionTime != null) {
-						jobStep.get().setProcessingCompletionTime(completionTime.toInstant());
-					} else {
-						// TODO Something is wrong with the job, try to get info from pod
-					}
+					try {
+						if (job.getStatus() != null) {
+							if (logger.isTraceEnabled())
+								logger.trace("    updateInfo: analyze job state");
 
-					// Set job conditions
-					if (job.getStatus().getConditions() != null) {
-						List<V1JobCondition> jobConditions = job.getStatus().getConditions();
-
-						for (V1JobCondition jobCondition : jobConditions) {
-							if ((jobCondition.getType().equalsIgnoreCase("complete")
-									|| jobCondition.getType().equalsIgnoreCase("completed"))
-									&& jobCondition.getStatus().equalsIgnoreCase("true")) {
-
-								// Plan failed job steps
-								if (jobStep.get().getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.FAILED) {
-									jobStep.get().setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.PLANNED);
-								}
-
-								// Run ready job steps
-								if (JobStepState.READY.equals(jobStep.get().getJobStepState())) {
-									// Sometimes we don't get the state transition to RUNNING
-									if (logger.isTraceEnabled())
-										logger.trace("... fixing state {} of job step {} to RUNNING",
-												jobStep.get().getJobStepState(), jobStep.get().getId());
-
-									jobStep.get().setJobStepState(JobStepState.RUNNING);
-								} else if (JobStepState.PLANNED.equals(jobStep.get().getJobStepState())
-										|| JobStepState.WAITING_INPUT.equals(jobStep.get().getJobStepState())) {
-									// Sometimes we don't even get the state transition to READY
-									if (logger.isTraceEnabled())
-										logger.trace("... fixing state {} of job step {} to RUNNING",
-												jobStep.get().getJobStepState(), jobStep.get().getId());
-
-									jobStep.get().setJobStepState(JobStepState.READY);
-									jobStep.get().setJobStepState(JobStepState.RUNNING);
-								}
-
-								// Mark closed job steps as completed
-								if (!JobStepState.CLOSED.equals(jobStep.get().getJobStepState())) {
-									jobStep.get().setJobStepState(JobStepState.COMPLETED);
-								}
-
-								// Removing unnecessary component products and delete the main product if it has no more components
-								// or files
-								UtilService.getJobStepUtil().checkCreatedProducts(jobStep.get());
-
-								// Set completion time if necessary
-								if (completionTime == null) {
-									completionTime = jobCondition.getLastProbeTime();
-									jobStep.get().setProcessingCompletionTime(completionTime.toInstant());
-								}
-
-								success = Boolean.TRUE;
-							} else if ((jobCondition.getType().equalsIgnoreCase("failed")
-									|| jobCondition.getType().equalsIgnoreCase("failure"))
-									&& jobCondition.getStatus().equalsIgnoreCase("true")) {
-
-								// Run ready job steps
-								if (JobStepState.READY.equals(jobStep.get().getJobStepState())) {
-									jobStep.get().setJobStepState(JobStepState.RUNNING);
-								} else if (JobStepState.PLANNED.equals(jobStep.get().getJobStepState())) {
-									// TODO Why do we only look state PLANNED if the state is not READY?
-									jobStep.get().setJobStepState(JobStepState.READY);
-									jobStep.get().setJobStepState(JobStepState.RUNNING);
-								}
-
-								// Mark job steps that are neither completed nor closed as failed
-								if (!JobStepState.COMPLETED.equals(jobStep.get().getJobStepState())
-										&& !JobStepState.CLOSED.equals(jobStep.get().getJobStepState())) {
-									jobStep.get().setJobStepState(JobStepState.FAILED);
-								}
-
-								if (completionTime == null) {
-									completionTime = jobCondition.getLastProbeTime();
-									jobStep.get().setProcessingCompletionTime(completionTime.toInstant());
-								}
-
-								success = Boolean.TRUE;
+							// Set start time
+							OffsetDateTime startTime = job.getStatus().getStartTime();
+							if (startTime != null) {
+								jobStep.get().setProcessingStartTime(startTime.toInstant());
 							}
-						}
 
+							// Set completion time
+							OffsetDateTime completionTime = job.getStatus().getCompletionTime();
+							if (completionTime != null) {
+								jobStep.get().setProcessingCompletionTime(completionTime.toInstant());
+							} else {
+								// TODO Something is wrong with the job, try to get info from pod
+							}
+
+							// Set job conditions
+							if (job.getStatus().getConditions() != null) {
+								List<V1JobCondition> jobConditions = job.getStatus().getConditions();
+
+								for (V1JobCondition jobCondition : jobConditions) {
+									if ((jobCondition.getType().equalsIgnoreCase("complete")
+											|| jobCondition.getType().equalsIgnoreCase("completed"))
+											&& jobCondition.getStatus().equalsIgnoreCase("true")) {
+
+										// Plan failed job steps
+										if (jobStep.get().getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.FAILED) {
+											jobStep.get().setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.PLANNED);
+										}
+
+										// Run ready job steps
+										if (JobStepState.READY.equals(jobStep.get().getJobStepState())) {
+											// Sometimes we don't get the state transition to RUNNING
+											if (logger.isTraceEnabled())
+												logger.trace("... fixing state {} of job step {} to RUNNING",
+														jobStep.get().getJobStepState(), jobStep.get().getId());
+
+											jobStep.get().setJobStepState(JobStepState.RUNNING);
+										} else if (JobStepState.PLANNED.equals(jobStep.get().getJobStepState())
+												|| JobStepState.WAITING_INPUT.equals(jobStep.get().getJobStepState())) {
+											// Sometimes we don't even get the state transition to READY
+											if (logger.isTraceEnabled())
+												logger.trace("... fixing state {} of job step {} to RUNNING",
+														jobStep.get().getJobStepState(), jobStep.get().getId());
+
+											jobStep.get().setJobStepState(JobStepState.READY);
+											jobStep.get().setJobStepState(JobStepState.RUNNING);
+										}
+
+										// Mark closed job steps as completed
+										if (!JobStepState.CLOSED.equals(jobStep.get().getJobStepState())) {
+											jobStep.get().setJobStepState(JobStepState.COMPLETED);
+										}
+
+										// Removing unnecessary component products and delete the main product if it has no more components
+										// or files
+										UtilService.getJobStepUtil().checkCreatedProducts(jobStep.get());
+
+										// Set completion time if necessary
+										if (completionTime == null) {
+											completionTime = jobCondition.getLastProbeTime();
+											jobStep.get().setProcessingCompletionTime(completionTime.toInstant());
+										}
+
+										success = Boolean.TRUE;
+									} else if ((jobCondition.getType().equalsIgnoreCase("failed")
+											|| jobCondition.getType().equalsIgnoreCase("failure"))
+											&& jobCondition.getStatus().equalsIgnoreCase("true")) {
+
+										// Run ready job steps
+										if (JobStepState.READY.equals(jobStep.get().getJobStepState())) {
+											jobStep.get().setJobStepState(JobStepState.RUNNING);
+										} else if (JobStepState.PLANNED.equals(jobStep.get().getJobStepState())) {
+											// TODO Why do we only look state PLANNED if the state is not READY?
+											jobStep.get().setJobStepState(JobStepState.READY);
+											jobStep.get().setJobStepState(JobStepState.RUNNING);
+										}
+
+										// Mark job steps that are neither completed nor closed as failed
+										if (!JobStepState.COMPLETED.equals(jobStep.get().getJobStepState())
+												&& !JobStepState.CLOSED.equals(jobStep.get().getJobStepState())) {
+											jobStep.get().setJobStepState(JobStepState.FAILED);
+										}
+
+										if (completionTime == null) {
+											completionTime = jobCondition.getLastProbeTime();
+											jobStep.get().setProcessingCompletionTime(completionTime.toInstant());
+										}
+
+										success = Boolean.TRUE;
+									}
+								}
+
+							}
+
+							// TODO Cancel pod and job, write reasons into job step log.
+							// TODO Check the pod for errors and warnings.
+							// kubeConfig.getApiV1().listNamespacedEvent("default",null,false,null,"involvedObject.name=proseojob733-bwzf4",null,null,null,null,false);
+						} else {
+							if (logger.isTraceEnabled())
+								logger.trace("    updateInfo: status not found");
+						}
+					} catch (Exception e) {
+						logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+
+						if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
+						// Re-throw to roll back the transaction
+						throw e;
 					}
 
-					// TODO Cancel pod and job, write reasons into job step log.
-					// TODO Check the pod for errors and warnings.
-					// kubeConfig.getApiV1().listNamespacedEvent("default",null,false,null,"involvedObject.name=proseojob733-bwzf4",null,null,null,null,false);
-				} else {
+					// Update the log and save the modified job step
+					updateJobLog(jobStep.get());
+					if (success == Boolean.TRUE) {
+						jobStep.get().incrementVersion();
+						RepositoryService.getJobStepRepository().save(jobStep.get());
+					}
+
 					if (logger.isTraceEnabled())
-						logger.trace("    updateInfo: status not found");
+						logger.trace("<<< updateInfo({}, {})", jobName, success);
+
+					return success;
+				});
+			} catch (CannotAcquireLockException e) {
+				if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+				if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+					ProductionPlanner.productionPlanner.dbWait();
+				} else {
+					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+					throw e;
 				}
-			} catch (Exception e) {
-				logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
-				
-				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-
-				// Re-throw to roll back the transaction
-				throw e;
 			}
+		}
+		return Boolean.FALSE;
 
-			// Update the log and save the modified job step
-			updateJobLog(jobStep.get());
-			if (success == Boolean.TRUE) {
-				jobStep.get().incrementVersion();
-				RepositoryService.getJobStepRepository().save(jobStep.get());
-			}
-
-			if (logger.isTraceEnabled())
-				logger.trace("<<< updateInfo({}, {})", jobName, success);
-
-			return success;
-		});
 	}
 
 	/**
@@ -1102,18 +1139,33 @@ public class KubeJob {
 		if (success) {
 			TransactionTemplate transactionTemplate = new TransactionTemplate(
 					this.kubeConfig.getProductionPlanner().getTxManager());
-			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-			transactionTemplate.execute((status) -> {
-				Long jobStepId = this.getJobId();
-				Optional<JobStep> jobStep = RepositoryService.getJobStepRepository().findById(jobStepId);
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);		
+			for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+				try {
 
-				// Perform cleanup operations on the job step
-				if (jobStep.isPresent()) {
-					UtilService.getJobStepUtil().checkFinish(jobStep.get());
+					transactionTemplate.execute((status) -> {
+						Long jobStepId = this.getJobId();
+						Optional<JobStep> jobStep = RepositoryService.getJobStepRepository().findById(jobStepId);
+
+						// Perform cleanup operations on the job step
+						if (jobStep.isPresent()) {
+							UtilService.getJobStepUtil().checkFinish(jobStep.get());
+						}
+
+						return null;
+					});
+					break;
+				} catch (CannotAcquireLockException e) {
+					if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+					if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+						ProductionPlanner.productionPlanner.dbWait();
+					} else {
+						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+						throw e;
+					}
 				}
-
-				return null;
-			});
+			}
 
 			// Delete the Kubernetes job
 			kubeConfig.deleteJob(jobName);

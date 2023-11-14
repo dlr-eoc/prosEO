@@ -24,6 +24,7 @@ import javax.persistence.Query;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionDefinition;
@@ -213,14 +214,27 @@ public class JobStepUtil {
 			return jobSteps;
 		});
 		for (Long jsId : allJobSteps) {
-			@SuppressWarnings("unused")
-			final Object dummy = transactionTemplate.execute((status) -> {
-				Optional<JobStep> opt = RepositoryService.getJobStepRepository().findById(jsId);
-				if (opt.isPresent()) {
-					checkJobStepQueries(opt.get(), false);
+			for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+				try {
+					transactionTemplate.execute((status) -> {
+						Optional<JobStep> opt = RepositoryService.getJobStepRepository().findById(jsId);
+						if (opt.isPresent()) {
+							checkJobStepQueries(opt.get(), false);
+						}
+						return null;
+					});
+					break;
+				} catch (CannotAcquireLockException e) {
+					if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+					if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+						ProductionPlanner.productionPlanner.dbWait();
+					} else {
+						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+						throw e;
+					}
 				}
-				return null;
-			});
+			}
 		}
 	}
 
@@ -1128,39 +1142,53 @@ public class JobStepUtil {
 					});
 					
 					transactionTemplate.setReadOnly(false);
-					answer = transactionTemplate.execute((status) -> {
-						Optional<JobStep> opt = RepositoryService.getJobStepRepository().findById(jsId);
-						JobStep js = null;
-						if (opt.isPresent()) {
-							js =  opt.get();
-						}
-						if (js != null && checkQueries) {
-							checkJobStepQueries(js, false);
-						}
-						if (js != null && js.getJobStepState() == JobStepState.READY) {
-							if (js.getJob().getJobState() == JobState.PLANNED) {
-								js.getJob().setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
-								RepositoryService.getJobRepository().save(js.getJob());
-							}
-							if ((js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)
-									&& js.getJob().getProcessingOrder().getOrderState() != OrderState.SUSPENDING
-									&& js.getJob().getProcessingOrder().getOrderState() != OrderState.PLANNED) {
-								if (kc.couldJobRun(js.getId())) {
-									try {
-										kc.getJobCreatingList().put(js.getId(), js.getId());
-										kc.createJob(String.valueOf(js.getId()), null, null);
-									} catch (Exception e) {
-										throw e;
-									} finally {
-										kc.getJobCreatingList().remove(js.getId());
-									}
-								} else {
-									return false;
+					for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+						try {
+							answer = transactionTemplate.execute((status) -> {
+								Optional<JobStep> opt = RepositoryService.getJobStepRepository().findById(jsId);
+								JobStep js = null;
+								if (opt.isPresent()) {
+									js =  opt.get();
 								}
+								if (js != null && checkQueries) {
+									checkJobStepQueries(js, false);
+								}
+								if (js != null && js.getJobStepState() == JobStepState.READY) {
+									if (js.getJob().getJobState() == JobState.PLANNED) {
+										js.getJob().setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
+										RepositoryService.getJobRepository().save(js.getJob());
+									}
+									if ((js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)
+											&& js.getJob().getProcessingOrder().getOrderState() != OrderState.SUSPENDING
+											&& js.getJob().getProcessingOrder().getOrderState() != OrderState.PLANNED) {
+										if (kc.couldJobRun(js.getId())) {
+											try {
+												kc.getJobCreatingList().put(js.getId(), js.getId());
+												kc.createJob(String.valueOf(js.getId()), null, null);
+											} catch (Exception e) {
+												throw e;
+											} finally {
+												kc.getJobCreatingList().remove(js.getId());
+											}
+										} else {
+											return false;
+										}
+									}
+								}
+								return true;
+							});
+							break;
+						} catch (CannotAcquireLockException e) {
+							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+							if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+								ProductionPlanner.productionPlanner.dbWait();
+							} else {
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+								throw e;
 							}
 						}
-						return true;
-					});
+					}
 				}
 			}
 		}
