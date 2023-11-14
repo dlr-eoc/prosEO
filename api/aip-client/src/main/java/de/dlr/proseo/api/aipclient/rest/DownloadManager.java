@@ -1284,12 +1284,12 @@ public class DownloadManager {
 					+ " or startswith(Name,'" + securityService.getMission().substring(0, 2) + "_'))"
 				+ " and (contains(Name,'" + productType + "')"
 				+ (securityService.getMission().startsWith("S1") && productType.startsWith("SM") ?
-						" or contains(Name,'S1" + productType.substring(2) + ")" +
-						" or contains(Name,'S2" + productType.substring(2) + ")" +
-						" or contains(Name,'S3" + productType.substring(2) + ")" +
-						" or contains(Name,'S4" + productType.substring(2) + ")" +
-						" or contains(Name,'S5" + productType.substring(2) + ")" +
-						" or contains(Name,'S6" + productType.substring(2) + ")"
+						" or contains(Name,'S1" + productType.substring(2) + "')" +
+						" or contains(Name,'S2" + productType.substring(2) + "')" +
+						" or contains(Name,'S3" + productType.substring(2) + "')" +
+						" or contains(Name,'S4" + productType.substring(2) + "')" +
+						" or contains(Name,'S5" + productType.substring(2) + "')" +
+						" or contains(Name,'S6" + productType.substring(2) + "')"
 						: "")
 				+ ")"
 				+ " and ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
@@ -1372,12 +1372,12 @@ public class DownloadManager {
 					+ " or startswith(Name,'" + securityService.getMission().substring(0, 2) + "_'))"
 				+ " and (contains(Name,'" + productType + "')"
 				+ (securityService.getMission().startsWith("S1") && productType.startsWith("SM") ?
-						" or contains(Name,'S1" + productType.substring(2) + ")" +
-						" or contains(Name,'S2" + productType.substring(2) + ")" +
-						" or contains(Name,'S3" + productType.substring(2) + ")" +
-						" or contains(Name,'S4" + productType.substring(2) + ")" +
-						" or contains(Name,'S5" + productType.substring(2) + ")" +
-						" or contains(Name,'S6" + productType.substring(2) + ")"
+						" or contains(Name,'S1" + productType.substring(2) + "')" +
+						" or contains(Name,'S2" + productType.substring(2) + "')" +
+						" or contains(Name,'S3" + productType.substring(2) + "')" +
+						" or contains(Name,'S4" + productType.substring(2) + "')" +
+						" or contains(Name,'S5" + productType.substring(2) + "')" +
+						" or contains(Name,'S6" + productType.substring(2) + "')"
 						: "")
 				+ ")"
 				+ " and ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
