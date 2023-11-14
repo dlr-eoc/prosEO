@@ -21,7 +21,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionException;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -89,7 +91,7 @@ public class OrbitControllerImpl implements OrbitController {
 	 *         HTTP status "INTERNAL_SERVER_ERROR" on any unexpected exception, or HTTP status "TOO MANY REQUESTS" if the result
 	 *         list exceeds a configured maximum.
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	@Override
 	public ResponseEntity<List<RestOrbit>> getOrbits(String spacecraftCode, Long orbitNumberFrom, Long orbitNumberTo,
 			String startTimeFrom, String startTimeTo, Integer recordFrom, Integer recordTo, String[] orderBy) {
@@ -160,7 +162,7 @@ public class OrbitControllerImpl implements OrbitController {
 	 *         parameters were inconsistent, or HTTP status "FORBIDDEN" and an error message if a cross-mission data access was
 	 *         attempted, or HTTP status "INTERNAL_SERVER_ERROR" on any unexpected exception.
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	@Override
 	public ResponseEntity<String> countOrbits(String spacecraftCode, Long orbitNumberFrom, Long orbitNumberTo, String startTimeFrom,
 			String startTimeTo) {
@@ -206,6 +208,7 @@ public class OrbitControllerImpl implements OrbitController {
 		}
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		List<RestOrbit> restOrbitList = null;
 		try {
@@ -290,6 +293,8 @@ public class OrbitControllerImpl implements OrbitController {
 			logger.trace(">>> getOrbitById({})", id);
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+		transactionTemplate.setReadOnly(true);
 
 		RestOrbit restOrbit = null;
 		try {
@@ -337,6 +342,7 @@ public class OrbitControllerImpl implements OrbitController {
 			logger.trace(">>> modifyOrbit({})", id);
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		RestOrbit restOrbit = null;
 		try {
@@ -443,6 +449,7 @@ public class OrbitControllerImpl implements OrbitController {
 			logger.trace(">>> deleteOrbitById({})", id);
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		try {
 			transactionTemplate.execute((status) -> {

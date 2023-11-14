@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.logging.http.HttpPrefix;
@@ -64,7 +65,7 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 	 * @return A ResponseEntity containing the list of RestJobStep objects and the HTTP status code
 	 */
 	@Override
-	@Transactional(readOnly = true)
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public ResponseEntity<List<RestJobStep>> getJobSteps(Status status, String mission, Long last) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getJobSteps({}, {}, {})", status, mission, last);
@@ -123,7 +124,7 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 	 * @return A ResponseEntity containing the RestJobStep object and the HTTP status code
 	 */
 	@Override
-	@Transactional(readOnly = true)
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public ResponseEntity<RestJobStep> getJobStep(String name) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getJobStep({})", name);
@@ -151,7 +152,7 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 	 * @param nameOrId The name or id of the job step to find
 	 * @return The found JobStep object
 	 */
-	@Transactional(readOnly = true)
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	private JobStep findJobStepByNameOrIdPrim(String nameOrId) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> findJobStepByNameOrIdPrim({})", nameOrId);
@@ -209,7 +210,7 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 	 * @param logs Whether to include the logs in the RestJobStep object
 	 * @return The RestJobStep object
 	 */
-	@Transactional(readOnly = true)
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	private RestJobStep getRestJobStep(long id, Boolean logs) {
 		RestJobStep rj = null;
 		JobStep js = null;
@@ -230,7 +231,7 @@ public class OrderjobstepControllerImpl implements OrderjobstepController {
 	 * @param limit   The length of the result entry list
 	 * @return The found job steps
 	 */
-	@Transactional(readOnly = true)
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	private List<JobStep> findOrderedByJobStepStateAndMission(JobStepState state, String mission, int limit) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> findOrderedByJobStepStateAndMission({}, {}, {})", state, mission, limit);

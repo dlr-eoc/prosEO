@@ -25,7 +25,7 @@ public enum GeneralMessage implements ProseoMessage {
 	INITIALIZING_USER_DETAILS_SERVICE	(9009, Level.INFO, true, "Initializing user details service from datasource {0}", ""),
 	INVALID_PROCESSING_MODE 			(9010, Level.ERROR, false, "Processing mode {0} not defined for mission {1}", ""),
 	OK									(9011, Level.INFO, true, "Okay", ""),
-	RUNTIME_EXCEPTION_ENCOUNTERED		(9012, Level.WARN, true, "Exception encountered: {0}", ""),
+	RUNTIME_EXCEPTION_ENCOUNTERED		(9012, Level.ERROR, true, "Exception encountered: {0}", ""),
 	TRUE								(9013, Level.INFO, true, "true", ""),
 	UNDEFINED							(9014, Level.ERROR, false, "An unknown error occured.", ""),
 	TOO_MANY_RESULTS					(9015, Level.ERROR, false, "The number of {0} matching the search criteria ({1}) exceeds the configured maximum number of results ({2})", ""),

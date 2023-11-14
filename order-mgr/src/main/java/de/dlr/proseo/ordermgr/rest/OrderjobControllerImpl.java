@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 
@@ -73,7 +74,7 @@ public class OrderjobControllerImpl implements OrderjobController {
 	 * @return A list of JSON objects describing jobs.
 	 */
 	@Override
-	@Transactional(readOnly = true)
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public ResponseEntity<List<RestJob>> getJobs(Long orderId, Integer recordFrom, Integer recordTo, Boolean logs, String[] states,
 			String[] orderBy) {
 		if (logger.isTraceEnabled())
@@ -133,7 +134,7 @@ public class OrderjobControllerImpl implements OrderjobController {
 	 * @param orderId The order ID of the jobs.
 	 * @return The number of jobs.
 	 */
-	@Transactional(readOnly = true)
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	@Override
 	public ResponseEntity<String> countJobs(String[] states, Long orderId) {
 		if (logger.isTraceEnabled())
@@ -170,7 +171,7 @@ public class OrderjobControllerImpl implements OrderjobController {
 	 *                  whitespace.
 	 * @return The index of the job in the ordered list (0 based).
 	 */
-	@Transactional(readOnly = true)
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	@Override
 	public ResponseEntity<String> indexOfJob(Long orderId, Long jobId, Long jobStepId, String[] states, String[] orderBy) {
 		if (logger.isTraceEnabled())

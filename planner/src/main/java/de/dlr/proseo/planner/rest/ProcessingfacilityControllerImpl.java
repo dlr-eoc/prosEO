@@ -15,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.logging.http.HttpPrefix;
@@ -55,7 +56,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      * @return a list of JSON objects describing the processing facilities
      */
 	@Override
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
     public ResponseEntity<List<RestProcessingFacility>> getRestProcessingFacilities(HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getRestProcessingFacilities()");
 		
@@ -93,6 +94,8 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -104,7 +107,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      * @return a JSON object describing the processing facility
      */
 	@Override
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public ResponseEntity<RestProcessingFacility> getRestProcessingFacilityByName(String name, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getRestProcessingFacilityByName({})", name);
 		
@@ -137,6 +140,8 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -168,6 +173,8 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			} catch (Exception e) {
 				productionPlanner.releaseThreadSemaphore("synchronizeFacility");		
 				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+				
+				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			}
 			
 			RestProcessingFacility pf = new RestProcessingFacility(
@@ -189,6 +196,8 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			return new ResponseEntity<>(pf, HttpStatus.OK);
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -234,6 +243,10 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.OK);
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}

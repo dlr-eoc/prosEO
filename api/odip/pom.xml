@@ -1,4 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
@@ -102,6 +102,11 @@
       <artifactId>proseo-interfaces</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>de.dlr.proseo</groupId>
+      <artifactId>proseo-logging</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 		<dependency>
 			<groupId>de.dlr.proseo</groupId>
 			<artifactId>proseo-model</artifactId>
@@ -127,12 +132,12 @@
 			<artifactId>springmvc-raml-plugin</artifactId>
             <type>maven-plugin</type>
 		</dependency>
-		<dependency>
+<!--		<dependency>
 			<groupId>de.dlr.proseo</groupId>
 			<artifactId>proseo-planner</artifactId>
 			<version>0.9.5-SNAPSHOT</version>
 		</dependency>
-	</dependencies>
+-->	</dependencies>
 
 	<build>
 		<finalName>proseo-api-odip</finalName>
@@ -211,17 +216,6 @@
 							<commandlineArgs>-i ${raml-path-query} -o src/site/resources/${project.artifactId}-query.html</commandlineArgs>
 						</configuration>
 					</execution>
-                    <execution>
-                        <id>generate-html-oauth2</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>raml2html</executable>
-                            <commandlineArgs>-i ${raml-path-oauth2} -o src/site/resources/${project.artifactId}-oauth2.html</commandlineArgs>
-                        </configuration>
-                    </execution>
 				</executions>
 			</plugin>
       <plugin>
@@ -261,7 +255,7 @@
                         <phase>install</phase>
                         <configuration>
                             <target>
-                                <exec executable="docker">
+                                <exec executable="docker" failonerror="true">
                                     <arg value="build" />
                                     <arg value="-t" />
                                     <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
@@ -269,7 +263,7 @@
                                     <arg value="${project.build.platform}" />
                                     <arg value="." />
                                 </exec>
-                                <exec executable="docker">
+                                <exec executable="docker" failonerror="true">
                                     <arg value="push" />
                                     <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
                                 </exec>

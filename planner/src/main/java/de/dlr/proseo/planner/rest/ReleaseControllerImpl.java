@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.model.rest.ReleaseController;
 import de.dlr.proseo.planner.ProductionPlanner;
 
@@ -31,7 +32,10 @@ public class ReleaseControllerImpl implements ReleaseController {
 		try {
 			productionPlanner.releaseThreadSemaphore("ingestorSemaphore");
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
+			
+			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
 			return new ResponseEntity<>("releaseSemaphore failed", HttpStatus.NOT_ACCEPTABLE);
 		}
 		return new ResponseEntity<>("releaseSemaphore succeded", HttpStatus.OK);

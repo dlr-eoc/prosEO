@@ -69,7 +69,7 @@ public class SendManager {
 		String contentType = config.getContentType();
 		String user = null;
 		String password = null;
-		String sender = config.getSender();
+		String sender = config.getMailSender();
 
 		// Check if the endpoint is provided
 		if (restMessage.getEndpoint() != null) {
@@ -145,7 +145,7 @@ public class SendManager {
 		}
 
 		// Check if a custom sender is provided, otherwise use the default from the configuration
-		if (restMessage.getSender() != null && !restMessage.getSender().isBlank()) {
+		if (type != SendType.MAIL && (restMessage.getSender() != null && !restMessage.getSender().isBlank())) {
 			sender = restMessage.getSender();
 		}
 

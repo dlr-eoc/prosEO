@@ -10,6 +10,7 @@ package de.dlr.proseo.planner.util;
 
 import java.util.Optional;
 
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -86,11 +87,14 @@ public class OrderPlanThread extends Thread {
      * Start and initialize the thread
      */
     public void run() {
-		if (logger.isTraceEnabled()) logger.trace(">>> run({})", this.getName());
-		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		if (logger.isTraceEnabled()) logger.trace(">>> run() for thread {}", this.getName());
 		
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
-		if (orderId != 0 && productionPlanner != null && orderDispatcher != null) {
+		
+		if (0 == orderId || null == productionPlanner || null == orderDispatcher) {
+			logger.log(answer.getMessage());
+		} else {
+			// Create the required jobs for the order (independent transaction)
 			try {
 				productionPlanner.acquireThreadSemaphore("OrderPlanThread.run");
 				answer = orderDispatcher.prepareExpectedJobs(orderId, procFacility, this);
@@ -99,7 +103,11 @@ public class OrderPlanThread extends Thread {
 				productionPlanner.releaseThreadSemaphore("OrderPlanThread.run");
 				answer.setMessage(PlannerMessage.PLANNING_INTERRUPTED);
 				answer.setText(logger.log(answer.getMessage(), orderId));
-			} 
+			}
+			
+			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+			
 			try {
 				if (answer.getSuccess()) {
 					answer = plan(orderId);
@@ -108,21 +116,22 @@ public class OrderPlanThread extends Thread {
 				answer.setMessage(PlannerMessage.PLANNING_INTERRUPTED);
 				answer.setText(logger.log(answer.getMessage(), orderId));
 			} catch(Exception e) {
-				@SuppressWarnings("unused")
-				Object dummy = transactionTemplate.execute((status) -> {
-					ProcessingOrder lambdaOrder = null;
+				// Set order state to failed
+				transactionTemplate.execute((status) -> {
 					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
 					if (orderOpt.isPresent()) {
-						lambdaOrder = orderOpt.get();
+						ProcessingOrder lambdaOrder = orderOpt.get();
+						lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
+						lambdaOrder.setStateMessage(ProductionPlanner.STATE_MESSAGE_FAILED);
+						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 					}
-					lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
-					UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_FAILED);
-					lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 					return null;
 				});
 				answer.setText(logger.log(PlannerMessage.ORDER_PLANNING_EXCEPTION, this.getName(), orderId));
 				answer.setMessage(GeneralMessage.EXCEPTION_ENCOUNTERED);
 				answer.setText(logger.log(answer.getMessage(), e.getMessage()));
+				
+				if (logger.isDebugEnabled()) logger.debug("Exception stack trace: ", e);
 			}
 			try {
 				if (!answer.getSuccess()) {
@@ -163,7 +172,9 @@ public class OrderPlanThread extends Thread {
 		}
 		this.resultMessage = answer;
 		productionPlanner.getPlanThreads().remove(this.getName());
-		if (logger.isTraceEnabled()) logger.trace("<<< run({})", this.getName());
+		
+		if (logger.isTraceEnabled()) logger.trace("<<< run() for thread {}", this.getName());
+		
 		productionPlanner.checkNextForRestart();				
     }
     
@@ -176,9 +187,12 @@ public class OrderPlanThread extends Thread {
      * @throws InterruptedException
      */
     public PlannerResultMessage plan(long orderId) throws InterruptedException {
+		if (logger.isTraceEnabled()) logger.trace(">>> plan({})", orderId);
+		
 		ProcessingOrder order = null;
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		order = transactionTemplate.execute((status) -> {
 			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
@@ -187,10 +201,14 @@ public class OrderPlanThread extends Thread {
 			}
 			return null;
 		});
-		if (logger.isTraceEnabled()) logger.trace(">>> plan({}, {})", (null == order ? "null" : order.getId()),
+		
+		if (logger.isTraceEnabled()) logger.trace("... planning job steps for order {} on facility {})",
+				(null == order ? "null" : order.getId()),
 				(null == procFacility ? "null" : procFacility.getName()));
+		
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		PlannerResultMessage publishAnswer = new PlannerResultMessage(GeneralMessage.FALSE);
+		
 		if (order != null && procFacility != null && 
 				(order.getOrderState() == OrderState.PLANNING || order.getOrderState() == OrderState.APPROVED)) {
 			try {
@@ -198,6 +216,7 @@ public class OrderPlanThread extends Thread {
 			} catch (InterruptedException e) {
 				throw e;
 			}
+			
 			try {
 				productionPlanner.acquireThreadSemaphore("OrderPlanThread.plan");
 				final PlannerResultMessage finalAnswer = new PlannerResultMessage(publishAnswer.getMessage());
@@ -235,6 +254,8 @@ public class OrderPlanThread extends Thread {
 			} catch (Exception e) {
 				answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
 				answer.setText(logger.log(answer.getMessage(),  e.getMessage()));
+				
+				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			} finally {
 				productionPlanner.releaseThreadSemaphore("OrderPlanThread.plan");
 			}
