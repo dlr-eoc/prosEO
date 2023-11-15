@@ -34,6 +34,7 @@ import de.dlr.proseo.planner.util.OrderUtil;
 
 import org.slf4j.event.Level;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -253,10 +254,24 @@ public class OrderControllerImpl implements OrderController {
 					productionPlanner.acquireThreadSemaphore("deleteOrder");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-					msg = transactionTemplate.execute((status) -> {
-						ProcessingOrder orderx = this.findOrderPrim(orderId);
-						return orderUtil.delete(orderx);
-					});
+					for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+						try {
+							msg = transactionTemplate.execute((status) -> {
+								ProcessingOrder orderx = this.findOrderPrim(orderId);
+								return orderUtil.delete(orderx);
+							});
+							break;
+						} catch (CannotAcquireLockException e) {
+							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+							if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+								ProductionPlanner.productionPlanner.dbWait();
+							} else {
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+								throw e;
+							}
+						}
+					}
 					productionPlanner.releaseThreadSemaphore("deleteOrder");	
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("deleteOrder");	
@@ -521,11 +536,26 @@ public class OrderControllerImpl implements OrderController {
 		try {
 			productionPlanner.acquireThreadSemaphore("cancelOrder");
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
-			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-			msg = transactionTemplate.execute((status) -> {
-				ProcessingOrder orderx = this.findOrderPrim(orderId);
-				return orderUtil.cancel(orderx);
-			});
+			for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+				try {
+					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+					msg = transactionTemplate.execute((status) -> {
+						ProcessingOrder orderx = this.findOrderPrim(orderId);
+						return orderUtil.cancel(orderx);
+					});
+					break;
+				} catch (CannotAcquireLockException e) {
+					if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+					if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+						ProductionPlanner.productionPlanner.dbWait();
+					} else {
+						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+						throw e;
+					}
+				}
+			}
+
 			productionPlanner.releaseThreadSemaphore("cancelOrder");	
 		} catch (Exception e) {
 			productionPlanner.releaseThreadSemaphore("cancelOrder");	
@@ -670,16 +700,30 @@ public class OrderControllerImpl implements OrderController {
 				
 				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 			}
-			
+
 			PlannerResultMessage msg = new PlannerResultMessage(null);
 			try {
 				productionPlanner.acquireThreadSemaphore("retryOrder");
 				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-				msg = transactionTemplate.execute((status) -> {
-					ProcessingOrder orderx = this.findOrderPrim(orderId);
-					return orderUtil.retry(orderx);
-				});
+				for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+					try {
+						msg = transactionTemplate.execute((status) -> {
+							ProcessingOrder orderx = this.findOrderPrim(orderId);
+							return orderUtil.retry(orderx);
+						});
+						break;
+					} catch (CannotAcquireLockException e) {
+						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+						if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+							ProductionPlanner.productionPlanner.dbWait();
+						} else {
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+							throw e;
+						}
+					}
+				}
 				productionPlanner.releaseThreadSemaphore("retryOrder");	
 			} catch (Exception e) {
 				productionPlanner.releaseThreadSemaphore("retryOrder");	

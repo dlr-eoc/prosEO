@@ -49,32 +49,32 @@ public class OrderReleaseThread extends Thread {
 	 * Logger of this class
 	 */
 	private static ProseoLogger logger = new ProseoLogger(OrderReleaseThread.class);
-    
+
 	/**
 	 * The job utility instance 
 	 */
 	private JobUtil jobUtil;
 
 	/** The Production Planner instance */
-    private ProductionPlanner productionPlanner;
-	
+	private ProductionPlanner productionPlanner;
+
 	/**
 	 * The processing order to plan.
 	 */
 	private ProcessingOrder order;
-	
+
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
-	
+
 	/**
 	 * The result of the planning
 	 */
 	private PlannerResultMessage resultMessage;
-	
+
 	private String user;
 	private String pw;
-	
+
 	/**
 	 * @return the user
 	 */
@@ -117,16 +117,16 @@ public class OrderReleaseThread extends Thread {
 		this.user = user;
 		this.pw = pw;
 	}
-	
-    /**
-     * Start and initialize the release thread
-     */
-    public void run() {
+
+	/**
+	 * Start and initialize the release thread
+	 */
+	public void run() {
 		if (logger.isTraceEnabled()) logger.trace(">>> run() for thread {}", this.getName());
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-		
+
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		if (order != null && productionPlanner != null && jobUtil != null) {
 			answer = new PlannerResultMessage(GeneralMessage.TRUE);
@@ -160,17 +160,32 @@ public class OrderReleaseThread extends Thread {
 					answer.setText(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage()));
 					productionPlanner.acquireThreadSemaphore("runRelease1");
 					transactionTemplate.setReadOnly(false);
-					transactionTemplate.execute((status) -> {
-						ProcessingOrder lambdaOrder = null;
-						Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
-						if (orderOpt.isPresent()) {
-							lambdaOrder = orderOpt.get();
+					for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+						try {
+
+							transactionTemplate.execute((status) -> {
+								ProcessingOrder lambdaOrder = null;
+								Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+								if (orderOpt.isPresent()) {
+									lambdaOrder = orderOpt.get();
+								}
+								lambdaOrder.setOrderState(OrderState.PLANNED);
+								UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_QUEUED);
+								lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
+								return null;
+							});
+							break;
+						} catch (CannotAcquireLockException e1) {
+							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e1);
+
+							if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+								ProductionPlanner.productionPlanner.dbWait();
+							} else {
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+								throw e1;
+							}
 						}
-						lambdaOrder.setOrderState(OrderState.PLANNED);
-						UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_QUEUED);
-						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
-						return null;
-					});
+					}
 
 					productionPlanner.releaseThreadSemaphore("runRelease1");
 				}
@@ -181,17 +196,32 @@ public class OrderReleaseThread extends Thread {
 				answer.setText(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage()));
 				productionPlanner.acquireThreadSemaphore("runRelease2");
 				transactionTemplate.setReadOnly(false);
-				transactionTemplate.execute((status) -> {
-					ProcessingOrder lambdaOrder = null;
-					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
-					if (orderOpt.isPresent()) {
-						lambdaOrder = orderOpt.get();
+				for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+					try {
+						transactionTemplate.execute((status) -> {
+							ProcessingOrder lambdaOrder = null;
+							Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+							if (orderOpt.isPresent()) {
+								lambdaOrder = orderOpt.get();
+							}
+							lambdaOrder.setOrderState(OrderState.PLANNED);
+							UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_QUEUED);
+							lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
+							return null;
+						});
+						break;
+					} catch (CannotAcquireLockException e1) {
+						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e1);
+
+						if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+							ProductionPlanner.productionPlanner.dbWait();
+						} else {
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+							throw e1;
+						}
 					}
-					lambdaOrder.setOrderState(OrderState.PLANNED);
-					UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_QUEUED);
-					lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
-					return null;
-				});
+				}
+
 				productionPlanner.releaseThreadSemaphore("runRelease2");
 			}
 		}
@@ -199,17 +229,17 @@ public class OrderReleaseThread extends Thread {
 		productionPlanner.getReleaseThreads().remove(this.getName());
 		if (logger.isTraceEnabled()) logger.trace("<<< run() for thread {}", this.getName());
 		productionPlanner.checkNextForRestart();				
-    }
-    
-    
-    /**
-     * Release the processing order 
-     * 
-     * @param orderId The id of the order
-     * @return The result message
-     * @throws InterruptedException
-     */
-    public PlannerResultMessage release(long orderId) throws InterruptedException {
+	}
+
+
+	/**
+	 * Release the processing order 
+	 * 
+	 * @param orderId The id of the order
+	 * @return The result message
+	 * @throws InterruptedException
+	 */
+	public PlannerResultMessage release(long orderId) throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> release({})", (null == order ? "null" : order.getId()));
 		ProcessingOrder order = null;
 
@@ -232,7 +262,7 @@ public class OrderReleaseThread extends Thread {
 						public int compare(Job o1, Job o2) {
 							return o1.getStartTime().compareTo(o2.getStartTime());
 						}});
-					
+
 					return orderOpt.get();
 				}
 				return null;
@@ -241,7 +271,7 @@ public class OrderReleaseThread extends Thread {
 		} catch (Exception e) {
 			answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
 			answer.setText(logger.log(answer.getMessage(), e.getMessage()));
-			
+
 			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 
 			productionPlanner.releaseThreadSemaphore("release1");
@@ -249,7 +279,7 @@ public class OrderReleaseThread extends Thread {
 		}
 		if (order != null && 
 				(order.getOrderState() == OrderState.RELEASING || order.getOrderState() == OrderState.PLANNED)) {
-			
+
 
 			int packetSize = ProductionPlanner.config.getPlanningBatchSize();
 			final Long jCount = (long) jobList.size();
@@ -261,7 +291,7 @@ public class OrderReleaseThread extends Thread {
 				while (curJList.get(0) < jCount) {
 
 					// Prepare for transaction retry, if "org.springframework.dao.CannotAcquireLockException" is thrown
-					for (int i = 0; i < DB_MAX_RETRY; i++) {
+					for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
 						try {
 							productionPlanner.acquireThreadSemaphore("releaseOrder");
 							if (logger.isTraceEnabled())
@@ -294,18 +324,15 @@ public class OrderReleaseThread extends Thread {
 
 							if (answer1 instanceof PlannerResultMessage) {
 								answer = (PlannerResultMessage) answer1;
-								if (answer.getCode() == PlannerMessage.ORDER_RELEASING_INTERRUPTED.getCode()) {
-									break;
-								}
 							}
+							break;
 						} catch (CannotAcquireLockException e) {
 							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-							if ((i + 1) < DB_MAX_RETRY) {
-								if (logger.isDebugEnabled()) logger.debug("... retrying in {} ms!", DB_WAIT);
-								Thread.sleep(DB_WAIT);
+							if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+								ProductionPlanner.productionPlanner.dbWait();
 							} else {
-								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", DB_MAX_RETRY);
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
 								throw e;
 							}
 						} catch (Exception e) {
@@ -316,84 +343,98 @@ public class OrderReleaseThread extends Thread {
 						} finally {
 							productionPlanner.releaseThreadSemaphore("releaseOrder");
 						} 
+						if (answer == null || answer.getCode() == PlannerMessage.ORDER_RELEASING_INTERRUPTED.getCode()) {
+							break;
+						}
 					}
-					
-					try {
-						productionPlanner.acquireThreadSemaphore("releaseOrder2");
+					// Prepare for transaction retry, if "org.springframework.dao.CannotAcquireLockException" is thrown
+					for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+						try {
+							productionPlanner.acquireThreadSemaphore("releaseOrder2");
+							// This one requires special handling, because as a "side effect" the Kubernetes job is started
+							// and must be cancelled, if the transaction fails
+							transactionTemplate.setReadOnly(false);
 
-						// TODO Add transaction retry here, but need to find the retry condition first
-						// This one requires special handling, because as a "side effect" the Kubernetes job is started
-						// and must be cancelled, if the transaction fails
-						transactionTemplate.setReadOnly(false);
-						transactionTemplate.execute((status) -> {
-							
-							String nativeQuery = "SELECT j.start_time, js.id, pf.name "
-									+ "FROM processing_order o "
-									+ "JOIN job j ON o.id = j.processing_order_id "
-									+ "JOIN job_step js ON j.id = js.job_id "
-									+ "JOIN processing_facility pf ON j.processing_facility_id = pf.id "
-									+ "WHERE o.id = :orderId "
-									+ "AND js.job_step_state = :jsState "
-									+ "ORDER BY js.priority desc, j.start_time, js.id";
-							
-							List<?> jobStepList = em.createNativeQuery(nativeQuery)
-									.setParameter("orderId", orderId)
-									.setParameter("jsState", JobStepState.READY.toString())
-									.getResultList();
-							
-							for (Object jobStepObject: jobStepList) {
-								if (jobStepObject instanceof Object[]) {
-									
-									Object[] jobStep = (Object[]) jobStepObject;
-									
-									if (logger.isTraceEnabled()) logger.trace("... found job step info {}", Arrays.asList(jobStep));
-									
-									// jobStep[0] is only used for ordering the result list
-									Object jsIdObject = jobStep[1];
-									Object pfNameObject = jobStep[2];
-									
-									Long jsId = jsIdObject instanceof BigInteger ? ((BigInteger) jsIdObject).longValue() : null;
-									String pfName = pfNameObject instanceof String ? (String) pfNameObject : null;
-									
-									if (null == jsId || null == pfName) {
-										logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, "Invalid query result: " + Arrays.asList(jobStep));
+							transactionTemplate.execute((status) -> {
 
+								String nativeQuery = "SELECT j.start_time, js.id, pf.name "
+										+ "FROM processing_order o "
+										+ "JOIN job j ON o.id = j.processing_order_id "
+										+ "JOIN job_step js ON j.id = js.job_id "
+										+ "JOIN processing_facility pf ON j.processing_facility_id = pf.id "
+										+ "WHERE o.id = :orderId "
+										+ "AND js.job_step_state = :jsState "
+										+ "ORDER BY js.priority desc, j.start_time, js.id";
+
+								List<?> jobStepList = em.createNativeQuery(nativeQuery)
+										.setParameter("orderId", orderId)
+										.setParameter("jsState", JobStepState.READY.toString())
+										.getResultList();
+
+								for (Object jobStepObject: jobStepList) {
+									if (jobStepObject instanceof Object[]) {
+
+										Object[] jobStep = (Object[]) jobStepObject;
+
+										if (logger.isTraceEnabled()) logger.trace("... found job step info {}", Arrays.asList(jobStep));
+
+										// jobStep[0] is only used for ordering the result list
+										Object jsIdObject = jobStep[1];
+										Object pfNameObject = jobStep[2];
+
+										Long jsId = jsIdObject instanceof BigInteger ? ((BigInteger) jsIdObject).longValue() : null;
+										String pfName = pfNameObject instanceof String ? (String) pfNameObject : null;
+
+										if (null == jsId || null == pfName) {
+											logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, "Invalid query result: " + Arrays.asList(jobStep));
+
+											throw new RuntimeException("Invalid query result");
+										}
+
+										try {
+											KubeConfig kc = productionPlanner.getKubeConfig(pfName);
+											if (!kc.couldJobRun(null)) {
+												break;
+											}
+											UtilService.getJobStepUtil().checkJobStepToRun(kc, jsId);
+										} catch (Exception e) {
+											if (logger.isDebugEnabled())
+												logger.debug("... exception in checkJobStepToRun(" + pfName + ", " + jsId + "): ", e);
+
+											logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+											throw e;
+										} 
+
+									} else {
+										logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, "Invalid query result: " + jobStepObject);
 										throw new RuntimeException("Invalid query result");
 									}
-									
-									try {
-										KubeConfig kc = productionPlanner.getKubeConfig(pfName);
-										if (!kc.couldJobRun()) {
-											break;
-										}
-										UtilService.getJobStepUtil().checkJobStepToRun(kc, jsId);
-									} catch (Exception e) {
-										if (logger.isDebugEnabled())
-											logger.debug("... exception in checkJobStepToRun(" + pfName + ", " + jsId + "): ", e);
-
-										logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
-										throw e;
-									} 
-									
-								} else {
-									logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, "Invalid query result: " + jobStepObject);
-									throw new RuntimeException("Invalid query result");
 								}
+
+								return null;					
+							});
+							break;
+						} catch (CannotAcquireLockException e) {
+							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+							if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+								ProductionPlanner.productionPlanner.dbWait();
+							} else {
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+								throw e;
 							}
-							
-							return null;					
-						});
-					} catch (Exception e) {
-						if (logger.isDebugEnabled())
-							logger.debug("... exception in release::doInTransaction2(" + orderId + "): ", e);
-						throw e;
-					} finally {
-						productionPlanner.releaseThreadSemaphore("releaseOrder2");
+						} catch (Exception e) {
+							if (logger.isDebugEnabled())
+								logger.debug("... exception in release::doInTransaction2(" + orderId + "): ", e);
+							throw e;
+						} finally {
+							productionPlanner.releaseThreadSemaphore("releaseOrder2");
+						}
 					}
 				}
 			} catch (Exception e) {	
 				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
-				
+
 				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 
 				throw e;
@@ -409,77 +450,92 @@ public class OrderReleaseThread extends Thread {
 
 				// TODO Add transaction retry here, but need to find the retry condition first
 				transactionTemplate.setReadOnly(false);
-				answer = transactionTemplate.execute((status) -> {
-					ProcessingOrder lambdaOrder = null;
-					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
-					if (orderOpt.isPresent()) {
-						lambdaOrder = orderOpt.get();
-					}
-					PlannerResultMessage lambdaAnswer = new PlannerResultMessage(GeneralMessage.FALSE);
-					if (finalAnswer.getSuccess() || finalAnswer.getCode() == PlannerMessage.JOB_ALREADY_COMPLETED.getCode()) {
-						if (lambdaOrder.getJobs().isEmpty()) {
-							lambdaOrder.setOrderState(OrderState.COMPLETED);
-							UtilService.getOrderUtil().checkAutoClose(lambdaOrder);
-							UtilService.getOrderUtil().setTimes(lambdaOrder);
-							UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_COMPLETED);
-							lambdaAnswer.setMessage(PlannerMessage.ORDER_PRODUCT_EXIST);
-						} else {
-							// check whether order is already running
-							Boolean running = false;
-							for (Job j : lambdaOrder.getJobs()) {
-								if (RepositoryService.getJobStepRepository().countJobStepRunningByJobId(j.getId()) > 0) {
-									running = true;
-									break;
-								}
+				for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+					try {
+
+						answer = transactionTemplate.execute((status) -> {
+							ProcessingOrder lambdaOrder = null;
+							Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+							if (orderOpt.isPresent()) {
+								lambdaOrder = orderOpt.get();
 							}
-							if (!lambdaOrder.getOrderState().equals(OrderState.RUNNING)) {
-								lambdaOrder.setOrderState(OrderState.RELEASED);
-								UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_RUNNING);
-								if (running) {
-									lambdaOrder.setOrderState(OrderState.RUNNING);
+							PlannerResultMessage lambdaAnswer = new PlannerResultMessage(GeneralMessage.FALSE);
+							if (finalAnswer.getSuccess() || finalAnswer.getCode() == PlannerMessage.JOB_ALREADY_COMPLETED.getCode()) {
+								if (lambdaOrder.getJobs().isEmpty()) {
+									lambdaOrder.setOrderState(OrderState.COMPLETED);
+									UtilService.getOrderUtil().checkAutoClose(lambdaOrder);
+									UtilService.getOrderUtil().setTimes(lambdaOrder);
+									UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_COMPLETED);
+									lambdaAnswer.setMessage(PlannerMessage.ORDER_PRODUCT_EXIST);
+								} else {
+									// check whether order is already running
+									Boolean running = false;
+									for (Job j : lambdaOrder.getJobs()) {
+										if (RepositoryService.getJobStepRepository().countJobStepRunningByJobId(j.getId()) > 0) {
+											running = true;
+											break;
+										}
+									}
+									if (!lambdaOrder.getOrderState().equals(OrderState.RUNNING)) {
+										lambdaOrder.setOrderState(OrderState.RELEASED);
+										UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_RUNNING);
+										if (running) {
+											lambdaOrder.setOrderState(OrderState.RUNNING);
+											UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_RUNNING);
+										}
+									}
+									lambdaAnswer.setMessage(PlannerMessage.ORDER_RELEASED);
+								}
+								lambdaAnswer.setText(logger.log(lambdaAnswer.getMessage(), lambdaOrder.getIdentifier()));
+								lambdaOrder.incrementVersion();
+								try {
+									lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
+								} catch (Exception e) {
+									if (logger.isDebugEnabled())
+										logger.debug("... exception in getOrderRepository.save1(" + lambdaOrder.getIdentifier() + "): ", e);
+									throw e;
+								}
+							} else {
+								// the order is also released
+								Boolean running = false;
+								for (Job j : lambdaOrder.getJobs()) {
+									if (RepositoryService.getJobStepRepository().countJobStepRunningByJobId(j.getId()) > 0) {
+										running = true;
+										break;
+									}
+								}
+								if (!lambdaOrder.getOrderState().equals(OrderState.RUNNING)) {
+									lambdaOrder.setOrderState(OrderState.RELEASED);
 									UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_RUNNING);
+									if (running) {
+										lambdaOrder.setOrderState(OrderState.RUNNING);
+										UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_RUNNING);
+									}
+								}
+								lambdaAnswer.setMessage(PlannerMessage.ORDER_RELEASED);
+								lambdaAnswer.setText(logger.log(lambdaAnswer.getMessage(), lambdaOrder.getIdentifier(), this.getName()));
+								try {
+									lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
+								} catch (Exception e) {
+									if (logger.isDebugEnabled())
+										logger.debug("... exception in getOrderRepository.save2(" + lambdaOrder.getIdentifier() + "): ", e);
+									throw e;
 								}
 							}
-							lambdaAnswer.setMessage(PlannerMessage.ORDER_RELEASED);
-						}
-						lambdaAnswer.setText(logger.log(lambdaAnswer.getMessage(), lambdaOrder.getIdentifier()));
-						lambdaOrder.incrementVersion();
-						try {
-							lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
-						} catch (Exception e) {
-							if (logger.isDebugEnabled())
-								logger.debug("... exception in getOrderRepository.save1(" + lambdaOrder.getIdentifier() + "): ", e);
-							throw e;
-						}
-					} else {
-						// the order is also released
-						Boolean running = false;
-						for (Job j : lambdaOrder.getJobs()) {
-							if (RepositoryService.getJobStepRepository().countJobStepRunningByJobId(j.getId()) > 0) {
-								running = true;
-								break;
-							}
-						}
-						if (!lambdaOrder.getOrderState().equals(OrderState.RUNNING)) {
-							lambdaOrder.setOrderState(OrderState.RELEASED);
-							UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_RUNNING);
-							if (running) {
-								lambdaOrder.setOrderState(OrderState.RUNNING);
-								UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_RUNNING);
-							}
-						}
-						lambdaAnswer.setMessage(PlannerMessage.ORDER_RELEASED);
-						lambdaAnswer.setText(logger.log(lambdaAnswer.getMessage(), lambdaOrder.getIdentifier(), this.getName()));
-						try {
-							lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
-						} catch (Exception e) {
-							if (logger.isDebugEnabled())
-								logger.debug("... exception in getOrderRepository.save2(" + lambdaOrder.getIdentifier() + "): ", e);
+							return lambdaAnswer;
+						});
+						break;
+					} catch (CannotAcquireLockException e) {
+						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+						if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+							ProductionPlanner.productionPlanner.dbWait();
+						} else {
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
 							throw e;
 						}
 					}
-					return lambdaAnswer;
-				});
+				}
 
 			} catch (Exception e) {	
 				if (logger.isDebugEnabled())
@@ -494,5 +550,5 @@ public class OrderReleaseThread extends Thread {
 
 		return answer;
 	}
-	
+
 }

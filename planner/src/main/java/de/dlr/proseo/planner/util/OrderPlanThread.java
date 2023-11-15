@@ -10,6 +10,7 @@ package de.dlr.proseo.planner.util;
 
 import java.util.Optional;
 
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -116,17 +117,32 @@ public class OrderPlanThread extends Thread {
 				answer.setMessage(PlannerMessage.PLANNING_INTERRUPTED);
 				answer.setText(logger.log(answer.getMessage(), orderId));
 			} catch(Exception e) {
-				// Set order state to failed
-				transactionTemplate.execute((status) -> {
-					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
-					if (orderOpt.isPresent()) {
-						ProcessingOrder lambdaOrder = orderOpt.get();
-						lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
-						lambdaOrder.setStateMessage(ProductionPlanner.STATE_MESSAGE_FAILED);
-						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
+				// Set order state to failed		
+				for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+					try {
+						transactionTemplate.execute((status) -> {
+							Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+							if (orderOpt.isPresent()) {
+								ProcessingOrder lambdaOrder = orderOpt.get();
+								lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
+								lambdaOrder.setStateMessage(ProductionPlanner.STATE_MESSAGE_FAILED);
+								lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
+							}
+							return null;
+						});
+						break;
+					} catch (CannotAcquireLockException e1) {
+						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e1);
+
+						if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+							ProductionPlanner.productionPlanner.dbWait();
+						} else {
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+							throw e1;
+						}
 					}
-					return null;
-				});
+				}
+
 				answer.setText(logger.log(PlannerMessage.ORDER_PLANNING_EXCEPTION, this.getName(), orderId));
 				answer.setMessage(GeneralMessage.EXCEPTION_ENCOUNTERED);
 				answer.setText(logger.log(answer.getMessage(), e.getMessage()));
@@ -136,35 +152,64 @@ public class OrderPlanThread extends Thread {
 			try {
 				if (!answer.getSuccess()) {
 					productionPlanner.acquireThreadSemaphore("OrderPlanThread.run");
-					@SuppressWarnings("unused")
-					Object dummy = transactionTemplate.execute((status) -> {
-						ProcessingOrder lambdaOrder = null;
-						Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
-						if (orderOpt.isPresent()) {
-							lambdaOrder = orderOpt.get();
+
+					for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+						try {
+							transactionTemplate.execute((status) -> {
+								ProcessingOrder lambdaOrder = null;
+								Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+								if (orderOpt.isPresent()) {
+									lambdaOrder = orderOpt.get();
+								}
+								lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
+								UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_FAILED);
+								lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
+								return null;
+							});
+							break;
+						} catch (CannotAcquireLockException e) {
+							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+							if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+								ProductionPlanner.productionPlanner.dbWait();
+							} else {
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+								throw e;
+							}
 						}
-						lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
-						UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_FAILED);
-						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
-						return null;
-					});
+					}
+
 					productionPlanner.releaseThreadSemaphore("OrderPlanThread.run");
 				}
 			}
 			catch(Exception e) {
 				productionPlanner.releaseThreadSemaphore("OrderPlanThread.run");
-				@SuppressWarnings("unused")
-				Object dummy = transactionTemplate.execute((status) -> {
-					ProcessingOrder lambdaOrder = null;
-					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
-					if (orderOpt.isPresent()) {
-						lambdaOrder = orderOpt.get();
+				for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+					try {
+						transactionTemplate.execute((status) -> {
+							ProcessingOrder lambdaOrder = null;
+							Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+							if (orderOpt.isPresent()) {
+								lambdaOrder = orderOpt.get();
+							}
+							lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
+							UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_FAILED);
+							lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
+							return null;
+						});
+						break;
+					} catch (CannotAcquireLockException e1) {
+						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e1);
+
+						if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+							ProductionPlanner.productionPlanner.dbWait();
+						} else {
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+							throw e1;
+						}
 					}
-					lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
-					UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_FAILED);
-					lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
-					return null;
-				});
+				}
+
 				answer.setText(logger.log(PlannerMessage.ORDER_PLANNING_EXCEPTION, this.getName(), orderId));
 				answer.setMessage(GeneralMessage.EXCEPTION_ENCOUNTERED);
 				answer.setText(logger.log(answer.getMessage(), e.getMessage()));
@@ -220,37 +265,52 @@ public class OrderPlanThread extends Thread {
 			try {
 				productionPlanner.acquireThreadSemaphore("OrderPlanThread.plan");
 				final PlannerResultMessage finalAnswer = new PlannerResultMessage(publishAnswer.getMessage());
-				answer = transactionTemplate.execute((status) -> {
-					ProcessingOrder lambdaOrder = null;
-					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
-					if (orderOpt.isPresent()) {
-						lambdaOrder = orderOpt.get();
-					}
-					PlannerResultMessage lambdaAnswer = new PlannerResultMessage(GeneralMessage.FALSE);
-					if (finalAnswer.getSuccess()) {
-						if (lambdaOrder.getJobs().isEmpty()) {
-							lambdaOrder.setOrderState(OrderState.COMPLETED);
-							UtilService.getOrderUtil().checkAutoClose(lambdaOrder);
-							UtilService.getOrderUtil().setTimes(lambdaOrder);
-							UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_COMPLETED);
-							lambdaAnswer.setMessage(PlannerMessage.ORDER_PRODUCT_EXIST);
+				for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+					try {
+						answer = transactionTemplate.execute((status) -> {
+							ProcessingOrder lambdaOrder = null;
+							Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+							if (orderOpt.isPresent()) {
+								lambdaOrder = orderOpt.get();
+							}
+							PlannerResultMessage lambdaAnswer = new PlannerResultMessage(GeneralMessage.FALSE);
+							if (finalAnswer.getSuccess()) {
+								if (lambdaOrder.getJobs().isEmpty()) {
+									lambdaOrder.setOrderState(OrderState.COMPLETED);
+									UtilService.getOrderUtil().checkAutoClose(lambdaOrder);
+									UtilService.getOrderUtil().setTimes(lambdaOrder);
+									UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_COMPLETED);
+									lambdaAnswer.setMessage(PlannerMessage.ORDER_PRODUCT_EXIST);
+								} else {
+									lambdaOrder.setOrderState(OrderState.PLANNED);
+									UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_QUEUED);
+									lambdaAnswer.setMessage(PlannerMessage.ORDER_PLANNED);
+								}
+								lambdaAnswer.setText(logger.log(lambdaAnswer.getMessage(), lambdaOrder.getIdentifier()));
+								lambdaOrder.incrementVersion();
+								lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
+							} else {
+								lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
+								UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_FAILED);
+								lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
+								lambdaAnswer.setMessage(PlannerMessage.ORDER_PLANNING_FAILED);
+								lambdaAnswer.setText(logger.log(lambdaAnswer.getMessage(), lambdaOrder.getIdentifier(), this.getName()));
+							}
+							return lambdaAnswer;
+						});
+						break;
+					} catch (CannotAcquireLockException e) {
+						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+						if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+							ProductionPlanner.productionPlanner.dbWait();
 						} else {
-							lambdaOrder.setOrderState(OrderState.PLANNED);
-							UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_QUEUED);
-							lambdaAnswer.setMessage(PlannerMessage.ORDER_PLANNED);
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+							throw e;
 						}
-						lambdaAnswer.setText(logger.log(lambdaAnswer.getMessage(), lambdaOrder.getIdentifier()));
-						lambdaOrder.incrementVersion();
-						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
-					} else {
-						lambdaOrder.setOrderState(OrderState.PLANNING_FAILED);
-						UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_FAILED);
-						lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
-						lambdaAnswer.setMessage(PlannerMessage.ORDER_PLANNING_FAILED);
-						lambdaAnswer.setText(logger.log(lambdaAnswer.getMessage(), lambdaOrder.getIdentifier(), this.getName()));
 					}
-					return lambdaAnswer;
-				});
+				}
+
 			} catch (Exception e) {
 				answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
 				answer.setText(logger.log(answer.getMessage(),  e.getMessage()));

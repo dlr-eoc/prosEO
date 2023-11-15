@@ -115,6 +115,7 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 	@Autowired
 	private OdipSecurity securityConfig;
 
+
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(OdipEntityProcessor.class);
 
@@ -696,17 +697,25 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 			return;
 		}
 		// the rest order is created, now create the processing order
-		modelOrder.setUuid(UUID.randomUUID().toString());
 		try {
-			RestOrder orderLoc = modelOrder;
+			modelOrder = OdipApplicationBase.util.createOrder(modelOrder);
+			if (modelOrder == null) {
+				response.setStatusCode((HttpStatusCode.NOT_FOUND).getStatusCode());
+				response.setHeader(HTTP_HEADER_WARNING, "Order not created");
+				return;
+			}
+			final RestOrder orderLoc = modelOrder;
+			final String mission = securityConfig.getMission();
+			final String user = securityConfig.getUser();
+			final String password = securityConfig.getPassword();
 			Thread sendAndReleaseThread = new Thread(modelOrder.getIdentifier()) {
 
 				@Override
 				public void run() {
 					if (logger.isTraceEnabled())
-						logger.trace(">>> sendAndReleaseThread:run()");
+						logger.trace(">>> planAndReleaseThread:run()");
 					try {
-						OdipApplicationBase.util.sendAndReleaseOrder(orderLoc);
+						OdipApplicationBase.util.planAndReleaseOrder(orderLoc, mission, user, password);
 					} catch (OdipException e) {
 						response.setStatusCode((e.getHttpStatus() != null ? e.getHttpStatus() : HttpStatusCode.NOT_FOUND).getStatusCode());
 						response.setHeader(HTTP_HEADER_WARNING, e.getMessage());
@@ -719,12 +728,16 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 					} finally {
 
 						if (logger.isTraceEnabled())
-							logger.trace("<<< sendAndReleaseThread");
+							logger.trace("<<< planAndReleaseThread");
 					}
 				}
 			};
 			sendAndReleaseThread.setName(modelOrder.getIdentifier());
 			sendAndReleaseThread.start();
+		} catch (OdipException e) {
+			response.setStatusCode((e.getHttpStatus() != null ? e.getHttpStatus() : HttpStatusCode.NOT_FOUND).getStatusCode());
+			response.setHeader(HTTP_HEADER_WARNING, e.getMessage());
+			return;
 		} catch (Exception e) {
 			response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, logger.log(OdipMessage.MSG_EXCEPTION,

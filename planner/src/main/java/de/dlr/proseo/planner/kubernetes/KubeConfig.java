@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionDefinition;
@@ -65,6 +66,9 @@ public class KubeConfig {
 
 	/** Map containing the created Kubernetes jobs */
 	private HashMap<String, KubeJob> kubeJobList = null;
+	
+	/** Map containing the creating Kubernetes jobs */
+	private HashMap<Long, Long> jobCreatingList = null;
 
 	/** List of Kubernetes nodes */
 	private V1NodeList kubeNodes = null;
@@ -139,6 +143,20 @@ public class KubeConfig {
 	// No need to create own namespace, as there is only one "user" (prosEO)
 	/** The namespace */
 	private String namespace = "default";
+
+	/**
+	 * @return the jobCreatingList
+	 */
+	public HashMap<Long, Long> getJobCreatingList() {
+		return jobCreatingList;
+	}
+
+	/**
+	 * @param jobCreatingList the jobCreatingList to set
+	 */
+	public void setJobCreatingList(HashMap<Long, Long> jobCreatingList) {
+		this.jobCreatingList = jobCreatingList;
+	}
 
 	/**
 	 * Returns the production planner.
@@ -327,6 +345,7 @@ public class KubeConfig {
 	public KubeConfig(ProcessingFacility processingFacility, ProductionPlanner planner) {
 		setFacility(processingFacility);
 		productionPlanner = planner;
+		jobCreatingList = new HashMap<>();
 	}
 
 	/**
@@ -350,6 +369,7 @@ public class KubeConfig {
 		storageManagerPassword = processingFacility.getStorageManagerPassword();
 		maxJobsPerNode = processingFacility.getMaxJobsPerNode();
 		this.processingFacility = processingFacility;
+		jobCreatingList = new HashMap<>();
 	}
 
 	/**
@@ -505,10 +525,15 @@ public class KubeConfig {
 	 *
 	 * @return true if a new job could run, otherwise false
 	 */
-	public boolean couldJobRun() {
+	public boolean couldJobRun(Long jsId) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> couldJobRun()");
 
+		if (jsId != null) {
+			if (jobCreatingList.containsKey(jsId)) {
+				return false;
+			}
+		}
 		// Check the facility state
 		if (getFacilityState() == FacilityState.DISABLED || getFacilityState() == FacilityState.STOPPED
 				|| getFacilityState() == FacilityState.STOPPING || getFacilityState() == FacilityState.STARTING) {
@@ -586,6 +611,7 @@ public class KubeConfig {
 		}
 
 		// Step 6: Update the state of job steps in the database
+		List<Long> jobStepIds = new ArrayList<Long>();
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		transactionTemplate.execute((status) -> {
@@ -594,52 +620,75 @@ public class KubeConfig {
 			jobStepStates.add(de.dlr.proseo.model.JobStep.JobStepState.RUNNING);
 			List<JobStep> runningJobSteps = RepositoryService.getJobStepRepository()
 				.findAllByProcessingFacilityAndJobStepStateIn(processingFacility.getId(), jobStepStates);
-
-			// These job steps have to be in the Kubernetes job list. If not, there was a problem. Set it to failed.
 			for (JobStep jobStep : runningJobSteps) {
-				String jobName = ProductionPlanner.jobNamePrefix + jobStep.getId();
+				jobStepIds.add(jobStep.getId());
+			}
+			return null;
+		});
 
-				// If no job with this name is running, change state to FAILED and set info in log
-				if (!kubeJobs.containsKey(jobName)) {
-					Product outputProduct = jobStep.getOutputProduct();
-					boolean wasFailed = true;
+		// These job steps have to be in the Kubernetes job list. If not, there was a problem. Set it to failed.
+		for (Long jobStepId : jobStepIds) {
+			for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+				try {
 
-					if (outputProduct != null) {
-						// Check whether the expected products were already generated
-						List<Product> collectedProducts = new ArrayList<>();
-						UtilService.getJobStepUtil().collectProducts(outputProduct, collectedProducts);
-						if (UtilService.getJobStepUtil()
-							.checkProducts(collectedProducts, jobStep.getJob().getProcessingFacility())) {
-							jobStep.setJobStepState(JobStepState.COMPLETED);
-							wasFailed = false;
-						} else {
-							jobStep.setJobStepState(JobStepState.FAILED);
+					transactionTemplate.execute((status) -> {
+						String jobName = ProductionPlanner.jobNamePrefix + jobStepId;
+						JobStep jobStep = RepositoryService.getJobStepRepository().getOne(jobStepId);
+
+						// If no job with this name is running, change state to FAILED and set info in log
+						if (!kubeJobs.containsKey(jobName)) {
+							Product outputProduct = jobStep.getOutputProduct();
+							boolean wasFailed = true;
+
+							if (outputProduct != null) {
+								// Check whether the expected products were already generated
+								List<Product> collectedProducts = new ArrayList<>();
+								UtilService.getJobStepUtil().collectProducts(outputProduct, collectedProducts);
+								if (UtilService.getJobStepUtil()
+										.checkProducts(collectedProducts, jobStep.getJob().getProcessingFacility())) {
+									jobStep.setJobStepState(JobStepState.COMPLETED);
+									wasFailed = false;
+								} else {
+									jobStep.setJobStepState(JobStepState.FAILED);
+								}
+							} else {
+								jobStep.setJobStepState(JobStepState.FAILED);
+							}
+
+							jobStep.incrementVersion();
+
+							// Save the information on what happened
+							String stdout = jobStep.getProcessingStdOut();
+							if (stdout == null) {
+								stdout = "";
+							}
+							if (wasFailed) {
+								jobStep.setProcessingStdOut(
+										"Job on Processing Facility was deleted/canceled by others (e.g. operator) or crashed\n\n"
+												+ stdout);
+							}
+							jobStep = RepositoryService.getJobStepRepository().save(jobStep);
+
+							// Check whether the job step is now finished, potentially do something accordingly
+							UtilService.getJobStepUtil().checkFinish(jobStep);
 						}
+
+						return null;
+					});
+					break;
+				} catch (CannotAcquireLockException e) {
+					if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+					if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+						ProductionPlanner.productionPlanner.dbWait();
 					} else {
-						jobStep.setJobStepState(JobStepState.FAILED);
+						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+						throw e;
 					}
-
-					jobStep.incrementVersion();
-
-					// Save the information on what happened
-					String stdout = jobStep.getProcessingStdOut();
-					if (stdout == null) {
-						stdout = "";
-					}
-					if (wasFailed) {
-						jobStep.setProcessingStdOut(
-								"Job on Processing Facility was deleted/canceled by others (e.g. operator) or crashed\n\n"
-										+ stdout);
-					}
-					jobStep = RepositoryService.getJobStepRepository().save(jobStep);
-
-					// Check whether the job step is now finished, potentially do something accordingly
-					UtilService.getJobStepUtil().checkFinish(jobStep);
 				}
 			}
 
-			return null;
-		});
+		}
 	}
 
 	/**
@@ -684,7 +733,7 @@ public class KubeConfig {
 	 * @param stderrLogLevel the log level for stderr
 	 * @return the created job or null
 	 */
-	@Transactional(isolation = Isolation.REPEATABLE_READ)
+	// @Transactional(isolation = Isolation.REPEATABLE_READ)
 	public KubeJob createJob(String name, String stdoutLogLevel, String stderrLogLevel) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createJob({}, {}, {})", name, stdoutLogLevel, stderrLogLevel);
