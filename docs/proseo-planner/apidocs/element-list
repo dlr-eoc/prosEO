@@ -5,4 +5,5 @@ de.dlr.proseo.planner.dispatcher
 de.dlr.proseo.planner.kubernetes
 de.dlr.proseo.planner.rest
 de.dlr.proseo.planner.rest.model
+de.dlr.proseo.planner.service
 de.dlr.proseo.planner.util
