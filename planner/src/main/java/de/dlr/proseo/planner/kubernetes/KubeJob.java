@@ -619,11 +619,12 @@ public class KubeJob {
 				if (logger.isTraceEnabled()) 
 					logger.trace("    createNamespacedJob: ApiException, retry {0} of {1}", i, jobName);
 				if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-					Thread.sleep(cycle);
+					Thread.sleep(500);
 					// search job/pod
 					searchPod();
 					if (podNames.get(podNames.size() - 1).startsWith(jobName)) {
 						// job was created
+						job = kubeConfig.getBatchApiV1().readNamespacedJob(jobName, kubeConfig.getNamespace(), null, false, false);
 						if (logger.isTraceEnabled()) 
 							logger.trace("    createNamespacedJob: retry {0} of {1} successful", i, jobName);
 						break;
