@@ -25,11 +25,11 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.StorageProvider;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.model.StorageType;
 import de.dlr.proseo.storagemgr.rest.model.RestJoborder;
-import de.dlr.proseo.storagemgr.utils.StorageProvider;
 
 /**
  * Job Order Upload test for Product Controller

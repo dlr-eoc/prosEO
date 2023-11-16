@@ -3,7 +3,7 @@
  *
  * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
  */
-package de.dlr.proseo.storagemgr.utils;
+package de.dlr.proseo.storagemgr;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.model.Storage;
 import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.model.StorageType;
@@ -28,6 +27,7 @@ import de.dlr.proseo.storagemgr.posix.PosixStorageFile;
 import de.dlr.proseo.storagemgr.s3.S3Configuration;
 import de.dlr.proseo.storagemgr.s3.S3Storage;
 import de.dlr.proseo.storagemgr.s3.S3StorageFile;
+import de.dlr.proseo.storagemgr.utils.PathConverter;
 
 /**
  * A central manager for different types of storage in the application. It

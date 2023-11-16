@@ -19,9 +19,9 @@ import org.springframework.stereotype.Component;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.StorageMgrMessage;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.StorageProvider;
 import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.rest.model.RestJoborder;
-import de.dlr.proseo.storagemgr.utils.StorageProvider;
 
 /**
  * Spring MVC controller for the prosEO Storage Manager; implements the services
