@@ -26,9 +26,9 @@ import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
+import de.dlr.proseo.storagemgr.model.StorageType;
 import de.dlr.proseo.storagemgr.rest.model.RestJoborder;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
-import de.dlr.proseo.storagemgr.version2.model.StorageType;
 
 /**
  * Mock Mvc test for Product Controller

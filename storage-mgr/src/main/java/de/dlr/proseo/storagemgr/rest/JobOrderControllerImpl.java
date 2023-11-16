@@ -17,10 +17,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
-import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.StorageMgrMessage;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.rest.model.RestJoborder;
 
 /**

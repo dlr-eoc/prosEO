@@ -8,7 +8,7 @@ package de.dlr.proseo.storagemgr.version2;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.storagemgr.version2.Exceptions.FileLockedAfterMaxCyclesException;
+import de.dlr.proseo.storagemgr.Exceptions.FileLockedAfterMaxCyclesException;
 
 /**
  * A mechanism to lock and unlock files during the download process. It helps

@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.storagemgr.version2.model.StorageType;
+import de.dlr.proseo.storagemgr.model.StorageType;
 
 /**
  * A set of methods to convert and manipulate file paths based on different

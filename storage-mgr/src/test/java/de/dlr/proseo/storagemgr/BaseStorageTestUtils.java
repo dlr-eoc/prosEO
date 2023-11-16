@@ -6,10 +6,10 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
 
+import de.dlr.proseo.storagemgr.model.StorageFile;
+import de.dlr.proseo.storagemgr.posix.PosixDAL;
+import de.dlr.proseo.storagemgr.posix.PosixStorageFile;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
-import de.dlr.proseo.storagemgr.version2.model.StorageFile;
-import de.dlr.proseo.storagemgr.version2.posix.PosixDAL;
-import de.dlr.proseo.storagemgr.version2.posix.PosixStorageFile;
 
 /**
  * @author Denys Chaykovskiy

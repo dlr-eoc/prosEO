@@ -20,6 +20,7 @@ import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.UniqueStorageTestPaths;
+import de.dlr.proseo.storagemgr.posix.PosixDAL;
 import de.dlr.proseo.storagemgr.version2.PathConverter;
 
 @RunWith(SpringJUnit4ClassRunner.class)

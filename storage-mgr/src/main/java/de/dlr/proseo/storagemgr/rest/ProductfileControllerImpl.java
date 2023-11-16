@@ -17,13 +17,13 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.StorageMgrMessage;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.Exceptions.FileLockedAfterMaxCyclesException;
 import de.dlr.proseo.storagemgr.cache.FileCache;
+import de.dlr.proseo.storagemgr.model.Storage;
+import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
 import de.dlr.proseo.storagemgr.version2.StorageFileLocker;
 import de.dlr.proseo.storagemgr.version2.StorageProvider;
-import de.dlr.proseo.storagemgr.version2.Exceptions.FileLockedAfterMaxCyclesException;
-import de.dlr.proseo.storagemgr.version2.model.Storage;
-import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 
 /**
  * Spring MVC controller for the prosEO Storage Manager; implements the services

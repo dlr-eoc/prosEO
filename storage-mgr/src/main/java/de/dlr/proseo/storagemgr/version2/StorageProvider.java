@@ -20,14 +20,14 @@ import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
-import de.dlr.proseo.storagemgr.version2.model.Storage;
-import de.dlr.proseo.storagemgr.version2.model.StorageFile;
-import de.dlr.proseo.storagemgr.version2.model.StorageType;
-import de.dlr.proseo.storagemgr.version2.posix.PosixStorage;
-import de.dlr.proseo.storagemgr.version2.posix.PosixStorageFile;
-import de.dlr.proseo.storagemgr.version2.s3.S3Configuration;
-import de.dlr.proseo.storagemgr.version2.s3.S3Storage;
-import de.dlr.proseo.storagemgr.version2.s3.S3StorageFile;
+import de.dlr.proseo.storagemgr.model.Storage;
+import de.dlr.proseo.storagemgr.model.StorageFile;
+import de.dlr.proseo.storagemgr.model.StorageType;
+import de.dlr.proseo.storagemgr.posix.PosixStorage;
+import de.dlr.proseo.storagemgr.posix.PosixStorageFile;
+import de.dlr.proseo.storagemgr.s3.S3Configuration;
+import de.dlr.proseo.storagemgr.s3.S3Storage;
+import de.dlr.proseo.storagemgr.s3.S3StorageFile;
 
 /**
  * A central manager for different types of storage in the application. It

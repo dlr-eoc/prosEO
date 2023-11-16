@@ -10,7 +10,7 @@ import org.junit.rules.TestName;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import de.dlr.proseo.storagemgr.version2.model.Storage;
+import de.dlr.proseo.storagemgr.model.Storage;
 
 /**
  * @author Denys Chaykovskiy
