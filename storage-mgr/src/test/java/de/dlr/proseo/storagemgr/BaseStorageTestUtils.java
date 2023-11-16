@@ -9,7 +9,7 @@ import java.util.List;
 import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.posix.PosixDAL;
 import de.dlr.proseo.storagemgr.posix.PosixStorageFile;
-import de.dlr.proseo.storagemgr.version2.PathConverter;
+import de.dlr.proseo.storagemgr.utils.PathConverter;
 
 /**
  * @author Denys Chaykovskiy

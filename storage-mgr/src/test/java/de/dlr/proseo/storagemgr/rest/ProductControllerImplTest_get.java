@@ -28,8 +28,8 @@ import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.model.Storage;
 import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.model.StorageType;
-import de.dlr.proseo.storagemgr.version2.PathConverter;
-import de.dlr.proseo.storagemgr.version2.StorageProvider;
+import de.dlr.proseo.storagemgr.utils.PathConverter;
+import de.dlr.proseo.storagemgr.utils.StorageProvider;
 
 /**
  * Mock Mvc test for Product Controller

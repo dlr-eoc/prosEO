@@ -17,8 +17,8 @@ import de.dlr.proseo.storagemgr.model.Storage;
 import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.model.StorageType;
 import de.dlr.proseo.storagemgr.posix.PosixStorageFile;
-import de.dlr.proseo.storagemgr.version2.FileUtils;
-import de.dlr.proseo.storagemgr.version2.PathConverter;
+import de.dlr.proseo.storagemgr.utils.FileUtils;
+import de.dlr.proseo.storagemgr.utils.PathConverter;
 
 /**
  * An implementation of the Storage interface for a S3-based file system,

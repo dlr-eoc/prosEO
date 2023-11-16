@@ -7,6 +7,8 @@ import java.util.List;
 
 import org.junit.Test;
 
+import de.dlr.proseo.storagemgr.utils.PathConverter;
+
 public class PathConverterTest {
 
 	@Test

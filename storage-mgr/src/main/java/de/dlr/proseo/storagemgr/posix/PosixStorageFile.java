@@ -12,7 +12,7 @@ import org.apache.commons.io.FilenameUtils;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.model.StorageType;
-import de.dlr.proseo.storagemgr.version2.PathConverter;
+import de.dlr.proseo.storagemgr.utils.PathConverter;
 
 /**
  * Represents a file within a POSIX-based storage system. It implements the

@@ -17,8 +17,8 @@ import java.util.List;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.StorageMgrMessage;
-import de.dlr.proseo.storagemgr.version2.FileUtils;
-import de.dlr.proseo.storagemgr.version2.PathConverter;
+import de.dlr.proseo.storagemgr.utils.FileUtils;
+import de.dlr.proseo.storagemgr.utils.PathConverter;
 
 /**
  * A data access layer for interacting with a POSIX-based storage system. It

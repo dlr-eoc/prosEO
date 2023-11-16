@@ -22,8 +22,8 @@ import de.dlr.proseo.storagemgr.cache.FileCache;
 import de.dlr.proseo.storagemgr.model.Storage;
 import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
-import de.dlr.proseo.storagemgr.version2.StorageFileLocker;
-import de.dlr.proseo.storagemgr.version2.StorageProvider;
+import de.dlr.proseo.storagemgr.utils.StorageFileLocker;
+import de.dlr.proseo.storagemgr.utils.StorageProvider;
 
 /**
  * Spring MVC controller for the prosEO Storage Manager; implements the services

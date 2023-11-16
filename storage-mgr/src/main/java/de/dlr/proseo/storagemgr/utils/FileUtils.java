@@ -3,7 +3,7 @@
  *
  * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
  */
-package de.dlr.proseo.storagemgr.version2;
+package de.dlr.proseo.storagemgr.utils;
 
 import java.io.File;
 import java.io.FileWriter;

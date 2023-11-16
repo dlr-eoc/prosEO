@@ -20,7 +20,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.TestUtils;
-import de.dlr.proseo.storagemgr.version2.FileUtils;
+import de.dlr.proseo.storagemgr.utils.FileUtils;
 
 /**
  * @author Denys Chaykovskiy

@@ -28,7 +28,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 
 import de.dlr.proseo.storagemgr.model.AtomicCommand;
 import de.dlr.proseo.storagemgr.model.DefaultRetryStrategy;
-import de.dlr.proseo.storagemgr.version2.PathConverter;
+import de.dlr.proseo.storagemgr.utils.PathConverter;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;

@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.StorageMgrMessage;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
-import de.dlr.proseo.storagemgr.version2.FileUtils;
+import de.dlr.proseo.storagemgr.utils.FileUtils;
 
 /**
  * File cache for managing files in cache storage.
