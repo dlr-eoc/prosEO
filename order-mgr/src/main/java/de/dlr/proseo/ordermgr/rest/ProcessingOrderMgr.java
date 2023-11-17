@@ -384,39 +384,6 @@ public class ProcessingOrderMgr {
 	}
 
 	/**
-	 * Prepare the order for deletion: remove dependencies to products and product queries.
-	 *
-	 * @param order the order to prepare
-	 */
-	private void prepareOrderToDelete(ProcessingOrder order) {
-		if (logger.isTraceEnabled())
-			logger.trace(">>> prepareOrderToDelete({})", order.getIdentifier());
-
-		if (order != null) {
-			for (Job j : order.getJobs()) {
-				for (JobStep js : j.getJobSteps()) {
-
-					deleteJOF(js);
-
-					js.setJobOrderFilename(null);
-					if (js.getOutputProduct() != null) {
-						js.getOutputProduct().setJobStep(null);
-					}
-
-					for (ProductQuery pq : js.getInputProductQueries()) {
-						for (Product p : pq.getSatisfyingProducts()) {
-							p.getSatisfiedProductQueries().clear();
-						}
-						pq.getSatisfyingProducts().clear();
-						RepositoryService.getProductQueryRepository().delete(pq);
-					}
-					js.getInputProductQueries().clear();
-				}
-			}
-		}
-	}
-
-	/**
 	 * Delete an order by entity
 	 *
 	 * @param order the order to delete
@@ -427,11 +394,28 @@ public class ProcessingOrderMgr {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteOrder({})", order.getIdentifier());
 
-		// Prepare the order to delete
-		prepareOrderToDelete(order);
+		// Remove dependencies not handled by data model cascade
+		for (Job j : order.getJobs()) {
+			for (JobStep js : j.getJobSteps()) {
+
+				if (null != js.getJobOrderFilename()) {
+					deleteJOF(js);
+					js.setJobOrderFilename(null);
+				}
+
+				if (js.getOutputProduct() != null) {
+					js.getOutputProduct().setJobStep(null);
+					RepositoryService.getProductRepository().save(js.getOutputProduct());
+					js.setOutputProduct(null);
+				}
+
+			}
+		}
+
 		// Delete the order
 		long id = order.getId();
 		RepositoryService.getOrderRepository().delete(order);
+		
 		// Test whether the deletion was successful
 		Optional<ProcessingOrder> modelOrder = RepositoryService.getOrderRepository().findById(id);
 		if (!modelOrder.isEmpty()) {
