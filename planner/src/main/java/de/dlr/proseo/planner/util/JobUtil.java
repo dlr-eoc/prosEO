@@ -28,9 +28,7 @@ import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.JobStep;
-import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.JobStep.JobStepState;
-import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.ProductionPlanner;
 
@@ -133,7 +131,7 @@ public class JobUtil {
 			Object o = query.getSingleResult();
 			return JobState.valueOf((String)o);			
 		});
-		final Object dummy = transactionTemplate.execute((status) -> {
+		transactionTemplate.execute((status) -> {
 			String sqlQuery = "select id from job_step where job_id = " + id + ";";
 			Query query = em.createNativeQuery(sqlQuery);
 			List<?> ol = query.getResultList();
@@ -160,7 +158,7 @@ public class JobUtil {
 				for (Long jsId : jobStepIds) {
 					UtilService.getJobStepUtil().close(jsId);
 				}		
-				final Object dummy2 = transactionTemplate.execute((status) -> {
+				transactionTemplate.execute((status) -> {
 					String sqlQuery = "select version from job where id = " + id + ";";
 					Query query = em.createNativeQuery(sqlQuery);
 					Object o = query.getSingleResult();

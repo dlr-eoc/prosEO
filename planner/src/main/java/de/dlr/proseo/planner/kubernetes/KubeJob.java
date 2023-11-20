@@ -13,7 +13,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import org.hibernate.exception.LockAcquisitionException;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionDefinition;
@@ -326,11 +325,49 @@ public class KubeJob {
 		final JobDispatcher jobDispatcher = new JobDispatcher();
 		// Prepare for transaction retry, if "org.springframework.dao.CannotAcquireLockException" is thrown
 		JobOrderData jobOrderData = null;
+		Instant execTime = Instant.now();
+		for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+			try {
+
+				final Instant execTimeLoc = transactionTemplate.execute(status -> {
+
+					// Find the job step in the database
+					Optional<JobStep> jobStepOptional = RepositoryService.getJobStepRepository().findById(this.getJobId());
+					if (jobStepOptional.isEmpty()) {
+						logger.log(PlannerMessage.JOB_STEP_NOT_FOUND, this.getJobId());
+						return null;
+					}
+					JobStep jobStep = jobStepOptional.get();
+
+					// Find the execution time
+					return jobStep.getJob().getProcessingOrder().getExecutionTime();				
+				});   
+				execTime = execTimeLoc;
+				break;
+
+			} catch (CannotAcquireLockException e) {
+				if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+				if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+					ProductionPlanner.productionPlanner.dbWait();
+				} else {
+					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+					throw e;
+				}
+			}
+		}
+		if (execTime != null) {
+			if (Instant.now().isBefore(execTime)) {
+				if (logger.isTraceEnabled())
+					logger.trace(">>> execution time of order is after now.");
+				return null;
+			}
+		}
+
 		for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
 			try {
 
 				final JobOrderData jobOrderDataLoc = transactionTemplate.execute(status -> {
-
 					// Find the job step in the database
 					Optional<JobStep> jobStepOptional = RepositoryService.getJobStepRepository().findById(this.getJobId());
 					if (jobStepOptional.isEmpty()) {
@@ -344,16 +381,6 @@ public class KubeJob {
 					if (null == configuredProcessor || !configuredProcessor.getEnabled()) {
 						logger.log(PlannerMessage.CONFIG_PROC_DISABLED, jobStep.getOutputProduct().getConfiguredProcessor().getIdentifier());
 						return null;
-					}
-
-					// Find the execution time
-					Instant execTime = jobStep.getJob().getProcessingOrder().getExecutionTime();
-					if (execTime != null) {
-						if (Instant.now().isBefore(execTime)) {
-							if (logger.isTraceEnabled())
-								logger.trace(">>> execution time of order is after now.");
-							return null;
-						}
 					}
 
 					// Set the log levels if provided, otherwise use default values
