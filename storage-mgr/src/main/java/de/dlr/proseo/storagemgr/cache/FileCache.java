@@ -39,7 +39,10 @@ public class FileCache {
 	/** Prefix for temporary files */
 	private static final String TEMPORARY_PREFIX = "temporary-";
 
-	/** Cache Map for storing file pathes */
+	/** Prefix for status files */
+	private static final String STATUS_PREFIX = "status-";
+	
+	/** Cache Map for storing file paths */
 	private MapCache mapCache;
 
 	@Autowired
@@ -94,6 +97,8 @@ public class FileCache {
 			deleteLRU();
 		}
 
+		rewriteStatusPrefixFile(pathKey, CacheFileStatus.READY);
+		
 		rewriteAccessedPrefixFile(pathKey);
 		FileInfo fileInfo = new FileInfo(getFileAccessed(pathKey), getFileSize(pathKey));
 
@@ -138,7 +143,51 @@ public class FileCache {
 	public static String getTemporaryPrefix() {
 		return TEMPORARY_PREFIX;
 	}
+	
+	/**
+	 * Returns a status of the cache file
+	 * 
+	 * @param path The full path to the cache file
+	 * @return a status of the cache file
+	 */
+	public CacheFileStatus getCacheFileStatus(String path) {
 
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getCacheFileStatus({})", path);
+
+		String status;
+		FileUtils fileUtils = new FileUtils(getStatusPath(path));
+
+		if (!hasStatus(path)) {
+			rewriteStatusPrefixFile(path, CacheFileStatus.READY);
+		}
+
+		status = fileUtils.getFileContent();
+
+		return CacheFileStatus.valueOf(status);
+	}
+	
+	/**
+	 * Sets the status of a cache file
+	 * 
+	 * @param pathKey File path as key
+	 * @return a status of the cache file
+	 */
+	public void setCacheFileStatus(String pathKey, CacheFileStatus status) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> setCacheFileStatus({}, {})", pathKey, status);
+
+		if (!mapCache.containsKey(pathKey)) {
+			if (!new File(pathKey).exists()) {
+				logger.log(StorageMgrMessage.CACHE_NO_FILE_FOR_PUTTING_TO_CACHE, pathKey);
+			}
+			return;
+		}
+		
+		rewriteStatusPrefixFile(pathKey, status);
+	}
+	
 	/**
 	 * Initializes file cache with directory from Application.yml
 	 */
@@ -277,7 +326,7 @@ public class FileCache {
 	/**
 	 * Gets the path key from file cache
 	 * 
-	 * @param pathKey Path to file
+	 * @param pathKey Path to the cache file
 	 * @return
 	 */
 	/* package */ FileInfo get(String pathKey) {
@@ -286,7 +335,7 @@ public class FileCache {
 	}
 
 	/**
-	 * Removes cache element, file and accessed file
+	 * Removes cache element, cache file and auxiliary files
 	 * 
 	 * @param pathKey Path to file
 	 */
@@ -295,7 +344,7 @@ public class FileCache {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> remove({}) - last accessed {}", pathKey, mapCache.get(pathKey).getAccessed());
 
-		deleteFileAndAccessedPrefixFile(pathKey);
+		deleteCacheFileAndAuxPrefixFiles(pathKey);
 
 		mapCache.remove(pathKey);
 	}
@@ -459,20 +508,24 @@ public class FileCache {
 	}
 
 	/**
-	 * Deletes if exist file and logically connected accessed file from the disk
+	 * Deletes a cache file and logically connected auxiliary files from the disk
 	 * 
-	 * @param path full path to the file
+	 * @param path full path to the cache file
 	 */
-	/* package */ void deleteFileAndAccessedPrefixFile(String path) {
+	/* package */ void deleteCacheFileAndAuxPrefixFiles(String path) {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> deleteFileAndAccessed({})", path);
+			logger.trace(">>> deleteFileAndAuxPrefixFiles({})", path);
 
-		String accessedPath = getAccessedPath(path);
 		String directory = new File(path).getParent();
 
 		deleteFile(path);
-		deleteFile(accessedPath);
+				
+		deleteFile(getAccessedPath(path));
+		deleteFile(getStatusPath(path));
+		deleteFile(getTemporaryPath(path));
+
+
 
 		deleteEmptyDirectoriesToTop(directory);
 	}
@@ -558,6 +611,40 @@ public class FileCache {
 
 		return accessedPath;
 	}
+	
+	/**
+	 * Gets the path of the status file
+	 * 
+	 * @param path The full path to the cache file
+	 * @return the path to the status file of the cache file
+	 */
+	/* package */ String getStatusPath(String path) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getStatusPath({})", path);
+
+		File file = new File(path);
+		String statusPath = file.getParent() + "/" + STATUS_PREFIX + file.getName();
+
+		return statusPath;
+	}
+	
+	/**
+	 * Gets the path of the temporary file
+	 * 
+	 * @param path The full path to the cache file
+	 * @return the path to the temporary file of the cache file
+	 */
+	/* package */ String getTemporaryPath(String path) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getTemporaryPath({})", path);
+
+		File file = new File(path);
+		String temporaryPath = file.getParent() + "/" + TEMPORARY_PREFIX + file.getName();
+
+		return temporaryPath;
+	}
 
 	/**
 	 * Gets the path to file from accessed path
@@ -575,7 +662,7 @@ public class FileCache {
 
 		return path;
 	}
-
+	
 	/**
 	 * Returns true if the file was accessed
 	 * 
@@ -588,16 +675,33 @@ public class FileCache {
 
 		return f.isFile();
 	}
+	
+	/**
+	 * Returns true if the cache file has a status
+	 * 
+	 * @param path the full path to the cache file
+	 * @return true if the file was accessed
+	 */
+	private boolean hasStatus(String path) {
+
+		File f = new File(getStatusPath(path));
+
+		return f.isFile();
+	}
 
 	/**
-	 * Returns true if the file is the cache file (not accessed, not temporary and
-	 * not hidden file)
+	 * Returns true if the file is the cache file (starts with the cache path, not accessed, not temporary, 
+	 * not hidden and not status file)
 	 * 
 	 * @param path the full path to the file
 	 * @return true if the file is the cache file
 	 */
 	private boolean isCacheFile(String path) {
 
+		if (!path.startsWith(cachePath)) {
+			return false; 
+		}
+		
 		if (isAccessedPrefixFile(path)) {
 			return false;
 		}
@@ -605,11 +709,14 @@ public class FileCache {
 		if (isTemporaryPrefixFile(path)) {
 			return false;
 		}
+			
+		if (isStatusPrefixFile(path)) {
+			return false;
+		}
 
 		if (isHiddenFile(path)) {
 			return false;
-
-		}
+		}	
 
 		return true;
 	}
@@ -634,6 +741,17 @@ public class FileCache {
 	private boolean isTemporaryPrefixFile(String path) {
 
 		return hasFilePrefix(path, TEMPORARY_PREFIX);
+	}
+	
+	/**
+	 * Returns true if the file has the status prefix
+	 * 
+	 * @param path the full path to the cache file
+	 * @return true if the cache file path has the status prefix
+	 */
+	private boolean isStatusPrefixFile(String path) {
+
+		return hasFilePrefix(path, STATUS_PREFIX);
 	}
 
 	/**
@@ -675,6 +793,23 @@ public class FileCache {
 		FileUtils fileUtils = new FileUtils(accessedPath);
 
 		fileUtils.createFile(timeStamp);
+	}
+	
+	/**
+	 * Rewrites status prefix file with the current status
+	 * 
+	 * @param path    The full path to the cache file
+	 * @param status  The 
+	 */
+	private void rewriteStatusPrefixFile(String path, CacheFileStatus status) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> rewriteStatusPrefixFile({}, {})", path,  status);
+
+		String statusPath = getStatusPath(path);
+		FileUtils fileUtils = new FileUtils(statusPath);
+
+		fileUtils.createFile(status.toString());
 	}
 
 	/**
