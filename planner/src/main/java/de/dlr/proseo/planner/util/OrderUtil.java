@@ -1214,7 +1214,7 @@ public class OrderUtil {
 			Object o = query.getSingleResult();
 			return OrderState.valueOf((String)o);			
 		});
-		final Object dummy = transactionTemplate.execute((status) -> {
+		transactionTemplate.execute((status) -> {
 			String sqlQuery = "select id from job where processing_order_id = " + orderId + ";";
 			Query query = em.createNativeQuery(sqlQuery);
 			List<?> ol = query.getResultList();
@@ -1243,7 +1243,7 @@ public class OrderUtil {
 				for (Long jobId : jobIds) {
 					jobUtil.close(jobId);
 				}
-				final Object dummy2 = transactionTemplate.execute((status) -> {
+				transactionTemplate.execute((status) -> {
 					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
 					if (orderOpt.isPresent()) {
 						ProcessingOrder locOrder = orderOpt.get();
@@ -1517,12 +1517,12 @@ public class OrderUtil {
 							if (logger.isTraceEnabled()) logger.trace(">>> notify({}, {})", url, restMessage);
 							response = restTemplate.postForEntity(url, restMessage, String.class);
 						} catch (RestClientException rce) {
-							String msg = logger.log(PlannerMessage.NOTIFY_FAILED, url, rce.getMessage());
+							logger.log(PlannerMessage.NOTIFY_FAILED, url, rce.getMessage());
 							return false;
 						} catch (Exception e) {
 							String msg = logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage());
 
-							if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+							if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", msg);
 
 							return false;
 						}

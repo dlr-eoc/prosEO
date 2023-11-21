@@ -40,11 +40,6 @@ import de.dlr.proseo.planner.kubernetes.KubeConfig;
  */
 public class OrderReleaseThread extends Thread {
 
-	/** Maximum number of retries for database concurrency issues */
-	private static final int DB_MAX_RETRY = 3;
-	/** Wait interval in ms before retrying database operation */
-	private static final int DB_WAIT = 1000;
-
 	/**
 	 * Logger of this class
 	 */

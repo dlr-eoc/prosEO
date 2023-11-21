@@ -24,7 +24,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
-import de.dlr.proseo.logging.messages.IngestorMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.model.enums.UserRole;
 

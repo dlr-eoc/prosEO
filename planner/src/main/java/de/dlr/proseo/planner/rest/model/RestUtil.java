@@ -37,7 +37,6 @@ import de.dlr.proseo.model.rest.model.StderrLogLevel;
 import de.dlr.proseo.model.rest.model.StdoutLogLevel;
 import de.dlr.proseo.model.util.OrderUtil;
 import de.dlr.proseo.planner.ProductionPlanner;
-import de.dlr.proseo.planner.util.OrderPlanThread;
 /**
  * Build REST objects
  * 

@@ -34,6 +34,7 @@ import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientResponseException;
@@ -581,7 +582,7 @@ public class OdipUtilBase {
 	 * @throws ODataApplicationException if there is an error in the OData application
 	 * @throws OdipException             if there is an error in the ODIP application
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public RestOrder toModelOrder(Entity order) throws ODataApplicationException, OdipException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> toModelOrder()");

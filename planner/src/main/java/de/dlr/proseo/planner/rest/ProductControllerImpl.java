@@ -77,7 +77,7 @@ public class ProductControllerImpl implements ProductController {
 				return null;
 			});
 			if (pcId != 0 && facilityId != 0) {
-				final Object o = transactionTemplate.execute((status) -> {
+				transactionTemplate.execute((status) -> {
 					UtilService.getJobStepUtil().searchForJobStepsToRun(facilityId, pcId, true);
 					return null;
 				});	

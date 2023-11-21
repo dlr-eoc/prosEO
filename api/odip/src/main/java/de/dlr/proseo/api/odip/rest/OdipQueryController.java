@@ -79,9 +79,9 @@ public class OdipQueryController {
 	 */
 	@RequestMapping(value = "/**")
 	protected void service(final HttpServletRequest request, HttpServletResponse response) throws ServletException {
-		if (logger.isTraceEnabled())
-			logger.trace(">>> service({}, {})", (null == request ? "null" : request.getRequestURL()), response);
-
+		if (logger.isTraceEnabled()) {
+			logger.trace(">>> service({}: {}, {})", request.getMethod(), (null == request ? "null" : request.getRequestURL()), response);
+		}
 		// Create OData handler
 		OData odata = OData.newInstance();
 
