@@ -123,6 +123,31 @@ public class DownloadManager {
 	private static final int ODATA_TOP_COUNT = 1000;
 	private static final String ODATA_CSC_ORDER = "OData.CSC.Order";
 
+	// OData response properties
+	private static final String ODATA_PROPERTY_ID = "Id";
+	private static final String ODATA_PROPERTY_STATUS = "Status";
+	private static final String ODATA_PROPERTY_ATTRIBUTES = "Attributes";
+	private static final String ODATA_PROPERTY_CHECKSUM_VALUE = "Value";
+	private static final String ODATA_PROPERTY_CHECKSUM_ALGORITHM = "Algorithm";
+	private static final String ODATA_PROPERTY_CHECKSUM = "Checksum";
+	private static final String ODATA_PROPERTY_CONTENT_LENGTH = "ContentLength";
+	private static final String ODATA_PROPERTY_FILENAME = "Name";
+	private static final String ODATA_PROPERTY_PUBLICATION_DATE = "PublicationDate";
+	private static final String ODATA_PROPERTY_CONTENTDATE_END = "End";
+	private static final String ODATA_PROPERTY_CONTENTDATE_START = "Start";
+	private static final String ODATA_PROPERTY_CONTENT_DATE = "ContentDate";
+	private static final String ODATA_PROPERTY_ATTRIBUTE_VALUE = "Value";
+	private static final String ODATA_PROPERTY_ATTRIBUTE_VALUE_TYPE = "ValueType";
+	private static final String ODATA_PROPERTY_ATTRIBUTE_NAME = "Name";
+
+	// OData attribute names
+	private static final String PRODUCT_ATTRIBUTE_PRODUCT_TYPE = "productType";
+	private static final String PRODUCT_ATTRIBUTE_PROCESSING_DATE = "processingDate";
+	
+	// OData property values
+	private static final String ORDER_STATUS_COMPLETED = "completed";
+	private static final String PRODUCT_CHECKSUM_MD5 = "MD5";
+	
 	/** Maximum number of retries for product download */
 	private static final int DOWNLOAD_MAX_RETRIES = 3;
 	/** Retry interval for product downloads in ms */
@@ -469,7 +494,7 @@ public class DownloadManager {
 	 */
 	private RestProduct toRestProduct(ClientEntity product, ProcessingFacility facility, Boolean attributes) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> toRestProduct({})", (null == product ? "MISSING" : product.getProperty("Id")));
+			logger.trace(">>> toRestProduct({})", (null == product ? "MISSING" : product.getProperty(ODATA_PROPERTY_ID)));
 
 		if (null == product)
 			return null;
@@ -478,16 +503,16 @@ public class DownloadManager {
 
 		try {
 			try {
-				restProduct.setUuid(product.getProperty("Id").getPrimitiveValue().toCastValue(String.class));
+				restProduct.setUuid(product.getProperty(ODATA_PROPERTY_ID).getPrimitiveValue().toCastValue(String.class));
 			} catch (EdmPrimitiveTypeException | NullPointerException e) {
 				logger.log(AipClientMessage.PRODUCT_UUID_MISSING, product.toString());
 				return null;
 			}
 
 			try {
-				restProduct.setSensingStartTime(OrbitTimeFormatter.format(Instant.parse(product.getProperty("ContentDate")
+				restProduct.setSensingStartTime(OrbitTimeFormatter.format(Instant.parse(product.getProperty(ODATA_PROPERTY_CONTENT_DATE)
 					.getComplexValue()
-					.get("Start")
+					.get(ODATA_PROPERTY_CONTENTDATE_START)
 					.getPrimitiveValue()
 					.toCastValue(String.class))));
 			} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
@@ -495,9 +520,9 @@ public class DownloadManager {
 				return null;
 			}
 			try {
-				restProduct.setSensingStopTime(OrbitTimeFormatter.format(Instant.parse(product.getProperty("ContentDate")
+				restProduct.setSensingStopTime(OrbitTimeFormatter.format(Instant.parse(product.getProperty(ODATA_PROPERTY_CONTENT_DATE)
 					.getComplexValue()
-					.get("End")
+					.get(ODATA_PROPERTY_CONTENTDATE_END)
 					.getPrimitiveValue()
 					.toCastValue(String.class))));
 			} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
@@ -506,7 +531,7 @@ public class DownloadManager {
 			}
 			try {
 				restProduct.setPublicationTime(OrbitTimeFormatter
-					.format(Instant.parse(product.getProperty("PublicationDate").getPrimitiveValue().toCastValue(String.class))));
+					.format(Instant.parse(product.getProperty(ODATA_PROPERTY_PUBLICATION_DATE).getPrimitiveValue().toCastValue(String.class))));
 			} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
 				logger.log(AipClientMessage.PRODUCT_PUBLICATION_MISSING, product.toString());
 				return null;
@@ -515,13 +540,13 @@ public class DownloadManager {
 			// Create product file sub-structure
 			RestProductFile restProductFile = new RestProductFile();
 			try {
-				restProductFile.setProductFileName(product.getProperty("Name").getPrimitiveValue().toCastValue(String.class));
+				restProductFile.setProductFileName(product.getProperty(ODATA_PROPERTY_FILENAME).getPrimitiveValue().toCastValue(String.class));
 			} catch (EdmPrimitiveTypeException | NullPointerException e) {
 				logger.log(AipClientMessage.PRODUCT_FILENAME_MISSING, product.toString());
 				return null;
 			}
 			try {
-				restProductFile.setFileSize(product.getProperty("ContentLength").getPrimitiveValue().toCastValue(Long.class));
+				restProductFile.setFileSize(product.getProperty(ODATA_PROPERTY_CONTENT_LENGTH).getPrimitiveValue().toCastValue(Long.class));
 			} catch (EdmPrimitiveTypeException | NullPointerException e) {
 				logger.log(AipClientMessage.PRODUCT_SIZE_MISSING, product.toString());
 				return null;
@@ -530,11 +555,11 @@ public class DownloadManager {
 
 			restProductFile.setChecksum(null);
 			try {
-				product.getProperty("Checksum").getCollectionValue().forEach(clientValue -> {
+				product.getProperty(ODATA_PROPERTY_CHECKSUM).getCollectionValue().forEach(clientValue -> {
 					try {
-						if ("MD5".equals(clientValue.asComplex().get("Algorithm").getPrimitiveValue().toCastValue(String.class))) {
+						if (PRODUCT_CHECKSUM_MD5.equals(clientValue.asComplex().get(ODATA_PROPERTY_CHECKSUM_ALGORITHM).getPrimitiveValue().toCastValue(String.class))) {
 							restProductFile
-								.setChecksum(clientValue.asComplex().get("Value").getPrimitiveValue().toCastValue(String.class));
+								.setChecksum(clientValue.asComplex().get(ODATA_PROPERTY_CHECKSUM_VALUE).getPrimitiveValue().toCastValue(String.class));
 							restProductFile.setChecksumTime(OrbitTimeFormatter.format(Instant
 								.parse(clientValue.asComplex().get("ChecksumDate").getPrimitiveValue().toCastValue(String.class))));
 						}
@@ -559,23 +584,23 @@ public class DownloadManager {
 			if (attributes) {
 				try {
 					if (logger.isTraceEnabled())
-						logger.trace("... Attributes = {} ", product.getProperty("Attributes"));
+						logger.trace("... Attributes = {} ", product.getProperty(ODATA_PROPERTY_ATTRIBUTES));
 					if (logger.isTraceEnabled())
-						logger.trace("... collection value = {} ", product.getProperty("Attributes").getCollectionValue());
+						logger.trace("... collection value = {} ", product.getProperty(ODATA_PROPERTY_ATTRIBUTES).getCollectionValue());
 
-					product.getProperty("Attributes").getCollectionValue().forEach(clientValue -> {
-						String attributeName = clientValue.asComplex().get("Name").getValue().toString();
-						String attributeType = clientValue.asComplex().get("ValueType").getValue().toString();
-						String attributeValue = clientValue.asComplex().get("Value").getValue().toString();
+					product.getProperty(ODATA_PROPERTY_ATTRIBUTES).getCollectionValue().forEach(clientValue -> {
+						String attributeName = clientValue.asComplex().get(ODATA_PROPERTY_ATTRIBUTE_NAME).getValue().toString();
+						String attributeType = clientValue.asComplex().get(ODATA_PROPERTY_ATTRIBUTE_VALUE_TYPE).getValue().toString();
+						String attributeValue = clientValue.asComplex().get(ODATA_PROPERTY_ATTRIBUTE_VALUE).getValue().toString();
 						if (logger.isTraceEnabled())
 							logger.trace("... found attribute {}", clientValue);
 						if (logger.isTraceEnabled())
 							logger.trace("    ... with Name {}", attributeName);
 						switch (attributeName) {
-						case "processingDate":
+						case PRODUCT_ATTRIBUTE_PROCESSING_DATE:
 							restProduct.setGenerationTime(OrbitTimeFormatter.format(Instant.parse(attributeValue)));
 							break;
-						case "productType":
+						case PRODUCT_ATTRIBUTE_PRODUCT_TYPE:
 							restProduct.setProductClass(attributeValue);
 							break;
 						default:
@@ -909,11 +934,11 @@ public class DownloadManager {
 			throw new IOException(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass().getName() + "/" + e.getMessage()));
 		}
 
-		String orderUuid = response.get("Id").toString();
-		String orderStatus = response.get("Status").toString();
+		String orderUuid = response.get(ODATA_PROPERTY_ID).toString();
+		String orderStatus = response.get(ODATA_PROPERTY_STATUS).toString();
 
 		// Wait for the product order to complete
-		while (!"completed".equals(orderStatus)) {
+		while (!ORDER_STATUS_COMPLETED.equals(orderStatus)) {
 			logger.log(AipClientMessage.WAITING_FOR_PRODUCT_ORDER, orderUuid, orderStatus);
 
 			try {
@@ -924,22 +949,20 @@ public class DownloadManager {
 			}
 
 			// Check order status
-			List<ClientEntity> orderList = null;
-			try {
-				orderList = queryArchive(archive, ODATA_ENTITY_ORDERS, ODATA_FILTER_ID + orderUuid, true);
-			} catch (IOException e) {
-				// Already logged
-				throw new IOException(e.getMessage());
-			}
-
-			if (null == orderList || 0 == orderList.size()) {
+			List<ClientEntity> orderList = queryArchive(archive, ODATA_ENTITY_ORDERS, ODATA_FILTER_ID + orderUuid, true);
+			
+			if (null == orderList || 1 != orderList.size()) {
 				throw new RuntimeException(logger.log(AipClientMessage.INVALID_ODATA_RESPONSE, orderList, archive.getCode()));
 			}
 			ClientEntity order = orderList.get(0);
+			
+			if (logger.isTraceEnabled()) logger.trace("... evaluating result object: {}", order);
 
 			try {
-				orderUuid = order.getProperty("Id").getPrimitiveValue().toCastValue(String.class);
-				orderStatus = order.getProperty("Status").getPrimitiveValue().toCastValue(String.class);
+				orderUuid = order.getProperty(ODATA_PROPERTY_ID).getPrimitiveValue().toCastValue(String.class);
+				orderStatus = order.getProperty(ODATA_PROPERTY_STATUS).getPrimitiveValue().toCastValue(String.class);
+				
+				if (logger.isTraceEnabled()) logger.trace("... found order UUID {} and status {}", orderUuid, orderStatus);
 			} catch (NullPointerException | EdmPrimitiveTypeException e) {
 				throw new IOException(logger.log(AipClientMessage.ORDER_DATA_MISSING, order.toString()));
 			}
