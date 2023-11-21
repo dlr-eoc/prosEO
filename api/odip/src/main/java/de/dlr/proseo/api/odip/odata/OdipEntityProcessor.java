@@ -7,6 +7,7 @@ package de.dlr.proseo.api.odip.odata;
 
 import java.io.InputStream;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Base64;
 import java.util.List;
@@ -20,7 +21,6 @@ import javax.persistence.Query;
 
 import org.apache.http.auth.AUTH;
 import org.apache.http.client.config.AuthSchemes;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.ContextURL.Suffix;
@@ -40,7 +40,6 @@ import org.apache.olingo.server.api.deserializer.DeserializerResult;
 import org.apache.olingo.server.api.deserializer.ODataDeserializer;
 import org.apache.olingo.server.api.processor.EntityProcessor;
 import org.apache.olingo.server.api.processor.MediaEntityProcessor;
-import org.apache.olingo.server.api.processor.PrimitiveProcessor;
 import org.apache.olingo.server.api.serializer.EntitySerializerOptions;
 import org.apache.olingo.server.api.serializer.ODataSerializer;
 import org.apache.olingo.server.api.serializer.SerializerResult;
@@ -51,28 +50,18 @@ import org.apache.olingo.server.api.uri.UriResourceEntitySet;
 import org.apache.olingo.server.api.uri.queryoption.ExpandOption;
 import org.apache.olingo.server.api.uri.queryoption.SelectOption;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
-
+import org.springframework.util.StreamUtils;
 import de.dlr.proseo.api.odip.OdipApplicationBase;
 import de.dlr.proseo.api.odip.OdipConfiguration;
 import de.dlr.proseo.api.odip.OdipSecurity;
 import de.dlr.proseo.api.odip.odata.OdipUtilBase.OdipException;
-import de.dlr.proseo.api.odip.service.ServiceConnection;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.OdipMessage;
-import de.dlr.proseo.logging.messages.PripMessage;
-import de.dlr.proseo.logging.messages.ProseoMessage;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Product;
-import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.Workflow;
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.rest.model.RestOrder;
@@ -84,7 +73,7 @@ import de.dlr.proseo.model.rest.model.RestOrder;
  *
  */
 @Component
-@Transactional
+@Transactional(isolation = Isolation.REPEATABLE_READ)
 public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcessor {
 
 	/* Other string constants */
@@ -99,18 +88,10 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 	@PersistenceContext
 	private EntityManager em;
 
-	/** REST template builder */
-	@Autowired
-	private RestTemplateBuilder rtb;
-
 	/** The configuration for the PRIP API */
 	@Autowired
 	private OdipConfiguration config;
 	
-	/** The configuration for the PRIP API */
-	@Autowired
-	private ServiceConnection serviceConnection;
-
 	/** The security utilities for the ODIP API */
 	@Autowired
 	private OdipSecurity securityConfig;
@@ -237,6 +218,7 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 	 * @throws NoResultException if a production order with the requested UUID could not be found in the database
 	 * @throws SecurityException if the logged in user is not authorized to access the requested production order
 	 */
+	@SuppressWarnings("unchecked")
 	private String getProductUuidProductionOrder(String productionOrderUuid) throws NoResultException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getProductionOrder({})", productionOrderUuid);
@@ -433,62 +415,6 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 	}
 
 	/**
-	 * Retrieve a download token for the requested product ID and file name from the Ingestor service
-	 *
-	 * @param id              the product ID
-	 * @param productFileName the product file name
-	 * @return a JSON Web Token for authentication with the Storage Manager
-	 * @throws HttpClientErrorException if an error is returned from the Ingestor service
-	 * @throws RestClientException      if the request to the Ingestor fails for some other reason
-	 * @throws RuntimeException         if any other exception occurs
-	 * @throws SecurityException        if the logged in user is not authorized to access the requested product
-	 */
-	private String retrieveDownloadToken(long id, String productFileName)
-			throws HttpClientErrorException, RestClientException, RuntimeException, SecurityException {
-		if (logger.isTraceEnabled())
-			logger.trace(">>> retrieveDownloadToken({}, {})", id, productFileName);
-
-		// Request product metadata from Ingestor service
-
-		// Attempt connection to service
-		ResponseEntity<String> entity = null;
-		try {
-			RestTemplate restTemplate = rtb
-				.basicAuthentication(securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword())
-				.build();
-			String requestUrl = config.getIngestorUrl() + "/products/" + id + "/download/token?fileName=" + productFileName;
-			if (logger.isTraceEnabled())
-				logger.trace("... calling service URL {} with GET", requestUrl);
-			entity = restTemplate.getForEntity(requestUrl, String.class);
-		} catch (HttpClientErrorException.Unauthorized e) {
-			String message = logger.log(OdipMessage.MSG_NOT_AUTHORIZED_FOR_SERVICE, securityConfig.getUser());
-			throw new SecurityException(message);
-		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
-			logger.log(OdipMessage.MSG_SERVICE_REQUEST_FAILED, e.getStatusCode().value(), e.getStatusCode().toString(),
-					e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING));
-			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING));
-		} catch (RestClientException e) {
-			String message = logger.log(OdipMessage.MSG_HTTP_REQUEST_FAILED, e.getMessage());
-			throw new RestClientException(message, e);
-		} catch (Exception e) {
-			logger.log(OdipMessage.MSG_EXCEPTION, e.getMessage(), e);
-			throw new RuntimeException(e);
-		}
-
-		// All GET requests should return HTTP status OK
-		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
-			String message = logger.log(OdipMessage.MSG_SERVICE_REQUEST_FAILED, entity.getStatusCodeValue(),
-					entity.getStatusCode().toString(), entity.getHeaders().getFirst(HTTP_HEADER_WARNING));
-			throw new RuntimeException(message);
-		}
-
-		String downloadToken = entity.getBody();
-		if (logger.isDebugEnabled())
-			logger.debug("... token generated: " + downloadToken);
-		return downloadToken;
-	}
-
-	/**
 	 * Reads entities data from persistence and puts serialized content and status into the response.
 	 *
 	 * @param request        OData request object containing raw HTTP information
@@ -672,17 +598,29 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 		// 2. create the data in backend
 		// 2.1. retrieve the payload from the POST request for the entity to create and deserialize it
 		InputStream requestInputStream = request.getBody();
+	    byte[] cachedPayload = null;
+	    try {
+			cachedPayload = StreamUtils.copyToByteArray(requestInputStream);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(cachedPayload);
+		String body = new String(cachedPayload);
+		logger.trace("body: \n" + body);
+		byteArrayInputStream = new ByteArrayInputStream(cachedPayload);
 		ODataDeserializer deserializer = this.odata.createDeserializer(requestFormat);
 		DeserializerResult result = null;
 		try {
-			result = deserializer.entity(requestInputStream, edmEntityType);
+			result = deserializer.entity(byteArrayInputStream, edmEntityType);
 		} catch (Exception e) {
 			response.setStatusCode(HttpStatusCode.NOT_ACCEPTABLE.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, logger.log(OdipMessage.MSG_JSON_PARSE_ERROR,
 					e.getMessage() + (e.getCause() == null ? "" : (": " + e.getCause().getMessage()))));
 			return;
 		}
-		Entity requestEntity = result.getEntity();
+		Entity requestEntity = result.getEntity();			
+
 		RestOrder modelOrder = null;
 		try {
 			modelOrder = OdipApplicationBase.util.toModelOrder(requestEntity);
