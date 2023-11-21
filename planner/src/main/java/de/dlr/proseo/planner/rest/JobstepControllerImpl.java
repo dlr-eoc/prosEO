@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -273,23 +274,37 @@ public class JobstepControllerImpl implements JobstepController {
 			if (js != null) {
 				List<PlannerResultMessage> msg = new ArrayList<PlannerResultMessage>();
 				try {
-					productionPlanner.acquireThreadSemaphore("resumeJobStep");
-					final ResponseEntity<RestJobStep> msgF = transactionTemplate.execute((status) -> {
-						JobStep jsx = this.findJobStepByNameOrIdPrim(jobstepId);
-						Job job = jsx.getJob();
-						if (job.getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
-							String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, job.getProcessingFacility().getName(),
-									job.getProcessingFacility().getFacilityState().toString());
+					for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+						try {
+							productionPlanner.acquireThreadSemaphore("resumeJobStep");
+							final ResponseEntity<RestJobStep> msgF = transactionTemplate.execute((status) -> {
+								JobStep jsx = this.findJobStepByNameOrIdPrim(jobstepId);
+								Job job = jsx.getJob();
+								if (job.getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
+									String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, job.getProcessingFacility().getName(),
+											job.getProcessingFacility().getFacilityState().toString());
 
-							return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
-						} else {
-							msg.add(jobStepUtil.resume(jsx, true));	
-							return null;
+									return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
+								} else {
+									msg.add(jobStepUtil.resume(jsx, true));	
+									return null;
+								}
+							});
+							productionPlanner.releaseThreadSemaphore("resumeJobStep");
+							if (msgF != null) {
+								return msgF;
+							}
+							break;
+						} catch (CannotAcquireLockException e) {
+							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+							if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+								ProductionPlanner.productionPlanner.dbWait();
+							} else {
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+								throw e;
+							}
 						}
-					});
-					productionPlanner.releaseThreadSemaphore("resumeJobStep");
-					if (msgF != null) {
-						return msgF;
 					}
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("resumeJobStep");	
@@ -365,10 +380,24 @@ public class JobstepControllerImpl implements JobstepController {
 					productionPlanner.acquireThreadSemaphore("cancelJobStep");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-					msg = transactionTemplate.execute((status) -> {
-						JobStep jsx = this.findJobStepByNameOrIdPrim(jobstepId);
-						return jobStepUtil.cancel(jsx);
-					});
+					for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+						try {
+							msg = transactionTemplate.execute((status) -> {
+								JobStep jsx = this.findJobStepByNameOrIdPrim(jobstepId);
+								return jobStepUtil.cancel(jsx);
+							});
+							break;
+						} catch (CannotAcquireLockException e) {
+							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+							if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+								ProductionPlanner.productionPlanner.dbWait();
+							} else {
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+								throw e;
+							}
+						}
+					}
 					productionPlanner.releaseThreadSemaphore("cancelJobStep");	
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("cancelJobStep");	
@@ -603,10 +632,24 @@ public class JobstepControllerImpl implements JobstepController {
 					productionPlanner.acquireThreadSemaphore("retryJobStep");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-					msg = transactionTemplate.execute((status) -> {
-						JobStep jsx = this.findJobStepByNameOrIdPrim(jobstepId);
-						return jobStepUtil.retry(jsx);
-					});
+					for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+						try {
+							msg = transactionTemplate.execute((status) -> {
+								JobStep jsx = this.findJobStepByNameOrIdPrim(jobstepId);
+								return jobStepUtil.retry(jsx);
+							});
+							break;
+						} catch (CannotAcquireLockException e) {
+							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+							if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+								ProductionPlanner.productionPlanner.dbWait();
+							} else {
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+								throw e;
+							}
+						}
+					}
 					productionPlanner.releaseThreadSemaphore("retryJobStep");	
 				} catch (Exception e) {
 					productionPlanner.releaseThreadSemaphore("retryJobStep");	
