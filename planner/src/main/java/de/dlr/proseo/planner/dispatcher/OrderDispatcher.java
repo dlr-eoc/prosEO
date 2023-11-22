@@ -59,11 +59,6 @@ import de.dlr.proseo.planner.util.UtilService;
 @Service
 public class OrderDispatcher {
 
-	/** Maximum number of retries for database concurrency issues */
-	private static final int DB_MAX_RETRY = 3;
-	/** Wait interval in ms before retrying database operation */
-	private static final int DB_WAIT = 1000;
-
 	/** Logger of this class */
 	private static ProseoLogger logger = new ProseoLogger(OrderDispatcher.class);
 
@@ -88,115 +83,127 @@ public class OrderDispatcher {
 		// Initialize the result message (of the method) with a default value of FALSE
 		PlannerResultMessage resultMessage = new PlannerResultMessage(GeneralMessage.FALSE);
 
-		try {
-			// Create a transaction template using the production planner's transaction manager
-			TransactionTemplate transactionTemplate = new TransactionTemplate(ProductionPlanner.productionPlanner.getTxManager());
-			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+		// Create a transaction template using the production planner's transaction manager
+		TransactionTemplate transactionTemplate = new TransactionTemplate(ProductionPlanner.productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+		for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+			try {
 
-			// Execute the transaction within the transaction template
-			resultMessage = (PlannerResultMessage) transactionTemplate.execute((status) -> {
-				ProcessingOrder order = null;
+				// Execute the transaction within the transaction template
+				resultMessage = (PlannerResultMessage) transactionTemplate.execute((status) -> {
+					ProcessingOrder order = null;
 
-				// Find the order with the given orderId
-				Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
-				if (orderOpt.isPresent()) {
-					order = orderOpt.get();
-				} else {
-					PlannerResultMessage msg = new PlannerResultMessage(PlannerMessage.ORDER_NOT_EXIST);
-					msg.setText(logger.log(msg.getMessage(), orderId));
-					return msg;
-				}
-
-				if (logger.isTraceEnabled())
-					logger.trace("... found order {}", order.getIdentifier());
-
-				// Initialize the answer message (of the transaction template) with a default value of FALSE
-				PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
-
-				// Check if the thread executing this method has been interrupted
-				if (thread.isInterrupted()) {
-					PlannerResultMessage msg = new PlannerResultMessage(PlannerMessage.PLANNING_INTERRUPTED);
-					msg.setText(logger.log(msg.getMessage(), orderId));
-					return msg;
-				}
-
-				switch (order.getOrderState()) {
-				case PLANNING:
-				case APPROVED: 
-					// Check if the order is valid
-					answer = checkForValidOrder(order);
-					if (!answer.getSuccess()) {
-						break;
+					// Find the order with the given orderId
+					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+					if (orderOpt.isPresent()) {
+						order = orderOpt.get();
+					} else {
+						PlannerResultMessage msg = new PlannerResultMessage(PlannerMessage.ORDER_NOT_EXIST);
+						msg.setText(logger.log(msg.getMessage(), orderId));
+						return msg;
 					}
 
-					try {
-						// Create jobs based on the order's slicing type
-						switch (order.getSlicingType()) {
-						case CALENDAR_DAY:
-							answer = createJobsForDay(order, processingFacility, thread);
-							break;
-						case CALENDAR_MONTH:
-							answer = createJobsForMonth(order, processingFacility, thread);
-							break;
-						case CALENDAR_YEAR:
-							answer = createJobsForYear(order, processingFacility, thread);
-							break;
-						case ORBIT:
-							answer = createJobsForOrbit(order, processingFacility, thread);
-							break;
-						case TIME_SLICE:
-							answer = createJobsForTimeSlices(order, processingFacility, thread);
-							break;
-						case NONE:
-							answer = createSingleJob(order, processingFacility);
-							break;
-						default:
-							answer.setMessage(PlannerMessage.ORDER_SLICING_TYPE_NOT_SET);
-							answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
-							break;
-						}
-					} catch (InterruptedException e) {
+					if (logger.isTraceEnabled())
+						logger.trace("... found order {}", order.getIdentifier());
+
+					// Initialize the answer message (of the transaction template) with a default value of FALSE
+					PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
+
+					// Check if the thread executing this method has been interrupted
+					if (thread.isInterrupted()) {
 						PlannerResultMessage msg = new PlannerResultMessage(PlannerMessage.PLANNING_INTERRUPTED);
 						msg.setText(logger.log(msg.getMessage(), orderId));
 						return msg;
 					}
 
-					if (order.getJobs().isEmpty()) {
-						// Set the order states
-						order.setOrderState(OrderState.PLANNED);
-						order.setOrderState(OrderState.RELEASING);
-						order.setOrderState(OrderState.RELEASED);
-						order.setOrderState(OrderState.RUNNING);
-						order.setOrderState(OrderState.COMPLETED);
+					switch (order.getOrderState()) {
+					case PLANNING:
+					case APPROVED: 
+						// Check if the order is valid
+						answer = checkForValidOrder(order);
+						if (!answer.getSuccess()) {
+							break;
+						}
 
-						// Check for auto close and set times and state message
-						UtilService.getOrderUtil().checkAutoClose(order);
-						UtilService.getOrderUtil().setTimes(order);
-						order.setStateMessage(ProductionPlanner.STATE_MESSAGE_COMPLETED);
+						try {
+							// Create jobs based on the order's slicing type
+							switch (order.getSlicingType()) {
+							case CALENDAR_DAY:
+								answer = createJobsForDay(order, processingFacility, thread);
+								break;
+							case CALENDAR_MONTH:
+								answer = createJobsForMonth(order, processingFacility, thread);
+								break;
+							case CALENDAR_YEAR:
+								answer = createJobsForYear(order, processingFacility, thread);
+								break;
+							case ORBIT:
+								answer = createJobsForOrbit(order, processingFacility, thread);
+								break;
+							case TIME_SLICE:
+								answer = createJobsForTimeSlices(order, processingFacility, thread);
+								break;
+							case NONE:
+								answer = createSingleJob(order, processingFacility);
+								break;
+							default:
+								answer.setMessage(PlannerMessage.ORDER_SLICING_TYPE_NOT_SET);
+								answer.setText(logger.log(answer.getMessage(), order.getIdentifier()));
+								break;
+							}
+						} catch (InterruptedException e) {
+							PlannerResultMessage msg = new PlannerResultMessage(PlannerMessage.PLANNING_INTERRUPTED);
+							msg.setText(logger.log(msg.getMessage(), orderId));
+							return msg;
+						}
 
-						answer.setMessage(PlannerMessage.ORDER_ALREADY_COMPLETED);
+						if (order.getJobs().isEmpty()) {
+							// Set the order states
+							order.setOrderState(OrderState.PLANNED);
+							order.setOrderState(OrderState.RELEASING);
+							order.setOrderState(OrderState.RELEASED);
+							order.setOrderState(OrderState.RUNNING);
+							order.setOrderState(OrderState.COMPLETED);
+
+							// Check for auto close and set times and state message
+							UtilService.getOrderUtil().checkAutoClose(order);
+							UtilService.getOrderUtil().setTimes(order);
+							order.setStateMessage(ProductionPlanner.STATE_MESSAGE_COMPLETED);
+
+							answer.setMessage(PlannerMessage.ORDER_ALREADY_COMPLETED);
+						}
+						break;
+
+					case RELEASED: 
+						answer.setMessage(PlannerMessage.ORDER_ALREADY_RELEASED);
+						answer.setText(logger.log(answer.getMessage(), order.getIdentifier(), order.getOrderState()));
+						break;
+
+					default: 
+						answer.setMessage(PlannerMessage.ORDER_WAIT_FOR_RELEASE); // TODO This message does not make sense here
+						answer.setText(logger.log(answer.getMessage(), order.getIdentifier(), order.getOrderState()));
+						break;
+
 					}
-					break;
-				
-				case RELEASED: 
-					answer.setMessage(PlannerMessage.ORDER_ALREADY_RELEASED);
-					answer.setText(logger.log(answer.getMessage(), order.getIdentifier(), order.getOrderState()));
-					break;
-				
-				default: 
-					answer.setMessage(PlannerMessage.ORDER_WAIT_FOR_RELEASE); // TODO This message does not make sense here
-					answer.setText(logger.log(answer.getMessage(), order.getIdentifier(), order.getOrderState()));
-					break;
-				
+
+					return answer;
+				});
+				break;
+			} catch (CannotAcquireLockException e) {
+				if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+				if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+					ProductionPlanner.productionPlanner.dbWait();
+				} else {
+					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+					throw e;
 				}
+			} catch (Exception e) {
 
-				return answer;
-			});
-		} catch (Exception e) {
-			
-			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 
-			throw e;
+				throw e;
+			}
 		}
 
 		// Check if the result message indicates a planning interruption
@@ -809,7 +816,7 @@ public class OrderDispatcher {
 			while (currentJobList.get(0) < jobCount) {
 				
 				// Prepare for transaction retry, if "org.springframework.dao.CannotAcquireLockException" is thrown
-				for (int i = 0; i < DB_MAX_RETRY; i++) {
+				for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
 					try {
 						// Acquire the thread semaphore
 						productionPlanner.acquireThreadSemaphore("createJobSteps");
@@ -856,14 +863,15 @@ public class OrderDispatcher {
 							msg.setText(logger.log(msg.getMessage(), orderId));
 							return msg;
 						}
+						break;
 					} catch (CannotAcquireLockException e) {
 						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-						if ((i + 1) < DB_MAX_RETRY) {
-							if (logger.isDebugEnabled()) logger.debug("... retrying in {} ms!", DB_WAIT);
-							Thread.sleep(DB_WAIT);
+						if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+							if (logger.isDebugEnabled()) logger.debug("... retrying in {} ms!", ProductionPlanner.DB_WAIT);
+							ProductionPlanner.productionPlanner.dbWait();
 						} else {
-							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", DB_MAX_RETRY);
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
 							throw e;
 						}
 					} finally {

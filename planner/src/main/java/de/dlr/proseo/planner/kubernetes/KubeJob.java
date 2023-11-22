@@ -197,45 +197,6 @@ public class KubeJob {
 	}
 
 	/**
-	 * Instantiate a Kubernetes job with the specified parameters.
-	 *
-	 * @param id               The database ID of the job
-	 * @param namePrefix       The name for the job
-	 * @param processorImage   The processor image for the job
-	 * @param jobOrderFileName The file name of the job order file
-	 * @param args             Additional command arguments for the job
-	 */
-	public KubeJob(int id, String namePrefix, String processorImage, String jobOrderFileName, ArrayList<String> args) {
-
-		this.imageName = processorImage;
-		this.jobOrderFileName = jobOrderFileName;
-		this.podNames = new ArrayList<>();
-
-		if (args != null) {
-			this.args.addAll(args);
-		}
-
-		// Create a new JobStep in the database
-		JobStep jobStep = new JobStep();
-		jobStep.setIsFailed(false);
-		jobStep = RepositoryService.getJobStepRepository().save(jobStep);
-		jobId = jobStep.getId();
-
-		// Set the job name and container name
-		if (namePrefix != null) {
-			jobName = namePrefix + jobId;
-		} else {
-			jobName = ProductionPlanner.jobNamePrefix + jobId;
-		}
-		containerName = ProductionPlanner.jobContainerPrefix + jobId;
-
-		// Update the JobStep with the processing mode and save it
-		// TODO Why is the job name the processing mode?
-		jobStep.setProcessingMode(jobName);
-		RepositoryService.getJobStepRepository().save(jobStep);
-	}
-
-	/**
 	 * Instantiate a Kubernetes job with ID and Job Order file name
 	 *
 	 * @param jobId            the job ID

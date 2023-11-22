@@ -457,54 +457,81 @@ public class JobstepControllerImpl implements JobstepController {
 		if (logger.isTraceEnabled()) logger.trace(">>> suspendJobStep({}, force: {})", jobstepId, forceP);
 
 		final Boolean force = (null == forceP ? false : forceP);
-		
+
 		try {
 			JobStep js = this.findJobStepByNameOrId(jobstepId);
 			if (js != null) {
 				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-				try {
-					productionPlanner.acquireThreadSemaphore("suspendJobStep");
-					final ResponseEntity<RestJobStep> msgF = transactionTemplate.execute((status) -> {
-						JobStep jsx = this.findJobStepByNameOrIdPrim(jobstepId);
-						Job job = jsx.getJob();
-						if (job.getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
-							String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, job.getProcessingFacility().getName(),
-									job.getProcessingFacility().getFacilityState().toString());
+				for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+					try {
+						productionPlanner.acquireThreadSemaphore("suspendJobStep");
+						final ResponseEntity<RestJobStep> msgF = transactionTemplate.execute((status) -> {
+							JobStep jsx = this.findJobStepByNameOrIdPrim(jobstepId);
+							Job job = jsx.getJob();
+							if (job.getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
+								String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, job.getProcessingFacility().getName(),
+										job.getProcessingFacility().getFacilityState().toString());
 
-							return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
-						} else {
-							return null;
+								return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
+							} else {
+								return null;
+							}
+						});
+						if (msgF != null) {
+							return msgF;
 						}
-					});
-					if (msgF != null) {
-						return msgF;
+						productionPlanner.releaseThreadSemaphore("suspendJobStep");
+
+						break;
+					} catch (CannotAcquireLockException e) {
+						productionPlanner.releaseThreadSemaphore("suspendJobStep");
+						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+						if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+							ProductionPlanner.productionPlanner.dbWait();
+						} else {
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+							throw e;
+						}
+					} catch (Exception e) {
+						productionPlanner.releaseThreadSemaphore("suspendJobStep");	
+						String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
+
+						if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
+						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 					}
-					productionPlanner.releaseThreadSemaphore("suspendJobStep");
-
-				} catch (Exception e) {
-					productionPlanner.releaseThreadSemaphore("suspendJobStep");	
-					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
-					
-					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-
-					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 				PlannerResultMessage msg = new PlannerResultMessage(GeneralMessage.FALSE); 
-				try {
-					productionPlanner.acquireThreadSemaphore("suspendJobStep");
-					msg = transactionTemplate.execute((status) -> {
-						JobStep jsx = this.findJobStepByNameOrIdPrim(jobstepId);
-						return jobStepUtil.suspend(jsx, force);
-					});
-					productionPlanner.releaseThreadSemaphore("suspendJobStep");
-				} catch (Exception e) {
-					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
-					
-					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+				for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+					try {
+						productionPlanner.acquireThreadSemaphore("suspendJobStep");
+						msg = transactionTemplate.execute((status) -> {
+							JobStep jsx = this.findJobStepByNameOrIdPrim(jobstepId);
+							return jobStepUtil.suspend(jsx, force);
+						});
+						productionPlanner.releaseThreadSemaphore("suspendJobStep");				
+						break;
+					} catch (CannotAcquireLockException e) {
+						productionPlanner.releaseThreadSemaphore("suspendJobStep");		
+						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-					productionPlanner.releaseThreadSemaphore("suspendJobStep");
-					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+						if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+							ProductionPlanner.productionPlanner.dbWait();
+						} else {
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+							throw e;
+						}
+
+					} catch (Exception e) {	
+						String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+
+						if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
+						productionPlanner.releaseThreadSemaphore("suspendJobStep");
+						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+					}
 				}
 				if (msg.getSuccess()) {
 					// suspended

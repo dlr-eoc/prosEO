@@ -191,19 +191,33 @@ public class OrderUtil {
 				}
 				try {
 					productionPlanner.acquireThreadSemaphore("OrderUtil.reset");
-					transactionTemplate.execute((status) -> {
-						Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
-						if (opt.isPresent()) {
-							ProcessingOrder orderx = opt.get();
-							orderx.setOrderState(OrderState.APPROVED);
-							setStateMessage(order, ProductionPlanner.STATE_MESSAGE_QUEUED);
-							orderx.setHasFailedJobSteps(false);
-							orderx.incrementVersion();
-							RepositoryService.getOrderRepository().save(orderx);
-							logOrderState(orderx);
+					for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+						try {
+							transactionTemplate.execute((status) -> {
+								Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
+								if (opt.isPresent()) {
+									ProcessingOrder orderx = opt.get();
+									orderx.setOrderState(OrderState.APPROVED);
+									setStateMessage(order, ProductionPlanner.STATE_MESSAGE_QUEUED);
+									orderx.setHasFailedJobSteps(false);
+									orderx.incrementVersion();
+									RepositoryService.getOrderRepository().save(orderx);
+									logOrderState(orderx);
+								}
+								return null;
+							});
+							break;
+						} catch (CannotAcquireLockException e) {
+							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+							if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+								ProductionPlanner.productionPlanner.dbWait();
+							} else {
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+								throw e;
+							}
 						}
-						return null;
-					});
+					}
 				} catch (Exception e) {
 					answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
 					answer.setText(logger.log(answer.getMessage(), e.getMessage()));
@@ -218,19 +232,33 @@ public class OrderUtil {
 				// jobs are in initial state, no change
 				try {
 					productionPlanner.acquireThreadSemaphore("OrderUtil.reset");
-					transactionTemplate.execute((status) -> {
-						Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
-						if (opt.isPresent()) {
-							ProcessingOrder orderx = opt.get();
-							orderx.setOrderState(OrderState.APPROVED);
-							setStateMessage(order, ProductionPlanner.STATE_MESSAGE_QUEUED);
-							orderx.setHasFailedJobSteps(false);
-							orderx.incrementVersion();
-							RepositoryService.getOrderRepository().save(orderx);
-							logOrderState(orderx);
+					for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+						try {
+							transactionTemplate.execute((status) -> {
+								Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
+								if (opt.isPresent()) {
+									ProcessingOrder orderx = opt.get();
+									orderx.setOrderState(OrderState.APPROVED);
+									setStateMessage(order, ProductionPlanner.STATE_MESSAGE_QUEUED);
+									orderx.setHasFailedJobSteps(false);
+									orderx.incrementVersion();
+									RepositoryService.getOrderRepository().save(orderx);
+									logOrderState(orderx);
+								}
+								return null;
+							});
+							break;
+						} catch (CannotAcquireLockException e) {
+							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+							if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+								ProductionPlanner.productionPlanner.dbWait();
+							} else {
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+								throw e;
+							}
 						}
-						return null;
-					});
+					}
 				} catch (Exception e) {
 					answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
 					answer.setText(logger.log(answer.getMessage(), e.getMessage()));
@@ -490,18 +518,33 @@ public class OrderUtil {
 				productionPlanner.acquireThreadSemaphore("plan");
 
 				transactionTemplate.setReadOnly(false);
-				answer = transactionTemplate.execute((status) -> {
-					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
-					if (orderOpt.isPresent()) {
-						orderOpt.get().setOrderState(OrderState.PLANNING);
-						orderOpt.get().incrementVersion();
-						RepositoryService.getOrderRepository().save(orderOpt.get());
+				for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+					try {
+						answer = transactionTemplate.execute((status) -> {
+							Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+							if (orderOpt.isPresent()) {
+								orderOpt.get().setOrderState(OrderState.PLANNING);
+								orderOpt.get().incrementVersion();
+								RepositoryService.getOrderRepository().save(orderOpt.get());
 
-						return new PlannerResultMessage(PlannerMessage.ORDER_PLANNING);
-					} else {
-						return new PlannerResultMessage(PlannerMessage.ORDER_NOT_EXIST);
+								return new PlannerResultMessage(PlannerMessage.ORDER_PLANNING);
+							} else {
+								return new PlannerResultMessage(PlannerMessage.ORDER_NOT_EXIST);
+							}
+						});
+
+						break;
+					} catch (CannotAcquireLockException e) {
+						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+						if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+							ProductionPlanner.productionPlanner.dbWait();
+						} else {
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+							throw e;
+						}
 					}
-				});
+				}
 			} catch (Exception e) {
 				answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
 				answer.setText(logger.log(answer.getMessage(), e.getMessage()));
@@ -601,18 +644,33 @@ public class OrderUtil {
 				try {
 					productionPlanner.acquireThreadSemaphore("resume");	
 					transactionTemplate.setReadOnly(false);
-					doIt = transactionTemplate.execute((status) -> {
-						Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
-						if (opt.isPresent()) {
-							ProcessingOrder orderx = opt.get();
-							orderx.setOrderState(OrderState.RELEASING);
-							//setStateMessage(order, ProductionPlanner.STATE_MESSAGE_RUNNING); // moved out of transaction, see below
-							orderx.incrementVersion();
-							orderx = RepositoryService.getOrderRepository().save(orderx);
-							return true;
+					for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+						try {
+							doIt = transactionTemplate.execute((status) -> {
+								Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
+								if (opt.isPresent()) {
+									ProcessingOrder orderx = opt.get();
+									orderx.setOrderState(OrderState.RELEASING);
+									//setStateMessage(order, ProductionPlanner.STATE_MESSAGE_RUNNING); // moved out of transaction, see below
+									orderx.incrementVersion();
+									orderx = RepositoryService.getOrderRepository().save(orderx);
+									return true;
+								}
+								return false;
+							});
+							break;
+						} catch (CannotAcquireLockException e) {
+							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+							if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+								ProductionPlanner.productionPlanner.dbWait();
+							} else {
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+								throw e;
+							}
 						}
-						return false;
-					});
+					}
+
 				} catch (Exception e) {
 					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 
@@ -997,6 +1055,7 @@ public class OrderUtil {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
+		transactionTemplate.setReadOnly(true);
 		final ProcessingOrder order = transactionTemplate.execute((status) -> {
 			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
 			if (orderOpt.isPresent()) {
@@ -1045,45 +1104,76 @@ public class OrderUtil {
 				if (answer.getSuccess()) {
 					try {
 						productionPlanner.acquireThreadSemaphore("prepareSuspend");	
-						transactionTemplate.execute((status) -> {
-							ProcessingOrder orderz = null;
-							Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
-							if (orderOpt.isPresent()) {
-								orderz = orderOpt.get();
-							}
-							if (orderz.getOrderState() == OrderState.RELEASING) {
-								orderz.setOrderState(OrderState.RELEASED);
-								orderz.setOrderState(OrderState.RUNNING);
-							}
-							orderz.setOrderState(OrderState.SUSPENDING);
-							setStateMessage(order, ProductionPlanner.STATE_MESSAGE_CANCELLED);
-							RepositoryService.getOrderRepository().save(orderz);
-							return null;
-						});
-						transactionTemplate.execute((status) -> {
-							ProcessingOrder orderz = null;
-							Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
-							if (orderOpt.isPresent()) {
-								orderz = orderOpt.get();
-							}
-							for (Job job : orderz.getJobs()) {
-								switch (job.getJobState()) {
-								case INITIAL:
-									job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
-									// intentionally fall through
-								case RELEASED:
-									job.setJobState(de.dlr.proseo.model.Job.JobState.STARTED);
-									// intentionally fall through
-								case STARTED:
-									job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
-									RepositoryService.getJobRepository().save(job);
-									break;
-								default:
-									break;						
+						transactionTemplate.setReadOnly(false);
+						for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+							try {
+								transactionTemplate.execute((status) -> {
+									ProcessingOrder orderz = null;
+									Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+									if (orderOpt.isPresent()) {
+										orderz = orderOpt.get();
+									}
+									if (orderz.getOrderState() == OrderState.RELEASING) {
+										orderz.setOrderState(OrderState.RELEASED);
+										orderz.setOrderState(OrderState.RUNNING);
+									}
+									orderz.setOrderState(OrderState.SUSPENDING);
+									setStateMessage(order, ProductionPlanner.STATE_MESSAGE_CANCELLED);
+									RepositoryService.getOrderRepository().save(orderz);
+									return null;
+								});
+								break;
+							} catch (CannotAcquireLockException e) {
+								if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+								if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+									ProductionPlanner.productionPlanner.dbWait();
+								} else {
+									if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+									throw e;
 								}
 							}
-							return null;
-						});
+						}
+
+						for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+							try {
+								transactionTemplate.execute((status) -> {
+									ProcessingOrder orderz = null;
+									Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
+									if (orderOpt.isPresent()) {
+										orderz = orderOpt.get();
+									}
+									for (Job job : orderz.getJobs()) {
+										switch (job.getJobState()) {
+										case INITIAL:
+											job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
+											// intentionally fall through
+										case RELEASED:
+											job.setJobState(de.dlr.proseo.model.Job.JobState.STARTED);
+											// intentionally fall through
+										case STARTED:
+											job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
+											RepositoryService.getJobRepository().save(job);
+											break;
+										default:
+											break;						
+										}
+									}
+									return null;
+								});
+								break;
+							} catch (CannotAcquireLockException e) {
+								if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+								if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+									ProductionPlanner.productionPlanner.dbWait();
+								} else {
+									if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+									throw e;
+								}
+							}
+						}
+
 						answer.setMessage(PlannerMessage.ORDER_SUSPEND_PREPARED);
 					} catch (Exception e) {
 						logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
@@ -1207,7 +1297,7 @@ public class OrderUtil {
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		List<Long> jobIds = new ArrayList<Long>();
-
+		transactionTemplate.setReadOnly(true);
 		final OrderState orderState = transactionTemplate.execute((status) -> {
 			String sqlQuery = "select order_state from processing_order where id = " + orderId + ";";
 			Query query = em.createNativeQuery(sqlQuery);
@@ -1243,29 +1333,46 @@ public class OrderUtil {
 				for (Long jobId : jobIds) {
 					jobUtil.close(jobId);
 				}
-				transactionTemplate.execute((status) -> {
-					Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
-					if (orderOpt.isPresent()) {
-						ProcessingOrder locOrder = orderOpt.get();
-						Duration retPeriod = locOrder.getMission().getOrderRetentionPeriod();
-						if (retPeriod != null && locOrder.getProductionType() == ProductionType.SYSTEMATIC) {
-							locOrder.setEvictionTime(Instant.now().plus(retPeriod));
-						}
-						if (locOrder.getOrderState() == OrderState.RUNNING) {
-							locOrder.setOrderState(OrderState.FAILED);
-						}
-						locOrder.setOrderState(OrderState.CLOSED);
-						if (locOrder.getHasFailedJobSteps()) {
-							setStateMessage(locOrder, ProductionPlanner.STATE_MESSAGE_FAILED);
+				transactionTemplate.setReadOnly(false);
+				
+				for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+					try {
+						transactionTemplate.execute((status) -> {
+							Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+							if (orderOpt.isPresent()) {
+								ProcessingOrder locOrder = orderOpt.get();
+								Duration retPeriod = locOrder.getMission().getOrderRetentionPeriod();
+								if (retPeriod != null && locOrder.getProductionType() == ProductionType.SYSTEMATIC) {
+									locOrder.setEvictionTime(Instant.now().plus(retPeriod));
+								}
+								if (locOrder.getOrderState() == OrderState.RUNNING) {
+									locOrder.setOrderState(OrderState.FAILED);
+								}
+								locOrder.setOrderState(OrderState.CLOSED);
+								if (locOrder.getHasFailedJobSteps()) {
+									setStateMessage(locOrder, ProductionPlanner.STATE_MESSAGE_FAILED);
+								} else {
+									setStateMessage(locOrder, ProductionPlanner.STATE_MESSAGE_COMPLETED);
+								}
+								locOrder.incrementVersion();
+								RepositoryService.getOrderRepository().save(locOrder);
+								logOrderState(locOrder);
+							}
+							return null;
+						});
+						break;
+					} catch (CannotAcquireLockException e) {
+						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+						if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+							ProductionPlanner.productionPlanner.dbWait();
 						} else {
-							setStateMessage(locOrder, ProductionPlanner.STATE_MESSAGE_COMPLETED);
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+							throw e;
 						}
-						locOrder.incrementVersion();
-						RepositoryService.getOrderRepository().save(locOrder);
-						logOrderState(locOrder);
 					}
-					return null;
-				});
+				}
+
 				answer.setMessage(PlannerMessage.ORDER_CLOSED);
 				break;			
 			case CLOSED:
