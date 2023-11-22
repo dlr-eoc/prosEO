@@ -76,43 +76,8 @@ public class ProductfileControllerImpl implements ProductfileController {
 				cfg.getFileCheckMaxCycles());
 
 		try {
-			// relative path depends on path, not on actual storage
-			String relativePath = storageProvider.getRelativePath(pathInfo);
-
-			StorageFile sourceFile = storageProvider.getStorageFile(relativePath);
-			StorageFile targetFile = storageProvider.getCacheFile(sourceFile.getRelativePath());
-
-			FileCache cache = FileCache.getInstance();
-
-			if (!cache.containsKey(targetFile.getFullPath())) {
-
-				fileLocker.lock();
-
-				// After lock() the active thread downloads the file and put it to the cache (see
-				// below)
-				// After lock() the passive thread did nothing, but the file has been downloaded
-				// and the cache has been updated - need to check if file contains in the cache
-				// again
-				if (!cache.containsKey(targetFile.getFullPath())) {
-
-					// active thread - downloads the file and puts it to the cache
-					storageProvider.getStorage().downloadFile(sourceFile, targetFile);
-					logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED, targetFile.getFullPath());
-
-					cache.put(targetFile.getFullPath());
-				} else {
-
-					// passive thread - did nothing, just waited until the file has been downloaded and use it from cache
-					logger.debug("... waiting-thread when the file downloaded and use it from cache: ",
-							targetFile.getFullPath());
-				}
-
-			} else {
-				logger.debug("... no download and no lock - the file is in cache: ", targetFile.getFullPath());
-			}
-
-			RestFileInfo restFileInfo = convertToRestFileInfo(targetFile,
-					storageProvider.getCacheFileSize(sourceFile.getRelativePath()));
+		
+			RestFileInfo restFileInfo = synchronizedDownloadFromStorageToCache(pathInfo, fileLocker);
 
 			return new ResponseEntity<>(restFileInfo, HttpStatus.OK);
 
@@ -138,7 +103,6 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 			fileLocker.unlock();
 			logger.debug("... unlocked the file: ", pathInfo);
-
 		}
 	}
 
@@ -155,39 +119,40 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> updateProductfiles({}, {})", pathInfo, productId);
-		
-		// Storage Manager version 2: pathInfo absolute path, upload absolute file -> storage
-		
-		// 1. download to cache  absolute-file -> cache
-		// 2. add to cache 		 cache.put()
-		// 3. upload to storage  cache -> storage
-		
-			if (pathInfo == null) {
-				return new ResponseEntity<RestFileInfo>(new RestFileInfo(), HttpStatus.BAD_REQUEST);
-			}
 
-			try {
-				Storage storage = storageProvider.getStorage();
-				String absolutePath = pathInfo;
-				String fileName = new File(pathInfo).getName();
-				String productFolderWithFilename = Paths.get(String.valueOf(productId), fileName).toString();
+		// Storage Manager version 2: pathInfo absolute path, upload absolute file ->
+		// storage
 
-				StorageFile sourceFile = storageProvider.getAbsoluteFile(absolutePath);
-				StorageFile targetFile = storageProvider.getStorageFile(productFolderWithFilename);
+		// 1. download to cache absolute-file -> cache
+		// 2. add to cache cache.put()
+		// 3. upload to storage cache -> storage
 
-				storage.uploadFile(sourceFile, targetFile);
+		if (pathInfo == null) {
+			return new ResponseEntity<RestFileInfo>(new RestFileInfo(), HttpStatus.BAD_REQUEST);
+		}
 
-				RestFileInfo restFileInfo = convertToRestFileInfo(targetFile, storage.getFileSize(targetFile));
+		try {
+			Storage storage = storageProvider.getStorage();
+			String absolutePath = pathInfo;
+			String fileName = new File(pathInfo).getName();
+			String productFolderWithFilename = Paths.get(String.valueOf(productId), fileName).toString();
 
-				logger.log(StorageMgrMessage.PRODUCT_FILE_UPLOADED, pathInfo, productId);
+			StorageFile sourceFile = storageProvider.getAbsoluteFile(absolutePath);
+			StorageFile targetFile = storageProvider.getStorageFile(productFolderWithFilename);
 
-				return new ResponseEntity<>(restFileInfo, HttpStatus.CREATED);
+			storage.uploadFile(sourceFile, targetFile);
 
-			} catch (Exception e) {
-			
-				String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
-				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
-			}	
+			RestFileInfo restFileInfo = convertToRestFileInfo(targetFile, storage.getFileSize(targetFile));
+
+			logger.log(StorageMgrMessage.PRODUCT_FILE_UPLOADED, pathInfo, productId);
+
+			return new ResponseEntity<>(restFileInfo, HttpStatus.CREATED);
+
+		} catch (Exception e) {
+
+			String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
+			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	/**
@@ -206,6 +171,102 @@ public class ProductfileControllerImpl implements ProductfileController {
 		restFileInfo.setFilePath(storageFile.getFullPath());
 		restFileInfo.setFileName(storageFile.getFileName());
 		restFileInfo.setFileSize(fileSize);
+
+		return restFileInfo;
+	}
+
+	private RestFileInfo synchronizedDownloadFromStorageToCache(String storageFilePath, StorageFileLocker fileLocker)
+			throws FileLockedAfterMaxCyclesException, IOException, Exception {
+
+		// relative path depends on path, not on actual storage
+		String relativePath = storageProvider.getRelativePath(storageFilePath);
+
+		StorageFile sourceFile = storageProvider.getStorageFile(relativePath);
+		StorageFile targetFile = storageProvider.getCacheFile(sourceFile.getRelativePath());
+
+		FileCache cache = FileCache.getInstance();
+
+		if (!cache.containsKey(targetFile.getFullPath())) {
+
+			fileLocker.lock();
+
+			// After lock() the active thread downloads the file and put it to the cache
+			// (see
+			// below)
+			// After lock() the passive thread did nothing, but the file has been downloaded
+			// and the cache has been updated - need to check if file contains in the cache
+			// again
+			if (!cache.containsKey(targetFile.getFullPath())) {
+
+				// active thread - downloads the file and puts it to the cache
+				storageProvider.getStorage().downloadFile(sourceFile, targetFile);
+				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED, targetFile.getFullPath());
+
+				cache.put(targetFile.getFullPath());
+			} else {
+
+				// passive thread - did nothing, just waited until the file has been downloaded
+				// and use it from cache
+				logger.debug("... waiting-thread when the file downloaded and use it from cache: ",
+						targetFile.getFullPath());
+			}
+
+		} else {
+			logger.debug("... no download and no lock - the file is in cache: ", targetFile.getFullPath());
+		}
+
+		RestFileInfo restFileInfo = convertToRestFileInfo(targetFile,
+				storageProvider.getCacheFileSize(sourceFile.getRelativePath()));
+
+		return restFileInfo;
+	}
+	
+	private RestFileInfo synchronizedDownloadFromAbsolutePathToCache(String absolutePath, Long productId, Long fileSize,  StorageFileLocker fileLocker)
+			throws FileLockedAfterMaxCyclesException, IOException, Exception {
+
+		StorageFile sourceFile = storageProvider.getAbsoluteFile(absolutePath);
+		
+		String fileName = new File(absolutePath).getName();
+		String productFolderWithFilename = Paths.get(String.valueOf(productId), fileName).toString();
+		StorageFile targetFile = storageProvider.getCacheFile(productFolderWithFilename);
+	
+
+		FileCache cache = FileCache.getInstance();
+
+		if (!cache.containsKey(targetFile.getFullPath())) {
+
+			fileLocker.lock();
+
+			// After lock() the active thread downloads the file and put it to the cache
+			// (see
+			// below)
+			// After lock() the passive thread did nothing, but the file has been downloaded
+			// and the cache has been updated - need to check if file contains in the cache
+			// again
+			if (!cache.containsKey(targetFile.getFullPath())) {
+
+				// active thread - downloads the file and puts it to the cache
+				
+				// TODO: ADD FUNCTIONALITY DOWNLOAD TO CACHE
+				//storageProvider.getStorage().downloadFile(sourceFile, targetFile);
+				
+				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED, targetFile.getFullPath());
+
+				cache.put(targetFile.getFullPath());
+			} else {
+
+				// passive thread - did nothing, just waited until the file has been downloaded
+				// and use it from cache
+				logger.debug("... waiting-thread when the file downloaded and use it from cache: ",
+						targetFile.getFullPath());
+			}
+
+		} else {
+			logger.debug("... no download and no lock - the file is in cache: ", targetFile.getFullPath());
+		}
+
+		RestFileInfo restFileInfo = convertToRestFileInfo(targetFile,
+				storageProvider.getCacheFileSize(sourceFile.getRelativePath()));
 
 		return restFileInfo;
 	}
