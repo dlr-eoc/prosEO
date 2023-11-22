@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.nio.file.Paths;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -36,9 +35,6 @@ import de.dlr.proseo.storagemgr.utils.StorageFileLocker;
 
 @Component
 public class ProductfileControllerImpl implements ProductfileController {
-
-	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String HTTP_MSG_PREFIX = "199 proseo-storage-mgr ";
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductControllerImpl.class);
@@ -92,21 +88,21 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 				fileLocker.lock();
 
-				// After lock the active thread downloaded the file and put it to the cache (see
+				// After lock() the active thread downloads the file and put it to the cache (see
 				// below)
-				// After lock the passive thread did nothing, but the file has been downloaded
+				// After lock() the passive thread did nothing, but the file has been downloaded
 				// and the cache has been updated - need to check if file contains in the cache
 				// again
 				if (!cache.containsKey(targetFile.getFullPath())) {
 
-					// download-thread
+					// active thread - downloads the file and puts it to the cache
 					storageProvider.getStorage().downloadFile(sourceFile, targetFile);
 					logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED, targetFile.getFullPath());
 
 					cache.put(targetFile.getFullPath());
 				} else {
 
-					// waiting-thread when the file downloaded and use it from cache
+					// passive thread - did nothing, just waited until the file has been downloaded and use it from cache
 					logger.debug("... waiting-thread when the file downloaded and use it from cache: ",
 							targetFile.getFullPath());
 				}
@@ -154,9 +150,6 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 * @param productId Product id
 	 * @return Target file name
 	 */
-	/**
-	 *
-	 */
 	@Override
 	public ResponseEntity<RestFileInfo> updateProductfiles(String pathInfo, Long productId, Long fileSize) {
 
@@ -164,6 +157,10 @@ public class ProductfileControllerImpl implements ProductfileController {
 			logger.trace(">>> updateProductfiles({}, {})", pathInfo, productId);
 		
 		// Storage Manager version 2: pathInfo absolute path, upload absolute file -> storage
+		
+		// 1. download to cache  absolute-file -> cache
+		// 2. add to cache 		 cache.put()
+		// 3. upload to storage  cache -> storage
 		
 			if (pathInfo == null) {
 				return new ResponseEntity<RestFileInfo>(new RestFileInfo(), HttpStatus.BAD_REQUEST);
@@ -187,9 +184,9 @@ public class ProductfileControllerImpl implements ProductfileController {
 				return new ResponseEntity<>(restFileInfo, HttpStatus.CREATED);
 
 			} catch (Exception e) {
-
+			
 				String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
-				return new ResponseEntity<>(errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
+				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
 			}	
 	}
 
@@ -213,16 +210,4 @@ public class ProductfileControllerImpl implements ProductfileController {
 		return restFileInfo;
 	}
 
-	/**
-	 * Create an HTTP "Warning" header with the given text message
-	 * 
-	 * @param message the message text
-	 * @return an HttpHeaders object with a warning message
-	 */
-	private HttpHeaders errorHeaders(String message) {
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING,
-				HTTP_MSG_PREFIX + (null == message ? "null" : message.replaceAll("\n", " ")));
-		return responseHeaders;
-	}
 }
