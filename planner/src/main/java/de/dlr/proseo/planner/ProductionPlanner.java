@@ -37,6 +37,7 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
+import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
@@ -375,12 +376,15 @@ public class ProductionPlanner implements CommandLineRunner {
 			}
 			if (kubeConfig == null) {
 				kubeConfig = new KubeConfig(pf, this);
-				if (kubeConfig != null && kubeConfig.connect()) {
-					kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
-					logger.log(PlannerMessage.PLANNER_FACILITY_CONNECTED, pf.getName(), pf.getProcessingEngineUrl());
-					logger.log(PlannerMessage.PLANNER_FACILITY_WORKER_CNT, String.valueOf(kubeConfig.getWorkerCnt()));
-				} else {
-					logger.log(PlannerMessage.PLANNER_FACILITY_NOT_CONNECTED, pf.getName(), pf.getProcessingEngineUrl());
+				if (kubeConfig.getFacilityState(pf) == FacilityState.RUNNING || kubeConfig.getFacilityState(pf) == FacilityState.STARTING 
+						|| kubeConfig.getFacilityState(pf) == FacilityState.STOPPING ) {
+					if (kubeConfig != null && kubeConfig.connect()) {
+						kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
+						logger.log(PlannerMessage.PLANNER_FACILITY_CONNECTED, pf.getName(), pf.getProcessingEngineUrl());
+						logger.log(PlannerMessage.PLANNER_FACILITY_WORKER_CNT, String.valueOf(kubeConfig.getWorkerCnt()));
+					} else {
+						logger.log(PlannerMessage.PLANNER_FACILITY_NOT_CONNECTED, pf.getName(), pf.getProcessingEngineUrl());
+					}
 				}
 			}
 		}
@@ -417,22 +421,26 @@ public class ProductionPlanner implements CommandLineRunner {
 		if (null == kubeConfig) {
 			// Planner does not know facility yet, so create a new KubeConfig object and make sure it can be connected
 			kubeConfig = new KubeConfig(pf, this);
-			if (kubeConfig.connect()) {
-				kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
-				logger.log(PlannerMessage.PLANNER_FACILITY_CONNECTED, pf.getName(), pf.getProcessingEngineUrl());
-				logger.log(PlannerMessage.PLANNER_FACILITY_WORKER_CNT, String.valueOf(kubeConfig.getWorkerCnt()));
-			} else {
-				logger.log(PlannerMessage.PLANNER_FACILITY_NOT_CONNECTED, pf.getName(), pf.getProcessingEngineUrl());
-				kubeConfig = null;
+			if (kubeConfig.getFacilityState(pf) == FacilityState.RUNNING || kubeConfig.getFacilityState(pf) == FacilityState.STARTING 
+					|| kubeConfig.getFacilityState(pf) == FacilityState.STOPPING ) {
+				if (kubeConfig.connect()) {
+					kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
+					logger.log(PlannerMessage.PLANNER_FACILITY_CONNECTED, pf.getName(), pf.getProcessingEngineUrl());
+					logger.log(PlannerMessage.PLANNER_FACILITY_WORKER_CNT, String.valueOf(kubeConfig.getWorkerCnt()));
+				} else {
+					logger.log(PlannerMessage.PLANNER_FACILITY_NOT_CONNECTED, pf.getName(), pf.getProcessingEngineUrl());
+				}
 			}
 		} else {
 			// Update information in KubeConfig object and make sure it can be connected
 			kubeConfig.setFacility(pf);
-			if (!kubeConfig.connect()) {
-				// error
-				kubeConfigs.remove(pf.getName().toLowerCase());
-				logger.log(PlannerMessage.PLANNER_FACILITY_DISCONNECTED, pf.getName());
-				kubeConfig = null;
+			if (kubeConfig.getFacilityState(pf) == FacilityState.RUNNING || kubeConfig.getFacilityState(pf) == FacilityState.STARTING 
+					|| kubeConfig.getFacilityState(pf) == FacilityState.STOPPING ) {
+				if (!kubeConfig.connect()) {
+					// error
+					kubeConfigs.remove(pf.getName().toLowerCase());
+					logger.log(PlannerMessage.PLANNER_FACILITY_DISCONNECTED, pf.getName());
+				}
 			}
 		}
 		return kubeConfig;

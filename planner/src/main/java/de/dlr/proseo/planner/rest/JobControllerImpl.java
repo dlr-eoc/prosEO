@@ -32,6 +32,7 @@ import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.model.Job;
+import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.rest.JobController;
@@ -239,6 +240,28 @@ public class JobControllerImpl implements JobController {
 			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 			Job job = this.findJobById(jobId);
+			// Check the status of the requested processing facility
+			final ResponseEntity<RestJob> response = transactionTemplate.execute((status) -> {
+				ProcessingFacility pf = job.getProcessingFacility();
+				KubeConfig kc = productionPlanner.updateKubeConfig(pf.getName());
+				if (null == kc) {
+					String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, pf.getName());
+
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
+				}
+				if (pf.getFacilityState() != FacilityState.RUNNING && pf.getFacilityState() != FacilityState.STARTING) {
+					String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, pf.getName(), pf.getFacilityState().toString());
+					if (pf.getFacilityState() == FacilityState.DISABLED) {
+						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
+					} else {
+						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.SERVICE_UNAVAILABLE);
+					}
+				}
+				return null;
+			});
+			if (response != null) {
+				return response;
+			}
 			if (job != null) {
 
 				PlannerResultMessage msg = new PlannerResultMessage(null);
@@ -403,8 +426,30 @@ public class JobControllerImpl implements JobController {
 		
 		try {
 			Job job = this.findJobById(jobId);
+			// Check the status of the requested processing facility
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+			final ResponseEntity<RestJob> response = transactionTemplate.execute((status) -> {
+				ProcessingFacility pf = job.getProcessingFacility();
+				KubeConfig kc = productionPlanner.updateKubeConfig(pf.getName());
+				if (null == kc) {
+					String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, pf.getName());
+
+					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
+				}
+				if (pf.getFacilityState() != FacilityState.RUNNING && pf.getFacilityState() != FacilityState.STARTING) {
+					String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, pf.getName(), pf.getFacilityState().toString());
+					if (pf.getFacilityState() == FacilityState.DISABLED) {
+						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
+					} else {
+						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.SERVICE_UNAVAILABLE);
+					}
+				}
+				return null;
+			});
+			if (response != null) {
+				return response;
+			}
 			if (job != null) {
 
 				PlannerResultMessage msg = new PlannerResultMessage(null);
