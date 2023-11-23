@@ -19,7 +19,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageProvider;
-import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.model.Storage;
 import de.dlr.proseo.storagemgr.model.StorageFile;
@@ -34,7 +34,7 @@ public class StorageProviderTest {
 	private TestUtils testUtils;
 	
 	@Autowired
-	private StorageTestUtils storageTestUtils;
+	private BaseStorageTestUtils storageTestUtils;
 	
 	@Autowired
 	private StorageProvider storageProvider;
@@ -97,7 +97,7 @@ public class StorageProviderTest {
 
 		assertTrue("File was not uploaded to storage: " + storageFilePath, TestUtils.fileExists(storageFilePath));
 
-		StorageTestUtils.printStorageFileList("Storage Files (should be 1 file) ", storage.getStorageFiles());
+		BaseStorageTestUtils.printStorageFileList("Storage Files (should be 1 file) ", storage.getStorageFiles());
 
 		// ----------------------- download --------------------------
 

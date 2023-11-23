@@ -26,7 +26,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageProvider;
-import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.model.StorageType;
@@ -52,7 +52,7 @@ public class ProductfileControllerImplTest_cache {
 	public TestName testName = new TestName();
 	
 	@Autowired
-	private StorageTestUtils storageTestUtils;
+	private BaseStorageTestUtils storageTestUtils;
 
 	String cachePath;
 	String storagePath; 

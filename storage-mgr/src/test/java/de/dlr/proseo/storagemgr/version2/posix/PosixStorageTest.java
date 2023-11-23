@@ -18,7 +18,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageProvider;
-import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.model.StorageType;
@@ -29,7 +29,7 @@ import de.dlr.proseo.storagemgr.model.StorageType;
 public class PosixStorageTest {
 
 	@Autowired
-	private StorageTestUtils storageTestUtils;
+	private BaseStorageTestUtils storageTestUtils;
 
 	@Autowired
 	private StorageProvider storageProvider;

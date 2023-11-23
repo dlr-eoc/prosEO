@@ -21,7 +21,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageProvider;
-import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.model.StorageType;
 import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
@@ -46,7 +46,7 @@ public class ProductfileControllerImplTest_upload {
 	private MockMvc mockMvc;
 
 	@Autowired
-	private StorageTestUtils storageTestUtils;
+	private BaseStorageTestUtils storageTestUtils;
 
 	@Autowired
 	private StorageProvider storageProvider;
@@ -124,7 +124,7 @@ public class ProductfileControllerImplTest_upload {
 		assertTrue("Expected path: " + realRelativeStoragePath + " Exists: " + relativePath, relativePath.equals(realRelativeStoragePath));
 
 		// show storage files
-		StorageTestUtils.printStorageFiles("After http-call", storageProvider.getStorage());
+		BaseStorageTestUtils.printStorageFiles("After http-call", storageProvider.getStorage());
 
 		// delete files with empty folders
 		new FileUtils(absoluteSourcePath).deleteFile(); // source

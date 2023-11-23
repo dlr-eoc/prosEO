@@ -24,7 +24,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageProvider;
-import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.model.Storage;
 import de.dlr.proseo.storagemgr.model.StorageFile;
@@ -49,7 +49,7 @@ public class ProductControllerImplTest_get {
 	private MockMvc mockMvc;
 
 	@Autowired
-	private StorageTestUtils storageTestUtils;
+	private BaseStorageTestUtils storageTestUtils;
 
 	@Autowired
 	private StorageProvider storageProvider;
@@ -140,7 +140,7 @@ public class ProductControllerImplTest_get {
 		}
 
 		// show storage files
-		StorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
+		BaseStorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
 
 		// HTTP Get files from storage
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
@@ -175,6 +175,6 @@ public class ProductControllerImplTest_get {
 		storageProvider.getStorage().delete(prefix);
 
 		// show storage files after deletion
-		StorageTestUtils.printStorageFiles("After deletion", storageProvider.getStorage());
+		BaseStorageTestUtils.printStorageFiles("After deletion", storageProvider.getStorage());
 	}
 }

@@ -26,7 +26,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.StorageProvider;
-import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.model.StorageType;
 import de.dlr.proseo.storagemgr.rest.model.RestJoborder;
@@ -136,7 +136,7 @@ public class JobOrderControllerImplTest_upload {
 		System.out.println("Created job order path: " + result.getPathInfo());
 
 		// show storage files
-		StorageTestUtils.printStorageFiles("After http-call", storageProvider.getStorage());
+		BaseStorageTestUtils.printStorageFiles("After http-call", storageProvider.getStorage());
 
 		// Only 1 job order expected today, because we deleted all today-orders earlier
 		int jobOrderCount = storageProvider.getStorage().getRelativeFiles(getJobOrderPrefixForToday()).size();
@@ -146,7 +146,7 @@ public class JobOrderControllerImplTest_upload {
 		storageProvider.getStorage().delete(getJobOrderPrefixForToday());
 
 		// show storage files
-		StorageTestUtils.printStorageFiles("After job order cleaning", storageProvider.getStorage());
+		BaseStorageTestUtils.printStorageFiles("After job order cleaning", storageProvider.getStorage());
 	}
 
 	// creates prefix for today only. ignores hour and file name (because it is

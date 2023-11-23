@@ -23,7 +23,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageProvider;
-import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.model.StorageType;
 import de.dlr.proseo.storagemgr.utils.PathConverter;
@@ -46,7 +46,7 @@ public class ProductControllerImplTest_delete {
 	private MockMvc mockMvc;
 
 	@Autowired
-	private StorageTestUtils storageTestUtils;
+	private BaseStorageTestUtils storageTestUtils;
 
 	@Rule
 	public TestName testName = new TestName();
@@ -116,10 +116,10 @@ public class ProductControllerImplTest_delete {
 		}
 			
 		// show storage files before http-delete-call
-		StorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
+		BaseStorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
 
 		// show storage files with prefix before http-delete-call
-		StorageTestUtils.printStorageFilesWithPrefix("Before http-call", storageProvider.getStorage(), prefix);
+		BaseStorageTestUtils.printStorageFilesWithPrefix("Before http-call", storageProvider.getStorage(), prefix);
 
 		// check count of uploaded prefix storage files
 		int realStorageFileCount = storageProvider.getStorage().getRelativeFiles(prefix).size();
@@ -141,7 +141,7 @@ public class ProductControllerImplTest_delete {
 		TestUtils.printMvcResult(REQUEST_STRING, mvcResult);
 
 		// show storage files with prefix before http-delete-call
-		StorageTestUtils.printStorageFilesWithPrefix("After http-call", storageProvider.getStorage(), prefix);
+		BaseStorageTestUtils.printStorageFilesWithPrefix("After http-call", storageProvider.getStorage(), prefix);
 
 		// check files after delete (expected: 0)
 		realStorageFileCount = storageProvider.getStorage().getRelativeFiles(prefix).size();

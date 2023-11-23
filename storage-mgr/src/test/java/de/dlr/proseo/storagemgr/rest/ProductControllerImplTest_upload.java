@@ -26,7 +26,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageProvider;
-import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.model.Storage;
 import de.dlr.proseo.storagemgr.model.StorageType;
@@ -143,7 +143,7 @@ public class ProductControllerImplTest_upload {
 		RestProductFS restProductFS = populateRestProductFS(productId, relativePaths);
 		
 		// show storage files
-		StorageTestUtils.printStorageFiles("Before http-upload call", storageProvider.getStorage());
+		BaseStorageTestUtils.printStorageFiles("Before http-upload call", storageProvider.getStorage());
 
 		// http-upload call
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.post(REQUEST_STRING)	
@@ -155,7 +155,7 @@ public class ProductControllerImplTest_upload {
 		TestUtils.printMvcResult(REQUEST_STRING, mvcResult); 
 		
 		// show storage files after http-upload
-		StorageTestUtils.printStorageFiles("After http-upload call", storageProvider.getStorage());
+		BaseStorageTestUtils.printStorageFiles("After http-upload call", storageProvider.getStorage());
 		
 		// check real with expected absolute storage paths 
 		String json = mvcResult.getResponse().getContentAsString();

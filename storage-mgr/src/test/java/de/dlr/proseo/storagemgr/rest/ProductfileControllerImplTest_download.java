@@ -23,7 +23,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageProvider;
-import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.model.StorageType;
@@ -49,7 +49,7 @@ public class ProductfileControllerImplTest_download {
 	private MockMvc mockMvc;
 	
 	@Autowired
-	private StorageTestUtils storageTestUtils;
+	private BaseStorageTestUtils storageTestUtils;
 	
  	@Autowired
 	private StorageProvider storageProvider;
@@ -119,7 +119,7 @@ public class ProductfileControllerImplTest_download {
 		storageProvider.getStorage().upload(sourceFile, storageFile);
 		
 		// show storage files
-		StorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
+		BaseStorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
 
 		// rest-download file from storage to cache
 		String absoluteStoragePath = storageProvider.getStorage().getAbsolutePath(relativePath);
