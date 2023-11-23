@@ -6,6 +6,19 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+
+import org.junit.Rule;
+import org.junit.rules.TestName;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.stereotype.Component;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import de.dlr.proseo.storagemgr.model.Storage;
 import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.posix.PosixDAL;
 import de.dlr.proseo.storagemgr.posix.PosixStorageFile;
@@ -15,11 +28,45 @@ import de.dlr.proseo.storagemgr.utils.PathConverter;
  * @author Denys Chaykovskiy
  *
  */
+/*
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
+@AutoConfigureMockMvc
+*/
+@Component
 public class BaseStorageTestUtils {
+	
+	@Autowired
+	private StorageProvider storageProvider;
+	
+	@Autowired
+	private TestUtils testUtils;
+
+	@Rule
+	public TestName testName = new TestName();
 
 	protected String sourcePath;
 	protected String storagePath;
 	protected String cachePath;
+	
+	@PostConstruct
+	private void init() {
+
+		sourcePath = testUtils.getSourcePath();
+		storagePath = testUtils.getStoragePath();
+		cachePath = testUtils.getCachePath();
+
+		theTestUtils = this;
+		
+		// storageProvider = new StorageProvider();
+	}
+	
+	private static BaseStorageTestUtils theTestUtils;
+
+	public static BaseStorageTestUtils getInstance() {
+
+		return theTestUtils;
+	}
 
 	public StorageFile getSourceFile(String relativePath) {
 
@@ -93,7 +140,7 @@ public class BaseStorageTestUtils {
 
 	public void uploadToPosixStorage(String relativePath) {
 
-		PosixDAL posixDAL = new PosixDAL();
+		PosixDAL posixDAL = new PosixDAL(storageProvider.getPosixConfigurationFromFile());
 
 		StorageFile sourceFile = getSourceFile(relativePath);
 		StorageFile destFile = getStorageFile(relativePath);
@@ -112,7 +159,7 @@ public class BaseStorageTestUtils {
 
 	public void downloadFromPosixStorage(String relativePath) {
 
-		PosixDAL posixDAL = new PosixDAL();
+		PosixDAL posixDAL = new PosixDAL(storageProvider.getPosixConfigurationFromFile());
 
 		StorageFile sourceFile = getStorageFile(relativePath);
 		StorageFile destFile = getCacheFile(relativePath);
@@ -155,5 +202,29 @@ public class BaseStorageTestUtils {
 
 	public String getSourcePath() {
 		return sourcePath;
+	}
+	
+	public static void printStorageFiles(String message, Storage storage) {
+		
+		List<String> storageFiles;
+		try {
+			storageFiles = storage.getRelativeFiles();	
+			String storageType = storage.getStorageType().toString();
+			TestUtils.printList(message + ". Storage " + storageType + " files || " + storage.getAbsoluteBasePath(), storageFiles);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void printStorageFilesWithPrefix(String message, Storage storage, String prefix) {
+		
+		List<String> storageFiles;
+		try {
+			storageFiles = storage.getRelativeFiles(prefix);	
+			String storageType = storage.getStorageType().toString();
+			TestUtils.printList(message + ". Storage " + storageType + " files || Prefix: " + prefix + " || " + storage.getAbsoluteBasePath(), storageFiles);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }
