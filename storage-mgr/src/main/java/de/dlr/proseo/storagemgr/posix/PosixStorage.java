@@ -29,47 +29,38 @@ import de.dlr.proseo.storagemgr.utils.PathConverter;
  * retrieving information about the storage, performing file operations, and
  * path conversion.
  * 
- * This class assumes a one-bucket concept for POSIX storage.
+ * This class assumes a no-bucket concept for POSIX storage.
  * 
  * @author Denys Chaykovskiy
  */
 public class PosixStorage implements Storage {
 
-	/** Base path */
-	private String basePath;
-
-	/** Source path */
-	private String sourcePath;
-
 	/** Bucket */
 	private String bucket;
+	
+	/** POSIX data access layer object */
+	private PosixDAL posixDAL;
+	
+	/** POSIX configuration */
+	private PosixConfiguration cfg;
 
 	/** Logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(PosixStorage.class);
-
-	/** POSIX data access layer object */
-	private PosixDAL posixDAL = new PosixDAL();
-
-	/**
-	 * Default Constructor
-	 */
-	public PosixStorage() {
-	}
 
 	/**
 	 * No bucket constructor initializing the storage with a basePath and
 	 * sourcePath. It creates the necessary directories if they don't exist.
 	 * 
-	 * @param basePath   base path
-	 * @param sourcePath source path
+	 * @param cfg POSIX configuration
 	 */
-	public PosixStorage(String basePath, String sourcePath) {
-		this.basePath = basePath;
-		this.sourcePath = sourcePath;
-		this.bucket = StorageFile.NO_BUCKET;
+	public PosixStorage(PosixConfiguration cfg) {
+		this.bucket = cfg.getBucket();  // StorageFile.NO_BUCKET is used in prosEO in POSIX Storage;
 
-		new FileUtils(basePath).createDirectories();
-		new FileUtils(sourcePath).createDirectories();
+		new FileUtils(cfg.getBasePath()).createDirectories();
+		new FileUtils(cfg.getSourcePath()).createDirectories();
+		
+		this.cfg = cfg; 
+		posixDAL = new PosixDAL(cfg);
 	}
 
 	/**
@@ -89,7 +80,7 @@ public class PosixStorage implements Storage {
 	 */
 	@Override
 	public String getBasePath() {
-		return basePath;
+		return cfg.getBasePath();
 	}
 
 	/**
@@ -111,7 +102,7 @@ public class PosixStorage implements Storage {
 	 */
 	@Override
 	public String getSourcePath() {
-		return sourcePath;
+		return cfg.getSourcePath();
 	}
 
 	/**
@@ -123,7 +114,7 @@ public class PosixStorage implements Storage {
 	public void setBucket(String bucket) {
 		this.bucket = bucket;
 
-		String bucketPath = Paths.get(basePath, bucket).toString();
+		String bucketPath = Paths.get(cfg.getBasePath(), bucket).toString();
 		new FileUtils(bucketPath).createDirectories();
 	}
 
@@ -182,7 +173,7 @@ public class PosixStorage implements Storage {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFiles({})", relativePath);
 
-		String path = new PathConverter(basePath, relativePath).getPath();
+		String path = new PathConverter(cfg.getBasePath(), relativePath).getPath();
 
 		return getRelativePath(posixDAL.getFiles(path));
 	}
@@ -194,7 +185,7 @@ public class PosixStorage implements Storage {
 	 */
 	@Override
 	public List<String> getRelativeFiles() {
-		return getRelativePath(posixDAL.getFiles(basePath));
+		return getRelativePath(posixDAL.getFiles(cfg.getBasePath()));
 	}
 
 	/**
@@ -207,7 +198,7 @@ public class PosixStorage implements Storage {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFiles({})", relativePath);
 
-		String path = new PathConverter(basePath, relativePath).getPath();
+		String path = new PathConverter(cfg.getBasePath(), relativePath).getPath();
 
 		return posixDAL.getFiles(path);
 	}
@@ -218,7 +209,7 @@ public class PosixStorage implements Storage {
 	 * @return the list of all files from the storage
 	 */
 	public List<String> getAbsoluteFiles() {
-		return posixDAL.getFiles(basePath);
+		return posixDAL.getFiles(cfg.getBasePath());
 	}
 
 	/**
@@ -233,8 +224,8 @@ public class PosixStorage implements Storage {
 			logger.trace(">>> getRelativePath({})", absolutePath);
 
 		List<String> basePaths = new ArrayList<>();
-		basePaths.add(basePath);
-		basePaths.add(sourcePath);
+		basePaths.add(cfg.getBasePath());
+		basePaths.add(cfg.getSourcePath());
 
 		return new PathConverter(absolutePath, basePaths).getRelativePath().getPath();
 	}
@@ -250,10 +241,10 @@ public class PosixStorage implements Storage {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRelativePath({})", absolutePaths);
 
-		logger.trace("... basePath = {}, sourcePath = {}", basePath, sourcePath);
+		logger.trace("... basePath = {}, sourcePath = {}", cfg.getBasePath(), cfg.getSourcePath());
 		List<String> basePaths = new ArrayList<>();
-		basePaths.add(basePath);
-		basePaths.add(sourcePath);
+		basePaths.add(cfg.getBasePath());
+		basePaths.add(cfg.getSourcePath());
 
 		List<String> relativePaths = new ArrayList<>();
 
@@ -305,7 +296,7 @@ public class PosixStorage implements Storage {
 	 */
 	@Override
 	public StorageFile getStorageFile(String relativePath) {
-		return new PosixStorageFile(basePath, relativePath);
+		return new PosixStorageFile(cfg.getBasePath(), relativePath);
 	}
 
 	/**
@@ -315,7 +306,7 @@ public class PosixStorage implements Storage {
 	 */
 	@Override
 	public List<StorageFile> getStorageFiles() {
-		List<String> paths = posixDAL.getFiles(basePath);
+		List<String> paths = posixDAL.getFiles(cfg.getBasePath());
 		List<StorageFile> storageFiles = new ArrayList<>();
 
 		for (String path : paths) {
@@ -453,7 +444,7 @@ public class PosixStorage implements Storage {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> upload({})", sourceFileOrDir.getFullPath());
 
-		StorageFile targetFileOrDir = new PosixStorageFile(basePath, sourceFileOrDir.getRelativePath());
+		StorageFile targetFileOrDir = new PosixStorageFile(cfg.getBasePath(), sourceFileOrDir.getRelativePath());
 
 		List<String> uploadedAbsolutePaths = posixDAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
 
@@ -472,7 +463,7 @@ public class PosixStorage implements Storage {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> uploadFile({})", sourceFile.getFullPath());
 
-		StorageFile targetFile = new PosixStorageFile(basePath, sourceFile.getRelativePath());
+		StorageFile targetFile = new PosixStorageFile(cfg.getBasePath(), sourceFile.getRelativePath());
 
 		String uploadedFile = posixDAL.uploadFile(sourceFile.getFullPath(), targetFile.getFullPath());
 
@@ -491,8 +482,8 @@ public class PosixStorage implements Storage {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> upload({})", relativeSourceFileOrDir);
 
-		StorageFile sourceFileOrDir = new PosixStorageFile(sourcePath, relativeSourceFileOrDir);
-		StorageFile targetFileOrDir = new PosixStorageFile(basePath, relativeSourceFileOrDir);
+		StorageFile sourceFileOrDir = new PosixStorageFile(cfg.getSourcePath(), relativeSourceFileOrDir);
+		StorageFile targetFileOrDir = new PosixStorageFile(cfg.getBasePath(), relativeSourceFileOrDir);
 
 		List<String> uploadedAbsolutePaths = posixDAL.upload(sourceFileOrDir.getFullPath(), targetFileOrDir.getFullPath());
 
@@ -511,8 +502,8 @@ public class PosixStorage implements Storage {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> uploadFile({})", relativeSourceFile);
 
-		StorageFile sourceFile = new PosixStorageFile(sourcePath, relativeSourceFile);
-		StorageFile targetFile = new PosixStorageFile(basePath, relativeSourceFile);
+		StorageFile sourceFile = new PosixStorageFile(cfg.getSourcePath(), relativeSourceFile);
+		StorageFile targetFile = new PosixStorageFile(cfg.getBasePath(), relativeSourceFile);
 
 		String uploadedFile = posixDAL.uploadFile(sourceFile.getFullPath(), targetFile.getFullPath());
 
@@ -672,6 +663,6 @@ public class PosixStorage implements Storage {
 	 * @return the full bucket path
 	 */
 	private String getFullBucketPath() {
-		return bucket.equals(StorageFile.NO_BUCKET) ? basePath : Paths.get(basePath, bucket).toString();
+		return bucket.equals(StorageFile.NO_BUCKET) ? cfg.getBasePath() : Paths.get(cfg.getBasePath(), bucket).toString();
 	}
 }

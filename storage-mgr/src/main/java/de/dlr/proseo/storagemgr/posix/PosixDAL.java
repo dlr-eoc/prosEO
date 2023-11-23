@@ -17,6 +17,8 @@ import java.util.List;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.StorageMgrMessage;
+import de.dlr.proseo.storagemgr.model.AtomicCommand;
+import de.dlr.proseo.storagemgr.model.DefaultRetryStrategy;
 import de.dlr.proseo.storagemgr.utils.FileUtils;
 import de.dlr.proseo.storagemgr.utils.PathConverter;
 
@@ -33,7 +35,30 @@ public class PosixDAL {
 
 	/** Logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(PosixDAL.class);
+	
+	/** POSIX configuration */
+	private PosixConfiguration cfg;
+	
+	/**
+	 * Constructor
+	 *
+	 * @param cfg POSIX Configuration
+	 */
+	public PosixDAL(PosixConfiguration cfg) {
 
+		this.cfg = cfg;
+	}
+
+	/**
+	 * Gets the POSIX configuration used by this PosixDAL instance.
+	 *
+	 * @return the PosixConfiguration object
+	 */
+	public PosixConfiguration getConfiguration() {
+
+		return cfg;
+	}
+	
 	/**
 	 * Retrieves a list of files that match a given path (or prefix). It recursively
 	 * scans directories and adds the absolute paths of files to the result
@@ -235,30 +260,11 @@ public class PosixDAL {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> downloadFile({},{})", sourceFile, targetFileOrDir);
+		
+		
+		AtomicCommand<String> fileUploader = new PosixAtomicFileUploader(sourceFile, targetFileOrDir);
 
-		String targetFile = targetFileOrDir;
-
-		if (new PathConverter(targetFileOrDir).isDirectory()) {
-			targetFile = new PathConverter(targetFileOrDir, getFileName(sourceFile)).getPath();
-		}
-
-		createParentDirectories(targetFile);
-
-		Path sourceFilePath = new File(sourceFile).toPath();
-		Path targetFilePath = new File(targetFile).toPath();
-
-		try {
-			Path copiedPath = Files.copy(sourceFilePath, targetFilePath, StandardCopyOption.REPLACE_EXISTING);
-			return copiedPath.toString();
-
-		} catch (Exception e) {
-			if (logger.isDebugEnabled()) {
-					logger.debug("An exception occurred. Cause: ", e);
-				}
-			if (logger.isTraceEnabled())
-				logger.log(StorageMgrMessage.FILE_NOT_DOWNLOADED, sourceFile, targetFileOrDir, e.getMessage());
-			throw e;
-		}
+		return new DefaultRetryStrategy<>(fileUploader, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
@@ -356,7 +362,7 @@ public class PosixDAL {
 	private void createParentDirectories(String path) {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getFiles({})", path);
+			logger.trace(">>> createParentDirectories({})", path);
 
 		File targetFile = new File(path);
 		File parent = targetFile.getParentFile();

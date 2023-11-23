@@ -22,11 +22,15 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.storagemgr.model.Storage;
 import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.model.StorageType;
+
 import de.dlr.proseo.storagemgr.posix.PosixStorage;
 import de.dlr.proseo.storagemgr.posix.PosixStorageFile;
+import de.dlr.proseo.storagemgr.posix.PosixConfiguration;
+
 import de.dlr.proseo.storagemgr.s3.S3Configuration;
 import de.dlr.proseo.storagemgr.s3.S3Storage;
 import de.dlr.proseo.storagemgr.s3.S3StorageFile;
+
 import de.dlr.proseo.storagemgr.utils.PathConverter;
 
 /**
@@ -82,23 +86,6 @@ public class StorageProvider {
 	 */
 	public StorageProvider() {
 		// init();
-	}
-
-	/**
-	 * Initializes storage(s) from Application.yml
-	 *
-	 * @throws IOException if an error occurs during initialization
-	 */
-	@PostConstruct
-	private void init() throws IOException {
-		theStorageProvider = this;
-		storage = createStorage(StorageType.valueOf(cfg.getDefaultStorageType()), cfg.getPosixBackendPath());
-
-		basePaths.add(storage.getBasePath());
-		basePaths.add(cfg.getDefaultSourcePath());
-		basePaths.add(cfg.getPosixCachePath());
-
-		loadDefaultPaths();
 	}
 
 	/**
@@ -263,31 +250,6 @@ public class StorageProvider {
 
 		Path path = Paths.get(absolutePath);
 		return Files.size(path);
-	}
-
-	/**
-	 * Creates a storage instance based on the specified storage type and storage
-	 * path.
-	 *
-	 * @param storageType the storage type (S3 or POSIX)
-	 * @param storagePath the base path of the POSIX storage (used for temporary
-	 *                    files in S3)
-	 * @return the created storage instance
-	 * @throws IOException if an error occurs during storage creation
-	 */
-	private Storage createStorage(StorageType storageType, String storagePath) throws IOException {
-		if (logger.isTraceEnabled())
-			logger.trace(">>> createStorage({}, {})", storageType.toString(), storagePath);
-
-		sourcePath = cfg.getDefaultSourcePath();
-
-		if (storageType == StorageType.POSIX) {
-			return new PosixStorage(storagePath, sourcePath);
-		} else if (storageType == StorageType.S3) {
-			return new S3Storage(getS3ConfigurationFromFile());
-		}
-
-		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
 	}
 
 	/**
@@ -475,6 +437,27 @@ public class StorageProvider {
 
 		return storage.createStorageFile(relativePath, content);
 	}
+	
+	/**
+	 * Gets the POSIX configuration from the file.
+	 *
+	 * @return the POSIX configuration
+	 */
+	public PosixConfiguration getPosixConfigurationFromFile() {
+		PosixConfiguration posixConfiguration = new PosixConfiguration();
+		
+		// FYI: No bucket configuration is used in prosEO for POSIX Storage
+		posixConfiguration.setBucket(StorageFile.NO_BUCKET);
+		
+		posixConfiguration.setBasePath(cfg.getPosixBackendPath());
+		posixConfiguration.setSourcePath(cfg.getDefaultSourcePath());
+
+		posixConfiguration.setMaxRequestAttempts(cfg.getMaxRequestAttempts());
+
+		posixConfiguration.setFileCheckWaitTime(cfg.getFileCheckWaitTime());
+
+		return posixConfiguration;
+	}
 
 	/**
 	 * Gets the S3 configuration from the file.
@@ -500,5 +483,47 @@ public class StorageProvider {
 		s3Configuration.setDefaultEndPoint(Boolean.parseBoolean(cfg.getS3DefaultEndPoint()));
 
 		return s3Configuration;
+	}
+	
+	/**
+	 * Initializes storage(s) from Application.yml
+	 *
+	 * @throws IOException if an error occurs during initialization
+	 */
+	@PostConstruct
+	private void init() throws IOException {
+		theStorageProvider = this;
+		storage = createStorage(StorageType.valueOf(cfg.getDefaultStorageType()), cfg.getPosixBackendPath());
+
+		basePaths.add(storage.getBasePath());
+		basePaths.add(cfg.getDefaultSourcePath());
+		basePaths.add(cfg.getPosixCachePath());
+
+		loadDefaultPaths();
+	}
+	
+	/**
+	 * Creates a storage instance based on the specified storage type and storage
+	 * path.
+	 *
+	 * @param storageType the storage type (S3 or POSIX)
+	 * @param storagePath the base path of the POSIX storage (used for temporary
+	 *                    files in S3)
+	 * @return the created storage instance
+	 * @throws IOException if an error occurs during storage creation
+	 */
+	private Storage createStorage(StorageType storageType, String storagePath) throws IOException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> createStorage({}, {})", storageType.toString(), storagePath);
+
+		sourcePath = cfg.getDefaultSourcePath();
+
+		if (storageType == StorageType.POSIX) {
+			return new PosixStorage(getPosixConfigurationFromFile());
+		} else if (storageType == StorageType.S3) {
+			return new S3Storage(getS3ConfigurationFromFile());
+		}
+
+		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
 	}
 }

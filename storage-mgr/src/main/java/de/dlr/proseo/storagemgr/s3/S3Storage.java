@@ -37,7 +37,7 @@ public class S3Storage implements Storage {
 	private static ProseoLogger logger = new ProseoLogger(S3Storage.class);
 
 	/**
-	 * Constructor with bucket, access keys, region and end point
+	 * Constructor with the s3 configuration
 	 *
 	 * @param cfg s3 configuration
 	 * @throws IOException if an I/O exception occurs
