@@ -961,9 +961,211 @@
               </div>
             </div>
           </div>
+          <div class="row py-lg-1">
+            <div class="col-12 border"></div>
+          </div>
+          <!-- Output parameters for all product classes -->
+          <div class="row" id="dynamicProcessingParameter">
+            <div class="col-12">
+              <div class="row py-lg-1" id="dynamicProcessingParameterStart">
+                <div class="col-12">
+                  <div class="input-group-prepend">
+                    <p class="input-group-text word-wrap" th:text="#{dynamicprocessingparameters}"></p>
+                    <div class="input-group-text">
+                      <span id="addDynProcAllClass" class="cursorpointer"
+                        th:onclick="addDynProcAllClass()"><span class="feather-l"
+                        data-feather="plus-circle"></span></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div name="dynamicProcessingParameters[]" id="OutDynamicProcessingParameter" data-name="parameterclass">
+                <div th:each="fcond,iterStat : ${ord?.dynamicProcessingParameters}">
+                  <div th:if="${iterStat.first} == true" class="row pt-lg-2 pb-lg-0" name="DynProcParameterAll"  th:data-index="${iterStat.index}"
+                   data-name="parameterrow">
+                    <div class="col-1"></div>
+                    <div class="col-3">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <span class="cursorpointer"
+                        onclick="removeDynProcAllClass()"><span class="feather-l"
+                        data-feather="x-circle"></span></span>
+                    </div>
+                          <p class="input-group-text word-wrap"
+                            th:text="#{allclasses}"></p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap" th:text="#{key}"></p>
+                        </div>
+                        <input type="text" class="form-control" name="key" data-name="key" required
+                          placeholder="Name" 
+                          th:value="${fcond?.key}">
+                      </div>
+                    </div>
+                    <div class="col-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap"
+                            th:text="#{type}"></p>
+                        </div>
+                        <select data-name="parameterType" name="parameterType" 
+                          class="custom-select">
+                          <option th:each="obj : ${parametertypes}" th:text="${obj}"
+                            th:label="${obj}"
+                            th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-3">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap" th:text="#{value}"></p>
+                        </div>
+                        <input type="text" class="form-control" 
+                          data-name="parameterValue" name="parameterValue" th:value="${fcond?.parameterValue}">
+                      </div>
+                    </div>
+                    <div class="col-1">
+                      <div class="input-group-text">
+                        <span th:id="'addParameterAll-' + ${iterStat.index}"
+                          class="cursorpointer"
+                          th:onclick="'addDynProcParameterAll(' + ${iterStat.index} + ')'"><span
+                          class="feather-l" data-feather="plus-circle"></span></span>
+                          <!-- <span>&nbsp;&nbsp;</span><span
+                          th:id="'removeDynProcParameterAll-' + ${iterStat.index}"
+                          class="cursorpointer"
+                          th:onclick="'removeDynProcParameterAll(' + ${iterStat.index} + ')'"><span
+                          class="feather-l" data-feather="x-circle"></span></span> -->
+                      </div>
+                    </div>
+                  </div>
+                  <div th:if="${iterStat.first} == false" class="row py-lg-0" name="DynProcParameterAll"  th:data-index="${iterStat.index}"  
+                    data-name="parameterrow">
+                    <div class="col-4">
+                    </div>
+                    <div class="col-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap" th:text="#{key}"></p>
+                        </div>
+                        <input type="text" class="form-control" data-name="key" name="key" required
+                          placeholder="Name" 
+                          th:value="${fcond?.key}">
+                      </div>
+                    </div>
+                    <div class="col-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap"
+                            th:text="#{type}"></p>
+                        </div>
+                        <select data-name="parameterType" name="parameterType" 
+                          class="custom-select">
+                          <option th:each="obj : ${parametertypes}" th:text="${obj}"
+                            th:label="${obj}"
+                            th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-3">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap" th:text="#{value}"></p>
+                        </div>
+                        <input type="text" class="form-control" 
+                          data-name="parameterValue" name="parameterValue" th:value="${fcond?.parameterValue}">
+                      </div>
+                    </div>
+                    <div class="col-1">
+                      <div class="input-group-text">
+                        <span th:id="'addParameterAll-' + ${iterStat.index}"
+                          class="cursorpointer"
+                          th:onclick="'addDynProcParameterAll(' + ${iterStat.index} + ')'"><span
+                          class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
+                          th:id="'removeParameterAll-' + ${iterStat.index}"
+                          class="cursorpointer"
+                          th:onclick="'removeDynProcParameterAll(' + ${iterStat.index} + ')'"><span
+                          class="feather-l" data-feather="x-circle"></span></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <input id="submitButton" class="btn btn-primary" type="submit" th:value="#{submit}"></input>
       </form>
+          <!-- Template for dynamic processing parameter -->
+              <div class="filtercontent" id="OutDynamicProcessingParameterTemplate" data-name="parameterclass">
+                  <div class="row pt-lg-2 pb-lg-0" name="DynProcParameterAll" data-index="0" data-name="parameterrow">
+                    <div class="col-1"></div>
+                    <div class="col-3">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <span class="cursorpointer"
+                        onclick="removeDynProcAllClass()"><span class="feather-l"
+                        data-feather="x-circle"></span></span>
+                    </div>
+                          <p class="input-group-text word-wrap"
+                            th:text="#{allclasses}"></p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap" th:text="#{key}"></p>
+                        </div>
+                        <input type="text" class="form-control" name="key" data-name="key" required
+                          placeholder="Name" 
+                          value="">
+                      </div>
+                    </div>
+                    <div class="col-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap"
+                            th:text="#{type}"></p>
+                        </div>
+                        <select name="parameterType" data-name="parameterType" 
+                          class="custom-select">
+                          <option th:each="obj : ${parametertypes}" th:text="${obj}"
+                            th:label="${obj}"
+                            th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-3">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap" th:text="#{value}"></p>
+                        </div>
+                        <input type="text" class="form-control" 
+                          name="parameterValue" data-name="parameterValue" value="">
+                      </div>
+                    </div>
+                    <div class="col-1">
+                      <div class="input-group-text">
+                        <span id="addParameterAll-0"
+                          class="cursorpointer"
+                          onclick="addDynProcParameterAll(0)"><span
+                          class="feather-l" data-feather="plus-circle"></span></span>
+                          <!-- <span>&nbsp;&nbsp;</span><span
+                          th:id="'removeDynProcParameterAll-' + ${iterStat.index}"
+                          class="cursorpointer"
+                          th:onclick="'removeDynProcParameterAll(' + ${iterStat.index} + ')'"><span
+                          class="feather-l" data-feather="x-circle"></span></span> -->
+                      </div>
+                    </div>
+                  </div>
+              </div>
           <!-- Template for all class parameter -->
               <div class="filtercontent" id="OutAllClassParameterTemplate" data-name="parameterclass">
                   <div class="row pt-lg-2 pb-lg-0" name="ParameterAll" data-index="0" data-name="parameterrow">
@@ -1377,6 +1579,16 @@ function addParameterAll(index) {
     addParameter(params, 'ParameterAll', null, index);
 };
 
+function removeDynProcParameterAll(index) {
+    var params = document.getElementsByName('DynProcParameterAll');
+    removeParameter(params, 'DynProcParameterAll', null, index);
+};
+
+function addDynProcParameterAll(index) {
+    var params = document.getElementsByName('DynProcParameterAll');
+    addParameter(params, 'DynProcParameterAll', null, index);
+};
+
 function addOutClassParameter(clsIndex, index) {
     var elem = document.getElementById('addOutClassParameter-' + clsIndex + '-' + index);
     var parent = $(elem).parents("div[name='OutClassParameters']");
@@ -1485,8 +1697,45 @@ function addAllClass() {
     }
 };
 
+function addDynProcAllClass() {
+    var element = document.getElementById('dynamicProcessingParameterStart');
+    var parent = document.getElementById('dynamicProcessingParameter');
+    var params = $(parent).find("div[name='DynProcParameterAll']");
+    if (params == null || params.length == 0) {// Get the template 
+        var template = document.getElementById('OutDynamicProcessingParameterTemplate');
+        if (template != null) {
+            var newParam = $(template).clone(true);
+            $(newParam).attr('id', 'OutDynamicProcessingParameter');
+            var child = $(newParam).children()[0];
+            $(child).attr('name', 'DynProcParameterAll');
+            // calc the new index
+            var newIndex = 0;
+            // replace the attributes containing index
+            $(child).attr('data-index', newIndex);
+            var subname = 'DynProcParameterAll';
+            var x = $(newParam).find("span[id='add-x']");
+            $(x).attr('onclick', 'add' + subname +'(' + newIndex + ')');
+            $(x).attr('id', 'add' + subname +'-' + newIndex);
+            x = $(newParam).find("span[id='remove-x']");
+            $(x).attr('onclick', 'remove' + subname +'('  + newIndex + ')');
+            $(x).attr('id', 'remove' + subname +'-' + newIndex);
+            
+            $(newParam).removeClass('filtercontent');
+            $(newParam).insertAfter($(element));
+        }
+    } else {
+        // nothing to do
+        alert("Defined for all Product Classes");
+    }
+};
+
 function removeAllClass() {
     var elem = document.getElementById('OutAllClassParameter');
+    $(elem).remove();
+};
+
+function removeDynProcAllClass() {
+    var elem = document.getElementById('OutDynamicProcessingParameter');
     $(elem).remove();
 };
 
@@ -1584,6 +1833,17 @@ function countAndSetNames() {
 	      $(params[i]).find("select[data-name='parameterType']").attr('name', 'outputParameters[' + i + '][parameterType]');
 	      $(params[i]).find("input[data-name='parameterValue']").attr('name', 'outputParameters[' + i + '][parameterValue]');
 	  }
+	    // search processing parameters
+	    var procParams = $('#OutDynamicProcessingParameter');
+	    var params = procParams.find("div[name='DynProcParameterAll']");
+	    var elem = null;
+	    for (var i = 0; i < params.length; i++) {
+	        $(params[i]).attr("data-index", i);
+	        $(params[i]).find("input[data-name='key']").attr('name', 'dynamicProcessingParameters[' + i + '][key]');
+	        $(params[i]).find("select[data-name='parameterType']").attr('name', 'dynamicProcessingParameters[' + i + '][parameterType]');
+	        $(params[i]).find("input[data-name='parameterValue']").attr('name', 'dynamicProcessingParameters[' + i + '][parameterValue]');
+	    }
+	    
 	  var classOutParams = $('#classOutputParametersId');
 	  var classes = classOutParams.find("div[name='OutClassParameters']");
 	  // for each elem of classes, create prodcut class name with parameter list

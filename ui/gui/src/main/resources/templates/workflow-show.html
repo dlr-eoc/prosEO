@@ -251,10 +251,19 @@
 										<td class="first-row">
 											<table class="table">
 												<tbody>
-													<tr th:each="elem : ${workflow?.classOutputParameters}">
-														<td th:text="${elem?.key}"></td>
-														<td th:text="${elem?.value}"></td>
-													</tr>
+				                  <div th:each="params : ${workflow?.classOutputParameters}">
+				                    <div th:each="p,iterStat : ${params?.outputParameters}">
+				                      <tr th:if="${iterStat.first} == true" class="first-row">
+				                        <td th:rowspan="${#lists.size(params?.outputParameters)}" class="first-row"><span th:text="${params?.productClass}"></span></td>
+				                        <td class="first-row"><span th:text="${p?.key}"></span></td>
+				                        <td class="first-row"><span th:text="${p?.parameterValue}"></span></td>
+				                      </tr>
+				                      <tr th:if="${iterStat.first} == false">
+				                        <td><span th:text="${p?.key}"></span></td>
+				                        <td><span th:text="${p?.parameterValue}"></span></td>
+				                      </tr>
+				                    </div>
+				                  </div>
 												</tbody>
 											</table>
 										</td>
