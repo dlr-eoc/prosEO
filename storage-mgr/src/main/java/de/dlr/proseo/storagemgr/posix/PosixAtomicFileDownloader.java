@@ -1,5 +1,5 @@
 /**
- * PosixAtomicFileUploader.java
+ * PosixAtomicFileDownloader.java
  *
  * (C) 2023 Dr. Bassler & Co. Managementberatung GmbH
  */
@@ -19,24 +19,24 @@ import de.dlr.proseo.storagemgr.utils.FileUtils;
 import de.dlr.proseo.storagemgr.utils.PathConverter;
 
 /**
- * Posix Atomic File Uploader from some external POSIX absolute path to the POSIX Storage
+ * Posix Atomic File Downloader from the POSIX Storage to some POSIX Path (normally, to the cache)
  *
  * @author Denys Chaykovskiy
  *
  */
-public class PosixAtomicFileUploader implements AtomicCommand<String> {
+public class PosixAtomicFileDownloader implements AtomicCommand<String> {
 
 	/** Info */
-	private static final String INFO = "Posix ATOMIC File Uploader";
+	private static final String INFO = "Posix ATOMIC File Downloader";
 
 	/** Completed Info */
-	private static final String COMPLETED = "file UPLOADED";
+	private static final String COMPLETED = "file DOWNLOADED";
 
 	/** Failed Info */
-	private static final String FAILED = "file upload FAILED";
+	private static final String FAILED = "file download FAILED";
 
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(PosixAtomicFileUploader.class);
+	private static Logger logger = LoggerFactory.getLogger(PosixAtomicFileDownloader.class);
 
 	/** source file */
 	private String sourceFile;
@@ -50,14 +50,14 @@ public class PosixAtomicFileUploader implements AtomicCommand<String> {
 	 * @param sourceFile      sourceFile
 	 * @param targetFileOrDir target file or directory
 	 */
-	public PosixAtomicFileUploader(String sourceFile, String targetFileOrDir) {
+	public PosixAtomicFileDownloader(String sourceFile, String targetFileOrDir) {
 
 		this.sourceFile = sourceFile;
 		this.targetFileOrDir = targetFileOrDir;
 	}
 
 	/**
-	 * Executes upload of the file to posix path
+	 * Executes download of the file from the storage to posix path
 	 *
 	 * @return uploaded file name
 	 */
@@ -65,7 +65,7 @@ public class PosixAtomicFileUploader implements AtomicCommand<String> {
 	public String execute() throws IOException {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> execute() - uploadFile({},{})", sourceFile, targetFileOrDir);
+			logger.trace(">>> execute() - downloadFile({},{})", sourceFile, targetFileOrDir);
 
 		String targetFile = targetFileOrDir;
 

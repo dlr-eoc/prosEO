@@ -230,7 +230,6 @@ public class ProductfileControllerImpl implements ProductfileController {
 		String productFolderWithFilename = Paths.get(String.valueOf(productId), fileName).toString();
 		StorageFile targetFile = storageProvider.getCacheFile(productFolderWithFilename);
 	
-
 		FileCache cache = FileCache.getInstance();
 
 		if (!cache.containsKey(targetFile.getFullPath())) {
@@ -248,7 +247,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 				// active thread - downloads the file and puts it to the cache
 				
 				// TODO: ADD FUNCTIONALITY DOWNLOAD TO CACHE
-				//storageProvider.getStorage().downloadFile(sourceFile, targetFile);
+				storageProvider.getStorage().downloadFile(sourceFile, targetFile);
 				
 				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED, targetFile.getFullPath());
 

@@ -170,30 +170,10 @@ public class PosixDAL {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> uploadFile({},{})", sourceFile, targetFileOrDir);
+	
+		AtomicCommand<String> fileUploader = new PosixAtomicFileUploader(sourceFile, targetFileOrDir);
 
-		String targetFile = targetFileOrDir;
-
-		if (new PathConverter(targetFileOrDir).isDirectory()) {
-			targetFile = new PathConverter(targetFileOrDir, getFileName(sourceFile)).getPath();
-		}
-
-		createParentDirectories(targetFile);
-
-		Path sourceFilePath = new File(sourceFile).toPath();
-		Path targetFilePath = new File(targetFile).toPath();
-
-		try {
-			Path copiedPath = Files.copy(sourceFilePath, targetFilePath, StandardCopyOption.REPLACE_EXISTING);
-			return copiedPath.toString();
-
-		} catch (IOException e) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("An exception occurred. Cause: ", e);
-			}
-			if (logger.isTraceEnabled())
-				logger.log(StorageMgrMessage.FILE_NOT_UPLOADED, sourceFile, targetFileOrDir, e.getMessage());
-			throw e;
-		}
+		return new DefaultRetryStrategy<>(fileUploader, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
@@ -261,10 +241,9 @@ public class PosixDAL {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> downloadFile({},{})", sourceFile, targetFileOrDir);
 		
-		
-		AtomicCommand<String> fileUploader = new PosixAtomicFileUploader(sourceFile, targetFileOrDir);
+		AtomicCommand<String> fileDownloader = new PosixAtomicFileDownloader(sourceFile, targetFileOrDir);
 
-		return new DefaultRetryStrategy<>(fileUploader, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
+		return new DefaultRetryStrategy<>(fileDownloader, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**

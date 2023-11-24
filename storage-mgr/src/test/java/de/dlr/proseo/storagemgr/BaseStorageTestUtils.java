@@ -10,13 +10,8 @@ import javax.annotation.PostConstruct;
 
 import org.junit.Rule;
 import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.stereotype.Component;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.storagemgr.model.Storage;
 import de.dlr.proseo.storagemgr.model.StorageFile;
@@ -28,11 +23,6 @@ import de.dlr.proseo.storagemgr.utils.PathConverter;
  * @author Denys Chaykovskiy
  *
  */
-/*
-@RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
-@AutoConfigureMockMvc
-*/
 @Component
 public class BaseStorageTestUtils {
 	

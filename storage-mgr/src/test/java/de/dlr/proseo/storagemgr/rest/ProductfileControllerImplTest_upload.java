@@ -57,7 +57,7 @@ public class ProductfileControllerImplTest_upload {
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/productfiles";
 
 	@Test
-	public void testUpload_v2Posix() throws Exception {
+	public void testUpload_Posix() throws Exception {
 
 		StorageType storageType = StorageType.POSIX;
 		storageProvider.setStorage(storageType);
@@ -69,7 +69,7 @@ public class ProductfileControllerImplTest_upload {
 	}
 
 	@Test
-	public void testUpload_v2S3() throws Exception {
+	public void testUpload_S3() throws Exception {
 
 		StorageType storageType = StorageType.S3;
 		storageProvider.setStorage(storageType);
