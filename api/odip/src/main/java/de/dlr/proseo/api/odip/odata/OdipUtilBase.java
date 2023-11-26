@@ -1001,7 +1001,7 @@ public class OdipUtilBase {
 	 * @return The created order after sending and releasing.
 	 * @throws OdipException If an error occurs during the process of sending and releasing the order.
 	 */
-	@Transactional
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public RestOrder planAndReleaseOrder(RestOrder order, String mission, String user, String password) throws OdipException {
 		RestOrder createdOrder = null;
 		if (order != null) {

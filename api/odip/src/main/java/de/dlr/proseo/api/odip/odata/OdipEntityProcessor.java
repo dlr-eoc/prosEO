@@ -51,6 +51,7 @@ import org.apache.olingo.server.api.uri.queryoption.ExpandOption;
 import org.apache.olingo.server.api.uri.queryoption.SelectOption;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StreamUtils;
 import de.dlr.proseo.api.odip.OdipApplicationBase;
@@ -72,7 +73,7 @@ import de.dlr.proseo.model.rest.model.RestOrder;
  *
  */
 @Component
-@Transactional
+@Transactional(isolation = Isolation.REPEATABLE_READ)
 public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcessor {
 
 	/* Other string constants */
