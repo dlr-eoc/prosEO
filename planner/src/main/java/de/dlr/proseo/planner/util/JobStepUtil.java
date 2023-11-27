@@ -216,6 +216,7 @@ public class JobStepUtil {
 		for (Long jsId : allJobSteps) {
 			for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
 				try {
+					transactionTemplate.setReadOnly(false);
 					transactionTemplate.execute((status) -> {
 						Optional<JobStep> opt = RepositoryService.getJobStepRepository().findById(jsId);
 						if (opt.isPresent()) {
@@ -875,7 +876,7 @@ public class JobStepUtil {
 	 * @param id Job step id
 	 * @param force 
 	 */
-	@Transactional(isolation = Isolation.REPEATABLE_READ)
+	// @Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void checkJobStepQueries(JobStep js, Boolean force) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> checkJobStepQueries({}, {}), jobStep state: {}", (null == js ? "null" : js.getId()), force, js.getJobStepState());
@@ -890,16 +891,21 @@ public class JobStepUtil {
 				for (ProductQuery pq : js.getInputProductQueries()) {
 					if (!pq.isSatisfied()) {
 						if (productQueryService.executeQuery(pq, false)) {
-							if (js.getJob().getProcessingOrder().getOrderSource() == OrderSource.ODIP
-									&& !pq.getInDownload() && pq.getSatisfyingProducts().isEmpty()) {
-								// An optional query will be satisfied, even if there are no input products (locally)
-								// Try to fetch more input products from some external archive
-								pq.setInDownload(true);
-								startAipDownload(pq);
-								// Prevent immediate start of job step without completion of download
-								// TODO The download state must be annotated with the product, the current implementation is not safe
-								pq.setIsSatisfied(false);
-								hasUnsatisfiedInputQueries = true;
+							if (js.getJob().getProcessingOrder().getOrderSource() == OrderSource.ODIP) {
+								if (pq.getInDownload()) {
+									pq.setInDownload(false);
+								} else {
+									if (!pq.getInDownload() && pq.getSatisfyingProducts().isEmpty()) {
+										// An optional query will be satisfied, even if there are no input products (locally)
+										// Try to fetch more input products from some external archive
+										pq.setInDownload(true);
+										startAipDownload(pq);
+										// Prevent immediate start of job step without completion of download
+										// TODO The download state must be annotated with the product, the current implementation is not safe
+										pq.setIsSatisfied(false);
+										hasUnsatisfiedInputQueries = true;
+									}
+								}
 							}
 
 							RepositoryService.getProductQueryRepository().save(pq);
@@ -929,13 +935,13 @@ public class JobStepUtil {
 						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT);
 						js.incrementVersion();
 						RepositoryService.getJobStepRepository().save(js);
-						em.merge(js);
+						// em.merge(js);
 					}				
 				} else {
 					js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.READY);
 					js.incrementVersion();
 					RepositoryService.getJobStepRepository().save(js);
-					em.merge(js);
+					// em.merge(js);
 				}
 			}
 			
