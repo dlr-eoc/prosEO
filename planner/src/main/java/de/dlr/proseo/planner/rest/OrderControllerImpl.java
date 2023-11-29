@@ -716,19 +716,19 @@ public class OrderControllerImpl implements OrderController {
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 			transactionTemplate.setReadOnly(true);
-			ProcessingFacility pf = transactionTemplate.execute((status) -> {
-				for (Job j : order.getJobs()) {
-					return j.getProcessingFacility();
-				}
-				return null;
-			});
+//			ProcessingFacility pf = transactionTemplate.execute((status) -> {
+//				for (Job j : this.findOrder(orderId).getJobs()) {
+//					return j.getProcessingFacility();
+//				}
+//				return null;
+//			});
 			// Check the status of the requested processing facility
-			KubeConfig kc = productionPlanner.updateKubeConfig(pf.getName());
-			if (null == kc) {
-				String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, pf.getName());
-
-		    	return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
-			}
+//			KubeConfig kc = productionPlanner.updateKubeConfig(pf.getName());
+//			if (null == kc) {
+//				String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, pf.getName());
+//
+//		    	return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
+//			}
 			
 			PlannerResultMessage msg = new PlannerResultMessage(null);
 			try {

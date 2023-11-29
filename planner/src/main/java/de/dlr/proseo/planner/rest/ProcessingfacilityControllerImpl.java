@@ -238,21 +238,27 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			
 			// delete pod
 			KubeJob kj = aKubeConfig.getKubeJob(podname);
-			if (kj != null) {
-				kj.finish(aKubeConfig, podname);
+			if (null == kj) {
+				return new ResponseEntity<>(http.errorHeaders(logger.log(PlannerMessage.KUBECONFIG_JOB_NOT_FOUND, aKubeConfig.getId())), HttpStatus.NOT_FOUND);
 			}
+
+			kj.finish(aKubeConfig, podname);
+
 			// TODO delete finished jobs asynchron
 			// aKubeConfig.deleteJob(podname);
 			
 			// TODO Correctly fill return entity PlannerPod
+			PlannerPod plannerPod = new PlannerPod();
+			plannerPod.setId(String.valueOf(kj.getJobId()));
+			plannerPod.setName(podname);
+			plannerPod.setStatus(status);
+			plannerPod.setSucceded(Boolean.valueOf(status == "SUCCESS").toString());
 			
 			String message = logger.log(PlannerMessage.KUBEJOB_FINISH_TRIGGERED, aKubeConfig.getId(), kj.getJobName());
 			
-			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.OK);
+			return new ResponseEntity<>(plannerPod, http.errorHeaders(message), HttpStatus.OK);
 		} catch (Exception e) {
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
-			
-			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			
 			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			

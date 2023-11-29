@@ -273,29 +273,32 @@ public class JobstepControllerImpl implements JobstepController {
 			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 			JobStep js = this.findJobStepByNameOrId(jobstepId);
-			// Check the status of the requested processing facility
-			final ResponseEntity<RestJobStep> response = transactionTemplate.execute((status) -> {
-				ProcessingFacility pf = js.getJob().getProcessingFacility();
-				KubeConfig kc = productionPlanner.updateKubeConfig(pf.getName());
-				if (null == kc) {
-					String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, pf.getName());
-
-					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
-				}
-				if (pf.getFacilityState() != FacilityState.RUNNING && pf.getFacilityState() != FacilityState.STARTING) {
-					String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, pf.getName(), pf.getFacilityState().toString());
-					if (pf.getFacilityState() == FacilityState.DISABLED) {
-						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
-					} else {
-						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.SERVICE_UNAVAILABLE);
-					}
-				}
-				return null;
-			});
-			if (response != null) {
-				return response;
-			}
+			
 			if (js != null) {
+				// Check the status of the requested processing facility
+				final ResponseEntity<RestJobStep> response = transactionTemplate.execute((status) -> {
+					ProcessingFacility pf = this.findJobStepByNameOrId(jobstepId).getJob().getProcessingFacility();
+					KubeConfig kc = productionPlanner.updateKubeConfig(pf.getName());
+					if (null == kc) {
+						String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, pf.getName());
+
+						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
+					}
+					if (pf.getFacilityState() != FacilityState.RUNNING && pf.getFacilityState() != FacilityState.STARTING) {
+						String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, pf.getName(), pf.getFacilityState().toString());
+						if (pf.getFacilityState() == FacilityState.DISABLED) {
+							return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
+						} else {
+							return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.SERVICE_UNAVAILABLE);
+						}
+					}
+					return null;
+				});
+				
+				if (response != null) {
+					return response;
+				}
+
 				List<PlannerResultMessage> msg = new ArrayList<PlannerResultMessage>();
 				try {
 					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
@@ -484,31 +487,32 @@ public class JobstepControllerImpl implements JobstepController {
 
 		try {
 			JobStep js = this.findJobStepByNameOrId(jobstepId);
-			// Check the status of the requested processing facility
-			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
-			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-			final ResponseEntity<RestJobStep> response = transactionTemplate.execute((status) -> {
-				ProcessingFacility pf = js.getJob().getProcessingFacility();
-				KubeConfig kc = productionPlanner.updateKubeConfig(pf.getName());
-				if (null == kc) {
-					String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, pf.getName());
-
-					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
-				}
-				if (pf.getFacilityState() != FacilityState.RUNNING && pf.getFacilityState() != FacilityState.STARTING) {
-					String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, pf.getName(), pf.getFacilityState().toString());
-					if (pf.getFacilityState() == FacilityState.DISABLED) {
-						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
-					} else {
-						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.SERVICE_UNAVAILABLE);
-					}
-				}
-				return null;
-			});
-			if (response != null) {
-				return response;
-			}
 			if (js != null) {
+				// Check the status of the requested processing facility
+				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+				final ResponseEntity<RestJobStep> response = transactionTemplate.execute((status) -> {
+					ProcessingFacility pf = this.findJobStepByNameOrId(jobstepId).getJob().getProcessingFacility();
+					KubeConfig kc = productionPlanner.updateKubeConfig(pf.getName());
+					if (null == kc) {
+						String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, pf.getName());
+
+						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
+					}
+					if (pf.getFacilityState() != FacilityState.RUNNING && pf.getFacilityState() != FacilityState.STARTING) {
+						String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, pf.getName(), pf.getFacilityState().toString());
+						if (pf.getFacilityState() == FacilityState.DISABLED) {
+							return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
+						} else {
+							return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.SERVICE_UNAVAILABLE);
+						}
+					}
+					return null;
+				});
+				if (response != null) {
+					return response;
+				}
+
 				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
 						productionPlanner.acquireThreadSemaphore("suspendJobStep");
