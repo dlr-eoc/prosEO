@@ -4,9 +4,11 @@ import java.util.Optional;
 import java.time.Instant;
 import java.time.Duration;
 
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
@@ -22,6 +24,7 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.monitor.MonitorApplication;
 import de.dlr.proseo.monitor.MonitorConfiguration;
 import de.dlr.proseo.model.util.MonServiceStates;
+import de.dlr.proseo.model.util.ProseoUtil;
 
 /**
  * Represent a microservice to check status
@@ -30,7 +33,6 @@ import de.dlr.proseo.model.util.MonServiceStates;
  *
  */
 
-@Transactional
 public class MicroService {
 
 	private static ProseoLogger logger = new ProseoLogger(MicroService.class);
@@ -67,7 +69,7 @@ public class MicroService {
 	 * State of service (MonServiceStates)
 	 */
 	private Long state = (long) 2;
-	
+		
 	/**
 	 * @return the hasActuator
 	 */
@@ -240,32 +242,71 @@ public class MicroService {
 		this.state = MonServiceStates.STOPPED_ID;
 		createEntry(monitor);
 		return;
-		
+
 	}
-	
+
 	/**
 	 * Create a new database entry of this 
 	 * 
 	 * @param monitor The basic Monitor thread
 	 */
-	@Transactional
 	public void createEntry(MonitorServices monitor) {
 		if (getIsProseo()) {
 			// It is a prosEO service
-			MonServiceStateOperation ms = new MonServiceStateOperation();
-			ms.setMonService(monitor.getMonService(getNameId(), getName()));
-			Optional<MonServiceState> aState = RepositoryService.getMonServiceStateRepository().findById(getState());
-			ms.setMonServiceState(aState.get());
-			ms.setDatetime(Instant.now());
-			ms = RepositoryService.getMonServiceStateOperationRepository().save(ms);
+			TransactionTemplate transactionTemplate = new TransactionTemplate(monitor.getTxManager());
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+			transactionTemplate.setReadOnly(false);
+			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
+				try {
+					transactionTemplate.execute((status) -> {	
+						MonServiceStateOperation ms = new MonServiceStateOperation();
+						ms.setMonService(monitor.getMonService(getNameId(), getName()));
+						Optional<MonServiceState> aState = RepositoryService.getMonServiceStateRepository().findById(getState());
+						ms.setMonServiceState(aState.get());
+						ms.setDatetime(Instant.now());
+						ms = RepositoryService.getMonServiceStateOperationRepository().save(ms);
+						return null;
+					});
+					break;
+				} catch (CannotAcquireLockException e) {
+					if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+					if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+						ProseoUtil.dbWait();
+					} else {
+						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+						throw e;
+					}
+				}
+			}
 		} else {
 			// It is an external service
-			MonExtServiceStateOperation ms = new MonExtServiceStateOperation();
-			ms.setMonExtService(monitor.getMonExtService(getNameId(), getName()));
-			Optional<MonServiceState> aState = RepositoryService.getMonServiceStateRepository().findById(getState());
-			ms.setMonServiceState(aState.get());
-			ms.setDatetime(Instant.now());
-			ms = RepositoryService.getMonExtServiceStateOperationRepository().save(ms);
+			TransactionTemplate transactionTemplate = new TransactionTemplate(monitor.getTxManager());
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+			transactionTemplate.setReadOnly(false);
+			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
+				try {
+					transactionTemplate.execute((status) -> {	
+						MonExtServiceStateOperation ms = new MonExtServiceStateOperation();
+						ms.setMonExtService(monitor.getMonExtService(getNameId(), getName()));
+						Optional<MonServiceState> aState = RepositoryService.getMonServiceStateRepository().findById(getState());
+						ms.setMonServiceState(aState.get());
+						ms.setDatetime(Instant.now());
+						ms = RepositoryService.getMonExtServiceStateOperationRepository().save(ms);
+						return null;
+					});
+					break;
+				} catch (CannotAcquireLockException e) {
+					if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+					if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+						ProseoUtil.dbWait();
+					} else {
+						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+						throw e;
+					}
+				}
+			}
 		}
 	}
 }

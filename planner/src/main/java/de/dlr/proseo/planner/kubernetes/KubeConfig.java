@@ -29,6 +29,7 @@ import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.rest.model.PodKube;
 import de.dlr.proseo.planner.util.UtilService;
@@ -427,7 +428,7 @@ public class KubeConfig {
 			logger.trace(">>> connect()");
 
 		// If the facility is disabled or stopped, no need to connect.
-		if (getFacilityState() == FacilityState.DISABLED || getFacilityState() == FacilityState.STOPPED)
+		if (getFacilityState(null) == FacilityState.DISABLED || getFacilityState(null) == FacilityState.STOPPED)
 			return false;
 
 		// Check if already connected
@@ -513,7 +514,7 @@ public class KubeConfig {
 	 * @return true if connected, otherwise false
 	 */
 	public boolean isConnected() {
-		if (getFacilityState() == FacilityState.DISABLED || apiV1 == null) {
+		if (getFacilityState(null) == FacilityState.DISABLED || apiV1 == null) {
 			return false;
 		} else {
 			return true;
@@ -535,8 +536,8 @@ public class KubeConfig {
 			}
 		}
 		// Check the facility state
-		if (getFacilityState() == FacilityState.DISABLED || getFacilityState() == FacilityState.STOPPED
-				|| getFacilityState() == FacilityState.STOPPING || getFacilityState() == FacilityState.STARTING) {
+		if (getFacilityState(null) == FacilityState.DISABLED || getFacilityState(null) == FacilityState.STOPPED
+				|| getFacilityState(null) == FacilityState.STOPPING || getFacilityState(null) == FacilityState.STARTING) {
 			// not available for jobs
 			return false;
 		}
@@ -556,8 +557,8 @@ public class KubeConfig {
 			logger.trace(">>> sync()");
 
 		// Step 1: Check facility state
-		if (getFacilityState() == FacilityState.DISABLED || getFacilityState() == FacilityState.STOPPED
-				|| getFacilityState() == FacilityState.STARTING) {
+		if (getFacilityState(null) == FacilityState.DISABLED || getFacilityState(null) == FacilityState.STOPPED
+				|| getFacilityState(null) == FacilityState.STARTING) {
 			// Nothing to do if facility state is disabled, stopped, or starting
 			return;
 		}
@@ -628,7 +629,7 @@ public class KubeConfig {
 
 		// These job steps have to be in the Kubernetes job list. If not, there was a problem. Set it to failed.
 		for (Long jobStepId : jobStepIds) {
-			for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 				try {
 
 					transactionTemplate.execute((status) -> {
@@ -679,10 +680,10 @@ public class KubeConfig {
 				} catch (CannotAcquireLockException e) {
 					if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-					if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-						ProductionPlanner.productionPlanner.dbWait();
+					if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+						ProseoUtil.dbWait();
 					} else {
-						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 						throw e;
 					}
 				}
@@ -1011,7 +1012,23 @@ public class KubeConfig {
 	 *
 	 * @return the facility state
 	 */
-	public FacilityState getFacilityState() {
+	public FacilityState getFacilityState(ProcessingFacility facility) {
+		if (facility != null) {
+			facilityState = facility.getFacilityState();
+		} else {
+			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+			// Check the status of the requested processing facility
+			final FacilityState response = transactionTemplate.execute((status) -> {
+				if (getProcessingFacility() != null) {
+					ProcessingFacility pf = RepositoryService.getFacilityRepository().findByName(getProcessingFacility().getName());
+					facilityState = pf.getFacilityState();	
+					return facilityState;
+				}
+				return FacilityState.DISABLED;
+			});
+			facilityState = response;
+		}
 		return facilityState;
 	}
 

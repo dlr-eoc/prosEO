@@ -23,6 +23,8 @@ import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
+import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.rest.ProcessingfacilityController;
 import de.dlr.proseo.model.rest.model.PlannerPod;
 import de.dlr.proseo.model.rest.model.RestProcessingFacility;
@@ -77,7 +79,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 						kc.getLongId(),
 						kc.getVersion(),
 						kc.getId(),
-						kc.getFacilityState().toString(),
+						kc.getFacilityState(null).toString(),
 						kc.getDescription(),
 						kc.getProcessingEngineUrl(),
 						kc.getProcessingEngineToken(),
@@ -124,7 +126,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 					null,
 					null,
 					kc.getId(),
-					kc.getFacilityState().toString(),
+					kc.getFacilityState(null).toString(),
 					kc.getDescription(),
 					kc.getProcessingEngineUrl(),
 					kc.getProcessingEngineToken(),
@@ -157,49 +159,55 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 		
 		productionPlanner.updateKubeConfig(name);
 		de.dlr.proseo.planner.kubernetes.KubeConfig kc = productionPlanner.getKubeConfig(name);
-		
+
 		if (null == kc) {
 			String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, name);
 
-	    	return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		}
-		
-		try {
-			kc.sync();
-			try {
-				productionPlanner.acquireThreadSemaphore("synchronizeFacility");
-				UtilService.getJobStepUtil().checkForJobStepsToRun(kc, 0, false, true);
-				productionPlanner.releaseThreadSemaphore("run");		
-			} catch (Exception e) {
-				productionPlanner.releaseThreadSemaphore("synchronizeFacility");		
-				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
-				
-				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-			}
-			
-			RestProcessingFacility pf = new RestProcessingFacility(
-					kc.getLongId(),
-					null,
-					kc.getId(),
-					kc.getFacilityState().toString(),
-					kc.getDescription(),
-					kc.getProcessingEngineUrl(),
-					kc.getProcessingEngineToken(),
-					null,
-					kc.getStorageManagerUrl(),
-					kc.getExternalStorageManagerUrl(),
-					kc.getLocalStorageManagerUrl(),
-					kc.getStorageManagerUser(),
-					kc.getStorageManagerPassword(),
-					kc.getStorageType().toString());
+		ProcessingFacility pf = kc.getProcessingFacility();
+		if (pf.getFacilityState() != FacilityState.RUNNING && pf.getFacilityState() != FacilityState.STARTING) {
+			String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, name, pf.getFacilityState().toString());
 
-			return new ResponseEntity<>(pf, HttpStatus.OK);
-		} catch (Exception e) {
-			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
-			
-			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-			
-			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
+		} else {
+			try {
+				kc.sync();
+				try {
+					productionPlanner.acquireThreadSemaphore("synchronizeFacility");
+					UtilService.getJobStepUtil().checkForJobStepsToRun(kc, 0, false, true);
+					productionPlanner.releaseThreadSemaphore("run");		
+				} catch (Exception e) {
+					productionPlanner.releaseThreadSemaphore("synchronizeFacility");		
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+
+					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+				}
+
+				RestProcessingFacility rpf = new RestProcessingFacility(
+						kc.getLongId(),
+						null,
+						kc.getId(),
+						kc.getFacilityState(null).toString(),
+						kc.getDescription(),
+						kc.getProcessingEngineUrl(),
+						kc.getProcessingEngineToken(),
+						null,
+						kc.getStorageManagerUrl(),
+						kc.getExternalStorageManagerUrl(),
+						kc.getLocalStorageManagerUrl(),
+						kc.getStorageManagerUser(),
+						kc.getStorageManagerPassword(),
+						kc.getStorageType().toString());
+
+				return new ResponseEntity<>(rpf, HttpStatus.OK);
+			} catch (Exception e) {
+				String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+
+				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+
+				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			}
 		}
 	}
 	

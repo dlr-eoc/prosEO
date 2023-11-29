@@ -24,6 +24,7 @@ import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.enums.OrderSource;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
+import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.ProductionPlannerSecurityConfig;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
@@ -254,7 +255,7 @@ public class OrderControllerImpl implements OrderController {
 					productionPlanner.acquireThreadSemaphore("deleteOrder");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-					for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
 							msg = transactionTemplate.execute((status) -> {
 								ProcessingOrder orderx = this.findOrderPrim(orderId);
@@ -264,10 +265,10 @@ public class OrderControllerImpl implements OrderController {
 						} catch (CannotAcquireLockException e) {
 							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-							if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-								ProductionPlanner.productionPlanner.dbWait();
+							if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+								ProseoUtil.dbWait();
 							} else {
-								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 								throw e;
 							}
 						}
@@ -348,7 +349,7 @@ public class OrderControllerImpl implements OrderController {
 			}
 			
 			ProcessingFacility pf = kc.getProcessingFacility();
-			if (pf.getFacilityState() != FacilityState.RUNNING && pf.getFacilityState() != FacilityState.STARTING) {
+			if (pf.getFacilityState() == FacilityState.DISABLED) {
 				String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, facility, pf.getFacilityState().toString());
 
 		    	return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
@@ -398,12 +399,43 @@ public class OrderControllerImpl implements OrderController {
 		String[] userPassword = securityConfig.parseAuthenticationHeader(httpHeaders.getFirst(HttpHeaders.AUTHORIZATION));
 		try {
 			ProcessingOrder order = this.findOrder(orderId);
-			
+
 			if (null == order) {
 				String message = logger.log(PlannerMessage.ORDER_NOT_EXIST, orderId);
 				
 				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 			}
+			// Check the status of the requested processing facility
+			for (ProcessingFacility pfx : orderUtil.getProcessingFacilities(order.getId())) {
+				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+				final ResponseEntity<RestOrder> response = transactionTemplate.execute((status) -> {
+					Optional<ProcessingFacility> pfopt = RepositoryService.getFacilityRepository().findById(pfx.getId());
+					if (pfopt.isPresent()) {
+						ProcessingFacility pf = pfopt.get();
+						KubeConfig kc = productionPlanner.updateKubeConfig(pf.getName());
+						if (null == kc) {
+							String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, pf.getName());
+
+							return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
+						}
+						if (pf.getFacilityState() != FacilityState.RUNNING && pf.getFacilityState() != FacilityState.STARTING) {
+							String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, pf.getName(), pf.getFacilityState().toString());
+							if (pf.getFacilityState() == FacilityState.DISABLED) {
+								return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
+							} else {
+								return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.SERVICE_UNAVAILABLE);
+							}
+						}
+					}
+					return null;
+				});
+				if (response != null) {
+					return response;
+				}
+			} 
+
+			
 			if (wait == null) {
 				wait = false;
 			}
@@ -429,11 +461,10 @@ public class OrderControllerImpl implements OrderController {
 					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 					// used to identify the order and missing input (if not null) as well 
-					String orderName = null;
 					try {
 						productionPlanner.acquireThreadSemaphore("resumeOdip");
 						transactionTemplate.setReadOnly(true);
-						orderName = transactionTemplate.execute((status) -> {
+						transactionTemplate.execute((status) -> {
 							Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
 							if (opt.isPresent()) {
 								ProcessingOrder orderx = opt.get();
@@ -457,35 +488,6 @@ public class OrderControllerImpl implements OrderController {
 					} finally {
 						productionPlanner.releaseThreadSemaphore("resumeOdip");					
 					}
-//					if (orderName != null) {
-//						// suspend and cancel the order
-//						PlannerResultMessage message = orderUtil.suspend(order.getId(), true);
-//						try {
-//							productionPlanner.acquireThreadSemaphore("resumeOdip2");	
-//							PlannerResultMessage dummy = transactionTemplate.execute((status) -> {
-//								PlannerResultMessage lamdaMsg = new PlannerResultMessage(GeneralMessage.FALSE);
-//								Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
-//								if (opt.isPresent()) {
-//									ProcessingOrder orderx = opt.get();
-//									lamdaMsg = orderUtil.cancel(orderx);
-//								}
-//								return lamdaMsg;
-//							});
-//							message.copy(dummy);
-//						} catch (Exception e) {
-//							logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
-//					
-//							if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-//						} finally {
-//							productionPlanner.releaseThreadSemaphore("resumeOdip2");					
-//						}
-//						if (message.getSuccess()) {
-//							return new ResponseEntity<>(http.errorHeaders(logger.log(PlannerMessage.MSG_NO_INPUTPRODUCT, orderName)), HttpStatus.NOT_FOUND);
-//						} else {
-//							message.setText(logger.log(PlannerMessage.MSG_NO_INPUTPRODUCT, orderName));
-//							return new ResponseEntity<>(http.errorHeaders(message.getText()), HttpStatus.NOT_FOUND);
-//						}
-//					}
 				}
 
 				return new ResponseEntity<>(ro, HttpStatus.OK);
@@ -536,7 +538,7 @@ public class OrderControllerImpl implements OrderController {
 		try {
 			productionPlanner.acquireThreadSemaphore("cancelOrder");
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
-			for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 				try {
 					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 					msg = transactionTemplate.execute((status) -> {
@@ -547,10 +549,10 @@ public class OrderControllerImpl implements OrderController {
 				} catch (CannotAcquireLockException e) {
 					if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-					if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-						ProductionPlanner.productionPlanner.dbWait();
+					if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+						ProseoUtil.dbWait();
 					} else {
-						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 						throw e;
 					}
 				}
@@ -637,27 +639,37 @@ public class OrderControllerImpl implements OrderController {
 			if (null == force) {
 				force = false;
 			}
-			
-			if (force) {
-				// "Suspend force" is only allowed, if the processing facilities are available
-				for (ProcessingFacility pf : orderUtil.getProcessingFacilities(order.getId())) {
-					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
-					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-					final String message = transactionTemplate.execute((status) -> {
-						Optional<ProcessingFacility> pfopt = RepositoryService.getFacilityRepository().findById(pf.getId());
-						if (pfopt.isPresent()) {
-							if (pfopt.get().getFacilityState() != FacilityState.RUNNING) {
-								return logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, pfopt.get().getName(),
-										pfopt.get().getFacilityState().toString());
+
+			// Check the status of the requested processing facility
+
+			for (ProcessingFacility pfx : orderUtil.getProcessingFacilities(order.getId())) {
+				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+				final ResponseEntity<RestOrder> response = transactionTemplate.execute((status) -> {
+					Optional<ProcessingFacility> pfopt = RepositoryService.getFacilityRepository().findById(pfx.getId());
+					if (pfopt.isPresent()) {
+						ProcessingFacility pf = pfopt.get();
+						KubeConfig kc = productionPlanner.updateKubeConfig(pf.getName());
+						if (null == kc) {
+							String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, pf.getName());
+
+							return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
+						}
+						if (pf.getFacilityState() != FacilityState.RUNNING && pf.getFacilityState() != FacilityState.STARTING) {
+							String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, pf.getName(), pf.getFacilityState().toString());
+							if (pf.getFacilityState() == FacilityState.DISABLED) {
+								return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
+							} else {
+								return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.SERVICE_UNAVAILABLE);
 							}
 						}
-						return null;
-					});
-					if (message != null) {
-						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
 					}
-				} 
-			}
+					return null;
+				});
+				if (response != null) {
+					return response;
+				}
+			} 
 
 			PlannerResultMessage msg = orderUtil.prepareSuspend(order.getId(), force);
 			if (msg.getSuccess()) {
@@ -701,12 +713,29 @@ public class OrderControllerImpl implements OrderController {
 				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 			}
 
+			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+			transactionTemplate.setReadOnly(true);
+			ProcessingFacility pf = transactionTemplate.execute((status) -> {
+				for (Job j : order.getJobs()) {
+					return j.getProcessingFacility();
+				}
+				return null;
+			});
+			// Check the status of the requested processing facility
+			KubeConfig kc = productionPlanner.updateKubeConfig(pf.getName());
+			if (null == kc) {
+				String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, pf.getName());
+
+		    	return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
+			}
+			
 			PlannerResultMessage msg = new PlannerResultMessage(null);
 			try {
 				productionPlanner.acquireThreadSemaphore("retryOrder");
-				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+				transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-				for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
 						msg = transactionTemplate.execute((status) -> {
 							ProcessingOrder orderx = this.findOrderPrim(orderId);
@@ -716,10 +745,10 @@ public class OrderControllerImpl implements OrderController {
 					} catch (CannotAcquireLockException e) {
 						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-						if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-							ProductionPlanner.productionPlanner.dbWait();
+						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+							ProseoUtil.dbWait();
 						} else {
-							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 							throw e;
 						}
 					}

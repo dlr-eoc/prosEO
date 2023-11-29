@@ -31,6 +31,7 @@ import de.dlr.proseo.model.Task;
 import de.dlr.proseo.model.enums.JobOrderVersion;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.JobDispatcher;
 import de.dlr.proseo.planner.util.UtilService;
@@ -197,45 +198,6 @@ public class KubeJob {
 	}
 
 	/**
-	 * Instantiate a Kubernetes job with the specified parameters.
-	 *
-	 * @param id               The database ID of the job
-	 * @param namePrefix       The name for the job
-	 * @param processorImage   The processor image for the job
-	 * @param jobOrderFileName The file name of the job order file
-	 * @param args             Additional command arguments for the job
-	 */
-	public KubeJob(int id, String namePrefix, String processorImage, String jobOrderFileName, ArrayList<String> args) {
-
-		this.imageName = processorImage;
-		this.jobOrderFileName = jobOrderFileName;
-		this.podNames = new ArrayList<>();
-
-		if (args != null) {
-			this.args.addAll(args);
-		}
-
-		// Create a new JobStep in the database
-		JobStep jobStep = new JobStep();
-		jobStep.setIsFailed(false);
-		jobStep = RepositoryService.getJobStepRepository().save(jobStep);
-		jobId = jobStep.getId();
-
-		// Set the job name and container name
-		if (namePrefix != null) {
-			jobName = namePrefix + jobId;
-		} else {
-			jobName = ProductionPlanner.jobNamePrefix + jobId;
-		}
-		containerName = ProductionPlanner.jobContainerPrefix + jobId;
-
-		// Update the JobStep with the processing mode and save it
-		// TODO Why is the job name the processing mode?
-		jobStep.setProcessingMode(jobName);
-		RepositoryService.getJobStepRepository().save(jobStep);
-	}
-
-	/**
 	 * Instantiate a Kubernetes job with ID and Job Order file name
 	 *
 	 * @param jobId            the job ID
@@ -326,7 +288,7 @@ public class KubeJob {
 		// Prepare for transaction retry, if "org.springframework.dao.CannotAcquireLockException" is thrown
 		JobOrderData jobOrderData = null;
 		Instant execTime = Instant.now();
-		for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+		for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 			try {
 
 				final Instant execTimeLoc = transactionTemplate.execute(status -> {
@@ -348,10 +310,10 @@ public class KubeJob {
 			} catch (CannotAcquireLockException e) {
 				if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-				if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-					ProductionPlanner.productionPlanner.dbWait();
+				if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+					ProseoUtil.dbWait();
 				} else {
-					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 					throw e;
 				}
 			}
@@ -364,7 +326,7 @@ public class KubeJob {
 			}
 		}
 
-		for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+		for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 			try {
 
 				final JobOrderData jobOrderDataLoc = transactionTemplate.execute(status -> {
@@ -433,10 +395,10 @@ public class KubeJob {
 			} catch (CannotAcquireLockException e) {
 				if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-				if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-					ProductionPlanner.productionPlanner.dbWait();
+				if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+					ProseoUtil.dbWait();
 				} else {
-					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 					throw e;
 				}
 			}
@@ -454,7 +416,7 @@ public class KubeJob {
 		final JobOrderData jobOrderDataLoc = jobOrderData;
 		V1Job job = null;
 		// Prepare for transaction retry, if "org.springframework.dao.CannotAcquireLockException" is thrown
-		for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+		for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 			try {
 
 				V1Job jobLoc = transactionTemplate.execute(status -> {
@@ -622,10 +584,10 @@ public class KubeJob {
 			} catch (CannotAcquireLockException e) {
 				if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-				if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-					ProductionPlanner.productionPlanner.dbWait();
+				if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+					ProseoUtil.dbWait();
 				} else {
-					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 					throw e;
 				}
 			}
@@ -637,7 +599,7 @@ public class KubeJob {
 
 		// Create the Kubernetes job
 		Integer cycle = ProductionPlanner.config.getProductionPlannerJobCreatedWaitTime();
-		for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+		for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 			try {
 				job = kubeConfig.getBatchApiV1().createNamespacedJob(kubeConfig.getNamespace(), job, null, null, null);
 				break;
@@ -645,7 +607,7 @@ public class KubeJob {
 				// look whether job was created or the exception was "real"
 				if (logger.isTraceEnabled()) 
 					logger.trace("    createNamespacedJob: ApiException, retry {0} of {1}", i, jobName);
-				if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
+				if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
 					Thread.sleep(500);
 					// search job/pod
 					searchPod();
@@ -663,7 +625,7 @@ public class KubeJob {
 		}
 		logger.log(PlannerMessage.JOB_CREATED, job.getMetadata().getName(), job.getStatus().toString());
 		// Prepare for transaction retry, if "org.springframework.dao.CannotAcquireLockException" is thrown
-		for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+		for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 			try {
 
 
@@ -688,10 +650,10 @@ public class KubeJob {
 			} catch (CannotAcquireLockException e) {
 				if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-				if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-					ProductionPlanner.productionPlanner.dbWait();
+				if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+					ProseoUtil.dbWait();
 				} else {
-					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 					throw e;
 				}
 			} catch (Exception e) {
@@ -707,7 +669,7 @@ public class KubeJob {
 			cycle = 2000;
 		}
 		Thread.sleep(cycle);
-		for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+		for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 			try {
 
 				transactionTemplate.execute(status -> {
@@ -731,10 +693,10 @@ public class KubeJob {
 			} catch (CannotAcquireLockException e) {
 				if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-				if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-					ProductionPlanner.productionPlanner.dbWait();
+				if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+					ProseoUtil.dbWait();
 				} else {
-					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 					throw e;
 				}
 			} catch (Exception e) {
@@ -828,7 +790,7 @@ public class KubeJob {
 
 			TransactionTemplate transactionTemplate = new TransactionTemplate(kubeConfig.getProductionPlanner().getTxManager());
 			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-			for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 				try {
 					transactionTemplate.execute((status) -> {
 
@@ -894,10 +856,10 @@ public class KubeJob {
 				} catch (CannotAcquireLockException e) {
 					if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-					if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-						ProductionPlanner.productionPlanner.dbWait();
+					if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+						ProseoUtil.dbWait();
 					} else {
-						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 						throw e;
 					}
 				} catch (Exception e) {
@@ -997,7 +959,7 @@ public class KubeJob {
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(this.kubeConfig.getProductionPlanner().getTxManager());
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-		for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+		for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 			try {
 				return transactionTemplate.execute((status) -> {
 
@@ -1142,10 +1104,10 @@ public class KubeJob {
 			} catch (CannotAcquireLockException e) {
 				if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-				if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-					ProductionPlanner.productionPlanner.dbWait();
+				if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+					ProseoUtil.dbWait();
 				} else {
-					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 					throw e;
 				}
 			}
@@ -1172,7 +1134,7 @@ public class KubeJob {
 			TransactionTemplate transactionTemplate = new TransactionTemplate(
 					this.kubeConfig.getProductionPlanner().getTxManager());
 			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);		
-			for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 				try {
 
 					transactionTemplate.execute((status) -> {
@@ -1190,10 +1152,10 @@ public class KubeJob {
 				} catch (CannotAcquireLockException e) {
 					if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-					if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-						ProductionPlanner.productionPlanner.dbWait();
+					if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+						ProseoUtil.dbWait();
 					} else {
-						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 						throw e;
 					}
 				}

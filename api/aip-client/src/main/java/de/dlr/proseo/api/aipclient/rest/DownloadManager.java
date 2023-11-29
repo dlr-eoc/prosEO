@@ -174,6 +174,7 @@ public class DownloadManager {
 	/** Lookup table for products currently being downloaded from some archive */
 	private static ConcurrentSkipListSet<String> productDownloads = new ConcurrentSkipListSet<>();
 
+	/** Semaphore to limit number of parallel requests to archive */
 	private static Semaphore semaphore = null;
 
 	/** A logger for this class */
@@ -737,6 +738,17 @@ public class DownloadManager {
 
 		// Perform product order request
 		Map<?, ?> createResponse;
+		
+		// Check whether parallel execution is allowed
+		try {
+			semaphore.acquire();
+			if (logger.isDebugEnabled())
+				logger.debug("... file download semaphore {} acquired, {} permits remaining",
+						semaphore, semaphore.availablePermits());
+		} catch (InterruptedException e) {
+			throw new IOException(logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString()));
+		}
+		
 		try {
 			createResponse = request.body(BodyInserters.fromObject(ODATA_ORDER_REQUEST_BODY))
 				.retrieve()
@@ -747,7 +759,14 @@ public class DownloadManager {
 			if (logger.isDebugEnabled())
 				logger.debug("Stack trace: ", e);
 			throw new IOException(message);
+		} finally {
+			// Release parallel thread
+			semaphore.release();
+			if (logger.isDebugEnabled())
+				logger.debug("... file download semaphore {} released, {} permits now available",
+						semaphore, semaphore.availablePermits());
 		}
+
 		if (null == createResponse) {
 			throw new IOException(
 					logger.log(AipClientMessage.ORDER_REQUEST_FAILED, archive.getBaseUri() + "/" + archive.getTokenUri()));
@@ -1004,6 +1023,17 @@ public class DownloadManager {
 
 		for (int i = 0; i < DOWNLOAD_MAX_RETRIES; i++) {
 			try {
+				
+				// Check whether parallel execution is allowed
+				try {
+					semaphore.acquire();
+					if (logger.isDebugEnabled())
+						logger.debug("... file download semaphore {} acquired, {} permits remaining",
+								semaphore, semaphore.availablePermits());
+				} catch (InterruptedException e) {
+					throw new IOException(logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString()));
+				}
+				
 				try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
 					logger.trace("... starting request for URL '{}'", requestUrl);
 
@@ -1032,6 +1062,12 @@ public class DownloadManager {
 							e.getMessage() + " / " + e.getReasonPhrase()));
 				} catch (Exception e) {
 					throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(), e.getMessage()));
+				} finally {
+					// Release parallel thread
+					semaphore.release();
+					if (logger.isDebugEnabled())
+						logger.debug("... file download semaphore {} released, {} permits now available",
+								semaphore, semaphore.availablePermits());
 				}
 
 				// Compare file size with value given by external archive
@@ -1187,17 +1223,6 @@ public class DownloadManager {
 				// Log download in lookup table
 				productDownloads.add(product.getUuid());
 
-				// Check whether parallel execution is allowed
-				try {
-					semaphore.acquire();
-					if (logger.isDebugEnabled())
-						logger.debug("... file download semaphore {} acquired, {} permits remaining",
-								semaphore, semaphore.availablePermits());
-				} catch (InterruptedException e) {
-					logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString());
-					return;
-				}
-				
 				try {
 					// For long-term archives, create a product order first and wait for its completion
 					if (ArchiveType.AIP.equals(archive.getArchiveType()) 
@@ -1218,12 +1243,6 @@ public class DownloadManager {
 					if (logger.isDebugEnabled())
 						logger.debug("Stack trace: ", e);
 				} finally {
-					// Release parallel thread
-					semaphore.release();
-					if (logger.isDebugEnabled())
-						logger.debug("... file download semaphore {} released, {} permits now available",
-								semaphore, semaphore.availablePermits());
-
 					// Remove download from lookup table
 					productDownloads.remove(product.getUuid());
 				}

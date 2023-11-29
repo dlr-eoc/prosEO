@@ -88,7 +88,8 @@
                   </tr>
                   <tr th:unless="${#lists.isEmpty(ord?.configuredProcessors)}">
                     <th class="tr-rowspan"><span>&nbsp;</span></th>
-                    <th colspan="6"><span th:text="#{requestedconfiguredprocessors}">requestedconfiguredprocessors</span></th>
+                    <th><span th:text="#{executiontime}">executiontime</span></th>
+                    <th colspan="5"><span th:text="#{requestedconfiguredprocessors}">requestedconfiguredprocessors</span></th>
                     <th><span>&nbsp;</span></th>
                   </tr>
                 </thead>
@@ -182,7 +183,9 @@
                   </tr>
                   <tr th:unless="${#lists.isEmpty(ord?.configuredProcessors)}">
                     <td class="tr-rowspan"><span>&nbsp;</span></td>
-                    <td colspan="6"><a 
+                    <td th:if="${ord?.executionTime}" th:text="${ord?.executionTime}"></td>
+                    <td th:unless="${ord?.executionTime}"><span>&nbsp;</span></td>
+                    <td colspan="5"><a 
                        th:if="${hasroleconfigurationreader}"
                        th:each="comp : ${ord?.configuredProcessors}" 
                        class="proseo-list-item"  
@@ -239,6 +242,18 @@
                     <tr th:if="${iterStat.first} == true" class="first-row">
                       <td th:rowspan="${#lists.size(ord?.outputParameters)}" class="first-row"><span th:text="#{outparams}">outparams</span></td>
                       <td th:rowspan="${#lists.size(ord?.outputParameters)}" class="first-row"><span th:text="#{allclasses}">allclasses</span></td>
+                      <td class="first-row"><span th:text="${p?.key}"></span></td>
+                      <td class="first-row"><span th:text="${p?.parameterValue}"></span></td>
+                    </tr>
+                    <tr th:if="${iterStat.first} == false">
+                      <td><span th:text="${p?.key}"></span></td>
+                      <td><span th:text="${p?.parameterValue}"></span></td>
+                    </tr>
+                  </div>
+                  <div th:each="p,iterStat : ${ord?.dynamicProcessingParameters}">
+                    <tr th:if="${iterStat.first} == true" class="first-row">
+                      <td th:rowspan="${#lists.size(ord?.dynamicProcessingParameters)}" class="first-row"><span th:text="#{dynamicprocessingparameters}">dynamicProcessingParameters</span></td>
+                      <td th:rowspan="${#lists.size(ord?.dynamicProcessingParameters)}" class="first-row"><span th:text="#{allclasses}">allclasses</span></td>
                       <td class="first-row"><span th:text="${p?.key}"></span></td>
                       <td class="first-row"><span th:text="${p?.parameterValue}"></span></td>
                     </tr>

@@ -12,9 +12,10 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionException;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -28,6 +29,7 @@ import de.dlr.proseo.model.MonServiceStateOperationDay;
 import de.dlr.proseo.model.MonServiceStateOperationMonth;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.MonServiceStates;
+import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.monitor.MonitorConfiguration;
 
 /**
@@ -36,7 +38,7 @@ import de.dlr.proseo.monitor.MonitorConfiguration;
  * @author Melchinger
  *
  */
-@Transactional
+
 public class MonServiceAggregation extends Thread {
 	private static ProseoLogger logger = new ProseoLogger(MonServiceAggregation.class);	
 
@@ -70,125 +72,223 @@ public class MonServiceAggregation extends Thread {
 	/**
 	 * Collect the monitoring information of services for day and month
 	 */
-	@Transactional
+
 	public void checkMonServiceAggregation() {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> checkMonServiceAggregation()");
 		Instant now = Instant.now();
 		Instant timeFrom;
 		Instant timeTo;
-		ZonedDateTime zdt = calcBasicStartTime(now, RepositoryService.getMonServiceStateOperationDayRepository().findLastDatetime());
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+		transactionTemplate.setReadOnly(true);
+		ZonedDateTime zdt = transactionTemplate.execute((status) -> {			
+			return calcBasicStartTime(now, RepositoryService.getMonServiceStateOperationDayRepository().findLastDatetime());
+		});
 		ZonedDateTime zdtOrig = zdt;
-		
-		List<MonService> services = RepositoryService.getMonServiceRepository().findAll();
-		List<MonExtService> extServices = RepositoryService.getMonExtServiceRepository().findAll();
+
+		List<MonService> services = transactionTemplate.execute((status) -> {	
+			return RepositoryService.getMonServiceRepository().findAll();
+		});
+		List<MonExtService> extServices = transactionTemplate.execute((status) -> {	
+			return RepositoryService.getMonExtServiceRepository().findAll();
+		});
 		// loop over missing entries
+		transactionTemplate.setReadOnly(false);
 		for (MonService m : services) {
 			timeFrom = zdtOrig.toInstant();
 			timeTo = timeFrom.plus(1, ChronoUnit.DAYS);
 			if (logger.isTraceEnabled())
 				logger.trace("  aggregate days for service '{}'", m.getName());
 			while (timeFrom.isBefore(now)) {
-				int countUp = getServiceStateCount(timeFrom, timeTo, m.getId(), true);
-				int countDown = getServiceStateCount(timeFrom, timeTo, m.getId(), false);
-				double upPercent = (countUp + countDown) == 0 ? 0.0 : 100.0 * countUp / (countUp + countDown);
-				
-				MonServiceStateOperationDay tm;
-				try {
-					tm = RepositoryService.getMonServiceStateOperationDayRepository().findByDateTimeBetween(timeFrom, timeTo, m.getId()).get(0);
-				} catch (IndexOutOfBoundsException ex) {
-					tm = new MonServiceStateOperationDay();
-				}
-				tm.setMonServiceId(m.getId());
-				tm.setUpTime(upPercent);
-				tm.setDatetime(timeFrom);
-				RepositoryService.getMonServiceStateOperationDayRepository().save(tm);				
+				final Instant timeFromX = timeFrom;
+				final Instant timeToX = timeTo;
+				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
+					try {
+						transactionTemplate.execute((status) -> {			
+							int countUp = getServiceStateCount(timeFromX, timeToX, m.getId(), true);
+							int countDown = getServiceStateCount(timeFromX, timeToX, m.getId(), false);
+							double upPercent = (countUp + countDown) == 0 ? 0.0 : 100.0 * countUp / (countUp + countDown);
+
+							MonServiceStateOperationDay tm;
+							try {
+								tm = RepositoryService.getMonServiceStateOperationDayRepository().findByDateTimeBetween(timeFromX, timeToX, m.getId()).get(0);
+							} catch (IndexOutOfBoundsException ex) {
+								tm = new MonServiceStateOperationDay();
+							}
+							tm.setMonServiceId(m.getId());
+							tm.setUpTime(upPercent);
+							tm.setDatetime(timeFromX);
+							RepositoryService.getMonServiceStateOperationDayRepository().save(tm);			
+							return null;
+						});
+						break;
+					} catch (CannotAcquireLockException e) {
+						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+							ProseoUtil.dbWait();
+						} else {
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+							throw e;
+						}
+					}
+				}											
 				timeFrom = timeTo;
 				timeTo = timeTo.plus(1, ChronoUnit.DAYS);
 			}
 		}
-		zdt = calcBasicStartTime(now, RepositoryService.getMonExtServiceStateOperationDayRepository().findLastDatetime());
+		transactionTemplate.setReadOnly(true);
+		zdt = transactionTemplate.execute((status) -> {			
+			return calcBasicStartTime(now, RepositoryService.getMonExtServiceStateOperationDayRepository().findLastDatetime());
+		});
 		zdtOrig = zdt;
 		// loop over missing entries
+		transactionTemplate.setReadOnly(false);
 		for (MonExtService m : extServices) {
 			timeFrom = zdtOrig.toInstant();
 			timeTo = timeFrom.plus(1, ChronoUnit.DAYS);
 			if (logger.isTraceEnabled())
 				logger.trace("  aggregate days for external service '{}'", m.getName());
 			while (timeFrom.isBefore(now)) {
-				int countUp = getExtServiceStateCount(timeFrom, timeTo, m.getId(), true);
-				int countDown = getExtServiceStateCount(timeFrom, timeTo, m.getId(), false);
-				double upPercent = (countUp + countDown) == 0 ? 0.0 : 100.0 * countUp / (countUp + countDown);
-				
-				MonExtServiceStateOperationDay tm;
-				try {
-					tm = RepositoryService.getMonExtServiceStateOperationDayRepository().findByDateTimeBetween(timeFrom, timeTo, m.getId()).get(0);
-				} catch (IndexOutOfBoundsException ex) {
-					tm = new MonExtServiceStateOperationDay();
-				}
-				tm.setMonExtServiceId(m.getId());
-				tm.setUpTime(upPercent);
-				tm.setDatetime(timeFrom);
-				RepositoryService.getMonExtServiceStateOperationDayRepository().save(tm);			
+				final Instant timeFromX = timeFrom;
+				final Instant timeToX = timeTo;
+				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
+					try {
+						transactionTemplate.execute((status) -> {	
+							int countUp = getExtServiceStateCount(timeFromX, timeToX, m.getId(), true);
+							int countDown = getExtServiceStateCount(timeFromX, timeToX, m.getId(), false);
+							double upPercent = (countUp + countDown) == 0 ? 0.0 : 100.0 * countUp / (countUp + countDown);
+
+							MonExtServiceStateOperationDay tm;
+							try {
+								tm = RepositoryService.getMonExtServiceStateOperationDayRepository().findByDateTimeBetween(timeFromX, timeToX, m.getId()).get(0);
+							} catch (IndexOutOfBoundsException ex) {
+								tm = new MonExtServiceStateOperationDay();
+							}
+							tm.setMonExtServiceId(m.getId());
+							tm.setUpTime(upPercent);
+							tm.setDatetime(timeFromX);
+							RepositoryService.getMonExtServiceStateOperationDayRepository().save(tm);			
+							return null;
+						});
+						break;
+					} catch (CannotAcquireLockException e) {
+						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+							ProseoUtil.dbWait();
+						} else {
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+							throw e;
+						}
+					}
+				}													
 				timeFrom = timeTo;
 				timeTo = timeTo.plus(1, ChronoUnit.DAYS);
 			}
 		}
 
-		zdt = calcBasicStartTime(now, RepositoryService.getMonServiceStateOperationMonthRepository().findLastDatetime());
+		transactionTemplate.setReadOnly(true);
+		zdt = transactionTemplate.execute((status) -> {			
+			return calcBasicStartTime(now, RepositoryService.getMonServiceStateOperationMonthRepository().findLastDatetime());
+		});
 		int d = zdt.getDayOfMonth() - 1;
 		zdtOrig = zdt.minusDays(d);
 		// loop over missing entries
+		transactionTemplate.setReadOnly(false);
 		for (MonService m : services) {
 			timeFrom = zdtOrig.toInstant();
 			timeTo = zdtOrig.plusMonths(1).toInstant();
 			if (logger.isTraceEnabled())
 				logger.trace("  aggregate months for service '{}'", m.getName());
 			while (timeFrom.isBefore(now)) {
-				int countUp = getServiceStateCount(timeFrom, timeTo, m.getId(), true);
-				int countDown = getServiceStateCount(timeFrom, timeTo, m.getId(), false);
-				double upPercent = (countUp + countDown) == 0 ? 0.0 : 100.0 * countUp / (countUp + countDown);
-				
-				MonServiceStateOperationMonth tm;
-				try {
-					tm = RepositoryService.getMonServiceStateOperationMonthRepository().findByDateTimeBetween(timeFrom, timeTo, m.getId()).get(0);
-				} catch (IndexOutOfBoundsException ex) {
-					tm = new MonServiceStateOperationMonth();
-				}
-				tm.setMonServiceId(m.getId());
-				tm.setUpTime(upPercent);
-				tm.setDatetime(timeFrom);
-				RepositoryService.getMonServiceStateOperationMonthRepository().save(tm);
+				final Instant timeFromX = timeFrom;
+				final Instant timeToX = timeTo;
+				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
+					try {
+						transactionTemplate.execute((status) -> {	
+							int countUp = getServiceStateCount(timeFromX, timeToX, m.getId(), true);
+							int countDown = getServiceStateCount(timeFromX, timeToX, m.getId(), false);
+							double upPercent = (countUp + countDown) == 0 ? 0.0 : 100.0 * countUp / (countUp + countDown);
+
+							MonServiceStateOperationMonth tm;
+							try {
+								tm = RepositoryService.getMonServiceStateOperationMonthRepository().findByDateTimeBetween(timeFromX, timeToX, m.getId()).get(0);
+							} catch (IndexOutOfBoundsException ex) {
+								tm = new MonServiceStateOperationMonth();
+							}
+							tm.setMonServiceId(m.getId());
+							tm.setUpTime(upPercent);
+							tm.setDatetime(timeFromX);
+							RepositoryService.getMonServiceStateOperationMonthRepository().save(tm);		
+							return null;
+						});
+						break;
+					} catch (CannotAcquireLockException e) {
+						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+							ProseoUtil.dbWait();
+						} else {
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+							throw e;
+						}
+					}
+				}													
 				zdt = ZonedDateTime.ofInstant(timeFrom, ZoneId.of("UTC"));
 				timeFrom = zdt.plusMonths(1).toInstant();
 				zdt = ZonedDateTime.ofInstant(timeFrom, ZoneId.of("UTC"));
 				timeTo = zdt.plusMonths(1).toInstant();
 			}
 		}
-		zdt = calcBasicStartTime(now, RepositoryService.getMonExtServiceStateOperationMonthRepository().findLastDatetime());
+		transactionTemplate.setReadOnly(true);
+		zdt = transactionTemplate.execute((status) -> {			
+		return calcBasicStartTime(now, RepositoryService.getMonExtServiceStateOperationMonthRepository().findLastDatetime());
+		});
 		d = zdt.getDayOfMonth() - 1;
 		zdtOrig = zdt.minusDays(d);
 		// loop over missing entries
+		transactionTemplate.setReadOnly(false);
 		for (MonExtService m : extServices) {
 			timeFrom = zdtOrig.toInstant();
 			timeTo = zdtOrig.plusMonths(1).toInstant();
 			if (logger.isTraceEnabled())
 				logger.trace("  aggregate months for external service '{}'", m.getName());
 			while (timeFrom.isBefore(now)) {
-				int countUp = getExtServiceStateCount(timeFrom, timeTo, m.getId(), true);
-				int countDown = getExtServiceStateCount(timeFrom, timeTo, m.getId(), false);
-				double upPercent = (countUp + countDown) == 0 ? 0.0 : 100.0 * countUp / (countUp + countDown);
-				
-				MonExtServiceStateOperationMonth tm;
-				try {
-					tm = RepositoryService.getMonExtServiceStateOperationMonthRepository().findByDateTimeBetween(timeFrom, timeTo, m.getId()).get(0);
-				} catch (IndexOutOfBoundsException ex) {
-					tm = new MonExtServiceStateOperationMonth();
-				}
-				tm.setMonExtServiceId(m.getId());
-				tm.setUpTime(upPercent);
-				tm.setDatetime(timeFrom);
-				RepositoryService.getMonExtServiceStateOperationMonthRepository().save(tm);
+				final Instant timeFromX = timeFrom;
+				final Instant timeToX = timeTo;
+				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
+					try {
+						transactionTemplate.execute((status) -> {	
+							int countUp = getExtServiceStateCount(timeFromX, timeToX, m.getId(), true);
+							int countDown = getExtServiceStateCount(timeFromX, timeToX, m.getId(), false);
+							double upPercent = (countUp + countDown) == 0 ? 0.0 : 100.0 * countUp / (countUp + countDown);
+
+							MonExtServiceStateOperationMonth tm;
+							try {
+								tm = RepositoryService.getMonExtServiceStateOperationMonthRepository().findByDateTimeBetween(timeFromX, timeToX, m.getId()).get(0);
+							} catch (IndexOutOfBoundsException ex) {
+								tm = new MonExtServiceStateOperationMonth();
+							}
+							tm.setMonExtServiceId(m.getId());
+							tm.setUpTime(upPercent);
+							tm.setDatetime(timeFromX);
+							RepositoryService.getMonExtServiceStateOperationMonthRepository().save(tm);	
+							return null;
+						});
+						break;
+					} catch (CannotAcquireLockException e) {
+						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+							ProseoUtil.dbWait();
+						} else {
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+							throw e;
+						}
+					}
+				}													
 				zdt = ZonedDateTime.ofInstant(timeFrom, ZoneId.of("UTC"));
 				timeFrom = zdt.plusMonths(1).toInstant();
 				zdt = ZonedDateTime.ofInstant(timeFrom, ZoneId.of("UTC"));
@@ -208,8 +308,13 @@ public class MonServiceAggregation extends Thread {
 			sqlString += "d.mon_service_state_id <> " + MonServiceStates.RUNNING_ID + " and ";
 		}
 		sqlString += "d.datetime >= '" + from.toString() + "' and d.datetime < '" + to.toString() + "'";
-		Query query = em.createNativeQuery(sqlString);
-		Object result = query.getSingleResult();
+		final Query query = em.createNativeQuery(sqlString);
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+		transactionTemplate.setReadOnly(true);
+		Object result = transactionTemplate.execute((status) -> {			
+			return query.getSingleResult();
+		});
 		if (result != null && result instanceof BigInteger) {
 			count = ((BigInteger)result).intValue();
 		}
@@ -228,7 +333,12 @@ public class MonServiceAggregation extends Thread {
 		}
 		sqlString += "d.datetime >= '" + from.toString() + "' and d.datetime < '" + to.toString() + "'";
 		Query query = em.createNativeQuery(sqlString);
-		Object result = query.getSingleResult();
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+		transactionTemplate.setReadOnly(true);
+		Object result = transactionTemplate.execute((status) -> {			
+			return query.getSingleResult();
+		});
 		if (result != null && result instanceof BigInteger) {
 			count = ((BigInteger)result).intValue();
 		}
@@ -268,15 +378,8 @@ public class MonServiceAggregation extends Thread {
     	}
     	while (!this.isInterrupted()) {
     		// look for job steps to run
-
-    		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
-
     		try {
-    			// Transaction to check the delete preconditions
-    			transactionTemplate.execute((status) -> {						
-    				this.checkMonServiceAggregation();
-    				return null;
-    			});
+    			this.checkMonServiceAggregation();
     		} catch (NoResultException e) {
     			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
     		} catch (IllegalArgumentException e) {
