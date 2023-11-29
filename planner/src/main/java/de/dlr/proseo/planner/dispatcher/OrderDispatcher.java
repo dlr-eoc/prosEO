@@ -46,6 +46,7 @@ import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.ProductQueryService;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.util.OrderPlanThread;
@@ -86,7 +87,7 @@ public class OrderDispatcher {
 		// Create a transaction template using the production planner's transaction manager
 		TransactionTemplate transactionTemplate = new TransactionTemplate(ProductionPlanner.productionPlanner.getTxManager());
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-		for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+		for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 			try {
 
 				// Execute the transaction within the transaction template
@@ -192,10 +193,10 @@ public class OrderDispatcher {
 			} catch (CannotAcquireLockException e) {
 				if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-				if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-					ProductionPlanner.productionPlanner.dbWait();
+				if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+					ProseoUtil.dbWait();
 				} else {
-					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 					throw e;
 				}
 			} catch (Exception e) {
@@ -816,7 +817,7 @@ public class OrderDispatcher {
 			while (currentJobList.get(0) < jobCount) {
 				
 				// Prepare for transaction retry, if "org.springframework.dao.CannotAcquireLockException" is thrown
-				for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
 						// Acquire the thread semaphore
 						productionPlanner.acquireThreadSemaphore("createJobSteps");
@@ -867,11 +868,10 @@ public class OrderDispatcher {
 					} catch (CannotAcquireLockException e) {
 						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-						if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-							if (logger.isDebugEnabled()) logger.debug("... retrying in {} ms!", ProductionPlanner.DB_WAIT);
-							ProductionPlanner.productionPlanner.dbWait();
+						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+							ProseoUtil.dbWait();
 						} else {
-							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 							throw e;
 						}
 					} finally {

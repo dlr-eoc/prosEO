@@ -16,7 +16,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionException;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.persistence.EntityManager;
@@ -51,7 +50,7 @@ public class MonitorApplication implements CommandLineRunner {
 	public static String hostName = "localhost";
 	public static String hostIP = "127.0.0.1";
 	public static String port = "8080";
-
+	
 	public static MonitorConfiguration config;
 
 	public static RestTemplateBuilder rtb;
@@ -101,7 +100,7 @@ public class MonitorApplication implements CommandLineRunner {
 			logger.trace(">>> startMonitorServices()");
 
 		if (monServices == null || !monServices.isAlive()) {
-			monServices = new MonitorServices(monitorConfig);
+			monServices = new MonitorServices(monitorConfig, txManager);
 			monServices.start();
 		} else {
 			if (monServices.isInterrupted()) {
@@ -176,7 +175,6 @@ public class MonitorApplication implements CommandLineRunner {
 	/**
 	 * Start the order monitoring thread
 	 */
-	@Transactional
 	public void startMonitorOrders() {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> startMonitorOrders()");
@@ -217,7 +215,6 @@ public class MonitorApplication implements CommandLineRunner {
 	/**
 	 * Start the product monitoring thread
 	 */
-	@Transactional
 	public void startMonitorProducts() {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> startMonitorOrders()");
@@ -283,5 +280,5 @@ public class MonitorApplication implements CommandLineRunner {
 		startMonitorOrders();
 		startMonitorProducts();
 	}
-
+	
 }

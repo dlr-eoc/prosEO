@@ -24,6 +24,7 @@ import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.enums.OrderSource;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
+import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.ProductionPlannerSecurityConfig;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
@@ -254,7 +255,7 @@ public class OrderControllerImpl implements OrderController {
 					productionPlanner.acquireThreadSemaphore("deleteOrder");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-					for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
 							msg = transactionTemplate.execute((status) -> {
 								ProcessingOrder orderx = this.findOrderPrim(orderId);
@@ -264,10 +265,10 @@ public class OrderControllerImpl implements OrderController {
 						} catch (CannotAcquireLockException e) {
 							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-							if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-								ProductionPlanner.productionPlanner.dbWait();
+							if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+								ProseoUtil.dbWait();
 							} else {
-								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 								throw e;
 							}
 						}
@@ -537,7 +538,7 @@ public class OrderControllerImpl implements OrderController {
 		try {
 			productionPlanner.acquireThreadSemaphore("cancelOrder");
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
-			for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 				try {
 					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 					msg = transactionTemplate.execute((status) -> {
@@ -548,10 +549,10 @@ public class OrderControllerImpl implements OrderController {
 				} catch (CannotAcquireLockException e) {
 					if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-					if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-						ProductionPlanner.productionPlanner.dbWait();
+					if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+						ProseoUtil.dbWait();
 					} else {
-						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 						throw e;
 					}
 				}
@@ -734,7 +735,7 @@ public class OrderControllerImpl implements OrderController {
 				productionPlanner.acquireThreadSemaphore("retryOrder");
 				transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-				for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
 						msg = transactionTemplate.execute((status) -> {
 							ProcessingOrder orderx = this.findOrderPrim(orderId);
@@ -744,10 +745,10 @@ public class OrderControllerImpl implements OrderController {
 					} catch (CannotAcquireLockException e) {
 						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-						if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-							ProductionPlanner.productionPlanner.dbWait();
+						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+							ProseoUtil.dbWait();
 						} else {
-							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 							throw e;
 						}
 					}

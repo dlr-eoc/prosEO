@@ -40,6 +40,7 @@ import de.dlr.proseo.model.rest.model.RestJob;
 import de.dlr.proseo.model.rest.model.RestJobGraph;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
+import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.rest.model.RestUtil;
@@ -265,7 +266,7 @@ public class JobControllerImpl implements JobController {
 			if (job != null) {
 
 				PlannerResultMessage msg = new PlannerResultMessage(null);
-				for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
 						productionPlanner.acquireThreadSemaphore("resumeJob");
 						final ResponseEntity<RestJob> answer = transactionTemplate.execute((status) -> {
@@ -290,10 +291,10 @@ public class JobControllerImpl implements JobController {
 						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 						productionPlanner.releaseThreadSemaphore("resumeJob");
 
-						if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-							ProductionPlanner.productionPlanner.dbWait();
+						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+							ProseoUtil.dbWait();
 						} else {
-							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 							throw e;
 						}
 					} catch (Exception e) {
@@ -364,7 +365,7 @@ public class JobControllerImpl implements JobController {
 
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-					for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
 							msg = transactionTemplate.execute((status) -> {
 								Job jobx = this.findJobByIdPrim(jobId);
@@ -374,10 +375,10 @@ public class JobControllerImpl implements JobController {
 						} catch (CannotAcquireLockException e) {
 							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-							if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-								ProductionPlanner.productionPlanner.dbWait();
+							if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+								ProseoUtil.dbWait();
 							} else {
-								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 								throw e;
 							}
 						}
@@ -481,7 +482,7 @@ public class JobControllerImpl implements JobController {
 
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 				}		
-				for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
 						productionPlanner.acquireThreadSemaphore("suspendJob");
 						msg = transactionTemplate.execute((status) -> {
@@ -494,10 +495,10 @@ public class JobControllerImpl implements JobController {
 						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 						productionPlanner.releaseThreadSemaphore("suspendJob");	
 
-						if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-							ProductionPlanner.productionPlanner.dbWait();
+						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+							ProseoUtil.dbWait();
 						} else {
-							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 							throw e;
 						}
 					} catch (Exception e) {
@@ -629,7 +630,7 @@ public class JobControllerImpl implements JobController {
 					productionPlanner.acquireThreadSemaphore("retryJob");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-					for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
 							msg = transactionTemplate.execute((status) -> {
 								Job jobx = this.findJobByIdPrim(id);
@@ -639,10 +640,10 @@ public class JobControllerImpl implements JobController {
 						} catch (CannotAcquireLockException e) {
 							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-							if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-								ProductionPlanner.productionPlanner.dbWait();
+							if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+								ProseoUtil.dbWait();
 							} else {
-								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 								throw e;
 							}
 						}

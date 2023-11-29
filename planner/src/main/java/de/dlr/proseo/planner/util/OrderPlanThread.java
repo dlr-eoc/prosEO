@@ -22,6 +22,7 @@ import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 
@@ -118,7 +119,7 @@ public class OrderPlanThread extends Thread {
 				answer.setText(logger.log(answer.getMessage(), orderId));
 			} catch(Exception e) {
 				// Set order state to failed		
-				for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
 						transactionTemplate.execute((status) -> {
 							Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
@@ -134,10 +135,10 @@ public class OrderPlanThread extends Thread {
 					} catch (CannotAcquireLockException e1) {
 						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e1);
 
-						if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-							ProductionPlanner.productionPlanner.dbWait();
+						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+							ProseoUtil.dbWait();
 						} else {
-							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 							throw e1;
 						}
 					}
@@ -153,7 +154,7 @@ public class OrderPlanThread extends Thread {
 				if (!answer.getSuccess()) {
 					productionPlanner.acquireThreadSemaphore("OrderPlanThread.run");
 
-					for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
 							transactionTemplate.execute((status) -> {
 								ProcessingOrder lambdaOrder = null;
@@ -170,10 +171,10 @@ public class OrderPlanThread extends Thread {
 						} catch (CannotAcquireLockException e) {
 							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-							if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-								ProductionPlanner.productionPlanner.dbWait();
+							if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+								ProseoUtil.dbWait();
 							} else {
-								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 								throw e;
 							}
 						}
@@ -184,7 +185,7 @@ public class OrderPlanThread extends Thread {
 			}
 			catch(Exception e) {
 				productionPlanner.releaseThreadSemaphore("OrderPlanThread.run");
-				for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
 						transactionTemplate.execute((status) -> {
 							ProcessingOrder lambdaOrder = null;
@@ -201,10 +202,10 @@ public class OrderPlanThread extends Thread {
 					} catch (CannotAcquireLockException e1) {
 						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e1);
 
-						if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-							ProductionPlanner.productionPlanner.dbWait();
+						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+							ProseoUtil.dbWait();
 						} else {
-							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 							throw e1;
 						}
 					}
@@ -265,7 +266,7 @@ public class OrderPlanThread extends Thread {
 			try {
 				productionPlanner.acquireThreadSemaphore("OrderPlanThread.plan");
 				final PlannerResultMessage finalAnswer = new PlannerResultMessage(publishAnswer.getMessage());
-				for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
 						answer = transactionTemplate.execute((status) -> {
 							ProcessingOrder lambdaOrder = null;
@@ -302,10 +303,10 @@ public class OrderPlanThread extends Thread {
 					} catch (CannotAcquireLockException e) {
 						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-						if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-							ProductionPlanner.productionPlanner.dbWait();
+						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+							ProseoUtil.dbWait();
 						} else {
-							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 							throw e;
 						}
 					}

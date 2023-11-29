@@ -8,6 +8,8 @@ package de.dlr.proseo.model.util;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+
 /**
  * Class to hold general utility methods
  *
@@ -15,11 +17,17 @@ import java.util.regex.Pattern;
  */
 public class ProseoUtil {
 
+	private static ProseoLogger logger = new ProseoLogger(ProseoUtil.class);
 	/**
 	 * prosEO message format, e. g. "199 proseo-processor-mgr (E2205) Product type
 	 * L2________ invalid for mission NM4T"
 	 */
 	private static final Pattern PROSEO_MESSAGE_TEMPLATE = Pattern.compile("199 +\\S+ +(?<message>\\([IWEF]\\d+\\) .*)");
+	
+	/** Maximum number of retries for database concurrency issues */
+	public static final int DB_MAX_RETRY = 5;
+	/** Wait interval in ms before retrying database operation */
+	public static final int DB_WAIT = 1000;
 
 	/**
 	 * Escape a give String to make it safe to be printed or stored.
@@ -58,5 +66,15 @@ public class ProseoUtil {
 		}
 
 		return result;
+	}
+
+	public static void dbWait() {
+		long factor = (long)((Math.random() * DB_WAIT) + DB_WAIT);
+		try {
+			if (logger.isDebugEnabled()) logger.debug("... retrying in {} ms!", factor);
+			Thread.sleep(factor);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 }

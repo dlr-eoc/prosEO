@@ -81,12 +81,6 @@ public class ProductionPlanner implements CommandLineRunner {
 	public static String STATE_MESSAGE_FAILED 				= "production has failed";
 	public static String STATE_MESSAGE_NO_INPUT_AVAILABLE 	= "input product currently unavailable";
 	public static String STATE_MESSAGE_NO_INPUT 			= "input product not found on LTA";
-
-	/** Maximum number of retries for database concurrency issues */
-	public static final int DB_MAX_RETRY = 5;
-	/** Wait interval in ms before retrying database operation */
-	public static final int DB_WAIT = 1000;
-
 	
 	public static ProductionPlannerConfiguration config;
 	
@@ -566,13 +560,4 @@ public class ProductionPlanner implements CommandLineRunner {
 		kubeDispatcher = null;
 	}
 	
-	public void dbWait() {
-		long factor = (long)((Math.random() * DB_WAIT) + DB_WAIT);
-		try {
-			if (logger.isDebugEnabled()) logger.debug("... retrying in {} ms!", factor);
-			Thread.sleep(factor);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
 }

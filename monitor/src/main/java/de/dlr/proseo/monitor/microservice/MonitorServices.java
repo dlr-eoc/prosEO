@@ -5,17 +5,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.MonExtService;
 import de.dlr.proseo.model.MonService;
 import de.dlr.proseo.model.MonServiceState;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.monitor.MonitorApplication;
 import de.dlr.proseo.monitor.MonitorConfiguration;
 
-@Transactional
 public class MonitorServices extends Thread {
 
 	private static ProseoLogger logger = new ProseoLogger(MonitorServices.class);
@@ -25,9 +28,18 @@ public class MonitorServices extends Thread {
 	private Map<String, MonExtService> monExtServices;
 	private Map<String, MonServiceState> monServiceStates;
 	private MonitorConfiguration config;
+	private PlatformTransactionManager txManager;
 	
-	public MonitorServices(MonitorConfiguration config) {
+	/**
+	 * @return the txManager
+	 */
+	public PlatformTransactionManager getTxManager() {
+		return txManager;
+	}
+
+	public MonitorServices(MonitorConfiguration config, PlatformTransactionManager txManager) {
 		this.config = config;
+		this.txManager = txManager;
 		this.setName("MonitorServices");
 		this.services = new ArrayList<MicroService>();
 		this.monServices = new HashMap<String, MonService>();
@@ -58,32 +70,70 @@ public class MonitorServices extends Thread {
 		return null;
 	}
 
-	@Transactional
 	public MonService getMonService(String nameId, String name) {
 		MonService ms = monServices.get(nameId);
 		if (ms == null) {
-			ms = RepositoryService.getMonServiceRepository().findByNameId(nameId);
-			if (ms == null) {
-				ms = new MonService();
-				ms.setName(name);
-				ms.setNameId(nameId);
-				ms = RepositoryService.getMonServiceRepository().save(ms);
+			TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+			transactionTemplate.setReadOnly(false);
+			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
+				try {
+					ms = transactionTemplate.execute((status) -> {	
+						MonService msX = RepositoryService.getMonServiceRepository().findByNameId(nameId);
+						if (msX == null) {
+							msX = new MonService();
+							msX.setName(name);
+							msX.setNameId(nameId);
+							msX = RepositoryService.getMonServiceRepository().save(msX);
+						}
+						return msX;
+					});
+					break;
+				} catch (CannotAcquireLockException e) {
+					if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+					if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+						ProseoUtil.dbWait();
+					} else {
+						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+						throw e;
+					}
+				}
 			}
 			monServices.put(nameId, ms);
 		}
 		return ms;
 	}
 	
-	@Transactional
 	public MonExtService getMonExtService(String nameId, String name) {
 		MonExtService ms = monExtServices.get(nameId);
 		if (ms == null) {
-			ms = RepositoryService.getMonExtServiceRepository().findByNameId(nameId);
-			if (ms == null) {
-				ms = new MonExtService();
-				ms.setName(name);
-				ms.setNameId(nameId);
-				ms = RepositoryService.getMonExtServiceRepository().save(ms);
+			TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+			transactionTemplate.setReadOnly(false);
+			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
+				try {
+					ms = transactionTemplate.execute((status) -> {	
+						MonExtService msX = RepositoryService.getMonExtServiceRepository().findByNameId(nameId);
+						if (msX == null) {
+							msX = new MonExtService();
+							msX.setName(name);
+							msX.setNameId(nameId);
+							msX = RepositoryService.getMonExtServiceRepository().save(msX);
+						}
+						return msX;
+					});
+					break;
+				} catch (CannotAcquireLockException e) {
+					if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+					if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+						ProseoUtil.dbWait();
+					} else {
+						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+						throw e;
+					}
+				}
 			}
 			monExtServices.put(nameId, ms);
 		}

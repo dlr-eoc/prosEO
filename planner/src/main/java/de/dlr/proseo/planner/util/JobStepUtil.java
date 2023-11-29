@@ -56,6 +56,7 @@ import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.service.ProductQueryService;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
+import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.ProductionPlannerConfiguration;
 import de.dlr.proseo.planner.ProductionPlannerSecurityConfig;
@@ -214,7 +215,7 @@ public class JobStepUtil {
 			return jobSteps;
 		});
 		for (Long jsId : allJobSteps) {
-			for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 				try {
 					transactionTemplate.setReadOnly(false);
 					transactionTemplate.execute((status) -> {
@@ -228,10 +229,10 @@ public class JobStepUtil {
 				} catch (CannotAcquireLockException e) {
 					if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-					if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-						ProductionPlanner.productionPlanner.dbWait();
+					if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+						ProseoUtil.dbWait();
 					} else {
-						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 						throw e;
 					}
 				}
@@ -1148,7 +1149,7 @@ public class JobStepUtil {
 					});
 					
 					transactionTemplate.setReadOnly(false);
-					for (int i = 0; i < ProductionPlanner.DB_MAX_RETRY; i++) {
+					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
 							answer = transactionTemplate.execute((status) -> {
 								Optional<JobStep> opt = RepositoryService.getJobStepRepository().findById(jsId);
@@ -1187,10 +1188,10 @@ public class JobStepUtil {
 						} catch (CannotAcquireLockException e) {
 							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
-							if ((i + 1) < ProductionPlanner.DB_MAX_RETRY) {
-								ProductionPlanner.productionPlanner.dbWait();
+							if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+								ProseoUtil.dbWait();
 							} else {
-								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProductionPlanner.DB_MAX_RETRY);
+								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 								throw e;
 							}
 						}
