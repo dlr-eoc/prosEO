@@ -67,14 +67,26 @@ public class Conf {
 	public static class NonUniqueResultException extends RuntimeException {
 		private static final long serialVersionUID = -1717642966866290514L;
 
+		/** Creates an exception with {@code null} as its detail message  */
 		public NonUniqueResultException() {
 			super();
 		}
 
+		/**
+		 * Creates an exception with a detail message
+		 * 
+		 * @param message the message to add to the exception
+		 */
 		public NonUniqueResultException(String message) {
 			super(message);
 		}
 
+		/**
+		 * Creates an exception with a detail message and a root cause
+		 * 
+		 * @param message the message to add to the exception
+		 * @param cause the root cause
+		 */
 		public NonUniqueResultException(String message, Throwable cause) {
 			super(message, cause);
 		}
