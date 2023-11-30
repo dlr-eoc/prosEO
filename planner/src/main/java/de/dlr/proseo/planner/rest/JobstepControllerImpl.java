@@ -344,32 +344,51 @@ public class JobstepControllerImpl implements JobstepController {
 				// Already logged
 				
 				if (msg.get(0).getSuccess()) {
-					final ResponseEntity<RestJobStep> msgS = transactionTemplate.execute((status) -> {
-						JobStep jsx = this.findJobStepByNameOrId(jobstepId);
-						Job job = jsx.getJob();
-						if (job != null && job.getProcessingFacility() != null) {
-							KubeConfig kc = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
-							if (kc != null) {
-								try {
-									productionPlanner.acquireThreadSemaphore("resumeJobStep");
-									UtilService.getJobStepUtil().checkJobStepToRun(kc, jsx.getId());
-									productionPlanner.releaseThreadSemaphore("resumeJobStep");
-								} catch (Exception e) {
-									String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
-									
-									if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+					ResponseEntity<RestJobStep> msgS = null;
+					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
+						try {
+							msgS = transactionTemplate.execute((status) -> {
+								JobStep jsx = this.findJobStepByNameOrId(jobstepId);
+								Job job = jsx.getJob();
+								if (job != null && job.getProcessingFacility() != null) {
+									KubeConfig kc = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
+									if (kc != null) {
+										try {
+											productionPlanner.acquireThreadSemaphore("resumeJobStep");
+											UtilService.getJobStepUtil().checkJobStepToRun(kc, jsx.getId());
+											productionPlanner.releaseThreadSemaphore("resumeJobStep");
+										} catch (Exception e) {
+											String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED,
+													e.getMessage());
 
-									productionPlanner.releaseThreadSemaphore("resumeJobStep");
-									return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+											if (logger.isDebugEnabled())
+												logger.debug("... exception stack trace: ", e);
+
+											productionPlanner.releaseThreadSemaphore("resumeJobStep");
+											return new ResponseEntity<>(http.errorHeaders(message),
+													HttpStatus.INTERNAL_SERVER_ERROR);
+										}
+									}
 								}
+								// resumed
+
+								RestJobStep pjs = RestUtil.createRestJobStep(jsx, false);
+
+								return new ResponseEntity<>(pjs, HttpStatus.OK);
+							});
+						} catch (CannotAcquireLockException e) {
+							if (logger.isDebugEnabled())
+								logger.debug("... database concurrency issue detected: ", e);
+
+							if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+								ProseoUtil.dbWait();
+							} else {
+								if (logger.isDebugEnabled())
+									logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+								throw e;
 							}
-						}
-						// resumed
-
-						RestJobStep pjs = RestUtil.createRestJobStep(jsx, false);
-
-						return new ResponseEntity<>(pjs, HttpStatus.OK);
-					});
+						} 
+					}
 					return msgS;
 				} else {
 					// illegal state for resume
