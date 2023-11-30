@@ -1042,6 +1042,14 @@ public class CadipMonitor extends BaseMonitor {
 			queryFilter.append(" and Retransfer eq false")
 				.append(" and PublicationDate gt ")
 				.append(odataDateFormat.format(referenceTimeStamp.atZone(ZoneId.of("Z"))));
+
+			// In the nominal case, apply any requested retrieval delay (keep this separate for unit test to work!)
+			if (logger.isTraceEnabled()) logger.trace("... applying retrieval delay of {} ms", config.getCadipRetrievalDelay());
+			if (0 < config.getCadipRetrievalDelay()) {
+				queryFilter.append(" and PublicationDate le ")
+					.append(odataDateFormat.format(
+							Instant.now().minusMillis(config.getCadipRetrievalDelay()).atZone(ZoneId.of("Z"))));
+			}
 		}
 
 		// Retrieve downlink sessions
