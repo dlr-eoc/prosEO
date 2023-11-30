@@ -136,7 +136,7 @@ public class OrderPlanThread extends Thread {
 						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e1);
 
 						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
-							ProseoUtil.dbWait();
+							ProseoUtil.dbWait(i + 1);
 						} else {
 							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 							throw e1;
@@ -172,7 +172,7 @@ public class OrderPlanThread extends Thread {
 							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
 							if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
-								ProseoUtil.dbWait();
+								ProseoUtil.dbWait(i + 1);
 							} else {
 								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 								throw e;
@@ -203,7 +203,7 @@ public class OrderPlanThread extends Thread {
 						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e1);
 
 						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
-							ProseoUtil.dbWait();
+							ProseoUtil.dbWait(i + 1);
 						} else {
 							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 							throw e1;
@@ -304,7 +304,7 @@ public class OrderPlanThread extends Thread {
 						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
 						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
-							ProseoUtil.dbWait();
+							ProseoUtil.dbWait(i + 1);
 						} else {
 							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 							throw e;

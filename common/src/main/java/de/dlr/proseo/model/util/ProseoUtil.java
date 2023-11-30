@@ -25,9 +25,14 @@ public class ProseoUtil {
 	private static final Pattern PROSEO_MESSAGE_TEMPLATE = Pattern.compile("199 +\\S+ +(?<message>\\([IWEF]\\d+\\) .*)");
 	
 	/** Maximum number of retries for database concurrency issues */
-	public static final int DB_MAX_RETRY = 5;
+	public static final int DB_MAX_RETRY = 10;
 	/** Wait interval in ms before retrying database operation */
 	public static final int DB_WAIT = 1000;
+
+	/** Maximum number of retries for Kubernetes API issues */
+	public static final int K8S_MAX_RETRY = 10;
+	/** Wait interval in ms before retrying Kubernetes API operation */
+	public static final int K8S_WAIT = 1000;
 
 	/**
 	 * Escape a give String to make it safe to be printed or stored.
@@ -68,13 +73,48 @@ public class ProseoUtil {
 		return result;
 	}
 
-	public static void dbWait() {
-		long factor = (long)((Math.random() * DB_WAIT) + DB_WAIT);
+	/**
+	 * Wait a slightly randomized amount of time, increasing progressively with the number of attempts
+	 * 
+	 * @param attempt the 
+	 */
+	public static void randomWait(int attempt, int waitInterval) {
+		long factor = (long)((Math.random() * attempt * attempt * waitInterval) + waitInterval);
 		try {
 			if (logger.isDebugEnabled()) logger.debug("... retrying in {} ms!", factor);
 			Thread.sleep(factor);
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			throw new RuntimeException("Random Wait interrupted", e);
 		}
+	}
+
+	/**
+	 * Wait a slightly randomized amount of time based on database wait parameters
+	 */
+	public static void dbWait() {
+		randomWait(1, DB_WAIT);
+	}
+
+	/**
+	 * Wait a slightly randomized amount of time based on database wait parameters
+	 * (increasing progressively with the number of attempts)
+	 */
+	public static void dbWait(int attempt) {
+		randomWait(attempt, DB_WAIT);
+	}
+	
+	/**
+	 * Wait a slightly randomized amount of time based on Kubernetes wait parameters
+	 */
+	public static void kubeWait() {
+		randomWait(1, K8S_WAIT);
+	}
+
+	/**
+	 * Wait a slightly randomized amount of time based on Kubernetes wait parameters
+	 * (increasing progressively with the number of attempts)
+	 */
+	public static void kubeWait(int attempt) {
+		randomWait(attempt, K8S_WAIT);
 	}
 }
