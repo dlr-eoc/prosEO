@@ -731,26 +731,36 @@ public class KubeJob {
 		if (kubeConfig != null && kubeConfig.isConnected()) {
 			V1PodList podList;
 
-			try {
-				// Retrieve the pod list for the namespace
-				podList = kubeConfig.getApiV1()
-					.listNamespacedPod(kubeConfig.getNamespace(), null, null, null, null, null, null, null, null, 30, null);
-				podNames.clear();
-
-				for (V1Pod pod : podList.getItems()) {
-					String podName = pod.getMetadata().getName();
-
-					// Filter pods based on the job name prefix
-					if (podName.startsWith(jobName)) {
-						podNames.add(podName);
-						if (logger.isTraceEnabled())
-							logger.trace("     Pod found: {}", podName);
-					}
-				}
-			} catch (ApiException e) {
-				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+			for (int retryNumber = 0; retryNumber < ProseoUtil.K8S_MAX_RETRY; ) {
+				++retryNumber;
 				
-				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+				try {
+					// Retrieve the pod list for the namespace
+					podList = kubeConfig.getApiV1().listNamespacedPod(kubeConfig.getNamespace(), null, null, null, null, null, null,
+							null, null, 30, null);
+					podNames.clear();
+
+					for (V1Pod pod : podList.getItems()) {
+						String podName = pod.getMetadata().getName();
+
+						// Filter pods based on the job name prefix
+						if (podName.startsWith(jobName)) {
+							podNames.add(podName);
+							if (logger.isTraceEnabled())
+								logger.trace("     Pod found: {}", podName);
+						}
+					}
+					break;
+				} catch (ApiException e) {
+					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+
+					if (logger.isDebugEnabled())
+						logger.debug("... exception stack trace: ", e);
+				}
+				
+				if (retryNumber < ProseoUtil.K8S_MAX_RETRY) {
+					ProseoUtil.kubeWait(retryNumber);
+				}
 			}
 		}
 
