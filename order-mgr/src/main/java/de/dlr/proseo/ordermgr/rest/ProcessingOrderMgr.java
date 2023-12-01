@@ -617,7 +617,7 @@ public class ProcessingOrderMgr {
 			throw new IllegalArgumentException(logger.log(OrderMgrMessage.ORDER_MISSING, id));
 		}
 
-		// Ensure user is authorized for the order missionƒ
+		// Ensure user is authorized for the order mission
 		if (!securityService.isAuthorizedForMission(order.getMissionCode())) {
 			throw new SecurityException(
 					logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, order.getMissionCode(), securityService.getMission()));
@@ -694,6 +694,22 @@ public class ProcessingOrderMgr {
 			throw new IllegalArgumentException(
 					logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "UUID", modelOrder.getIdentifier()));
 
+		// ODIP: Workflow and input product reference may not be changed
+		if (null != modelOrder.getInputProductReference()
+				&& !modelOrder.getInputProductReference().equals(changedOrder.getInputProductReference()))
+			throw new IllegalArgumentException(
+					logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "input product reference", modelOrder.getIdentifier()));
+
+		if (null == modelOrder.getWorkflow() && ((null != order.getWorkflowName()) || (null != order.getWorkflowUuid())))
+			throw new IllegalArgumentException(
+					logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "workflow", modelOrder.getIdentifier()));
+
+		if (null != modelOrder.getWorkflow() && (order.getWorkflowName() != modelOrder.getWorkflow().getName()
+				|| order.getWorkflowUuid() != modelOrder.getWorkflow().getUuid().toString()))
+			throw new IllegalArgumentException(
+					logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "workflow", modelOrder.getIdentifier()));
+
+	
 		if (!modelOrder.getIdentifier().equals(changedOrder.getIdentifier())) {
 			orderChanged = true;
 			stateChangeOnly = false;
@@ -971,28 +987,6 @@ public class ProcessingOrderMgr {
 			stateChangeOnly = false;
 			modelOrder.setProcessingMode(changedOrder.getProcessingMode());
 		}
-		
-		// Check for workflow change
-		if (null == order.getWorkflowUuid()) {
-			if (null != modelOrder.getWorkflow()) {
-				orderChanged = true;
-				stateChangeOnly = false;
-				modelOrder.setWorkflow(null);
-			}
-		} else if (null == modelOrder.getWorkflow() ||
-				!order.getWorkflowUuid().equals(modelOrder.getWorkflow().getUuid().toString())) {
-			Workflow workflow = RepositoryService.getWorkflowRepository().findByUuid(UUID.fromString(order.getWorkflowUuid()));
-			if (null == workflow) {
-				throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_WORKFLOW_UUID, order.getWorkflowUuid()));
-			}
-			if (null != order.getWorkflowName() && !workflow.getName().equals(order.getWorkflowName())) {
-				throw new IllegalArgumentException(logger.log(OrderMgrMessage.INVALID_WORKFLOW_SPECIFICATION,
-						order.getWorkflowName(), order.getWorkflowUuid()));
-			}
-			orderChanged = true;
-			stateChangeOnly = false;
-			modelOrder.setWorkflow(workflow);
-		}
 
 		// Check for new configured processors
 		Set<ConfiguredProcessor> newConfiguredProcessors = new HashSet<>();
@@ -1112,20 +1106,6 @@ public class ProcessingOrderMgr {
 		}
 
 		// Check for forbidden order data modifications
-		if (null != modelOrder.getInputProductReference()
-				&& !modelOrder.getInputProductReference().equals(changedOrder.getInputProductReference()))
-			throw new IllegalArgumentException(
-					logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "input product reference", modelOrder.getIdentifier()));
-
-		if (null == modelOrder.getWorkflow() && ((null != order.getWorkflowName()) || (null != order.getWorkflowUuid())))
-			throw new IllegalArgumentException(
-					logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "workflow", modelOrder.getIdentifier()));
-
-		if (null != modelOrder.getWorkflow() && (order.getWorkflowName() != modelOrder.getWorkflow().getName()
-				|| order.getWorkflowUuid() != modelOrder.getWorkflow().getUuid().toString()))
-			throw new IllegalArgumentException(
-					logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "workflow", modelOrder.getIdentifier()));
-
 		if (orderChanged && !stateChangeOnly) {
 			if (!securityService.hasRole(UserRole.ORDER_MGR)) {
 				throw new SecurityException(logger.log(OrderMgrMessage.ORDER_MODIFICATION_FORBIDDEN, securityService.getUser()));
