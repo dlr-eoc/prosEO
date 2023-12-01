@@ -76,7 +76,8 @@ public class ProseoUtil {
 	/**
 	 * Wait a slightly randomized amount of time, increasing progressively with the number of attempts
 	 * 
-	 * @param attempt the 
+	 * @param attempt the retry attempt count
+	 * @param waitInterval the base wait interval to apply
 	 */
 	public static void randomWait(int attempt, int waitInterval) {
 		long factor = (long)((Math.random() * attempt * attempt * waitInterval) + waitInterval);
@@ -98,6 +99,8 @@ public class ProseoUtil {
 	/**
 	 * Wait a slightly randomized amount of time based on database wait parameters
 	 * (increasing progressively with the number of attempts)
+	 * 
+	 * @param attempt the retry attempt count
 	 */
 	public static void dbWait(int attempt) {
 		randomWait(attempt, DB_WAIT);
@@ -113,6 +116,8 @@ public class ProseoUtil {
 	/**
 	 * Wait a slightly randomized amount of time based on Kubernetes wait parameters
 	 * (increasing progressively with the number of attempts)
+	 * 
+	 * @param attempt the retry attempt count
 	 */
 	public static void kubeWait(int attempt) {
 		randomWait(attempt, K8S_WAIT);

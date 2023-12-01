@@ -239,7 +239,8 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			// delete pod
 			KubeJob kj = aKubeConfig.getKubeJob(podname);
 			if (null == kj) {
-				return new ResponseEntity<>(http.errorHeaders(logger.log(PlannerMessage.KUBECONFIG_JOB_NOT_FOUND, aKubeConfig.getId())), HttpStatus.NOT_FOUND);
+				return new ResponseEntity<>(http.errorHeaders(
+						logger.log(PlannerMessage.KUBECONFIG_JOB_NOT_FOUND, podname)), HttpStatus.OK);
 			}
 
 			kj.finish(aKubeConfig, podname);
