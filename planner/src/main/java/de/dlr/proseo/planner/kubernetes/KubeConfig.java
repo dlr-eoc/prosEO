@@ -914,7 +914,7 @@ public class KubeConfig {
 		V1Pod retrievedPod = null;
 		int retryNumber = 0;
 
-		while (retryNumber < 10 && retrievedPod == null) {
+		while (retryNumber < ProseoUtil.K8S_MAX_RETRY && retrievedPod == null) {
 			retryNumber++;
 			
 			try {
@@ -924,7 +924,7 @@ public class KubeConfig {
 					// Nothing to do, as there is a bug in the Kubernetes API
 				} else if (e instanceof ApiException && ((ApiException) e).getCode() == 404) {
 					// Pod not found
-					retryNumber = 10;
+					retryNumber = ProseoUtil.K8S_MAX_RETRY;
 				} else {
 					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 					
@@ -932,12 +932,8 @@ public class KubeConfig {
 				}
 			}
 			
-			if ((retryNumber < 10 && retrievedPod == null)) {
-				try {
-					Thread.sleep(100);
-				} catch (InterruptedException e) {
-					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
-				}
+			if ((retryNumber < ProseoUtil.K8S_MAX_RETRY && retrievedPod == null)) {
+				ProseoUtil.kubeWait(retryNumber);
 			}
 		}
 
