@@ -17,6 +17,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.facmgr.rest.model.FacmgrUtil;
@@ -35,7 +36,7 @@ import de.dlr.proseo.model.service.RepositoryService;
  * @author Ranjitha Vignesh
  */
 @Component
-@Transactional
+@Transactional(isolation = Isolation.REPEATABLE_READ)
 public class FacmgrManager {
 
 	/** JPA entity manager */
