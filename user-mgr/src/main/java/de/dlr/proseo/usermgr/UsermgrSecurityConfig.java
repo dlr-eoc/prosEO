@@ -20,6 +20,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -135,6 +136,7 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 			final RestUser transactionalRestUser = restUser;
 
 			TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 			try {
 				restUser = transactionTemplate.execute((status) -> {
 					return userManager.createUser(transactionalRestUser);
