@@ -10,6 +10,7 @@ import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -27,6 +28,7 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.UserMgrMessage;
 import de.dlr.proseo.model.enums.UserRole;
+import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.usermgr.rest.UserManager;
 import de.dlr.proseo.usermgr.rest.model.RestUser;
 
@@ -137,13 +139,29 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 
 			TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-			try {
-				restUser = transactionTemplate.execute((status) -> {
-					return userManager.createUser(transactionalRestUser);
-				});
-			} catch (Exception e1) {
-				logger.log(UserMgrMessage.CREATE_BOOTSTRAP_FAILED, e1);
+			
+			
+			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
+				try {
+					restUser = transactionTemplate.execute((status) -> {
+						return userManager.createUser(transactionalRestUser);
+					});
+				} catch (CannotAcquireLockException e1) {
+					if (logger.isDebugEnabled())
+						logger.debug("... database concurrency issue detected: ", e1);
+
+					if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+						ProseoUtil.dbWait();
+					} else {
+						if (logger.isDebugEnabled())
+							logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+						throw e;
+					}
+				} catch (Exception e1) {
+					logger.log(UserMgrMessage.CREATE_BOOTSTRAP_FAILED, e1);
+				}
 			}
+
 		}
 
 		return jdbcDaoImpl;
