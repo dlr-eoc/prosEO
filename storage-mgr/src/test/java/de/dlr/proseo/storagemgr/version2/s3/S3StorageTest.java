@@ -63,6 +63,7 @@ public class S3StorageTest {
 		// StorageProvider storageProvider = new StorageProvider();
 
 		StorageType storageType = StorageType.S3; 
+		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 
 		String prefix = "s3-storage-test/";
@@ -98,13 +99,16 @@ public class S3StorageTest {
 			
 			TestUtils.printList("S3 Storage files after delete:", storage.getRelativeFiles());
 			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw e;
 		}
 		
+		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
+
 	}
 
 }

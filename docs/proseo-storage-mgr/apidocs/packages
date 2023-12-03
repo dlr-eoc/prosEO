@@ -4,6 +4,12 @@ de.dlr.proseo.storagemgr.cache
 de.dlr.proseo.storagemgr.cache
 de.dlr.proseo.storagemgr
 de.dlr.proseo.storagemgr.utils
+de.dlr.proseo.storagemgr.utils
+de.dlr.proseo.storagemgr.utils
+de.dlr.proseo.storagemgr.utils
+de.dlr.proseo.storagemgr.utils
+de.dlr.proseo.storagemgr.utils
+de.dlr.proseo.storagemgr.utils
 de.dlr.proseo.storagemgr.version2
 de.dlr.proseo.storagemgr.version2.posix
 de.dlr.proseo.storagemgr.version2.posix
@@ -38,6 +44,7 @@ de.dlr.proseo.storagemgr.version2.model
 de.dlr.proseo.storagemgr.version2.model
 de.dlr.proseo.storagemgr.version2
 de.dlr.proseo.storagemgr.version2
+de.dlr.proseo.storagemgr.fs.s3
 de.dlr.proseo.storagemgr.rest
 de.dlr.proseo.storagemgr.rest
 de.dlr.proseo.storagemgr.rest

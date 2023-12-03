@@ -1544,9 +1544,11 @@ public class JobStepUtil {
 		}
 		String user = "";
 		String pw = "";
-		if (Thread.currentThread() instanceof OrderReleaseThread) {
-			user = ((OrderReleaseThread) Thread.currentThread()).getUser();
-			pw = ((OrderReleaseThread) Thread.currentThread()).getPw();
+		user = pq.getJobStep().getJob().getProcessingOrder().getUser();
+		pw = pq.getJobStep().getJob().getProcessingOrder().getPassword();
+		if (user == null) {
+			user = "";
+			pw = "";
 		}
 		Boolean retry = false;
 		for (SimplePolicy simplePolicy : pq.getGeneratingRule().getSimplePolicies()) {

@@ -647,6 +647,10 @@ public class OrderUtil {
 								if (opt.isPresent()) {
 									ProcessingOrder orderx = opt.get();
 									orderx.setOrderState(OrderState.RELEASING);
+									if (user != null && !user.isBlank()) {
+										orderx.setUser(user);
+										orderx.setPassword(pw);
+									}
 									//setStateMessage(order, ProductionPlanner.STATE_MESSAGE_RUNNING); // moved out of transaction, see below
 									orderx.incrementVersion();
 									orderx = RepositoryService.getOrderRepository().save(orderx);
@@ -694,7 +698,7 @@ public class OrderUtil {
 						if (ordery != null) {
 							String threadName = ProductionPlanner.RELEASE_THREAD_PREFIX + ordery.getId();
 							if (!productionPlanner.getReleaseThreads().containsKey(threadName)) {
-								rt = new OrderReleaseThread(productionPlanner, em, jobUtil, ordery, threadName, user, pw);
+								rt = new OrderReleaseThread(productionPlanner, em, jobUtil, ordery, threadName);
 								productionPlanner.getReleaseThreads().put(threadName, rt);
 							}
 							logOrderState(order);

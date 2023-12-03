@@ -79,6 +79,7 @@ public class StorageProviderTest {
 		assertTrue("File for upload has not been created: " + sourceFilePath, TestUtils.fileExists(sourceFilePath));
 
 		StorageType storageType = StorageType.POSIX; 
+		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 		Storage storage = storageProvider.getStorage();
 
@@ -114,6 +115,7 @@ public class StorageProviderTest {
 		
 		assertTrue("File was not downloaded from storage: " + cacheFilePath, TestUtils.fileExists(cacheFilePath));
 		
+		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 		
@@ -140,5 +142,10 @@ public class StorageProviderTest {
 		
 
 		TestUtils.deleteStorageDirectories();
+	}
+
+	@Test
+	public void testDefaultS3PosixProvider() {
+
 	}
 }

@@ -10,6 +10,7 @@ import org.junit.rules.TestName;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.storagemgr.version2.StorageProvider;
 import de.dlr.proseo.storagemgr.version2.model.Storage;
 
 /**
@@ -22,6 +23,9 @@ public class StorageTestUtils extends BaseStorageTestUtils {
 
 	@Autowired
 	private TestUtils testUtils;
+
+ 	@Autowired
+	private StorageProvider storageProvider;
 
 	@Rule
 	public TestName testName = new TestName();
@@ -45,7 +49,11 @@ public class StorageTestUtils extends BaseStorageTestUtils {
 		return theTestUtils;
 	}
 
+	public void printVersion(String msg) {
 
+		System.out.println(msg + (storageProvider.isVersion2() ? " Version-2" : " Version-1"));
+	}
+	
 	public static void printStorageFiles(String message, Storage storage) {
 		
 		List<String> storageFiles;

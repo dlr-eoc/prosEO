@@ -44,6 +44,7 @@ public class PosixStorageTest {
 		TestUtils.createEmptyStorageDirectories();
 
 		StorageType storageType = StorageType.POSIX;
+		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 
 		String prefix = "posix-storage-upload-test/";
@@ -67,6 +68,7 @@ public class PosixStorageTest {
 		TestUtils.printList("Storage Files: ", uploadedPathes);
 		assertTrue("Expected: 3, " + " Exists: " + uploadedPathes.size(), uploadedPathes.size() == 3);
 
+		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 		
@@ -81,6 +83,7 @@ public class PosixStorageTest {
 		TestUtils.createEmptyStorageDirectories();
 
 		StorageType storageType = StorageType.POSIX;
+		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 
 		String prefix = "posix-storage-download-test/";
@@ -105,6 +108,7 @@ public class PosixStorageTest {
 		TestUtils.printList("Source Files: ", downloadedPathes);
 		assertTrue("Expected: 3, " + " Exists: " + downloadedPathes.size(), downloadedPathes.size() == 3);
 
+		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 		
