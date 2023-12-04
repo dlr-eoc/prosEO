@@ -1004,6 +1004,9 @@ public class DownloadManager {
 				(null == archive ? "NULL" : archive.getCode()),
 				(null == product ? "NULL" : product.getUuid()));
 
+		if (logger.isTraceEnabled()) logger.trace("... download of product with class {} and file name {} requested",
+				product.getProductClass(), product.getProductFile().get(0).getProductFileName());
+		
 		// Build the request URL
 		StringBuilder requestUrl = new StringBuilder(archive.getBaseUri());
 		requestUrl.append('/')
@@ -1054,7 +1057,7 @@ public class DownloadManager {
 					}
 
 					httpResponse.close();
-
+					
 				} catch (FileNotFoundException e) {
 					throw new IOException(logger.log(AipClientMessage.FILE_NOT_WRITABLE, productFile));
 				} catch (HttpResponseException e) {
@@ -1083,6 +1086,9 @@ public class DownloadManager {
 					throw new IOException(logger.log(AipClientMessage.CHECKSUM_MISMATCH, product.getUuid(),
 							restProductFile.getChecksum(), md5Hash));
 				}
+				
+				break; // Leave retry loop!
+
 			} catch (Exception e) {
 				if ((i + 1) < DOWNLOAD_MAX_RETRIES) {
 					if (logger.isTraceEnabled())
@@ -1124,6 +1130,9 @@ public class DownloadManager {
 		ingestorProduct.setFileSize(restProductFile.getFileSize());
 		ingestorProduct.setChecksum(restProductFile.getChecksum());
 		ingestorProduct.setChecksumTime(restProductFile.getChecksumTime());
+		
+		if (logger.isTraceEnabled()) logger.trace("... ingestor product metadata with product class {} and file name {} created",
+				ingestorProduct.getProductClass(), ingestorProduct.getProductFileName());
 
 		return ingestorProduct;
 	}
@@ -1140,8 +1149,11 @@ public class DownloadManager {
 	private void ingestProduct(IngestorProduct product, ProcessingFacility facility, String user, String password)
 			throws IOException {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> downloadAndIngest({}, {}, {}, ********)", (null == product ? "NULL" : product.getUuid()),
+			logger.trace(">>> ingestProduct({}, {}, {}, ********)", (null == product ? "NULL" : product.getUuid()),
 					(null == facility ? "NULL" : facility.getName()), user);
+		
+		if (logger.isTraceEnabled()) logger.trace("... ingestion requested for product of class {} and file name {}",
+				product.getProductClass(), product.getProductFileName());
 
 		// Upload product via Ingestor
 		String ingestorRestUrl = "/ingest/" + facility.getName();
@@ -1219,6 +1231,10 @@ public class DownloadManager {
 				if (logger.isTraceEnabled())
 					logger.trace(">>> downloadAndIngest:run({}, {}, {})", (null == archive ? "NULL" : archive.getCode()),
 							(null == product ? "NULL" : product.getUuid()), (null == facility ? "NULL" : facility.getName()));
+				
+				if (logger.isTraceEnabled())
+					logger.trace("... download and ingest requested for product of class {} and file name {}",
+							product.getProductClass(), product.getProductFile().get(0).getProductFileName());
 
 				// Log download in lookup table
 				productDownloads.add(product.getUuid());
@@ -1231,8 +1247,7 @@ public class DownloadManager {
 					}
 
 					// Download the product by product UUID
-					IngestorProduct ingestorProduct = null;
-					ingestorProduct = downloadProduct(archive, product, missionCode);
+					IngestorProduct ingestorProduct = downloadProduct(archive, product, missionCode);
 					
 					// Ingest product to prosEO
 					ingestProduct(ingestorProduct, facility, user, password);
