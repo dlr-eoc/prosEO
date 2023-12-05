@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.storagemgr;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -26,6 +27,7 @@ import de.dlr.proseo.storagemgr.model.StorageType;
 import de.dlr.proseo.storagemgr.posix.PosixStorage;
 import de.dlr.proseo.storagemgr.posix.PosixStorageFile;
 import de.dlr.proseo.storagemgr.posix.PosixConfiguration;
+import de.dlr.proseo.storagemgr.posix.PosixDAL;
 
 import de.dlr.proseo.storagemgr.s3.S3Configuration;
 import de.dlr.proseo.storagemgr.s3.S3Storage;
@@ -483,6 +485,26 @@ public class StorageProvider {
 		s3Configuration.setDefaultEndPoint(Boolean.parseBoolean(cfg.getS3DefaultEndPoint()));
 
 		return s3Configuration;
+	}
+	
+	/**
+	 * @param sourceFileOrDir
+	 * @return
+	 * @throws IOException 
+	 */
+	public List<String> copyAbsoluteFilesToCache(String sourceFileOrDir, Long productId ) throws IOException {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> copyAbsoluteFilesToCache({})", sourceFileOrDir);
+				
+		String fileName = new File(sourceFileOrDir).getName();
+		String productFolderWithFilename = Paths.get(String.valueOf(productId), fileName).toString();
+		StorageFile targetFile = getCacheFile(productFolderWithFilename);
+		
+		PosixDAL posixDAL = new PosixDAL(getPosixConfigurationFromFile());
+		
+		return posixDAL.copy(sourceFileOrDir, targetFile.getFullPath());
+
 	}
 	
 	/**
