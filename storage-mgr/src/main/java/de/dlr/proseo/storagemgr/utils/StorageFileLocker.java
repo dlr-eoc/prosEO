@@ -65,7 +65,7 @@ public class StorageFileLocker {
 	 *                                           waiting for the concurrent access
 	 *                                           to terminate
 	 */
-	public void lock() throws FileLockedAfterMaxCyclesException, InterruptedException {
+	public void lockOrWaitUntilUnlocked() throws FileLockedAfterMaxCyclesException, InterruptedException {
 
 		long i = 0;
 

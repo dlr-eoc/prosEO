@@ -76,7 +76,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 				cfg.getFileCheckMaxCycles());
 
 		try {
-		
+
 			RestFileInfo restFileInfo = synchronizedDownloadFromStorageToCache(pathInfo, fileLocker);
 
 			return new ResponseEntity<>(restFileInfo, HttpStatus.OK);
@@ -188,24 +188,25 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		if (!cache.containsKey(targetFile.getFullPath())) {
 
-			fileLocker.lock();
+			fileLocker.lockOrWaitUntilUnlocked();
 
-			// After lock() the active thread downloads the file and put it to the cache
-			// (see
-			// below)
+			// After lock() the active thread starts to download the file and put it to the cache
+			// (see below)
 			// After lock() the passive thread did nothing, but the file has been downloaded
 			// and the cache has been updated - need to check if file contains in the cache
 			// again
+
 			if (!cache.containsKey(targetFile.getFullPath())) {
 
-				// active thread - downloads the file and puts it to the cache
+				// I am active thread - downloads the file and puts it to the cache
 				storageProvider.getStorage().downloadFile(sourceFile, targetFile);
 				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED, targetFile.getFullPath());
 
 				cache.put(targetFile.getFullPath());
+				
 			} else {
 
-				// passive thread - did nothing, just waited until the file has been downloaded
+				// I am passive thread - did nothing, just waited until the file has been downloaded
 				// and use it from cache
 				logger.debug("... waiting-thread when the file downloaded and use it from cache: ",
 						targetFile.getFullPath());
@@ -220,21 +221,21 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		return restFileInfo;
 	}
-	
-	private RestFileInfo synchronizedDownloadFromAbsolutePathToCache(String absolutePath, Long productId, Long fileSize,  StorageFileLocker fileLocker)
-			throws FileLockedAfterMaxCyclesException, IOException, Exception {
+
+	private RestFileInfo synchronizedDownloadFromAbsolutePathToCache(String absolutePath, Long productId, Long fileSize,
+			StorageFileLocker fileLocker) throws FileLockedAfterMaxCyclesException, IOException, Exception {
 
 		StorageFile sourceFile = storageProvider.getAbsoluteFile(absolutePath);
-		
+
 		String fileName = new File(absolutePath).getName();
 		String productFolderWithFilename = Paths.get(String.valueOf(productId), fileName).toString();
 		StorageFile targetFile = storageProvider.getCacheFile(productFolderWithFilename);
-	
+
 		FileCache cache = FileCache.getInstance();
 
 		if (!cache.containsKey(targetFile.getFullPath())) {
 
-			fileLocker.lock();
+			fileLocker.lockOrWaitUntilUnlocked();
 
 			// After lock() the active thread downloads the file and put it to the cache
 			// (see
@@ -245,10 +246,10 @@ public class ProductfileControllerImpl implements ProductfileController {
 			if (!cache.containsKey(targetFile.getFullPath())) {
 
 				// active thread - downloads the file and puts it to the cache
-				
-				// TODO: ADD FUNCTIONALITY DOWNLOAD TO CACHE
-				storageProvider.getStorage().downloadFile(sourceFile, targetFile);
-				
+
+				// TODO: WIP
+				storageProvider.copyAbsoluteFilesToCache(absolutePath, productId);
+
 				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED, targetFile.getFullPath());
 
 				cache.put(targetFile.getFullPath());
