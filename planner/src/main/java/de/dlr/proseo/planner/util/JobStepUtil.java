@@ -1544,8 +1544,8 @@ public class JobStepUtil {
 		}
 		String user = "";
 		String pw = "";
-		user = pq.getJobStep().getJob().getProcessingOrder().getUser();
-		pw = pq.getJobStep().getJob().getProcessingOrder().getPassword();
+		user = pq.getJobStep().getJob().getProcessingOrder().getMission().getCode()+ "-" + config.getAipUser();
+		pw = config.getAipPassword();
 		if (user == null) {
 			user = "";
 			pw = "";

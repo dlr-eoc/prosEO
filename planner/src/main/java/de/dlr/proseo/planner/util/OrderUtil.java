@@ -647,10 +647,6 @@ public class OrderUtil {
 								if (opt.isPresent()) {
 									ProcessingOrder orderx = opt.get();
 									orderx.setOrderState(OrderState.RELEASING);
-									if (user != null && !user.isBlank()) {
-										orderx.setUser(user);
-										orderx.setPassword(pw);
-									}
 									//setStateMessage(order, ProductionPlanner.STATE_MESSAGE_RUNNING); // moved out of transaction, see below
 									orderx.incrementVersion();
 									orderx = RepositoryService.getOrderRepository().save(orderx);

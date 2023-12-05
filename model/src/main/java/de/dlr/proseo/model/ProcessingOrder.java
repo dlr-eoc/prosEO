@@ -71,14 +71,6 @@ public class ProcessingOrder extends PersistentObject {
 	@Column(nullable = false)
 	private UUID uuid;
 	
-	/** The user name for AIP download */
-	@Column(name = "aip_user")
-	private String aipUser;
-
-	/** The password for AIP download */
-	@Column(name = "aip_password")
-	private String aipPassword;
-	
 	/**
 	 * Priority of the ProcessingOrder (lower number means lower priority; value range 1..100 is defined for the ODIP,
 	 * but other values are allowed outside On-Demand Production, including negative numbers). Default value is 50.
@@ -259,34 +251,6 @@ public class ProcessingOrder extends PersistentObject {
 	private Set<MonOrderProgress> monOrderProgress = new HashSet<>();
 	
 	
-	/**
-	 * @return the user
-	 */
-	public String getUser() {
-		return aipUser;
-	}
-
-	/**
-	 * @return the password
-	 */
-	public String getPassword() {
-		return aipPassword;
-	}
-
-	/**
-	 * @param user the user to set
-	 */
-	public void setUser(String user) {
-		this.aipUser = user;
-	}
-
-	/**
-	 * @param password the password to set
-	 */
-	public void setPassword(String password) {
-		this.aipPassword = password;
-	}
-
 	/**
 	 * Gets the owning mission
 	 * 
