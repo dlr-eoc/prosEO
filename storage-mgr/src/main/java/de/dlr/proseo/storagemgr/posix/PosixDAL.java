@@ -10,13 +10,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.logging.messages.StorageMgrMessage;
 import de.dlr.proseo.storagemgr.model.AtomicCommand;
 import de.dlr.proseo.storagemgr.model.DefaultRetryStrategy;
 import de.dlr.proseo.storagemgr.utils.FileUtils;
@@ -302,6 +300,82 @@ public class PosixDAL {
 
 		return downloadedFiles;
 	}
+	
+	/**
+	 * Copies a file from the POSIX file system to another posix file system (normally, to the cache)
+	 * location
+	 *
+	 * @param sourceFile      posix source file 
+	 * @param targetFileOrDir posix target file or directory
+	 * @return path of downloaded file
+	 * @throws IOException if file cannot be downloaded
+	 */
+	public String copyFile(String sourceFile, String targetFileOrDir) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> copyFile({},{})", sourceFile, targetFileOrDir);
+		
+		AtomicCommand<String> fileCopier = new PosixAtomicFileCopier(sourceFile, targetFileOrDir);
+
+		return new DefaultRetryStrategy<>(fileCopier, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
+	}
+
+	/**
+	 * Copies files or directories recursively from the posix file system to another posix file system (normally, to the cache)
+	 *
+	 * @param sourceFileOrDir posix source file or directory 
+	 * @param targetFileOrDir posix target file or directory
+	 * @return path list of copied files
+	 * @throws IOException true if file or directory cannot be copied
+	 */
+	public List<String> copy(String sourceFileOrDir, String targetFileOrDir) throws IOException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> copy({},{})", sourceFileOrDir, targetFileOrDir);
+
+		List<String> copiedFiles = new ArrayList<>();
+
+		if (isFile(sourceFileOrDir)) {
+			String copiedFile = copyFile(sourceFileOrDir, targetFileOrDir);
+			copiedFiles.add(copiedFile);
+			return copiedFiles;
+		}
+
+		String sourceDir = sourceFileOrDir;
+		String targetDir = targetFileOrDir;
+		targetDir = new PathConverter(targetDir).addSlashAtEnd().getPath();
+
+		File directory = new File(sourceDir);
+		File[] files = directory.listFiles();
+		if (files == null)
+			return copiedFiles;
+		Arrays.sort(files);
+
+		for (File file : files) {
+			if (file.isFile()) {
+				String sourceFile = file.getAbsolutePath();
+				String copiedFile = downloadFile(sourceFile, targetDir);
+				copiedFiles.add(copiedFile);
+			}
+		}
+
+		for (File file : files) {
+			if (file.isDirectory()) {
+
+				String sourceSubDir = file.getAbsolutePath();
+				String targetSubDir = Paths.get(targetDir, file.getName()).toString();
+				targetSubDir = new PathConverter(targetSubDir).addSlashAtEnd().getPath();
+
+				// String path = new PathConverter(targetSubDirPath).addSlashAtEnd().getPath();
+				// targetSubDir.setRelativePath(path);
+
+				List<String> subDirFiles = copy(sourceSubDir, targetSubDir);
+				copiedFiles.addAll(subDirFiles);
+			}
+		}
+
+		return copiedFiles;
+	}
 
 	/**
 	 * Deletes file in storage
@@ -331,23 +405,5 @@ public class PosixDAL {
 			logger.trace(">>> delete({})", sourceFileOrDir);
 
 		return new FileUtils(sourceFileOrDir).delete();
-	}
-
-	/**
-	 * Create parent directories for a given path if they do not exist
-	 *
-	 * @param path path
-	 */
-	private void createParentDirectories(String path) {
-
-		if (logger.isTraceEnabled())
-			logger.trace(">>> createParentDirectories({})", path);
-
-		File targetFile = new File(path);
-		File parent = targetFile.getParentFile();
-
-		if (parent != null && !parent.exists() && !parent.mkdirs()) {
-			throw new IllegalStateException("Couldn't create dir: " + parent);
-		}
 	}
 }
