@@ -492,7 +492,7 @@ public class StorageProvider {
 	 * @return
 	 * @throws IOException 
 	 */
-	public List<String> copyAbsoluteFilesToCache(String sourceFileOrDir, Long productId ) throws IOException {
+	public List<String> copyAbsoluteFilesToCache(String sourceFileOrDir, Long productId) throws IOException {
 		
 		if (logger.isTraceEnabled())
 			logger.trace(">>> copyAbsoluteFilesToCache({})", sourceFileOrDir);

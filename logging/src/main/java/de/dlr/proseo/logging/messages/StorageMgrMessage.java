@@ -65,6 +65,12 @@ public enum StorageMgrMessage implements ProseoMessage {
 	CACHE_CLEANUP_REPORT				  (5573, Level.INFO,  true,  "Cache cleanup removed {0} entries from file cache in {1} ms", ""),
 	CACHE_NOT_ENOUGH_SPACE_AFTER_CLEANING (5574, Level.ERROR, false, "Disk usage {0} exceeds maximum usage {1} after emptying cache", ""),
 	CACHE_FILE_NOT_DELETED 				  (5575, Level.WARN,  false, "Cache File was not deleted: {0}", ""),
+	
+	/** Downloaded = retrieved */
+	PRODUCT_FILE_DOWNLOADED_FROM_EXTERNAL_TO_CACHE 	(5581, Level.INFO,  true,  "Product file downloaded from external storage to cache: {0}", ""),  
+	/** Uploaded = registered */
+	PRODUCT_FILE_UPLOADED_FROM_CACHE_TO_STORAGE     (5552, Level.INFO,  true,  "Product file {0} uploaded from cache to storage for product {1}", ""),  
+	
 	;
 
 	private final int code;
