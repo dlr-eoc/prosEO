@@ -694,7 +694,7 @@ public class OrderUtil {
 						if (ordery != null) {
 							String threadName = ProductionPlanner.RELEASE_THREAD_PREFIX + ordery.getId();
 							if (!productionPlanner.getReleaseThreads().containsKey(threadName)) {
-								rt = new OrderReleaseThread(productionPlanner, em, jobUtil, ordery, threadName, user, pw);
+								rt = new OrderReleaseThread(productionPlanner, em, jobUtil, ordery, threadName);
 								productionPlanner.getReleaseThreads().put(threadName, rt);
 							}
 							logOrderState(order);

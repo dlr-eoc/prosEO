@@ -81,7 +81,7 @@ public class ServiceConnection {
 	 * @throws RuntimeException if the service returned an HTTP status different from OK (200)
 	 */
 	public <T> T getFromService(String serviceUrl, String requestPath, Class<T> clazz, String username, String password) throws RestClientException, RuntimeException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getFromService({}, {}, {}, user, password)", serviceUrl, requestPath, clazz);
+		if (logger.isTraceEnabled()) logger.trace(">>> getFromService({}, {}, {}, {}, password)", serviceUrl, requestPath, clazz, username);
 		
 		// Attempt connection to service
 		ResponseEntity<T> entity = null;
@@ -98,10 +98,11 @@ public class ServiceConnection {
 			throw new HttpClientErrorException(e.getStatusCode(), message);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
 			String warningMessage = http.extractProseoMessage(e.getResponseHeaders().getFirst(HttpHeaders.WARNING));
-			if (warningMessage == null) 
+			if (HttpStatus.UNAUTHORIZED.equals(e.getStatusCode())) {
+				logger.log(PlannerMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
+			} else {
 				logger.log(PlannerMessage.EXTRACTED_MESSAGE, warningMessage);
-				else
-					logger.log(PlannerMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
+			}
 			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
 		} catch (RestClientResponseException e) {
 			logger.log(PlannerMessage.HTTP_REQUEST_FAILED, e.getMessage());
