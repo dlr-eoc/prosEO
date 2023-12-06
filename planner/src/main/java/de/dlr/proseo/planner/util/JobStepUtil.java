@@ -896,7 +896,7 @@ public class JobStepUtil {
 								if (pq.getInDownload()) {
 									pq.setInDownload(false);
 								} else {
-									if (!pq.getInDownload() && pq.getSatisfyingProducts().isEmpty()) {
+									if (!pq.getInDownload() && !pq.getIsSatisfied() && pq.getGeneratingRule().isMandatory()) {
 										// An optional query will be satisfied, even if there are no input products (locally)
 										// Try to fetch more input products from some external archive
 										pq.setInDownload(true);
