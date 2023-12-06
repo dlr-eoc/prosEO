@@ -21,11 +21,12 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -49,7 +50,7 @@ import de.dlr.proseo.usermgr.rest.model.RestUser;
  * @author Dr. Thomas Bassler
  */
 @Component
-@Transactional
+@Transactional(isolation = Isolation.REPEATABLE_READ)
 public class GroupManager {
 
 	/** Repository for User group objects */
