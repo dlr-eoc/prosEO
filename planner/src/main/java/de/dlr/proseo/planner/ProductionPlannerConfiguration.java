@@ -91,6 +91,28 @@ public class ProductionPlannerConfiguration {
 	/** The URI of the AIP client (protocol, host name, port, context; no terminating slash) */
 	@Value("${proseo.aip.url}")
 	private String aipUrl;
+	
+	/** The user of the AIP client */
+	@Value("${proseo.aip.user}")
+	private String aipUser;
+	
+	/** The password of the AIP client */
+	@Value("${proseo.aip.password}")
+	private String aipPassword;
+
+	/**
+	 * @return the aipUser
+	 */
+	public String getAipUser() {
+		return aipUser;
+	}
+
+	/**
+	 * @return the aipPassword
+	 */
+	public String getAipPassword() {
+		return aipPassword;
+	}
 
 	/**
 	 * Gets the AIP URL
