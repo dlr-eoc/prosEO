@@ -686,35 +686,36 @@ public class ProcessingOrderMgr {
 		boolean stateChangeOnly = true;
 		ProcessingOrder changedOrder = OrderUtil.toModelOrder(order);
 
-		// Mission code and UUID cannot be changed
+		// Mission code and UUID may not be changed
 		if (!modelOrder.getMission().equals(changedOrder.getMission()))
 			throw new IllegalArgumentException(
 					logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "mission", modelOrder.getIdentifier()));
 		if (!modelOrder.getUuid().equals(changedOrder.getUuid()))
 			throw new IllegalArgumentException(
 					logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "UUID", modelOrder.getIdentifier()));
-
-		// ODIP: Workflow and input product reference may not be changed
-		if (null != modelOrder.getInputProductReference()
-				&& !modelOrder.getInputProductReference().equals(changedOrder.getInputProductReference()))
-			throw new IllegalArgumentException(
-					logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "input product reference", modelOrder.getIdentifier()));
-
-		if (null == modelOrder.getWorkflow() && ((null != order.getWorkflowName()) || (null != order.getWorkflowUuid())))
-			throw new IllegalArgumentException(
-					logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "workflow", modelOrder.getIdentifier()));
-
-		if (null != modelOrder.getWorkflow() && (order.getWorkflowName() != modelOrder.getWorkflow().getName()
-				|| order.getWorkflowUuid() != modelOrder.getWorkflow().getUuid().toString()))
-			throw new IllegalArgumentException(
-					logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "workflow", modelOrder.getIdentifier()));
-
 	
+		// Workflow and input product reference may not be changed
+		if ((null != modelOrder.getInputProductReference() && null == order.getInputProductReference())
+				|| (null != modelOrder.getInputProductReference() && !modelOrder.getInputProductReference()
+					.getInputFileName()
+					.equals(order.getInputProductReference().getInputFileName()))
+				|| (null == modelOrder.getInputProductReference() && null != order.getInputProductReference())) {
+			throw new IllegalArgumentException(
+					logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "inputProductReference", modelOrder.getIdentifier()));
+		}
+		if ((null != modelOrder.getWorkflow() && !modelOrder.getWorkflow().getUuid().toString().equals(order.getWorkflowUuid()))
+				|| (null == modelOrder.getWorkflow() && null != order.getWorkflowUuid())) {
+			throw new IllegalArgumentException(
+					logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "workflow", modelOrder.getIdentifier()));
+		}
+		
+		// Modify attributes
 		if (!modelOrder.getIdentifier().equals(changedOrder.getIdentifier())) {
 			orderChanged = true;
 			stateChangeOnly = false;
 			modelOrder.setIdentifier(changedOrder.getIdentifier());
 		}
+		
 		if (!modelOrder.getOrderSource().equals(changedOrder.getOrderSource())) {
 			orderChanged = true;
 			stateChangeOnly = false;
@@ -818,7 +819,7 @@ public class ProcessingOrderMgr {
 			orderChanged = true;
 			stateChangeOnly = false;
 			modelOrder.setHasFailedJobSteps(changedOrder.getHasFailedJobSteps());
-		}
+		}		
 
 		// Check for changes in input filters
 		Map<ProductClass, InputFilter> newInputFilters = new HashMap<>();
