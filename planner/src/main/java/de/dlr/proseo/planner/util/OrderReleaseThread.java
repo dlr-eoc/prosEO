@@ -68,23 +68,6 @@ public class OrderReleaseThread extends Thread {
 	 */
 	private PlannerResultMessage resultMessage;
 
-	private String user;
-	private String pw;
-
-	/**
-	 * @return the user
-	 */
-	public String getUser() {
-		return user;
-	}
-
-	/**
-	 * @return the pw
-	 */
-	public String getPw() {
-		return pw;
-	}
-
 	/**
 	 * @return the resultMessage
 	 */
@@ -104,14 +87,12 @@ public class OrderReleaseThread extends Thread {
 	 * @param pw the password for calling other prosEO services (e. g. AIP Client)
 	 */
 	public OrderReleaseThread(ProductionPlanner productionPlanner, EntityManager em, JobUtil jobUtil, ProcessingOrder order, 
-			String name, String user, String pw) {
+			String name) {
 		super(name);
 		this.productionPlanner = productionPlanner;
 		this.em = em;
 		this.jobUtil = jobUtil;
 		this.order = order;
-		this.user = user;
-		this.pw = pw;
 	}
 
 	/**
