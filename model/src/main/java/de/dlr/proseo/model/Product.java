@@ -815,7 +815,7 @@ public class Product extends PersistentObject {
 			return false;
 		Product other = (Product) obj;
 		
-		// Same UUIDs or at least one UUID is null
+		// Both UUIDs are set: Same UUIDs?
 		if (null != uuid) {
 			if (uuid.equals(other.getUuid())) {
 				return true;

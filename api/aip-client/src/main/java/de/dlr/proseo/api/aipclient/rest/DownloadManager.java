@@ -19,6 +19,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -80,6 +81,8 @@ import de.dlr.proseo.api.aipclient.rest.model.RestParameter;
 import de.dlr.proseo.api.aipclient.rest.model.RestProduct;
 import de.dlr.proseo.api.aipclient.rest.model.RestProductFile;
 import de.dlr.proseo.basewrap.MD5Util;
+import de.dlr.proseo.basewrap.BaseWrapper.WrapperException;
+import de.dlr.proseo.interfaces.rest.model.RestMessage;
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -106,6 +109,9 @@ import reactor.netty.http.client.HttpClient;
 
 /**
  * Class to handle product downloads from remote Long-term Archives
+ * <br>
+ * Archive queries are restricted to the logged-in mission using the first three characters of the file name,
+ * as per the EO GS File Format Standard (PE-TN-ESA-GS-0001), issue 3.01, sec. 4.1 
  *
  * @author Dr. Thomas Bassler
  */
@@ -113,6 +119,7 @@ import reactor.netty.http.client.HttpClient;
 @Transactional
 public class DownloadManager {
 
+	private static final String FAILURE_NOTIFICATION_SUBJECT = "AIP Client Failure";
 	// OData URL components for AIP and PRIP
 	private static final String ODATA_CONTEXT = "odata/v1";
 	private static final String ODATA_ENTITY_ORDERS = "Orders";
@@ -191,6 +198,42 @@ public class DownloadManager {
 		ODATA_TO_PARAMTYPE_MAP.put("Double", ParameterType.DOUBLE.toString());
 		ODATA_TO_PARAMTYPE_MAP.put("Boolean", ParameterType.BOOLEAN.toString());
 		ODATA_TO_PARAMTYPE_MAP.put("DateTimeOffset", ParameterType.INSTANT.toString());
+	}
+
+	/**
+	 * Send a (failure) notification message to the configured recipient
+	 *
+	 * @param message the message to send
+	 */
+	private void notifyUser(String message) {
+		if (logger.isTraceEnabled()) logger.trace(">>> notifyUser({})", message);
+
+		try {
+			// Create a request
+			WebClient webClient = WebClient.create(config.getNotificationUrl());
+			RequestBodySpec request = webClient.post().accept(MediaType.TEXT_PLAIN);
+
+			// Build message body
+			RestMessage newMessage = new RestMessage(
+					config.getNotificationRecipient(), 
+					null, null,
+					FAILURE_NOTIFICATION_SUBJECT,
+					null, null, true,
+					message,
+					config.getNotificationSender());
+			
+			String jsonMessage = (new ObjectMapper()).writeValueAsString(newMessage);
+
+			// Send message to notification service
+			String notificationResponse = request.syncBody(jsonMessage).retrieve().bodyToMono(String.class).block();
+			
+			if (logger.isTraceEnabled()) logger.trace("... notification response: ", notificationResponse);
+			
+		} catch (Exception e) {
+			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass().getName() + "/" + e.getMessage());
+			if (logger.isDebugEnabled()) logger.debug("Stack trace: ", e);
+			// otherwise ignore (if the message does not get sent, we cannot help it, since we are in failure handling anyway)
+		}
 	}
 
 	/**
@@ -634,8 +677,7 @@ public class DownloadManager {
 	 * @return the bearer token as received from the archive, or null, if the request failed
 	 */
 	private String getBearerToken(ProductArchive archive) {
-		if (logger.isTraceEnabled())
-			logger.trace(">>> getBearerToken()");
+		if (logger.isTraceEnabled()) logger.trace(">>> getBearerToken()");
 
 		// Create a request
 		WebClient webClient = WebClient.create(archive.getBaseUri());
@@ -991,6 +1033,38 @@ public class DownloadManager {
 	}
 
 	/**
+	 * Create product representation for Ingestor (mission-specific subclasses may want to override this method
+	 * to set the attributes from inspecting the downloaded product)
+	 * 
+	 * @param product the product metadata as received from the archive
+	 * @param missionCode the code of the mission to ingest to
+	 * @return a product representation suitable for ingestion
+	 */
+	protected IngestorProduct setProductMetadata(RestProduct product, String missionCode) {
+		if (logger.isTraceEnabled()) logger.trace(">>> setProductMetadata({}, {})", product, missionCode);
+
+		IngestorProduct ingestorProduct = new IngestorProduct();
+		ingestorProduct.setMissionCode(missionCode);
+		ingestorProduct.setUuid(product.getUuid());
+		ingestorProduct.setProductClass(product.getProductClass());
+		ingestorProduct.setProductQuality(ProductQuality.NOMINAL.toString());
+		ingestorProduct.setSensingStartTime(product.getSensingStartTime());
+		ingestorProduct.setSensingStopTime(product.getSensingStopTime());
+		ingestorProduct.setGenerationTime(product.getGenerationTime());
+		ingestorProduct.setPublicationTime(product.getPublicationTime());
+		ingestorProduct.setProductionType(product.getProductionType());
+		ingestorProduct.getParameters().addAll(product.getParameters());
+
+		RestProductFile restProductFile = product.getProductFile().get(0);
+		ingestorProduct.setProductFileName(restProductFile.getProductFileName());
+		ingestorProduct.setFileSize(restProductFile.getFileSize());
+		ingestorProduct.setChecksum(restProductFile.getChecksum());
+		ingestorProduct.setChecksumTime(restProductFile.getChecksumTime());
+		
+		return ingestorProduct;
+	}
+
+	/**
 	 * Download a product by UUID from the given archive
 	 *
 	 * @param archive the archive to download from
@@ -1109,27 +1183,8 @@ public class DownloadManager {
 		logger.log(AipClientMessage.PRODUCT_TRANSFER_COMPLETED, product.getUuid(), restProductFile.getProductFileName(),
 				restProductFile.getFileSize(), restProductFile.getChecksum(), product.getPublicationTime());
 
-		// Create product representation for Ingestor
-		IngestorProduct ingestorProduct = new IngestorProduct();
-		ingestorProduct.setMissionCode(missionCode);
-		ingestorProduct.setUuid(product.getUuid());
-		ingestorProduct.setProductClass(product.getProductClass());
-		ingestorProduct.setProductQuality(ProductQuality.NOMINAL.toString());
-		ingestorProduct.setSensingStartTime(product.getSensingStartTime());
-		ingestorProduct.setSensingStopTime(product.getSensingStopTime());
-		ingestorProduct.setGenerationTime(product.getGenerationTime());
-		ingestorProduct.setPublicationTime(product.getPublicationTime());
-		ingestorProduct.setProductionType(product.getProductionType());
-		ingestorProduct.getParameters().addAll(product.getParameters());
-
-		// Set ingestion-specific attributes
-		ingestorProduct.setSourceStorageType(StorageType.POSIX.toString());
-		ingestorProduct.setMountPoint(config.getStorageMgrMountPoint());
-		ingestorProduct.setFilePath(config.getStorageMgrSourceDir());
-		ingestorProduct.setProductFileName(restProductFile.getProductFileName());
-		ingestorProduct.setFileSize(restProductFile.getFileSize());
-		ingestorProduct.setChecksum(restProductFile.getChecksum());
-		ingestorProduct.setChecksumTime(restProductFile.getChecksumTime());
+		// Set the product metadata (mission-specific subclasses may inspect the downloaded product)
+		IngestorProduct ingestorProduct = setProductMetadata(product, missionCode);
 		
 		if (logger.isTraceEnabled()) logger.trace("... ingestor product metadata with product class {} and file name {} created",
 				ingestorProduct.getProductClass(), ingestorProduct.getProductFileName());
@@ -1154,6 +1209,17 @@ public class DownloadManager {
 		
 		if (logger.isTraceEnabled()) logger.trace("... ingestion requested for product of class {} and file name {}",
 				product.getProductClass(), product.getProductFileName());
+		
+		// Set ingestion-specific attributes
+		product.setSourceStorageType(StorageType.POSIX.toString());
+		product.setMountPoint(config.getStorageMgrMountPoint());
+		product.setFilePath(config.getStorageMgrSourceDir());
+
+		// Set product eviction time, if requested
+		if (0 < config.getIngestorProductRetention()) {
+			product.setEvictionTime(OrbitTimeFormatter.format(
+					Instant.now().plus(config.getIngestorProductRetention(), ChronoUnit.DAYS)));
+		}
 
 		// Upload product via Ingestor
 		String ingestorRestUrl = "/ingest/" + facility.getName();
@@ -1251,12 +1317,16 @@ public class DownloadManager {
 					
 					// Ingest product to prosEO
 					ingestProduct(ingestorProduct, facility, user, password);
-				} catch (InterruptedException | IOException e) {
-					// Already logged, just finish this thread
 				} catch (Exception e) {
-					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass().getName() + "/" + e.getMessage());
-					if (logger.isDebugEnabled())
-						logger.debug("Stack trace: ", e);
+					String message = null;
+					if (e instanceof InterruptedException || e instanceof IOException) {
+						// Already logged
+						message = e.getMessage();
+					} else {
+						message = logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass().getName() + "/" + e.getMessage());
+						if (logger.isDebugEnabled()) logger.debug("Stack trace: ", e);
+					}
+					notifyUser(message);
 				} finally {
 					// Remove download from lookup table
 					productDownloads.remove(product.getUuid());
@@ -1311,7 +1381,9 @@ public class DownloadManager {
 
 	/**
 	 * Query the given archive for the first product matching the given product type and sensing start/stop times, download it and
-	 * ingest it to the prosEO Storage Manager backend storage.
+	 * ingest it to the prosEO Storage Manager backend storage.<br>
+	 * Queries are restricted to the logged-in mission using the first three characters of the file name,
+	 * as per the EO GS File Format Standard (PE-TN-ESA-GS-0001), issue 3.01, sec. 4.1 
 	 *
 	 * @param archive            the archive to query
 	 * @param productType        the product type to look for
@@ -1353,7 +1425,10 @@ public class DownloadManager {
 				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart);
 			break;
 		default:
-			queryFilter = "ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
+			queryFilter = 
+				"(startswith(Name,'" + securityService.getMission() + "')"
+					+ " or startswith(Name,'" + securityService.getMission().substring(0, 2) + "_'))"
+				+ " and ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
 				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart)
 				+ " and Attributes/OData.CSC.StringAttribute/any(" + "att:att/Name eq 'productType' "
 				+ "and att/OData.CSC.StringAttribute/Value eq '" + productType + "')";
@@ -1399,7 +1474,9 @@ public class DownloadManager {
 
 	/**
 	 * Query the given archive for all products matching the given product type and intersecting the given sensing start/stop time
-	 * interval, download them and ingest them to the prosEO Storage Manager backend storage.
+	 * interval, download them and ingest them to the prosEO Storage Manager backend storage.<br>
+	 * Queries are restricted to the logged-in mission using the first three characters of the file name,
+	 * as per the EO GS File Format Standard (PE-TN-ESA-GS-0001), issue 3.01, sec. 4.1 
 	 *
 	 * @param archive            the archive to query
 	 * @param productType        the product type to look for
@@ -1441,7 +1518,10 @@ public class DownloadManager {
 				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart);
 			break;
 		default:
-			queryFilter = "ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
+			queryFilter =
+				"(startswith(Name,'" + securityService.getMission() + "')"
+					+ " or startswith(Name,'" + securityService.getMission().substring(0, 2) + "_'))"
+				+ " and ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
 				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart)
 				+ " and Attributes/OData.CSC.StringAttribute/any(" + "att:att/Name eq 'productType' "
 				+ "and att/OData.CSC.StringAttribute/Value eq '" + productType + "')";

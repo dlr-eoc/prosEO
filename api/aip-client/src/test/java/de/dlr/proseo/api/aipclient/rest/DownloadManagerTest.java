@@ -71,6 +71,7 @@ public class DownloadManagerTest {
 	
 	// Database test data
 	private static final String TEST_MISSION_NAME = "Unit Test Mission";
+	private static final String TEST_MISSION_CODE = "UTM";
 	private static final String TEST_FACILITY = "testfac";
 	private static final String TEST_LTA_1 = "lta1";
 	private static final String TEST_LTA_2 = "lta2";
@@ -86,8 +87,8 @@ public class DownloadManagerTest {
 	private static final String TEST_USER = "dummy";
 	
 	// Mock LTA test data
-	private static final String TEST_FILENAME_1 = "UTM_OPER_L0__ODB_1__20210101T000510_20210101T002508_16680_03.RAW";
-	private static final String TEST_FILENAME_2 = "UTM_OPER_L0__ODB_1__20210101T001510_20210101T003508_16680_04.RAW";
+	private static final String TEST_FILENAME_1 = TEST_MISSION_CODE + "_OPER_L0__ODB_1__20210101T000510_20210101T002508_16680_03.RAW";
+	private static final String TEST_FILENAME_2 = TEST_MISSION_CODE + "_OPER_L0__ODB_1__20210101T001510_20210101T003508_16680_04.RAW";
 	private static final String TEST_NON_EXISTENT_FILENAME = "non-existent-filename";
 	private static final String TEST_START_TIME = "2021-01-01T00:05:10.123Z";
 	private static final String TEST_STOP_TIME = "2021-01-01T00:25:08.234Z";
@@ -112,7 +113,10 @@ public class DownloadManagerTest {
 				+ TEST_NON_EXISTENT_FILENAME
 				+ "'&%24count=true&%24top=1000&%24expand=Attributes"; 
 	private static final String LTA_QUERY_BY_TIME = 
-			"Products?%24filter=ContentDate%2FStart%20eq%20" 
+			"Products?%24filter="
+				+ "%28startswith%28Name%2C'" + TEST_MISSION_CODE + "'%29"
+				+ "%20or%20startswith%28Name%2C'" + TEST_MISSION_CODE.substring(0, 2) + "_'%29%29"
+				+ "%20and%20ContentDate%2FStart%20eq%20" 
 				+ TEST_START_TIME.replaceAll(":", "%3A")
 				+ "%20and%20ContentDate%2FEnd%20eq%20" 
 				+ TEST_STOP_TIME.replaceAll(":", "%3A")
@@ -121,7 +125,10 @@ public class DownloadManagerTest {
 				+ TEST_PRODUCT_TYPE 
 				+ "'%29&%24count=true&%24top=1000&%24expand=Attributes";
 	private static final String LTA_QUERY_BY_INVALID_TIME = 
-			"Products?%24filter=ContentDate%2FStart%20eq%20" 
+			"Products?%24filter="
+				+ "%28startswith%28Name%2C'" + TEST_MISSION_CODE + "'%29"
+				+ "%20or%20startswith%28Name%2C'" + TEST_MISSION_CODE.substring(0, 2) + "_'%29%29"
+				+ "%20and%20ContentDate%2FStart%20eq%20" 
 				+ TEST_START_TIME_INVALID.replaceAll(":", "%3A")
 				+ "%20and%20ContentDate%2FEnd%20eq%20" 
 				+ TEST_STOP_TIME_INVALID.replaceAll(":", "%3A")
@@ -130,7 +137,10 @@ public class DownloadManagerTest {
 				+ TEST_PRODUCT_TYPE 
 				+ "'%29&%24count=true&%24top=1000&%24expand=Attributes";
 	private static final String LTA_QUERY_ALL_BY_TIME = 
-			"Products?%24filter=ContentDate%2FStart%20lt%20" 
+			"Products?%24filter="
+				+ "%28startswith%28Name%2C'" + TEST_MISSION_CODE + "'%29"
+				+ "%20or%20startswith%28Name%2C'" + TEST_MISSION_CODE.substring(0, 2) + "_'%29%29"
+				+ "%20and%20ContentDate%2FStart%20lt%20" 
 				+ TEST_STOP_TIME.replaceAll(":", "%3A")
 				+ "%20and%20ContentDate%2FEnd%20gt%20" 
 				+ TEST_START_TIME.replaceAll(":", "%3A")
@@ -139,7 +149,10 @@ public class DownloadManagerTest {
 				+ TEST_PRODUCT_TYPE 
 				+ "'%29&%24count=true&%24top=1000&%24expand=Attributes";
 	private static final String LTA_QUERY_ALL_BY_INVALID_TIME = 
-			"Products?%24filter=ContentDate%2FStart%20lt%20" 
+			"Products?%24filter="
+				+ "%28startswith%28Name%2C'" + TEST_MISSION_CODE + "'%29"
+				+ "%20or%20startswith%28Name%2C'" + TEST_MISSION_CODE.substring(0, 2) + "_'%29%29"
+				+ "%20and%20ContentDate%2FStart%20lt%20" 
 				+ TEST_STOP_TIME_INVALID.replaceAll(":", "%3A")
 				+ "%20and%20ContentDate%2FEnd%20gt%20" 
 				+ TEST_START_TIME_INVALID.replaceAll(":", "%3A")

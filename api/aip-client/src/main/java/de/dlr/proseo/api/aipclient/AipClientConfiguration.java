@@ -32,6 +32,10 @@ public class AipClientConfiguration {
 	@Value("${proseo.ingestor.timeout}")
 	private Long ingestorTimeout;
 
+	/** Retention period for ingested products in days (e. g. 7 days; 0 means never evict) */
+	@Value("${proseo.ingestor.product.retention:7}")
+	private Long ingestorProductRetention;
+
 	/** The Storage Manager mount point for product ingestion */
 	@Value("${proseo.storagemgr.mountpoint}")
 	private String storageMgrMountPoint;
@@ -51,6 +55,18 @@ public class AipClientConfiguration {
 	/** Maximum number of parallel download threads */
 	@Value("${proseo.archive.threads}")
 	private Integer archiveThreads;
+
+	/** URL of the Notification Service */
+	@Value("${proseo.notification.url}")
+	private String notificationUrl;
+
+	/** URL of the message recipient (supports protocols as per Notification Service API, including "mailto:" and "http[s]:") */
+	@Value("${proseo.notification.recipient}")
+	private String notificationRecipient;
+
+	/** Sender identification */
+	@Value("${proseo.notification.sender}")
+	private String notificationSender;
 
 	/**
 	 * Gets the path to the directory to download files to
@@ -77,6 +93,15 @@ public class AipClientConfiguration {
 	 */
 	public Long getIngestorTimeout() {
 		return ingestorTimeout;
+	}
+
+	/**
+	 * Gets the retention period for ingested products in days
+	 * 
+	 * @return the product retention period
+	 */
+	public Long getIngestorProductRetention() {
+		return ingestorProductRetention;
 	}
 
 	/**
@@ -122,6 +147,33 @@ public class AipClientConfiguration {
 	 */
 	public Integer getArchiveThreads() {
 		return archiveThreads;
+	}
+
+	/**
+	 * Gets the URL of the Notification Service
+	 * 
+	 * @return the Notification Service URL
+	 */
+	public String getNotificationUrl() {
+		return notificationUrl;
+	}
+
+	/**
+	 * Gets the URL of the message recipient
+	 * 
+	 * @return the notification recipient's URL
+	 */
+	public String getNotificationRecipient() {
+		return notificationRecipient;
+	}
+
+	/**
+	 * Gets the sender identification
+	 * 
+	 * @return the notification sender
+	 */
+	public String getNotificationSender() {
+		return notificationSender;
 	}
 	
 }
