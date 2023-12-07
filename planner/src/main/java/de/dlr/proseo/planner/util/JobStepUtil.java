@@ -893,19 +893,15 @@ public class JobStepUtil {
 					if (!pq.isSatisfied()) {
 						if (productQueryService.executeQuery(pq, false)) {
 							if (js.getJob().getProcessingOrder().getOrderSource() == OrderSource.ODIP) {
-								if (pq.getInDownload()) {
-									pq.setInDownload(false);
-								} else {
-									if (!pq.getInDownload() && pq.getSatisfyingProducts().isEmpty()) {
-										// An optional query will be satisfied, even if there are no input products (locally)
-										// Try to fetch more input products from some external archive
-										pq.setInDownload(true);
-										startAipDownload(pq);
-										// Prevent immediate start of job step without completion of download
-										// TODO The download state must be annotated with the product, the current implementation is not safe
-										pq.setIsSatisfied(false);
-										hasUnsatisfiedInputQueries = true;
-									}
+								if (!pq.getInDownload() && pq.getSatisfyingProducts().isEmpty()) {
+									// An optional query will be satisfied, even if there are no input products (locally)
+									// Try to fetch more input products from some external archive
+									pq.setInDownload(true);
+									startAipDownload(pq);
+									// Prevent immediate start of job step without completion of download
+									// TODO The download state must be annotated with the product, the current implementation is not safe
+									pq.setIsSatisfied(false);
+									hasUnsatisfiedInputQueries = true;
 								}
 							}
 
@@ -1544,9 +1540,11 @@ public class JobStepUtil {
 		}
 		String user = "";
 		String pw = "";
-		if (Thread.currentThread() instanceof OrderReleaseThread) {
-			user = ((OrderReleaseThread) Thread.currentThread()).getUser();
-			pw = ((OrderReleaseThread) Thread.currentThread()).getPw();
+		user = pq.getJobStep().getJob().getProcessingOrder().getMission().getCode()+ "-" + config.getAipUser();
+		pw = config.getAipPassword();
+		if (user == null) {
+			user = "";
+			pw = "";
 		}
 		Boolean retry = false;
 		for (SimplePolicy simplePolicy : pq.getGeneratingRule().getSimplePolicies()) {

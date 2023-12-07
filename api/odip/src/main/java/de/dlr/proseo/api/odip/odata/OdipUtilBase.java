@@ -609,8 +609,21 @@ public class OdipUtilBase {
 		}
 		if (restOrder.getWorkflowUuid() != null) {
 			workflow = RepositoryService.getWorkflowRepository().findByUuid(UUID.fromString(restOrder.getWorkflowUuid()));
+			if (null != workflow) {
 			if (null != restOrder.getWorkflowName() && !workflow.getName().equals(restOrder.getWorkflowName())) {
 				workflow = null;
+			}
+		}
+		}
+		if (null == workflow && null != restOrder.getWorkflowName()) {
+			List<Workflow> workflows = RepositoryService.getWorkflowRepository()
+					.findByMissionCodeAndName(securityConfig.getMission(), restOrder.getWorkflowName());
+			for (Workflow wf : workflows) {
+				if (workflow == null) {
+					workflow = wf;
+				} else if (workflow.getVersion() < wf.getVersion()) {
+					workflow = wf;
+				}
 			}
 		}
 		if (workflow == null) {
@@ -941,6 +954,8 @@ public class OdipUtilBase {
 			execTime = execTime.plusMillis(execDelay);
 			restOrder.setExecutionTime(Date.from(execTime));
 		}
+		restOrder.setWorkflowUuid(workflow.getUuid().toString());
+		restOrder.setWorkflowName(workflow.getName());
 		return restOrder;
 	}
 
