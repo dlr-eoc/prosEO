@@ -4,14 +4,14 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo</artifactId>
-		<version>0.9.5-SNAPSHOT</version>
+		<version>0.9.5</version>
 	</parent>
 
 	<artifactId>proseo-geotools</artifactId>
 	<name>prosEO Geotools</name>
 
 	<properties>
-		<module.version>0.9.5-SNAPSHOT</module.version>
+		<module.version>0.9.5</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/geotools-api.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.geotools.rest</raml-base-package>

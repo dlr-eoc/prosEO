@@ -16,10 +16,10 @@
 -docencoding
 'UTF-8'
 -doctitle
-'prosEO Logging 0.9.5-SNAPSHOT API'
+'prosEO Logging 0.9.5 API'
 -linkoffline
 'https://docs.oracle.com/en/java/javase/11/docs/api' '/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/logging/target/javadoc-bundle-options'
 -use
 -version
 -windowtitle
-'prosEO Logging 0.9.5-SNAPSHOT API'
+'prosEO Logging 0.9.5 API'
