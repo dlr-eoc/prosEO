@@ -56,6 +56,10 @@ proseo:
     aip:
         # URL for AIP client
         url: http://proseo-aip-client/proseo/api/aip-client/v0.1
+        # user without mission prefix for AIP client, user has to be defined in all missions of system
+        user: user
+        # password for AIP client
+        password: password
     posix:
         workerMountPoint: /proseo/data
         
