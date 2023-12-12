@@ -15,6 +15,8 @@ proseo:
         directory: /Path/to/WebDAV/volume/NOMINAL
         # Interval between pickup point checks in milliseconds (e. g. every min)
         check.interval: 60000
+        # Retrieval delay in milliseconds (to avoid concurrent EDIP access by multiple PDGSs, e. g. 30 min; default 0)
+        #retrieval.delay: 1800000
         
         # Download history
         history:
