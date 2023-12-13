@@ -20,9 +20,6 @@ proseo:
         url: http://localhost:8082/proseo/order-mgr/v0.1
     productionPlanner:
         url: http://localhost:8083/proseo/planner/v0.1
-        # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
-        filecheckwaittime: 1000
-        filecheckmaxcycles: 50
     processorManager:
         url: http://localhost:8084/proseo/processor-mgr/v0.1
     productClassManager:

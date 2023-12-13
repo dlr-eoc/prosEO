@@ -685,8 +685,8 @@ public class ProcessingOrderMgrTest {
 		po.setWorkflow(RepositoryService.getWorkflowRepository()
 				.findByMissionCodeAndNameAndVersion("UTM", testWorkflow[0][0], testWorkflowVersion));
 		testOrder.setId(RepositoryService.getOrderRepository().save(po).getId());
-		testOrder.setWorkflowName(testWorkflow[0][0]);
-		testOrder.setWorkflowUuid(testWorkflow[0][1]);
+		testOrder.setWorkflowName(testWorkflow[1][0]);
+		testOrder.setWorkflowUuid(testWorkflow[1][1]);
 		assertThrows(IllegalArgumentException.class, () -> pom.modifyOrder(testOrder.getId(), testOrder));
 	}
 

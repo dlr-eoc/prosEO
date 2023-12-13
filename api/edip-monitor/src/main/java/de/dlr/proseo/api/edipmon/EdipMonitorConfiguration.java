@@ -35,6 +35,10 @@ public class EdipMonitorConfiguration {
 	@Value("${proseo.edip.check.interval}")
 	private Long edipCheckInterval;
 
+	/** The Retrieval delay in milliseconds (to avoid concurrent EDIP access by multiple PDGSs, default 0) */
+	@Value("${proseo.edip.retrieval.delay:0}")
+	private Long edipRetrievalDelay;
+
 	/** The path to the file for storing transfer history */
 	@Value("${proseo.edip.history.file}")
 	private String edipHistoryPath;
@@ -126,6 +130,15 @@ public class EdipMonitorConfiguration {
 	 */
 	public Long getEdipCheckInterval() {
 		return edipCheckInterval;
+	}
+
+	/**
+	 * Gets the retrieval delay for the pickup point
+	 *
+	 * @return the EDIP retrieval delay in ms
+	 */
+	public Long getEdipRetrievalDelay() {
+		return edipRetrievalDelay;
 	}
 
 	/**

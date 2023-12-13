@@ -1,1 +1,1 @@
-FROM localhost:5000/proseo-sample-wrapper:0.9.5-SNAPSHOT
+FROM localhost:5000/proseo-sample-wrapper:0.9.5

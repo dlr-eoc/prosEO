@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributeView;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -358,6 +359,7 @@ public class EdipMonitor extends BaseMonitor {
 					List<Path> dsibFilePaths = new ArrayList<>();
 
 					String[] channelEntries = sessionEntry.toFile().list();
+					Instant latestDsibTimestamp = Instant.MIN;
 					if (null == channelEntries) {
 						logger.log(ApiMonitorMessage.SKIPPING_SESSION_DIRECTORY, sessionEntry.getFileName().toString());
 						return;
@@ -387,7 +389,28 @@ public class EdipMonitor extends BaseMonitor {
 							logger.log(ApiMonitorMessage.SESSION_TRANSFER_INCOMPLETE, sessionEntry.getFileName().toString());
 							return;
 						}
+						
+						// Check DSIB file timestamp
+						try {
+							Instant dsibTimestamp = Files.getFileAttributeView(dsibFilePath, BasicFileAttributeView.class)
+								.readAttributes()
+								.lastModifiedTime()
+								.toInstant();
+							if (latestDsibTimestamp.isBefore(dsibTimestamp)) {
+								latestDsibTimestamp = dsibTimestamp;
+							}
+						} catch (IOException e) {
+							logger.log(ApiMonitorMessage.CANNOT_READ_DSIB_FILE, dsibFilePath, e.toString());
+							return;
+						}
+
 						dsibFilePaths.add(dsibFilePath);
+					}
+
+					// Check configured retrieval delay
+					if (Instant.now().isBefore(latestDsibTimestamp.plusMillis(config.getEdipRetrievalDelay()))) {
+						logger.log(ApiMonitorMessage.SKIPPING_SESSION_FOR_DELAY, sessionEntry.getFileName().toString());
+						return;
 					}
 
 					if (logger.isTraceEnabled())
