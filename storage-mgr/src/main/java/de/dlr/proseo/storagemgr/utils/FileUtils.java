@@ -16,6 +16,7 @@ import java.util.List;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.StorageMgrMessage;
+import de.dlr.proseo.storagemgr.Exceptions.FileLockedAfterMaxCyclesException;
 
 /**
  * A utility class for common file operations. It provides methods to create,
@@ -88,6 +89,47 @@ public class FileUtils {
 			}
 			return false;
 		}
+	}
+
+	/**
+	 * Creates the file with the content in a synchro modus
+	 *
+	 * @param content Content of the file
+	 * @param waitTime           the wait time between each cycle of checking the
+	 *                           file lock status
+	 * @param fileCheckMaxCycles file check max cycles
+	 * @return true if file was successfully created
+	 */
+	public boolean synchroCreateFile(String content, long waitTime, long fileCheckMaxCycles) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> synchroCreateFile({}, {}, {})", content, waitTime, fileCheckMaxCycles);
+
+		StorageFileLocker fileLocker = new StorageFileLocker(path, waitTime, fileCheckMaxCycles);
+		boolean fileCreatedStatus;
+			
+		try {
+			
+			fileLocker.lockOrWaitUntilUnlockedAndLock();
+			fileCreatedStatus = createFile(content); 
+
+		} catch (FileLockedAfterMaxCyclesException e) {
+			
+			logger.debug("... the file is locked after max check cycles: ", path, " ", e.getMessage());
+			fileCreatedStatus = false;
+			
+		} catch (InterruptedException e) {
+			
+			logger.debug("... the file is locked after max check cycles: ", path, " ", e.getMessage());
+			fileCreatedStatus = false;
+			
+		} finally {
+
+			fileLocker.unlock();
+			logger.debug("... unlocked the file: ", path);
+		}
+
+		return fileCreatedStatus;
 	}
 
 	/**
