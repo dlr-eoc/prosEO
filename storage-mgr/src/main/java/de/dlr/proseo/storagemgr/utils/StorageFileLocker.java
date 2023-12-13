@@ -65,19 +65,23 @@ public class StorageFileLocker {
 	 *                                           waiting for the concurrent access
 	 *                                           to terminate
 	 */
-	public void lockOrWaitUntilUnlocked() throws FileLockedAfterMaxCyclesException, InterruptedException {
+	public void lockOrWaitUntilUnlockedAndLock() throws FileLockedAfterMaxCyclesException, InterruptedException {
 
 		long i = 0;
 
 		for (; i < fileCheckMaxCycles; ++i) {
 
-			synchronized (productLockSet) {
+			// lock the file if not locked (not in the set) 
+			synchronized (productLockSet) {				
 				if (!productLockSet.contains(path)) {
+					
 					productLockSet.add(path);
+					logger.debug("... the file {} is locked", path);
 					break;
 				}
 			}
 
+			// wait, because file is locked (in the set) in another thread
 			if (logger.isDebugEnabled())
 				logger.debug("... waiting for concurrent access to {} to terminate", path);
 			Thread.sleep(waitTime);
@@ -94,5 +98,6 @@ public class StorageFileLocker {
 	 */
 	public void unlock() {
 		productLockSet.remove(path);
+		logger.debug("... the file {} is unlocked", path);
 	}
 }

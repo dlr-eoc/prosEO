@@ -223,7 +223,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		if (!cache.containsKey(targetFile.getFullPath())) {
 
-			fileLocker.lockOrWaitUntilUnlocked();
+			fileLocker.lockOrWaitUntilUnlockedAndLock();
 
 			// After lock() the active thread starts to download the file and put it to the
 			// cache
@@ -269,7 +269,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		if (!cache.containsKey(targetCacheFile.getFullPath())) {
 
-			fileLocker.lockOrWaitUntilUnlocked();
+			fileLocker.lockOrWaitUntilUnlockedAndLock();
 
 			// After lock() the active thread starts to download the file and put it to the
 			// cache
@@ -320,7 +320,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		if (!cache.containsKey(sourceCacheFile.getFullPath())) {
 
-			fileLocker.lockOrWaitUntilUnlocked();
+			fileLocker.lockOrWaitUntilUnlockedAndLock();
 
 			// After lock() the active thread starts to download the file and put it to the
 			// cache
