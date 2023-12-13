@@ -791,8 +791,8 @@ public class FileCache {
 		String accessedPath = getAccessedPath(path);
 		String timeStamp = Instant.now().toString();
 		FileUtils fileUtils = new FileUtils(accessedPath);
-
-		fileUtils.createFile(timeStamp);
+		
+		fileUtils.synchroCreateFile(timeStamp, cfg.getFileCheckWaitTime(), cfg.getFileCheckMaxCycles());
 	}
 	
 	/**
@@ -809,7 +809,7 @@ public class FileCache {
 		String statusPath = getStatusPath(path);
 		FileUtils fileUtils = new FileUtils(statusPath);
 
-		fileUtils.createFile(status.toString());
+		fileUtils.synchroCreateFile(status.toString(), cfg.getFileCheckWaitTime(), cfg.getFileCheckMaxCycles());		
 	}
 
 	/**
