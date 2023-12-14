@@ -71,15 +71,17 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		// Storage Manager version 2: download Storage -> Cache
 		// pathInfo is absolute path s3://bucket/.. or /storagePath/..
-		
-		String absoluteStoragePath = pathInfo; 
-		
+
+		String absoluteStoragePath = pathInfo;
+
 		StorageFile cacheFile;
 		try {
+
 			String relativePath = storageProvider.getRelativePath(absoluteStoragePath);
 			cacheFile = storageProvider.getCacheFile(relativePath);
 
 		} catch (IOException e) {
+
 			String msg = logger.log(StorageMgrMessage.PRODUCT_FILE_CANNOT_BE_DOWNLOADED, e.getMessage());
 			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);
 		}
@@ -90,14 +92,13 @@ public class ProductfileControllerImpl implements ProductfileController {
 		try {
 
 			RestFileInfo restFileInfo = synchronizedDownloadFromStorageToCache(absoluteStoragePath, fileLocker);
-
 			return new ResponseEntity<>(restFileInfo, HttpStatus.OK);
 
 		} catch (FileLockedAfterMaxCyclesException e) {
 
 			String time = String.valueOf(cfg.getFileCheckMaxCycles() * cfg.getFileCheckWaitTime() / 1000);
-			String msg = logger.log(StorageMgrMessage.READ_TIME_OUT, absoluteStoragePath, time, e.getLocalizedMessage());
-
+			String msg = logger.log(StorageMgrMessage.READ_TIME_OUT, absoluteStoragePath, time,
+					e.getLocalizedMessage());
 			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.SERVICE_UNAVAILABLE);
 
 		} catch (IOException e) {
@@ -109,9 +110,8 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 			String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
 			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
 
-		finally {
+		} finally {
 
 			fileLocker.unlock();
 			logger.debug("... unlocked the file: ", pathInfo);
@@ -132,9 +132,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> updateProductfiles({}, {})", pathInfo, productId);
 
-		// Storage Manager version 2: pathInfo absolute external path, upload absolute file ->
-		// storage
-
+		// uploads absolute external file -> cache -> storage
 		// 1. download to cache absolute-file -> cache
 		// 2. add to cache cache.put()
 		// 3. upload to storage cache -> storage
@@ -142,48 +140,31 @@ public class ProductfileControllerImpl implements ProductfileController {
 		if (pathInfo == null) {
 			return new ResponseEntity<RestFileInfo>(new RestFileInfo(), HttpStatus.BAD_REQUEST);
 		}
-		
-		String absoluteExternalPath = pathInfo; 
-		
+
+		String absoluteExternalPath = pathInfo;
+
 		String relativePath = getProductFolderWithFilename(absoluteExternalPath, productId);
 		StorageFile cacheFile = storageProvider.getCacheFile(relativePath);
-		
+
 		StorageFileLocker fileLocker = new StorageFileLocker(cacheFile.getFullPath(), cfg.getFileCheckWaitTime(),
 				cfg.getFileCheckMaxCycles());
 
 		try {
-			
-			RestFileInfo restFileInfo = synchronizedDownloadFromAbsolutePathToCache(absoluteExternalPath, productId, fileSize, fileLocker);
-			
+
+			RestFileInfo restFileInfo = synchronizedDownloadFromAbsolutePathToCache(absoluteExternalPath, productId,
+					fileSize, fileLocker);
 			fileLocker.unlock();
-
 			restFileInfo = synchronizedUploadFromCacheToStorage(relativePath, fileLocker);
-		
-			/*
-			Storage storage = storageProvider.getStorage();
-			String absolutePath = pathInfo;
-			String fileName = new File(absolutePath).getName();
-			String productFolderWithFilename = Paths.get(String.valueOf(productId), fileName).toString();
-
-			StorageFile sourceExternalFile = storageProvider.getAbsoluteFile(absolutePath);
-			StorageFile targetStorageFile = storageProvider.getStorageFile(productFolderWithFilename);
-
-			storage.uploadFile(sourceExternalFile, targetStorageFile);
-
-			RestFileInfo restFileInfo = convertToRestFileInfo(targetStorageFile,
-					storage.getFileSize(targetStorageFile));
-			*/
 
 			logger.log(StorageMgrMessage.PRODUCT_FILE_UPLOADED, absoluteExternalPath, productId);
-
 			return new ResponseEntity<>(restFileInfo, HttpStatus.CREATED);
 
 		} catch (Exception e) {
 
 			String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
 			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-		finally {
+			
+		} finally {
 
 			fileLocker.unlock();
 			logger.debug("... unlocked the file: ", absoluteExternalPath);
@@ -225,16 +206,9 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 			fileLocker.lockOrWaitUntilUnlockedAndLock();
 
-			// After lock() the active thread starts to download the file and put it to the
-			// cache
-			// (see below)
-			// After lock() the passive thread did nothing, but the file has been downloaded
-			// and the cache has been updated - need to check if file contains in the cache
-			// again
-
 			if (!cache.containsKey(targetFile.getFullPath())) {
 
-				// I am active thread - downloads the file and puts it to the cache
+				// active thread - downloads the file and puts it to the cache
 				storageProvider.getStorage().downloadFile(sourceFile, targetFile);
 				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED, targetFile.getFullPath());
 
@@ -242,9 +216,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 			} else {
 
-				// I am passive thread - did nothing, just waited until the file has been
-				// downloaded
-				// and use it from cache
+				// passive thread - does nothing, waited for downloaded file and use it from cache
 				logger.debug("... waiting-thread when the file downloaded and use it from cache: ",
 						targetFile.getFullPath());
 			}
@@ -259,8 +231,9 @@ public class ProductfileControllerImpl implements ProductfileController {
 		return restFileInfo;
 	}
 
-	private RestFileInfo synchronizedDownloadFromAbsolutePathToCache(String absoluteExternalPath, Long productId, Long fileSize,
-			StorageFileLocker fileLocker) throws FileLockedAfterMaxCyclesException, IOException, Exception {
+	private RestFileInfo synchronizedDownloadFromAbsolutePathToCache(String absoluteExternalPath, Long productId,
+			Long fileSize, StorageFileLocker fileLocker)
+			throws FileLockedAfterMaxCyclesException, IOException, Exception {
 
 		String productFolderWithFilename = getProductFolderWithFilename(absoluteExternalPath, productId);
 		StorageFile targetCacheFile = storageProvider.getCacheFile(productFolderWithFilename);
@@ -312,7 +285,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 			throws FileLockedAfterMaxCyclesException, IOException, Exception {
 
 		Storage storage = storageProvider.getStorage();
-				
+
 		StorageFile sourceCacheFile = storageProvider.getCacheFile(relativeCachePath);
 		StorageFile targetStorageFile = storageProvider.getStorageFile(relativeCachePath);
 
@@ -356,11 +329,11 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		return restFileInfo;
 	}
-	
+
 	private String getProductFolderWithFilename(String absoluteExternalPath, Long productId) {
-		
+
 		String fileName = new File(absoluteExternalPath).getName();
-		return Paths.get(String.valueOf(productId), fileName).toString();	
+		return Paths.get(String.valueOf(productId), fileName).toString();
 	}
 
 }
