@@ -69,7 +69,7 @@ public enum StorageMgrMessage implements ProseoMessage {
 	/** Downloaded = retrieved */
 	PRODUCT_FILE_DOWNLOADED_FROM_EXTERNAL_TO_CACHE 	(5581, Level.INFO,  true,  "Product file downloaded from external storage to cache: {0}", ""),  
 	/** Uploaded = registered */
-	PRODUCT_FILE_UPLOADED_FROM_CACHE_TO_STORAGE     (5552, Level.INFO,  true,  "Product file {0} uploaded from cache to storage for product {1}", ""),  
+	PRODUCT_FILE_UPLOADED_FROM_CACHE_TO_STORAGE     (5582, Level.INFO,  true,  "Product file {0} uploaded from cache to storage for product {1}", ""),  
 	
 	;
 
