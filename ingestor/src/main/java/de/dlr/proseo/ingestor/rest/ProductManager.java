@@ -396,24 +396,16 @@ public class ProductManager {
 			product.setParameters(new ArrayList<RestParameter>());
 		}
 
-		Product modelProduct = ProductUtil.toModelProduct(product);
-
-		// Check metadata database for product with same characteristics
-		TypedQuery<Product> query = em
-			.createQuery("select p from Product p where " + "p.productClass.mission.code = :missionCode and "
-					+ "p.productClass.productType = :productType and " + "p.sensingStartTime = :sensingStart and "
-					+ "p.sensingStopTime = :sensingStop", Product.class)
-			.setParameter("missionCode", product.getMissionCode())
-			.setParameter("productType", product.getProductClass())
-			.setParameter("sensingStart", modelProduct.getSensingStartTime())
-			.setParameter("sensingStop", modelProduct.getSensingStopTime());
-		for (Product candidateProduct : query.getResultList()) {
-			if (candidateProduct.equals(modelProduct)) {
-				throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_EXISTS, candidateProduct.getId()));
-			}
+		// Check metadata database for product(s) with same characteristics
+		Product equivalentProduct = findEquivalentProduct(product);
+		if (null != equivalentProduct) {
+			throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_EXISTS, equivalentProduct.getId()));
 		}
+		
 
 		// Create a database model product
+		Product modelProduct = ProductUtil.toModelProduct(product);
+
 		if (null == modelProduct.getUuid()) {
 			modelProduct.setUuid(UUID.randomUUID());
 		} else {
@@ -517,6 +509,39 @@ public class ProductManager {
 	}
 
 	/**
+	 * Find any product equivalent to the given product (i. e. fulfilling the Product::equals() conditions).
+	 * 
+	 * @param product the product example to search for
+	 * @return a product with the same characteristics or null, if no such product can be found
+	 */
+	public Product findEquivalentProduct(RestProduct product) {
+		if (logger.isTraceEnabled()) logger.trace(">>> findEquivalentProducts({})", product);
+
+		Product modelProduct = ProductUtil.toModelProduct(product);
+
+		// Check metadata database for product with same characteristics
+		TypedQuery<Product> query = em
+			.createQuery("select p from Product p where " + "p.productClass.mission.code = :missionCode and "
+					+ "p.productClass.productType = :productType and " + "p.sensingStartTime = :sensingStart and "
+					+ "p.sensingStopTime = :sensingStop", Product.class)
+			.setParameter("missionCode", product.getMissionCode())
+			.setParameter("productType", product.getProductClass())
+			.setParameter("sensingStart", modelProduct.getSensingStartTime())
+			.setParameter("sensingStop", modelProduct.getSensingStopTime());
+		
+		// Check the results for a product exactly matching the given example;
+		// note that at most one such product may exist for the metadata database to be consistent
+		for (Product candidateProduct: query.getResultList()) {
+			if (candidateProduct.equals(modelProduct)) {
+				return candidateProduct;
+			}
+		}
+		
+		// No matching product found
+		return null;
+	}
+
+	/**
 	 * Find the product with the given ID
 	 *
 	 * @param id the ID to look for
@@ -527,8 +552,7 @@ public class ProductManager {
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public RestProduct getProductById(Long id) throws IllegalArgumentException, NoResultException, SecurityException {
-		if (logger.isTraceEnabled())
-			logger.trace(">>> getProductById({})", id);
+		if (logger.isTraceEnabled()) logger.trace(">>> getProductById({})", id);
 
 		Product product = readProduct(id);
 

@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
@@ -168,17 +169,35 @@ public class ProductIngestor {
 							securityService.getMission()));
 				}
 
-				// Create a new product or test for existing product in the metadata database
+				// Test for existing product in the metadata database (either because we already know that such a product exists,
+				// or in the case of re-ingesting a formerly known, but now evicted product)
+				RestProduct equivalentProduct = null;
 				try {
 					if (null == ingestorProduct.getId() || 0 == ingestorProduct.getId()) {
-						RestProduct newProduct = productManager.createProduct(ingestorProduct);
-						ingestorProduct.setId(newProduct.getId());
-						productsCreated.add(newProduct.getId());
+						Product equivalentModelProduct = productManager.findEquivalentProduct(ingestorProduct);
+						if (null != equivalentModelProduct) {
+							equivalentProduct = ProductUtil.toRestProduct(equivalentModelProduct);
+						}
 					} else {
-						productManager.getProductById(ingestorProduct.getId());
+						equivalentProduct = productManager.getProductById(ingestorProduct.getId());
 					}
 				} catch (Exception e) {
 					throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_INGESTION_FAILED, e.getMessage()));
+				}
+
+				// Create a new product if required
+				if (null == equivalentProduct) {
+					try {
+						RestProduct newProduct = productManager.createProduct(ingestorProduct);
+						ingestorProduct.setId(newProduct.getId());
+						productsCreated.add(newProduct.getId());
+					} catch (Exception e) {
+						throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_INGESTION_FAILED, e.getMessage()));
+					}
+				} else {
+					ingestorProduct.setId(equivalentProduct.getId());
+					// We do not add the product to the list of created products, because we did not create it,
+					// and therefore we do not need to delete it in case of upload errors
 				}
 
 			}
