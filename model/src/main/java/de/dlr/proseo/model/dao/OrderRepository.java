@@ -25,6 +25,9 @@ import de.dlr.proseo.model.enums.OrderState;
 @Repository
 public interface OrderRepository extends JpaRepository<ProcessingOrder, Long> {
 
+	@Query("select po from ProcessingOrder po where po.mission.code = ?1 and po.identifier like ?2 and po.submissionDate = (select max(po2.submissionDate) from ProcessingOrder po2 where po2.mission.code = ?1 and po2.identifier)")
+	public ProcessingOrder findByMissionCodeAndIdentifierAndLatestSubmissionDate(String missionCode, String identifier);
+	
 	/**
 	 * Get the processing order with the given mission code and identifier
 	 * 
@@ -83,5 +86,4 @@ public interface OrderRepository extends JpaRepository<ProcessingOrder, Long> {
 	 */
 	@Query("select po from ProcessingOrder po where po.orderState = ?1")
 	public List<ProcessingOrder> findByOrderState(OrderState orderState);
-
 }
