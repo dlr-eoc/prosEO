@@ -51,8 +51,8 @@ public enum OdipMessage implements ProseoMessage {
 	MSG_EXCEPTION_SET_RESP					(7235, Level.ERROR, false, "Exception setting response content (cause {0}: {1})", ""),
 	MSG_EXCEPTION_PIS						(7236, Level.ERROR, false, "Server Error occurred in ProductionInterfaceSecurity (cause {0}: {1})", ""),
 	MSG_EXCEPTION_PQC						(7237, Level.ERROR, false, "Server Error occurred in ProductQueryController (cause {0}: {1})", ""),
-	MSG_WORKFLOW_REFERENCE_MISSING  		(7238, Level.ERROR, false, "Workflow UUID and name missing", ""),
-	MSG_WORKFLOW_REF_NOT_FOUND  			(7239, Level.ERROR, false, "Workflow referenced by (UUID/name) {0}/{1} not found", ""),
+	MSG_WORKFLOW_REFERENCE_MISSING  		(7238, Level.ERROR, false, "Workflow UUID missing", ""),
+	MSG_WORKFLOW_REF_NOT_FOUND  			(7239, Level.ERROR, false, "Workflow referenced by UUID {0} not found", ""),
 	MSG_WORKFLOW_OPTION_NOT_DEF  			(7240, Level.ERROR, false, "Workflow option {0} not  defined in workflow {1}", ""),
 	MSG_WORKFLOW_OPTION_NO_TYPE_MATCH 		(7241, Level.ERROR, false, "Workflow option {0} does not match type: {1}, value: {2}", ""),
 	MSG_WORKFLOW_OPTION_VALUE_NOT_IN_RANGE 	(7242, Level.ERROR, false, "Workflow option {0}: value not in value range {1}", ""),
@@ -79,6 +79,9 @@ public enum OdipMessage implements ProseoMessage {
 	MSG_PRODUCTIONORDERPRODUCT_NOT_FOUND	(7263, Level.ERROR, false, "No product found for production order with UUID {0}", ""),
 	MSG_PRODUCTIONORDERWORKFLOW_NOT_FOUND	(7264, Level.ERROR, false, "No workflow found for production order with UUID {0}", ""),
 	MSG_PRODUCTIONORDERPRODUCT_NO_FILES 	(7265, Level.ERROR, false, "Requested product of production order with UUID {0} has no files", ""),
+	MSG_WORKFLOW_NAME_MISMATCH  			(7266, Level.ERROR, false, "Workflow name mismatch {0}: {1} <-> {2}", ""),
+	MSG_CROSS_MISSION_ACCESS		  		(7267, Level.ERROR, false, "Cross mission access (user <-> workflow) {0} <-> {1}", ""),
+	MSG_CROSS_MISSION_PRODUCT		  		(7268, Level.ERROR, false, "Cross mission access (workflow <-> product) {0} <-> {1}", ""),
 	;
 
 	private final int code;

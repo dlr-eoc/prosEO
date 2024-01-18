@@ -4,6 +4,7 @@
 package de.dlr.proseo.model.dao;
 
 import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,8 +26,15 @@ import de.dlr.proseo.model.enums.OrderState;
 @Repository
 public interface OrderRepository extends JpaRepository<ProcessingOrder, Long> {
 
-	@Query("select po from ProcessingOrder po where po.mission.code = ?1 and po.identifier like ?2 and po.submissionDate = (select max(po2.submissionDate) from ProcessingOrder po2 where po2.mission.code = ?1 and po2.identifier)")
-	public ProcessingOrder findByMissionCodeAndIdentifierAndLatestSubmissionDate(String missionCode, String identifier);
+	/**
+	 * Get the latest execution time of processing orders with the given mission code and identifier pattern
+	 * 
+	 * @param missionCode the mission code of the processing order
+	 * @param identifier  the identifier of the processing order
+	 * @return the unique execution time of processing orders identified by the given identifier pattern
+	 */
+	@Query("select distinct(po.executionTime) from ProcessingOrder po where po.mission.code = ?1 and po.identifier like ?2 and po.executionTime = (select distinct(max(po2.executionTime)) from ProcessingOrder po2 where po2.mission.code = ?1 and po2.identifier like ?2)")
+	public Date findByMissionCodeAndIdentifierAndLatestExecutionTime(String missionCode, String identifier);
 	
 	/**
 	 * Get the processing order with the given mission code and identifier
