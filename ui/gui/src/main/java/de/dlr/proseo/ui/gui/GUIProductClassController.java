@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.ui.gui;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
@@ -177,36 +179,39 @@ public class GUIProductClassController extends GUIBaseController {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
 		String divider = "?";
-		String uri = "/productclasses/count";
+		String uriString = "/productclasses/count";
 		if (mission != null && !mission.isEmpty()) {
-			uri += divider + "mission=" + mission;
+			uriString += divider + "mission=" + mission;
 			divider = "&";
 		}
 		if (productType != null && !productType.isEmpty()) {
 			String[] pcs = productType.split(",");
 			for (String pc : pcs) {
-				uri += divider + "productType=" + pc;
+				uriString += divider + "productType=" + pc;
 				divider = "&";
 			}
 		}
 		if (processorClass != null && !processorClass.isEmpty()) {
 			String[] pcs = processorClass.split(",");
 			for (String pc : pcs) {
-				uri += divider + "processorClass=" + pc;
+				uriString += divider + "processorClass=" + pc;
 				divider = "&";
 			}
 		}
 		if (level != null) {
-			uri += divider + "level=" + level;
+			uriString += divider + "level=" + level;
 			divider = "&";
 		}
 		if (visibility != null) {
-			uri += divider + "visibility=" + visibility;
+			uriString += divider + "visibility=" + visibility;
 			divider = "&";
 		}
+		URI uri = UriComponentsBuilder.fromUriString(uriString)
+				.build()
+				.toUri();
 		Long result = (long) -1;
 		try {
-			String resStr = serviceConnection.getFromService(serviceConfig.getProductClassManagerUrl(), uri, String.class,
+			String resStr = serviceConnection.getFromService(serviceConfig.getProductClassManagerUrl(), uri.toString(), String.class,
 					auth.getProseoName(), auth.getPassword());
 
 			if (resStr != null && resStr.length() > 0) {
@@ -254,45 +259,48 @@ public class GUIProductClassController extends GUIBaseController {
 		String mission = auth.getMission();
 
 		// Build the request URI
-		String uri = serviceConfig.getProductClassManagerUrl() + "/productclasses";
+		String uriString = serviceConfig.getProductClassManagerUrl() + "/productclasses";
 		String divider = "?";
 		if (mission != null && !mission.isEmpty()) {
-			uri += divider + "mission=" + mission;
+			uriString += divider + "mission=" + mission;
 			divider = "&";
 		}
 		if (productType != null && !productType.isEmpty()) {
 			String[] pcs = productType.split(",");
 			for (String pc : pcs) {
-				uri += divider + "productType=" + pc;
+				uriString += divider + "productType=" + pc;
 				divider = "&";
 			}
 		}
 		if (processorClass != null && !processorClass.isEmpty()) {
 			String[] pcs = processorClass.split(",");
 			for (String pc : pcs) {
-				uri += divider + "processorClass=" + pc;
+				uriString += divider + "processorClass=" + pc;
 				divider = "&";
 			}
 		}
 		if (level != null) {
-			uri += divider + "level=" + level;
+			uriString += divider + "level=" + level;
 			divider = "&";
 		}
 		if (visibility != null) {
-			uri += divider + "visibility=" + visibility;
+			uriString += divider + "visibility=" + visibility;
 			divider = "&";
 		}
 		if (from != null) {
-			uri += divider + "recordFrom=" + from;
+			uriString += divider + "recordFrom=" + from;
 			divider = "&";
 		}
 		if (to != null) {
-			uri += divider + "recordTo=" + to;
+			uriString += divider + "recordTo=" + to;
 			divider = "&";
 		}
-		uri += divider + "orderBy=productType ASC";
-		logger.trace("URI " + uri);
+		uriString += divider + "orderBy=productType ASC";
 
+		URI uri = UriComponentsBuilder.fromUriString(uriString)
+				.build()
+				.toUri();
+		logger.trace("URI " + uri);
 		// Create and configure a WebClient to make a HTTP request to the URI
 		Builder webclient = WebClient.builder()
 			.clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect((req, res) -> {

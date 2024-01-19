@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.ui.gui;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +22,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -107,8 +109,11 @@ public class GUIConfigurationController extends GUIBaseController {
 		// Retrieve the authentication token from the security context
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
-		String uri = serviceConfig.getProcessorManagerUrl() + "/configurations";
-		uri += "?mission=" + mission;
+		String uriString = serviceConfig.getProcessorManagerUrl() + "/configurations";
+		uriString += "?mission=" + mission;
+		URI uri = UriComponentsBuilder.fromUriString(uriString)
+				.build()
+				.toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make the GET request

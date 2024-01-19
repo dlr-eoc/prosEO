@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.ui.gui;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +22,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -191,13 +193,16 @@ public class GUIProcessorController extends GUIBaseController {
 		String mission = auth.getMission();
 
 		// Build the request URI
-		String uri = serviceConfig.getProcessorManagerUrl() + "/processors";
+		String uriString = serviceConfig.getProcessorManagerUrl() + "/processors";
 		String divider = "?";
-		uri += divider + "mission=" + mission;
+		uriString += divider + "mission=" + mission;
 		divider = "&";
 		if (processorName != null) {
-			uri += divider + "processorName=" + processorName;
+			uriString += divider + "processorName=" + processorName;
 		}
+		URI uri = UriComponentsBuilder.fromUriString(uriString)
+				.build()
+				.toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
@@ -236,13 +241,16 @@ public class GUIProcessorController extends GUIBaseController {
 		String mission = auth.getMission();
 
 		// Build the request URI
-		String uri = serviceConfig.getProcessorManagerUrl() + "/configuredprocessors";
+		String uriString = serviceConfig.getProcessorManagerUrl() + "/configuredprocessors";
 		String divider = "?";
-		uri += divider + "mission=" + mission;
+		uriString += divider + "mission=" + mission;
 		divider = "&";
 		if (processorName != null) {
-			uri += divider + "identifier=" + processorName;
+			uriString += divider + "identifier=" + processorName;
 		}
+		URI uri = UriComponentsBuilder.fromUriString(uriString)
+				.build()
+				.toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI

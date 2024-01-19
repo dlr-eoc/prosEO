@@ -349,34 +349,39 @@ public class OrderService {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
 		// Build the request URI
-		String uri = config.getProductionPlanner() + "/orders";
+		String uriString = config.getProductionPlanner() + "/orders";
 		String method = "patch";
 		if (state.equalsIgnoreCase("approve")) {
-			uri += "/approve/" + orderId;
+			uriString += "/approve/" + orderId;
 		} else if (state.equalsIgnoreCase("plan")) {
-			uri += "/plan/" + orderId;
-			uri += "?facility=" + facility;
+			uriString += "/plan/" + orderId;
+			uriString += "?facility=" + facility;
 			method = "put";
 		} else if (state.equalsIgnoreCase("release")) {
-			uri += "/release/" + orderId;
+			uriString += "/release/" + orderId;
 		} else if (state.equalsIgnoreCase("suspend")) {
-			uri += "/suspend/" + orderId;
+			uriString += "/suspend/" + orderId;
 		} else if (state.equalsIgnoreCase("suspendforce")) {
-			uri += "/suspend/" + orderId + "?force=true";
+			uriString += "/suspend/" + orderId + "?force=true";
 		} else if (state.equalsIgnoreCase("resume")) {
-			uri += "/resume/" + orderId;
+			uriString += "/resume/" + orderId;
 		} else if (state.equalsIgnoreCase("reset")) {
-			uri += "/reset/" + orderId;
+			uriString += "/reset/" + orderId;
 		} else if (state.equalsIgnoreCase("cancel")) {
-			uri += "/cancel/" + orderId;
+			uriString += "/cancel/" + orderId;
 		} else if (state.equalsIgnoreCase("retry")) {
-			uri += "/retry/" + orderId;
+			uriString += "/retry/" + orderId;
 		} else if (state.equalsIgnoreCase("close")) {
-			uri += "/close/" + orderId;
+			uriString += "/close/" + orderId;
 		} else if (state.equalsIgnoreCase("delete")) {
-			uri += "/" + orderId;
+			uriString += "/" + orderId;
 			method = "delete";
 		}
+		
+		URI uri = UriComponentsBuilder.fromUriString(uriString)
+				.build()
+				.toUri();
+		
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
@@ -440,21 +445,24 @@ public class OrderService {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
 		// Build the request URI
-		String uri = config.getProductionPlanner() + "/jobs";
+		String uriString = config.getProductionPlanner() + "/jobs";
 		String method = "patch";
 		if (state.equalsIgnoreCase("release")) {
-			uri += "/resume/" + jobId;
+			uriString += "/resume/" + jobId;
 		} else if (state.equalsIgnoreCase("suspend")) {
-			uri += "/suspend/" + jobId;
+			uriString += "/suspend/" + jobId;
 		} else if (state.equalsIgnoreCase("suspendforce")) {
-			uri += "/suspend/" + jobId + "?force=true";
+			uriString += "/suspend/" + jobId + "?force=true";
 		} else if (state.equalsIgnoreCase("resume")) {
-			uri += "/resume/" + jobId;
+			uriString += "/resume/" + jobId;
 		} else if (state.equalsIgnoreCase("cancel")) {
-			uri += "/cancel/" + jobId;
+			uriString += "/cancel/" + jobId;
 		} else if (state.equalsIgnoreCase("retry")) {
-			uri += "/retry/" + jobId;
+			uriString += "/retry/" + jobId;
 		}
+		URI uri = UriComponentsBuilder.fromUriString(uriString)
+				.build()
+				.toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
@@ -510,21 +518,24 @@ public class OrderService {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
 		// Build the request URI
-		String uri = config.getProductionPlanner() + "/jobsteps";
+		String uriString = config.getProductionPlanner() + "/jobsteps";
 		String method = "patch";
 		if (state.equalsIgnoreCase("release")) {
-			uri += "/resume/" + jobStepId;
+			uriString += "/resume/" + jobStepId;
 		} else if (state.equalsIgnoreCase("suspend")) {
-			uri += "/suspend/" + jobStepId;
+			uriString += "/suspend/" + jobStepId;
 		} else if (state.equalsIgnoreCase("suspendforce")) {
-			uri += "/suspend/" + jobStepId + "?force=true";
+			uriString += "/suspend/" + jobStepId + "?force=true";
 		} else if (state.equalsIgnoreCase("resume")) {
-			uri += "/resume/" + jobStepId;
+			uriString += "/resume/" + jobStepId;
 		} else if (state.equalsIgnoreCase("cancel")) {
-			uri += "/cancel/" + jobStepId;
+			uriString += "/cancel/" + jobStepId;
 		} else if (state.equalsIgnoreCase("retry")) {
-			uri += "/retry/" + jobStepId;
+			uriString += "/retry/" + jobStepId;
 		}
+		URI uri = UriComponentsBuilder.fromUriString(uriString)
+				.build()
+				.toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
