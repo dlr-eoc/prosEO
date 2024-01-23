@@ -63,8 +63,9 @@ public class OrderjobControllerImpl implements OrderjobController {
 
 	/**
 	 * Retrieves production planner jobs, optionally filtered by job state and/or order ID.
+	 * At the moment the states parameter accepts COMPLETED or NON-COMPLETED. It is prepared to accept a list of job states for selection. 
 	 *
-	 * @param states     The job states to filter by.
+	 * @param states 	 The grouped job states (COMPLETED or NON-COMPLETED) to filter by.
 	 * @param orderId    The order ID to filter by.
 	 * @param recordFrom The first record of the filtered and ordered result to return.
 	 * @param recordTo   The last record of the filtered and ordered result to return.
@@ -129,8 +130,9 @@ public class OrderjobControllerImpl implements OrderjobController {
 
 	/**
 	 * Retrieves the number of production planner jobs based on the specified states and order ID.
+	 * At the moment the states parameter accepts COMPLETED or NON-COMPLETED. It is prepared to accept a list of job states for selection. 
 	 *
-	 * @param states  The permitted job states.
+	 * @param states The grouped job states (COMPLETED or NON-COMPLETED) to filter by.
 	 * @param orderId The order ID of the jobs.
 	 * @return The number of jobs.
 	 */
@@ -162,8 +164,9 @@ public class OrderjobControllerImpl implements OrderjobController {
 
 	/**
 	 * Retrieves the index of a job in an ordered list of all jobs of an order.
+	 * At the moment the states parameter accepts COMPLETED or NON-COMPLETED. It is prepared to accept a list of job states for selection. 
 	 *
-	 * @param states    The permitted job states (COMPLETED, NON-COMPLETED).
+	 * @param states 	The grouped job states (COMPLETED or NON-COMPLETED) to filter by.
 	 * @param orderId   The persistent id of the processing order.
 	 * @param jobId     The persistent id of the job.
 	 * @param jobStepId The persistent id of the job step.
@@ -238,8 +241,9 @@ public class OrderjobControllerImpl implements OrderjobController {
 	/**
 	 * Creates a JPQL query for jobs, filtering by the mission the user is logged in to, and optionally by job state and/or order
 	 * ID.
+	 * At the moment the states parameter accepts COMPLETED or NON-COMPLETED. It is prepared to accept a list of job states for selection. 
 	 *
-	 * @param states     The job states to filter by.
+	 * @param states     The grouped job states (COMPLETED or NON-COMPLETED) to filter by.
 	 * @param orderId    The order ID to filter by.
 	 * @param recordFrom The first record of the filtered and ordered result to return.
 	 * @param recordTo   The last record of the filtered and ordered result to return.
