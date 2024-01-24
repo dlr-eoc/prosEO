@@ -64,7 +64,6 @@ When all `application.yml` files have been created, for each component a configu
 file) must be created and pushed to the Docker registry to be used:
 ```
 export REGISTRY_URL=<your preferred prosEO repository, e. g. localhost:5000>
-export VERSION=<the prosEO version to install, e. g. 0.9.5>
 
 cd proseo-images/proseo-components
 
@@ -72,7 +71,7 @@ for component in proseo-* ; do
   cd $component
 
   COMPONENT_NAME=$(cat Dockerfile | grep FROM | awk '{gsub("localhost:5000/",""); split($0,a," "); print a[2]}')
-  TAGGED_NAME=${REGISTRY_URL}/${COMPONENT_NAME}:${VERSION}-proseo
+  TAGGED_NAME=${REGISTRY_URL}/${COMPONENT_NAME}-proseo
 
   docker build -t ${TAGGED_NAME}
   docker push ${TAGGED_NAME}

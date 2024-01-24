@@ -23,8 +23,8 @@ public class ConfigurationFile {
 	private String fileVersion;
 	
 	/** 
-	 * The POSIX file path for the configuration file (TBD: absolute according to IPF Spec or relative to some TBD mount point?; 
-	 * level 3 "File_Name" from Generic IPF Interface Specifications, sec. 4.1.3)
+	 * The POSIX file path for the configuration file (absolute according to the interface specification or relative to
+	 * the processor working directory; level 3 "File_Name" from Generic IPF Interface Specifications, sec. 4.1.3)
 	 */
 	private String fileName;
 

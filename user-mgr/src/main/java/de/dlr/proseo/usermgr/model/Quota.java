@@ -28,13 +28,13 @@ public class Quota {
 	private Long used = 0L;
 
 	/**
-	 * Date of last recorded access (determines calendar month, for which the "used"
+	 * Date of last recorded download (determines calendar month, for which the "used"
 	 * volume count is valid)
 	 */
 	private Date lastAccessDate = new Date();
 
 	/**
-	 * Gets the assigned data volume in GiB
+	 * Gets the assigned data volume in Bytes
 	 *
 	 * @return the assigned data volume
 	 */
@@ -43,7 +43,7 @@ public class Quota {
 	}
 
 	/**
-	 * Sets the assigned data volume in GiB
+	 * Sets the assigned data volume in Bytes
 	 *
 	 * @param assigned the assigned data volume to set
 	 */
@@ -52,7 +52,7 @@ public class Quota {
 	}
 
 	/**
-	 * Gets the used data volume in GiB
+	 * Gets the used data volume in Bytes
 	 *
 	 * @return the used data volume
 	 */
@@ -61,7 +61,7 @@ public class Quota {
 	}
 
 	/**
-	 * Sets the used data volume in GiB
+	 * Sets the used data volume in Bytes
 	 *
 	 * @param used the used data volume to set
 	 */
