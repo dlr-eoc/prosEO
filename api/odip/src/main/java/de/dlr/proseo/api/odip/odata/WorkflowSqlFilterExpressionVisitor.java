@@ -76,7 +76,7 @@ public class WorkflowSqlFilterExpressionVisitor implements ExpressionVisitor<Str
 			+ "LEFT OUTER JOIN processor_class procclass ON proc.processor_class_id = procclass.id\n";
 	// "LEFT OUTER JOIN workflow_option_value_range wovr ON wo.id = wovr.workflow_option_id\n";
 	private static final String OPTION_JOIN_TEMPLATE = "LEFT OUTER JOIN workflow_option pp%d ON p.id = pp%d.workflow_id\n";
-	private static final String WHERE_CLAUSE = "WHERE procclass.mission_id = (SELECT id FROM mission mis WHERE mis.code = '%s') AND ";
+	private static final String WHERE_CLAUSE = "WHERE procclass.mission_id = (SELECT id FROM mission mis WHERE mis.code = '%s') AND p.enabled IS TRUE AND ";
 	private static final String OPTION_WHERE_TEMPLATE = "(pp%d.name = '%s')";
 
 	/** Mapping from OData member names to SQL schema names */

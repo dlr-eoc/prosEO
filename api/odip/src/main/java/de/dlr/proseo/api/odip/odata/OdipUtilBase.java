@@ -597,40 +597,38 @@ public class OdipUtilBase {
 		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWNAME) != null) {
 			restOrder.setWorkflowName((String) order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_WORKFLOWNAME).getValue());
 		}
-		if (restOrder.getWorkflowUuid() == null && restOrder.getWorkflowName() == null) {
+		if (restOrder.getWorkflowUuid() == null) {
 			// no workflow reference, return error
 			String message = logger.log(OdipMessage.MSG_WORKFLOW_REFERENCE_MISSING);
-			throw new OdipException(message);
+			throw new OdipException(message, HttpStatusCode.BAD_REQUEST);
 		}
 		Workflow workflow = null;
 		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_PRIORITY) != null) {
 			restOrder
-				.setPriority(((Long) (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_PRIORITY).getValue())).intValue());
+			.setPriority(((Long) (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_PRIORITY).getValue())).intValue());
 		}
 		if (restOrder.getWorkflowUuid() != null) {
 			workflow = RepositoryService.getWorkflowRepository().findByUuid(UUID.fromString(restOrder.getWorkflowUuid()));
 			if (null != workflow) {
-			if (null != restOrder.getWorkflowName() && !workflow.getName().equals(restOrder.getWorkflowName())) {
-				workflow = null;
-			}
-		}
-		}
-		if (null == workflow && null != restOrder.getWorkflowName()) {
-			List<Workflow> workflows = RepositoryService.getWorkflowRepository()
-					.findByMissionCodeAndName(securityConfig.getMission(), restOrder.getWorkflowName());
-			for (Workflow wf : workflows) {
-				if (workflow == null) {
-					workflow = wf;
-				} else if (workflow.getVersion() < wf.getVersion()) {
-					workflow = wf;
+				if (null != restOrder.getWorkflowName() && !workflow.getName().equals(restOrder.getWorkflowName())) {
+					logger.log(OdipMessage.MSG_WORKFLOW_NAME_MISMATCH, restOrder.getWorkflowUuid(), workflow.getName(),
+							restOrder.getWorkflowName());
 				}
 			}
 		}
 		if (workflow == null) {
 			// no workflow reference, return error
-			String message = logger.log(OdipMessage.MSG_WORKFLOW_REF_NOT_FOUND, restOrder.getWorkflowUuid(),
-					restOrder.getWorkflowName());
+			String message = logger.log(OdipMessage.MSG_WORKFLOW_REF_NOT_FOUND, restOrder.getWorkflowUuid());
 			throw new OdipException(message);
+		}
+		if (!workflow.getEnabled()) {
+			// no workflow reference, return error
+			String message = logger.log(OdipMessage.MSG_WORKFLOW_NOT_ENABLED, restOrder.getWorkflowUuid());
+			throw new OdipException(message);
+		}
+		if (!securityConfig.getMission().equals(workflow.getMission().getCode())) {
+			String message = logger.log(OdipMessage.MSG_CROSS_MISSION_ACCESS, securityConfig.getMission(), workflow.getMission().getCode());
+			throw new OdipException(message, HttpStatusCode.BAD_REQUEST);
 		}
 		if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_INPUTPRODUCTREFERENCE) != null) {
 			if (order.getProperty(OdipEdmProvider.ET_PRODUCTIONORDER_PROP_INPUTPRODUCTREFERENCE)
@@ -672,6 +670,12 @@ public class OdipUtilBase {
 				if (reference != null || (start != null && end != null)) {
 					RestInputReference inputProductReference = new RestInputReference();
 					if (reference != null) {
+						if (!(reference.startsWith(workflow.getMission().getCode())
+								|| reference.startsWith(workflow.getMission().getCode().substring(0, 2) + "_"))) {
+							String message = logger.log(OdipMessage.MSG_CROSS_MISSION_PRODUCT, workflow.getMission().getCode(),
+									reference.substring(0, 3));
+							throw new OdipException(message, HttpStatusCode.BAD_REQUEST);
+						}
 						inputProductReference.setInputFileName(reference);
 					}
 					if (start != null && end != null) {

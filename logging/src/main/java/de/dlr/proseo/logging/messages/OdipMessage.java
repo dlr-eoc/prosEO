@@ -73,12 +73,16 @@ public enum OdipMessage implements ProseoMessage {
 	MSG_PARAMETER_NOT_FOUND					(7257, Level.ERROR, false, "Parameter not found: {0}", ""),
 	MSG_INPUTREF_NOT_FOUND					(7258, Level.ERROR, false, "No product file named {0} found on any archive", ""),
 	MSG_NO_INPUTPRODUCT						(7259, Level.ERROR, false, "No product of type {0} found on any archive", ""),
-	MSG_WORKFLOW_NOT_FOUND					(7260, Level.ERROR, false, "No workflow found with UUID {0}", ""),
+	MSG_WORKFLOW_NOT_FOUND					(7260, Level.ERROR, false, "No enabled workflow found with UUID {0}", ""),
 	MSG_NOT_AUTHORIZED_FOR_WORKFLOW 		(7261, Level.ERROR, false, "User {0} not authorized to access requested production order {1}", ""),
 	MSG_JSON_PARSE_ERROR					(7262, Level.ERROR, false, "JSON parse error: {0}", ""),
 	MSG_PRODUCTIONORDERPRODUCT_NOT_FOUND	(7263, Level.ERROR, false, "No product found for production order with UUID {0}", ""),
 	MSG_PRODUCTIONORDERWORKFLOW_NOT_FOUND	(7264, Level.ERROR, false, "No workflow found for production order with UUID {0}", ""),
 	MSG_PRODUCTIONORDERPRODUCT_NO_FILES 	(7265, Level.ERROR, false, "Requested product of production order with UUID {0} has no files", ""),
+	MSG_WORKFLOW_NAME_MISMATCH  			(7266, Level.ERROR, false, "Workflow name mismatch {0}: {1} <-> {2}", ""),
+	MSG_CROSS_MISSION_ACCESS		  		(7267, Level.ERROR, false, "Cross mission access (user <-> workflow) {0} <-> {1}", ""),
+	MSG_CROSS_MISSION_PRODUCT		  		(7268, Level.ERROR, false, "Cross mission access (workflow <-> product) {0} <-> {1}", ""),
+	MSG_WORKFLOW_NOT_ENABLED    			(7269, Level.ERROR, false, "Workflow referenced by UUID {0} is disabled (not useable)", ""),
 	;
 
 	private final int code;
