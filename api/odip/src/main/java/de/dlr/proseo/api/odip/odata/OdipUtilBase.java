@@ -621,6 +621,11 @@ public class OdipUtilBase {
 			String message = logger.log(OdipMessage.MSG_WORKFLOW_REF_NOT_FOUND, restOrder.getWorkflowUuid());
 			throw new OdipException(message);
 		}
+		if (!workflow.getEnabled()) {
+			// no workflow reference, return error
+			String message = logger.log(OdipMessage.MSG_WORKFLOW_NOT_ENABLED, restOrder.getWorkflowUuid());
+			throw new OdipException(message);
+		}
 		if (!securityConfig.getMission().equals(workflow.getMission().getCode())) {
 			String message = logger.log(OdipMessage.MSG_CROSS_MISSION_ACCESS, securityConfig.getMission(), workflow.getMission().getCode());
 			throw new OdipException(message, HttpStatusCode.BAD_REQUEST);
