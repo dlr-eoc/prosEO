@@ -18,6 +18,7 @@ import de.dlr.proseo.logging.messages.StorageMgrMessage;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.StorageProvider;
 import de.dlr.proseo.storagemgr.Exceptions.FileLockedAfterMaxCyclesException;
+import de.dlr.proseo.storagemgr.cache.CacheFileStatus;
 import de.dlr.proseo.storagemgr.cache.FileCache;
 import de.dlr.proseo.storagemgr.model.Storage;
 import de.dlr.proseo.storagemgr.model.StorageFile;
@@ -192,13 +193,13 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 				// active thread - copies the file to the cache storage and puts it to the cache
 				
-				// cache.putNonExistingUploading(cacheFile.getFullPath()); // status = copying_to_cache
+				cache.setCacheFileStatus(cacheFile.getFullPath(), CacheFileStatus.NOT_EXISTS);
 				
 				storageProvider.getStorage().downloadFile(storageFile, cacheFile);
 				
 				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED_FROM_STORAGE, cacheFile.getFullPath());
 
-				cache.put(cacheFile.getFullPath()); // status = READY
+				cache.put(cacheFile.getFullPath()); // cache file status = READY
 
 			} else {
 
@@ -234,12 +235,15 @@ public class ProductfileControllerImpl implements ProductfileController {
 			if (!cache.containsKey(cacheFile.getFullPath())) {
 
 				// active thread - copies the file to the cache storage and puts it to the cache
+				
+				cache.setCacheFileStatus(cacheFile.getFullPath(), CacheFileStatus.NOT_EXISTS);
+				
 				storageProvider.copyAbsoluteFilesToCache(externalPath, productId);
 
 				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED_FROM_EXTERNAL_TO_CACHE,
 						cacheFile.getFullPath());
 
-				cache.put(cacheFile.getFullPath());
+				cache.put(cacheFile.getFullPath()); // cache file status = READY
 				
 			} else {
 
