@@ -14,7 +14,7 @@ public enum CacheFileStatus {
 	/** Status READY */
 	READY,
 	/** Status UPLOADING */
-	UPLOADING, 
-	/** Status DOWNLOADING */
-	DOWNLOADING, 
+	COPYING_FROM_CACHE, 
+	/** Status Cache File does not exist in the cache */
+	NOT_EXISTS, 
 }

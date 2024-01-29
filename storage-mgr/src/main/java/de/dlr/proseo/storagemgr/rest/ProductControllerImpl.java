@@ -256,7 +256,7 @@ public class ProductControllerImpl implements ProductController {
 			InputStreamResource fsr = new InputStreamResource(stream);
 
 			if (null == fromByte || null == toByte) {
-				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED, pathInfo);
+				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED_FROM_STORAGE, pathInfo);
 			} else {
 				logger.log(StorageMgrMessage.PRODUCT_FILE_PARTIALLY_DOWNLOADED, pathInfo, Long.toString(fromByte),
 						Long.toString(toByte), Long.toString(toByte - fromByte));

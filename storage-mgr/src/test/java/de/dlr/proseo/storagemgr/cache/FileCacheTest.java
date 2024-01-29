@@ -203,9 +203,13 @@ public class FileCacheTest {
 
 		String path1 = Paths.get(testCachePath + "/" + "testStatus1.txt").toString();
 		String path2 = Paths.get(testCachePath + "/" + "testStatus2.txt").toString();
+		String path3 = Paths.get(testCachePath + "/" + "testStatus3.txt").toString();
+
 
 		CacheFileStatus status1;
 		CacheFileStatus status2;
+		CacheFileStatus status3;
+
 
 		// create 2 files for cache
 
@@ -228,36 +232,48 @@ public class FileCacheTest {
 
 		assertTrue("Expected cache file2 status after put() is Ready. Exists: " + status2.toString(),
 				status2 == CacheFileStatus.READY);
+		
+		// check not exists status - file is not in cache, but has a status
+		
+		fileCache.setCacheFileStatus(path3, CacheFileStatus.NOT_EXISTS);
+		
+		status3 = fileCache.getCacheFileStatus(path3);
+		
+		assertTrue("Expected cache file3 does not exist in the cache. Exists:" + fileCache.containsKey(path3),
+				!fileCache.containsKey(path3));
+		
+		assertTrue("Expected cache file3 status after setStatus(Not_exists) is Not_exists. Exists:" + status3.toString(),
+				status3 == CacheFileStatus.NOT_EXISTS);
+		
+		// changing status1 to copying from cache
 
-		// changing status1 to Uploading
-
-		fileCache.setCacheFileStatus(path1, CacheFileStatus.UPLOADING);
+		fileCache.setCacheFileStatus(path1, CacheFileStatus.COPYING_FROM_CACHE);
 
 		status1 = fileCache.getCacheFileStatus(path1);
 		status2 = fileCache.getCacheFileStatus(path2);
 
 		assertTrue("Expected cache file1 status after setStatus(Uploading) is Uploading. Exists:" + status1.toString(),
-				status1 == CacheFileStatus.UPLOADING);
+				status1 == CacheFileStatus.COPYING_FROM_CACHE);
 
 		assertTrue("Expected cache file2 status after <no changes> is Ready. Exists:" + status2.toString(),
 				status2 == CacheFileStatus.READY);
 
-		// changing status2 to Downloading
+		// changing status2 to copying to cache
 
-		fileCache.setCacheFileStatus(path2, CacheFileStatus.DOWNLOADING);
+		fileCache.setCacheFileStatus(path2, CacheFileStatus.NOT_EXISTS);
 
 		status1 = fileCache.getCacheFileStatus(path1);
 		status2 = fileCache.getCacheFileStatus(path2);
 
 		assertTrue("Expected cache file1 status after <no changes> is Uploading. Exists: " + status1.toString(),
-				status1 == CacheFileStatus.UPLOADING);
+				status1 == CacheFileStatus.COPYING_FROM_CACHE);
 
 		assertTrue("Expected cache file2 status after setStatus(Downloading) is Downlading. Exists: " + status2.toString(),
-				status2 == CacheFileStatus.DOWNLOADING);
+				status2 == CacheFileStatus.NOT_EXISTS);
 
 		// changing status1 to Ready
 
-		fileCache.setCacheFileStatus(path1, CacheFileStatus.READY);
+		fileCache.put(path1); // status is set as ready
 
 		status1 = fileCache.getCacheFileStatus(path1);
 		status2 = fileCache.getCacheFileStatus(path2);
@@ -266,7 +282,7 @@ public class FileCacheTest {
 				status1 == CacheFileStatus.READY);
 
 		assertTrue("Expected cache file2 status after <no changes> is Downloading. Exists: " + status2.toString(),
-				status2 == CacheFileStatus.DOWNLOADING);
+				status2 == CacheFileStatus.NOT_EXISTS);
 	
 		// check cache after status changes 
 

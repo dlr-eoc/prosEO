@@ -157,7 +157,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 			fileLocker.unlock();
 			restFileInfo = cacheToStorageFileCopy(relativePath, fileLocker);
 
-			logger.log(StorageMgrMessage.PRODUCT_FILE_UPLOADED, externalPath, productId);
+			logger.log(StorageMgrMessage.PRODUCT_FILE_UPLOADED_TO_STORAGE, externalPath, productId);
 			return new ResponseEntity<>(restFileInfo, HttpStatus.CREATED);
 
 		} catch (Exception e) {
@@ -191,11 +191,14 @@ public class ProductfileControllerImpl implements ProductfileController {
 			if (!cache.containsKey(cacheFile.getFullPath())) {
 
 				// active thread - copies the file to the cache storage and puts it to the cache
+				
+				// cache.putNonExistingUploading(cacheFile.getFullPath()); // status = copying_to_cache
+				
 				storageProvider.getStorage().downloadFile(storageFile, cacheFile);
 				
-				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED, cacheFile.getFullPath());
+				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED_FROM_STORAGE, cacheFile.getFullPath());
 
-				cache.put(cacheFile.getFullPath());
+				cache.put(cacheFile.getFullPath()); // status = READY
 
 			} else {
 

@@ -22,7 +22,25 @@ import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.utils.FileUtils;
 
 /**
- * File cache for managing files in cache storage.
+ * File cache for managing files in the cache storage. Features: 1) saves the
+ * time stamp of the last access of the cache file; 2) contains the status of
+ * the cache file, which can be changed; 3) uses the possibility to save in the
+ * cache also "temporary" files (temporary file is a file, which has not yet
+ * been copied to the cache. After copying it will be renamed to the cache file.
+ * In case of unsuccessful copying a temporary file will be deleted)
+ * 
+ * Information about some public methods:
+ * 
+ * The method put(fullPath): - puts the file to the cache; - sets the file
+ * status "READY"; - sets/updates the last accessed record; - cleans the cache
+ * if there is not enough free space - deletes the file physically if it is a
+ * temporary file
+ * 
+ * The method containsKey(fullPath): - checks if the path is in the cache. Only
+ * cache paths with the status "READY" are visible - removes the cache path from
+ * the cache if the physical file does not exist anymore - if the file is in the
+ * cache, updates the time stamp of the last access calling put()
+ * 
  * 
  * @author Denys Chaykovskiy
  *
@@ -41,7 +59,7 @@ public class FileCache {
 
 	/** Prefix for status files */
 	private static final String STATUS_PREFIX = "status-";
-	
+
 	/** Cache Map for storing file paths */
 	private MapCache mapCache;
 
@@ -68,7 +86,7 @@ public class FileCache {
 	 * Puts the new element to map. If element exists, it will be overwritten.
 	 * Removes the file if it is temporary
 	 * 
-	 * @param pathKey File path as a key
+	 * @param pathKey the full cache file path as a key
 	 */
 	public void put(String pathKey) {
 
@@ -80,6 +98,8 @@ public class FileCache {
 			logger.log(StorageMgrMessage.CACHE_NO_FILE_FOR_PUTTING_TO_CACHE, pathKey);
 			return;
 		}
+
+		// pathKey is the full path, beginning with the cache path
 		if (!pathKey.startsWith(cachePath)) {
 			if (logger.isTraceEnabled())
 				logger.trace("... not adding {} to cache, because it is considered a backend file", pathKey);
@@ -98,7 +118,7 @@ public class FileCache {
 		}
 
 		rewriteStatusPrefixFile(pathKey, CacheFileStatus.READY);
-		
+
 		rewriteAccessedPrefixFile(pathKey);
 		FileInfo fileInfo = new FileInfo(getFileAccessed(pathKey), getFileSize(pathKey));
 
@@ -106,8 +126,10 @@ public class FileCache {
 	}
 
 	/**
-	 * Checks if key available in map and updates the record in file cache if
-	 * available
+	 * Checks if the cache contains the path If not - returns false. If the physical
+	 * file does not exits anymore - deletes the path from the cache. Returns true
+	 * if the path is available in the cache and also updates the file record of the
+	 * last access
 	 * 
 	 * @param pathKey File path as key
 	 * @return true if pathkey is in file cache
@@ -124,7 +146,7 @@ public class FileCache {
 
 		File file = new File(pathKey);
 
-		if (!file.exists() || !file.isFile()) {
+		if (!file.isFile()) {
 
 			remove(pathKey);
 			return false;
@@ -136,6 +158,42 @@ public class FileCache {
 	}
 
 	/**
+	 * Puts the new cache file to the cache. The file does not exist yet in the
+	 * cache - it is uploading. The put() method checks if the cache file exists,
+	 * that's why there is a need in the special method The method is important for
+	 * the recovery - if an uploading to the cache was not successful, the file must
+	 * be deleted.
+	 * 
+	 * @param pathKey the full cache file path as a key
+	 */
+	public void putNonExistingUploading(String pathKey) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> put({})", pathKey);
+
+		// pathKey is the full path, beginning with the cache path
+		if (!pathKey.startsWith(cachePath)) {
+
+			if (logger.isTraceEnabled())
+				logger.trace("... not adding {} to cache, because it does not start with the cache path", pathKey);
+			return;
+		}
+
+		if (isTemporaryPrefixFile(pathKey)) {
+
+			deleteFile(pathKey);
+			logger.log(StorageMgrMessage.CACHE_TEMPORARY_FILE_DELETED, pathKey);
+		}
+
+		rewriteStatusPrefixFile(pathKey, CacheFileStatus.NOT_EXISTS);
+
+		rewriteAccessedPrefixFile(pathKey);
+		FileInfo fileInfo = new FileInfo(getFileAccessed(pathKey), 0);
+
+		mapCache.put(pathKey, fileInfo);
+	}
+
+	/**
 	 * Gets temporary prefix of the file
 	 * 
 	 * @return temporary prefix of the file
@@ -143,7 +201,7 @@ public class FileCache {
 	public static String getTemporaryPrefix() {
 		return TEMPORARY_PREFIX;
 	}
-	
+
 	/**
 	 * Returns a status of the cache file
 	 * 
@@ -166,7 +224,7 @@ public class FileCache {
 
 		return CacheFileStatus.valueOf(status);
 	}
-	
+
 	/**
 	 * Sets the status of a cache file
 	 * 
@@ -178,16 +236,19 @@ public class FileCache {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> setCacheFileStatus({}, {})", pathKey, status);
 
-		if (!mapCache.containsKey(pathKey)) {
-			if (!new File(pathKey).exists()) {
-				logger.log(StorageMgrMessage.CACHE_NO_FILE_FOR_PUTTING_TO_CACHE, pathKey);
+		// There is no cache file for the status == not exists
+		if (status != CacheFileStatus.NOT_EXISTS) {
+			if (!mapCache.containsKey(pathKey)) {
+				if (!new File(pathKey).exists()) {
+					logger.log(StorageMgrMessage.CACHE_NO_FILE_FOR_PUTTING_TO_CACHE, pathKey);
+				}
+				return;
 			}
-			return;
 		}
-		
+
 		rewriteStatusPrefixFile(pathKey, status);
 	}
-	
+
 	/**
 	 * Initializes file cache with directory from Application.yml
 	 */
@@ -520,12 +581,10 @@ public class FileCache {
 		String directory = new File(path).getParent();
 
 		deleteFile(path);
-				
+
 		deleteFile(getAccessedPath(path));
 		deleteFile(getStatusPath(path));
 		deleteFile(getTemporaryPath(path));
-
-
 
 		deleteEmptyDirectoriesToTop(directory);
 	}
@@ -611,7 +670,7 @@ public class FileCache {
 
 		return accessedPath;
 	}
-	
+
 	/**
 	 * Gets the path of the status file
 	 * 
@@ -628,7 +687,7 @@ public class FileCache {
 
 		return statusPath;
 	}
-	
+
 	/**
 	 * Gets the path of the temporary file
 	 * 
@@ -662,7 +721,7 @@ public class FileCache {
 
 		return path;
 	}
-	
+
 	/**
 	 * Returns true if the file was accessed
 	 * 
@@ -675,7 +734,7 @@ public class FileCache {
 
 		return f.isFile();
 	}
-	
+
 	/**
 	 * Returns true if the cache file has a status
 	 * 
@@ -690,8 +749,8 @@ public class FileCache {
 	}
 
 	/**
-	 * Returns true if the file is the cache file (starts with the cache path, not accessed, not temporary, 
-	 * not hidden and not status file)
+	 * Returns true if the file is the cache file (starts with the cache path, not
+	 * accessed, not temporary, not hidden and not status file)
 	 * 
 	 * @param path the full path to the file
 	 * @return true if the file is the cache file
@@ -699,9 +758,9 @@ public class FileCache {
 	private boolean isCacheFile(String path) {
 
 		if (!path.startsWith(cachePath)) {
-			return false; 
+			return false;
 		}
-		
+
 		if (isAccessedPrefixFile(path)) {
 			return false;
 		}
@@ -709,14 +768,14 @@ public class FileCache {
 		if (isTemporaryPrefixFile(path)) {
 			return false;
 		}
-			
+
 		if (isStatusPrefixFile(path)) {
 			return false;
 		}
 
 		if (isHiddenFile(path)) {
 			return false;
-		}	
+		}
 
 		return true;
 	}
@@ -742,7 +801,7 @@ public class FileCache {
 
 		return hasFilePrefix(path, TEMPORARY_PREFIX);
 	}
-	
+
 	/**
 	 * Returns true if the file has the status prefix
 	 * 
@@ -791,25 +850,25 @@ public class FileCache {
 		String accessedPath = getAccessedPath(path);
 		String timeStamp = Instant.now().toString();
 		FileUtils fileUtils = new FileUtils(accessedPath);
-		
+
 		fileUtils.synchroCreateFile(timeStamp, cfg.getFileCheckWaitTime(), cfg.getFileCheckMaxCycles());
 	}
-	
+
 	/**
 	 * Rewrites status prefix file with the current status
 	 * 
-	 * @param path    The full path to the cache file
-	 * @param status  The 
+	 * @param path   The full path to the cache file
+	 * @param status The
 	 */
 	private void rewriteStatusPrefixFile(String path, CacheFileStatus status) {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> rewriteStatusPrefixFile({}, {})", path,  status);
+			logger.trace(">>> rewriteStatusPrefixFile({}, {})", path, status);
 
 		String statusPath = getStatusPath(path);
 		FileUtils fileUtils = new FileUtils(statusPath);
 
-		fileUtils.synchroCreateFile(status.toString(), cfg.getFileCheckWaitTime(), cfg.getFileCheckMaxCycles());		
+		fileUtils.synchroCreateFile(status.toString(), cfg.getFileCheckWaitTime(), cfg.getFileCheckMaxCycles());
 	}
 
 	/**
