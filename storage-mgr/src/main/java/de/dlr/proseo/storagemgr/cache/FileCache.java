@@ -158,42 +158,6 @@ public class FileCache {
 	}
 
 	/**
-	 * Puts the new cache file to the cache. The file does not exist yet in the
-	 * cache - it is uploading. The put() method checks if the cache file exists,
-	 * that's why there is a need in the special method The method is important for
-	 * the recovery - if an uploading to the cache was not successful, the file must
-	 * be deleted.
-	 * 
-	 * @param pathKey the full cache file path as a key
-	 */
-	public void putNonExistingUploading(String pathKey) {
-
-		if (logger.isTraceEnabled())
-			logger.trace(">>> put({})", pathKey);
-
-		// pathKey is the full path, beginning with the cache path
-		if (!pathKey.startsWith(cachePath)) {
-
-			if (logger.isTraceEnabled())
-				logger.trace("... not adding {} to cache, because it does not start with the cache path", pathKey);
-			return;
-		}
-
-		if (isTemporaryPrefixFile(pathKey)) {
-
-			deleteFile(pathKey);
-			logger.log(StorageMgrMessage.CACHE_TEMPORARY_FILE_DELETED, pathKey);
-		}
-
-		rewriteStatusPrefixFile(pathKey, CacheFileStatus.NOT_EXISTS);
-
-		rewriteAccessedPrefixFile(pathKey);
-		FileInfo fileInfo = new FileInfo(getFileAccessed(pathKey), 0);
-
-		mapCache.put(pathKey, fileInfo);
-	}
-
-	/**
 	 * Gets temporary prefix of the file
 	 * 
 	 * @return temporary prefix of the file
@@ -226,7 +190,8 @@ public class FileCache {
 	}
 
 	/**
-	 * Sets the status of a cache file
+	 * Sets the status of a cache file. The pathKey must be an existing cache file, 
+	 * the exception is for "not exists" cache file status.
 	 * 
 	 * @param pathKey File path as key
 	 * @return a status of the cache file
