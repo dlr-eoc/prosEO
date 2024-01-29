@@ -173,6 +173,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 		}
 	}
 
+	// x-to-cache-copy method, status "not exists is used"
 	private RestFileInfo storageToCacheFileCopy(String storageFilePath, StorageFileLocker fileLocker)
 			throws FileLockedAfterMaxCyclesException, IOException, Exception {
 
@@ -219,6 +220,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 		return restFileInfo;
 	}
 
+	// x-to-cache-copy method, status "not exists is used"
 	private RestFileInfo externalToCacheFileCopy(String externalPath, Long productId, Long fileSize,
 			StorageFileLocker fileLocker) throws FileLockedAfterMaxCyclesException, IOException, Exception {
 

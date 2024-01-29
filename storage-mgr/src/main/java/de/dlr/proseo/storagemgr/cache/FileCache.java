@@ -146,7 +146,7 @@ public class FileCache {
 
 		File file = new File(pathKey);
 
-		if (!file.isFile()) {
+		if (!file.isFile() || hasNotExistsStatus(pathKey)) {
 
 			remove(pathKey);
 			return false;
@@ -156,7 +156,7 @@ public class FileCache {
 
 		return true;
 	}
-
+	
 	/**
 	 * Gets temporary prefix of the file
 	 * 
@@ -481,8 +481,21 @@ public class FileCache {
 				deleteFile(file.getPath());
 			}
 
-			// delete if accessed file alone without file
+			// delete if accessed file alone without cache file
 			if (isAccessedPrefixFile(file.getPath()) && !Files.exists(Paths.get(getPathFromAccessed(file.getPath())))) {
+
+				file.delete();
+
+				if (new FileUtils(path).isEmptyDirectory()) {
+
+					deleteEmptyDirectoriesToTop(path);
+					return;
+				}
+				continue;
+			}
+			
+			// delete if status file alone without cache file
+			if (isStatusPrefixFile(file.getPath()) && !Files.exists(Paths.get(getPathFromStatus(file.getPath())))) {
 
 				file.delete();
 
@@ -496,6 +509,14 @@ public class FileCache {
 
 			// if cache file, adds to cache without update accessed prefix file
 			else if (file.isFile() && isCacheFile(file.getPath())) {
+				
+				// delete cache file with status file if status = not exists
+				if (hasNotExistsStatus(file.getPath())) {
+					
+					deleteFile(file.getPath());
+					deleteFile(getStatusPath(file.getPath()));			
+					continue;				
+				}
 
 				putWithoutUpdateAccessedPrefixFile(file.getPath());
 			}
@@ -546,7 +567,7 @@ public class FileCache {
 		String directory = new File(path).getParent();
 
 		deleteFile(path);
-
+		
 		deleteFile(getAccessedPath(path));
 		deleteFile(getStatusPath(path));
 		deleteFile(getTemporaryPath(path));
@@ -686,6 +707,24 @@ public class FileCache {
 
 		return path;
 	}
+	
+	/**
+	 * Gets a cache path from a status path
+	 * 
+	 * @param status Path status Path to the file
+	 * @return the full path to cache file
+	 */
+	/* package */ String getPathFromStatus(String statusPath) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getPathFromStatus({})", statusPath);
+
+		File file = new File(statusPath);
+		String path = file.getParent() + "/" + file.getName().replace(STATUS_PREFIX, "");
+
+		return path;
+	}
+
 
 	/**
 	 * Returns true if the file was accessed
@@ -800,6 +839,17 @@ public class FileCache {
 		String fileName = new File(path).getName();
 
 		return fileName.startsWith(prefix) ? true : false;
+	}
+	
+	/**
+	 * Returns true if the cache file has "not exists" status
+	 * 
+	 * @param cacheFile the full path to the cache file
+	 * @return true if the file has "not exists" status
+	 */
+	private boolean hasNotExistsStatus(String cacheFile) {
+
+		return getCacheFileStatus(cacheFile) == CacheFileStatus.NOT_EXISTS;
 	}
 
 	/**
