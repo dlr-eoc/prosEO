@@ -93,7 +93,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		try {
 
-			RestFileInfo restFileInfo = storageToCacheFileCopy(absoluteStoragePath, fileLocker);
+			RestFileInfo restFileInfo = copyFileStorageToCache(absoluteStoragePath, fileLocker);
 			return new ResponseEntity<>(restFileInfo, HttpStatus.OK);
 
 		} catch (FileLockedAfterMaxCyclesException e) {
@@ -154,9 +154,9 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		try {
 
-			RestFileInfo restFileInfo = externalToCacheFileCopy(externalPath, productId, fileSize, fileLocker);
+			RestFileInfo restFileInfo = copyFileExternalToCache(externalPath, productId, fileSize, fileLocker);
 			fileLocker.unlock();
-			restFileInfo = cacheToStorageFileCopy(relativePath, fileLocker);
+			restFileInfo = copyFileCacheToStorage(relativePath, fileLocker);
 
 			logger.log(StorageMgrMessage.PRODUCT_FILE_UPLOADED_TO_STORAGE, externalPath, productId);
 			return new ResponseEntity<>(restFileInfo, HttpStatus.CREATED);
@@ -172,10 +172,23 @@ public class ProductfileControllerImpl implements ProductfileController {
 			logger.debug("... unlocked the file: ", externalPath);
 		}
 	}
-
-	// x-to-cache-copy method, status "not exists is used"
-	private RestFileInfo storageToCacheFileCopy(String storageFilePath, StorageFileLocker fileLocker)
+	
+	/**
+	 * Copies the file from the storage to the cache using synchronization.
+	 * During the copying to the cache, the status of the file will be "not exists", 
+	 * after the completion the status will be set to "ready"
+	 * 
+	 * @param storageFilePath the file path in the storage
+	 * @param fileLocker file locker is used for synchronization 
+	 * @return RestFileInfo
+	 * @throws FileLockedAfterMaxCyclesException
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	private RestFileInfo copyFileStorageToCache(String storageFilePath, StorageFileLocker fileLocker)
 			throws FileLockedAfterMaxCyclesException, IOException, Exception {
+		
+		// x-to-cache-copy method, status "not exists" is used
 
 		// relative path depends on path, not on actual storage
 		String relativePath = storageProvider.getRelativePath(storageFilePath);
@@ -220,10 +233,25 @@ public class ProductfileControllerImpl implements ProductfileController {
 		return restFileInfo;
 	}
 
-	// x-to-cache-copy method, status "not exists is used"
-	private RestFileInfo externalToCacheFileCopy(String externalPath, Long productId, Long fileSize,
+	/**
+	 * Copies the file from the external source to the cache using synchronization.
+	 * During the copying to the cache, the status of the file will be "not exists", 
+	 * after the completion the status will be set to "ready"
+	 * 
+	 * @param externalPath external path of the file, which will be copied to the cache
+	 * @param productId product id is used as a directory to store copied file in cache
+	 * @param fileSize file size 
+	 * @param fileLocker file locker is used for synchronization
+	 * @return Rest File Info 
+	 * @throws FileLockedAfterMaxCyclesException
+	 * @throws IOException 
+	 * @throws Exception
+	 */
+	private RestFileInfo copyFileExternalToCache(String externalPath, Long productId, Long fileSize,
 			StorageFileLocker fileLocker) throws FileLockedAfterMaxCyclesException, IOException, Exception {
 
+		// x-to-cache-copy method, status "not exists" is used
+		
 		String productFolderWithFilename = getProductFolderWithFilename(externalPath, productId);
 		StorageFile cacheFile = storageProvider.getCacheFile(productFolderWithFilename);
 
@@ -269,7 +297,19 @@ public class ProductfileControllerImpl implements ProductfileController {
 	// TODO: WIP Special use case for cache recovery - file in cache, but not in storage
 	// TODO: WIP Special use case for cache state - not uploaded to storage
 
-	private RestFileInfo cacheToStorageFileCopy(String relativeCachePath, StorageFileLocker fileLocker)
+	/**
+	 * Copies the file from the cache to the storage using synchronization.
+	 * During the copying to the cache, the status of the file will be "not exists", 
+	 * after the completion the status will be set to "ready"
+	 * 
+	 * @param relativeCachePath relative cache path
+	 * @param fileLocker is used for synchronization 
+	 * @return RestFileInfo 
+	 * @throws FileLockedAfterMaxCyclesException
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	private RestFileInfo copyFileCacheToStorage(String relativeCachePath, StorageFileLocker fileLocker)
 			throws FileLockedAfterMaxCyclesException, IOException, Exception {
 
 		Storage storage = storageProvider.getStorage();
@@ -317,7 +357,6 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 * 
 	 * @param storageFile storage file
 	 * @param fileSize    file size
-	 * 
 	 * @return rest file info
 	 */
 	private static RestFileInfo convertToRestFileInfo(StorageFile storageFile, long fileSize) {
