@@ -764,12 +764,14 @@ public class DownloadManager {
 			logger.trace(">>> createOrder({}, {})", (null == archive ? "NULL" : archive.getCode()), requestUri);
 
 		// Create a request
+		String fullRequestUri = archive.getBaseUri() 
+				+ (null == archive.getContext() ? "" : "/" + archive.getContext())
+				+ "/" + ODATA_CONTEXT
+				+ "/" + requestUri;
+		
 		WebClient webClient = WebClient.create(archive.getBaseUri());
 		RequestBodySpec request = webClient.post()
-				.uri(archive.getBaseUri() 
-						+ (null == archive.getContext() ? "" : "/" + archive.getContext())
-						+ "/" + ODATA_CONTEXT
-						+ "/" + requestUri)
+				.uri(fullRequestUri)
 				.contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON);
 		
@@ -792,6 +794,8 @@ public class DownloadManager {
 		}
 		
 		try {
+			if (logger.isDebugEnabled()) logger.debug("... sending OData request '{}'", fullRequestUri);
+			
 			createResponse = request.body(BodyInserters.fromObject(ODATA_ORDER_REQUEST_BODY))
 				.retrieve()
 				.bodyToMono(Map.class)
