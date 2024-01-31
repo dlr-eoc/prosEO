@@ -230,31 +230,49 @@ metadata:
   namespace: default
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
   name: proseo-planner-role
-  namespace: default
+  # namespace not applicable for ClusterRole
 rules:
 - apiGroups: [""]
   resources: ["nodes"]
   verbs: ["get", "list", "watch"]
 - apiGroups: [""]
-  resources: ["jobs", "pods"]
+  resources: ["events"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["batch"]
+  resources: ["jobs"]
   verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
   name: proseo-planner-binding
-  namespace: default
+  # namespace not applicable for ClusterRoleBinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: Role
+  kind: ClusterRole
   name: proseo-planner-role
 subjects:
 - kind: ServiceAccount
   name: proseo-planner
   namespace: default
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: proseo-planner-secret
+  namespace: default
+  annotations:
+    kubernetes.io/service-account.name: proseo-planner
+type: kubernetes.io/service-account-token
 ```
 
 Create the account, role and role binding, and retrieve the authentication token for the new account:

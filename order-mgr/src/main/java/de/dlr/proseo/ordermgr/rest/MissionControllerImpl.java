@@ -572,10 +572,15 @@ public class MissionControllerImpl implements MissionController {
 					}
 				}
 
-				// Delete the mission
+				// Delete dependent configured elements if requested
 				if (force) {
 					deleteMissionDependentObjects(mission);
 				}
+				
+				// Silently delete all spacecrafts and orbits (by cascade)
+				deleteSpacecraftsAndOrbits(id);
+
+				// Delete the mission
 				RepositoryService.getMissionRepository().deleteById(id);
 
 				// Test whether the deletion was successful
@@ -730,14 +735,7 @@ public class MissionControllerImpl implements MissionController {
 			logger.debug("... processor classes deleted");
 
 		// Delete all spacecrafts and orbits (by cascade)
-		jpqlQuery = "select s from Spacecraft s where s.mission.id = " + missionId;
-		query = em.createQuery(jpqlQuery);
-		for (Object resultObject : query.getResultList()) {
-			if (resultObject instanceof Spacecraft)
-				RepositoryService.getSpacecraftRepository().deleteById(((Spacecraft) resultObject).getId());
-		}
-		if (logger.isDebugEnabled())
-			logger.debug("... spacecrafts deleted");
+		deleteSpacecraftsAndOrbits(missionId);
 
 		// Delete all user-group associations for this mission (bulk delete using Native SQL since we have no implicit joins, and
 		// the User object is not mapped)
@@ -777,6 +775,25 @@ public class MissionControllerImpl implements MissionController {
 		
 		if (logger.isDebugEnabled())
 			logger.debug("... users deleted");
+	}
+
+	/**
+	 * Delete all spacecrafts and orbits (by cascade)
+	 * 
+	 * @param missionId the mission to delete the spacecrafts from
+	 */
+	private void deleteSpacecraftsAndOrbits(long missionId) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteSpacecraftsAndOrbits({})", missionId);
+
+		String jpqlQuery = "select s from Spacecraft s where s.mission.id = " + missionId;
+		Query query = em.createQuery(jpqlQuery);
+		for (Object resultObject : query.getResultList()) {
+			if (resultObject instanceof Spacecraft)
+				RepositoryService.getSpacecraftRepository().deleteById(((Spacecraft) resultObject).getId());
+		}
+		if (logger.isDebugEnabled())
+			logger.debug("... spacecrafts deleted");
 	}
 
 	/**
