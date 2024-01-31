@@ -22,12 +22,20 @@ import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.utils.FileUtils;
 
 /**
- * File cache for managing files in the cache storage. Features: 1) saves the
- * time stamp of the last access of the cache file; 2) contains the status of
- * the cache file, which can be changed; 3) uses the possibility to save in the
- * cache also "temporary" files (temporary file is a file, which has not yet
- * been copied to the cache. After copying it will be renamed to the cache file.
- * In case of unsuccessful copying a temporary file will be deleted)
+ * File cache for managing files in the cache storage. Features: 
+ * 1) saves the time stamp of the last access of the cache file; 
+ * 2) contains the status of the cache file, which can be changed. 
+ *  The status file with the status "not exists" can exists alone or 
+ *  together with the cache file. The existence of status file "not exists"
+ *  shows, that copying failed and the status file "not exists" together with
+ *  the cache file (if exists) will be deleted after the new initialization
+ *  of the cache. In case of new copy attempt they will be overwritten. 
+ *  In case of calling put() with the existing cache file, status will be 
+ *  changed to "ready" 
+ * 3) uses the possibility to save in the cache also "temporary" files 
+ * (temporary file is a file, which has not yet been copied to the cache. 
+ *  After copying it will be renamed to the cache file.
+ *  In case of unsuccessful copying a temporary file will be deleted)
  * 
  * Information about some public methods:
  * 
