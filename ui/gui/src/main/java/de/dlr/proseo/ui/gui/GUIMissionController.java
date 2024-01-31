@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.ui.gui;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +22,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -118,8 +120,11 @@ public class GUIMissionController extends GUIBaseController {
 		String mission = auth.getMission();
 
 		// Build the request URI
-		String uri = serviceConfig.getOrderManagerUrl() + "/missions";
-		uri += "?mission=" + mission;
+		String uriString = serviceConfig.getOrderManagerUrl() + "/missions";
+		uriString += "?mission=" + mission;
+		URI uri = UriComponentsBuilder.fromUriString(uriString)
+				.build()
+				.toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI

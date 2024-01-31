@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.ui.gui;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +24,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
@@ -213,32 +215,35 @@ public class GUIWorkflowController extends GUIBaseController {
 
 		// Build request URI
 		String divider = "?";
-		String uri = "/workflows/count";
+		String uriString = "/workflows/count";
 
 		if (mission != null && !mission.isEmpty()) {
-			uri += divider + "mission=" + mission;
+			uriString += divider + "mission=" + mission;
 			divider = "&";
 		}
 		if (name != null && !name.isEmpty()) {
-			uri += divider + "name=" + name;
+			uriString += divider + "name=" + name;
 			divider = "&";
 		}
 		if (workflowVersion != null && !workflowVersion.isEmpty()) {
-			uri += divider + "workflowVersion=" + workflowVersion;
+			uriString += divider + "workflowVersion=" + workflowVersion;
 			divider = "&";
 		}
 		if (inputProductClass != null && !inputProductClass.isEmpty()) {
-			uri += divider + "inputProductClass=" + inputProductClass;
+			uriString += divider + "inputProductClass=" + inputProductClass;
 			divider = "&";
 		}
 
+		URI uri = UriComponentsBuilder.fromUriString(uriString)
+				.build()
+				.toUri();
 		// Initialize the result with -1 to indicate errors if no valid response is
 		// given
 		Long result = -1l;
 
 		try {
 			// Fetch workflow count from processor manager
-			String response = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(), uri, String.class,
+			String response = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(), uri.toString(), String.class,
 					auth.getProseoName(), auth.getPassword());
 
 			if (response != null && response.length() > 0) {
@@ -290,43 +295,46 @@ public class GUIWorkflowController extends GUIBaseController {
 		String mission = auth.getMission();
 
 		// Build request URI
-		String uri = serviceConfig.getProcessorManagerUrl() + "/workflows";
+		String uriString = serviceConfig.getProcessorManagerUrl() + "/workflows";
 
 		if (id != null && id > 0) {
 			// If an ID was given, it is the only relevant parameter
-			uri += "/" + id.toString();
+			uriString += "/" + id.toString();
 		} else {
 			// Else build a request URI with all other parameters
 			String divider = "?";
 
 			if (mission != null && !mission.isEmpty()) {
-				uri += divider + "mission=" + mission;
+				uriString += divider + "mission=" + mission;
 				divider = "&";
 			}
 			if (name != null && !name.isEmpty()) {
-				uri += divider + "name=" + name;
+				uriString += divider + "name=" + name;
 				divider = "&";
 			}
 			if (workflowVersion != null && !workflowVersion.isEmpty()) {
-				uri += divider + "workflowVersion=" + workflowVersion;
+				uriString += divider + "workflowVersion=" + workflowVersion;
 				divider = "&";
 			}
 			if (inputProductClass != null && !inputProductClass.isEmpty()) {
-				uri += divider + "inputProductClass=" + inputProductClass;
+				uriString += divider + "inputProductClass=" + inputProductClass;
 				divider = "&";
 			}
 			if (recordFrom != null) {
-				uri += divider + "recordFrom=" + recordFrom;
+				uriString += divider + "recordFrom=" + recordFrom;
 				divider = "&";
 			}
 			if (recordTo != null) {
-				uri += divider + "recordTo=" + recordTo;
+				uriString += divider + "recordTo=" + recordTo;
 				divider = "&";
 			}
 
-			uri += divider + "orderBy=name ASC,workflowVersion ASC";
+			uriString += divider + "orderBy=name ASC,workflowVersion ASC";
 		}
 
+		URI uri = UriComponentsBuilder.fromUriString(uriString)
+				.build()
+				.toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI

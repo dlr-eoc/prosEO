@@ -6,6 +6,7 @@
 package de.dlr.proseo.ui.gui;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
@@ -1268,21 +1270,24 @@ public class GUIOrderController extends GUIBaseController {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		Long result = (long) -1;
 		String mission = auth.getMission();
-		String uri = "/orders/count";
+		String uriString = "/orders/count";
 		String divider = "?";
 		if (null != mission) {
-			uri += divider + "mission=" + mission;
+			uriString += divider + "mission=" + mission;
 			divider = "&";
 		}
 		if (null != orderName && !orderName.trim().isEmpty()) {
-			uri += divider + "identifier=" + orderName.trim();
+			uriString += divider + "identifier=" + orderName.trim();
 		}
 		if (null != nid && !nid.trim().isEmpty()) {
-			uri += divider + "nid=" + nid.trim();
+			uriString += divider + "nid=" + nid.trim();
 		}
+		URI uri = UriComponentsBuilder.fromUriString(uriString)
+				.build()
+				.toUri();
 
 		try {
-			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(), uri, String.class,
+			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(), uri.toString(), String.class,
 					auth.getProseoName(), auth.getPassword());
 
 			if (resStr != null && resStr.length() > 0) {
@@ -1328,16 +1333,16 @@ public class GUIOrderController extends GUIBaseController {
 			Long recordTo, String sortCol, Boolean up) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
-		String uri = "/orders/countselect";
+		String uriString = "/orders/countselect";
 
 		String divider = "?";
 		if (mission != null && !mission.isEmpty()) {
-			uri += divider + "mission=" + mission;
+			uriString += divider + "mission=" + mission;
 			divider = "&";
 		}
 		if (identifier != null && !identifier.isEmpty()) {
 			try {
-				uri += divider + "identifier=" + URLEncoder.encode(identifier.replaceAll("[*]", "%"), "UTF-8");
+				uriString += divider + "identifier=" + URLEncoder.encode(identifier.replaceAll("[*]", "%"), "UTF-8");
 			} catch (UnsupportedEncodingException e) {
 				logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
@@ -1346,7 +1351,7 @@ public class GUIOrderController extends GUIBaseController {
 		if (states != null && !states.isEmpty()) {
 			String[] pcs = states.split(":");
 			for (String pc : pcs) {
-				uri += divider + "state=" + pc;
+				uriString += divider + "state=" + pc;
 				divider = "&";
 			}
 		}
@@ -1354,56 +1359,59 @@ public class GUIOrderController extends GUIBaseController {
 		if (states != null && !states.isEmpty()) {
 			String[] pcs = states.split(":");
 			for (String pc : pcs) {
-				uri += divider + "state=" + pc;
+				uriString += divider + "state=" + pc;
 				divider = "&";
 			}
 		}
 		if (products != null && !products.isEmpty()) {
 			String[] pcs = products.split(":");
 			for (String pc : pcs) {
-				uri += divider + "productClass=" + pc;
+				uriString += divider + "productClass=" + pc;
 				divider = "&";
 			}
 		}
 		if (from != null && !from.isEmpty()) {
-			uri += divider + "startTime=" + from;
+			uriString += divider + "startTime=" + from;
 			divider = "&";
 		}
 		if (to != null && !to.isEmpty()) {
-			uri += divider + "stopTime=" + to;
+			uriString += divider + "stopTime=" + to;
 			divider = "&";
 		}
 		if (recordFrom != null) {
-			uri += divider + "recordFrom=" + recordFrom;
+			uriString += divider + "recordFrom=" + recordFrom;
 			divider = "&";
 		}
 		if (recordTo != null) {
-			uri += divider + "recordTo=" + recordTo;
+			uriString += divider + "recordTo=" + recordTo;
 			divider = "&";
 		}
 		if (sortCol != null && !sortCol.isEmpty()) {
-			uri += divider + "orderBy=" + sortCol;
+			uriString += divider + "orderBy=" + sortCol;
 			if (up != null && !up) {
 				try {
-					uri += URLEncoder.encode(" DESC", "UTF-8");
+					uriString += URLEncoder.encode(" DESC", "UTF-8");
 				} catch (UnsupportedEncodingException e) {
-					uri += "%20DESC";
+					uriString += "%20DESC";
 					logger.log(UIMessage.EXCEPTION, e.getMessage());
 				}
 			} else {
 				try {
-					uri += URLEncoder.encode(" ASC", "UTF-8");
+					uriString += URLEncoder.encode(" ASC", "UTF-8");
 				} catch (UnsupportedEncodingException e) {
-					uri += "%20ASC";
+					uriString += "%20ASC";
 					logger.log(UIMessage.EXCEPTION, e.getMessage());
 				}
 			}
 			divider = "&";
 		}
 
+		URI uri = UriComponentsBuilder.fromUriString(uriString)
+				.build()
+				.toUri();
 		Long result = (long) -1;
 		try {
-			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(), uri, String.class,
+			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(), uri.toString(), String.class,
 					auth.getProseoName(), auth.getPassword());
 
 			if (resStr != null && resStr.length() > 0) {

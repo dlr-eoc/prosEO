@@ -59,7 +59,7 @@ public class ProseoHttp {
 	 */
 	public HttpHeaders errorHeaders(String loggedMessage) {
 		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HttpHeaders.WARNING, prefix.getPrefix() + (null == loggedMessage ? "null" : loggedMessage));
+		responseHeaders.set(HttpHeaders.WARNING, prefix.getPrefix() + (null == loggedMessage ? "null" : loggedMessage.replaceAll("\n", " ")));
 		return responseHeaders;
 	}
 
