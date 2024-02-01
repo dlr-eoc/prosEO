@@ -4,7 +4,7 @@ import java.nio.file.Paths;
 
 import org.junit.rules.TestName;
 
-import de.dlr.proseo.storagemgr.version2.PathConverter;
+import de.dlr.proseo.storagemgr.utils.PathConverter;
 
 /**
  * @author Denys Chaykovskiy

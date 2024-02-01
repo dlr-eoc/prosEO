@@ -16,11 +16,10 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.dlr.proseo.storagemgr.version2.FileUtils;
-import de.dlr.proseo.storagemgr.version2.StorageProvider;
-import de.dlr.proseo.storagemgr.version2.model.Storage;
-import de.dlr.proseo.storagemgr.version2.model.StorageFile;
-import de.dlr.proseo.storagemgr.version2.model.StorageType;
+import de.dlr.proseo.storagemgr.model.Storage;
+import de.dlr.proseo.storagemgr.model.StorageFile;
+import de.dlr.proseo.storagemgr.model.StorageType;
+import de.dlr.proseo.storagemgr.utils.FileUtils;
 
 /**
  * @author Denys Chaykovskiy
@@ -321,6 +320,18 @@ public class TestUtils {
 		}
 		System.out.println();
 	}
+	
+	/**
+	 * @param message
+	 * @param directoryPath
+	 */
+	public static void printDirectoryTree(String message, String directoryPath) {
+		
+		System.out.println();
+		System.out.println(message); 
+		
+		printDirectoryTree(directoryPath);		
+	}
 
 	/**
 	 * @param directoryPath
@@ -342,7 +353,7 @@ public class TestUtils {
 		System.out.print(" Files: " + countFilesInDirectory(directoryPath));
 		System.out.println(" Folders: " + countDirectoriesInDirectory(directoryPath));
 
-		printDirectoryTree(directoryPath, "");
+		printDirectoryTreeWithDepth(directoryPath, "");
 		System.out.println();
 	}
 
@@ -350,7 +361,7 @@ public class TestUtils {
 	 * @param directoryPath
 	 * @param depth
 	 */
-	private static void printDirectoryTree(String directoryPath, String depth) {
+	private static void printDirectoryTreeWithDepth(String directoryPath, String depth) {
 
 		File directory = new File(directoryPath);
 
@@ -374,7 +385,7 @@ public class TestUtils {
 		for (File file : files) {
 			if (file.isDirectory()) {
 				System.out.println(depth + file.getName() + " <DIR>");
-				printDirectoryTree(file.getPath(), OUTPUT_TAB + depth);
+				printDirectoryTreeWithDepth(file.getPath(), OUTPUT_TAB + depth);
 			}
 		}
 	}

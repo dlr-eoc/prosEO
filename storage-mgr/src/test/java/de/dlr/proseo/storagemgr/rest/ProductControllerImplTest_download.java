@@ -19,13 +19,13 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import de.dlr.proseo.storagemgr.StorageManager;
-import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.StorageProvider;
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
-import de.dlr.proseo.storagemgr.version2.PathConverter;
-import de.dlr.proseo.storagemgr.version2.StorageProvider;
-import de.dlr.proseo.storagemgr.version2.model.Storage;
-import de.dlr.proseo.storagemgr.version2.model.StorageFile;
-import de.dlr.proseo.storagemgr.version2.model.StorageType;
+import de.dlr.proseo.storagemgr.model.Storage;
+import de.dlr.proseo.storagemgr.model.StorageFile;
+import de.dlr.proseo.storagemgr.model.StorageType;
+import de.dlr.proseo.storagemgr.utils.PathConverter;
 
 /**
  * Mock Mvc test for Product Controller
@@ -48,7 +48,7 @@ public class ProductControllerImplTest_download {
 	private MockMvc mockMvc;
 
 	@Autowired
-	private StorageTestUtils storageTestUtils;
+	private BaseStorageTestUtils storageTestUtils;
 
 	@Autowired
 	private StorageProvider storageProvider;
@@ -66,45 +66,20 @@ public class ProductControllerImplTest_download {
 	 * @return products string[]
 	 */
 	@Test
-	public void testDownload_v2Posix() throws Exception {
+	public void testDownload_posix() throws Exception {
 
 		if (TESTS_ENABLED) {
 
 			StorageType storageType = StorageType.POSIX;
-			storageProvider.loadVersion2();
 			storageProvider.setStorage(storageType);
 
 			downloadProductFiles(storageType);
 
-			assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 			StorageType realStorageType = storageProvider.getStorage().getStorageType();
 			assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 		}
 	}
 
-	/**
-	 * Downloads products with given directory prefix
-	 * 
-	 * GET /products storageType="POSIX"&prefix="/.."
-	 * 
-	 * @return products string[]
-	 */
-	@Test
-	public void testDownload_v1Posix() throws Exception {
-
-		if (TESTS_ENABLED) {
-
-			StorageType storageType = StorageType.POSIX;
-			storageProvider.loadVersion1();
-			storageProvider.setStorage(storageType);
-
-			downloadProductFiles(storageType);
-
-			assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
-			StorageType realStorageType = storageProvider.getStorage().getStorageType();
-			assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
-		}
-	}
 
 	/**
 	 * Downloads products with given directory prefix
@@ -114,45 +89,20 @@ public class ProductControllerImplTest_download {
 	 * @return products string[]
 	 */
 	@Test
-	public void testDownload_v2S3() throws Exception {
+	public void testDownload_S3() throws Exception {
 
 		if (TESTS_ENABLED) {
 
 			StorageType storageType = StorageType.S3;
-			storageProvider.loadVersion2();
 			storageProvider.setStorage(storageType);
 
 			downloadProductFiles(storageType);
 
-			assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 			StorageType realStorageType = storageProvider.getStorage().getStorageType();
 			assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 		}
 	}
 
-	/**
-	 * Downloads products with given directory prefix
-	 * 
-	 * GET /products storageType="POSIX"&prefix="/.."
-	 * 
-	 * @return products string[]
-	 */
-	@Test
-	public void testDownload_v1S3() throws Exception {
-
-		if (TESTS_ENABLED) {
-
-			StorageType storageType = StorageType.S3;
-			storageProvider.loadVersion1();
-			storageProvider.setStorage(storageType);
-
-			downloadProductFiles(storageType);
-
-			assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
-			StorageType realStorageType = storageProvider.getStorage().getStorageType();
-			assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
-		}
-	}
 
 	/**
 	 * Get the data files for the product as data stream (optionally zip-compressed,
@@ -201,7 +151,7 @@ public class ProductControllerImplTest_download {
 		Long toByte = 7l;
 
 		// show storage files
-		StorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
+		BaseStorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
 
 		// TEST PARTIAL CONTENT
 		// HTTP Download files (partial content) from storage
@@ -254,6 +204,6 @@ public class ProductControllerImplTest_download {
 		storageProvider.getStorage().delete(prefix);
 
 		// show storage files after deletion
-		StorageTestUtils.printStorageFiles("After deletion", storageProvider.getStorage());
+		BaseStorageTestUtils.printStorageFiles("After deletion", storageProvider.getStorage());
 	}
 }

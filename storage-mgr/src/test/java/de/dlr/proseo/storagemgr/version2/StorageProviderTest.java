@@ -18,11 +18,12 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.storagemgr.StorageManager;
-import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.StorageProvider;
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
-import de.dlr.proseo.storagemgr.version2.model.Storage;
-import de.dlr.proseo.storagemgr.version2.model.StorageFile;
-import de.dlr.proseo.storagemgr.version2.model.StorageType;
+import de.dlr.proseo.storagemgr.model.Storage;
+import de.dlr.proseo.storagemgr.model.StorageFile;
+import de.dlr.proseo.storagemgr.model.StorageType;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -33,7 +34,7 @@ public class StorageProviderTest {
 	private TestUtils testUtils;
 	
 	@Autowired
-	private StorageTestUtils storageTestUtils;
+	private BaseStorageTestUtils storageTestUtils;
 	
 	@Autowired
 	private StorageProvider storageProvider;
@@ -79,7 +80,6 @@ public class StorageProviderTest {
 		assertTrue("File for upload has not been created: " + sourceFilePath, TestUtils.fileExists(sourceFilePath));
 
 		StorageType storageType = StorageType.POSIX; 
-		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 		Storage storage = storageProvider.getStorage();
 
@@ -97,7 +97,7 @@ public class StorageProviderTest {
 
 		assertTrue("File was not uploaded to storage: " + storageFilePath, TestUtils.fileExists(storageFilePath));
 
-		StorageTestUtils.printStorageFileList("Storage Files (should be 1 file) ", storage.getStorageFiles());
+		BaseStorageTestUtils.printStorageFileList("Storage Files (should be 1 file) ", storage.getStorageFiles());
 
 		// ----------------------- download --------------------------
 
@@ -115,7 +115,6 @@ public class StorageProviderTest {
 		
 		assertTrue("File was not downloaded from storage: " + cacheFilePath, TestUtils.fileExists(cacheFilePath));
 		
-		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 		
@@ -142,10 +141,5 @@ public class StorageProviderTest {
 		
 
 		TestUtils.deleteStorageDirectories();
-	}
-
-	@Test
-	public void testDefaultS3PosixProvider() {
-
 	}
 }

@@ -22,14 +22,14 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import de.dlr.proseo.storagemgr.StorageManager;
-import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.StorageProvider;
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
+import de.dlr.proseo.storagemgr.model.StorageFile;
+import de.dlr.proseo.storagemgr.model.StorageType;
 import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
-import de.dlr.proseo.storagemgr.version2.FileUtils;
-import de.dlr.proseo.storagemgr.version2.PathConverter;
-import de.dlr.proseo.storagemgr.version2.StorageProvider;
-import de.dlr.proseo.storagemgr.version2.model.StorageFile;
-import de.dlr.proseo.storagemgr.version2.model.StorageType;
+import de.dlr.proseo.storagemgr.utils.FileUtils;
+import de.dlr.proseo.storagemgr.utils.PathConverter;
 
 /**
  * Mock Mvc test for Product Controller
@@ -49,7 +49,7 @@ public class ProductfileControllerImplTest_download {
 	private MockMvc mockMvc;
 	
 	@Autowired
-	private StorageTestUtils storageTestUtils;
+	private BaseStorageTestUtils storageTestUtils;
 	
  	@Autowired
 	private StorageProvider storageProvider;
@@ -59,66 +59,26 @@ public class ProductfileControllerImplTest_download {
 
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/productfiles";
 
-	/**
-	 * Retrieve file from Storage Manager into locally accessible file system // DOWNLOAD TEST
-	 * 
-	 * GET /productfiles pathInfo="/.."
-	 * 
-	 * @return RestFileInfo
-	 */
 	@Test
-	public void testDownload_v1Posix() throws Exception {
-				
-		StorageType storageType = StorageType.POSIX; 
-		storageProvider.loadVersion1();
-		storageProvider.setStorage(storageType);
-
-		download("v1Posix");
-		
-		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-
-	@Test
-	public void testDownload_v2Posix() throws Exception {
+	public void testDownload_posix() throws Exception {
 		
 		StorageType storageType = StorageType.POSIX; 
-		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 
-		download("v2Posix");
+		download("Posix");
 		
-		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
 	
-	
 	@Test
-	public void testDownload_v1S3() throws Exception {
-				
-		StorageType storageType = StorageType.S3; 
-		storageProvider.loadVersion1();
-		storageProvider.setStorage(storageType);
-
-		download("v1S3");
-		
-		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-
-	@Test
-	public void testDownload_v2S3() throws Exception {
+	public void testDownload_S3() throws Exception {
 		
 		StorageType storageType = StorageType.S3; 
-		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 
-		download("v2S3");
+		download("S3");
 		
-		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
@@ -159,7 +119,7 @@ public class ProductfileControllerImplTest_download {
 		storageProvider.getStorage().upload(sourceFile, storageFile);
 		
 		// show storage files
-		StorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
+		BaseStorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
 
 		// rest-download file from storage to cache
 		String absoluteStoragePath = storageProvider.getStorage().getAbsolutePath(relativePath);
@@ -173,7 +133,6 @@ public class ProductfileControllerImplTest_download {
 		TestUtils.printMvcResult(REQUEST_STRING, mvcResult); 
 
 		storageTestUtils.printCache();
-		storageTestUtils.printVersion("FINISHED download-Test");
 		
 		// check real with expected absolute cache path 
 		String expectedAbsoluteCachePath = new PathConverter(storageProvider.getCachePath(), relativePath).getPath();

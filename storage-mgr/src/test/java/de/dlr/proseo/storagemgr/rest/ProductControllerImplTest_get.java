@@ -23,13 +23,13 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import de.dlr.proseo.storagemgr.StorageManager;
-import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.StorageProvider;
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
-import de.dlr.proseo.storagemgr.version2.PathConverter;
-import de.dlr.proseo.storagemgr.version2.StorageProvider;
-import de.dlr.proseo.storagemgr.version2.model.Storage;
-import de.dlr.proseo.storagemgr.version2.model.StorageFile;
-import de.dlr.proseo.storagemgr.version2.model.StorageType;
+import de.dlr.proseo.storagemgr.model.Storage;
+import de.dlr.proseo.storagemgr.model.StorageFile;
+import de.dlr.proseo.storagemgr.model.StorageType;
+import de.dlr.proseo.storagemgr.utils.PathConverter;
 
 /**
  * Mock Mvc test for Product Controller
@@ -49,7 +49,7 @@ public class ProductControllerImplTest_get {
 	private MockMvc mockMvc;
 
 	@Autowired
-	private StorageTestUtils storageTestUtils;
+	private BaseStorageTestUtils storageTestUtils;
 
 	@Autowired
 	private StorageProvider storageProvider;
@@ -70,33 +70,10 @@ public class ProductControllerImplTest_get {
 	public void testGet_v2Posix() throws Exception {
 
 		StorageType storageType = StorageType.POSIX;
-		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 
 		getProductFiles(storageType);
 
-		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-
-	/**
-	 * Get products with given directory prefix
-	 * 
-	 * GET /products storageType="POSIX"&prefix="/.."
-	 * 
-	 * @return products string[]
-	 */
-	@Test
-	public void testGet_v1Posix() throws Exception {
-
-		StorageType storageType = StorageType.POSIX;
-		storageProvider.loadVersion1();
-		storageProvider.setStorage(storageType);
-
-		getProductFiles(storageType);
-
-		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
@@ -112,33 +89,10 @@ public class ProductControllerImplTest_get {
 	public void testGet_v2S3() throws Exception {
 
 		StorageType storageType = StorageType.S3;
-		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 
 		getProductFiles(storageType);
 
-		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-
-	/**
-	 * Get products with given directory prefix
-	 * 
-	 * GET /products storageType="POSIX"&prefix="/.."
-	 * 
-	 * @return products string[]
-	 */
-	@Test
-	public void testGet_v1S3() throws Exception {
-
-		StorageType storageType = StorageType.S3;
-		storageProvider.loadVersion1();
-		storageProvider.setStorage(storageType);
-
-		getProductFiles(storageType);
-
-		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
@@ -186,7 +140,7 @@ public class ProductControllerImplTest_get {
 		}
 
 		// show storage files
-		StorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
+		BaseStorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
 
 		// HTTP Get files from storage
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)
@@ -221,6 +175,6 @@ public class ProductControllerImplTest_get {
 		storageProvider.getStorage().delete(prefix);
 
 		// show storage files after deletion
-		StorageTestUtils.printStorageFiles("After deletion", storageProvider.getStorage());
+		BaseStorageTestUtils.printStorageFiles("After deletion", storageProvider.getStorage());
 	}
 }

@@ -15,10 +15,11 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.storagemgr.StorageManager;
-import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.StorageProvider;
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
-import de.dlr.proseo.storagemgr.version2.model.StorageType;
-import de.dlr.proseo.storagemgr.version2.model.Storage;
+import de.dlr.proseo.storagemgr.model.Storage;
+import de.dlr.proseo.storagemgr.model.StorageType;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -29,7 +30,7 @@ public class StorageUtilityTest {
 	private TestUtils testUtils;
 
 	@Autowired
-	private StorageTestUtils storageTestUtils;
+	private BaseStorageTestUtils storageTestUtils;
 	
 	@Autowired
 	private StorageProvider storageProvider;
@@ -56,7 +57,6 @@ public class StorageUtilityTest {
 				
 		// change type to show another storage
 		StorageType storageType = StorageType.POSIX; 
-		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 		
 		Storage storage = storageProvider.getStorage();
@@ -67,13 +67,13 @@ public class StorageUtilityTest {
 		TestUtils.printList("S3 Buckets:", s3Storage.getBuckets());
 		
 		// show s3 storage files 
-		StorageTestUtils.printStorageFiles("S3 before Action", s3Storage);
+		BaseStorageTestUtils.printStorageFiles("S3 before Action", s3Storage);
 		
 		// show posix storage files 
-		StorageTestUtils.printStorageFiles("POSIX before Action", posixStorage);
+		BaseStorageTestUtils.printStorageFiles("POSIX before Action", posixStorage);
 		
 		// show default storage files 
-		StorageTestUtils.printStorageFiles("Default Storage BEFORE Action", storage);
+		BaseStorageTestUtils.printStorageFiles("Default Storage BEFORE Action", storage);
 
 		
 		// ACTIONS // 		
@@ -95,6 +95,6 @@ public class StorageUtilityTest {
 		// storage.delete(path);
 		
 		// show default storage files 
-		StorageTestUtils.printStorageFiles("Default Storage AFTER Action", storage);
+		BaseStorageTestUtils.printStorageFiles("Default Storage AFTER Action", storage);
 	}
 } 
