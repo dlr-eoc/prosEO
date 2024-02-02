@@ -13,8 +13,6 @@ package de.dlr.proseo.storagemgr.cache;
 public enum CacheFileStatus {
 	/** Status READY */
 	READY,
-	/** Status UPLOADING */
-	COPYING_FROM_CACHE, 
 	/** Status Cache File does not exist in the cache */
 	NOT_EXISTS, 
 }

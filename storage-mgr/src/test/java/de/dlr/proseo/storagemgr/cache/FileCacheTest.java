@@ -245,30 +245,30 @@ public class FileCacheTest {
 		assertTrue("Expected cache file3 status after setStatus(Not_exists) is Not_exists. Exists:" + status3.toString(),
 				status3 == CacheFileStatus.NOT_EXISTS);
 		
-		// changing status1 to copying from cache
+		// changing status1 to NOT_EXISTS from cache
 
-		fileCache.setCacheFileStatus(path1, CacheFileStatus.COPYING_FROM_CACHE);
+		fileCache.setCacheFileStatus(path1, CacheFileStatus.NOT_EXISTS);
 
 		status1 = fileCache.getCacheFileStatus(path1);
 		status2 = fileCache.getCacheFileStatus(path2);
 
-		assertTrue("Expected cache file1 status after setStatus(Uploading) is Uploading. Exists:" + status1.toString(),
-				status1 == CacheFileStatus.COPYING_FROM_CACHE);
+		assertTrue("Expected cache file1 status after setStatus(NOT_EXISTS) is NOT_EXISTS. Exists:" + status1.toString(),
+				status1 == CacheFileStatus.NOT_EXISTS);
 
 		assertTrue("Expected cache file2 status after <no changes> is Ready. Exists:" + status2.toString(),
 				status2 == CacheFileStatus.READY);
 
-		// changing status2 to copying to cache
+		// changing status2 to NOT_EXISTS to cache
 
 		fileCache.setCacheFileStatus(path2, CacheFileStatus.NOT_EXISTS);
 
 		status1 = fileCache.getCacheFileStatus(path1);
 		status2 = fileCache.getCacheFileStatus(path2);
 
-		assertTrue("Expected cache file1 status after <no changes> is Uploading. Exists: " + status1.toString(),
-				status1 == CacheFileStatus.COPYING_FROM_CACHE);
+		assertTrue("Expected cache file1 status after <no changes> is NOT_EXISTS. Exists: " + status1.toString(),
+				status1 == CacheFileStatus.NOT_EXISTS);
 
-		assertTrue("Expected cache file2 status after setStatus(Downloading) is Downlading. Exists: " + status2.toString(),
+		assertTrue("Expected cache file2 status after setStatus(NOT_EXISTS) is NOT_EXISTS. Exists: " + status2.toString(),
 				status2 == CacheFileStatus.NOT_EXISTS);
 
 		// changing status1 to Ready
