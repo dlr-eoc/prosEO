@@ -92,7 +92,9 @@ public class FileCache {
 
 	/**
 	 * Puts the new element to map. If element exists, it will be overwritten.
-	 * Removes the file if it is temporary
+	 * Removes the file if it is temporary file (not a cache file). 
+	 * Calls deleteLRU before adding the file to cache to clean free space if needed.
+	 * Set the status = "ready" and updates the last access record of the cache file.
 	 * 
 	 * @param pathKey the full cache file path as a key
 	 */
@@ -134,10 +136,10 @@ public class FileCache {
 	}
 
 	/**
-	 * Checks if the cache contains the path If not - returns false. If the physical
+	 * Checks if the cache contains the path. If not - returns false. If the physical
 	 * file does not exits anymore - deletes the path from the cache. Returns true
 	 * if the path is available in the cache and also updates the file record of the
-	 * last access
+	 * last access calling put() method
 	 * 
 	 * @param pathKey File path as key
 	 * @return true if pathkey is in file cache
@@ -154,7 +156,7 @@ public class FileCache {
 
 		File file = new File(pathKey);
 
-		if (!file.isFile() || hasNotExistsStatus(pathKey)) {
+		if (!file.isFile()) {
 
 			remove(pathKey);
 			return false;
