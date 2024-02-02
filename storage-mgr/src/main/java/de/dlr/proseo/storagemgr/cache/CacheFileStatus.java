@@ -6,13 +6,22 @@
 package de.dlr.proseo.storagemgr.cache;
 
 /**
- * Cache File Status shows the current status of the file in the cache
+ * Cache File Status shows the current status of the file in the cache storage
+ * and in the cache list
  *
  * @author Denys Chaykovskiy
  */
 public enum CacheFileStatus {
-	/** Status READY */
+
+	/**
+	 * Status READY - a file exists in the cache storage and was put to the cache
+	 * list
+	 */
 	READY,
-	/** Status Cache File does not exist in the cache */
-	NOT_EXISTS, 
+
+	/**
+	 * Status NOT_EXISTS - a file can exist in the cache storage, but can be
+	 * corrupted, that's why it is not in the cache list
+	 */
+	NOT_EXISTS,
 }
