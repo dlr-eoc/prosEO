@@ -207,7 +207,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 				// active thread - copies the file to the cache storage and puts it to the cache
 				
-				cache.setCacheFileStatus(cacheFile.getFullPath(), CacheFileStatus.NOT_EXISTS);
+				cache.setCacheFileStatus(cacheFile.getFullPath(), CacheFileStatus.INCOMPLETE);
 				
 				storageProvider.getStorage().downloadFile(storageFile, cacheFile);
 				
@@ -266,7 +266,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 				// active thread - copies the file to the cache storage and puts it to the cache
 				
-				cache.setCacheFileStatus(cacheFile.getFullPath(), CacheFileStatus.NOT_EXISTS);
+				cache.setCacheFileStatus(cacheFile.getFullPath(), CacheFileStatus.INCOMPLETE);
 				
 				storageProvider.copyAbsoluteFilesToCache(externalPath, productId);
 

@@ -212,7 +212,7 @@ public class FileCache {
 			logger.trace(">>> setCacheFileStatus({}, {})", pathKey, status);
 
 		// There is no cache file for the status == not exists
-		if (status != CacheFileStatus.NOT_EXISTS) {
+		if (status != CacheFileStatus.INCOMPLETE) {
 			if (!mapCache.containsKey(pathKey)) {
 				if (!new File(pathKey).exists()) {
 					logger.log(StorageMgrMessage.CACHE_NO_FILE_FOR_PUTTING_TO_CACHE, pathKey);
@@ -859,7 +859,7 @@ public class FileCache {
 	 */
 	private boolean hasNotExistsStatus(String cacheFile) {
 
-		return getCacheFileStatus(cacheFile) == CacheFileStatus.NOT_EXISTS;
+		return getCacheFileStatus(cacheFile) == CacheFileStatus.INCOMPLETE;
 	}
 
 	/**

@@ -20,8 +20,8 @@ public enum CacheFileStatus {
 	READY,
 
 	/**
-	 * Status NOT_EXISTS - a file can exist in the cache storage, but can be
-	 * corrupted, that's why it is not in the cache list
+	 * Status INCOMPLETE - a file can exist in the cache storage, but can be
+	 * corrupted (not completely uploaded and so on), that's why it is not in the cache list
 	 */
-	NOT_EXISTS,
+	INCOMPLETE,
 }

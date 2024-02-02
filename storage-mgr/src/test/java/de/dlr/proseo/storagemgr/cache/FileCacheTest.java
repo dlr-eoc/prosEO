@@ -235,41 +235,41 @@ public class FileCacheTest {
 		
 		// check not exists status - file is not in cache, but has a status
 		
-		fileCache.setCacheFileStatus(path3, CacheFileStatus.NOT_EXISTS);
+		fileCache.setCacheFileStatus(path3, CacheFileStatus.INCOMPLETE);
 		
 		status3 = fileCache.getCacheFileStatus(path3);
 		
 		assertTrue("Expected cache file3 does not exist in the cache. Exists:" + fileCache.containsKey(path3),
 				!fileCache.containsKey(path3));
 		
-		assertTrue("Expected cache file3 status after setStatus(Not_exists) is Not_exists. Exists:" + status3.toString(),
-				status3 == CacheFileStatus.NOT_EXISTS);
+		assertTrue("Expected cache file3 status after setStatus(INCOMPLETE) is INCOMPLETE. Exists:" + status3.toString(),
+				status3 == CacheFileStatus.INCOMPLETE);
 		
-		// changing status1 to NOT_EXISTS from cache
+		// changing status1 to INCOMPLETE 
 
-		fileCache.setCacheFileStatus(path1, CacheFileStatus.NOT_EXISTS);
+		fileCache.setCacheFileStatus(path1, CacheFileStatus.INCOMPLETE);
 
 		status1 = fileCache.getCacheFileStatus(path1);
 		status2 = fileCache.getCacheFileStatus(path2);
 
-		assertTrue("Expected cache file1 status after setStatus(NOT_EXISTS) is NOT_EXISTS. Exists:" + status1.toString(),
-				status1 == CacheFileStatus.NOT_EXISTS);
+		assertTrue("Expected cache file1 status after setStatus(INCOMPLETE) is INCOMPLETE. Exists:" + status1.toString(),
+				status1 == CacheFileStatus.INCOMPLETE);
 
 		assertTrue("Expected cache file2 status after <no changes> is Ready. Exists:" + status2.toString(),
 				status2 == CacheFileStatus.READY);
 
-		// changing status2 to NOT_EXISTS to cache
+		// changing status2 to INCOMPLETE
 
-		fileCache.setCacheFileStatus(path2, CacheFileStatus.NOT_EXISTS);
+		fileCache.setCacheFileStatus(path2, CacheFileStatus.INCOMPLETE);
 
 		status1 = fileCache.getCacheFileStatus(path1);
 		status2 = fileCache.getCacheFileStatus(path2);
 
-		assertTrue("Expected cache file1 status after <no changes> is NOT_EXISTS. Exists: " + status1.toString(),
-				status1 == CacheFileStatus.NOT_EXISTS);
+		assertTrue("Expected cache file1 status after <no changes> is INCOMPLETE. Exists: " + status1.toString(),
+				status1 == CacheFileStatus.INCOMPLETE);
 
-		assertTrue("Expected cache file2 status after setStatus(NOT_EXISTS) is NOT_EXISTS. Exists: " + status2.toString(),
-				status2 == CacheFileStatus.NOT_EXISTS);
+		assertTrue("Expected cache file2 status after setStatus(INCOMPLETE) is INCOMPLETE. Exists: " + status2.toString(),
+				status2 == CacheFileStatus.INCOMPLETE);
 
 		// changing status1 to Ready
 
@@ -282,7 +282,7 @@ public class FileCacheTest {
 				status1 == CacheFileStatus.READY);
 
 		assertTrue("Expected cache file2 status after <no changes> is Downloading. Exists: " + status2.toString(),
-				status2 == CacheFileStatus.NOT_EXISTS);
+				status2 == CacheFileStatus.INCOMPLETE);
 	
 		// check cache after status changes 
 
