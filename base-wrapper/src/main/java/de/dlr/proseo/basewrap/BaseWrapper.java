@@ -933,7 +933,7 @@ public class BaseWrapper {
 				for (IpfFileName fn : io.getFileNames()) {
 					// Push output file to Storage Manager
 					Map<String, String> params = new HashMap<>();
-					params.put("pathInfo", fn.getFileName() + (io.getFileNameType().equalsIgnoreCase("Directory") ? "/" : ""));
+					params.put("pathInfo", fn.getFileName());
 					params.put("productId", io.getProductID());
 					Path fp = Path.of(fn.getFileName());
 					try {
