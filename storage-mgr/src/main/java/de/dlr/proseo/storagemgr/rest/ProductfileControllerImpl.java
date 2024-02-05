@@ -2,8 +2,9 @@ package de.dlr.proseo.storagemgr.rest;
 
 import java.io.File;
 import java.io.IOException;
-
+import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermissions;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -36,6 +37,9 @@ import de.dlr.proseo.storagemgr.utils.StorageFileLocker;
 
 @Component
 public class ProductfileControllerImpl implements ProductfileController {
+
+	/** The file permission with read-only permissions for all users */
+	private static String READ_ONLY_FOR_ALL_USERS = "r--r--r--";
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductControllerImpl.class);
@@ -172,14 +176,15 @@ public class ProductfileControllerImpl implements ProductfileController {
 			logger.debug("... unlocked the file: ", externalPath);
 		}
 	}
-	
+
 	/**
-	 * Copies the file from the storage to the cache using synchronization.
-	 * During the copying to the cache, the status of the file will be "not exists", 
-	 * after the completion the status will be set to "ready"
+	 * Copies the file from the storage to the cache using synchronization. During
+	 * the copying to the cache, the status of the file will be "not exists", after
+	 * the completion the status will be set to "ready". Sets the file permission
+	 * 444.
 	 * 
 	 * @param storageFilePath the file path in the storage
-	 * @param fileLocker file locker is used for synchronization 
+	 * @param fileLocker      file locker is used for synchronization
 	 * @return RestFileInfo
 	 * @throws FileLockedAfterMaxCyclesException
 	 * @throws IOException
@@ -187,7 +192,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 */
 	private RestFileInfo copyFileStorageToCache(String storageFilePath, StorageFileLocker fileLocker)
 			throws FileLockedAfterMaxCyclesException, IOException, Exception {
-		
+
 		// x-to-cache-copy method, status "not exists" is used
 
 		// relative path depends on path, not on actual storage
@@ -206,12 +211,15 @@ public class ProductfileControllerImpl implements ProductfileController {
 			if (!cache.containsKey(cacheFile.getFullPath())) {
 
 				// active thread - copies the file to the cache storage and puts it to the cache
-				
+
 				cache.setCacheFileStatus(cacheFile.getFullPath(), CacheFileStatus.INCOMPLETE);
-				
+
 				storageProvider.getStorage().downloadFile(storageFile, cacheFile);
-				
+
 				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED_FROM_STORAGE, cacheFile.getFullPath());
+
+				Files.setPosixFilePermissions(Paths.get(cacheFile.getFullPath()),
+						PosixFilePermissions.fromString(READ_ONLY_FOR_ALL_USERS));
 
 				cache.put(cacheFile.getFullPath()); // cache file status = READY
 
@@ -223,7 +231,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 			}
 
 		} else {
-			
+
 			logger.debug("... no download and no lock - the file is in cache: ", cacheFile.getFullPath());
 		}
 
@@ -235,23 +243,26 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 	/**
 	 * Copies the file from the external source to the cache using synchronization.
-	 * During the copying to the cache, the status of the file will be "not exists", 
-	 * after the completion the status will be set to "ready"
+	 * During the copying to the cache, the status of the file will be "not exists",
+	 * after the completion the status will be set to "ready". Sets the file
+	 * permission 444.
 	 * 
-	 * @param externalPath external path of the file, which will be copied to the cache
-	 * @param productId product id is used as a directory to store copied file in cache
-	 * @param fileSize file size 
-	 * @param fileLocker file locker is used for synchronization
-	 * @return Rest File Info 
+	 * @param externalPath external path of the file, which will be copied to the
+	 *                     cache
+	 * @param productId    product id is used as a directory to store copied file in
+	 *                     cache
+	 * @param fileSize     file size
+	 * @param fileLocker   file locker is used for synchronization
+	 * @return Rest File Info
 	 * @throws FileLockedAfterMaxCyclesException
-	 * @throws IOException 
+	 * @throws IOException
 	 * @throws Exception
 	 */
 	private RestFileInfo copyFileExternalToCache(String externalPath, Long productId, Long fileSize,
 			StorageFileLocker fileLocker) throws FileLockedAfterMaxCyclesException, IOException, Exception {
 
 		// x-to-cache-copy method, status "not exists" is used
-		
+
 		String productFolderWithFilename = getProductFolderWithFilename(externalPath, productId);
 		StorageFile cacheFile = storageProvider.getCacheFile(productFolderWithFilename);
 
@@ -265,16 +276,18 @@ public class ProductfileControllerImpl implements ProductfileController {
 			if (!cache.containsKey(cacheFile.getFullPath())) {
 
 				// active thread - copies the file to the cache storage and puts it to the cache
-				
+
 				cache.setCacheFileStatus(cacheFile.getFullPath(), CacheFileStatus.INCOMPLETE);
-				
+
 				storageProvider.copyAbsoluteFilesToCache(externalPath, productId);
 
-				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED_FROM_EXTERNAL_TO_CACHE,
-						cacheFile.getFullPath());
+				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED_FROM_EXTERNAL_TO_CACHE, cacheFile.getFullPath());
+
+				Files.setPosixFilePermissions(Paths.get(cacheFile.getFullPath()),
+						PosixFilePermissions.fromString(READ_ONLY_FOR_ALL_USERS));
 
 				cache.put(cacheFile.getFullPath()); // cache file status = READY
-				
+
 			} else {
 
 				// passive thread - did nothing, waited for copied file and use it from cache
@@ -284,7 +297,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 			}
 
 		} else {
-			
+
 			logger.debug("... no download and no lock - the file is in cache: ", cacheFile.getFullPath());
 		}
 
@@ -294,17 +307,18 @@ public class ProductfileControllerImpl implements ProductfileController {
 		return restFileInfo;
 	}
 
-	// TODO: WIP Special use case for cache recovery - file in cache, but not in storage
+	// TODO: WIP Special use case for cache recovery - file in cache, but not in
+	// storage
 	// TODO: WIP Special use case for cache state - not uploaded to storage
 
 	/**
-	 * Copies the file from the cache to the storage using synchronization.
-	 * During the copying to the cache, the status of the file will be "not exists", 
-	 * after the completion the status will be set to "ready"
+	 * Copies the file from the cache to the storage using synchronization. During
+	 * the copying to the cache, the status of the file will be "not exists", after
+	 * the completion the status will be set to "ready"
 	 * 
 	 * @param relativeCachePath relative cache path
-	 * @param fileLocker is used for synchronization 
-	 * @return RestFileInfo 
+	 * @param fileLocker        is used for synchronization
+	 * @return RestFileInfo
 	 * @throws FileLockedAfterMaxCyclesException
 	 * @throws IOException
 	 * @throws Exception
@@ -323,17 +337,17 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 			fileLocker.lockOrWaitUntilUnlockedAndLock();
 
-			// check again, the file could be copied to storage from another thread after lock
+			// check again, the file could be copied to storage from another thread after
+			// lock
 			if (!cache.containsKey(cacheFile.getFullPath())) {
 
 				// active thread - copies the file to the storage and checks it as OK (WIP)
 				storage.uploadFile(cacheFile, storageFile);
 
-				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED_FROM_EXTERNAL_TO_CACHE,
-						storageFile.getFullPath());
+				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED_FROM_EXTERNAL_TO_CACHE, storageFile.getFullPath());
 
 				cache.put(storageFile.getFullPath());
-				
+
 			} else {
 
 				// passive thread - did nothing, waited for copied file and use it from cache
@@ -342,7 +356,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 			}
 
 		} else {
-			
+
 			logger.debug("... no download and no lock - the file is in cache: ", storageFile.getFullPath());
 		}
 
