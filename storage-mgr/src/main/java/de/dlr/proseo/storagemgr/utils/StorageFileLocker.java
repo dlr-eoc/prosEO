@@ -46,6 +46,9 @@ public class StorageFileLocker {
 	 * @param fileCheckMaxCycles file check max cycles
 	 */
 	public StorageFileLocker(String path, long waitTime, long fileCheckMaxCycles) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> StorageFileLocker({}, {}, {})", path, waitTime, fileCheckMaxCycles);
 
 		this.path = path;
 		this.fileCheckMaxCycles = fileCheckMaxCycles;
@@ -66,6 +69,9 @@ public class StorageFileLocker {
 	 *                                           to terminate
 	 */
 	public void lockOrWaitUntilUnlockedAndLock() throws FileLockedAfterMaxCyclesException, InterruptedException {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> lockOrWaitUntilUnlockedAndLock()");
 
 		long i = 0;
 
@@ -97,7 +103,15 @@ public class StorageFileLocker {
 	 * productLockSet.
 	 */
 	public void unlock() {
-		productLockSet.remove(path);
-		logger.debug("... the file {} is unlocked", path);
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> unlock()");
+		
+		if (productLockSet.remove(path)) {
+			logger.debug("... the file {} is unlocked", path);
+		}
+		else {
+			logger.debug("... the file {} was not locked (not in the concurrent list)", path);
+		}
 	}
 }

@@ -192,6 +192,9 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 */
 	private RestFileInfo copyFileStorageToCache(String storageFilePath, StorageFileLocker fileLocker)
 			throws FileLockedAfterMaxCyclesException, IOException, Exception {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> copyFileStorageToCache({}, {})", storageFilePath, fileLocker);
 
 		// x-to-cache-copy method, status "not exists" is used
 
@@ -260,6 +263,9 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 */
 	private RestFileInfo copyFileExternalToCache(String externalPath, Long productId, Long fileSize,
 			StorageFileLocker fileLocker) throws FileLockedAfterMaxCyclesException, IOException, Exception {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> copyFileExternalToCache({}, {}, {}, {})", externalPath, productId, fileSize, fileLocker);
 
 		// x-to-cache-copy method, status "not exists" is used
 
@@ -325,6 +331,9 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 */
 	private RestFileInfo copyFileCacheToStorage(String relativeCachePath, StorageFileLocker fileLocker)
 			throws FileLockedAfterMaxCyclesException, IOException, Exception {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> copyFileCacheToStorage({}, {})", relativeCachePath, fileLocker);
 
 		Storage storage = storageProvider.getStorage();
 
@@ -374,6 +383,9 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 * @return rest file info
 	 */
 	private static RestFileInfo convertToRestFileInfo(StorageFile storageFile, long fileSize) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> convertToRestFileInfo({}, {})", storageFile, fileSize);
 
 		RestFileInfo restFileInfo = new RestFileInfo();
 
@@ -394,6 +406,9 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 * @return product folder with the file name
 	 */
 	private String getProductFolderWithFilename(String externalPath, Long productId) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getProductFolderWithFilename({}, {})", externalPath, productId);
 
 		String fileName = new File(externalPath).getName();
 		return Paths.get(String.valueOf(productId), fileName).toString();
