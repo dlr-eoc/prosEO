@@ -84,8 +84,9 @@ The `proseo-images` directory may be populated with convenience scripts for thes
 
 ## Step 3: Deploy the prosEO Control Instance
 
-Create the prosEO Control Instance from a `docker-compose.yml` file. A `docker-compose.yml.template`
-file is provided in the `proseo-images` directory, a simplified file would look something like the following:
+Create the prosEO Control Instance from a `docker-compose.yml` file. A working `docker-compose.yml.template`
+file is provided in the `proseo-images` directory, a simplified file restricted to the core microservices
+would look something like the following:
 ```yaml
 version: '3'
 services:
@@ -150,6 +151,41 @@ services:
       - proseo-order-mgr
       - proseo-processor-mgr
       - proseo-productclass-mgr
+  proseo-api-prip:
+    image: ${REGISTRY_URL}/proseo-api-prip:${VERSION}-proseo
+    platform: linux/amd64
+    ports:
+      - "8089:8080"
+    depends_on:
+      - proseo-user-mgr
+      - proseo-ingestor
+  proseo-api-odip:
+    image: ${REGISTRY_URL}/proseo-api-odip:${VERSION}-proseo
+    platform: linux/amd64
+    ports:
+      - "8090:8080"
+    depends_on:
+      - proseo-user-mgr
+      - proseo-ingestor
+      - proseo-order-mgr
+      - proseo-prodplanner
+  proseo-notification:
+    image: ${REGISTRY_URL}/proseo-notification:${VERSION}-proseo
+    platform: linux/amd64
+    ports:
+      - "8091:8080"
+  proseo-aip-client:
+    image: ${REGISTRY_URL}/proseo-aip-client:${VERSION}-proseo
+    platform: linux/amd64
+    volumes:
+      - <local path to transfer directory>:/proseo/transfer
+    ports:
+      - "8092:8080"
+  proseo-archive-mgr:
+    image: ${REGISTRY_URL}/proseo-archive-mgr:${VERSION}-proseo
+    platform: linux/amd64
+    ports:
+      - "8093:8080"
   proseo-pgadmin:
     image: dpage/pgadmin4
     environment:
