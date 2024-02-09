@@ -38,6 +38,7 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.StorageMgrMessage;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.StorageProvider;
+import de.dlr.proseo.storagemgr.cache.FileCache;
 import de.dlr.proseo.storagemgr.model.Storage;
 import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.model.StorageType;
@@ -219,20 +220,27 @@ public class ProductControllerImpl implements ProductController {
 
 		}
 		// token check end
+		 
 
 		// Storage Manager version 2: storage file -> byte page
 
 		try {
 			Storage storage = storageProvider.getStorage(pathInfo);
-
 			String relativePath = storage.getRelativePath(pathInfo);
+			
+			StorageFile cacheFile = storageProvider.getCacheFile(relativePath);
+			FileCache cache = FileCache.getInstance();
 
-			StorageFile sourceFile = storage.getStorageFile(relativePath);
-
-			if (sourceFile == null) {
-
-				String msg = logger.log(StorageMgrMessage.PATH_IS_NULL);
-				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);
+			StorageFile sourceFile;
+			if (cache.containsKey(cacheFile.getFullPath())) {
+				
+				sourceFile = cacheFile;	
+				logger.debug("... product file found in cache - it will be downloaded from cache: {}", sourceFile.getFullPath());
+			}
+			else {
+				
+				sourceFile = storage.getStorageFile(relativePath);
+				logger.debug("... no product file in cache - it will be downloaded from storage: {}", sourceFile.getFullPath());
 			}
 
 			// token check begin
