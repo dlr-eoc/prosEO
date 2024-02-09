@@ -22,6 +22,7 @@ import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageProvider;
 import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
+import de.dlr.proseo.storagemgr.cache.FileCache;
 import de.dlr.proseo.storagemgr.model.Storage;
 import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.model.StorageType;
@@ -152,6 +153,18 @@ public class ProductControllerImplTest_download {
 
 		// show storage files
 		BaseStorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
+		
+		// TODO: added test conditions: 1) stream download from cache 2) stream download from storage
+		// the code above puts the file to the cache and covers 2), without this code 1) is covered 
+
+			/*  puts to cache in order to stream download from cache 
+		StorageFile storageFile = storageProvider.getStorageFile(relativePath);
+		StorageFile cacheFile = storageProvider.getCacheFile(storageFile.getRelativePath());
+		storageProvider.getStorage().downloadFile(storageFile, cacheFile);
+		
+		FileCache cache = FileCache.getInstance();
+		cache.put(cacheFile.getFullPath()); // cache file status = READY
+			 */ 
 
 		// TEST PARTIAL CONTENT
 		// HTTP Download files (partial content) from storage
