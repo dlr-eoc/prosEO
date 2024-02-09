@@ -39,7 +39,7 @@ import de.dlr.proseo.storagemgr.utils.StorageFileLocker;
 public class ProductfileControllerImpl implements ProductfileController {
 
 	/** The file permission with read-only permissions for all users */
-	private static String READ_ONLY_FOR_ALL_USERS = "r--r--r--";
+	private static final String READ_ONLY_FOR_ALL_USERS = "r--r--r--";
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductControllerImpl.class);
