@@ -73,14 +73,16 @@ public class ProductControllerImplTest_download {
 
 			StorageType storageType = StorageType.POSIX;
 			storageProvider.setStorage(storageType);
+			boolean downloadFileFromCache = false;
 
-			downloadProductFiles(storageType);
+			downloadProductFiles(storageType, downloadFileFromCache);
 
 			StorageType realStorageType = storageProvider.getStorage().getStorageType();
 			assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
+		} else {
+			System.out.println("TESTS ARE DISABLED");
 		}
 	}
-
 
 	/**
 	 * Downloads products with given directory prefix
@@ -96,14 +98,16 @@ public class ProductControllerImplTest_download {
 
 			StorageType storageType = StorageType.S3;
 			storageProvider.setStorage(storageType);
+			boolean downloadFileFromCache = false;
 
-			downloadProductFiles(storageType);
+			downloadProductFiles(storageType, downloadFileFromCache);
 
 			StorageType realStorageType = storageProvider.getStorage().getStorageType();
 			assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
+		} else {
+			System.out.println("TESTS ARE DISABLED");
 		}
 	}
-
 
 	/**
 	 * Get the data files for the product as data stream (optionally zip-compressed,
@@ -124,8 +128,14 @@ public class ProductControllerImplTest_download {
 	 * s3://<bucket>/<relativePath> // no storage path in s3
 	 * /<storagePath>/<relativePath> // no bucket in posix currently
 	 * 
+	 * @param storageType           storage Type (S3 or POSIX)
+	 * @param downloadFileFromCache if true, a file will be copied to cache before
+	 *                              download(). If a file is in the cache,
+	 *                              download() method will download it directly from
+	 *                              the cache, not from the storage
+	 * 
 	 */
-	private void downloadProductFiles(StorageType storageType) throws Exception {
+	private void downloadProductFiles(StorageType storageType, boolean downloadFileFromCache) throws Exception {
 
 		TestUtils.printMethodName(this, testName);
 
@@ -134,7 +144,7 @@ public class ProductControllerImplTest_download {
 
 		String relativePath = new PathConverter(prefix, "productDownloadDir/productDownload3.txt").getPath();
 		String fileContent = "some content";
-		
+
 		// create file in source
 		storageTestUtils.createSourceFile(relativePath, fileContent);
 
@@ -153,18 +163,22 @@ public class ProductControllerImplTest_download {
 
 		// show storage files
 		BaseStorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
-		
-		// TODO: added test conditions: 1) stream download from cache 2) stream download from storage
-		// the code above puts the file to the cache and covers 2), without this code 1) is covered 
 
-			/*  puts to cache in order to stream download from cache 
+		// puts a file to the cache in order to trigger a stream downloading from cache
+		// if true, a file will be copied to the cache before download()
 		StorageFile storageFile = storageProvider.getStorageFile(relativePath);
 		StorageFile cacheFile = storageProvider.getCacheFile(storageFile.getRelativePath());
-		storageProvider.getStorage().downloadFile(storageFile, cacheFile);
-		
 		FileCache cache = FileCache.getInstance();
-		cache.put(cacheFile.getFullPath()); // cache file status = READY
-			 */ 
+
+		if (downloadFileFromCache) {
+
+			storageProvider.getStorage().downloadFile(storageFile, cacheFile);
+			cache.put(cacheFile.getFullPath()); // cache file status = READY
+		} else {
+
+			// avoid downloading from cache - delete the file in cache if exists
+			TestUtils.deleteFile(cacheFile.getFullPath());
+		}
 
 		// TEST PARTIAL CONTENT
 		// HTTP Download files (partial content) from storage
@@ -194,8 +208,8 @@ public class ProductControllerImplTest_download {
 		// HTTP Download files (FULL CONTENT) from storage
 		System.out.println("TEST FULL CONTENT BEGIN - BEFORE HTTP CALL ");
 
-		request = MockMvcRequestBuilders.get(REQUEST_STRING)
-				.param("pathInfo", absoluteStoragePath).param("token", token);
+		request = MockMvcRequestBuilders.get(REQUEST_STRING).param("pathInfo", absoluteStoragePath).param("token",
+				token);
 
 		mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
 
@@ -212,9 +226,12 @@ public class ProductControllerImplTest_download {
 		assertTrue("Real path: " + realFileContent + " Expected  path: " + expectedFileContent,
 				realFileContent.equals(expectedFileContent));
 		System.out.println("TEST FULL CONTENT END");
-		
+
 		// delete storage files with prefix
 		storageProvider.getStorage().delete(prefix);
+
+		// delete cache file if exists
+		TestUtils.deleteFile(cacheFile.getFullPath());
 
 		// show storage files after deletion
 		BaseStorageTestUtils.printStorageFiles("After deletion", storageProvider.getStorage());

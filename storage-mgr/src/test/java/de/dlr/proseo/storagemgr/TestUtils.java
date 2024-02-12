@@ -190,6 +190,9 @@ public class TestUtils {
 
 			System.out.println("File was NOT deleted: " + file.getPath());
 		}
+		else {
+			System.out.println("File was deleted: " + file.getPath());
+		}
 	}
 
 	/**
