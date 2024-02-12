@@ -60,14 +60,13 @@ public class ProductControllerImplTest_download {
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/products/download";
 
 	/**
-	 * Downloads products with given directory prefix
+	 * Downloads products with given directory prefix from storage
 	 * 
 	 * GET /products storageType="POSIX"&prefix="/.."
 	 * 
-	 * @return products string[]
 	 */
 	@Test
-	public void testDownload_posix() throws Exception {
+	public void testDownloadFromStorage_posix() throws Exception {
 
 		if (TESTS_ENABLED) {
 
@@ -85,14 +84,13 @@ public class ProductControllerImplTest_download {
 	}
 
 	/**
-	 * Downloads products with given directory prefix
+	 * Downloads products with given directory prefix from storage
 	 * 
-	 * GET /products storageType="POSIX"&prefix="/.."
+	 * GET /products storageType="S3"&prefix="/.."
 	 * 
-	 * @return products string[]
 	 */
 	@Test
-	public void testDownload_S3() throws Exception {
+	public void testDownloadfromStorage_S3() throws Exception {
 
 		if (TESTS_ENABLED) {
 
@@ -109,6 +107,54 @@ public class ProductControllerImplTest_download {
 		}
 	}
 
+	/**
+	 * Downloads products with given directory prefix from cache
+	 * 
+	 * GET /products storageType="POSIX"&prefix="/.."
+	 * 
+	 */
+	@Test
+	public void testDownloadFromCache_posix() throws Exception {
+
+		if (TESTS_ENABLED) {
+
+			StorageType storageType = StorageType.POSIX;
+			storageProvider.setStorage(storageType);
+			boolean downloadFileFromCache = true;
+
+			downloadProductFiles(storageType, downloadFileFromCache);
+
+			StorageType realStorageType = storageProvider.getStorage().getStorageType();
+			assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
+		} else {
+			System.out.println("TESTS ARE DISABLED");
+		}
+	}
+
+	/**
+	 * Downloads products with given directory prefix from cache
+	 * 
+	 * GET /products storageType="S3"&prefix="/.."
+	 * 
+	 */
+	@Test
+	public void testDownloadfromCache_S3() throws Exception {
+
+		if (TESTS_ENABLED) {
+
+			StorageType storageType = StorageType.S3;
+			storageProvider.setStorage(storageType);
+			boolean downloadFileFromCache = true;
+
+			downloadProductFiles(storageType, downloadFileFromCache);
+
+			StorageType realStorageType = storageProvider.getStorage().getStorageType();
+			assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
+		} else {
+			System.out.println("TESTS ARE DISABLED");
+		}
+	}
+	
 	/**
 	 * Get the data files for the product as data stream (optionally zip-compressed,
 	 * optionally range-restricted)
