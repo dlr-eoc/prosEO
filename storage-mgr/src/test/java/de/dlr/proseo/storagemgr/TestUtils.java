@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.UnsupportedEncodingException;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
@@ -36,8 +38,8 @@ public class TestUtils {
 	private static final String TARGET_DIRECTORY = "target";
 
 	@Autowired
-	private StorageProvider storageProvider; 
-	
+	private StorageProvider storageProvider;
+
 	@Autowired
 	private StorageManagerConfiguration cfg;
 
@@ -158,6 +160,44 @@ public class TestUtils {
 	}
 
 	/**
+	 * Creates a large file
+	 * 
+	 * For example: 
+	 * long fileSizeInBytes = 100L * 1024 * 1024; // 100 MB
+	 * 
+	 * @param filePath 
+	 * @param fileSizeInBytes
+	 */
+	public static void createLargeFile(String filePath, long fileSizeInBytes) {
+		
+		File file = new File(filePath);
+
+		if (!file.getPath().contains(TEST_DIRECTORY)) {
+
+			System.out.println("Attempt to create file not in test dir: " + file.getPath());
+			return;
+		}
+		
+		try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath))) {
+			
+			byte[] buffer = new byte[1024];
+			long bytesWritten = 0;
+
+			while (bytesWritten < fileSizeInBytes) {
+				
+				int bytesToWrite = (int) Math.min(buffer.length, fileSizeInBytes - bytesWritten);
+				bos.write(buffer, 0, bytesToWrite);
+				bytesWritten += bytesToWrite;
+			}
+
+			System.out.println("Large file created successfully.");
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
 	 * @param path
 	 */
 	public static boolean fileExists(String path) {
@@ -189,8 +229,7 @@ public class TestUtils {
 		if (!file.delete()) {
 
 			System.out.println("File was NOT deleted: " + file.getPath());
-		}
-		else {
+		} else {
 			System.out.println("File was deleted: " + file.getPath());
 		}
 	}
@@ -323,17 +362,17 @@ public class TestUtils {
 		}
 		System.out.println();
 	}
-	
+
 	/**
 	 * @param message
 	 * @param directoryPath
 	 */
 	public static void printDirectoryTree(String message, String directoryPath) {
-		
+
 		System.out.println();
-		System.out.println(message); 
-		
-		printDirectoryTree(directoryPath);		
+		System.out.println(message);
+
+		printDirectoryTree(directoryPath);
 	}
 
 	/**
@@ -371,7 +410,8 @@ public class TestUtils {
 		// System.out.println("FOLDER: " + directoryPath + " " + " DEPTH: " + depth);
 
 		File[] files = directory.listFiles();
-		if (files == null) return;
+		if (files == null)
+			return;
 		Arrays.sort(files);
 
 		/*
@@ -438,7 +478,7 @@ public class TestUtils {
 		}
 		return count;
 	}
-	
+
 	public static String asJsonString(final Object obj) {
 		try {
 			return new ObjectMapper().writeValueAsString(obj);
@@ -446,40 +486,41 @@ public class TestUtils {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	/**
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public void deleteFilesinS3Storage() throws IOException {
-		
-		deleteFilesInStorage(StorageType.S3); 
+
+		deleteFilesInStorage(StorageType.S3);
 	}
-	
+
 	/**
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public void deleteFilesinPosixStorage() throws IOException {
-		
-		deleteFilesInStorage(StorageType.POSIX); 
+
+		deleteFilesInStorage(StorageType.POSIX);
 	}
-	
+
 	/**
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	private void deleteFilesInStorage(StorageType storageType) throws IOException {
-		
+
 		File file = new File(getStoragePath());
 
 		if (!file.getPath().contains(TEST_DIRECTORY)) {
 
-			System.out.println("Attempt to delete " + storageType.toString() + " storage files not from unit test: " + getStoragePath());
+			System.out.println("Attempt to delete " + storageType.toString() + " storage files not from unit test: "
+					+ getStoragePath());
 			return;
 		}
-				
+
 		Storage storage = storageProvider.getStorage(storageType);
 		List<String> relativePaths = storage.getRelativeFiles();
-		
-		for(String relativePath : relativePaths) {
+
+		for (String relativePath : relativePaths) {
 			StorageFile storageFile = storage.getStorageFile(relativePath);
 			try {
 				storage.delete(storageFile);
@@ -487,24 +528,24 @@ public class TestUtils {
 				e.printStackTrace();
 			}
 		}
-		
+
 		List<String> storageFilesAfterDelete = storage.getRelativeFiles();
 		TestUtils.printList("Storage after delete all " + storageType + " files:", storageFilesAfterDelete);
 	}
 
 	public static void printMvcResult(String requestString, MvcResult mvcResult) {
-		
+
 		System.out.println();
 		System.out.println("HTTP Response");
 		System.out.println("Request: " + requestString);
 		System.out.println("Status: " + mvcResult.getResponse().getStatus());
-		
+
 		try {
 			System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
-		
-		System.out.println();		
+
+		System.out.println();
 	}
 }
