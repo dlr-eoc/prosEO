@@ -178,6 +178,8 @@ public class TestUtils {
 			return;
 		}
 		
+		file.getParentFile().mkdirs();
+		
 		try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath))) {
 			
 			byte[] buffer = new byte[1024];
