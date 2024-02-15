@@ -127,6 +127,9 @@ public class ProductfileControllerImplTest_syncDownload {
 
 		DownloadThread thread2 = new DownloadThread(relativePath);
 		thread2.start();
+		
+		thread1.join();
+        thread2.join();
 
 		// delete files with empty folders
 
