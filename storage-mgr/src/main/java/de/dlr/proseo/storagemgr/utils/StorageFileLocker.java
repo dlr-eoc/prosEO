@@ -82,14 +82,14 @@ public class StorageFileLocker {
 				if (!productLockSet.contains(path)) {
 					
 					productLockSet.add(path);
-					logger.debug("... the file {} is locked", path);
+					logger.debug("... the file has been locked: {}", path);
 					break;
 				}
 			}
 
 			// wait, because file is locked (in the set) in another thread
 			if (logger.isDebugEnabled())
-				logger.debug("... waiting for concurrent access to {} to terminate", path);
+				logger.debug("... waiting for concurrent access to the file: {}", path);
 			Thread.sleep(waitTime);
 		}
 
@@ -108,10 +108,10 @@ public class StorageFileLocker {
 			logger.trace(">>> unlock()");
 		
 		if (productLockSet.remove(path)) {
-			logger.debug("... the file {} is unlocked", path);
+			logger.debug("... the file has been unlocked: {}", path);
 		}
 		else {
-			logger.debug("... the file {} was not locked (not in the concurrent list)", path);
+			logger.debug("... the file was not locked (not in the concurrent list): {}", path);
 		}
 	}
 }

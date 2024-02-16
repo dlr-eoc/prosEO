@@ -120,7 +120,6 @@ public class ProductfileControllerImpl implements ProductfileController {
 		} finally {
 
 			fileLocker.unlock();
-			logger.debug("... unlocked the file: ", pathInfo);
 		}
 	}
 
@@ -160,7 +159,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 			RestFileInfo restFileInfo = copyFileExternalToCache(externalPath, productId, fileSize, fileLocker);
 			fileLocker.unlock();
-			
+
 			restFileInfo = copyFileCacheToStorage(relativePath);
 
 			logger.log(StorageMgrMessage.PRODUCT_FILE_UPLOADED_TO_STORAGE, externalPath, productId);
@@ -192,7 +191,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 */
 	private RestFileInfo copyFileStorageToCache(String storageFilePath, StorageFileLocker fileLocker)
 			throws FileLockedAfterMaxCyclesException, IOException, Exception {
-		
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> copyFileStorageToCache({}, {})", storageFilePath, fileLocker);
 
@@ -229,7 +228,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 			} else {
 
 				// passive thread - did nothing, waited for copied file and use it from cache
-				logger.debug("... waiting-thread when the file downloaded and use it from cache: ",
+				logger.debug("... waiting-thread: waited until the file was downloaded to cache from external storage and use it from cache: {}",
 						cacheFile.getFullPath());
 			}
 
@@ -263,7 +262,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 */
 	private RestFileInfo copyFileExternalToCache(String externalPath, Long productId, Long fileSize,
 			StorageFileLocker fileLocker) throws FileLockedAfterMaxCyclesException, IOException, Exception {
-		
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> copyFileExternalToCache({}, {}, {}, {})", externalPath, productId, fileSize, fileLocker);
 
@@ -298,13 +297,13 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 				// passive thread - did nothing, waited for copied file and use it from cache
 				logger.debug(
-						"... waiting-thread when the file downloaded to cache from external storage and use it from cache: ",
+						"... waiting-thread: waited until the file was downloaded to cache from external storage and use it from cache: {}",
 						cacheFile.getFullPath());
 			}
 
 		} else {
 
-			logger.debug("... no download and no lock - the file is in cache: ", cacheFile.getFullPath());
+			logger.debug("... no download and no lock - the file is in cache: {}", cacheFile.getFullPath());
 		}
 
 		RestFileInfo restFileInfo = convertToRestFileInfo(cacheFile,
@@ -314,7 +313,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 	}
 
 	/**
-	 * Copies the file from the cache to the backend storage. 
+	 * Copies the file from the cache to the backend storage.
 	 * 
 	 * @param relativeCachePath relative cache path
 	 * @return RestFileInfo
@@ -323,7 +322,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 */
 	private RestFileInfo copyFileCacheToStorage(String relativeCachePath)
 			throws FileLockedAfterMaxCyclesException, IOException, Exception {
-		
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> copyFileCacheToStorage({})", relativeCachePath);
 
@@ -331,11 +330,11 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		StorageFile cacheFile = storageProvider.getCacheFile(relativeCachePath);
 		StorageFile storageFile = storageProvider.getStorageFile(relativeCachePath);
-			
+
 		storage.uploadFile(cacheFile, storageFile);
 
 		logger.log(StorageMgrMessage.PRODUCT_FILE_UPLOADED_FROM_CACHE_TO_STORAGE, storageFile.getFullPath());
-		
+
 		RestFileInfo restFileInfo = convertToRestFileInfo(storageFile,
 				storageProvider.getCacheFileSize(cacheFile.getRelativePath()));
 
@@ -350,7 +349,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 * @return rest file info
 	 */
 	private static RestFileInfo convertToRestFileInfo(StorageFile storageFile, long fileSize) {
-		
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> convertToRestFileInfo({}, {})", storageFile, fileSize);
 
@@ -373,7 +372,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 * @return product folder with the file name
 	 */
 	private String getProductFolderWithFilename(String externalPath, Long productId) {
-		
+
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getProductFolderWithFilename({}, {})", externalPath, productId);
 

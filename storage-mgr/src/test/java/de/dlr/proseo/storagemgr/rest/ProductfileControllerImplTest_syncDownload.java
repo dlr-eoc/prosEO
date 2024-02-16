@@ -119,17 +119,26 @@ public class ProductfileControllerImplTest_syncDownload {
 		StorageFile storageFile = storageProvider.getStorageFile(relativePath);
 		storageProvider.getStorage().upload(sourceFile, storageFile);
 
-		// show storage files
-		BaseStorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
+		// show storage and cache files
+		BaseStorageTestUtils.printStorageFiles("BEFORE http-call", storageProvider.getStorage());
+		storageTestUtils.printCache();
 
+		// concurrent threads download concurrently from storage to cache
 		DownloadThread thread1 = new DownloadThread(relativePath);
 		thread1.start();
 
 		DownloadThread thread2 = new DownloadThread(relativePath);
 		thread2.start();
-		
+	
 		thread1.join();
         thread2.join();
+        
+        // not a concurrent thread uses downloaded file (in thread 1 or 2) from cache
+		DownloadThread thread3 = new DownloadThread(relativePath);
+		thread3.start();
+		
+        thread3.join();
+
 
 		// delete files with empty folders
 
@@ -159,7 +168,7 @@ public class ProductfileControllerImplTest_syncDownload {
 
 		public void run() {
 			
-			System.out.println("Thread name:" + Thread.currentThread().getName());
+			System.out.println("Thread name: " + Thread.currentThread().getName());
 
 			// rest-download file from storage to cache
 			String absoluteStoragePath = storageProvider.getStorage().getAbsolutePath(relativePath);
@@ -173,6 +182,7 @@ public class ProductfileControllerImplTest_syncDownload {
 				mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
 
 				// show results of http-download
+				System.out.println("Thread name: " + Thread.currentThread().getName());
 				TestUtils.printMvcResult(REQUEST_STRING, mvcResult);
 
 				storageTestUtils.printCache();

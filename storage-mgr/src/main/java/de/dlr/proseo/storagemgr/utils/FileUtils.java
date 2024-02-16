@@ -115,18 +115,17 @@ public class FileUtils {
 
 		} catch (FileLockedAfterMaxCyclesException e) {
 			
-			logger.debug("... the file is locked after max check cycles: ", path, " ", e.getMessage());
+			logger.debug("... the file is locked after max check cycles: " + path + " " + e.getMessage());
 			fileCreatedStatus = false;
 			
 		} catch (InterruptedException e) {
 			
-			logger.debug("... the file is locked after max check cycles: ", path, " ", e.getMessage());
+			logger.debug("... the file is locked after max check cycles: " + path + " " + e.getMessage());
 			fileCreatedStatus = false;
 			
 		} finally {
 
 			fileLocker.unlock();
-			logger.debug("... unlocked the file: ", path);
 		}
 
 		return fileCreatedStatus;
