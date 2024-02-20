@@ -132,7 +132,7 @@ public class ProductionInterfaceSecurity {
 	 */
 	/* package */ UserInfo authenticateUser(UserInfo userInfo) throws SecurityException {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> doLogin(HttpServletRequest)");
+			logger.trace(">>> authenticateUser(userInfo)");
 
 		// Attempt connection to User Manager
 		@SuppressWarnings("rawtypes")
