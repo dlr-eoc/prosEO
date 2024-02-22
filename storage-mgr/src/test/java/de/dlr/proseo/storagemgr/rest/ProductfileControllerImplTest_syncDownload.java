@@ -153,9 +153,9 @@ public class ProductfileControllerImplTest_syncDownload {
 		
         thread3.join();
             
-        
-        TestUtils.printList("CATCHED LOGS AND OUTPUT", streamInterceptor.getOutput());      
+        List<String> interceptedOutput = streamInterceptor.getOutput();
         streamInterceptor.restoreDefaultOutput(); 
+        TestUtils.printList("CATCHED LOGS AND OUTPUT", interceptedOutput);      
         
 		// delete files with empty folders
 
