@@ -5,7 +5,11 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.util.List;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Rule;
@@ -30,6 +34,13 @@ import de.dlr.proseo.storagemgr.model.StorageType;
 import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
 import de.dlr.proseo.storagemgr.utils.FileUtils;
 import de.dlr.proseo.storagemgr.utils.PathConverter;
+import de.dlr.proseo.storagemgr.StreamCatcher;
+
+
+
+
+import java.util.ArrayList;
+
 
 /**
  * Mock Mvc test for Product Controller
@@ -58,6 +69,7 @@ public class ProductfileControllerImplTest_syncDownload {
 	public TestName testName = new TestName();
 
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/productfiles";
+	
 
 	@Test
 	public void testDownload_posix() throws Exception {
@@ -101,7 +113,9 @@ public class ProductfileControllerImplTest_syncDownload {
 	private void syncDownload(String testID) throws Exception {
 
 		TestUtils.printMethodName(this, testName);
-
+			
+		StreamCatcher streamCatcher = new StreamCatcher(System.out); 
+		    
 		// create file in source
 		// upload to storage
 		// call http-download
@@ -138,8 +152,11 @@ public class ProductfileControllerImplTest_syncDownload {
 		thread3.start();
 		
         thread3.join();
-
-
+            
+        
+        TestUtils.printList("CATCHED LOGS AND OUTPUT", streamCatcher.getOutput());      
+        streamCatcher.restoreDefaultOutput(); 
+        
 		// delete files with empty folders
 
 		String cacheFile = new PathConverter(storageProvider.getCachePath(), relativePath).getPath();
@@ -156,6 +173,19 @@ public class ProductfileControllerImplTest_syncDownload {
 			storageProvider.getStorage().deleteFile(storageFile); // in storage
 		}
 	}
+	
+	 private List<String> extractOutputLines(String capturedOutput) {
+	        String[] lines = capturedOutput.split(System.lineSeparator());
+
+	        List<String> outputLines = new ArrayList<>();
+
+	        // Add each line to the list
+	        for (String line : lines) {
+	            outputLines.add("YAYA" + line.trim());
+	        }
+
+	        return outputLines;
+	    }
 
 	private class DownloadThread extends Thread {
 
@@ -209,5 +239,23 @@ public class ProductfileControllerImplTest_syncDownload {
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	public class InterceptingPrintStream extends PrintStream {
+	    private StringBuilder capturedOutput = new StringBuilder();
+
+	    public InterceptingPrintStream(OutputStream out) {
+	        super(out);
+	    }
+
+	    @Override
+	    public void println(String x) {
+	        capturedOutput.append(x).append(System.lineSeparator());
+	        super.println("YOYO" +  x);
+	    }
+
+	    public String getCapturedOutput() {
+	        return capturedOutput.toString();
+	    }
 	}
 }
