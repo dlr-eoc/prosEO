@@ -53,15 +53,13 @@ public class SendManager {
 	 * sending either to the ServiceConnection class (HTTP/HTTPs) or the ServiceMail class (MAIL)
 	 *
 	 * @param restMessage a REST message
-	 * @return a ResponseEntity representing the response from the sending operation
+	 * @return a message body representing the response from the sending operation (only in case of HTTP(S) endpoints) or null
 	 */
-	public ResponseEntity<?> sendNotification(RestMessage restMessage) {
+	public Object sendNotification(RestMessage restMessage) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> sendNotification({})", restMessage);
 
 		// Analyze content of message
-		String endpoint = null;
-		SendType type = SendType.UNKNOWN;
 		boolean raw = false;
 		String message = "";
 		String messageCode = null;
@@ -72,30 +70,32 @@ public class SendManager {
 		String sender = config.getMailSender();
 
 		// Check if the endpoint is provided
-		if (restMessage.getEndpoint() != null) {
-			endpoint = restMessage.getEndpoint();
-
-			// Detect the send type (HTTP, HTTPS, or MAIL)
-			if (endpoint.toLowerCase().startsWith("https:")) {
-				type = SendType.HTTPS;
-			} else if (endpoint.toLowerCase().startsWith("http:")) {
-				type = SendType.HTTP;
-			} else if (endpoint.toLowerCase().startsWith("mailto:")) {
-				type = SendType.MAIL;
-			}
-
-			// Throw an exception if the send type is unknown
-			if (type == SendType.UNKNOWN) {
-				throw new IllegalArgumentException(
-						logger.log(NotificationMessage.MSG_ENDPOINT_TYPE_UNKNOWN, restMessage.getEndpoint()));
-			}
-		} else {
+		if (null == restMessage.getEndpoint()) {
 			// Throw an exception no send tyoe is set
 			throw new IllegalArgumentException(logger.log(NotificationMessage.MSG_ENDPOINT_NOT_SET));
+		} 
+
+		String endpoint = restMessage.getEndpoint();
+
+		// Detect the send type (HTTP, HTTPS, or MAIL)
+		SendType type = null;
+		if (endpoint.toLowerCase().startsWith("https:")) {
+			type = SendType.HTTPS;
+		} else if (endpoint.toLowerCase().startsWith("http:")) {
+			type = SendType.HTTP;
+		} else if (endpoint.toLowerCase().startsWith("mailto:")) {
+			type = SendType.MAIL;
+		} else {
+			// Throw an exception if the send type is unknown
+			throw new IllegalArgumentException(
+					logger.log(NotificationMessage.MSG_ENDPOINT_TYPE_UNKNOWN, restMessage.getEndpoint()));
 		}
+
 
 		// Check user and password for HTTP-based protocols
 		if (type == SendType.HTTPS || type == SendType.HTTP) {
+			// TODO User and password may be null, in case the endpoint does not require authentication (though not recommended)
+			// RAML specifies them as optional!
 			if (restMessage.getUser() == null || restMessage.getPassword() == null) {
 				throw new IllegalArgumentException(logger.log(NotificationMessage.MSG_USER_PASSWORD_NOT_SET));
 			}
@@ -150,17 +150,21 @@ public class SendManager {
 		}
 
 		// Send the message based on the detected send type
+		Object result = null;
+		
 		switch (type) {
 		case HTTPS:
 		case HTTP:
-			return serviceConnection.postToService(endpoint, user, password, subject, mediaType, messageCode, message, sender);
+			result = serviceConnection.postToService(endpoint, user, password, subject, mediaType, messageCode, message, sender);
+			break;
 		case MAIL:
-			return serviceMail.sendMail(endpoint, user, password, subject, mediaType, messageCode, message, sender);
-		default:
+			serviceMail.sendMail(endpoint, subject, mediaType, messageCode, message, sender);
 			break;
 		}
-
-		// Throw an exception if the send type is unknown
-		throw new IllegalArgumentException(logger.log(NotificationMessage.MSG_ENDPOINT_TYPE_UNKNOWN, restMessage.getEndpoint()));
+		
+		// Log success and return endpoint response, if any
+		logger.log(NotificationMessage.MESSAGE_SENT, endpoint);
+		
+		return result;
 	}
 }

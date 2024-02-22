@@ -81,7 +81,6 @@ import de.dlr.proseo.api.aipclient.rest.model.RestParameter;
 import de.dlr.proseo.api.aipclient.rest.model.RestProduct;
 import de.dlr.proseo.api.aipclient.rest.model.RestProductFile;
 import de.dlr.proseo.basewrap.MD5Util;
-import de.dlr.proseo.basewrap.BaseWrapper.WrapperException;
 import de.dlr.proseo.interfaces.rest.model.RestMessage;
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
@@ -210,8 +209,8 @@ public class DownloadManager {
 
 		try {
 			// Create a request
-			WebClient webClient = WebClient.create(config.getNotificationUrl());
-			RequestBodySpec request = webClient.post().accept(MediaType.TEXT_PLAIN);
+			WebClient webClient = WebClient.create(config.getNotificationUrl() + "/notify");
+			RequestBodySpec request = webClient.post().contentType(MediaType.APPLICATION_JSON).accept(MediaType.ALL);
 
 			// Build message body
 			RestMessage newMessage = new RestMessage(
