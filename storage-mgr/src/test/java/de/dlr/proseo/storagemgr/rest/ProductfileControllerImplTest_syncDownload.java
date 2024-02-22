@@ -34,7 +34,7 @@ import de.dlr.proseo.storagemgr.model.StorageType;
 import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
 import de.dlr.proseo.storagemgr.utils.FileUtils;
 import de.dlr.proseo.storagemgr.utils.PathConverter;
-import de.dlr.proseo.storagemgr.StreamCatcher;
+import de.dlr.proseo.storagemgr.StreamInterceptor;
 
 
 
@@ -114,7 +114,7 @@ public class ProductfileControllerImplTest_syncDownload {
 
 		TestUtils.printMethodName(this, testName);
 			
-		StreamCatcher streamCatcher = new StreamCatcher(System.out); 
+		StreamInterceptor streamInterceptor = new StreamInterceptor(System.out); 
 		    
 		// create file in source
 		// upload to storage
@@ -154,8 +154,8 @@ public class ProductfileControllerImplTest_syncDownload {
         thread3.join();
             
         
-        TestUtils.printList("CATCHED LOGS AND OUTPUT", streamCatcher.getOutput());      
-        streamCatcher.restoreDefaultOutput(); 
+        TestUtils.printList("CATCHED LOGS AND OUTPUT", streamInterceptor.getOutput());      
+        streamInterceptor.restoreDefaultOutput(); 
         
 		// delete files with empty folders
 
@@ -173,19 +173,6 @@ public class ProductfileControllerImplTest_syncDownload {
 			storageProvider.getStorage().deleteFile(storageFile); // in storage
 		}
 	}
-	
-	 private List<String> extractOutputLines(String capturedOutput) {
-	        String[] lines = capturedOutput.split(System.lineSeparator());
-
-	        List<String> outputLines = new ArrayList<>();
-
-	        // Add each line to the list
-	        for (String line : lines) {
-	            outputLines.add("YAYA" + line.trim());
-	        }
-
-	        return outputLines;
-	    }
 
 	private class DownloadThread extends Thread {
 
@@ -241,21 +228,4 @@ public class ProductfileControllerImplTest_syncDownload {
 		}
 	}
 	
-	public class InterceptingPrintStream extends PrintStream {
-	    private StringBuilder capturedOutput = new StringBuilder();
-
-	    public InterceptingPrintStream(OutputStream out) {
-	        super(out);
-	    }
-
-	    @Override
-	    public void println(String x) {
-	        capturedOutput.append(x).append(System.lineSeparator());
-	        super.println("YOYO" +  x);
-	    }
-
-	    public String getCapturedOutput() {
-	        return capturedOutput.toString();
-	    }
-	}
 }

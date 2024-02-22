@@ -6,46 +6,44 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Stream catcher for catching an output stream
+ * Stream interceptor for intercepting an output stream
  * 
  * @author Denys Chaykovskiy
  * 
  */
  
-public class StreamCatcher {
+public class StreamInterceptor {
 	
 	/** Output header */
-	private static final String OUTPUT_HEADER = "catched: "; 
+	private static final String OUTPUT_HEADER = "Intercepted: "; 
 	
 	/** Saved original output stream */
-	final PrintStream originalSystemOut;
+	private PrintStream originalSystemOut;
 
-	/** System output content */
-	ByteArrayOutputStream systemOutContent ;
+	/** Intercepted system output content */
+	private ByteArrayOutputStream systemOutContent = new ByteArrayOutputStream();;
 
 	/**
 	 * @param originalSystemOut
 	 */
-	public StreamCatcher(PrintStream originalSystemOut) {
+	public StreamInterceptor(PrintStream originalSystemOut) {
 
 		this.originalSystemOut = originalSystemOut;
 		
-		systemOutContent = new ByteArrayOutputStream();
-
 		System.setOut(new PrintStream(systemOutContent));
 	}
 
 	/**
-	 * Gets a catched output content
+	 * Gets an intercepted output content
 	 * 
 	 * 
-	 * @return catched output content
+	 * @return intercepted output content
 	 */
 	public List<String> getOutput() {
 		
-		String capturedOutput = systemOutContent.toString();
+		String interceptedOutput = systemOutContent.toString();
 
-		String[] lines = capturedOutput.split(System.lineSeparator());
+		String[] lines = interceptedOutput.split(System.lineSeparator());
 
 		List<String> outputLines = new ArrayList<>();
 
