@@ -386,6 +386,48 @@ public class DownloadManager {
 
 		return productList;
 	}
+	
+	/**
+	 * Check the given list of products against another product and return the product, which matches the other product and
+	 * has a product file at the given processing facility; it can be assumed that all products in the list are of the same
+	 * mission and product class as the other product (due to selection by findAllProductsBySensingTime()).
+	 * 
+	 * @param modelProducts the list of products to check
+	 * @param restProduct the product to check against
+	 * @param processingFacility the processing facility, at which the product file shall be present
+	 * @return the product found converted to a REST product or null, if no such product exists
+	 */
+	private RestProduct findLocalProductAtFacility(List<Product> modelProducts, RestProduct restProduct, ProcessingFacility processingFacility) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> findLocalProductAtFacility(Product[{}], {}, {})",
+					(null == modelProducts ? "MISSING" : modelProducts.size()),
+					(null == restProduct ? "null" : restProduct.getProductClass()),
+					(null == processingFacility ? "null" : processingFacility.getName()));
+		
+		// Get sensing start and stop times and generation time to check against
+		Instant sensingStartTime = OrbitTimeFormatter.parseDateTime(restProduct.getSensingStartTime());
+		Instant sensingStopTime = OrbitTimeFormatter.parseDateTime(restProduct.getSensingStopTime());
+		Instant generationTime = OrbitTimeFormatter.parseDateTime(restProduct.getGenerationTime());
+		
+		// Travel through the list of products
+		for (Product modelProduct: modelProducts) {
+			if (sensingStartTime.equals(modelProduct.getSensingStartTime())
+					&& sensingStopTime.equals(modelProduct.getSensingStopTime())
+					&& generationTime.equals(modelProduct.getGenerationTime())) {
+				
+				// Candidate product found, check product files
+				for (ProductFile modelProductFile: modelProduct.getProductFile()) {
+					if (modelProductFile.getProcessingFacility().equals(processingFacility)) {
+						return toRestProduct(modelProduct);
+					}
+				}
+				
+			}
+		}
+
+		// No matching product or product file found
+		return null;
+	}
 
 	/**
 	 * Convert a prosEO model product file into a REST product file
@@ -1487,10 +1529,11 @@ public class DownloadManager {
 	 * @param earliestStop       sensing stop time at millisecond precision
 	 * @param processingFacility the processing facility to store the result in
 	 * @param password           password for Ingestor login
+	 * @param modelProducts 	 list of products already available locally
 	 * @return a list of product metadata in REST interface format or an empty list, if no product was found
 	 */
 	private List<RestProduct> downloadAllBySensingTime(ProductArchive archive, String productType, Instant earliestStart,
-			Instant earliestStop, ProcessingFacility processingFacility, String password) {
+			Instant earliestStop, ProcessingFacility processingFacility, String password, List<Product> modelProducts) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> downloadAllBySensingTime({}, {}, {}, {}, {}, ********)",
 					(null == archive ? "NULL" : archive.getCode()), productType, earliestStart, earliestStop,
@@ -1565,12 +1608,23 @@ public class DownloadManager {
 			} else {
 				restProduct = toRestProduct(odataProduct, processingFacility, true);
 			}
-			// Start download and ingestion thread
-			downloadAndIngest(archive, restProduct, processingFacility, password);
-			if (logger.isTraceEnabled())
-				logger.trace("Found product " + restProduct);
-
-			restProducts.add(restProduct);
+			
+			// Check whether product file is already available locally
+			RestProduct localProduct = findLocalProductAtFacility(modelProducts, restProduct, processingFacility);
+			
+			if (null == localProduct) {
+				// Not available locally: Start download and ingestion thread
+				downloadAndIngest(archive, restProduct, processingFacility, password);
+				if (logger.isTraceEnabled())
+					logger.trace("Found product " + restProduct);
+	
+				restProducts.add(restProduct);
+			} else {
+				// Skip download and return locally available product
+				restProducts.add(localProduct);
+				if (logger.isTraceEnabled())
+					logger.trace("Skipping locally available product " + restProduct);
+			}
 		}
 
 		// Return list of product metadata
@@ -1724,15 +1778,9 @@ public class DownloadManager {
 		// Check availability of products
 		List<Product> modelProducts = findAllProductsBySensingTime(productType, earliestStart, earliestStop, processingFacility);
 
-		if (!modelProducts.isEmpty()) {
-			// Found some suitable products
-			List<RestProduct> resultList = new ArrayList<>();
-			for (Product modelProduct : modelProducts) {
-				resultList.add(toRestProduct(modelProduct));
-			}
-			return resultList;
+		if (modelProducts.isEmpty()) {
+			if (logger.isTraceEnabled()) logger.trace("No products found locally");
 		}
-		if (logger.isTraceEnabled()) logger.trace("No products found locally");
 
 		// Query the available archives for the given product type
 		List<ProductArchive> productArchives = RepositoryService.getProductArchiveRepository().findAll();
@@ -1746,7 +1794,7 @@ public class DownloadManager {
 			if (archive.getAvailableProductClasses().contains(productClass)) {
 				if (logger.isTraceEnabled()) logger.trace("Querying archive for product class {}", productClass.getProductType());
 				List<RestProduct> result = downloadAllBySensingTime(archive, productType, earliestStart, earliestStop,
-						processingFacility, password);
+						processingFacility, password, modelProducts);
 				if (!result.isEmpty()) {
 					return result;
 				}
