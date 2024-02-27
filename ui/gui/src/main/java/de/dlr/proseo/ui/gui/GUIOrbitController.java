@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.ui.gui;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +23,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
@@ -178,37 +180,40 @@ public class GUIOrbitController extends GUIBaseController {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
 		// Build the request URI
-		String uri = serviceConfig.getOrderManagerUrl() + "/orbits";
+		String uriString = serviceConfig.getOrderManagerUrl() + "/orbits";
 		String divider = "?";
 		if (spacecraft != null) {
-			uri += divider + "spacecraftCode=" + spacecraft;
+			uriString += divider + "spacecraftCode=" + spacecraft;
 			divider = "&";
 		}
 		if (startTimeFrom != null) {
-			uri += divider + "startTimeFrom=" + startTimeFrom;
+			uriString += divider + "startTimeFrom=" + startTimeFrom;
 			divider = "&";
 		}
 		if (startTimeTo != null) {
-			uri += divider + "startTimeTo=" + startTimeTo;
+			uriString += divider + "startTimeTo=" + startTimeTo;
 			divider = "&";
 		}
 		if (numberFrom != null) {
-			uri += divider + "orbitNumberFrom=" + numberFrom;
+			uriString += divider + "orbitNumberFrom=" + numberFrom;
 			divider = "&";
 		}
 		if (numberTo != null) {
-			uri += divider + "orbitNumberTo=" + numberTo;
+			uriString += divider + "orbitNumberTo=" + numberTo;
 			divider = "&";
 		}
 		if (recordFrom != null) {
-			uri += divider + "recordFrom=" + recordFrom;
+			uriString += divider + "recordFrom=" + recordFrom;
 			divider = "&";
 		}
 		if (recordTo != null) {
-			uri += divider + "recordTo=" + recordTo;
+			uriString += divider + "recordTo=" + recordTo;
 			divider = "&";
 		}
-		uri += divider + "orderBy=orbitNumber ASC,startTime ASC";
+		uriString += divider + "orderBy=orbitNumber ASC,startTime ASC";
+		URI uri = UriComponentsBuilder.fromUriString(uriString)
+				.build()
+				.toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI

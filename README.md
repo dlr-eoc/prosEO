@@ -53,11 +53,15 @@ To build prosEO from source code, the following prerequisites must be met:
   ```
   If you already have a `properties` element in your settings file, it is of course
   sufficient to just add the `docker.registry` property there.
-- Add the following to your Docker Engine configuration (e. g. via the Docker Dashboard):
+- Add the following to your Docker Engine configuration (e. g. via the Docker Dashboard or manually in `daemon.json`):
   ```
-  "insecure-registries": [
-    "localhost:5000"
-  ],
+  {
+    ...
+    "insecure-registries": [
+      "localhost:5000"
+    ],
+    ...
+  }
   ```
 - Push the OpenJDK 11 image to your local repository:
   ```

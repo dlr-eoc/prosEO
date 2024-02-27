@@ -124,8 +124,11 @@ public class StatisticsService {
 	public String getOrderIdOfIdentifier(String identifier, GUIAuthenticationToken auth)
 			throws RestClientResponseException, RuntimeException {
 
+		URI uri = UriComponentsBuilder.fromUriString("/orders?identifier=" + identifier)
+				.build()
+				.toUri();
 		// Retrieve orders with matching identifier
-		List<?> result = serviceConnection.getFromService(config.getOrderManager(), "/orders?identifier=" + identifier, List.class,
+		List<?> result = serviceConnection.getFromService(config.getOrderManager(), uri.toString(), List.class,
 				auth.getProseoName(), auth.getPassword());
 
 		return ((HashMap<?, ?>) result.get(0)).get("id").toString();

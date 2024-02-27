@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.ui.gui;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
@@ -281,53 +283,56 @@ public class GUIProductController extends GUIBaseController {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
 		String divider = "?";
-		String uri = "/products/count";
+		String uriString = "/products/count";
 		if (productClass != mission && !mission.isEmpty()) {
-			uri += divider + "mission=" + mission;
+			uriString += divider + "mission=" + mission;
 			divider = "&";
 		}
 		if (productClass != null && !productClass.isEmpty()) {
 			String[] pcs = productClass.split(",");
 			for (String pc : pcs) {
-				uri += divider + "productClass=" + pc;
+				uriString += divider + "productClass=" + pc;
 				divider = "&";
 			}
 		}
 		if (mode != null && !mode.isEmpty()) {
-			uri += divider + "mode=" + mode;
+			uriString += divider + "mode=" + mode;
 			divider = "&";
 		}
 		if (fileClass != null && !fileClass.isEmpty()) {
-			uri += divider + "fileClass=" + fileClass;
+			uriString += divider + "fileClass=" + fileClass;
 			divider = "&";
 		}
 		if (quality != null && !quality.isEmpty()) {
-			uri += divider + "quality=" + quality;
+			uriString += divider + "quality=" + quality;
 			divider = "&";
 		}
 		if (startTimeFrom != null && !startTimeFrom.isEmpty()) {
-			uri += divider + "startTimeFrom=" + startTimeFrom;
+			uriString += divider + "startTimeFrom=" + startTimeFrom;
 			divider = "&";
 		}
 		if (startTimeTo != null && !startTimeTo.isEmpty()) {
-			uri += divider + "startTimeTo=" + startTimeTo;
+			uriString += divider + "startTimeTo=" + startTimeTo;
 			divider = "&";
 		}
 		if (genTimeFrom != null && !genTimeFrom.isEmpty()) {
-			uri += divider + "genTimeFrom=" + genTimeFrom;
+			uriString += divider + "genTimeFrom=" + genTimeFrom;
 			divider = "&";
 		}
 		if (genTimeTo != null && !genTimeTo.isEmpty()) {
-			uri += divider + "genTimeTo=" + genTimeTo;
+			uriString += divider + "genTimeTo=" + genTimeTo;
 			divider = "&";
 		}
 		if (jobStepId != null) {
-			uri += divider + "jobStep=" + jobStepId;
+			uriString += divider + "jobStep=" + jobStepId;
 			divider = "&";
 		}
+		URI uri = UriComponentsBuilder.fromUriString(uriString)
+				.build()
+				.toUri();
 		Long result = (long) -1;
 		try {
-			String resStr = serviceConnection.getFromService(serviceConfig.getIngestorUrl(), uri, String.class,
+			String resStr = serviceConnection.getFromService(serviceConfig.getIngestorUrl(), uri.toString(), String.class,
 					auth.getProseoName(), auth.getPassword());
 
 			if (resStr != null && resStr.length() > 0) {
@@ -382,64 +387,67 @@ public class GUIProductController extends GUIBaseController {
 		String mission = auth.getMission();
 
 		// Build the request URI
-		String uri = serviceConfig.getIngestorUrl() + "/products";
+		String uriString = serviceConfig.getIngestorUrl() + "/products";
 		if (id != null && id > 0) {
-			uri += "/" + id.toString();
+			uriString += "/" + id.toString();
 		} else {
 			String divider = "?";
 			if (mission != null && !mission.isEmpty()) {
-				uri += divider + "mission=" + mission;
+				uriString += divider + "mission=" + mission;
 				divider = "&";
 			}
 			if (productClass != null && !productClass.isEmpty()) {
 				String[] pcs = productClass.split(",");
 				for (String pc : pcs) {
-					uri += divider + "productClass=" + pc;
+					uriString += divider + "productClass=" + pc;
 					divider = "&";
 				}
 			}
 			if (mode != null && !mode.isEmpty()) {
-				uri += divider + "mode=" + mode;
+				uriString += divider + "mode=" + mode;
 				divider = "&";
 			}
 			if (fileClass != null && !fileClass.isEmpty()) {
-				uri += divider + "fileClass=" + fileClass;
+				uriString += divider + "fileClass=" + fileClass;
 				divider = "&";
 			}
 			if (quality != null && !quality.isEmpty()) {
-				uri += divider + "quality=" + quality;
+				uriString += divider + "quality=" + quality;
 				divider = "&";
 			}
 			if (startTimeFrom != null && !startTimeFrom.isEmpty()) {
-				uri += divider + "startTimeFrom=" + startTimeFrom;
+				uriString += divider + "startTimeFrom=" + startTimeFrom;
 				divider = "&";
 			}
 			if (startTimeTo != null && !startTimeTo.isEmpty()) {
-				uri += divider + "startTimeTo=" + startTimeTo;
+				uriString += divider + "startTimeTo=" + startTimeTo;
 				divider = "&";
 			}
 			if (genTimeFrom != null && !genTimeFrom.isEmpty()) {
-				uri += divider + "genTimeFrom=" + genTimeFrom;
+				uriString += divider + "genTimeFrom=" + genTimeFrom;
 				divider = "&";
 			}
 			if (genTimeTo != null && !genTimeTo.isEmpty()) {
-				uri += divider + "genTimeTo=" + genTimeTo;
+				uriString += divider + "genTimeTo=" + genTimeTo;
 				divider = "&";
 			}
 			if (recordFrom != null) {
-				uri += divider + "recordFrom=" + recordFrom;
+				uriString += divider + "recordFrom=" + recordFrom;
 				divider = "&";
 			}
 			if (recordTo != null) {
-				uri += divider + "recordTo=" + recordTo;
+				uriString += divider + "recordTo=" + recordTo;
 				divider = "&";
 			}
 			if (jobStepId != null) {
-				uri += divider + "jobStep=" + jobStepId;
+				uriString += divider + "jobStep=" + jobStepId;
 				divider = "&";
 			}
-			uri += divider + "orderBy=productClass.productType ASC,sensingStartTime ASC";
+			uriString += divider + "orderBy=productClass.productType ASC,sensingStartTime ASC";
 		}
+		URI uri = UriComponentsBuilder.fromUriString(uriString)
+				.build()
+				.toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI

@@ -84,8 +84,9 @@ The `proseo-images` directory may be populated with convenience scripts for thes
 
 ## Step 3: Deploy the prosEO Control Instance
 
-Create the prosEO Control Instance from a `docker-compose.yml` file. A `docker-compose.yml.template`
-file is provided in the `proseo-images` directory, a simplified file would look something like the following:
+Create the prosEO Control Instance from a `docker-compose.yml` file. A working `docker-compose.yml.template`
+file is provided in the `proseo-images` directory, a simplified file restricted to the core microservices
+would look something like the following:
 ```yaml
 version: '3'
 services:
@@ -150,6 +151,41 @@ services:
       - proseo-order-mgr
       - proseo-processor-mgr
       - proseo-productclass-mgr
+  proseo-api-prip:
+    image: ${REGISTRY_URL}/proseo-api-prip:${VERSION}-proseo
+    platform: linux/amd64
+    ports:
+      - "8089:8080"
+    depends_on:
+      - proseo-user-mgr
+      - proseo-ingestor
+  proseo-api-odip:
+    image: ${REGISTRY_URL}/proseo-api-odip:${VERSION}-proseo
+    platform: linux/amd64
+    ports:
+      - "8090:8080"
+    depends_on:
+      - proseo-user-mgr
+      - proseo-ingestor
+      - proseo-order-mgr
+      - proseo-prodplanner
+  proseo-notification:
+    image: ${REGISTRY_URL}/proseo-notification:${VERSION}-proseo
+    platform: linux/amd64
+    ports:
+      - "8091:8080"
+  proseo-aip-client:
+    image: ${REGISTRY_URL}/proseo-aip-client:${VERSION}-proseo
+    platform: linux/amd64
+    volumes:
+      - <local path to transfer directory>:/proseo/transfer
+    ports:
+      - "8092:8080"
+  proseo-archive-mgr:
+    image: ${REGISTRY_URL}/proseo-archive-mgr:${VERSION}-proseo
+    platform: linux/amd64
+    ports:
+      - "8093:8080"
   proseo-pgadmin:
     image: dpage/pgadmin4
     environment:
@@ -230,31 +266,49 @@ metadata:
   namespace: default
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
   name: proseo-planner-role
-  namespace: default
+  # namespace not applicable for ClusterRole
 rules:
 - apiGroups: [""]
   resources: ["nodes"]
   verbs: ["get", "list", "watch"]
 - apiGroups: [""]
-  resources: ["jobs", "pods"]
+  resources: ["events"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["batch"]
+  resources: ["jobs"]
   verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
   name: proseo-planner-binding
-  namespace: default
+  # namespace not applicable for ClusterRoleBinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: Role
+  kind: ClusterRole
   name: proseo-planner-role
 subjects:
 - kind: ServiceAccount
   name: proseo-planner
   namespace: default
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: proseo-planner-secret
+  namespace: default
+  annotations:
+    kubernetes.io/service-account.name: proseo-planner
+type: kubernetes.io/service-account-token
 ```
 
 Create the account, role and role binding, and retrieve the authentication token for the new account:
