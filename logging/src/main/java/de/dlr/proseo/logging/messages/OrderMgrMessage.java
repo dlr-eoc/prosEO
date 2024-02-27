@@ -94,7 +94,7 @@ public enum OrderMgrMessage implements ProseoMessage {
 	MODIFICATION_NOT_ALLOWED			(3578, Level.ERROR, false, "The following property may not be modified: {0} (Attempt to modify order {1})", ""),
 	ORDER_CLEANUP_CYCLE					(3579, Level.INFO, true, "Order cleanup cycle started", ""),
 	ORDER_CLEANUP_SLEEP					(3580, Level.INFO, true, "Order cleanup cycle completed, sleeping for {0} ms", ""),
-	ORDER_CLEANUP_TERMINATE				(3581, Level.INFO, true, "Order cleanup cycle interrupted – terminating‚", ""),
+	ORDER_CLEANUP_TERMINATE				(3581, Level.INFO, true, "Order cleanup cycle interrupted - terminating‚", ""),
 	ORDER_NOT_EVICTABLE					(3582, Level.ERROR, false, "Eviction time {1} of order {0} not before requested cutoff time {2}", ""),
 	
 	;

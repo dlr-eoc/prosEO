@@ -11,17 +11,13 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import de.dlr.proseo.logging.http.HttpPrefix;
-import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.NotificationMessage;
 import de.dlr.proseo.notification.NotificationConfiguration;
@@ -40,9 +36,6 @@ public class ServiceMail {
 	/** The configuration of the notification service */
 	@Autowired
 	NotificationConfiguration config;
-
-	/** HTTP service methods */
-	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.NOTIFICATION);
 
 	/**
 	 * Creates and configures a JavaMailSenderImpl instance with the necessary properties, and reads the mail-related configuration
@@ -77,19 +70,19 @@ public class ServiceMail {
 	 * Sends an email based on the provided parameters. The email can be sent as plain text or MIME (HTML) format.
 	 * 
 	 * @param endpoint    The email address
-	 * @param user        The username for authentication (optional)
-	 * @param password    The password for authentication (optional)
 	 * @param subject     The email subject
 	 * @param mediaType   The media type to send the email
 	 * @param messageCode The message code
 	 * @param message     The email body
 	 * @param sender      The email sender
-	 * @return The response entity
+	 * @throws IllegalArgumentException if an error occurs during mail preparation
+	 * @throws MailException if an error occurs during mail sending
 	 */
-	public ResponseEntity<?> sendMail(String endpoint, String user, String password, String subject, MediaType mediaType,
-			String messageCode, String message, String sender) {
+	public void sendMail(String endpoint, String subject, MediaType mediaType, String messageCode, String message,
+			String sender) throws IllegalArgumentException, MailException {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> sendMail({}, {})", endpoint, message);
+			logger.trace(">>> sendMail({}, {}, {}, {}, {}, {})", endpoint, subject, mediaType,
+					messageCode, message, sender);
 
 		// Set the endpoint
 		String to = endpoint;
@@ -102,14 +95,14 @@ public class ServiceMail {
 
 		// Send the message according to media type
 		if (mediaType.equals(MediaType.TEXT_PLAIN)) {
-			return sendSimpleMessage(to, user, password, subject, messageCode, message, sender);
-		} else if (mediaType.equals(MediaType.APPLICATION_JSON_VALUE)) {
-			return sendSimpleMessage(to, user, password, subject, messageCode, message, sender);
+			sendSimpleMessage(to, subject, messageCode, message, sender);
+		} else if (mediaType.equals(MediaType.APPLICATION_JSON)) {
+			sendSimpleMessage(to, subject, messageCode, message, sender);
 		} else if (mediaType.equals(MediaType.TEXT_HTML)) {
-			return sendMimeMessage(to, user, password, subject, messageCode, message, sender);
+			sendMimeMessage(to, subject, messageCode, message, sender);
 		} else {
 			logger.log(NotificationMessage.UNKNOWN_MEDIATYPE, mediaType);
-			return sendSimpleMessage(to, user, password, subject, messageCode, message, sender);
+			sendSimpleMessage(to, subject, messageCode, message, sender);
 		}
 	}
 
@@ -117,16 +110,13 @@ public class ServiceMail {
 	 * Send a plain text email based on the provided parameters.
 	 * 
 	 * @param to          The email address
-	 * @param user        The username for authentication (optional)
-	 * @param password    The password for authentication (optional)
 	 * @param subject     The email subject
 	 * @param messageCode The message code
 	 * @param message     The email body
 	 * @param sender      The email sender
-	 * @return The response entity
+	 * @throws MailException If an error occurs during mail sending
 	 */
-	public ResponseEntity<?> sendSimpleMessage(String to, String user, String password, String subject, String messageCode,
-			String message, String sender) {
+	public void sendSimpleMessage(String to, String subject, String messageCode, String message, String sender) throws MailException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> sendSimpleMessage({})", to);
 
@@ -138,24 +128,20 @@ public class ServiceMail {
 		newMsg.setText(message);
 
 		getMailSender().send(newMsg);
-
-		return null;
 	}
 
 	/**
 	 * Send an HTML email as a MIME message based on the provided parameters.
 	 * 
 	 * @param to          The email address
-	 * @param user        The username for authentication (optional)
-	 * @param password    The password for authentication (optional)
 	 * @param subject     The email subject
 	 * @param messageCode The message code
 	 * @param message     The email body
 	 * @param sender      The email sender
-	 * @return The response entity
+	 * @throws IllegalArgumentException if an error occurs during mail preparation
+	 * @throws MailException if an error occurs during mail sending
 	 */
-	public ResponseEntity<?> sendMimeMessage(String to, String user, String password, String subject, String messageCode,
-			String message, String sender) {
+	public void sendMimeMessage(String to, String subject, String messageCode, String message, String sender) throws IllegalArgumentException, MailException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> sendMimeMessage({})", to);
 
@@ -172,12 +158,8 @@ public class ServiceMail {
 			getMailSender().send(newMsg);
 		} catch (MessagingException e) {
 			String msg = logger.log(NotificationMessage.MESSAGING_EXCEPTION, e.getMessage());
-			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);
-		} catch (MailException e) {
-			String msg = logger.log(NotificationMessage.MESSAGING_EXCEPTION, e.getMessage());
-			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);
+			throw new IllegalArgumentException(msg);
 		}
-		return null;
 	}
 
 }

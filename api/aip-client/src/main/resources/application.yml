@@ -46,7 +46,7 @@ proseo:
     
     notification:
         # URL of the Notification Service
-        url: http://proseo-notification:8091/proseo/notification/v1
+        url: http://proseo-notification:8080/proseo/notification/v1
         # URL of the message recipient (supports protocols as per Notification Service API, including "mailto:" and "http[s]:")
         recipient: "mailto:proseo-support@drbassler.de"
         # Sender identification
