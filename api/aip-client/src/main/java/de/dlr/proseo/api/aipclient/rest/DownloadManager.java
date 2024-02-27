@@ -180,8 +180,10 @@ public class DownloadManager {
 	/** Lookup table for products currently being downloaded from some archive */
 	private static ConcurrentSkipListSet<String> productDownloads = new ConcurrentSkipListSet<>();
 
-	/** Semaphore to limit number of parallel requests to archive */
-	private static Semaphore semaphore = null;
+	/** Semaphore to limit number of parallel order requests to archive */
+	private static Semaphore orderSemaphore = null;
+	/** Semaphore to limit number of parallel download requests to archive */
+	private static Semaphore downloadSemaphore = null;
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(DownloadManager.class);
@@ -826,10 +828,10 @@ public class DownloadManager {
 		
 		// Check whether parallel execution is allowed
 		try {
-			semaphore.acquire();
+			downloadSemaphore.acquire();
 			if (logger.isDebugEnabled())
 				logger.debug("... file download semaphore {} acquired, {} permits remaining",
-						semaphore, semaphore.availablePermits());
+						downloadSemaphore, downloadSemaphore.availablePermits());
 		} catch (InterruptedException e) {
 			throw new IOException(logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString()));
 		}
@@ -848,10 +850,10 @@ public class DownloadManager {
 			throw new IOException(message);
 		} finally {
 			// Release parallel thread
-			semaphore.release();
+			downloadSemaphore.release();
 			if (logger.isDebugEnabled())
 				logger.debug("... file download semaphore {} released, {} permits now available",
-						semaphore, semaphore.availablePermits());
+						downloadSemaphore, downloadSemaphore.availablePermits());
 		}
 
 		if (null == createResponse) {
@@ -1027,53 +1029,76 @@ public class DownloadManager {
 		StringBuilder requestUrl = new StringBuilder(ODATA_ENTITY_PRODUCTS);
 		requestUrl.append('(').append(productUuid).append(')').append('/').append(ODATA_CSC_ORDER);
 
-		// Start the product order request
-		Map<?, ?> response;
+		// Check whether parallel execution is allowed
 		try {
-			response = createOrder(archive, requestUrl.toString());
-		} catch (IOException e) {
-			// Already logged
-			throw e;
-		} catch (Exception e) {
+			orderSemaphore.acquire();
 			if (logger.isDebugEnabled())
-				logger.debug("Stack trace: ", e);
-			throw new IOException(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass().getName() + "/" + e.getMessage()));
+				logger.debug("... archive order semaphore {} acquired, {} permits remaining",
+						orderSemaphore, orderSemaphore.availablePermits());
+		} catch (InterruptedException e) {
+			throw new IOException(logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString()));
 		}
 
-		String orderUuid = response.get(ODATA_PROPERTY_ID).toString();
-		String orderStatus = response.get(ODATA_PROPERTY_STATUS).toString();
-
-		// Wait for the product order to complete
-		while (!ORDER_STATUS_COMPLETED.equals(orderStatus)) {
-			logger.log(AipClientMessage.WAITING_FOR_PRODUCT_ORDER, orderUuid, orderStatus);
-
-			try {
-				Thread.sleep(config.getOrderCheckInterval());
-			} catch (InterruptedException e) {
-				logger.log(AipClientMessage.ORDER_WAIT_INTERRUPTED, orderUuid);
-				throw e;
-			}
-
-			// Check order status
-			List<ClientEntity> orderList = queryArchive(archive, ODATA_ENTITY_ORDERS, ODATA_FILTER_ID + orderUuid, true);
+		try {
 			
-			if (null == orderList || 1 != orderList.size()) {
-				throw new RuntimeException(logger.log(AipClientMessage.INVALID_ODATA_RESPONSE, orderList, archive.getCode()));
-			}
-			ClientEntity order = orderList.get(0);
-			
-			if (logger.isTraceEnabled()) logger.trace("... evaluating result object: {}", order);
-
+			// Start the product order request
+			Map<?, ?> response;
 			try {
-				orderUuid = order.getProperty(ODATA_PROPERTY_ID).getPrimitiveValue().toCastValue(String.class);
-				orderStatus = order.getProperty(ODATA_PROPERTY_STATUS).getPrimitiveValue().toCastValue(String.class);
 				
-				if (logger.isTraceEnabled()) logger.trace("... found order UUID {} and status {}", orderUuid, orderStatus);
-			} catch (NullPointerException | EdmPrimitiveTypeException e) {
-				throw new IOException(logger.log(AipClientMessage.ORDER_DATA_MISSING, order.toString()));
+				response = createOrder(archive, requestUrl.toString());
+				
+			} catch (IOException e) {
+				// Already logged
+				throw e;
+			} catch (Exception e) {
+				if (logger.isDebugEnabled())
+					logger.debug("Stack trace: ", e);
+				throw new IOException(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass().getName() + "/" + e.getMessage()));
 			}
+
+			String orderUuid = response.get(ODATA_PROPERTY_ID).toString();
+			String orderStatus = response.get(ODATA_PROPERTY_STATUS).toString();
+
+			// Wait for the product order to complete
+			while (!ORDER_STATUS_COMPLETED.equals(orderStatus)) {
+				logger.log(AipClientMessage.WAITING_FOR_PRODUCT_ORDER, orderUuid, orderStatus);
+
+				try {
+					Thread.sleep(config.getOrderCheckInterval());
+				} catch (InterruptedException e) {
+					logger.log(AipClientMessage.ORDER_WAIT_INTERRUPTED, orderUuid);
+					throw e;
+				}
+
+				// Check order status
+				List<ClientEntity> orderList = queryArchive(archive, ODATA_ENTITY_ORDERS, ODATA_FILTER_ID + orderUuid, true);
+				
+				if (null == orderList || 1 != orderList.size()) {
+					throw new RuntimeException(logger.log(AipClientMessage.INVALID_ODATA_RESPONSE, orderList, archive.getCode()));
+				}
+				ClientEntity order = orderList.get(0);
+				
+				if (logger.isTraceEnabled()) logger.trace("... evaluating result object: {}", order);
+
+				try {
+					orderUuid = order.getProperty(ODATA_PROPERTY_ID).getPrimitiveValue().toCastValue(String.class);
+					orderStatus = order.getProperty(ODATA_PROPERTY_STATUS).getPrimitiveValue().toCastValue(String.class);
+					
+					if (logger.isTraceEnabled()) logger.trace("... found order UUID {} and status {}", orderUuid, orderStatus);
+				} catch (NullPointerException | EdmPrimitiveTypeException e) {
+					throw new IOException(logger.log(AipClientMessage.ORDER_DATA_MISSING, order.toString()));
+				}
+			}
+			logger.log(AipClientMessage.PRODUCT_ORDER_COMPLETED, orderUuid);
+			
+		} finally {
+			// Release parallel thread
+			orderSemaphore.release();
+			if (logger.isDebugEnabled())
+				logger.debug("... order archive semaphore {} released, {} permits now available",
+						orderSemaphore, orderSemaphore.availablePermits());
+			
 		}
-		logger.log(AipClientMessage.PRODUCT_ORDER_COMPLETED, orderUuid);
 
 	}
 
@@ -1148,10 +1173,10 @@ public class DownloadManager {
 				
 				// Check whether parallel execution is allowed
 				try {
-					semaphore.acquire();
+					downloadSemaphore.acquire();
 					if (logger.isDebugEnabled())
 						logger.debug("... file download semaphore {} acquired, {} permits remaining",
-								semaphore, semaphore.availablePermits());
+								downloadSemaphore, downloadSemaphore.availablePermits());
 				} catch (InterruptedException e) {
 					throw new IOException(logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString()));
 				}
@@ -1186,10 +1211,10 @@ public class DownloadManager {
 					throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(), e.getMessage()));
 				} finally {
 					// Release parallel thread
-					semaphore.release();
+					downloadSemaphore.release();
 					if (logger.isDebugEnabled())
 						logger.debug("... file download semaphore {} released, {} permits now available",
-								semaphore, semaphore.availablePermits());
+								downloadSemaphore, downloadSemaphore.availablePermits());
 				}
 
 				// Compare file size with value given by external archive
@@ -1323,11 +1348,18 @@ public class DownloadManager {
 			return;
 		}
 
-		// Restrict number of parallel downloads
-		if (null == semaphore) {
-			semaphore = new Semaphore(config.getArchiveThreads(), true);
+		// Restrict number of parallel archive orders
+		if (null == orderSemaphore) {
+			orderSemaphore = new Semaphore(config.getArchiveOrderThreads(), true);
 			if (logger.isDebugEnabled())
-				logger.debug("... file download semaphore {} created", semaphore);
+				logger.debug("... archive order semaphore {} created", orderSemaphore);
+		}
+		
+		// Restrict number of parallel downloads
+		if (null == downloadSemaphore) {
+			downloadSemaphore = new Semaphore(config.getArchiveThreads(), true);
+			if (logger.isDebugEnabled())
+				logger.debug("... file download semaphore {} created", downloadSemaphore);
 		}
 		
 		// Get the user and mission code from the current security context (not preserved to spawned thread)

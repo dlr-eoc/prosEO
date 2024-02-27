@@ -52,6 +52,10 @@ public class AipClientConfiguration {
 	@Value("${proseo.archive.timeout}")
 	private Long archiveTimeout;
 
+	/** Maximum number of parallel archive order threads */
+	@Value("${proseo.archive.orderthreads}")
+	private Integer archiveOrderThreads;
+
 	/** Maximum number of parallel download threads */
 	@Value("${proseo.archive.threads}")
 	private Integer archiveThreads;
@@ -141,9 +145,18 @@ public class AipClientConfiguration {
 	}
 
 	/**
+	 * Gets the maximum number of parallel archive order threads
+	 * 
+	 * @return the archive order threads
+	 */
+	public Integer getArchiveOrderThreads() {
+		return archiveOrderThreads;
+	}
+
+	/**
 	 * Gets the maximum number of parallel download threads
 	 * 
-	 * @return the archiveThreads
+	 * @return the archive threads
 	 */
 	public Integer getArchiveThreads() {
 		return archiveThreads;

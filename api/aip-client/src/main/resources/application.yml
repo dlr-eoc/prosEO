@@ -41,6 +41,8 @@ proseo:
     archive:
         # Timeout for archive connections in milliseconds (e. g. 30 s)
         timeout: 30000
+        # Maximum number of parallel archive order threads
+        orderthreads: 100
         # Maximum number of parallel download threads
         threads: 6
     
