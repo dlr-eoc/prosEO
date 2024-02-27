@@ -1561,7 +1561,10 @@ public class DownloadManager {
 						: "")
 				+ ")"
 				+ " and ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
-				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart);
+				// ********** TEMPORARY HACK FOR DATA DOWNLOAD FROM CloudFerro WITH CORRUPTED STOP TIMES *********
+				//+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart);
+				+ " and ContentDate/Start ge " + ODATA_DF.format(earliestStart);
+				// ********** END TEMPORARY HACK **********
 			break;
 		default:
 			queryFilter =
