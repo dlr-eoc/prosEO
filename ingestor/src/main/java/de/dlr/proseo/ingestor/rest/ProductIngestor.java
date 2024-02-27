@@ -124,7 +124,7 @@ public class ProductIngestor {
 	 * product will be created, otherwise a matching product will be looked up and
 	 * updated
 	 * 
-	 * NOTE: Datatabase transactions are indirect, therefore no '@Transactional' annotation here.
+	 * NOTE: Datatabase transactions are programmatically, therefore no '@Transactional' annotation here.
 	 *
 	 * @param facility        the processing facility to ingest products to
 	 * @param copyFiles       indicates, whether to copy the files to a different
@@ -195,6 +195,14 @@ public class ProductIngestor {
 						throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_INGESTION_FAILED, e.getMessage()));
 					}
 				} else {
+					// Check if a product file already exists for the given facility
+					for (RestProductFile productFile: equivalentProduct.getProductFile()) {
+						if (facility.getName().equals(productFile.getProcessingFacilityName())) {
+							throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_FILE_EXISTS,
+									productFile.getProductFileName(), facility.getName()));
+						}
+					}
+					
 					ingestorProduct.setId(equivalentProduct.getId());
 					// We do not add the product to the list of created products, because we did not create it,
 					// and therefore we do not need to delete it in case of upload errors
@@ -533,7 +541,8 @@ public class ProductIngestor {
 			// Error, if a database product file for the given facility exists already
 			for (ProductFile modelProductFile : modelProduct.getProductFile()) {
 				if (facility.equals(modelProductFile.getProcessingFacility())) {
-					throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_FILE_EXISTS, facility));
+					throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_FILE_EXISTS,
+							modelProductFile.getProductFileName(), facility));
 				}
 			}
 			// OK, not found!
