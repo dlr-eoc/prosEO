@@ -15,11 +15,11 @@ Download Docker Desktop from <https://www.docker.com/products/docker-desktop>.
 
 Install and run Docker Desktop and activate Kubernetes as described here:
 - For MacOS:
-  1) Install and run: <https://docs.docker.com/docker-for-mac/install/>
-  2) Activate Kubernetes: <https://docs.docker.com/docker-for-mac/>
+  1) Install and run: <https://docs.docker.com/desktop/install/mac-install/>
+  2) Activate Kubernetes: <https://docs.docker.com/desktop/settings/mac/#kubernetes>
 - For Windows:
-  1) Install and run: <https://docs.docker.com/docker-for-windows/install/>
-  2) Activate Kubernetes: <https://docs.docker.com/docker-for-windows/>
+  1) Install and run: <https://docs.docker.com/desktop/install/windows-install/>
+  2) Activate Kubernetes: <https://docs.docker.com/desktop/settings/windows/#kubernetes>
 
 *Caution:* Configurations and version numbers below are based on Docker Desktop 4.15.0 and Kubernetes 1.25.2. Newer (or older) 
 versions may require modified approaches.
