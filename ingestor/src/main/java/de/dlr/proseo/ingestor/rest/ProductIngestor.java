@@ -195,6 +195,8 @@ public class ProductIngestor {
 						throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_INGESTION_FAILED, e.getMessage()));
 					}
 				} else {
+					// TODO This is too defensive. Actually an update of existing product files was envisioned from the start,
+					//      but the rest of the implementation would not yet handle that correctly
 					// Check if a product file already exists for the given facility
 					for (RestProductFile productFile: equivalentProduct.getProductFile()) {
 						if (facility.getName().equals(productFile.getProcessingFacilityName())) {
