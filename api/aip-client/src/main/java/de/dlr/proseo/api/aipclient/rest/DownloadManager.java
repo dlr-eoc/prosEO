@@ -1285,6 +1285,10 @@ public class DownloadManager {
 		product.setMountPoint(config.getStorageMgrMountPoint());
 		product.setFilePath(config.getStorageMgrSourceDir());
 
+		// Remove UUID and have Ingestor generate a UUID of its own
+		// (otherwise ingesting the same AUX products into two missions will fail!)
+		product.setUuid(null);
+
 		// Set product eviction time, if requested
 		if (0 < config.getIngestorProductRetention()) {
 			product.setEvictionTime(OrbitTimeFormatter.format(
