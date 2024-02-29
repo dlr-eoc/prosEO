@@ -7,6 +7,15 @@ import java.io.IOException;
 /**
  * MultiThreadLogAnalyser Class
  * 
+ * There are 2 for common thread roles during synchronization for a common
+ * resource 1) blocking thread - blocks a free common resource, later releases
+ * it 2) waiting thread - waits until a common resource will be free and blocks
+ * it, later releases it
+ * 
+ * There are 3 common thread roles during synchronization with a job to be done:
+ * 1) blocking thread - blocks a common resource, does a job, frees the resource
+ * 2) waiting thread - checks, that the resource is blocked, 3) checks, that the
+ * job done and just uses results. No blocking or waiting
  * 
  * @author Denys Chaykovskiy
  * 
@@ -38,8 +47,6 @@ public class MultiThreadLogAnalyser {
 
 	/** non-blocking thread name */
 	private String nonBlockingThreadName;
-
-	
 
 	/**
 	 * Constructor
@@ -87,8 +94,8 @@ public class MultiThreadLogAnalyser {
 		boolean expectedDifferentThreads = areDifferent(blockingThreadName, waitingThreadName, nonBlockingThreadName);
 
 		if (!expectedDifferentThreads) {
-			System.out.println("ERROR: Expected threads are not different: " + blockingThreadName + " " + waitingThreadName +
-					" " + nonBlockingThreadName);
+			System.out.println("ERROR: Expected threads are not different: " + blockingThreadName + " "
+					+ waitingThreadName + " " + nonBlockingThreadName);
 		}
 
 		return expectedDifferentThreads;
