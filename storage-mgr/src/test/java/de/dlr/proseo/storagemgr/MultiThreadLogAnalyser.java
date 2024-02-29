@@ -47,7 +47,38 @@ public class MultiThreadLogAnalyser {
 
 	/** non-blocking thread name */
 	private String nonBlockingThreadName;
+	
+	
+	public static void main(String[] args) {
 
+		final String BLOCKER = "blocker";
+		final String WAITER = "waiter";
+		final String CONSUMER = "consumer";
+
+		String logString1 = "Intercepted: 2024-02-22 20:23:08.000 TRACE 14224 --- [       Thread-6] d.dlr.proseo.storagemgr.utils.FileUtils  : >>> bl"
+				+ BLOCKER + "(2024-02-22T19:23:08.000469Z)";
+		String logString2 = "Intercepted: 2024-02-22 20:23:08.000 TRACE 14224 --- [       Thread-7] d.dlr.proseo.storagemgr.utils.FileUtils  : >>> wa"
+				+ WAITER + "iting(2024-02-22T19:23:08.000469Z)";
+		String logString3 = "Intercepted: 2024-02-22 20:23:08.000 TRACE 14224 --- [       Thread-8] d.dlr.proseo.storagemgr.utils.FileUtils  : >>> no"
+				+ CONSUMER + "blocking(2024-02-22T19:23:08.000469Z)";
+
+		List<String> logs = new ArrayList<>();
+
+		logs.add(logString1);
+		logs.add(logString2);
+		logs.add(logString3);
+
+		MultiThreadLogAnalyser logAnalyser = new MultiThreadLogAnalyser(logs, BLOCKER, WAITER, CONSUMER);
+
+		if (logAnalyser.check()) {
+
+			System.out.println("Test is green");
+		} else {
+			System.out.println("Test is RED");
+		}
+
+	}
+	
 	/**
 	 * Constructor
 	 * 
