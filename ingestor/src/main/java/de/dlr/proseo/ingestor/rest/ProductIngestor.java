@@ -256,16 +256,20 @@ public class ProductIngestor {
 		// Database updated, notifying Production Planner if requested
 		if (ingestorConfig.getNotifyPlanner()) {
 			if (logger.isTraceEnabled()) logger.trace("... products ingested, now notifying planner");
-			for (RestProduct product: result) {
-				try {
-					notifyPlanner(user, password, product, facility.getId());
-					if (logger.isTraceEnabled())
-						logger.trace("... planner notification successful for product {}", product.getId());
-				} catch (Exception e) {
-					// If notification fails, log warning, but otherwise ignore
-					logger.log(IngestorMessage.NOTIFICATION_FAILED, e.getMessage());
-				} 
-			}
+			transactionTemplate.setReadOnly(true);
+			transactionTemplate.execute(status -> {
+				for (RestProduct product: result) {
+					try {
+						notifyPlanner(user, password, product, facility.getId());
+						if (logger.isTraceEnabled())
+							logger.trace("... planner notification successful for product {}", product.getId());
+					} catch (Exception e) {
+						// If notification fails, log warning, but otherwise ignore
+						logger.log(IngestorMessage.NOTIFICATION_FAILED, e.getMessage());
+					} 
+				}
+				return null; // dummy, no return value needed
+			});
 		} else {
 			if (logger.isDebugEnabled()) logger.debug("... skipping Planner notification due to configuration setting");
 		}
