@@ -1,4 +1,4 @@
-package de.dlr.proseo.storagemgr.version2;
+package de.dlr.proseo.storagemgr.utils;
 
 import java.io.IOException;
 
