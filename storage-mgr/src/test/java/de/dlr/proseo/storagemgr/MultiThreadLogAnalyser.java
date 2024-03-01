@@ -97,8 +97,11 @@ public class MultiThreadLogAnalyser {
 		for (String log : logs) {
 
 			LogParser logParser = new LogParser(log);
-
-			logRecords.add(logParser.parse());
+			
+			if (logParser.isMultiThreadLogString()) {
+				
+				logRecords.add(logParser.parse());
+			}
 		}
 	}
 

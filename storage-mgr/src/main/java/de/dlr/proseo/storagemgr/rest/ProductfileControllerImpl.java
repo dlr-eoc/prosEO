@@ -213,6 +213,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 			if (!cache.containsKey(cacheFile.getFullPath())) {
 
 				// active thread - copies the file to the cache storage and puts it to the cache
+				logger.debug("... active-thread: copies the file to the cache storage and puts it to the cache: {}", cacheFile.getFullPath());
 
 				cache.setCacheFileStatus(cacheFile.getFullPath(), CacheFileStatus.INCOMPLETE);
 
@@ -234,7 +235,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		} else {
 
-			logger.debug("... no download and no lock - the file is in cache: ", cacheFile.getFullPath());
+			logger.debug("... no download and no lock - the file is in cache: {}", cacheFile.getFullPath());
 		}
 
 		RestFileInfo restFileInfo = convertToRestFileInfo(cacheFile,
@@ -281,6 +282,8 @@ public class ProductfileControllerImpl implements ProductfileController {
 			if (!cache.containsKey(cacheFile.getFullPath())) {
 
 				// active thread - copies the file to the cache storage and puts it to the cache
+				logger.debug("... active-thread: copies the file to the cache storage and puts it to the cache: {}",
+						cacheFile.getFullPath());
 
 				cache.setCacheFileStatus(cacheFile.getFullPath(), CacheFileStatus.INCOMPLETE);
 

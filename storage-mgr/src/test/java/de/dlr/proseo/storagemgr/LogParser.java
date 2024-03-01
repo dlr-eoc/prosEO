@@ -50,12 +50,28 @@ public class LogParser {
 
 		if (sublines.length < 11)
 			return false;
-
-		// TODO: add additional conditions like thread name has "thread"
+		
+		return true;
+	}
+		
+	/**
+	 * Checks if the string is a multi-thread log string
+	 * 
+	 * @return
+	 */
+	public boolean isMultiThreadLogString() {
+		
+		if (!logString.contains("Thread-")) {
+			return false; 
+		}
+		
+		if (!isLogString()) {
+			return false; 
+		}
 
 		return true;
 	}
-
+	
 	/**
 	 * Parses a log record
 	 * 
@@ -140,7 +156,7 @@ public class LogParser {
 	 * @return
 	 */
 	private static String parseContent(String content) {
-
-		return content.replace(">>> ", "");
+		
+		return content.replace(">>> ", "").replace("... ", "");
 	}
 }

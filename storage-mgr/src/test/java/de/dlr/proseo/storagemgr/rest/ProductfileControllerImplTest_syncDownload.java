@@ -5,11 +5,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.util.List;
+import java.io.File;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Rule;
@@ -35,11 +32,7 @@ import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
 import de.dlr.proseo.storagemgr.utils.FileUtils;
 import de.dlr.proseo.storagemgr.utils.PathConverter;
 import de.dlr.proseo.storagemgr.StreamInterceptor;
-
-
-
-
-import java.util.ArrayList;
+import de.dlr.proseo.storagemgr.MultiThreadLogAnalyser;
 
 
 /**
@@ -155,7 +148,25 @@ public class ProductfileControllerImplTest_syncDownload {
             
         List<String> interceptedOutput = streamInterceptor.getOutput();
         streamInterceptor.restoreDefaultOutput(); 
-        TestUtils.printList("CATCHED LOGS AND OUTPUT", interceptedOutput);      
+        TestUtils.printList("CATCHED LOGS AND OUTPUT", interceptedOutput);    
+        
+        // Multi-thread analysis
+        
+    	String cachePath = new PathConverter(storageProvider.getCachePath(), relativePath)
+				.getPath();
+        
+        String blocker = "active-thread: copies the file to the cache storage and puts it to the cache: " + cachePath; 
+        String waiter = "waiting-thread: waited until the file was downloaded to cache from external storage and use it from cache: " + cachePath; 
+        String consumer = "no download and no lock - the file is in cache: " + cachePath; 
+        
+        MultiThreadLogAnalyser logAnalyser = new MultiThreadLogAnalyser(interceptedOutput, blocker, waiter, consumer);
+        
+        if (logAnalyser.check()) {
+        	System.out.println("Multi-thread analysis: PASSED");
+        }
+        else {
+        	System.out.println("Multi-thread analysis: FAILED");
+        }
         
 		// delete files with empty folders
 
