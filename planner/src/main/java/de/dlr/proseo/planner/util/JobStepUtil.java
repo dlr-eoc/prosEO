@@ -252,6 +252,7 @@ public class JobStepUtil {
 				processingFacilityId, jobStepStates, config.getJobStepSort());
 
 		String nativeQuery;
+		// sort the job steps in dependence of jobStepSort parameter
 		switch (config.getJobStepSort()) {
 		case SUBMISSION_TIME: 
 			nativeQuery = "SELECT po.submission_time, js.id "
@@ -1048,6 +1049,7 @@ public class JobStepUtil {
 						List<?> jobStepList = transactionTemplate.execute((status) -> {
 
 							String nativeQuery;
+							// sort the job steps in dependence of jobStepSort parameter
 							switch (config.getJobStepSort()) {
 							case SUBMISSION_TIME: 
 								nativeQuery = "SELECT po.submission_time, js.id "
