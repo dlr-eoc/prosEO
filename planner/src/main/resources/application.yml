@@ -45,6 +45,8 @@ proseo:
         checkForFurtherJobStepsToRun: true
         # collect the planning and releasing of jobs and job steps into one transaction with planningbatchsize job steps 
         planningbatchsize: 50
+        # Sort mode to start job steps (sensingTime | submissionTime)
+        jobStepSort: sensingTime
     ingestor:
         # Callback URL for wrapper
         url: http://192.168.20.155:8081/proseo/ingestor/v0.1

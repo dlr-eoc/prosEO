@@ -39,6 +39,7 @@ import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
+import de.dlr.proseo.planner.JobStepSort;
 import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
@@ -140,8 +141,6 @@ public class JobStepUtil {
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		transactionTemplate.setReadOnly(true);
 		
-		// TODO Replace findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime() by native SQL query
-
 		final ProcessingFacility processingFacility = transactionTemplate.execute((status) -> {
 			Optional<ProcessingFacility> opt = RepositoryService.getFacilityRepository().findById(pfId);
 			if (opt.isPresent()) {
@@ -185,10 +184,10 @@ public class JobStepUtil {
 							jobSteps.add(pq.getJobStep().getId());
 						}
 					}
+					jobSteps.sort(null);
 				} else {
 					for (ProcessingFacility pf : RepositoryService.getFacilityRepository().findAll()) {
-						//jobSteps.addAll(RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(pf.getId(), jobStepStates));
-						jobSteps.addAll(findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(pf.getId(), jobStepStates));
+						jobSteps.addAll(findAllByProcessingFacilityAndJobStepStateInAndOrderBy(pf.getId(), jobStepStates));
 					}
 				}
 			} else {
@@ -207,9 +206,9 @@ public class JobStepUtil {
 							}
 						}
 					}
+					jobSteps.sort(null);
 				} else {
-					//jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(pfId, jobStepStates);
-					jobSteps = findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(pfId, jobStepStates);
+					jobSteps = findAllByProcessingFacilityAndJobStepStateInAndOrderBy(pfId, jobStepStates);
 				}
 			}
 			return jobSteps;
@@ -247,17 +246,40 @@ public class JobStepUtil {
 	 * @param jobStepStates a list of job step state names
 	 * @return
 	 */
-	private List<Long> findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(long processingFacilityId,
+	private List<Long> findAllByProcessingFacilityAndJobStepStateInAndOrderBy(long processingFacilityId,
 			List<String> jobStepStates) {
-		if (logger.isTraceEnabled()) logger.trace(">>> findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime({}, {})",
-				processingFacilityId, jobStepStates);
+		if (logger.isTraceEnabled()) logger.trace(">>> findAllByProcessingFacilityAndJobStepStateInAndOrderBy({}, {}), sort order: {}",
+				processingFacilityId, jobStepStates, config.getJobStepSort());
 
-		String nativeQuery = "SELECT j.start_time, js.id "
-				+ "FROM job j "
-				+ "JOIN job_step js ON j.id = js.job_id "
-				+ "WHERE j.processing_facility_id = :pfId "
-				+ "AND js.job_step_state IN :jsStates "
-				+ "ORDER BY js.priority desc, j.start_time, js.id";
+		String nativeQuery;
+		switch (config.getJobStepSort()) {
+		case SUBMISSION_TIME: 
+			nativeQuery = "SELECT po.submission_time, js.id "
+					+ "FROM job j "
+					+ "JOIN job_step js ON j.id = js.job_id "
+					+ "JOIN processing_order po ON po.id = j.processing_order_id "
+					+ "WHERE j.processing_facility_id = :pfId "
+					+ "AND js.job_step_state IN :jsStates "
+					+ "ORDER BY js.priority desc, po.submission_time, js.id";
+			break;
+		case SENSING_TIME:
+			nativeQuery = "SELECT j.start_time, js.id "
+					+ "FROM job j "
+					+ "JOIN job_step js ON j.id = js.job_id "
+					+ "WHERE j.processing_facility_id = :pfId "
+					+ "AND js.job_step_state IN :jsStates "
+					+ "ORDER BY js.priority desc, j.start_time, js.id";
+			break;
+		default:
+			nativeQuery = "SELECT j.start_time, js.id "
+					+ "FROM job j "
+					+ "JOIN job_step js ON j.id = js.job_id "
+					+ "WHERE j.processing_facility_id = :pfId "
+					+ "AND js.job_step_state IN :jsStates "
+					+ "ORDER BY js.priority desc, j.start_time, js.id";
+			break;
+				
+		}
 		List<?> jobStepList = em.createNativeQuery(nativeQuery)
 				.setParameter("pfId", processingFacilityId)
 				.setParameter("jsStates", jobStepStates)
@@ -1025,18 +1047,53 @@ public class JobStepUtil {
 						transactionTemplate.setReadOnly(true);
 						List<?> jobStepList = transactionTemplate.execute((status) -> {
 
-							String nativeQuery = "SELECT j.start_time, js.id "
-									+ "FROM processing_order o "
-									+ "JOIN job j ON o.id = j.processing_order_id "
-									+ "JOIN job_step js ON j.id = js.job_id "
-									+ "WHERE j.processing_facility_id = :pfId "
-									+ "AND js.job_step_state = :jsStateReady "
-									+ "AND o.order_state != :oStateSuspending "
-									+ "AND o.order_state != :oStatePlanned "
-									+ "AND ("
-									+ "j.job_state = :jStateReleased OR j.job_state = :jStateStarted"
-									+ ")"
-									+ "ORDER BY js.priority desc, j.start_time, js.id";
+							String nativeQuery;
+							switch (config.getJobStepSort()) {
+							case SUBMISSION_TIME: 
+								nativeQuery = "SELECT po.submission_time, js.id "
+										+ "FROM processing_order o "
+										+ "JOIN job j ON o.id = j.processing_order_id "
+										+ "JOIN job_step js ON j.id = js.job_id "
+										+ "JOIN processing_order po ON po.id = j.processing_order_id "
+										+ "WHERE j.processing_facility_id = :pfId "
+										+ "AND js.job_step_state = :jsStateReady "
+										+ "AND o.order_state != :oStateSuspending "
+										+ "AND o.order_state != :oStatePlanned "
+										+ "AND ("
+										+ "j.job_state = :jStateReleased OR j.job_state = :jStateStarted"
+										+ ")"
+										+ "ORDER BY js.priority desc, po.submission_time, js.id";
+								break;
+							case SENSING_TIME:
+								nativeQuery = "SELECT j.start_time, js.id "
+										+ "FROM processing_order o "
+										+ "JOIN job j ON o.id = j.processing_order_id "
+										+ "JOIN job_step js ON j.id = js.job_id "
+										+ "WHERE j.processing_facility_id = :pfId "
+										+ "AND js.job_step_state = :jsStateReady "
+										+ "AND o.order_state != :oStateSuspending "
+										+ "AND o.order_state != :oStatePlanned "
+										+ "AND ("
+										+ "j.job_state = :jStateReleased OR j.job_state = :jStateStarted"
+										+ ")"
+										+ "ORDER BY js.priority desc, j.start_time, js.id";
+								break;
+							default:
+								nativeQuery = "SELECT j.start_time, js.id "
+										+ "FROM processing_order o "
+										+ "JOIN job j ON o.id = j.processing_order_id "
+										+ "JOIN job_step js ON j.id = js.job_id "
+										+ "WHERE j.processing_facility_id = :pfId "
+										+ "AND js.job_step_state = :jsStateReady "
+										+ "AND o.order_state != :oStateSuspending "
+										+ "AND o.order_state != :oStatePlanned "
+										+ "AND ("
+										+ "j.job_state = :jStateReleased OR j.job_state = :jStateStarted"
+										+ ")"
+										+ "ORDER BY js.priority desc, j.start_time, js.id";
+								break;
+									
+							}
 							return em.createNativeQuery(nativeQuery)
 									.setParameter("pfId", kc.getLongId())
 									.setParameter("jsStateReady", JobStepState.READY.toString())
