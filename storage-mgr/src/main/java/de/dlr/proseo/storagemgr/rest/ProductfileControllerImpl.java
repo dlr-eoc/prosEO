@@ -42,7 +42,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 	private static final String READ_ONLY_FOR_ALL_USERS = "r--r--r--";
 
 	/** A logger for this class */
-	private static ProseoLogger logger = new ProseoLogger(ProductControllerImpl.class);
+	private static ProseoLogger logger = new ProseoLogger(ProductfileControllerImpl.class);
 	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.STORAGE_MGR);
 
 	@Autowired
