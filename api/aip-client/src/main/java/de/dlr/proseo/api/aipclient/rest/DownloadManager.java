@@ -1442,11 +1442,11 @@ public class DownloadManager {
 		}
 
 		if (null == productList || 0 == productList.size()) {
-			logger.log(AipClientMessage.PRODUCT_NOT_FOUND_BY_NAME, filename, archive);
+			logger.log(AipClientMessage.PRODUCT_NOT_FOUND_BY_NAME, filename, archive.getName());
 			return null;
 		}
 		if (1 < productList.size()) {
-			logger.log(AipClientMessage.MULTIPLE_PRODUCTS_FOUND_BY_NAME, filename, archive);
+			logger.log(AipClientMessage.MULTIPLE_PRODUCTS_FOUND_BY_NAME, filename, archive.getName());
 		}
 
 		RestProduct restProduct = toRestProduct(productList.get(0), facility, true);
@@ -1523,11 +1523,11 @@ public class DownloadManager {
 		}
 
 		if (null == productList || 0 == productList.size()) {
-			logger.log(AipClientMessage.PRODUCT_NOT_FOUND_BY_TIME, productType, earliestStart, earliestStop, archive);
+			logger.log(AipClientMessage.PRODUCT_NOT_FOUND_BY_TIME, productType, earliestStart, earliestStop, archive.getName());
 			return null;
 		}
 		if (1 < productList.size()) {
-			logger.log(AipClientMessage.MULTIPLE_PRODUCTS_FOUND_BY_TIME, productType, earliestStart, earliestStop, archive);
+			logger.log(AipClientMessage.MULTIPLE_PRODUCTS_FOUND_BY_TIME, productType, earliestStart, earliestStop, archive.getName());
 		}
 		ClientEntity odataProduct = productList.get(0);
 		RestProduct restProduct = null; 
@@ -1617,7 +1617,7 @@ public class DownloadManager {
 		}
 
 		if (null == productList || 0 == productList.size()) {
-			logger.log(AipClientMessage.NO_PRODUCTS_FOUND_BY_TIME, productType, earliestStart, earliestStop, archive);
+			logger.log(AipClientMessage.NO_PRODUCTS_FOUND_BY_TIME, productType, earliestStart, earliestStop, archive.getName());
 			return new ArrayList<>();
 		}
 
