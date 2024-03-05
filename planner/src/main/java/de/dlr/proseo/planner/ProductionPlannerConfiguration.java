@@ -84,6 +84,10 @@ public class ProductionPlannerConfiguration {
 	@Value("${proseo.productionPlanner.planningbatchsize}")
 	private Integer planningBatchSize;
 
+	/** Sort parameter for starting order of job steps */
+	@Value("${proseo.productionPlanner.jobStepSort}")
+	private JobStepSort jobStepSort;
+
 	/** Timeout for HTTP requests in milliseconds */
 	@Value("${proseo.http.timeout}")
 	private Integer httpTimeout;
@@ -99,6 +103,14 @@ public class ProductionPlannerConfiguration {
 	/** The password of the AIP client */
 	@Value("${proseo.aip.password}")
 	private String aipPassword;
+
+	
+	/**
+	 * @return the jobStepSort
+	 */
+	public JobStepSort getJobStepSort() {
+		return jobStepSort;
+	}
 
 	/**
 	 * @return the aipUser

@@ -334,6 +334,7 @@ public class OrderReleaseThread extends Thread {
 
 							transactionTemplate.execute((status) -> {
 
+								// sort the job steps by start time of job, don't use jobStepSort parameter
 								String nativeQuery = "SELECT j.start_time, js.id, pf.name "
 										+ "FROM processing_order o "
 										+ "JOIN job j ON o.id = j.processing_order_id "
