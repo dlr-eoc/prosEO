@@ -48,8 +48,8 @@ public class NotifyControllerImpl implements NotifyController {
 			logger.trace(">>> notify({})", restMessage);
 
 		try {
-			ResponseEntity<?> result = sendManager.sendNotification(restMessage);
-			return new ResponseEntity<>(result, HttpStatus.CREATED);
+			Object responseBody = sendManager.sendNotification(restMessage);
+			return new ResponseEntity<>(responseBody, HttpStatus.CREATED);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (SecurityException e) {

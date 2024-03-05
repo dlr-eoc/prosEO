@@ -13,7 +13,7 @@ proseo:
     http.timeout: 10000
     notification:
         subject: "Message from prosEO"
-        contentType: "text/html"
+        contentType: "text/plain"
         mail:
             host: "mail.host"
             port: 587

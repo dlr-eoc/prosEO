@@ -163,7 +163,7 @@ public enum PlannerMessage implements ProseoMessage {
 	NO_INPUT_QUERIES					(4143, Level.WARN, true, "Job Step ''{0}'' has no input product queries", ""),
 	MSG_NO_INPUTPRODUCT					(4144, Level.ERROR, false, "No input product(s) found for order {0}", ""),
 	NOTIFY_FAILED						(4145, Level.ERROR, false, "Notification to {0} failed: {1}", ""),
-	EXTRACTED_MESSAGE					(4146, Level.ERROR, false, "Extraced message: {0}", ""),
+	EXTRACTED_MESSAGE					(4146, Level.ERROR, false, "Extracted message: {0}", ""),
 	HTTP_REQUEST_FAILED					(4147, Level.ERROR, false, "HTTP request failed (cause: {0})", ""),
 	NOT_AUTHORIZED_FOR_SERVICE			(4148, Level.ERROR, false, "User {0} not authorized for requested service", ""),
 	INVALID_URL							(4149, Level.ERROR, false, "Invalid request URL {0} (cause: {1})", ""),

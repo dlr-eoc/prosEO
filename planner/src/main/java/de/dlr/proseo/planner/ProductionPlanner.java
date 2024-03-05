@@ -497,6 +497,7 @@ public class ProductionPlanner implements CommandLineRunner {
 			hostName = hostname;
 			System.out.println("Your current IP address : " + ip);
 			System.out.println("Your current Hostname : " + hostname);
+			System.out.println("jobStepSort : " + config.getJobStepSort());
 
 		} catch (UnknownHostException e) {
 			e.printStackTrace();

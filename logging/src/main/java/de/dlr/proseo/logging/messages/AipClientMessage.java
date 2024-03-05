@@ -52,10 +52,10 @@ public enum AipClientMessage implements ProseoMessage {
 	PRODUCT_DOWNLOAD_ONGOING			(6836, Level.INFO, true, "Download for product {0} already ongoing, skipping download and ingestion", ""),
 	INVALID_PRODUCT_TYPE				(6837, Level.ERROR, false, "Invalid product type {1} for mission {0}", ""),
 	INVALID_SENSING_TIME				(6838, Level.ERROR, false, "Invalid sensing time: {0}", ""),
-	PRODUCT_NOT_FOUND_BY_TIME	 		(6839, Level.INFO, true, "Product file of type {0} with sensing time interval {1} – {2} not found in external archive {3}", ""),
-	MULTIPLE_PRODUCTS_FOUND_BY_TIME	 	(6840, Level.WARN, true, "Multiple files of type {0} with sensing time interval {1} – {2} found in external archive {3}, using first one", ""),
-	INPUT_FILE_NOT_FOUND_BY_TIME		(6841, Level.ERROR, false, "No input file of type {0} with sensing time interval {1} – {2} found locally or in any external archive", ""),
-	NO_PRODUCTS_FOUND_BY_TIME	 		(6842, Level.INFO, true, "No product files of type {0} intersecting sensing time interval {1} – {2} found in external archive {3}", ""),
+	PRODUCT_NOT_FOUND_BY_TIME	 		(6839, Level.INFO, true, "Product file of type {0} with sensing time interval {1} - {2} not found in external archive {3}", ""),
+	MULTIPLE_PRODUCTS_FOUND_BY_TIME	 	(6840, Level.WARN, true, "Multiple files of type {0} with sensing time interval {1} - {2} found in external archive {3}, using first one", ""),
+	INPUT_FILE_NOT_FOUND_BY_TIME		(6841, Level.ERROR, false, "No input file of type {0} with sensing time interval {1} - {2} found locally or in any external archive", ""),
+	NO_PRODUCTS_FOUND_BY_TIME	 		(6842, Level.INFO, true, "No product files of type {0} intersecting sensing time interval {1} - {2} found in external archive {3}", ""),
 	PRODUCT_TYPE_MISMATCH				(6843, Level.WARN, true, "Product type {0} of archive product does not match requested type {1}, will be replaced", ""),
 	DOWNLOAD_RETRY_INTERRUPTED			(6844, Level.ERROR, false, "Wait for download retry of product {0} interrupted, product download failed", "")
 	;

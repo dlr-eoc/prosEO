@@ -124,7 +124,7 @@ public class ProductIngestor {
 	 * product will be created, otherwise a matching product will be looked up and
 	 * updated
 	 * 
-	 * NOTE: Datatabase transactions are indirect, therefore no '@Transactional' annotation here.
+	 * NOTE: Datatabase transactions are programmatically, therefore no '@Transactional' annotation here.
 	 *
 	 * @param facility        the processing facility to ingest products to
 	 * @param copyFiles       indicates, whether to copy the files to a different
@@ -195,6 +195,16 @@ public class ProductIngestor {
 						throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_INGESTION_FAILED, e.getMessage()));
 					}
 				} else {
+					// TODO This is too defensive. Actually an update of existing product files was envisioned from the start,
+					//      but the rest of the implementation would not yet handle that correctly
+					// Check if a product file already exists for the given facility
+					for (RestProductFile productFile: equivalentProduct.getProductFile()) {
+						if (facility.getName().equals(productFile.getProcessingFacilityName())) {
+							throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_FILE_EXISTS,
+									productFile.getProductFileName(), facility.getName()));
+						}
+					}
+					
 					ingestorProduct.setId(equivalentProduct.getId());
 					// We do not add the product to the list of created products, because we did not create it,
 					// and therefore we do not need to delete it in case of upload errors
@@ -246,16 +256,20 @@ public class ProductIngestor {
 		// Database updated, notifying Production Planner if requested
 		if (ingestorConfig.getNotifyPlanner()) {
 			if (logger.isTraceEnabled()) logger.trace("... products ingested, now notifying planner");
-			for (RestProduct product: result) {
-				try {
-					notifyPlanner(user, password, product, facility.getId());
-					if (logger.isTraceEnabled())
-						logger.trace("... planner notification successful for product {}", product.getId());
-				} catch (Exception e) {
-					// If notification fails, log warning, but otherwise ignore
-					logger.log(IngestorMessage.NOTIFICATION_FAILED, e.getMessage());
-				} 
-			}
+			transactionTemplate.setReadOnly(true);
+			transactionTemplate.execute(status -> {
+				for (RestProduct product: result) {
+					try {
+						notifyPlanner(user, password, product, facility.getId());
+						if (logger.isTraceEnabled())
+							logger.trace("... planner notification successful for product {}", product.getId());
+					} catch (Exception e) {
+						// If notification fails, log warning, but otherwise ignore
+						logger.log(IngestorMessage.NOTIFICATION_FAILED, e.getMessage());
+					} 
+				}
+				return null; // dummy, no return value needed
+			});
 		} else {
 			if (logger.isDebugEnabled()) logger.debug("... skipping Planner notification due to configuration setting");
 		}
@@ -533,7 +547,8 @@ public class ProductIngestor {
 			// Error, if a database product file for the given facility exists already
 			for (ProductFile modelProductFile : modelProduct.getProductFile()) {
 				if (facility.equals(modelProductFile.getProcessingFacility())) {
-					throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_FILE_EXISTS, facility));
+					throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_FILE_EXISTS,
+							modelProductFile.getProductFileName(), facility));
 				}
 			}
 			// OK, not found!
