@@ -13,11 +13,32 @@
 # The target storage is a POSIX backend on localhost.
 #
 
+# -----------------------------
+# Configure backend environment
+# -----------------------------
+
+# Source storage type (S3 or POSIX)
+STORAGE_TYPE=POSIX
+# S3 Endpoint (only if source storage type is S3)
+#S3_ENDPOINT=https://<S3 API endpoint>
+# Local path to data ingestion "mount point" (only if source storage type is POSIX)
+LOCAL_MOUNT_POINT=testproducts/transfer
+# Path to data ingestion "mount point" (bucket URL "s3://<bucket name>" for S3, container-internal POSIX file path for Storage Manager otherwise)
+#MOUNT_POINT=s3://<bucket_name>
+MOUNT_POINT=/mnt
+# Path under mount point (S3 prefix or sub-directory path)
+FILE_PATH=PTM/testdata
+
+# Do not forget to configure the Processing Facility below! 
+
+# -------------------------
+# Create L0/AUX input data
+# -------------------------
  
 # Create empty subdirectory for test data
 TEST_DATA_DIR=testproducts
 mkdir -p $TEST_DATA_DIR
-rm $TEST_DATA_DIR/*
+rm -rf $TEST_DATA_DIR/*
 
 # Products consist of the fields id, type, start time, stop time, generation time and revision,
 # separated by vertical bars
@@ -25,59 +46,59 @@ rm $TEST_DATA_DIR/*
 cd $TEST_DATA_DIR
 
 cat >PTM_L0_20191104090000_20191104094500_20191104120000.RAW <<EOF
-1234567|L0________|2019-11-04T09:00:00Z|2019-11-04T09:45:00Z|2019-11-04T12:00:00Z|1
+1234567|PTM_L0|2019-11-04T09:00:00Z|2019-11-04T09:45:00Z|2019-11-04T12:00:00Z|1
 EOF
 
 cat >PTM_L0_20191104094500_20191104103000_20191104120100.RAW <<EOF
-1234567|L0________|2019-11-04T09:45:00Z|2019-11-04T10:30:00Z|2019-11-04T12:01:00Z|1
+1234567|PTM_L0|2019-11-04T09:45:00Z|2019-11-04T10:30:00Z|2019-11-04T12:01:00Z|1
 EOF
 
 cat >PTM_L0_20191104103000_20191104111500_20191104120200.RAW <<EOF
-1234567|L0________|2019-11-04T10:30:00Z|2019-11-04T11:15:00Z|2019-11-04T12:02:00Z|1
+1234567|PTM_L0|2019-11-04T10:30:00Z|2019-11-04T11:15:00Z|2019-11-04T12:02:00Z|1
 EOF
 
 cat >PTM_L0_20191104111500_20191104120000_20191104120300.RAW <<EOF
-1234567|L0________|2019-11-04T11:15:00Z|2019-11-04T12:00:00Z|2019-11-04T12:03:00Z|1
+1234567|PTM_L0|2019-11-04T11:15:00Z|2019-11-04T12:00:00Z|2019-11-04T12:03:00Z|1
 EOF
 
 cat >PTM_L0_20191104120000_20191104124500_20191104150000.RAW <<EOF
-1234567|L0________|2019-11-04T12:00:00Z|2019-11-04T12:45:00Z|2019-11-04T15:00:00Z|1
+1234567|PTM_L0|2019-11-04T12:00:00Z|2019-11-04T12:45:00Z|2019-11-04T15:00:00Z|1
 EOF
 
 cat >PTM_L0_20191104124500_20191104133000_20191104150100.RAW <<EOF
-1234567|L0________|2019-11-04T12:45:00Z|2019-11-04T13:30:00Z|2019-11-04T15:01:00Z|1
+1234567|PTM_L0|2019-11-04T12:45:00Z|2019-11-04T13:30:00Z|2019-11-04T15:01:00Z|1
 EOF
 
 cat >PTM_L0_20191104133000_20191104141500_20191104150200.RAW <<EOF
-1234567|L0________|2019-11-04T13:30:00Z|2019-11-04T14:15:00Z|2019-11-04T15:02:00Z|1
+1234567|PTM_L0|2019-11-04T13:30:00Z|2019-11-04T14:15:00Z|2019-11-04T15:02:00Z|1
 EOF
 
 cat >PTM_L0_20191104141500_20191104150000_20191104150300.RAW <<EOF
-1234567|L0________|2019-11-04T14:15:00Z|2019-11-04T15:00:00Z|2019-11-04T15:03:00Z|1
+1234567|PTM_L0|2019-11-04T14:15:00Z|2019-11-04T15:00:00Z|2019-11-04T15:03:00Z|1
 EOF
 
 cat >PTM_L0_20191104150000_20191104154500_20191104180000.RAW <<EOF
-1234567|L0________|2019-11-04T15:00:00Z|2019-11-04T15:45:00Z|2019-11-04T18:00:00Z|1
+1234567|PTM_L0|2019-11-04T15:00:00Z|2019-11-04T15:45:00Z|2019-11-04T18:00:00Z|1
 EOF
 
 cat >PTM_L0_20191104154500_20191104163000_20191104180100.RAW <<EOF
-1234567|L0________|2019-11-04T15:45:00Z|2019-11-04T16:30:00Z|2019-11-04T18:01:00Z|1
+1234567|PTM_L0|2019-11-04T15:45:00Z|2019-11-04T16:30:00Z|2019-11-04T18:01:00Z|1
 EOF
 
 cat >PTM_L0_20191104163000_20191104171500_20191104180200.RAW <<EOF
-1234567|L0________|2019-11-04T16:30:00Z|2019-11-04T17:15:00Z|2019-11-04T18:02:00Z|1
+1234567|PTM_L0|2019-11-04T16:30:00Z|2019-11-04T17:15:00Z|2019-11-04T18:02:00Z|1
 EOF
 
 cat >PTM_L0_20191104171500_20191104180000_20191104180300.RAW <<EOF
-1234567|L0________|2019-11-04T17:15:00Z|2019-11-04T18:00:00Z|2019-11-04T18:03:00Z|1
+1234567|PTM_L0|2019-11-04T17:15:00Z|2019-11-04T18:00:00Z|2019-11-04T18:03:00Z|1
 EOF
 
 cat >PTM_L0_20191104180000_20191104184500_20191104210000.RAW <<EOF
-1234567|L0________|2019-11-04T18:00:00Z|2019-11-04T18:45:00Z|2019-11-04T21:00:00Z|1
+1234567|PTM_L0|2019-11-04T18:00:00Z|2019-11-04T18:45:00Z|2019-11-04T21:00:00Z|1
 EOF
 
 cat >PTM_L0_20191104184500_20191104193000_20191104210100.RAW <<EOF
-1234567|L0________|2019-11-04T18:45:00Z|2019-11-04T19:30:00Z|2019-11-04T21:01:00Z|1
+1234567|PTM_L0|2019-11-04T18:45:00Z|2019-11-04T19:30:00Z|2019-11-04T21:01:00Z|1
 EOF
 
 cd -
@@ -86,9 +107,16 @@ cd -
 # Using bulletinb-380.xml
 cp -p bulletinb-380.xml $TEST_DATA_DIR
 
+# Provide test data for ingestion
+if [ "$STORAGE_TYPE" = "S3" ] ; then
 # Upload test data to S3 storage on test cluster
 # Requires "aws" (aws-cli) as a local S3 client, correctly configured with access key id and secret
-# aws s3 sync $TEST_DATA_DIR s3://<bucket> --endpoint-url https://<provider-url>
+  aws s3 sync $TEST_DATA_DIR ${MOUNT_POINT}/${FILE_PATH}/ --endpoint-url $S3_ENDPOINT
+else
+  # Copy test data to shared storage area
+  mkdir -p ${LOCAL_MOUNT_POINT}/${FILE_PATH}
+  cp -pR ${TEST_DATA_DIR}/PTM* ${TEST_DATA_DIR}/bull* ${LOCAL_MOUNT_POINT}/${FILE_PATH}/
+fi
 
 
 # -------------------------
@@ -139,13 +167,13 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
                 "parameterValue": "1"
             }
         ],
-        "sourceStorageType": "S3",
-        "mountPoint": "s3://proseo-s5p-main",
-        "filePath": "integration-test/testdata",
+        "sourceStorageType": "${STORAGE_TYPE}",
+        "mountPoint": "${MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104090000_20191104094500_20191104120000.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "50545d8ad8486dd9297014cf2e769f71",
+    	"fileSize": 80,
+    	"checksum": "76d31dc84a24dd2b34eea488de24c2f8",
     	"checksumTime": "2019-11-04T12:00:10.000000"
     },
     {
@@ -164,13 +192,13 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
                 "parameterValue": "1"
             }
         ],
-        "sourceStorageType": "S3",
-        "mountPoint": "s3://proseo-s5p-main",
-        "filePath": "integration-test/testdata",
+        "sourceStorageType": "${STORAGE_TYPE}",
+        "mountPoint": "${MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104094500_20191104103000_20191104120100.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "3ca720d0d2a7dee0ba95a9b50047b5a0",
+    	"fileSize": 80,
+    	"checksum": "be03bdf9e2ff6433af2ffc9c6e8376e2",
     	"checksumTime": "2019-11-04T12:01:10.000000"
     },
     {
@@ -189,13 +217,13 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
                 "parameterValue": "1"
             }
         ],
-        "sourceStorageType": "S3",
-        "mountPoint": "s3://proseo-s5p-main",
-        "filePath": "integration-test/testdata",
+        "sourceStorageType": "${STORAGE_TYPE}",
+        "mountPoint": "${MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104103000_20191104111500_20191104120200.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "f65f2591c400a85ced1d7557a6644138",
+    	"fileSize": 80,
+    	"checksum": "2883a21e909d3891d8f5fd7b2fed0683",
     	"checksumTime": "2019-11-04T12:02:10.000000"
     },
     {
@@ -214,13 +242,13 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
                 "parameterValue": "1"
             }
         ],
-        "sourceStorageType": "S3",
-        "mountPoint": "s3://proseo-s5p-main",
-        "filePath": "integration-test/testdata",
+        "sourceStorageType": "${STORAGE_TYPE}",
+        "mountPoint": "${MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104111500_20191104120000_20191104120300.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "58a029e6b09ad1e749fc1ff523dbbf80",
+    	"fileSize": 80,
+    	"checksum": "fc69dd62825413c1262920bdadf8cedd",
     	"checksumTime": "2019-11-04T12:03:10.000000"
     },
     {
@@ -239,13 +267,13 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
                 "parameterValue": "1"
             }
         ],
-        "sourceStorageType": "S3",
-        "mountPoint": "s3://proseo-s5p-main",
-        "filePath": "integration-test/testdata",
+        "sourceStorageType": "${STORAGE_TYPE}",
+        "mountPoint": "${MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104120000_20191104124500_20191104150000.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "9ecc9bbc7abb0672efd51a39e8fc2c59",
+    	"fileSize": 80,
+    	"checksum": "1ad62add86fcfba32ca394db1ef059c0",
     	"checksumTime": "2019-11-04T15:00:10.000000"
     },
     {
@@ -264,13 +292,13 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
                 "parameterValue": "1"
             }
         ],
-        "sourceStorageType": "S3",
-        "mountPoint": "s3://proseo-s5p-main",
-        "filePath": "integration-test/testdata",
+        "sourceStorageType": "${STORAGE_TYPE}",
+        "mountPoint": "${MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104124500_20191104133000_20191104150100.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "fb720888a0d9bae6b16c1f9607c4de27",
+    	"fileSize": 80,
+    	"checksum": "46eeb6be8f41134736b68d655c3d026d",
     	"checksumTime": "2019-11-04T15:01:10.000000"
     },
     {
@@ -289,13 +317,13 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
                 "parameterValue": "1"
             }
         ],
-        "sourceStorageType": "S3",
-        "mountPoint": "s3://proseo-s5p-main",
-        "filePath": "integration-test/testdata",
+        "sourceStorageType": "${STORAGE_TYPE}",
+        "mountPoint": "${MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104133000_20191104141500_20191104150200.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "4ef20d31f2e051d16cf06db2bae2c76e",
+    	"fileSize": 80,
+    	"checksum": "2c6d93c9f3131329672ca27f7da74010",
     	"checksumTime": "2019-11-04T15:02:10.000000"
     },
     {
@@ -314,13 +342,13 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
                 "parameterValue": "1"
             }
         ],
-        "sourceStorageType": "S3",
-        "mountPoint": "s3://proseo-s5p-main",
-        "filePath": "integration-test/testdata",
+        "sourceStorageType": "${STORAGE_TYPE}",
+        "mountPoint": "${MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104141500_20191104150000_20191104150300.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "8b3a2f2f386c683ce9b1c68bb52b34d2",
+    	"fileSize": 80,
+    	"checksum": "f1f2b02c2c27665ff25c1c68de4503e0",
     	"checksumTime": "2019-11-04T15:03:10.000000"
     },
     {
@@ -339,13 +367,13 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
                 "parameterValue": "1"
             }
         ],
-        "sourceStorageType": "S3",
-        "mountPoint": "s3://proseo-s5p-main",
-        "filePath": "integration-test/testdata",
+        "sourceStorageType": "${STORAGE_TYPE}",
+        "mountPoint": "${MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104150000_20191104154500_20191104180000.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "6bea82661ad200b8dc8a912bbc9c89f6",
+    	"fileSize": 80,
+    	"checksum": "5ac3ddf9dfad802c3e1c2a86bb8b7959",
     	"checksumTime": "2019-11-04T18:00:10.000000"
     },
     {
@@ -364,13 +392,13 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
                 "parameterValue": "1"
             }
         ],
-        "sourceStorageType": "S3",
-        "mountPoint": "s3://proseo-s5p-main",
-        "filePath": "integration-test/testdata",
+        "sourceStorageType": "${STORAGE_TYPE}",
+        "mountPoint": "${MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104154500_20191104163000_20191104180100.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "a1953fa0c117f803c26902243bb0d3aa",
+    	"fileSize": 80,
+    	"checksum": "21c5b324468622de13f53d677322b2e5",
     	"checksumTime": "2019-11-04T18:01:10.000000"
     },
     {
@@ -389,13 +417,13 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
                 "parameterValue": "1"
             }
         ],
-        "sourceStorageType": "S3",
-        "mountPoint": "s3://proseo-s5p-main",
-        "filePath": "integration-test/testdata",
+        "sourceStorageType": "${STORAGE_TYPE}",
+        "mountPoint": "${MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104163000_20191104171500_20191104180200.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "a9fb7fc052b5aced6f6dc9d753bbe790",
+    	"fileSize": 80,
+    	"checksum": "e55f131285387a23ca9b5f47ac32808f",
     	"checksumTime": "2019-11-04T18:02:10.000000"
     },
     {
@@ -414,13 +442,13 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
                 "parameterValue": "1"
             }
         ],
-        "sourceStorageType": "S3",
-        "mountPoint": "s3://proseo-s5p-main",
-        "filePath": "integration-test/testdata",
+        "sourceStorageType": "${STORAGE_TYPE}",
+        "mountPoint": "${MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104171500_20191104180000_20191104180300.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "b8b5304d83100a56114cd5ca6a6bc581",
+    	"fileSize": 80,
+    	"checksum": "44742febb6c4f31d9680720363918e8e",
     	"checksumTime": "2019-11-04T18:03:10.000000"
     },
     {
@@ -439,13 +467,13 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
                 "parameterValue": "1"
             }
         ],
-        "sourceStorageType": "S3",
-        "mountPoint": "s3://proseo-s5p-main",
-        "filePath": "integration-test/testdata",
+        "sourceStorageType": "${STORAGE_TYPE}",
+        "mountPoint": "${MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104180000_20191104184500_20191104210000.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "9211729e47c5e2487de302f1ca48f4b9",
+    	"fileSize": 80,
+    	"checksum": "2710894af465ea542cdda92a5fc48205",
     	"checksumTime": "2019-11-04T21:00:10.000000"
     },
     {
@@ -464,13 +492,13 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
                 "parameterValue": "1"
             }
         ],
-        "sourceStorageType": "S3",
-        "mountPoint": "s3://proseo-s5p-main",
-        "filePath": "integration-test/testdata",
+        "sourceStorageType": "${STORAGE_TYPE}",
+        "mountPoint": "${MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104184500_20191104193000_20191104210100.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "95eb634992099c7ebb7bf5b76b243da1",
+    	"fileSize": 80,
+    	"checksum": "82b53742a4fe9d04ceaa8df0fb41090c",
     	"checksumTime": "2019-11-04T21:01:10.000000"
     },
     {
@@ -489,9 +517,9 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
                 "parameterValue": "1"
             }
         ],
-        "sourceStorageType": "S3",
-        "mountPoint": "s3://proseo-s5p-main",
-        "filePath": "integration-test/testdata",
+        "sourceStorageType": "${STORAGE_TYPE}",
+        "mountPoint": "${MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "bulletinb-380.xml",
         "auxFileNames": [],
     	"fileSize": 51090,
@@ -550,6 +578,11 @@ cat >$TEST_DATA_DIR/order_l2.json <<EOF
             "key": "revision",
             "parameterType": "INTEGER",
     				"parameterValue": "2"
+    			},
+		        {
+		            "key": "baselineCollection",
+		            "parameterType": "INTEGER",
+		            "parameterValue": "77"
     			}
     		]
     	}
@@ -561,12 +594,12 @@ cat >$TEST_DATA_DIR/order_l2.json <<EOF
             "parameterValue": "99"
         },
         {
-            "key": "copernicusCollection",
+            "key": "baselineCollection",
             "parameterType": "INTEGER",
             "parameterValue": "77"
         }
     ],
-    "configuredProcessors": [ "PTML2_0.1.0_OPER_2020-03-25" ],
+    "configuredProcessors": [ "PTML2_1.0.0_OPER_2020-03-25" ],
     "orbits": [
         { "spacecraftCode": "PTS", "orbitNumberFrom": 3000, "orbitNumberTo": 3002 }
     ],
@@ -628,12 +661,12 @@ cat >$TEST_DATA_DIR/order_l3.json <<EOF
             "parameterValue": "99"
         },
         {
-            "key": "copernicusCollection",
+            "key": "baselineCollection",
             "parameterType": "INTEGER",
             "parameterValue": "77"
         }
     ],
-    "configuredProcessors": [ "PTML3_0.1.0_OPER_2020-03-25" ],
+    "configuredProcessors": [ "PTML3_1.0.0_OPER_2020-03-25" ],
     "orbits": [],
     "requestedProductClasses": [ "PTM_L3" ],
     "inputProductClasses": [ "PTM_L2_A", "PTM_L2_B" ],

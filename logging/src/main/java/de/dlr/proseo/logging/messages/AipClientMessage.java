@@ -35,7 +35,7 @@ public enum AipClientMessage implements ProseoMessage {
 	ERROR_REGISTERING_PRODUCT			(6819, Level.ERROR, false, "Error registering product of class {0} with Ingestor (HTTP status code: {1}, message: {2})", ""),
 	PRODUCT_REGISTERED					(6820, Level.INFO, true, "Product {0} registered with Ingestor", ""),
 	ODATA_REQUEST_ABORTED				(6821, Level.ERROR, false, "OData request {0} aborted (cause: {1} / {2})", ""),
-	ODATA_REQUEST_FAILED				(6822, Level.ERROR, false, "OData request {0} failed with HTTP status code {1}, message:\n{2}\n", ""),
+	ODATA_REQUEST_FAILED				(6822, Level.ERROR, false, "OData request {0} failed with HTTP status code {1}, message: {2}", ""),
 	ODATA_RESPONSE_UNREADABLE			(6823, Level.ERROR, false, "OData response not readable", ""),
 	RETRIEVAL_RESULT					(6824, Level.INFO, true, "Retrieval request returned {0} products out of {1} available", ""),
 	PRODUCT_UUID_MISSING				(6825, Level.ERROR, false, "Product list entry {0} does not contain product UUID ('Id' element)", ""),

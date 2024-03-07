@@ -156,10 +156,8 @@ public enum PlannerMessage implements ProseoMessage {
 	JOB_STEP_CREATION_FAILED_EXCEPTION	(4139, Level.ERROR, false, "Creation of job order for job step {0} failed with exception {1}", ""),
 	SENDING_JOB_STEP_FAILED				(4140, Level.ERROR, false, "Sending of job order to Storage Manager failed for job step {0}", ""),
 	JOB_STEP_CREATION_EXCEPTION			(4141, Level.ERROR, false, "General exception creating job for job step {0}: {1}", ""),
-	KUBERNETES_API_EXCEPTION			(4142, Level.ERROR, false, "Kubernetes API exception creating job for job step {0}: {1}" + "\n" +
-			"  Status code: {2}" + "\n" +
-			"  Reason: {3}" + "\n" +
-			"  Response headers: {4}", ""),
+	KUBERNETES_API_EXCEPTION			(4142, Level.ERROR, false, "Kubernetes API exception creating job for job step {0}: {1}, "
+			+ "Status code: {2}, Reason: {3}, Response headers: {4}", ""),
 	NO_INPUT_QUERIES					(4143, Level.WARN, true, "Job Step ''{0}'' has no input product queries", ""),
 	MSG_NO_INPUTPRODUCT					(4144, Level.ERROR, false, "No input product(s) found for order {0}", ""),
 	NOTIFY_FAILED						(4145, Level.ERROR, false, "Notification to {0} failed: {1}", ""),
