@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo-api</artifactId>
-		<version>0.9.5</version>
+		<version>1.0.0</version>
 	</parent>
 
 	<artifactId>proseo-api-prip</artifactId>
@@ -19,7 +19,7 @@
 
 	<properties>
 		<olingo.version>4.7.1</olingo.version>
-		<module.version>0.9.5</module.version>
+		<module.version>1.0.0</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path-query>src/main/resources/raml/prip-query.raml</raml-path-query>
 		<raml-path-download>src/main/resources/raml/prip-download.raml</raml-path-download>

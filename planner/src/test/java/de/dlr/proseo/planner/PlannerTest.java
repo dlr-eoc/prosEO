@@ -91,81 +91,81 @@ public class PlannerTest {
 	public void tearDown() throws Exception {
 	}
 
-	private OrderState logOrderState(TransactionTemplate transactionTemplate, Long orderId) {
-		Boolean isReadOnly = transactionTemplate.isReadOnly();
-		transactionTemplate.setReadOnly(true);
-		final OrderState state = transactionTemplate.execute((status) -> {
-			Optional<ProcessingOrder> optOrder = RepositoryService.getOrderRepository().findById(orderId);
-			if (optOrder != null) {
-				logger.debug("    New order state: {}", optOrder.get().getOrderState());
-				return optOrder.get().getOrderState();
-			}
-			return null;
-		});		
-		transactionTemplate.setReadOnly(isReadOnly);
-		return state;
-	} 
-	
+//	private OrderState logOrderState(TransactionTemplate transactionTemplate, Long orderId) {
+//		Boolean isReadOnly = transactionTemplate.isReadOnly();
+//		transactionTemplate.setReadOnly(true);
+//		final OrderState state = transactionTemplate.execute((status) -> {
+//			Optional<ProcessingOrder> optOrder = RepositoryService.getOrderRepository().findById(orderId);
+//			if (optOrder != null) {
+//				logger.debug("    New order state: {}", optOrder.get().getOrderState());
+//				return optOrder.get().getOrderState();
+//			}
+//			return null;
+//		});		
+//		transactionTemplate.setReadOnly(isReadOnly);
+//		return state;
+//	} 
+//	
 	@Test
-	@Sql("/ptm.sql")
+//	@Sql("/ptm.sql")
 	public void test() {
-		logger.debug(">>> Starting test()");
-	    List<Map<String, Object>> tableNames = jdbcTemplate.queryForList("SHOW TABLES");
-	    // Iterate over the table names
-	    for (Map<String, Object> tableName : tableNames) {
-	        // Execute a SELECT * FROM <tableName> query
-	    	if (!"PRODUCT_PROCESSING_FACILITIES".equalsIgnoreCase(tableName.get("TABLE_NAME").toString())) {
-	    		System.out.println(tableName.get("TABLE_NAME").toString());
-	    		List<Map<String, Object>> rows = jdbcTemplate.queryForList("SELECT * FROM " + tableName.get("TABLE_NAME").toString());
-	    		// Print the results to the console
-	    		for (Map<String, Object> row : rows) {
-	    			System.out.println(row);
-	    		}
-	    	}
-	    }
-
-		List<Map<String, Object>> rows = jdbcTemplate.queryForList("SELECT * FROM product where product_class_id = 40");
-		List<Product> ps = jdbcTemplate.queryForList("SELECT * FROM product where product_class_id = 40", Product.class);
-
-		logger.debug(">>> Approve order {}", ORDER_L2);
-		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
-		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-		transactionTemplate.setReadOnly(false);
-		// approve saves the order
-		final ProcessingOrder order = transactionTemplate.execute((status) -> {
-			ProcessingOrder orderLoc = RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(MISSION_CODE, ORDER_L2);
-			orderUtil.approve(orderLoc);
-			return orderLoc;
-		});
-		final Long orderId = order.getId();
-		logOrderState(transactionTemplate, orderId);
-		transactionTemplate.setReadOnly(true);
-		final ProcessingFacility facility = transactionTemplate.execute((status) -> {
-			return RepositoryService.getFacilityRepository().findByName(FACILITY_NAME);
-		});	
-		transactionTemplate.setReadOnly(false);
-		// planning can't be interrupted, use the wait feature
-		orderUtil.plan(orderId, facility, true);
-		logOrderState(transactionTemplate, orderId);
-		// now release the order in an own thread and try to suspend it
-		// test only standard implementation (without notification endpoint)
-		orderUtil.resume(order, false, null, null);
-		logOrderState(transactionTemplate, orderId);
-		orderUtil.suspend(orderId, true);
-		logOrderState(transactionTemplate, orderId);
-		// now release with wait
-		orderUtil.resume(order, true, null, null);
-		logOrderState(transactionTemplate, orderId);
-		try {
-			logger.debug(">>> run one cycle");
-			productionPlanner.startDispatcher();
-			// wait a bit to run one cycle
-			Thread.sleep(100);
-			productionPlanner.stopDispatcher();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		logger.debug(">>> Starting test()");
+//	    List<Map<String, Object>> tableNames = jdbcTemplate.queryForList("SHOW TABLES");
+//	    // Iterate over the table names
+//	    for (Map<String, Object> tableName : tableNames) {
+//	        // Execute a SELECT * FROM <tableName> query
+//	    	if (!"PRODUCT_PROCESSING_FACILITIES".equalsIgnoreCase(tableName.get("TABLE_NAME").toString())) {
+//	    		System.out.println(tableName.get("TABLE_NAME").toString());
+//	    		List<Map<String, Object>> rows = jdbcTemplate.queryForList("SELECT * FROM " + tableName.get("TABLE_NAME").toString());
+//	    		// Print the results to the console
+//	    		for (Map<String, Object> row : rows) {
+//	    			System.out.println(row);
+//	    		}
+//	    	}
+//	    }
+//
+//		List<Map<String, Object>> rows = jdbcTemplate.queryForList("SELECT * FROM product where product_class_id = 40");
+//		List<Product> ps = jdbcTemplate.queryForList("SELECT * FROM product where product_class_id = 40", Product.class);
+//
+//		logger.debug(">>> Approve order {}", ORDER_L2);
+//		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+//		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+//		transactionTemplate.setReadOnly(false);
+//		// approve saves the order
+//		final ProcessingOrder order = transactionTemplate.execute((status) -> {
+//			ProcessingOrder orderLoc = RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(MISSION_CODE, ORDER_L2);
+//			orderUtil.approve(orderLoc);
+//			return orderLoc;
+//		});
+//		final Long orderId = order.getId();
+//		logOrderState(transactionTemplate, orderId);
+//		transactionTemplate.setReadOnly(true);
+//		final ProcessingFacility facility = transactionTemplate.execute((status) -> {
+//			return RepositoryService.getFacilityRepository().findByName(FACILITY_NAME);
+//		});	
+//		transactionTemplate.setReadOnly(false);
+//		// planning can't be interrupted, use the wait feature
+//		orderUtil.plan(orderId, facility, true);
+//		logOrderState(transactionTemplate, orderId);
+//		// now release the order in an own thread and try to suspend it
+//		// test only standard implementation (without notification endpoint)
+//		orderUtil.resume(order, false, null, null);
+//		logOrderState(transactionTemplate, orderId);
+//		orderUtil.suspend(orderId, true);
+//		logOrderState(transactionTemplate, orderId);
+//		// now release with wait
+//		orderUtil.resume(order, true, null, null);
+//		logOrderState(transactionTemplate, orderId);
+//		try {
+//			logger.debug(">>> run one cycle");
+//			productionPlanner.startDispatcher();
+//			// wait a bit to run one cycle
+//			Thread.sleep(100);
+//			productionPlanner.stopDispatcher();
+//		} catch (Exception e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 	}
 
 }

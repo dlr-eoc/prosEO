@@ -8,7 +8,7 @@
 '/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/monitor/src/main/java:/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/monitor/target/generated-raml-mvc:/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/monitor/target/generated-sources/annotations'
 -author
 -bottom
-'Copyright &#169; 2023 <a href="http://www.dlr.de">DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</a>. All rights reserved.'
+'Copyright &#169; 2024 <a href="http://www.dlr.de">DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</a>. All rights reserved.'
 -charset
 'UTF-8'
 -d
@@ -16,7 +16,7 @@
 -docencoding
 'UTF-8'
 -doctitle
-'prosEO Monitor 0.9.5 API'
+'prosEO Monitor 1.0.0 API'
 -linkoffline
 'https://docs.oracle.com/en/java/javase/11/docs/api' '/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/monitor/target/javadoc-bundle-options'
 -linkoffline
@@ -28,4 +28,4 @@
 -use
 -version
 -windowtitle
-'prosEO Monitor 0.9.5 API'
+'prosEO Monitor 1.0.0 API'
