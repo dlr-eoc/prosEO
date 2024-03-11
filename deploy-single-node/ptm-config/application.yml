@@ -1,328 +1,36 @@
+# Configuration of prosEO Command Line Interface for single node deployment
 spring:
-    maxResults: 10000
-    jpa:
-        database-platform: org.hibernate.dialect.PostgreSQLDialect
-        hibernate.ddl-auto: update
-        open-in-view: false
-        properties.hibernate.jdbc.time_zone: UTC
-    datasource:
-        url: jdbc:postgresql://localhost:5432/proseo
-        username: postgres
-        password: sequel09Master
-        hikari:
-            transaction-isolation: TRANSACTION_SERIALIZABLE
-            # maximum-pool-size: 12
-            idle-timeout: 600000
-            validationTimeout: 300000
-            connectionTimeout: 30000
-            idleTimeout: 600000
-            maxLifetime: 1800000
-        test-while-idle: true
-        validation-query: SELECT 1;
-        time-between-eviction-runs-millis: 60000
-        remove-abandoned: true
-        remove-abandoned-timeout: 60
-    mvc:
-      async:
-        request-timeout: -1
-    main.allow-bean-definition-overriding: true
+    main:
+        web-application-type: NONE
 logging:
     level:
         root: INFO
+        org.apache.http: INFO
         de.dlr.proseo: TRACE
-        de.dlr.cpros: TRACE
-        org.hibernate.engine.jdbc.env.internal: WARN
-        org.springframework.security: WARN
-        org.apache: WARN
-        org.apache.commons: WARN
+    file: proseo-ui-cli.log
 proseo:
-    defaultuser.name: sysadm
-    defaultuser.password: sysadm
-    token.expiration: 3600
-    ltas:
-        # TODO
-    aip:
-        url: http://192.168.20.155:8092/proseo/api/aip-client/v0.1
-        user: s1aoper
-        password: sb24ZxoBxR6y5bVm
-    aipclient:
-        # Path to the directory to download files to (must be readable for Storage Manager, see below)
-        targetdir:
-            C:\usr\prosEO\doc\testconfig\test-local\ptm-config\testproducts\transfer\aip\downloads
-    auxip:
-        # AUXIP Monitor identifier (must be unique for all AUXIP monitors on the same host)
-        id: PTM-AUXIP
-        # The base URI of the AUXIP (protocol, host name, port; no terminating slash)
-        baseuri: http://192.168.20.155:8092
-        # The AUXIP context, if any ("service root", any URI component(s) before "odata"; no starting or terminating slash)
-        context: proseo/api/prip
-        
-        # Flag indicating whether token-based authentication shall be used (default false)
-        usetoken: false
-        # The URI for requesting a bearer token (full URL)
-        tokenuri: http://192.168.20.155:8091/proseo/api/prip/token
-        # The AUXIP username
-        user: myuser
-        # The AUXIP password
-        password: mypassword
-        # Credentials for OpenID-based token requests (optional)
-        client:
-            # The AUXIP client ID
-            id: my-client-id
-            # The AUXIP client secret (mandatory if client ID is set)
-            secret: mysecret
-            # Send client ID and secret in body?
-            sendinbody: false
-            
-        # The product types to select
-        producttypes: all
-        
-        # Interval between pickup point checks in milliseconds (e. g. every min)
-        check.interval: 60000
-        # Interval between individual chunk retrievals in milliseconds (e. g. every 10 s)
-        chunk.interval: 10000
-        
-        # Handling of history file
-        history:
-            # Path to the file for storing transfer history (on a persistent volume)
-            file: /Path/to/transfer/history/file
-            # Interval to truncate transfer history file in milliseconds (e. g. daily)
-            truncate.interval: 86400000
-            # Period to retain transfer history entries for, in milliseconds (e. g. one week)
-            retention: 604800000
-            
-        # Handling of parallel threads
-        threads:
-            # Maximum number of parallel transfer threads (default 1 = no parallel threads)
-            # max: 1
-            # Interval in millliseconds to check for completed transfers (default 500 ms)
-            # wait: 500
-            # Maximum number of wait cycles for transfer completion checks (default 3600)
-            # cycles: 3600
-            
-        # Minimum size in bytes of a file to be used for performance measurements (e. g. 20 MiB = 20 * 1024 * 1024 Bytes)
-        performance.minsize: 20971520
-            
-        # The path to the target AUX file directory (for ingestion)
-        directory: /Path/to/transfer/directory
-    # Maximum number of products to retrieve in a single query
-    quota: 5000
-    notification:
-        url: http://192.168.20.155:8099/proseo/notification/v0.1
-        subject: "Message from prosEO"
-        contentType: "text/html"
-        mail:
-            host: "smtp.ionos.de"
-            port: 587
-            user: "test@prophos.de"
-            password: "WhimdasDiavJic:"
-            auth: true
-            starttls: true
-            timeout: 10000
-            sender: "test@prophos.de"
+    cli:
+        syntaxfile: ui-cli-syntax.yml
+    
     userManager:
-        url: http://192.168.20.155:8089/proseo/user-mgr/v0.1
-    orderManager:
-        # wait time between cleanup cycles in hours
-        cleanupCycleTime: 1
-        url: http://192.168.20.155:8082/proseo/order-mgr/v0.1
-    processorManager:
-        url: http://192.168.20.155:8084/proseo/processor-mgr/v0.1
-    productClassManager:
-        url: http://192.168.20.155:8085/proseo/productclass-mgr/v0.1
-    productionPlanner:
-        url: http://192.168.20.155:8080/proseo/planner/v0.1
-        user: wrapper
-        password: Ingest&Plan
-        maxcycles: 50
-        # time in milliseconds
-        cyclewaittime: 1000
-        # wait time after k8s job creation in milliseconds  
-        jobcreatedwaittime: 2000
-        # run once if <= 0 (at startup)
-        dispatcherwaittime: 300000
-        # kubernetes configuration file, used to connect master
-        kubeconfig: empty
-        # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
-        filecheckwaittime: 1000
-        filecheckmaxcycles: 50
-        # check for job steps to run after one has finished
-        checkForFurtherJobStepsToRun: true
-        # collect the planning and releasing of jobs and job steps into one transaction with planningbatchsize job steps 
-        planningbatchsize: 3
-    storageManager:
-        user: wrapper
-        password: Ingest&Plan
-        defaultStorageType: S3
-        # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
-        filecheckwaittime: 1000
-        filecheckmaxcycles: 50
+        url: http://localhost:8086/proseo/user-mgr/v0.1
     ingestor:
-        url: http://192.168.20.155:8081/proseo/ingestor/v0.1
-        user: wrapper
-        password: Ingest&Plan
-        # wait time between cleanup cycles in hours
-        cleanupCycleTime: 1
-    wrapper:
-        user: wrapper
-        password: Ingest&Plan
-    global:
-      storageIdPrefix: proseo
-    procFacility:
-      name: devel
-      url: http://192.168.20.155:9887/k8s-api-endpoint
-      descr: local env :-)
+        url: http://localhost:8081/proseo/ingestor/v0.1
+    orderManager:
+        url: http://localhost:8082/proseo/order-mgr/v0.1
+    productionPlanner:
+        url: http://localhost:8083/proseo/planner/v0.1
+        # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
+        filecheckwaittime: 1000
+        filecheckmaxcycles: 50
+    processorManager:
+        url: http://localhost:8084/proseo/processor-mgr/v0.1
+    productClassManager:
+        url: http://localhost:8085/proseo/productclass-mgr/v0.1
     facilityManager:
-      url: http://192.168.20.155:8087/proseo/facility-mgr/v0.1
-    processingFacilityManager:
-      url: http://192.168.20.155:8087/proseo/facility-mgr/v0.1
+        url: http://localhost:8087/proseo/facility-mgr/v0.1
     archiveManager:
-      url: http://192.168.20.155:8093/proseo/archive-mgr/v0.1
-    gui:
-        timeout: 600000
-    odip:
-        facility: localhost
-        # execution delay in minutes
-        executionDelay: 5
-    prip:
-      url: http://localhost:8091/proseo/prip/odata/v1
-    s1obsorbitmonitor:
-      user: proseo
-      password: sb24ZxoBxR6y5bVm
-      mission: S1B
-      spacecraft: S1B
-      executionDelay: 0 # delay in minutes
-      facility: localhost
-      # wait time between cycles in minutes
-      cycleTime: 1
-      # orbit period in seconds
-      # orbitPeriod: 5886
-    s1errmatmonitor:
-      user: proseo
-      password: sb24ZxoBxR6y5bVm
-      mission: S1A
-      facility: localhost        
-      # Cycle execution time in minutes after midnight
-      cycleExecution: 10
-      # Execution time delay in minutes from now
-      executionDelay: 240
-      # Create orders beginning at start date
-      startDate: "2024-01-10T00:00:00.000000Z"
-      # Start delta in milliseconds (0:00h - startDelta)
-      startDelta: 10000
-      # Stop delta in milliseconds (24:00h + stopDelta)
-      stopDelta: 10000
-    monitor:
-        # Timeout settings for HTTP requests
-        connecttimeout: 1000
-        readtimeout: 1000
-        # default cycle wait time
-        cycle: 10000
-        # cycle wait time for checking services
-        servicecycle: 10000
-        # cycle wait time for checking orders
-        ordercycle: 30000
-        # cycle wait time for checking products
-        productcycle: 60000
-        # if no entries are in an aggregation table this date is used to begin generating the entries
-        aggregationstart: "2023-10-19T00:00:00.000000Z"
-        services:
-            # prosEO Metadata Database
-            -
-                name: "Production Planner"
-                nameId: planner
-                url: http://192.168.20.155:8080/actuator/health
-                hasactuator: true
-                isproseo: true
-
-            # prosEO Internal Services
-            -
-                name: Database
-                nameId: proseo
-                url: http://192.168.20.155:5432/
-                docker: machine1
-                hasactuator: false
-                isproseo: true
-            -
-                name: Grafana
-                nameId: jovial_hofstadter
-                url: http://192.168.20.155:3000/
-                docker: machine1
-                hasactuator: false
-                isproseo: true                
-            -
-                name: XBIP-Monitor
-                nameId: xbip-monitor
-                url: http://192.168.20.156:8080/actuator/health
-                kubernetes: kube1
-                hasactuator: true
-                isproseo: true
-            -
-                name: Matera
-                nameId: matera
-                url: http://192.168.20.156:8080/proseo/xbip-monitor/v1/mti/status
-                hasactuator: false
-                isproseo: false
-
-            # prosEO Supporting Services (shown as "Internal")
-            -
-                name: "S3 Object Storage"
-                nameId: root_minio_1
-                url: http://192.168.20.155:9000/
-                docker: machine2
-                hasactuator: false
-                isproseo: true
-        dockers:
-            -
-                name: machine1
-                ip: localhost
-                port: 2375
-                apiversion: 1.40
-            -
-                name: machine2
-                ip: 192.168.20.155
-                port: 2375
-                apiversion: 1.40
-    s1monitor:
-        # if no entries are in an aggregation table this date is used to begin generating the entries
-        aggregationstart: "2021-10-19T00:00:00.000000Z"
-        # timeliness specifications for KPI01
-        timeliness:
-            -
-                mode: "NRT"
-                minutes: 30
-            -
-                mode: "NRT-PT"
-                minutes: 30
-            -
-                mode: "NTC"
-                minutes: 360
-        rawdatacycle: 30000
-        kpi01timelinesscycle: 30000
-        kpi02completenesscycle: 30000
-    s3:
-      s3AccessKey: short_access_key
-      s3SecretAccessKey: short_secret_key
-      s3EndPoint: http://192.168.20.155:9000
-      s3Region: eu-de
-      s3DefaultBucket: proseo-data-001
-      s3MaxNumberOfBuckets: 50
-    posix:
-      mountPoint: /proseo/data
-      workerMountPoint: /proseo/data
-    joborder:
-      bucket: internal
-      prefix: joborders
-    mountpoints:
-     #ALLUXIO-properties are only used for answering GET-requests on endpoint /info
-      alluxio:
-        k8sNode:
-          alluxioCache: /mnt/alluxio
-          alluxioFuse: /alluxio-fuse
-      #Required for handling a mounted storage-appliance, available at every k8s-Node as POSIX-mountpoint
-      unregisteredProducts:
-        k8sNode:
-          unregisteredProducts: ""
-
+        url: http://localhost:8093/proseo/archive-mgr/v0.1
+        
     # Connection timeout in ms
     http.timeout: 10000
