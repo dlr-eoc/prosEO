@@ -552,7 +552,7 @@ public class ProductionPlanner implements CommandLineRunner {
 			int i = 0;
 			while (kubeDispatcher.isAlive() && i < 100) {
 				try {
-					wait(100);
+					Thread.sleep(100);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
