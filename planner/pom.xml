@@ -108,6 +108,11 @@
             <artifactId>springmvc-raml-plugin</artifactId>
             <type>maven-plugin</type>
         </dependency>
+        <dependency>
+        	<groupId>de.dlr.proseo</groupId>
+        	<artifactId>proseo-common</artifactId>
+        	<version>1.0.0</version>
+        </dependency>
 	</dependencies>
 
 	<build>
