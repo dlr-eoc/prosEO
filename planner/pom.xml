@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo</artifactId>
-		<version>1.0.0</version>
+		<version>1.0.1-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>proseo-planner</artifactId>
@@ -75,7 +75,7 @@
 		<dependency>
 			<groupId>de.dlr.proseo</groupId>
 			<artifactId>proseo-model</artifactId>
-			<version>1.0.0</version>
+			<version>1.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>de.dlr.proseo</groupId>
@@ -110,7 +110,7 @@
         <dependency>
         	<groupId>de.dlr.proseo</groupId>
         	<artifactId>proseo-common</artifactId>
-        	<version>1.0.0</version>
+        	<version>1.0.1-SNAPSHOT</version>
         </dependency>
 	</dependencies>
 

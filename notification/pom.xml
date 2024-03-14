@@ -5,7 +5,7 @@
   <parent>
     <groupId>de.dlr.proseo</groupId>
     <artifactId>proseo</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
   </parent>
   
   <artifactId>proseo-notification</artifactId>
@@ -57,7 +57,7 @@
     <dependency>
       <groupId>de.dlr.proseo</groupId>
       <artifactId>proseo-logging</artifactId>
-      <version>1.0.0</version>
+      <version>1.0.1-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>com.github.docker-java</groupId>

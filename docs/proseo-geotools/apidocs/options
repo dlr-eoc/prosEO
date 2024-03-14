@@ -16,7 +16,7 @@
 -docencoding
 'UTF-8'
 -doctitle
-'proseo-geotools 1.0.0 API'
+'proseo-geotools 1.0.1-SNAPSHOT API'
 -linkoffline
 'https://docs.oracle.com/en/java/javase/11/docs/api' '/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/geotools/target/javadoc-bundle-options'
 -linkoffline
@@ -26,4 +26,4 @@
 -use
 -version
 -windowtitle
-'proseo-geotools 1.0.0 API'
+'proseo-geotools 1.0.1-SNAPSHOT API'
