@@ -62,6 +62,12 @@ jobs:
         docker tag openjdk:11 localhost:5000/openjdk:11
         docker push localhost:5000/openjdk:11
         
+    - name: Show current directory
+      run: pwd
+      
+    - name: Add minio container for s3 testing
+      run: docker compose -f ./storage-mgr/src/test/resources/docker-compose.yml up -d
+        
     - name: Show docker images 
       run: docker images
 
