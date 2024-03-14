@@ -19,7 +19,7 @@ services:
 
   monitor:
     hostname: monitor
-    image: proseo-registry.eoc.dlr.de/proseo-monitor:0.9.5-proseo
+    image: proseo-registry.eoc.dlr.de/proseo-monitor:1.0.0-proseo
     ports:
       - 8080:8080
     volumes:

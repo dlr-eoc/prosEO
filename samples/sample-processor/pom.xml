@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo-samples</artifactId>
-		<version>0.9.5</version>
+		<version>1.0.0</version>
 	</parent>
 
 	<artifactId>proseo-sample-processor</artifactId>
@@ -21,7 +21,7 @@
 	</organization>
 
     <properties>
-        <module.version>0.9.5</module.version>
+        <module.version>1.0.0</module.version>
     </properties>
 
 	<dependencies>

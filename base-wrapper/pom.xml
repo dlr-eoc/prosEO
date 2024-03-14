@@ -5,7 +5,7 @@
     <parent>
         <groupId>de.dlr.proseo</groupId>
         <artifactId>proseo</artifactId>
-        <version>0.9.5</version>
+        <version>1.0.0</version>
     </parent>
 
 	<artifactId>proseo-base-wrapper</artifactId>
@@ -19,7 +19,7 @@
 	</organization>
 
 	<properties>
-		<module.version>0.9.5</module.version>
+		<module.version>1.0.0</module.version>
 		<resteasy.version>3.14.0.Final</resteasy.version>
 		<!-- Properties below to raise dependencies from Spring Boot 2.1.6 to Resteasy 3.14.0 -->
         <commons-codec.version>1.14</commons-codec.version>
