@@ -34,7 +34,7 @@ public enum ApiMonitorMessage implements ProseoMessage {
 	// -- AUXIP/CADIP Monitor --
 	INVALID_AUXIP_ID			(7015, Level.ERROR, false, "Invalid AUXIP Monitor identifier {0} passed", ""),
 	ODATA_REQUEST_ABORTED		(7016, Level.ERROR, false, "OData request for reference time {0} aborted (cause: {1} / {2})", ""),
-	ODATA_REQUEST_FAILED		(7017, Level.ERROR, false, "OData request for reference time {0} failed with HTTP status code {1}, message:\n{2}\n", ""),
+	ODATA_REQUEST_FAILED		(7017, Level.ERROR, false, "OData request for reference time {0} failed with HTTP status code {1}, message: {2}", ""),
 	ODATA_RESPONSE_UNREADABLE	(7018, Level.ERROR, false, "OData response not readable", ""),
 	RETRIEVAL_RESULT			(7019, Level.INFO, true, "Retrieval request returned {0} products out of {1} available", ""),
 	PRODUCT_UUID_MISSING		(7020, Level.ERROR, false, "Product list entry {0} does not contain product UUID ('Id' element)", ""),
@@ -47,7 +47,7 @@ public enum ApiMonitorMessage implements ProseoMessage {
 	PRODUCT_EVICTION_MISSING	(7027, Level.ERROR, false, "Product list entry {0} does not contain valid eviction time ('EvictionDate' element)", ""),
 	TARGET_DIR_NOT_WRITABLE		(7028, Level.ERROR, false, "Target directory {0} not writable", ""),
 	ODATA_SESSION_REQ_ABORTED	(7029, Level.ERROR, false, "OData request for files of session {0} aborted (cause: {1} / {2})", ""),
-	ODATA_SESSION_REQ_FAILED	(7030, Level.ERROR, false, "OData request for files of session {0} failed with HTTP status code {1}, message:\n{2}\n", ""),
+	ODATA_SESSION_REQ_FAILED	(7030, Level.ERROR, false, "OData request for files of session {0} failed with HTTP status code {1}, message: {2}", ""),
 	SESSION_RETRIEVAL_RESULT	(7031, Level.INFO, true, "Session file list request returned {0} files out of {1} available", ""),
 	
 	// -- EDIP Monitor --
