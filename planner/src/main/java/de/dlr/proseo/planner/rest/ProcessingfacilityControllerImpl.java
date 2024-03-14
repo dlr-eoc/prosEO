@@ -174,11 +174,8 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			try {
 				kc.sync();
 				try {
-					productionPlanner.acquireThreadSemaphore("synchronizeFacility");
 					UtilService.getJobStepUtil().checkForJobStepsToRun(kc, 0, false, true);
-					productionPlanner.releaseThreadSemaphore("run");		
 				} catch (Exception e) {
-					productionPlanner.releaseThreadSemaphore("synchronizeFacility");		
 					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 
 					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);

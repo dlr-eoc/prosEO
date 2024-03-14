@@ -79,20 +79,12 @@ public class KubeDispatcher extends Thread {
 
 			if (kubeConfig != null) {
 				try {
-					// Acquire the thread semaphore for the kubeConfig's production planner
-					kubeConfig.getProductionPlanner().acquireThreadSemaphore("run");
-
 					// Check for job steps to run
 					UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, onlyRun, true);
-
-					// Release the thread semaphore for the kubeConfig's production planner
-					kubeConfig.getProductionPlanner().releaseThreadSemaphore("run");
 				} catch (Exception e) {
 					if (logger.isDebugEnabled())
 						logger.debug("... exception in checkForJobStepsToRun(" + kubeConfig.getId() + ", " + 0 + ", " + onlyRun + ", true): ", e);
 
-					// Release the thread semaphore in case of an exception
-					kubeConfig.getProductionPlanner().releaseThreadSemaphore("run");
 					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 				}
 			} else {
@@ -107,17 +99,9 @@ public class KubeDispatcher extends Thread {
 					logger.log(PlannerMessage.KUBEDISPATCHER_RUN_ONCE);
 
 					try {
-						// Acquire the thread semaphore for the production planner
-						productionPlanner.acquireThreadSemaphore("run");
-
 						// Check for job steps to run using the JobStepUtil
 						UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, onlyRun, true);
-
-						// Release the thread semaphore for the production planner
-						productionPlanner.releaseThreadSemaphore("run");
 					} catch (Exception e) {
-						// Release the thread semaphore in case of an exception
-						productionPlanner.releaseThreadSemaphore("run");
 						logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 						
 						if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
@@ -130,20 +114,12 @@ public class KubeDispatcher extends Thread {
 						// Only check for job steps if there are no released threads in the production planner
 						if (productionPlanner.getReleaseThreads().size() == 0) {
 							try {
-								// Acquire the thread semaphore for the production planner
-								productionPlanner.acquireThreadSemaphore("run");
-
 								// Check for job steps to run using the JobStepUtil
 								UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, onlyRun, true);
-
-								// Release the thread semaphore for the production planner
-								productionPlanner.releaseThreadSemaphore("run");
 							} catch (Exception e) {
 								if (logger.isDebugEnabled())
 									logger.debug("... exception in checkForJobStepsToRun(" + kubeConfig.getId() + ", " + 0 + ", " + onlyRun + ", true): ", e);
 
-								// Release the thread semaphore in case of an exception
-								productionPlanner.releaseThreadSemaphore("run");
 								logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 							}
 						}

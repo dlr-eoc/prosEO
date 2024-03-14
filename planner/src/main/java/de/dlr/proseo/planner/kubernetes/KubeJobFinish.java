@@ -90,7 +90,6 @@ public class KubeJobFinish extends Thread {
 
 				try {
 					// Update the finish info of the Kubernetes job and check if it is finished
-					planner.acquireThreadSemaphore("KubeJobFinish.run");
 					found = kubeJob.updateFinishInfoAndDelete(jobName);
 
 					if (found) {
@@ -126,18 +125,13 @@ public class KubeJobFinish extends Thread {
 							}
 						}
 
-						planner.releaseThreadSemaphore("KubeJobFinish.run");
-
 						if (ProductionPlanner.config.getCheckForFurtherJobStepsToRun()) {
 							// Start the KubeDispatcher to handle any further job steps that can be run
 							KubeDispatcher kubeDispatcher = new KubeDispatcher(null, kubeJob.getKubeConfig(), true);
 							kubeDispatcher.start();
 						}
-					} else {
-						planner.releaseThreadSemaphore("KubeJobFinish.run");
 					}
 				} catch (Exception e) {
-					planner.releaseThreadSemaphore("KubeJobFinish.run");
 					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 					
 					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);

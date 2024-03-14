@@ -186,7 +186,6 @@ public class OrderUtil {
 					}
 				}
 				try {
-					productionPlanner.acquireThreadSemaphore("OrderUtil.reset");
 					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
 							transactionTemplate.execute((status) -> {
@@ -219,15 +218,12 @@ public class OrderUtil {
 					answer.setText(logger.log(answer.getMessage(), e.getMessage()));
 
 					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-				} finally {
-					productionPlanner.releaseThreadSemaphore("OrderUtil.reset");
 				}
 				answer.setMessage(PlannerMessage.ORDER_RESET);
 				break;	
 			case PLANNING_FAILED:
 				// jobs are in initial state, no change
 				try {
-					productionPlanner.acquireThreadSemaphore("OrderUtil.reset");
 					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
 							transactionTemplate.execute((status) -> {
@@ -260,8 +256,6 @@ public class OrderUtil {
 					answer.setText(logger.log(answer.getMessage(), e.getMessage()));
 
 					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-				} finally {
-					productionPlanner.releaseThreadSemaphore("OrderUtil.reset");
 				}
 				answer.setMessage(PlannerMessage.ORDER_RESET);
 				break;			
@@ -270,7 +264,6 @@ public class OrderUtil {
 			case PLANNED:
 				// remove jobs and job steps
 				try {
-					productionPlanner.acquireThreadSemaphore("OrderUtil.reset");
 					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
 							transactionTemplate.execute((status) -> {
@@ -319,8 +312,6 @@ public class OrderUtil {
 					answer.setText(logger.log(answer.getMessage(), e.getMessage()));
 
 					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-				} finally {
-					productionPlanner.releaseThreadSemaphore("OrderUtil.reset");
 				}
 				answer.setMessage(PlannerMessage.ORDER_RESET);
 				break;	
@@ -511,8 +502,6 @@ public class OrderUtil {
 		case PLANNING_FAILED:
 			// Set order state to PLANNING
 			try {
-				productionPlanner.acquireThreadSemaphore("plan");
-
 				transactionTemplate.setReadOnly(false);
 				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
@@ -546,8 +535,6 @@ public class OrderUtil {
 				answer.setText(logger.log(answer.getMessage(), e.getMessage()));
 
 				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-			} finally {
-				productionPlanner.releaseThreadSemaphore("plan");
 			}
 			if (!answer.getSuccess()) {
 				break;
@@ -638,7 +625,6 @@ public class OrderUtil {
 				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 				Boolean doIt = false;
 				try {
-					productionPlanner.acquireThreadSemaphore("resume");	
 					transactionTemplate.setReadOnly(false);
 					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
@@ -671,8 +657,6 @@ public class OrderUtil {
 					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 
 					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-				} finally {
-					productionPlanner.releaseThreadSemaphore("resume");					
 				}
 				if (doIt) {
 					// Moved here from the transaction above, because it does not affect the transaction
@@ -682,7 +666,6 @@ public class OrderUtil {
 
 					OrderReleaseThread rt = null; 
 					try {
-						productionPlanner.acquireThreadSemaphore("resume");
 						transactionTemplate.setReadOnly(true);
 						final ProcessingOrder ordery = transactionTemplate.execute((status) -> {
 							Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(order.getId());
@@ -704,8 +687,6 @@ public class OrderUtil {
 						logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 
 						if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-					} finally {
-						productionPlanner.releaseThreadSemaphore("resume");					
 					}
 					if (rt != null) {
 						rt.start();
@@ -855,7 +836,6 @@ public class OrderUtil {
 					}
 				}
 				try {
-					productionPlanner.acquireThreadSemaphore("suspend");	
 					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
 							transactionTemplate.execute((status) -> {
@@ -962,13 +942,11 @@ public class OrderUtil {
 
 					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 				} finally {
-					productionPlanner.releaseThreadSemaphore("suspend");
 					productionPlanner.checkNextForRestart();					
 				}
 				break;	
 			case RELEASED:
 				try {
-					productionPlanner.acquireThreadSemaphore("suspend");	
 					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
 							answer = transactionTemplate.execute((status) -> {
@@ -1016,7 +994,6 @@ public class OrderUtil {
 
 					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 				} finally {
-					productionPlanner.releaseThreadSemaphore("suspend");	
 					productionPlanner.checkNextForRestart();				
 				}
 				break;			
@@ -1099,7 +1076,6 @@ public class OrderUtil {
 				}
 				if (answer.getSuccess()) {
 					try {
-						productionPlanner.acquireThreadSemaphore("prepareSuspend");	
 						transactionTemplate.setReadOnly(false);
 						for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 							try {
@@ -1175,8 +1151,6 @@ public class OrderUtil {
 						logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 
 						if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-					} finally {
-						productionPlanner.releaseThreadSemaphore("prepareSuspend");					
 					}
 				}
 				break;	
