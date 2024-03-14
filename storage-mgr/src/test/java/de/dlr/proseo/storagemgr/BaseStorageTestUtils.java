@@ -6,20 +6,57 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
 
-import de.dlr.proseo.storagemgr.version2.PathConverter;
-import de.dlr.proseo.storagemgr.version2.model.StorageFile;
-import de.dlr.proseo.storagemgr.version2.posix.PosixDAL;
-import de.dlr.proseo.storagemgr.version2.posix.PosixStorageFile;
+import javax.annotation.PostConstruct;
+
+import org.junit.Rule;
+import org.junit.rules.TestName;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import de.dlr.proseo.storagemgr.model.Storage;
+import de.dlr.proseo.storagemgr.model.StorageFile;
+import de.dlr.proseo.storagemgr.posix.PosixDAL;
+import de.dlr.proseo.storagemgr.posix.PosixStorageFile;
+import de.dlr.proseo.storagemgr.utils.PathConverter;
 
 /**
  * @author Denys Chaykovskiy
  *
  */
+@Component
 public class BaseStorageTestUtils {
+	
+	@Autowired
+	private StorageProvider storageProvider;
+	
+	@Autowired
+	private TestUtils testUtils;
+
+	@Rule
+	public TestName testName = new TestName();
 
 	protected String sourcePath;
 	protected String storagePath;
 	protected String cachePath;
+	
+	@PostConstruct
+	private void init() {
+
+		sourcePath = testUtils.getSourcePath();
+		storagePath = testUtils.getStoragePath();
+		cachePath = testUtils.getCachePath();
+
+		theTestUtils = this;
+		
+		// storageProvider = new StorageProvider();
+	}
+	
+	private static BaseStorageTestUtils theTestUtils;
+
+	public static BaseStorageTestUtils getInstance() {
+
+		return theTestUtils;
+	}
 
 	public StorageFile getSourceFile(String relativePath) {
 
@@ -85,6 +122,30 @@ public class BaseStorageTestUtils {
 		return sourceFilePath;
 	}
 	
+	/**
+	 * Creates a large file in source and returns absolute path of created file
+	 * 
+	 * For example: 
+	 * long fileSizeInBytes = 100L * 1024 * 1024; // 100 MB
+	 * 
+	 * @param relativePath
+	 * @param fileSize
+	 * @return absolute path of created file
+	 */
+	public String createSourceFile(String relativePath, long fileSizeInBytes) {
+
+		String path = Paths.get(sourcePath, relativePath).toString();
+		String sourceFilePath = new PathConverter(path).convertToSlash().getPath();
+
+		TestUtils.createLargeFile(sourceFilePath, fileSizeInBytes);
+
+		assertTrue("File for upload in Source has not been created: " + sourceFilePath, TestUtils.fileExists(sourceFilePath));
+
+		System.out.println("File " + relativePath + " successfully created in Source");
+
+		return sourceFilePath;
+	}
+	
 	public String getAbsoluteSourcePath(String relativePath) {
 
 		String path = Paths.get(sourcePath, relativePath).toString();
@@ -93,7 +154,7 @@ public class BaseStorageTestUtils {
 
 	public void uploadToPosixStorage(String relativePath) {
 
-		PosixDAL posixDAL = new PosixDAL();
+		PosixDAL posixDAL = new PosixDAL(storageProvider.getPosixConfigurationFromFile());
 
 		StorageFile sourceFile = getSourceFile(relativePath);
 		StorageFile destFile = getStorageFile(relativePath);
@@ -112,7 +173,7 @@ public class BaseStorageTestUtils {
 
 	public void downloadFromPosixStorage(String relativePath) {
 
-		PosixDAL posixDAL = new PosixDAL();
+		PosixDAL posixDAL = new PosixDAL(storageProvider.getPosixConfigurationFromFile());
 
 		StorageFile sourceFile = getStorageFile(relativePath);
 		StorageFile destFile = getCacheFile(relativePath);
@@ -155,5 +216,29 @@ public class BaseStorageTestUtils {
 
 	public String getSourcePath() {
 		return sourcePath;
+	}
+	
+	public static void printStorageFiles(String message, Storage storage) {
+		
+		List<String> storageFiles;
+		try {
+			storageFiles = storage.getRelativeFiles();	
+			String storageType = storage.getStorageType().toString();
+			TestUtils.printList(message + ". Storage " + storageType + " files || " + storage.getAbsoluteBasePath(), storageFiles);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void printStorageFilesWithPrefix(String message, Storage storage, String prefix) {
+		
+		List<String> storageFiles;
+		try {
+			storageFiles = storage.getRelativeFiles(prefix);	
+			String storageType = storage.getStorageType().toString();
+			TestUtils.printList(message + ". Storage " + storageType + " files || Prefix: " + prefix + " || " + storage.getAbsoluteBasePath(), storageFiles);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

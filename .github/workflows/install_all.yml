@@ -1,10 +1,11 @@
-# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven 
-
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support 
-# documentation. 
+# install_all.yml
+#
+# (C) 2024 Dr. Bassler & Co. Managementberatung GmbH
+#
+# Installs the whole prosEO project and runs all tests
+# 
+# @author Denys Chaykovskiy
+#
 
 name: Install all 
 
@@ -61,6 +62,12 @@ jobs:
         docker pull openjdk:11
         docker tag openjdk:11 localhost:5000/openjdk:11
         docker push localhost:5000/openjdk:11
+        
+    - name: Show current directory
+      run: pwd
+      
+    - name: Add minio container for s3 testing
+      run: docker compose -f ./storage-mgr/src/test/resources/docker-compose.yml up -d
         
     - name: Show docker images 
       run: docker images

@@ -1,5 +1,7 @@
 package de.dlr.proseo.storagemgr.cache;
 
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
 import static org.junit.Assert.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -21,17 +23,16 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.dlr.proseo.storagemgr.StorageManager;
-import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.StorageProvider;
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
+import de.dlr.proseo.storagemgr.model.StorageFile;
+import de.dlr.proseo.storagemgr.model.StorageType;
 import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
-import de.dlr.proseo.storagemgr.version2.FileUtils;
-import de.dlr.proseo.storagemgr.version2.PathConverter;
-import de.dlr.proseo.storagemgr.version2.StorageProvider;
-import de.dlr.proseo.storagemgr.version2.model.StorageFile;
-import de.dlr.proseo.storagemgr.version2.model.StorageType;
+import de.dlr.proseo.storagemgr.utils.FileUtils;
+import de.dlr.proseo.storagemgr.utils.PathConverter;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -51,7 +52,7 @@ public class ProductfileControllerImplTest_cache {
 	public TestName testName = new TestName();
 	
 	@Autowired
-	private StorageTestUtils storageTestUtils;
+	private BaseStorageTestUtils storageTestUtils;
 
 	String cachePath;
 	String storagePath; 
@@ -60,6 +61,7 @@ public class ProductfileControllerImplTest_cache {
 
 	@PostConstruct
 	private void init() {
+		
 		cachePath = testUtils.getCachePath();
 		storagePath = testUtils.getStoragePath();
 	}
@@ -69,58 +71,25 @@ public class ProductfileControllerImplTest_cache {
 
 
 	@Test
-	public void testCache_v1Posix() throws Exception {
+	public void testCache_posix() throws Exception {
 
 		StorageType storageType = StorageType.POSIX;
-		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
 
 		testCache();
 
-		assertTrue("Expected: SM Version 1, " + " Exists: 2", !storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
 
 	@Test
-	public void testCache_v2Posix() throws Exception {
-
-		StorageType storageType = StorageType.POSIX;
-		storageProvider.loadVersion2();
-		storageProvider.setStorage(storageType);
-
-		testCache();
-
-		assertTrue("Expected: SM Version 2, " + " Exists: 1", storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-
-	
-	@Test
-	public void testCache_v1S3() throws Exception {
+	public void testCache_S3() throws Exception {
 
 		StorageType storageType = StorageType.S3;
-		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
 
 		testCache();
 
-		assertTrue("Expected: SM Version 1, " + " Exists: 2", !storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-
-	@Test
-	public void testCache_v2S3() throws Exception {
-
-		StorageType storageType = StorageType.S3;
-		storageProvider.loadVersion2();
-		storageProvider.setStorage(storageType);
-
-		testCache();
-
-		assertTrue("Expected: SM Version 2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
@@ -199,7 +168,6 @@ public class ProductfileControllerImplTest_cache {
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString());
 		
 		storageTestUtils.printCache();
-		storageTestUtils.printVersion("FINISHED download-Test");
 		
 		// show path of created rest job without first folder (bucket)
 		// String expectedCachePath = new PathConverter(absolutePath).removeFirstFolder().getPath();
