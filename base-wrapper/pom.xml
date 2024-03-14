@@ -19,7 +19,6 @@
 	</organization>
 
 	<properties>
-		<module.version>1.0.0</module.version>
 		<resteasy.version>3.14.0.Final</resteasy.version>
 		<!-- Properties below to raise dependencies from Spring Boot 2.1.6 to Resteasy 3.14.0 -->
         <commons-codec.version>1.14</commons-codec.version>

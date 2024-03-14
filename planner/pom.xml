@@ -23,7 +23,6 @@
 	</organization>
 
 	<properties>
-		<module.version>1.0.0</module.version>
 		<kubernetes.client.version>12.0.1</kubernetes.client.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/planner-api.raml</raml-path>
@@ -193,14 +192,14 @@
                             	<exec executable="docker" failonerror="true">
                                     <arg value="build" />
                                     <arg value="-t" />
-                                    <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
+                                    <arg value="${docker.registry}/${project.build.finalName}:${project.version}" />
                                     <arg value="--platform" />
                                     <arg value="${project.build.platform}" />
                                     <arg value="." />
                                 </exec>
                             	<exec executable="docker" failonerror="true">
                                     <arg value="push" />
-                                    <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
+                                    <arg value="${docker.registry}/${project.build.finalName}:${project.version}" />
                                 </exec>
                             </target>
                         </configuration>

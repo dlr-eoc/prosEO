@@ -17,10 +17,6 @@
 		<url>http://www.dlr.de</url>
 	</organization>
 
-    <properties>
-        <module.version>1.0.0</module.version>
-    </properties>
-
 	<dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>

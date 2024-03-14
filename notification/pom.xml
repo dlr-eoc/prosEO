@@ -13,7 +13,6 @@
   <description>prosEO Notification Service: The component to send notifications</description>
   
   <properties>
-    <module.version>1.0.0</module.version>
     <main.basedir>${basedir}/../..</main.basedir>
     <raml-path>src/main/resources/raml/notification-api.raml</raml-path>
     <raml-base-package>de.dlr.proseo.notification.rest</raml-base-package>
@@ -163,14 +162,14 @@
                                 <exec executable="docker">
                                     <arg value="build" />
                                     <arg value="-t" />
-                                    <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
+                                    <arg value="${docker.registry}/${project.build.finalName}:${project.version}" />
                                     <arg value="--platform" />
                                     <arg value="${project.build.platform}" />
                                     <arg value="." />
                                 </exec>
                                 <exec executable="docker">
                                     <arg value="push" />
-                                    <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
+                                    <arg value="${docker.registry}/${project.build.finalName}:${project.version}" />
                                 </exec>
                             </target>
                         </configuration>

@@ -19,7 +19,6 @@
 	</organization>
 
 	<properties>
-        <module.version>1.0.0</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/test/resources/raml/interface-test.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.interfaces</raml-base-package>
