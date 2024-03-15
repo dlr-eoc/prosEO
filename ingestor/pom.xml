@@ -26,7 +26,7 @@
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/ingestor-api.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.ingestor.rest</raml-base-package>
-		<nimbus.jwt.version>9.10</nimbus.jwt.version>
+		<nimbus.jwt.version>9.37.2</nimbus.jwt.version>
 	</properties>
 
 	<dependencies>
