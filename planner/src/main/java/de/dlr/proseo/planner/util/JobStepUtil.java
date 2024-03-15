@@ -818,14 +818,11 @@ public class JobStepUtil {
 			case PLANNED:
 			case WAITING_INPUT:
 				try {
-					productionPlanner.acquireReleaseSemaphore("resume");
 					checkJobStepQueries(js, force);
 				} catch (Exception e) {
 					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 					
 					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-				} finally {
-					productionPlanner.releaseReleaseSemaphore("resume");				
 				}
 				if (js.getJobStepState() == JobStepState.WAITING_INPUT) {
 					answer.setMessage(PlannerMessage.JOBSTEP_WAITING);
@@ -1028,8 +1025,6 @@ public class JobStepUtil {
 				checkForJobStepsToRun();
 			} else {
 				try {
-					productionPlanner.acquireReleaseSemaphore("checkForJobStepsToRun");
-
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
@@ -1143,9 +1138,7 @@ public class JobStepUtil {
 						}
 
 					} 
-					productionPlanner.releaseReleaseSemaphore("checkForJobStepsToRun");	
 				} catch (Exception e) {
-					productionPlanner.releaseReleaseSemaphore("checkForJobStepsToRun");	
 					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 					
 					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
@@ -1287,7 +1280,6 @@ public class JobStepUtil {
 				if (pfo != null) {
 					// wait until finish of concurrent createJob
 					try {
-						productionPlanner.acquireReleaseSemaphore("checkJobToRun");
 						final List<Long> jobSteps = new ArrayList<Long>();
 
 						@SuppressWarnings("unused")
@@ -1309,8 +1301,6 @@ public class JobStepUtil {
 						logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 						
 						if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-					} finally {
-						productionPlanner.releaseReleaseSemaphore("checkJobToRun");					
 					}
 				}
 			}
@@ -1348,7 +1338,6 @@ public class JobStepUtil {
 					// wait until finish of concurrent createJob
 					final List<Long> jobSteps = new ArrayList<Long>();
 					try {
-						productionPlanner.acquireReleaseSemaphore("checkOrderToRun");
 						@SuppressWarnings("unused")
 						String dummy = transactionTemplate.execute((status) -> {
 							ProcessingOrder order = null;
@@ -1384,8 +1373,6 @@ public class JobStepUtil {
 						logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 						
 						if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-					} finally {
-						productionPlanner.releaseReleaseSemaphore("checkOrderToRun");					
 					}
 				}
 			}

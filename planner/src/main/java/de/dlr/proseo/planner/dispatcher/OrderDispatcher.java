@@ -764,9 +764,6 @@ public class OrderDispatcher {
 		final List<Job> jobList = new ArrayList<>();
 
 		try {
-			// Acquire the thread semaphore
-			productionPlanner.acquireThreadSemaphore("createJobSteps");
-
 			// If present, find the order with the given orderId, and retrieve its jobs
 			transactionTemplate.setReadOnly(true);
 			order = transactionTemplate.execute((status) -> {
@@ -780,12 +777,7 @@ public class OrderDispatcher {
 				}
 				return null;
 			});
-
-			// Release the thread semaphore
-			productionPlanner.releaseThreadSemaphore("createJobSteps");
 		} catch (Exception e) {
-			productionPlanner.releaseThreadSemaphore("createJobSteps");
-			
 			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 
 			throw e;
@@ -819,9 +811,6 @@ public class OrderDispatcher {
 				// Prepare for transaction retry, if "org.springframework.dao.CannotAcquireLockException" is thrown
 				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
-						// Acquire the thread semaphore
-						productionPlanner.acquireThreadSemaphore("createJobSteps");
-
 						transactionTemplate.setReadOnly(false);
 						PlannerResultMessage plannerResponse = transactionTemplate.execute((status) -> {
 							currentJobStepList.set(0, 0);
@@ -858,7 +847,6 @@ public class OrderDispatcher {
 						if (!plannerResponse.getSuccess()) {
 							// If an interrupt message is received, set the answer, release the semaphore and return
 							answer = plannerResponse;
-							productionPlanner.releaseThreadSemaphore("createJobSteps");
 
 							PlannerResultMessage msg = new PlannerResultMessage(PlannerMessage.PLANNING_INTERRUPTED);
 							msg.setText(logger.log(msg.getMessage(), orderId));
@@ -874,9 +862,6 @@ public class OrderDispatcher {
 							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 							throw e;
 						}
-					} finally {
-						// Release the thread semaphore
-						productionPlanner.releaseThreadSemaphore("createJobSteps");
 					}
 				}
 			}
@@ -888,8 +873,6 @@ public class OrderDispatcher {
 			/*
 			 * Exception above is recaught here (due to rethrow)
 			 */
-
-			productionPlanner.releaseThreadSemaphore("createJobSteps");
 			throw e;
 		}
 

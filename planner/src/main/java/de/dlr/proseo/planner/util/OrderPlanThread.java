@@ -98,11 +98,8 @@ public class OrderPlanThread extends Thread {
 		} else {
 			// Create the required jobs for the order (independent transaction)
 			try {
-				productionPlanner.acquireThreadSemaphore("OrderPlanThread.run");
 				answer = orderDispatcher.prepareExpectedJobs(orderId, procFacility, this);
-				productionPlanner.releaseThreadSemaphore("OrderPlanThread.run");
 			} catch(InterruptedException e) {
-				productionPlanner.releaseThreadSemaphore("OrderPlanThread.run");
 				answer.setMessage(PlannerMessage.PLANNING_INTERRUPTED);
 				answer.setText(logger.log(answer.getMessage(), orderId));
 			}
@@ -152,8 +149,6 @@ public class OrderPlanThread extends Thread {
 			}
 			try {
 				if (!answer.getSuccess()) {
-					productionPlanner.acquireThreadSemaphore("OrderPlanThread.run");
-
 					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
 							transactionTemplate.execute((status) -> {
@@ -179,12 +174,9 @@ public class OrderPlanThread extends Thread {
 							}
 						}
 					}
-
-					productionPlanner.releaseThreadSemaphore("OrderPlanThread.run");
 				}
 			}
 			catch(Exception e) {
-				productionPlanner.releaseThreadSemaphore("OrderPlanThread.run");
 				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
 						transactionTemplate.execute((status) -> {
@@ -264,7 +256,6 @@ public class OrderPlanThread extends Thread {
 			}
 			
 			try {
-				productionPlanner.acquireThreadSemaphore("OrderPlanThread.plan");
 				final PlannerResultMessage finalAnswer = new PlannerResultMessage(publishAnswer.getMessage());
 				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
@@ -317,8 +308,6 @@ public class OrderPlanThread extends Thread {
 				answer.setText(logger.log(answer.getMessage(),  e.getMessage()));
 				
 				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-			} finally {
-				productionPlanner.releaseThreadSemaphore("OrderPlanThread.plan");
 			}
 		}
 		

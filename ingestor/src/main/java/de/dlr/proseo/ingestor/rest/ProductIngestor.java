@@ -9,7 +9,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
@@ -39,7 +38,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.net.HttpHeaders;
 
 import de.dlr.proseo.ingestor.IngestorConfiguration;
-import de.dlr.proseo.ingestor.PlannerSemaphoreClient;
 import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
 import de.dlr.proseo.ingestor.rest.model.ProductFileUtil;
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
@@ -96,10 +94,6 @@ public class ProductIngestor {
 	/** Database transaction manager */
 	@Autowired
 	private PlatformTransactionManager txManager;
-
-	/** Client to request/release semaphores from Production Planner */
-	@Autowired
-	private PlannerSemaphoreClient semaphoreClient;
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -244,13 +238,7 @@ public class ProductIngestor {
 		
 		// Now we know all uploads were successful, and we can update the database metadata in one single transaction
 		List<RestProduct> result = transactionTemplate.execute(status -> {
-			try {
-				semaphoreClient.acquireSemaphore(user, password);
-
-				return ingestToDatabase(ingestorProducts, facility);
-			} finally {
-				semaphoreClient.releaseSemaphore(user, password);
-			}
+			return ingestToDatabase(ingestorProducts, facility);
 		});
 		
 		// Database updated, notifying Production Planner if requested
@@ -527,61 +515,55 @@ public class ProductIngestor {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> ingestProductFile({}, {}, {}, {}, PWD)", productId, facility, productFile.getProductFileName(), user);
 
-		try {
-			semaphoreClient.acquireSemaphore(user, password);
+		// Find the product with the given ID
+		Optional<Product> product = RepositoryService.getProductRepository().findById(productId);
 
-			// Find the product with the given ID
-			Optional<Product> product = RepositoryService.getProductRepository().findById(productId);
-
-			if (product.isEmpty()) {
-				throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_NOT_FOUND, productId));
-			}
-			Product modelProduct = product.get();
-
-			// Ensure user is authorized for the product's mission
-			if (!securityService.isAuthorizedForMission(modelProduct.getProductClass().getMission().getCode())) {
-				throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
-						modelProduct.getProductClass().getMission().getCode(), securityService.getMission()));
-			}
-
-			// Error, if a database product file for the given facility exists already
-			for (ProductFile modelProductFile : modelProduct.getProductFile()) {
-				if (facility.equals(modelProductFile.getProcessingFacility())) {
-					throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_FILE_EXISTS,
-							modelProductFile.getProductFileName(), facility));
-				}
-			}
-			// OK, not found!
-
-			// Create the database product file
-			ProductFile modelProductFile = ProductFileUtil.toModelProductFile(productFile);
-			modelProductFile.setProcessingFacility(facility);
-			modelProductFile.setProduct(product.get());
-			modelProductFile = RepositoryService.getProductFileRepository().save(modelProductFile);
-
-			// Check for first time ingestion (defines publication time)
-			if (null == modelProduct.getPublicationTime()) {
-				modelProduct.setPublicationTime(Instant.now().truncatedTo(ChronoUnit.MILLIS));
-			}
-			modelProduct.getProductFile().add(modelProductFile); // Autosave with commit
-
-			// Database updated, notifying Production Planner if requested
-			if (ingestorConfig.getNotifyPlanner()) {
-				try {
-					notifyPlanner(user, password, ProductUtil.toRestProduct(modelProduct), facility.getId());
-				} catch (Exception e) {
-					// If notification fails, log warning, but otherwise ignore
-					logger.log(IngestorMessage.NOTIFICATION_FAILED, e);
-				}
-			}
-
-			// Return the updated REST product file
-			logger.log(IngestorMessage.PRODUCT_FILE_INGESTED, productFile.getProductFileName(), productId, facility.getName());
-
-			return ProductFileUtil.toRestProductFile(modelProductFile);
-		} finally {
-			semaphoreClient.releaseSemaphore(user, password);
+		if (product.isEmpty()) {
+			throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_NOT_FOUND, productId));
 		}
+		Product modelProduct = product.get();
+
+		// Ensure user is authorized for the product's mission
+		if (!securityService.isAuthorizedForMission(modelProduct.getProductClass().getMission().getCode())) {
+			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
+					modelProduct.getProductClass().getMission().getCode(), securityService.getMission()));
+		}
+
+		// Error, if a database product file for the given facility exists already
+		for (ProductFile modelProductFile : modelProduct.getProductFile()) {
+			if (facility.equals(modelProductFile.getProcessingFacility())) {
+				throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_FILE_EXISTS,
+						modelProductFile.getProductFileName(), facility));
+			}
+		}
+		// OK, not found!
+
+		// Create the database product file
+		ProductFile modelProductFile = ProductFileUtil.toModelProductFile(productFile);
+		modelProductFile.setProcessingFacility(facility);
+		modelProductFile.setProduct(product.get());
+		modelProductFile = RepositoryService.getProductFileRepository().save(modelProductFile);
+
+		// Check for first time ingestion (defines publication time)
+		if (null == modelProduct.getPublicationTime()) {
+			modelProduct.setPublicationTime(Instant.now().truncatedTo(ChronoUnit.MILLIS));
+		}
+		modelProduct.getProductFile().add(modelProductFile); // Autosave with commit
+
+		// Database updated, notifying Production Planner if requested
+		if (ingestorConfig.getNotifyPlanner()) {
+			try {
+				notifyPlanner(user, password, ProductUtil.toRestProduct(modelProduct), facility.getId());
+			} catch (Exception e) {
+				// If notification fails, log warning, but otherwise ignore
+				logger.log(IngestorMessage.NOTIFICATION_FAILED, e);
+			}
+		}
+
+		// Return the updated REST product file
+		logger.log(IngestorMessage.PRODUCT_FILE_INGESTED, productFile.getProductFileName(), productId, facility.getName());
+
+		return ProductFileUtil.toRestProductFile(modelProductFile);
 	}
 
 	/**

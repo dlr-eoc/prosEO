@@ -149,7 +149,6 @@ public class JobstepControllerImpl implements JobstepController {
 			JobStep js = this.findJobStepByNameOrId(name);
 			if (js != null) {
 				try {
-					productionPlanner.acquireThreadSemaphore("getJobStep");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 					transactionTemplate.execute((status) -> {
@@ -170,9 +169,7 @@ public class JobstepControllerImpl implements JobstepController {
 						}
 						return null;
 					});
-					productionPlanner.releaseThreadSemaphore("getJobStep");	
 				} catch (Exception e) {
-					productionPlanner.releaseThreadSemaphore("getJobStep");	
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
 					
 					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
@@ -303,7 +300,6 @@ public class JobstepControllerImpl implements JobstepController {
 				try {
 					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
-							productionPlanner.acquireThreadSemaphore("resumeJobStep");
 							final ResponseEntity<RestJobStep> msgF = transactionTemplate.execute((status) -> {
 								JobStep jsx = this.findJobStepByNameOrIdPrim(jobstepId);
 								Job job = jsx.getJob();
@@ -317,7 +313,6 @@ public class JobstepControllerImpl implements JobstepController {
 									return null;
 								}
 							});
-							productionPlanner.releaseThreadSemaphore("resumeJobStep");
 							if (msgF != null) {
 								return msgF;
 							}
@@ -334,7 +329,6 @@ public class JobstepControllerImpl implements JobstepController {
 						}
 					}
 				} catch (Exception e) {
-					productionPlanner.releaseThreadSemaphore("resumeJobStep");	
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
 					
 					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
@@ -351,15 +345,12 @@ public class JobstepControllerImpl implements JobstepController {
 							KubeConfig kc = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
 							if (kc != null) {
 								try {
-									productionPlanner.acquireThreadSemaphore("resumeJobStep");
 									UtilService.getJobStepUtil().checkJobStepToRun(kc, jsx.getId());
-									productionPlanner.releaseThreadSemaphore("resumeJobStep");
 								} catch (Exception e) {
 									String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 									
 									if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 
-									productionPlanner.releaseThreadSemaphore("resumeJobStep");
 									return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 								}
 							}
@@ -404,7 +395,6 @@ public class JobstepControllerImpl implements JobstepController {
 				Job job = js.getJob();
 				PlannerResultMessage msg = new PlannerResultMessage(null);
 				try {
-					productionPlanner.acquireThreadSemaphore("cancelJobStep");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
@@ -425,9 +415,7 @@ public class JobstepControllerImpl implements JobstepController {
 							}
 						}
 					}
-					productionPlanner.releaseThreadSemaphore("cancelJobStep");	
 				} catch (Exception e) {
-					productionPlanner.releaseThreadSemaphore("cancelJobStep");	
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
 					
 					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
@@ -439,15 +427,12 @@ public class JobstepControllerImpl implements JobstepController {
 						KubeConfig kc = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
 						if (kc != null) {
 							try {
-								productionPlanner.acquireThreadSemaphore("cancelJobStep");
 								UtilService.getJobStepUtil().checkJobStepToRun(kc, js.getId());
-								productionPlanner.releaseThreadSemaphore("cancelJobStep");
 							} catch (Exception e) {
 								String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 								
 								if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 
-								productionPlanner.releaseThreadSemaphore("cancelJobStep");
 								return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 							}
 						}
@@ -515,7 +500,6 @@ public class JobstepControllerImpl implements JobstepController {
 
 				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
-						productionPlanner.acquireThreadSemaphore("suspendJobStep");
 						final ResponseEntity<RestJobStep> msgF = transactionTemplate.execute((status) -> {
 							JobStep jsx = this.findJobStepByNameOrIdPrim(jobstepId);
 							Job job = jsx.getJob();
@@ -531,11 +515,9 @@ public class JobstepControllerImpl implements JobstepController {
 						if (msgF != null) {
 							return msgF;
 						}
-						productionPlanner.releaseThreadSemaphore("suspendJobStep");
 
 						break;
 					} catch (CannotAcquireLockException e) {
-						productionPlanner.releaseThreadSemaphore("suspendJobStep");
 						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
 						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
@@ -545,7 +527,6 @@ public class JobstepControllerImpl implements JobstepController {
 							throw e;
 						}
 					} catch (Exception e) {
-						productionPlanner.releaseThreadSemaphore("suspendJobStep");	
 						String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
 
 						if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
@@ -556,15 +537,12 @@ public class JobstepControllerImpl implements JobstepController {
 				PlannerResultMessage msg = new PlannerResultMessage(GeneralMessage.FALSE); 
 				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
-						productionPlanner.acquireThreadSemaphore("suspendJobStep");
 						msg = transactionTemplate.execute((status) -> {
 							JobStep jsx = this.findJobStepByNameOrIdPrim(jobstepId);
 							return jobStepUtil.suspend(jsx, force);
 						});
-						productionPlanner.releaseThreadSemaphore("suspendJobStep");				
 						break;
 					} catch (CannotAcquireLockException e) {
-						productionPlanner.releaseThreadSemaphore("suspendJobStep");		
 						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
 
 						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
@@ -579,7 +557,6 @@ public class JobstepControllerImpl implements JobstepController {
 
 						if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 
-						productionPlanner.releaseThreadSemaphore("suspendJobStep");
 						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 					}
 				}
@@ -655,11 +632,8 @@ public class JobstepControllerImpl implements JobstepController {
 		if (logger.isTraceEnabled()) logger.trace(">>> findJobStepByNameOrId({})", nameOrId);
 		JobStep js = null;
 		try {
-			productionPlanner.acquireThreadSemaphore("findJobStepByNameOrId");
 			js = this.findJobStepByNameOrIdPrim(nameOrId);
-			productionPlanner.releaseThreadSemaphore("findJobStepByNameOrId");	
 		} catch (Exception e) {
-			productionPlanner.releaseThreadSemaphore("findJobStepByNameOrId");	
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());	
 			
 			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
@@ -670,7 +644,6 @@ public class JobstepControllerImpl implements JobstepController {
 	private RestJobStep getRestJobStep(long id, Boolean logs) {
 		RestJobStep answer = null;
 		try {
-			productionPlanner.acquireThreadSemaphore("getRestJobStep");
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 			transactionTemplate.setReadOnly(true);
@@ -688,8 +661,6 @@ public class JobstepControllerImpl implements JobstepController {
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());	
 			
 			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-		} finally {
-			productionPlanner.releaseThreadSemaphore("getRestJobStep");
 		}
 		return answer;
 	}
@@ -706,7 +677,6 @@ public class JobstepControllerImpl implements JobstepController {
 			if (js != null) {
 				PlannerResultMessage msg = new PlannerResultMessage(null);
 				try {
-					productionPlanner.acquireThreadSemaphore("retryJobStep");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
@@ -727,9 +697,7 @@ public class JobstepControllerImpl implements JobstepController {
 							}
 						}
 					}
-					productionPlanner.releaseThreadSemaphore("retryJobStep");	
 				} catch (Exception e) {
-					productionPlanner.releaseThreadSemaphore("retryJobStep");	
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
 					
 					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
