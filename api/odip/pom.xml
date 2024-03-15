@@ -27,7 +27,7 @@
         <raml-path-query>src/main/resources/raml/odip-query.raml</raml-path-query>
         <raml-path-oauth2>src/main/resources/raml/odip-oauth2.raml</raml-path-oauth2>
         <raml-base-package>de.dlr.proseo.api.odip.rest</raml-base-package>
-        <nimbus.jwt.version>9.10</nimbus.jwt.version>
+        <nimbus.jwt.version>9.37.2</nimbus.jwt.version>
     </properties>
 
     <dependencies>
