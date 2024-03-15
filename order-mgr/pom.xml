@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo</artifactId>
-		<version>1.0.0</version>
+		<version>1.0.1-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>proseo-order-mgr</artifactId>
@@ -19,7 +19,6 @@
 	</organization>
 
 	<properties>
-		<module.version>1.0.0</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/order-mgr-api.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.model.rest</raml-base-package>
@@ -159,14 +158,14 @@
                             	<exec executable="docker" failonerror="true">
                                     <arg value="build" />
                                     <arg value="-t" />
-                                    <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
+                                    <arg value="${docker.registry}/${project.build.finalName}:${project.version}" />
                                     <arg value="--platform" />
                                     <arg value="${project.build.platform}" />
                                     <arg value="." />
                                 </exec>
                             	<exec executable="docker" failonerror="true">
                                     <arg value="push" />
-                                    <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
+                                    <arg value="${docker.registry}/${project.build.finalName}:${project.version}" />
                                 </exec>
                             </target>
                         </configuration>

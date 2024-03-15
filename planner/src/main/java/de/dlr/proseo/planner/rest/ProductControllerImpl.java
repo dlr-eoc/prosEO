@@ -67,8 +67,6 @@ public class ProductControllerImpl implements ProductController {
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		try {
-			productionPlanner.acquireThreadSemaphore("getObjectByProductidAndFacilityId");
-			productionPlanner.acquireReleaseSemaphore("getObjectByProductidAndFacilityId");
 			final long pcId = transactionTemplate.execute((status) -> {
 				Product p = RepositoryService.getProductRepository().getOne(Long.valueOf(productid));
 				if (p != null) {
@@ -83,11 +81,7 @@ public class ProductControllerImpl implements ProductController {
 				});	
 				logger.log(PlannerMessage.PLANNING_CHECK_COMPLETE, Long.valueOf(productid));
 			}
-			productionPlanner.releaseThreadSemaphore("getObjectByProductidAndFacilityId");
-			productionPlanner.releaseReleaseSemaphore("getObjectByProductidAndFacilityId");	
 		} catch (Exception e) {
-			productionPlanner.releaseThreadSemaphore("getObjectByProductidAndFacilityId");	
-			productionPlanner.releaseReleaseSemaphore("getObjectByProductidAndFacilityId");	
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 			
 			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
