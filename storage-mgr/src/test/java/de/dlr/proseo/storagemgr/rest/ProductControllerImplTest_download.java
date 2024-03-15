@@ -19,13 +19,14 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import de.dlr.proseo.storagemgr.StorageManager;
-import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.StorageProvider;
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
-import de.dlr.proseo.storagemgr.version2.PathConverter;
-import de.dlr.proseo.storagemgr.version2.StorageProvider;
-import de.dlr.proseo.storagemgr.version2.model.Storage;
-import de.dlr.proseo.storagemgr.version2.model.StorageFile;
-import de.dlr.proseo.storagemgr.version2.model.StorageType;
+import de.dlr.proseo.storagemgr.cache.FileCache;
+import de.dlr.proseo.storagemgr.model.Storage;
+import de.dlr.proseo.storagemgr.model.StorageFile;
+import de.dlr.proseo.storagemgr.model.StorageType;
+import de.dlr.proseo.storagemgr.utils.PathConverter;
 
 /**
  * Mock Mvc test for Product Controller
@@ -48,7 +49,7 @@ public class ProductControllerImplTest_download {
 	private MockMvc mockMvc;
 
 	@Autowired
-	private StorageTestUtils storageTestUtils;
+	private BaseStorageTestUtils storageTestUtils;
 
 	@Autowired
 	private StorageProvider storageProvider;
@@ -59,101 +60,101 @@ public class ProductControllerImplTest_download {
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/products/download";
 
 	/**
-	 * Downloads products with given directory prefix
+	 * Downloads products with given directory prefix from storage
 	 * 
 	 * GET /products storageType="POSIX"&prefix="/.."
 	 * 
-	 * @return products string[]
 	 */
 	@Test
-	public void testDownload_v2Posix() throws Exception {
+	public void testDownloadFromStorage_posix() throws Exception {
 
 		if (TESTS_ENABLED) {
 
 			StorageType storageType = StorageType.POSIX;
-			storageProvider.loadVersion2();
 			storageProvider.setStorage(storageType);
+			boolean downloadFileFromCache = false;
 
-			downloadProductFiles(storageType);
+			downloadProductFiles(storageType, downloadFileFromCache);
 
-			assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 			StorageType realStorageType = storageProvider.getStorage().getStorageType();
 			assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
+		} else {
+			System.out.println("TESTS ARE DISABLED");
 		}
 	}
 
 	/**
-	 * Downloads products with given directory prefix
+	 * Downloads products with given directory prefix from storage
+	 * 
+	 * GET /products storageType="S3"&prefix="/.."
+	 * 
+	 */
+	@Test
+	public void testDownloadfromStorage_S3() throws Exception {
+
+		if (TESTS_ENABLED) {
+
+			StorageType storageType = StorageType.S3;
+			storageProvider.setStorage(storageType);
+			boolean downloadFileFromCache = false;
+
+			downloadProductFiles(storageType, downloadFileFromCache);
+
+			StorageType realStorageType = storageProvider.getStorage().getStorageType();
+			assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
+		} else {
+			System.out.println("TESTS ARE DISABLED");
+		}
+	}
+
+	/**
+	 * Downloads products with given directory prefix from cache
 	 * 
 	 * GET /products storageType="POSIX"&prefix="/.."
 	 * 
-	 * @return products string[]
 	 */
 	@Test
-	public void testDownload_v1Posix() throws Exception {
+	public void testDownloadFromCache_posix() throws Exception {
 
 		if (TESTS_ENABLED) {
 
 			StorageType storageType = StorageType.POSIX;
-			storageProvider.loadVersion1();
 			storageProvider.setStorage(storageType);
+			boolean downloadFileFromCache = true;
 
-			downloadProductFiles(storageType);
+			downloadProductFiles(storageType, downloadFileFromCache);
 
-			assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
 			StorageType realStorageType = storageProvider.getStorage().getStorageType();
 			assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
+		} else {
+			System.out.println("TESTS ARE DISABLED");
 		}
 	}
 
 	/**
-	 * Downloads products with given directory prefix
+	 * Downloads products with given directory prefix from cache
 	 * 
-	 * GET /products storageType="POSIX"&prefix="/.."
+	 * GET /products storageType="S3"&prefix="/.."
 	 * 
-	 * @return products string[]
 	 */
 	@Test
-	public void testDownload_v2S3() throws Exception {
+	public void testDownloadfromCache_S3() throws Exception {
 
 		if (TESTS_ENABLED) {
 
 			StorageType storageType = StorageType.S3;
-			storageProvider.loadVersion2();
 			storageProvider.setStorage(storageType);
+			boolean downloadFileFromCache = true;
 
-			downloadProductFiles(storageType);
+			downloadProductFiles(storageType, downloadFileFromCache);
 
-			assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 			StorageType realStorageType = storageProvider.getStorage().getStorageType();
 			assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
+		} else {
+			System.out.println("TESTS ARE DISABLED");
 		}
 	}
-
-	/**
-	 * Downloads products with given directory prefix
-	 * 
-	 * GET /products storageType="POSIX"&prefix="/.."
-	 * 
-	 * @return products string[]
-	 */
-	@Test
-	public void testDownload_v1S3() throws Exception {
-
-		if (TESTS_ENABLED) {
-
-			StorageType storageType = StorageType.S3;
-			storageProvider.loadVersion1();
-			storageProvider.setStorage(storageType);
-
-			downloadProductFiles(storageType);
-
-			assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
-			StorageType realStorageType = storageProvider.getStorage().getStorageType();
-			assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
-		}
-	}
-
+	
 	/**
 	 * Get the data files for the product as data stream (optionally zip-compressed,
 	 * optionally range-restricted)
@@ -173,8 +174,14 @@ public class ProductControllerImplTest_download {
 	 * s3://<bucket>/<relativePath> // no storage path in s3
 	 * /<storagePath>/<relativePath> // no bucket in posix currently
 	 * 
+	 * @param storageType           storage Type (S3 or POSIX)
+	 * @param downloadFileFromCache if true, a file will be copied to cache before
+	 *                              download(). If a file is in the cache,
+	 *                              download() method will download it directly from
+	 *                              the cache, not from the storage
+	 * 
 	 */
-	private void downloadProductFiles(StorageType storageType) throws Exception {
+	private void downloadProductFiles(StorageType storageType, boolean downloadFileFromCache) throws Exception {
 
 		TestUtils.printMethodName(this, testName);
 
@@ -183,7 +190,7 @@ public class ProductControllerImplTest_download {
 
 		String relativePath = new PathConverter(prefix, "productDownloadDir/productDownload3.txt").getPath();
 		String fileContent = "some content";
-		
+
 		// create file in source
 		storageTestUtils.createSourceFile(relativePath, fileContent);
 
@@ -201,7 +208,23 @@ public class ProductControllerImplTest_download {
 		Long toByte = 7l;
 
 		// show storage files
-		StorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
+		BaseStorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
+
+		// puts a file to the cache in order to trigger a stream downloading from cache
+		// if true, a file will be copied to the cache before download()
+		StorageFile storageFile = storageProvider.getStorageFile(relativePath);
+		StorageFile cacheFile = storageProvider.getCacheFile(storageFile.getRelativePath());
+		FileCache cache = FileCache.getInstance();
+
+		if (downloadFileFromCache) {
+
+			storageProvider.getStorage().downloadFile(storageFile, cacheFile);
+			cache.put(cacheFile.getFullPath()); // cache file status = READY
+		} else {
+
+			// avoid downloading from cache - delete the file in cache if exists
+			TestUtils.deleteFile(cacheFile.getFullPath());
+		}
 
 		// TEST PARTIAL CONTENT
 		// HTTP Download files (partial content) from storage
@@ -231,8 +254,8 @@ public class ProductControllerImplTest_download {
 		// HTTP Download files (FULL CONTENT) from storage
 		System.out.println("TEST FULL CONTENT BEGIN - BEFORE HTTP CALL ");
 
-		request = MockMvcRequestBuilders.get(REQUEST_STRING)
-				.param("pathInfo", absoluteStoragePath).param("token", token);
+		request = MockMvcRequestBuilders.get(REQUEST_STRING).param("pathInfo", absoluteStoragePath).param("token",
+				token);
 
 		mvcResult = mockMvc.perform(request).andExpect(status().isOk()).andReturn();
 
@@ -249,11 +272,14 @@ public class ProductControllerImplTest_download {
 		assertTrue("Real path: " + realFileContent + " Expected  path: " + expectedFileContent,
 				realFileContent.equals(expectedFileContent));
 		System.out.println("TEST FULL CONTENT END");
-		
+
 		// delete storage files with prefix
 		storageProvider.getStorage().delete(prefix);
 
+		// delete cache file if exists
+		TestUtils.deleteFile(cacheFile.getFullPath());
+
 		// show storage files after deletion
-		StorageTestUtils.printStorageFiles("After deletion", storageProvider.getStorage());
+		BaseStorageTestUtils.printStorageFiles("After deletion", storageProvider.getStorage());
 	}
 }

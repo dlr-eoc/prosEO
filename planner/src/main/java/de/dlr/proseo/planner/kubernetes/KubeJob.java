@@ -794,94 +794,86 @@ public class KubeJob {
 		// Search for pods associated with the job
 		searchPod();
 
-		try {
-			// Acquire thread semaphore for "finish" operation
-			kubeConfig.getProductionPlanner().acquireThreadSemaphore("finish");
+		TransactionTemplate transactionTemplate = new TransactionTemplate(kubeConfig.getProductionPlanner().getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+		for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
+			try {
+				transactionTemplate.execute((status) -> {
 
-			TransactionTemplate transactionTemplate = new TransactionTemplate(kubeConfig.getProductionPlanner().getTxManager());
-			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
-				try {
-					transactionTemplate.execute((status) -> {
+					// Retrieve the kube job information
+					V1Job job = kubeConfig.getV1Job(jobName);
+					if (job == null) {
+						return null;
+					}
 
-						// Retrieve the kube job information
-						V1Job job = kubeConfig.getV1Job(jobName);
-						if (job == null) {
-							return null;
+					// Find the job step in the database
+					Long jobStepId = this.getJobId();
+					Optional<JobStep> jobStep = RepositoryService.getJobStepRepository().findById(jobStepId);
+					if (jobStep.isEmpty()) {
+						return null;
+					}
+
+					// Update the job log
+					updateJobLog(jobStep.get());
+
+					if (job.getStatus() != null) {
+						// Set the processing start time
+						OffsetDateTime startTime = job.getStatus().getStartTime();
+						if (startTime != null) {
+							jobStep.get().setProcessingStartTime(startTime.toInstant());
 						}
 
-						// Find the job step in the database
-						Long jobStepId = this.getJobId();
-						Optional<JobStep> jobStep = RepositoryService.getJobStepRepository().findById(jobStepId);
-						if (jobStep.isEmpty()) {
-							return null;
+						// Set the processing completion time
+						OffsetDateTime completionTime = job.getStatus().getCompletionTime();
+						if (completionTime != null) {
+							jobStep.get().setProcessingCompletionTime(completionTime.toInstant());
 						}
 
-						// Update the job log
-						updateJobLog(jobStep.get());
+						// Set the job conditions
+						if (job.getStatus().getConditions() != null) {
+							List<V1JobCondition> jobConditions = job.getStatus().getConditions();
 
-						if (job.getStatus() != null) {
-							// Set the processing start time
-							OffsetDateTime startTime = job.getStatus().getStartTime();
-							if (startTime != null) {
-								jobStep.get().setProcessingStartTime(startTime.toInstant());
-							}
-
-							// Set the processing completion time
-							OffsetDateTime completionTime = job.getStatus().getCompletionTime();
-							if (completionTime != null) {
-								jobStep.get().setProcessingCompletionTime(completionTime.toInstant());
-							}
-
-							// Set the job conditions
-							if (job.getStatus().getConditions() != null) {
-								List<V1JobCondition> jobConditions = job.getStatus().getConditions();
-
-								for (V1JobCondition jobCondition : jobConditions) {
-									if ((jobCondition.getType().equalsIgnoreCase("complete")
-											|| jobCondition.getType().equalsIgnoreCase("completed"))
-											&& jobCondition.getStatus().equalsIgnoreCase("true")) {
-										jobStep.get().setJobStepState(JobStepState.COMPLETED);
-										UtilService.getJobStepUtil().checkCreatedProducts(jobStep.get());
-										jobStep.get().incrementVersion();
-									} else if (jobCondition.getType().equalsIgnoreCase("failed")
-											|| jobCondition.getType().equalsIgnoreCase("failure")) {
-										jobStep.get().setJobStepState(JobStepState.FAILED);
-										jobStep.get().incrementVersion();
-									}
+							for (V1JobCondition jobCondition : jobConditions) {
+								if ((jobCondition.getType().equalsIgnoreCase("complete")
+										|| jobCondition.getType().equalsIgnoreCase("completed"))
+										&& jobCondition.getStatus().equalsIgnoreCase("true")) {
+									jobStep.get().setJobStepState(JobStepState.COMPLETED);
+									UtilService.getJobStepUtil().checkCreatedProducts(jobStep.get());
+									jobStep.get().incrementVersion();
+								} else if (jobCondition.getType().equalsIgnoreCase("failed")
+										|| jobCondition.getType().equalsIgnoreCase("failure")) {
+									jobStep.get().setJobStepState(JobStepState.FAILED);
+									jobStep.get().incrementVersion();
 								}
 							}
 						}
-
-						// Save the updated job step in the repository
-						RepositoryService.getJobStepRepository().save(jobStep.get());
-
-						// Log the order state for the job step's processing order
-						UtilService.getOrderUtil().logOrderState(jobStep.get().getJob().getProcessingOrder());
-
-						jobSteps.add(jobStep.get());
-						return jobStep.get();
-					});
-					break;
-				} catch (CannotAcquireLockException e) {
-					if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
-
-					if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
-						ProseoUtil.dbWait();
-					} else {
-						if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
-						throw e;
 					}
-				} catch (Exception e) {
-					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 
-					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+					// Save the updated job step in the repository
+					RepositoryService.getJobStepRepository().save(jobStep.get());
+
+					// Log the order state for the job step's processing order
+					UtilService.getOrderUtil().logOrderState(jobStep.get().getJob().getProcessingOrder());
+
+					jobSteps.add(jobStep.get());
+					return jobStep.get();
+				});
+				break;
+			} catch (CannotAcquireLockException e) {
+				if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+				if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+					ProseoUtil.dbWait();
+				} else {
+					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+					throw e;
 				}
-			} 
-		} finally {
-			// Release the thread semaphore for "finish" operation
-			kubeConfig.getProductionPlanner().releaseThreadSemaphore("finish");
-		}
+			} catch (Exception e) {
+				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+
+				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+			}
+		} 
 
 		// Configure and start a KubeJobFinish object to monitor the completion of the kube job
 		KubeJobFinish jobMonitor = new KubeJobFinish(this, kubeConfig.getProductionPlanner(), jobName);

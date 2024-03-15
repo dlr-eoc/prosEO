@@ -135,7 +135,7 @@ public class OrderReleaseThread extends Thread {
 					answer.setMessage(PlannerMessage.ORDER_RELEASING_EXCEPTION);
 					answer.setText(logger.log(PlannerMessage.ORDER_RELEASING_EXCEPTION, this.getName(), order.getIdentifier()));
 					answer.setText(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage()));
-					productionPlanner.acquireThreadSemaphore("runRelease1");
+
 					transactionTemplate.setReadOnly(false);
 					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
@@ -163,15 +163,13 @@ public class OrderReleaseThread extends Thread {
 							}
 						}
 					}
-
-					productionPlanner.releaseThreadSemaphore("runRelease1");
 				}
 			}
 			catch(Exception e) {
 				answer.setMessage(PlannerMessage.ORDER_RELEASING_EXCEPTION);
 				answer.setText(logger.log(PlannerMessage.ORDER_RELEASING_EXCEPTION, this.getName(), order.getIdentifier()));
 				answer.setText(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage()));
-				productionPlanner.acquireThreadSemaphore("runRelease2");
+
 				transactionTemplate.setReadOnly(false);
 				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
@@ -198,12 +196,10 @@ public class OrderReleaseThread extends Thread {
 						}
 					}
 				}
-
-				productionPlanner.releaseThreadSemaphore("runRelease2");
 			}
 		}
 		this.resultMessage = answer;
-		productionPlanner.getReleaseThreads().remove(this.getName());
+
 		if (logger.isTraceEnabled()) logger.trace("<<< run() for thread {}", this.getName());
 		productionPlanner.checkNextForRestart();				
 	}
@@ -227,7 +223,6 @@ public class OrderReleaseThread extends Thread {
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		PlannerResultMessage releaseAnswer = new PlannerResultMessage(GeneralMessage.FALSE);
 		try {
-			productionPlanner.acquireThreadSemaphore("release1");
 			transactionTemplate.setReadOnly(true);
 			order = transactionTemplate.execute((status) -> {
 				Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
@@ -244,14 +239,12 @@ public class OrderReleaseThread extends Thread {
 				}
 				return null;
 			});
-			productionPlanner.releaseThreadSemaphore("release1");	
 		} catch (Exception e) {
 			answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
 			answer.setText(logger.log(answer.getMessage(), e.getMessage()));
 
 			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 
-			productionPlanner.releaseThreadSemaphore("release1");
 			return answer;
 		}
 		if (order != null && 
@@ -270,7 +263,6 @@ public class OrderReleaseThread extends Thread {
 					// Prepare for transaction retry, if "org.springframework.dao.CannotAcquireLockException" is thrown
 					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
-							productionPlanner.acquireThreadSemaphore("releaseOrder");
 							if (logger.isTraceEnabled())
 								logger.trace(">>> releaseJobBlock({})", curJList.get(0));
 
@@ -317,8 +309,6 @@ public class OrderReleaseThread extends Thread {
 								logger.debug("... exception in release::doInTransaction1(" + orderId + "): ", e);
 
 							throw e;
-						} finally {
-							productionPlanner.releaseThreadSemaphore("releaseOrder");
 						} 
 						if (answer == null || answer.getCode() == PlannerMessage.ORDER_RELEASING_INTERRUPTED.getCode()) {
 							break;
@@ -327,7 +317,6 @@ public class OrderReleaseThread extends Thread {
 					// Prepare for transaction retry, if "org.springframework.dao.CannotAcquireLockException" is thrown
 					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
-							productionPlanner.acquireThreadSemaphore("releaseOrder2");
 							// This one requires special handling, because as a "side effect" the Kubernetes job is started
 							// and must be cancelled, if the transaction fails
 							transactionTemplate.setReadOnly(false);
@@ -405,8 +394,6 @@ public class OrderReleaseThread extends Thread {
 							if (logger.isDebugEnabled())
 								logger.debug("... exception in release::doInTransaction2(" + orderId + "): ", e);
 							throw e;
-						} finally {
-							productionPlanner.releaseThreadSemaphore("releaseOrder2");
 						}
 					}
 				}
@@ -424,8 +411,6 @@ public class OrderReleaseThread extends Thread {
 			}
 			final PlannerResultMessage finalAnswer = new PlannerResultMessage(releaseAnswer.getMessage());
 			try {
-				productionPlanner.acquireThreadSemaphore("releaseOrder3");	
-
 				// TODO Add transaction retry here, but need to find the retry condition first
 				transactionTemplate.setReadOnly(false);
 				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
@@ -521,8 +506,6 @@ public class OrderReleaseThread extends Thread {
 
 				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 				throw e;
-			} finally {
-				productionPlanner.releaseThreadSemaphore("releaseOrder3");
 			}
 		}
 

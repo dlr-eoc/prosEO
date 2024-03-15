@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo-samples</artifactId>
-		<version>1.0.0</version>
+		<version>1.0.1-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>proseo-sample-wrapper</artifactId>
@@ -20,7 +20,6 @@
 	</organization>
 
 	<properties>
-		<module.version>1.0.0</module.version>
 		<!-- dropwizard downgrade hack ~ https://github.com/doanduyhai/Achilles/issues/353#issuecomment-456735770 -->
 		<dropwizard-metrics.version>3.2.6</dropwizard-metrics.version>
 	</properties>
@@ -34,7 +33,7 @@
 		<dependency>
 			<groupId>de.dlr.proseo</groupId>
 			<artifactId>proseo-base-wrapper</artifactId>
-			<version>1.0.0</version>
+			<version>1.0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 
@@ -77,14 +76,14 @@
                             	<exec executable="docker" failonerror="true">
                                     <arg value="build" />
                                     <arg value="-t" />
-                                    <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
+                                    <arg value="${docker.registry}/${project.build.finalName}:${project.version}" />
                                     <arg value="--platform" />
                                     <arg value="${project.build.platform}" />
                                     <arg value="." />
                                 </exec>
                             	<exec executable="docker" failonerror="true">
                                     <arg value="push" />
-                                    <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
+                                    <arg value="${docker.registry}/${project.build.finalName}:${project.version}" />
                                 </exec>
                             </target>
                         </configuration>

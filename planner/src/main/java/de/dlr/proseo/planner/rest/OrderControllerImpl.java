@@ -85,7 +85,6 @@ public class OrderControllerImpl implements OrderController {
 		try {
 			List<RestOrder> list = new ArrayList<RestOrder>();
 			try {
-				productionPlanner.acquireThreadSemaphore("getOrders");
 				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 				transactionTemplate.setReadOnly(true);
@@ -97,9 +96,7 @@ public class OrderControllerImpl implements OrderController {
 					}
 					return null;
 				});
-				productionPlanner.releaseThreadSemaphore("getOrders");	
 			} catch (Exception e) {
-				productionPlanner.releaseThreadSemaphore("getOrders");	
 				String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
 				
 				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
@@ -166,16 +163,13 @@ public class OrderControllerImpl implements OrderController {
 		} else {
 			PlannerResultMessage msg = new PlannerResultMessage(null);
 			try {
-				productionPlanner.acquireThreadSemaphore("approveOrder");
 				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 				msg = transactionTemplate.execute((status) -> {
 					ProcessingOrder orderx = this.findOrderPrim(orderId);
 					return orderUtil.approve(orderx);
 				});
-				productionPlanner.releaseThreadSemaphore("approveOrder");	
 			} catch (Exception e) {
-				productionPlanner.releaseThreadSemaphore("approveOrder");	
 				String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
 				
 				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
@@ -252,7 +246,6 @@ public class OrderControllerImpl implements OrderController {
 			} else {
 				PlannerResultMessage msg = new PlannerResultMessage(null);
 				try {
-					productionPlanner.acquireThreadSemaphore("deleteOrder");
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
@@ -273,9 +266,7 @@ public class OrderControllerImpl implements OrderController {
 							}
 						}
 					}
-					productionPlanner.releaseThreadSemaphore("deleteOrder");	
 				} catch (Exception e) {
-					productionPlanner.releaseThreadSemaphore("deleteOrder");	
 					String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
 					
 					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
@@ -462,7 +453,6 @@ public class OrderControllerImpl implements OrderController {
 
 					// used to identify the order and missing input (if not null) as well 
 					try {
-						productionPlanner.acquireThreadSemaphore("resumeOdip");
 						transactionTemplate.setReadOnly(true);
 						transactionTemplate.execute((status) -> {
 							Optional<ProcessingOrder> opt = RepositoryService.getOrderRepository().findById(order.getId());
@@ -485,8 +475,6 @@ public class OrderControllerImpl implements OrderController {
 						if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 
 						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
-					} finally {
-						productionPlanner.releaseThreadSemaphore("resumeOdip");					
 					}
 				}
 
@@ -536,7 +524,6 @@ public class OrderControllerImpl implements OrderController {
 
 		PlannerResultMessage msg = new PlannerResultMessage(null);
 		try {
-			productionPlanner.acquireThreadSemaphore("cancelOrder");
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 				try {
@@ -558,9 +545,7 @@ public class OrderControllerImpl implements OrderController {
 				}
 			}
 
-			productionPlanner.releaseThreadSemaphore("cancelOrder");	
 		} catch (Exception e) {
-			productionPlanner.releaseThreadSemaphore("cancelOrder");	
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
 			
 			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
@@ -596,12 +581,9 @@ public class OrderControllerImpl implements OrderController {
 		}
 		PlannerResultMessage msg = new PlannerResultMessage(null);
 		try {
-			productionPlanner.acquireThreadSemaphore("closeOrder");
 			msg = orderUtil.close(order.getId());
 			logger.log(msg.getMessage(), order.getIdentifier());
-			productionPlanner.releaseThreadSemaphore("closeOrder");	
 		} catch (Exception e) {
-			productionPlanner.releaseThreadSemaphore("closeOrder");	
 			String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
 			
 			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
@@ -732,7 +714,6 @@ public class OrderControllerImpl implements OrderController {
 			
 			PlannerResultMessage msg = new PlannerResultMessage(null);
 			try {
-				productionPlanner.acquireThreadSemaphore("retryOrder");
 				transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
@@ -753,9 +734,7 @@ public class OrderControllerImpl implements OrderController {
 						}
 					}
 				}
-				productionPlanner.releaseThreadSemaphore("retryOrder");	
 			} catch (Exception e) {
-				productionPlanner.releaseThreadSemaphore("retryOrder");	
 				String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());			
 				
 				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
@@ -829,11 +808,8 @@ public class OrderControllerImpl implements OrderController {
 		if (logger.isTraceEnabled()) logger.trace(">>> findOrder({})", orderId);
 		ProcessingOrder order = null;
 		try {
-			productionPlanner.acquireThreadSemaphore("findOrder");
 			order = this.findOrderPrim(orderId);
-			productionPlanner.releaseThreadSemaphore("findOrder");	
 		} catch (Exception e) {
-			productionPlanner.releaseThreadSemaphore("findOrder");	
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());	
 			
 			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
@@ -844,7 +820,6 @@ public class OrderControllerImpl implements OrderController {
 	private RestOrder getRestOrder(long id) {
 		RestOrder answer = null;
 		try {
-			productionPlanner.acquireThreadSemaphore("getRestOrder");
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 			transactionTemplate.setReadOnly(true);
@@ -862,8 +837,6 @@ public class OrderControllerImpl implements OrderController {
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());	
 			
 			if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-		} finally {
-			productionPlanner.releaseThreadSemaphore("getRestOrder");
 		}
 		return answer;
 	}
