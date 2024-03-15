@@ -25,7 +25,7 @@
 		<raml-path-download>src/main/resources/raml/prip-download.raml</raml-path-download>
         <raml-path-oauth2>src/main/resources/raml/prip-oauth2.raml</raml-path-oauth2>
 		<raml-base-package>de.dlr.proseo.api.prip.rest</raml-base-package>
-        <nimbus.jwt.version>9.10</nimbus.jwt.version>
+        <nimbus.jwt.version>9.37.2</nimbus.jwt.version>
 	</properties>
 
 	<dependencies>
