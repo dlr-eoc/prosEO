@@ -101,11 +101,12 @@ public class OrderUtil {
 	 * @return Result message
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ)
-	public PlannerResultMessage cancel(ProcessingOrder order) {
-		if (logger.isTraceEnabled()) logger.trace(">>> cancel({})", (null == order ? "null" : order.getId()));
+	public PlannerResultMessage cancel(ProcessingOrder orderX) {
+		if (logger.isTraceEnabled()) logger.trace(">>> cancel({})", (null == orderX ? "null" : orderX.getId()));
 
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
-		if (order != null) {
+		if (orderX != null) {
+			ProcessingOrder order = RepositoryService.getOrderRepository().findById(orderX.getId()).get();
 			switch (order.getOrderState()) {
 			case INITIAL:
 			case APPROVED:

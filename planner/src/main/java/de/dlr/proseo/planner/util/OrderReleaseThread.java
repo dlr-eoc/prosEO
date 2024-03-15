@@ -371,7 +371,7 @@ public class OrderReleaseThread extends Thread {
 
 										try {
 											KubeConfig kc = productionPlanner.getKubeConfig(pfName);
-											if (!kc.couldJobRun(null)) {
+											if (kc == null || !kc.couldJobRun(null)) {
 												break;
 											}
 											UtilService.getJobStepUtil().checkJobStepToRun(kc, jsId);

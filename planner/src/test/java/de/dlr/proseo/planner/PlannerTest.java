@@ -33,12 +33,17 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.model.Job;
+import de.dlr.proseo.model.Job.JobState;
+import de.dlr.proseo.model.JobStep;
+import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.util.OrderUtil;
+import de.dlr.proseo.planner.util.JobUtil;
 
 /**
  * 
@@ -69,6 +74,8 @@ public class PlannerTest {
     private ProductionPlanner productionPlanner;
     @Autowired
     private OrderUtil orderUtil;
+    @Autowired
+    private JobUtil jobUtil;
     
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -137,22 +144,20 @@ public class PlannerTest {
 	
 	@Test
 	@Sql("/ptm.sql")
-	public void test() {
-		logger.debug(">>> Starting test()");
+	public void testApprovePlanReset() {
+		logger.debug(">>> Starting testApprovePlanReset()");
+		// stop dispatcher cycle first
 		productionPlanner.stopDispatcher();
-	    List<Map<String, Object>> tableNames = jdbcTemplate.queryForList("SHOW TABLES");
-	    // Iterate over the table names
-	    for (Map<String, Object> tableName : tableNames) {
-	        // Execute a SELECT * FROM <tableName> query
-	    	// if (!"PRODUCT_PROCESSING_FACILITIES".equalsIgnoreCase(tableName.get("TABLE_NAME").toString())) {
-	    		System.out.println(tableName.get("TABLE_NAME").toString());
-	    		List<Map<String, Object>> rows = jdbcTemplate.queryForList("SELECT * FROM " + tableName.get("TABLE_NAME").toString());
-	    		// Print the results to the console
-	    		for (Map<String, Object> row : rows) {
-	    			System.out.println(row);
-	    		}
-	    	// }
-	    }
+//	    List<Map<String, Object>> tableNames = jdbcTemplate.queryForList("SHOW TABLES");
+//	    // Iterate over the table names
+//	    for (Map<String, Object> tableName : tableNames) {
+//	    	System.out.println(tableName.get("TABLE_NAME").toString());
+//	    	List<Map<String, Object>> rows = jdbcTemplate.queryForList("SELECT * FROM " + tableName.get("TABLE_NAME").toString());
+//	    	// Print the results to the console
+//	    	for (Map<String, Object> row : rows) {
+//	    		System.out.println(row);
+//	    	}
+//	    }
 	    productionPlanner.updateKubeConfigs();
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
@@ -166,52 +171,153 @@ public class PlannerTest {
 		final ProcessingFacility facility = transactionTemplate.execute((status) -> {
 			return RepositoryService.getFacilityRepository().findByName(FACILITY_NAME);
 		});	
-
 		PlannerResultMessage resMsg;
 		transactionTemplate.setReadOnly(false);
-		// check illegal actions 
+		// check the actions according to the src/images/OrderStateStateMachineDiagram.png
+		// order state is INITIAL, check illegal actions 
 		// resMsg = orderUtil.approve(order);
-		resMsg = orderUtil.plan(orderId, facility, true);
-		resMsg = orderUtil.resume(order, true, null, null);
-		resMsg = orderUtil.suspend(orderId, true);
-		resMsg = orderUtil.retry(order);
-		resMsg = orderUtil.cancel(order);
-		resMsg = orderUtil.reset(order);
-		resMsg = orderUtil.close(orderId);
-		logger.log(resMsg.getMessage(), order.getIdentifier()); // close doesn't log
-		
+		order = planOrder(transactionTemplate, orderId, OrderState.INITIAL);
+		order = resumeOrder(transactionTemplate, orderId, OrderState.INITIAL);
+		order = suspendOrder(transactionTemplate, orderId, OrderState.INITIAL);
+		order = retryOrder(transactionTemplate, orderId, OrderState.INITIAL);
+		order = cancelOrder(transactionTemplate, orderId, OrderState.INITIAL);
+		order = resetOrder(transactionTemplate, orderId, OrderState.INITIAL);
+		order = closeOrder(transactionTemplate, orderId, OrderState.INITIAL);
+
+	
 		// approve the order
-		resMsg = orderUtil.approve(order);
-		order = reloadOrder(transactionTemplate, orderId);
+		order = approveOrder(transactionTemplate, orderId, OrderState.APPROVED);
 		logOrderState(transactionTemplate, orderId);
 		
 		// check illegal actions
-		resMsg = orderUtil.approve(order);
-		// resMsg = orderUtil.plan(orderId, facility, true);
-		resMsg = orderUtil.resume(order, true, null, null);
-		resMsg = orderUtil.suspend(orderId, true);
-		resMsg = orderUtil.retry(order);
-		resMsg = orderUtil.cancel(order);
-		// resMsg = orderUtil.reset(order);
-		resMsg = orderUtil.close(orderId);
-		logger.log(resMsg.getMessage(), order.getIdentifier()); // close doesn't log
+		order = approveOrder(transactionTemplate, orderId, OrderState.APPROVED);
+		// order = planOrder(transactionTemplate, orderId, OrderState.APPROVED);
+		order = resumeOrder(transactionTemplate, orderId, OrderState.APPROVED);
+		order = suspendOrder(transactionTemplate, orderId, OrderState.APPROVED);
+		order = retryOrder(transactionTemplate, orderId, OrderState.APPROVED);
+		order = cancelOrder(transactionTemplate, orderId, OrderState.APPROVED);
+		// order = resetOrder(transactionTemplate, orderId, OrderState.APPROVED);
+		order = closeOrder(transactionTemplate, orderId, OrderState.APPROVED);
 
-		// plan the order
-		orderUtil.plan(orderId, facility, true);
-		order = reloadOrder(transactionTemplate, orderId);
+		// reset order and approve again
+		order = resetOrder(transactionTemplate, orderId, OrderState.INITIAL);
+		order = approveOrder(transactionTemplate, orderId, OrderState.APPROVED);
+
+		// plan the order, wait until planning is finished
+		order = planOrder(transactionTemplate, orderId, OrderState.PLANNED, OrderState.PLANNING);
 		logOrderState(transactionTemplate, orderId);
 		
 		// check illegal actions
-		resMsg = orderUtil.approve(order);
-		resMsg = orderUtil.plan(orderId, facility, true);
-		// resMsg = orderUtil.resume(order, true, null, null);
-		resMsg = orderUtil.suspend(orderId, true);
-		resMsg = orderUtil.retry(order);
-		// resMsg = orderUtil.cancel(order);
-		// resMsg = orderUtil.reset(order);
-		resMsg = orderUtil.close(orderId);
-		logger.log(resMsg.getMessage(), order.getIdentifier()); // close doesn't log
+		order = approveOrder(transactionTemplate, orderId, OrderState.PLANNED);
+		order = planOrder(transactionTemplate, orderId, OrderState.PLANNED);
+		// order = resumeOrder(transactionTemplate, orderId, OrderState.PLANNED);
+		order = suspendOrder(transactionTemplate, orderId, OrderState.PLANNED);
+		order = retryOrder(transactionTemplate, orderId, OrderState.PLANNED);
+		// order = cancelOrder(transactionTemplate, orderId, OrderState.PLANNED);
+		// order = resetOrder(transactionTemplate, orderId, OrderState.PLANNED);
+		order = closeOrder(transactionTemplate, orderId, OrderState.PLANNED);
+		
+		// a planned order could be reset
+		order = resetOrder(transactionTemplate, orderId, OrderState.INITIAL);
+		
+		
+	}
+	
+	
 
+	/**
+	 * Test for Plan -> Release -> Suspend -> Release -> Cancel
+	 */
+	@Test
+	@Sql("/ptm.sql")
+	public void testPlanReleaseDelete() {
+		logger.debug(">>> Starting testPlanReleaseDelete()");
+		// stop dispatcher cycle first
+		productionPlanner.stopDispatcher();
+//	    List<Map<String, Object>> tableNames = jdbcTemplate.queryForList("SHOW TABLES");
+//	    // Iterate over the table names
+//	    for (Map<String, Object> tableName : tableNames) {
+//	    	System.out.println(tableName.get("TABLE_NAME").toString());
+//	    	List<Map<String, Object>> rows = jdbcTemplate.queryForList("SELECT * FROM " + tableName.get("TABLE_NAME").toString());
+//	    	// Print the results to the console
+//	    	for (Map<String, Object> row : rows) {
+//	    		System.out.println(row);
+//	    	}
+//	    }
+	    productionPlanner.updateKubeConfigs();
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+		transactionTemplate.setReadOnly(true);
+		// get the order id
+		final Long orderId = transactionTemplate.execute((status) -> {
+			ProcessingOrder orderLoc = RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(MISSION_CODE, ORDER_L2);
+			return orderLoc.getId();
+		});
+		ProcessingOrder order = reloadOrder(transactionTemplate, orderId);
+		final ProcessingFacility facility = transactionTemplate.execute((status) -> {
+			return RepositoryService.getFacilityRepository().findByName(FACILITY_NAME);
+		});	
+		PlannerResultMessage resMsg;
+		transactionTemplate.setReadOnly(false);		
+
+		// release the order
+		order = approveOrder(transactionTemplate, orderId, OrderState.APPROVED);
+		order = planOrder(transactionTemplate, orderId, OrderState.PLANNED);
+		order = resumeOrder(transactionTemplate, orderId, OrderState.RELEASED, OrderState.RELEASING, OrderState.RUNNING);
+		logOrderState(transactionTemplate, orderId);
+
+		// check illegal actions
+		order = approveOrder(transactionTemplate, orderId, OrderState.RELEASED, OrderState.RELEASING, OrderState.RUNNING);
+		order = planOrder(transactionTemplate, orderId, OrderState.RELEASED, OrderState.RELEASING, OrderState.RUNNING);
+		order = resumeOrder(transactionTemplate, orderId, OrderState.RELEASED, OrderState.RELEASING, OrderState.RUNNING);
+		// order = suspendOrder(transactionTemplate, orderId, OrderState.RELEASED, OrderState.RELEASING, OrderState.RUNNING);
+		order = retryOrder(transactionTemplate, orderId, OrderState.RELEASED, OrderState.RELEASING, OrderState.RUNNING);
+		order = cancelOrder(transactionTemplate, orderId, OrderState.RELEASED, OrderState.RELEASING, OrderState.RUNNING);
+		order = resetOrder(transactionTemplate, orderId, OrderState.RELEASED, OrderState.RELEASING, OrderState.RUNNING);
+		order = closeOrder(transactionTemplate, orderId, OrderState.RELEASED, OrderState.RELEASING, OrderState.RUNNING);
+			
+		// suspend is possible
+		order = suspendOrder(transactionTemplate, orderId, OrderState.PLANNED, OrderState.SUSPENDING);
+		logOrderState(transactionTemplate, orderId);
+		
+		// Cancel the order
+		order = cancelOrder(transactionTemplate, orderId, OrderState.FAILED);
+		logOrderState(transactionTemplate, orderId);
+
+		// check illegal actions
+		order = approveOrder(transactionTemplate, orderId, OrderState.FAILED);
+		order = planOrder(transactionTemplate, orderId, OrderState.FAILED);
+		order = resumeOrder(transactionTemplate, orderId, OrderState.FAILED);
+		order = suspendOrder(transactionTemplate, orderId, OrderState.FAILED);
+		// order = retryOrder(transactionTemplate, orderId, OrderState.FAILED);
+		order = cancelOrder(transactionTemplate, orderId, OrderState.FAILED);
+		order = resetOrder(transactionTemplate, orderId, OrderState.FAILED);
+		// order = closeOrder(transactionTemplate, orderId, OrderState.FAILED);
+		
+		// retry the order
+		order = retryOrder(transactionTemplate, orderId, OrderState.PLANNED);
+		logOrderState(transactionTemplate, orderId);
+
+		// Cancel the order
+		order = cancelOrder(transactionTemplate, orderId, OrderState.FAILED);
+		logOrderState(transactionTemplate, orderId);
+		
+		// close the order		
+		order = closeOrder(transactionTemplate, orderId, OrderState.CLOSED);
+
+		 // check illegal actions
+		 order = approveOrder(transactionTemplate, orderId, OrderState.CLOSED);
+		 order = planOrder(transactionTemplate, orderId, OrderState.CLOSED);
+		 order = resumeOrder(transactionTemplate, orderId, OrderState.CLOSED);
+		 order = suspendOrder(transactionTemplate, orderId, OrderState.CLOSED);
+		 order = retryOrder(transactionTemplate, orderId, OrderState.CLOSED);
+		 order = cancelOrder(transactionTemplate, orderId, OrderState.CLOSED);
+		 order = resetOrder(transactionTemplate, orderId, OrderState.CLOSED);
+		 order = closeOrder(transactionTemplate, orderId, OrderState.CLOSED);		
+
+		// delete the order
+		
+		resMsg = deleteOrder(transactionTemplate, orderId);
 		
 		try {
 			logger.debug(">>> run one cycle");
@@ -225,4 +331,249 @@ public class PlannerTest {
 		}
 	}
 
+
+	/**
+	 * Test for Plan -> Release -> Suspend -> Release -> Cancel
+	 */
+	@Test
+	@Sql("/ptm.sql")
+	public void testJob() {
+		logger.debug(">>> Starting testPlanReleaseDelete()");
+		// stop dispatcher cycle first
+		productionPlanner.stopDispatcher();
+//	    List<Map<String, Object>> tableNames = jdbcTemplate.queryForList("SHOW TABLES");
+//	    // Iterate over the table names
+//	    for (Map<String, Object> tableName : tableNames) {
+//	    	System.out.println(tableName.get("TABLE_NAME").toString());
+//	    	List<Map<String, Object>> rows = jdbcTemplate.queryForList("SELECT * FROM " + tableName.get("TABLE_NAME").toString());
+//	    	// Print the results to the console
+//	    	for (Map<String, Object> row : rows) {
+//	    		System.out.println(row);
+//	    	}
+//	    }
+	    productionPlanner.updateKubeConfigs();
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+		transactionTemplate.setReadOnly(true);
+		// get the order id
+		final Long orderId = transactionTemplate.execute((status) -> {
+			ProcessingOrder orderLoc = RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(MISSION_CODE, ORDER_L2);
+			return orderLoc.getId();
+		});
+		ProcessingOrder order = reloadOrder(transactionTemplate, orderId);
+		final ProcessingFacility facility = transactionTemplate.execute((status) -> {
+			return RepositoryService.getFacilityRepository().findByName(FACILITY_NAME);
+		});	
+		PlannerResultMessage resMsg;
+		transactionTemplate.setReadOnly(false);
+		order = approveOrder(transactionTemplate, orderId, OrderState.APPROVED);
+		order = planOrder(transactionTemplate, orderId, OrderState.PLANNED);
+		final Long jobId = transactionTemplate.execute((status) -> {
+			ProcessingOrder orderLoc = RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(MISSION_CODE, ORDER_L2);
+			Job job = null;
+			for (Job j : orderLoc.getJobs()) {
+				job = j;
+				break;
+			}
+			return job.getId();
+		});
+		
+		// job is in state PLANNED
+		// resume job
+		resumeJob(transactionTemplate, jobId, JobState.RELEASED, JobState.STARTED);
+		
+		// check job actions
+		resumeJob(transactionTemplate, jobId, JobState.RELEASED, JobState.STARTED);
+	}
+	private ProcessingOrder testResult(TransactionTemplate transactionTemplate, Long orderId, PlannerResultMessage resMsg, OrderState expectedState) {
+		ProcessingOrder order = reloadOrder(transactionTemplate, orderId);
+		return testResultPrim(order, resMsg, new OrderState[] {expectedState});
+	};
+	private ProcessingOrder testResultPrim(ProcessingOrder order, PlannerResultMessage resMsg, 
+			 OrderState... expectedStates) {
+		int i = 0;
+		for (i = 0; i < expectedStates.length; i++) {
+			if (order.getOrderState().equals(expectedStates[i])) {
+				i = -1;
+				break;
+			}
+		}
+		if (i < 0) {
+			
+		} else {
+			assertEquals("Order state error", expectedStates[0], order.getOrderState());
+		}
+		return order;
+	};
+	private Job testResultPrim(Job job, PlannerResultMessage resMsg, 
+			 JobState... expectedStates) {
+		int i = 0;
+		for (i = 0; i < expectedStates.length; i++) {
+			if (job.getJobState().equals(expectedStates[i])) {
+				i = -1;
+				break;
+			}
+		}
+		if (i < 0) {
+			
+		} else {
+			assertEquals("Order state error", expectedStates[0], job.getJobState());
+		}
+		return job;
+	};
+	private JobStep testResultPrim(JobStep jobStep, PlannerResultMessage resMsg, 
+			 JobStepState... expectedStates) {
+		int i = 0;
+		for (i = 0; i < expectedStates.length; i++) {
+			if (jobStep.getJobStepState().equals(expectedStates[i])) {
+				i = -1;
+				break;
+			}
+		}
+		if (i < 0) {
+			
+		} else {
+			assertEquals("Order state error", expectedStates[0], jobStep.getJobStepState());
+		}
+		return jobStep;
+	};
+	
+
+	private ProcessingOrder approveOrder(TransactionTemplate transactionTemplate, Long orderId, OrderState... orderStates) {
+		transactionTemplate.setReadOnly(false);
+		final ProcessingOrder order = transactionTemplate.execute((status) -> {
+			ProcessingOrder orderLoc = null;
+			Optional<ProcessingOrder> optOrder = RepositoryService.getOrderRepository().findById(orderId);
+			if (optOrder != null) {
+				orderLoc = optOrder.get();
+				PlannerResultMessage resMsg = orderUtil.approve(orderLoc);
+				orderLoc = RepositoryService.getOrderRepository().findById(orderId).get();
+				testResultPrim(orderLoc, resMsg, orderStates);
+				return orderLoc;
+			}
+			return null;
+		});		
+		return order;
+	}
+	private ProcessingOrder cancelOrder(TransactionTemplate transactionTemplate, Long orderId, OrderState... orderStates) {
+		transactionTemplate.setReadOnly(false);
+		final ProcessingOrder order = transactionTemplate.execute((status) -> {
+			ProcessingOrder orderLoc = null;
+			Optional<ProcessingOrder> optOrder = RepositoryService.getOrderRepository().findById(orderId);
+			if (optOrder != null) {
+				orderLoc = optOrder.get();
+				PlannerResultMessage resMsg = orderUtil.cancel(orderLoc);
+				orderLoc = RepositoryService.getOrderRepository().findById(orderId).get();
+				testResultPrim(orderLoc, resMsg, orderStates);
+				return orderLoc;
+			}
+			return null;
+		});		
+		return order;
+	}
+	private ProcessingOrder closeOrder(TransactionTemplate transactionTemplate, Long orderId, OrderState... orderStates) {
+		transactionTemplate.setReadOnly(false);
+		PlannerResultMessage resMsg = orderUtil.close(orderId);
+		ProcessingOrder order = reloadOrder(transactionTemplate, orderId);
+		testResultPrim(order, resMsg, orderStates);
+		return order;
+	}
+	private ProcessingOrder planOrder(TransactionTemplate transactionTemplate, Long orderId, OrderState... orderStates) {
+		transactionTemplate.setReadOnly(false);
+		final ProcessingFacility facility = transactionTemplate.execute((status) -> {
+			return RepositoryService.getFacilityRepository().findByName(FACILITY_NAME);
+		});	
+		PlannerResultMessage resMsg = orderUtil.plan(orderId, facility, true);
+		ProcessingOrder order = reloadOrder(transactionTemplate, orderId);
+		testResultPrim(order, resMsg, orderStates);
+		return order;
+	}
+	private PlannerResultMessage deleteOrder(TransactionTemplate transactionTemplate, Long orderId) {
+		transactionTemplate.setReadOnly(false);
+		final PlannerResultMessage msg = transactionTemplate.execute((status) -> {
+			ProcessingOrder orderLoc = null;
+			Optional<ProcessingOrder> optOrder = RepositoryService.getOrderRepository().findById(orderId);
+			if (optOrder != null) {
+				orderLoc = optOrder.get();
+				PlannerResultMessage resMsg = orderUtil.delete(orderLoc);
+				assertEquals("Delete order failed.", resMsg.getSuccess(), true);
+				return resMsg;
+			}
+			return null;
+		});		
+		return msg;
+	}
+	private ProcessingOrder resetOrder(TransactionTemplate transactionTemplate, Long orderId, OrderState... orderStates) {
+		transactionTemplate.setReadOnly(false);
+		final ProcessingOrder order = transactionTemplate.execute((status) -> {
+			ProcessingOrder orderLoc = null;
+			Optional<ProcessingOrder> optOrder = RepositoryService.getOrderRepository().findById(orderId);
+			if (optOrder != null) {
+				orderLoc = optOrder.get();
+				PlannerResultMessage resMsg = orderUtil.reset(orderLoc);
+				orderLoc = RepositoryService.getOrderRepository().findById(orderId).get();
+				testResultPrim(orderLoc, resMsg, orderStates);
+				return orderLoc;
+			}
+			return null;
+		});		
+		return order;
+	}
+	private ProcessingOrder resumeOrder(TransactionTemplate transactionTemplate, Long orderId, OrderState... orderStates) {
+		transactionTemplate.setReadOnly(false);
+		final ProcessingOrder orderX = transactionTemplate.execute((status) -> {
+			ProcessingOrder orderLoc = null;
+			Optional<ProcessingOrder> optOrder = RepositoryService.getOrderRepository().findById(orderId);
+			if (optOrder != null) {
+				orderLoc = optOrder.get();
+				return orderLoc;
+			}
+			return null;
+		});	
+		PlannerResultMessage resMsg = orderUtil.resume(orderX, true, null, null);
+		ProcessingOrder order = reloadOrder(transactionTemplate, orderId);
+		testResultPrim(order, resMsg, orderStates);
+		return order;
+	}
+	private ProcessingOrder retryOrder(TransactionTemplate transactionTemplate, Long orderId, OrderState... orderStates) {
+		transactionTemplate.setReadOnly(false);
+		final ProcessingOrder order = transactionTemplate.execute((status) -> {
+			ProcessingOrder orderLoc = null;
+			Optional<ProcessingOrder> optOrder = RepositoryService.getOrderRepository().findById(orderId);
+			if (optOrder != null) {
+				orderLoc = optOrder.get();
+				PlannerResultMessage resMsg = orderUtil.retry(orderLoc);
+				orderLoc = RepositoryService.getOrderRepository().findById(orderId).get();
+				testResultPrim(orderLoc, resMsg, orderStates);
+				return orderLoc;
+			}
+			return null;
+		});		
+		return order;
+	}
+	private ProcessingOrder suspendOrder(TransactionTemplate transactionTemplate, Long orderId, OrderState... orderStates) {
+		transactionTemplate.setReadOnly(false);
+		PlannerResultMessage resMsg = orderUtil.suspend(orderId, true);
+		ProcessingOrder order = reloadOrder(transactionTemplate, orderId);
+		testResultPrim(order, resMsg, orderStates);
+		return order;
+	}
+	
+
+	private Job resumeJob(TransactionTemplate transactionTemplate, Long jobId, JobState... jobStates) {
+		transactionTemplate.setReadOnly(false);
+		final Job job = transactionTemplate.execute((status) -> {
+			Job jobLoc = null;
+			Optional<Job> optJob = RepositoryService.getJobRepository().findById(jobId);
+			if (optJob != null) {
+				jobLoc = optJob.get();
+				PlannerResultMessage resMsg = jobUtil.resume(jobLoc);
+				jobLoc = RepositoryService.getJobRepository().findById(jobId).get();
+				testResultPrim(jobLoc, resMsg, jobStates);
+				return jobLoc;
+			}
+			return null;
+		});		
+		return job;
+	}
 }
