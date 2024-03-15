@@ -25,7 +25,7 @@
 		<raml-path>src/main/resources/raml/storage-mgr-api.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.storagemgr.rest</raml-base-package>
 
-        <nimbus.jwt.version>9.10</nimbus.jwt.version>
+        <nimbus.jwt.version>9.37.2</nimbus.jwt.version>
         <awssdk1.version>1.12.557</awssdk1.version>
         <awssdk2.version>2.20.154</awssdk2.version>
 	</properties>
