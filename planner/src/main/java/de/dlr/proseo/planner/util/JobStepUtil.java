@@ -423,32 +423,16 @@ public class JobStepUtil {
 		if (js != null) {
 			switch (js.getJobStepState()) {
 			case PLANNED:
-			case READY:
-			case WAITING_INPUT:
 				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.FAILED);
 				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
 				em.merge(js);
 				answer.setMessage(PlannerMessage.JOBSTEP_CANCELED);
 				break;
+			case READY:
+			case WAITING_INPUT:
 			case RUNNING:
-				Boolean deleted = false;
-					KubeConfig kc = productionPlanner.getKubeConfig(js.getJob().getProcessingFacility().getName());
-					if (kc != null) {
-						KubeJob kj = kc.getKubeJob(ProductionPlanner.jobNamePrefix + js.getId());
-						if (kj != null) {
-							deleted = kc.deleteJob(kj.getJobName());
-						}
-				}
-				if (deleted) {
-					js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.FAILED);
-					js.incrementVersion();
-					RepositoryService.getJobStepRepository().save(js);
-					em.merge(js);
-					answer.setMessage(PlannerMessage.JOBSTEP_CANCELED);
-				} else {
-					answer.setMessage(PlannerMessage.JOBSTEP_ALREADY_RUNNING);
-				}
+				answer.setMessage(PlannerMessage.JOBSTEP_ALREADY_RUNNING);
 				break;
 			case COMPLETED:
 				answer.setMessage(PlannerMessage.JOBSTEP_ALREADY_COMPLETED);
@@ -536,13 +520,13 @@ public class JobStepUtil {
 		if (js != null) {
 			switch (js.getJobStepState()) {
 			case PLANNED:
+			case WAITING_INPUT:
 			case READY:
 			case RUNNING:
 			case COMPLETED:
 			case CLOSED:
 				answer.setMessage(PlannerMessage.JOBSTEP_COULD_NOT_RETRY);
 				break;
-			case WAITING_INPUT:
 			case FAILED:
 				Product jsp = js.getOutputProduct();
 				if (jsp != null) {
