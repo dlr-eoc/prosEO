@@ -4,6 +4,7 @@
 .settings/
 .metadata
 .factorypath
+**/.factorypath
 bin/
 .vscode
 **/*~
