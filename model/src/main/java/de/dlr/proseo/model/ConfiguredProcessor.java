@@ -8,6 +8,7 @@ package de.dlr.proseo.model;
 import java.util.Objects;
 import java.util.UUID;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Index;
@@ -37,6 +38,8 @@ public class ConfiguredProcessor extends PersistentObject {
 	/**
 	 * A universally unique identifier (UUID) for this configured processor to identify it as "workflow" on ESA's ODPRIP API.
 	 */
+	// TODO Re-test column definition after migration to Spring Boot 3 / Hibernate 6 and remove if possible
+	@Column(nullable = false, columnDefinition = "uuid")
 	private UUID uuid;
 	
 	/** The processor version */

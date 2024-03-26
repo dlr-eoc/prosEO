@@ -64,7 +64,8 @@ public class Product extends PersistentObject {
 	/**
 	 * Universally unique product identifier (Production Interface Delivery Point Specification, sec. 3.1)
 	 */
-	@Column(nullable = false)
+	// TODO Re-test column definition after migration to Spring Boot 3 / Hibernate 6 and remove if possible
+	@Column(nullable = false, columnDefinition = "uuid")
 	private UUID uuid;
 	
 	/** Product class this products instantiates */

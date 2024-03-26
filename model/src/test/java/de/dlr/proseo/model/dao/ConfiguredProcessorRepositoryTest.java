@@ -7,6 +7,7 @@ package de.dlr.proseo.model.dao;
 
 import static org.junit.Assert.*;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.After;
@@ -28,7 +29,6 @@ import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.ProcessorClass;
-import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;
 
@@ -102,6 +102,7 @@ public class ConfiguredProcessorRepositoryTest {
 		ConfiguredProcessor confProc = new ConfiguredProcessor();
 		confProc.setIdentifier(TEST_IDENTIFIER);
 		confProc.setUuid(UUID.randomUUID());
+		logger.debug("Created UUID " + confProc.getUuid());
 		confProc.setProcessor(p);
 		confProc = RepositoryService.getConfiguredProcessorRepository().save(confProc);
 		p.getConfiguredProcessors().add(confProc);
@@ -112,7 +113,15 @@ public class ConfiguredProcessorRepositoryTest {
 		
 		logger.info("OK: Test for findByIdentifier completed");
 		
+		// Test findAll
+		List<ConfiguredProcessor> listOfConfProcs = RepositoryService.getConfiguredProcessorRepository().findAll();
+		assertTrue("List is empty", 0 < listOfConfProcs.size());
+		confProc = listOfConfProcs.get(0);
+		
+		logger.info("OK: Test for findAll completed");
+		
 		// Test findByUuid
+		logger.debug("Looking for configured processor with UUID " + confProc.getUuid());
 		confProc = RepositoryService.getConfiguredProcessorRepository().findByUuid(confProc.getUuid());
 		assertNotNull("Find by UUID failed for ConfiguredProcessor", confProc);
 		

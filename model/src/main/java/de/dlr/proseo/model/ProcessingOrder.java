@@ -68,7 +68,8 @@ public class ProcessingOrder extends PersistentObject {
 	private String identifier;
 	
 	/** The universally unique identifier (UUID) for this order */
-	@Column(nullable = false)
+	// TODO Re-test column definition after migration to Spring Boot 3 / Hibernate 6 and remove if possible
+	@Column(nullable = false, columnDefinition = "uuid")
 	private UUID uuid;
 	
 	/**
