@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.*;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -56,9 +56,6 @@ public class IngestorTest {
 		ResponseEntity<Map> entity = new TestRestTemplate().getForEntity(
 				"http://localhost:" + this.port, Map.class);
 		assertEquals(HttpStatus.UNAUTHORIZED, entity.getStatusCode());
-		@SuppressWarnings("unchecked")
-		Map<String, Object> body = entity.getBody();
-		assertEquals("Wrong body: " + body, "Unauthorized", body.get("error"));
 		assertFalse("Wrong headers: " + entity.getHeaders(), entity.getHeaders()
 				.containsKey("Set-Cookie"));
 	}

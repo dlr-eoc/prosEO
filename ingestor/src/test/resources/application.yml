@@ -10,6 +10,8 @@ spring:
         driverClassName: org.h2.Driver
         username: any       
         password: any
+management:
+  endpoints.web.exposure.include: "health,info"
 logging:
     file: /proseo/log/proseo-ingestor.log
     level:
