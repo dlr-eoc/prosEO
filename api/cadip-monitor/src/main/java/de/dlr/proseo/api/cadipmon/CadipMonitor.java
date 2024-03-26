@@ -1490,7 +1490,7 @@ public class CadipMonitor extends BaseMonitor {
 							.encodeToString((config.getCadipUser() + ":" + config.getCadipPassword()).getBytes()));
 				}
 			}
-		}).doAfterResponse((response, connection) -> {
+		}).doAfterResponseSuccess((response, connection) -> {
 			if (logger.isTraceEnabled()) {
 				logger.trace("... response code: {}", response.status());
 				logger.trace("... response redirections: {}", Arrays.asList(response.redirectedFrom()));
