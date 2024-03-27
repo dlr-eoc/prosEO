@@ -62,18 +62,21 @@ public class ProductArchiveControllerImpl implements ArchiveController {
 	/**
 	 * List of all product archives with no search criteria
 	 *
-	 * @param code the unique product archive name
+	 * @param name 			the product archive name
+	 * @param archiveType	the product archive type
+	 * @param recordFrom    first record of filtered and ordered result to return
+	 * @param recordTo      last record of filtered and ordered result to return
 	 * @return a response entity with either a list of product archives and HTTP status OK or an error message and an HTTP status
 	 *         indicating failure
 	 */
 	@Override
-	public ResponseEntity<List<RestProductArchive>> getArchives(String code) {
+	public ResponseEntity<List<RestProductArchive>> getArchives(String name, String archiveType, Integer recordFrom, Integer recordTo) {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getArchives( {})", code);
+			logger.trace(">>> getArchives( {}, {}, {}, {})", name, archiveType, recordFrom, recordTo);
 
 		try {
-			return new ResponseEntity<>(productArchiveManager.getArchivesByCode(code), HttpStatus.OK);
+			return new ResponseEntity<>(productArchiveManager.getArchives(name, archiveType, recordFrom, recordTo), HttpStatus.OK);
 
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
@@ -163,6 +166,25 @@ public class ProductArchiveControllerImpl implements ArchiveController {
 
 		} catch (ConcurrentModificationException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
+		}
+	}
+
+	/**
+	 * Count the product archives matching the specified name, archive type.
+	 *
+	 * @param name         the product archive name
+	 * @param archiveType      the product archive type
+	 * @return the number of matching archives as a String (may be zero) or HTTP status "FORBIDDEN" and an error message */
+	@Override
+	public ResponseEntity<String> countArchives(String name, String archiveType) {
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> countArchives({}, {})", name, archiveType);
+
+		try {
+			return new ResponseEntity<>(productArchiveManager.countArchives(name, archiveType), HttpStatus.OK);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
