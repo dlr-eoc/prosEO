@@ -59,12 +59,23 @@ resourceTypes:
   type: standard
   get:
     description: |
-      List of all product archives with no search criteria
+      List of product archives with search criteria
     displayName: getArchives
     queryParameters:
-      code?: 
+      name?: 
         type: string
-        description: the unique product archive name
+        description: the product archive name
+      archiveType?: 
+        type: string
+        description: the product archive type   
+      recordFrom?: 
+        type: integer
+        format: int32
+        description: first record of filtered and ordered result to return
+      recordTo?:
+        type: integer
+        format: int32
+        description: last record of filtered and ordered result to return
     responses:
       200:
         body:
@@ -85,6 +96,23 @@ resourceTypes:
           application/json:
             type: RestProductArchive
             example: !include ../../../../../../model/src/main/resources/raml/examples/productarchive.json
+            
+  /count:
+    get:
+      description: |
+        Count the product archive matching the specified name, archive type.
+      displayName: countArchives
+      queryParameters:
+        name?: 
+          type: string
+          description: the product archive name
+        archiveType?: 
+          type: string
+          description: the product archive type
+      responses:
+        200:
+          body:
+            text/plain:
   /{id}:
     uriParameters:
       id:
