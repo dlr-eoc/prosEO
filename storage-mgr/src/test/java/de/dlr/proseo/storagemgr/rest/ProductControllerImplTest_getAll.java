@@ -19,10 +19,10 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import de.dlr.proseo.storagemgr.StorageManager;
-import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.StorageProvider;
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
-import de.dlr.proseo.storagemgr.version2.StorageProvider;
-import de.dlr.proseo.storagemgr.version2.model.StorageType;
+import de.dlr.proseo.storagemgr.model.StorageType;
 
 /**
  * Mock Mvc test for Product Controller
@@ -57,15 +57,13 @@ public class ProductControllerImplTest_getAll {
 	 * @return products string[]
 	 */
 	@Test
-	public void testGet_v2Posix() throws Exception {
+	public void testGet_posix() throws Exception {
 
 		StorageType storageType = StorageType.POSIX;
-		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 
 		getProductFiles(storageType);
 
-		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
@@ -78,57 +76,13 @@ public class ProductControllerImplTest_getAll {
 	 * @return products string[]
 	 */
 	@Test
-	public void testGet_v1Posix() throws Exception {
-
-		StorageType storageType = StorageType.POSIX;
-		storageProvider.loadVersion1();
-		storageProvider.setStorage(storageType);
-
-		getProductFiles(storageType);
-
-		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-
-	/**
-	 * Get products with given directory prefix
-	 * 
-	 * GET /products storageType="POSIX"&prefix="/.."
-	 * 
-	 * @return products string[]
-	 */
-	@Test
-	public void testGet_v2S3() throws Exception {
+	public void testGet_S3() throws Exception {
 
 		StorageType storageType = StorageType.S3;
-		storageProvider.loadVersion2();
 		storageProvider.setStorage(storageType);
 
 		getProductFiles(storageType);
 
-		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-
-	/**
-	 * Get products with given directory prefix
-	 * 
-	 * GET /products storageType="POSIX"&prefix="/.."
-	 * 
-	 * @return products string[]
-	 */
-	@Test
-	public void testGet_v1S3() throws Exception {
-
-		StorageType storageType = StorageType.S3;
-		storageProvider.loadVersion1();
-		storageProvider.setStorage(storageType);
-
-		getProductFiles(storageType);
-
-		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
@@ -158,7 +112,7 @@ public class ProductControllerImplTest_getAll {
 		TestUtils.printMethodName(this, testName);
 
 		// show storage files
-		StorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
+		BaseStorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
 
 		// HTTP Get files from storage
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING)

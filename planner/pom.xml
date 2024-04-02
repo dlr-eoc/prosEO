@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo</artifactId>
-		<version>0.9.5</version>
+		<version>1.0.1</version>
 	</parent>
 
 	<artifactId>proseo-planner</artifactId>
@@ -23,7 +23,6 @@
 	</organization>
 
 	<properties>
-		<module.version>0.9.5</module.version>
 		<kubernetes.client.version>12.0.1</kubernetes.client.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/planner-api.raml</raml-path>
@@ -46,15 +45,16 @@
 		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-test</artifactId>
+      <scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-        </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+    </dependency>
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
@@ -75,7 +75,7 @@
 		<dependency>
 			<groupId>de.dlr.proseo</groupId>
 			<artifactId>proseo-model</artifactId>
-			<version>0.9.5</version>
+			<version>1.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>de.dlr.proseo</groupId>
@@ -106,6 +106,11 @@
             <groupId>com.phoenixnap.oss</groupId>
             <artifactId>springmvc-raml-plugin</artifactId>
             <type>maven-plugin</type>
+        </dependency>
+        <dependency>
+        	<groupId>de.dlr.proseo</groupId>
+        	<artifactId>proseo-common</artifactId>
+        	<version>1.0.1</version>
         </dependency>
 	</dependencies>
 
@@ -187,14 +192,14 @@
                             	<exec executable="docker" failonerror="true">
                                     <arg value="build" />
                                     <arg value="-t" />
-                                    <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
+                                    <arg value="${docker.registry}/${project.build.finalName}:${project.version}" />
                                     <arg value="--platform" />
                                     <arg value="${project.build.platform}" />
                                     <arg value="." />
                                 </exec>
                             	<exec executable="docker" failonerror="true">
                                     <arg value="push" />
-                                    <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
+                                    <arg value="${docker.registry}/${project.build.finalName}:${project.version}" />
                                 </exec>
                             </target>
                         </configuration>

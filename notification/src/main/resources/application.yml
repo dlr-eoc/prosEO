@@ -4,17 +4,17 @@ spring:
         request-timeout: -1
     main.allow-bean-definition-overriding: true
 logging:
+    file: /proseo/log/proseo-notification.log
     level:
         root: INFO
         de.dlr.proseo: TRACE
         org.hibernate.engine.jdbc.env.internal: WARN
-        org.springframework.security: TRACE
+        #org.springframework.security: TRACE
 proseo:
     http.timeout: 10000
     notification:
-        url: http://192.168.20.155:8099/proseo/notification/v0.1
         subject: "Message from prosEO"
-        contentType: "text/html"
+        contentType: "text/plain"
         mail:
             host: "mail.host"
             port: 587

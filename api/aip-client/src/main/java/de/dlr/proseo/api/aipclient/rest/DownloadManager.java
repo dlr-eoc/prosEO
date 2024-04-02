@@ -81,7 +81,6 @@ import de.dlr.proseo.api.aipclient.rest.model.RestParameter;
 import de.dlr.proseo.api.aipclient.rest.model.RestProduct;
 import de.dlr.proseo.api.aipclient.rest.model.RestProductFile;
 import de.dlr.proseo.basewrap.MD5Util;
-import de.dlr.proseo.basewrap.BaseWrapper.WrapperException;
 import de.dlr.proseo.interfaces.rest.model.RestMessage;
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
@@ -181,8 +180,10 @@ public class DownloadManager {
 	/** Lookup table for products currently being downloaded from some archive */
 	private static ConcurrentSkipListSet<String> productDownloads = new ConcurrentSkipListSet<>();
 
-	/** Semaphore to limit number of parallel requests to archive */
-	private static Semaphore semaphore = null;
+	/** Semaphore to limit number of parallel order requests to archive */
+	private static Semaphore orderSemaphore = null;
+	/** Semaphore to limit number of parallel download requests to archive */
+	private static Semaphore downloadSemaphore = null;
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(DownloadManager.class);
@@ -210,8 +211,8 @@ public class DownloadManager {
 
 		try {
 			// Create a request
-			WebClient webClient = WebClient.create(config.getNotificationUrl());
-			RequestBodySpec request = webClient.post().accept(MediaType.TEXT_PLAIN);
+			WebClient webClient = WebClient.create(config.getNotificationUrl() + "/notify");
+			RequestBodySpec request = webClient.post().contentType(MediaType.APPLICATION_JSON).accept(MediaType.ALL);
 
 			// Build message body
 			RestMessage newMessage = new RestMessage(
@@ -386,6 +387,48 @@ public class DownloadManager {
 		}
 
 		return productList;
+	}
+	
+	/**
+	 * Check the given list of products against another product and return the product, which matches the other product and
+	 * has a product file at the given processing facility; it can be assumed that all products in the list are of the same
+	 * mission and product class as the other product (due to selection by findAllProductsBySensingTime()).
+	 * 
+	 * @param modelProducts the list of products to check
+	 * @param restProduct the product to check against
+	 * @param processingFacility the processing facility, at which the product file shall be present
+	 * @return the product found converted to a REST product or null, if no such product exists
+	 */
+	private RestProduct findLocalProductAtFacility(List<Product> modelProducts, RestProduct restProduct, ProcessingFacility processingFacility) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> findLocalProductAtFacility(Product[{}], {}, {})",
+					(null == modelProducts ? "MISSING" : modelProducts.size()),
+					(null == restProduct ? "null" : restProduct.getProductClass()),
+					(null == processingFacility ? "null" : processingFacility.getName()));
+		
+		// Get sensing start and stop times and generation time to check against
+		Instant sensingStartTime = OrbitTimeFormatter.parseDateTime(restProduct.getSensingStartTime());
+		Instant sensingStopTime = OrbitTimeFormatter.parseDateTime(restProduct.getSensingStopTime());
+		Instant generationTime = OrbitTimeFormatter.parseDateTime(restProduct.getGenerationTime());
+		
+		// Travel through the list of products
+		for (Product modelProduct: modelProducts) {
+			if (sensingStartTime.equals(modelProduct.getSensingStartTime())
+					&& sensingStopTime.equals(modelProduct.getSensingStopTime())
+					&& generationTime.equals(modelProduct.getGenerationTime())) {
+				
+				// Candidate product found, check product files
+				for (ProductFile modelProductFile: modelProduct.getProductFile()) {
+					if (modelProductFile.getProcessingFacility().equals(processingFacility)) {
+						return toRestProduct(modelProduct);
+					}
+				}
+				
+			}
+		}
+
+		// No matching product or product file found
+		return null;
 	}
 
 	/**
@@ -785,10 +828,10 @@ public class DownloadManager {
 		
 		// Check whether parallel execution is allowed
 		try {
-			semaphore.acquire();
+			downloadSemaphore.acquire();
 			if (logger.isDebugEnabled())
 				logger.debug("... file download semaphore {} acquired, {} permits remaining",
-						semaphore, semaphore.availablePermits());
+						downloadSemaphore, downloadSemaphore.availablePermits());
 		} catch (InterruptedException e) {
 			throw new IOException(logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString()));
 		}
@@ -807,10 +850,10 @@ public class DownloadManager {
 			throw new IOException(message);
 		} finally {
 			// Release parallel thread
-			semaphore.release();
+			downloadSemaphore.release();
 			if (logger.isDebugEnabled())
 				logger.debug("... file download semaphore {} released, {} permits now available",
-						semaphore, semaphore.availablePermits());
+						downloadSemaphore, downloadSemaphore.availablePermits());
 		}
 
 		if (null == createResponse) {
@@ -986,53 +1029,76 @@ public class DownloadManager {
 		StringBuilder requestUrl = new StringBuilder(ODATA_ENTITY_PRODUCTS);
 		requestUrl.append('(').append(productUuid).append(')').append('/').append(ODATA_CSC_ORDER);
 
-		// Start the product order request
-		Map<?, ?> response;
+		// Check whether parallel execution is allowed
 		try {
-			response = createOrder(archive, requestUrl.toString());
-		} catch (IOException e) {
-			// Already logged
-			throw e;
-		} catch (Exception e) {
+			orderSemaphore.acquire();
 			if (logger.isDebugEnabled())
-				logger.debug("Stack trace: ", e);
-			throw new IOException(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass().getName() + "/" + e.getMessage()));
+				logger.debug("... archive order semaphore {} acquired, {} permits remaining",
+						orderSemaphore, orderSemaphore.availablePermits());
+		} catch (InterruptedException e) {
+			throw new IOException(logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString()));
 		}
 
-		String orderUuid = response.get(ODATA_PROPERTY_ID).toString();
-		String orderStatus = response.get(ODATA_PROPERTY_STATUS).toString();
-
-		// Wait for the product order to complete
-		while (!ORDER_STATUS_COMPLETED.equals(orderStatus)) {
-			logger.log(AipClientMessage.WAITING_FOR_PRODUCT_ORDER, orderUuid, orderStatus);
-
-			try {
-				Thread.sleep(config.getOrderCheckInterval());
-			} catch (InterruptedException e) {
-				logger.log(AipClientMessage.ORDER_WAIT_INTERRUPTED, orderUuid);
-				throw e;
-			}
-
-			// Check order status
-			List<ClientEntity> orderList = queryArchive(archive, ODATA_ENTITY_ORDERS, ODATA_FILTER_ID + orderUuid, true);
+		try {
 			
-			if (null == orderList || 1 != orderList.size()) {
-				throw new RuntimeException(logger.log(AipClientMessage.INVALID_ODATA_RESPONSE, orderList, archive.getCode()));
-			}
-			ClientEntity order = orderList.get(0);
-			
-			if (logger.isTraceEnabled()) logger.trace("... evaluating result object: {}", order);
-
+			// Start the product order request
+			Map<?, ?> response;
 			try {
-				orderUuid = order.getProperty(ODATA_PROPERTY_ID).getPrimitiveValue().toCastValue(String.class);
-				orderStatus = order.getProperty(ODATA_PROPERTY_STATUS).getPrimitiveValue().toCastValue(String.class);
 				
-				if (logger.isTraceEnabled()) logger.trace("... found order UUID {} and status {}", orderUuid, orderStatus);
-			} catch (NullPointerException | EdmPrimitiveTypeException e) {
-				throw new IOException(logger.log(AipClientMessage.ORDER_DATA_MISSING, order.toString()));
+				response = createOrder(archive, requestUrl.toString());
+				
+			} catch (IOException e) {
+				// Already logged
+				throw e;
+			} catch (Exception e) {
+				if (logger.isDebugEnabled())
+					logger.debug("Stack trace: ", e);
+				throw new IOException(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass().getName() + "/" + e.getMessage()));
 			}
+
+			String orderUuid = response.get(ODATA_PROPERTY_ID).toString();
+			String orderStatus = response.get(ODATA_PROPERTY_STATUS).toString();
+
+			// Wait for the product order to complete
+			while (!ORDER_STATUS_COMPLETED.equals(orderStatus)) {
+				logger.log(AipClientMessage.WAITING_FOR_PRODUCT_ORDER, orderUuid, orderStatus);
+
+				try {
+					Thread.sleep(config.getOrderCheckInterval());
+				} catch (InterruptedException e) {
+					logger.log(AipClientMessage.ORDER_WAIT_INTERRUPTED, orderUuid);
+					throw e;
+				}
+
+				// Check order status
+				List<ClientEntity> orderList = queryArchive(archive, ODATA_ENTITY_ORDERS, ODATA_FILTER_ID + orderUuid, true);
+				
+				if (null == orderList || 1 != orderList.size()) {
+					throw new RuntimeException(logger.log(AipClientMessage.INVALID_ODATA_RESPONSE, orderList, archive.getCode()));
+				}
+				ClientEntity order = orderList.get(0);
+				
+				if (logger.isTraceEnabled()) logger.trace("... evaluating result object: {}", order);
+
+				try {
+					orderUuid = order.getProperty(ODATA_PROPERTY_ID).getPrimitiveValue().toCastValue(String.class);
+					orderStatus = order.getProperty(ODATA_PROPERTY_STATUS).getPrimitiveValue().toCastValue(String.class);
+					
+					if (logger.isTraceEnabled()) logger.trace("... found order UUID {} and status {}", orderUuid, orderStatus);
+				} catch (NullPointerException | EdmPrimitiveTypeException e) {
+					throw new IOException(logger.log(AipClientMessage.ORDER_DATA_MISSING, order.toString()));
+				}
+			}
+			logger.log(AipClientMessage.PRODUCT_ORDER_COMPLETED, orderUuid);
+			
+		} finally {
+			// Release parallel thread
+			orderSemaphore.release();
+			if (logger.isDebugEnabled())
+				logger.debug("... order archive semaphore {} released, {} permits now available",
+						orderSemaphore, orderSemaphore.availablePermits());
+			
 		}
-		logger.log(AipClientMessage.PRODUCT_ORDER_COMPLETED, orderUuid);
 
 	}
 
@@ -1107,10 +1173,10 @@ public class DownloadManager {
 				
 				// Check whether parallel execution is allowed
 				try {
-					semaphore.acquire();
+					downloadSemaphore.acquire();
 					if (logger.isDebugEnabled())
 						logger.debug("... file download semaphore {} acquired, {} permits remaining",
-								semaphore, semaphore.availablePermits());
+								downloadSemaphore, downloadSemaphore.availablePermits());
 				} catch (InterruptedException e) {
 					throw new IOException(logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString()));
 				}
@@ -1145,10 +1211,10 @@ public class DownloadManager {
 					throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(), e.getMessage()));
 				} finally {
 					// Release parallel thread
-					semaphore.release();
+					downloadSemaphore.release();
 					if (logger.isDebugEnabled())
 						logger.debug("... file download semaphore {} released, {} permits now available",
-								semaphore, semaphore.availablePermits());
+								downloadSemaphore, downloadSemaphore.availablePermits());
 				}
 
 				// Compare file size with value given by external archive
@@ -1219,6 +1285,10 @@ public class DownloadManager {
 		product.setMountPoint(config.getStorageMgrMountPoint());
 		product.setFilePath(config.getStorageMgrSourceDir());
 
+		// Remove UUID and have Ingestor generate a UUID of its own
+		// (otherwise ingesting the same AUX products into two missions will fail!)
+		product.setUuid(null);
+
 		// Set product eviction time, if requested
 		if (0 < config.getIngestorProductRetention()) {
 			product.setEvictionTime(OrbitTimeFormatter.format(
@@ -1282,11 +1352,18 @@ public class DownloadManager {
 			return;
 		}
 
-		// Restrict number of parallel downloads
-		if (null == semaphore) {
-			semaphore = new Semaphore(config.getArchiveThreads(), true);
+		// Restrict number of parallel archive orders
+		if (null == orderSemaphore) {
+			orderSemaphore = new Semaphore(config.getArchiveOrderThreads(), true);
 			if (logger.isDebugEnabled())
-				logger.debug("... file download semaphore {} created", semaphore);
+				logger.debug("... archive order semaphore {} created", orderSemaphore);
+		}
+		
+		// Restrict number of parallel downloads
+		if (null == downloadSemaphore) {
+			downloadSemaphore = new Semaphore(config.getArchiveThreads(), true);
+			if (logger.isDebugEnabled())
+				logger.debug("... file download semaphore {} created", downloadSemaphore);
 		}
 		
 		// Get the user and mission code from the current security context (not preserved to spawned thread)
@@ -1365,11 +1442,11 @@ public class DownloadManager {
 		}
 
 		if (null == productList || 0 == productList.size()) {
-			logger.log(AipClientMessage.PRODUCT_NOT_FOUND_BY_NAME, filename, archive);
+			logger.log(AipClientMessage.PRODUCT_NOT_FOUND_BY_NAME, filename, archive.getName());
 			return null;
 		}
 		if (1 < productList.size()) {
-			logger.log(AipClientMessage.MULTIPLE_PRODUCTS_FOUND_BY_NAME, filename, archive);
+			logger.log(AipClientMessage.MULTIPLE_PRODUCTS_FOUND_BY_NAME, filename, archive.getName());
 		}
 
 		RestProduct restProduct = toRestProduct(productList.get(0), facility, true);
@@ -1446,11 +1523,11 @@ public class DownloadManager {
 		}
 
 		if (null == productList || 0 == productList.size()) {
-			logger.log(AipClientMessage.PRODUCT_NOT_FOUND_BY_TIME, productType, earliestStart, earliestStop, archive);
+			logger.log(AipClientMessage.PRODUCT_NOT_FOUND_BY_TIME, productType, earliestStart, earliestStop, archive.getName());
 			return null;
 		}
 		if (1 < productList.size()) {
-			logger.log(AipClientMessage.MULTIPLE_PRODUCTS_FOUND_BY_TIME, productType, earliestStart, earliestStop, archive);
+			logger.log(AipClientMessage.MULTIPLE_PRODUCTS_FOUND_BY_TIME, productType, earliestStart, earliestStop, archive.getName());
 		}
 		ClientEntity odataProduct = productList.get(0);
 		RestProduct restProduct = null; 
@@ -1488,10 +1565,11 @@ public class DownloadManager {
 	 * @param earliestStop       sensing stop time at millisecond precision
 	 * @param processingFacility the processing facility to store the result in
 	 * @param password           password for Ingestor login
+	 * @param modelProducts 	 list of products already available locally
 	 * @return a list of product metadata in REST interface format or an empty list, if no product was found
 	 */
 	private List<RestProduct> downloadAllBySensingTime(ProductArchive archive, String productType, Instant earliestStart,
-			Instant earliestStop, ProcessingFacility processingFacility, String password) {
+			Instant earliestStop, ProcessingFacility processingFacility, String password, List<Product> modelProducts) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> downloadAllBySensingTime({}, {}, {}, {}, {}, ********)",
 					(null == archive ? "NULL" : archive.getCode()), productType, earliestStart, earliestStop,
@@ -1539,7 +1617,7 @@ public class DownloadManager {
 		}
 
 		if (null == productList || 0 == productList.size()) {
-			logger.log(AipClientMessage.NO_PRODUCTS_FOUND_BY_TIME, productType, earliestStart, earliestStop, archive);
+			logger.log(AipClientMessage.NO_PRODUCTS_FOUND_BY_TIME, productType, earliestStart, earliestStop, archive.getName());
 			return new ArrayList<>();
 		}
 
@@ -1566,12 +1644,23 @@ public class DownloadManager {
 			} else {
 				restProduct = toRestProduct(odataProduct, processingFacility, true);
 			}
-			// Start download and ingestion thread
-			downloadAndIngest(archive, restProduct, processingFacility, password);
-			if (logger.isTraceEnabled())
-				logger.trace("Found product " + restProduct);
-
-			restProducts.add(restProduct);
+			
+			// Check whether product file is already available locally
+			RestProduct localProduct = findLocalProductAtFacility(modelProducts, restProduct, processingFacility);
+			
+			if (null == localProduct) {
+				// Not available locally: Start download and ingestion thread
+				downloadAndIngest(archive, restProduct, processingFacility, password);
+				if (logger.isTraceEnabled())
+					logger.trace("Found product " + restProduct);
+	
+				restProducts.add(restProduct);
+			} else {
+				// Skip download and return locally available product
+				restProducts.add(localProduct);
+				if (logger.isTraceEnabled())
+					logger.trace("Skipping locally available product " + restProduct);
+			}
 		}
 
 		// Return list of product metadata
@@ -1725,15 +1814,9 @@ public class DownloadManager {
 		// Check availability of products
 		List<Product> modelProducts = findAllProductsBySensingTime(productType, earliestStart, earliestStop, processingFacility);
 
-		if (!modelProducts.isEmpty()) {
-			// Found some suitable products
-			List<RestProduct> resultList = new ArrayList<>();
-			for (Product modelProduct : modelProducts) {
-				resultList.add(toRestProduct(modelProduct));
-			}
-			return resultList;
+		if (modelProducts.isEmpty()) {
+			if (logger.isTraceEnabled()) logger.trace("No products found locally");
 		}
-		if (logger.isTraceEnabled()) logger.trace("No products found locally");
 
 		// Query the available archives for the given product type
 		List<ProductArchive> productArchives = RepositoryService.getProductArchiveRepository().findAll();
@@ -1747,7 +1830,7 @@ public class DownloadManager {
 			if (archive.getAvailableProductClasses().contains(productClass)) {
 				if (logger.isTraceEnabled()) logger.trace("Querying archive for product class {}", productClass.getProductType());
 				List<RestProduct> result = downloadAllBySensingTime(archive, productType, earliestStart, earliestStop,
-						processingFacility, password);
+						processingFacility, password, modelProducts);
 				if (!result.isEmpty()) {
 					return result;
 				}

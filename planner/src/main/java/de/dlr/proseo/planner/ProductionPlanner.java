@@ -133,16 +133,6 @@ public class ProductionPlanner implements CommandLineRunner {
 	private EntityManager em;
 
 	/**
-	 * Semaphore to avoid concurrent kubernetes job generation. 
-	 */
-	private Semaphore releaseSemaphore = new Semaphore(1);
-
-	/**
-	 * Semaphore to avoid concurrent db access of threads. 
-	 */
-	private Semaphore threadSemaphore = new Semaphore(1);
-
-	/**
 	 * Collect at planner start all orders of state SUSPENDING
 	 */
 	private List<Long> suspendingOrders = new ArrayList<Long>();
@@ -214,21 +204,6 @@ public class ProductionPlanner implements CommandLineRunner {
 	}
 
 	/**
-	 * @return the releaseSemaphore
-	 */
-	public Semaphore getReleaseSemaphore() {
-		return releaseSemaphore;
-	}
-	
-
-	/**
-	 * @return the threadSemaphore
-	 */
-	public Semaphore getThreadSemaphore() {
-		return threadSemaphore;
-	}
-
-	/**
 	 * Get the user/pw for processing order
 	 * 
 	 * @param orderId Id of order
@@ -236,54 +211,6 @@ public class ProductionPlanner implements CommandLineRunner {
 	 */
 	public Map<String, String> getAuth(Long orderId) {
 		return orderPwCache.get(orderId);
-	}
-
-	/**
-	 * Acquires the release semaphore not interruptible 
-	 * @param here
-	 */
-	public void acquireReleaseSemaphore(String here) {
-		if (logger.isTraceEnabled()) logger.trace(">>> acquireReleaseSemaphore({})", here == null ? "null" : here);
-//		getReleaseSemaphore().acquireUninterruptibly();
-		if (logger.isTraceEnabled()) logger.trace("<<< acquireReleaseSemaphore({})", here == null ? "null" : here);
-	}
-	
-	/**
-	 * Release the release semaphore
-	 * @param here
-	 */
-	public void releaseReleaseSemaphore(String here) {
-		if (logger.isTraceEnabled()) logger.trace(">>> releaseReleaseSemaphore({})", here == null ? "null" : here);
-		if (getReleaseSemaphore().availablePermits() <= 0) {
-			if (logger.isTraceEnabled()) logger.trace("    released({})", here);
-//			getReleaseSemaphore().release();
-		} else {
-			if (logger.isTraceEnabled()) logger.trace("    nothing to release({})", here == null ? "null" : here);
-		}
-	}
-
-	/**
-	 * Acquires the thread semaphore not interruptible 
-	 * @param here
-	 */
-	public void acquireThreadSemaphore(String here) {
-		if (logger.isTraceEnabled()) logger.trace(">>> acquireThreadSemaphore({})", here == null ? "null" : here);
-//		getThreadSemaphore().acquireUninterruptibly();
-		if (logger.isTraceEnabled()) logger.trace("<<< acquireThreadSemaphore({})", here == null ? "null" : here);
-	}
-	
-	/**
-	 * Release the thread semaphore
-	 * @param here
-	 */
-	public void releaseThreadSemaphore(String here) {
-		if (logger.isTraceEnabled()) logger.trace(">>> releaseThreadSemaphore({})", here == null ? "null" : here);
-		if (getThreadSemaphore().availablePermits() <= 0) {
-			if (logger.isTraceEnabled()) logger.trace("    released({})", here);
-//			getThreadSemaphore().release();
-		} else {
-			if (logger.isTraceEnabled()) logger.trace("    nothing to release({})", here == null ? "null" : here);
-		}
 	}
 
 	/**
@@ -497,6 +424,7 @@ public class ProductionPlanner implements CommandLineRunner {
 			hostName = hostname;
 			System.out.println("Your current IP address : " + ip);
 			System.out.println("Your current Hostname : " + hostname);
+			System.out.println("jobStepSort : " + config.getJobStepSort());
 
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
@@ -551,7 +479,7 @@ public class ProductionPlanner implements CommandLineRunner {
 			int i = 0;
 			while (kubeDispatcher.isAlive() && i < 100) {
 				try {
-					wait(100);
+					Thread.sleep(100);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}

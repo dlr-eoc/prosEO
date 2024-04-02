@@ -68,7 +68,7 @@ public class WorkflowSqlFilterExpressionVisitor implements ExpressionVisitor<Str
 	/** SQL command parts */
 	private static final String SELECT_CLAUSE = "SELECT DISTINCT p.* ";
 	private static final String SELECT_COUNT_CLAUSE = "SELECT count(DISTINCT p.*) ";
-	private static final String FROM_CLAUSE = "FROM workflow p\n" + "JOIN workflow_option wo ON wo.workflow_id = p.id\n"
+	private static final String FROM_CLAUSE = "FROM workflow p\n" + "LEFT OUTER JOIN workflow_option wo ON wo.workflow_id = p.id\n"
 			+ "LEFT OUTER JOIN product_class ipc ON p.input_product_class_id = ipc.id\n"
 			+ "LEFT OUTER JOIN product_class opc ON p.output_product_class_id = opc.id\n"
 			+ "LEFT OUTER JOIN configured_processor cp ON p.configured_processor_id = cp.id\n"

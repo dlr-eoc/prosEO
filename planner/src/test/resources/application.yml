@@ -1,16 +1,17 @@
 spring:
+    maxResults: 10000
     jpa:
         database-platform: org.hibernate.dialect.H2Dialect
         hibernate.ddl-auto: create-drop
         open-in-view: false
         properties.hibernate.jdbc.time_zone: UTC
-        show-sql: false
+        show-sql: true
     datasource:
-        url: "jdbc:h2:mem:jpa_jbd"
+        url: "jdbc:h2:mem:jpa_jbd;DB_CLOSE_ON_EXIT=FALSE;"
         driverClassName: org.h2.Driver
+        mode: PostgreSQL
         username: any       
         password: any
-        hikari.transaction-isolation: TRANSACTION_SERIALIZABLE
 logging:
     file: /proseo/log/proseo-prodplanner.log
     level:
@@ -47,6 +48,8 @@ proseo:
         checkForFurtherJobStepsToRun: true
         # collect the planning and releasing of jobs and job steps into one transaction with planningbatchsize job steps 
         planningbatchsize: 50
+        # Sort mode to start job steps (sensingTime | submissionTime)
+        jobStepSort: sensingTime
     ingestor:
         # Callback URL for wrapper
         url: http://192.168.20.155:8081/proseo/ingestor/v0.1

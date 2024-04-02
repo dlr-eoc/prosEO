@@ -68,7 +68,7 @@ public class ServiceConnection {
 	 * @throws RestClientException if an error (HTTP status code 4xx or 5xx) occurred in the communication to the service
 	 * @throws RuntimeException    if the service returned an HTTP status different from OK (200)
 	 */
-	public ResponseEntity<?> postToService(String endpoint, String user, String password, String subject, MediaType mediaType,
+	public Object postToService(String endpoint, String user, String password, String subject, MediaType mediaType,
 			String messageCode, String message, String sender) throws RestClientException, RuntimeException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> postToService({}, {})", endpoint, message);
@@ -148,7 +148,7 @@ public class ServiceConnection {
 		// Check connection result
 		if (logger.isTraceEnabled())
 			logger.trace("<<< postToService()");
-		return entity;
+		return entity.getBody();
 	}
 
 }

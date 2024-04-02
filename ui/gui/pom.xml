@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo-ui</artifactId>
-		<version>0.9.5</version>
+		<version>1.0.1</version>
 	</parent>
 
 	<artifactId>proseo-ui-gui</artifactId>
@@ -16,10 +16,6 @@
 		<name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
 		<url>http://www.dlr.de</url>
 	</organization>
-
-	<properties>
-		<module.version>0.9.5</module.version>
-	</properties>
 
 	<dependencies>
 		<dependency>
@@ -131,14 +127,14 @@
                             	<exec executable="docker" failonerror="true">
                                     <arg value="build" />
                                     <arg value="-t" />
-                                    <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
+                                    <arg value="${docker.registry}/${project.build.finalName}:${project.version}" />
                                     <arg value="--platform" />
                                     <arg value="${project.build.platform}" />
                                     <arg value="." />
                                 </exec>
                             	<exec executable="docker" failonerror="true">
                                     <arg value="push" />
-                                    <arg value="${docker.registry}/${project.build.finalName}:${module.version}" />
+                                    <arg value="${docker.registry}/${project.build.finalName}:${project.version}" />
                                 </exec>
                             </target>
                         </configuration>

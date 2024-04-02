@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo-ui</artifactId>
-		<version>0.9.5</version>
+		<version>1.0.1</version>
 	</parent>
 
 	<artifactId>proseo-ui-backend</artifactId>
@@ -16,10 +16,6 @@
 		<name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
 		<url>http://www.dlr.de</url>
 	</organization>
-
-    <properties>
-        <module.version>0.9.5</module.version>
-    </properties>
 
 	<dependencies>
         <dependency>

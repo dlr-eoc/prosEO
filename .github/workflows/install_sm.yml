@@ -1,12 +1,13 @@
-# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven 
+# install_sm.yml
+#
+# (C) 2024 Dr. Bassler & Co. Managementberatung GmbH
+#
+# Installs the Stoage Manager (SM) and runs all SM tests on minio container
+# 
+# @author Denys Chaykovskiy
+#
 
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation. 
-
-name: Install SM only 
+name: Install SM only with test execution
 
 on:
   push:

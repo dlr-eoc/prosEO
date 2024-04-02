@@ -20,13 +20,13 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import de.dlr.proseo.storagemgr.StorageManager;
-import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.StorageProvider;
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
+import de.dlr.proseo.storagemgr.model.StorageType;
 import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
-import de.dlr.proseo.storagemgr.version2.FileUtils;
-import de.dlr.proseo.storagemgr.version2.PathConverter;
-import de.dlr.proseo.storagemgr.version2.StorageProvider;
-import de.dlr.proseo.storagemgr.version2.model.StorageType;
+import de.dlr.proseo.storagemgr.utils.FileUtils;
+import de.dlr.proseo.storagemgr.utils.PathConverter;
 
 /**
  * Mock Mvc test for Product Controller
@@ -46,7 +46,7 @@ public class ProductfileControllerImplTest_upload {
 	private MockMvc mockMvc;
 
 	@Autowired
-	private StorageTestUtils storageTestUtils;
+	private BaseStorageTestUtils storageTestUtils;
 
 	@Autowired
 	private StorageProvider storageProvider;
@@ -57,57 +57,25 @@ public class ProductfileControllerImplTest_upload {
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/productfiles";
 
 	@Test
-	public void testUpload_v1Posix() throws Exception {
+	public void testUpload_Posix() throws Exception {
 
 		StorageType storageType = StorageType.POSIX;
-		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
 
 		upload();
 
-		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
 
 	@Test
-	public void testUpload_v2Posix() throws Exception {
-
-		StorageType storageType = StorageType.POSIX;
-		storageProvider.loadVersion2();
-		storageProvider.setStorage(storageType);
-
-		upload();
-
-		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-
-	@Test
-	public void testUpload_v1S3() throws Exception {
+	public void testUpload_S3() throws Exception {
 
 		StorageType storageType = StorageType.S3;
-		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
 
 		upload();
 
-		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-
-	@Test
-	public void testUpload_v2S3() throws Exception {
-
-		StorageType storageType = StorageType.S3;
-		storageProvider.loadVersion2();
-		storageProvider.setStorage(storageType);
-
-		upload();
-
-		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
@@ -156,7 +124,7 @@ public class ProductfileControllerImplTest_upload {
 		assertTrue("Expected path: " + realRelativeStoragePath + " Exists: " + relativePath, relativePath.equals(realRelativeStoragePath));
 
 		// show storage files
-		StorageTestUtils.printStorageFiles("After http-call", storageProvider.getStorage());
+		BaseStorageTestUtils.printStorageFiles("After http-call", storageProvider.getStorage());
 
 		// delete files with empty folders
 		new FileUtils(absoluteSourcePath).deleteFile(); // source

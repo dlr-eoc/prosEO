@@ -205,8 +205,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104090000_20191104094500_20191104120000.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "50545d8ad8486dd9297014cf2e769f71",
+    	"fileSize": 80,
+    	"checksum": "76d31dc84a24dd2b34eea488de24c2f8",
     	"checksumTime": "2019-11-04T12:00:10.000000"
     },
     {
@@ -230,8 +230,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104094500_20191104103000_20191104120100.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "3ca720d0d2a7dee0ba95a9b50047b5a0",
+    	"fileSize": 80,
+    	"checksum": "be03bdf9e2ff6433af2ffc9c6e8376e2",
     	"checksumTime": "2019-11-04T12:01:10.000000"
     },
     {
@@ -255,8 +255,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104103000_20191104111500_20191104120200.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "f65f2591c400a85ced1d7557a6644138",
+    	"fileSize": 80,
+    	"checksum": "2883a21e909d3891d8f5fd7b2fed0683",
     	"checksumTime": "2019-11-04T12:02:10.000000"
     },
     {
@@ -280,8 +280,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104111500_20191104120000_20191104120300.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "58a029e6b09ad1e749fc1ff523dbbf80",
+    	"fileSize": 80,
+    	"checksum": "fc69dd62825413c1262920bdadf8cedd",
     	"checksumTime": "2019-11-04T12:03:10.000000"
     },
     {
@@ -305,8 +305,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104120000_20191104124500_20191104150000.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "9ecc9bbc7abb0672efd51a39e8fc2c59",
+    	"fileSize": 80,
+    	"checksum": "1ad62add86fcfba32ca394db1ef059c0",
     	"checksumTime": "2019-11-04T15:00:10.000000"
     },
     {
@@ -330,8 +330,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104124500_20191104133000_20191104150100.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "fb720888a0d9bae6b16c1f9607c4de27",
+    	"fileSize": 80,
+    	"checksum": "46eeb6be8f41134736b68d655c3d026d",
     	"checksumTime": "2019-11-04T15:01:10.000000"
     },
     {
@@ -355,8 +355,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104133000_20191104141500_20191104150200.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "4ef20d31f2e051d16cf06db2bae2c76e",
+    	"fileSize": 80,
+    	"checksum": "2c6d93c9f3131329672ca27f7da74010",
     	"checksumTime": "2019-11-04T15:02:10.000000"
     },
     {
@@ -380,8 +380,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104141500_20191104150000_20191104150300.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "8b3a2f2f386c683ce9b1c68bb52b34d2",
+    	"fileSize": 80,
+    	"checksum": "f1f2b02c2c27665ff25c1c68de4503e0",
     	"checksumTime": "2019-11-04T15:03:10.000000"
     },
     {
@@ -405,8 +405,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104150000_20191104154500_20191104180000.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "6bea82661ad200b8dc8a912bbc9c89f6",
+    	"fileSize": 80,
+    	"checksum": "5ac3ddf9dfad802c3e1c2a86bb8b7959",
     	"checksumTime": "2019-11-04T18:00:10.000000"
     },
     {
@@ -430,8 +430,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104154500_20191104163000_20191104180100.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "a1953fa0c117f803c26902243bb0d3aa",
+    	"fileSize": 80,
+    	"checksum": "21c5b324468622de13f53d677322b2e5",
     	"checksumTime": "2019-11-04T18:01:10.000000"
     },
     {
@@ -455,8 +455,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104163000_20191104171500_20191104180200.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "a9fb7fc052b5aced6f6dc9d753bbe790",
+    	"fileSize": 80,
+    	"checksum": "e55f131285387a23ca9b5f47ac32808f",
     	"checksumTime": "2019-11-04T18:02:10.000000"
     },
     {
@@ -480,8 +480,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104171500_20191104180000_20191104180300.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "b8b5304d83100a56114cd5ca6a6bc581",
+    	"fileSize": 80,
+    	"checksum": "44742febb6c4f31d9680720363918e8e",
     	"checksumTime": "2019-11-04T18:03:10.000000"
     },
     {
@@ -505,8 +505,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104180000_20191104184500_20191104210000.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "9211729e47c5e2487de302f1ca48f4b9",
+    	"fileSize": 80,
+    	"checksum": "2710894af465ea542cdda92a5fc48205",
     	"checksumTime": "2019-11-04T21:00:10.000000"
     },
     {
@@ -530,8 +530,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104184500_20191104193000_20191104210100.RAW",
         "auxFileNames": [],
-    	"fileSize": 84,
-    	"checksum": "95eb634992099c7ebb7bf5b76b243da1",
+    	"fileSize": 80,
+    	"checksum": "82b53742a4fe9d04ceaa8df0fb41090c",
     	"checksumTime": "2019-11-04T21:01:10.000000"
     },
     {

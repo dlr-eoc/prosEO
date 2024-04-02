@@ -25,13 +25,13 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import de.dlr.proseo.storagemgr.StorageManager;
-import de.dlr.proseo.storagemgr.StorageTestUtils;
+import de.dlr.proseo.storagemgr.StorageProvider;
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
+import de.dlr.proseo.storagemgr.model.Storage;
+import de.dlr.proseo.storagemgr.model.StorageType;
 import de.dlr.proseo.storagemgr.rest.model.RestProductFS;
-import de.dlr.proseo.storagemgr.version2.PathConverter;
-import de.dlr.proseo.storagemgr.version2.StorageProvider;
-import de.dlr.proseo.storagemgr.version2.model.Storage;
-import de.dlr.proseo.storagemgr.version2.model.StorageType;
+import de.dlr.proseo.storagemgr.utils.PathConverter;
 
 /**
  * Mock Mvc test for Product Controller
@@ -57,7 +57,6 @@ public class ProductControllerImplTest_upload {
 	private StorageProvider storageProvider;
 
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/products";
-
 	
 	/**
 	 * Register products/files/dirs from unstructered storage in prosEO-storage
@@ -67,19 +66,17 @@ public class ProductControllerImplTest_upload {
 	 * @return RestProductFS
 	 */
 	@Test
-	public void testUpload_v1Posix() throws Exception {
+	public void testUpload_posix() throws Exception {
 		
 		StorageType storageType = StorageType.POSIX; 
-		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
 		
 		uploadRestProductFS();
 		
-		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
-	
+		
 	/**
 	 * Register products/files/dirs from unstructered storage in prosEO-storage
 	 * 
@@ -88,57 +85,13 @@ public class ProductControllerImplTest_upload {
 	 * @return RestProductFS
 	 */
 	@Test
-	public void testUpload_v2Posix() throws Exception {
-		
-		StorageType storageType = StorageType.POSIX; 
-		storageProvider.loadVersion2();
-		storageProvider.setStorage(storageType);
-		
-		uploadRestProductFS();
-		
-		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-	
-	/**
-	 * Register products/files/dirs from unstructered storage in prosEO-storage
-	 * 
-	 * POST /products RestProductFS
-	 * 
-	 * @return RestProductFS
-	 */
-	@Test
-	public void testUpload_v1S3() throws Exception {
+	public void testUpload_S3() throws Exception {
 		
 		StorageType storageType = StorageType.S3; 
-		storageProvider.loadVersion1();
 		storageProvider.setStorage(storageType);
 		
 		uploadRestProductFS();
 		
-		assertTrue("Expected: SM Version1, " + " Exists: 2", !storageProvider.isVersion2());
-		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
-	}
-	
-	/**
-	 * Register products/files/dirs from unstructered storage in prosEO-storage
-	 * 
-	 * POST /products RestProductFS
-	 * 
-	 * @return RestProductFS
-	 */
-	@Test
-	public void testUpload_v2S3() throws Exception {
-		
-		StorageType storageType = StorageType.S3; 
-		storageProvider.loadVersion2();
-		storageProvider.setStorage(storageType);
-		
-		uploadRestProductFS();
-		
-		assertTrue("Expected: SM Version2, " + " Exists: 1", storageProvider.isVersion2());
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 	}
@@ -190,7 +143,7 @@ public class ProductControllerImplTest_upload {
 		RestProductFS restProductFS = populateRestProductFS(productId, relativePaths);
 		
 		// show storage files
-		StorageTestUtils.printStorageFiles("Before http-upload call", storageProvider.getStorage());
+		BaseStorageTestUtils.printStorageFiles("Before http-upload call", storageProvider.getStorage());
 
 		// http-upload call
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.post(REQUEST_STRING)	
@@ -202,7 +155,7 @@ public class ProductControllerImplTest_upload {
 		TestUtils.printMvcResult(REQUEST_STRING, mvcResult); 
 		
 		// show storage files after http-upload
-		StorageTestUtils.printStorageFiles("After http-upload call", storageProvider.getStorage());
+		BaseStorageTestUtils.printStorageFiles("After http-upload call", storageProvider.getStorage());
 		
 		// check real with expected absolute storage paths 
 		String json = mvcResult.getResponse().getContentAsString();

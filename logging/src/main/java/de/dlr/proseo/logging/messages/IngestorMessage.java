@@ -56,7 +56,7 @@ public enum IngestorMessage implements ProseoMessage {
 	PRODUCT_DOWNLOAD_TOKEN_REQUESTED	(2041, Level.INFO, true, " Download token for product with ID {0} and file name {1} provided", ""),
 	PRODUCT_EXISTS						(2042, Level.ERROR, false, "Product with equal characteristics already exists with ID {0}", ""),
 	PRODUCT_FILE_DELETED				(2043, Level.INFO, true, "Product file {0} for product with id {1} deleted", ""),
-	PRODUCT_FILE_EXISTS					(2044, Level.ERROR, false, "Product file for processing facility {0} exists", ""),
+	PRODUCT_FILE_EXISTS					(2044, Level.ERROR, false, "Product file {0} exists at processing facility {0}", ""),
 	PRODUCT_FILE_INGESTED				(2045, Level.INFO, true, "Product file {0} ingested for product ID {1} at processing facility {2}", ""),
 	PRODUCT_FILE_MODIFIED				(2046, Level.INFO, true, "Product file {0} for product with id {1} modified", ""),
 	PRODUCT_FILE_NOT_FOUND				(2047, Level.ERROR, false, "Product file for processing facility {0} not found", ""),

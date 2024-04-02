@@ -3,17 +3,10 @@ package de.dlr.proseo.storagemgr.rest;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.nio.file.attribute.PosixFilePermissions;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -22,17 +15,16 @@ import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.StorageMgrMessage;
+
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.StorageProvider;
+import de.dlr.proseo.storagemgr.Exceptions.FileLockedAfterMaxCyclesException;
+import de.dlr.proseo.storagemgr.cache.CacheFileStatus;
 import de.dlr.proseo.storagemgr.cache.FileCache;
+import de.dlr.proseo.storagemgr.model.Storage;
+import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
-import de.dlr.proseo.storagemgr.utils.StorageType;
-import de.dlr.proseo.storagemgr.version2.StorageFileLocker;
-import de.dlr.proseo.storagemgr.version2.StorageProvider;
-import de.dlr.proseo.storagemgr.version2.Exceptions.FileLockedAfterMaxCyclesException;
-import de.dlr.proseo.storagemgr.version2.model.Storage;
-import de.dlr.proseo.storagemgr.version2.model.StorageFile;
-import de.dlr.proseo.storagemgr.utils.ProseoFile;
-import de.dlr.proseo.storagemgr.utils.StorageLogger;
+import de.dlr.proseo.storagemgr.utils.StorageFileLocker;
 
 /**
  * Spring MVC controller for the prosEO Storage Manager; implements the services
@@ -46,34 +38,11 @@ import de.dlr.proseo.storagemgr.utils.StorageLogger;
 @Component
 public class ProductfileControllerImpl implements ProductfileController {
 
-	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String HTTP_MSG_PREFIX = "199 proseo-storage-mgr ";
-
-	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
-	private static final String MSG_FILE_NOT_FOUND = "(E%d) File %s not found";
-	private static final String MSG_FILE_COPIED = "(I%d) Requested object %s copied to target path %s";
-	private static final String MSG_TARGET_PATH_MISSING = "(E%d) No target path given";
-	private static final String MSG_FILES_UPDATED = "(I%d) Product file %s uploaded for product ID %d";
-	private static final String MSG_READ_TIMEOUT = "(E%d) Read for file %s timed out after %d seconds";
-
-	private static final int MSG_ID_EXCEPTION_THROWN = 4051;
-	private static final int MSG_ID_FILE_COPIED = 4052;
-	private static final int MSG_ID_FILE_NOT_FOUND = 4053;
-	private static final int MSG_ID_FILES_UPDATED = 4054;
-	private static final int MSG_ID_READ_TIMEOUT = 4055;
-
-	// Same as in ProseFileS3
-	private static final int MSG_ID_TARGET_PATH_MISSING = 4100;
-
-	private static final String MSG_FILE_NOT_FETCHED = "Requested file {} not copied";
-
-	// Lock table for products currently being downloaded from backend storage
-	private static ConcurrentSkipListSet<String> productLockSet = new ConcurrentSkipListSet<>();
-
-	private static Logger loggerLegacy = LoggerFactory.getLogger(ProductfileControllerImpl.class);
+	/** The file permission with read-only permissions for all users */
+	private static final String READ_ONLY_FOR_ALL_USERS = "r--r--r--";
 
 	/** A logger for this class */
-	private static ProseoLogger logger = new ProseoLogger(ProductControllerImpl.class);
+	private static ProseoLogger logger = new ProseoLogger(ProductfileControllerImpl.class);
 	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.STORAGE_MGR);
 
 	@Autowired
@@ -105,149 +74,52 @@ public class ProductfileControllerImpl implements ProductfileController {
 			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);
 		}
 
-		// pathInfo is absolute path s3://bucket/.. or /storagePath/.. DOWNLOAD Storage
-		// -> Cache
-		if (storageProvider.isVersion2()) {
+		// 1. copy Storage -> Cache
+		// 2. add to cache cache.put(cache file)
+		// pathInfo is absolute path s3://bucket/.. or /storagePath/..
 
-			StorageFileLocker fileLocker = new StorageFileLocker(pathInfo, cfg.getFileCheckWaitTime(),
-					cfg.getFileCheckMaxCycles());
+		String absoluteStoragePath = pathInfo;
 
-			try {
-				// relative path depends on path, not on actual storage
-				String relativePath = storageProvider.getRelativePath(pathInfo);
+		StorageFile cacheFile;
+		try {
 
-				StorageFile sourceFile = storageProvider.getStorageFile(relativePath);
-				StorageFile targetFile = storageProvider.getCacheFile(sourceFile.getRelativePath());
+			String relativePath = storageProvider.getRelativePath(absoluteStoragePath);
+			cacheFile = storageProvider.getCacheFile(relativePath);
 
-				FileCache cache = FileCache.getInstance();
+		} catch (IOException e) {
 
-				if (!cache.containsKey(targetFile.getFullPath())) {
-
-					fileLocker.lock();
-					
-					// After lock the active thread downloaded the file and put it to the cache (see below)
-					// After lock the passive thread did nothing, but the file has been downloaded
-					// 	and the cache has been updated - need to check if file contains in the cache again
-					if (!cache.containsKey(targetFile.getFullPath())) {
-
-						// download-thread
-						storageProvider.getStorage().downloadFile(sourceFile, targetFile);
-						logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED, targetFile.getFullPath());
-						
-						cache.put(targetFile.getFullPath());
-					}
-					else {
-						
-						// waiting-thread when the file downloaded and use it from cache
-						logger.debug("... waiting-thread when the file downloaded and use it from cache: ", targetFile.getFullPath());		
-					}
-					
-				} else {
-					logger.debug("... no download and no lock - the file is in cache: ", targetFile.getFullPath());
-				}
-
-				RestFileInfo restFileInfo = convertToRestFileInfo(targetFile,
-						storageProvider.getCacheFileSize(sourceFile.getRelativePath()));
-
-				return new ResponseEntity<>(restFileInfo, HttpStatus.OK);
-
-			} catch (FileLockedAfterMaxCyclesException e) {
-
-				String time = String.valueOf(cfg.getFileCheckMaxCycles() * cfg.getFileCheckWaitTime() / 1000);
-				String msg = logger.log(StorageMgrMessage.READ_TIME_OUT, pathInfo, time, e.getLocalizedMessage());
-
-				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.SERVICE_UNAVAILABLE);
-
-			} catch (IOException e) {
-
-				String msg = logger.log(StorageMgrMessage.PRODUCT_FILE_CANNOT_BE_DOWNLOADED, e.getMessage());
-				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);
-
-			} catch (Exception e) {
-
-				String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
-				return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
-			}
-
-			finally {
-
-				fileLocker.unlock();
-				logger.debug("... unlocked the file: ", pathInfo);
-
-			}
-		} // end version 2
-
-		if (null == pathInfo || pathInfo.isBlank())
-
-		{
-			return new ResponseEntity<>(
-					errorHeaders(
-							StorageLogger.logError(loggerLegacy, MSG_TARGET_PATH_MISSING, MSG_ID_TARGET_PATH_MISSING)),
-					HttpStatus.BAD_REQUEST);
+			String msg = logger.log(StorageMgrMessage.PRODUCT_FILE_CANNOT_BE_DOWNLOADED, e.getMessage());
+			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);
 		}
 
-		ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
-		ProseoFile targetFile = ProseoFile.fromPathInfo(cfg.getPosixCachePath() + "/" + sourceFile.getRelPathAndFile(),
-				cfg);
-
-		// Acquire lock on requested product file
-		Instant lockRequestStartTime = Instant.now();
-		Instant lockRequestTimeOut = lockRequestStartTime
-				.plusMillis(cfg.getFileCheckMaxCycles() * cfg.getFileCheckWaitTime());
-		try {
-			int i = 0;
-			for (; i < cfg.getFileCheckMaxCycles() && Instant.now().isBefore(lockRequestTimeOut); ++i) {
-				synchronized (productLockSet) {
-					if (!productLockSet.contains(sourceFile.getFileName())) {
-						productLockSet.add(sourceFile.getFileName());
-						break;
-					}
-				}
-				if (loggerLegacy.isDebugEnabled())
-					loggerLegacy.debug("... waiting for concurrent access to {} to terminate",
-							sourceFile.getFileName());
-				Thread.sleep(cfg.getFileCheckWaitTime());
-			}
-			;
-			if (i == cfg.getFileCheckMaxCycles()) {
-				return new ResponseEntity<>(
-						errorHeaders(StorageLogger.logError(loggerLegacy, MSG_READ_TIMEOUT, MSG_ID_READ_TIMEOUT,
-								sourceFile.getFileName(),
-								Duration.between(lockRequestStartTime, Instant.now()).getSeconds())),
-						HttpStatus.SERVICE_UNAVAILABLE);
-			}
-		} catch (InterruptedException e) {
-			return new ResponseEntity<>(errorHeaders(StorageLogger.logError(loggerLegacy, MSG_EXCEPTION_THROWN,
-					MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage())),
-					HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+		StorageFileLocker fileLocker = new StorageFileLocker(cacheFile.getFullPath(), cfg.getFileCheckWaitTime(),
+				cfg.getFileCheckMaxCycles());
 
 		try {
-			ArrayList<String> transferredFiles = sourceFile.copyTo(targetFile, false);
-			if (transferredFiles != null && !transferredFiles.isEmpty()) {
-				RestFileInfo response = new RestFileInfo();
-				response.setStorageType(targetFile.getFsType().toString());
-				response.setFilePath(targetFile.getFullPath());
-				response.setFileName(targetFile.getFileName());
-				response.setFileSize(targetFile.getLength());
 
-				StorageLogger.logInfo(loggerLegacy, MSG_FILE_COPIED, MSG_ID_FILE_COPIED, sourceFile.getFullPath(),
-						targetFile.getFullPath());
+			RestFileInfo restFileInfo = copyFileStorageToCache(absoluteStoragePath, fileLocker);
+			return new ResponseEntity<>(restFileInfo, HttpStatus.OK);
 
-				return new ResponseEntity<>(response, HttpStatus.OK);
-			} else {
-				return new ResponseEntity<>(errorHeaders(
-						StorageLogger.logError(loggerLegacy, MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND, pathInfo)),
-						HttpStatus.NOT_FOUND);
-			}
-		} catch (IllegalArgumentException e) {
-			return new ResponseEntity<RestFileInfo>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (FileLockedAfterMaxCyclesException e) {
+
+			String time = String.valueOf(cfg.getFileCheckMaxCycles() * cfg.getFileCheckWaitTime() / 1000);
+			String msg = logger.log(StorageMgrMessage.READ_TIME_OUT, absoluteStoragePath, time,
+					e.getLocalizedMessage());
+			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.SERVICE_UNAVAILABLE);
+
+		} catch (IOException e) {
+
+			String msg = logger.log(StorageMgrMessage.PRODUCT_FILE_CANNOT_BE_DOWNLOADED, e.getMessage());
+			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);
+
 		} catch (Exception e) {
-			return new ResponseEntity<>(errorHeaders(StorageLogger.logError(loggerLegacy, MSG_EXCEPTION_THROWN,
-					MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage())),
-					HttpStatus.INTERNAL_SERVER_ERROR);
+
+			String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
+			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
+
 		} finally {
-			productLockSet.remove(sourceFile.getFileName());
+
+			fileLocker.unlock();
 		}
 	}
 
@@ -259,108 +131,217 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 * @param productId Product id
 	 * @return Target file name
 	 */
-	/**
-	 *
-	 */
 	@Override
 	public ResponseEntity<RestFileInfo> updateProductfiles(String pathInfo, Long productId, Long fileSize) {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> updateProductfiles({}, {})", pathInfo, productId);
 
-		// pathInfo absolute path, UPLOAD absolute file -> storage
-		if (storageProvider.isVersion2()) {
+		// copies absolute external file -> cache file -> storage file
+		// 1. copy external -> cache
+		// 2. add to cache cache.put(cache file)
+		// 3. copy cache -> storage
+		// pathInfo is absolute external path
 
-			if (pathInfo == null) {
-				return new ResponseEntity<RestFileInfo>(new RestFileInfo(), HttpStatus.BAD_REQUEST);
-			}
-
-			try {
-				Storage storage = storageProvider.getStorage();
-				String absolutePath = pathInfo;
-				// String relativePath = storageProvider.getRelativePath(absolutePath);
-				String fileName = new File(pathInfo).getName();
-				String productFolderWithFilename = Paths.get(String.valueOf(productId), fileName).toString();
-
-				StorageFile sourceFile = storageProvider.getAbsoluteFile(absolutePath);
-				StorageFile targetFile = storageProvider.getStorageFile(productFolderWithFilename);
-
-				storage.uploadFile(sourceFile, targetFile);
-
-				RestFileInfo restFileInfo = convertToRestFileInfo(targetFile, storage.getFileSize(targetFile));
-
-				logger.log(StorageMgrMessage.PRODUCT_FILE_UPLOADED, pathInfo, productId);
-
-				return new ResponseEntity<>(restFileInfo, HttpStatus.CREATED);
-
-			} catch (Exception e) {
-
-				String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
-				return new ResponseEntity<>(errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
-			}
-		} // end version 2
-
-		RestFileInfo response = new RestFileInfo();
-		if (pathInfo != null) {
-			ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
-			ProseoFile targetFile = ProseoFile.fromType(StorageType.valueOf(cfg.getDefaultStorageType()),
-					String.valueOf(productId) + "/" + sourceFile.getFileName(), cfg);
-			try {
-				// wait until source file is really copied
-				if (sourceFile.getFsType() == StorageType.POSIX) {
-					int i = 0;
-					Path fp = Path.of(sourceFile.getFullPath());
-					if (fp.toFile().isFile()) {
-						Long wait = cfg.getFileCheckWaitTime();
-						Long max = cfg.getFileCheckMaxCycles();
-						try {
-							while (Files.size(fp) < fileSize && i < max) {
-								if (loggerLegacy.isDebugEnabled()) {
-									loggerLegacy.debug("Wait for fully copied file {}", sourceFile.getFullPath());
-								}
-								i++;
-								try {
-									Thread.sleep(wait);
-								} catch (InterruptedException e) {
-									return new ResponseEntity<>(
-											errorHeaders(StorageLogger.logError(loggerLegacy, MSG_READ_TIMEOUT,
-													MSG_ID_READ_TIMEOUT, sourceFile.getFileName(),
-													cfg.getFileCheckMaxCycles() * cfg.getFileCheckWaitTime() / 1000)),
-											HttpStatus.SERVICE_UNAVAILABLE);
-								}
-							}
-						} catch (IOException e) {
-							loggerLegacy.error("Unable to access file {}", sourceFile.getFullPath());
-							return new ResponseEntity<>(
-									errorHeaders(StorageLogger.logError(loggerLegacy, MSG_EXCEPTION_THROWN,
-											MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage())),
-									HttpStatus.INTERNAL_SERVER_ERROR);
-						}
-						if (i >= max) {
-							loggerLegacy.error(MSG_FILE_NOT_FETCHED, sourceFile.getFullPath());
-						}
-					}
-				}
-				ArrayList<String> transfered = sourceFile.copyTo(targetFile, false);
-
-				if (transfered != null && !transfered.isEmpty()) {
-					response.setStorageType(targetFile.getFsType().toString());
-					response.setFilePath(targetFile.getFullPath());
-					response.setFileName(targetFile.getFileName());
-					response.setFileSize(targetFile.getLength());
-
-					StorageLogger.logInfo(loggerLegacy, MSG_FILES_UPDATED, MSG_ID_FILES_UPDATED, pathInfo, productId);
-
-					return new ResponseEntity<>(response, HttpStatus.CREATED);
-				}
-			} catch (Exception e) {
-
-				return new ResponseEntity<>(errorHeaders(StorageLogger.logError(loggerLegacy, MSG_EXCEPTION_THROWN,
-						MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage())),
-						HttpStatus.INTERNAL_SERVER_ERROR);
-			}
+		if (pathInfo == null) {
+			return new ResponseEntity<RestFileInfo>(new RestFileInfo(), HttpStatus.BAD_REQUEST);
 		}
-		return new ResponseEntity<RestFileInfo>(response, HttpStatus.NOT_FOUND);
+
+		String externalPath = pathInfo;
+
+		String relativePath = getProductFolderWithFilename(externalPath, productId);
+		StorageFile cacheFile = storageProvider.getCacheFile(relativePath);
+
+		StorageFileLocker fileLocker = new StorageFileLocker(cacheFile.getFullPath(), cfg.getFileCheckWaitTime(),
+				cfg.getFileCheckMaxCycles());
+
+		try {
+
+			RestFileInfo restFileInfo = copyFileExternalToCache(externalPath, productId, fileSize, fileLocker);
+			fileLocker.unlock();
+
+			restFileInfo = copyFileCacheToStorage(relativePath);
+
+			logger.log(StorageMgrMessage.PRODUCT_FILE_UPLOADED_TO_STORAGE, externalPath, productId);
+			return new ResponseEntity<>(restFileInfo, HttpStatus.CREATED);
+
+		} catch (Exception e) {
+
+			String msg = logger.log(StorageMgrMessage.INTERNAL_ERROR, e.getMessage());
+			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
+
+		} finally {
+
+			fileLocker.unlock();
+		}
+	}
+
+	/**
+	 * Copies the file from the storage to the cache using synchronization. During
+	 * the copying to the cache, the status of the file will be "not exists", after
+	 * the completion the status will be set to "ready". Sets the file permission
+	 * 444.
+	 * 
+	 * @param storageFilePath the file path in the storage
+	 * @param fileLocker      file locker is used for synchronization
+	 * @return RestFileInfo
+	 * @throws FileLockedAfterMaxCyclesException
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	private RestFileInfo copyFileStorageToCache(String storageFilePath, StorageFileLocker fileLocker)
+			throws FileLockedAfterMaxCyclesException, IOException, Exception {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> copyFileStorageToCache({}, {})", storageFilePath, fileLocker);
+
+		// x-to-cache-copy method, status "not exists" is used
+
+		// relative path depends on path, not on actual storage
+		String relativePath = storageProvider.getRelativePath(storageFilePath);
+
+		StorageFile storageFile = storageProvider.getStorageFile(relativePath);
+		StorageFile cacheFile = storageProvider.getCacheFile(storageFile.getRelativePath());
+
+		FileCache cache = FileCache.getInstance();
+
+		if (!cache.containsKey(cacheFile.getFullPath())) {
+
+			fileLocker.lockOrWaitUntilUnlockedAndLock();
+
+			// check again, the file could be copied to cache from another thread after lock
+			if (!cache.containsKey(cacheFile.getFullPath())) {
+
+				// active thread - copies the file to the cache storage and puts it to the cache
+				logger.debug("... active-thread: copies the file to the cache storage and puts it to the cache: {}", cacheFile.getFullPath());
+
+				cache.setCacheFileStatus(cacheFile.getFullPath(), CacheFileStatus.INCOMPLETE);
+
+				storageProvider.getStorage().downloadFile(storageFile, cacheFile);
+
+				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED_FROM_STORAGE, cacheFile.getFullPath());
+
+				Files.setPosixFilePermissions(Paths.get(cacheFile.getFullPath()),
+						PosixFilePermissions.fromString(READ_ONLY_FOR_ALL_USERS));
+
+				cache.put(cacheFile.getFullPath()); // cache file status = READY
+
+			} else {
+
+				// passive thread - did nothing, waited for copied file and use it from cache
+				logger.debug("... waiting-thread: waited until the file was downloaded to cache from external storage and use it from cache: {}",
+						cacheFile.getFullPath());
+			}
+
+		} else {
+
+			logger.debug("... no download and no lock - the file is in cache: {}", cacheFile.getFullPath());
+		}
+
+		RestFileInfo restFileInfo = convertToRestFileInfo(cacheFile,
+				storageProvider.getCacheFileSize(storageFile.getRelativePath()));
+
+		return restFileInfo;
+	}
+
+	/**
+	 * Copies the file from the external source to the cache using synchronization.
+	 * During the copying to the cache, the status of the file will be "not exists",
+	 * after the completion the status will be set to "ready". Sets the file
+	 * permission 444.
+	 * 
+	 * @param externalPath external path of the file, which will be copied to the
+	 *                     cache
+	 * @param productId    product id is used as a directory to store copied file in
+	 *                     cache
+	 * @param fileSize     file size
+	 * @param fileLocker   file locker is used for synchronization
+	 * @return Rest File Info
+	 * @throws FileLockedAfterMaxCyclesException
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	private RestFileInfo copyFileExternalToCache(String externalPath, Long productId, Long fileSize,
+			StorageFileLocker fileLocker) throws FileLockedAfterMaxCyclesException, IOException, Exception {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> copyFileExternalToCache({}, {}, {}, {})", externalPath, productId, fileSize, fileLocker);
+
+		// x-to-cache-copy method, status "not exists" is used
+
+		String productFolderWithFilename = getProductFolderWithFilename(externalPath, productId);
+		StorageFile cacheFile = storageProvider.getCacheFile(productFolderWithFilename);
+
+		FileCache cache = FileCache.getInstance();
+
+		if (!cache.containsKey(cacheFile.getFullPath())) {
+
+			fileLocker.lockOrWaitUntilUnlockedAndLock();
+
+			// check again, the file could be copied to cache from another thread after lock
+			if (!cache.containsKey(cacheFile.getFullPath())) {
+
+				// active thread - copies the file to the cache storage and puts it to the cache
+				logger.debug("... active-thread: copies the file to the cache storage and puts it to the cache: {}",
+						cacheFile.getFullPath());
+
+				cache.setCacheFileStatus(cacheFile.getFullPath(), CacheFileStatus.INCOMPLETE);
+
+				storageProvider.copyAbsoluteFilesToCache(externalPath, productId);
+
+				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED_FROM_EXTERNAL_TO_CACHE, cacheFile.getFullPath());
+
+				Files.setPosixFilePermissions(Paths.get(cacheFile.getFullPath()),
+						PosixFilePermissions.fromString(READ_ONLY_FOR_ALL_USERS));
+
+				cache.put(cacheFile.getFullPath()); // cache file status = READY
+
+			} else {
+
+				// passive thread - did nothing, waited for copied file and use it from cache
+				logger.debug(
+						"... waiting-thread: waited until the file was downloaded to cache from external storage and use it from cache: {}",
+						cacheFile.getFullPath());
+			}
+
+		} else {
+
+			logger.debug("... no download and no lock - the file is in cache: {}", cacheFile.getFullPath());
+		}
+
+		RestFileInfo restFileInfo = convertToRestFileInfo(cacheFile,
+				storageProvider.getCacheFileSize(cacheFile.getRelativePath()));
+
+		return restFileInfo;
+	}
+
+	/**
+	 * Copies the file from the cache to the backend storage.
+	 * 
+	 * @param relativeCachePath relative cache path
+	 * @return RestFileInfo
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	private RestFileInfo copyFileCacheToStorage(String relativeCachePath)
+			throws FileLockedAfterMaxCyclesException, IOException, Exception {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> copyFileCacheToStorage({})", relativeCachePath);
+
+		Storage storage = storageProvider.getStorage();
+
+		StorageFile cacheFile = storageProvider.getCacheFile(relativeCachePath);
+		StorageFile storageFile = storageProvider.getStorageFile(relativeCachePath);
+
+		storage.uploadFile(cacheFile, storageFile);
+
+		logger.log(StorageMgrMessage.PRODUCT_FILE_UPLOADED_FROM_CACHE_TO_STORAGE, storageFile.getFullPath());
+
+		RestFileInfo restFileInfo = convertToRestFileInfo(storageFile,
+				storageProvider.getCacheFileSize(cacheFile.getRelativePath()));
+
+		return restFileInfo;
 	}
 
 	/**
@@ -368,10 +349,12 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 * 
 	 * @param storageFile storage file
 	 * @param fileSize    file size
-	 * 
 	 * @return rest file info
 	 */
 	private static RestFileInfo convertToRestFileInfo(StorageFile storageFile, long fileSize) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> convertToRestFileInfo({}, {})", storageFile, fileSize);
 
 		RestFileInfo restFileInfo = new RestFileInfo();
 
@@ -384,15 +367,19 @@ public class ProductfileControllerImpl implements ProductfileController {
 	}
 
 	/**
-	 * Create an HTTP "Warning" header with the given text message
+	 * Gets a product folder with the file name from the given external path using
+	 * product id
 	 * 
-	 * @param message the message text
-	 * @return an HttpHeaders object with a warning message
+	 * @param externalPath absolute external path
+	 * @param productId    product id
+	 * @return product folder with the file name
 	 */
-	private HttpHeaders errorHeaders(String message) {
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING,
-				HTTP_MSG_PREFIX + (null == message ? "null" : message.replaceAll("\n", " ")));
-		return responseHeaders;
+	private String getProductFolderWithFilename(String externalPath, Long productId) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getProductFolderWithFilename({}, {})", externalPath, productId);
+
+		String fileName = new File(externalPath).getName();
+		return Paths.get(String.valueOf(productId), fileName).toString();
 	}
 }

@@ -39,6 +39,7 @@ import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
+import de.dlr.proseo.planner.JobStepSort;
 import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
@@ -140,8 +141,6 @@ public class JobStepUtil {
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		transactionTemplate.setReadOnly(true);
 		
-		// TODO Replace findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime() by native SQL query
-
 		final ProcessingFacility processingFacility = transactionTemplate.execute((status) -> {
 			Optional<ProcessingFacility> opt = RepositoryService.getFacilityRepository().findById(pfId);
 			if (opt.isPresent()) {
@@ -185,10 +184,10 @@ public class JobStepUtil {
 							jobSteps.add(pq.getJobStep().getId());
 						}
 					}
+					jobSteps.sort(null);
 				} else {
 					for (ProcessingFacility pf : RepositoryService.getFacilityRepository().findAll()) {
-						//jobSteps.addAll(RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(pf.getId(), jobStepStates));
-						jobSteps.addAll(findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(pf.getId(), jobStepStates));
+						jobSteps.addAll(findAllByProcessingFacilityAndJobStepStateInAndOrderBy(pf.getId(), jobStepStates));
 					}
 				}
 			} else {
@@ -207,9 +206,9 @@ public class JobStepUtil {
 							}
 						}
 					}
+					jobSteps.sort(null);
 				} else {
-					//jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(pfId, jobStepStates);
-					jobSteps = findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(pfId, jobStepStates);
+					jobSteps = findAllByProcessingFacilityAndJobStepStateInAndOrderBy(pfId, jobStepStates);
 				}
 			}
 			return jobSteps;
@@ -247,17 +246,41 @@ public class JobStepUtil {
 	 * @param jobStepStates a list of job step state names
 	 * @return
 	 */
-	private List<Long> findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime(long processingFacilityId,
+	private List<Long> findAllByProcessingFacilityAndJobStepStateInAndOrderBy(long processingFacilityId,
 			List<String> jobStepStates) {
-		if (logger.isTraceEnabled()) logger.trace(">>> findAllByProcessingFacilityAndJobStepStateInAndOrderBySensingStartTime({}, {})",
-				processingFacilityId, jobStepStates);
+		if (logger.isTraceEnabled()) logger.trace(">>> findAllByProcessingFacilityAndJobStepStateInAndOrderBy({}, {}), sort order: {}",
+				processingFacilityId, jobStepStates, config.getJobStepSort());
 
-		String nativeQuery = "SELECT j.start_time, js.id "
-				+ "FROM job j "
-				+ "JOIN job_step js ON j.id = js.job_id "
-				+ "WHERE j.processing_facility_id = :pfId "
-				+ "AND js.job_step_state IN :jsStates "
-				+ "ORDER BY js.priority desc, j.start_time, js.id";
+		String nativeQuery;
+		// sort the job steps in dependence of jobStepSort parameter
+		switch (config.getJobStepSort()) {
+		case SUBMISSION_TIME: 
+			nativeQuery = "SELECT po.submission_time, js.id "
+					+ "FROM job j "
+					+ "JOIN job_step js ON j.id = js.job_id "
+					+ "JOIN processing_order po ON po.id = j.processing_order_id "
+					+ "WHERE j.processing_facility_id = :pfId "
+					+ "AND js.job_step_state IN :jsStates "
+					+ "ORDER BY js.priority desc, po.submission_time, js.id";
+			break;
+		case SENSING_TIME:
+			nativeQuery = "SELECT j.start_time, js.id "
+					+ "FROM job j "
+					+ "JOIN job_step js ON j.id = js.job_id "
+					+ "WHERE j.processing_facility_id = :pfId "
+					+ "AND js.job_step_state IN :jsStates "
+					+ "ORDER BY js.priority desc, j.start_time, js.id";
+			break;
+		default:
+			nativeQuery = "SELECT j.start_time, js.id "
+					+ "FROM job j "
+					+ "JOIN job_step js ON j.id = js.job_id "
+					+ "WHERE j.processing_facility_id = :pfId "
+					+ "AND js.job_step_state IN :jsStates "
+					+ "ORDER BY js.priority desc, j.start_time, js.id";
+			break;
+				
+		}
 		List<?> jobStepList = em.createNativeQuery(nativeQuery)
 				.setParameter("pfId", processingFacilityId)
 				.setParameter("jsStates", jobStepStates)
@@ -400,32 +423,16 @@ public class JobStepUtil {
 		if (js != null) {
 			switch (js.getJobStepState()) {
 			case PLANNED:
-			case READY:
-			case WAITING_INPUT:
 				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.FAILED);
 				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
 				em.merge(js);
 				answer.setMessage(PlannerMessage.JOBSTEP_CANCELED);
 				break;
+			case READY:
+			case WAITING_INPUT:
 			case RUNNING:
-				Boolean deleted = false;
-					KubeConfig kc = productionPlanner.getKubeConfig(js.getJob().getProcessingFacility().getName());
-					if (kc != null) {
-						KubeJob kj = kc.getKubeJob(ProductionPlanner.jobNamePrefix + js.getId());
-						if (kj != null) {
-							deleted = kc.deleteJob(kj.getJobName());
-						}
-				}
-				if (deleted) {
-					js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.FAILED);
-					js.incrementVersion();
-					RepositoryService.getJobStepRepository().save(js);
-					em.merge(js);
-					answer.setMessage(PlannerMessage.JOBSTEP_CANCELED);
-				} else {
-					answer.setMessage(PlannerMessage.JOBSTEP_ALREADY_RUNNING);
-				}
+				answer.setMessage(PlannerMessage.JOBSTEP_ALREADY_RUNNING);
 				break;
 			case COMPLETED:
 				answer.setMessage(PlannerMessage.JOBSTEP_ALREADY_COMPLETED);
@@ -513,13 +520,13 @@ public class JobStepUtil {
 		if (js != null) {
 			switch (js.getJobStepState()) {
 			case PLANNED:
+			case WAITING_INPUT:
 			case READY:
 			case RUNNING:
 			case COMPLETED:
 			case CLOSED:
 				answer.setMessage(PlannerMessage.JOBSTEP_COULD_NOT_RETRY);
 				break;
-			case WAITING_INPUT:
 			case FAILED:
 				Product jsp = js.getOutputProduct();
 				if (jsp != null) {
@@ -795,14 +802,11 @@ public class JobStepUtil {
 			case PLANNED:
 			case WAITING_INPUT:
 				try {
-					productionPlanner.acquireReleaseSemaphore("resume");
 					checkJobStepQueries(js, force);
 				} catch (Exception e) {
 					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 					
 					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-				} finally {
-					productionPlanner.releaseReleaseSemaphore("resume");				
 				}
 				if (js.getJobStepState() == JobStepState.WAITING_INPUT) {
 					answer.setMessage(PlannerMessage.JOBSTEP_WAITING);
@@ -1005,8 +1009,6 @@ public class JobStepUtil {
 				checkForJobStepsToRun();
 			} else {
 				try {
-					productionPlanner.acquireReleaseSemaphore("checkForJobStepsToRun");
-
 					TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
@@ -1025,18 +1027,54 @@ public class JobStepUtil {
 						transactionTemplate.setReadOnly(true);
 						List<?> jobStepList = transactionTemplate.execute((status) -> {
 
-							String nativeQuery = "SELECT j.start_time, js.id "
-									+ "FROM processing_order o "
-									+ "JOIN job j ON o.id = j.processing_order_id "
-									+ "JOIN job_step js ON j.id = js.job_id "
-									+ "WHERE j.processing_facility_id = :pfId "
-									+ "AND js.job_step_state = :jsStateReady "
-									+ "AND o.order_state != :oStateSuspending "
-									+ "AND o.order_state != :oStatePlanned "
-									+ "AND ("
-									+ "j.job_state = :jStateReleased OR j.job_state = :jStateStarted"
-									+ ")"
-									+ "ORDER BY js.priority desc, j.start_time, js.id";
+							String nativeQuery;
+							// sort the job steps in dependence of jobStepSort parameter
+							switch (config.getJobStepSort()) {
+							case SUBMISSION_TIME: 
+								nativeQuery = "SELECT po.submission_time, js.id "
+										+ "FROM processing_order o "
+										+ "JOIN job j ON o.id = j.processing_order_id "
+										+ "JOIN job_step js ON j.id = js.job_id "
+										+ "JOIN processing_order po ON po.id = j.processing_order_id "
+										+ "WHERE j.processing_facility_id = :pfId "
+										+ "AND js.job_step_state = :jsStateReady "
+										+ "AND o.order_state != :oStateSuspending "
+										+ "AND o.order_state != :oStatePlanned "
+										+ "AND ("
+										+ "j.job_state = :jStateReleased OR j.job_state = :jStateStarted"
+										+ ")"
+										+ "ORDER BY js.priority desc, po.submission_time, js.id";
+								break;
+							case SENSING_TIME:
+								nativeQuery = "SELECT j.start_time, js.id "
+										+ "FROM processing_order o "
+										+ "JOIN job j ON o.id = j.processing_order_id "
+										+ "JOIN job_step js ON j.id = js.job_id "
+										+ "WHERE j.processing_facility_id = :pfId "
+										+ "AND js.job_step_state = :jsStateReady "
+										+ "AND o.order_state != :oStateSuspending "
+										+ "AND o.order_state != :oStatePlanned "
+										+ "AND ("
+										+ "j.job_state = :jStateReleased OR j.job_state = :jStateStarted"
+										+ ")"
+										+ "ORDER BY js.priority desc, j.start_time, js.id";
+								break;
+							default:
+								nativeQuery = "SELECT j.start_time, js.id "
+										+ "FROM processing_order o "
+										+ "JOIN job j ON o.id = j.processing_order_id "
+										+ "JOIN job_step js ON j.id = js.job_id "
+										+ "WHERE j.processing_facility_id = :pfId "
+										+ "AND js.job_step_state = :jsStateReady "
+										+ "AND o.order_state != :oStateSuspending "
+										+ "AND o.order_state != :oStatePlanned "
+										+ "AND ("
+										+ "j.job_state = :jStateReleased OR j.job_state = :jStateStarted"
+										+ ")"
+										+ "ORDER BY js.priority desc, j.start_time, js.id";
+								break;
+									
+							}
 							return em.createNativeQuery(nativeQuery)
 									.setParameter("pfId", kc.getLongId())
 									.setParameter("jsStateReady", JobStepState.READY.toString())
@@ -1084,9 +1122,7 @@ public class JobStepUtil {
 						}
 
 					} 
-					productionPlanner.releaseReleaseSemaphore("checkForJobStepsToRun");	
 				} catch (Exception e) {
-					productionPlanner.releaseReleaseSemaphore("checkForJobStepsToRun");	
 					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 					
 					if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
@@ -1228,7 +1264,6 @@ public class JobStepUtil {
 				if (pfo != null) {
 					// wait until finish of concurrent createJob
 					try {
-						productionPlanner.acquireReleaseSemaphore("checkJobToRun");
 						final List<Long> jobSteps = new ArrayList<Long>();
 
 						@SuppressWarnings("unused")
@@ -1250,8 +1285,6 @@ public class JobStepUtil {
 						logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 						
 						if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-					} finally {
-						productionPlanner.releaseReleaseSemaphore("checkJobToRun");					
 					}
 				}
 			}
@@ -1289,7 +1322,6 @@ public class JobStepUtil {
 					// wait until finish of concurrent createJob
 					final List<Long> jobSteps = new ArrayList<Long>();
 					try {
-						productionPlanner.acquireReleaseSemaphore("checkOrderToRun");
 						@SuppressWarnings("unused")
 						String dummy = transactionTemplate.execute((status) -> {
 							ProcessingOrder order = null;
@@ -1325,8 +1357,6 @@ public class JobStepUtil {
 						logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 						
 						if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
-					} finally {
-						productionPlanner.releaseReleaseSemaphore("checkOrderToRun");					
 					}
 				}
 			}

@@ -1,1 +1,1 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"de.dlr.proseo.ui.gui"},{"l":"de.dlr.proseo.ui.gui.service"}];updateSearchResults();
+packageSearchIndex = [{"l":"Alle Packages","u":"allpackages-index.html"},{"l":"de.dlr.proseo.ui.gui"},{"l":"de.dlr.proseo.ui.gui.service"}];updateSearchResults();
