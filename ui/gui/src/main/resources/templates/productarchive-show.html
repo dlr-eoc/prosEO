@@ -108,6 +108,10 @@
 							<input type="text" class="form-control" name="archiveType"
 								id="archiveType">
 						</div>
+						<div class="col-1 pl-lg-0">
+							<input type="text" class="form-control" name="baseUri"
+								id="baseUri">
+						</div>
 
 					</div>
 					<div class="row py-lg-1">
@@ -134,6 +138,8 @@
 								<th><span th:text="#{id}">id</span></th>
 								<th><span th:text="#{name}">name</span></th>
 								<th><span th:text="#{archiveType}">archiveType</span></th>
+								<th><span th:text="#{baseUri}">baseUri</span></th>
+								
 							</tr>
 						</thead>
 
@@ -160,6 +166,8 @@
 											th:text="${productarchive.id}"></td>
 										<td class="first-row" th:text="${productarchive.name}"></td>
 										<td class="first-row" th:text="${productarchive.archiveType}"></td>
+										<td class="first-row" th:text="${productarchive.baseUri}"></td>
+										
 									</tr>
 								</tbody>
 
