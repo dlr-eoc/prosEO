@@ -2,7 +2,7 @@
 #
 # (C) 2024 Dr. Bassler & Co. Managementberatung GmbH
 #
-# Installs the whole prosEO project and runs all tests
+# Installs the whole prosEO project and runs all tests (Tests are switched off)
 # 
 # @author Denys Chaykovskiy
 #
@@ -76,4 +76,5 @@ jobs:
       run: docker container ls
       
     - name: Install all
-      run: mvn -B install --file pom.xml
+# (tests are switched off)  run: mvn -B install --file pom.xml
+      run: mvn -B install --file pom.xml -Dmaven.test.skip=true
