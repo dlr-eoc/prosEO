@@ -36,6 +36,7 @@ import de.dlr.proseo.logging.messages.FacilityMgrMessage;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.ProductArchiveMgrMessage;
 import de.dlr.proseo.model.ProductArchive;
+import de.dlr.proseo.model.enums.ArchiveType;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 
@@ -284,8 +285,13 @@ public class ProductArchiveManager {
 		if (null != name) {
 			query.setParameter("name", name);
 		}
-		if (null != archiveType) {
-			query.setParameter("archiveType", archiveType);
+		
+		try {
+			if (null != archiveType) {
+				query.setParameter("archiveType", ArchiveType.valueOf(archiveType));
+			}
+		} catch (Exception e) {
+			throw new NoResultException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND, name, archiveType));
 		}
 	
 		query.setFirstResult(recordFrom);
@@ -327,8 +333,15 @@ public class ProductArchiveManager {
 		
 		if (name != null)
 			predicates.add(cb.equal(rootArchive.get("name"), name));
-		if (archiveType != null)
-			predicates.add(cb.equal(rootArchive.get("archiveType"), archiveType));
+		
+		try {
+			if (archiveType != null)
+				predicates.add(cb.equal(rootArchive.get("archiveType"), ArchiveType.valueOf(archiveType)));
+		}
+		catch (Exception e) {
+			logger.trace("... wrong archive type: " + archiveType);		
+			return "0"; 
+		}
 		
 		query.select(cb.count(rootArchive)).where(predicates.toArray(new Predicate[predicates.size()]));
 		Long result = em.createQuery(query).getSingleResult();	
