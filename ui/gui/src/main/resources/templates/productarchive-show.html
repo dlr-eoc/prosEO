@@ -92,8 +92,8 @@
 						</div>
 
 						<!-- Filter name -->
-						<div class="col-1 pr-lg-0">
-							<p class="input-group-text word-wrap" th:text="#{name}"></p>
+						<div class="col-2 pr-lg-0">
+							<p class="input-group-text word-wrap" th:text="#{productarchive-name}"></p>
 						</div>
 						<div class="col-3 pl-lg-0">
 							<input type="text" class="form-control" name="name" id="name">
@@ -102,7 +102,7 @@
 						<!-- Filter archiveType -->
 						<div class="col-2 pr-lg-0">
 							<p class="input-group-text word-wrap"
-								th:text="#{archiveType}"></p>
+								th:text="#{productarchive-archiveType}"></p>
 						</div>
 						<div class="col-1 pl-lg-0">
 							<input type="text" class="form-control" name="archiveType"
@@ -133,9 +133,9 @@
 							<tr>
 								<th><span>&nbsp;</span></th>
 								<th><span th:text="#{id}">id</span></th>
-								<th><span th:text="#{name}">name</span></th>
-								<th><span th:text="#{archiveType}">archiveType</span></th>
-								<th><span th:text="#{baseUri}">baseUri</span></th>
+								<th><span th:text="#{productarchive-name}">name</span></th>
+								<th><span th:text="#{productarchive-archiveType}">archiveType</span></th>
+								<th><span th:text="#{productarchive-baseUri}">baseUri</span></th>
 								
 							</tr>
 						</thead>
@@ -174,28 +174,38 @@
 									<!-- Table header (parts that are hidden by default) -->
 									<tr class="th-row">
 										<th class="tr-rowspan"><span>&nbsp;</span></th>
-										<th><span th:text="#{context}">context</span></th>
-										<th><span th:text="#{code}">code</span></th>
+										<th><span th:text="#{productarchive-version}">version</span></th>
+										<th><span th:text="#{productarchive-clientId}">clientId</span></th>
+										<th><span th:text="#{productarchive-clientSecret}">clientSecret</span></th>
+										<th><span th:text="#{productarchive-code}">code</span></th>						
 									</tr>
 
 									<!-- Hidden content -->
 									<tr class="proseo-row-divider">
 										<td class="tr-rowspan">&nbsp;</td>
-										<td class="first-row" th:text="${productarchive.context}"></td>
+										<td class="first-row" th:text="${productarchive.version}"></td>
+										<td class="first-row" th:text="${productarchive.clientId}"></td>
+										<td class="first-row" th:text="${productarchive.clientSecret}"></td>
 										<td class="first-row" th:text="${productarchive.code}"></td>
 									</tr>
 
 									<!-- More hidden table headers -->
 									<tr class="th-row">
 										<th class="tr-rowspan"><span>&nbsp;</span></th>
+										<th><span th:text="#{productarchive-context}">context</span></th>
+										<th><span th:text="#{password}">context</span></th>
+										<th><span th:text="#{productarchive-tokenUri}">context</span></th>	
 										<th><span th:text="#{username}">username</span></th>
 									</tr>
 
 									<!-- More hidden table content -->
 									<tr class="proseo-row-divider">
 										<td class="tr-rowspan">&nbsp;</td>
+										<td class="first-row" th:text="${productarchive.context}"></td>
+										<td class="first-row" th:text="${productarchive.password}"></td>
+										<td class="first-row" th:text="${productarchive.tokenUri}"></td>										
 										<td class="first-row" th:text="${productarchive.username}"></td>
-									</tr>
+									</tr>				
 
 								</tbody>
 
