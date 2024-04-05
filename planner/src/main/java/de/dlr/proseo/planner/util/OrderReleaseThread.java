@@ -275,8 +275,14 @@ public class OrderReleaseThread extends Thread {
 										return PlannerMessage.ORDER_RELEASING_INTERRUPTED;
 									}
 									if (jobList.get(curJList.get(0)).getJobState() == JobState.PLANNED) {
-										Job locJob = RepositoryService.getJobRepository()
-												.getOne(jobList.get(curJList.get(0)).getId());
+										Optional<Job> locJobOpt = RepositoryService.getJobRepository()
+												.findById(jobList.get(curJList.get(0)).getId());
+										Job locJob = null;
+										if (locJobOpt.isPresent()) {
+											locJob = locJobOpt.get();
+										} else {
+											return new PlannerResultMessage(GeneralMessage.FALSE);
+										}
 										try {
 											locAnswer = jobUtil.resume(locJob);
 										} catch (Exception e) {

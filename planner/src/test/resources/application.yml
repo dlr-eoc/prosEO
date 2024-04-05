@@ -21,7 +21,7 @@ logging:
         #io.kubernetes.client.openapi: INFO
         org.hibernate.engine.jdbc.env.internal: WARN
 management:
-  endpoints.web.exposure.include: "health,info"
+    endpoints.web.exposure.include: "health,info"
 proseo:
     wrapper:
         # User and password for wrapper callbacks

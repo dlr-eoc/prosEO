@@ -14,6 +14,8 @@ logging:
         root: INFO
         de.dlr.proseo: TRACE
         org.hibernate.engine.jdbc.env.internal: WARN
+management:
+    endpoints.web.exposure.include: "health"
 proseo:
     userManager.url: http://localhost:8086/proseo/user-mgr/v0.1
     ingestor.url: http://localhost:8081/proseo/ingestor/v0.1

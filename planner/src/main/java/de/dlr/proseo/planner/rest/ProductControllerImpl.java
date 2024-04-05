@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.planner.rest;
 
+import java.util.Optional;
+
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
@@ -23,7 +25,6 @@ import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.rest.ProductController;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.util.UtilService;
 /**
  * Spring MVC controller for the prosEO planner; implements the services required to handle products.
@@ -39,10 +40,6 @@ public class ProductControllerImpl implements ProductController {
 	 */
 	private static ProseoLogger logger = new ProseoLogger(ProductControllerImpl.class);
 
-	/** The Production Planner instance */
-    @Autowired
-    private ProductionPlanner productionPlanner;
-    
 	/** Transaction manager for transaction control */
 	@Autowired
 	private PlatformTransactionManager txManager;
@@ -68,7 +65,11 @@ public class ProductControllerImpl implements ProductController {
 
 		try {
 			final long pcId = transactionTemplate.execute((status) -> {
-				Product p = RepositoryService.getProductRepository().getOne(Long.valueOf(productid));
+				Optional<Product> pOpt = RepositoryService.getProductRepository().findById(Long.valueOf(productid));
+				Product p = null;
+				if (pOpt.isPresent()) {
+					p = pOpt.get();
+				}
 				if (p != null) {
 					return p.getProductClass().getId();
 				}

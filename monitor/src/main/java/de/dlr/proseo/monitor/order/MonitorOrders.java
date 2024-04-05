@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -116,7 +117,13 @@ public class MonitorOrders extends Thread {
 				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
 						transactionTemplate.execute((status) -> {	
-							ProcessingOrder pox = RepositoryService.getOrderRepository().getOne(po.getId());
+							Optional<ProcessingOrder> poxOpt = RepositoryService.getOrderRepository().findById(po.getId());
+							ProcessingOrder pox = null;
+							if (poxOpt.isPresent()) {
+								pox = poxOpt.get();
+							} else {
+								return null;
+							}
 							pox.getMonOrderProgress().add(mop);
 							RepositoryService.getOrderRepository().save(pox);
 							return null;

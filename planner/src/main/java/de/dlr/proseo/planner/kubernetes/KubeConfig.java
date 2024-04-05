@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpStatus;
@@ -634,8 +635,13 @@ public class KubeConfig {
 
 					transactionTemplate.execute((status) -> {
 						String jobName = ProductionPlanner.jobNamePrefix + jobStepId;
-						JobStep jobStep = RepositoryService.getJobStepRepository().getOne(jobStepId);
-
+						Optional<JobStep> jobStepOpt = RepositoryService.getJobStepRepository().findById(jobStepId);
+						JobStep jobStep = null;
+						if (jobStepOpt.isPresent()) {
+							jobStep = jobStepOpt.get();
+						} else {
+							return null;
+						}
 						// If no job with this name is running, change state to FAILED and set info in log
 						if (!kubeJobs.containsKey(jobName)) {
 							Product outputProduct = jobStep.getOutputProduct();
