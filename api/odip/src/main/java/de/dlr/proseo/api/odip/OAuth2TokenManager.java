@@ -68,10 +68,6 @@ public class OAuth2TokenManager {
 	@Autowired
 	private OdipConfiguration config;
 
-	/** The security configuration to use */
-	@Autowired
-	private OdipSecurity securityConfig;
-
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(OAuth2TokenManager.class);
 
@@ -123,7 +119,7 @@ public class OAuth2TokenManager {
 	 * @return the OAuth2 JSON Web Token generated
 	 * @throws SecurityException if the authenticated client is not authorized to use the ODIP API
 	 */
-	private String createToken(UserInfo userInfo) throws SecurityException {
+	private String createToken(UserInfo userInfo, OdipSecurity securityConfig) throws SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createToken({})", userInfo.username);
 
@@ -176,7 +172,7 @@ public class OAuth2TokenManager {
 	 * @throws UnsupportedOperationException if the authorization grant type is not supported by the ODIP service
 	 * @throws SecurityException             if the authenticated client is not authorized to use this authorization grant type
 	 */
-	public OAuth2Response getToken(String grantType, String username, String password, HttpHeaders headers)
+	public OAuth2Response getToken(String grantType, String username, String password, HttpHeaders headers, OdipSecurity securityConfig)
 			throws IllegalArgumentException, UnsupportedOperationException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getToken({}, {}, ********, HttpHeaders)", grantType, username);
@@ -213,7 +209,7 @@ public class OAuth2TokenManager {
 		}
 
 		// Create token
-		String token = createToken(userInfo);
+		String token = createToken(userInfo, securityConfig);
 
 		OAuth2Response response = new OAuth2Response();
 		response.setAccessToken(token);
