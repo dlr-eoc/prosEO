@@ -7,7 +7,6 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Job;
@@ -20,7 +19,6 @@ import de.dlr.proseo.model.Job.JobState;
  *
  */
 @Transactional
-@Repository
 public interface JobRepository extends JpaRepository<Job, Long> {
 
 	@Query("select j from Job j where j.jobState = ?1")

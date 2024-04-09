@@ -11,9 +11,12 @@ spring:
         driverClassName: org.h2.Driver
         username: any       
         password: any
+management:
+  endpoints.web.exposure.include: "health,info"
 logging:
-    file: /proseo/log/proseo-order-mgr.log
-    level:
+  file:
+        name: /proseo/log/proseo-order-mgr.log
+  level:
         root: INFO
         de.dlr.proseo: TRACE
         org.hibernate.engine.jdbc.env.internal: WARN

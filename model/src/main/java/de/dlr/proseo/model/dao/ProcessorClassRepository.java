@@ -5,7 +5,6 @@ package de.dlr.proseo.model.dao;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
 
 import de.dlr.proseo.model.ProcessorClass;
 
@@ -15,7 +14,6 @@ import de.dlr.proseo.model.ProcessorClass;
  * @author Dr. Thomas Bassler
  *
  */
-@Repository
 public interface ProcessorClassRepository extends JpaRepository<ProcessorClass, Long> {
 
 	/**

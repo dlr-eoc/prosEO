@@ -23,9 +23,11 @@ import org.apache.olingo.server.api.debug.DefaultDebugSupport;
 import org.apache.olingo.server.api.serializer.ODataSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.dlr.proseo.api.prip.OAuth2TokenManager;
 import de.dlr.proseo.api.prip.ProductionInterfaceSecurity;
 import de.dlr.proseo.api.prip.odata.LogUtil;
 import de.dlr.proseo.api.prip.odata.ProductEdmProvider;
@@ -51,6 +53,10 @@ public class ProductQueryController {
 
 	/** The service URI */
 	public static final String URI = "/proseo/prip/odata/v1";
+
+	/** The OAuth2 Token Manager */
+	@Autowired
+	private OAuth2TokenManager tokenManager;
 
 	/** The security utilities for the PRIP API */
 	@Autowired
@@ -78,7 +84,7 @@ public class ProductQueryController {
 	 * @param response the HTTP response
 	 * @throws ServletException on any unforeseen runtime exception
 	 */
-	@RequestMapping(value = "/**")
+	@GetMapping(value = "/**")
 	protected void service(final HttpServletRequest request, HttpServletResponse response) throws ServletException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> service({}, {})", (null == request ? "null" : request.getRequestURL()), response);
@@ -97,7 +103,7 @@ public class ProductQueryController {
 
 		// Analyze authentication information and make sure user is authorized for using the PRIP API
 		try {
-			securityConfig.doLogin(request);
+			securityConfig.doLogin(request, tokenManager);
 		} catch (SecurityException e) {
 			try {
 				ODataSerializer serializer = odata.createSerializer(ContentType.JSON);

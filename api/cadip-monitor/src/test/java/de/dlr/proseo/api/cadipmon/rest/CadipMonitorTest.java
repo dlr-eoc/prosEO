@@ -37,7 +37,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 
-import de.dlr.proseo.api.cadipmon.CadipMonitor;
 import de.dlr.proseo.api.cadipmon.CadipMonitorApplication;
 import de.dlr.proseo.api.cadipmon.CadipMonitorConfiguration;
 
@@ -138,10 +137,6 @@ public class CadipMonitorTest {
 	/** CADIP monitor configuration */
 	@Autowired
 	private CadipMonitorConfiguration config;
-
-	/** CADIP Monitor */
-	@Autowired
-	private CadipMonitor cadipMonitor;
 
 	/** A mock CADIP service */
 	private static int WIREMOCK_PORT = 9876;

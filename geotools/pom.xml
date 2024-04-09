@@ -72,11 +72,17 @@
 			<artifactId>proseo-logging</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-        <dependency>
-            <groupId>com.phoenixnap.oss</groupId>
-            <artifactId>springmvc-raml-plugin</artifactId>
-            <type>maven-plugin</type>
-        </dependency>
+    <dependency>
+        <groupId>com.phoenixnap.oss</groupId>
+        <artifactId>springmvc-raml-plugin</artifactId>
+        <type>maven-plugin</type>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+        <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
 	</dependencies>
 
 	<repositories>

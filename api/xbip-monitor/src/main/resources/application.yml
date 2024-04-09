@@ -1,5 +1,6 @@
 logging:
-    file: /proseo/log/proseo-xbip-monitor.log
+    file:
+        name: /proseo/log/proseo-xbip-monitor.log
     level:
         root: INFO
         de.dlr.proseo: TRACE

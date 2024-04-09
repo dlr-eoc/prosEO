@@ -8,7 +8,6 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
 
 import de.dlr.proseo.model.Orbit;
 
@@ -18,7 +17,6 @@ import de.dlr.proseo.model.Orbit;
  * @author Dr. Thomas Bassler
  *
  */
-@Repository
 public interface OrbitRepository extends JpaRepository<Orbit, Long> {
 
 	/**

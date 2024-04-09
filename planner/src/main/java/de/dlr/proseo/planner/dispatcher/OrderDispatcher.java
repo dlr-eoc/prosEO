@@ -827,9 +827,14 @@ public class OrderDispatcher {
 
 								// Retrieve the job from the repository
 								if (jobList.get(currentJobList.get(0)).getJobState() == JobState.INITIAL) {
-									Job locJob = RepositoryService.getJobRepository()
-											.getOne(jobList.get(currentJobList.get(0)).getId());
-
+									Optional<Job> locJobOpt = RepositoryService.getJobRepository()
+											.findById(jobList.get(currentJobList.get(0)).getId());
+									Job locJob = null;
+									if (locJobOpt.isPresent()) {
+										locJob = locJobOpt.get();
+									} else {
+										return new PlannerResultMessage(GeneralMessage.FALSE);
+									}
 									// Create job steps for the job
 									createJobStepsOfJob(locOrder, locJob, productionPlanner);
 										

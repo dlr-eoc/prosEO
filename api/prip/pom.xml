@@ -21,13 +21,13 @@
     </organization>
 
     <properties>
-        <olingo.version>4.7.1</olingo.version>
+        <olingo.version>4.10.0</olingo.version><!-- Olingo 5.x is for Spring Boot 3/Spring 6 -->
+        <nimbus.jwt.version>9.37.3</nimbus.jwt.version>
         <main.basedir>${basedir}/../..</main.basedir>
         <raml-path-query>src/main/resources/raml/prip-query.raml</raml-path-query>
         <raml-path-download>src/main/resources/raml/prip-download.raml</raml-path-download>
         <raml-path-oauth2>src/main/resources/raml/prip-oauth2.raml</raml-path-oauth2>
         <raml-base-package>de.dlr.proseo.api.prip.rest</raml-base-package>
-        <nimbus.jwt.version>9.10</nimbus.jwt.version>
     </properties>
 
     <dependencies>
@@ -57,18 +57,19 @@
             <artifactId>spring-boot-starter-test</artifactId>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.hamcrest</groupId>
+                    <artifactId>hamcrest-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.projectreactor</groupId>
-            <artifactId>reactor-spring</artifactId>
-            <version>1.0.1.RELEASE</version>
         </dependency>
         <dependency>
             <groupId>org.apache.olingo</groupId>

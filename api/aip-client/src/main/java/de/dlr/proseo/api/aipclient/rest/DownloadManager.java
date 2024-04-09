@@ -226,7 +226,7 @@ public class DownloadManager {
 			String jsonMessage = (new ObjectMapper()).writeValueAsString(newMessage);
 
 			// Send message to notification service
-			String notificationResponse = request.syncBody(jsonMessage).retrieve().bodyToMono(String.class).block();
+			String notificationResponse = request.bodyValue(jsonMessage).retrieve().bodyToMono(String.class).block();
 			
 			if (logger.isTraceEnabled()) logger.trace("... notification response: ", notificationResponse);
 			
@@ -839,7 +839,7 @@ public class DownloadManager {
 		try {
 			if (logger.isDebugEnabled()) logger.debug("... sending OData request '{}'", fullRequestUri);
 			
-			createResponse = request.body(BodyInserters.fromObject(ODATA_ORDER_REQUEST_BODY))
+			createResponse = request.body(BodyInserters.fromValue(ODATA_ORDER_REQUEST_BODY))
 				.retrieve()
 				.bodyToMono(Map.class)
 				.block();
@@ -1321,7 +1321,7 @@ public class DownloadManager {
 			Flux<String> result = webClient.post().uri(ingestorRestUrl).headers(httpHeaders -> {
 				httpHeaders.add(HttpHeaders.AUTHORIZATION, basicAuth);
 				httpHeaders.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
-			}).body(BodyInserters.fromObject(jsonRequest)).retrieve().bodyToFlux(String.class);
+			}).body(BodyInserters.fromValue(jsonRequest)).retrieve().bodyToFlux(String.class);
 			result.blockLast(Duration.ofSeconds(config.getIngestorTimeout()));
 		} catch (WebClientResponseException e) {
 			logger.log(AipClientMessage.ERROR_REGISTERING_PRODUCT, product.getProductClass(), e.getStatusCode().value(),

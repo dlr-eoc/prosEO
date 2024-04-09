@@ -1,5 +1,6 @@
 logging:
-    file: /proseo/log/proseo-cadip-monitor.log
+    file:
+        name: /proseo/log/proseo-cadip-monitor.log
     level:
         root: INFO
         de.dlr.proseo: TRACE

@@ -5,7 +5,6 @@ package de.dlr.proseo.model.dao;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
 
 import de.dlr.proseo.model.Configuration;
 
@@ -15,7 +14,6 @@ import de.dlr.proseo.model.Configuration;
  * @author Dr. Thomas Bassler
  *
  */
-@Repository
 public interface ConfigurationRepository extends JpaRepository<Configuration, Long> {
 
 	/**

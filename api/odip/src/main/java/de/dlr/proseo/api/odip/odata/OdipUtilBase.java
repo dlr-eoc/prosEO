@@ -103,7 +103,7 @@ public class OdipUtilBase {
 
 	/** The security utilities for the ODIP API */
 	@Autowired
-	protected OdipSecurity securityConfig;
+	private OdipSecurity securityConfig;
 
 	/** JPA entity manager */
 	@PersistenceContext

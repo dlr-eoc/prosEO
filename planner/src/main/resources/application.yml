@@ -17,6 +17,8 @@ logging:
         de.dlr.proseo: TRACE
         #io.kubernetes.client.openapi: INFO
         org.hibernate.engine.jdbc.env.internal: WARN
+management:
+    endpoints.web.exposure.include: "health"
 proseo:
     wrapper:
         # User and password for wrapper callbacks
