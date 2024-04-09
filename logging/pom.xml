@@ -19,23 +19,9 @@
 	</organization>
 
 	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>11</maven.compiler.source>
-		<maven.compiler.target>11</maven.compiler.target>
-		<maven-site-plugin.version>3.9.1</maven-site-plugin.version>
-		<maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
-		<maven-project-info-reports-plugin.version>3.1.1</maven-project-info-reports-plugin.version>
-		<spring.version>5.1.8.RELEASE</spring.version>
 	</properties>
 
 	<dependencies>
-		<!--		
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId>
-			<version>3.12.0</version>
-		</dependency>
-		-->
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-core</artifactId>
@@ -62,14 +48,6 @@
 	<build>
 		<finalName>proseo-logging</finalName>
 		<plugins>
-			<plugin>
-				<artifactId>maven-site-plugin</artifactId>
-			</plugin>
-
-			<plugin>
-				<artifactId>maven-javadoc-plugin</artifactId>
-			</plugin>
-
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>

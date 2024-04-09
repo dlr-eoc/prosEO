@@ -21,7 +21,6 @@
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/geotools-api.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.geotools.rest</raml-base-package>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<geotools.version>25.3</geotools.version>
 	</properties>
 
@@ -43,6 +42,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 		</dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-shapefile</artifactId>

@@ -46,11 +46,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 		</dependency>
-<!-- 		<dependency> -->
-<!-- 			<groupId>org.projectreactor</groupId> -->
-<!-- 			<artifactId>reactor-spring</artifactId> -->
-<!-- 			<version>1.0.1.RELEASE</version> -->
-<!-- 		</dependency> -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
 	    <dependency>
 	        <groupId>io.projectreactor</groupId>
 	        <artifactId>reactor-core</artifactId>
