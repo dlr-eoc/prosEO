@@ -20,8 +20,6 @@
 	</organization>
 
 	<properties>
-		<!-- dropwizard downgrade hack ~ https://github.com/doanduyhai/Achilles/issues/353#issuecomment-456735770 -->
-		<!-- dropwizard-metrics.version>3.2.6</dropwizard-metrics.version -->
 	</properties>
 	
 	<dependencies>
