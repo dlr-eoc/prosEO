@@ -18,8 +18,8 @@
 	</organization>
 
 	<properties>
-        <olingo.version>4.7.1</olingo.version>
-        <netty.version>4.1.48.Final</netty.version>
+        <olingo.version>4.10.0</olingo.version><!-- Olingo 5.x is for Spring Boot 3/Spring 6 -->
+        <wiremock.version>2.35.2</wiremock.version><!-- Wiremock 3.x is for Spring Boot 3/Spring 6 -->
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/aip-client-api.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.api.aipclient.rest</raml-base-package>
@@ -56,9 +56,15 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 		</dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.hamcrest</groupId>
+                    <artifactId>hamcrest-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
@@ -68,7 +74,7 @@
         <dependency>
             <groupId>com.github.tomakehurst</groupId>
             <artifactId>wiremock-jre8</artifactId>
-            <version>2.35.0</version>
+            <version>${wiremock.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
