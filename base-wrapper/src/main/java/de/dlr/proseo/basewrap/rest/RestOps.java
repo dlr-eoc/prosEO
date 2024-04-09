@@ -11,13 +11,13 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.ProcessingException;
+import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,7 +93,7 @@ public class RestOps {
 			try {
 
 				// Build a new client to build and execute a HTTP request
-				ResteasyClient client = new ResteasyClientBuilder().connectTimeout(ENV_HTTP_TIMEOUT, TimeUnit.SECONDS)
+				ResteasyClient client = (ResteasyClient) ClientBuilder.newBuilder().connectTimeout(ENV_HTTP_TIMEOUT, TimeUnit.SECONDS)
 					.readTimeout(ENV_HTTP_TIMEOUT, TimeUnit.SECONDS)
 					.build()
 					.register(new RestAuth(user, pw));
