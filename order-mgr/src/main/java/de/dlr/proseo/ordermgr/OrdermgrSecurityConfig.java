@@ -76,18 +76,6 @@ public class OrdermgrSecurityConfig {
 		return http.build();
 	}
 
-	/**
-	 * Initialize the users, passwords and roles for the Ordermgr from the prosEO database
-	 *
-	 * @param builder to manage authentications
-	 * @throws Exception if anything goes wrong with JDBC authentication
-	 */
-	@Autowired
-	public void initialize(AuthenticationManagerBuilder builder) throws Exception {
-		logger.log(GeneralMessage.INITIALIZING_AUTHENTICATION);
-
-		builder.userDetailsService(userDetailsService());
-	}
 
 	/**
 	 * Provides the default password encoder for prosEO (BCrypt)
