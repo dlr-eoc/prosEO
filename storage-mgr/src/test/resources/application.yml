@@ -1,3 +1,5 @@
+management:
+    endpoints.web.exposure.include: "health,info"
 logging:
     file: 
         name: /proseo/log/proseo-storage-mgr.log
