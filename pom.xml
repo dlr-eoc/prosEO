@@ -36,9 +36,9 @@
 		<maven-site-plugin.version>3.12.1</maven-site-plugin.version>
 		<maven-javadoc-plugin.version>3.6.3</maven-javadoc-plugin.version>
 		<maven-project-info-reports-plugin.version>3.5.0</maven-project-info-reports-plugin.version>
+		<exec-maven-plugin.version>3.2.0</exec-maven-plugin.version>
 		<junit.version>4.13.2</junit.version>
-		<log4j2.version>2.15.0</log4j2.version>
-		<spring-boot-starter-test.version>2.7.18</spring-boot-starter-test.version>
+		<spring-boot-starter-test.version>2.7.18</spring-boot-starter-test.version> <!-- Not in parent POM! -->
 	</properties>
 
 	<modules>
@@ -186,7 +186,24 @@
 						<overrideNamingLogicWith>DISPLAY_NAME</overrideNamingLogicWith>
 					</configuration>
 				</plugin>
-
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>${exec-maven-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>exec</goal>
+                            </goals>
+                            <inherited>false</inherited>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <executable>raml2html</executable>
+                        <commandlineArgs>-i ${raml-path} -o src/site/resources/${project.artifactId}.html</commandlineArgs>
+                    </configuration>
+                </plugin>
 			</plugins>
 		</pluginManagement>
 	</build>
