@@ -11,14 +11,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
@@ -31,7 +30,7 @@ import de.dlr.proseo.model.enums.UserRole;
  */
 @Configuration
 @EnableWebSecurity
-public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
+public class OrdermgrSecurityConfig {
 
 	/** Datasource as configured in the application properties */
 	@Autowired
@@ -45,11 +44,9 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 	 *
 	 * @param http the HTTP security object
 	 */
-	@Override
-	protected void configure(HttpSecurity http) throws Exception {
-		http.httpBasic()
-			.and()
-			.authorizeRequests()
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http.httpBasic(it -> {})
+		.authorizeHttpRequests(requests -> requests
 			.antMatchers("/**/actuator/health")
 			.permitAll()
 			.antMatchers(HttpMethod.GET, "/**/missions")
@@ -73,24 +70,11 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 			.antMatchers(HttpMethod.GET, "/**/orbits")
 			.hasAnyRole(UserRole.MISSION_READER.toString())
 			.antMatchers("/**/orbits")
-			.hasAnyRole(UserRole.MISSION_MGR.toString())
-			.and()
-			.csrf()
-			.disable(); // Required for POST requests (or configure CSRF)
+			.hasAnyRole(UserRole.MISSION_MGR.toString()))
+			.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
+		return http.build();
 	}
 
-	/**
-	 * Initialize the users, passwords and roles for the Ordermgr from the prosEO database
-	 *
-	 * @param builder to manage authentications
-	 * @throws Exception if anything goes wrong with JDBC authentication
-	 */
-	@Autowired
-	public void initialize(AuthenticationManagerBuilder builder) throws Exception {
-		logger.log(GeneralMessage.INITIALIZING_AUTHENTICATION);
-
-		builder.userDetailsService(userDetailsService());
-	}
 
 	/**
 	 * Provides the default password encoder for prosEO (BCrypt)
@@ -98,7 +82,7 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 	 * @return a BCryptPasswordEncoder
 	 */
 	@Bean
-	public PasswordEncoder passwordEncoder() {
+	PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
 
@@ -107,9 +91,8 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 	 *
 	 * @return a JdbcDaoImpl object
 	 */
-	@Override
 	@Bean
-	public UserDetailsService userDetailsService() {
+	UserDetailsService userDetailsService() {
 		logger.log(GeneralMessage.INITIALIZING_USER_DETAILS_SERVICE, dataSource);
 
 		JdbcDaoImpl jdbcDaoImpl = new JdbcDaoImpl();
