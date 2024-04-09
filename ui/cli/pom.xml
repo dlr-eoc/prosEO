@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
@@ -9,7 +11,9 @@
 
 	<artifactId>proseo-ui-cli</artifactId>
 	<name>prosEO Command Line Interface</name>
-	<description>prosEO Command Line Interface – a command-line based user interface for managing and monitoring prosEO, the Processing System for Earth Observation Data</description>
+	<description>prosEO Command Line Interface – a command-line based user
+		interface for managing and monitoring prosEO, the Processing System for
+		Earth Observation Data</description>
 
 	<url>https://github.com/dlr-eoc/prosEO/ui/cli</url>
 	<organization>
@@ -18,7 +22,7 @@
 	</organization>
 
 	<properties>
-		<jline.version>3.13.2</jline.version>
+		<jline.version>3.25.1</jline.version>
 	</properties>
 
 	<dependencies>
@@ -43,19 +47,25 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 		</dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
+		<dependency>
+			<groupId>org.junit.vintage</groupId>
+			<artifactId>junit-vintage-engine</artifactId>
+			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.hamcrest</groupId>
+					<artifactId>hamcrest-core</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-xml</artifactId>
 		</dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-yaml</artifactId>
-        </dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-yaml</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.yaml</groupId>
 			<artifactId>snakeyaml</artifactId>
@@ -105,12 +115,12 @@
 	<build>
 		<finalName>proseo-ui-cli</finalName>
 		<plugins>
-			
+
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
-			
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
@@ -128,7 +138,7 @@
 					</execution>
 				</executions>
 			</plugin>
-	
+
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<executions>
@@ -145,39 +155,42 @@
 							<archive>
 								<manifest>
 									<addClasspath>true</addClasspath>
-									<mainClass>de.dlr.proseo.ui.cli.syntax2html.Syntax2HTML</mainClass>
+									<mainClass>
+										de.dlr.proseo.ui.cli.syntax2html.Syntax2HTML</mainClass>
 								</manifest>
 							</archive>
 						</configuration>
 					</execution>
 				</executions>
 			</plugin>
-			
-			
-			 <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <configuration>
-                            <target>
-                            	<exec executable="java" failonerror="true">
-                                    <arg value="-jar" />
-                                    <arg value="target/proseo-ui-cli-syntax2html.jar" />
-                                    <arg value="src/main/resources/ui-cli-syntax.yml" />
-                                    <arg value="src/site/resources/syntax.html" />
-                                </exec>
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            
-			
+
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<configuration>
+							<target>
+								<exec executable="java" failonerror="true">
+									<arg value="-jar" />
+									<arg
+										value="target/proseo-ui-cli-syntax2html.jar" />
+									<arg
+										value="src/main/resources/ui-cli-syntax.yml" />
+									<arg value="src/site/resources/syntax.html" />
+								</exec>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+
 		</plugins>
 	</build>
 </project>
