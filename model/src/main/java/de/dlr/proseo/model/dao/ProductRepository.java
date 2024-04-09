@@ -9,7 +9,6 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
 
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.Product;
@@ -21,7 +20,6 @@ import de.dlr.proseo.model.enums.ProductionType;
  * @author Dr. Thomas Bassler
  *
  */
-@Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
 	/**

@@ -8,7 +8,6 @@ package de.dlr.proseo.model;
 import java.io.Serializable;
 import java.time.DateTimeException;
 import java.time.Instant;
-import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
 import java.util.Objects;
 

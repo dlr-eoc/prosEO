@@ -9,7 +9,6 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
 
 import de.dlr.proseo.model.ProductFile;
 
@@ -19,7 +18,6 @@ import de.dlr.proseo.model.ProductFile;
  * @author Dr. Thomas Bassler
  *
  */
-@Repository
 public interface ProductFileRepository extends JpaRepository<ProductFile, Long> {
 
 	/**

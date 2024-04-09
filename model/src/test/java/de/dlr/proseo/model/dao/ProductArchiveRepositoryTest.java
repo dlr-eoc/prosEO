@@ -22,7 +22,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProductArchive;
 import de.dlr.proseo.model.enums.ArchiveType;
 import de.dlr.proseo.model.service.RepositoryApplication;
