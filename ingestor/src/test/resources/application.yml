@@ -13,7 +13,8 @@ spring:
 management:
   endpoints.web.exposure.include: "health,info"
 logging:
-    file: /proseo/log/proseo-ingestor.log
+    file:
+        name: /proseo/log/proseo-ingestor.log
     level:
         root: INFO
         de.dlr.proseo: TRACE
