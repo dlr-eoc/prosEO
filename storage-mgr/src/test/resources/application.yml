@@ -1,5 +1,6 @@
 logging:
-    file: /proseo/log/proseo-storage-mgr.log
+    file: 
+        name: /proseo/log/proseo-storage-mgr.log
     level:
         root: INFO
         de.dlr.proseo: TRACE

@@ -13,7 +13,7 @@ spring:
         password: any
 logging:
   file:
-      name: /proseo/log/proseo-order-mgr.log
+        name: /proseo/log/proseo-order-mgr.log
   level:
         root: INFO
         de.dlr.proseo: TRACE
