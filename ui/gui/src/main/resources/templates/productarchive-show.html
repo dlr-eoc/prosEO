@@ -176,37 +176,37 @@
 									<!-- Table header (parts that are hidden by default) -->
 									<tr class="th-row">
 										<th class="tr-rowspan"><span>&nbsp;</span></th>
-										<th><span th:text="#{productarchive-version}">version</span></th>
-										<th><span th:text="#{productarchive-clientId}">clientId</span></th>
-										<th><span th:text="#{productarchive-clientSecret}">clientSecret</span></th>
-										<th><span th:text="#{productarchive-code}">code</span></th>						
+										<th><span th:text="#{productarchive-context}">context</span></th>
+										<th><span th:text="#{productarchive-tokenRequired}">tokenRequired</span></th>
+										<th><span th:text="#{productarchive-tokenUri}">tokenUri</span></th>
+										<th><span th:text="#{username}">username</span></th>						
 									</tr>
 
 									<!-- Hidden content -->
 									<tr class="proseo-row-divider">
 										<td class="tr-rowspan">&nbsp;</td>
-										<td class="first-row" th:text="${productarchive.version}"></td>
-										<td class="first-row" th:text="${productarchive.clientId}"></td>
-										<td class="first-row" th:text="${productarchive.clientSecret}"></td>
-										<td class="first-row" th:text="${productarchive.code}"></td>
+										<td class="first-row" th:text="${productarchive.context}"></td>
+										<td class="first-row" th:text="${productarchive.tokenRequired}"></td>
+										<td class="first-row" th:text="${productarchive.tokenUri}"></td>
+										<td class="first-row" th:text="${productarchive.username}"></td>
 									</tr>
 
 									<!-- More hidden table headers -->
 									<tr class="th-row">
 										<th class="tr-rowspan"><span>&nbsp;</span></th>
-										<th><span th:text="#{productarchive-context}">context</span></th>
-										<th><span th:text="#{password}">context</span></th>
-										<th><span th:text="#{productarchive-tokenUri}">context</span></th>	
-										<th><span th:text="#{username}">username</span></th>
+										<th><span th:text="#{password}">password</span></th>
+										<th><span th:text="#{productarchive-clientId}">clientId</span></th>
+										<th><span th:text="#{productarchive-clientSecret}">clientSecret</span></th>	
+										<th><span th:text="#{productarchive-sendAuthInBody}">sendAuthInBody</span></th>
 									</tr>
 
 									<!-- More hidden table content -->
 									<tr class="proseo-row-divider">
 										<td class="tr-rowspan">&nbsp;</td>
-										<td class="first-row" th:text="${productarchive.context}"></td>
 										<td class="first-row" th:text="${productarchive.password}"></td>
-										<td class="first-row" th:text="${productarchive.tokenUri}"></td>										
-										<td class="first-row" th:text="${productarchive.username}"></td>
+										<td class="first-row" th:text="${productarchive.clientId}"></td>
+										<td class="first-row" th:text="${productarchive.clientSecret}"></td>										
+										<td class="first-row" th:text="${productarchive.sendAuthInBody}"></td>
 									</tr>				
 
 								</tbody>
