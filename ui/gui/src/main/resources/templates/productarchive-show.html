@@ -87,7 +87,7 @@
 						<div class="col-1 pr-lg-0">
 							<p class="input-group-text word-wrap" th:text="#{id}"></p>
 						</div>
-						<div class="col-1 pl-lg-0">
+						<div class="col-2 pl-lg-0">
 							<input type="number" class="form-control" name="id" id="id">
 						</div>
 
@@ -104,7 +104,7 @@
 							<p class="input-group-text word-wrap"
 								th:text="#{productarchive-archiveType}"></p>
 						</div>
-						<div class="col-1 pl-lg-0">
+						<div class="col-2 pl-lg-0">
 							<input type="text" class="form-control" name="archiveType"
 								id="archiveType">
 						</div>
@@ -133,6 +133,7 @@
 							<tr>
 								<th><span>&nbsp;</span></th>
 								<th><span th:text="#{id}">id</span></th>
+								<th><span th:text="#{productarchive-code}">code</span></th>
 								<th><span th:text="#{productarchive-name}">name</span></th>
 								<th><span th:text="#{productarchive-archiveType}">archiveType</span></th>
 								<th><span th:text="#{productarchive-baseUri}">baseUri</span></th>
@@ -161,6 +162,7 @@
 										<td class="cursorpointer first-row no-left-border"
 											th:onclick="'toggleProductArchive('+${productarchive.id}+')'"
 											th:text="${productarchive.id}"></td>
+										<td class="first-row" th:text="${productarchive.code}"></td>	
 										<td class="first-row" th:text="${productarchive.name}"></td>
 										<td class="first-row" th:text="${productarchive.archiveType}"></td>
 										<td class="first-row" th:text="${productarchive.baseUri}"></td>
