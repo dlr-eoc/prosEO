@@ -162,10 +162,10 @@
 										<td class="cursorpointer first-row no-left-border"
 											th:onclick="'toggleProductArchive('+${productarchive.id}+')'"
 											th:text="${productarchive.id}"></td>
-										<td class="first-row" th:text="${productarchive.code}"></td>	
-										<td class="first-row" th:text="${productarchive.name}"></td>
-										<td class="first-row" th:text="${productarchive.archiveType}"></td>
-										<td class="first-row" th:text="${productarchive.baseUri}"></td>
+										<td class="first-row" th:text="${productarchive?.code}"></td>	
+										<td class="first-row" th:text="${productarchive?.name}"></td>
+										<td class="first-row" th:text="${productarchive?.archiveType}"></td>
+										<td class="first-row" th:text="${productarchive?.baseUri}"></td>
 										
 									</tr>
 								</tbody>
@@ -185,10 +185,10 @@
 									<!-- Hidden content -->
 									<tr class="proseo-row-divider">
 										<td class="tr-rowspan">&nbsp;</td>
-										<td class="first-row" th:text="${productarchive.context}"></td>
-										<td class="first-row" th:text="${productarchive.tokenRequired}"></td>
-										<td class="first-row" th:text="${productarchive.tokenUri}"></td>
-										<td class="first-row" th:text="${productarchive.username}"></td>
+										<td class="first-row" th:text="${productarchive?.context}"></td>
+										<td class="first-row" th:text="${productarchive?.tokenRequired}"></td>
+										<td class="first-row" th:text="${productarchive?.tokenUri}"></td>
+										<td class="first-row" th:text="${productarchive?.username}"></td>
 									</tr>
 
 									<!-- More hidden table headers -->
@@ -203,10 +203,22 @@
 									<!-- More hidden table content -->
 									<tr class="proseo-row-divider">
 										<td class="tr-rowspan">&nbsp;</td>
-										<td class="first-row" th:text="${productarchive.password}"></td>
-										<td class="first-row" th:text="${productarchive.clientId}"></td>
-										<td class="first-row" th:text="${productarchive.clientSecret}"></td>										
-										<td class="first-row" th:text="${productarchive.sendAuthInBody}"></td>
+										
+										<td class="first-row"><input th:id="'passwordinput' + ${productarchive?.id}" th:value="${productarchive?.password}" type="password" readonly></input>
+											<a class="eye" th:id="'passwordeye' + ${productarchive?.id}" th:onclick="'showHidePassword(' + ${productarchive?.id} + ')'">
+										   		<span data-feather="eye"></span>
+										   	</a>
+										</td>
+										   	
+										<td class="first-row" th:text="${productarchive?.clientId}"></td>
+										
+									    <td class="first-row"><input th:id="'clientsecretinput' + ${productarchive?.id}" th:value="${productarchive?.clientSecret}" type="password" readonly></input> 
+									  		<a class="eye" th:id="'clientsecreteye' + ${productarchive?.id}" th:onclick="'showHideClientSecret(' + ${productarchive?.id} + ')'">
+									      		<span data-feather="eye"></span>
+									     	</a>
+									    </td>
+												
+										<td class="first-row" th:text="${productarchive?.sendAuthInBody}"></td>
 									</tr>				
 
 								</tbody>
@@ -257,6 +269,30 @@
 		var id = null;
 		var name = null;
 		var archiveType = null;
+		
+		function showHideClientSecret(id) {
+		      if (document.getElementById('clientsecretinput' + id).type == 'password' ) { 
+		          document.getElementById('clientsecretinput' + id).type = 'text';
+		          document.getElementById('clientsecreteye' + id).innerHTML = '<span data-feather="eye-off"></span>';
+		          feather.replace();
+		      } else {
+			      document.getElementById('clientsecretinput' + id).type = 'password';
+		          document.getElementById('clientsecreteye' + id).innerHTML = '<span data-feather="eye"></span>';
+		          feather.replace();
+		      }
+	    };
+	    
+	    function showHidePassword(id) {
+	        if (document.getElementById('passwordinput' + id).type == 'password' ) { 
+	            document.getElementById('passwordinput' + id).type = 'text';
+	            document.getElementById('passwordeye' + id).innerHTML = '<span data-feather="eye-off"></span>';
+	            feather.replace();
+	        } else {
+	            document.getElementById('passwordinput' + id).type = 'password';
+	            document.getElementById('passwordeye' + id).innerHTML = '<span data-feather="eye"></span>';
+	            feather.replace();
+	        }
+	    };
 		
 		// Function to fetch objects from the REST controller
 		function updateTable(newPage) {
