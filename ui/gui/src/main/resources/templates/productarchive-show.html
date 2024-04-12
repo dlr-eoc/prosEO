@@ -219,7 +219,24 @@
 									    </td>
 												
 										<td class="first-row" th:text="${productarchive?.sendAuthInBody}"></td>
-									</tr>				
+									</tr>	
+									
+									<!-- More hidden table headers -->
+									<tr class="th-row">
+										<th class="tr-rowspan"><span>&nbsp;</span></th>
+										<th><span th:text="#{productarchive-available-product-classes}">availableProductClasses</span></th>
+									</tr>
+										
+									<!-- More hidden table content -->
+									<tr class="proseo-row-divider">
+										<td class="tr-rowspan">&nbsp;</td>
+									
+										<td><a th:each="avail : ${productarchive?.availableProductClasses}"
+											class="proseo-list-item"
+											th:href="'/productclass-show?productClass=' + ${avail}"
+											th:text="' ' + ${avail}"></a>
+										</td>	
+									</tr>		
 
 								</tbody>
 
