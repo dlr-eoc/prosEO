@@ -199,6 +199,7 @@ public class OrderReleaseThread extends Thread {
 			}
 		}
 		this.resultMessage = answer;
+		productionPlanner.getReleaseThreads().remove(this.getName());
 
 		if (logger.isTraceEnabled()) logger.trace("<<< run() for thread {}", this.getName());
 		productionPlanner.checkNextForRestart();				
