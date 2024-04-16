@@ -92,7 +92,7 @@ public class ProcessorService {
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
-			.exchange();
+			.retrieve().bodyToMono(ClientResponse.class);
 	}
 
 	/**
@@ -127,7 +127,7 @@ public class ProcessorService {
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
-			.exchange();
+			.retrieve().bodyToMono(ClientResponse.class);
 	}
 
 	/**
@@ -179,11 +179,11 @@ public class ProcessorService {
 		return webclient.build()
 			.post()
 			.uri(uri)
-			.body(BodyInserters.fromObject(map))
+			.body(BodyInserters.fromProducer(map, Map.class))
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
 			.accept(MediaType.APPLICATION_JSON)
-			.exchange();
+			.retrieve().bodyToMono(ClientResponse.class);
 	}
 
 	/**

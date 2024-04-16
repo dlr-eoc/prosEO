@@ -321,7 +321,7 @@ public class GUIProductClassController extends GUIBaseController {
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
-			.exchange();
+			.retrieve().bodyToMono(ClientResponse.class);
 	}
 
 	/**

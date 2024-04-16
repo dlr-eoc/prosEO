@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
@@ -9,13 +11,20 @@
 
 	<artifactId>proseo-ui-gui</artifactId>
 	<name>prosEO Graphical User Interface</name>
-	<description>prosEO Graphical User Interface – a browser-based graphical user interface for managing and monitoring prosEO, the Processing System for Earth Observation Data</description>
+	<description>prosEO Graphical User Interface – a browser-based graphical
+		user interface for managing and monitoring prosEO, the Processing System
+		for Earth Observation Data</description>
 
 	<url>https://github.com/dlr-eoc/prosEO/ui/gui</url>
 	<organization>
 		<name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
 		<url>http://www.dlr.de</url>
 	</organization>
+
+	<properties>
+		<bootstrap.version>3.4.1</bootstrap.version>
+		<jquery.version>3.7.1</jquery.version>
+	</properties>
 
 	<dependencies>
 		<dependency>
@@ -48,15 +57,16 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
 		<dependency>
-			<groupId>org.projectreactor</groupId>
-			<artifactId>reactor-spring</artifactId>
-			<version>1.0.1.RELEASE</version>
+			<groupId>org.junit.vintage</groupId>
+			<artifactId>junit-vintage-engine</artifactId>
+			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.hamcrest</groupId>
+					<artifactId>hamcrest-core</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>de.dlr.proseo</groupId>
@@ -90,12 +100,12 @@
 		<dependency>
 			<groupId>org.webjars</groupId>
 			<artifactId>bootstrap</artifactId>
-			<version>3.3.7-1</version>
+			<version>${bootstrap.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.webjars</groupId>
 			<artifactId>jquery</artifactId>
-			<version>3.1.1</version>
+			<version>${jquery.version}</version>
 		</dependency>
 	</dependencies>
 
@@ -108,34 +118,36 @@
 			</plugin>
 
 			<!-- Build Docker image -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>install</phase>
-                        <configuration>
-                            <target>
-                            	<exec executable="docker" failonerror="true">
-                                    <arg value="build" />
-                                    <arg value="-t" />
-                                    <arg value="${docker.registry}/${project.build.finalName}:${project.version}" />
-                                    <arg value="--platform" />
-                                    <arg value="${project.build.platform}" />
-                                    <arg value="." />
-                                </exec>
-                            	<exec executable="docker" failonerror="true">
-                                    <arg value="push" />
-                                    <arg value="${docker.registry}/${project.build.finalName}:${project.version}" />
-                                </exec>
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>install</phase>
+						<configuration>
+							<target>
+								<exec executable="docker" failonerror="true">
+									<arg value="build" />
+									<arg value="-t" />
+									<arg
+										value="${docker.registry}/${project.build.finalName}:${project.version}" />
+									<arg value="--platform" />
+									<arg value="${project.build.platform}" />
+									<arg value="." />
+								</exec>
+								<exec executable="docker" failonerror="true">
+									<arg value="push" />
+									<arg
+										value="${docker.registry}/${project.build.finalName}:${project.version}" />
+								</exec>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 </project>

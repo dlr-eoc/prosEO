@@ -131,7 +131,7 @@ public class OrderService {
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
-			.exchange();
+			.retrieve().bodyToMono(ClientResponse.class);
 	}
 
 	/**
@@ -172,7 +172,7 @@ public class OrderService {
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
-			.exchange();
+			.retrieve().bodyToMono(ClientResponse.class);
 	}
 
 	/**
@@ -230,7 +230,7 @@ public class OrderService {
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
-			.exchange();
+			.retrieve().bodyToMono(ClientResponse.class);
 	}
 
 	/**
@@ -271,7 +271,7 @@ public class OrderService {
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
-			.exchange();
+			.retrieve().bodyToMono(ClientResponse.class);
 	}
 
 	/**
@@ -392,9 +392,9 @@ public class OrderService {
 			})
 				// Timeouts: Neither configuring timeouts in tcpConfiguration() nor using the timeout() method on the returned Mono
 				// keeps the application from timing out after 30 s sharp
-				.tcpConfiguration(client -> client.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.getTimeout().intValue())
-					.doOnConnected(conn -> conn.addHandlerLast(new ReadTimeoutHandler((int) (config.getTimeout() / 1000)))
-						.addHandlerLast(new WriteTimeoutHandler((int) (config.getTimeout() / 1000)))))));
+				.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.getTimeout().intValue())
+				.doOnConnected(conn -> conn.addHandlerLast(new ReadTimeoutHandler((int) (config.getTimeout() / 1000)))
+					.addHandlerLast(new WriteTimeoutHandler((int) (config.getTimeout() / 1000))))));
 		WebClient webClient = webClientBuilder.build();
 
 		logger.trace("Found authentication: " + auth);
@@ -408,21 +408,21 @@ public class OrderService {
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.exchange()
+				.retrieve().bodyToMono(ClientResponse.class)
 				.timeout(Duration.ofMillis(config.getTimeout()));
 		} else if (method.equals("put")) {
 			answer = webClient.put()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.exchange()
+				.retrieve().bodyToMono(ClientResponse.class)
 				.timeout(Duration.ofMillis(config.getTimeout()));
 		} else if (method.equals("delete")) {
 			answer = webClient.delete()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.exchange()
+				.retrieve().bodyToMono(ClientResponse.class)
 				.timeout(Duration.ofMillis(config.getTimeout()));
 		}
 
@@ -484,19 +484,19 @@ public class OrderService {
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.exchange();
+				.retrieve().bodyToMono(ClientResponse.class);
 		} else if (method.equals("put")) {
 			answer = webClient.put()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.exchange();
+				.retrieve().bodyToMono(ClientResponse.class);
 		} else if (method.equals("delete")) {
 			answer = webClient.delete()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.exchange();
+				.retrieve().bodyToMono(ClientResponse.class);
 		}
 
 		// The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
@@ -557,19 +557,19 @@ public class OrderService {
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.exchange();
+				.retrieve().bodyToMono(ClientResponse.class);
 		} else if (method.equals("put")) {
 			answer = webClient.put()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.exchange();
+				.retrieve().bodyToMono(ClientResponse.class);
 		} else if (method.equals("delete")) {
 			answer = webClient.delete()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.exchange();
+				.retrieve().bodyToMono(ClientResponse.class);
 		}
 
 		// The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
