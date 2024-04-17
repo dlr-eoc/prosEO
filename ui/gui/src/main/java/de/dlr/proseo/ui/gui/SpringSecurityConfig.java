@@ -27,15 +27,15 @@ public class SpringSecurityConfig {
 	@Autowired
 	private GUIAuthenticationProvider authenticationProvider;
 
-	/**
-	 * Configures the HTTP security settings, including the authentication filter, URL permissions, login and logout pages, and CSRF
-	 * protection.
-	 *
-	 * @param http the HttpSecurity object to be configured
-	 * @throws Exception if an error occurs during configuration
-	 */
-	@Bean
-	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    /**
+     * Configures the HTTP security settings, including the authentication filter, URL permissions, login and logout pages, and CSRF
+     * protection.
+     *
+     * @param http the HttpSecurity object to be configured
+     * @throws Exception if an error occurs during configuration
+     */
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		
 		// Create an instance of the custom authentication filter
 		SpringAuthenticationFilter authenticationFilter = new SpringAuthenticationFilter();
@@ -44,30 +44,27 @@ public class SpringSecurityConfig {
 
 		// Configure HTTP security
 		http.authenticationProvider(authenticationProvider);
-		
-		http.addFilter(authenticationFilter)
-			.authorizeRequests()
-			.antMatchers("/resources/**")
-			.permitAll()
-			.antMatchers("/background.jpg")
-			.permitAll()
-			.antMatchers("/**/actuator/health")
-			.permitAll()
-			.anyRequest()
-			.authenticated()
-			.and()
-			.formLogin()
-			.loginPage("/customlogin")
-			.failureUrl("/customlogin?error")
-			.permitAll()
-			.and()
-			.logout()
-			.logoutUrl("/logout")
-			.logoutSuccessUrl("/customlogin?logout")
-			.permitAll()
-			.and()
-			.csrf()
-			.disable();
+
+        http.addFilter(authenticationFilter)
+                .authorizeRequests(requests -> requests
+                        .antMatchers("/resources/**")
+                        .permitAll()
+                        .antMatchers("/background.jpg")
+                        .permitAll()
+                        .antMatchers("/**/actuator/health")
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated())
+                .formLogin(login -> login
+                        .loginPage("/customlogin")
+                        .failureUrl("/customlogin?error")
+                        .permitAll())
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/customlogin?logout")
+                        .permitAll())
+                .csrf(csrf -> csrf
+                        .disable());
 		
 		return http.build();
 	}
