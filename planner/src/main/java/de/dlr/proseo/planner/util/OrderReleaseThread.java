@@ -76,8 +76,6 @@ public class OrderReleaseThread extends Thread {
 	 * @param jobUtil           The job utility instance
 	 * @param order             The processing order to plan
 	 * @param name              The thread name
-	 * @param user              the username for calling other prosEO services (e. g. AIP Client)
-	 * @param pw                the password for calling other prosEO services (e. g. AIP Client)
 	 */
 	public OrderReleaseThread(ProductionPlanner productionPlanner, EntityManager em, JobUtil jobUtil, ProcessingOrder order,
 			String name) {

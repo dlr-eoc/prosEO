@@ -454,9 +454,9 @@ public class OrderDispatcher {
 	/**
 	 * Create the necessary jobs for an order of order slicing type type CALENDER_YEAR.
 	 *
-	 * @param order    The processing order.
-	 * @param facility The processing facility.
-	 * @param thread   The order plan thread to handle interrupts.
+	 * @param order  The processing order.
+	 * @param pf     The processing facility.
+	 * @param thread The order plan thread to handle interrupts.
 	 * @return The result message detailing if the jobs were created successfully or what type of error occurred.
 	 * @throws InterruptedException if the execution is interrupted.
 	 */

@@ -1442,8 +1442,8 @@ public class JobStepUtil {
 	 *
 	 * Method is synchronized to avoid different threads (simultaneous event-triggered dispatching) to interfere with each other.
 	 *
-	 * @param kc    KubeConfig
-	 * @param order ProcessingOrder
+	 * @param kc      KubeConfig
+	 * @param orderId The ID of the ProcessingOrder to check
 	 */
 	// @Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void checkOrderToRun(KubeConfig kc, long orderId) {

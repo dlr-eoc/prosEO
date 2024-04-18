@@ -92,7 +92,7 @@ public class OrderUtil {
 	/**
 	 * Cancel the processing order and it jobs and job steps.
 	 *
-	 * @param order The processing Order
+	 * @param orderX The processing order
 	 * @return Result message
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ)
@@ -151,7 +151,7 @@ public class OrderUtil {
 	/**
 	 * Reset the processing order and it jobs and job steps.
 	 *
-	 * @param order The processing Order
+	 * @param order The processing order
 	 * @return Result message
 	 */
 	public PlannerResultMessage reset(ProcessingOrder order) {
@@ -351,7 +351,7 @@ public class OrderUtil {
 	/**
 	 * Delete the processing order and it jobs and job steps.
 	 *
-	 * @param order The processing Order
+	 * @param order The processing order
 	 * @return Result message
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ)
@@ -416,7 +416,7 @@ public class OrderUtil {
 	/**
 	 * Approve the processing order and it jobs and job steps.
 	 *
-	 * @param order The processing Order
+	 * @param order The processing order
 	 * @return Result message
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ)
@@ -474,7 +474,7 @@ public class OrderUtil {
 	/**
 	 * Plan the processing order and it jobs and job steps.
 	 *
-	 * @param order        The processing order
+	 * @param id           The processing order ID
 	 * @param procFacility The processing facility to run the order
 	 * @param wait         indicates whether to wait for the order planning to complete
 	 * @return Result message
@@ -612,7 +612,7 @@ public class OrderUtil {
 	/**
 	 * Resume the processing order and it jobs and job steps.
 	 *
-	 * @param order The processing Order
+	 * @param order The processing order
 	 * @param wait  indicates whether to wait for the order releasing to complete
 	 * @param user  the username for calling other prosEO services (e. g. AIP Client)
 	 * @param pw    the password for calling other prosEO services (e. g. AIP Client)
@@ -751,7 +751,7 @@ public class OrderUtil {
 	/**
 	 * Start the processing order and it jobs and job steps.
 	 *
-	 * @param order The processing Order
+	 * @param order The processing order
 	 * @return Result message
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ)
@@ -808,7 +808,7 @@ public class OrderUtil {
 	/**
 	 * Suspend the processing order and its jobs and job steps.
 	 *
-	 * @param order The processing order id
+	 * @param id The processing order ID
 	 * @param force The flag to force kill of currently running job steps on processing facility
 	 * @return Result message
 	 */
@@ -1047,7 +1047,7 @@ public class OrderUtil {
 	/**
 	 * Prepare the suspend of the processing order. All jobs are set to state ON_HOLD first to avoid start of further job steps.
 	 *
-	 * @param order The processing order id
+	 * @param id    The processing order ID
 	 * @param force The flag to force kill of currently running job steps on processing facility
 	 * @return Result message
 	 */
@@ -1211,7 +1211,7 @@ public class OrderUtil {
 	/**
 	 * Retry the processing order and it jobs and job steps.
 	 *
-	 * @param order The processing Order
+	 * @param order The processing order
 	 * @return Result message
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ)
@@ -1295,7 +1295,7 @@ public class OrderUtil {
 	/**
 	 * Close the processing order and it jobs and job steps.
 	 *
-	 * @param order The processing Order
+	 * @param orderId The processing order ID
 	 * @return Result message
 	 */
 	public PlannerResultMessage close(Long orderId) {
@@ -1401,7 +1401,7 @@ public class OrderUtil {
 	/**
 	 * Check whether the processing order and it jobs and job steps are finished.
 	 *
-	 * @param order The processing Order
+	 * @param orderId The processing order ID
 	 * @return true after success
 	 */
 	public Boolean checkFinish(Long orderId) {
@@ -1670,7 +1670,7 @@ public class OrderUtil {
 	/**
 	 * Get the processing facility(-ies) processing the order At the moment there is normally only one facility to do so.
 	 *
-	 * @param order The processing order
+	 * @param id The processing order ID
 	 * @return List of processinig facilities
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ)
@@ -1801,7 +1801,7 @@ public class OrderUtil {
 	/**
 	 * Restart the thread corresponding to release the order with the given ID.
 	 * 
-	 * @param order The order ID
+	 * @param id The order ID
 	 */
 	public void restartReleasingOrder(long id) {
 		if (logger.isTraceEnabled())
@@ -1817,7 +1817,7 @@ public class OrderUtil {
 	/**
 	 * Restart the thread corresponding to suspend the order with the given ID.
 	 * 
-	 * @param order The order ID
+	 * @param id The order ID
 	 */
 	public void restartSuspendingOrder(long id) {
 		if (logger.isTraceEnabled())

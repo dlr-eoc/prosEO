@@ -122,7 +122,7 @@ public class JobUtil {
 	/**
 	 * Delete satisfied product queries of its job steps.
 	 *
-	 * @param job The job
+	 * @param id The job ID
 	 * @return Result message indicating success or failure
 	 */
 	public PlannerResultMessage close(Long id) {
