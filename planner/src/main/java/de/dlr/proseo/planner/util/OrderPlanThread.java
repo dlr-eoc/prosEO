@@ -1,12 +1,9 @@
 /**
  * OrderPlanThread.java
- * 
- * @author Ernst Melchinger
+ *
  * © 2019 Prophos Informatik GmbH
  */
-
 package de.dlr.proseo.planner.util;
-
 
 import java.util.Optional;
 
@@ -17,51 +14,44 @@ import org.springframework.transaction.support.TransactionTemplate;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
-import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.ProseoUtil;
+import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 
-
 /**
- * Thread to plan a processing order
- *
+ * Thread handling the planning process of a single processing order, creating job steps, and updating its planning state
+ * accordingly.
+ * 
+ * @author Ernst Melchinger
  */
 public class OrderPlanThread extends Thread {
 
-	/**
-	 * Logger of this class
-	 */
+	/** Logger instance for this class */
 	private static ProseoLogger logger = new ProseoLogger(OrderPlanThread.class);
-    
-	/**
-	 * The order dispatcher 
-	 */
+
+	/** The order dispatcher */
 	private OrderDispatcher orderDispatcher;
 
-	/** The Production Planner instance */
-    private ProductionPlanner productionPlanner;
-	
-	/**
-	 * The processing order to plan.
-	 */
+	/** The production planner instance */
+	private ProductionPlanner productionPlanner;
+
+	/** The ID of the processing order to plan */
 	private long orderId;
-	
-	/**
-	 * The facility to process the order
-	 */
+
+	/** The facility to process the order */
 	private ProcessingFacility procFacility;
-	
-	/**
-	 * The result of the planning
-	 */
+
+	/** The result of the planning */
 	private PlannerResultMessage resultMessage;
-	
+
 	/**
+	 * Get the result message of the planning.
+	 * 
 	 * @return the resultMessage
 	 */
 	public PlannerResultMessage getResultMessage() {
@@ -69,53 +59,57 @@ public class OrderPlanThread extends Thread {
 	}
 
 	/**
-	 * Create new thread
+	 * Create a new OrderPlanThread.
 	 * 
 	 * @param productionPlanner The production planner instance
-	 * @param orderDispatcher Ther order dispatcher
-	 * @param order The processing order to plan
-	 * @param procFacility The processing facility to run the order
-	 * @param name The thread name
+	 * @param orderDispatcher   The order dispatcher
+	 * @param orderId           The ID of the processing order to plan
+	 * @param procFacility      The processing facility to run the order
+	 * @param name              The name of the thread
 	 */
-	public OrderPlanThread(ProductionPlanner productionPlanner, OrderDispatcher orderDispatcher, long orderId,  ProcessingFacility procFacility, String name) {
+	public OrderPlanThread(ProductionPlanner productionPlanner, OrderDispatcher orderDispatcher, long orderId,
+			ProcessingFacility procFacility, String name) {
 		super(name);
+
 		this.productionPlanner = productionPlanner;
 		this.orderDispatcher = orderDispatcher;
 		this.orderId = orderId;
 		this.procFacility = procFacility;
-	}	
+	}
 
-    /**
-     * Start and initialize the thread
-     */
-    public void run() {
-		if (logger.isTraceEnabled()) logger.trace(">>> run() for thread {}", this.getName());
-		
+	/**
+	 * Starts the thread and initiates the planning process for the given order.
+	 */
+	@Override
+	public void run() {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> run() for thread {}", this.getName());
+
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
-		
+
 		if (0 == orderId || null == productionPlanner || null == orderDispatcher) {
 			logger.log(answer.getMessage());
 		} else {
 			// Create the required jobs for the order (independent transaction)
 			try {
 				answer = orderDispatcher.prepareExpectedJobs(orderId, procFacility, this);
-			} catch(InterruptedException e) {
+			} catch (InterruptedException e) {
 				answer.setMessage(PlannerMessage.PLANNING_INTERRUPTED);
 				answer.setText(logger.log(answer.getMessage(), orderId));
 			}
-			
+
 			TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-			
+
 			try {
 				if (answer.getSuccess()) {
 					answer = plan(orderId);
 				}
-			} catch(InterruptedException e) {
+			} catch (InterruptedException e) {
 				answer.setMessage(PlannerMessage.PLANNING_INTERRUPTED);
 				answer.setText(logger.log(answer.getMessage(), orderId));
-			} catch(Exception e) {
-				// Set order state to failed		
+			} catch (Exception e) {
+				// Set order state to failed
 				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
 						transactionTemplate.execute((status) -> {
@@ -130,12 +124,14 @@ public class OrderPlanThread extends Thread {
 						});
 						break;
 					} catch (CannotAcquireLockException e1) {
-						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e1);
+						if (logger.isDebugEnabled())
+							logger.debug("... database concurrency issue detected: ", e1);
 
 						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
 							ProseoUtil.dbWait(i + 1);
 						} else {
-							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+							if (logger.isDebugEnabled())
+								logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 							throw e1;
 						}
 					}
@@ -144,10 +140,13 @@ public class OrderPlanThread extends Thread {
 				answer.setText(logger.log(PlannerMessage.ORDER_PLANNING_EXCEPTION, this.getName(), orderId));
 				answer.setMessage(GeneralMessage.EXCEPTION_ENCOUNTERED);
 				answer.setText(logger.log(answer.getMessage(), e.getMessage()));
-				
-				if (logger.isDebugEnabled()) logger.debug("Exception stack trace: ", e);
+
+				if (logger.isDebugEnabled())
+					logger.debug("Exception stack trace: ", e);
 			}
+
 			try {
+				// Handle planning failure
 				if (!answer.getSuccess()) {
 					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
@@ -164,19 +163,20 @@ public class OrderPlanThread extends Thread {
 							});
 							break;
 						} catch (CannotAcquireLockException e) {
-							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+							if (logger.isDebugEnabled())
+								logger.debug("... database concurrency issue detected: ", e);
 
 							if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
 								ProseoUtil.dbWait(i + 1);
 							} else {
-								if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+								if (logger.isDebugEnabled())
+									logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 								throw e;
 							}
 						}
 					}
 				}
-			}
-			catch(Exception e) {
+			} catch (Exception e) {
 				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
 						transactionTemplate.execute((status) -> {
@@ -192,12 +192,14 @@ public class OrderPlanThread extends Thread {
 						});
 						break;
 					} catch (CannotAcquireLockException e1) {
-						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e1);
+						if (logger.isDebugEnabled())
+							logger.debug("... database concurrency issue detected: ", e1);
 
 						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
 							ProseoUtil.dbWait(i + 1);
 						} else {
-							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+							if (logger.isDebugEnabled())
+								logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
 							throw e1;
 						}
 					}
@@ -210,23 +212,24 @@ public class OrderPlanThread extends Thread {
 		}
 		this.resultMessage = answer;
 		productionPlanner.getPlanThreads().remove(this.getName());
-		
-		if (logger.isTraceEnabled()) logger.trace("<<< run() for thread {}", this.getName());
-		
-		productionPlanner.checkNextForRestart();				
-    }
-    
-    
-    /**
-     * Plan the order 
-     * 
-     * @param orderId The id of the order
-     * @return The result message
-     * @throws InterruptedException
-     */
-    public PlannerResultMessage plan(long orderId) throws InterruptedException {
-		if (logger.isTraceEnabled()) logger.trace(">>> plan({})", orderId);
-		
+
+		if (logger.isTraceEnabled())
+			logger.trace("<<< run() for thread {}", this.getName());
+
+		productionPlanner.checkNextForRestart();
+	}
+
+	/**
+	 * Plan the given order by creating job steps and updating its state.
+	 * 
+	 * @param orderId The ID of the order to plan
+	 * @return The result message of the planning
+	 * @throws InterruptedException
+	 */
+	public PlannerResultMessage plan(long orderId) throws InterruptedException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> plan({})", orderId);
+
 		ProcessingOrder order = null;
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
@@ -239,22 +242,22 @@ public class OrderPlanThread extends Thread {
 			}
 			return null;
 		});
-		
-		if (logger.isTraceEnabled()) logger.trace("... planning job steps for order {} on facility {})",
-				(null == order ? "null" : order.getId()),
-				(null == procFacility ? "null" : procFacility.getName()));
-		
+
+		if (logger.isTraceEnabled())
+			logger.trace("... planning job steps for order {} on facility {})", (null == order ? "null" : order.getId()),
+					(null == procFacility ? "null" : procFacility.getName()));
+
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		PlannerResultMessage publishAnswer = new PlannerResultMessage(GeneralMessage.FALSE);
-		
-		if (order != null && procFacility != null && 
-				(order.getOrderState() == OrderState.PLANNING || order.getOrderState() == OrderState.APPROVED)) {
+
+		if (order != null && procFacility != null
+				&& (order.getOrderState() == OrderState.PLANNING || order.getOrderState() == OrderState.APPROVED)) {
 			try {
 				publishAnswer = orderDispatcher.createJobSteps(order.getId(), procFacility, productionPlanner, this);
 			} catch (InterruptedException e) {
 				throw e;
 			}
-			
+
 			try {
 				final PlannerResultMessage finalAnswer = new PlannerResultMessage(publishAnswer.getMessage());
 				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
@@ -271,7 +274,8 @@ public class OrderPlanThread extends Thread {
 									lambdaOrder.setOrderState(OrderState.COMPLETED);
 									UtilService.getOrderUtil().checkAutoClose(lambdaOrder);
 									UtilService.getOrderUtil().setTimes(lambdaOrder);
-									UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_COMPLETED);
+									UtilService.getOrderUtil()
+										.setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_COMPLETED);
 									lambdaAnswer.setMessage(PlannerMessage.ORDER_PRODUCT_EXIST);
 								} else {
 									lambdaOrder.setOrderState(OrderState.PLANNED);
@@ -286,7 +290,8 @@ public class OrderPlanThread extends Thread {
 								UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_FAILED);
 								lambdaOrder = RepositoryService.getOrderRepository().save(lambdaOrder);
 								lambdaAnswer.setMessage(PlannerMessage.ORDER_PLANNING_FAILED);
-								lambdaAnswer.setText(logger.log(lambdaAnswer.getMessage(), lambdaOrder.getIdentifier(), this.getName()));
+								lambdaAnswer
+									.setText(logger.log(lambdaAnswer.getMessage(), lambdaOrder.getIdentifier(), this.getName()));
 							}
 							return lambdaAnswer;
 						});
@@ -302,7 +307,6 @@ public class OrderPlanThread extends Thread {
 						}
 					}
 				}
-
 			} catch (Exception e) {
 				answer.setMessage(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED);
 				answer.setText(logger.log(answer.getMessage(),  e.getMessage()));
@@ -310,7 +314,7 @@ public class OrderPlanThread extends Thread {
 				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			}
 		}
-		
+
 		return answer;
 	}
 }
