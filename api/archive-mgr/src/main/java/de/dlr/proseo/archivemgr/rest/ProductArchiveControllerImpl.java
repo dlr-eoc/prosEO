@@ -62,6 +62,7 @@ public class ProductArchiveControllerImpl implements ArchiveController {
 	/**
 	 * List of all product archives with no search criteria
 	 *
+	 * @param code 			the product archive code
 	 * @param name 			the product archive name
 	 * @param archiveType	the product archive type
 	 * @param recordFrom    first record of filtered and ordered result to return
@@ -70,13 +71,13 @@ public class ProductArchiveControllerImpl implements ArchiveController {
 	 *         indicating failure
 	 */
 	@Override
-	public ResponseEntity<List<RestProductArchive>> getArchives(String name, String archiveType, Integer recordFrom, Integer recordTo) {
+	public ResponseEntity<List<RestProductArchive>> getArchives(String code, String name, String archiveType, Integer recordFrom, Integer recordTo) {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getArchives( {}, {}, {}, {})", name, archiveType, recordFrom, recordTo);
+			logger.trace(">>> getArchives({}, {}, {}, {}, {})", code, name, archiveType, recordFrom, recordTo);
 
 		try {
-			return new ResponseEntity<>(productArchiveManager.getArchives(name, archiveType, recordFrom, recordTo), HttpStatus.OK);
+			return new ResponseEntity<>(productArchiveManager.getArchives(code, name, archiveType, recordFrom, recordTo), HttpStatus.OK);
 
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
