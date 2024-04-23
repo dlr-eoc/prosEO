@@ -104,11 +104,18 @@
 							<p class="input-group-text word-wrap"
 								th:text="#{productarchive-archive-type}"></p>
 						</div>
-						<div class="col-2 pl-lg-0">
-							<input type="text" class="form-control" name="archiveType"
-								id="archiveType">
-						</div>
-				
+			
+						       
+          				<div class="col-2 pl-lg-0">
+  				            <select name="archiveType" id="archiveType" multiple="multiple">
+                				<option>AIP</option>
+                				<option>AUXIP</option>
+                				<option>PODIP</option>
+                				<option>PRIP</option>
+          					    <option>SIMPLEAIP</option>
+              				</select>
+            			</div>                    
+                    
 
 					</div>
 					<div class="row py-lg-1">
