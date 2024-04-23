@@ -320,6 +320,16 @@
 		
 		// Function to fetch objects from the REST controller
 		function updateTable(newPage) {
+			
+			$('#archiveType').multiselect({
+	              buttonWidth : '99%',
+	              enableFiltering : true,
+	              numberDisplayed : 0,
+	              maxHeight : 400,
+	              enableCaseInsensitiveFiltering : true,
+	              nonSelectedText : ''
+	        });
+					
 			currentPage = newPage;
 			
 			var recordFrom = (currentPage - 1) * pageSize;
