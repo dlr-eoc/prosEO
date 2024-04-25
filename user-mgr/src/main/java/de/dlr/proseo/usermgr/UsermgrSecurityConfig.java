@@ -12,14 +12,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -39,7 +38,7 @@ import de.dlr.proseo.usermgr.rest.model.RestUser;
  */
 @Configuration
 @EnableWebSecurity
-public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
+public class UsermgrSecurityConfig {
 
 	/** Datasource as configured in the application properties */
 	@Autowired
@@ -65,11 +64,9 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 	 *
 	 * @param http the HTTP security object
 	 */
-	@Override
-	protected void configure(HttpSecurity http) throws Exception {
-		http.httpBasic()
-			.and()
-			.authorizeRequests()
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http.httpBasic(it -> {})
+			.authorizeHttpRequests(requests -> requests
 			.antMatchers("/**/actuator/health")
 			.permitAll()
 			.antMatchers("/**/login")
@@ -79,24 +76,9 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 			.antMatchers(HttpMethod.PATCH, "/**/users/*")
 			.authenticated() // Any user may change their own password
 			.anyRequest()
-			.hasAnyRole(UserRole.ROOT.toString(), UserRole.USERMGR.toString())
-			.and()
-			.csrf()
-			.disable(); // Required for POST requests (or configure CSRF)
-	}
-
-	/**
-	 * Initialize the users, passwords and roles for the User Manager from the
-	 * prosEO database
-	 *
-	 * @param builder to manage authentications
-	 * @throws Exception if anything goes wrong with JDBC authentication
-	 */
-	@Autowired
-	public void initialize(AuthenticationManagerBuilder builder) throws Exception {
-		logger.log(GeneralMessage.INITIALIZING_AUTHENTICATION);
-
-		builder.userDetailsService(userDetailsService());
+			.hasAnyRole(UserRole.ROOT.toString(), UserRole.USERMGR.toString()))
+			.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
+		return http.build();
 	}
 
 	/**
@@ -105,7 +87,7 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 	 * @return a BCryptPasswordEncoder
 	 */
 	@Bean
-	public PasswordEncoder passwordEncoder() {
+	PasswordEncoder passwordEncoder() {
 		return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
 	}
 
@@ -115,9 +97,8 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 	 *
 	 * @return a JdbcDaoImpl object
 	 */
-	@Override
 	@Bean
-	public UserDetailsService userDetailsService() {
+	UserDetailsService userDetailsService() {
 		logger.log(GeneralMessage.INITIALIZING_USER_DETAILS_SERVICE, dataSource);
 
 		JdbcDaoImpl jdbcDaoImpl = new JdbcDaoImpl();
