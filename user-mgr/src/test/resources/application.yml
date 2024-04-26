@@ -12,6 +12,8 @@ spring:
         username: any       
         password: any
         show-sql: false
+management:
+    endpoints.web.exposure.include: "health,info"
 logging:
     level:
         root: INFO
