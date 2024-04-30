@@ -21,12 +21,12 @@
     </organization>
 
     <properties>
-        <olingo.version>4.7.1</olingo.version>
+        <olingo.version>4.10.0</olingo.version><!-- Olingo 5.x is for Spring Boot 3/Spring 6 -->
         <main.basedir>${basedir}/../..</main.basedir>
         <raml-path-query>src/main/resources/raml/odip-query.raml</raml-path-query>
         <raml-path-oauth2>src/main/resources/raml/odip-oauth2.raml</raml-path-oauth2>
         <raml-base-package>de.dlr.proseo.api.odip.rest</raml-base-package>
-        <nimbus.jwt.version>9.10</nimbus.jwt.version>
+        <nimbus.jwt.version>9.37.3</nimbus.jwt.version>
     </properties>
 
     <dependencies>
@@ -135,10 +135,15 @@
             <type>maven-plugin</type>
         </dependency>
         <dependency>
-          <groupId>junit</groupId>
-          <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-          <scope>test</scope>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.hamcrest</groupId>
+                    <artifactId>hamcrest-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 
