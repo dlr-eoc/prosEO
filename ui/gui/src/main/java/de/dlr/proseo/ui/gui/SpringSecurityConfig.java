@@ -43,9 +43,8 @@ public class SpringSecurityConfig {
 		authenticationFilter.setFilterProcessesUrl("/customlogin");
 
 		// Configure HTTP security
-		http.authenticationProvider(authenticationProvider);
-
         http.addFilter(authenticationFilter)
+        		.authenticationProvider(authenticationProvider)
                 .authorizeRequests(requests -> requests
                         .antMatchers("/resources/**")
                         .permitAll()

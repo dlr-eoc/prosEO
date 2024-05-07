@@ -1,85 +1,83 @@
-
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>prosEO – Processing System for Earth Observation Data Login RESOURCES/TEMPLATES</title>
-    <!-- Bootstrap core CSS -->
-<!-- Latest compiled and minified CSS -->
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
-
-<!-- jQuery library -->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-
-<!-- Latest compiled JavaScript -->
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
-
-<!--
-    <style>
-    
-    
-      .bd-placeholder-img {
-        font-size: 1.125rem;
-        text-anchor: middle;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-      }
-
-      @media (min-width: 768px) {
-        .bd-placeholder-img-lg {
-          font-size: 3.5rem;
-        }
-      }
-    </style>
-    -->
-  </head>
-  
-  <body class="text-center" style="background-image: url(background.jpg)">
-  <div class="container">
-   <form th:action="@{/customlogin}" method="post">
-                <legend>Please Login</legend>
-                <div th:if="${param.error}" class="alert alert-error">    
-                    Invalid username and password.
-                </div>
-                <div th:if="${param.logout}" class="alert alert-success"> 
-                    You have been logged out.
-                </div>
-  	<div class="form-group row">
-  	<label for="username" class="col-sm-2 col-form-label"><span th:text="#{username}"></span></label>
-  	<div class="col-sm-10">
-               <input type="text" id="username" name="username"/>   
-  	</div>
-  	</div>
-  	<div class="form-group row">
-  	<label for="password" class="col-sm-2 col-form-label"><span th:text="#{password}"></span></label>
-  	<div class="col-sm-10">
-           <input type="password" id="password" name="password"/>   
-  	</div>
-  	</div>
-  	<fieldset class="form-group">
-  	<div class="row">
-  	<label  class="col-form-label col-sm-2 pt-0">
-  	  <span th:text="#{missions}"></span>
-    </label>
-    <div class="col-sm-10">
-      <select name="mission" id="mission">
-        <option th:each="miss : ${missions}" th:text="${miss}" th:label="${miss}"></option>
-      </select>
-    </div>
+   <head>
+   
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
       
-    	</div>
-    	</div>
-    	</div>
-    	</fieldset>
-    	<div class="form-group row">
-    		<div class="col-sm-10">
-    		   <button type="submit" class="btn btn-primary"><span th:text="#{login}"></span></button>
-    		   </div>
-    		 </div>
-    		 </form>
+      <title>prosEO</title>
       
-</body>
+      <!-- jQuery JavaScript functionality -->
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+      <!-- Bootstrap JavaScript functionality -->
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+      
+      <!-- Bootstrap stylesheet -->
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+      <!-- custom styles for prosEO -->
+      <link href="../static/fragments/proseo.css" th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css" />
+      
+      <style>
+         body {
+            margin-left: 30px;
+         
+            /* Background image*/
+            background-image: url(background.jpg); 
+            background-repeat: no-repeat;
+            background-position: bottom;
+            background-size: 100%;
+            background-attachment: fixed;
+            background-color: white;
+         }
+         
+         h1 {
+            margin-bottom: 30px;
+         }
+         
+         form {
+            margin-bottom: 30px;
+         }
+      </style>
+      
+   </head>
+   
+   <body>
+   
+      <h1 style="text-align: left;">Login</h1>
+        
+      <form th:action="@{/customlogin}" method="post" style="text-align: left;">
+      
+         <div th:if="${param.error}" class="alert alert-error">    
+            Invalid username and password.
+         </div>
+         
+         <div th:if="${param.logout}" class="alert alert-success"> 
+            You have been logged out.
+         </div>
+         
+         <div style="margin-bottom: 10px;">
+            <label for="username" style="display: inline-block; width: 100px;"><span th:text="#{username}"></label>
+            <input type="text" id="username" name="username" required>
+         </div>
+         
+         <div style="margin-bottom: 10px;">
+            <label for="password" style="display: inline-block; width: 100px;"><span th:text="#{password}"></label>
+            <input type="password" id="password" name="password" required>
+         </div>
+         
+         <div style="margin-bottom: 10px;">
+            <label for="mission" style="display: inline-block; width: 100px;"><span th:text="#{missions}"></label>
+            <select id="mission" name="mission">
+               <option th:each="miss : ${missions}" th:text="${miss}" th:label="${miss}"></option>
+            </select>
+         </div>
+         
+         <button type="submit" class="btn btn-primary"><span th:text="#{login}"></span></button>
+         
+      </form>
+      
+      <p><span th:text="#{proseo}"></span> - <span th:text="#{missioncontrol}"></span> - <span th:text="#{version}"></span> <span th:text="${proseoversion}"></span> - <span th:text="#{copyright}"></span></p>	
+
+   </body>
+   
 </html>
