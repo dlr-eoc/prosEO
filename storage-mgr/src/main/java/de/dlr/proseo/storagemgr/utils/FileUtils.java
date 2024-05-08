@@ -70,7 +70,10 @@ public class FileUtils {
 	public boolean createFile(String content) {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> createFile({})", content);
+			logger.trace(">>> createFile(<content>)");
+		
+		logger.debug("... file content (first 20 characters): " + new StringUtils(content).getMaxSubstring(20));
+		logger.debug("... file size: " + content.length());
 
 		File file = new File(path);
 		file.getParentFile().mkdirs();
@@ -103,7 +106,10 @@ public class FileUtils {
 	public boolean synchroCreateFile(String content, long waitTime, long fileCheckMaxCycles) {
 		
 		if (logger.isTraceEnabled())
-			logger.trace(">>> synchroCreateFile({}, {}, {})", content, waitTime, fileCheckMaxCycles);
+			logger.trace(">>> synchroCreateFile(<content>, {}, {})", waitTime, fileCheckMaxCycles);
+		
+		logger.debug("... file content (first 20 characters): " + new StringUtils(content).getMaxSubstring(20));
+		logger.debug("... file size: " + content.length());
 
 		StorageFileLocker fileLocker = new StorageFileLocker(path, waitTime, fileCheckMaxCycles);
 		boolean fileCreatedStatus;
