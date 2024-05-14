@@ -366,10 +366,12 @@ public class ProcessingOrderMgrTest {
 		ConfiguredProcessor configProc0 = new ConfiguredProcessor();
 		configProc0.setProcessor(processor);
 		configProc0.setIdentifier(testConfProc[0]);
+		configProc0.setUuid(UUID.randomUUID());
 		RepositoryService.getConfiguredProcessorRepository().save(configProc0);
 		ConfiguredProcessor configProc1 = new ConfiguredProcessor();
 		configProc0.setProcessor(processor);
 		configProc1.setIdentifier(testConfProc[1]);
+		configProc1.setUuid(UUID.randomUUID());
 		RepositoryService.getConfiguredProcessorRepository().save(configProc1);
 	}
 
