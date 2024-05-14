@@ -222,11 +222,13 @@ public class WorkflowMgrTest {
 		ConfiguredProcessor configProc0 = new ConfiguredProcessor();
 		configProc0.setProcessor(processor);
 		configProc0.setIdentifier(testWorkflowData[0][5]);
-
+		configProc0.setUuid(UUID.randomUUID());
 		RepositoryService.getConfiguredProcessorRepository().save(configProc0);
+
 		ConfiguredProcessor configProc1 = new ConfiguredProcessor();
 		configProc1.setProcessor(processor);
 		configProc1.setIdentifier(testWorkflowData[1][5]);
+		configProc1.setUuid(UUID.randomUUID());
 		RepositoryService.getConfiguredProcessorRepository().save(configProc1);
 		
 		return testMission;

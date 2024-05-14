@@ -50,7 +50,8 @@ public class Workflow extends PersistentObject {
 	private Mission mission;
 
 	/** The unique identifier of the workflow */
-	@Column(nullable = false)
+	// TODO Re-test column definition after migration to Spring Boot 3 / Hibernate 6 and remove if possible
+	@Column(nullable = false, columnDefinition = "uuid")
 	private UUID uuid;
 	
 	/** A short name for the workflow */
