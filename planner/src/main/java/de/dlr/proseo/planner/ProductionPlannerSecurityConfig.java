@@ -74,7 +74,8 @@ public class ProductionPlannerSecurityConfig {
 	 * @param http The HTTP security object.
 	 * @return A configured SecurityFilterChain object.
 	 */
-	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+	@Bean
+	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http.httpBasic(it -> {
 		})
 			.authorizeHttpRequests(requests -> requests.antMatchers("/**/actuator/health")

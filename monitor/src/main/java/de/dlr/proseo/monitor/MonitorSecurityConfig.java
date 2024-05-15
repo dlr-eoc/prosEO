@@ -41,7 +41,8 @@ public class MonitorSecurityConfig {
 	 * 
 	 * @param http the HTTP security object
 	 */
-	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+	@Bean
+	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http.httpBasic(it -> {})
         .authorizeHttpRequests(requests -> requests
 			.anyRequest().authenticated())
