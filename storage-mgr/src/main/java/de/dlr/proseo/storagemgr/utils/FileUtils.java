@@ -95,8 +95,12 @@ public class FileUtils {
 	}
 
 	/**
-	 * Creates the file with the content in a synchronized modus. Returns false if the file was not created/rewritten. 
-	 * creation of the file was not successfully
+	 * Creates the file with the content in a synchronized modus. Returns false if
+	 * the file was not created/rewritten. creation of the file was not
+	 * successfully. The waiting thread will unlock the file, which was locked in
+	 * the locked thread in case of exception - Timeout or Interrupted exception. It
+	 * is made for unlocking auxiliary files (status and accessed) of the storage
+	 * manager. Please use this synchronized function carefully.
 	 *
 	 * @param content            Content of the file
 	 * @param waitTime           the wait time between each cycle of checking the
@@ -119,18 +123,21 @@ public class FileUtils {
 
 			fileLocker.lockOrWaitUntilUnlockedAndLock();
 			fileCreatedStatus = createFile(content);
-			fileLocker.unlock();
 			fileCreatedStatus = true;
 
 		} catch (FileLockedAfterMaxCyclesException e) {
 
-			logger.debug("... the synchronized file was not created/rewritten: waiting timeout (possible locked from another thread): "
-					+ path + " " + e.getMessage());
+			logger.debug(
+					"... the synchronized file was not created/rewritten: waiting timeout (possible locked from another thread): "
+							+ path + " " + e.getMessage());
 
 		} catch (InterruptedException e) {
 
 			logger.debug("... the syncronized file was not created/rewritten: interrupted exception: " + path + " "
 					+ e.getMessage());
+		} finally {
+
+			fileLocker.unlock();
 		}
 
 		return fileCreatedStatus;
