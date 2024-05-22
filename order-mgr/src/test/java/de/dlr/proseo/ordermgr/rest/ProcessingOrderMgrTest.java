@@ -614,11 +614,11 @@ public class ProcessingOrderMgrTest {
 		testOrder.setId(RepositoryService.getOrderRepository().save(OrderUtil.toModelOrder(testOrder)).getId());
 
 		// Stop time must not precede start time
-		testOrder.setStopTime(Instant.now().toString());
-		testOrder.setStartTime(Instant.now().toString());
+		testOrder.setStopTime(OrbitTimeFormatter.format(Instant.now()));
+		testOrder.setStartTime(OrbitTimeFormatter.format(Instant.now()));
 		assertThrows(IllegalArgumentException.class, () -> pom.modifyOrder(testOrder.getId(), testOrder));
-		testOrder.setStartTime(Instant.now().toString());
-		testOrder.setStopTime(Instant.now().toString());
+		testOrder.setStartTime(OrbitTimeFormatter.format(Instant.now()));
+		testOrder.setStopTime(OrbitTimeFormatter.format(Instant.now()));
 		testOrder.setId(RepositoryService.getOrderRepository().save(OrderUtil.toModelOrder(testOrder)).getId());
 
 		// Updated input product classes must be valid
