@@ -615,7 +615,8 @@ public class ProcessingOrderMgrTest {
 
 		// Stop time must not precede start time
 		testOrder.setStopTime(OrbitTimeFormatter.format(Instant.now()));
-		testOrder.setStartTime(OrbitTimeFormatter.format(Instant.now()));
+		testOrder.setStartTime(OrbitTimeFormatter.format(Instant.now().plusMillis(1)));
+		
 		assertThrows(IllegalArgumentException.class, () -> pom.modifyOrder(testOrder.getId(), testOrder));
 		testOrder.setStartTime(OrbitTimeFormatter.format(Instant.now()));
 		testOrder.setStopTime(OrbitTimeFormatter.format(Instant.now()));
