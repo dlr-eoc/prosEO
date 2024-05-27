@@ -140,19 +140,19 @@ public class GUIProductController extends GUIBaseController {
 		Long page = (from / pageSize) + 1;
 
 		// Subscribe to the response
-		responseSpec.toEntity(HashMap.class)
+		responseSpec.toEntityList(Object.class)
 			// Handle errors
 			.doOnError(e -> {
 				model.addAttribute("errormsg", e.getMessage());
 				deferredResult.setResult("product-show :: #errormsg");
 			})
 			// Handle successful response
-			.subscribe(entityMap -> {
-				logger.trace("Now in Consumer::accept({})", entityMap);
+			.subscribe(entityList -> {
+				logger.trace("Now in Consumer::accept({})", entityList);
 
-				if (entityMap.getStatusCode().is2xxSuccessful()) {
+				if (entityList.getStatusCode().is2xxSuccessful()) {
 					if (productId != null && productId > 0) {
-						products.add(entityMap.getBody());
+						products.add(entityList.getBody());
 
 						model.addAttribute("products", products);
 						model.addAttribute("count", 1);
@@ -172,7 +172,7 @@ public class GUIProductController extends GUIBaseController {
 						deferredResult.setResult("product-show :: #productcontent");
 						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
 					} else {
-						products.addAll((Collection<? extends Object>) entityMap.getBody());
+						products.addAll((Collection<? extends Object>) entityList.getBody());
 						// MapComparator oc = new MapComparator("productClass", true);
 						// products.sort(oc);
 						model.addAttribute("products", products);
@@ -204,8 +204,8 @@ public class GUIProductController extends GUIBaseController {
 						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
 					}
 				} else {
-					ClientResponse errorResponse = ClientResponse.create(entityMap.getStatusCode())
-						.headers(headers -> headers.addAll(entityMap.getHeaders()))
+					ClientResponse errorResponse = ClientResponse.create(entityList.getStatusCode())
+						.headers(headers -> headers.addAll(entityList.getHeaders()))
 						.build();
 					handleHTTPError(errorResponse, model);
 
