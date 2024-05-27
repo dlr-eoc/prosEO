@@ -16,13 +16,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -30,7 +31,6 @@ import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 /**
@@ -57,7 +57,7 @@ public class GUIOrbitController extends GUIBaseController {
 	 *
 	 * @return the name of the orbit view template
 	 */
-	@RequestMapping(value = "/orbit-show")
+	@GetMapping("/orbit-show")
 	public String showOrbit() {
 		return "orbit-show";
 	}
@@ -77,8 +77,7 @@ public class GUIOrbitController extends GUIBaseController {
 	 * @param model         The model to hold the data
 	 * @return The result
 	 */
-	@SuppressWarnings("unchecked")
-	@RequestMapping(value = "/orbits/get")
+	@GetMapping("/orbits/get")
 	public DeferredResult<String> getOrbits(@RequestParam(required = false, value = "spacecraft") String spacecraft,
 			@RequestParam(required = false, value = "startTimeFrom") String startTimeFrom,
 			@RequestParam(required = false, value = "startTimeTo") String startTimeTo,
@@ -90,6 +89,7 @@ public class GUIOrbitController extends GUIBaseController {
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getOrbits(model)");
+
 		Long from = null;
 		Long to = null;
 		if (fromIndex != null && fromIndex >= 0) {
@@ -108,24 +108,31 @@ public class GUIOrbitController extends GUIBaseController {
 		Long pages = (count / pageSize) + deltaPage;
 		Long page = (from / pageSize) + 1;
 
-		Mono<ClientResponse> mono = get(spacecraft, startTimeFrom, startTimeTo, numberFrom, numberTo, from, to);
+		// Perform the HTTP request to retrieve orbits
+		ResponseSpec responseSpec = get(spacecraft, startTimeFrom, startTimeTo, numberFrom, numberTo, from, to);
 		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> orbits = new ArrayList<>();
 
-		mono.doOnError(e -> {
-			model.addAttribute("errormsg", e.getMessage());
-			deferredResult.setResult("orbit-show :: #errormsg");
-		}).subscribe(clientResponse -> {
-			logger.trace("Now in Consumer::accept({})", clientResponse);
-			if (clientResponse.statusCode().is2xxSuccessful()) {
-				clientResponse.bodyToMono(List.class).subscribe(pcList -> {
-					orbits.addAll(pcList);
+		// Subscribe to the response
+		responseSpec.toEntityList(Object.class)
+			// Handle errors
+			.doOnError(e -> {
+				model.addAttribute("errormsg", e.getMessage());
+				deferredResult.setResult("orbit-show :: #errormsg");
+			})
+			// Handle successful response
+			.subscribe(entityList -> {
+				logger.trace("Now in Consumer::accept({})", entityList);
+
+				if (entityList.getStatusCode().is2xxSuccessful()) {
+					orbits.addAll(entityList.getBody());
 
 					model.addAttribute("orbits", orbits);
 					model.addAttribute("count", count);
 					model.addAttribute("pageSize", pageSize);
 					model.addAttribute("pageCount", pages);
 					model.addAttribute("page", page);
+
 					List<Long> showPages = new ArrayList<>();
 					Long start = Math.max(page - 4, 1);
 					Long end = Math.min(page + 4, pages);
@@ -138,26 +145,36 @@ public class GUIOrbitController extends GUIBaseController {
 					for (Long i = start; i <= end; i++) {
 						showPages.add(i);
 					}
+
 					model.addAttribute("showPages", showPages);
+
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + orbits.toString());
+
 					deferredResult.setResult("orbit-show :: #orbitcontent");
 					logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-				});
-			} else {
-				handleHTTPError(clientResponse, model);
-				deferredResult.setResult("orbit-show :: #errormsg");
-			}
-			logger.trace(">>>>MODEL" + model.toString());
+				} else {
+					ClientResponse errorResponse = ClientResponse.create(entityList.getStatusCode())
+						.headers(headers -> headers.addAll(entityList.getHeaders()))
+						.build();
+					handleHTTPError(errorResponse, model);
 
-		}, e -> {
-			model.addAttribute("errormsg", e.getMessage());
-			deferredResult.setResult("orbit-show :: #errormsg");
-		});
+					deferredResult.setResult("orbit-show :: #errormsg");
+				}
+
+				logger.trace(">>>>MODEL" + model.toString());
+
+			}, e -> {
+				model.addAttribute("errormsg", e.getMessage());
+				deferredResult.setResult("orbit-show :: #errormsg");
+			});
+
 		logger.trace(model.toString() + "MODEL TO STRING");
 		logger.trace(">>>>MONO" + orbits.toString());
 		logger.trace(">>>>MODEL" + model.toString());
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
+
+		// Return the deferred result
 		return deferredResult;
 	}
 
@@ -173,7 +190,7 @@ public class GUIOrbitController extends GUIBaseController {
 	 * @param recordTo      the last record to retrieve
 	 * @return a Mono containing the HTTP response
 	 */
-	private Mono<ClientResponse> get(String spacecraft, String startTimeFrom, String startTimeTo, Long numberFrom, Long numberTo,
+	private ResponseSpec get(String spacecraft, String startTimeFrom, String startTimeTo, Long numberFrom, Long numberTo,
 			Long recordFrom, Long recordTo) {
 
 		// Provide authentication
@@ -211,9 +228,7 @@ public class GUIOrbitController extends GUIBaseController {
 			divider = "&";
 		}
 		uriString += divider + "orderBy=orbitNumber ASC,startTime ASC";
-		URI uri = UriComponentsBuilder.fromUriString(uriString)
-				.build()
-				.toUri();
+		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
@@ -228,7 +243,7 @@ public class GUIOrbitController extends GUIBaseController {
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
 
 		/*
-		 * The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
+		 * The returned ResponseSpec can be subscribed to in order to retrieve the actual response and perform additional
 		 * operations on it, such as extracting the response body or handling any errors that may occur during the request.
 		 */
 		return webclient.build()
@@ -236,7 +251,7 @@ public class GUIOrbitController extends GUIBaseController {
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
-			.retrieve().bodyToMono(ClientResponse.class);
+			.retrieve();
 	}
 
 	private Long countOrbits(String spacecraft) {
@@ -260,7 +275,7 @@ public class GUIOrbitController extends GUIBaseController {
 				result = Long.valueOf(resStr);
 			}
 		} catch (RestClientResponseException e) {
-			
+
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_MISSIONS_FOUND);
@@ -272,7 +287,7 @@ public class GUIOrbitController extends GUIBaseController {
 			default:
 				logger.log(UIMessage.EXCEPTION, e.getMessage());
 			}
-			
+
 			return result;
 		} catch (RuntimeException e) {
 			logger.log(UIMessage.EXCEPTION, e.getMessage());

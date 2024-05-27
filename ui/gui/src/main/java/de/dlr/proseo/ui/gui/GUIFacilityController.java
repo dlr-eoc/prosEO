@@ -15,18 +15,18 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.gui.service.MapComparator;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 /**
@@ -49,7 +49,7 @@ public class GUIFacilityController extends GUIBaseController {
 	 *
 	 * @return the name of the facility view template
 	 */
-	@RequestMapping(value = "/facility-show")
+	@GetMapping("/facility-show")
 	public String showFacility() {
 		return "facility-show";
 	}
@@ -62,23 +62,30 @@ public class GUIFacilityController extends GUIBaseController {
 	 * @param model  The model to hold the data
 	 * @return The deferred result containing the result
 	 */
-	@SuppressWarnings("unchecked")
-	@RequestMapping(value = "/facilities/get")
+	@GetMapping("/facilities/get")
 	public DeferredResult<String> getFacilities(@RequestParam(required = false, value = "sortby") String sortby,
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getFacilities(model)");
-		Mono<ClientResponse> mono = get();
+
+		// Perform the HTTP request to retrieve facilities
+		ResponseSpec responseSpec = get();
 		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> facilities = new ArrayList<>();
-		mono.doOnError(e -> {
-			model.addAttribute("errormsg", e.getMessage());
-			deferredResult.setResult("facility-show :: #errormsg");
-		}).subscribe(clientResponse -> {
-			logger.trace("Now in Consumer::accept({})", clientResponse);
-			if (clientResponse.statusCode().is2xxSuccessful()) {
-				clientResponse.bodyToMono(List.class).subscribe(pcList -> {
-					facilities.addAll(pcList);
+
+		// Subscribe to the response
+		responseSpec.toEntityList(Object.class)
+			// Handle errors
+			.doOnError(e -> {
+				model.addAttribute("errormsg", e.getMessage());
+				deferredResult.setResult("facility-show :: #errormsg");
+			})
+			// Handle successful response
+			.subscribe(entityList -> {
+				logger.trace("Now in Consumer::accept({})", entityList);
+
+				if (entityList.getStatusCode().is2xxSuccessful()) {
+					facilities.addAll(entityList.getBody());
 
 					MapComparator oc = new MapComparator("name", true);
 					facilities.sort(oc);
@@ -86,23 +93,30 @@ public class GUIFacilityController extends GUIBaseController {
 					model.addAttribute("facilities", facilities);
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + facilities.toString());
+
 					deferredResult.setResult("facility-show :: #facilitycontent");
 					logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-				});
-			} else {
-				handleHTTPError(clientResponse, model);
-				deferredResult.setResult("facility-show :: #errormsg");
-			}
-			logger.trace(">>>>MODEL" + model.toString());
+				} else {
+					ClientResponse errorResponse = ClientResponse.create(entityList.getStatusCode())
+						.headers(headers -> headers.addAll(entityList.getHeaders()))
+						.build();
+					handleHTTPError(errorResponse, model);
 
-		}, e -> {
-			model.addAttribute("errormsg", e.getMessage());
-			deferredResult.setResult("facility-show :: #errormsg");
-		});
+					deferredResult.setResult("facility-show :: #errormsg");
+				}
+
+				logger.trace(">>>>MODEL" + model.toString());
+			}, e -> {
+				model.addAttribute("errormsg", e.getMessage());
+				deferredResult.setResult("facility-show :: #errormsg");
+			});
+
 		logger.trace(model.toString() + "MODEL TO STRING");
 		logger.trace(">>>>MONO" + facilities.toString());
 		logger.trace(">>>>MODEL" + model.toString());
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
+
+		// Return the deferred result
 		return deferredResult;
 	}
 
@@ -111,7 +125,7 @@ public class GUIFacilityController extends GUIBaseController {
 	 *
 	 * @return a Mono containing the HTTP response
 	 */
-	private Mono<ClientResponse> get() {
+	private ResponseSpec get() {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -131,17 +145,15 @@ public class GUIFacilityController extends GUIBaseController {
 		logger.trace("... with username " + auth.getName());
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
 		/*
-		 * The returned Mono<ClientResponse> can be subscribed to in order to retrieve
-		 * the actual response and perform additional operations on it, such as
-		 * extracting the response body or handling any errors that may occur during the
-		 * request.
+		 * The returned ResponseSpec can be subscribed to in order to retrieve the actual response and perform additional
+		 * operations on it, such as extracting the response body or handling any errors that may occur during the request.
 		 */
 		return webclient.build()
 			.get()
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
-			.retrieve().bodyToMono(ClientResponse.class);
+			.retrieve();
 	}
 
 }

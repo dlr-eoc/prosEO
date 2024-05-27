@@ -6,7 +6,7 @@
 package de.dlr.proseo.ui.gui;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 
 /**
  * A controller for retrieving and handling spacecrafts
@@ -21,7 +21,7 @@ public class GUISpaceCraftController extends GUIBaseController {
 	 *
 	 * @return the name of the spacecraft addition view template
 	 */
-	@RequestMapping(value = "/spacecraft-add")
+	@GetMapping("/spacecraft-add")
 	public String addSpaceCraft() {
 		return "spacecraft-add";
 	}
@@ -31,7 +31,7 @@ public class GUISpaceCraftController extends GUIBaseController {
 	 *
 	 * @return the name of the spacecraft removal view template
 	 */
-	@RequestMapping(value = "/spacecraft-remove")
+	@GetMapping("/spacecraft-remove")
 	public String removeSpaceCraft() {
 		return "spacecraft-remove";
 	}
