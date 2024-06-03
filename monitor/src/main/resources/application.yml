@@ -34,12 +34,13 @@ proseo:
           # Do first start (true|false)
           doFirstStart: false
           # Calculate these metrics (true|false)
-          doDownload: true
-          doSensingToPublication: true
-          doSubmisionToCompletion: true
-          producedBytesAndCountForType: true
-          producedBytesAndCount: true
-          doOriginToPublication: true
+          calculate:
+            download: true
+            sensingToPublication: true
+            submisionToCompletion: true
+            producedBytesAndCountForType: true
+            producedBytesAndCount: true
+            originToPublication: true
         # if no entries are in an aggregation table this date is used to begin generating the entries
         aggregationStart: "2021-10-19T00:00:00.000000Z"
         # timeliness specifications for KPI01

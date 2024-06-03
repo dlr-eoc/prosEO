@@ -83,65 +83,65 @@ public class MonitorConfiguration {
 	/** 
 	 * Calculate these metrics 
 	 * */
-	@Value("${proseo.monitor.metrics.doOriginToPublication}")
-	private Boolean doOriginToPublication;
+	@Value("${proseo.monitor.metrics.calculate.originToPublication}")
+	private Boolean originToPublication;
 
 	/** 
 	 * Calculate these metrics 
 	 * */
-	@Value("${proseo.monitor.metrics.doDownload}")
-	private Boolean doDownload;
+	@Value("${proseo.monitor.metrics.calculate.download}")
+	private Boolean download;
 
 	/** 
 	 * Calculate these metrics 
 	 * */
-	@Value("${proseo.monitor.metrics.doSensingToPublication}")
-	private Boolean doSensingToPublication;
+	@Value("${proseo.monitor.metrics.calculate.sensingToPublication}")
+	private Boolean sensingToPublication;
 
 	/** 
 	 * Calculate these metrics 
 	 * */
-	@Value("${proseo.monitor.metrics.doSubmisionToCompletion}")
-	private Boolean doSubmisionToCompletion;
+	@Value("${proseo.monitor.metrics.calculate.submisionToCompletion}")
+	private Boolean submisionToCompletion;
 
 	/** 
 	 * Calculate these metrics 
 	 * */
-	@Value("${proseo.monitor.metrics.producedBytesAndCountForType}")
+	@Value("${proseo.monitor.metrics.calculate.producedBytesAndCountForType}")
 	private Boolean producedBytesAndCountForType;
 
 	/** 
 	 * Calculate these metrics 
 	 * */
-	@Value("${proseo.monitor.metrics.producedBytesAndCount}")
+	@Value("${proseo.monitor.metrics.calculate.producedBytesAndCount}")
 	private Boolean producedBytesAndCount;
 
 	/**
-	 * @return the doOriginToPublication
+	 * @return the originToPublication
 	 */
-	public Boolean getDoOriginToPublication() {
-		return doOriginToPublication;
+	public Boolean getOriginToPublication() {
+		return originToPublication;
 	}
 
 	/**
-	 * @return the doDownload
+	 * @return the download
 	 */
-	public Boolean getDoDownload() {
-		return doDownload;
+	public Boolean getDownload() {
+		return download;
 	}
 
 	/**
-	 * @return the doSensingToPublication
+	 * @return the sensingToPublication
 	 */
-	public Boolean getDoSensingToPublication() {
-		return doSensingToPublication;
+	public Boolean getSensingToPublication() {
+		return sensingToPublication;
 	}
 
 	/**
-	 * @return the doSubmisionToCompletion
+	 * @return the submisionToCompletion
 	 */
-	public Boolean getDoSubmisionToCompletion() {
-		return doSubmisionToCompletion;
+	public Boolean getSubmisionToCompletion() {
+		return submisionToCompletion;
 	}
 
 	/**
@@ -159,31 +159,31 @@ public class MonitorConfiguration {
 	}
 
 	/**
-	 * @param doOriginToPublication the doOriginToPublication to set
+	 * @param originToPublication the originToPublication to set
 	 */
 	public void setDoOriginToPublication(Boolean doOriginToPublication) {
-		this.doOriginToPublication = doOriginToPublication;
+		this.originToPublication = doOriginToPublication;
 	}
 
 	/**
-	 * @param doDownload the doDownload to set
+	 * @param download the download to set
 	 */
 	public void setDoDownload(Boolean doDownload) {
-		this.doDownload = doDownload;
+		this.download = doDownload;
 	}
 
 	/**
-	 * @param doSensingToPublication the doSensingToPublication to set
+	 * @param sensingToPublication the sensingToPublication to set
 	 */
 	public void setDoSensingToPublication(Boolean doSensingToPublication) {
-		this.doSensingToPublication = doSensingToPublication;
+		this.sensingToPublication = doSensingToPublication;
 	}
 
 	/**
-	 * @param doSubmisionToCompletion the doSubmisionToCompletion to set
+	 * @param submisionToCompletion the submisionToCompletion to set
 	 */
 	public void setDoSubmisionToCompletion(Boolean doSubmisionToCompletion) {
-		this.doSubmisionToCompletion = doSubmisionToCompletion;
+		this.submisionToCompletion = doSubmisionToCompletion;
 	}
 
 	/**
