@@ -26,6 +26,20 @@ proseo:
         orderCycle: 30000
         # cycle wait time for checking products
         productCycle: 60000
+        metrics:
+          # See for regex: https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/regex/Pattern.html#sum
+          productTypeRegex: ".*"
+          # Duration in days to create first entry as "monthly", used for testing
+          firstStartDuration: 2000
+          # Do first start (true|false)
+          doFirstStart: false
+          # Calculate these metrics (true|false)
+          doDownload: true
+          doSensingToPublication: true
+          doSubmisionToCompletion: true
+          producedBytesAndCountForType: true
+          producedBytesAndCount: true
+          doOriginToPublication: true
         # if no entries are in an aggregation table this date is used to begin generating the entries
         aggregationStart: "2021-10-19T00:00:00.000000Z"
         # timeliness specifications for KPI01

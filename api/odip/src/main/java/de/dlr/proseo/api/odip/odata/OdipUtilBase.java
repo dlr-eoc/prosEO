@@ -45,6 +45,7 @@ import de.dlr.proseo.api.odip.service.ServiceConnection;
 import de.dlr.proseo.api.odip.util.ProductUtil;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.OdipMessage;
+import de.dlr.proseo.model.ApiMetrics;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Product;
@@ -53,6 +54,7 @@ import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.Workflow;
 import de.dlr.proseo.model.WorkflowOption;
 import de.dlr.proseo.model.WorkflowOption.WorkflowOptionType;
+import de.dlr.proseo.model.enums.MetricType;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderSource;
 import de.dlr.proseo.model.enums.OrderState;
@@ -483,6 +485,42 @@ public class OdipUtilBase {
 		}
 		workflow.addProperty(new Property(null, OdipEdmProvider.ET_WORKFLOW_PROP_WORKFLOWOPTIONS, ValueType.COLLECTION_COMPLEX,
 				workflowOptions));
+		return workflow;
+	}
+
+	/**
+	 * Converts a model workflow to an ODIP workflow entity.
+	 *
+	 * @param modelWorkflow the model workflow to convert
+	 * @return the converted ODIP workflow entity
+	 * @throws IllegalArgumentException if the provided model workflow is invalid
+	 * @throws URISyntaxException       if there is an error in the URI syntax
+	 */
+	public Entity toOdipMetrics(ApiMetrics modelMetrics) throws IllegalArgumentException, URISyntaxException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> toOdipMetrics({})", modelMetrics.getName());
+
+		// Create w entity
+		Entity workflow = new Entity();
+		workflow.setType(OdipEdmProvider.ET_METRICS_FQN.getFullQualifiedNameAsString());
+		workflow.addProperty(new Property(null, OdipEdmProvider.ET_METRICS_PROP_NAME, ValueType.PRIMITIVE, modelMetrics.getName()));
+		if (modelMetrics.getTimestamp() != null) {
+			workflow.addProperty(new Property(null, OdipEdmProvider.ET_METRICS_PROP_TIMESTAMP, ValueType.PRIMITIVE,
+					Date.from(modelMetrics.getTimestamp())));
+		}
+		if (modelMetrics.getMetrictype() != null) {
+			workflow.addProperty(new Property(null, OdipEdmProvider.ET_METRICS_PROP_METRICTYPE, ValueType.PRIMITIVE,
+					modelMetrics.getMetrictype()));
+			if (modelMetrics.getMetrictype().equals(MetricType.GAUGE)) {
+				workflow.addProperty(new Property(null, OdipEdmProvider.ET_METRICS_PROP_GAUGE, ValueType.PRIMITIVE,
+						modelMetrics.getGauge()));
+			}
+			if (modelMetrics.getMetrictype().equals(MetricType.COUNTER)) {
+				workflow.addProperty(new Property(null, OdipEdmProvider.ET_METRICS_PROP_COUNT, ValueType.PRIMITIVE,
+						modelMetrics.getCount()));
+			}
+		}
+
 		return workflow;
 	}
 

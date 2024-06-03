@@ -30,6 +30,7 @@ import de.dlr.proseo.model.dao.MonServiceStateOperationRepository;
 import de.dlr.proseo.model.dao.MonServiceStateRepository;
 import de.dlr.proseo.model.dao.OrbitRepository;
 import de.dlr.proseo.model.dao.OrderRepository;
+import de.dlr.proseo.model.dao.ApiMetricsRepository;
 import de.dlr.proseo.model.dao.ClassOutputParameterRepository;
 import de.dlr.proseo.model.dao.ProcessorClassRepository;
 import de.dlr.proseo.model.dao.ProcessorRepository;
@@ -189,6 +190,10 @@ public class RepositoryService {
 	/** The repository for the WorkflowOption class */
 	@Autowired
     private WorkflowOptionRepository workflowOptionRepository;
+	
+	/** The repository for the ApiMetrics class */
+	@Autowired
+    private ApiMetricsRepository apiMetricsRepository;
 	
 	/**
 	 * Singleton constructor
@@ -484,6 +489,13 @@ public class RepositoryService {
 	 */
 	public static WorkflowOptionRepository getWorkflowOptionRepository() {
 		return theRepositoryService.workflowOptionRepository;
+	}
+
+	/**
+	 * @return the apiMetricsRepository
+	 */
+	public static ApiMetricsRepository getApiMetricsRepository() {
+		return theRepositoryService.apiMetricsRepository;
 	}
 
 }
