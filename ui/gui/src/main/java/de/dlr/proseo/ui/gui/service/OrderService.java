@@ -6,7 +6,6 @@
 package de.dlr.proseo.ui.gui.service;
 
 import java.net.URI;
-import java.time.Duration;
 import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +15,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
@@ -31,7 +29,6 @@ import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
-import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 /**
@@ -338,9 +335,9 @@ public class OrderService {
 	 * @param orderId  the order id
 	 * @param state    the desired order state
 	 * @param facility the processing facility
-	 * @return a Mono; providing access to the response status and headers, as well as methods to consume the response body
+	 * @return aResponseSpec; providing access to the response status and headers, as well as methods to consume the response body
 	 */
-	public Mono<ClientResponse> setState(String orderId, String state, String facility) {
+	public ResponseSpec setState(String orderId, String state, String facility) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -385,7 +382,8 @@ public class OrderService {
 				logger.trace("response:{}", res.status());
 				return HttpResponseStatus.FOUND.equals(res.status());
 			})
-				// Timeouts: Neither configuring timeouts in tcpConfiguration() nor using the timeout() method on the returned Mono
+				// Timeouts: Neither configuring timeouts in tcpConfiguration() nor using the timeout() method on the
+				// returnedResponseSpec
 				// keeps the application from timing out after 30 s sharp
 				.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.getTimeout().intValue())
 				.doOnConnected(conn -> conn.addHandlerLast(new ReadTimeoutHandler((int) (config.getTimeout() / 1000)))
@@ -397,34 +395,33 @@ public class OrderService {
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
 
 		// Build the ResponseSpec
-		Mono<ClientResponse> answer = null;
+		ResponseSpec answer = null;
+
 		if (method.equals("patch")) {
 			answer = webClient.patch()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.retrieve()
-				.bodyToMono(ClientResponse.class)
-				.timeout(Duration.ofMillis(config.getTimeout()));
+				.retrieve();
+			// timeout should be handled by the connection timeout specified above
+//				.timeout(Duration.ofMillis(config.getTimeout()));
 		} else if (method.equals("put")) {
 			answer = webClient.put()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.retrieve()
-				.bodyToMono(ClientResponse.class)
-				.timeout(Duration.ofMillis(config.getTimeout()));
+				.retrieve();
+//				.timeout(Duration.ofMillis(config.getTimeout()));
 		} else if (method.equals("delete")) {
 			answer = webClient.delete()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.retrieve()
-				.bodyToMono(ClientResponse.class)
-				.timeout(Duration.ofMillis(config.getTimeout()));
+				.retrieve();
+//				.timeout(Duration.ofMillis(config.getTimeout()));
 		}
 
-		// The returned Mono can be subscribed to in order to retrieve the actual response and perform additional
+		// The returned ResponseSpec can be subscribed to in order to retrieve the actual response and perform additional
 		// operations on it, such as extracting the response body or handling any errors that may occur during the request.
 		return answer;
 	}
@@ -472,7 +469,7 @@ public class OrderService {
 		logger.trace("... with username " + auth.getName());
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
 
-		// Build the Mono
+		// Build the ResponseSpec
 		ResponseSpec answer = null;
 		if (method.equals("patch")) {
 			answer = webClient.patch()
@@ -542,7 +539,7 @@ public class OrderService {
 		logger.trace("... with username " + auth.getName());
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
 
-		// Build the Mono
+		// Build the ResponseSpec
 		ResponseSpec answer = null;
 		if (method.equals("patch")) {
 			answer = webClient.patch()
