@@ -85,7 +85,7 @@ public class GUIConfiguration implements WebMvcConfigurer {
 	 * @return the locale resolver bean
 	 */
 	@Bean
-	public LocaleResolver localeResolver() {
+	LocaleResolver localeResolver() {
 		return new CookieLocaleResolver();
 	}
 
@@ -95,7 +95,7 @@ public class GUIConfiguration implements WebMvcConfigurer {
 	 * @return the locale change interceptor bean
 	 */
 	@Bean
-	public LocaleChangeInterceptor localChangeInterceptor() {
+	LocaleChangeInterceptor localChangeInterceptor() {
 		LocaleChangeInterceptor lci = new LocaleChangeInterceptor();
 		lci.setParamName("lang"); // The request parameter name for language change
 		return lci;

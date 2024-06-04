@@ -5,9 +5,12 @@
  */
 package de.dlr.proseo.ui.gui;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Properties;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -19,6 +22,7 @@ import org.springframework.web.client.RestClientResponseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.rest.model.RestMission;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -26,7 +30,7 @@ import de.dlr.proseo.ui.backend.ServiceConnection;
 /**
  * A bridge between the GUI application and the prosEO backend services, used for testing purposes, displaying custom login pages,
  * and retrieving missions
- * 
+ *
  * @author David Mazo
  */
 @Controller
@@ -61,6 +65,23 @@ public class GUIController {
 	 */
 	@GetMapping("/customlogin")
 	public String index12(Model model) {
+		String version = null;
+		String resource = "META-INF/maven/de.dlr.proseo/proseo-ui-gui/pom.properties";
+
+		try (InputStream stream = getClass().getClassLoader().getResourceAsStream(resource)) {
+			if (stream != null) {
+				Properties props = new Properties();
+				props.load(stream);
+				version = props.getProperty("version");
+			} else {
+				logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, "Failed to load properties file: " + resource);
+			}
+		} catch (IOException e) {
+			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
+		}
+
+		model.addAttribute("proseoversion", version);
+
 		return "customlogin.html";
 	}
 

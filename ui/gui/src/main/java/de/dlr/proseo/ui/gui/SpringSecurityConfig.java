@@ -48,11 +48,8 @@ public class SpringSecurityConfig {
 		// Configure HTTP security
 		http.addFilter(authenticationFilter)
 			.authenticationProvider(authenticationProvider)
-			.authorizeRequests(requests -> requests.antMatchers("/resources/**")
-				.permitAll()
-				.antMatchers("/background.jpg")
-				.permitAll()
-				.antMatchers("/**/actuator/health")
+			.authorizeRequests(requests -> requests
+				.antMatchers("/static/**", "/fragments/**", "/background.jpg", "/customlogin", "/**/actuator/health")
 				.permitAll()
 				.anyRequest()
 				.authenticated())

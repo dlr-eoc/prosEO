@@ -13,17 +13,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.ui.gui.service.MapComparator;
 import de.dlr.proseo.ui.gui.service.ProcessorService;
-import reactor.core.publisher.Mono;
 
 /**
  * A controller for retrieving and handling processor class data
@@ -44,7 +44,7 @@ public class GUIProcessorClassController extends GUIBaseController {
 	 *
 	 * @return the name of the processor class view template
 	 */
-	@RequestMapping(value = "/processor-class-show")
+	@GetMapping("/processor-class-show")
 	public String showProcessorClass() {
 		return "processor-class-show";
 	}
@@ -56,23 +56,29 @@ public class GUIProcessorClassController extends GUIBaseController {
 	 * @param model              the model to prepare for Thymeleaf
 	 * @return Thymeleaf fragment with result from the query
 	 */
-	@SuppressWarnings("unchecked")
-	@RequestMapping(value = "/processor-class-show/get")
+	@GetMapping("/processor-class-show/get")
 	public DeferredResult<String> getProcessorClassName(
 			@RequestParam(required = false, value = "processorclassName") String processorClassName, Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getProcessorClassName({}, {}, model)", processorClassName);
-		Mono<ClientResponse> mono = processorService.get(processorClassName);
+
+		// Perform the HTTP request to retrieve processor classes
+		ResponseSpec responseSpec = processorService.get(processorClassName);
 		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> procs = new ArrayList<>();
-		mono.doOnError(e -> {
-			model.addAttribute("errormsg", e.getMessage());
-			deferredResult.setResult("processor-class-show :: #errormsg");
-		}).subscribe(clientResponse -> {
-			logger.trace("Now in Consumer::accept({})", clientResponse);
-			if (clientResponse.statusCode().is2xxSuccessful()) {
-				clientResponse.bodyToMono(List.class).subscribe(processorClassList -> {
-					procs.addAll(processorClassList);
+
+		// Subscribe to the response
+		responseSpec.toEntityList(Object.class)
+			// Handle errors
+			.doOnError(e -> {
+				model.addAttribute("errormsg", e.getMessage());
+				deferredResult.setResult("processor-class-show :: #errormsg");
+			})
+			// Handle successful response
+			.subscribe(entityList -> {
+				logger.trace("Now in Consumer::accept({})", entityList);
+				if (entityList.getStatusCode().is2xxSuccessful()) {
+					procs.addAll(entityList.getBody());
 
 					MapComparator oc = new MapComparator("processorName", true);
 					procs.sort(oc);
@@ -80,23 +86,30 @@ public class GUIProcessorClassController extends GUIBaseController {
 					model.addAttribute("procs", procs);
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + procs.toString());
+
 					deferredResult.setResult("processor-class-show :: #processorclasscontent");
 					logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-				});
-			} else {
-				handleHTTPError(clientResponse, model);
-				deferredResult.setResult("processor-class-show :: #errormsg");
-			}
-			logger.trace(">>>>MODEL" + model.toString());
+				} else {
+					ClientResponse errorResponse = ClientResponse.create(entityList.getStatusCode())
+						.headers(headers -> headers.addAll(entityList.getHeaders()))
+						.build();
+					handleHTTPError(errorResponse, model);
 
-		}, e -> {
-			model.addAttribute("errormsg", e.getMessage());
-			deferredResult.setResult("processor-class-show :: #errormsg");
-		});
+					deferredResult.setResult("processor-class-show :: #errormsg");
+				}
+
+				logger.trace(">>>>MODEL" + model.toString());
+			}, e -> {
+				model.addAttribute("errormsg", e.getMessage());
+				deferredResult.setResult("processor-class-show :: #errormsg");
+			});
+
 		logger.trace(model.toString() + "MODEL TO STRING");
 		logger.trace(">>>>MONO" + procs.toString());
 		logger.trace(">>>>MODEL" + model.toString());
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
+
+		// Return the deferred result
 		return deferredResult;
 	}
 
