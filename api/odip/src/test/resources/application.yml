@@ -1,0 +1,37 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+        open-in-view: false
+        properties.hibernate.jdbc.time_zone: UTC
+    datasource:
+        url: jdbc:postgresql://proseo-db:5432/proseo
+        username: <db_user>
+        password: <db_pwd>
+logging:
+    file: /proseo/log/proseo-api-odip.log
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE
+        org.hibernate.engine.jdbc.env.internal: WARN
+management:
+    endpoints.web.exposure.include: "health,info"
+proseo:
+    userManager.url: http://localhost:8086/proseo/user-mgr/v0.1
+    ingestor.url: http://localhost:8081/proseo/ingestor/v0.1
+    orderManager.url: http://192.168.20.155:8082/proseo/order-mgr/v0.1
+    productionPlanner.url: http://192.168.20.155:8080/proseo/planner/v0.1
+    prip.url: http://localhost:8091/proseo/prip/odata/v1
+    # Timeout for outgoing HTTP connections
+    http.timeout: 10000
+    # Expiration time for OAuth2 tokens in seconds
+    token.expiration: 3600
+    # Maximum number of products to retrieve in a single query
+    quota: 5000
+    odip:
+        facility: Lerchenhof
+        # execution delay in minutes
+        executionDelay: 5
+        
+    # URL for AIP client
+    aip.url: http://192.168.20.155:8080/proseo/api/aip-client/v0.1
