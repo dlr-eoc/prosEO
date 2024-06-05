@@ -45,7 +45,7 @@ import reactor.netty.http.client.HttpClient;
 public class GUIProductController extends GUIBaseController {
 
 	/** A logger for this class */
-	private static ProseoLogger logger = new ProseoLogger(GUIProductClassController.class);
+	private static ProseoLogger logger = new ProseoLogger(GUIProductController.class);
 
 	/** The configuration object for the prosEO backend services */
 	@Autowired
@@ -151,30 +151,9 @@ public class GUIProductController extends GUIBaseController {
 				logger.trace("Now in Consumer::accept({})", entityList);
 
 				if (entityList.getStatusCode().is2xxSuccessful()) {
-					if (productId != null && productId > 0) {
-						products.add(entityList.getBody());
-
-						model.addAttribute("products", products);
-						model.addAttribute("count", 1);
-						model.addAttribute("pageSize", 1);
-						model.addAttribute("pageCount", 1);
-						model.addAttribute("page", 1);
-
-						List<Long> showPages = new ArrayList<>();
-						showPages.add((long) 1);
-						model.addAttribute("showPages", showPages);
-
-						if (logger.isTraceEnabled())
-							logger.trace(model.toString() + "MODEL TO STRING");
-						if (logger.isTraceEnabled())
-							logger.trace(">>>>MONO" + products.toString());
-
-						deferredResult.setResult("product-show :: #productcontent");
-						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-					} else {
+					if (entityList.getBody() instanceof Collection) {
 						products.addAll((Collection<? extends Object>) entityList.getBody());
-						// MapComparator oc = new MapComparator("productClass", true);
-						// products.sort(oc);
+
 						model.addAttribute("products", products);
 						model.addAttribute("count", count);
 						model.addAttribute("pageSize", pageSize);
@@ -195,6 +174,26 @@ public class GUIProductController extends GUIBaseController {
 						}
 
 						model.addAttribute("showPages", showPages);
+						if (logger.isTraceEnabled())
+							logger.trace(model.toString() + "MODEL TO STRING");
+						if (logger.isTraceEnabled())
+							logger.trace(">>>>MONO" + products.toString());
+
+						deferredResult.setResult("product-show :: #productcontent");
+						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
+					} else {
+						products.add(entityList.getBody());
+
+						model.addAttribute("products", products);
+						model.addAttribute("count", 1);
+						model.addAttribute("pageSize", 1);
+						model.addAttribute("pageCount", 1);
+						model.addAttribute("page", 1);
+
+						List<Long> showPages = new ArrayList<>();
+						showPages.add((long) 1);
+						model.addAttribute("showPages", showPages);
+
 						if (logger.isTraceEnabled())
 							logger.trace(model.toString() + "MODEL TO STRING");
 						if (logger.isTraceEnabled())
