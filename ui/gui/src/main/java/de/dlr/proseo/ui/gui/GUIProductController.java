@@ -18,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestClientResponseException;
@@ -25,6 +26,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -32,7 +34,6 @@ import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 /**
@@ -59,7 +60,7 @@ public class GUIProductController extends GUIBaseController {
 	 *
 	 * @return the name of the product view template
 	 */
-	@RequestMapping(value = "/product-show")
+	@GetMapping("/product-show")
 	public String showProduct() {
 		return "product-show";
 	}
@@ -94,8 +95,7 @@ public class GUIProductController extends GUIBaseController {
 	 * @param model         the attributes to return
 	 * @return the result
 	 */
-	@SuppressWarnings("unchecked")
-	@RequestMapping(value = "/product/get")
+	@GetMapping("/product/get")
 	public DeferredResult<String> getProducts(@RequestParam(required = false, value = "id") Long productId,
 			@RequestParam(required = false, value = "productClass") String productClass,
 			@RequestParam(required = false, value = "mode") String mode,
@@ -127,7 +127,9 @@ public class GUIProductController extends GUIBaseController {
 		} else if (from != null) {
 			to = count;
 		}
-		Mono<ClientResponse> mono = get(productId, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom,
+
+		// Perform the HTTP request to retrieve missions
+		ResponseSpec responseSpec = get(productId, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom,
 				genTimeTo, from, to, jobStepId);
 		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> products = new ArrayList<>();
@@ -136,33 +138,41 @@ public class GUIProductController extends GUIBaseController {
 		long deltaPage = (count % pageSize) == 0 ? 0 : 1;
 		Long pages = (count / pageSize) + deltaPage;
 		Long page = (from / pageSize) + 1;
-		mono.doOnError(e -> {
-			model.addAttribute("errormsg", e.getMessage());
-			deferredResult.setResult("product-show :: #errormsg");
-		}).subscribe(clientResponse -> {
-			logger.trace("Now in Consumer::accept({})", clientResponse);
-			if (clientResponse.statusCode().is2xxSuccessful()) {
-				if (productId != null && productId > 0) {
-					clientResponse.bodyToMono(HashMap.class).subscribe(p -> {
-						products.add(p);
+
+		// Subscribe to the response
+		responseSpec.toEntityList(Object.class)
+			// Handle errors
+			.doOnError(e -> {
+				model.addAttribute("errormsg", e.getMessage());
+				deferredResult.setResult("product-show :: #errormsg");
+			})
+			// Handle successful response
+			.subscribe(entityList -> {
+				logger.trace("Now in Consumer::accept({})", entityList);
+
+				if (entityList.getStatusCode().is2xxSuccessful()) {
+					if (productId != null && productId > 0) {
+						products.add(entityList.getBody());
+
 						model.addAttribute("products", products);
 						model.addAttribute("count", 1);
 						model.addAttribute("pageSize", 1);
 						model.addAttribute("pageCount", 1);
 						model.addAttribute("page", 1);
+
 						List<Long> showPages = new ArrayList<>();
 						showPages.add((long) 1);
 						model.addAttribute("showPages", showPages);
+
 						if (logger.isTraceEnabled())
 							logger.trace(model.toString() + "MODEL TO STRING");
 						if (logger.isTraceEnabled())
 							logger.trace(">>>>MONO" + products.toString());
+
 						deferredResult.setResult("product-show :: #productcontent");
 						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-					});
-				} else {
-					clientResponse.bodyToMono(List.class).subscribe(pList -> {
-						products.addAll(pList);
+					} else {
+						products.addAll((Collection<? extends Object>) entityList.getBody());
 						// MapComparator oc = new MapComparator("productClass", true);
 						// products.sort(oc);
 						model.addAttribute("products", products);
@@ -170,6 +180,7 @@ public class GUIProductController extends GUIBaseController {
 						model.addAttribute("pageSize", pageSize);
 						model.addAttribute("pageCount", pages);
 						model.addAttribute("page", page);
+
 						List<Long> showPages = new ArrayList<>();
 						Long start = Math.max(page - 4, 1);
 						Long end = Math.min(page + 4, pages);
@@ -182,30 +193,37 @@ public class GUIProductController extends GUIBaseController {
 						for (Long i = start; i <= end; i++) {
 							showPages.add(i);
 						}
+
 						model.addAttribute("showPages", showPages);
 						if (logger.isTraceEnabled())
 							logger.trace(model.toString() + "MODEL TO STRING");
 						if (logger.isTraceEnabled())
 							logger.trace(">>>>MONO" + products.toString());
+
 						deferredResult.setResult("product-show :: #productcontent");
-
 						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-					});
-				}
-			} else {
-				handleHTTPError(clientResponse, model);
-				deferredResult.setResult("product-show :: #errormsg");
-			}
-			logger.trace(">>>>MODEL" + model.toString());
+					}
+				} else {
+					ClientResponse errorResponse = ClientResponse.create(entityList.getStatusCode())
+						.headers(headers -> headers.addAll(entityList.getHeaders()))
+						.build();
+					handleHTTPError(errorResponse, model);
 
-		}, e -> {
-			model.addAttribute("errormsg", e.getMessage());
-			deferredResult.setResult("product-show :: #errormsg");
-		});
+					deferredResult.setResult("product-show :: #errormsg");
+				}
+
+				logger.trace(">>>>MODEL" + model.toString());
+			}, e -> {
+				model.addAttribute("errormsg", e.getMessage());
+				deferredResult.setResult("product-show :: #errormsg");
+			});
+
 		logger.trace(model.toString() + "MODEL TO STRING");
 		logger.trace(">>>>MONO" + products.toString());
 		logger.trace(">>>>MODEL" + model.toString());
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
+
+		// Return the deferred result
 		return deferredResult;
 	}
 
@@ -218,48 +236,61 @@ public class GUIProductController extends GUIBaseController {
 	 * @param model  The model to hold the data
 	 * @return The result
 	 */
-	@SuppressWarnings("unchecked")
-	@RequestMapping(value = "/productfile/get")
+	@GetMapping("/productfile/get")
 	public DeferredResult<String> getProductFiles(@RequestParam(required = false, value = "id") Long id,
 			@RequestParam(required = false, value = "sortby") String sortby,
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 
 		logger.trace(">>> getProductFiles({}, {}, {}, {}, model)", id);
-		Mono<ClientResponse> mono = get(id, null, null, null, null, null, null, null, null, null, null, null);
+
+		// Perform the HTTP request to retrieve missions
+		ResponseSpec responseSpec = get(id, null, null, null, null, null, null, null, null, null, null, null);
 		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> productfiles = new ArrayList<>();
-		mono.doOnError(e -> {
-			model.addAttribute("errormsg", e.getMessage());
-			deferredResult.setResult("productfile-show :: #errormsg");
-		}).subscribe(clientResponse -> {
-			logger.trace("Now in Consumer::accept({})", clientResponse);
-			if (clientResponse.statusCode().is2xxSuccessful()) {
-				if (id != null && id > 0) {
-					clientResponse.bodyToMono(HashMap.class).subscribe(p -> {
-						productfiles.addAll((Collection<? extends Object>) p.get("productFile"));
+
+		// Subscribe to the response
+		responseSpec.toEntity(HashMap.class)
+			// Handle errors
+			.doOnError(e -> {
+				model.addAttribute("errormsg", e.getMessage());
+				deferredResult.setResult("productfile-show :: #errormsg");
+			})// Handle successful response
+			.subscribe(entityMap -> {
+				logger.trace("Now in Consumer::accept({})", entityMap);
+
+				if (entityMap.getStatusCode().is2xxSuccessful()) {
+					if (id != null && id > 0) {
+						productfiles.addAll((Collection<? extends Object>) entityMap.getBody().get("productFile"));
 						model.addAttribute("productfiles", productfiles);
+
 						if (logger.isTraceEnabled())
 							logger.trace(model.toString() + "MODEL TO STRING");
 						if (logger.isTraceEnabled())
 							logger.trace(">>>>MONO" + productfiles.toString());
+
 						deferredResult.setResult("productfile-show :: #productfilecontent");
 						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-					});
-				}
-			} else {
-				handleHTTPError(clientResponse, model);
-				deferredResult.setResult("productfile-show :: #errormsg");
-			}
-			logger.trace(">>>>MODEL" + model.toString());
+					}
+				} else {
+					ClientResponse errorResponse = ClientResponse.create(entityMap.getStatusCode())
+						.headers(headers -> headers.addAll(entityMap.getHeaders()))
+						.build();
+					handleHTTPError(errorResponse, model);
 
-		}, e -> {
-			model.addAttribute("errormsg", e.getMessage());
-			deferredResult.setResult("productfile-show :: #errormsg");
-		});
+					deferredResult.setResult("productfile-show :: #errormsg");
+				}
+
+				logger.trace(">>>>MODEL" + model.toString());
+			}, e -> {
+				model.addAttribute("errormsg", e.getMessage());
+				deferredResult.setResult("productfile-show :: #errormsg");
+			});
+
 		logger.trace(model.toString() + "MODEL TO STRING");
 		logger.trace(">>>>MONO" + productfiles.toString());
 		logger.trace(">>>>MODEL" + model.toString());
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
+
 		return deferredResult;
 	}
 
@@ -327,9 +358,7 @@ public class GUIProductController extends GUIBaseController {
 			uriString += divider + "jobStep=" + jobStepId;
 			divider = "&";
 		}
-		URI uri = UriComponentsBuilder.fromUriString(uriString)
-				.build()
-				.toUri();
+		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
 		Long result = (long) -1;
 		try {
 			String resStr = serviceConnection.getFromService(serviceConfig.getIngestorUrl(), uri.toString(), String.class,
@@ -378,9 +407,8 @@ public class GUIProductController extends GUIBaseController {
 	 * @param jobStepId     the id of the job step producing the product
 	 * @return a Mono containing the HTTP response
 	 */
-	private Mono<ClientResponse> get(Long id, String productClass, String mode, String fileClass, String quality,
-			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, Long recordFrom, Long recordTo,
-			Long jobStepId) {
+	private ResponseSpec get(Long id, String productClass, String mode, String fileClass, String quality, String startTimeFrom,
+			String startTimeTo, String genTimeFrom, String genTimeTo, Long recordFrom, Long recordTo, Long jobStepId) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -445,9 +473,7 @@ public class GUIProductController extends GUIBaseController {
 			}
 			uriString += divider + "orderBy=productClass.productType ASC,sensingStartTime ASC";
 		}
-		URI uri = UriComponentsBuilder.fromUriString(uriString)
-				.build()
-				.toUri();
+		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
@@ -462,15 +488,15 @@ public class GUIProductController extends GUIBaseController {
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
 
 		/*
-		 * The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
-		 * operations on it, such as extracting the response body or handling any errors that may occur during the request.
+		 * The returned ResponseSpec can be subscribed to in order to retrieve the actual response and perform additional operations
+		 * on it, such as extracting the response body or handling any errors that may occur during the request.
 		 */
 		return webclient.build()
 			.get()
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
-			.retrieve().bodyToMono(ClientResponse.class);
+			.retrieve();
 	}
 
 }

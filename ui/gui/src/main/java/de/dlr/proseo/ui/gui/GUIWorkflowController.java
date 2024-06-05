@@ -7,7 +7,6 @@ package de.dlr.proseo.ui.gui;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,13 +16,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -31,7 +31,6 @@ import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 /**
@@ -58,7 +57,7 @@ public class GUIWorkflowController extends GUIBaseController {
 	 *
 	 * @return the name of the workflow view template
 	 */
-	@RequestMapping(value = "/workflow-show")
+	@GetMapping("/workflow-show")
 	public String showWorkflow() {
 		return "workflow-show";
 	}
@@ -77,7 +76,7 @@ public class GUIWorkflowController extends GUIBaseController {
 	 * @param model             the attributes to return
 	 * @return the result
 	 */
-	@RequestMapping(value = "/workflow/get")
+	@GetMapping("/workflow/get")
 	public DeferredResult<String> getWorkflows(@RequestParam(required = false, value = "id") Long id,
 			@RequestParam(required = false, value = "name") String name,
 			@RequestParam(required = false, value = "workflowVersion") String workflowVersion,
@@ -99,23 +98,21 @@ public class GUIWorkflowController extends GUIBaseController {
 			count = countWorkflows(name, workflowVersion, inputProductClass);
 		}
 
-		makeGetRequest(id, name, workflowVersion, inputProductClass, recordFrom, recordTo).subscribe(
+		makeGetRequest(id, name, workflowVersion, inputProductClass, recordFrom, recordTo).toEntityList(Object.class)
+			.subscribe(
 
-				// In case of success, handle HTTP response
-				clientResponse -> {
+					// In case of success, handle HTTP response
+					clientResponse -> {
 
-					logger.trace("Now in Consumer::accept({})", clientResponse);
+						logger.trace("Now in Consumer::accept({})", clientResponse);
 
-					if (clientResponse.statusCode().is2xxSuccessful()) {
+						if (clientResponse.getStatusCode().is2xxSuccessful()) {
 
-						if (id != null && id > 0) {
-
-							// If an ID was provided, only one workflow is retrieved
-
-							clientResponse.bodyToMono(HashMap.class).subscribe(workflow -> {
+							if (id != null && id > 0) {
+								// If an ID was provided, only one workflow is retrieved
 
 								List<Object> workflows = new ArrayList<>();
-								workflows.add(workflow);
+								workflows.add(clientResponse.getBody());
 
 								model.addAttribute("workflows", workflows);
 								model.addAttribute("numberOfPages", 1);
@@ -133,13 +130,10 @@ public class GUIWorkflowController extends GUIBaseController {
 
 								deferredResult.setResult("workflow-show :: #workflowcontent");
 								logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-							});
 
-						} else {
+							} else {
 
-							// If no ID was provided, several workflows may be retrieved
-
-							clientResponse.bodyToMono(List.class).subscribe(workflows -> {
+								// If no ID was provided, several workflows may be retrieved
 
 								// Determine number of pages
 								Long numberOfPages = count % pageSize == 0 ? count / pageSize : count / pageSize + 1;
@@ -159,7 +153,7 @@ public class GUIWorkflowController extends GUIBaseController {
 								}
 
 								// Fill model with attributes to return
-								model.addAttribute("workflows", workflows);
+								model.addAttribute("workflows", clientResponse.getBody());
 								model.addAttribute("numberOfPages", numberOfPages);
 								model.addAttribute("currentPage", currentPage);
 								model.addAttribute("showPages", showPages);
@@ -167,30 +161,33 @@ public class GUIWorkflowController extends GUIBaseController {
 								if (logger.isTraceEnabled())
 									logger.trace(model.toString() + "MODEL TO STRING");
 								if (logger.isTraceEnabled())
-									logger.trace(">>>>MONO" + workflows.toString());
+									logger.trace(">>>>MONO" + clientResponse.getBody().toString());
 								deferredResult.setResult("workflow-show :: #workflowcontent");
 
 								logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-							});
+							}
+
+						} else {
+							// Handle and display HTTP error
+							ClientResponse errorResponse = ClientResponse.create(clientResponse.getStatusCode())
+								.headers(headers -> headers.addAll(clientResponse.getHeaders()))
+								.build();
+							handleHTTPError(errorResponse, model);
+
+							deferredResult.setResult("workflow-show :: #errormsg");
 						}
 
-					} else {
-						// Handle and display HTTP error
-						handleHTTPError(clientResponse, model);
+						logger.trace(">>>>MODEL" + model.toString());
+
+					},
+
+					// In case of errors, display an error message
+					error -> {
+						model.addAttribute("errormsg", error.getMessage());
 						deferredResult.setResult("workflow-show :: #errormsg");
 					}
 
-					logger.trace(">>>>MODEL" + model.toString());
-
-				},
-
-				// In case of errors, display an error message
-				error -> {
-					model.addAttribute("errormsg", error.getMessage());
-					deferredResult.setResult("workflow-show :: #errormsg");
-				}
-
-		);
+			);
 
 		logger.trace(model.toString() + "MODEL TO STRING");
 		logger.trace(">>>>MODEL" + model.toString());
@@ -234,9 +231,7 @@ public class GUIWorkflowController extends GUIBaseController {
 			divider = "&";
 		}
 
-		URI uri = UriComponentsBuilder.fromUriString(uriString)
-				.build()
-				.toUri();
+		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
 		// Initialize the result with -1 to indicate errors if no valid response is
 		// given
 		Long result = -1l;
@@ -287,8 +282,8 @@ public class GUIWorkflowController extends GUIBaseController {
 	 * @param recordTo          the last record to retrieve
 	 * @return a Mono containing the HTTP response
 	 */
-	private Mono<ClientResponse> makeGetRequest(Long id, String name, String workflowVersion, String inputProductClass,
-			Long recordFrom, Long recordTo) {
+	private ResponseSpec makeGetRequest(Long id, String name, String workflowVersion, String inputProductClass, Long recordFrom,
+			Long recordTo) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -332,9 +327,7 @@ public class GUIWorkflowController extends GUIBaseController {
 			uriString += divider + "orderBy=name ASC,workflowVersion ASC";
 		}
 
-		URI uri = UriComponentsBuilder.fromUriString(uriString)
-				.build()
-				.toUri();
+		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
@@ -351,15 +344,15 @@ public class GUIWorkflowController extends GUIBaseController {
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
 
 		/*
-		 * The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
-		 * operations on it, such as extracting the response body or handling any errors that may occur during the request.
+		 * The returned ResponseSpec can be subscribed to in order to retrieve the actual response and perform additional operations
+		 * on it, such as extracting the response body or handling any errors that may occur during the request.
 		 */
 		return webclient.build()
 			.get()
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
-			.retrieve().bodyToMono(ClientResponse.class);
+			.retrieve();
 
 	}
 }

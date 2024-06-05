@@ -6,7 +6,7 @@
 package de.dlr.proseo.ui.gui;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 
 /**
  * A controller for retrieving and handling settings
@@ -21,7 +21,7 @@ public class GUISettingsController extends GUIBaseController {
 	 *
 	 * @return the name of the global settings view template
 	 */
-	@RequestMapping(value = "/settings-global")
+	@GetMapping("/settings-global")
 	public String globalSettings() {
 		return "settings-global";
 	}
@@ -31,7 +31,7 @@ public class GUISettingsController extends GUIBaseController {
 	 *
 	 * @return the name of the personal settings view template
 	 */
-	@RequestMapping(value = "/settings-personal")
+	@GetMapping("/settings-personal")
 	public String personalSettings() {
 		return "settings-personal";
 	}
