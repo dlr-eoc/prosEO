@@ -1638,10 +1638,10 @@ commands:
               description: If set, show passwords for Product Archive users, otherwise show placeholder
               shortForm: s
           parameters:
-            - name: archiveName
+            - name: archiveCode
               type: string
               optional: true
-              description: The name of the product archive to show
+              description: The code of the product archive to show
         - name: create
           description: Create a new product archive; 
                        the user will be prompted for mandatory attributes not given on the command line
@@ -1678,20 +1678,20 @@ commands:
               type: boolean
               description: Delete non-mandatory attributes not given in the product archive definition file and/or the command parameters
           parameters:
-            - name: archiveName
+            - name: archiveCode
               type: string
               optional: true
-              description: The name of the archive to update (mandatory if not read from file)
+              description: The code of the archive to update (mandatory if not read from file)
             - name: attribute
               type: string
               optional: true
               repeatable: true
               description: A archive attribute to set in the form "<attribute name>=<attribute value>"
         - name: delete
-          description: Delete the product archive with the given name
+          description: Delete the product archive with the given code
           parameters:
-            - name: archiveName
+            - name: archiveCode
               type: string
-              description: The name of the archive to delete
+              description: The code of the archive to delete
           
           

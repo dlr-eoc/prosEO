@@ -70,7 +70,10 @@ public class FileUtils {
 	public boolean createFile(String content) {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> createFile({})", content);
+			logger.trace(">>> createFile(<content>)");
+
+		logger.debug("... file content (first 20 characters): " + new StringUtils(content).getMaxSubstring(20));
+		logger.debug("... file size: " + content.length());
 
 		File file = new File(path);
 		file.getParentFile().mkdirs();
@@ -92,37 +95,46 @@ public class FileUtils {
 	}
 
 	/**
-	 * Creates the file with the content in a synchro modus
+	 * Creates the file with the content in a synchronized modus. Returns false if
+	 * the file was not created/rewritten. creation of the file was not
+	 * successfully. The waiting thread will unlock the file, which was locked in
+	 * the locked thread in case of exception - Timeout or Interrupted exception. It
+	 * is made for unlocking auxiliary files (status and accessed) of the storage
+	 * manager. Please use this synchronized function carefully.
 	 *
-	 * @param content Content of the file
+	 * @param content            Content of the file
 	 * @param waitTime           the wait time between each cycle of checking the
 	 *                           file lock status
 	 * @param fileCheckMaxCycles file check max cycles
 	 * @return true if file was successfully created
 	 */
 	public boolean synchroCreateFile(String content, long waitTime, long fileCheckMaxCycles) {
-		
+
 		if (logger.isTraceEnabled())
-			logger.trace(">>> synchroCreateFile({}, {}, {})", content, waitTime, fileCheckMaxCycles);
+			logger.trace(">>> synchroCreateFile(<content>, {}, {})", waitTime, fileCheckMaxCycles);
+
+		logger.debug("... file content (first 20 characters): " + new StringUtils(content).getMaxSubstring(20));
+		logger.debug("... file size: " + content.length());
 
 		StorageFileLocker fileLocker = new StorageFileLocker(path, waitTime, fileCheckMaxCycles);
-		boolean fileCreatedStatus;
-			
+		boolean fileCreatedStatus = false;
+
 		try {
-			
+
 			fileLocker.lockOrWaitUntilUnlockedAndLock();
-			fileCreatedStatus = createFile(content); 
+			fileCreatedStatus = createFile(content);
+			fileCreatedStatus = true;
 
 		} catch (FileLockedAfterMaxCyclesException e) {
-			
-			logger.debug("... the file is locked after max check cycles: " + path + " " + e.getMessage());
-			fileCreatedStatus = false;
-			
+
+			logger.debug(
+					"... the synchronized file was not created/rewritten: waiting timeout (possible locked from another thread): "
+							+ path + " " + e.getMessage());
+
 		} catch (InterruptedException e) {
-			
-			logger.debug("... the file is locked after max check cycles: " + path + " " + e.getMessage());
-			fileCreatedStatus = false;
-			
+
+			logger.debug("... the syncronized file was not created/rewritten: interrupted exception: " + path + " "
+					+ e.getMessage());
 		} finally {
 
 			fileLocker.unlock();

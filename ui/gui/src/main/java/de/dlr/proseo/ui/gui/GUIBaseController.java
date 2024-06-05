@@ -37,6 +37,7 @@ import de.dlr.proseo.model.rest.model.RestConfiguredProcessor;
 import de.dlr.proseo.model.rest.model.RestMission;
 import de.dlr.proseo.model.rest.model.RestProcessingFacility;
 import de.dlr.proseo.model.rest.model.RestProcessorClass;
+import de.dlr.proseo.model.rest.model.RestProductArchive;
 import de.dlr.proseo.model.rest.model.RestSpacecraft;
 import de.dlr.proseo.model.rest.model.RestWorkflow;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -160,6 +161,62 @@ public class GUIBaseController {
 		auth.getDataCache().getFacilities().sort(c);
 		return auth.getDataCache().getFacilities();
 	}
+	
+	/**
+	 * Retrieve the product archives
+	 *
+	 * @return a list with the names of available product archives
+	 */
+	@ModelAttribute("productarchivenames")
+	public List<String> productarchives() {
+		if (!hasroleproductarchivereader()) {
+			return new ArrayList<>();
+		}
+		checkClearCache();
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+		if (auth.getDataCache().getProductArchives() != null && !auth.getDataCache().getProductArchives().isEmpty())
+			return auth.getDataCache().getProductArchives();
+
+		logger.trace("Get product archives");
+		auth.getDataCache().setProductarchives(new ArrayList<String>());
+		List<?> resultList = null;
+
+		try {     
+			resultList = serviceConnection.getFromService(serviceConfig.getArchiveManagerUrl(), "/archives", List.class,
+					auth.getProseoName(), auth.getPassword());
+		} catch (RestClientResponseException e) {
+
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				logger.log(UIMessage.NO_MISSIONS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				logger.log(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				logger.log(UIMessage.EXCEPTION, e.getMessage());
+			}
+
+			return auth.getDataCache().getProductArchives();
+		} catch (RuntimeException e) {
+			logger.log(UIMessage.EXCEPTION, e.getMessage());
+			return auth.getDataCache().getProductArchives();
+		}
+
+		if (resultList != null) {
+			ObjectMapper mapper = new ObjectMapper();
+			for (Object object : resultList) {
+				RestProductArchive restArchive = mapper.convertValue(object, RestProductArchive.class);
+				auth.getDataCache().getProductArchives().add(restArchive.getName());
+			}
+		}
+
+		Comparator<String> c = Comparator.comparing((String x) -> x);
+		auth.getDataCache().getProductArchives().sort(c);
+		return auth.getDataCache().getProductArchives();
+	}
+
 
 	/**
 	 * Retrieve the product classes of mission
@@ -881,6 +938,30 @@ public class GUIBaseController {
 	public Boolean hasrolefacilitymonitor() {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		return auth.getUserRoles().contains(UserRole.FACILITY_MONITOR.toString());
+	}
+	
+	// Product Archive management roles
+
+	/**
+	 * Read access to product archives
+	 *
+	 * @return true, if the user has the product archive reader role
+	 */
+	@ModelAttribute("hasroleproductarchivereader")
+	public Boolean hasroleproductarchivereader() {
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+		return auth.getUserRoles().contains(UserRole.ARCHIVE_READER.toString());
+	}
+
+	/**
+	 * Create, update and delete access to product archives
+	 *
+	 * @return true, if the user has the product archive manager role
+	 */
+	@ModelAttribute("hasroleproductarchivemgr")
+	public Boolean hasroleproductarchivemgr() {
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+		return auth.getUserRoles().contains(UserRole.ARCHIVE_MGR.toString());
 	}
 
 	/**
