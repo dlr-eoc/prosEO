@@ -7,6 +7,7 @@ package de.dlr.proseo.ui.gui;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -108,31 +109,8 @@ public class GUIWorkflowController extends GUIBaseController {
 
 						if (clientResponse.getStatusCode().is2xxSuccessful()) {
 
-							if (id != null && id > 0) {
-								// If an ID was provided, only one workflow is retrieved
-
-								List<Object> workflows = new ArrayList<>();
-								workflows.add(clientResponse.getBody());
-
-								model.addAttribute("workflows", workflows);
-								model.addAttribute("numberOfPages", 1);
-								model.addAttribute("currentPage", 1);
-
-								// Helper list for the buttons with page numbers
-								List<Long> showPages = new ArrayList<>();
-								showPages.add(1l);
-								model.addAttribute("showPages", showPages);
-
-								if (logger.isTraceEnabled())
-									logger.trace(model.toString() + "MODEL TO STRING");
-								if (logger.isTraceEnabled())
-									logger.trace(">>>>MONO" + workflows.toString());
-
-								deferredResult.setResult("workflow-show :: #workflowcontent");
-								logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-
-							} else {
-
+							if (clientResponse.getBody() instanceof Collection) {
+								
 								// If no ID was provided, several workflows may be retrieved
 
 								// Determine number of pages
@@ -165,6 +143,31 @@ public class GUIWorkflowController extends GUIBaseController {
 								deferredResult.setResult("workflow-show :: #workflowcontent");
 
 								logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
+								
+							} else {
+								
+								// If an ID was provided, only one workflow is retrieved
+
+								List<Object> workflows = new ArrayList<>();
+								workflows.add(clientResponse.getBody());
+
+								model.addAttribute("workflows", workflows);
+								model.addAttribute("numberOfPages", 1);
+								model.addAttribute("currentPage", 1);
+
+								// Helper list for the buttons with page numbers
+								List<Long> showPages = new ArrayList<>();
+								showPages.add(1l);
+								model.addAttribute("showPages", showPages);
+
+								if (logger.isTraceEnabled())
+									logger.trace(model.toString() + "MODEL TO STRING");
+								if (logger.isTraceEnabled())
+									logger.trace(">>>>MONO" + workflows.toString());
+
+								deferredResult.setResult("workflow-show :: #workflowcontent");
+								logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
+
 							}
 
 						} else {

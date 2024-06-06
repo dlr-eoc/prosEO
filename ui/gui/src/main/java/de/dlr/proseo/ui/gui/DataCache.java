@@ -37,6 +37,9 @@ public class DataCache {
 
 	/** List with cached workflows */
 	private List<String> workflows = null;
+	
+	/** List with cached product archives */
+	private List<String> productarchives = null;
 
 	/**
 	 * Clears the data cache
@@ -48,6 +51,7 @@ public class DataCache {
 		fileClasses = null;
 		processingModes = null;
 		spaceCrafts = null;
+		productarchives = null; 
 	}
 
 	/**
@@ -121,6 +125,15 @@ public class DataCache {
 	public List<String> getWorkflows() {
 		return workflows;
 	}
+	
+	/**
+	 * Get the product archives
+	 *
+	 * @return the product archives
+	 */
+	public List<String> getProductArchives() {
+		return productarchives;
+	}
 
 	/**
 	 * Set the configured processors
@@ -192,6 +205,15 @@ public class DataCache {
 	 */
 	public void setWorkflows(List<String> workflows) {
 		this.workflows = workflows;
+	}
+	
+	/**
+	 * Set the product archives
+	 *
+	 * @param productarchives the product archive to set
+	 */
+	public void setProductarchives(List<String> productarchives) {
+		this.productarchives = productarchives;
 	}
 
 }

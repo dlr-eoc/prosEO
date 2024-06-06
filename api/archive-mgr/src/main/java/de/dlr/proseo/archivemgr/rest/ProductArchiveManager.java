@@ -14,25 +14,35 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 
+import de.dlr.proseo.archivemgr.ProductArchiveManagerConfiguration;
 import de.dlr.proseo.archivemgr.rest.model.ProductArchiveModelMapper;
 import de.dlr.proseo.archivemgr.rest.model.ProductArchiveRestMapper;
 import de.dlr.proseo.archivemgr.rest.model.RestProductArchive;
 import de.dlr.proseo.archivemgr.utils.StringUtils;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.FacilityMgrMessage;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.ProductArchiveMgrMessage;
 import de.dlr.proseo.model.ProductArchive;
+import de.dlr.proseo.model.enums.ArchiveType;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 
 /**
- * Service methods required to create, modify and delete product archives in the prosEO database, and to query the database about
- * such archives
+ * Service methods required to create, modify and delete product archives in the
+ * prosEO database, and to query the database about such archives
  *
  * @author Denys Chaykovskiy
  */
@@ -47,6 +57,10 @@ public class ProductArchiveManager {
 	/** Utility class for user authorizations */
 	@Autowired
 	private SecurityService securityService;
+
+	/** The product archive manager configuration */
+	@Autowired
+	ProductArchiveManagerConfiguration config;
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductArchiveManager.class);
@@ -69,7 +83,8 @@ public class ProductArchiveManager {
 		}
 
 		if (archiveExistsByCode(restArchive.getCode())) {
-			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.DUPLICATED_ARCHIVE, restArchive.getCode()));
+			throw new IllegalArgumentException(
+					logger.log(ProductArchiveMgrMessage.DUPLICATED_ARCHIVE, restArchive.getCode()));
 		}
 
 		// all checks inside
@@ -125,7 +140,8 @@ public class ProductArchiveManager {
 	 *
 	 * @param code the code of the product archive
 	 * @return product archive
-	 * @throws IllegalArgumentException if no product archive matching the given code could be found
+	 * @throws IllegalArgumentException if no product archive matching the given
+	 *                                  code could be found
 	 */
 	public RestProductArchive getArchiveByCode(String code) {
 
@@ -148,7 +164,8 @@ public class ProductArchiveManager {
 	 *
 	 * @param code the code of the product archive
 	 * @return a list of product archives, if code == null, returns all archives
-	 * @throws NoResultException if no product archives matching the given search criteria could be found
+	 * @throws NoResultException if no product archives matching the given search
+	 *                           criteria could be found
 	 */
 	public List<RestProductArchive> getArchivesByCode(String code) {
 
@@ -189,7 +206,8 @@ public class ProductArchiveManager {
 	 * @param id the ID to look for
 	 * @return a Json object corresponding to the product archive found
 	 * @throws IllegalArgumentException if no product archive ID was given
-	 * @throws NoResultException        if no product archive with the given ID exists
+	 * @throws NoResultException        if no product archive with the given ID
+	 *                                  exists
 	 */
 	public RestProductArchive getArchiveById(Long id) throws IllegalArgumentException, NoResultException {
 
@@ -212,15 +230,152 @@ public class ProductArchiveManager {
 	}
 
 	/**
-	 * Update the product archive with the given ID with the attribute values of the given Json object. Unchanged values must be
-	 * provided, too, or they will be changed to null.
+	 * Get product archives by name and archive type
+	 *
+	 * @param code        the archive code
+	 * @param name        the archive name
+	 * @param archiveType the archive type
+	 * @param recordFrom  first record of filtered and ordered result to return
+	 * @param recordTo    last record of filtered and ordered result to return
+	 * @return a list of Json objects representing product archives satisfying the
+	 *         search criteria
+	 * @throws NoResultException if no product archives matching the given search
+	 *                           criteria could be found
+	 */
+	public List<RestProductArchive> getArchives(String code, String name, String archiveType, Integer recordFrom,
+			Integer recordTo) throws NoResultException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getArchives({}, {}, {}, {}, {})", code, name, archiveType, recordFrom, recordTo);
+
+		if (recordFrom == null) {
+			recordFrom = 0;
+		}
+		if (recordTo == null) {
+			recordTo = Integer.MAX_VALUE;
+		}
+
+		Long numberOfResults = Long.parseLong(this.countArchives(name, archiveType));
+		Integer maxResults = config.getMaxResults();
+		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults
+				&& (numberOfResults - recordFrom) > maxResults) {
+			throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS, logger.log(GeneralMessage.TOO_MANY_RESULTS,
+					"productArchives", numberOfResults, config.getMaxResults()));
+		}
+
+		List<RestProductArchive> result = new ArrayList<>();
+
+		String jpqlQuery = "select w from ProductArchive w";
+
+		// adds WHERE condition
+		if ((null != code) || (null != name) || (null != archiveType)) {
+			
+			jpqlQuery += " where";
+
+			if (null != code) {
+				jpqlQuery += " code = :code and";
+			}
+
+			if (null != name) {
+				jpqlQuery += " name = :name and";
+			}
+
+			if (null != archiveType) {
+				jpqlQuery += " archiveType = :archiveType and";
+			}
+
+			jpqlQuery = jpqlQuery.substring(0, jpqlQuery.length() - 4); // removes last " and"
+		}
+
+		jpqlQuery += " ORDER BY w.id";
+
+		Query query = em.createQuery(jpqlQuery);
+
+		if (null != code) {
+			query.setParameter("code", code);
+		}
+
+		if (null != name) {
+			query.setParameter("name", name);
+		}
+
+		try {
+			if (null != archiveType) {
+				query.setParameter("archiveType", ArchiveType.valueOf(archiveType));
+			}
+		} catch (Exception e) {
+			throw new NoResultException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND, name, archiveType));
+		}
+
+		query.setFirstResult(recordFrom);
+		query.setMaxResults(recordTo - recordFrom);
+
+		for (Object resultObject : query.getResultList()) {
+			if (resultObject instanceof ProductArchive) {
+				result.add(new ProductArchiveModelMapper((ProductArchive) resultObject).toRest());
+			}
+		}
+
+		if (result.isEmpty()) {
+			throw new NoResultException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND, name, archiveType));
+		}
+
+		logger.log(ProductArchiveMgrMessage.ARCHIVE_LIST_RETRIEVED, result.size(), name, archiveType);
+
+		return result;
+	}
+
+	/**
+	 * Count the product archives matching the specified name and archive type
+	 *
+	 * @param name        the product archive name
+	 * @param archiveType the product archive type
+	 * @return the number of product archives found as string
+	 */
+	public String countArchives(String name, String archiveType) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> countArchives({}, {})", name, archiveType);
+
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+		CriteriaQuery<Long> query = cb.createQuery(Long.class);
+		Root<ProductArchive> rootArchive = query.from(ProductArchive.class);
+
+		List<Predicate> predicates = new ArrayList<>();
+
+		if (name != null)
+			predicates.add(cb.equal(rootArchive.get("name"), name));
+
+		try {
+			if (archiveType != null)
+				predicates.add(cb.equal(rootArchive.get("archiveType"), ArchiveType.valueOf(archiveType)));
+		} catch (Exception e) {
+			logger.trace("... wrong archive type: " + archiveType);
+			return "0";
+		}
+
+		query.select(cb.count(rootArchive)).where(predicates.toArray(new Predicate[predicates.size()]));
+		Long result = em.createQuery(query).getSingleResult();
+		logger.trace("... product archive count: " + result);
+
+		return result.toString();
+	}
+
+	/**
+	 * Update the product archive with the given ID with the attribute values of the
+	 * given Json object. Unchanged values must be provided, too, or they will be
+	 * changed to null.
 	 *
 	 * @param id          the ID of the product archive to update
-	 * @param restArchive a Json object containing the modified (and unmodified) attributes
-	 * @return a Json object corresponding to the product archive after modification (with ID and version for all contained objects)
-	 * @throws EntityNotFoundException         if no product with the given ID exists
+	 * @param restArchive a Json object containing the modified (and unmodified)
+	 *                    attributes
+	 * @return a Json object corresponding to the product archive after modification
+	 *         (with ID and version for all contained objects)
+	 * @throws EntityNotFoundException         if no product with the given ID
+	 *                                         exists
 	 * @throws IllegalArgumentException        if any of the input data was invalid
-	 * @throws ConcurrentModificationException if the facility has been modified since retrieval by the client
+	 * @throws ConcurrentModificationException if the facility has been modified
+	 *                                         since retrieval by the client
 	 */
 	public RestProductArchive modifyArchive(Long id, RestProductArchive restArchive) {
 
@@ -242,7 +397,8 @@ public class ProductArchiveManager {
 		ProductArchive modelArchive = RepositoryService.getProductArchiveRepository().findById(id).get();
 		modelArchive = new ProductArchiveModelMapper(modelArchive).get();
 
-		ProductArchive changedArchive = new ProductArchiveRestMapper(restArchive, securityService.getMission()).toModel();
+		ProductArchive changedArchive = new ProductArchiveRestMapper(restArchive, securityService.getMission())
+				.toModel();
 
 		boolean archiveChanged = isArchiveChanged(modelArchive, changedArchive);
 
@@ -268,9 +424,12 @@ public class ProductArchiveManager {
 	 * Delete a product archive by ID
 	 *
 	 * @param id the ID of the product archive to delete
-	 * @throws EntityNotFoundException  if the product archive to delete does not exist in the database
-	 * @throws IllegalArgumentException if the product archive to delete still has stored products
-	 * @throws RuntimeException         if the deletion was not performed as expected
+	 * @throws EntityNotFoundException  if the product archive to delete does not
+	 *                                  exist in the database
+	 * @throws IllegalArgumentException if the product archive to delete still has
+	 *                                  stored products
+	 * @throws RuntimeException         if the deletion was not performed as
+	 *                                  expected
 	 */
 	public void deleteArchiveById(Long id) throws EntityNotFoundException, IllegalArgumentException, RuntimeException {
 

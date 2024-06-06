@@ -49,7 +49,6 @@ import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
 import de.dlr.proseo.ui.gui.service.OrderService;
-import reactor.core.publisher.Mono;
 
 /**
  * A controller for retrieving and handling order data
@@ -289,46 +288,58 @@ public class GUIOrderController extends GUIBaseController {
 			@RequestParam(required = false, value = "facility") String facility, Model model, HttpServletResponse httpResponse) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> setState({}, {}, model)", id, state, facility);
-		Mono<ClientResponse> mono = orderService.setState(id, state, facility);
-		DeferredResult<String> deferredResult = new DeferredResult<>();
-		mono.timeout(Duration.ofMillis(config.getTimeout())).doOnError(e -> {
-			model.addAttribute("warnmsg", e.getMessage());
-			// deferredResult.setResult("order-show :: #warnmsg");
-			deferredResult.setErrorResult(model.asMap().get("warnmsg"));
-		}).subscribe(clientResponse -> {
-			logger.trace("Now in Consumer::accept({})", clientResponse);
-			if (clientResponse.statusCode().is2xxSuccessful()) {
-				if (clientResponse.statusCode().compareTo(HttpStatus.NO_CONTENT) == 0) {
-					deferredResult.setResult("order-show :: #warnmsg");
-					httpResponse.setHeader("warnstatus", "nocontent");
-				} else {
-					clientResponse.bodyToMono(HashMap.class)
-						.timeout(Duration.ofMillis(config.getTimeout()))
-						.subscribe(orderList -> {
-							model.addAttribute("ord", orderList);
-							logger.trace(model.toString() + "MODEL TO STRING");
-							logger.trace(">>>>MONO" + orderList.toString());
-							deferredResult.setResult("order-show :: #ordercontent");
-							logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-						});
-				}
-			} else {
-				handleHTTPWarning(clientResponse, model, httpResponse);
-				deferredResult.setResult("order-show :: #warnmsg");
-				clientResponse.bodyToMono(String.class).subscribe(body -> {
-					httpResponse.setHeader("warndesc", body);
-				});
-			}
-			logger.trace(">>>>MODEL" + model.toString());
 
-		}, e -> {
-			model.addAttribute("warnmsg", e.getMessage());
-			// deferredResult.setResult("order-show :: #warnmsg");
-			deferredResult.setErrorResult(model.asMap().get("warnmsg"));
-		});
+		ResponseSpec responseSpec = orderService.setState(id, state, facility);
+
+		DeferredResult<String> deferredResult = new DeferredResult<>();
+
+		responseSpec.toEntity(HashMap.class)
+			// Set timeout
+			.timeout(Duration.ofMillis(config.getTimeout()))
+			// Handle errors
+			.doOnError(e -> {
+				model.addAttribute("warnmsg", e.getMessage());
+				// deferredResult.setResult("order-show :: #warnmsg");
+				deferredResult.setErrorResult(model.asMap().get("warnmsg"));
+			})
+			// Handle successful response
+			.subscribe(clientResponse -> {
+				logger.trace("Now in Consumer::accept({})", clientResponse);
+				if (clientResponse.getStatusCode().is2xxSuccessful()) {
+					if (clientResponse.getStatusCode().compareTo(HttpStatus.NO_CONTENT) == 0) {
+						deferredResult.setResult("order-show :: #warnmsg");
+						httpResponse.setHeader("warnstatus", "nocontent");
+					} else {
+						model.addAttribute("ord", clientResponse.getBody());
+						logger.trace(model.toString() + "MODEL TO STRING");
+						logger.trace(">>>>MONO" + clientResponse.getBody().toString());
+
+						deferredResult.setResult("order-show :: #ordercontent");
+						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
+					}
+				} else {
+					ClientResponse warningResponse = ClientResponse.create(clientResponse.getStatusCode())
+						.headers(headers -> headers.addAll(clientResponse.getHeaders()))
+						.build();
+
+					handleHTTPWarning(warningResponse, model, httpResponse);
+					deferredResult.setResult("order-show :: #warnmsg");
+
+					responseSpec.toEntity(String.class)
+						.subscribe(responseString -> httpResponse.setHeader("warndesc", responseString.getBody()));
+				}
+
+				logger.trace(">>>>MODEL" + model.toString());
+			}, e -> {
+				model.addAttribute("warnmsg", e.getMessage());
+				// deferredResult.setResult("order-show :: #warnmsg");
+				deferredResult.setErrorResult(model.asMap().get("warnmsg"));
+			});
+
 		logger.trace(model.toString() + "MODEL TO STRING");
 		logger.trace(">>>>MODEL" + model.toString());
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
+
 		return deferredResult;
 	}
 

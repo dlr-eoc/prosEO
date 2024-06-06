@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport"
+	content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title th:text="#{productarchive} + ' | ' + #{proseo}">proseo</title>
+
+<!-- Bootstrap core CSS -->
+<link rel="stylesheet"
+	href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+	integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
+	crossorigin="anonymous" />
+
+<!-- Custom styles for prosEO -->
+<link href="../static/fragments/proseo.css"
+	th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css" />
+<link rel="stylesheet"
+	href="../static/fragments/bootstrap-multiselect.css"
+	th:href="@{/fragments/bootstrap-multiselect.css}" type="text/css" />
+</head>
+
+<body>
+
+	<div style="display: none;" class="loading">
+		<div class="loader"></div>
+	</div>
+
+	<nav id="proseo-nav"
+		class="navbar bg-light fixed-top flex-md-nowrap p-0 shadow navbar-expand-md">
+		<div class="container-fluid pl-0 pr-0">
+
+			<a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
+				href="/"><img src="proseo_logo.png" class="rounded" width="50"
+				height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
+
+			<button class="navbar-toggler position-absolute d-md-none collapsed"
+				type="button" data-toggle="collapse" data-target="#sidebarMenu"
+				aria-controls="sidebarMenu" aria-expanded="false"
+				aria-label="Toggle navigation">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+
+			<ul class="navbar-nav mr-auto navbar-left">
+				<li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
+						th:text="${missioncode}">mission</span></a></li>
+				<li class="p-breadcrumb-item"><span th:text="#{productarchive}">productarchive</span></li>
+			</ul>
+
+			<div th:replace="fragments/navbar.html :: navbarRight"></div>
+		</div>
+	</nav>
+
+	<div class="container-fluid">
+
+		<div class="row">
+
+			<div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
+			<div class="proseo-top-div"></div>
+
+			<!-- Show an error message if the user is not authorized to view productarchives -->
+			<main th:unless="${hasroleproductarchivereader}" role="main"
+				class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+				<h5 class="FAILED">
+					<br> <span th:text="#{noroleright}"></span> 
+					<br>&nbsp;
+				</h5>
+			</main>
+
+			<!-- Show productarchives if the user is authorized -->
+			<main th:if="${hasroleproductarchivereader}" role="main"
+				class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+
+				<div th:if="${errormsg != null}" id="errormsg" class="FAILED">
+					<h5>
+						<br> <span th:text="${errormsg}"></span>
+					</h5>
+				</div>
+
+
+				<!-- Filter productarchives -->
+				<form id="productarchiveFilters">
+					<div class="row py-lg-1">
+
+						<!-- Filter id -->
+						<div class="col-1 pr-lg-0">
+							<p class="input-group-text word-wrap" th:text="#{id}"></p>
+						</div>
+						<div class="col-2 pl-lg-0">
+							<input type="number" class="form-control" name="id" id="id">
+						</div>
+
+						<!-- Filter name -->
+						<div class="col-2 pr-lg-0">
+							<p class="input-group-text word-wrap" th:text="#{productarchive-name}"></p>
+						</div>
+						<div class="col-3 pl-lg-0">
+							<input type="text" class="form-control" name="name" id="name">
+						</div>
+
+						<!-- Filter archiveType -->
+						<div class="col-2 pr-lg-0">
+							<p class="input-group-text word-wrap"
+								th:text="#{productarchive-archive-type}"></p>
+						</div>
+			
+						       
+          				<div class="col-2 pl-lg-0">
+  				            <select name="archiveType" id="archiveType" multiple="multiple">
+                				<option>AIP</option>
+                				<option>AUXIP</option>
+                				<option>PODIP</option>
+                				<option>PRIP</option>
+          					    <option>SIMPLEAIP</option>
+              				</select>
+            			</div>                    
+                    
+
+					</div>
+					<div class="row py-lg-1">
+
+						<!-- Submit button -->
+						<div class="col-3">
+							<button type="submit" class="btn btn-sm btn-outline-secondary">
+								<span th:text="#{productarchive-show}"></span>
+							</button>
+						</div>
+
+					</div>
+				</form>
+
+				<!-- The actual productarchiv table -->
+				<div id="productarchivecontent" name="productarchivecontent">
+				
+					<table class="table" id="productarchiveTable">
+
+						<!-- Table header (parts that are always visible) -->
+						<thead class="thead-proseo" id="proseo-thead">
+							<tr>
+								<th><span>&nbsp;</span></th>
+								<th><span th:text="#{id}">id</span></th>
+								<th><span th:text="#{productarchive-code}">code</span></th>
+								<th><span th:text="#{productarchive-name}">name</span></th>
+								<th><span th:text="#{productarchive-archive-type}">archiveType</span></th>
+								<th><span th:text="#{productarchive-base-uri}">baseUri</span></th>
+								
+							</tr>
+						</thead>
+
+						<div th:unless="${productarchives} == null">
+							<div th:each="productarchive : ${productarchives}">
+
+								<!-- productarchive content that is always visible -->
+								<tbody>
+									<tr>
+										<td th:id="'togglepa' + ${productarchive.id}"
+											class="cursorpointer first-row no-right-border"
+											th:onclick="'toggleProductArchive('+${productarchive.id}+')'">
+											<div class="hideproductarchive" th:id="'hidepa' + ${productarchive.id}"
+												th:style="${'display: none;'}">
+												<span data-feather="minus-circle"></span>
+											</div>
+											<div class="showproductarchive" th:id="'showpa' + ${productarchive.id}"
+												th:style="${'display: block;'}">
+												<span data-feather="plus-circle"></span>
+											</div>
+										</td>
+										<td class="cursorpointer first-row no-left-border"
+											th:onclick="'toggleProductArchive('+${productarchive.id}+')'"
+											th:text="${productarchive.id}"></td>
+										<td class="first-row" th:text="${productarchive?.code}"></td>	
+										<td class="first-row" th:text="${productarchive?.name}"></td>
+										<td class="first-row" th:text="${productarchive?.archiveType}"></td>
+										<td class="first-row" th:text="${productarchive?.baseUri}"></td>
+										
+									</tr>
+								</tbody>
+
+								<!-- productarchive headers and content that can be hidden -->
+								<tbody class="filtercontent" th:id="'pacontent'+${productarchive.id}">
+
+									<!-- Table header (parts that are hidden by default) -->
+									<tr class="th-row">
+										<th class="tr-rowspan"><span>&nbsp;</span></th>
+										<th><span th:text="#{productarchive-context}">context</span></th>
+										<th><span th:text="#{productarchive-token-required}">tokenRequired</span></th>
+										<th><span th:text="#{productarchive-token-uri}">tokenUri</span></th>
+										<th><span th:text="#{username}">username</span></th>						
+									</tr>
+
+									<!-- Hidden content -->
+									<tr class="proseo-row-divider">
+										<td class="tr-rowspan">&nbsp;</td>
+										<td class="first-row" th:text="${productarchive?.context}"></td>
+										<td class="first-row" th:text="${productarchive?.tokenRequired}"></td>
+										<td class="first-row" th:text="${productarchive?.tokenUri}"></td>
+										<td class="first-row" th:text="${productarchive?.username}"></td>
+									</tr>
+
+									<!-- More hidden table headers -->
+									<tr class="th-row">
+										<th class="tr-rowspan"><span>&nbsp;</span></th>
+										<th><span th:text="#{password}">password</span></th>
+										<th><span th:text="#{productarchive-client-id}">clientId</span></th>
+										<th><span th:text="#{productarchive-client-secret}">clientSecret</span></th>	
+										<th><span th:text="#{productarchive-send-auth-in-body}">sendAuthInBody</span></th>
+									</tr>
+
+									<!-- More hidden table content -->
+									<tr class="proseo-row-divider">
+										<td class="tr-rowspan">&nbsp;</td>
+										
+										<td class="first-row"><input th:id="'passwordinput' + ${productarchive?.id}" th:value="${productarchive?.password}" type="password" readonly></input>
+											<a class="eye" th:id="'passwordeye' + ${productarchive?.id}" th:onclick="'showHidePassword(' + ${productarchive?.id} + ')'">
+										   		<span data-feather="eye"></span>
+										   	</a>
+										</td>
+										   	
+										<td class="first-row" th:text="${productarchive?.clientId}"></td>
+										
+									    <td class="first-row"><input th:id="'clientsecretinput' + ${productarchive?.id}" th:value="${productarchive?.clientSecret}" type="password" readonly></input> 
+									  		<a class="eye" th:id="'clientsecreteye' + ${productarchive?.id}" th:onclick="'showHideClientSecret(' + ${productarchive?.id} + ')'">
+									      		<span data-feather="eye"></span>
+									     	</a>
+									    </td>
+												
+										<td class="first-row" th:text="${productarchive?.sendAuthInBody}"></td>
+									</tr>	
+									
+									<!-- More hidden table headers -->
+									<tr class="th-row">
+										<th class="tr-rowspan"><span>&nbsp;</span></th>
+										<th><span th:text="#{productarchive-available-product-classes}">availableProductClasses</span></th>
+									</tr>
+										
+									<!-- More hidden table content -->
+									<tr class="proseo-row-divider">
+										<td class="tr-rowspan">&nbsp;</td>
+									
+										<td><a th:each="avail : ${productarchive?.availableProductClasses}"
+											class="proseo-list-item"
+											th:href="'/productclass-show?productClass=' + ${avail}"
+											th:text="' ' + ${avail}"></a>
+										</td>	
+									</tr>		
+
+								</tbody>
+
+							</div>
+						</div>
+						
+					</table>
+
+					<div th:replace="fragments/navbar.html :: alternatePageNav"></div>
+				</div>
+				<div th:insert="fragments/footer.html :: footer"></div>
+			</main>
+
+		</div>
+
+	</div>
+
+	<!-- Imports -->
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="https://unpkg.com/feather-icons"></script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.5.1.js"
+		integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+		crossorigin="anonymous"></script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+		integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+		crossorigin="anonymous"></script>
+	<script
+		src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+		integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+		crossorigin="anonymous"></script>
+	<script
+		src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
+	<script src="../static/fragments/proseo.js"
+		th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
+	<script src="../static/fragments/bootstrap-multiselect.js"
+		th:src="@{/fragments/bootstrap-multiselect.js}" type="text/javascript"></script>
+
+	<script type="text/javascript" th:inline="javascript">
+		// Global variables
+		var currentPage = 1; // Current page number
+		var pageSize = 50; // Maximum objects per page
+		
+		// product archive filters
+		var id = null;
+		var name = null;
+		var archiveType = null;
+		
+		function showHideClientSecret(id) {
+		      if (document.getElementById('clientsecretinput' + id).type == 'password' ) { 
+		          document.getElementById('clientsecretinput' + id).type = 'text';
+		          document.getElementById('clientsecreteye' + id).innerHTML = '<span data-feather="eye-off"></span>';
+		          feather.replace();
+		      } else {
+			      document.getElementById('clientsecretinput' + id).type = 'password';
+		          document.getElementById('clientsecreteye' + id).innerHTML = '<span data-feather="eye"></span>';
+		          feather.replace();
+		      }
+	    };
+	    
+	    function showHidePassword(id) {
+	        if (document.getElementById('passwordinput' + id).type == 'password' ) { 
+	            document.getElementById('passwordinput' + id).type = 'text';
+	            document.getElementById('passwordeye' + id).innerHTML = '<span data-feather="eye-off"></span>';
+	            feather.replace();
+	        } else {
+	            document.getElementById('passwordinput' + id).type = 'password';
+	            document.getElementById('passwordeye' + id).innerHTML = '<span data-feather="eye"></span>';
+	            feather.replace();
+	        }
+	    };
+		
+		// Function to fetch objects from the REST controller
+		function updateTable(newPage) {
+			
+			$('#archiveType').multiselect({
+	              buttonWidth : '99%',
+	              enableFiltering : true,
+	              numberDisplayed : 0,
+	              maxHeight : 400,
+	              enableCaseInsensitiveFiltering : true,
+	              nonSelectedText : ''
+	        });
+					
+			currentPage = newPage;
+			
+			var recordFrom = (currentPage - 1) * pageSize;
+			var recordTo = currentPage * pageSize;			
+			
+			var url = "/productarchive/get?recordFrom=" + recordFrom 
+					+ "&recordTo=" + recordTo 
+					+ "&currentPage=" + currentPage 
+					+ "&pageSize=" + pageSize;
+			
+			if (id != null && id != "null")
+				url += "&id=" + id;
+			
+			if (name != null && name != "null")
+				url += "&name=" + name;
+					
+			if (archiveType != null && archiveType != "null")
+				url += "&archiveType=" + archiveType;
+			
+			console.log(url);
+			
+			fetch(url)
+			  .then(response => response.text()) // Extract the response body as text
+			  .then(html => {
+				  $("#productarchivecontent").html(html); // Set the HTML content of the element
+				  feather.replace(); // Display the arrows on the buttons
+                  document.getElementById("pageSizeField").placeholder = pageSize; //Display correct page size
+                  })
+			  .catch(console.error);
+		}
+		
+		// Function to fetch and apply filters
+		function setFilters(event) {	
+			// Allow for custom form handling
+			event.preventDefault();
+			
+			// Retrieve the values from the form inputs
+			id = document.getElementById("id").value.trim() === "" ? null : document.getElementById("id").value;
+			name = document.getElementById("name").value.trim() === "" ? null : document.getElementById("name").value;
+			archiveType = document.getElementById("archiveType").value.trim() === "" ? null : document.getElementById("archiveType").value;
+		    
+		    // Update the table according to the new filters
+		    updateTable(currentPage);
+		}
+		
+		// Function to hide or show product archive details
+	    function toggleProductArchive(id) {
+		      var content = document.getElementById("pacontent" + id);
+		      var eleshow = document.getElementById("showpa" + id);
+		      var elehide = document.getElementById("hidepa" + id);
+		      $(content).toggleClass("filtercontent");
+		      if ($(content).css("display") === "none") {
+		          $(eleshow).show();
+		          $(elehide).hide();
+		      } else {
+		          $(eleshow).hide();
+		          $(elehide).show();
+		      }
+		  }
+		
+		// Function to customize the page size
+	    function updatePageSize() {
+			
+			// Retrieve the new page size
+			var newPageSize = document.getElementById("pageSizeField").value;
+			pageSize = (!isNaN(newPageSize) && newPageSize > 0) ? parseInt(newPageSize) : pageSize;console.log("New page size: " + pageSize);
+	        
+	        // Call the function to update the table with the new page size	        
+	        updateTable(currentPage);
+	    }
+	</script>
+
+	<script>
+    window.onload = function init() {					
+		// Call the updateTable(currentPage) function initially to populate the table on page load
+		updateTable(currentPage);
+		
+		// Add an event listener to the form so that the filters will be applied
+		document.getElementById("productarchiveFilters").addEventListener("submit", setFilters);
+		}
+	</script>
+</body>
+
+</html>
