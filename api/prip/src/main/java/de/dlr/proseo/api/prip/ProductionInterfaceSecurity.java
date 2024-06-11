@@ -46,10 +46,6 @@ public class ProductionInterfaceSecurity {
 	@Autowired
 	private ProductionInterfaceConfiguration config;
 
-	/** The OAuth2 Token Manager */
-	@Autowired
-	private OAuth2TokenManager tokenManager;
-
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductionInterfaceSecurity.class);
 
@@ -89,9 +85,10 @@ public class ProductionInterfaceSecurity {
 	 * Log in to prosEO
 	 *
 	 * @param request the HTTP request containing the authentication header
+	 * @param tokenManager the token manager to use
 	 * @throws SecurityException if the login failed for any reason
 	 */
-	public void doLogin(HttpServletRequest request) throws SecurityException {
+	public void doLogin(HttpServletRequest request, OAuth2TokenManager tokenManager) throws SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> doLogin(HttpServletRequest)");
 

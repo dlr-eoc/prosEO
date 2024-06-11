@@ -7,7 +7,6 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
 
@@ -17,7 +16,6 @@ import de.dlr.proseo.model.ConfiguredProcessor;
  * @author Dr. Thomas Bassler
  *
  */
-@Repository
 public interface ConfiguredProcessorRepository extends JpaRepository<ConfiguredProcessor, Long> {
 
 	/**

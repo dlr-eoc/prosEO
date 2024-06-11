@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.api.odip.OAuth2TokenManager;
+import de.dlr.proseo.api.odip.OdipSecurity;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.OdipMessage;
 
@@ -49,6 +50,10 @@ public class OAuth2TokenController {
 	/** The OAuth2 token manager */
 	@Autowired
 	private OAuth2TokenManager tokenManager;
+	/** The security configuration to use */
+	@Autowired
+	private OdipSecurity securityConfig;
+	/** The security configuration to use */
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(OAuth2TokenController.class);
@@ -90,7 +95,7 @@ public class OAuth2TokenController {
 		ObjectMapper om = new ObjectMapper();
 
 		try {
-			String responseBody = om.writeValueAsString(tokenManager.getToken(grantType, username, password, httpHeaders));
+			String responseBody = om.writeValueAsString(tokenManager.getToken(grantType, username, password, httpHeaders, securityConfig));
 
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.set(HttpHeaders.CACHE_CONTROL, "no-store");

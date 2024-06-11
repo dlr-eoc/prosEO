@@ -91,7 +91,7 @@ public class WorkflowSqlFilterExpressionVisitor implements ExpressionVisitor<Str
 		.withZone(ZoneId.of("UTC"));
 
 	/** A logger for this class */
-	private static ProseoLogger logger = new ProseoLogger(OrderSqlFilterExpressionVisitor.class);
+	private static ProseoLogger logger = new ProseoLogger(WorkflowSqlFilterExpressionVisitor.class);
 
 	/** The security utilities for the ODIP API */
 	@Autowired

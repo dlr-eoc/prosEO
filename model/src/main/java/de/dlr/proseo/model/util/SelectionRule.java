@@ -9,7 +9,6 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -171,7 +170,6 @@ public class SelectionRule {
 	
 	private static final String MSG_NO_UNIQUE_ITEM_FOUND = "Multiple items found for selection rule: ";
 	private static final String MSG_MISSING_ARGUMENTS = "Null arguments not allowed";
-	private static final String MSG_START_OR_STOP_TIME_NULL = "Start and stop times must not be null";
 	private static final String MSG_NULL_SELECTION_RULE = "Null value for selectionRuleString not allowed!";
 	private static final String MSG_NULL_TARGET_PRODUCT_CLASS = "Null value for targetProductClass not allowed!";
 	private static final String MSG_WRONG_ITEM_CLASS = "Unexpected item class ";

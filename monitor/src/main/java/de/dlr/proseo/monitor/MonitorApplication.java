@@ -18,6 +18,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.Duration;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
@@ -26,6 +27,9 @@ import de.dlr.proseo.monitor.microservice.MonServiceAggregation;
 import de.dlr.proseo.monitor.microservice.MonitorServices;
 import de.dlr.proseo.monitor.order.MonitorOrders;
 import de.dlr.proseo.monitor.product.MonitorProducts;
+import de.dlr.proseo.monitor.apimetrics.Metrics;
+import de.dlr.proseo.monitor.apimetrics.Metrics10Minutes;
+import de.dlr.proseo.monitor.apimetrics.MetricsHourly;
 
 /*
  * prosEO Planner application
@@ -79,6 +83,8 @@ public class MonitorApplication implements CommandLineRunner {
 	private MonServiceAggregation monServiceAggregation = null;
 	private MonitorOrders monOrders = null;
 	private MonitorProducts monProducts = null;
+	private Metrics10Minutes metrics10 = null;
+	private MetricsHourly metricsHourly = null;
 
 	/**
 	 * Initialize and run application
@@ -252,6 +258,84 @@ public class MonitorApplication implements CommandLineRunner {
 		monOrders = null;
 	}
 
+	/**
+	 * Start the 10 minutes metrics thread
+	 */
+	public void startMetrics10() {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> startMetrics10()");
+
+		if (metrics10 == null || !metrics10.isAlive()) {
+			metrics10 = new Metrics10Minutes(monitorConfig, txManager, em);
+			metrics10.start();
+		} else {
+			if (metrics10.isInterrupted()) {
+				// kubeDispatcher
+			}
+		}
+	}
+	/**
+	 * Stop the 10 minutes metrics thread
+	 */
+	public void stopMetrics10() {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> stopMetrics10()");
+
+		if (metrics10 != null && metrics10.isAlive()) {
+			metrics10.interrupt();
+			int i = 0;
+			while (metrics10.isAlive() && i < 100) {
+				try {
+					wait(100);
+				} catch (InterruptedException e) {
+					if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
+				}
+			}
+		}
+		metrics10 = null;
+	}
+
+	/**
+	 * Start the hourly metrics thread
+	 */
+	public void startMetricsHourly() {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> startMetricsHourly()");
+
+		if (metricsHourly == null || !metricsHourly.isAlive()) {
+			metricsHourly = new MetricsHourly(monitorConfig, txManager, em);
+			metricsHourly.start();
+		} else {
+			if (metricsHourly.isInterrupted()) {
+				// kubeDispatcher
+			}
+		}
+	}
+	/**
+	 * Stop the hourly metrics thread
+	 */
+	public void stopMetricsHourly() {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> stopMetricsHourly()");
+
+		if (metricsHourly != null && metricsHourly.isAlive()) {
+			metricsHourly.interrupt();
+			int i = 0;
+			while (metricsHourly.isAlive() && i < 100) {
+				try {
+					wait(100);
+				} catch (InterruptedException e) {
+					if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
+				}
+			}
+		}
+		metrics10 = null;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -274,7 +358,18 @@ public class MonitorApplication implements CommandLineRunner {
 					logger.debug("An exception occurred. Cause: ", e);
 				}
 		}
-
+		// mostly used  for testing and debugging
+		if (config.getDoFirstStart()) {
+			Metrics m = new Metrics(monitorConfig, txManager, em);
+			m.producedBytesAndCountForType();
+			m.producedBytesAndCount();
+			m.sensingToPublication(Duration.ofDays(config.getFirstStartDuration()));
+			m.originToPublication(Duration.ofDays(config.getFirstStartDuration()));
+			m.downloadSize();
+			m.submissionToCompletedOrder(Duration.ofDays(config.getFirstStartDuration()));
+		}
+		startMetrics10();
+		startMetricsHourly();
 		startMonitorServices();
 		startMonitorServicesAggregation();
 		startMonitorOrders();

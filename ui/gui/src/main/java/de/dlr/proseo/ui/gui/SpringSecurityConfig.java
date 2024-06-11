@@ -5,12 +5,16 @@
  */
 package de.dlr.proseo.ui.gui;
 
+import java.util.Collections;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.web.SecurityFilterChain;
 
 /**
  * Configuration class for Spring Security. Enables web security and provides customization for authentication and authorization.
@@ -20,7 +24,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
  */
 @Configuration
 @EnableWebSecurity
-public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
+public class SpringSecurityConfig {
 
 	/** The GUI authentication provider */
 	@Autowired
@@ -33,8 +37,8 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 	 * @param http the HttpSecurity object to be configured
 	 * @throws Exception if an error occurs during configuration
 	 */
-	@Override
-	protected void configure(HttpSecurity http) throws Exception {
+	@Bean
+	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
 		// Create an instance of the custom authentication filter
 		SpringAuthenticationFilter authenticationFilter = new SpringAuthenticationFilter();
@@ -43,40 +47,27 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 
 		// Configure HTTP security
 		http.addFilter(authenticationFilter)
-			.authorizeRequests()
-			.antMatchers("/resources/**")
-			.permitAll()
-			.antMatchers("/background.jpg")
-			.permitAll()
-			.antMatchers("/**/actuator/health")
-			.permitAll()
-			.anyRequest()
-			.authenticated()
-			.and()
-			.formLogin()
-			.loginPage("/customlogin")
-			.failureUrl("/customlogin?error")
-			.permitAll()
-			.and()
-			.logout()
-			.logoutUrl("/logout")
-			.logoutSuccessUrl("/customlogin?logout")
-			.permitAll()
-			.and()
-			.csrf()
-			.disable();
+			.authenticationProvider(authenticationProvider)
+			.authorizeRequests(requests -> requests
+				.antMatchers("/static/**", "/fragments/**", "/background.jpg", "/customlogin", "/**/actuator/health")
+				.permitAll()
+				.anyRequest()
+				.authenticated())
+			.formLogin(login -> login.loginPage("/customlogin").failureUrl("/customlogin?error").permitAll())
+			.logout(logout -> logout.logoutUrl("/logout").logoutSuccessUrl("/customlogin?logout").permitAll())
+			.csrf(csrf -> csrf.disable());
+
+		return http.build();
 	}
 
 	/**
-	 * Configures the authentication manager builder to use the GUIAuthenticationProvider for authentication.
+	 * Provides the authentication manager, which manages authentication attempts within the application.
 	 *
-	 * @param auth the AuthenticationManagerBuilder object to be configured
-	 * @throws Exception if an error occurs during configuration
+	 * @return An instance of AuthenticationManager configured with the GUIAuthenticationProvider.
+	 * @throws Exception if an error occurs during the instantiation of AuthenticationManager.
 	 */
-	@Override
-	protected void configure(final AuthenticationManagerBuilder auth) throws Exception {
-		auth.authenticationProvider(authenticationProvider);
-		super.configure(auth);
+	@Bean
+	AuthenticationManager authenticationManagerBean() throws Exception {
+		return new ProviderManager(Collections.singletonList(authenticationProvider));
 	}
-
 }

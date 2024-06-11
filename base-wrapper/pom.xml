@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>de.dlr.proseo</groupId>
@@ -8,48 +8,47 @@
         <version>1.1.0-SNAPSHOT</version>
     </parent>
 
-	<artifactId>proseo-base-wrapper</artifactId>
-	<name>prosEO Base Processor Wrapper</name>
-	<description>prosEO Base Processor Wrapper for externally developed, ESA-IPF-conformant processors providing procedures to execute before the start and after the end of the processor</description>
+  <artifactId>proseo-base-wrapper</artifactId>
+  <name>prosEO Base Processor Wrapper</name>
+  <description>prosEO Base Processor Wrapper for externally developed, ESA-IPF-conformant processors providing procedures to execute before the start and after the end of the processor</description>
 
-	<url>https://github.com/dlr-eoc/prosEO/base-wrapper</url>
-	<organization>
-		<name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
-		<url>http://www.dlr.de</url>
-	</organization>
+  <url>https://github.com/dlr-eoc/prosEO/base-wrapper</url>
+  <organization>
+    <name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
+    <url>http://www.dlr.de</url>
+  </organization>
 
-	<properties>
-		<resteasy.version>3.14.0.Final</resteasy.version>
-		<!-- Properties below to raise dependencies from Spring Boot 2.1.6 to Resteasy 3.14.0 -->
-        <commons-codec.version>1.14</commons-codec.version>
-        <httpclient.version>4.5.13</httpclient.version>
-        <jackson.version>2.10.5</jackson.version>
-        <jboss-logging.version>3.4.1.Final</jboss-logging.version>
-        <reactive-streams.version>1.0.3</reactive-streams.version>
-	</properties>
+  <properties>
+    <resteasy.version>4.7.9.Final</resteasy.version><!-- Version 6.x now relies on Jakarta like Spring Boot 3 -->
+  </properties>
 
-	<dependencies>
-		<dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-classic</artifactId>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/commons-logging/commons-logging -->
-		<dependency>
-		    <groupId>commons-logging</groupId>
-		    <artifactId>commons-logging</artifactId>
-		    <version>1.2</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/junit/junit -->
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<scope>test</scope>
-		</dependency>
+  <dependencies>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/commons-logging/commons-logging -->
+    <dependency>
+        <groupId>commons-logging</groupId>
+        <artifactId>commons-logging</artifactId>
+        <version>1.2</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/junit/junit -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
 
-		<!-- From JBoss Resteasy documentation -->
+    <!-- From JBoss Resteasy documentation -->
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-jaxrs</artifactId>
+            <artifactId>resteasy-core-spi</artifactId>
+            <version>${resteasy.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client-api</artifactId>
             <version>${resteasy.version}</version>
         </dependency>
         <dependency>
@@ -58,57 +57,57 @@
             <version>${resteasy.version}</version>
         </dependency>
 
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-		</dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
    
-		<dependency>
-			<groupId>de.dlr.proseo</groupId>
-			<artifactId>proseo-common</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>de.dlr.proseo</groupId>
-			<artifactId>proseo-interfaces</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-	</dependencies>
+    <dependency>
+      <groupId>de.dlr.proseo</groupId>
+      <artifactId>proseo-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>de.dlr.proseo</groupId>
+      <artifactId>proseo-interfaces</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
 
-	<build>
-		<finalName>proseo-base-wrapper</finalName>
-		<pluginManagement>
-		    <plugins>
-	            <plugin>
-	                <artifactId>maven-site-plugin</artifactId>
-	                <version>${maven-site-plugin.version}</version>
-	            </plugin>
-		    </plugins>
-		</pluginManagement>
-		<plugins>
-			<!-- Build self-contained JAR -->
-			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<archive>
-						<manifest>
-							<addClasspath>true</addClasspath>
-							<mainClass>de.dlr.proseo.basewrap.BaseWrapper</mainClass>
-						</manifest>
-					</archive>
-					<descriptorRefs>
-						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+  <build>
+    <finalName>proseo-base-wrapper</finalName>
+    <pluginManagement>
+        <plugins>
+              <plugin>
+                  <artifactId>maven-site-plugin</artifactId>
+                  <version>${maven-site-plugin.version}</version>
+              </plugin>
+        </plugins>
+    </pluginManagement>
+    <plugins>
+      <!-- Build self-contained JAR -->
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+              <mainClass>de.dlr.proseo.basewrap.BaseWrapper</mainClass>
+            </manifest>
+          </archive>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

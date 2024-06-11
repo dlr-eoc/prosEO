@@ -17,9 +17,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -27,7 +27,6 @@ import de.dlr.proseo.ui.backend.ServiceConnection;
 import de.dlr.proseo.ui.gui.GUIAuthenticationToken;
 import de.dlr.proseo.ui.gui.GUIConfiguration;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 /**
@@ -54,11 +53,11 @@ public class StatisticsService {
 	 * Retrieves job steps based on a specified status and optional last parameter
 	 *
 	 * @param status the job step status
-	 * @param last the last job step to return
-	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, and as well as methods to consume the
-	 *         response body
+	 * @param last   the last job step to return
+	 * @return a ResponseSpec; providing access to the response status and headers, and as well as methods to consume the response
+	 *         body
 	 */
-	public Mono<ClientResponse> getJobsteps(String status, Long last) {
+	public ResponseSpec getJobsteps(String status, Long last) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -85,14 +84,14 @@ public class StatisticsService {
 		logger.trace("... with username " + auth.getName());
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
 
-		// The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
+		// The returned ResponseSpec can be subscribed to in order to retrieve the actual response and perform additional
 		// operations on it, such as extracting the response body or handling any errors that may occur during the request.
 		return webClientBuilder.build()
 			.get()
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
-			.exchange();
+			.retrieve();
 	}
 
 	/**
@@ -124,9 +123,7 @@ public class StatisticsService {
 	public String getOrderIdOfIdentifier(String identifier, GUIAuthenticationToken auth)
 			throws RestClientResponseException, RuntimeException {
 
-		URI uri = UriComponentsBuilder.fromUriString("/orders?identifier=" + identifier)
-				.build()
-				.toUri();
+		URI uri = UriComponentsBuilder.fromUriString("/orders?identifier=" + identifier).build().toUri();
 		// Retrieve orders with matching identifier
 		List<?> result = serviceConnection.getFromService(config.getOrderManager(), uri.toString(), List.class,
 				auth.getProseoName(), auth.getPassword());

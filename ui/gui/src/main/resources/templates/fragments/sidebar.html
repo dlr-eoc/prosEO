@@ -72,7 +72,13 @@
  -->					<!-- group -->
 <!-- 					<li class="nav-item"><a id="sb-group" class="nav-link"
 						href="/group-show"><span th:text="#{group}">group</span></a></li>
- -->				</ul>
+						
+		<!-- product archive -->
+          <li 
+            th:if="${hasroleproductarchivereader}"
+             class="nav-item"><a id="sb-productarchive" class="nav-link"
+            href="/productarchive-show"><span th:text="#{productarchive}">product archive</span></a></li>
+				</ul>
 			</div>
 		</nav>
 	</div>

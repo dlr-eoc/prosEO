@@ -6,7 +6,6 @@
 package de.dlr.proseo.ui.gui.service;
 
 import java.net.URI;
-import java.time.Duration;
 import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +15,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -30,7 +29,6 @@ import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
-import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 /**
@@ -65,10 +63,10 @@ public class OrderService {
 	 * @param recordTo      the last result to return
 	 * @param sortCol       the column on which to base the sorting
 	 * @param up            true if the sorting should be ascending, false if it should be descending
-	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, and as well as methods to consume the
-	 *         response body
+	 * @return a ResponseSpec; providing access to the response status and headers, and as well as methods to consume the response
+	 *         body
 	 */
-	public Mono<ClientResponse> get(String identifier, String states, String products, String startTimeFrom, String startTimeTo,
+	public ResponseSpec get(String identifier, String states, String products, String startTimeFrom, String startTimeTo,
 			Long recordFrom, Long recordTo, String sortCol, Boolean up) {
 
 		// Provide authentication
@@ -124,24 +122,23 @@ public class OrderService {
 		logger.trace("... with username " + auth.getName());
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
 
-		// The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
+		// The returned ResponseSpec can be subscribed to in order to retrieve the actual response and perform additional
 		// operations on it, such as extracting the response body or handling any errors that may occur during the request.
 		return webclient.build()
 			.get()
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
-			.exchange();
+			.retrieve();
 	}
 
 	/**
 	 * Retrieves information about a specific order based on its ID
 	 *
 	 * @param orderId the order id
-	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, as well as methods to consume the
-	 *         response body
+	 * @return a ResponseSpec; providing access to the response status and headers, as well as methods to consume the response body
 	 */
-	public Mono<ClientResponse> getId(String orderId) {
+	public ResponseSpec getId(String orderId) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -165,14 +162,14 @@ public class OrderService {
 		logger.trace("... with username " + auth.getName());
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
 
-		// The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
+		// The returned ResponseSpec can be subscribed to in order to retrieve the actual response and perform additional
 		// operations on it, such as extracting the response body or handling any errors that may occur during the request.
 		return webclient.build()
 			.get()
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
-			.exchange();
+			.retrieve();
 	}
 
 	/**
@@ -182,10 +179,9 @@ public class OrderService {
 	 * @param recordFrom the first result to return
 	 * @param recordTo   the last return to return
 	 * @param states     the permitted job states
-	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, and also methods to consume the
-	 *         response body
+	 * @return a ResponseSpec; providing access to the response status and headers, and also methods to consume the response body
 	 */
-	public Mono<ClientResponse> getJobsOfOrder(String orderId, Long recordFrom, Long recordTo, String states) {
+	public ResponseSpec getJobsOfOrder(String orderId, Long recordFrom, Long recordTo, String states) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -223,24 +219,23 @@ public class OrderService {
 		logger.trace("... with username " + auth.getName());
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
 
-		// The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
+		// The returned ResponseSpec can be subscribed to in order to retrieve the actual response and perform additional
 		// operations on it, such as extracting the response body or handling any errors that may occur during the request.
 		return webclient.build()
 			.get()
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
-			.exchange();
+			.retrieve();
 	}
 
 	/**
 	 * Retrieves the graph of a specific job
 	 *
 	 * @param orderId the job id
-	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, and also methods to consume the
-	 *         response body
+	 * @return a ResponseSpec; providing access to the response status and headers, and also methods to consume the response body
 	 */
-	public Mono<ClientResponse> getGraphOfJob(String orderId) {
+	public ResponseSpec getGraphOfJob(String orderId) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -264,21 +259,21 @@ public class OrderService {
 		logger.trace("... with username " + auth.getName());
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
 
-		// The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
+		// The returned ResponseSpec can be subscribed to in order to retrieve the actual response and perform additional
 		// operations on it, such as extracting the response body or handling any errors that may occur during the request.
 		return webclient.build()
 			.get()
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
-			.exchange();
+			.retrieve();
 	}
 
 	/**
 	 * Retrieves the graph of a specific job
 	 *
 	 * @param jobId the job id
-	 * @param auth the GUI authentication token
+	 * @param auth  the GUI authentication token
 	 * @return the job graph
 	 */
 	@SuppressWarnings("unchecked")
@@ -340,10 +335,9 @@ public class OrderService {
 	 * @param orderId  the order id
 	 * @param state    the desired order state
 	 * @param facility the processing facility
-	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, as well as methods to consume the
-	 *         response body
+	 * @return aResponseSpec; providing access to the response status and headers, as well as methods to consume the response body
 	 */
-	public Mono<ClientResponse> setState(String orderId, String state, String facility) {
+	public ResponseSpec setState(String orderId, String state, String facility) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -377,11 +371,9 @@ public class OrderService {
 			uriString += "/" + orderId;
 			method = "delete";
 		}
-		
-		URI uri = UriComponentsBuilder.fromUriString(uriString)
-				.build()
-				.toUri();
-		
+
+		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
+
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
@@ -390,43 +382,46 @@ public class OrderService {
 				logger.trace("response:{}", res.status());
 				return HttpResponseStatus.FOUND.equals(res.status());
 			})
-				// Timeouts: Neither configuring timeouts in tcpConfiguration() nor using the timeout() method on the returned Mono
+				// Timeouts: Neither configuring timeouts in tcpConfiguration() nor using the timeout() method on the
+				// returnedResponseSpec
 				// keeps the application from timing out after 30 s sharp
-				.tcpConfiguration(client -> client.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.getTimeout().intValue())
-					.doOnConnected(conn -> conn.addHandlerLast(new ReadTimeoutHandler((int) (config.getTimeout() / 1000)))
-						.addHandlerLast(new WriteTimeoutHandler((int) (config.getTimeout() / 1000)))))));
+				.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.getTimeout().intValue())
+				.doOnConnected(conn -> conn.addHandlerLast(new ReadTimeoutHandler((int) (config.getTimeout() / 1000)))
+					.addHandlerLast(new WriteTimeoutHandler((int) (config.getTimeout() / 1000))))));
 		WebClient webClient = webClientBuilder.build();
 
 		logger.trace("Found authentication: " + auth);
 		logger.trace("... with username " + auth.getName());
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
 
-		// Build the Mono
-		Mono<ClientResponse> answer = null;
+		// Build the ResponseSpec
+		ResponseSpec answer = null;
+
 		if (method.equals("patch")) {
 			answer = webClient.patch()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.exchange()
-				.timeout(Duration.ofMillis(config.getTimeout()));
+				.retrieve();
+			// timeout should be handled by the connection timeout specified above
+//				.timeout(Duration.ofMillis(config.getTimeout()));
 		} else if (method.equals("put")) {
 			answer = webClient.put()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.exchange()
-				.timeout(Duration.ofMillis(config.getTimeout()));
+				.retrieve();
+//				.timeout(Duration.ofMillis(config.getTimeout()));
 		} else if (method.equals("delete")) {
 			answer = webClient.delete()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.exchange()
-				.timeout(Duration.ofMillis(config.getTimeout()));
+				.retrieve();
+//				.timeout(Duration.ofMillis(config.getTimeout()));
 		}
 
-		// The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
+		// The returned ResponseSpec can be subscribed to in order to retrieve the actual response and perform additional
 		// operations on it, such as extracting the response body or handling any errors that may occur during the request.
 		return answer;
 	}
@@ -436,10 +431,9 @@ public class OrderService {
 	 *
 	 * @param jobId the job id
 	 * @param state the desired state
-	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, as well as methods to consume the
-	 *         response body
+	 * @return a ResponseSpec; providing access to the response status and headers, as well as methods to consume the response body
 	 */
-	public Mono<ClientResponse> setJobState(String jobId, String state) {
+	public ResponseSpec setJobState(String jobId, String state) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -460,9 +454,7 @@ public class OrderService {
 		} else if (state.equalsIgnoreCase("retry")) {
 			uriString += "/retry/" + jobId;
 		}
-		URI uri = UriComponentsBuilder.fromUriString(uriString)
-				.build()
-				.toUri();
+		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
@@ -477,29 +469,29 @@ public class OrderService {
 		logger.trace("... with username " + auth.getName());
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
 
-		// Build the Mono
-		Mono<ClientResponse> answer = null;
+		// Build the ResponseSpec
+		ResponseSpec answer = null;
 		if (method.equals("patch")) {
 			answer = webClient.patch()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.exchange();
+				.retrieve();
 		} else if (method.equals("put")) {
 			answer = webClient.put()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.exchange();
+				.retrieve();
 		} else if (method.equals("delete")) {
 			answer = webClient.delete()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.exchange();
+				.retrieve();
 		}
 
-		// The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
+		// The returned ResponseSpec can be subscribed to in order to retrieve the actual response and perform additional
 		// operations on it, such as extracting the response body or handling any errors that may occur during the request.
 		return answer;
 	}
@@ -509,10 +501,9 @@ public class OrderService {
 	 *
 	 * @param jobStepId the job step state
 	 * @param state     the state to set
-	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, as well as methods to consume the
-	 *         response body
+	 * @return a ResponseSpec; providing access to the response status and headers, as well as methods to consume the response body
 	 */
-	public Mono<ClientResponse> setJobStepState(String jobStepId, String state) {
+	public ResponseSpec setJobStepState(String jobStepId, String state) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -533,9 +524,7 @@ public class OrderService {
 		} else if (state.equalsIgnoreCase("retry")) {
 			uriString += "/retry/" + jobStepId;
 		}
-		URI uri = UriComponentsBuilder.fromUriString(uriString)
-				.build()
-				.toUri();
+		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
 		logger.trace("URI " + uri);
 
 		// Create and configure a WebClient to make a HTTP request to the URI
@@ -550,29 +539,29 @@ public class OrderService {
 		logger.trace("... with username " + auth.getName());
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]"));
 
-		// Build the Mono
-		Mono<ClientResponse> answer = null;
+		// Build the ResponseSpec
+		ResponseSpec answer = null;
 		if (method.equals("patch")) {
 			answer = webClient.patch()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.exchange();
+				.retrieve();
 		} else if (method.equals("put")) {
 			answer = webClient.put()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.exchange();
+				.retrieve();
 		} else if (method.equals("delete")) {
 			answer = webClient.delete()
 				.uri(uri)
 				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.accept(MediaType.APPLICATION_JSON)
-				.exchange();
+				.retrieve();
 		}
 
-		// The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
+		// The returned ResponseSpec can be subscribed to in order to retrieve the actual response and perform additional
 		// operations on it, such as extracting the response body or handling any errors that may occur during the request.
 		return answer;
 	}

@@ -10,9 +10,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -80,7 +80,7 @@ public class OAuth2TokenController {
 	 *         failure occurred (additionally the Warning header is set), or HTTP status INTERNAL_SERVER_ERROR and an OAuth2 error
 	 *         response, if any other unrecoverable failure occurred
 	 */
-	@RequestMapping(value = "", method = RequestMethod.POST)
+	@PostMapping(value = "")
 	public ResponseEntity<String> getToken(@RequestParam(name = "grant_type") String grantType,
 			@RequestParam(required = false) String username, @RequestParam(required = false) String password,
 			@RequestParam(required = false) String scope, @RequestHeader HttpHeaders httpHeaders) {

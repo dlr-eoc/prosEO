@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
 
 import de.dlr.proseo.model.MonProductProductionDay;
 
@@ -15,7 +14,6 @@ import de.dlr.proseo.model.MonProductProductionDay;
  * @author Ernst Melchinger
  *
  */
-@Repository
 public interface MonProductProductionDayRepository extends JpaRepository<MonProductProductionDay, Long> {
 
 	/**

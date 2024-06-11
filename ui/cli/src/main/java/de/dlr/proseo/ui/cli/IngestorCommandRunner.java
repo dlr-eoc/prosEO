@@ -64,7 +64,7 @@ public class IngestorCommandRunner {
 	
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
 	private static final String PROMPT_PRODUCT_CLASS = "Product class (empty field cancels): ";
-	private static final String PROMPT_FILE_CLASS = "File class (empty field cancels): ";
+//	private static final String PROMPT_FILE_CLASS = "File class (empty field cancels): ";
 	private static final String PROMPT_START_TIME = "Sensing start time (empty field cancels): ";
 	private static final String PROMPT_STOP_TIME = "Sensing stop time (empty field cancels): ";
 	private static final String PROMPT_GENERATION_TIME = "Product generation time (empty field cancels): ";

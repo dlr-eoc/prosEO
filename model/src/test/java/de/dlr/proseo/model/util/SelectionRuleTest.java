@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.TimeZone;
 
@@ -28,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimpleSelectionRule;
-import de.dlr.proseo.model.SimpleSelectionRuleTest;
 
 /**
  * Unit test class for SelectionRule using various valid and invalid rules and various sensing time intervals.

@@ -95,17 +95,18 @@ public class ProductionPlannerConfiguration {
 	/** The URI of the AIP client (protocol, host name, port, context; no terminating slash) */
 	@Value("${proseo.aip.url}")
 	private String aipUrl;
-	
+
 	/** The user of the AIP client */
 	@Value("${proseo.aip.user}")
 	private String aipUser;
-	
+
 	/** The password of the AIP client */
 	@Value("${proseo.aip.password}")
 	private String aipPassword;
 
-	
 	/**
+	 * Gets the job step sorting order.
+	 * 
 	 * @return the jobStepSort
 	 */
 	public JobStepSort getJobStepSort() {
@@ -113,6 +114,8 @@ public class ProductionPlannerConfiguration {
 	}
 
 	/**
+	 * Gets the AIP user.
+	 *
 	 * @return the aipUser
 	 */
 	public String getAipUser() {
@@ -120,6 +123,8 @@ public class ProductionPlannerConfiguration {
 	}
 
 	/**
+	 * Gets the AIP password.
+	 *
 	 * @return the aipPassword
 	 */
 	public String getAipPassword() {
@@ -127,8 +132,8 @@ public class ProductionPlannerConfiguration {
 	}
 
 	/**
-	 * Gets the AIP URL
-	 * 
+	 * Gets the AIP URL.
+	 *
 	 * @return the aipUrl
 	 */
 	public String getAipUrl() {

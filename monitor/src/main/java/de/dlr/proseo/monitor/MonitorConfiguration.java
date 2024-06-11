@@ -2,6 +2,7 @@ package de.dlr.proseo.monitor;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -60,6 +61,200 @@ public class MonitorConfiguration {
 	 * Start creating aggregation at this time
 	 */
 	private String aggregationStart;
+
+	/** 
+	 * The regex to select product types 
+	 * */
+	@Value("${proseo.monitor.metrics.productTypeRegex}")
+	private String productTypeRegex;
+
+	/** 
+	 * Use this duration in days if doFirstStart is true 
+	 * */
+	@Value("${proseo.monitor.metrics.firstStartDuration}")
+	private Long firstStartDuration;
+
+	/** 
+	 * Do a first start cycle of metrics (used for testing) 
+	 * */
+	@Value("${proseo.monitor.metrics.doFirstStart}")
+	private Boolean doFirstStart;
+	
+	/** 
+	 * Calculate these metrics 
+	 * */
+	@Value("${proseo.monitor.metrics.calculate.originToPublication}")
+	private Boolean originToPublication;
+
+	/** 
+	 * Calculate these metrics 
+	 * */
+	@Value("${proseo.monitor.metrics.calculate.download}")
+	private Boolean download;
+
+	/** 
+	 * Calculate these metrics 
+	 * */
+	@Value("${proseo.monitor.metrics.calculate.sensingToPublication}")
+	private Boolean sensingToPublication;
+
+	/** 
+	 * Calculate these metrics 
+	 * */
+	@Value("${proseo.monitor.metrics.calculate.submisionToCompletion}")
+	private Boolean submisionToCompletion;
+
+	/** 
+	 * Calculate these metrics 
+	 * */
+	@Value("${proseo.monitor.metrics.calculate.producedBytesAndCountForType}")
+	private Boolean producedBytesAndCountForType;
+
+	/** 
+	 * Calculate these metrics 
+	 * */
+	@Value("${proseo.monitor.metrics.calculate.producedBytesAndCount}")
+	private Boolean producedBytesAndCount;
+
+	/**
+	 * @return the originToPublication
+	 */
+	public Boolean getOriginToPublication() {
+		return originToPublication;
+	}
+
+	/**
+	 * @return the download
+	 */
+	public Boolean getDownload() {
+		return download;
+	}
+
+	/**
+	 * @return the sensingToPublication
+	 */
+	public Boolean getSensingToPublication() {
+		return sensingToPublication;
+	}
+
+	/**
+	 * @return the submisionToCompletion
+	 */
+	public Boolean getSubmisionToCompletion() {
+		return submisionToCompletion;
+	}
+
+	/**
+	 * @return the producedBytesAndCountForType
+	 */
+	public Boolean getProducedBytesAndCountForType() {
+		return producedBytesAndCountForType;
+	}
+
+	/**
+	 * @return the producedBytesAndCount
+	 */
+	public Boolean getProducedBytesAndCount() {
+		return producedBytesAndCount;
+	}
+
+	/**
+	 * @param originToPublication the originToPublication to set
+	 */
+	public void setDoOriginToPublication(Boolean doOriginToPublication) {
+		this.originToPublication = doOriginToPublication;
+	}
+
+	/**
+	 * @param download the download to set
+	 */
+	public void setDoDownload(Boolean doDownload) {
+		this.download = doDownload;
+	}
+
+	/**
+	 * @param sensingToPublication the sensingToPublication to set
+	 */
+	public void setDoSensingToPublication(Boolean doSensingToPublication) {
+		this.sensingToPublication = doSensingToPublication;
+	}
+
+	/**
+	 * @param submisionToCompletion the submisionToCompletion to set
+	 */
+	public void setDoSubmisionToCompletion(Boolean doSubmisionToCompletion) {
+		this.submisionToCompletion = doSubmisionToCompletion;
+	}
+
+	/**
+	 * @param producedBytesAndCountForType the producedBytesAndCountForType to set
+	 */
+	public void setProducedBytesAndCountForType(Boolean producedBytesAndCountForType) {
+		this.producedBytesAndCountForType = producedBytesAndCountForType;
+	}
+
+	/**
+	 * @param producedBytesAndCount the producedBytesAndCount to set
+	 */
+	public void setProducedBytesAndCount(Boolean producedBytesAndCount) {
+		this.producedBytesAndCount = producedBytesAndCount;
+	}
+
+	/**
+	 * @return the prodCycle
+	 */
+	public Long getProdCycle() {
+		return prodCycle;
+	}
+
+	/**
+	 * @return the productTypeRegex
+	 */
+	public String getProductTypeRegex() {
+		return productTypeRegex;
+	}
+
+	/**
+	 * @return the firstStartDuration
+	 */
+	public Long getFirstStartDuration() {
+		return firstStartDuration;
+	}
+
+	/**
+	 * @return the doFirstStart
+	 */
+	public Boolean getDoFirstStart() {
+		return doFirstStart;
+	}
+
+	/**
+	 * @param prodCycle the prodCycle to set
+	 */
+	public void setProdCycle(Long prodCycle) {
+		this.prodCycle = prodCycle;
+	}
+
+	/**
+	 * @param productTypeRegex the productTypeRegex to set
+	 */
+	public void setProductTypeRegex(String productTypeRegex) {
+		this.productTypeRegex = productTypeRegex;
+	}
+
+	/**
+	 * @param firstStartDuration the firstStartDuration to set
+	 */
+	public void setFirstStartDuration(Long firstStartDuration) {
+		this.firstStartDuration = firstStartDuration;
+	}
+
+	/**
+	 * @param doFirstStart the doFirstStart to set
+	 */
+	public void setDoFirstStart(Boolean doFirstStart) {
+		this.doFirstStart = doFirstStart;
+	}
 
 	/**
 	 * @return the aggregationStart

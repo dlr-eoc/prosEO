@@ -3,6 +3,8 @@ logging:
     level:
         root: INFO
         de.dlr.proseo: TRACE
+management:
+    endpoints.web.exposure.include: "health"
 proseo:
     geotools:
         # source shape files

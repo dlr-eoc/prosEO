@@ -6,7 +6,8 @@ logging:
         root: INFO
         org.apache.http: INFO
         de.dlr.proseo: TRACE
-    file: proseo-ui-cli.log
+    file:
+        name: proseo-ui-cli.log
 proseo:
     cli:
         syntaxfile: ui-cli-syntax.yml

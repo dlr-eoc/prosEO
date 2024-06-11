@@ -57,9 +57,11 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 	public static final String ET_PRODUCTIONORDER_NAME = "ProductionOrder";
 	public static final String ET_ORDER_NAME = "Order";
 	public static final String ET_WORKFLOW_NAME = "Workflow";
+	public static final String ET_METRICS_NAME = "Metrics";
 	public static final FullQualifiedName ET_PRODUCTIONORDER_FQN = new FullQualifiedName(NAMESPACE, ET_PRODUCTIONORDER_NAME);
 	public static final FullQualifiedName ET_ORDER_FQN = new FullQualifiedName(NAMESPACE, ET_ORDER_NAME);
 	public static final FullQualifiedName ET_WORKFLOW_FQN = new FullQualifiedName(NAMESPACE, ET_WORKFLOW_NAME);
+	public static final FullQualifiedName ET_METRICS_FQN = new FullQualifiedName(NAMESPACE, ET_METRICS_NAME);
 	public static final String ET_WORKFLOW_PROP_NAME = "Name";
 	public static final String ET_WORKFLOW_PROP_ID = "Id";
 	public static final String ET_WORKFLOW_PROP_DESCRIPTION = "Description";
@@ -67,6 +69,11 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 	public static final String ET_WORKFLOW_PROP_OUTPUTPRODUCTTYPE = "OutputProductType";
 	public static final String ET_WORKFLOW_PROP_WORKFLOWVERSION = "WorkflowVersion";
 	public static final String ET_WORKFLOW_PROP_WORKFLOWOPTIONS = "WorkflowOptions";
+	public static final String ET_METRICS_PROP_NAME = "Name";
+	public static final String ET_METRICS_PROP_TIMESTAMP = "Timestamp";
+	public static final String ET_METRICS_PROP_METRICTYPE = "MetricType";
+	public static final String ET_METRICS_PROP_COUNT = "Count";
+	public static final String ET_METRICS_PROP_GAUGE = "Gauge";
 
 	public static final String ET_WORKFLOWOPTION_PROP_NAME = "Name";
 	public static final String ET_WORKFLOWOPTION_PROP_TYPE = "Type";
@@ -124,6 +131,7 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 	public static final String ES_PRODUCTIONORDERS_NAME = "ProductionOrders";
 	public static final String ES_WORKFLOW_NAME = "Workflow";
 	public static final String ES_WORKFLOWS_NAME = "Workflows";
+	public static final String ES_METRICS_NAME = "Metrics";
 	public static final String ES_ATTRIBUTES_NAME = "Attributes";
 	public static final String ES_STRINGATTRIBUTES_NAME = "StringAttributes";
 	public static final String ES_INTEGERATTRIBUTES_NAME = "IntegerAttributes";
@@ -200,6 +208,7 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 		List<CsdlEntitySet> entitySets = new ArrayList<>();
 		entitySets.add(getEntitySet(CONTAINER, ES_PRODUCTIONORDERS_NAME));
 		entitySets.add(getEntitySet(CONTAINER, ES_WORKFLOWS_NAME));
+		entitySets.add(getEntitySet(CONTAINER, ES_METRICS_NAME));
 
 		// Create EntityContainer
 		CsdlEntityContainer entityContainer = new CsdlEntityContainer();
@@ -312,6 +321,20 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 				CsdlEntitySet entitySet = new CsdlEntitySet();
 				entitySet.setName(ES_WORKFLOW_NAME);
 				entitySet.setType(ET_WORKFLOW_FQN);
+
+				CsdlNavigationPropertyBinding navAttributesBinding = new CsdlNavigationPropertyBinding();
+				navAttributesBinding.setPath(ET_ATTRIBUTE_NAME);
+				navAttributesBinding.setTarget(ES_ATTRIBUTES_NAME); // target entitySet, where the nav prop points to
+
+				entitySet.setNavigationPropertyBindings(Arrays.asList(navAttributesBinding));
+
+				if (logger.isTraceEnabled())
+					logger.trace("<<< getEntitySet({}, {})", entityContainer, entitySetName);
+				return entitySet;
+			} else if (entitySetName.equals(ES_METRICS_NAME)) {
+				CsdlEntitySet entitySet = new CsdlEntitySet();
+				entitySet.setName(ES_METRICS_NAME);
+				entitySet.setType(ET_METRICS_FQN);
 
 				CsdlNavigationPropertyBinding navAttributesBinding = new CsdlNavigationPropertyBinding();
 				navAttributesBinding.setPath(ET_ATTRIBUTE_NAME);
@@ -676,6 +699,50 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 			if (logger.isTraceEnabled())
 				logger.trace("<<< getEntityType({})", entityTypeName);
 			return productType;
+		} else if (entityTypeName.equals(ET_METRICS_FQN)) {
+
+			// Create workflow properties
+			CsdlProperty name = new CsdlProperty().setName(GENERIC_PROP_NAME)
+				.setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
+			CsdlProperty timestamp = new CsdlProperty().setName(ET_METRICS_PROP_TIMESTAMP)
+					.setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName());
+			CsdlProperty metrictype = new CsdlProperty().setName(ET_METRICS_PROP_METRICTYPE)
+					.setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
+			CsdlProperty gauge = new CsdlProperty().setName(ET_METRICS_PROP_GAUGE)
+					.setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
+			CsdlProperty count = new CsdlProperty().setName(ET_METRICS_PROP_COUNT)
+					.setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName());
+			// Create CsdlPropertyRef for Key element
+			CsdlPropertyRef idRef = new CsdlPropertyRef();
+			idRef.setName(GENERIC_PROP_NAME);
+
+			// Configure workflow entity type
+			CsdlEntityType productType = new CsdlEntityType();
+			productType.setName(ET_METRICS_NAME);
+			productType.setProperties(Arrays.asList(name, timestamp, metrictype, gauge, count));
+			productType.setKey(Collections.singletonList(idRef));
+
+			if (logger.isTraceEnabled())
+				logger.trace("<<< getEntityType({})", entityTypeName);
+			return productType;
+		} else if (entityTypeName.equals(ET_WORKFLOW_FQN)) {
+			// Create Attribute properties
+			CsdlProperty name = new CsdlProperty().setName(GENERIC_PROP_NAME)
+				.setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
+
+			// Create CsdlPropertyRef for Key element
+			CsdlPropertyRef idRef = new CsdlPropertyRef();
+			idRef.setName(GENERIC_PROP_ID);
+
+			// Configure Attributes entity type
+			CsdlEntityType attributesType = new CsdlEntityType();
+			attributesType.setName(ET_WORKFLOW_NAME);
+			attributesType.setProperties(Arrays.asList(name));
+			attributesType.setKey(Collections.singletonList(idRef));
+
+			if (logger.isTraceEnabled())
+				logger.trace("<<< getEntityType({})", entityTypeName);
+			return attributesType;
 		} else if (entityTypeName.equals(ET_PRODUCT_FQN)) {
 			// Create Attribute properties
 			CsdlProperty name = new CsdlProperty().setName(GENERIC_PROP_NAME)
@@ -812,6 +879,7 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 		entityTypes.add(getEntityType(ET_PRODUCTIONORDER_FQN));
 		entityTypes.add(getEntityType(ET_ORDER_FQN));
 		entityTypes.add(getEntityType(ET_WORKFLOW_FQN));
+		entityTypes.add(getEntityType(ET_METRICS_FQN));
 		entityTypes.add(getEntityType(ET_ATTRIBUTE_FQN));
 		entityTypes.add(getEntityType(ET_STRINGATTRIBUTE_FQN));
 		entityTypes.add(getEntityType(ET_DATEATTRIBUTE_FQN));

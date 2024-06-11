@@ -1,6 +1,6 @@
 /**
  * ProductionPlannerSecurityConfig.java
- * 
+ *
  * © 2019 Prophos Informatik GmbH
  */
 package de.dlr.proseo.planner;
@@ -13,14 +13,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
@@ -28,28 +27,27 @@ import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.model.enums.UserRole;
 
 /**
- * Security configuration for prosEO Planner module
- * 
+ * Security configuration for the prosEO planner module. Configures access permissions and authentication mechanisms.
+ *
  * @author Ernst Melchinger
  */
 @Configuration
 @EnableWebSecurity
-public class ProductionPlannerSecurityConfig extends WebSecurityConfigurerAdapter {
+public class ProductionPlannerSecurityConfig {
 
-	/** Datasource as configured in the application properties */
+	/** The data source configured in the application properties. */
 	@Autowired
 	private DataSource dataSource;
-	
-	/** A logger for this class */
+
+	/** A logger for this class. */
 	private static ProseoLogger logger = new ProseoLogger(ProductionPlannerSecurityConfig.class);
-	
+
 	/**
-	 * Parse an HTTP authentication header into username and password
+	 * Parses an HTTP authentication header into a username and a password.
 	 *
-	 * @param authHeader the authentication header to parse
-	 * @return a string array containing the username and the password
-	 * @throws IllegalArgumentException if the authentication header cannot be
-	 *                                  parsed
+	 * @param authHeader The authentication header to parse.
+	 * @return A string array containing the username and the password.
+	 * @throws IllegalArgumentException If the authentication header cannot be parsed.
 	 */
 	public String[] parseAuthenticationHeader(String authHeader) throws IllegalArgumentException {
 		if (logger.isTraceEnabled())
@@ -71,74 +69,69 @@ public class ProductionPlannerSecurityConfig extends WebSecurityConfigurerAdapte
 	}
 
 	/**
-	 * Set the Ingestor security options
-	 * 
-	 * @param http the HTTP security object
+	 * Configures the security filter chain for HTTP requests. Defines access permissions based on user roles.
+	 *
+	 * @param http The HTTP security object.
+	 * @return A configured SecurityFilterChain object.
 	 */
-	@Override
-	protected void configure(HttpSecurity http) throws Exception {
-		http
-			.httpBasic()
-				.and()
-			.authorizeRequests()
-				.antMatchers("/**/actuator/health").permitAll()
-				.antMatchers(HttpMethod.GET, "/**/orders").hasAnyRole(UserRole.ORDER_READER.toString())
-				.antMatchers("/**/orders/approve").hasAnyRole(UserRole.ORDER_APPROVER.toString())
-				.antMatchers(
-						"/**/orders/plan", "/**/orders/release",
-						"/**/orders/reset", "/**/orders/cancel",
-						"/**/orders/retry", "/**/orders/suspend")
-					.hasAnyRole(UserRole.ORDER_PLANNER.toString())
-				.antMatchers("/**/orders").hasAnyRole(UserRole.ORDER_MGR.toString())
-				.antMatchers(HttpMethod.GET, "/**/jobs", "/**/jobsteps").hasAnyRole(UserRole.ORDER_READER.toString())
-				.antMatchers("/**/jobs", "/**/jobsteps").hasAnyRole(UserRole.ORDER_PLANNER.toString())
+	@Bean
+	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http.httpBasic(it -> {
+		})
+			.authorizeHttpRequests(requests -> requests.antMatchers("/**/actuator/health")
+				.permitAll()
+				.antMatchers(HttpMethod.GET, "/**/orders")
+				.hasAnyRole(UserRole.ORDER_READER.toString())
+				.antMatchers("/**/orders/approve")
+				.hasAnyRole(UserRole.ORDER_APPROVER.toString())
+				.antMatchers("/**/orders/plan", "/**/orders/release", "/**/orders/reset", "/**/orders/cancel", "/**/orders/retry",
+						"/**/orders/suspend")
+				.hasAnyRole(UserRole.ORDER_PLANNER.toString())
+				.antMatchers("/**/orders")
+				.hasAnyRole(UserRole.ORDER_MGR.toString())
+				.antMatchers(HttpMethod.GET, "/**/jobs", "/**/jobsteps")
+				.hasAnyRole(UserRole.ORDER_READER.toString())
+				.antMatchers("/**/jobs", "/**/jobsteps")
+				.hasAnyRole(UserRole.ORDER_PLANNER.toString())
 				.antMatchers("/**/processingfacilities/synchronize")
-					.hasAnyRole(UserRole.FACILITY_MGR.toString(), UserRole.ORDER_PLANNER.toString())
-				.antMatchers(HttpMethod.GET, "/**/processingfacilities").hasAnyRole(UserRole.FACILITY_READER.toString())
-				.antMatchers("/**/processingfacilities/*/finish/*").hasAnyRole(UserRole.JOBSTEP_PROCESSOR.toString())
-				.antMatchers("/**/product/*").hasAnyRole(UserRole.PRODUCT_INGESTOR.toString(), UserRole.JOBSTEP_PROCESSOR.toString())
-				.antMatchers("/**/semaphore/*").hasAnyRole(UserRole.PRODUCT_INGESTOR.toString(), UserRole.JOBSTEP_PROCESSOR.toString())
-				.anyRequest().hasAnyRole(UserRole.ORDER_MGR.toString())
-			.and()
-			.csrf().disable(); // Required for POST requests (or configure CSRF)
+				.hasAnyRole(UserRole.FACILITY_MGR.toString(), UserRole.ORDER_PLANNER.toString())
+				.antMatchers(HttpMethod.GET, "/**/processingfacilities")
+				.hasAnyRole(UserRole.FACILITY_READER.toString())
+				.antMatchers("/**/processingfacilities/*/finish/*")
+				.hasAnyRole(UserRole.JOBSTEP_PROCESSOR.toString())
+				.antMatchers("/**/product/*")
+				.hasAnyRole(UserRole.PRODUCT_INGESTOR.toString(), UserRole.JOBSTEP_PROCESSOR.toString())
+				.antMatchers("/**/semaphore/*")
+				.hasAnyRole(UserRole.PRODUCT_INGESTOR.toString(), UserRole.JOBSTEP_PROCESSOR.toString())
+				.anyRequest()
+				.hasAnyRole(UserRole.ORDER_MGR.toString()))
+			.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
+		return http.build();
 	}
 
 	/**
-	 * Initialize the users, passwords and roles for the ProductClassManager from the prosEO database
-	 * 
-	 * @param builder to manage authentications
-	 * @throws Exception if anything goes wrong with JDBC authentication
-	 */
-	@Autowired
-	public void initialize(AuthenticationManagerBuilder builder) throws Exception {
-		logger.log(GeneralMessage.INITIALIZING_AUTHENTICATION);
-
-		builder.userDetailsService(userDetailsService());
-	}
-
-	/**
-	 * Provides the default password encoder for prosEO (BCrypt)
-	 * 
-	 * @return a BCryptPasswordEncoder
+	 * Provides the default password encoder for prosEO (BCrypt).
+	 *
+	 * @return A BCryptPasswordEncoder instance.
 	 */
 	@Bean
-	public PasswordEncoder passwordEncoder() {
-	    return new BCryptPasswordEncoder();
+	PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
 	}
 
 	/**
-	 * Provides the default user details service for prosEO (based on the standard data model for users and groups)
-	 * 
-	 * @return a JdbcDaoImpl object
+	 * Provides the default user details service for prosEO based on the standard data model for users and groups.
+	 *
+	 * @return A JdbcDaoImpl object.
 	 */
 	@Bean
-	public UserDetailsService userDetailsService() {
+	UserDetailsService userDetailsService() {
 		logger.log(GeneralMessage.INITIALIZING_USER_DETAILS_SERVICE, dataSource);
 
 		JdbcDaoImpl jdbcDaoImpl = new JdbcDaoImpl();
 		jdbcDaoImpl.setDataSource(dataSource);
 		jdbcDaoImpl.setEnableGroups(true);
-		
+
 		return jdbcDaoImpl;
 	}
 }

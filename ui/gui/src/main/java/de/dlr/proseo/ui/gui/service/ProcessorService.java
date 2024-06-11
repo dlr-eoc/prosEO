@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
-import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
@@ -30,7 +29,6 @@ import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.ui.gui.GUIAuthenticationToken;
 import de.dlr.proseo.ui.gui.GUIConfiguration;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 /**
@@ -53,10 +51,10 @@ public class ProcessorService {
 	 * Gets a processor class by its name
 	 *
 	 * @param processorName the processor class name to search for
-	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, and as well as methods to consume
-	 *         the response body
+	 * @return a ResponseSpec; providing access to the response status and headers, and as well as methods to consume the response
+	 *         body
 	 */
-	public Mono<ClientResponse> get(String processorName) {
+	public ResponseSpec get(String processorName) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -92,17 +90,17 @@ public class ProcessorService {
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
-			.exchange();
+			.retrieve();
 	}
 
 	/**
 	 * Get a processor class by its database ID
 	 *
 	 * @param processorId the database ID to search for
-	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, and as well as methods to consume
-	 *         the response body
+	 * @return a ResponseSpec; providing access to the response status and headers, and as well as methods to consume the response
+	 *         body
 	 */
-	public Mono<ClientResponse> getById(String processorId) {
+	public ResponseSpec getById(String processorId) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) (SecurityContextHolder.getContext().getAuthentication());
@@ -127,7 +125,7 @@ public class ProcessorService {
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
-			.exchange();
+			.retrieve();
 	}
 
 	/**
@@ -137,12 +135,12 @@ public class ProcessorService {
 	 * @param processorName  user-defined processor class name (Processor_Name from Generic IPF Interface Specifications, sec.
 	 *                       4.1.3), unique within a mission
 	 * @param productClasses the product classes a processor of this class can generate
-	 * @return a Mono&lt;ClientResponse&gt; providing access to the response status and headers, and as well as methods to consume
-	 *         the response body
+	 * @return a ResponseSpec; providing access to the response status and headers, and as well as methods to consume the response
+	 *         body
 	 *
 	 *         TODO verify
 	 */
-	public Mono<ClientResponse> post(String missionCode, String processorName, String[] productClasses) {
+	public ResponseSpec post(String missionCode, String processorName, String[] productClasses) {
 		logger.trace(">>>>>ResponseSpec POST: {}, {}, {},", missionCode, processorName, productClasses);
 
 		// Provide authentication
@@ -174,16 +172,16 @@ public class ProcessorService {
 				return HttpResponseStatus.FOUND.equals(res.status());
 			})));
 
-		// The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
+		// The returned ResponseSpec can be subscribed to in order to retrieve the actual response and perform additional
 		// operations on it, such as extracting the response body or handling any errors that may occur during the request.
 		return webclient.build()
 			.post()
 			.uri(uri)
-			.body(BodyInserters.fromObject(map))
+			.body(BodyInserters.fromProducer(map, Map.class))
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
 			.accept(MediaType.APPLICATION_JSON)
-			.exchange();
+			.retrieve();
 	}
 
 	/**
@@ -229,7 +227,7 @@ public class ProcessorService {
 				return HttpResponseStatus.FOUND.equals(res.status());
 			})));
 
-		// The returned Mono<ClientResponse> can be subscribed to in order to retrieve the actual response and perform additional
+		// The returned ResponseSpec can be subscribed to in order to retrieve the actual response and perform additional
 		// operations on it, such as extracting the response body or handling any errors that may occur during the request.
 		return webclient.build()
 			.patch()

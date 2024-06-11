@@ -58,6 +58,7 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.OdipMessage;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Workflow;
+import de.dlr.proseo.model.ApiMetrics;
 import de.dlr.proseo.model.enums.UserRole;
 
 /**
@@ -221,6 +222,54 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 	}
 
 	/**
+	 * Create an SQL command with a "WHERE" clause derived from the "$filter" query parameter in the URI
+	 *
+	 * @param uriInfo   the URI info to analyze
+	 * @param countOnly create a command, which only counts the requested workflows, but does not return them
+	 * @return a native SQL command
+	 * @throws ODataApplicationException if any error is encountered in the query options contained in the URI info object
+	 */
+	private StringBuilder createMetricsSqlQueryFilter(UriInfo uriInfo, boolean countOnly) throws ODataApplicationException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> createMetricsSqlQueryFilter({})", uriInfo.getUriResourceParts());
+
+		MetricsSqlFilterExpressionVisitor expressionVisitor = new MetricsSqlFilterExpressionVisitor();
+		StringBuilder sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(countOnly, securityConfig.getMission()));
+
+		// Test filter option
+		FilterOption filterOption = uriInfo.getFilterOption();
+		if (null == filterOption) {
+			sqlCommand.append("TRUE");
+		} else {
+			try {
+				Expression filterExpression = filterOption.getExpression();
+				String result = filterExpression.accept(expressionVisitor);
+				logger.trace("accept() returns [" + result + "]");
+				if (null == result) {
+					throw new NullPointerException("Unexpected null result from expressionVisitor");
+				}
+				sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(countOnly, securityConfig.getMission())); // The number of parameters requested
+																							// may have changed!
+				sqlCommand.append(result);
+			} catch (ODataApplicationException | ExpressionVisitException e) {
+				throw new ODataApplicationException("Exception thrown in filter expression: " + e.getMessage(),
+						HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ROOT);
+			}
+		}
+
+		// Add filter for mission
+		// sqlCommand.append("\nAND m.code = '").append(securityConfig.getMission()).append("'");
+
+		// Add filter for user's access permissions
+//		StringBuilder permissionFilter = new StringBuilder("AND pc.visibility IN ('");
+//		permissionFilter.append(ProductVisibility.PUBLIC.toString()).append("'");
+		if (securityConfig.hasRole(UserRole.ORDER_READER) || securityConfig.hasRole(UserRole.ORDER_MGR)) {
+		}
+
+		return sqlCommand;
+	}
+
+	/**
 	 * Convert the given URI info object into a native SQL command to select the requested production orders. In addition to the URI
 	 * info the production order class access rights of the logged in user will be respected.
 	 *
@@ -338,6 +387,66 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 		}
 
 		logger.trace("<<< createWorkflowSqlQuery() -> SQL command:\n" + sqlCommand);
+		return sqlCommand.toString();
+	}
+
+	/**
+	 * Convert the given URI info object into a native SQL command to select the requested workflows. In addition to the URI info
+	 * the workflow class access rights of the logged in user will be respected.
+	 *
+	 * @param uriInfo the URI info to analyze
+	 * @return a native SQL command
+	 * @throws ODataApplicationException if any error is encountered in the query options contained in the URI info object
+	 */
+	private String createMetricsSqlQuery(UriInfo uriInfo) throws ODataApplicationException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> createMetricsSqlQuery({})", uriInfo.getUriResourceParts());
+
+		MetricsSqlFilterExpressionVisitor expressionVisitor = new MetricsSqlFilterExpressionVisitor();
+		StringBuilder sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(false, securityConfig.getMission()));
+
+		sqlCommand = createMetricsSqlQueryFilter(uriInfo, false);
+
+		// Test order option
+		OrderByOption orderByOption = uriInfo.getOrderByOption();
+		if (null != orderByOption) {
+			StringBuilder orderByClause = new StringBuilder();
+			List<OrderByItem> orderByItems = orderByOption.getOrders();
+			boolean first = true;
+			for (OrderByItem orderByItem : orderByItems) {
+				if (first) {
+					orderByClause.append("ORDER BY ");
+					first = false;
+				} else {
+					orderByClause.append(", ");
+				}
+				try {
+					String orderExpression = orderByItem.getExpression().accept(new MetricsSqlFilterExpressionVisitor());
+					orderByClause.append(orderExpression).append(" ").append(orderByItem.isDescending() ? "DESC" : "ASC");
+				} catch (ExpressionVisitException | ODataApplicationException e) {
+					throw new ODataApplicationException("Exception thrown in orderBy expression: " + e.getMessage(),
+							HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ROOT);
+				}
+			}
+			sqlCommand.append("\n").append(orderByClause);
+		}
+
+		// Test topOption
+		TopOption topOption = uriInfo.getTopOption();
+		if (null == topOption) {
+			// In any case we restrict the number of Metrics to retrieve to the quota
+			sqlCommand.append("\nLIMIT ").append(config.getQuota() + 1);
+		} else {
+			sqlCommand.append("\nLIMIT ").append(topOption.getValue());
+		}
+
+		// Test skip option
+		SkipOption skipOption = uriInfo.getSkipOption();
+		if (null != skipOption) {
+			sqlCommand.append("\nOFFSET ").append(skipOption.getValue());
+		}
+
+		logger.trace("<<< createMetricsSqlQuery() -> SQL command:\n" + sqlCommand);
 		return sqlCommand.toString();
 	}
 
@@ -474,6 +583,72 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 			logger.trace("... returning " + orderCollection.getEntities().size() + " workflow entries");
 		return orderCollection;
 	}
+	/**
+	 * Read the requested workflows from the prosEO kernel components
+	 *
+	 * @param uriInfo additional URI parameters to consider in the request
+	 *
+	 * @return a collection of entities representing workflows
+	 * @throws URISyntaxException        if a valid URI cannot be generated from any UUID
+	 * @throws QuotaExceededException    if the result set exceeds the configured quota
+	 * @throws ODataApplicationException if an error occurs during evaluation of a filtering condition
+	 */
+	private EntityCollection queryMetrics(UriInfo uriInfo)
+			throws URISyntaxException, QuotaExceededException, ODataApplicationException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> queryMetrics({})", uriInfo);
+
+		EntityCollection orderCollection = new EntityCollection();
+		List<Entity> metricsList = new ArrayList<>();
+
+		// Request workflow list from database
+		String sqlCommand = createMetricsSqlQuery(uriInfo);
+
+		Query query = em.createNativeQuery(sqlCommand, ApiMetrics.class);
+		List<?> resultList = query.getResultList();
+
+		// Check quota
+		if (resultList.size() > config.getQuota()) {
+			String message = logger.log(OdipMessage.MSG_QUOTA_EXCEEDED, config.getQuota());
+			throw new QuotaExceededException(message);
+		}
+
+		for (Object resultObject : query.getResultList()) {
+			if (resultObject instanceof ApiMetrics) {
+				// Create output workflow
+				Entity metric = OdipApplicationBase.util.toOdipMetrics((ApiMetrics) resultObject);
+				metricsList.add(metric);
+			}
+		}
+		if (logger.isDebugEnabled())
+			logger.debug("... workflows found: " + metricsList.size());
+
+		// Add the workflow list to the workflow collection
+		orderCollection.getEntities().addAll(metricsList);
+
+		// Check $count option
+		CountOption countOption = uriInfo.getCountOption();
+		if (null != countOption && countOption.getValue()) {
+			sqlCommand = createMetricsSqlQueryFilter(uriInfo, true).toString();
+
+			query = em.createNativeQuery(sqlCommand);
+			Integer collectionSize = 0;
+			String queryResult = query.getSingleResult().toString();
+			try {
+				collectionSize = Integer.parseInt(queryResult);
+			} catch (NumberFormatException e) {
+				logger.log(OdipMessage.MSG_INVALID_QUERY_RESULT, queryResult);
+			}
+
+			if (logger.isTraceEnabled())
+				logger.trace("... returning collection size {} due to $count option", collectionSize);
+			orderCollection.setCount(collectionSize);
+		}
+
+		if (logger.isTraceEnabled())
+			logger.trace("... returning " + orderCollection.getEntities().size() + " metrics entries");
+		return orderCollection;
+	}
 
 	/**
 	 * Reads entities data from persistence and puts serialized content and status into the response.
@@ -509,6 +684,8 @@ public class OdipEntityCollectionProcessor implements EntityCollectionProcessor 
 				entityCollection = queryProductionOrders(uriInfo);
 			} else if (edmEntitySet.getEntityType().getFullQualifiedName().equals(OdipEdmProvider.ET_WORKFLOW_FQN)) {
 				entityCollection = queryWorkflows(uriInfo);
+			} else if (edmEntitySet.getEntityType().getFullQualifiedName().equals(OdipEdmProvider.ET_METRICS_FQN)) {
+				entityCollection = queryMetrics(uriInfo);
 			} else {
 				String message = logger.log(OdipMessage.MSG_INVALID_ENTITY_TYPE,
 						edmEntitySet.getEntityType().getFullQualifiedName());

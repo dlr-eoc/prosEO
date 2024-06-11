@@ -454,9 +454,9 @@ public class OrderDispatcher {
 	/**
 	 * Create the necessary jobs for an order of order slicing type type CALENDER_YEAR.
 	 *
-	 * @param order    The processing order.
-	 * @param facility The processing facility.
-	 * @param thread   The order plan thread to handle interrupts.
+	 * @param order  The processing order.
+	 * @param pf     The processing facility.
+	 * @param thread The order plan thread to handle interrupts.
 	 * @return The result message detailing if the jobs were created successfully or what type of error occurred.
 	 * @throws InterruptedException if the execution is interrupted.
 	 */
@@ -827,9 +827,14 @@ public class OrderDispatcher {
 
 								// Retrieve the job from the repository
 								if (jobList.get(currentJobList.get(0)).getJobState() == JobState.INITIAL) {
-									Job locJob = RepositoryService.getJobRepository()
-											.getOne(jobList.get(currentJobList.get(0)).getId());
-
+									Optional<Job> locJobOpt = RepositoryService.getJobRepository()
+											.findById(jobList.get(currentJobList.get(0)).getId());
+									Job locJob = null;
+									if (locJobOpt.isPresent()) {
+										locJob = locJobOpt.get();
+									} else {
+										return new PlannerResultMessage(GeneralMessage.FALSE);
+									}
 									// Create job steps for the job
 									createJobStepsOfJob(locOrder, locJob, productionPlanner);
 										

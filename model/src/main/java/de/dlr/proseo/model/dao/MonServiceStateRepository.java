@@ -4,7 +4,6 @@
 package de.dlr.proseo.model.dao;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import de.dlr.proseo.model.MonServiceState;
 
@@ -14,7 +13,6 @@ import de.dlr.proseo.model.MonServiceState;
  * @author Ernst Melchinger
  *
  */
-@Repository
 public interface MonServiceStateRepository extends JpaRepository<MonServiceState, Long> {
 	
 	/**

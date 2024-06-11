@@ -1,10 +1,20 @@
-/*
+/**
  * ProductionPlanner.java
- * 
+ *
  * © 2019 Prophos Informatik GmbH
  */
-
 package de.dlr.proseo.planner;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -20,25 +30,13 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Semaphore;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
-import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.enums.OrderState;
+import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.kubernetes.KubeJobFinish;
@@ -46,24 +44,22 @@ import de.dlr.proseo.planner.util.OrderPlanThread;
 import de.dlr.proseo.planner.util.OrderReleaseThread;
 import de.dlr.proseo.planner.util.UtilService;
 
-/*
- * prosEO Planner application
- * 
+/**
+ * prosEO planner application
+ *
  * @author Ernst Melchinger
- * 
+ *
  */
 @SpringBootApplication
 @EnableConfigurationProperties
-@ComponentScan(basePackages={"de.dlr.proseo"})
+@ComponentScan(basePackages = { "de.dlr.proseo" })
 //@Transactional(isolation = Isolation.REPEATABLE_READ)
 @EnableJpaRepositories("de.dlr.proseo.model.dao")
 public class ProductionPlanner implements CommandLineRunner {
-	
+
 	private static ProseoLogger logger = new ProseoLogger(ProductionPlanner.class);
-	
-	/**
-	 * Some constant definition for public use.
-	 */
+
+	// Some constant definitions for public use
 	public static final String jobNamePrefix = "proseojob";
 	public static final String jobContainerPrefix = "proseocont";
 
@@ -74,56 +70,42 @@ public class ProductionPlanner implements CommandLineRunner {
 	public static String PLAN_THREAD_PREFIX = "PlanOrder_";
 	public static String RELEASE_THREAD_PREFIX = "ReleaseOrder_";
 
-	public static String STATE_MESSAGE_COMPLETED 			= "requested output product is available";
-	public static String STATE_MESSAGE_QUEUED 				= "request is queued for processing";
-	public static String STATE_MESSAGE_RUNNING 				= "request is under processing";
-	public static String STATE_MESSAGE_CANCELLED 			= "request cancelled by user";
-	public static String STATE_MESSAGE_FAILED 				= "production has failed";
-	public static String STATE_MESSAGE_NO_INPUT_AVAILABLE 	= "input product currently unavailable";
-	public static String STATE_MESSAGE_NO_INPUT 			= "input product not found on LTA";
-	
-	public static ProductionPlannerConfiguration config;
-	
-	public static ProductionPlanner productionPlanner;
-	
+	public static String STATE_MESSAGE_COMPLETED = "requested output product is available";
+	public static String STATE_MESSAGE_QUEUED = "request is queued for processing";
+	public static String STATE_MESSAGE_RUNNING = "request is under processing";
+	public static String STATE_MESSAGE_CANCELLED = "request cancelled by user";
+	public static String STATE_MESSAGE_FAILED = "production has failed";
+	public static String STATE_MESSAGE_NO_INPUT_AVAILABLE = "input product currently unavailable";
+	public static String STATE_MESSAGE_NO_INPUT = "input product not found on LTA";
 
-	/** 
-	 * Planner configuration 
-	 */
+	/** The static production planner configuration */
+	public static ProductionPlannerConfiguration config;
+
+	/** The production planner instance */
+	public static ProductionPlanner productionPlanner;
+
+	/** The instance production planner configuration */
 	@Autowired
 	ProductionPlannerConfiguration plannerConfig;
 
-	/**
-	 * Current running KubeConfigs
-	 */
+	/** Currently running Kubernetes configurations */
 	private Map<String, KubeConfig> kubeConfigs = new HashMap<>();
-	
-	/**
-	 * Kube dispatcher
-	 */
+
+	/** Kubernetes dispatcher looking for runnable job steps */
 	private KubeDispatcher kubeDispatcher = null;
-	
-	
-	/**
-	 * password cache for orders (used to set user/pw in wrapper call)
-	 */
+
+	/** Password cache for orders (used to set username/password in wrapper call) */
 	private Map<Long, Map<String, String>> orderPwCache = new HashMap<>();
 
-	/**
-	 * Current running order planning threads
-	 */
+	/** Currently running order planning threads */
 	private Map<String, OrderPlanThread> planThreads = new HashMap<>();
 
-	/**
-	 * Current running order planning threads
-	 */
+	/** Currently running order finishing threads */
 	private Map<String, KubeJobFinish> finishThreads = new HashMap<>();
 
-	/**
-	 * Current running order release threads
-	 */
+	/** Currently running order release threads */
 	private Map<String, OrderReleaseThread> releaseThreads = new HashMap<>();
-	
+
 	/** Transaction manager for transaction control */
 	@Autowired
 	private PlatformTransactionManager txManager;
@@ -132,97 +114,108 @@ public class ProductionPlanner implements CommandLineRunner {
 	@PersistenceContext
 	private EntityManager em;
 
-	/**
-	 * Collect at planner start all orders of state SUSPENDING
-	 */
-	private List<Long> suspendingOrders = new ArrayList<Long>();
+	/** Collection of all orders in state SUSPENDING at planner start */
+	private List<Long> suspendingOrders = new ArrayList<>();
+
+	/** Collection of all orders in state RELEASING at planner start */
+	private List<Long> releasingOrders = new ArrayList<>();
+
+	/** Collection of all orders in state PLANNING at planner start */
+	private List<Long> planningOrders = new ArrayList<>();
 
 	/**
-	 * Collect at planner start all orders of state RELEASING
-	 */
-	private List<Long> releasingOrders = new ArrayList<Long>();
-
-	/**
-	 * Collect at planner start all orders of state PLANNING
-	 */
-	private List<Long> planningOrders = new ArrayList<Long>();
-
-	/**
-	 * @return the finishThreads
+	 * Gets the finishThreads map.
+	 *
+	 * @return The map of finishing threads.
 	 */
 	public Map<String, KubeJobFinish> getFinishThreads() {
 		return finishThreads;
 	}
 
 	/**
-	 * @return the suspendingOrders
+	 * Gets the suspendingOrders list.
+	 *
+	 * @return The list of suspending orders.
 	 */
 	public List<Long> getSuspendingOrders() {
 		return suspendingOrders;
 	}
 
 	/**
-	 * @return the releasingOrders
+	 * Gets the releasingOrders list.
+	 *
+	 * @return The list of releasing orders.
 	 */
 	public List<Long> getReleasingOrders() {
 		return releasingOrders;
 	}
 
 	/**
-	 * @return the planningOrders
+	 * Gets the planningOrders list.
+	 *
+	 * @return The list of planning orders.
 	 */
 	public List<Long> getPlanningOrders() {
 		return planningOrders;
 	}
 
 	/**
-	 * @return the planThreads
+	 * Gets the planThreads map.
+	 *
+	 * @return The map of planning threads.
 	 */
 	public Map<String, OrderPlanThread> getPlanThreads() {
 		return planThreads;
 	}
 
 	/**
-	 * @return the releaseThreads
+	 * Gets the releaseThreads map.
+	 *
+	 * @return The map of release threads.
 	 */
 	public Map<String, OrderReleaseThread> getReleaseThreads() {
 		return releaseThreads;
 	}
 
 	/**
-	 * @return the txManager
+	 * Gets the transaction manger.
+	 *
+	 * @return The PlatformTransactionManager instance.
 	 */
 	public PlatformTransactionManager getTxManager() {
 		return txManager;
 	}
 
 	/**
-	 * @return the em
+	 * Gets the entity manager.
+	 *
+	 * @return The EntityManager instance.
 	 */
 	public EntityManager getEm() {
 		return em;
 	}
 
 	/**
-	 * Get the user/pw for processing order
-	 * 
-	 * @param orderId Id of order
-	 * @return user/pw
+	 * Gets the authentication details of an order (username and password).
+	 *
+	 * @param orderId The ID of the order.
+	 * @return The authentication details.
 	 */
 	public Map<String, String> getAuth(Long orderId) {
 		return orderPwCache.get(orderId);
 	}
 
 	/**
-	 * Set or update user/pw of a processing order
-	 * 
-	 * @param orderId
-	 * @param user 
-	 * @param pw
+	 * Updates authentication details for an order).
+	 *
+	 * @param orderId The ID of the order.
+	 * @param user    The username.
+	 * @param pw      The password.
 	 */
 	public void updateAuth(Long orderId, String user, String pw) {
-		if (logger.isTraceEnabled()) logger.trace(">>> updateAuth({}, user, password)", orderId);
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> updateAuth({}, user, password)", orderId);
+
 		if (orderPwCache.containsKey(orderId)) {
 			Map<String, String> aMap = orderPwCache.get(orderId);
 			if (aMap.containsKey(user)) {
@@ -239,12 +232,12 @@ public class ProductionPlanner implements CommandLineRunner {
 			orderPwCache.put(orderId, aMap);
 		}
 	}
-	
+
 	/**
-	 * Look for connected KubeConfig of name. 
-	 * 
-	 * @param name of KubeConfig to find (may be null)
-	 * @return KubeConfig found or null
+	 * Gets the KubeConfig instance by name.
+	 *
+	 * @param name The name of the KubeConfig instance (may be null).
+	 * @return The KubeConfig instance.
 	 */
 	public KubeConfig getKubeConfig(String name) {
 		if (name == null) {
@@ -258,19 +251,21 @@ public class ProductionPlanner implements CommandLineRunner {
 	}
 
 	/**
-	 * @return the collection of KubeConfigs which are connected.
+	 * Gets all connected KubeConfig instances.
+	 *
+	 * @return Collection of KubeConfig instances.
 	 */
 	public Collection<KubeConfig> getKubeConfigs() {
 		return kubeConfigs.values();
 	}
-	
+
 	/**
-	 * Initialize and run application 
-	 * 
-	 * @param args command line arguments
-	 * @throws Exception
+	 * Main method to start the application.
+	 *
+	 * @param args Command line arguments.
+	 * @throws Exception Exception if an error occurs.
 	 */
-	public static void main(String[] args) throws Exception { 
+	public static void main(String[] args) throws Exception {
 		SpringApplication spa = new SpringApplication(ProductionPlanner.class);
 		spa.run(args);
 	}
@@ -281,86 +276,95 @@ public class ProductionPlanner implements CommandLineRunner {
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public void updateKubeConfigs() {
-		if (logger.isTraceEnabled()) logger.trace(">>> updateKubeConfigs()");
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> updateKubeConfigs()");
+
 		KubeConfig kubeConfig = null;
-			
-		for (ProcessingFacility pf : RepositoryService.getFacilityRepository().findAll()) {
-			kubeConfig = getKubeConfig(pf.getName());
+
+		for (ProcessingFacility processingFacility : RepositoryService.getFacilityRepository().findAll()) {
+			kubeConfig = getKubeConfig(processingFacility.getName());
 			if (kubeConfig != null) {
 				if (!kubeConfig.connect()) {
 					// error
-					kubeConfigs.remove(pf.getName().toLowerCase());
+					kubeConfigs.remove(processingFacility.getName().toLowerCase());
 
-					logger.log(PlannerMessage.PLANNER_FACILITY_DISCONNECTED, pf.getName());
+					logger.log(PlannerMessage.PLANNER_FACILITY_DISCONNECTED, processingFacility.getName());
 				}
 			}
 			if (kubeConfig == null) {
-				kubeConfig = new KubeConfig(pf, this);
-				if (kubeConfig.getFacilityState(pf) == FacilityState.RUNNING || kubeConfig.getFacilityState(pf) == FacilityState.STARTING 
-						|| kubeConfig.getFacilityState(pf) == FacilityState.STOPPING ) {
+				kubeConfig = new KubeConfig(processingFacility, this);
+				if (kubeConfig.getFacilityState(processingFacility) == FacilityState.RUNNING
+						|| kubeConfig.getFacilityState(processingFacility) == FacilityState.STARTING
+						|| kubeConfig.getFacilityState(processingFacility) == FacilityState.STOPPING) {
 					if (kubeConfig != null && kubeConfig.connect()) {
-						kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
-						logger.log(PlannerMessage.PLANNER_FACILITY_CONNECTED, pf.getName(), pf.getProcessingEngineUrl());
+						kubeConfigs.put(processingFacility.getName().toLowerCase(), kubeConfig);
+						logger.log(PlannerMessage.PLANNER_FACILITY_CONNECTED, processingFacility.getName(),
+								processingFacility.getProcessingEngineUrl());
 						logger.log(PlannerMessage.PLANNER_FACILITY_WORKER_CNT, String.valueOf(kubeConfig.getWorkerCnt()));
 					} else {
-						logger.log(PlannerMessage.PLANNER_FACILITY_NOT_CONNECTED, pf.getName(), pf.getProcessingEngineUrl());
+						logger.log(PlannerMessage.PLANNER_FACILITY_NOT_CONNECTED, processingFacility.getName(),
+								processingFacility.getProcessingEngineUrl());
 					}
 				}
 			}
-		}
-		for (KubeConfig kf : getKubeConfigs()) {
-			if (RepositoryService.getFacilityRepository().findByName(kf.getId().toLowerCase()) == null) {
-				kubeConfigs.remove(kf.getId().toLowerCase());
-				logger.log(PlannerMessage.PLANNER_FACILITY_DISCONNECTED, kf.getId(), kf.getProcessingEngineUrl());
+			for (KubeConfig kf : getKubeConfigs()) {
+				if (RepositoryService.getFacilityRepository().findByName(kf.getId().toLowerCase()) == null) {
+					kubeConfigs.remove(kf.getId().toLowerCase());
+					logger.log(PlannerMessage.PLANNER_FACILITY_DISCONNECTED, kf.getId(), kf.getProcessingEngineUrl());
+				}
 			}
 		}
 	}
-	
+
 	/**
-	 * Try to connect processing facility.
-	 * Add new kube config for not connected facility, remove kube config for not connectable facility.
-	 * 
+	 * Attempts to connect to a processing facility. Adds a new Kubernetes configuration for the previously not connected facility,
+	 * removes Kubernetes configuration for a facility to which a connection is not possible.
+	 *
 	 * @param facilityName the name of the processing facility to connect
 	 * @return the KubeConfig object for this processing facility, or null, if the facility is not connected
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public KubeConfig updateKubeConfig(String facilityName) {
-		if (logger.isTraceEnabled()) logger.trace(">>> updateKubeConfig({})", facilityName);
-		
-		if (null == facilityName) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> updateKubeConfig({})", facilityName);
+
+		if (facilityName == null) {
 			return null;
 		}
-		
-		ProcessingFacility pf = RepositoryService.getFacilityRepository().findByName(facilityName);
-		if (null == pf) {
+
+		ProcessingFacility processingFacility = RepositoryService.getFacilityRepository().findByName(facilityName);
+		if (processingFacility == null) {
 			return null;
 		}
-		
-		KubeConfig kubeConfig = getKubeConfig(pf.getName());
-		
-		if (null == kubeConfig) {
+
+		KubeConfig kubeConfig = getKubeConfig(processingFacility.getName());
+
+		if (kubeConfig == null) {
 			// Planner does not know facility yet, so create a new KubeConfig object and make sure it can be connected
-			kubeConfig = new KubeConfig(pf, this);
-			if (kubeConfig.getFacilityState(pf) == FacilityState.RUNNING || kubeConfig.getFacilityState(pf) == FacilityState.STARTING 
-					|| kubeConfig.getFacilityState(pf) == FacilityState.STOPPING ) {
+			kubeConfig = new KubeConfig(processingFacility, this);
+			if (kubeConfig.getFacilityState(processingFacility) == FacilityState.RUNNING
+					|| kubeConfig.getFacilityState(processingFacility) == FacilityState.STARTING
+					|| kubeConfig.getFacilityState(processingFacility) == FacilityState.STOPPING) {
 				if (kubeConfig.connect()) {
-					kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
-					logger.log(PlannerMessage.PLANNER_FACILITY_CONNECTED, pf.getName(), pf.getProcessingEngineUrl());
+					kubeConfigs.put(processingFacility.getName().toLowerCase(), kubeConfig);
+					logger.log(PlannerMessage.PLANNER_FACILITY_CONNECTED, processingFacility.getName(),
+							processingFacility.getProcessingEngineUrl());
 					logger.log(PlannerMessage.PLANNER_FACILITY_WORKER_CNT, String.valueOf(kubeConfig.getWorkerCnt()));
 				} else {
-					logger.log(PlannerMessage.PLANNER_FACILITY_NOT_CONNECTED, pf.getName(), pf.getProcessingEngineUrl());
+					logger.log(PlannerMessage.PLANNER_FACILITY_NOT_CONNECTED, processingFacility.getName(),
+							processingFacility.getProcessingEngineUrl());
 				}
 			}
 		} else {
 			// Update information in KubeConfig object and make sure it can be connected
-			kubeConfig.setFacility(pf);
-			if (kubeConfig.getFacilityState(pf) == FacilityState.RUNNING || kubeConfig.getFacilityState(pf) == FacilityState.STARTING 
-					|| kubeConfig.getFacilityState(pf) == FacilityState.STOPPING ) {
+			kubeConfig.setFacility(processingFacility);
+			if (kubeConfig.getFacilityState(processingFacility) == FacilityState.RUNNING
+					|| kubeConfig.getFacilityState(processingFacility) == FacilityState.STARTING
+					|| kubeConfig.getFacilityState(processingFacility) == FacilityState.STOPPING) {
 				if (!kubeConfig.connect()) {
 					// error
-					kubeConfigs.remove(pf.getName().toLowerCase());
-					logger.log(PlannerMessage.PLANNER_FACILITY_DISCONNECTED, pf.getName());
+					kubeConfigs.remove(processingFacility.getName().toLowerCase());
+					logger.log(PlannerMessage.PLANNER_FACILITY_DISCONNECTED, processingFacility.getName());
 				}
 			}
 		}
@@ -368,51 +372,59 @@ public class ProductionPlanner implements CommandLineRunner {
 	}
 
 	/**
-	 * Collect the orders in state SUSPENDING, RELEASING and PLANNING, store their ids
-	 * and restart the first.
+	 * Collect the orders in state SUSPENDING, RELEASING and PLANNING, store their IDs and restart the first.
 	 */
 	private void checkForRestartSuspend() {
-		// collect orders in ...ING state	
 		List<ProcessingOrder> orders = RepositoryService.getOrderRepository().findByOrderState(OrderState.SUSPENDING);
 		for (ProcessingOrder order : orders) {
-			// resume the order
+			// Resume the order
 			suspendingOrders.add(order.getId());
-			if (logger.isTraceEnabled()) logger.trace(">>> suspending order found ({})", order.getId());
+			if (logger.isTraceEnabled())
+				logger.trace(">>> suspending order found ({})", order.getId());
 		}
 		UtilService.getOrderUtil().checkNextForRestart();
 	}
 
+	/**
+	 * Checks for orders to restart that are in 'releasing' or 'planning' state.
+	 */
 	private void checkForRestart() {
 		List<ProcessingOrder> orders = RepositoryService.getOrderRepository().findByOrderState(OrderState.RELEASING);
 		for (ProcessingOrder order : orders) {
-			// resume the order
+			// Resume the order
 			releasingOrders.add(order.getId());
-			if (logger.isTraceEnabled()) logger.trace(">>> releasing order found ({})", order.getId());
+			if (logger.isTraceEnabled())
+				logger.trace(">>> releasing order found ({})", order.getId());
 		}
 		orders = RepositoryService.getOrderRepository().findByOrderState(OrderState.PLANNING);
 		for (ProcessingOrder order : orders) {
-			// resume the order
+			// Resume the order
 			planningOrders.add(order.getId());
-			if (logger.isTraceEnabled()) logger.trace(">>> planning order found ({})", order.getId());
-		}		
+			if (logger.isTraceEnabled())
+				logger.trace(">>> planning order found ({})", order.getId());
+		}
 		UtilService.getOrderUtil().checkNextForRestart();
 	}
-	
+
 	/**
-	 * Dispatch checkNextForRestart to UtilService
+	 * Checks for the next order to restart.
 	 */
 	public void checkNextForRestart() {
 		UtilService.getOrderUtil().checkNextForRestart();
 	}
-	
-	
-	/* (non-Javadoc)
+
+	/**
+	 * Runs the application, initializing necessary configurations and components.
+	 *
 	 * @see org.springframework.boot.CommandLineRunner#run(java.lang.String[])
+	 * @param arg0 Command line arguments.
+	 * @throws Exception If an error occurs during execution.
 	 */
 	@Override
 	public void run(String... arg0) throws Exception {
-		if (logger.isTraceEnabled()) logger.trace(">>> run({})", arg0.toString());
-      
+		if (logger.isTraceEnabled())
+			logger.trace(">>> run({})", arg0.toString());
+
 		InetAddress ip;
 		String hostname;
 		config = plannerConfig;
@@ -443,21 +455,21 @@ public class ProductionPlanner implements CommandLineRunner {
 			e.printStackTrace();
 		}
 
-		// continue suspend first
+		// Continue order suspension first
 		checkForRestartSuspend();
-		
+
 		this.startDispatcher();
-		
+
 		checkForRestart();
 	}
 
-	
 	/**
-	 * Start the kube dispatcher thread
+	 * Starts the Kubernetes dispatcher thread.
 	 */
 	public void startDispatcher() {
-		if (logger.isTraceEnabled()) logger.trace(">>> startDispatcher()");
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> startDispatcher()");
+
 		if (kubeDispatcher == null || !kubeDispatcher.isAlive()) {
 			kubeDispatcher = new KubeDispatcher(this, null, false);
 			kubeDispatcher.start();
@@ -469,11 +481,12 @@ public class ProductionPlanner implements CommandLineRunner {
 	}
 
 	/**
-	 * Stop the kube dispatcher thread
+	 * Stops the Kubernetes dispatcher thread.
 	 */
 	public void stopDispatcher() {
-		if (logger.isTraceEnabled()) logger.trace(">>> stopDispatcher()");
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> stopDispatcher()");
+
 		if (kubeDispatcher != null && kubeDispatcher.isAlive()) {
 			kubeDispatcher.interrupt();
 			int i = 0;
@@ -487,5 +500,4 @@ public class ProductionPlanner implements CommandLineRunner {
 		}
 		kubeDispatcher = null;
 	}
-	
 }

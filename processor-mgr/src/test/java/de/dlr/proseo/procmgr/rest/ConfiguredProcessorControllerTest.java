@@ -10,6 +10,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.After;
 import org.junit.Before;
@@ -211,12 +212,14 @@ public class ConfiguredProcessorControllerTest {
 		configProc0.setProcessor(processor0);
 		configProc0.setConfiguration(configuration0);
 		configProc0.setIdentifier(testConfiguredProcessors[0]);
+		configProc0.setUuid(UUID.randomUUID());
 		configProc0.setId(RepositoryService.getConfiguredProcessorRepository().save(configProc0).getId());
 
 		ConfiguredProcessor configProc1 = new ConfiguredProcessor();
 		configProc1.setProcessor(processor1);
 		configProc1.setConfiguration(configuration1);
 		configProc1.setIdentifier(testConfiguredProcessors[1]);
+		configProc1.setUuid(UUID.randomUUID());
 		configProc1.setId(RepositoryService.getConfiguredProcessorRepository().save(configProc1).getId());
 
 	}

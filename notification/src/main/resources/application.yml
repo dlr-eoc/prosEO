@@ -10,6 +10,8 @@ logging:
         de.dlr.proseo: TRACE
         org.hibernate.engine.jdbc.env.internal: WARN
         #org.springframework.security: TRACE
+management:
+    endpoints.web.exposure.include: "health"
 proseo:
     http.timeout: 10000
     notification:

@@ -9,9 +9,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 
 /**
  * 
@@ -21,26 +21,23 @@ import org.springframework.security.crypto.password.PasswordEncoder;
  */
 @Configuration
 @EnableWebSecurity
-public class NotificationSecurityConfig extends WebSecurityConfigurerAdapter {
+public class NotificationSecurityConfig {
 
 	/**
 	 * Configures the HTTP security for the application, defining which requests should be allowed or denied
 	 *
 	 * @param http the HTTP security object
 	 */
-	@Override
-	protected void configure(HttpSecurity http) throws Exception {
-		http
-//			.httpBasic()
-//				.and()
-			.authorizeRequests()
-			.antMatchers("/**/notify")
-			.permitAll()
-			.antMatchers("/**/actuator/health")
-			.permitAll()
-			.and()
-			.csrf()
-			.disable(); // Required for POST requests (or configure CSRF)
+	@Bean
+	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http.httpBasic(it -> {})
+		.authorizeHttpRequests(requests -> requests
+				.antMatchers("/**/notify")
+				.permitAll()
+				.antMatchers("/**/actuator/health")
+				.permitAll())
+		.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
+		return http.build();
 	}
 
 	/**
@@ -49,7 +46,7 @@ public class NotificationSecurityConfig extends WebSecurityConfigurerAdapter {
 	 * @return a BCryptPasswordEncoder
 	 */
 	@Bean
-	public PasswordEncoder passwordEncoder() {
+	PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
 }
