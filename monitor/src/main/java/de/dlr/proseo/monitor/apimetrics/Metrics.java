@@ -169,13 +169,16 @@ public class Metrics {
 	 * @param map The map containing the value
 	 * @param now The current date and time
 	 */
-	private void updateCountMetric(String key, String suffix, Map<String, Long> map, Instant now) {
+	private void updateCountMetric(String key, String suffix, Map<String, Long> map, Instant now, Map<String, Long> entries) {
 		String name = key + "." + suffix;
 		ApiMetrics metric = RepositoryService.getApiMetricsRepository().findLastEntryByName(name);
 		if (metric == null) {
 			metric = new ApiMetrics();
 			metric.setName(name);
 			metric.setMetrictype(MetricType.COUNTER);
+		}
+		if (entries != null && entries.containsKey(name)) {
+			entries.remove(name);
 		}
 		metric.setCount(map.get(key));
 		metric.setTimestamp(now);
@@ -189,13 +192,16 @@ public class Metrics {
 	 * @param value The new value
 	 * @param now The current date and time
 	 */
-	private void updateCountMetric(String key, long value, Instant now) {
+	private void updateCountMetric(String key, long value, Instant now, Map<String, Long> entries) {
 		String name = key;
 		ApiMetrics metric = RepositoryService.getApiMetricsRepository().findLastEntryByName(name);
 		if (metric == null) {
 			metric = new ApiMetrics();
 			metric.setName(name);
 			metric.setMetrictype(MetricType.COUNTER);
+		}
+		if (entries != null && entries.containsKey(name)) {
+			entries.remove(name);
 		}
 		metric.setCount(value);
 		metric.setTimestamp(now);
@@ -209,7 +215,7 @@ public class Metrics {
 	 * @param value The new value
 	 * @param now The current date and time
 	 */
-	private void updateGaugeMetric(String key, String value, Instant now) {
+	private void updateGaugeMetric(String key, String value, Instant now, Map<String, Long> entries) {
 		String name = key;
 		ApiMetrics metric = RepositoryService.getApiMetricsRepository().findLastEntryByName(name);
 		if (metric == null) {
@@ -217,9 +223,78 @@ public class Metrics {
 			metric.setName(name);
 			metric.setMetrictype(MetricType.GAUGE);
 		}
+		if (entries != null && entries.containsKey(name)) {
+			entries.remove(name);
+		}
 		metric.setGauge(value);
 		metric.setTimestamp(now);
 		RepositoryService.getApiMetricsRepository().save(metric);
+	}
+	
+	private Map<String, Long> getExistingEntryNames(String namePattern, TransactionTemplate transactionTemplate) {
+		Map<String, Long> entries = new HashMap<String, Long>();
+		transactionTemplate.setReadOnly(true);
+		for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
+			try {
+				transactionTemplate.execute((status) -> {
+					String sqlQuery;
+					sqlQuery = "SELECT DISTINCT m.name, m.id FROM api_metrics m WHERE name LIKE '" 
+						+ namePattern + "'";
+					Query query = em.createNativeQuery(sqlQuery);
+					Object oList = query.getResultList();
+					if (oList instanceof ArrayList) {
+						@SuppressWarnings("unchecked")
+						ArrayList<Object> list = (ArrayList<Object>)oList;
+						for (Object ele : list) {
+							if (ele instanceof Object[]) {
+								Object[] arrayEle = (Object[])ele;
+								if (arrayEle.length == 2) {
+									if (arrayEle[0] instanceof String) {
+										entries.put((String)arrayEle[0], toLong(arrayEle[1]));
+									}
+								}
+							}
+						}
+					}
+					return null;
+				});
+
+			} catch (CannotAcquireLockException e) {
+				if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+				if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+					ProseoUtil.dbWait();
+				} else {
+					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+					throw e;
+				}
+			}	
+		}
+		return entries;
+	}
+	
+	private void deleteOldEntries(Map<String, Long> entries, TransactionTemplate transactionTemplate) {
+		transactionTemplate.setReadOnly(false);
+		for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
+			try {
+				transactionTemplate.execute((status) -> {
+					for (String name : entries.keySet()) {
+						RepositoryService.getApiMetricsRepository().deleteById(entries.get(name));
+					}
+					return null;
+				});
+
+			} catch (CannotAcquireLockException e) {
+				if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+
+				if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+					ProseoUtil.dbWait();
+				} else {
+					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+					throw e;
+				}
+			}	
+		}
 	}
 
 	/**
@@ -321,8 +396,8 @@ public class Metrics {
 										}
 										Instant now = Instant.now();
 										for (String key : sizeMap.keySet()) {
-											updateCountMetric(key, N_SIZE, sizeMap, now);
-											updateCountMetric(key, N_COUNT, countMap, now);
+											updateCountMetric(key, N_SIZE, sizeMap, now, null);
+											updateCountMetric(key, N_COUNT, countMap, now, null);
 										}
 										return null;
 									});
@@ -451,10 +526,10 @@ public class Metrics {
 
 								Instant now = Instant.now();
 								for (String key : sizeMap.keySet()) {
-									updateCountMetric(key, N_SIZE, sizeMap, now);
+									updateCountMetric(key, N_SIZE, sizeMap, now, null);
 								}
 								for (String key : compMap.keySet()) {
-									updateCountMetric(key, N_COMPLETED, compMap, now);
+									updateCountMetric(key, N_COMPLETED, compMap, now, null);
 								}
 								return null;
 							});
@@ -544,8 +619,8 @@ public class Metrics {
 									}
 									Instant now = Instant.now();
 									if (count > 0) {
-										updateCountMetric(nameSize, size, now);
-										updateCountMetric(nameCount, count, now);
+										updateCountMetric(nameSize, size, now, null);
+										updateCountMetric(nameCount, count, now, null);
 									}
 									return null;
 								});
@@ -590,20 +665,24 @@ public class Metrics {
 			List<Mission> missions = transactionTemplate.execute((status) -> {
 				return RepositoryService.getMissionRepository().findAll();
 			});
+			String periodString = N_MONTHLY;
+			if (period.equals(Duration.ofDays(1))) {
+				periodString = N_DAILY;
+			}
+			Map<String, Long> entries = getExistingEntryNames(
+					N_SENSING_TO_PUBLICATION + "." + periodString + "%", 
+					transactionTemplate);
 			for (Mission mission : missions) {
 				for (ProductClass productClass : getProductClasses(transactionTemplate, mission)) {
 					// only for processed products
 					if (productClass.getProcessingLevel() != null) {
-						String periodString = N_MONTHLY;
-						if (period.equals(Duration.ofDays(1))) {
-							periodString = N_DAILY;
-						}
 						String nameMinBase = N_SENSING_TO_PUBLICATION + "." + periodString + "." + N_MIN + "." + N_TIME 
 								+ "." + productClass.getProductType();
 						String nameMaxBase = N_SENSING_TO_PUBLICATION + "." + periodString + "." + N_MAX + "." + N_TIME 
 								+ "." + productClass.getProductType();
 						String nameAvgBase = N_SENSING_TO_PUBLICATION + "." + periodString + "." + N_AVG + "." + N_TIME 
 								+ "." + productClass.getProductType();
+
 						// Find the entry
 						transactionTemplate.setReadOnly(false);
 						for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
@@ -684,17 +763,17 @@ public class Metrics {
 									for (String key : sumMap.keySet()) {
 										if (countMap.get(key) > 0) {
 											avgMap.put(key, sumMap.get(key).dividedBy(countMap.get(key)));
-											updateGaugeMetric(key, formatDuration(avgMap.get(key)), now);
+											updateGaugeMetric(key, formatDuration(avgMap.get(key)), now, entries);
 										}
 									}
 									for (String key : minMap.keySet()) {
 										if (minMap.get(key) != null) {
-											updateGaugeMetric(key, formatDuration(minMap.get(key)), now);
+											updateGaugeMetric(key, formatDuration(minMap.get(key)), now, entries);
 										}
 									}
 									for (String key : maxMap.keySet()) {
 										if (maxMap.get(key) != null) {
-											updateGaugeMetric(key, formatDuration(maxMap.get(key)), now);
+											updateGaugeMetric(key, formatDuration(maxMap.get(key)), now, entries);
 										}
 									}
 									return null;
@@ -715,6 +794,7 @@ public class Metrics {
 					}
 				}
 			}
+			deleteOldEntries(entries, transactionTemplate);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -740,21 +820,24 @@ public class Metrics {
 			List<Mission> missions = transactionTemplate.execute((status) -> {
 				return RepositoryService.getMissionRepository().findAll();
 			});
+			String periodString = N_MONTHLY;
+			if (period.equals(Duration.ofDays(1))) {
+				periodString = N_DAILY;
+			}
+			Map<String, Long> entries = getExistingEntryNames(
+					N_ORIGIN_TO_PUBLICATION + "." + periodString + "%",
+					transactionTemplate);
 			for (Mission mission : missions) {
 				for (ProductClass productClass : getProductClasses(transactionTemplate, mission)) {
 					// only for processed products
 					if (productClass.getProcessingLevel() != null) {
-						String periodString = N_MONTHLY;
-						if (period.equals(Duration.ofDays(1))) {
-							periodString = N_DAILY;
-						}
 						String nameMinBase = N_ORIGIN_TO_PUBLICATION + "." + periodString + "." + N_MIN + "." + N_TIME 
 								+ "." + productClass.getProductType();
 						String nameMaxBase = N_ORIGIN_TO_PUBLICATION + "." + periodString + "." + N_MAX + "." + N_TIME 
 								+ "." + productClass.getProductType();
 						String nameAvgBase = N_ORIGIN_TO_PUBLICATION + "." + periodString + "." + N_AVG + "." + N_TIME 
 								+ "." + productClass.getProductType();
-						
+
 						// Find the entry
 						transactionTemplate.setReadOnly(false);
 						for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
@@ -835,17 +918,17 @@ public class Metrics {
 									for (String key : sumMap.keySet()) {
 										if (countMap.get(key) > 0) {
 											avgMap.put(key, sumMap.get(key).dividedBy(countMap.get(key)));
-											updateGaugeMetric(key, formatDuration(avgMap.get(key)), now);
+											updateGaugeMetric(key, formatDuration(avgMap.get(key)), now, entries);
 										}
 									}
 									for (String key : minMap.keySet()) {
 										if (minMap.get(key) != null) {
-											updateGaugeMetric(key, formatDuration(minMap.get(key)), now);
+											updateGaugeMetric(key, formatDuration(minMap.get(key)), now, entries);
 										}
 									}
 									for (String key : maxMap.keySet()) {
 										if (maxMap.get(key) != null) {
-											updateGaugeMetric(key, formatDuration(maxMap.get(key)), now);
+											updateGaugeMetric(key, formatDuration(maxMap.get(key)), now, entries);
 										}
 									}
 									return null;
@@ -866,6 +949,7 @@ public class Metrics {
 					}
 				}
 			}
+			deleteOldEntries(entries, transactionTemplate);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -890,17 +974,21 @@ public class Metrics {
 			List<Mission> missions = transactionTemplate.execute((status) -> {
 				return RepositoryService.getMissionRepository().findAll();
 			});
+			String periodStringTmp = N_MONTHLY;
+			if (period.equals(Duration.ofDays(1))) {
+				periodStringTmp = N_DAILY;
+			}
+			Map<String, Long> entries = getExistingEntryNames(N_SUBMISSION_TO_COMPLETION + "%", 
+					transactionTemplate);
 			for (Mission mission : missions) {
 				for (ProductClass productClass : getProductClasses(transactionTemplate, mission)) {
 					// only for processed products
 					if (productClass.getProcessingLevel() != null) {
-						String periodString = N_MONTHLY;
-						if (period.equals(Duration.ofDays(1))) {
-							periodString = N_DAILY;
-						}
+						final String periodString = periodStringTmp;
 						String nameMin = N_SUBMISSION_TO_COMPLETION + "." + periodString + "." + N_MIN + "." + N_TIME;
 						String nameMax = N_SUBMISSION_TO_COMPLETION + "." + periodString + "." + N_MAX + "." + N_TIME;
 						String nameAvg = N_SUBMISSION_TO_COMPLETION + "." + periodString + "." + N_AVG + "." + N_TIME;
+
 						// Find the entry
 						transactionTemplate.setReadOnly(false);
 						for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
@@ -913,6 +1001,7 @@ public class Metrics {
 									String sqlQuery;
 									sqlQuery = "SELECT o.actual_completion_time, o.submission_time FROM processing_order o "
 											+ " WHERE o.actual_completion_time IS NOT NULL "
+											+ " AND o.actual_completion_time > '" + dateTimeFormatter.format(now.minus(period)) +"'"
 											+ " AND o.submission_time IS NOT NULL"
 											+ " AND o.order_source = 'ODIP';";	
 
@@ -922,7 +1011,7 @@ public class Metrics {
 									Duration sum = Duration.ofMillis(0);
 									Duration min = null;
 									Duration max = null;
-									Duration avg = Duration.ofMillis(0);;
+									Duration avg = Duration.ofMillis(0);
 									if (oList instanceof ArrayList) {
 										@SuppressWarnings("unchecked")
 										ArrayList<Object> list = (ArrayList<Object>)oList;
@@ -967,9 +1056,11 @@ public class Metrics {
 										min = Duration.ofMillis(0);
 										max = Duration.ofMillis(0);
 									}
-									updateGaugeMetric(nameMin, formatDuration(min), now);
-									updateGaugeMetric(nameMax, formatDuration(max), now);
-									updateGaugeMetric(nameAvg, formatDuration(avg), now);
+									if (avg.compareTo(Duration.ofMillis(0)) > 0) {
+										updateGaugeMetric(nameMin, formatDuration(min), now, entries);
+										updateGaugeMetric(nameMax, formatDuration(max), now, entries);
+										updateGaugeMetric(nameAvg, formatDuration(avg), now, entries);
+									}
 									return null;
 								});
 								break;
@@ -988,6 +1079,7 @@ public class Metrics {
 					}
 				}
 			}
+			deleteOldEntries(entries, transactionTemplate);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
