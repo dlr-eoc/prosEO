@@ -12,16 +12,13 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEnti
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.Mission;
-import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.ProductionPlanner;
-import de.dlr.proseo.planner.dispatcher.JobDispatcher;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = ProductionPlanner.class, webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -29,17 +26,16 @@ import de.dlr.proseo.planner.dispatcher.JobDispatcher;
 @WithMockUser(username = "PTM-proseo", roles = { "ORDER_APPROVER", "ORDER_MGR" })
 @Transactional
 @AutoConfigureTestEntityManager
-@Sql("/ptm.sql")
 public class KubeTest {
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(KubeTest.class);
 
 //    @Autowired
 //    private JobStepRepository jobSteps;
-//    
+//
 //    @Autowired
 //    private ProductionPlanner productionPlanner;
-    
+
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 	}
@@ -71,7 +67,7 @@ public class KubeTest {
 		String pft = m.getProductFileTemplate();
 		RepositoryService.getMissionRepository().save(m);
 //		JobStep js = new JobStep();
-//		js.setProcessingMode("nix"); 
+//		js.setProcessingMode("nix");
 //		RepositoryService.getJobStepRepository().save(js);
 //		JobDispatcher jd = new JobDispatcher();
 //		try {
