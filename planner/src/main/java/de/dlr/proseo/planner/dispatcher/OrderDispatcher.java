@@ -71,15 +71,15 @@ public class OrderDispatcher {
 	 * Publish an order, create jobs and job steps needed to create all products
 	 *
 	 * @param orderId            The processing order id
-	 * @param processingFacility The processing facility
+	 * @param facilityId         The processing facility id
 	 * @param thread             The OrderPlanThread
 	 * @return The PlannerResultMessage indicating the result of the operation. False if no order with the given id was found.
 	 * @throws InterruptedException if the execution is interrupted
 	 */
-	public PlannerResultMessage prepareExpectedJobs(long orderId, ProcessingFacility processingFacility, OrderPlanThread thread)
+	public PlannerResultMessage prepareExpectedJobs(long orderId, long facilityId, OrderPlanThread thread)
 			throws InterruptedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> prepareExpectedJobs({}, {}, {}", orderId,
-				(null == processingFacility ? "null" : processingFacility.getName()), thread);
+				facilityId, thread);
 
 		// Initialize the result message (of the method) with a default value of FALSE
 		PlannerResultMessage resultMessage = new PlannerResultMessage(GeneralMessage.FALSE);
@@ -127,6 +127,9 @@ public class OrderDispatcher {
 						}
 
 						try {
+							ProcessingFacility processingFacility = 
+									RepositoryService.getFacilityRepository().findById(facilityId).orElseThrow();
+							
 							// Create jobs based on the order's slicing type
 							switch (order.getSlicingType()) {
 							case CALENDAR_DAY:
@@ -155,6 +158,10 @@ public class OrderDispatcher {
 						} catch (InterruptedException e) {
 							PlannerResultMessage msg = new PlannerResultMessage(PlannerMessage.PLANNING_INTERRUPTED);
 							msg.setText(logger.log(msg.getMessage(), orderId));
+							return msg;
+						} catch (NoSuchElementException e) {
+							PlannerResultMessage msg = new PlannerResultMessage(PlannerMessage.FACILITY_NOT_EXIST);
+							msg.setText(logger.log(msg.getMessage(), facilityId));
 							return msg;
 						}
 
@@ -744,17 +751,17 @@ public class OrderDispatcher {
 	 * Create the job steps for each job of the processing order.
 	 *
 	 * @param orderId           The ID of the processing order.
-	 * @param facility          The processing facility.
+	 * @param facilityId        The ID of the processing facility.
 	 * @param productionPlanner The production planner instance.
 	 * @param thread            The order plan thread to handle interrupts.
 	 * @return The result message indicating the success (or the cause of failure) of creating job steps.
 	 * @throws InterruptedException if the execution is interrupted.
 	 */
-	public PlannerResultMessage createJobSteps(long orderId, ProcessingFacility facility, ProductionPlanner productionPlanner,
+	public PlannerResultMessage createJobSteps(long orderId, long facilityId, ProductionPlanner productionPlanner,
 			OrderPlanThread thread) throws InterruptedException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createJobSteps({}, {}, ProductionPlanner, {})",
-					orderId, (null == facility ? "null" : facility.getName()), thread);
+					orderId, facilityId, thread);
 
 		ProcessingOrder order = null;
 
@@ -785,7 +792,7 @@ public class OrderDispatcher {
 
 		if (logger.isTraceEnabled())
 			logger.trace("... creating job steps for order {} in facility {})", (null == order ? "null" : order.getIdentifier()),
-					(null == facility ? "null" : facility.getName()));
+					facilityId);
 
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.TRUE);
 
@@ -873,7 +880,7 @@ public class OrderDispatcher {
 		} catch (Exception e) {
 			if (logger.isDebugEnabled())
 				logger.debug("... exception in createJobSteps::doInTransaction(" + orderId + ", " 
-						+ facility.getName() + ", ProductionPlanner): ", e);
+						+ facilityId + ", ProductionPlanner): ", e);
 			
 			/*
 			 * Exception above is recaught here (due to rethrow)

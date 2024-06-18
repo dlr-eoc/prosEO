@@ -14,7 +14,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
-import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -43,8 +42,8 @@ public class OrderPlanThread extends Thread {
 	/** The ID of the processing order to plan */
 	private long orderId;
 
-	/** The facility to process the order */
-	private ProcessingFacility procFacility;
+	/** The ID of the facility to process the order */
+	private long facilityId;
 
 	/** The result of the planning */
 	private PlannerResultMessage resultMessage;
@@ -64,17 +63,17 @@ public class OrderPlanThread extends Thread {
 	 * @param productionPlanner The production planner instance
 	 * @param orderDispatcher   The order dispatcher
 	 * @param orderId           The ID of the processing order to plan
-	 * @param procFacility      The processing facility to run the order
+	 * @param facilityId        The ID of the processing facility to run the order
 	 * @param name              The name of the thread
 	 */
 	public OrderPlanThread(ProductionPlanner productionPlanner, OrderDispatcher orderDispatcher, long orderId,
-			ProcessingFacility procFacility, String name) {
+			long facilityId, String name) {
 		super(name);
 
 		this.productionPlanner = productionPlanner;
 		this.orderDispatcher = orderDispatcher;
 		this.orderId = orderId;
-		this.procFacility = procFacility;
+		this.facilityId = facilityId;
 	}
 
 	/**
@@ -92,7 +91,7 @@ public class OrderPlanThread extends Thread {
 		} else {
 			// Create the required jobs for the order (independent transaction)
 			try {
-				answer = orderDispatcher.prepareExpectedJobs(orderId, procFacility, this);
+				answer = orderDispatcher.prepareExpectedJobs(orderId, facilityId, this);
 			} catch (InterruptedException e) {
 				answer.setMessage(PlannerMessage.PLANNING_INTERRUPTED);
 				answer.setText(logger.log(answer.getMessage(), orderId));
@@ -245,15 +244,15 @@ public class OrderPlanThread extends Thread {
 
 		if (logger.isTraceEnabled())
 			logger.trace("... planning job steps for order {} on facility {})", (null == order ? "null" : order.getId()),
-					(null == procFacility ? "null" : procFacility.getName()));
+					facilityId);
 
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
 		PlannerResultMessage publishAnswer = new PlannerResultMessage(GeneralMessage.FALSE);
 
-		if (order != null && procFacility != null
+		if (order != null && facilityId != 0
 				&& (order.getOrderState() == OrderState.PLANNING || order.getOrderState() == OrderState.APPROVED)) {
 			try {
-				publishAnswer = orderDispatcher.createJobSteps(order.getId(), procFacility, productionPlanner, this);
+				publishAnswer = orderDispatcher.createJobSteps(order.getId(), facilityId, productionPlanner, this);
 			} catch (InterruptedException e) {
 				throw e;
 			}

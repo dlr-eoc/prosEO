@@ -16,10 +16,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -36,7 +32,6 @@ public class BaseWrapperTest {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseWrapperTest.class);
 	private static final String JOB_ORDER_FILE_NAME = "src/test/resources/JobOrder.609521551_KNMI.xml";
-//	private static final String JOB_ORDER_UNFORMATTED_FILE_NAME = "src/test/resources/JobOrderUnformatted.xml";
 
 	public static final String ANSI_RESET = "\u001B[0m";
 	public static final String ANSI_BLACK = "\u001B[30m";
@@ -99,15 +94,6 @@ public class BaseWrapperTest {
 	 */
 	@Test
 	public final void testRun1() {
-
-		// test for debug
-		Client client = ClientBuilder.newClient();
-
-		WebTarget webTarget = client.target("server").path("Hallo/Welt");
-		webTarget = webTarget.queryParam("p1", "v1");
-		webTarget = webTarget.queryParam("p2", "v2");
-		logger.info(webTarget.toString());
-		logger.info(webTarget.getUri().toString());
 
 		// Hashmap holding env-vars
 		Map<String, String> envmap = new HashMap<>();

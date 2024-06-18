@@ -40,22 +40,12 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- From JBoss Resteasy documentation -->
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-core-spi</artifactId>
-            <version>${resteasy.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-client-api</artifactId>
-            <version>${resteasy.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-client</artifactId>
-            <version>${resteasy.version}</version>
-        </dependency>
+    <!-- From Apache HTTP Client documentation -->
+    <dependency>
+        <groupId>org.apache.httpcomponents.client5</groupId>
+        <artifactId>httpclient5</artifactId>
+    </dependency>
+    <!-- End Apache HTTP Client documentation -->
 
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -85,7 +75,7 @@
         </plugins>
     </pluginManagement>
     <plugins>
-      <!-- Build self-contained JAR -->
+            <!-- Build self-contained JAR -->
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <executions>
