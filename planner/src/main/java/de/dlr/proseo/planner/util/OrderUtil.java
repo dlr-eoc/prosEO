@@ -475,13 +475,13 @@ public class OrderUtil {
 	 * Plan the processing order and it jobs and job steps.
 	 *
 	 * @param id           The processing order ID
-	 * @param procFacility The processing facility to run the order
+	 * @param facilityId   The database ID of the processing facility to run the order
 	 * @param wait         indicates whether to wait for the order planning to complete
 	 * @return Result message
 	 */
-	public PlannerResultMessage plan(long id, ProcessingFacility procFacility, Boolean wait) {
+	public PlannerResultMessage plan(long id, Long facilityId, Boolean wait) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> plan({}, {}, {})", id, (null == procFacility ? "null" : procFacility.getName()), wait);
+			logger.trace(">>> plan({}, {}, {})", id, facilityId, wait);
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
@@ -495,7 +495,7 @@ public class OrderUtil {
 			return null;
 		});
 
-		if (null == order || null == procFacility) {
+		if (null == order || null == facilityId) {
 			PlannerResultMessage answer = new PlannerResultMessage(PlannerMessage.ORDER_NOT_EXIST);
 			answer.setText(logger.log(answer.getMessage(), id));
 			return answer;
@@ -562,7 +562,7 @@ public class OrderUtil {
 			// Create a planning thread for this order, if required
 			String threadName = ProductionPlanner.PLAN_THREAD_PREFIX + order.getId();
 			if (!productionPlanner.getPlanThreads().containsKey(threadName)) {
-				OrderPlanThread pt = new OrderPlanThread(productionPlanner, orderDispatcher, id, procFacility, threadName);
+				OrderPlanThread pt = new OrderPlanThread(productionPlanner, orderDispatcher, id, facilityId, threadName);
 				productionPlanner.getPlanThreads().put(threadName, pt);
 				pt.start();
 				if (wait) {
@@ -1769,20 +1769,20 @@ public class OrderUtil {
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		// Find the processing facility
-		final ProcessingFacility pf = transactionTemplate.execute((status) -> {
+		final Long facilityId = transactionTemplate.execute((status) -> {
 			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
 			if (orderOpt.isPresent()) {
 				Set<Job> jobs = orderOpt.get().getJobs();
 				for (Job job : jobs) {
 					if (job.getProcessingFacility() != null) {
-						return job.getProcessingFacility();
+						return job.getProcessingFacility().getId();
 					}
 				}
 			}
 			return null;
 		});
-		if (pf != null) {
-			UtilService.getOrderUtil().plan(id, pf, false);
+		if (facilityId != null) {
+			UtilService.getOrderUtil().plan(id, facilityId, false);
 		} else {
 			// no job with processing facility exist, can't plan
 			final ProcessingOrder order = transactionTemplate.execute((status) -> {

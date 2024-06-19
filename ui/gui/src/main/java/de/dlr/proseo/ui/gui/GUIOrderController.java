@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -34,6 +35,7 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -377,19 +379,31 @@ public class GUIOrderController extends GUIBaseController {
 						deferredResult.setResult("order-show :: #warnmsg");
 						httpResponse.setHeader("warnstatus", "nocontent");
 					} else {
-						ClientResponse successResponse = ClientResponse.create(clientResponse.getStatusCode())
-							.headers(headers -> headers.addAll(clientResponse.getHeaders()))
-							.build();
-
-						successResponse.bodyToMono(HashMap.class)
-							.timeout(Duration.ofMillis(config.getTimeout()))
-							.subscribe(orderList -> {
-								model.addAttribute("ord", orderList);
-								logger.trace(model.toString() + "MODEL TO STRING");
-								logger.trace(">>>>MONO" + orderList.toString());
-								deferredResult.setResult("order-show :: #null");
-								logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-							});
+						if (clientResponse.getBody() instanceof Collection) {
+							model.addAttribute("ord", clientResponse.getBody());
+						} else {
+							List<Object> list = new ArrayList<>();
+							list.add(clientResponse.getBody());
+							model.addAttribute("ord", list);
+						}
+						logger.trace(model.toString() + "MODEL TO STRING");
+						logger.trace(">>>>MONO" + model.getAttribute("ord").toString());
+						deferredResult.setResult("order-show :: #null");
+						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
+//						
+//						ClientResponse successResponse = ClientResponse.create(clientResponse.getStatusCode())
+//							.headers(headers -> headers.addAll(clientResponse.getHeaders()))
+//							.build();
+//
+//						successResponse.bodyToMono(HashMap.class)
+//							.timeout(Duration.ofMillis(config.getTimeout()))
+//							.subscribe(orderList -> {
+//								model.addAttribute("ord", orderList);
+//								logger.trace(model.toString() + "MODEL TO STRING");
+//								logger.trace(">>>>MONO" + orderList.toString());
+//								deferredResult.setResult("order-show :: #null");
+//								logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
+//							});
 					}
 				} else {
 					ClientResponse warningResponse = ClientResponse.create(clientResponse.getStatusCode())
@@ -452,19 +466,30 @@ public class GUIOrderController extends GUIBaseController {
 						deferredResult.setResult("order-show :: #warnmsg");
 						httpResponse.setHeader("warnstatus", "nocontent");
 					} else {
-						ClientResponse successResponse = ClientResponse.create(clientResponse.getStatusCode())
-							.headers(headers -> headers.addAll(clientResponse.getHeaders()))
-							.build();
-
-						successResponse.bodyToMono(HashMap.class)
-							.timeout(Duration.ofMillis(config.getTimeout()))
-							.subscribe(orderList -> {
-								model.addAttribute("job", orderList);
-								logger.trace(model.toString() + "MODEL TO STRING");
-								logger.trace(">>>>MONO" + orderList.toString());
-								deferredResult.setResult("order-show :: #null");
-								logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-							});
+						if (clientResponse.getBody() instanceof Collection) {
+							model.addAttribute("job", clientResponse.getBody());
+						} else {
+							List<Object> list = new ArrayList<>();
+							list.add(clientResponse.getBody());
+							model.addAttribute("job", list);
+						}
+						logger.trace(model.toString() + "MODEL TO STRING");
+						logger.trace(">>>>MONO" + model.getAttribute("job").toString());
+						deferredResult.setResult("order-show :: #null");
+						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
+//						ClientResponse successResponse = ClientResponse.create(clientResponse.getStatusCode())
+//							.headers(headers -> headers.addAll(clientResponse.getHeaders()))
+//							.build();
+//
+//						successResponse.bodyToMono(HashMap.class)
+//							.timeout(Duration.ofMillis(config.getTimeout()))
+//							.subscribe(orderList -> {
+//								model.addAttribute("job", orderList);
+//								logger.trace(model.toString() + "MODEL TO STRING");
+//								logger.trace(">>>>MONO" + orderList.toString());
+//								deferredResult.setResult("order-show :: #null");
+//								logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
+//							});
 					}
 				} else {
 					ClientResponse warningResponse = ClientResponse.create(clientResponse.getStatusCode())
@@ -843,8 +868,17 @@ public class GUIOrderController extends GUIBaseController {
 		responseSpec.toEntityList(Object.class)
 			// Handle errors
 			.doOnError(e -> {
-				model.addAttribute("errormsg", e.getMessage());
-				deferredResult.setResult("order :: #errormsg");
+				if (e instanceof WebClientResponseException.NotFound) {
+					model.addAttribute("jobs", jobs);
+					model.addAttribute("count", 0);
+					model.addAttribute("pageSize", 0);
+					model.addAttribute("pageCount", 0);
+					model.addAttribute("page", 0);
+					deferredResult.setResult("order :: #jobscontent");
+				} else {
+					model.addAttribute("errormsg", e.getMessage());
+					deferredResult.setResult("order :: #errormsg");
+				}
 			})
 			// Handle successful response
 			.subscribe(entityList -> {
@@ -902,8 +936,10 @@ public class GUIOrderController extends GUIBaseController {
 
 				logger.trace(">>>>MODEL" + model.toString());
 			}, e -> {
-				model.addAttribute("errormsg", e.getMessage());
-				deferredResult.setResult("order :: #errormsg");
+				if (!(e instanceof WebClientResponseException.NotFound)) {
+					model.addAttribute("errormsg", e.getMessage());
+					deferredResult.setResult("order :: #errormsg");
+				}
 			});
 
 		logger.trace(model.toString() + "MODEL TO STRING");

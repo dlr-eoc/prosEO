@@ -6,19 +6,30 @@
  */
 package de.dlr.proseo.basewrap.rest;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
-
-import javax.ws.rs.ProcessingException;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.entity.EntityBuilder;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
+import org.apache.hc.core5.net.URIBuilder;
+import org.apache.hc.core5.util.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,78 +96,79 @@ public class RestOps {
 					(null == queryParams ? "null" : queryParams.toString()), (null == method ? "null" : method.toString()));
 
 		HttpResponseInfo responseInfo = new HttpResponseInfo();
-		Response response = null;
 		String content = (payLoad == null) ? "" : payLoad;
-
+		
 		// Retry the REST API call until a configured maximum of retries is reached
 		int retry = 0;
 		while (retry < MAX_RETRIES) {
-			try {
+			
+			// Create and configure an HTTP client
+			
+			final RequestConfig requestConfig = RequestConfig.custom()
+                    .setConnectionRequestTimeout(Timeout.ofSeconds(ENV_HTTP_TIMEOUT))
+                    .setConnectTimeout(Timeout.ofSeconds(ENV_HTTP_TIMEOUT))
+                    .build();
+			
+			final BasicCredentialsProvider credsProvider = new BasicCredentialsProvider();
+	        credsProvider.setCredentials(
+	                new AuthScope(null, -1),
+	                new UsernamePasswordCredentials(user, pw.toCharArray()));
+			
+			if (logger.isDebugEnabled()) logger.debug("About to build HTTP client ");
+	        
+			try (CloseableHttpClient httpClient = HttpClients.custom()
+					.setDefaultCredentialsProvider(credsProvider)
+					.setDefaultRequestConfig(requestConfig)
+					.build()) {
+				
+				
+				// Build the HTTP request
 
-				// Build a new client to build and execute a HTTP request
-				ResteasyClient client = (ResteasyClient) ClientBuilder.newBuilder().connectTimeout(ENV_HTTP_TIMEOUT, TimeUnit.SECONDS)
-					.readTimeout(ENV_HTTP_TIMEOUT, TimeUnit.SECONDS)
-					.build()
-					.register(new RestAuth(user, pw));
+				URI uri = new URIBuilder(endPoint + endPointPath)
+						.addParameters(null == queryParams ? new ArrayList<NameValuePair>() :
+							queryParams.entrySet().stream()
+							.map(entry -> new BasicNameValuePair(entry.getKey(), entry.getValue()))
+							.collect(Collectors.toList()))
+						.build();
+				
+				ClassicHttpRequest request = ClassicRequestBuilder
+						.create(method.toString())
+						.setUri(uri)
+						.addHeader(HttpHeaders.ACCEPT, ContentType.APPLICATION_JSON.toString())
+						.build();
 
-				// Create a resource target identified by an URI with query parameters
-				WebTarget webTarget = client.target(endPoint).path(endPointPath);
-				if (queryParams != null) {
-					for (Entry<String, String> queryParam : queryParams.entrySet()) {
-						webTarget = webTarget.queryParam(queryParam.getKey(), queryParam.getValue());
-					}
-				}
-
-				// Handle the request according to the HTTP method
-				switch (method) {
-				case POST:
-					if (logger.isDebugEnabled())
-						logger.debug(method + " " + webTarget.getUri());
-					response = webTarget.request(MediaType.APPLICATION_JSON)
-						.post(Entity.entity(content, MediaType.APPLICATION_JSON));
-					break;
-				case PUT:
-					if (logger.isDebugEnabled())
-						logger.debug(method + " " + webTarget.getUri());
-					response = webTarget.request(MediaType.APPLICATION_JSON)
-						.put(Entity.entity(content, MediaType.APPLICATION_JSON));
-					break;
-				case PATCH:
-					if (logger.isDebugEnabled())
-						logger.debug(method + " " + webTarget.getUri());
-					response = webTarget.request(MediaType.APPLICATION_JSON)
-						.method(HttpMethod.PATCH.toString(), Entity.entity(content, MediaType.APPLICATION_JSON));
-					break;
-				case GET:
-					if (logger.isDebugEnabled())
-						logger.debug(method + " " + webTarget.getUri());
-					response = webTarget.request(MediaType.APPLICATION_JSON).get();
-					break;
-				default:
+				
+				// For POST, PUT, PATCH add a request body
+								
+				if (HttpMethod.GET.equals(method)) {
+					// NOP: No request body
+				} else if (HttpMethod.POST.equals(method) || HttpMethod.PUT.equals(method) || HttpMethod.PATCH.equals(method)) {
+					request.setEntity(
+							EntityBuilder.create().setContentType(ContentType.APPLICATION_JSON).setText(content).build());
+				} else {
 					throw new UnsupportedOperationException(method + " not implemented");
 				}
-
-				// Extract the response information
+				
+				if (logger.isDebugEnabled()) logger.debug("Sending HTTP request " + request.toString());
+				
+				
+				// Execute the request
+				
+				httpClient.execute(request, response -> {
+					responseInfo.sethttpCode(response.getCode());
+					if (null != response.getEntity()) {
+						responseInfo.sethttpResponse(EntityUtils.toString(response.getEntity()));
+					}
+					return null;
+				});
+				
 				if (logger.isDebugEnabled())
-					logger.debug(
-							"response: " + (null == response ? "null"
-									: " status = " + response.getStatus() + ", has body = " + response.hasEntity()),
-							" warning = " + response.getHeaderString("Warning"));
-				responseInfo.sethttpCode(response.getStatus());
-				responseInfo.setHttpWarning(response.getHeaderString("Warning"));
-				if (response.hasEntity()) {
-					responseInfo.sethttpResponse(response.readEntity(String.class));
-				} else {
-					responseInfo.sethttpResponse("");
-				}
-
-				// Close the response and the client
-				response.close();
-				client.close();
-
+					logger.debug("Request execution completed with status code " + responseInfo.gethttpCode());
+				
 				return responseInfo;
-			} catch (ProcessingException e) {
-				logger.error("Exception during REST API call: " + e.getMessage(), e);
+				
+			} catch (IOException e) {
+				logger.error("I/O Exception during REST API call: " + e.getMessage(), e);
 
 				if (retry < (MAX_RETRIES - 1)) {
 					// Sometimes there is the exception "no route to host" which isn't really true
@@ -175,7 +187,16 @@ public class RestOps {
 					// If the retries are exhausted unsuccessfully, return null
 					return null;
 				}
+			} catch (URISyntaxException e) {
+				String message = String.format("Invalid URI components for endpoint %s and query parameters %s", 
+						endPoint + endPointPath, queryParams.toString());
+				logger.error(message, e);
+				throw new RuntimeException(message, e);
+			} catch (RuntimeException e) {
+				logger.error("Exception during REST API call: ", e);
+				throw e;
 			}
+
 			retry++;
 		}
 
