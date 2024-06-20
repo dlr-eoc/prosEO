@@ -520,7 +520,7 @@ public class PlannerTest {
 		final ProcessingFacility facility = transactionTemplate.execute((status) -> {
 			return RepositoryService.getFacilityRepository().findByName(FACILITY_NAME);
 		});	
-		PlannerResultMessage resMsg = orderUtil.plan(orderId, facility, true);
+		PlannerResultMessage resMsg = orderUtil.plan(orderId, facility.getId(), true);
 		ProcessingOrder order = reloadOrder(transactionTemplate, orderId);
 		testResultPrim(order, resMsg, orderStates);
 		return order;

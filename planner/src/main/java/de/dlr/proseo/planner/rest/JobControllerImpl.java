@@ -272,7 +272,8 @@ public class JobControllerImpl implements JobController {
 			final ResponseEntity<RestJob> response = transactionTemplate.execute((status) -> {
 
 				// Get the processing facility associated with the job and update its Kubernetes configuration
-				ProcessingFacility processingFacility = job.getProcessingFacility();
+				Job locJob = this.findJobById(jobId);
+				ProcessingFacility processingFacility = locJob.getProcessingFacility();
 				KubeConfig kubeConfig = productionPlanner.updateKubeConfig(processingFacility.getName());
 
 				// Check if the Kubernetes configuration is null, indicating the non-existence of the facility
@@ -300,8 +301,6 @@ public class JobControllerImpl implements JobController {
 				return response;
 			}
 			if (job != null) {
-
-				PlannerResultMessage msg = new PlannerResultMessage(null);
 				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
 						final ResponseEntity<RestJob> answer = transactionTemplate.execute((status) -> {
@@ -348,36 +347,32 @@ public class JobControllerImpl implements JobController {
 				}
 
 				// Check the success status of the planner message
-				if (msg.getSuccess()) {
-					final KubeConfig kubeConfig = transactionTemplate.execute((status) -> {
-						if (job.getProcessingFacility() != null) {
-							// Get the Kubernetes configuration for the processing facility
-							return productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
-						} else {
-							return null;
-						}
-					});
-					if (kubeConfig != null) {
-						try {
-							// Check for unsatisfied job step queries
-							UtilService.getJobStepUtil().checkJobToRun(kubeConfig, job.getId());
-						} catch (Exception e) {
-							String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
-
-							if (logger.isDebugEnabled())
-								logger.debug("... exception stack trace: ", e);
-
-							return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
-						}
+				final KubeConfig kubeConfig = transactionTemplate.execute((status) -> {
+					Job locJob = this.findJobById(jobId);
+					if (locJob.getProcessingFacility() != null) {
+						// Get the Kubernetes configuration for the processing facility
+						return productionPlanner.getKubeConfig(locJob.getProcessingFacility().getName());
+					} else {
+						return null;
 					}
+				});
+				if (kubeConfig != null) {
+					try {
+						// Check for unsatisfied job step queries
+						UtilService.getJobStepUtil().checkJobToRun(kubeConfig, job.getId());
+					} catch (Exception e) {
+						String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 
-					// Return the rest job and HTTP status 200
-					RestJob restJob = getRestJob(job.getId(), false);
-					return new ResponseEntity<>(restJob, HttpStatus.OK);
-				} else {
-					String message = logger.log(msg.getMessage(), jobId);
-					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.BAD_REQUEST);
+						if (logger.isDebugEnabled())
+							logger.debug("... exception stack trace: ", e);
+
+						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+					}
 				}
+
+				// Return the rest job and HTTP status 200
+				RestJob restJob = getRestJob(job.getId(), false);
+				return new ResponseEntity<>(restJob, HttpStatus.OK);
 			}
 			String message = logger.log(PlannerMessage.JOB_NOT_EXIST, jobId);
 
@@ -486,7 +481,8 @@ public class JobControllerImpl implements JobController {
 			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 			final ResponseEntity<RestJob> response = transactionTemplate.execute((status) -> {
 				// Check the status of the processing facility associated with the job
-				ProcessingFacility processingFacility = job.getProcessingFacility();
+				Job locJob = this.findJobById(jobId);
+				ProcessingFacility processingFacility = locJob.getProcessingFacility();
 				KubeConfig kubeConfig = productionPlanner.updateKubeConfig(processingFacility.getName());
 
 				// If the processing facility does not exist, return HTTP 404

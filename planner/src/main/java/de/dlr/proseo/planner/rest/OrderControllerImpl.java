@@ -390,7 +390,7 @@ public class OrderControllerImpl implements OrderController {
 			}
 
 			// Plan the order on the processing facility
-			PlannerResultMessage msg = orderUtil.plan(order.getId(), processingFacility, wait);
+			PlannerResultMessage msg = orderUtil.plan(order.getId(), processingFacility.getId(), wait);
 			if (msg.getSuccess()) {
 				// If planning is successful, retrieve and return the updated order
 				RestOrder restOrder = getRestOrder(order.getId());
