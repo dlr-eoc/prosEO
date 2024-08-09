@@ -8,7 +8,7 @@ description: |
     command [subcommand...] [option...] [parameter...]
   
   Commands can be entered after the "prosEO>" command prompt. They can also be invoked on the shell command line 
-  following the name of the prosEO executable (e. g. "proseo") and at least one whitespace character.
+  following the CLI execution command (e. g. "java -jar proseo-ui-cli.jar") and at least one whitespace character.
   
   Commands may have subcommands, which precede all options and parameters.
   
