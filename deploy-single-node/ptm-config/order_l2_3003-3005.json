@@ -6,7 +6,7 @@
     "sliceOverlap": 0,
     "inputFilters": [
     	{
-    		"productClass": "L0________",
+    		"productClass": "PTM_L0",
 		    "filterConditions": [
 		        {
 		            "key": "revision",
@@ -21,7 +21,7 @@
 		    ]
 	    },
     	{
-    		"productClass": "L1B_PART1",
+    		"productClass": "PTM_L1B_P1",
 		    "filterConditions": [
 		        {
 		            "key": "revision",
@@ -38,7 +38,7 @@
     ],
     "classOutputParameters": [
     	{
-    		"productClass": "L1B_PART1",
+    		"productClass": "PTM_L1B_P1",
     		"outputParameters": [
     			{
     				"key": "revision",
@@ -69,7 +69,7 @@
     "orbits": [
         { "spacecraftCode": "PTS", "orbitNumberFrom": 3003, "orbitNumberTo": 3005 }
     ],
-    "requestedProductClasses": [ "PTM_L2A", "PTM_L2B" ],
+    "requestedProductClasses": [ "PTM_L2_A", "PTM_L2_B" ],
     "inputProductClasses": [],
     "outputFileClass": "TEST",
     "processingMode": "OPER"
