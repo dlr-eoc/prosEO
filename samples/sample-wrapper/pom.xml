@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo-samples</artifactId>
-		<version>1.1.0-SNAPSHOT</version>
+		<version>1.1.0</version>
 	</parent>
 
 	<artifactId>proseo-sample-wrapper</artifactId>
@@ -31,7 +31,7 @@
 		<dependency>
 			<groupId>de.dlr.proseo</groupId>
 			<artifactId>proseo-base-wrapper</artifactId>
-			<version>1.1.0-SNAPSHOT</version>
+			<version>1.1.0</version>
 		</dependency>
 	</dependencies>
 
