@@ -1210,13 +1210,15 @@ public class OdipUtilBase {
 		
 		try {
 			@SuppressWarnings("unchecked")
-			List<RestProduct> restProducts = (List<RestProduct>) serviceConnection.getFromService(config.getAipUrl(),
+			List<Map<String, Object>> restProductList = (List<Map<String, Object>>) serviceConnection.getFromService(config.getAipUrl(),
 					URI_PATH_DOWNLOAD_ALLBYTIME + "?productType=" + productType + "&startTime=" + OrbitTimeFormatter.format(start)
 							+ "&stopTime=" + OrbitTimeFormatter.format(stop) + "&facility=" + config.getFacility(),
-					RestProduct.class, securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword());
-			if (restProducts != null) {
-				for (RestProduct restProduct : restProducts) {
-					products.add(ProductUtil.toModelProduct(restProduct));
+					List.class, securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword());
+			if (logger.isTraceEnabled())
+				logger.trace(">>> restProductList: ", restProductList);
+			if (restProductList != null) {
+				for (Map<String, Object> restProductMap : restProductList) {
+					products.add(ProductUtil.toModelProduct(restProductMap));
 				}
 			}
 		} catch (HttpClientErrorException e) {
