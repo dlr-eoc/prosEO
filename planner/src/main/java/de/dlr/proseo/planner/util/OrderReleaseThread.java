@@ -431,6 +431,7 @@ public class OrderReleaseThread extends Thread {
 									UtilService.getOrderUtil().setTimes(lambdaOrder);
 									UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_COMPLETED);
 									lambdaAnswer.setMessage(PlannerMessage.ORDER_PRODUCT_EXIST);
+									UtilService.getOrderUtil().setOrderHistory(lambdaOrder);
 								} else {
 									// check whether order is already running
 									Boolean running = false;
@@ -449,6 +450,7 @@ public class OrderReleaseThread extends Thread {
 										}
 									}
 									lambdaAnswer.setMessage(PlannerMessage.ORDER_RELEASED);
+									UtilService.getOrderUtil().setOrderHistory(lambdaOrder);
 								}
 								lambdaAnswer.setText(logger.log(lambdaAnswer.getMessage(), lambdaOrder.getIdentifier()));
 								lambdaOrder.incrementVersion();
@@ -485,6 +487,8 @@ public class OrderReleaseThread extends Thread {
 										logger.debug("... exception in getOrderRepository.save2(" + lambdaOrder.getIdentifier() + "): ", e);
 									throw e;
 								}
+
+								UtilService.getOrderUtil().setOrderHistory(lambdaOrder);
 							}
 							return lambdaAnswer;
 						});

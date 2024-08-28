@@ -51,6 +51,7 @@ import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
+import de.dlr.proseo.model.ProcessingOrderHistory;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductQuery;
@@ -340,7 +341,17 @@ public class ProcessingOrderMgr {
 			// Everything OK, store new order in database
 			modelOrder = RepositoryService.getOrderRepository().save(modelOrder);
 			logger.log(OrderMgrMessage.ORDER_CREATED, order.getIdentifier(), order.getMissionCode());
-
+			
+			// Create and initialize the history element of the processing order.
+			ProcessingOrderHistory orderHistory = new ProcessingOrderHistory();
+			orderHistory.setIdentifier(modelOrder.getIdentifier());
+			orderHistory.setMissionCode(modelOrder.getMission().getCode());
+			orderHistory.setCreationTime(Instant.now());
+			orderHistory.setOrderState(modelOrder.getOrderState());
+			for (ProductClass pc : modelOrder.getRequestedProductClasses()) {
+				orderHistory.getProductTypes().add(pc.getProductType());
+			}
+			RepositoryService.getProcessingOrderHistoryRepository().save(orderHistory);
 			return OrderUtil.toRestOrder(modelOrder);
 
 		} catch (org.springframework.dao.DataIntegrityViolationException e) {
@@ -431,6 +442,12 @@ public class ProcessingOrderMgr {
 		prepareOrderToDelete(order);
 		// Delete the order
 		long id = order.getId();
+		ProcessingOrderHistory history = RepositoryService.getProcessingOrderHistoryRepository()
+				.findByMissionCodeAndIdentifier(order.getMission().getCode(), order.getIdentifier());
+		if (history != null) {
+			history.setDeletionTime(Instant.now());
+			RepositoryService.getProcessingOrderHistoryRepository().save(history);
+		}
 		RepositoryService.getOrderRepository().delete(order);
 		// Test whether the deletion was successful
 		Optional<ProcessingOrder> modelOrder = RepositoryService.getOrderRepository().findById(id);
