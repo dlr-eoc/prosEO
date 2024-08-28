@@ -179,6 +179,7 @@ public class OrderDispatcher {
 							order.setStateMessage(ProductionPlanner.STATE_MESSAGE_COMPLETED);
 
 							answer.setMessage(PlannerMessage.ORDER_ALREADY_COMPLETED);
+							UtilService.getOrderUtil().setOrderHistory(order);
 						}
 						break;
 
