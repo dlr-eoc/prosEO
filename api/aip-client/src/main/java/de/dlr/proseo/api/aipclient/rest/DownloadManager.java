@@ -408,13 +408,13 @@ public class DownloadManager {
 		
 		// Get sensing start and stop times and generation time to check against
 		Instant sensingStartTime = OrbitTimeFormatter.parseDateTime(restProduct.getSensingStartTime());
-		Instant sensingStopTime = OrbitTimeFormatter.parseDateTime(restProduct.getSensingStopTime());
+		// Instant sensingStopTime = OrbitTimeFormatter.parseDateTime(restProduct.getSensingStopTime());
 		Instant generationTime = OrbitTimeFormatter.parseDateTime(restProduct.getGenerationTime());
 		
 		// Travel through the list of products
 		for (Product modelProduct: modelProducts) {
 			if (sensingStartTime.equals(modelProduct.getSensingStartTime())
-					&& sensingStopTime.equals(modelProduct.getSensingStopTime())
+					// && sensingStopTime.equals(modelProduct.getSensingStopTime())
 					&& generationTime.equals(modelProduct.getGenerationTime())) {
 				
 				// Candidate product found, check product files
