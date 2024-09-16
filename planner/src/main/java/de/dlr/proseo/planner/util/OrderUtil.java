@@ -42,6 +42,7 @@ import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
+import de.dlr.proseo.model.ProcessingOrderHistory;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.enums.OrderSource;
@@ -121,6 +122,7 @@ public class OrderUtil {
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				logOrderState(order);
+				UtilService.getOrderUtil().setOrderHistory(order);
 				answer.setMessage(PlannerMessage.ORDER_CANCELED);
 				break;	
 			case RELEASED:
@@ -358,6 +360,7 @@ public class OrderUtil {
 			case INITIAL:
 			case APPROVED:
 				// jobs are in initial state, no change
+				UtilService.getOrderUtil().setOrderHistoryOrderDeleted(order);
 				RepositoryService.getOrderRepository().delete(order);
 				answer.setMessage(PlannerMessage.ORDER_DELETED);
 				break;				
@@ -383,6 +386,7 @@ public class OrderUtil {
 						RepositoryService.getJobRepository().delete(job);
 					}
 				}
+				UtilService.getOrderUtil().setOrderHistoryOrderDeleted(order);
 				RepositoryService.getOrderRepository().delete(order);
 				answer.setMessage(PlannerMessage.ORDER_DELETED);
 				break;
@@ -915,7 +919,8 @@ public class OrderUtil {
 									setStateMessage(orderz, ProductionPlanner.STATE_MESSAGE_COMPLETED);
 									checkAutoClose(orderz);
 									RepositoryService.getOrderRepository().save(orderz);
-									logOrderState(orderz);			
+									logOrderState(orderz);	
+									UtilService.getOrderUtil().setOrderHistory(orderz);		
 									return new PlannerResultMessage(PlannerMessage.ORDER_COMPLETED);
 								} else {
 									orderz.setOrderState(OrderState.PLANNED);
@@ -1229,6 +1234,7 @@ public class OrderUtil {
 						order.incrementVersion();
 						RepositoryService.getOrderRepository().save(order);
 						answer.setMessage(PlannerMessage.ORDER_COMPLETED);
+						UtilService.getOrderUtil().setOrderHistory(order);
 					} else {
 						if (order.getOrderState() == OrderState.RUNNING) {
 							order.setOrderState(OrderState.SUSPENDING);
@@ -1322,6 +1328,7 @@ public class OrderUtil {
 								locOrder.setOrderState(OrderState.CLOSED);
 								if (locOrder.getHasFailedJobSteps()) {
 									setStateMessage(locOrder, ProductionPlanner.STATE_MESSAGE_FAILED);
+									UtilService.getOrderUtil().setOrderHistory(locOrder);
 								} else {
 									setStateMessage(locOrder, ProductionPlanner.STATE_MESSAGE_COMPLETED);
 								}
@@ -1408,12 +1415,14 @@ public class OrderUtil {
 						checkAutoClose(order);
 						setTimes(order);
 						setStateMessage(order, ProductionPlanner.STATE_MESSAGE_COMPLETED);
+						UtilService.getOrderUtil().setOrderHistory(order);
 					} else {
 						order.setOrderState(OrderState.FAILED);
 						setStateMessage(order, ProductionPlanner.STATE_MESSAGE_FAILED);
 					}
 					checkFurther = true;
 					RepositoryService.getOrderRepository().save(order);
+					UtilService.getOrderUtil().setOrderHistory(order);
 					em.merge(order);
 					hasChanged = true;
 				}
@@ -1457,12 +1466,14 @@ public class OrderUtil {
 						order.setOrderState(OrderState.FAILED);
 						setStateMessage(order, ProductionPlanner.STATE_MESSAGE_FAILED);
 						RepositoryService.getOrderRepository().save(order);
+						UtilService.getOrderUtil().setOrderHistory(order);
 						em.merge(order);
 					} else {
 						order.setOrderState(OrderState.COMPLETED);
 						setTimes(order);
 						setStateMessage(order, ProductionPlanner.STATE_MESSAGE_COMPLETED);
 						checkAutoClose(order);
+						UtilService.getOrderUtil().setOrderHistory(order);
 						sendNotification(order);
 					}
 					hasChanged = true;
@@ -1531,6 +1542,57 @@ public class OrderUtil {
 		}
 	}
 
+	/**
+	 * Set the order state and time of an order history object.
+	 * The time setting depends on the current order state.
+	 *  
+	 * @param order The processing order
+	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
+	public void setOrderHistory(ProcessingOrder order) {
+		if (order != null) {
+			ProcessingOrderHistory history = RepositoryService.getProcessingOrderHistoryRepository()
+					.findByMissionCodeAndIdentifier(order.getMission().getCode(), order.getIdentifier());
+			if (history != null) {
+				history.setOrderState(order.getOrderState());
+				switch (order.getOrderState()) {
+				case RELEASED:
+				case RUNNING:
+					if (history.getReleaseTime() == null) {
+						history.setReleaseTime(Instant.now());
+					}
+					break;
+				case FAILED:
+				case COMPLETED:
+					if (history.getCompletionTime() == null) {
+						history.setCompletionTime(Instant.now());
+					}
+					break;
+				default:
+					break;
+				}
+				RepositoryService.getProcessingOrderHistoryRepository().save(history);
+			}
+		}
+	}
+
+	/**
+	 * Set the deletion time of an order history object.
+	 *  
+	 * @param order The processing order
+	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
+	public void setOrderHistoryOrderDeleted(ProcessingOrder order) {
+		if (order != null) {
+			ProcessingOrderHistory history = RepositoryService.getProcessingOrderHistoryRepository()
+					.findByMissionCodeAndIdentifier(order.getMission().getCode(), order.getIdentifier());
+			if (history != null) {
+				history.setDeletionTime(Instant.now());
+				RepositoryService.getProcessingOrderHistoryRepository().save(history);
+			}
+		}
+	}
+	
 	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public Boolean 
 	sendNotification(ProcessingOrder order) {
