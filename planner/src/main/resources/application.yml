@@ -10,7 +10,8 @@ spring:
         password: <db_pwd>
         hikari.transaction-isolation: TRANSACTION_SERIALIZABLE
 logging:
-    file: /proseo/log/proseo-prodplanner.log
+    file:
+        name: /proseo/log/proseo-prodplanner.log
     level:
         root: INFO
         okhttp3: WARN

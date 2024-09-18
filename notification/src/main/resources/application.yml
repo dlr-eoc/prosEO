@@ -4,7 +4,8 @@ spring:
         request-timeout: -1
     main.allow-bean-definition-overriding: true
 logging:
-    file: /proseo/log/proseo-notification.log
+    file:
+        name: /proseo/log/proseo-notification.log
     level:
         root: INFO
         de.dlr.proseo: TRACE

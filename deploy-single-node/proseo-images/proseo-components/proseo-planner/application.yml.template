@@ -10,13 +10,16 @@ spring:
         password: ********
         hikari.transaction-isolation: TRANSACTION_SERIALIZABLE
 logging:
-    file: /proseo/log/proseo-prodplanner.log
+    file:
+        name: /proseo/log/proseo-prodplanner.log
     level:
         root: INFO
         okhttp3: WARN
         de.dlr.proseo: TRACE
         #io.kubernetes.client.openapi: INFO
         org.hibernate.engine.jdbc.env.internal: WARN
+management:
+    endpoints.web.exposure.include: "health"
 proseo:
     wrapper:
         # User and password for wrapper callbacks
@@ -41,8 +44,25 @@ proseo:
         filecheckmaxcycles: 50
         # check for job steps to run after one has finished
         checkForFurtherJobStepsToRun: true
+        # collect the planning and releasing of jobs and job steps into one transaction with planningbatchsize job steps 
+        planningbatchsize: 50
+        # Sort mode to start job steps (sensingTime | submissionTime)
+        jobStepSort: sensingTime
     ingestor:
         # Callback URL for wrapper
         url: http://host.docker.internal:8081/proseo/ingestor/v0.1
+    notification:
+        # URL for notification service
+        url: http://proseo-notification:8080/proseo/notification/v0.1
+    aip:
+        # URL for AIP client
+        url: http://proseo-aip-client:8080/proseo/api/aip-client/v0.1
+        # user without mission prefix for AIP client, user has to be defined in all missions of system
+        user: user
+        # password for AIP client
+        password: password
     posix:
         workerMountPoint: /proseo/data
+
+    # Timeout for outgoing HTTP connections
+    http.timeout: 10000

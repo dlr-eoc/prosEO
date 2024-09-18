@@ -9,16 +9,20 @@ spring:
         username: <db_user>
         password: <db_pwd>
 logging:
-    file: /proseo/log/proseo-api-odip.log
+    file:
+        name: /proseo/log/proseo-api-odip.log
     level:
         root: INFO
         de.dlr.proseo: TRACE
         org.hibernate.engine.jdbc.env.internal: WARN
+management:
+    endpoints.web.exposure.include: "health"
 proseo:
     userManager.url: http://proseo-user-mgr:8080/proseo/user-mgr/v0.1
     ingestor.url: http://proseo-ingestor:8080/proseo/ingestor/v0.1
     orderManager.url: http://proseo-order-mgr:8080/proseo/order-mgr/v0.1
     productionPlanner.url: http://proseo-prodplanner:8080/proseo/planner/v0.1
+    prip.url: http://proseo-api-prip:8080/proseo/prip/odata/v1
     # Timeout for outgoing HTTP connections
     http.timeout: 10000
     # Expiration time for OAuth2 tokens in seconds
@@ -27,6 +31,8 @@ proseo:
     quota: 5000
     odip:
         facility: localhost
+        # execution delay in minutes
+        executionDelay: 5
         
     # URL for AIP client
     aip.url: http://proseo-aip-client:8080/proseo/api/aip-client/v0.1

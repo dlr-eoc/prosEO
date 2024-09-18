@@ -1,4 +1,5 @@
 spring:
+    maxResults: 10000
     jpa:
         database-platform: org.hibernate.dialect.PostgreSQLDialect
         hibernate.ddl-auto: update
@@ -10,7 +11,8 @@ spring:
         password: <db_pwd>
     packagesToScan: de.dlr.proseo.model
 logging:
-    file: /proseo/log/proseo-archive-mgr.log
+    file: 
+        name: /proseo/log/proseo-archive-mgr.log
     level:
         root: INFO
         de.dlr.proseo: TRACE
