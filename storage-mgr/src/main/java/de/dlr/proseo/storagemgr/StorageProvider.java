@@ -488,22 +488,22 @@ public class StorageProvider {
 	}
 	
 	/**
-	 * @param sourceFileOrDir
-	 * @return
+	 * Copies files from an absolute source path to an absolute path in the cache
+	 * 
+	 * @param sourceFile the file path to copy from
+	 * @param destCacheFile the file path to copy to
+	 * @return a path list of copied files
 	 * @throws IOException 
 	 */
-	public List<String> copyAbsoluteFilesToCache(String sourceFileOrDir, Long productId) throws IOException {
+	public List<String> copyAbsoluteFilesToCache(String sourceFile, StorageFile destCacheFile) throws IOException {
 		
 		if (logger.isTraceEnabled())
-			logger.trace(">>> copyAbsoluteFilesToCache({})", sourceFileOrDir);
+			logger.trace(">>> copyAbsoluteFilesToCache({}, {})", sourceFile, 
+					(null == destCacheFile ? "null" : destCacheFile.getFullPath()));
 				
-		String fileName = new File(sourceFileOrDir).getName();
-		String productFolderWithFilename = Paths.get(String.valueOf(productId), fileName).toString();
-		StorageFile targetFile = getCacheFile(productFolderWithFilename);
-		
 		PosixDAL posixDAL = new PosixDAL(getPosixConfigurationFromFile());
 		
-		return posixDAL.copy(sourceFileOrDir, targetFile.getFullPath());
+		return posixDAL.copy(sourceFile, destCacheFile.getFullPath());
 
 	}
 	

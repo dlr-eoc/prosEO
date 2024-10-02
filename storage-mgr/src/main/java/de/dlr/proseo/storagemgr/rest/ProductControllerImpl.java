@@ -10,7 +10,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Paths;
 import java.text.ParseException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -89,7 +94,17 @@ public class ProductControllerImpl implements ProductController {
 
 		try {
 			String hostName = getLocalHostName();
-			String prefix = new PathConverter(restProductFS.getProductId()).addSlashAtEnd().getPath();
+			
+			ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
+			String prefix = new PathConverter(Paths.get(
+					String.valueOf(now.get(ChronoField.YEAR)),
+					String.valueOf(now.get(ChronoField.MONTH_OF_YEAR)),
+					String.valueOf(now.get(ChronoField.DAY_OF_MONTH)),
+					String.valueOf(now.get(ChronoField.HOUR_OF_DAY)),
+					String.valueOf(restProductFS.getProductId())).toString())
+				.addSlashAtEnd()
+				.getPath();
+			
 			List<String> allUploaded = new ArrayList<String>();
 
 			StorageFile targetFolder = storageProvider.getStorageFile(prefix);
