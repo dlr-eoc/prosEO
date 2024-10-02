@@ -188,7 +188,7 @@ public class GUIBaseController {
 
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				logger.log(UIMessage.NO_MISSIONS_FOUND);
+				logger.log(UIMessage.NO_ARCHIVES_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
