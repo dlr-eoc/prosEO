@@ -175,6 +175,28 @@
                 </configuration>
             </plugin>
 
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>extendable-jar</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>extendable</classifier>
+							<includes>
+								<include>de/dlr/proseo/api/aipclient/AipClientApplication.class</include>
+								<include>de/dlr/proseo/api/aipclient/AipClientConfiguration.class</include>
+								<include>de/dlr/proseo/api/aipclient/AipClientSecurityConfig.class</include>
+								<include>de/dlr/proseo/api/auxipmon/rest/**</include>
+							</includes>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 			<!-- Build Docker image -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
