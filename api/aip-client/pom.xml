@@ -198,10 +198,9 @@
 						<configuration>
 							<classifier>extendable</classifier>
 							<includes>
-								<include>de/dlr/proseo/api/aipclient/AipClientApplication.class</include>
 								<include>de/dlr/proseo/api/aipclient/AipClientConfiguration.class</include>
 								<include>de/dlr/proseo/api/aipclient/AipClientSecurityConfig.class</include>
-								<include>de/dlr/proseo/api/auxipmon/rest/**</include>
+								<include>de/dlr/proseo/api/aipclient/rest/**</include>
 							</includes>
 						</configuration>
 					</execution>

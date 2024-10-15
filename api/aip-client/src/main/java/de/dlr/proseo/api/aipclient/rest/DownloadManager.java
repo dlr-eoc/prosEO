@@ -865,6 +865,21 @@ public class DownloadManager {
 
 		return createResponse;
 	}
+	
+	/**
+	 * Mission specific additional query filters to inject into OData query
+	 * 
+	 * This method is intended for overriding by mission-specific extensions of this class.
+	 * 
+	 * @param missionCode the applicable mission
+	 * @param productType the product type to query data for
+	 * @return a string containing additional filter elements (default implementation is empty string)
+	 */
+	protected String getMissionSpecificFilters(String missionCode, String productType) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getMissionSpecificFilters({}, {})", missionCode, productType);
+		
+		return "";
+	}
 
 	/**
 	 * Send the given request to an archive
@@ -1105,6 +1120,8 @@ public class DownloadManager {
 	/**
 	 * Create product representation for Ingestor (mission-specific subclasses may want to override this method
 	 * to set the attributes from inspecting the downloaded product)
+	 * 
+	 * This method is intended for overriding by mission-specific extensions of this class.
 	 * 
 	 * @param product the product metadata as received from the archive
 	 * @param missionCode the code of the mission to ingest to
@@ -1493,14 +1510,7 @@ public class DownloadManager {
 				"(startswith(Name,'" + securityService.getMission() + "')"
 					+ " or startswith(Name,'" + securityService.getMission().substring(0, 2) + "_'))"
 				+ " and (contains(Name,'" + productType + "')"
-				+ (securityService.getMission().startsWith("S1") && productType.startsWith("SM") ?
-						" or contains(Name,'S1" + productType.substring(2) + "')" +
-						" or contains(Name,'S2" + productType.substring(2) + "')" +
-						" or contains(Name,'S3" + productType.substring(2) + "')" +
-						" or contains(Name,'S4" + productType.substring(2) + "')" +
-						" or contains(Name,'S5" + productType.substring(2) + "')" +
-						" or contains(Name,'S6" + productType.substring(2) + "')"
-						: "")
+				+ getMissionSpecificFilters(securityService.getMission(), productType)
 				+ ")"
 				+ " and ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
 				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart);
@@ -1587,14 +1597,7 @@ public class DownloadManager {
 				"(startswith(Name,'" + securityService.getMission() + "')"
 					+ " or startswith(Name,'" + securityService.getMission().substring(0, 2) + "_'))"
 				+ " and (contains(Name,'" + productType + "')"
-				+ (securityService.getMission().startsWith("S1") && productType.startsWith("SM") ?
-						" or contains(Name,'S1" + productType.substring(2) + "')" +
-						" or contains(Name,'S2" + productType.substring(2) + "')" +
-						" or contains(Name,'S3" + productType.substring(2) + "')" +
-						" or contains(Name,'S4" + productType.substring(2) + "')" +
-						" or contains(Name,'S5" + productType.substring(2) + "')" +
-						" or contains(Name,'S6" + productType.substring(2) + "')"
-						: "")
+				+ getMissionSpecificFilters(securityService.getMission(), productType)
 				+ ")"
 				+ " and ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
 				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart);
