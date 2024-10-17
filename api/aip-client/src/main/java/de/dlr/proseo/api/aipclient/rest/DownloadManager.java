@@ -597,28 +597,33 @@ public class DownloadManager {
 			}
 
 			try {
-				restProduct.setSensingStartTime(OrbitTimeFormatter.format(Instant.parse(product.getProperty(ODATA_PROPERTY_CONTENT_DATE)
-					.getComplexValue()
-					.get(ODATA_PROPERTY_CONTENTDATE_START)
-					.getPrimitiveValue()
-					.toCastValue(String.class))));
+				restProduct.setSensingStartTime(OrbitTimeFormatter.format(
+					Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse(
+						product.getProperty(ODATA_PROPERTY_CONTENT_DATE)
+							.getComplexValue()
+							.get(ODATA_PROPERTY_CONTENTDATE_START)
+							.getPrimitiveValue()
+							.toCastValue(String.class)))));
 			} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
 				logger.log(AipClientMessage.PRODUCT_VAL_START_MISSING, product.toString());
 				return null;
 			}
 			try {
-				restProduct.setSensingStopTime(OrbitTimeFormatter.format(Instant.parse(product.getProperty(ODATA_PROPERTY_CONTENT_DATE)
-					.getComplexValue()
-					.get(ODATA_PROPERTY_CONTENTDATE_END)
-					.getPrimitiveValue()
-					.toCastValue(String.class))));
+				restProduct.setSensingStopTime(OrbitTimeFormatter.format(
+					Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse(
+						product.getProperty(ODATA_PROPERTY_CONTENT_DATE)
+							.getComplexValue()
+							.get(ODATA_PROPERTY_CONTENTDATE_END)
+							.getPrimitiveValue()
+							.toCastValue(String.class)))));
 			} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
 				logger.log(AipClientMessage.PRODUCT_VAL_STOP_MISSING, product.toString());
 				return null;
 			}
 			try {
 				restProduct.setPublicationTime(OrbitTimeFormatter
-					.format(Instant.parse(product.getProperty(ODATA_PROPERTY_PUBLICATION_DATE).getPrimitiveValue().toCastValue(String.class))));
+					.format(Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse(
+							product.getProperty(ODATA_PROPERTY_PUBLICATION_DATE).getPrimitiveValue().toCastValue(String.class)))));
 			} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
 				logger.log(AipClientMessage.PRODUCT_PUBLICATION_MISSING, product.toString());
 				return null;
@@ -650,7 +655,7 @@ public class DownloadManager {
 							restProductFile.setChecksumTime(OrbitTimeFormatter.format(Instant
 								.parse(clientValue.asComplex().get("ChecksumDate").getPrimitiveValue().toCastValue(String.class))));
 						}
-					} catch (EdmPrimitiveTypeException e) {
+					} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
 						logger.log(AipClientMessage.PRODUCT_HASH_MISSING, product.toString());
 					}
 				});
@@ -685,7 +690,12 @@ public class DownloadManager {
 							logger.trace("    ... with Name {}", attributeName);
 						switch (attributeName) {
 						case PRODUCT_ATTRIBUTE_PROCESSING_DATE:
-							restProduct.setGenerationTime(OrbitTimeFormatter.format(Instant.parse(attributeValue)));
+							try {
+								restProduct.setGenerationTime(OrbitTimeFormatter.format(
+										Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse(attributeValue))));
+							} catch (DateTimeParseException e) {
+								logger.log(AipClientMessage.PRODUCT_GENERATION_MISSING, product.toString());
+							}
 							break;
 						case PRODUCT_ATTRIBUTE_PRODUCT_TYPE:
 							restProduct.setProductClass(attributeValue);
@@ -707,6 +717,12 @@ public class DownloadManager {
 			return null;
 		} catch (NullPointerException e) {
 			logger.log(AipClientMessage.MANDATORY_ELEMENT_MISSING, product);
+			return null;
+		}
+		
+		// Make sure generation time exists (retrieved from list of attributes, so no systematic property access)
+		if (null == restProduct.getGenerationTime()) {
+			logger.log(AipClientMessage.PRODUCT_GENERATION_MISSING, product.toString());
 			return null;
 		}
 
