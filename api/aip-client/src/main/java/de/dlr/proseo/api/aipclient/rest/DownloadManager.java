@@ -727,6 +727,13 @@ public class DownloadManager {
 						}
 
 					});
+					
+					// Make sure generation time exists in attributes (no systematic property access)
+					if (null == restProduct.getGenerationTime()) {
+						logger.log(AipClientMessage.PRODUCT_GENERATION_MISSING, product.toString());
+						return null;
+					}
+
 				} catch (NullPointerException e) {
 					logger.log(AipClientMessage.PRODUCT_ATTRIBUTES_MISSING, product.toString());
 					return null;
@@ -740,12 +747,6 @@ public class DownloadManager {
 			return null;
 		}
 		
-		// Make sure generation time exists (retrieved from list of attributes, so no systematic property access)
-		if (null == restProduct.getGenerationTime()) {
-			logger.log(AipClientMessage.PRODUCT_GENERATION_MISSING, product.toString());
-			return null;
-		}
-
 		return restProduct;
 	}
 
