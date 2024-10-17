@@ -138,6 +138,7 @@ public class DownloadManager {
 	private static final String ODATA_PROPERTY_CHECKSUM = "Checksum";
 	private static final String ODATA_PROPERTY_CONTENT_LENGTH = "ContentLength";
 	private static final String ODATA_PROPERTY_FILENAME = "Name";
+	private static final String ODATA_PROPERTY_ONLINE = "Online";
 	private static final String ODATA_PROPERTY_PUBLICATION_DATE = "PublicationDate";
 	private static final String ODATA_PROPERTY_CONTENTDATE_END = "End";
 	private static final String ODATA_PROPERTY_CONTENTDATE_START = "Start";
@@ -189,6 +190,19 @@ public class DownloadManager {
 	private static ProseoLogger logger = new ProseoLogger(DownloadManager.class);
 	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.AIP_CLIENT);
 
+	/**
+	 * Extension to RestProduct class to include the "Online" parameter
+	 */
+	private static class AipRestProduct extends RestProduct {
+		private static final long serialVersionUID = 1L;
+		
+		public Boolean online = false;
+		
+		public Boolean isOnline() { return online; }
+
+		public void setOnline(Boolean online) { this.online = online; }
+	}
+	
 	/**
 	 * Fill mapping between OData types and prosEO parameter types
 	 */
@@ -579,14 +593,14 @@ public class DownloadManager {
 	 * @param attributes flag to fill attributes
 	 * @return the corresponding REST interface product
 	 */
-	private RestProduct toRestProduct(ClientEntity product, ProcessingFacility facility, Boolean attributes) {
+	private AipRestProduct toRestProduct(ClientEntity product, ProcessingFacility facility, Boolean attributes) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> toRestProduct({})", (null == product ? "MISSING" : product.getProperty(ODATA_PROPERTY_ID)));
 
 		if (null == product)
 			return null;
 
-		RestProduct restProduct = new RestProduct();
+		AipRestProduct restProduct = new AipRestProduct();
 
 		try {
 			try {
@@ -626,6 +640,12 @@ public class DownloadManager {
 							product.getProperty(ODATA_PROPERTY_PUBLICATION_DATE).getPrimitiveValue().toCastValue(String.class)))));
 			} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
 				logger.log(AipClientMessage.PRODUCT_PUBLICATION_MISSING, product.toString());
+				return null;
+			}
+			try {
+				restProduct.setOnline(product.getProperty(ODATA_PROPERTY_ONLINE).getPrimitiveValue().toCastValue(Boolean.class));
+			} catch (EdmPrimitiveTypeException | NullPointerException e) {
+				logger.log(AipClientMessage.PRODUCT_ONLINEFLAG_MISSING, product.toString());
 				return null;
 			}
 
@@ -824,7 +844,7 @@ public class DownloadManager {
 
 		// Create a request
 		String fullRequestUri = archive.getBaseUri() 
-				+ (null == archive.getContext() ? "" : "/" + archive.getContext())
+				+ (null == archive.getContext() || archive.getContext().isBlank() ? "" : "/" + archive.getContext())
 				+ "/" + ODATA_CONTEXT
 				+ "/" + requestUri;
 		
@@ -874,7 +894,7 @@ public class DownloadManager {
 
 		if (null == createResponse) {
 			throw new IOException(
-					logger.log(AipClientMessage.ORDER_REQUEST_FAILED, archive.getBaseUri() + "/" + archive.getTokenUri()));
+					logger.log(AipClientMessage.ORDER_REQUEST_FAILED, archive.getBaseUri() + "/" + archive.getBaseUri()));
 		}
 		if (logger.isTraceEnabled())
 			logger.trace("... got create response '{}'", createResponse);
@@ -1362,7 +1382,7 @@ public class DownloadManager {
 			throw e;
 		}
 
-		logger.log(AipClientMessage.PRODUCT_REGISTERED, product.getUuid());
+		logger.log(AipClientMessage.PRODUCT_REGISTERED, product.getProductFileName());
 	}
 
 	/**
@@ -1373,7 +1393,7 @@ public class DownloadManager {
 	 * @param facility the processing facility to ingest the product to
 	 * @param password Ingestor password
 	 */
-	private void downloadAndIngest(final ProductArchive archive, final RestProduct product, final ProcessingFacility facility,
+	private void downloadAndIngest(final ProductArchive archive, final AipRestProduct product, final ProcessingFacility facility,
 			String password) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> downloadAndIngest({}, {}, {}, ********)", (null == archive ? "NULL" : archive.getCode()),
@@ -1421,8 +1441,9 @@ public class DownloadManager {
 
 				try {
 					// For long-term archives, create a product order first and wait for its completion
-					if (ArchiveType.AIP.equals(archive.getArchiveType()) 
-							|| ArchiveType.SIMPLEAIP.equals(archive.getArchiveType())) {
+					if (!product.isOnline() && (
+							ArchiveType.AIP.equals(archive.getArchiveType()) 
+							|| ArchiveType.SIMPLEAIP.equals(archive.getArchiveType()))) {
 						createProductOrderAndWait(archive, product.getUuid());
 					}
 
@@ -1482,7 +1503,7 @@ public class DownloadManager {
 			logger.log(AipClientMessage.MULTIPLE_PRODUCTS_FOUND_BY_NAME, filename, archive.getName());
 		}
 
-		RestProduct restProduct = toRestProduct(productList.get(0), facility, true);
+		AipRestProduct restProduct = toRestProduct(productList.get(0), facility, true);
 
 		// Start download and ingestion thread
 		downloadAndIngest(archive, restProduct, facility, password);
@@ -1556,7 +1577,7 @@ public class DownloadManager {
 			logger.log(AipClientMessage.MULTIPLE_PRODUCTS_FOUND_BY_TIME, productType, earliestStart, earliestStop, archive.getName());
 		}
 		ClientEntity odataProduct = productList.get(0);
-		RestProduct restProduct = null; 
+		AipRestProduct restProduct = null; 
 		if (archive.getArchiveType().equals(ArchiveType.SIMPLEAIP)) {
 			// the attributes where not expanded in first query cause slow reaction
 			// query the product directly and expand the attributes
@@ -1643,7 +1664,7 @@ public class DownloadManager {
 		List<RestProduct> restProducts = new ArrayList<>();
 
 		for (ClientEntity odataProduct : productList) {
-			RestProduct restProduct = null; 
+			AipRestProduct restProduct = null; 
 			if (archive.getArchiveType().equals(ArchiveType.SIMPLEAIP)) {
 				// the attributes where not expanded in first query cause slow reaction
 				// query the product directly and expand the attributes
