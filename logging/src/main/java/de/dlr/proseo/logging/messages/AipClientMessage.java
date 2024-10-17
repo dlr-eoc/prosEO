@@ -57,7 +57,8 @@ public enum AipClientMessage implements ProseoMessage {
 	INPUT_FILE_NOT_FOUND_BY_TIME		(6841, Level.ERROR, false, "No input file of type {0} with sensing time interval {1} - {2} found locally or in any external archive", ""),
 	NO_PRODUCTS_FOUND_BY_TIME	 		(6842, Level.INFO, true, "No product files of type {0} intersecting sensing time interval {1} - {2} found in external archive {3}", ""),
 	PRODUCT_TYPE_MISMATCH				(6843, Level.WARN, true, "Product type {0} of archive product does not match requested type {1}, will be replaced", ""),
-	DOWNLOAD_RETRY_INTERRUPTED			(6844, Level.ERROR, false, "Wait for download retry of product {0} interrupted, product download failed", "")
+	DOWNLOAD_RETRY_INTERRUPTED			(6844, Level.ERROR, false, "Wait for download retry of product {0} interrupted, product download failed", ""),
+	PRODUCT_GENERATION_MISSING			(6845, Level.ERROR, false, "Product list entry {0} does not contain valid generation time ('ProcessingDate' attribute)", "")
 	;
 
 	private final int code;
