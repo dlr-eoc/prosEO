@@ -536,7 +536,6 @@ function setState(oId, state) {
     var url = "/order-state/post?id=" + oId + "&state=" + state;
     var row = document.getElementById(oId);
     var method = 'POST';
-
     $.ajax({
         url : url,
         method : method,

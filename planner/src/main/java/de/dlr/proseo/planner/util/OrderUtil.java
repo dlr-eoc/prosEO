@@ -1589,7 +1589,6 @@ public class OrderUtil {
 	 *  
 	 * @param order The processing order
 	 */
-	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void setOrderHistory(ProcessingOrder order) {
 		if (order != null) {
 			ProcessingOrderHistory history = RepositoryService.getProcessingOrderHistoryRepository()
