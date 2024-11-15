@@ -16,10 +16,12 @@ import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -612,7 +614,7 @@ public class DownloadManager {
 
 			try {
 				restProduct.setSensingStartTime(OrbitTimeFormatter.format(
-					Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse(
+					Instant.from(OrbitTimeFormatter.parse(
 						product.getProperty(ODATA_PROPERTY_CONTENT_DATE)
 							.getComplexValue()
 							.get(ODATA_PROPERTY_CONTENTDATE_START)
@@ -624,7 +626,7 @@ public class DownloadManager {
 			}
 			try {
 				restProduct.setSensingStopTime(OrbitTimeFormatter.format(
-					Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse(
+					Instant.from(OrbitTimeFormatter.parse(
 						product.getProperty(ODATA_PROPERTY_CONTENT_DATE)
 							.getComplexValue()
 							.get(ODATA_PROPERTY_CONTENTDATE_END)
@@ -636,7 +638,7 @@ public class DownloadManager {
 			}
 			try {
 				restProduct.setPublicationTime(OrbitTimeFormatter
-					.format(Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse(
+					.format(Instant.from(OrbitTimeFormatter.parse(
 							product.getProperty(ODATA_PROPERTY_PUBLICATION_DATE).getPrimitiveValue().toCastValue(String.class)))));
 			} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
 				logger.log(AipClientMessage.PRODUCT_PUBLICATION_MISSING, product.toString());
@@ -646,7 +648,7 @@ public class DownloadManager {
 				restProduct.setOnline(product.getProperty(ODATA_PROPERTY_ONLINE).getPrimitiveValue().toCastValue(Boolean.class));
 			} catch (EdmPrimitiveTypeException | NullPointerException e) {
 				logger.log(AipClientMessage.PRODUCT_ONLINEFLAG_MISSING, product.toString());
-				return null;
+				restProduct.setOnline(true);
 			}
 
 			// Create product file sub-structure
@@ -712,7 +714,7 @@ public class DownloadManager {
 						case PRODUCT_ATTRIBUTE_PROCESSING_DATE:
 							try {
 								restProduct.setGenerationTime(OrbitTimeFormatter.format(
-										Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse(attributeValue))));
+									Instant.from(OrbitTimeFormatter.parse(attributeValue))));
 							} catch (DateTimeParseException e) {
 								logger.log(AipClientMessage.PRODUCT_GENERATION_MISSING, product.toString());
 							}
