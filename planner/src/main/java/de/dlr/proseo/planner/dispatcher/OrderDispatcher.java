@@ -858,7 +858,7 @@ public class OrderDispatcher {
 						});
 
 						if (!plannerResponse.getSuccess()) {
-							// If an interrupt message is received, set the answer, release the semaphore and return
+							// If an interrupt message is received, set the answer and return
 							answer = plannerResponse;
 
 							PlannerResultMessage msg = new PlannerResultMessage(PlannerMessage.PLANNING_INTERRUPTED);
@@ -1191,8 +1191,6 @@ public class OrderDispatcher {
 					if (logger.isTraceEnabled())
 						logger.trace("<<< createProductsAndJobStep");
 					throw e;
-				} finally {
-					// productionPlanner.releaseReleaseSemaphore();
 				}
 			}
 			allProducts.addAll(products);

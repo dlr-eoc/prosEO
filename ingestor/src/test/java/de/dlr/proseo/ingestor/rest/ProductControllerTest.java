@@ -102,14 +102,6 @@ public class ProductControllerTest {
 	public static void setUpBeforeClass() throws Exception {
 		wireMockServer = new WireMockServer(WIREMOCK_PORT);
 		wireMockServer.start();
-
-		wireMockServer
-				.stubFor(WireMock.get(WireMock.urlEqualTo("/planner/semaphore/acquire")).willReturn(WireMock.aResponse()
-						.withStatus(200).withHeader("Content-Type", "application/json").withBody("{}")));
-
-		wireMockServer
-				.stubFor(WireMock.get(WireMock.urlEqualTo("/planner/semaphore/release")).willReturn(WireMock.aResponse()
-						.withStatus(200).withHeader("Content-Type", "application/json").withBody("{}")));
 		
 //		wireMockServer.getStubMappings().forEach(s -> logger.trace("Stub mapping: " + s));
 
