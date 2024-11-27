@@ -8,6 +8,8 @@ package de.dlr.proseo.model.util;
 import static org.junit.Assert.*;
 
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 import org.junit.Test;
@@ -54,6 +56,7 @@ public class OrbitTimeFormatterTest {
 		testInstantNoTimezone = Instant.parse(inputNoTimezone + "Z");
 		
 		assertEquals("Parsing without timezone and with milliseconds failed:", testInstantNoTimezone, Instant.from(OrbitTimeFormatter.parse(inputNoTimezone)));
+		// assertEquals("Parsing without timezone and with milliseconds failed:", testInstantNoTimezone, Instant.from(OrbitTimeFormatter.parse(inputNoTimezone + "G")));
 		
 		// --- Test invalid inputs ---
 		String invalidInput = "something weird";

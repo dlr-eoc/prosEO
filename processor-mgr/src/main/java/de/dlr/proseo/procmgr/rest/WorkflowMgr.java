@@ -872,6 +872,7 @@ public class WorkflowMgr {
 
 					restParam.setParameterType(restParam.getParameterType().toUpperCase());
 					newParam.setParameterType(ParameterType.valueOf(restParam.getParameterType()));
+					workflowChanged = true;
 					switch (restParam.getParameterType()) {
 					case "BOOLEAN":
 						if (!restParam.getParameterValue().equalsIgnoreCase("true")
@@ -933,6 +934,12 @@ public class WorkflowMgr {
 				if (modelWorkflow.getInputFilters().containsKey(prodClass)) {
 					modelWorkflow.getInputFilters().remove(prodClass);
 				}
+			}
+		} else {
+			// clear options
+			if (!modelWorkflow.getInputFilters().isEmpty()) {
+				modelWorkflow.getInputFilters().clear();
+				workflowChanged = true;
 			}
 		}
 
@@ -998,6 +1005,7 @@ public class WorkflowMgr {
 
 					restParam.setParameterType(restParam.getParameterType().toUpperCase());
 					newParam.setParameterType(ParameterType.valueOf(restParam.getParameterType()));
+					workflowChanged = true;
 					switch (restParam.getParameterType()) {
 					case "BOOLEAN":
 						if (!restParam.getParameterValue().equalsIgnoreCase("true")
@@ -1063,6 +1071,12 @@ public class WorkflowMgr {
 					modelWorkflow.getClassOutputParameters().remove(prodClass);
 				}
 			}
+		} else {
+			// clear options
+			if (!modelWorkflow.getClassOutputParameters().isEmpty()) {
+				modelWorkflow.getClassOutputParameters().clear();
+				workflowChanged = true;
+			}
 		}
 
 		// Quietly replace null output parameters with empty list
@@ -1106,6 +1120,7 @@ public class WorkflowMgr {
 
 				// Potentially override old values
 				modelOutputParameter.setParameterType(ParameterType.valueOf(restOutputParameter.getParameterType()));
+				workflowChanged = true;
 				switch (restOutputParameter.getParameterType()) {
 				case "BOOLEAN":
 					if (!restOutputParameter.getParameterValue().equalsIgnoreCase("true")
@@ -1165,7 +1180,14 @@ public class WorkflowMgr {
 			for (String key : oldOutputParameters.keySet()) {
 				if (modelWorkflow.getOutputParameters().containsKey(key)) {
 					modelWorkflow.getOutputParameters().remove(key);
+					workflowChanged = true;
 				}
+			}
+		} else {
+			// clear options
+			if (!modelWorkflow.getOutputParameters().isEmpty()) {
+				modelWorkflow.getOutputParameters().clear();
+				workflowChanged = true;
 			}
 		}
 
@@ -1179,11 +1201,6 @@ public class WorkflowMgr {
 
 		// TODO change modification logic regarding workflow options, or version will be
 		// incremented regardless of actual changes
-		// Check whether options were deleted entirely
-		if (restWorkflow.getWorkflowOptions().isEmpty()) {
-			workflowOptionsChanged = true;
-			modelWorkflow.getWorkflowOptions().clear();
-		}
 
 		// If options were provided, update old options (and don't create new one)
 
@@ -1279,6 +1296,12 @@ public class WorkflowMgr {
 				if (toRemove != null) {
 					modelWorkflow.getWorkflowOptions().remove(toRemove);
 				}
+			}
+		} else {
+			// clear options
+			if (!modelWorkflow.getWorkflowOptions().isEmpty()) {
+				modelWorkflow.getWorkflowOptions().clear();
+				workflowChanged = true;
 			}
 		}
 
