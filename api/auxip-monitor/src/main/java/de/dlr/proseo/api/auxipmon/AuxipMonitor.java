@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.Base64;
@@ -628,11 +629,11 @@ public class AuxipMonitor extends BaseMonitor {
 //			if (logger.isTraceEnabled()) logger.trace("... d = {}", d);
 //			Instant i = Instant.parse(d);
 //			if (logger.isTraceEnabled()) logger.trace("... i = {}", i);
-			tp.setStartTime(Instant.parse(product.getProperty("ContentDate")
+			tp.setStartTime(Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse(product.getProperty("ContentDate")
 				.getComplexValue()
 				.get("Start")
 				.getPrimitiveValue()
-				.toCastValue(String.class)));
+				.toCastValue(String.class))));
 		} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
 			logger.log(ApiMonitorMessage.PRODUCT_VAL_START_MISSING, product.toString());
 			return null;
@@ -640,8 +641,8 @@ public class AuxipMonitor extends BaseMonitor {
 //		if (logger.isTraceEnabled()) logger.trace("... start = {}", tp.getStartTime());
 
 		try {
-			tp.setStopTime(Instant.parse(
-					product.getProperty("ContentDate").getComplexValue().get("End").getPrimitiveValue().toCastValue(String.class)));
+			tp.setStopTime(Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse(
+					product.getProperty("ContentDate").getComplexValue().get("End").getPrimitiveValue().toCastValue(String.class))));
 		} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
 			logger.log(ApiMonitorMessage.PRODUCT_VAL_STOP_MISSING, product.toString());
 			return null;
@@ -650,7 +651,10 @@ public class AuxipMonitor extends BaseMonitor {
 
 		try {
 			tp.setPublicationTime(
-					Instant.parse(product.getProperty("PublicationDate").getPrimitiveValue().toCastValue(String.class)));
+					Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse(
+							product.getProperty("PublicationDate")
+							.getPrimitiveValue()
+							.toCastValue(String.class))));
 		} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
 			logger.log(ApiMonitorMessage.PRODUCT_PUBLICATION_MISSING, product.toString());
 			return null;
@@ -659,7 +663,10 @@ public class AuxipMonitor extends BaseMonitor {
 			logger.trace("... publication = {}", tp.getPublicationTime());
 
 		try {
-			tp.setEvictionTime(Instant.parse(product.getProperty("EvictionDate").getPrimitiveValue().toCastValue(String.class)));
+			tp.setEvictionTime(Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse(
+					product.getProperty("EvictionDate")
+					.getPrimitiveValue()
+					.toCastValue(String.class))));
 		} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
 			logger.log(ApiMonitorMessage.PRODUCT_EVICTION_MISSING, product.toString());
 			return null;
