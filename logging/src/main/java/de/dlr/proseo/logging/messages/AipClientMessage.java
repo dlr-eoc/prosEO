@@ -37,7 +37,7 @@ public enum AipClientMessage implements ProseoMessage {
 	ODATA_REQUEST_ABORTED				(6821, Level.ERROR, false, "OData request {0} aborted (cause: {1} / {2})", ""),
 	ODATA_REQUEST_FAILED				(6822, Level.ERROR, false, "OData request {0} failed with HTTP status code {1}, message: {2}", ""),
 	ODATA_RESPONSE_UNREADABLE			(6823, Level.ERROR, false, "OData response not readable", ""),
-	RETRIEVAL_RESULT					(6824, Level.INFO, true, "Retrieval request returned {0} products out of {1} available", ""),
+	RETRIEVAL_RESULT					(6824, Level.INFO, true, "Retrieval request returned {1} {0} out of {2} available", ""),
 	PRODUCT_UUID_MISSING				(6825, Level.ERROR, false, "Product list entry {0} does not contain product UUID ('Id' element)", ""),
 	PRODUCT_FILENAME_MISSING			(6826, Level.ERROR, false, "Product list entry {0} does not contain product filename ('Name' element)", ""),
 	PRODUCT_SIZE_MISSING				(6827, Level.ERROR, false, "Product list entry {0} does not contain product size ('ContentLength' element)", ""),
@@ -59,7 +59,8 @@ public enum AipClientMessage implements ProseoMessage {
 	PRODUCT_TYPE_MISMATCH				(6843, Level.WARN, true, "Product type {0} of archive product does not match requested type {1}, will be replaced", ""),
 	DOWNLOAD_RETRY_INTERRUPTED			(6844, Level.ERROR, false, "Wait for download retry of product {0} interrupted, product download failed", ""),
 	PRODUCT_GENERATION_MISSING			(6845, Level.ERROR, false, "Product list entry {0} does not contain valid generation time ('ProcessingDate' attribute)", ""),
-	PRODUCT_ONLINEFLAG_MISSING			(6846, Level.ERROR, false, "Product list entry {0} does not contain valid online flag ('Online' element)", "")
+	PRODUCT_ONLINEFLAG_MISSING			(6846, Level.ERROR, false, "Product list entry {0} does not contain valid online flag ('Online' element)", ""),
+	CREATING_PRODUCT_ORDER				(6847, Level.INFO, true, "Creating product order for product {0} ({1}) in archive {2}", "")
 	;
 
 	private final int code;

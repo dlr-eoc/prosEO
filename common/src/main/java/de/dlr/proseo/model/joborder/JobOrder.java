@@ -108,7 +108,7 @@ public class JobOrder {
 	/**
 	 * Sets the List_of_Ipf_Procs element
 	 *
-	 * @param the list of processors
+	 * @param listOfProcs the list of processors
 	 */
 	public void setListOfProcs(List<Proc> listOfProcs) {	
 		this.listOfProcs = listOfProcs;
