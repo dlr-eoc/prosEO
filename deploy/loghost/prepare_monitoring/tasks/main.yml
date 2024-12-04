@@ -12,6 +12,6 @@
 
 - name: Copy Docker compose file for prosEO Monitor and Grafana
   copy:
-    src: docker-compose.yml
+    src: docker-compose-monitor.yml
     dest: /opt/proseo
     mode: 0644

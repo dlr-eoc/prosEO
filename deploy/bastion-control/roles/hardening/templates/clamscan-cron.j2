@@ -3,7 +3,11 @@ echo "-- Starting clamscan at $(date) --" >>/var/log/clamscan.log
 clamscan -ri \
     /etc /home /opt /srv /tmp /usr /var \
     >>/var/log/clamscan.log 2>&1
-if [ ! 0 -eq $? ] ; then
+RC=$?
+echo "-- Leaving clamscan at $(date) with exit code $RC --" >>/var/log/clamscan.log
+echo "" >>/var/log/clamscan.log
+
+if [[ ${RC} -ne 0 ]] ; then
   mail -s "ClamAV alert from $HOSTNAME, check log" "{{ rkhunter_email|default('root@localhost') }}" <<EOF
   Please check /var/log/clamscan.log
 EOF
