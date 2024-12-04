@@ -16,7 +16,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Base64;
 import java.util.Map;
@@ -66,6 +65,7 @@ import de.dlr.proseo.basewrap.MD5Util;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.ApiMonitorMessage;
 import de.dlr.proseo.logging.messages.OAuthMessage;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
  * Monitor for Auxiliary Data Interface Points (AUXIP)
@@ -619,7 +619,7 @@ public class AuxipMonitor extends BaseMonitor {
 //			if (logger.isTraceEnabled()) logger.trace("... d = {}", d);
 //			Instant i = Instant.parse(d);
 //			if (logger.isTraceEnabled()) logger.trace("... i = {}", i);
-			tp.setStartTime(Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse(product.getProperty("ContentDate")
+			tp.setStartTime(Instant.from(OrbitTimeFormatter.parse(product.getProperty("ContentDate")
 				.getComplexValue()
 				.get("Start")
 				.getPrimitiveValue()
@@ -631,7 +631,7 @@ public class AuxipMonitor extends BaseMonitor {
 //		if (logger.isTraceEnabled()) logger.trace("... start = {}", tp.getStartTime());
 
 		try {
-			tp.setStopTime(Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse(
+			tp.setStopTime(Instant.from(OrbitTimeFormatter.parse(
 					product.getProperty("ContentDate").getComplexValue().get("End").getPrimitiveValue().toCastValue(String.class))));
 		} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
 			logger.log(ApiMonitorMessage.PRODUCT_VAL_STOP_MISSING, product.toString());
@@ -641,7 +641,7 @@ public class AuxipMonitor extends BaseMonitor {
 
 		try {
 			tp.setPublicationTime(
-					Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse(
+					Instant.from(OrbitTimeFormatter.parse(
 							product.getProperty("PublicationDate")
 							.getPrimitiveValue()
 							.toCastValue(String.class))));
@@ -653,7 +653,7 @@ public class AuxipMonitor extends BaseMonitor {
 			logger.trace("... publication = {}", tp.getPublicationTime());
 
 		try {
-			tp.setEvictionTime(Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse(
+			tp.setEvictionTime(Instant.from(OrbitTimeFormatter.parse(
 					product.getProperty("EvictionDate")
 					.getPrimitiveValue()
 					.toCastValue(String.class))));
