@@ -729,6 +729,13 @@ public class DownloadManager {
 						}
 
 					});
+					
+					// Make sure generation time exists in attributes (no systematic property access)
+					if (null == restProduct.getGenerationTime()) {
+						logger.log(AipClientMessage.PRODUCT_GENERATION_MISSING, product.toString());
+						return null;
+					}
+
 				} catch (NullPointerException e) {
 					logger.log(AipClientMessage.PRODUCT_ATTRIBUTES_MISSING, product.toString());
 					return null;
@@ -742,12 +749,6 @@ public class DownloadManager {
 			return null;
 		}
 		
-		// Make sure generation time exists (retrieved from list of attributes, so no systematic property access)
-		if (null == restProduct.getGenerationTime()) {
-			logger.log(AipClientMessage.PRODUCT_GENERATION_MISSING, product.toString());
-			return null;
-		}
-
 		return restProduct;
 	}
 
@@ -926,7 +927,7 @@ public class DownloadManager {
 	 * @param queryEntity the entity to query for
 	 * @param queryFilter the query filter to send
 	 * @param expandAttributes flag to expand the attributes
-	 * @return a possibly empty list of products (as attribute maps) or null, if an invalid response was received
+	 * @return a possibly empty list of products or orders (as attribute maps) or null, if an invalid response was received
 	 * @throws IOException in case of a communication error
 	 */
 	private List<ClientEntity> queryArchive(ProductArchive archive, String queryEntity, String queryFilter,
@@ -988,8 +989,10 @@ public class DownloadManager {
 		}
 
 		ClientEntitySet entitySet = response.getBody();
-		logger.log(AipClientMessage.RETRIEVAL_RESULT, entitySet.getEntities().size(), entitySet.getCount());
-
+		if (ODATA_ENTITY_PRODUCTS.equals(queryEntity) || logger.isDebugEnabled()) {
+			logger.log(AipClientMessage.RETRIEVAL_RESULT, (ODATA_ENTITY_PRODUCTS.equals(queryEntity) ? "products" : "orders"),
+					entitySet.getEntities().size(), entitySet.getCount());
+		}
 		return entitySet.getEntities();
 	}
 
@@ -1104,8 +1107,7 @@ public class DownloadManager {
 				// Already logged
 				throw e;
 			} catch (Exception e) {
-				if (logger.isDebugEnabled())
-					logger.debug("Stack trace: ", e);
+				if (logger.isDebugEnabled()) logger.debug("Stack trace: ", e);
 				throw new IOException(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass().getName() + "/" + e.getMessage()));
 			}
 
@@ -1446,6 +1448,8 @@ public class DownloadManager {
 					if (!product.isOnline() && (
 							ArchiveType.AIP.equals(archive.getArchiveType()) 
 							|| ArchiveType.SIMPLEAIP.equals(archive.getArchiveType()))) {
+						logger.log(AipClientMessage.CREATING_PRODUCT_ORDER, 
+								product.getProductFile().get(0).getProductFileName(), product.getUuid(), archive.getName());
 						createProductOrderAndWait(archive, product.getUuid());
 					}
 
