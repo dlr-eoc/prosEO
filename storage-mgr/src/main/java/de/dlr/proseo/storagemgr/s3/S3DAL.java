@@ -145,11 +145,13 @@ public class S3DAL {
 
 		if (cfg.isDefaultEndPoint()) {
 			s3ClientV2 = S3Client.builder()
+				.forcePathStyle(true)
 				.region(s3Region)
 				.credentialsProvider(StaticCredentialsProvider.create(credentials))
 				.build();
 		} else {
 			s3ClientV2 = S3Client.builder()
+				.forcePathStyle(true)
 				.region(s3Region)
 				.endpointOverride(URI.create(cfg.getS3EndPoint()))
 				.credentialsProvider(StaticCredentialsProvider.create(credentials))
