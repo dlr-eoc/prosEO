@@ -388,7 +388,7 @@ resourceTypes:
       status?:
         description: The status of the job steps to retrieve
         type: string
-        enum: [ INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED, NONE ]
+        enum: [ INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED, CLOSED, NONE ]
       mission?: 
         description: The mission for which to retrieve the job steps
         type: string
@@ -417,6 +417,29 @@ resourceTypes:
           headers:
             Warning: !include types/error.raml
         
+/orderjobstepsofstates:
+  type: standard
+  get:
+    description: |
+      Get production planner job steps by status, mission, and latest of size "last".
+    displayName: getJobStepsOfStates
+    queryParameters:
+      status:
+        description: The status of the job steps to retrieve
+        type: string[]
+      mission: 
+        description: The mission for which to retrieve the job steps
+        type: string
+      last: 
+        description: The number of latest job steps to retrieve
+        type: integer
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestJobStep[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/jobstep-list.json
+            
 /missions:
   type: standard
   get:
