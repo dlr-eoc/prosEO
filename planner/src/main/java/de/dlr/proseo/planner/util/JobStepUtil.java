@@ -107,6 +107,9 @@ public class JobStepUtil {
 	@Autowired
 	RestTemplateBuilder rtb;
 
+	public ProductQueryService getProductQueryService() {
+		return productQueryService;
+	}
 	/**
 	 * Retrieves job steps with a specific job step state, associated with a given mission code. Results are ordered by processing
 	 * completion time in descending order, limited to a specified number.
