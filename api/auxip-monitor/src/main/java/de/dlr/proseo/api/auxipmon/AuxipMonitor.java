@@ -407,7 +407,7 @@ public class AuxipMonitor extends BaseMonitor {
 		String oDataServiceRoot = config.getAuxipBaseUri() + "/"
 				+ (config.getAuxipContext().isBlank() ? "" : config.getAuxipContext() + "/") + "odata/v1";
 		String authorizationHeader = config.getAuxipUseToken() ? "Bearer " + bearerToken
-				: "Basic " + Base64.getEncoder().encode((config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes());
+				: "Basic " + Base64.getEncoder().encodeToString((config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes());
 
 		// Create query filter for all product types configured
 		// Note: 'false' literal not implemented in some AUXIPs, therefore approach "false or ..." does not work
