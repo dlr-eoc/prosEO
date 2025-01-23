@@ -161,6 +161,60 @@ public class GUIBaseController {
 		auth.getDataCache().getFacilities().sort(c);
 		return auth.getDataCache().getFacilities();
 	}
+
+	/**
+	 * Retrieve the enabled processing facilities 
+	 *
+	 * @return a list with the names of available processing facilities
+	 */
+	@ModelAttribute("enabledfacilitynames")
+	public List<String> enabledfacilities() {
+		if (!hasrolefacilityreader()) {
+			return new ArrayList<>();
+		}
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+
+		logger.trace("Get facilities");
+		List<String> enabledFacilities = new ArrayList<String>();
+		List<?> resultList = null;
+
+		try {
+			resultList = serviceConnection.getFromService(serviceConfig.getFacilityManagerUrl(), "/facilities", List.class,
+					auth.getProseoName(), auth.getPassword());
+		} catch (RestClientResponseException e) {
+
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				logger.log(UIMessage.NO_MISSIONS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				logger.log(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				logger.log(UIMessage.EXCEPTION, e.getMessage());
+			}
+
+			return enabledFacilities;
+		} catch (RuntimeException e) {
+			logger.log(UIMessage.EXCEPTION, e.getMessage());
+			return auth.getDataCache().getFacilities();
+		}
+
+		if (resultList != null) {
+			ObjectMapper mapper = new ObjectMapper();
+			for (Object object : resultList) {
+				RestProcessingFacility restFacility = mapper.convertValue(object, RestProcessingFacility.class);
+				if (!restFacility.getFacilityState().equals("DISABLED")) {
+					enabledFacilities.add(restFacility.getName());
+				}
+			}
+		}
+
+		Comparator<String> c = Comparator.comparing((String x) -> x);
+		enabledFacilities.sort(c);
+		return enabledFacilities;
+	}
 	
 	/**
 	 * Retrieve the product archives
