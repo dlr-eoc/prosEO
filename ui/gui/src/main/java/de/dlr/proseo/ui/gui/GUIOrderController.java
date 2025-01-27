@@ -201,7 +201,9 @@ public class GUIOrderController extends GUIBaseController {
 					model.addAttribute("count", 0);
 					model.addAttribute("pageSize", 0);
 					model.addAttribute("pageCount", 0);
+					model.addAttribute("numberOfPages", 0);
 					model.addAttribute("page", 0);
+					model.addAttribute("currentPage", 0);
 					deferredResult.setResult("order :: #jobscontent");
 				} else if (entityList.getStatusCode().is2xxSuccessful()) {
 					// orders.addAll(selectOrders(orderList, identifier, states, from, to, products));
@@ -226,7 +228,9 @@ public class GUIOrderController extends GUIBaseController {
 					model.addAttribute("count", count);
 					model.addAttribute("pageSize", pageSize);
 					model.addAttribute("pageCount", pages);
+					model.addAttribute("numberOfPages", pages);
 					model.addAttribute("page", page);
+					model.addAttribute("currentPage", page);
 
 					List<Long> showPages = new ArrayList<>();
 					Long start = Math.max(page - 4, 1);
@@ -873,7 +877,9 @@ public class GUIOrderController extends GUIBaseController {
 					model.addAttribute("count", 0);
 					model.addAttribute("pageSize", 0);
 					model.addAttribute("pageCount", 0);
+					model.addAttribute("numberOfPages", pages);
 					model.addAttribute("page", 0);
+					model.addAttribute("currentPage", 0);
 					deferredResult.setResult("order :: #jobscontent");
 				} else {
 					model.addAttribute("errormsg", e.getMessage());
@@ -890,7 +896,9 @@ public class GUIOrderController extends GUIBaseController {
 					model.addAttribute("count", 0);
 					model.addAttribute("pageSize", 0);
 					model.addAttribute("pageCount", 0);
+					model.addAttribute("numberOfPages", pages);
 					model.addAttribute("page", 0);
+					model.addAttribute("currentPage", 0);
 					deferredResult.setResult("order :: #jobscontent");
 				} else if (entityList.getStatusCode().is2xxSuccessful()) {
 					jobs.addAll(entityList.getBody());
@@ -903,7 +911,9 @@ public class GUIOrderController extends GUIBaseController {
 					model.addAttribute("count", count);
 					model.addAttribute("pageSize", pageSize);
 					model.addAttribute("pageCount", pages);
+					model.addAttribute("numberOfPages", pages);
 					model.addAttribute("page", page);
+					model.addAttribute("currentPage", page);
 					model.addAttribute("orderState", orderState);
 
 					List<Long> showPages = new ArrayList<>();

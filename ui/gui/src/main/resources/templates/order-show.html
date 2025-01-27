@@ -78,7 +78,7 @@
                 th:text="#{state}"></p>
             </div>
             <div class="col-3 pl-lg-0">
-              <select name="orderstates" id="orderstates" multiple="multiple">
+              <select name="orderStates" id="orderStates" multiple="multiple">
                 <option>INITIAL</option>
                 <option>APPROVED</option>
                 <option>PLANNING</option>
@@ -107,7 +107,7 @@
           <div class="row py-lg-1">
             <div class="col-2">
               <button id="orderselect" type="button"
-                    onclick="retrieveDataPrim();"
+                    onclick="retrieveDataPrim(true);"
                     class="btn btn-sm btn-outline-secondary">
                     <span th:text="#{order-show}"></span>
                   </button>
@@ -153,12 +153,12 @@
                 <table class="table table-hover" id="orderTable">
                   <thead class="thead-proseo" id="proseo-thead">
                     <tr>
-                      <th onclick="selectOrder('select-id', ['select-identifier', 'select-state'])" 
+                      <th onclick="selectOrder('select-id', ['select-identifier', 'select-orderState'])" 
                         class="selectord cursorpointer"><span id="select-id" class="select-up xyz" th:class="('selectord ' + (${selcol} == 'id' ? ${selorder} : ''))" th:text="#{id}">id</span></th>
-                      <th onclick="selectOrder('select-identifier', ['select-id', 'select-state'])" 
+                      <th onclick="selectOrder('select-identifier', ['select-id', 'select-orderState'])" 
                         class="selectord cursorpointer"><span id="select-identifier" th:class="('selectord ' + (${selcol} == 'identifier' ? ${selorder} : ''))" th:text="#{name}">name</span></th>
-                      <th onclick="selectOrder('select-state', ['select-identifier', 'select-id'])" 
-                        class="selectord cursorpointer"><span id="select-state" th:class="('selectord ' + (${selcol} == 'orderState' ? ${selorder} : ''))" th:text="#{state}">state</span></th>
+                      <th onclick="selectOrder('select-orderState', ['select-identifier', 'select-id'])" 
+                        class="selectord cursorpointer"><span id="select-orderState" th:class="('selectord ' + (${selcol} == 'orderState' ? ${selorder} : ''))" th:text="#{state}">state</span></th>
                       <th><span th:text="#{startstoptime}">startstoptime</span></th>
                       <th><span th:text="#{product}">product</span></th>
                       <th><span th:text="#{jobstepstates}">jobstepstates</span></th>
@@ -226,7 +226,7 @@
                     </tr>
                   </tbody>
                 </table>
-                <div th:replace="fragments/navbar.html :: pagenav"></div>
+                <div th:replace="fragments/navbar.html :: alternatePageNav"></div>
               </div>
             </div>
           </div>
@@ -257,16 +257,37 @@
   <script src="../static/fragments/jquery.serialize-object.js" th:src="@{/fragments/jquery.serialize-object.js}" type="text/javascript"></script>
 
 <script>
-    var input = document.getElementById("identifier");
+var input = document.getElementById("identifier");
 input.addEventListener("keyup", function(event) {
-    if (event.keyCode === 13) {
-        event.preventDefault();
-        document.getElementById("orderselect").click();
-    }
+if (event.key === "Enter") {
+    event.preventDefault();
+    document.getElementById("orderselect").click();
+}
 });
 </script>
   <script type="text/javascript" th:inline="javascript">
 
+  // Global variables
+  var currentPage = 1; // Current page number
+  var pageSize = 20; // Maximum objects per page
+  
+  // order filters
+  var identifier = null;
+  var sortCol = "id";
+  var upText = "true";
+  var products = null;
+	var orderStates = null;
+  var fromDate = null;
+  var toDate = null;
+
+  function getFromRow() {
+	  return (currentPage - 1) * pageSize;
+  }
+  
+  function getToRow() {
+	  return currentPage * pageSize;
+	}
+  
   function addEventHandler() {
       $("input[name='fromDate']").change(checkTime);
       $("input[name='toDate']").change(checkTime);   
@@ -295,6 +316,14 @@ input.addEventListener("keyup", function(event) {
     }
   }
 
+  function inputSetPageSize() {
+	  if (event.key === "Enter") {
+		    // Cancel the default action, if needed
+		    event.preventDefault();
+		    document.getElementById("pageSizeButton").click();
+		  }
+  }
+  
   function checkTime(elem) {
       var startElem = null;
       if (elem != null && $(elem).is('input')) {
@@ -317,6 +346,8 @@ input.addEventListener("keyup", function(event) {
   }
 
 function selectOrder(ele, others) {
+    var loc = location.search.slice(0);
+    var search = location.search.slice(1);
 		var elem = $("#" + ele);
 		var sel = "select-down";
 		var newsel = "select-up";
@@ -344,9 +375,46 @@ function selectOrder(ele, others) {
 				$(eleidentifier).removeClass("select-up");
 				$(eleidentifier).removeClass("select-down");
 		}
-		retrieveDataPrim();
+		setParams(ele, newsel, null, null);
+		retrieveDataPrim(false);
 };
 
+function setSort() {
+    var ele = sortCol;
+    if (ele == null) {
+    	ele = 'id';
+    }
+    ele = "select-" + ele;
+    var up = true;
+    if (upText == "false") {
+    	up = false;
+    }
+    var cols = ['select-id', 'select-identifier', 'select-orderState'];
+    let others = new Array(2);
+    var j = 0;
+    for (let i = 0; i < cols.length; i++) {
+    	if (ele != cols[i]) {
+    		others[j] = cols[i];
+    		j++;
+    	}
+    }
+    var elem = $("#" + ele);
+    var sel = "select-up";
+    var newsel = "select-down";
+    if (up) {
+    	sel = "select-down";
+    	newsel = "select-up";
+    }
+    $(elem).removeClass(sel);
+    $(elem).removeClass(newsel);
+    $(elem).addClass(newsel);
+    for (i = 0; i < others.length; i++) {
+        var e = others[i];
+        var eleidentifier = $("#" + e);
+        $(eleidentifier).removeClass("select-up");
+        $(eleidentifier).removeClass("select-down");
+    }
+}
 
 function plan(oId, state) {
 		var dialog = document.getElementById('plan' + oId);
@@ -394,11 +462,11 @@ function doPlan(oId, facility) {
 		          hideLoader();
 		          if (jqXHR.getResponseHeader("warnstatus") != null && jqXHR.getResponseHeader("warnstatus") == 'productfound') {
 	                alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
-	                retrieveDataPrim();
+	                retrieveDataPrim(false);
 	            } else if (jqXHR.getResponseHeader("warnstatus") != null) {
 				    		  alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
 				    	} else {
-				    		retrieveDataPrim();
+				    		retrieveDataPrim(false);
 						  }
 				    },
 				    error : function(jqXHR, textStatus, errorThrown) {
@@ -425,7 +493,7 @@ function setState(oId, state) {
                 if (jqXHR.getResponseHeader("warnstatus") != null && jqXHR.getResponseHeader("warnstatus") != 'nocontent') {
                     alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
                 } else {
-                    retrieveDataPrim();
+                    retrieveDataPrim(false);
                 }
               },
               error : function(jqXHR, textStatus, errorThrown) {
@@ -441,112 +509,259 @@ function setSelected() {
 	// identifier
   $('#identifier').val(getURLParam('identifier'));
 	// states
-  var cls = getURLParams('orderstates');
-  if (cls != null && cls.length > 0) {
-    $('#orderstates').multiselect('select', getURLParams('orderstates'));
+	$('#orderStates').multiselect('deselectAll', false);
+  if (orderStates != null && orderStates.length > 0) {
+    $('#orderStates').multiselect('select', orderStates);
   }
 	// start date from, to
 	
-  $('#fromDate').val(getURLParam('fromDate'));
-  $('#toDate').val(getURLParam('toDate'));
+  $('#fromDate').val(fromDate);
+  $('#toDate').val(toDate);
 	// product classes
-  var cls = getURLParams('products');
-  if (cls != null && cls.length > 0) {
-    $('#products').multiselect('select', getURLParams('products'));
+  $('#products').multiselect('deselectAll', false);
+  if (products != null && products.length > 0) {
+    $('#products').multiselect('select', products);
   }
 }
 
-function setParams() {
+function setHTMLParams() {
     var loc = location.search.slice(0);
     var search = location.search.slice(1);
-    var paramString = search;
-    search = removeURLKeyPrim('identifier', search);
-    search = removeURLKeyPrim('products', search);
-    search = removeURLKeyPrim('orderstates', search);
-    search = removeURLKeyPrim('fromDate', search);
-    search = removeURLKeyPrim('toDate', search);
-    searchTmp = addURLParamValuePrim('identifier', $('#identifier').val(), search);
-    if (searchTmp != null) {search = searchTmp};
-    var searchTmp = addURLParamValuesPrim('orderstates', $('#orderstates').val(), search);
-    if (searchTmp != null) {search = searchTmp};
-    searchTmp = addURLParamValuePrim('fromDate', getDateString($('#fromDate').val(), false), search);
-    if (searchTmp != null) {search = searchTmp};
-    searchTmp = addURLParamValuePrim('toDate', getDateString($('#toDate').val(), false), search);
-    if (searchTmp != null) {search = searchTmp};
-    var searchTmp = addURLParamValuesPrim('products', $('#products').val(), search);
-    if (searchTmp != null) {search = searchTmp};
-    if (search != loc) {
-        if (search == '') {
-          search = '?';
-        }
-        history.pushState({}, null, search);
+    // build parameter string
+    var paramString = "";
+    paramString = addURLParamValuePrim('identifier', identifier, paramString);
+    paramString = addURLParamValuesPrim('products', products, paramString);
+    paramString = addURLParamValuesPrim('orderStates', orderStates, paramString);
+    paramString = addURLParamValuePrim('fromDate', fromDate, paramString);
+    paramString = addURLParamValuePrim('toDate', toDate, paramString);
+    paramString = addURLParamValuePrim('currentPage', currentPage.toString(), paramString);
+    paramString = addURLParamValuePrim('pageSize', pageSize.toString(), paramString);
+    paramString = addURLParamValuePrim('sortCol', sortCol.replace("select-", ""), paramString);
+    paramString = addURLParamValuePrim('up', upText, paramString);
+    var newHref = location.origin + location.pathname + paramString;
+    if (newHref != location.href) {
+    	  history.pushState({}, null, newHref);
     }
 }
 
-function retrieveDataPrim() {
+function readHTMLParams() {
+	  var tmp = getURLParam('currentPage');
+	  currentPage = isEmpty(tmp) ? 1 : Number(tmp);
+	  tmp = getURLParam('pageSize');
+	  pageSize = isEmpty(tmp) ? 20 : Number(tmp);
+	  identifier = getURLParam('identifier');
+	  tmp = getURLParam('sortCol');
+	  sortCol = isEmpty(tmp) ? "id" : tmp;
+	  tmp = getURLParam('up');
+	  upText = isEmpty(tmp) ? "true" : tmp;
+	  products = getURLParams('products');
+	  orderStates = getURLParams('orderStates');
+	  fromDate = getURLParam('fromDate');
+	  toDate = getURLParam('toDate');
+}
+
+function setParams(ele, selup, newPage, newPageSize) {
+	  var newSortCol = null;
+	  var newUpText = null;
+	  var newIdentifier = "";
+	  var newProducts = null;
+	  var newOrderStates = null;
+	  var newFromDate = null;
+	  var newToDate = null;
+	  
+	  var hasChanged = false;
+
+	  var search = location.search.slice(1);
+	  if (isEmpty(search)) {
+	    hasChanged = true;
+	  }
+    if (ele != null && selup != null) {
+    	newSortCol = ele.replace("select-", "");
+      if (selup == "select-up") {
+    	  newUpText = "true";
+      } else {
+    	  newUpText = "false";
+      }
+    } else {
+    	newSortCol = sortCol;
+    	newUpText = upText;
+    }
+    if (newPage == null) {
+    	newPage = currentPage;
+    } else {
+    	newPage = Number(newPage);
+    }
+    if (newPageSize == null) {
+    	newPageSize = pageSize;
+    } else {
+    	newPageSize = Number(newPageSize);
+    }
+    
+    newIdentifier = $('#identifier').val();
+    if (isEmpty(newIdentifier)) {
+        newIdentifier = null;
+    }
+    if (isEmpty(identifier)) {
+        identifier = null;
+    }
+    newFromDate = getDateString($('#fromDate').val());
+    newToDate= getDateString($('#toDate').val());
+    newOrderStates = $('#orderStates').val();
+    newProducts = $('#products').val();
+    		
+    if (   identifier != newIdentifier
+    		|| fromDate != newFromDate
+    		|| toDate != newToDate
+        || !arrayEquals(orderStates, newOrderStates)  
+        || !arrayEquals(products, newProducts)) {
+    	// table size may be changed, go to first page
+      currentPage = 1;
+      newPage = 1;
+    	hasChanged = true;
+    } 	
+    if (   newSortCol != sortCol
+    		|| newUpText != upText
+    		|| newPage != currentPage
+    		|| newPageSize != pageSize) {
+      hasChanged = true;
+    }
+    
+    if (!hasChanged && (sortCol != newSortCol || upText != newUpText)) {
+    	hasChanged = true;
+    }
+    
+    sortCol = newSortCol;
+    upText = newUpText;
+    identifier = newIdentifier;
+    products = newProducts;
+    orderStates = newOrderStates;
+    fromDate = newFromDate;
+    toDate = newToDate;
+    currentPage = Number(newPage);
+    pageSize = newPageSize;
+    
+    if (hasChanged) {
+    	setHTMLParams();
+    }
+}
+
+function getSort() {
+	  var done = false;
+	  var sortCol = "id";
+	  var up = true;
+    var elem = $("#select-identifier");
+    var styles = $(elem).attr("class");
+    if (styles != null) {
+        var styless = styles.split(" ");
+        for (i = 0; i < styless.length; i++) {
+            var s = styless[i];
+            if (s == "select-up") {
+                done = true;
+                sortCol = "identifier";
+                up = true;
+                break;
+            } else if (s == "select-down") {
+                done = true;
+                sortCol = "identifier";
+                up = false;
+                break;
+            }
+        }
+    }
+    if (!done) {
+        var elem = $("#select-id");
+        styles = $(elem).attr("class");
+        if (styles != null) {
+            var styless = styles.split(" ");
+            for (i = 0; i < styless.length; i++) {
+                var s = styless[i];
+                if (s == "select-up") {
+                    done = true;
+                    sortCol = "id";
+                    up = true;
+                    break;
+                } else if (s == "select-down") {
+                    done = true;
+                    sortCol = "id";
+                    up = false;
+                    break;
+                }
+            }
+        }
+    }
+    if (!done) {
+        var elem = $("#select-orderState");
+        styles = $(elem).attr("class");
+        if (styles != null) {
+            var styless = styles.split(" ");
+            for (i = 0; i < styless.length; i++) {
+                var s = styless[i];
+                if (s == "select-up") {
+                    done = true;
+                    sortCol = "orderState";
+                    up = true;
+                    break;
+                } else if (s == "select-down") {
+                    done = true;
+                    sortCol = "orderState";
+                    up = false;
+                    break;
+                }
+            }
+        }
+    }
+    return sortCol + ":" + up.toString();
+}
+
+// Function to customize the page size
+function updatePageSize() {
+  
+  // Retrieve the new page size
+  var newPageSize = document.getElementById("pageSizeField").value;
+  newPageSize = (!isNaN(newPageSize) && newPageSize > 0) ? parseInt(newPageSize) : pageSize;
+  if (newPageSize != pageSize) { 
+	  pageSize = newPageSize;
+	  // Go always to first page
+	  currentPage = 1;
+	  // Call the function to update the table with the new page size         
+    updateTable(currentPage);
+  }
+}
+  
+function retrieveDataPrim(setPar) {
   if (!$('#ord-shw')[0].checkValidity()) {
-    event.preventDefault();
-    event.stopPropagation();
+    //event.preventDefault();
+    //event.stopPropagation();
     $('#ord-shw')[0].classList.add('was-validated');
   } else {
     $('#ord-shw')[0].classList.add('was-validated');
-		var from = getURLParam('from');
-		var to = getURLParam('to');        
+    if (setPar) {
+    	setParams(null, null, null, null);
+    }
+		var from = getFromRow();
+		var to = getToRow();        
 		if (from == null || to == null) {
-		  from = 0;
-		  to = 20;
+		  currentPage = 1;
+		  pageSize = 20;
 		}
-		retrieveDataPage(from, to);
+		retrieveData();
 	}
 }
 
-function retrieveDataPage(from, to) {
-    var loc = location.search.slice(0);
-    var search = location.search.slice(1);
-    var paramString = search;
-    search = removeURLKeyPrim('from', search);
-    search = removeURLKeyPrim('to', search);
-    searchTmp = addURLParamValuePrim('from', from, search);
-    if (searchTmp != null) {search = searchTmp};
-    searchTmp = addURLParamValuePrim('to', to, search);
-    if (searchTmp != null) {search = searchTmp};
-    if (search != loc) {
-        if (search == '') {
-          search = '?';
-        }
-        history.pushState({}, null, search);
-    }
-    setParams();
-    var identifier = getURLParam('identifier');
-    var productClasses = getURLParams('products');
-    var productClass = null;
-    if (productClasses != null && productClasses.length > 0) {
-      productClass = "";
-      var divider = "";
-      for (var i = 0; i < productClasses.length; i++) {
-        productClass = productClass + divider + productClasses[i];
-        divider = ":";
-      }     
-    }
-    var orderstates = getURLParams('orderstates');
-    var orderstate = null;
-    if (orderstates != null && orderstates.length > 0) {
-    	orderstate = "";
-      var divider = "";
-      for (var i = 0; i < orderstates.length; i++) {
-    	  orderstate = orderstate + divider + orderstates[i];
-        divider = ":";
-      }     
-    }
-    var fromDate = getURLParam('fromDate');
-    var toDate = getURLParam('toDate');
-    retrieveData(identifier, orderstate, fromDate, toDate, productClass, from, to);
+function updateTable(newPage) {
+	retrieveDataPage(newPage, pageSize);
 }
 
-function retrieveData(identifier, orderstates, fromDate, toDate, products, from, to) {
+function retrieveDataPage(newPage, newPageSize) {
+	setParams(null, null, newPage, newPageSize);
+	retrieveData();
+}
+
+function retrieveData() {
     if ([[${hasroleorderreader}]]) {
 				showLoader();
-        $('#orderstates').multiselect({
+				setParams(null, null, null, null);
+        $('#orderStates').multiselect({
             buttonWidth : '99%',
             enableFiltering : true,
             numberDisplayed : 0,
@@ -562,84 +777,35 @@ function retrieveData(identifier, orderstates, fromDate, toDate, products, from,
             enableCaseInsensitiveFiltering : true,
             nonSelectedText : ''
         });
+        setSelected();
 				var tableRows = $("orderTable").rows;
 				if (tableRows > 1 && tableRows != null) {
 					  $("orderTable > tbody").empty();
 				}
+
+			  var from = getFromRow();
+			  var to = getToRow();      
 				var url = "/order-show/get"
 				var divider = "?";
-				var sortcol = "id";
-				var up = true;
-				var done = false;
 				var elem = $("#select-identifier");
-				var styles = $(elem).attr("class");
-				if (styles != null) {
-					  var styless = styles.split(" ");
-					  for (i = 0; i < styless.length; i++) {
-						    var s = styless[i];
-						    if (s == "select-up") {
-							      done = true;
-							      sortcol = "identifier";
-							      up = true;
-							      break;
-						    } else if (s == "select-down") {
-							      done = true;
-							      sortcol = "identifier";
-							      up = false;
-							      break;
-						    }
-					  }
-				}
-				if (!done) {
-					  var elem = $("#select-id");
-					  styles = $(elem).attr("class");
-					  if (styles != null) {
-						    var styless = styles.split(" ");
-						    for (i = 0; i < styless.length; i++) {
-							      var s = styless[i];
-							      if (s == "select-up") {
-								        done = true;
-								        sortcol = "id";
-								        up = true;
-								        break;
-							      } else if (s == "select-down") {
-								        done = true;
-								        sortcol = "id";
-								        up = false;
-								        break;
-							      }
-						    }
-					  }
-				}
-				if (!done) {
-					  var elem = $("#select-state");
-					  styles = $(elem).attr("class");
-					  if (styles != null) {
-						    var styless = styles.split(" ");
-						    for (i = 0; i < styless.length; i++) {
-							      var s = styless[i];
-							      if (s == "select-up") {
-								        done = true;
-								        sortcol = "orderState";
-								        up = true;
-								        break;
-							      } else if (s == "select-down") {
-								        done = true;
-								        sortcol = "orderState";
-								        up = false;
-								        break;
-							      }
-						    }
-					  }
-				}
+				setSort();
+		    var sort = getSort();
+		    var sortCol = sort.split(":")[0];
+		    if (sortCol == null) {
+		      sortCol = "id";
+		    }
+		    var up = false;
+		    if (sort.split(":")[1] == "true") {
+		      up = true;
+		    }
 
 				if (identifier != null && identifier.length > 0) {
 					  url = url + divider + "identifier=" + identifier.trim();
 					  divider = "&";
 				}
 				// <select>.selectedOptions does not work for IE, loop over options instead
-				if (orderstates != null && orderstates.length > 0) {
-						url = url + divider + "states=" + orderstates;
+				if (orderStates != null && orderStates.length > 0) {
+						url = url + divider + "states=" + joinStrings(orderStates, ":");
 			      divider = "&";
 				}
 
@@ -652,19 +818,19 @@ function retrieveData(identifier, orderstates, fromDate, toDate, products, from,
             divider = "&";
         }
         if (products != null && products.length > 0) {
-            url = url + divider + "products=" + products.trim();
+            url = url + divider + "products=" + joinStrings(products, ":");
             divider = "&";
         }
         if (from != null && to != null) {
-            url = url + divider + "recordFrom=" + from;
+            url = url + divider + "recordFrom=" + from.toString();
             divider = "&";
-            url = url + divider + "recordTo=" + to;
+            url = url + divider + "recordTo=" + to.toString();
             divider = "&";
         }
 
-				url = url + divider + "sortby=" + sortcol;
+				url = url + divider + "sortby=" + sortCol.replace("select-", "");
 				divider = "&";
-				url = url + divider + "up=" + up;
+				url = url + divider + "up=" + up.toString();
 				divider = "&";
 
 				$.ajax({
@@ -672,12 +838,15 @@ function retrieveData(identifier, orderstates, fromDate, toDate, products, from,
 					  method : "GET",
 					  success : function(res, textStatus, jqXHR) {
 						    $("#orderscontent").html(res);
+						    readHTMLParams();
 						    hideLoader();
 			          feather.replace(); 
 		            addEventHandler();
+		            setSort();
 						    document.title = [[#{order}]] + " | " + [[#{proseo}]];
 					  },
 					  error : function(jqXHR, textStatus, errorThrown) {
+			          readHTMLParams();
                 hideLoader();
                 feather.replace(); 
                 addEventHandler();
@@ -689,23 +858,30 @@ function retrieveData(identifier, orderstates, fromDate, toDate, products, from,
 };
 </script>
 <script>
-    window.onload = function () {
-        // $('.collapse').collapse();
+    // Read the HTML parameters from URI and retrieve the corresponding data
+    function loadWindow() {
         var elem = document.getElementById('sb-order');
         $(elem).addClass('active');
         feather.replace();
+        readHTMLParams();
         setSelected();
-        retrieveDataPrim();
-        
+        retrieveDataPrim(false);
+    };
+    
+    window.onload = function () {
+        loadWindow();
         // correct scroll due to "sticky" elements
         var handler = function ( ) {
             var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
     			           + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
             window.scrollBy(0, h);
-        };
-        window.addEventListener('hashchange', handler);
-        
-    }
+        };        
+    };
+
+    // re-load window to read and set all HTML parameters
+    $(window).on('popstate', function (e) {
+      loadWindow();
+    });
 </script>
 
 </html>

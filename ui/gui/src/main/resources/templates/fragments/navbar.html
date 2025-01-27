@@ -126,8 +126,8 @@
 	<!-- Customize page size -->
 	<div>
 		<label for="pageSizeField"><span th:text="#{show-page-size}"></span></label>
-		<input type="number" id="pageSizeField" placeholder="{{pageSize}}">
-		<button onclick="updatePageSize()"
+		<input type="number" min="1" max="50" step="1" id="pageSizeField" th:value="${pageSize}" th:onkeyup="inputSetPageSize()">
+		<button onclick="updatePageSize()" id="pageSizeButton"
 			class="btn btn-sm btn-outline-secondary">
 			<span th:text="#{update-page-size}"></span>
 		</button>
