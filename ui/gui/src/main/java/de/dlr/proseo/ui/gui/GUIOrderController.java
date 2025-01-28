@@ -1484,11 +1484,8 @@ public class GUIOrderController extends GUIBaseController {
 			divider = "&";
 		}
 		if (identifier != null && !identifier.isEmpty()) {
-			try {
-				uriString += divider + "identifier=" + URLEncoder.encode(identifier.replaceAll("[*]", "%"), "UTF-8");
-			} catch (UnsupportedEncodingException e) {
-				logger.log(UIMessage.EXCEPTION, e.getMessage());
-			}
+			String identifierQueryParam = identifier.replaceAll("[*]", "%").trim();
+			uriString += divider + "identifier=" + identifierQueryParam;
 			divider = "&";
 		}
 		if (states != null && !states.isEmpty()) {

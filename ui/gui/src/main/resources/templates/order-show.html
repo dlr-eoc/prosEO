@@ -720,11 +720,11 @@ function updatePageSize() {
   var newPageSize = document.getElementById("pageSizeField").value;
   newPageSize = (!isNaN(newPageSize) && newPageSize > 0) ? parseInt(newPageSize) : pageSize;
   if (newPageSize != pageSize) { 
-	  pageSize = newPageSize;
+	  // pageSize = newPageSize;
 	  // Go always to first page
 	  currentPage = 1;
 	  // Call the function to update the table with the new page size         
-    updateTable(currentPage);
+    updateTable(currentPage, newPageSize);
   }
 }
   
@@ -748,8 +748,8 @@ function retrieveDataPrim(setPar) {
 	}
 }
 
-function updateTable(newPage) {
-	retrieveDataPage(newPage, pageSize);
+function updateTable(newPage, newPageSize) {
+	retrieveDataPage(newPage, newPageSize);
 }
 
 function retrieveDataPage(newPage, newPageSize) {
