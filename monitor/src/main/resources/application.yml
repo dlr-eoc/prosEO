@@ -10,7 +10,7 @@ spring:
         password: sequel09Master
 logging:
     file:
-    name: /proseo/log/proseo-monitor.log
+        name: /proseo/log/proseo-monitor.log
     level:
         root: INFO
         de.dlr.proseo: TRACE
