@@ -27,7 +27,7 @@ description: |
   
   The option "delete-attributes" deletes non-mandatory simple attributes not given in the mission definition file and/or the command 
   parameters. For attributes containing a list of objects (e.g. a workflow parameter list) this is not implmented. If a list is not 
-  given or null it is assumed as an empty list and and already defined objects (e.g. workflow parameters) are deleted. Thus these
+  given or null it is assumed as an empty list and already defined objects (e.g. workflow parameters) are deleted. Thus these
   lists have to be defined always in an input file describing an object.
   
   All date-time values must conform to the ISO date-time format ("YYYY-MM-DD[THH:MM:SS.ssssssZ]"), with or without a second,
