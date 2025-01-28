@@ -54,7 +54,7 @@
           history.pushState({}, null, search);
         }
       }
-      return null;
+      return search;
     };
     
     function addURLParamPrim(param, paramstring) {
@@ -63,7 +63,7 @@
     	var divider = '?';
     	var first = true;
     	var found = false;
-    	var search = '';
+    	var search = "";
     	for (var i = 0; i < pairs.length; i++) {
       	if (pairs[i].length > 0) {
       		search += divider;
@@ -82,20 +82,20 @@
 	    	search += param;
 	    	return search;
 	    }
-    	return null;
+    	return search;
     };
     
     function addURLParamValuePrim(name, value, paramstring) {
-      var searchTmp = null;
+      var searchTmp = "";
       if (value != null && value.length > 0 && name != null && name.length > null) {
         searchTmp = addURLParamPrim(name + '=' + value, paramstring);
         return searchTmp;
       }
-      return null;
+      return paramstring;
     };
     
     function addURLParamValuesPrim(name, value, paramstring) {
-      var searchTmp = null;
+      var searchTmp = "";
       var search = trimLeftChar(paramstring, '?');;
       if (value != null && value.length > 0 && name != null && name.length > null) {
         for (var i = 0; i < value.length; i++) {
@@ -104,7 +104,7 @@
         }
         return search;
       }
-      return null;
+      return search;
     };
     
     function removeURLParam(param) {
@@ -281,4 +281,47 @@
           $(opts[i]).prop( "selected", false );
         }
       }
-    }
+    };
+    
+    function arrayEquals(a1, a2) {
+      if (a1 == null && a2 == null) {
+        return true;
+      } else if ((a1 == null && a2 != null) || (a1 != null && a2 == null)) {
+        return false;
+      } else if (a1.length == 0 && a2.length == 0) {
+        return true;
+      } else if (a1.length != a2.length) {
+        return false;
+      } else {
+        for (var i = 0; i < a1.length; i++) {
+          if (!a2.includes(a1[i])) {
+            return false;
+          }
+        }
+        return true;
+      }
+    };
+    
+    function isEmpty(s) {
+      if (s == null || s.trim().length == 0) {
+        return true;
+      }
+      return false;
+    };
+    
+    function joinStrings(array, joinString) {
+      if (array == null || array.length == 0 || joinString == null) {
+        return "";
+      }
+      var answer = "";
+      var firstTime = true;
+      for (var i = 0; i < array.length; i++) {
+        if (firstTime) {
+          firstTime = false;
+        } else {
+          answer = answer + joinString;
+        }
+        answer = answer + array[i];
+      }
+      return answer;
+    };
