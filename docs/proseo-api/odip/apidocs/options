@@ -18,7 +18,7 @@
 -docencoding
 'UTF-8'
 -doctitle
-'prosEO On-Demand Production Interface Delivery Point API 1.1.0 API'
+'prosEO On-Demand Production Interface Delivery Point API 1.2.0-SNAPSHOT API'
 -linkoffline
 'https://docs.oracle.com/en/java/javase/11/docs/api' '/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/api/odip/target/javadoc-bundle-options'
 -linkoffline
@@ -32,4 +32,4 @@
 -use
 -version
 -windowtitle
-'prosEO On-Demand Production Interface Delivery Point API 1.1.0 API'
+'prosEO On-Demand Production Interface Delivery Point API 1.2.0-SNAPSHOT API'
