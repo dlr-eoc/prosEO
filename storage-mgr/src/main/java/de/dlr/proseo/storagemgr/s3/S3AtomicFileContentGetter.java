@@ -80,8 +80,9 @@ public class S3AtomicFileContentGetter implements AtomicCommand<String> {
 
 			if (logger.isTraceEnabled())
 				logger.trace("... " + getCompletedInfo());
-
-			return new String(responseInputStream.readAllBytes(), StandardCharsets.UTF_8);
+			String answer = new String(responseInputStream.readAllBytes(), StandardCharsets.UTF_8);
+			responseInputStream.close();
+			return answer;
 
 		} catch (Exception e) {
 			if (logger.isTraceEnabled())
