@@ -20,5 +20,5 @@ WORKDIR /usr/share/proseo-storage-mgr
 
 ENTRYPOINT ["java", \
 "-XX:+UseCodeCacheFlushing", \
-"-Xmx1400m", \
+#"-Xmx1400m", \
 "-jar", "/usr/share/proseo-storage-mgr/proseo-storage-mgr.jar"]
