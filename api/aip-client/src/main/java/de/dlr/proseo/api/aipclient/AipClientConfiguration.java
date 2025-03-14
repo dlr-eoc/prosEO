@@ -24,6 +24,10 @@ public class AipClientConfiguration {
 	@Value("${proseo.aipclient.targetdir}")
 	private String clientTargetDir;
 
+	/** Delete downloaded files from target directory after ingestion, if true */
+	@Value("${proseo.aipclient.deletetempfiles}")
+	private Boolean deleteTempFiles;
+
 	/** The URL of the prosEO Ingestor */
 	@Value("${proseo.ingestor.url}")
 	private String ingestorUrl;
@@ -79,6 +83,15 @@ public class AipClientConfiguration {
 	 */
 	public String getClientTargetDir() {
 		return clientTargetDir;
+	}
+
+	/**
+	 * Gets the flag for the deletion of temporary files
+	 *
+	 * @return true, if temporary files shall be deleted, false otherwise
+	 */
+	public Boolean isDeleteTempFiles() {
+		return deleteTempFiles;
 	}
 
 	/**
