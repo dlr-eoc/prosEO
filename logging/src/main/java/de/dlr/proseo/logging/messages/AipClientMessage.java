@@ -60,7 +60,10 @@ public enum AipClientMessage implements ProseoMessage {
 	DOWNLOAD_RETRY_INTERRUPTED			(6844, Level.ERROR, false, "Wait for download retry of product {0} interrupted, product download failed", ""),
 	PRODUCT_GENERATION_MISSING			(6845, Level.ERROR, false, "Product list entry {0} does not contain valid generation time ('ProcessingDate' attribute)", ""),
 	PRODUCT_ONLINEFLAG_MISSING			(6846, Level.ERROR, false, "Product list entry {0} does not contain valid online flag ('Online' element)", ""),
-	CREATING_PRODUCT_ORDER				(6847, Level.INFO, true, "Creating product order for product {0} ({1}) in archive {2}", "")
+	CREATING_PRODUCT_ORDER				(6847, Level.INFO, true, "Creating product order for product {0} ({1}) in archive {2}", ""),
+	SKIPPING_INVALID_PRODUCT			(6848, Level.WARN, true, "Skipping invalid product (see preceding message[s])", ""),
+	DELETING_TEMP_FILE					(6849, Level.INFO, true, "Deleting temporary file {0}", ""),
+	FILE_DELETION_FAILED				(6850, Level.WARN, true, "Deletion of temporary file {0} failed", "")
 	;
 
 	private final int code;

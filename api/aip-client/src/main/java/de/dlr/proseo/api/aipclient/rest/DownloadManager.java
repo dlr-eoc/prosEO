@@ -12,16 +12,16 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -128,7 +128,7 @@ public class DownloadManager {
 	private static final String ODATA_FILTER_NAME = "Name eq ";
 	private static final String ODATA_FILTER_ID = "Id eq ";
 	private static final String ODATA_EXPAND_ATTRIBUTES = "Attributes";
-	private static final int ODATA_TOP_COUNT = 1000;
+	private static final int ODATA_TOP_COUNT = 10000;
 	private static final String ODATA_CSC_ORDER = "OData.CSC.Order";
 
 	// OData response properties
@@ -949,10 +949,12 @@ public class DownloadManager {
 			.addQueryOption(QueryOption.COUNT, "true")
 			.top(ODATA_TOP_COUNT);
 
-		if (expandAttributes && ODATA_ENTITY_PRODUCTS.equals(queryEntity)) {
-			uriBuilder = uriBuilder.expand(ODATA_EXPAND_ATTRIBUTES);
+		if (ODATA_ENTITY_PRODUCTS.equals(queryEntity)) {
+			uriBuilder = uriBuilder.orderBy("OriginDate asc");
+			if (expandAttributes) {
+				uriBuilder = uriBuilder.expand(ODATA_EXPAND_ATTRIBUTES);
+			} 
 		}
-
 		String authorizationHeader = archive.isTokenRequired() ?
 				"Bearer " + getBearerToken(archive) : 
     			"Basic " + Base64.getEncoder().encodeToString((archive.getUsername() + ":" + archive.getPassword()).getBytes());
@@ -973,6 +975,14 @@ public class DownloadManager {
 		try {
 			response = futureResponse.get(config.getArchiveTimeout(), TimeUnit.MILLISECONDS);
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("Exception stack trace: " + e.getClass().getName() + "\n" + Arrays.asList(e.getStackTrace()).toString());
+				Throwable cause = e.getCause();
+				while (null != cause) {
+					logger.debug("Caused by: " + cause.getClass().getName() + "\n" + Arrays.asList(cause.getStackTrace()).toString());
+					cause = cause.getCause();
+				}
+			}
 			throw new IOException(
 					logger.log(AipClientMessage.ODATA_REQUEST_ABORTED, request.getURI(), e.getClass().getName(), e.getMessage()));
 		}
@@ -1228,16 +1238,6 @@ public class DownloadManager {
 		for (int i = 0; i < DOWNLOAD_MAX_RETRIES; i++) {
 			try {
 				
-				// Check whether parallel execution is allowed
-				try {
-					downloadSemaphore.acquire();
-					if (logger.isDebugEnabled())
-						logger.debug("... file download semaphore {} acquired, {} permits remaining",
-								downloadSemaphore, downloadSemaphore.availablePermits());
-				} catch (InterruptedException e) {
-					throw new IOException(logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString()));
-				}
-				
 				try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
 					logger.trace("... starting request for URL '{}'", requestUrl);
 
@@ -1266,12 +1266,6 @@ public class DownloadManager {
 							e.getMessage() + " / " + e.getReasonPhrase()));
 				} catch (Exception e) {
 					throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(), e.getMessage()));
-				} finally {
-					// Release parallel thread
-					downloadSemaphore.release();
-					if (logger.isDebugEnabled())
-						logger.debug("... file download semaphore {} released, {} permits now available",
-								downloadSemaphore, downloadSemaphore.availablePermits());
 				}
 
 				// Compare file size with value given by external archive
@@ -1453,11 +1447,31 @@ public class DownloadManager {
 						createProductOrderAndWait(archive, product.getUuid());
 					}
 
-					// Download the product by product UUID
-					IngestorProduct ingestorProduct = downloadProduct(archive, product, missionCode);
+					// Check whether parallel download and ingestion is allowed
+					try {
+						downloadSemaphore.acquire();
+						if (logger.isDebugEnabled())
+							logger.debug("... file download semaphore {} acquired, {} permits remaining",
+									downloadSemaphore, downloadSemaphore.availablePermits());
+					} catch (InterruptedException e) {
+						throw new IOException(logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString()));
+					}
 					
-					// Ingest product to prosEO
-					ingestProduct(ingestorProduct, facility, user, password);
+					try {
+						// Download the product by product UUID
+						IngestorProduct ingestorProduct = downloadProduct(archive, product, missionCode);
+						
+						// Ingest product to prosEO
+						ingestProduct(ingestorProduct, facility, user, password);
+					} catch (Exception e) {
+						throw e;
+					} finally {
+						// Release parallel thread
+						downloadSemaphore.release();
+						if (logger.isDebugEnabled())
+							logger.debug("... file download semaphore {} released, {} permits now available",
+									downloadSemaphore, downloadSemaphore.availablePermits());
+					}
 				} catch (Exception e) {
 					String message = null;
 					if (e instanceof InterruptedException || e instanceof IOException) {
@@ -1471,6 +1485,19 @@ public class DownloadManager {
 				} finally {
 					// Remove download from lookup table
 					productDownloads.remove(product.getUuid());
+					
+					// Remove temporary download file if it exists
+					Path tempFilePath = Path.of(config.getClientTargetDir(), File.separator, 
+							product.getProductFile().get(0).getProductFileName());
+					if (config.isDeleteTempFiles() && Files.exists(tempFilePath)) {
+						try {
+							logger.log(AipClientMessage.DELETING_TEMP_FILE, tempFilePath);
+							Files.delete(tempFilePath);
+						} catch (IOException e) {
+							// Optional: Log and ignore
+							logger.log(AipClientMessage.FILE_DELETION_FAILED, tempFilePath);
+						}
+					}
 				}
 			}
 		};
@@ -1670,17 +1697,17 @@ public class DownloadManager {
 		List<RestProduct> restProducts = new ArrayList<>();
 
 		for (ClientEntity odataProduct : productList) {
-			AipRestProduct restProduct = null; 
+			AipRestProduct restProduct = null;
 			if (archive.getArchiveType().equals(ArchiveType.SIMPLEAIP)) {
 				// the attributes where not expanded in first query cause slow reaction
 				// query the product directly and expand the attributes
 				restProduct = toRestProduct(odataProduct, processingFacility, false);
 				try {
-					ClientEntity secondOdataProduct = queryArchiveForSingleEntity(archive, ODATA_ENTITY_PRODUCTS, restProduct.getUuid(), true);
+				ClientEntity secondOdataProduct = queryArchiveForSingleEntity(archive, ODATA_ENTITY_PRODUCTS, restProduct.getUuid(), true);
 					restProduct = toRestProduct(secondOdataProduct, processingFacility, true);
 				} catch (IOException e) {
-					// already logged
-					break;
+					logger.log(AipClientMessage.SKIPPING_INVALID_PRODUCT, new Object[0]);
+					continue;
 				}
 				// For SIMPLEAIP an exact match between requested product type and product type found is not guaranteed
 				if (!productType.equals(restProduct.getProductClass())) {
@@ -1689,17 +1716,21 @@ public class DownloadManager {
 				}
 			} else {
 				restProduct = toRestProduct(odataProduct, processingFacility, true);
+				if (null == restProduct) {
+					logger.log(AipClientMessage.SKIPPING_INVALID_PRODUCT, new Object[0]);
+					continue;
+				}
 			}
-			
+
 			// Check whether product file is already available locally
 			RestProduct localProduct = findLocalProductAtFacility(modelProducts, restProduct, processingFacility);
-			
+
 			if (null == localProduct) {
 				// Not available locally: Start download and ingestion thread
 				downloadAndIngest(archive, restProduct, processingFacility, password);
 				if (logger.isTraceEnabled())
 					logger.trace("Found product " + restProduct);
-	
+
 				restProducts.add(restProduct);
 			} else {
 				// Skip download and return locally available product
@@ -1708,7 +1739,7 @@ public class DownloadManager {
 					logger.trace("Skipping locally available product " + restProduct);
 			}
 		}
-
+			
 		// Return list of product metadata
 		return restProducts;
 	}
