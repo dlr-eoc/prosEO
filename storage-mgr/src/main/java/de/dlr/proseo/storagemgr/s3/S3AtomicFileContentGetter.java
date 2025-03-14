@@ -73,16 +73,11 @@ public class S3AtomicFileContentGetter implements AtomicCommand<String> {
 		try {
 			GetObjectRequest getObjectRequest = GetObjectRequest.builder().bucket(bucket).key(path).build();
 
-			ResponseInputStream<GetObjectResponse> responseInputStream = s3Client.getObject(getObjectRequest);
-
-			// InputStream stream = new
-			// ByteArrayInputStream(responseInputStream.readAllBytes());
-
-			if (logger.isTraceEnabled())
-				logger.trace("... " + getCompletedInfo());
-
-			return new String(responseInputStream.readAllBytes(), StandardCharsets.UTF_8);
-
+	         try (ResponseInputStream<GetObjectResponse> responseInputStream = s3Client.getObject(getObjectRequest)) {
+	             if (logger.isTraceEnabled())
+	                 logger.trace("... " + getCompletedInfo());
+	             return new String(responseInputStream.readAllBytes(), StandardCharsets.UTF_8);
+	         }
 		} catch (Exception e) {
 			if (logger.isTraceEnabled())
 				logger.trace(getFailedInfo() + e.getMessage());
