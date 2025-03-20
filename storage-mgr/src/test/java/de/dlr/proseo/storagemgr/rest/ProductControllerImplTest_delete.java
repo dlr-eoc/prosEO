@@ -67,7 +67,7 @@ public class ProductControllerImplTest_delete {
 	public void testDelete_posix() throws Exception {
 
 		StorageType storageType = StorageType.POSIX;
-		storageProvider.setStorage(storageType);
+		storageProvider.setDefaultStorage(storageType);
 
 		delete(storageProvider);
 
@@ -86,7 +86,7 @@ public class ProductControllerImplTest_delete {
 	public void testDelete_S3() throws Exception {
 
 		StorageType storageType = StorageType.S3;
-		storageProvider.setStorage(storageType);
+		storageProvider.setDefaultStorage(storageType);
 
 		delete(storageProvider);
 

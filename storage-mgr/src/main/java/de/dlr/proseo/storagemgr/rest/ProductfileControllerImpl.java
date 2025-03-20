@@ -27,6 +27,7 @@ import de.dlr.proseo.storagemgr.cache.CacheFileStatus;
 import de.dlr.proseo.storagemgr.cache.FileCache;
 import de.dlr.proseo.storagemgr.model.Storage;
 import de.dlr.proseo.storagemgr.model.StorageFile;
+import de.dlr.proseo.storagemgr.model.StorageType;
 import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
 import de.dlr.proseo.storagemgr.utils.StorageFileLocker;
 
@@ -174,9 +175,10 @@ public class ProductfileControllerImpl implements ProductfileController {
 			logger.trace(">>> copyFileStorageToCache({})", absoluteStorageFilePath);
 
 		// relative path depends on path, not on actual storage
-		String relativePath = storageProvider.getRelativePath(absoluteStorageFilePath);
+		Storage storage = storageProvider.getStorage(absoluteStorageFilePath);
+		String relativePath = storage.getRelativePath(absoluteStorageFilePath);
 
-		StorageFile storageFile = storageProvider.getStorageFile(relativePath);
+		StorageFile storageFile = storageProvider.getStorageFile(storage, relativePath);
 		StorageFile cacheFile = storageProvider.getCacheFile(storageFile.getRelativePath());
 
 		FileCache cache = FileCache.getInstance();
@@ -234,7 +236,13 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 				cache.setCacheFileStatus(destCacheFile.getFullPath(), CacheFileStatus.INCOMPLETE);
 
-				storageProvider.getStorage().downloadFile(srcStorageFile, destCacheFile);
+				if (StorageType.POSIX.equals(srcStorageFile.getStorageType())) {
+					storageProvider.getStorage().downloadFile(srcStorageFile, destCacheFile);
+				} else {
+					storageProvider
+						.getStorage(srcStorageFile.getStorageType(), srcStorageFile.getBucket())
+						.downloadFile(srcStorageFile, destCacheFile);
+				}
 
 				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED_FROM_STORAGE, destCacheFile.getFullPath());
 
@@ -400,7 +408,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 		Storage storage = storageProvider.getStorage();
 
 		StorageFile cacheFile = storageProvider.getCacheFile(relativeCachePath);
-		StorageFile storageFile = storageProvider.getStorageFile(relativeCachePath);
+		StorageFile storageFile = storageProvider.getStorageFile(storage, relativeCachePath);
 
 		storage.uploadFile(cacheFile, storageFile);
 

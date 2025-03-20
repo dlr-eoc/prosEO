@@ -70,7 +70,7 @@ public class ProductControllerImplTest_get {
 	public void testGet_v2Posix() throws Exception {
 
 		StorageType storageType = StorageType.POSIX;
-		storageProvider.setStorage(storageType);
+		storageProvider.setDefaultStorage(storageType);
 
 		getProductFiles(storageType);
 
@@ -89,7 +89,7 @@ public class ProductControllerImplTest_get {
 	public void testGet_v2S3() throws Exception {
 
 		StorageType storageType = StorageType.S3;
-		storageProvider.setStorage(storageType);
+		storageProvider.setDefaultStorage(storageType);
 
 		getProductFiles(storageType);
 
@@ -135,7 +135,7 @@ public class ProductControllerImplTest_get {
 
 			// upload file to storage from source
 			StorageFile sourceFile = storageProvider.getSourceFile(relativePath);
-			StorageFile targetFile = storageProvider.getStorageFile(relativePath);
+			StorageFile targetFile = storageProvider.getStorageFileFromDefaultStorage(relativePath);
 			storageProvider.getStorage().uploadFile(sourceFile, targetFile);
 		}
 

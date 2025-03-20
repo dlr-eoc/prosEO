@@ -20,6 +20,7 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.StorageMgrMessage;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.StorageProvider;
+import de.dlr.proseo.storagemgr.model.Storage;
 import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.rest.model.RestJoborder;
 
@@ -104,11 +105,12 @@ public class JobOrderControllerImpl implements JoborderController {
 		}
 
 		try {
+			Storage storage = storageProvider.getStorage(pathInfo);
 
-			String relativePath = storageProvider.getRelativePath(pathInfo);
-			StorageFile storageFile = storageProvider.getStorageFile(relativePath);
+			String relativePath = storage.getRelativePath(pathInfo);
+			StorageFile storageFile = storageProvider.getStorageFile(storage, relativePath);
 
-			String response = storageProvider.getStorage().getFileContent(storageFile);
+			String response = storage.getFileContent(storageFile);
 
 			logger.log(StorageMgrMessage.JOB_ORDER_FILE_GOT, pathInfo);
 

@@ -60,7 +60,7 @@ public class ProductfileControllerImplTest_upload {
 	public void testUpload_Posix() throws Exception {
 
 		StorageType storageType = StorageType.POSIX;
-		storageProvider.setStorage(storageType);
+		storageProvider.setDefaultStorage(storageType);
 
 		upload();
 
@@ -72,7 +72,7 @@ public class ProductfileControllerImplTest_upload {
 	public void testUpload_S3() throws Exception {
 
 		StorageType storageType = StorageType.S3;
-		storageProvider.setStorage(storageType);
+		storageProvider.setDefaultStorage(storageType);
 
 		upload();
 
@@ -82,6 +82,8 @@ public class ProductfileControllerImplTest_upload {
 
 	/**
 	 * UPLOAD (updateProductfiles)
+	 * 
+	 * NOT INTENDED FOR USE OUTSIDE UNIT TEST CASES!
 	 * 
 	 * absolute file -> storage (absoluteSourcePath/filename) takes filename from path and
 	 * productid from parameter, ignores the rest of the path

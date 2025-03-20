@@ -63,7 +63,7 @@ public class ProductfileControllerImplTest_download {
 	public void testDownload_posix() throws Exception {
 		
 		StorageType storageType = StorageType.POSIX; 
-		storageProvider.setStorage(storageType);
+		storageProvider.setDefaultStorage(storageType);
 
 		download("Posix");
 		
@@ -75,7 +75,7 @@ public class ProductfileControllerImplTest_download {
 	public void testDownload_S3() throws Exception {
 		
 		StorageType storageType = StorageType.S3; 
-		storageProvider.setStorage(storageType);
+		storageProvider.setDefaultStorage(storageType);
 
 		download("S3");
 		
@@ -115,7 +115,7 @@ public class ProductfileControllerImplTest_download {
 		
 		// upload file to storage from source
 		StorageFile sourceFile = storageProvider.getSourceFile(relativePath);
-		StorageFile storageFile = storageProvider.getStorageFile(relativePath);
+		StorageFile storageFile = storageProvider.getStorageFileFromDefaultStorage(relativePath);
 		storageProvider.getStorage().upload(sourceFile, storageFile);
 		
 		// show storage files
