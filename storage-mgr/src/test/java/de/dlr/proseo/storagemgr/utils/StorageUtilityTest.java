@@ -57,11 +57,11 @@ public class StorageUtilityTest {
 				
 		// change type to show another storage
 		StorageType storageType = StorageType.POSIX; 
-		storageProvider.setStorage(storageType);
+		storageProvider.setDefaultStorage(storageType);
 		
 		Storage storage = storageProvider.getStorage();
-		Storage posixStorage = storageProvider.getStorage(StorageType.POSIX);
-		Storage s3Storage = storageProvider.getStorage(StorageType.S3);
+		Storage posixStorage = storageProvider.getDefaultStorage(StorageType.POSIX);
+		Storage s3Storage = storageProvider.getDefaultStorage(StorageType.S3);
 		
 		// show s3 buckets
 		TestUtils.printList("S3 Buckets:", s3Storage.getBuckets());
