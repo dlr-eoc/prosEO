@@ -63,7 +63,7 @@ public class S3StorageTest {
 		// StorageProvider storageProvider = new StorageProvider();
 
 		StorageType storageType = StorageType.S3; 
-		storageProvider.setStorage(storageType);
+		storageProvider.setDefaultStorage(storageType);
 
 		String prefix = "s3-storage-test/";
 
@@ -87,7 +87,7 @@ public class S3StorageTest {
 			StorageFile sourceDir = storageProvider.getSourceFile(prefix);
 			
 			// change prefix to source absolute path to have right uploaded path - sourceDir.fullPath instead prefix
-			StorageFile targetDir = storageProvider.getStorageFile(prefix);
+			StorageFile targetDir = storageProvider.getStorageFile(storage, prefix);
 
 			List<String> uploadedPathes = storage.upload(sourceDir, targetDir);
 			

@@ -80,13 +80,13 @@ public class StorageProviderTest {
 		assertTrue("File for upload has not been created: " + sourceFilePath, TestUtils.fileExists(sourceFilePath));
 
 		StorageType storageType = StorageType.POSIX; 
-		storageProvider.setStorage(storageType);
+		storageProvider.setDefaultStorage(storageType);
 		Storage storage = storageProvider.getStorage();
 
 		// -------------------- upload ----------------------------
 
 		StorageFile sourceFile = storageProvider.getPosixFile(sourcePath, testFileName);
-		StorageFile destFile = storageProvider.getStorageFile(testFileName);
+		StorageFile destFile = storageProvider.getStorageFile(storage, testFileName);
 
 		try {
 			storage.uploadFile(sourceFile, destFile);
@@ -101,7 +101,7 @@ public class StorageProviderTest {
 
 		// ----------------------- download --------------------------
 
-		sourceFile = storageProvider.getStorageFile(testFileName);
+		sourceFile = storageProvider.getStorageFile(storage, testFileName);
 		destFile = storageProvider.getCacheFile(testFileName);
 		
 		try {

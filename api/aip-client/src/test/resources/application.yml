@@ -17,6 +17,8 @@ proseo:
     aipclient:
         # Path to the directory to download files to (must be readable for Storage Manager, see below)
         targetdir: target/test/downloads
+        # Delete downloaded files from target directory after ingestion, if true
+        deletetempfiles: false
         
     ingestor:
         # URL of the Ingestor Service

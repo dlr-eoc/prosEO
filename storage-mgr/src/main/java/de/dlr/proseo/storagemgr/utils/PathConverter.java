@@ -29,7 +29,7 @@ public class PathConverter {
 	private List<String> basePaths = new ArrayList<>();
 
 	/** Logger for this class */
-	private static ProseoLogger logger = new ProseoLogger(FileUtils.class);
+	private static ProseoLogger logger = new ProseoLogger(PathConverter.class);
 
 	private static String S3PREFIX = "s3://";
 	private static String SLASH = "/";

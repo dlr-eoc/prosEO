@@ -71,7 +71,7 @@ public class ProductControllerImplTest_download {
 		if (TESTS_ENABLED) {
 
 			StorageType storageType = StorageType.POSIX;
-			storageProvider.setStorage(storageType);
+			storageProvider.setDefaultStorage(storageType);
 			boolean downloadFileFromCache = false;
 
 			downloadProductFiles(storageType, downloadFileFromCache);
@@ -95,7 +95,7 @@ public class ProductControllerImplTest_download {
 		if (TESTS_ENABLED) {
 
 			StorageType storageType = StorageType.S3;
-			storageProvider.setStorage(storageType);
+			storageProvider.setDefaultStorage(storageType);
 			boolean downloadFileFromCache = false;
 
 			downloadProductFiles(storageType, downloadFileFromCache);
@@ -119,7 +119,7 @@ public class ProductControllerImplTest_download {
 		if (TESTS_ENABLED) {
 
 			StorageType storageType = StorageType.POSIX;
-			storageProvider.setStorage(storageType);
+			storageProvider.setDefaultStorage(storageType);
 			boolean downloadFileFromCache = true;
 
 			downloadProductFiles(storageType, downloadFileFromCache);
@@ -143,7 +143,7 @@ public class ProductControllerImplTest_download {
 		if (TESTS_ENABLED) {
 
 			StorageType storageType = StorageType.S3;
-			storageProvider.setStorage(storageType);
+			storageProvider.setDefaultStorage(storageType);
 			boolean downloadFileFromCache = true;
 
 			downloadProductFiles(storageType, downloadFileFromCache);
@@ -196,7 +196,7 @@ public class ProductControllerImplTest_download {
 
 		// upload file to storage from source
 		StorageFile sourceFile = storageProvider.getSourceFile(relativePath);
-		StorageFile targetFile = storageProvider.getStorageFile(relativePath);
+		StorageFile targetFile = storageProvider.getStorageFileFromDefaultStorage(relativePath);
 
 		Storage storage = storageProvider.getStorage();
 		storage.uploadFile(sourceFile, targetFile);
@@ -212,7 +212,7 @@ public class ProductControllerImplTest_download {
 
 		// puts a file to the cache in order to trigger a stream downloading from cache
 		// if true, a file will be copied to the cache before download()
-		StorageFile storageFile = storageProvider.getStorageFile(relativePath);
+		StorageFile storageFile = storageProvider.getStorageFile(storage, relativePath);
 		StorageFile cacheFile = storageProvider.getCacheFile(storageFile.getRelativePath());
 		FileCache cache = FileCache.getInstance();
 

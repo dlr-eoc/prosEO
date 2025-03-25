@@ -76,7 +76,8 @@ public class ProductControllerImpl implements ProductController {
 
 	/**
 	 * Copy a file from "ingest" file system to storage manager controlled prosEO
-	 * cache. Source and target are defined in the restProductFS structure
+	 * cache. Source and target are defined in the restProductFS structure.
+	 * Upload is restricted to the default backend storage path/bucket.
 	 * 
 	 * @param restProductFS the ingest file information
 	 * @return a response entity containing HTTP status CREATED and the ingest file
@@ -107,7 +108,7 @@ public class ProductControllerImpl implements ProductController {
 			
 			List<String> allUploaded = new ArrayList<String>();
 
-			StorageFile targetFolder = storageProvider.getStorageFile(prefix);
+			StorageFile targetFolder = storageProvider.getStorageFileFromDefaultStorage(prefix);
 
 			for (String fileOrDir : restProductFS.getSourceFilePaths()) {
 
@@ -137,9 +138,9 @@ public class ProductControllerImpl implements ProductController {
 	}
 
 	/**
-	 * List the file/object contents of a repository.
+	 * List the file/object contents of the default repository.
 	 * 
-	 * @param storageType S2, POSIX or null
+	 * @param storageType S3, POSIX or null
 	 * @param prefix      Path information
 	 * @return a response entity containing HTTP status OK or PARTIAL_CONTENT and
 	 *         list of file (object) paths on success, or HTTP status
@@ -160,16 +161,16 @@ public class ProductControllerImpl implements ProductController {
 			List<String> response;
 
 			if (storageType == null) { // add both
-
-				response = storageProvider.getStorage(StorageType.S3).getAbsoluteFiles(prefix);
-				response = storageProvider.getStorage(StorageType.S3).addFSPrefix(response);
-				response.addAll(storageProvider.getStorage(StorageType.POSIX).getAbsoluteFiles(prefix));
-				response = storageProvider.getStorage(StorageType.POSIX).addFSPrefix(response);
+				
+				response = storageProvider.getDefaultStorage(StorageType.S3).getAbsoluteFiles(prefix);
+				response = storageProvider.getDefaultStorage(StorageType.S3).addFSPrefix(response);
+				response.addAll(storageProvider.getDefaultStorage(StorageType.POSIX).getAbsoluteFiles(prefix));
+				response = storageProvider.getDefaultStorage(StorageType.POSIX).addFSPrefix(response);
 
 			} else {
 
-				response = storageProvider.getStorage(StorageType.valueOf(storageType)).getAbsoluteFiles(prefix);
-				response = storageProvider.getStorage(StorageType.valueOf(storageType)).addFSPrefix(response);
+				response = storageProvider.getDefaultStorage(StorageType.valueOf(storageType)).getAbsoluteFiles(prefix);
+				response = storageProvider.getDefaultStorage(StorageType.valueOf(storageType)).addFSPrefix(response);
 			}
 
 			logger.log(StorageMgrMessage.PRODUCT_FILES_LISTED, response.toString());
@@ -298,7 +299,8 @@ public class ProductControllerImpl implements ProductController {
 	}
 
 	/**
-	 * Delete object(s)
+	 * Delete object(s) from the default storage (deleting from other storages is not supported,
+	 * as they are not managed by the called Storage Manager instance)
 	 * 
 	 * @param pathInfo path to the object or directory
 	 * 

@@ -71,7 +71,7 @@ public class JobOrderControllerImplTest_upload {
 	public void testUpload_v2Posix() throws Exception {
 
 		StorageType storageType = StorageType.POSIX;
-		storageProvider.setStorage(storageType);
+		storageProvider.setDefaultStorage(storageType);
 
 		uploadRestJobOrder(storageType);
 
@@ -83,7 +83,7 @@ public class JobOrderControllerImplTest_upload {
 	public void testUpload_v2S3() throws Exception {
 
 		StorageType storageType = StorageType.S3;
-		storageProvider.setStorage(storageType);
+		storageProvider.setDefaultStorage(storageType);
 
 		uploadRestJobOrder(storageType);
 
