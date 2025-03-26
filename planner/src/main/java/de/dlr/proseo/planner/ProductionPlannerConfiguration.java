@@ -89,8 +89,8 @@ public class ProductionPlannerConfiguration {
 	private JobStepSort jobStepSort;
 	
 	/** Enable (default)/disable automatic derivation of job steps to generate required input data */
-	@Value("${proseo.productionPlanner.autogenerate}")
-	private Boolean autogenerate = true;
+	@Value("${proseo.productionPlanner.autogenerate:true}")
+	private Boolean autogenerate;
 	
 
 	/** Timeout for HTTP requests in milliseconds */
