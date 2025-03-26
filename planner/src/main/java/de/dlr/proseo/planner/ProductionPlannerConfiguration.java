@@ -87,6 +87,11 @@ public class ProductionPlannerConfiguration {
 	/** Sort parameter for starting order of job steps */
 	@Value("${proseo.productionPlanner.jobStepSort}")
 	private JobStepSort jobStepSort;
+	
+	/** Enable (default)/disable automatic derivation of job steps to generate required input data */
+	@Value("${proseo.productionPlanner.autogenerate:true}")
+	private Boolean autogenerate;
+	
 
 	/** Timeout for HTTP requests in milliseconds */
 	@Value("${proseo.http.timeout}")
@@ -347,5 +352,14 @@ public class ProductionPlannerConfiguration {
 			return hostAlias;
 		}
 	}
+
+	/**
+	 * Get the autogenerate flag
+	 * @return the autogenerate
+	 */
+	public Boolean getAutogenerate() {
+		return autogenerate;
+	}
+	
 
 }
