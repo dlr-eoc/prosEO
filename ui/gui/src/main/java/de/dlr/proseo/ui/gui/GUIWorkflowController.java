@@ -135,6 +135,7 @@ public class GUIWorkflowController extends GUIBaseController {
 								model.addAttribute("numberOfPages", numberOfPages);
 								model.addAttribute("currentPage", currentPage);
 								model.addAttribute("showPages", showPages);
+								model.addAttribute("count", count);
 
 								if (logger.isTraceEnabled())
 									logger.trace(model.toString() + "MODEL TO STRING");
@@ -159,6 +160,7 @@ public class GUIWorkflowController extends GUIBaseController {
 								List<Long> showPages = new ArrayList<>();
 								showPages.add(1l);
 								model.addAttribute("showPages", showPages);
+								model.addAttribute("count", 1);
 
 								if (logger.isTraceEnabled())
 									logger.trace(model.toString() + "MODEL TO STRING");

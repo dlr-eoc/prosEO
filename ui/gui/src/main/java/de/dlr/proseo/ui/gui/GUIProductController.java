@@ -155,10 +155,13 @@ public class GUIProductController extends GUIBaseController {
 						products.addAll((Collection<? extends Object>) entityList.getBody());
 
 						model.addAttribute("products", products);
+						
 						model.addAttribute("count", count);
 						model.addAttribute("pageSize", pageSize);
 						model.addAttribute("pageCount", pages);
+						model.addAttribute("numberOfPages", pages);
 						model.addAttribute("page", page);
+						model.addAttribute("currentPage", page);
 
 						List<Long> showPages = new ArrayList<>();
 						Long start = Math.max(page - 4, 1);
@@ -185,10 +188,13 @@ public class GUIProductController extends GUIBaseController {
 						products.add(entityList.getBody());
 
 						model.addAttribute("products", products);
+						
 						model.addAttribute("count", 1);
 						model.addAttribute("pageSize", 1);
 						model.addAttribute("pageCount", 1);
+						model.addAttribute("numberOfPages", 1);
 						model.addAttribute("page", 1);
+						model.addAttribute("currentPage", 1);
 
 						List<Long> showPages = new ArrayList<>();
 						showPages.add((long) 1);

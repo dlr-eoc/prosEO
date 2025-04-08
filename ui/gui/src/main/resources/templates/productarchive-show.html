@@ -107,12 +107,14 @@
 			
 						       
           				<div class="col-2 pl-lg-0">
-  				            <select name="archiveType" id="archiveType" multiple="multiple">
-                				<option>AIP</option>
-                				<option>AUXIP</option>
-                				<option>PODIP</option>
-                				<option>PRIP</option>
-          					    <option>SIMPLEAIP</option>
+  				            <select name="archiveType" id="archiveType"
+                          class="custom-select"> <!-- multiple="multiple" --> 
+                        <option text="" label=""></option>
+                        <option text="AIP" label="AIP">AIP</option>
+                				<option text="AUXIP" label="AUXIP">AUXIP</option>
+                				<option text="PODIP" label="PODIP">PODIP</option>
+                				<option text="PRIP" label="PRIP">PRIP</option>
+          					    <option text="SIMPLEAIP" label="SIMPLEAIP">SIMPLEAIP</option>
               				</select>
             			</div>                    
                     
@@ -287,11 +289,11 @@
 	<script type="text/javascript" th:inline="javascript">
 		// Global variables
 		var currentPage = 1; // Current page number
-		var pageSize = 50; // Maximum objects per page
+		var pageSize = 20; // Maximum objects per page
 		
 		// product archive filters
 		var id = null;
-		var name = null;
+		var wname = null;
 		var archiveType = null;
 		
 		function showHideClientSecret(id) {
@@ -317,19 +319,72 @@
 	            feather.replace();
 	        }
 	    };
-		
+
+	    function setParams(ele, selup, newPage, newPageSize) {
+	        var newId = null;
+	        var newName = null;
+	        var newArchiveType = null;
+
+	        var hasChanged = false;
+	          
+	        hasChanged |= setPageParams(newPage, newPageSize);
+	        newId = $('#id').val();
+	        if (isEmpty(newId)) {newId = null};
+	        newName = $('#name').val();
+	        if (isEmpty(newName)) {newName = null};
+
+	        newArchiveType = $('#archiveType').val();
+
+	        if (   id != newId
+	            || wname != newName
+	            || archiveType != newArchiveType) {
+	          // table size may be changed, go to first page
+	          currentPage = 1;
+	          newPage = 1;
+	          hasChanged = true;
+	        }   
+	        id = newId;
+	        wname = newName;
+	        archiveType = newArchiveType;
+	        if (hasChanged) {
+	            setHTMLParams();
+	        }
+	    }
+	    
+	    function setHTMLParams() {
+	        var loc = location.search.slice(0);
+	        var search = location.search.slice(1);
+	        // build parameter string
+	        var paramString = "";
+	        paramString = addURLParamValuePrim('id', id, paramString);
+	        paramString = addURLParamValuePrim('name', wname, paramString);
+	        paramString = addURLParamValuePrim('archiveType', archiveType, paramString);
+	        paramString = setPageHTMLParams(paramString);
+	        var newHref = location.origin + location.pathname + paramString;
+	        if (newHref != location.href) {
+	            history.pushState({}, null, newHref);
+	        }
+	    }
+
+	    function readHTMLParams() {
+	        readPageHTMLParams();
+	        id = getURLParam('id');
+	        wname = getURLParam('name');
+	        archiveType = getURLParam('archiveType');
+	    }
+	    function setSelected() {
+	          $('#id').val(id);
+	          $('#name').val(wname);
+	          setSelectedOption('archiveType', archiveType);
+	    }
+
+	    function updateTable(newPage, newPageSize) {
+	      setParams(null, null, newPage, newPageSize);
+	      updateTablePrim(currentPage);
+	    }
 		// Function to fetch objects from the REST controller
-		function updateTable(newPage) {
+		function updateTablePrim(newPage) {
 			
-			$('#archiveType').multiselect({
-	              buttonWidth : '99%',
-	              enableFiltering : true,
-	              numberDisplayed : 0,
-	              maxHeight : 400,
-	              enableCaseInsensitiveFiltering : true,
-	              nonSelectedText : ''
-	        });
-					
 			currentPage = newPage;
 			
 			var recordFrom = (currentPage - 1) * pageSize;
@@ -343,8 +398,8 @@
 			if (id != null && id != "null")
 				url += "&id=" + id;
 			
-			if (name != null && name != "null")
-				url += "&name=" + name;
+			if (wname != null && wname != "null")
+				url += "&name=" + wname;
 					
 			if (archiveType != null && archiveType != "null")
 				url += "&archiveType=" + archiveType;
@@ -356,23 +411,19 @@
 			  .then(html => {
 				  $("#productarchivecontent").html(html); // Set the HTML content of the element
 				  feather.replace(); // Display the arrows on the buttons
-                  document.getElementById("pageSizeField").placeholder = pageSize; //Display correct page size
-                  })
+		      readHTMLParams();
+		      setSelected();
+          document.getElementById("pageSizeField").value = pageSize; //Display correct page size
+        })
 			  .catch(console.error);
 		}
 		
 		// Function to fetch and apply filters
 		function setFilters(event) {	
-			// Allow for custom form handling
-			event.preventDefault();
-			
-			// Retrieve the values from the form inputs
-			id = document.getElementById("id").value.trim() === "" ? null : document.getElementById("id").value;
-			name = document.getElementById("name").value.trim() === "" ? null : document.getElementById("name").value;
-			archiveType = document.getElementById("archiveType").value.trim() === "" ? null : document.getElementById("archiveType").value;
-		    
+			  // Allow for custom form handling
+			  event.preventDefault();
 		    // Update the table according to the new filters
-		    updateTable(currentPage);
+		    updateTable(null, null);
 		}
 		
 		// Function to hide or show product archive details
@@ -390,25 +441,22 @@
 		      }
 		  }
 		
-		// Function to customize the page size
-	    function updatePageSize() {
-			
-			// Retrieve the new page size
-			var newPageSize = document.getElementById("pageSizeField").value;
-			pageSize = (!isNaN(newPageSize) && newPageSize > 0) ? parseInt(newPageSize) : pageSize;console.log("New page size: " + pageSize);
-	        
-	        // Call the function to update the table with the new page size	        
-	        updateTable(currentPage);
-	    }
 	</script>
 
 	<script>
+    window.onpopstate = function(event) {
+        if (location.toString().charAt(location.toString().length-1) != '#') {
+          document.location.reload();
+        }
+      };
     window.onload = function init() {					
-		// Call the updateTable(currentPage) function initially to populate the table on page load
-		updateTable(currentPage);
+    	  // Call the updateTable(currentPage) function initially to populate the table on page load
+        readHTMLParams();
+        setSelected();
+        updateTablePrim(currentPage);
 		
-		// Add an event listener to the form so that the filters will be applied
-		document.getElementById("productarchiveFilters").addEventListener("submit", setFilters);
+        // Add an event listener to the form so that the filters will be applied
+		    document.getElementById("productarchiveFilters").addEventListener("submit", setFilters);
 		}
 	</script>
 </body>

@@ -280,14 +280,6 @@ if (event.key === "Enter") {
   var fromDate = null;
   var toDate = null;
 
-  function getFromRow() {
-	  return (currentPage - 1) * pageSize;
-  }
-  
-  function getToRow() {
-	  return currentPage * pageSize;
-	}
-  
   function addEventHandler() {
       $("input[name='fromDate']").change(checkTime);
       $("input[name='toDate']").change(checkTime);   
@@ -534,8 +526,7 @@ function setHTMLParams() {
     paramString = addURLParamValuesPrim('orderStates', orderStates, paramString);
     paramString = addURLParamValuePrim('fromDate', fromDate, paramString);
     paramString = addURLParamValuePrim('toDate', toDate, paramString);
-    paramString = addURLParamValuePrim('currentPage', currentPage.toString(), paramString);
-    paramString = addURLParamValuePrim('pageSize', pageSize.toString(), paramString);
+    paramString = setPageHTMLParams(paramString);
     paramString = addURLParamValuePrim('sortCol', sortCol.replace("select-", ""), paramString);
     paramString = addURLParamValuePrim('up', upText, paramString);
     var newHref = location.origin + location.pathname + paramString;
@@ -545,10 +536,7 @@ function setHTMLParams() {
 }
 
 function readHTMLParams() {
-	  var tmp = getURLParam('currentPage');
-	  currentPage = isEmpty(tmp) ? 1 : Number(tmp);
-	  tmp = getURLParam('pageSize');
-	  pageSize = isEmpty(tmp) ? 20 : Number(tmp);
+	  readPageHTMLParams();
 	  identifier = getURLParam('identifier');
 	  tmp = getURLParam('sortCol');
 	  sortCol = isEmpty(tmp) ? "id" : tmp;
@@ -586,16 +574,6 @@ function setParams(ele, selup, newPage, newPageSize) {
     	newSortCol = sortCol;
     	newUpText = upText;
     }
-    if (newPage == null) {
-    	newPage = currentPage;
-    } else {
-    	newPage = Number(newPage);
-    }
-    if (newPageSize == null) {
-    	newPageSize = pageSize;
-    } else {
-    	newPageSize = Number(newPageSize);
-    }
     
     newIdentifier = $('#identifier').val();
     if (isEmpty(newIdentifier)) {
@@ -608,7 +586,12 @@ function setParams(ele, selup, newPage, newPageSize) {
     newToDate= getDateString($('#toDate').val());
     newOrderStates = $('#orderStates').val();
     newProducts = $('#products').val();
-    		
+    	
+    if (   setPageParams(newPage, newPageSize)
+    		|| newSortCol != sortCol
+    		|| newUpText != upText) {
+      hasChanged = true;
+    }	
     if (   identifier != newIdentifier
     		|| fromDate != newFromDate
     		|| toDate != newToDate
@@ -619,12 +602,6 @@ function setParams(ele, selup, newPage, newPageSize) {
       newPage = 1;
     	hasChanged = true;
     } 	
-    if (   newSortCol != sortCol
-    		|| newUpText != upText
-    		|| newPage != currentPage
-    		|| newPageSize != pageSize) {
-      hasChanged = true;
-    }
     
     if (!hasChanged && (sortCol != newSortCol || upText != newUpText)) {
     	hasChanged = true;
@@ -637,8 +614,6 @@ function setParams(ele, selup, newPage, newPageSize) {
     orderStates = newOrderStates;
     fromDate = newFromDate;
     toDate = newToDate;
-    currentPage = Number(newPage);
-    pageSize = newPageSize;
     
     if (hasChanged) {
     	setHTMLParams();
@@ -711,21 +686,6 @@ function getSort() {
         }
     }
     return sortCol + ":" + up.toString();
-}
-
-// Function to customize the page size
-function updatePageSize() {
-  
-  // Retrieve the new page size
-  var newPageSize = document.getElementById("pageSizeField").value;
-  newPageSize = (!isNaN(newPageSize) && newPageSize > 0) ? parseInt(newPageSize) : pageSize;
-  if (newPageSize != pageSize) { 
-	  // pageSize = newPageSize;
-	  // Go always to first page
-	  currentPage = 1;
-	  // Call the function to update the table with the new page size         
-    updateTable(currentPage, newPageSize);
-  }
 }
   
 function retrieveDataPrim(setPar) {

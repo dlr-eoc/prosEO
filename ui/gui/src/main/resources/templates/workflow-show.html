@@ -321,16 +321,87 @@
 	<script type="text/javascript" th:inline="javascript">
 		// Global variables
 		var currentPage = 1; // Current page number
-		var pageSize = 50; // Maximum objects per page
+		var pageSize = 20; // Maximum objects per page
 		
 		// Workflow filters
 		var id = null;
-		var name = null;
+		var wname = null;
 		var workflowVersion = null;
 		var inputProductClass = null;
+
+		function setParams(ele, selup, newPage, newPageSize) {
+	      var newId = null;
+	      var newName = null;
+	      var newWorkflowVersion = null;
+	      var newInputProductClass = null;
+
+		    var hasChanged = false;
+		      
+		    hasChanged |= setPageParams(newPage, newPageSize);
+        newId = $('#id').val();
+        if (isEmpty(newId)) {newId = null};
+        newName = $('#name').val();
+        if (isEmpty(newName)) {newName = null};
+        newWorkflowVersion = $('#workflowVersion').val();
+        if (isEmpty(newWorkflowVersion)) {newWorkflowVersion = null};
+        newInputProductClass = $('#inputProductClass').val();
+        if (isEmpty(newInputProductClass)) {newInputProductClass = null};
+
+        if (   id != newId
+            || wname != newName
+            || workflowVersion != newWorkflowVersion
+            || inputProductClass != newInputProductClass) {
+          // table size may be changed, go to first page
+          currentPage = 1;
+          newPage = 1;
+          hasChanged = true;
+        }   
+        id = newId;
+        wname = newName;
+        workflowVersion = newWorkflowVersion;
+        inputProductClass = newInputProductClass;
+        if (hasChanged) {
+            setHTMLParams();
+        }
+		}
+		
+		function setHTMLParams() {
+		    var loc = location.search.slice(0);
+		    var search = location.search.slice(1);
+		    // build parameter string
+		    var paramString = "";
+		    paramString = addURLParamValuePrim('id', id, paramString);
+		    paramString = addURLParamValuePrim('name', wname, paramString);
+		    paramString = addURLParamValuePrim('workflowVersion', workflowVersion, paramString);
+		    paramString = addURLParamValuePrim('inputProductClass', inputProductClass, paramString);
+		    paramString = setPageHTMLParams(paramString);
+		    var newHref = location.origin + location.pathname + paramString;
+		    if (newHref != location.href) {
+		        history.pushState({}, null, newHref);
+		    }
+		}
+
+		function readHTMLParams() {
+		    readPageHTMLParams();
+		    id = getURLParam('id');
+	      wname = getURLParam('name');
+	      workflowVersion = getURLParam('workflowVersion');
+	      inputProductClass = getURLParam('inputProductClass');
+		}
+		function setSelected() {
+		      $('#id').val(id);
+		      $('#name').val(wname);
+		      $('#workflowVersion').val(workflowVersion);
+		      $('#inputProductClass').val(inputProductClass);
+		}
+
+		function updateTable(newPage, newPageSize) {
+		  setParams(null, null, newPage, newPageSize);
+			updateTablePrim(currentPage);
+		}
 		
 		// Function to fetch objects from the REST controller
-		function updateTable(newPage) {
+		function updateTablePrim(newPage) {
 			currentPage = newPage;
 			
 			var recordFrom = (currentPage - 1) * pageSize;
@@ -344,8 +415,8 @@
 			if (id != null && id != "null")
 				url += "&id=" + id;
 			
-			if (name != null && name != "null")
-				url += "&name=" + name;
+			if (wname != null && wname != "null")
+				url += "&name=" + wname;
 					
 			if (workflowVersion != null && workflowVersion != "null")
 				url += "&workflowVersion=" + workflowVersion;
@@ -360,8 +431,10 @@
 			  .then(html => {
 				  $("#workflowcontent").html(html); // Set the HTML content of the element
 				  feather.replace(); // Display the arrows on the buttons
-                  document.getElementById("pageSizeField").placeholder = pageSize; //Display correct page size
-                  })
+				  readHTMLParams();
+				  setSelected();
+          document.getElementById("pageSizeField").value = pageSize; //Display correct page size
+        })
 			  .catch(console.error);
 		}
 		
@@ -369,15 +442,8 @@
 		function setFilters(event) {	
 			// Allow for custom form handling
 			event.preventDefault();
-			
-			// Retrieve the values from the form inputs
-			id = document.getElementById("id").value.trim() === "" ? null : document.getElementById("id").value;
-			name = document.getElementById("name").value.trim() === "" ? null : document.getElementById("name").value;
-			workflowVersion = document.getElementById("workflowVersion").value.trim() === "" ? null : document.getElementById("workflowVersion").value;
-			inputProductClass = document.getElementById("inputProductClass").value.trim() === "" ? null : document.getElementById("inputProductClass").value;
-		    
-		    // Update the table according to the new filters
-		    updateTable(currentPage);
+			// Update the table according to the new filters
+		  updateTable(null, null);
 		}
 		
 		// Function to hide or show workflow details
@@ -395,25 +461,22 @@
 		      }
 		  }
 		
-		// Function to customize the page size
-	    function updatePageSize() {
-			
-			// Retrieve the new page size
-			var newPageSize = document.getElementById("pageSizeField").value;
-			pageSize = (!isNaN(newPageSize) && newPageSize > 0) ? parseInt(newPageSize) : pageSize;console.log("New page size: " + pageSize);
-	        
-	        // Call the function to update the table with the new page size	        
-	        updateTable(currentPage);
-	    }
 	</script>
 
 	<script>
-    window.onload = function init() {					
-		// Call the updateTable(currentPage) function initially to populate the table on page load
-		updateTable(currentPage);
+	  window.onpopstate = function(event) {
+		  if (location.toString().charAt(location.toString().length-1) != '#') {
+		    document.location.reload();
+		  }
+		};
+    window.onload = function init() {	
+    	  readHTMLParams();
+    	  setSelected();
+    	  // Call the updateTable(currentPage) function initially to populate the table on page load
+		    updateTablePrim(currentPage);
 		
-		// Add an event listener to the form so that the filters will be applied
-		document.getElementById("workflowFilters").addEventListener("submit", setFilters);
+		    // Add an event listener to the form so that the filters will be applied
+		    document.getElementById("workflowFilters").addEventListener("submit", setFilters);
 		}
 	</script>
 </body>

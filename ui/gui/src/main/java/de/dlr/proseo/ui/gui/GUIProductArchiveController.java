@@ -118,6 +118,7 @@ public class GUIProductArchiveController extends GUIBaseController {
 								model.addAttribute("productarchives", productarchives);
 								model.addAttribute("numberOfPages", 1);
 								model.addAttribute("currentPage", 1);
+								model.addAttribute("count", 1);
 
 								// Helper list for the buttons with page numbers
 								List<Long> showPages = new ArrayList<>();
@@ -161,6 +162,7 @@ public class GUIProductArchiveController extends GUIBaseController {
 								model.addAttribute("numberOfPages", numberOfPages);
 								model.addAttribute("currentPage", currentPage);
 								model.addAttribute("showPages", showPages);
+								model.addAttribute("count", count);
 
 								if (logger.isTraceEnabled())
 									logger.trace(model.toString() + "MODEL TO STRING");
