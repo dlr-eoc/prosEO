@@ -68,7 +68,7 @@
           </List_of_File_Names>
         </Input>
       </List_of_Inputs>
-      <List_of_Outputs count="1">
+      <List_of_Outputs count="2">
         <Output>
           <File_Type>PTM_L1B_P1</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
