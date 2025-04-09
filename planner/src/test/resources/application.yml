@@ -54,7 +54,7 @@ proseo:
         # Sort mode to start job steps (sensingTime | submissionTime)
         jobStepSort: sensingTime
         # Enable (true: default)/disable (false) automatic derivation of job steps to generate required input data
-        autogenerate: true
+        # autogenerate: true
     ingestor:
         # Callback URL for wrapper
         url: http://192.168.20.155:8081/proseo/ingestor/v0.1
