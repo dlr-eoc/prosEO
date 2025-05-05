@@ -256,6 +256,7 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 			while (Files.size(targetFile.toPath()) < contentLength && i < maxCycles) {
 				logger.info("... waiting to complete writing of {}", targetFile);
 				Thread.sleep(waitTime);
+				i++;
 			}
 
 			if (maxCycles <= i) {
