@@ -32,6 +32,7 @@ import de.dlr.proseo.storagemgr.utils.PathConverter;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
@@ -54,11 +55,17 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
  */
 public class S3DAL {
 
-	/** S3 client for v2 */
-	private S3Client s3ClientV2;
+	/** Chunk size for downloads to S3 storage (128 MB) */
+	private static final Long MULTIPART_DOWNLOAD_PARTSIZE_BYTES = (long) (128 * 1024 * 1024);
 
 	/** S3 client for v1 */
 	private AmazonS3 s3ClientV1;
+
+	/** S3 client for v2 */
+	private S3Client s3ClientV2;
+
+	/** Asynchronous S3 client for v2 */
+	private S3AsyncClient s3AsyncClientV2;
 
 	/** s3 configuration */
 	private S3Configuration cfg;
@@ -138,25 +145,46 @@ public class S3DAL {
 	public void initS3ClientV2() throws IOException {
 
 		if (logger.isTraceEnabled()) logger.trace(">>> initS3ClientV2()");
-
+		
 		Region s3Region = Region.of(cfg.getS3Region()); // Region.EU_CENTRAL_1;
 
 		logger.trace("... using access key {} and secret {}", cfg.getS3AccessKey(), "***");
 		initCredentials(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
 
 		if (cfg.isDefaultEndPoint()) {
+			
 			s3ClientV2 = S3Client.builder()
 				.forcePathStyle(true)
 				.region(s3Region)
 				.credentialsProvider(StaticCredentialsProvider.create(credentials))
 				.build();
+			
+			s3AsyncClientV2 = S3AsyncClient.crtBuilder()
+				.credentialsProvider(StaticCredentialsProvider.create(credentials))
+				.region(s3Region)
+                .targetThroughputInGbps(20.0)
+                .minimumPartSizeInBytes(MULTIPART_DOWNLOAD_PARTSIZE_BYTES)
+                .forcePathStyle(true)
+				.build();
+			
 		} else {
+			
 			s3ClientV2 = S3Client.builder()
 				.forcePathStyle(true)
 				.region(s3Region)
 				.endpointOverride(URI.create(cfg.getS3EndPoint()))
 				.credentialsProvider(StaticCredentialsProvider.create(credentials))
 				.build();
+			
+			s3AsyncClientV2 = S3AsyncClient.crtBuilder()
+				.credentialsProvider(StaticCredentialsProvider.create(credentials))
+				.region(s3Region)
+                .targetThroughputInGbps(20.0)
+                .minimumPartSizeInBytes(MULTIPART_DOWNLOAD_PARTSIZE_BYTES)
+				.endpointOverride(URI.create(cfg.getS3EndPoint()))
+                .forcePathStyle(true)
+				.build();
+			
 		}
 
 		setDefaultBucket(cfg.getBucket());
@@ -470,7 +498,7 @@ public class S3DAL {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> downloadFile({},{},{})", bucket, sourceFile, targetFileOrDir);
 
-		AtomicCommand<String> fileDownloader = new S3AtomicFileDownloader(s3ClientV1, bucket, sourceFile, targetFileOrDir,
+		AtomicCommand<String> fileDownloader = new S3AtomicFileDownloaderV2(s3AsyncClientV2, bucket, sourceFile, targetFileOrDir,
 				cfg.getFileCheckWaitTime(), cfg.getMaxRequestAttempts());
 		return new DefaultRetryStrategy<>(fileDownloader, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
