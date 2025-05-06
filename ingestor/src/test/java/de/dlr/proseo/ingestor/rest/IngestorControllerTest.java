@@ -130,12 +130,6 @@ public class IngestorControllerTest {
 		wireMockServer = new WireMockServer(WIREMOCK_PORT);
 		wireMockServer.start();
 
-		wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo("/planner/semaphore/acquire")).willReturn(
-				WireMock.aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody("{}")));
-
-		wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo("/planner/semaphore/release")).willReturn(
-				WireMock.aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody("{}")));
-
 		wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/storage-mgr/products"))
 				.willReturn(WireMock.aResponse().withStatus(201).withHeader("Content-Type", "application/json")
 						.withBody(STORAGE_MGR_RESPONSE)));

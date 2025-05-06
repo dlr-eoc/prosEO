@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionDefinition;
@@ -27,9 +28,12 @@ import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.JobStep.StdLogLevel;
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.Task;
 import de.dlr.proseo.model.enums.JobOrderVersion;
+import de.dlr.proseo.model.enums.OrderSource;
 import de.dlr.proseo.model.joborder.JobOrder;
+import de.dlr.proseo.model.service.ProductQueryService;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.planner.ProductionPlanner;
@@ -64,7 +68,7 @@ public class KubeJob {
 
 	/** Logger of this class */
 	private static ProseoLogger logger = new ProseoLogger(KubeJob.class);
-
+	
 	/** The job's database id */
 	private long jobId;
 
@@ -323,6 +327,10 @@ public class KubeJob {
 				if (logger.isTraceEnabled())
 					logger.trace(">>> execution time of order is after now.");
 				return null;
+			} else {
+				// reprocess the selection rules to get all "new" available input products
+				reexecuteProductQueries();
+
 			}
 		}
 
@@ -1359,4 +1367,32 @@ public class KubeJob {
 		}
 	}
 
+	private void reexecuteProductQueries() {
+
+		TransactionTemplate transactionTemplate = new TransactionTemplate(this.kubeConfig.getProductionPlanner().getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+
+		transactionTemplate.setReadOnly(false);
+		transactionTemplate.execute(status -> {
+
+			// Find the job step in the database
+			Optional<JobStep> jobStepOptional = RepositoryService.getJobStepRepository().findById(this.getJobId());
+			if (jobStepOptional.isEmpty()) {
+				logger.log(PlannerMessage.JOB_STEP_NOT_FOUND, this.getJobId());
+				return null;
+			}
+			JobStep js = jobStepOptional.get();
+
+			// Iterate over the input product queries of the job step
+			for (ProductQuery productQuery : js.getInputProductQueries()) {
+				// Execute the product query always
+				ProductQueryService productQueryService = UtilService.getJobStepUtil().getProductQueryService();
+				if (productQueryService.executeQuery(productQuery, false)) {
+					// If the query is successfully executed, update its state and save
+					RepositoryService.getProductQueryRepository().save(productQuery);
+				}
+			}	
+			return null;
+		});  
+	}
 }

@@ -49,6 +49,7 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.planner.ProductionPlanner;
+import de.dlr.proseo.planner.ProductionPlannerConfiguration;
 import de.dlr.proseo.planner.util.OrderPlanThread;
 import de.dlr.proseo.planner.util.UtilService;
 
@@ -66,6 +67,10 @@ public class OrderDispatcher {
 	/** The product query service */
 	@Autowired
 	private ProductQueryService productQueryService;
+
+	/** Production planner configuration */
+	@Autowired
+	ProductionPlannerConfiguration config;
 
 	/**
 	 * Publish an order, create jobs and job steps needed to create all products
@@ -179,6 +184,7 @@ public class OrderDispatcher {
 							order.setStateMessage(ProductionPlanner.STATE_MESSAGE_COMPLETED);
 
 							answer.setMessage(PlannerMessage.ORDER_ALREADY_COMPLETED);
+							UtilService.getOrderUtil().setOrderHistory(order);
 						}
 						break;
 
@@ -857,7 +863,7 @@ public class OrderDispatcher {
 						});
 
 						if (!plannerResponse.getSuccess()) {
-							// If an interrupt message is received, set the answer, release the semaphore and return
+							// If an interrupt message is received, set the answer and return
 							answer = plannerResponse;
 
 							PlannerResultMessage msg = new PlannerResultMessage(PlannerMessage.PLANNING_INTERRUPTED);
@@ -1190,8 +1196,6 @@ public class OrderDispatcher {
 					if (logger.isTraceEnabled())
 						logger.trace("<<< createProductsAndJobStep");
 					throw e;
-				} finally {
-					// productionPlanner.releaseReleaseSemaphore();
 				}
 			}
 			allProducts.addAll(products);
@@ -1208,9 +1212,15 @@ public class OrderDispatcher {
 					if (logger.isDebugEnabled())
 						logger.debug("Product query for rule '{}' already satisfied", pq.getGeneratingRule());
 				} else {
-					// Create job steps for the unsatisfied product query
-					createProductsAndJobStep(pq.getRequestedProductClass(), job, order, allJobSteps, allProducts,
-							productionPlanner);
+					if (config.getAutogenerate()) {
+						// Create job steps for the unsatisfied product query
+						createProductsAndJobStep(pq.getRequestedProductClass(), job, order, allJobSteps, allProducts,
+								productionPlanner);
+					} else {
+						if (logger.isDebugEnabled()) {
+							logger.debug("Autogenerate is disabled, don't generate derivated job steps");
+						}
+					}
 				}
 			}
 

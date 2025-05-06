@@ -1,4 +1,5 @@
 spring:
+    maxResults: 10000
     jpa:
         database-platform: org.hibernate.dialect.PostgreSQLDialect
         hibernate.ddl-auto: update
@@ -9,11 +10,14 @@ spring:
         username: postgres
         password: ********
 logging:
-    file: /proseo/log/proseo-user-mgr.log
+    file: 
+        name: /proseo/log/proseo-user-mgr.log
     level:
         root: INFO
         de.dlr.proseo: TRACE
         org.hibernate.engine.jdbc.env.internal: WARN
 proseo:
+    defaultuser.name: sysadm
+    defaultuser.password: sysadm
     # Password expiration period in days
     password.expirationtime: 90

@@ -37,7 +37,7 @@ const messages = {
 const categories = {
     modules: "Module",
     packages: "Packages",
-    types: "Klassen und Schnittstellen",
+    types: "Typen",
     members: "Mitglieder",
     searchTags: "Tags suchen"
 };

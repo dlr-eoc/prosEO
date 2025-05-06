@@ -276,6 +276,7 @@ public class OrderPlanThread extends Thread {
 									UtilService.getOrderUtil()
 										.setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_COMPLETED);
 									lambdaAnswer.setMessage(PlannerMessage.ORDER_PRODUCT_EXIST);
+									UtilService.getOrderUtil().setOrderHistory(lambdaOrder);
 								} else {
 									lambdaOrder.setOrderState(OrderState.PLANNED);
 									UtilService.getOrderUtil().setStateMessage(lambdaOrder, ProductionPlanner.STATE_MESSAGE_QUEUED);

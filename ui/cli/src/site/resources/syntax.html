@@ -1,10 +1,13 @@
 <!DOCTYPE html><html><head><title>ProsEO CLI Documentation</title><link rel="stylesheet" href="css/syntax.css"></head><body><h1 id="Header">prosEO UI Command Line Interface Syntax (v0.1)</h1><p>The general syntax for commands is:</p><p>  command [subcommand...] [option...] [parameter...]</p><p>Commands can be entered after the "prosEO>" command prompt. They can also be invoked on the shell command line 
-following the name of the prosEO executable (e. g. "proseo") and at least one whitespace character.</p><p>Commands may have subcommands, which precede all options and parameters.</p><p>Commands may have options (--option, a short form -o may be given as alias) and parameters
+following the CLI execution command (e. g. "java -jar proseo-ui-cli.jar") and at least one whitespace character.</p><p>Commands may have subcommands, which precede all options and parameters.</p><p>Commands may have options (--option, a short form -o may be given as alias) and parameters
 (passed as values without the parameter name).</p><p>Modal options can be combined into one option, i. e. "-a -b -c" is the same as "-abc".
 Options with values are either of the form "-ovalue" or "--option=value";
 in the case of multiple values "--option=value,value,value".</p><p>Parameters are positional, except (implicitly) for attribute parameters of the form "<attribute name>=<attribute value>".
 Attribute values may be comma-separated string lists, but they cannot represent attributes of more complex types. To set
-complex object attributes use the "--file" option and pass a Json, XML or Yaml file.</p><p>Options and parameters containing blanks and/or quotes must be quoted, e. g. "-ovalue with blanks" or 'My "quoted" parameter'.</p><p>All date-time values must conform to the ISO date-time format ("YYYY-MM-DD[THH:MM:SS.ssssssZ]"), with or without a second,
+complex object attributes use the "--file" option and pass a Json, XML or Yaml file.</p><p>Options and parameters containing blanks and/or quotes must be quoted, e. g. "-ovalue with blanks" or 'My "quoted" parameter'.</p><p>The option "delete-attributes" deletes non-mandatory simple attributes not given in the mission definition file and/or the command 
+parameters. For attributes containing a list of objects (e.g. a workflow parameter list) this is not implmented. If a list is not 
+given or null it is assumed as an empty list and already defined objects (e.g. workflow parameters) are deleted. Thus these
+lists have to be defined always in an input file describing an object.</p><p>All date-time values must conform to the ISO date-time format ("YYYY-MM-DD[THH:MM:SS.ssssssZ]"), with or without a second,
 a fraction of second and/or a time zone, e. g. the following are valid:
 "2020-04-08", "2020-04-08T11:30+0200", "2020-04-08T11:30:45.123456Z".
 Value parts not specified will be set to zero, i. e. "2020-04-08" will be interpreted as "2020-04-08T00:00:00.000000" in UTC.

@@ -1,4 +1,4 @@
-FROM localhost:5000/proseo-api-odip:1.1.0-SNAPSHOT
+FROM localhost:5000/proseo-api-odip:1.2.0-SNAPSHOT
 ADD application.yml /usr/share/api/odip/application.yml
 WORKDIR /usr/share/api/odip
 

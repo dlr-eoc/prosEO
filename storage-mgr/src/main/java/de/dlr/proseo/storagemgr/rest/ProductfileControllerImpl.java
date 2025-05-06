@@ -5,6 +5,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoField;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,6 +27,7 @@ import de.dlr.proseo.storagemgr.cache.CacheFileStatus;
 import de.dlr.proseo.storagemgr.cache.FileCache;
 import de.dlr.proseo.storagemgr.model.Storage;
 import de.dlr.proseo.storagemgr.model.StorageFile;
+import de.dlr.proseo.storagemgr.model.StorageType;
 import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
 import de.dlr.proseo.storagemgr.utils.StorageFileLocker;
 
@@ -132,13 +137,13 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		String externalPath = pathInfo;
 
-		String relativePath = getProductFolderWithFilename(externalPath, productId);
+		String targetPath = getProductFolderWithFilename(externalPath, productId);
 
 		try {
 
-			RestFileInfo restFileInfo = copyExternalFileToCache(externalPath, productId); // synchronized
+			RestFileInfo restFileInfo = copyExternalFileToCache(externalPath, targetPath, productId); // synchronized
 
-			restFileInfo = copyCacheFileToStorage(relativePath);
+			restFileInfo = copyCacheFileToStorage(targetPath);
 
 			logger.log(StorageMgrMessage.PRODUCT_FILE_UPLOADED_TO_STORAGE, externalPath, productId);
 			return new ResponseEntity<>(restFileInfo, HttpStatus.CREATED);
@@ -170,9 +175,10 @@ public class ProductfileControllerImpl implements ProductfileController {
 			logger.trace(">>> copyFileStorageToCache({})", absoluteStorageFilePath);
 
 		// relative path depends on path, not on actual storage
-		String relativePath = storageProvider.getRelativePath(absoluteStorageFilePath);
+		Storage storage = storageProvider.getStorage(absoluteStorageFilePath);
+		String relativePath = storage.getRelativePath(absoluteStorageFilePath);
 
-		StorageFile storageFile = storageProvider.getStorageFile(relativePath);
+		StorageFile storageFile = storageProvider.getStorageFile(storage, relativePath);
 		StorageFile cacheFile = storageProvider.getCacheFile(storageFile.getRelativePath());
 
 		FileCache cache = FileCache.getInstance();
@@ -230,7 +236,13 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 				cache.setCacheFileStatus(destCacheFile.getFullPath(), CacheFileStatus.INCOMPLETE);
 
-				storageProvider.getStorage().downloadFile(srcStorageFile, destCacheFile);
+				if (StorageType.POSIX.equals(srcStorageFile.getStorageType())) {
+					storageProvider.getStorage().downloadFile(srcStorageFile, destCacheFile);
+				} else {
+					storageProvider
+						.getStorage(srcStorageFile.getStorageType(), srcStorageFile.getBucket())
+						.downloadFile(srcStorageFile, destCacheFile);
+				}
 
 				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED_FROM_STORAGE, destCacheFile.getFullPath());
 
@@ -271,6 +283,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 * 
 	 * @param srcExternalPath external absolute path of the file, which will be copied to the
 	 *                     cache
+	 * @param targetPath relative path to the target location of the file
 	 * @param productId    product id is used as a directory to store copied file in
 	 *                     cache
 	 * @return Rest File Info
@@ -278,14 +291,13 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 * @throws IOException
 	 * @throws Exception
 	 */
-	private RestFileInfo copyExternalFileToCache(String srcExternalPath, Long productId)
+	private RestFileInfo copyExternalFileToCache(String srcExternalPath, String targetPath, Long productId)
 			throws FileLockedAfterMaxCyclesException, IOException, Exception {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> copyFileExternalToCache({}, {}, {}, {})", srcExternalPath, productId);
 
-		String productFolderWithFilename = getProductFolderWithFilename(srcExternalPath, productId);
-		StorageFile destCacheFile = storageProvider.getCacheFile(productFolderWithFilename);
+		StorageFile destCacheFile = storageProvider.getCacheFile(targetPath);
 
 		FileCache cache = FileCache.getInstance();
 
@@ -323,7 +335,8 @@ public class ProductfileControllerImpl implements ProductfileController {
 			throws FileLockedAfterMaxCyclesException, IOException, Exception {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> synchroCopyFileExternalToCache({}, {}, {})", srcExternalPath, productId, destCacheFile);
+			logger.trace(">>> synchroCopyFileExternalToCache({}, {}, {})", srcExternalPath, productId, 
+					(null == destCacheFile ? "null" : destCacheFile.getFullPath()));
 
 		// synchronized x-to-cache-copy method, status "not exists" is used
 
@@ -345,7 +358,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 				cache.setCacheFileStatus(destCacheFile.getFullPath(), CacheFileStatus.INCOMPLETE);
 
-				storageProvider.copyAbsoluteFilesToCache(srcExternalPath, productId);
+				storageProvider.copyAbsoluteFilesToCache(srcExternalPath, destCacheFile);
 
 				logger.log(StorageMgrMessage.PRODUCT_FILE_DOWNLOADED_FROM_EXTERNAL_TO_CACHE,
 						destCacheFile.getFullPath());
@@ -395,7 +408,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 		Storage storage = storageProvider.getStorage();
 
 		StorageFile cacheFile = storageProvider.getCacheFile(relativeCachePath);
-		StorageFile storageFile = storageProvider.getStorageFile(relativeCachePath);
+		StorageFile storageFile = storageProvider.getStorageFile(storage, relativeCachePath);
 
 		storage.uploadFile(cacheFile, storageFile);
 
@@ -431,7 +444,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 	/**
 	 * Gets a product folder with the file name from the given external path using
-	 * product id
+	 * product id and current timestamp (to avoid huge directories and make the backend storage navigable)
 	 * 
 	 * @param externalPath absolute external path
 	 * @param productId    product id
@@ -443,6 +456,13 @@ public class ProductfileControllerImpl implements ProductfileController {
 			logger.trace(">>> getProductFolderWithFilename({}, {})", externalPath, productId);
 
 		String fileName = new File(externalPath).getName();
-		return Paths.get(String.valueOf(productId), fileName).toString();
+		ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
+		return Paths.get(
+				String.valueOf(now.get(ChronoField.YEAR)),
+				String.valueOf(now.get(ChronoField.MONTH_OF_YEAR)),
+				String.valueOf(now.get(ChronoField.DAY_OF_MONTH)),
+				String.valueOf(now.get(ChronoField.HOUR_OF_DAY)),
+				String.valueOf(productId),
+				fileName).toString();
 	}
 }

@@ -30,6 +30,7 @@ import de.dlr.proseo.model.dao.MonServiceStateOperationRepository;
 import de.dlr.proseo.model.dao.MonServiceStateRepository;
 import de.dlr.proseo.model.dao.OrbitRepository;
 import de.dlr.proseo.model.dao.OrderRepository;
+import de.dlr.proseo.model.dao.ProcessingOrderHistoryRepository;
 import de.dlr.proseo.model.dao.ApiMetricsRepository;
 import de.dlr.proseo.model.dao.ClassOutputParameterRepository;
 import de.dlr.proseo.model.dao.ProcessorClassRepository;
@@ -183,6 +184,10 @@ public class RepositoryService {
 	@Autowired
     private MonExtServiceStateOperationMonthRepository monExtServiceStateOperationMonthRepository;
 	
+	/** The repository for the ProcessingOrder class */
+	@Autowired
+    private ProcessingOrderHistoryRepository processingOrderHistoryRepository;
+		
 	/** The repository for the Workflow class */
 	@Autowired
     private WorkflowRepository workflowRepository;
@@ -469,12 +474,19 @@ public class RepositoryService {
 	public static MonExtServiceStateOperationDayRepository getMonExtServiceStateOperationDayRepository() {
 		return theRepositoryService.monExtServiceStateOperationDayRepository;
 	}
-
+	
 	/**
 	 * @return the monExtServiceStateOperationMonthRepository
 	 */
 	public static MonExtServiceStateOperationMonthRepository getMonExtServiceStateOperationMonthRepository() {
 		return theRepositoryService.monExtServiceStateOperationMonthRepository;
+	}
+
+	/**
+	 * @return the processingOrderHistoryRepository
+	 */
+	public static ProcessingOrderHistoryRepository getProcessingOrderHistoryRepository() {
+		return theRepositoryService.processingOrderHistoryRepository;
 	}
 
 	/**

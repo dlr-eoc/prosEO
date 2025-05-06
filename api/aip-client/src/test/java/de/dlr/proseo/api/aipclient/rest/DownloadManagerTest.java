@@ -107,11 +107,11 @@ public class DownloadManagerTest {
 	private static final String LTA_QUERY_BY_NAME = 
 			"Products?%24filter=Name%20eq%20'" 
 				+ TEST_FILENAME_1
-				+ "'&%24count=true&%24top=1000&%24expand=Attributes"; 
+				+ "'&%24count=true&%24top=10000&%24orderby=OriginDate%20asc&%24expand=Attributes"; 
 	private static final String LTA_QUERY_BY_INVALID_NAME = 
 			"Products?%24filter=Name%20eq%20'" 
 				+ TEST_NON_EXISTENT_FILENAME
-				+ "'&%24count=true&%24top=1000&%24expand=Attributes"; 
+				+ "'&%24count=true&%24top=10000&%24orderby=OriginDate%20asc&%24expand=Attributes"; 
 	private static final String LTA_QUERY_BY_TIME = 
 			"Products?%24filter="
 				+ "%28startswith%28Name%2C'" + TEST_MISSION_CODE + "'%29"
@@ -123,7 +123,7 @@ public class DownloadManagerTest {
 				+ "%20and%20Attributes%2FOData.CSC.StringAttribute%2Fany%28att%3Aatt%2FName%20eq%20'productType'%20" 
 				+ "and%20att%2FOData.CSC.StringAttribute%2FValue%20eq%20'" 
 				+ TEST_PRODUCT_TYPE 
-				+ "'%29&%24count=true&%24top=1000&%24expand=Attributes";
+				+ "'%29&%24count=true&%24top=10000&%24orderby=OriginDate%20asc&%24expand=Attributes";
 	private static final String LTA_QUERY_BY_INVALID_TIME = 
 			"Products?%24filter="
 				+ "%28startswith%28Name%2C'" + TEST_MISSION_CODE + "'%29"
@@ -135,7 +135,7 @@ public class DownloadManagerTest {
 				+ "%20and%20Attributes%2FOData.CSC.StringAttribute%2Fany%28att%3Aatt%2FName%20eq%20'productType'%20" 
 				+ "and%20att%2FOData.CSC.StringAttribute%2FValue%20eq%20'" 
 				+ TEST_PRODUCT_TYPE 
-				+ "'%29&%24count=true&%24top=1000&%24expand=Attributes";
+				+ "'%29&%24count=true&%24top=10000&%24orderby=OriginDate%20asc&%24expand=Attributes";
 	private static final String LTA_QUERY_ALL_BY_TIME = 
 			"Products?%24filter="
 				+ "%28startswith%28Name%2C'" + TEST_MISSION_CODE + "'%29"
@@ -147,7 +147,7 @@ public class DownloadManagerTest {
 				+ "%20and%20Attributes%2FOData.CSC.StringAttribute%2Fany%28att%3Aatt%2FName%20eq%20'productType'%20" 
 				+ "and%20att%2FOData.CSC.StringAttribute%2FValue%20eq%20'" 
 				+ TEST_PRODUCT_TYPE 
-				+ "'%29&%24count=true&%24top=1000&%24expand=Attributes";
+				+ "'%29&%24count=true&%24top=10000&%24orderby=OriginDate%20asc&%24expand=Attributes";
 	private static final String LTA_QUERY_ALL_BY_INVALID_TIME = 
 			"Products?%24filter="
 				+ "%28startswith%28Name%2C'" + TEST_MISSION_CODE + "'%29"
@@ -159,7 +159,7 @@ public class DownloadManagerTest {
 				+ "%20and%20Attributes%2FOData.CSC.StringAttribute%2Fany%28att%3Aatt%2FName%20eq%20'productType'%20" 
 				+ "and%20att%2FOData.CSC.StringAttribute%2FValue%20eq%20'" 
 				+ TEST_PRODUCT_TYPE 
-				+ "'%29&%24count=true&%24top=1000&%24expand=Attributes";
+				+ "'%29&%24count=true&%24top=10000&%24orderby=OriginDate%20asc&%24expand=Attributes";
 	
 	private static final String TEST_PRODUCT_DATA_1 = "testdata1 for UUID " + TEST_UUID_1;
 	private static final String TEST_PRODUCT_DATA_2 = "testdata2 for UUID " + TEST_UUID_2;
@@ -172,6 +172,7 @@ public class DownloadManagerTest {
 			+ "\"OriginDate\":\"1970-01-01T00:00:00Z\"," 
 			+ "\"PublicationDate\":\"2022-06-26T14:53:11.138Z\"," 
 			+ "\"EvictionDate\":\"9999-12-31T23:59:59.999Z\"," 
+			+ "\"Online\":false," 
 			+ "\"Footprint\":null," 
 			+ "\"Checksum\":[{"
 				+ "\"Algorithm\":\"MD5\"," 
@@ -240,6 +241,7 @@ public class DownloadManagerTest {
 			+ "\"OriginDate\":\"1970-01-01T00:00:00Z\"," 
 			+ "\"PublicationDate\":\"2022-06-26T14:53:11.138Z\"," 
 			+ "\"EvictionDate\":\"9999-12-31T23:59:59.999Z\"," 
+			+ "\"Online\":true," 
 			+ "\"Footprint\":null," 
 			+ "\"Checksum\":[{"
 				+ "\"Algorithm\":\"MD5\"," 
@@ -349,9 +351,9 @@ public class DownloadManagerTest {
 			+ "}";
 	
 	private static final String LTA_QUERY_ORDER_BY_UUID_1 =
-			"Orders?%24filter=Id%20eq%20" + TEST_ORDER_UUID_1 + "&%24count=true&%24top=1000";
+			"Orders?%24filter=Id%20eq%20" + TEST_ORDER_UUID_1 + "&%24count=true&%24top=10000";
 	private static final String LTA_QUERY_ORDER_BY_UUID_2 =
-			"Orders?%24filter=Id%20eq%20" + TEST_ORDER_UUID_2 + "&%24count=true&%24top=1000";
+			"Orders?%24filter=Id%20eq%20" + TEST_ORDER_UUID_2 + "&%24count=true&%24top=10000";
 	
 	private static final String LTA_RESPONSE_QUERY_ORDER_1 =
 			"{\n"

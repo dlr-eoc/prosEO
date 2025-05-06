@@ -4,11 +4,14 @@ spring:
         request-timeout: -1
     main.allow-bean-definition-overriding: true
 logging:
-    file: /proseo/log/proseo-notification.log
+    file:
+        name: /proseo/log/proseo-notification.log
     level:
         root: INFO
         de.dlr.proseo: TRACE
         org.hibernate.engine.jdbc.env.internal: WARN
+management:
+    endpoints.web.exposure.include: "health"
 proseo:
     http.timeout: 10000
     notification:

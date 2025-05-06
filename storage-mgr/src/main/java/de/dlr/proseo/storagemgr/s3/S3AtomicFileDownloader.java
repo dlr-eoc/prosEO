@@ -212,7 +212,7 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 	private void downloadWithTransferManagerV1(String s3Key, String targetPath) throws IOException {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> downloadWithTransferManagerV1({}, {}, {})", bucket, s3Key, targetPath);
+			logger.trace(">>> downloadWithTransferManagerV1({}, {})", s3Key, targetPath);
 
 		File targetFile = new File(targetPath);
 
@@ -240,6 +240,8 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 		}
 
 		try {
+			if (logger.isTraceEnabled()) logger.trace("Downloading from bucket {}", bucket);
+			
 			Download download = transferManager.download(bucket, s3Key, targetFile);
 
 			download.waitForCompletion();
@@ -254,6 +256,7 @@ public class S3AtomicFileDownloader implements AtomicCommand<String> {
 			while (Files.size(targetFile.toPath()) < contentLength && i < maxCycles) {
 				logger.info("... waiting to complete writing of {}", targetFile);
 				Thread.sleep(waitTime);
+				i++;
 			}
 
 			if (maxCycles <= i) {

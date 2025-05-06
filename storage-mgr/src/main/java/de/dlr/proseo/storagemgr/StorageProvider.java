@@ -5,9 +5,7 @@
  */
 package de.dlr.proseo.storagemgr;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -52,8 +50,8 @@ public class StorageProvider {
 	/** StorageProvider singleton */
 	private static StorageProvider theStorageProvider;
 
-	/** Storage */
-	private Storage storage;
+	/** The default storage as configured for the application */
+	private Storage defaultStorage;
 
 	/** Base Paths are used to get relative path from absolute path */
 	List<String> basePaths = new ArrayList<>();
@@ -65,11 +63,11 @@ public class StorageProvider {
 	@Autowired
 	private StorageManagerConfiguration cfg;
 
-	/** Source path is used as a central place to upload files to storage */
+	/** Source path is used as a central place to upload files to defaultStorage */
 	private String sourcePath;
 
-	/** Storage path is used for posix storage */
-	private String storagePath;
+	/** Storage path is the configured default file path for POSIX storage */
+	private String defaultPosixPath;
 
 	/** Cache path is used for downloaded files from storage */
 	private String cachePath;
@@ -95,7 +93,7 @@ public class StorageProvider {
 	 */
 	public void loadDefaultPaths() {
 		sourcePath = cfg.getDefaultSourcePath();
-		storagePath = cfg.getPosixBackendPath();
+		defaultPosixPath = cfg.getPosixBackendPath();
 		cachePath = cfg.getPosixCachePath();
 	}
 
@@ -109,13 +107,13 @@ public class StorageProvider {
 	}
 
 	/**
-	 * Sets the storage path.
+	 * Sets the default POSIX storage path.
 	 *
-	 * @param storagePath the storage path to set
+	 * @param defaultPosixPath the storage path to set
 	 */
-	public void setStoragePath(String storagePath) {
-		this.storagePath = storagePath;
-	}
+//	public void setDefaultPosixPath(String defaultPosixPath) {
+//		this.defaultPosixPath = defaultPosixPath;
+//	}
 
 	/**
 	 * Sets the cache path.
@@ -136,12 +134,12 @@ public class StorageProvider {
 	}
 
 	/**
-	 * Gets the storage path.
+	 * Gets the default POSIX storage path.
 	 *
-	 * @return the storage path
+	 * @return the POSIX storage path
 	 */
-	public String getStoragePath() {
-		return storagePath;
+	public String getDefaultStoragePath() {
+		return defaultPosixPath;
 	}
 
 	/**
@@ -156,20 +154,33 @@ public class StorageProvider {
 	/**
 	 * Gets the current storage instance.
 	 *
-	 * @return the current storage instance
+	 * @return the current defaultStorage instance
 	 */
 	public Storage getStorage() {
-		return storage;
+		return defaultStorage;
+	}
+
+	/**
+	 * Gets the default storage instance based on the specified storage type.
+	 *
+	 * @param storageType the storage type
+	 * @return the storage instance
+	 * @throws IOException if an error occurs during storage creation
+	 */
+	public Storage getDefaultStorage(StorageType storageType) throws IOException {
+		return getStorage(storageType, 
+				StorageType.POSIX.equals(storageType) ? defaultPosixPath : cfg.getS3DefaultBucket());
 	}
 
 	/**
 	 * Gets the desired storage instance based on the specified storage type.
 	 *
 	 * @param storageType the storage type
+	 * @param storagePath the base path for a POSIX storage and the bucket for an S3 storage 
 	 * @return the storage instance
 	 * @throws IOException if an error occurs during storage creation
 	 */
-	public Storage getStorage(StorageType storageType) throws IOException {
+	public Storage getStorage(StorageType storageType, String storagePath) throws IOException {
 		return createStorage(storageType, storagePath);
 	}
 
@@ -181,25 +192,30 @@ public class StorageProvider {
 	 * @throws IOException if an error occurs during storage retrieval
 	 */
 	public Storage getStorage(String absolutePath) throws IOException {
-		StorageType storageType = new PathConverter(absolutePath).getStorageType();
-		return getStorage(storageType);
+		PathConverter pcv = new PathConverter(absolutePath);
+		StorageType storageType = pcv.getStorageType();
+		return getStorage(storageType, 
+				StorageType.POSIX.equals(storageType) ? pcv.getPath() : pcv.removeFsPrefix().getFirstFolder().getPath());
 	}
 
 	/**
 	 * Sets the default storage type and creates the corresponding storage instance.
+	 * 
+	 * NOT INTENDED FOR USE OUTSIDE UNIT TEST CASES!
 	 *
 	 * @param storageType the storage type to set
 	 * @return the created storage instance
 	 * @throws IOException if an error occurs during storage creation
 	 */
-	public Storage setStorage(StorageType storageType) throws IOException {
+	public Storage setDefaultStorage(StorageType storageType) throws IOException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> setStorage({})", storageType.toString());
 
 		cfg.setDefaultStorageType(storageType.toString());
-		storage = createStorage(storageType, storagePath);
+		defaultStorage = createStorage(storageType, 
+				StorageType.POSIX.equals(storageType) ? defaultPosixPath : cfg.getS3DefaultBucket());
 
-		return storage;
+		return defaultStorage;
 	}
 
 	/**
@@ -286,7 +302,7 @@ public class StorageProvider {
 	 * Gets the posix file as a StorageFile from the relative path. The path can be
 	 * virtual.
 	 *
-	 * @param basePath     the base path of the posix storage
+	 * @param basePath     the base path of the posix defaultStorage
 	 * @param relativePath the relative path of the file
 	 * @return the StorageFile representing the posix file
 	 */
@@ -300,58 +316,88 @@ public class StorageProvider {
 	/**
 	 * Gets the storage file as a StorageFile from the relative path. The path can
 	 * be virtual.
-	 *
+	 * @param storage the storage to get the file from
 	 * @param relativePath the relative path of the file
+	 *
 	 * @return the StorageFile representing the storage file
 	 */
-	public StorageFile getStorageFile(String relativePath) {
+	public StorageFile getStorageFile(Storage storage, String relativePath) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getStorageFile({})", relativePath);
+			logger.trace(">>> getStorageFile({}, {})",
+					null == storage ? "NULL" : 
+						(StorageType.POSIX.equals(storage.getStorageType()) ? storage.getBasePath() : storage.getBucket()),
+					relativePath);
 
 		StorageType storageType = storage.getStorageType();
 
-		if (storageType == StorageType.POSIX) {
-			return new PosixStorageFile(storagePath, relativePath);
-		} else if (storageType == StorageType.S3) {
-			return new S3StorageFile(cfg.getS3DefaultBucket(), relativePath);
+		if (StorageType.POSIX.equals(storageType)) {
+			return new PosixStorageFile(storage.getBasePath(), relativePath);
+		} else if (StorageType.S3.equals(storageType)) {
+			return new S3StorageFile(storage.getBucket(), relativePath);
 		}
 
 		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
 	}
+	
+	/**
+	 * Gets the storage file as a StorageFile from the relative path. The path can
+	 * be virtual using the default storage
+	 * 
+	 * @param relativePath the relative path of the file
+	 *
+	 * @return the StorageFile representing the storage file
+	 */
+	public StorageFile getStorageFileFromDefaultStorage(String relativePath) {
+		return getStorageFile(defaultStorage, relativePath);
+	}
 
 	/**
 	 * Gets the file size of the storage file specified by the StorageFile instance.
+	 * 
+	 * NOT USED AND NOT TESTED
 	 *
 	 * @param storageFile the StorageFile instance
 	 * @return the file size in bytes
 	 * @throws IOException if an error occurs while getting the file size
 	 */
-	public Long getFileSize(StorageFile storageFile) throws IOException {
-		if (logger.isTraceEnabled())
-			logger.trace(">>> getFileSize({})", storageFile.getFullPath());
-
-		StorageType storageType = new PathConverter(storageFile.getFullPath()).getStorageType();
-		return getStorage(storageType).getFileSize(storageFile);
-	}
+//	public Long getFileSize(StorageFile storageFile) throws IOException {
+//		if (logger.isTraceEnabled())
+//			logger.trace(">>> getFileSize({})", storageFile.getFullPath());
+//
+//		StorageType storageType = new PathConverter(storageFile.getFullPath()).getStorageType();
+//		
+//		if (StorageType.POSIX.equals(storageType)) {
+//			return getStorage(storageType, storageFile.getBasePath()).getFileSize(storageFile);
+//		} else {
+//			return getStorage(storageType, storageFile.getBucket()).getFileSize(storageFile);
+//		}
+//	}
 
 	/**
 	 * Gets an input stream from the storage file specified by the StorageFile
 	 * instance.
+	 * 
+	 * NOT USED AND NOT TESTED
 	 *
 	 * @param storageFile the StorageFile instance
 	 * @return the input stream
 	 * @throws IOException if an error occurs while getting the input stream
 	 */
-	public InputStream getInputStream(StorageFile storageFile) throws IOException {
-		if (logger.isTraceEnabled())
-			logger.trace(">>> getInputStream({})", storageFile.getFullPath());
-
-		StorageType storageType = new PathConverter(storageFile.getFullPath()).getStorageType();
-		return getStorage(storageType).getInputStream(storageFile);
-	}
+//	public InputStream getInputStream(StorageFile storageFile) throws IOException {
+//		if (logger.isTraceEnabled())
+//			logger.trace(">>> getInputStream({})", storageFile.getFullPath());
+//
+//		StorageType storageType = new PathConverter(storageFile.getFullPath()).getStorageType();
+//
+//		if (StorageType.POSIX.equals(storageType)) {
+//			return getStorage(storageType, storageFile.getBasePath()).getInputStream(storageFile);
+//		} else {
+//			return getStorage(storageType, storageFile.getBucket()).getInputStream(storageFile);
+//		}
+//	}
 
 	/**
-	 * Gets a file as a StorageFile from the absolute path. The path to the file can
+	 * Gets a file as a POSIX StorageFile from the absolute path. The path to the file can
 	 * be virtual.
 	 *
 	 * @param absolutePath the absolute path to the file
@@ -396,20 +442,6 @@ public class StorageProvider {
 	}
 
 	/**
-	 * Gets the absolute posix storage path from the relative path.
-	 *
-	 * @param relativePath the relative path
-	 * @return the absolute posix storage path from the relative path
-	 */
-	public String getAbsolutePosixStoragePath(String relativePath) {
-		if (logger.isTraceEnabled())
-			logger.trace(">>> getAbsolutePosixStoragePath({})", relativePath);
-
-		String path = Paths.get(storagePath, relativePath).toString();
-		return new PathConverter(path, basePaths).convertToSlash().getPath();
-	}
-
-	/**
 	 * Gets the relative path from the absolute path using the base path list.
 	 *
 	 * @param absolutePath the absolute path
@@ -420,8 +452,11 @@ public class StorageProvider {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRelativePath({})", absolutePath);
 
-		StorageType storageType = new PathConverter(absolutePath).getStorageType();
-		return getStorage(storageType).getRelativePath(absolutePath);
+		PathConverter pcv = new PathConverter(absolutePath);
+		StorageType storageType = pcv.getStorageType();
+		return getStorage(storageType, 
+				StorageType.POSIX.equals(storageType) ? pcv.getPath() : pcv.removeFsPrefix().getFirstFolder().getPath())
+			.getRelativePath(absolutePath);
 	}
 
 	/**
@@ -437,7 +472,7 @@ public class StorageProvider {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createStorageFile({}, {})", relativePath, content.length());
 
-		return storage.createStorageFile(relativePath, content);
+		return defaultStorage.createStorageFile(relativePath, content);
 	}
 	
 	/**
@@ -488,22 +523,22 @@ public class StorageProvider {
 	}
 	
 	/**
-	 * @param sourceFileOrDir
-	 * @return
+	 * Copies files from an absolute source path to an absolute path in the cache
+	 * 
+	 * @param sourceFile the file path to copy from
+	 * @param destCacheFile the file path to copy to
+	 * @return a path list of copied files
 	 * @throws IOException 
 	 */
-	public List<String> copyAbsoluteFilesToCache(String sourceFileOrDir, Long productId) throws IOException {
+	public List<String> copyAbsoluteFilesToCache(String sourceFile, StorageFile destCacheFile) throws IOException {
 		
 		if (logger.isTraceEnabled())
-			logger.trace(">>> copyAbsoluteFilesToCache({})", sourceFileOrDir);
+			logger.trace(">>> copyAbsoluteFilesToCache({}, {})", sourceFile, 
+					(null == destCacheFile ? "null" : destCacheFile.getFullPath()));
 				
-		String fileName = new File(sourceFileOrDir).getName();
-		String productFolderWithFilename = Paths.get(String.valueOf(productId), fileName).toString();
-		StorageFile targetFile = getCacheFile(productFolderWithFilename);
-		
 		PosixDAL posixDAL = new PosixDAL(getPosixConfigurationFromFile());
 		
-		return posixDAL.copy(sourceFileOrDir, targetFile.getFullPath());
+		return posixDAL.copy(sourceFile, destCacheFile.getFullPath());
 
 	}
 	
@@ -515,9 +550,11 @@ public class StorageProvider {
 	@PostConstruct
 	private void init() throws IOException {
 		theStorageProvider = this;
-		storage = createStorage(StorageType.valueOf(cfg.getDefaultStorageType()), cfg.getPosixBackendPath());
+		StorageType storageType = StorageType.valueOf(cfg.getDefaultStorageType());
+		defaultStorage = createStorage(storageType, 
+				StorageType.POSIX.equals(storageType) ? cfg.getPosixBackendPath() : cfg.getS3DefaultBucket());
 
-		basePaths.add(storage.getBasePath());
+		basePaths.add(defaultStorage.getBasePath());
 		basePaths.add(cfg.getDefaultSourcePath());
 		basePaths.add(cfg.getPosixCachePath());
 
@@ -529,8 +566,7 @@ public class StorageProvider {
 	 * path.
 	 *
 	 * @param storageType the storage type (S3 or POSIX)
-	 * @param storagePath the base path of the POSIX storage (used for temporary
-	 *                    files in S3)
+	 * @param storagePath the base path for a POSIX storage and the bucket for an S3 storage
 	 * @return the created storage instance
 	 * @throws IOException if an error occurs during storage creation
 	 */
@@ -540,10 +576,14 @@ public class StorageProvider {
 
 		sourcePath = cfg.getDefaultSourcePath();
 
-		if (storageType == StorageType.POSIX) {
-			return new PosixStorage(getPosixConfigurationFromFile());
-		} else if (storageType == StorageType.S3) {
-			return new S3Storage(getS3ConfigurationFromFile());
+		if (StorageType.POSIX.equals(storageType)) {
+			PosixConfiguration posixConfig = getPosixConfigurationFromFile();
+			posixConfig.setBasePath(storagePath);
+			return new PosixStorage(posixConfig);
+		} else if (StorageType.S3.equals(storageType)) {
+			S3Configuration s3Config = getS3ConfigurationFromFile();
+			s3Config.setBucket(storagePath);
+			return new S3Storage(s3Config);
 		}
 
 		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");

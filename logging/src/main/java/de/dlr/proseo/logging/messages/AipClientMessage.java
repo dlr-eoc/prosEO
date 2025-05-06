@@ -37,7 +37,7 @@ public enum AipClientMessage implements ProseoMessage {
 	ODATA_REQUEST_ABORTED				(6821, Level.ERROR, false, "OData request {0} aborted (cause: {1} / {2})", ""),
 	ODATA_REQUEST_FAILED				(6822, Level.ERROR, false, "OData request {0} failed with HTTP status code {1}, message: {2}", ""),
 	ODATA_RESPONSE_UNREADABLE			(6823, Level.ERROR, false, "OData response not readable", ""),
-	RETRIEVAL_RESULT					(6824, Level.INFO, true, "Retrieval request returned {0} products out of {1} available", ""),
+	RETRIEVAL_RESULT					(6824, Level.INFO, true, "Retrieval request returned {1} {0} out of {2} available", ""),
 	PRODUCT_UUID_MISSING				(6825, Level.ERROR, false, "Product list entry {0} does not contain product UUID ('Id' element)", ""),
 	PRODUCT_FILENAME_MISSING			(6826, Level.ERROR, false, "Product list entry {0} does not contain product filename ('Name' element)", ""),
 	PRODUCT_SIZE_MISSING				(6827, Level.ERROR, false, "Product list entry {0} does not contain product size ('ContentLength' element)", ""),
@@ -57,7 +57,13 @@ public enum AipClientMessage implements ProseoMessage {
 	INPUT_FILE_NOT_FOUND_BY_TIME		(6841, Level.ERROR, false, "No input file of type {0} with sensing time interval {1} - {2} found locally or in any external archive", ""),
 	NO_PRODUCTS_FOUND_BY_TIME	 		(6842, Level.INFO, true, "No product files of type {0} intersecting sensing time interval {1} - {2} found in external archive {3}", ""),
 	PRODUCT_TYPE_MISMATCH				(6843, Level.WARN, true, "Product type {0} of archive product does not match requested type {1}, will be replaced", ""),
-	DOWNLOAD_RETRY_INTERRUPTED			(6844, Level.ERROR, false, "Wait for download retry of product {0} interrupted, product download failed", "")
+	DOWNLOAD_RETRY_INTERRUPTED			(6844, Level.ERROR, false, "Wait for download retry of product {0} interrupted, product download failed", ""),
+	PRODUCT_GENERATION_MISSING			(6845, Level.ERROR, false, "Product list entry {0} does not contain valid generation time ('ProcessingDate' attribute)", ""),
+	PRODUCT_ONLINEFLAG_MISSING			(6846, Level.ERROR, false, "Product list entry {0} does not contain valid online flag ('Online' element)", ""),
+	CREATING_PRODUCT_ORDER				(6847, Level.INFO, true, "Creating product order for product {0} ({1}) in archive {2}", ""),
+	SKIPPING_INVALID_PRODUCT			(6848, Level.WARN, true, "Skipping invalid product (see preceding message[s])", ""),
+	DELETING_TEMP_FILE					(6849, Level.INFO, true, "Deleting temporary file {0}", ""),
+	FILE_DELETION_FAILED				(6850, Level.WARN, true, "Deletion of temporary file {0} failed", "")
 	;
 
 	private final int code;

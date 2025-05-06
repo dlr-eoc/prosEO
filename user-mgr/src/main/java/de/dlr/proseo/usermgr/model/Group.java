@@ -17,8 +17,10 @@ import javax.persistence.Entity;
 import javax.persistence.ForeignKey;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 /**
  * A group of users
@@ -26,6 +28,7 @@ import javax.persistence.OneToMany;
  * @author Dr. Thomas Bassler
  */
 @Entity(name = "groups")
+@Table(indexes = { @Index(unique = true, columnList = "groupName") })
 public class Group {
 
 	/** Database generated ID value for the group. */
@@ -38,7 +41,7 @@ public class Group {
 	 * ("-") and the actual group name (which may be used across missions to denote
 	 * equivalent functional groups).
 	 */
-	@Column(nullable = false, unique = true)
+	@Column(nullable = false)
 	private String groupName;
 
 	/** The users belonging to this group */

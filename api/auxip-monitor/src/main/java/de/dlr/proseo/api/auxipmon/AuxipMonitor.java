@@ -65,6 +65,7 @@ import de.dlr.proseo.basewrap.MD5Util;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.ApiMonitorMessage;
 import de.dlr.proseo.logging.messages.OAuthMessage;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
  * Monitor for Auxiliary Data Interface Points (AUXIP)
@@ -406,7 +407,7 @@ public class AuxipMonitor extends BaseMonitor {
 		String oDataServiceRoot = config.getAuxipBaseUri() + "/"
 				+ (config.getAuxipContext().isBlank() ? "" : config.getAuxipContext() + "/") + "odata/v1";
 		String authorizationHeader = config.getAuxipUseToken() ? "Bearer " + bearerToken
-				: "Basic " + Base64.getEncoder().encode((config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes());
+				: "Basic " + Base64.getEncoder().encodeToString((config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes());
 
 		// Create query filter for all product types configured
 		// Note: 'false' literal not implemented in some AUXIPs, therefore approach "false or ..." does not work
@@ -618,11 +619,11 @@ public class AuxipMonitor extends BaseMonitor {
 //			if (logger.isTraceEnabled()) logger.trace("... d = {}", d);
 //			Instant i = Instant.parse(d);
 //			if (logger.isTraceEnabled()) logger.trace("... i = {}", i);
-			tp.setStartTime(Instant.parse(product.getProperty("ContentDate")
+			tp.setStartTime(Instant.from(OrbitTimeFormatter.parse(product.getProperty("ContentDate")
 				.getComplexValue()
 				.get("Start")
 				.getPrimitiveValue()
-				.toCastValue(String.class)));
+				.toCastValue(String.class))));
 		} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
 			logger.log(ApiMonitorMessage.PRODUCT_VAL_START_MISSING, product.toString());
 			return null;
@@ -630,8 +631,8 @@ public class AuxipMonitor extends BaseMonitor {
 //		if (logger.isTraceEnabled()) logger.trace("... start = {}", tp.getStartTime());
 
 		try {
-			tp.setStopTime(Instant.parse(
-					product.getProperty("ContentDate").getComplexValue().get("End").getPrimitiveValue().toCastValue(String.class)));
+			tp.setStopTime(Instant.from(OrbitTimeFormatter.parse(
+					product.getProperty("ContentDate").getComplexValue().get("End").getPrimitiveValue().toCastValue(String.class))));
 		} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
 			logger.log(ApiMonitorMessage.PRODUCT_VAL_STOP_MISSING, product.toString());
 			return null;
@@ -640,7 +641,10 @@ public class AuxipMonitor extends BaseMonitor {
 
 		try {
 			tp.setPublicationTime(
-					Instant.parse(product.getProperty("PublicationDate").getPrimitiveValue().toCastValue(String.class)));
+					Instant.from(OrbitTimeFormatter.parse(
+							product.getProperty("PublicationDate")
+							.getPrimitiveValue()
+							.toCastValue(String.class))));
 		} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
 			logger.log(ApiMonitorMessage.PRODUCT_PUBLICATION_MISSING, product.toString());
 			return null;
@@ -649,7 +653,10 @@ public class AuxipMonitor extends BaseMonitor {
 			logger.trace("... publication = {}", tp.getPublicationTime());
 
 		try {
-			tp.setEvictionTime(Instant.parse(product.getProperty("EvictionDate").getPrimitiveValue().toCastValue(String.class)));
+			tp.setEvictionTime(Instant.from(OrbitTimeFormatter.parse(
+					product.getProperty("EvictionDate")
+					.getPrimitiveValue()
+					.toCastValue(String.class))));
 		} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
 			logger.log(ApiMonitorMessage.PRODUCT_EVICTION_MISSING, product.toString());
 			return null;

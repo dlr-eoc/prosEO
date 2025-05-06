@@ -368,7 +368,7 @@ public class OrderService {
 		} else if (state.equalsIgnoreCase("close")) {
 			uriString += "/close/" + orderId;
 		} else if (state.equalsIgnoreCase("delete")) {
-			uriString += "/" + orderId;
+			uriString = config.getOrderManager() + "/orders/" + orderId;
 			method = "delete";
 		}
 

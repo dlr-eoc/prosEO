@@ -536,10 +536,6 @@ function setState(oId, state) {
     var url = "/order-state/post?id=" + oId + "&state=" + state;
     var row = document.getElementById(oId);
     var method = 'POST';
-    if (state == 'DELETE') {
-        method = 'DELETE';
-    } else {
-    }
     $.ajax({
         url : url,
         method : method,
@@ -720,6 +716,26 @@ function retrieveDataPage(from, to) {
     retrieveJobs(myid, from, to, null, calcPage);
 }
 
+function selectJobState() {
+	var jobstateMenu =  document.getElementById('jobstates');
+    var loc = location.search.slice(0);
+    var search = location.search.slice(1);
+    var paramString = search;
+    search = removeURLKeyPrim('jobstates', search);
+    var jsval = jobstateMenu.options[jobstateMenu.selectedIndex].value;
+    
+    var searchTmp = addURLParamValuePrim('jobstates', jsval, search);
+    if (searchTmp != null) {search = searchTmp};
+    if (search != loc) {
+        if (search == '') {
+          search = '?';
+        }
+        history.pushState({}, null, search);
+    }
+    var from = getFromTo('x');
+    var to = getFromTo('y');
+    retrieveDataPage(0, to - from);
+}
 
 function retrieveJobs(id, from, to, aJob, aJobStep, calcPage) {
     if ([[${hasroleorderreader}]]) {
@@ -764,7 +780,7 @@ function retrieveJobs(id, from, to, aJob, aJobStep, calcPage) {
                 success : function(res, textStatus, jqXHR) {
                     $("#jobscontent").html(res);
                     document.getElementById('jthead').hidden = false;
-                    document.getElementById('jobstates').addEventListener('change', setJobState);
+                    document.getElementById('jobstates').addEventListener('change', selectJobState);
                     var nav = document.getElementById('pagenav');
                     if (nav != null) {
 	                    var page =  nav.getAttribute('data-page');

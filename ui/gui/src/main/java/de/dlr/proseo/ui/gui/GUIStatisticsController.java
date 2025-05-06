@@ -137,7 +137,7 @@ public class GUIStatisticsController extends GUIBaseController {
 			logger.trace(">>> getIdentifier({}, model)", count);
 
 		// Perform the HTTP request to retrieve the completed job steps
-		ResponseSpec responseSpec = statisticsService.getJobsteps("COMPLETED", count.longValue());
+		ResponseSpec responseSpec = statisticsService.getJobsteps("COMPLETED:CLOSED", count.longValue());
 		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> jobsteps = new ArrayList<>();
 

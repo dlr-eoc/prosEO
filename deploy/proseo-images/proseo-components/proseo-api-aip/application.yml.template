@@ -9,7 +9,8 @@ spring:
         username: <db_user>
         password: <db_pwd>
 logging:
-    file: /proseo/log/proseo-api-aipclient.log
+    file:
+        name: /proseo/log/proseo-api-aipclient.log
     level:
         root: INFO
         de.dlr.proseo: INFO
@@ -24,6 +25,8 @@ proseo:
         url: http://proseo-ingestor:8080/proseo/ingestor/v0.1
         # Timeout for Ingestor connections in milliseconds (e. g. 30 s)
         timeout: 30000
+        # Retention period for ingested products in days (e. g. 7 days; 0 means never evict)
+        product.retention: 7
         
     storagemgr:
         # The Storage Manager mount point for product ingestion
@@ -38,3 +41,15 @@ proseo:
     archive:
         # Timeout for archive connections in milliseconds (e. g. 30 s)
         timeout: 30000
+        # Maximum number of parallel archive order threads
+        orderthreads: 100
+        # Maximum number of parallel download threads
+        threads: 6
+    
+    notification:
+        # URL of the Notification Service
+        url: http://proseo-notification:8080/proseo/notification/v1
+        # URL of the message recipient (supports protocols as per Notification Service API, including "mailto:" and "http[s]:")
+        recipient: "mailto:proseo-support@drbassler.de"
+        # Sender identification
+        sender: "noreply@localhost"

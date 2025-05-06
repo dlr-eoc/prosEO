@@ -6,11 +6,9 @@ spring:
         url: jdbc:postgresql://10.x.x.c:5432/proseo
         username: postgres
         password: somepwd
-server:
-    # Tomcat UI session timeout (default 30 min)
-    #servlet.session.timeout: 120m
 logging:
-    file: /proseo/log/proseo-ui-gui.log
+    file:
+        name: /proseo/log/proseo-ui-gui.log
     level:
         root: INFO
         de.dlr.proseo: TRACE
@@ -32,6 +30,8 @@ proseo:
         url: http://proseo-user-mgr:8080/proseo/user-mgr/v0.1
     facilityManager:
         url: http://proseo-facility-mgr:8080/proseo/facility-mgr/v0.1
+    archiveManager:
+        url: http://proseo-archive-mgr:8080/proseo/archive-mgr/v0.1
 
     # Connection timeout for asynchronous requests in ms
     gui.timeout: 600000

@@ -6,6 +6,7 @@
 package de.dlr.proseo.ui.gui.service;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -63,11 +64,19 @@ public class StatisticsService {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
 
+		List<String> states = new ArrayList<String>();
+		
+		if (status != null && status.length() > 0) {
+			for (String state : status.split(":")) {
+				states.add(state);
+			}
+		}
+		
 		// Build the request URI
 		URI uri = UriComponentsBuilder.fromUriString(config.getOrderManager())
-			.path("/orderjobsteps")
+			.path("/orderjobstepsofstates")
 			.queryParam("mission", mission)
-			.queryParam("status", Optional.ofNullable(status).filter(s -> !s.isBlank()).orElse(null))
+			.queryParam("status", states)
 			.queryParam("last", Optional.ofNullable(last).orElse(null))
 			.build()
 			.toUri();

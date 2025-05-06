@@ -467,7 +467,7 @@ public class WorkflowCommandRunner {
 
 		/* Update attributes of database workflow */
 		// No modification of ID, version, mission code, workflow name or uuid
-		if (null != updatedWorkflow.getDescription()) {
+		if (isDeleteAttributes || null != updatedWorkflow.getDescription()) {
 			restWorkflow.setDescription(updatedWorkflow.getDescription());
 		}
 		if (null != updatedWorkflow.getWorkflowVersion()) {
@@ -494,7 +494,7 @@ public class WorkflowCommandRunner {
 		if (null != updatedWorkflow.getSlicingType()) {
 			restWorkflow.setSlicingType(updatedWorkflow.getSlicingType());
 		}
-		if (null != updatedWorkflow.getSliceDuration()) {
+		if (isDeleteAttributes || null != updatedWorkflow.getSliceDuration()) {
 			restWorkflow.setSliceDuration(updatedWorkflow.getSliceDuration());
 		}
 		if (null != updatedWorkflow.getSliceOverlap()) {
@@ -502,18 +502,24 @@ public class WorkflowCommandRunner {
 		}
 		if (null != updatedWorkflow.getInputFilters()) {
 			restWorkflow.setInputFilters(updatedWorkflow.getInputFilters());
+		} else if (isDeleteAttributes) {
+			restWorkflow.getInputFilters().clear();
 		}
 		if (null != updatedWorkflow.getClassOutputParameters()) {
 			restWorkflow.setClassOutputParameters(updatedWorkflow.getClassOutputParameters());
+		} else if (isDeleteAttributes) {
+			restWorkflow.getClassOutputParameters().clear();
 		}
 		if (null != updatedWorkflow.getOutputParameters()) {
 			restWorkflow.setOutputParameters(updatedWorkflow.getOutputParameters());
+		} else if (isDeleteAttributes) {
+			restWorkflow.getOutputParameters().clear();
 		}
 
-		if (isDeleteAttributes
-				|| (null != updatedWorkflow.getWorkflowOptions() && !updatedWorkflow.getWorkflowOptions().isEmpty())) {
+		if (null != updatedWorkflow.getWorkflowOptions()) {
+			restWorkflow.setWorkflowOptions(updatedWorkflow.getWorkflowOptions());
+		} else if (isDeleteAttributes) {
 			restWorkflow.getWorkflowOptions().clear();
-			restWorkflow.getWorkflowOptions().addAll(updatedWorkflow.getWorkflowOptions());
 		}
 
 		/* Update workflow using Workflow Manager service */

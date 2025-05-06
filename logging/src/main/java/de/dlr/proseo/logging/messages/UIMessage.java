@@ -43,7 +43,7 @@ public enum UIMessage implements ProseoMessage {
 	DELETE_PRODUCTS_WITHOUT_FORCE			(6026, Level.ERROR, false, "Option 'delete-products' not valid without option 'force'", ""),
 	END_OF_FILE								(6027, Level.INFO, true, "End of input reached, prosEO Command Line Interface terminates", ""),
 	EXCEPTION								(6028, Level.ERROR, false, "Command failed (cause: {0})", ""),
-	EXTRACTED_MESSAGE						(6029, Level.ERROR, false, "Extraced message: {0}", ""),
+	EXTRACTED_MESSAGE						(6029, Level.ERROR, false, "Extracted message: {0}", ""),
 	FACILITY_CREATED						(6030, Level.INFO, true, "Processing facility {0} created (database ID {1})", ""),
 	FACILITY_DATA_INVALID					(6031, Level.ERROR, false, "Processing facility data invalid (cause: {0})", ""),
 	FACILITY_DELETE_FAILED					(6032, Level.ERROR, false, "Deletion of processing facility {0} failed (cause: {1})", ""),

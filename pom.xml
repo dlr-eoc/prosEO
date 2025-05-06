@@ -4,7 +4,7 @@
 	
 	<groupId>de.dlr.proseo</groupId>
 	<artifactId>proseo</artifactId>
-	<version>1.1.0-SNAPSHOT</version>
+	<version>1.2.0-SNAPSHOT</version>
 	<name>prosEO</name>
 	<description>prosEO – A Processing System for Earth Observation Data</description>
 	<packaging>pom</packaging>

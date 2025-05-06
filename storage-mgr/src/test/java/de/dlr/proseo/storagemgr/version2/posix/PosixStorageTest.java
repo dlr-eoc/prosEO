@@ -44,7 +44,7 @@ public class PosixStorageTest {
 		TestUtils.createEmptyStorageDirectories();
 
 		StorageType storageType = StorageType.POSIX;
-		storageProvider.setStorage(storageType);
+		storageProvider.setDefaultStorage(storageType);
 
 		String prefix = "posix-storage-upload-test/";
 
@@ -59,7 +59,7 @@ public class PosixStorageTest {
 		}
 
 		StorageFile sourceDir = storageProvider.getSourceFile(prefix);
-		StorageFile targetDir = storageProvider.getStorageFile(prefix);
+		StorageFile targetDir = storageProvider.getStorageFileFromDefaultStorage(prefix);
 
 		// upload files
 		List<String> uploadedPathes = storageProvider.getStorage().upload(sourceDir, targetDir);
@@ -81,7 +81,7 @@ public class PosixStorageTest {
 		TestUtils.createEmptyStorageDirectories();
 
 		StorageType storageType = StorageType.POSIX;
-		storageProvider.setStorage(storageType);
+		storageProvider.setDefaultStorage(storageType);
 
 		String prefix = "posix-storage-download-test/";
 
@@ -97,7 +97,7 @@ public class PosixStorageTest {
 		}
 		storageTestUtils.printPosixStorage();
 
-		StorageFile sourceDir = storageProvider.getStorageFile(prefix);
+		StorageFile sourceDir = storageProvider.getStorageFileFromDefaultStorage(prefix);
 		StorageFile targetDir = storageProvider.getCacheFile(prefix);
 
 		// download files

@@ -12,6 +12,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
@@ -126,7 +128,7 @@ public class DownloadManager {
 	private static final String ODATA_FILTER_NAME = "Name eq ";
 	private static final String ODATA_FILTER_ID = "Id eq ";
 	private static final String ODATA_EXPAND_ATTRIBUTES = "Attributes";
-	private static final int ODATA_TOP_COUNT = 1000;
+	private static final int ODATA_TOP_COUNT = 10000;
 	private static final String ODATA_CSC_ORDER = "OData.CSC.Order";
 
 	// OData response properties
@@ -138,6 +140,7 @@ public class DownloadManager {
 	private static final String ODATA_PROPERTY_CHECKSUM = "Checksum";
 	private static final String ODATA_PROPERTY_CONTENT_LENGTH = "ContentLength";
 	private static final String ODATA_PROPERTY_FILENAME = "Name";
+	private static final String ODATA_PROPERTY_ONLINE = "Online";
 	private static final String ODATA_PROPERTY_PUBLICATION_DATE = "PublicationDate";
 	private static final String ODATA_PROPERTY_CONTENTDATE_END = "End";
 	private static final String ODATA_PROPERTY_CONTENTDATE_START = "Start";
@@ -189,6 +192,19 @@ public class DownloadManager {
 	private static ProseoLogger logger = new ProseoLogger(DownloadManager.class);
 	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.AIP_CLIENT);
 
+	/**
+	 * Extension to RestProduct class to include the "Online" parameter
+	 */
+	private static class AipRestProduct extends RestProduct {
+		private static final long serialVersionUID = 1L;
+		
+		public Boolean online = false;
+		
+		public Boolean isOnline() { return online; }
+
+		public void setOnline(Boolean online) { this.online = online; }
+	}
+	
 	/**
 	 * Fill mapping between OData types and prosEO parameter types
 	 */
@@ -408,13 +424,13 @@ public class DownloadManager {
 		
 		// Get sensing start and stop times and generation time to check against
 		Instant sensingStartTime = OrbitTimeFormatter.parseDateTime(restProduct.getSensingStartTime());
-		Instant sensingStopTime = OrbitTimeFormatter.parseDateTime(restProduct.getSensingStopTime());
+		// Instant sensingStopTime = OrbitTimeFormatter.parseDateTime(restProduct.getSensingStopTime());
 		Instant generationTime = OrbitTimeFormatter.parseDateTime(restProduct.getGenerationTime());
 		
 		// Travel through the list of products
 		for (Product modelProduct: modelProducts) {
 			if (sensingStartTime.equals(modelProduct.getSensingStartTime())
-					&& sensingStopTime.equals(modelProduct.getSensingStopTime())
+					// && sensingStopTime.equals(modelProduct.getSensingStopTime())
 					&& generationTime.equals(modelProduct.getGenerationTime())) {
 				
 				// Candidate product found, check product files
@@ -579,14 +595,14 @@ public class DownloadManager {
 	 * @param attributes flag to fill attributes
 	 * @return the corresponding REST interface product
 	 */
-	private RestProduct toRestProduct(ClientEntity product, ProcessingFacility facility, Boolean attributes) {
+	private AipRestProduct toRestProduct(ClientEntity product, ProcessingFacility facility, Boolean attributes) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> toRestProduct({})", (null == product ? "MISSING" : product.getProperty(ODATA_PROPERTY_ID)));
 
 		if (null == product)
 			return null;
 
-		RestProduct restProduct = new RestProduct();
+		AipRestProduct restProduct = new AipRestProduct();
 
 		try {
 			try {
@@ -597,31 +613,42 @@ public class DownloadManager {
 			}
 
 			try {
-				restProduct.setSensingStartTime(OrbitTimeFormatter.format(Instant.parse(product.getProperty(ODATA_PROPERTY_CONTENT_DATE)
-					.getComplexValue()
-					.get(ODATA_PROPERTY_CONTENTDATE_START)
-					.getPrimitiveValue()
-					.toCastValue(String.class))));
+				restProduct.setSensingStartTime(OrbitTimeFormatter.format(
+					Instant.from(OrbitTimeFormatter.parse(
+						product.getProperty(ODATA_PROPERTY_CONTENT_DATE)
+							.getComplexValue()
+							.get(ODATA_PROPERTY_CONTENTDATE_START)
+							.getPrimitiveValue()
+							.toCastValue(String.class)))));
 			} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
 				logger.log(AipClientMessage.PRODUCT_VAL_START_MISSING, product.toString());
 				return null;
 			}
 			try {
-				restProduct.setSensingStopTime(OrbitTimeFormatter.format(Instant.parse(product.getProperty(ODATA_PROPERTY_CONTENT_DATE)
-					.getComplexValue()
-					.get(ODATA_PROPERTY_CONTENTDATE_END)
-					.getPrimitiveValue()
-					.toCastValue(String.class))));
+				restProduct.setSensingStopTime(OrbitTimeFormatter.format(
+					Instant.from(OrbitTimeFormatter.parse(
+						product.getProperty(ODATA_PROPERTY_CONTENT_DATE)
+							.getComplexValue()
+							.get(ODATA_PROPERTY_CONTENTDATE_END)
+							.getPrimitiveValue()
+							.toCastValue(String.class)))));
 			} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
 				logger.log(AipClientMessage.PRODUCT_VAL_STOP_MISSING, product.toString());
 				return null;
 			}
 			try {
 				restProduct.setPublicationTime(OrbitTimeFormatter
-					.format(Instant.parse(product.getProperty(ODATA_PROPERTY_PUBLICATION_DATE).getPrimitiveValue().toCastValue(String.class))));
+					.format(Instant.from(OrbitTimeFormatter.parse(
+							product.getProperty(ODATA_PROPERTY_PUBLICATION_DATE).getPrimitiveValue().toCastValue(String.class)))));
 			} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
 				logger.log(AipClientMessage.PRODUCT_PUBLICATION_MISSING, product.toString());
 				return null;
+			}
+			try {
+				restProduct.setOnline(product.getProperty(ODATA_PROPERTY_ONLINE).getPrimitiveValue().toCastValue(Boolean.class));
+			} catch (EdmPrimitiveTypeException | NullPointerException e) {
+				logger.log(AipClientMessage.PRODUCT_ONLINEFLAG_MISSING, product.toString());
+				restProduct.setOnline(true);
 			}
 
 			// Create product file sub-structure
@@ -650,7 +677,7 @@ public class DownloadManager {
 							restProductFile.setChecksumTime(OrbitTimeFormatter.format(Instant
 								.parse(clientValue.asComplex().get("ChecksumDate").getPrimitiveValue().toCastValue(String.class))));
 						}
-					} catch (EdmPrimitiveTypeException e) {
+					} catch (EdmPrimitiveTypeException | NullPointerException | DateTimeParseException e) {
 						logger.log(AipClientMessage.PRODUCT_HASH_MISSING, product.toString());
 					}
 				});
@@ -685,7 +712,12 @@ public class DownloadManager {
 							logger.trace("    ... with Name {}", attributeName);
 						switch (attributeName) {
 						case PRODUCT_ATTRIBUTE_PROCESSING_DATE:
-							restProduct.setGenerationTime(OrbitTimeFormatter.format(Instant.parse(attributeValue)));
+							try {
+								restProduct.setGenerationTime(OrbitTimeFormatter.format(
+									Instant.from(OrbitTimeFormatter.parse(attributeValue))));
+							} catch (DateTimeParseException e) {
+								logger.log(AipClientMessage.PRODUCT_GENERATION_MISSING, product.toString());
+							}
 							break;
 						case PRODUCT_ATTRIBUTE_PRODUCT_TYPE:
 							restProduct.setProductClass(attributeValue);
@@ -697,6 +729,13 @@ public class DownloadManager {
 						}
 
 					});
+					
+					// Make sure generation time exists in attributes (no systematic property access)
+					if (null == restProduct.getGenerationTime()) {
+						logger.log(AipClientMessage.PRODUCT_GENERATION_MISSING, product.toString());
+						return null;
+					}
+
 				} catch (NullPointerException e) {
 					logger.log(AipClientMessage.PRODUCT_ATTRIBUTES_MISSING, product.toString());
 					return null;
@@ -709,7 +748,7 @@ public class DownloadManager {
 			logger.log(AipClientMessage.MANDATORY_ELEMENT_MISSING, product);
 			return null;
 		}
-
+		
 		return restProduct;
 	}
 
@@ -808,7 +847,7 @@ public class DownloadManager {
 
 		// Create a request
 		String fullRequestUri = archive.getBaseUri() 
-				+ (null == archive.getContext() ? "" : "/" + archive.getContext())
+				+ (null == archive.getContext() || archive.getContext().isBlank() ? "" : "/" + archive.getContext())
 				+ "/" + ODATA_CONTEXT
 				+ "/" + requestUri;
 		
@@ -858,12 +897,27 @@ public class DownloadManager {
 
 		if (null == createResponse) {
 			throw new IOException(
-					logger.log(AipClientMessage.ORDER_REQUEST_FAILED, archive.getBaseUri() + "/" + archive.getTokenUri()));
+					logger.log(AipClientMessage.ORDER_REQUEST_FAILED, archive.getBaseUri() + "/" + archive.getBaseUri()));
 		}
 		if (logger.isTraceEnabled())
 			logger.trace("... got create response '{}'", createResponse);
 
 		return createResponse;
+	}
+	
+	/**
+	 * Mission specific additional query filters to inject into OData query
+	 * 
+	 * This method is intended for overriding by mission-specific extensions of this class.
+	 * 
+	 * @param missionCode the applicable mission
+	 * @param productType the product type to query data for
+	 * @return a string containing additional filter elements (default implementation is empty string)
+	 */
+	protected String getMissionSpecificFilters(String missionCode, String productType) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getMissionSpecificFilters({}, {})", missionCode, productType);
+		
+		return "";
 	}
 
 	/**
@@ -873,7 +927,7 @@ public class DownloadManager {
 	 * @param queryEntity the entity to query for
 	 * @param queryFilter the query filter to send
 	 * @param expandAttributes flag to expand the attributes
-	 * @return a possibly empty list of products (as attribute maps) or null, if an invalid response was received
+	 * @return a possibly empty list of products or orders (as attribute maps) or null, if an invalid response was received
 	 * @throws IOException in case of a communication error
 	 */
 	private List<ClientEntity> queryArchive(ProductArchive archive, String queryEntity, String queryFilter,
@@ -895,10 +949,12 @@ public class DownloadManager {
 			.addQueryOption(QueryOption.COUNT, "true")
 			.top(ODATA_TOP_COUNT);
 
-		if (expandAttributes && ODATA_ENTITY_PRODUCTS.equals(queryEntity)) {
-			uriBuilder = uriBuilder.expand(ODATA_EXPAND_ATTRIBUTES);
+		if (ODATA_ENTITY_PRODUCTS.equals(queryEntity)) {
+			uriBuilder = uriBuilder.orderBy("OriginDate asc");
+			if (expandAttributes) {
+				uriBuilder = uriBuilder.expand(ODATA_EXPAND_ATTRIBUTES);
+			} 
 		}
-
 		String authorizationHeader = archive.isTokenRequired() ?
 				"Bearer " + getBearerToken(archive) : 
     			"Basic " + Base64.getEncoder().encodeToString((archive.getUsername() + ":" + archive.getPassword()).getBytes());
@@ -919,6 +975,14 @@ public class DownloadManager {
 		try {
 			response = futureResponse.get(config.getArchiveTimeout(), TimeUnit.MILLISECONDS);
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("Exception stack trace: " + e.getClass().getName() + "\n" + Arrays.asList(e.getStackTrace()).toString());
+				Throwable cause = e.getCause();
+				while (null != cause) {
+					logger.debug("Caused by: " + cause.getClass().getName() + "\n" + Arrays.asList(cause.getStackTrace()).toString());
+					cause = cause.getCause();
+				}
+			}
 			throw new IOException(
 					logger.log(AipClientMessage.ODATA_REQUEST_ABORTED, request.getURI(), e.getClass().getName(), e.getMessage()));
 		}
@@ -935,8 +999,10 @@ public class DownloadManager {
 		}
 
 		ClientEntitySet entitySet = response.getBody();
-		logger.log(AipClientMessage.RETRIEVAL_RESULT, entitySet.getEntities().size(), entitySet.getCount());
-
+		if (ODATA_ENTITY_PRODUCTS.equals(queryEntity) || logger.isDebugEnabled()) {
+			logger.log(AipClientMessage.RETRIEVAL_RESULT, (ODATA_ENTITY_PRODUCTS.equals(queryEntity) ? "products" : "orders"),
+					entitySet.getEntities().size(), entitySet.getCount());
+		}
 		return entitySet.getEntities();
 	}
 
@@ -1051,8 +1117,7 @@ public class DownloadManager {
 				// Already logged
 				throw e;
 			} catch (Exception e) {
-				if (logger.isDebugEnabled())
-					logger.debug("Stack trace: ", e);
+				if (logger.isDebugEnabled()) logger.debug("Stack trace: ", e);
 				throw new IOException(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass().getName() + "/" + e.getMessage()));
 			}
 
@@ -1105,6 +1170,8 @@ public class DownloadManager {
 	/**
 	 * Create product representation for Ingestor (mission-specific subclasses may want to override this method
 	 * to set the attributes from inspecting the downloaded product)
+	 * 
+	 * This method is intended for overriding by mission-specific extensions of this class.
 	 * 
 	 * @param product the product metadata as received from the archive
 	 * @param missionCode the code of the mission to ingest to
@@ -1171,16 +1238,6 @@ public class DownloadManager {
 		for (int i = 0; i < DOWNLOAD_MAX_RETRIES; i++) {
 			try {
 				
-				// Check whether parallel execution is allowed
-				try {
-					downloadSemaphore.acquire();
-					if (logger.isDebugEnabled())
-						logger.debug("... file download semaphore {} acquired, {} permits remaining",
-								downloadSemaphore, downloadSemaphore.availablePermits());
-				} catch (InterruptedException e) {
-					throw new IOException(logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString()));
-				}
-				
 				try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
 					logger.trace("... starting request for URL '{}'", requestUrl);
 
@@ -1209,12 +1266,6 @@ public class DownloadManager {
 							e.getMessage() + " / " + e.getReasonPhrase()));
 				} catch (Exception e) {
 					throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(), e.getMessage()));
-				} finally {
-					// Release parallel thread
-					downloadSemaphore.release();
-					if (logger.isDebugEnabled())
-						logger.debug("... file download semaphore {} released, {} permits now available",
-								downloadSemaphore, downloadSemaphore.availablePermits());
 				}
 
 				// Compare file size with value given by external archive
@@ -1329,7 +1380,7 @@ public class DownloadManager {
 			throw e;
 		}
 
-		logger.log(AipClientMessage.PRODUCT_REGISTERED, product.getUuid());
+		logger.log(AipClientMessage.PRODUCT_REGISTERED, product.getProductFileName());
 	}
 
 	/**
@@ -1340,7 +1391,7 @@ public class DownloadManager {
 	 * @param facility the processing facility to ingest the product to
 	 * @param password Ingestor password
 	 */
-	private void downloadAndIngest(final ProductArchive archive, final RestProduct product, final ProcessingFacility facility,
+	private void downloadAndIngest(final ProductArchive archive, final AipRestProduct product, final ProcessingFacility facility,
 			String password) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> downloadAndIngest({}, {}, {}, ********)", (null == archive ? "NULL" : archive.getCode()),
@@ -1388,16 +1439,39 @@ public class DownloadManager {
 
 				try {
 					// For long-term archives, create a product order first and wait for its completion
-					if (ArchiveType.AIP.equals(archive.getArchiveType()) 
-							|| ArchiveType.SIMPLEAIP.equals(archive.getArchiveType())) {
+					if (!product.isOnline() && (
+							ArchiveType.AIP.equals(archive.getArchiveType()) 
+							|| ArchiveType.SIMPLEAIP.equals(archive.getArchiveType()))) {
+						logger.log(AipClientMessage.CREATING_PRODUCT_ORDER, 
+								product.getProductFile().get(0).getProductFileName(), product.getUuid(), archive.getName());
 						createProductOrderAndWait(archive, product.getUuid());
 					}
 
-					// Download the product by product UUID
-					IngestorProduct ingestorProduct = downloadProduct(archive, product, missionCode);
+					// Check whether parallel download and ingestion is allowed
+					try {
+						downloadSemaphore.acquire();
+						if (logger.isDebugEnabled())
+							logger.debug("... file download semaphore {} acquired, {} permits remaining",
+									downloadSemaphore, downloadSemaphore.availablePermits());
+					} catch (InterruptedException e) {
+						throw new IOException(logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString()));
+					}
 					
-					// Ingest product to prosEO
-					ingestProduct(ingestorProduct, facility, user, password);
+					try {
+						// Download the product by product UUID
+						IngestorProduct ingestorProduct = downloadProduct(archive, product, missionCode);
+						
+						// Ingest product to prosEO
+						ingestProduct(ingestorProduct, facility, user, password);
+					} catch (Exception e) {
+						throw e;
+					} finally {
+						// Release parallel thread
+						downloadSemaphore.release();
+						if (logger.isDebugEnabled())
+							logger.debug("... file download semaphore {} released, {} permits now available",
+									downloadSemaphore, downloadSemaphore.availablePermits());
+					}
 				} catch (Exception e) {
 					String message = null;
 					if (e instanceof InterruptedException || e instanceof IOException) {
@@ -1411,6 +1485,19 @@ public class DownloadManager {
 				} finally {
 					// Remove download from lookup table
 					productDownloads.remove(product.getUuid());
+					
+					// Remove temporary download file if it exists
+					Path tempFilePath = Path.of(config.getClientTargetDir(), File.separator, 
+							product.getProductFile().get(0).getProductFileName());
+					if (config.isDeleteTempFiles() && Files.exists(tempFilePath)) {
+						try {
+							logger.log(AipClientMessage.DELETING_TEMP_FILE, tempFilePath);
+							Files.delete(tempFilePath);
+						} catch (IOException e) {
+							// Optional: Log and ignore
+							logger.log(AipClientMessage.FILE_DELETION_FAILED, tempFilePath);
+						}
+					}
 				}
 			}
 		};
@@ -1449,7 +1536,7 @@ public class DownloadManager {
 			logger.log(AipClientMessage.MULTIPLE_PRODUCTS_FOUND_BY_NAME, filename, archive.getName());
 		}
 
-		RestProduct restProduct = toRestProduct(productList.get(0), facility, true);
+		AipRestProduct restProduct = toRestProduct(productList.get(0), facility, true);
 
 		// Start download and ingestion thread
 		downloadAndIngest(archive, restProduct, facility, password);
@@ -1493,14 +1580,7 @@ public class DownloadManager {
 				"(startswith(Name,'" + securityService.getMission() + "')"
 					+ " or startswith(Name,'" + securityService.getMission().substring(0, 2) + "_'))"
 				+ " and (contains(Name,'" + productType + "')"
-				+ (securityService.getMission().startsWith("S1") && productType.startsWith("SM") ?
-						" or contains(Name,'S1" + productType.substring(2) + "')" +
-						" or contains(Name,'S2" + productType.substring(2) + "')" +
-						" or contains(Name,'S3" + productType.substring(2) + "')" +
-						" or contains(Name,'S4" + productType.substring(2) + "')" +
-						" or contains(Name,'S5" + productType.substring(2) + "')" +
-						" or contains(Name,'S6" + productType.substring(2) + "')"
-						: "")
+				+ getMissionSpecificFilters(securityService.getMission(), productType)
 				+ ")"
 				+ " and ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
 				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart);
@@ -1530,7 +1610,7 @@ public class DownloadManager {
 			logger.log(AipClientMessage.MULTIPLE_PRODUCTS_FOUND_BY_TIME, productType, earliestStart, earliestStop, archive.getName());
 		}
 		ClientEntity odataProduct = productList.get(0);
-		RestProduct restProduct = null; 
+		AipRestProduct restProduct = null; 
 		if (archive.getArchiveType().equals(ArchiveType.SIMPLEAIP)) {
 			// the attributes where not expanded in first query cause slow reaction
 			// query the product directly and expand the attributes
@@ -1587,14 +1667,7 @@ public class DownloadManager {
 				"(startswith(Name,'" + securityService.getMission() + "')"
 					+ " or startswith(Name,'" + securityService.getMission().substring(0, 2) + "_'))"
 				+ " and (contains(Name,'" + productType + "')"
-				+ (securityService.getMission().startsWith("S1") && productType.startsWith("SM") ?
-						" or contains(Name,'S1" + productType.substring(2) + "')" +
-						" or contains(Name,'S2" + productType.substring(2) + "')" +
-						" or contains(Name,'S3" + productType.substring(2) + "')" +
-						" or contains(Name,'S4" + productType.substring(2) + "')" +
-						" or contains(Name,'S5" + productType.substring(2) + "')" +
-						" or contains(Name,'S6" + productType.substring(2) + "')"
-						: "")
+				+ getMissionSpecificFilters(securityService.getMission(), productType)
 				+ ")"
 				+ " and ContentDate/Start lt " + ODATA_DF.format(earliestStop) 
 				+ " and ContentDate/End gt " + ODATA_DF.format(earliestStart);
@@ -1624,17 +1697,17 @@ public class DownloadManager {
 		List<RestProduct> restProducts = new ArrayList<>();
 
 		for (ClientEntity odataProduct : productList) {
-			RestProduct restProduct = null; 
+			AipRestProduct restProduct = null;
 			if (archive.getArchiveType().equals(ArchiveType.SIMPLEAIP)) {
 				// the attributes where not expanded in first query cause slow reaction
 				// query the product directly and expand the attributes
 				restProduct = toRestProduct(odataProduct, processingFacility, false);
 				try {
-					ClientEntity secondOdataProduct = queryArchiveForSingleEntity(archive, ODATA_ENTITY_PRODUCTS, restProduct.getUuid(), true);
+				ClientEntity secondOdataProduct = queryArchiveForSingleEntity(archive, ODATA_ENTITY_PRODUCTS, restProduct.getUuid(), true);
 					restProduct = toRestProduct(secondOdataProduct, processingFacility, true);
 				} catch (IOException e) {
-					// already logged
-					break;
+					logger.log(AipClientMessage.SKIPPING_INVALID_PRODUCT, new Object[0]);
+					continue;
 				}
 				// For SIMPLEAIP an exact match between requested product type and product type found is not guaranteed
 				if (!productType.equals(restProduct.getProductClass())) {
@@ -1643,17 +1716,21 @@ public class DownloadManager {
 				}
 			} else {
 				restProduct = toRestProduct(odataProduct, processingFacility, true);
+				if (null == restProduct) {
+					logger.log(AipClientMessage.SKIPPING_INVALID_PRODUCT, new Object[0]);
+					continue;
+				}
 			}
-			
+
 			// Check whether product file is already available locally
 			RestProduct localProduct = findLocalProductAtFacility(modelProducts, restProduct, processingFacility);
-			
+
 			if (null == localProduct) {
 				// Not available locally: Start download and ingestion thread
 				downloadAndIngest(archive, restProduct, processingFacility, password);
 				if (logger.isTraceEnabled())
 					logger.trace("Found product " + restProduct);
-	
+
 				restProducts.add(restProduct);
 			} else {
 				// Skip download and return locally available product
@@ -1662,7 +1739,7 @@ public class DownloadManager {
 					logger.trace("Skipping locally available product " + restProduct);
 			}
 		}
-
+			
 		// Return list of product metadata
 		return restProducts;
 	}
