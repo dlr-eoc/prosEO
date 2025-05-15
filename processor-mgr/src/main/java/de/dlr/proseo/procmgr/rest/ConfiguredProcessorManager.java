@@ -107,7 +107,7 @@ public class ConfiguredProcessorManager {
 		}
 
 		Long numberOfResults = Long
-			.parseLong(this.countConfiguredProcessors(mission, processorName, processorVersion, configurationVersion));
+			.parseLong(this.countConfiguredProcessors(mission, identifier, processorVersion, configurationVersion));
 		Integer maxResults = config.getMaxResults();
 		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults && (numberOfResults - recordFrom) > maxResults) {
 			throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS,
@@ -132,6 +132,7 @@ public class ConfiguredProcessorManager {
 		if (null != uuid) {
 			jpqlQuery += " and c.uuid = :uuid";
 		}
+		jpqlQuery += " order by identifier ASC";
 		Query query = em.createQuery(jpqlQuery);
 		query.setParameter("missionCode", mission);
 		if (null != identifier) {
@@ -495,10 +496,10 @@ public class ConfiguredProcessorManager {
 	 * @return the number of configuredProcessors found as string
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public String countConfiguredProcessors(String missionCode, String processorName, String processorVersion,
+	public String countConfiguredProcessors(String missionCode, String identifier, String processorVersion,
 			String configurationVersion) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> countConfiguredProcessors({}, {}, {}, {}, {}, {})", missionCode, processorName, processorVersion,
+			logger.trace(">>> countConfiguredProcessors({}, {}, {}, {}, {}, {})", missionCode, identifier, processorVersion,
 					configurationVersion);
 
 		if (null == missionCode) {
@@ -520,9 +521,9 @@ public class ConfiguredProcessorManager {
 
 		predicates
 			.add(cb.equal(rootConfiguredProcessor.get("processor").get("processorClass").get("mission").get("code"), missionCode));
-		if (processorName != null)
+		if (identifier != null)
 			predicates
-				.add(cb.equal(rootConfiguredProcessor.get("processor").get("processorClass").get("processorName"), processorName));
+				.add(cb.equal(rootConfiguredProcessor.get("identifier"), identifier));
 		if (processorVersion != null)
 			predicates.add(cb.equal(rootConfiguredProcessor.get("processor").get("processorVersion"), processorVersion));
 		if (configurationVersion != null)
@@ -531,7 +532,7 @@ public class ConfiguredProcessorManager {
 		query.select(cb.count(rootConfiguredProcessor)).where(predicates.toArray(new Predicate[predicates.size()]));
 
 		Long result = em.createQuery(query).getSingleResult();
-		logger.log(ProcessorMgrMessage.CONFIGURED_PROCESSORS_COUNTED, result, missionCode, processorName, processorVersion,
+		logger.log(ProcessorMgrMessage.CONFIGURED_PROCESSORS_COUNTED, result, missionCode, identifier, processorVersion,
 				configurationVersion);
 
 		return result.toString();

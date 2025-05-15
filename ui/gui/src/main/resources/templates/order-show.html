@@ -517,8 +517,6 @@ function setSelected() {
 }
 
 function setHTMLParams() {
-    var loc = location.search.slice(0);
-    var search = location.search.slice(1);
     // build parameter string
     var paramString = "";
     paramString = addURLParamValuePrim('identifier', identifier, paramString);
@@ -559,10 +557,7 @@ function setParams(ele, selup, newPage, newPageSize) {
 	  
 	  var hasChanged = false;
 
-	  var search = location.search.slice(1);
-	  if (isEmpty(search)) {
-	    hasChanged = true;
-	  }
+    hasChanged |= setPageParams(newPage, newPageSize);
     if (ele != null && selup != null) {
     	newSortCol = ele.replace("select-", "");
       if (selup == "select-up") {
@@ -587,8 +582,7 @@ function setParams(ele, selup, newPage, newPageSize) {
     newOrderStates = $('#orderStates').val();
     newProducts = $('#products').val();
     	
-    if (   setPageParams(newPage, newPageSize)
-    		|| newSortCol != sortCol
+    if (   newSortCol != sortCol
     		|| newUpText != upText) {
       hasChanged = true;
     }	
@@ -758,8 +752,7 @@ function retrieveData() {
 		    if (sort.split(":")[1] == "true") {
 		      up = true;
 		    }
-
-				if (identifier != null && identifier.length > 0) {
+				if (parameterHasValue(identifier)) {
 					  url = url + divider + "identifier=" + identifier.trim();
 					  divider = "&";
 				}
@@ -769,11 +762,11 @@ function retrieveData() {
 			      divider = "&";
 				}
 
-				if (fromDate != null && fromDate.length > 0) {
+				if (parameterHasValue(fromDate)) {
 					  url = url + divider + "from=" + fromDate.trim();
 					  divider = "&";
 				}
-        if (toDate != null && toDate.length > 0) {
+        if (parameterHasValue(toDate)) {
             url = url + divider + "to=" + toDate.trim();
             divider = "&";
         }
@@ -820,8 +813,7 @@ function retrieveData() {
 <script>
     // Read the HTML parameters from URI and retrieve the corresponding data
     function loadWindow() {
-        var elem = document.getElementById('sb-order');
-        $(elem).addClass('active');
+    	activateSidebarElem('sb-order');
         feather.replace();
         readHTMLParams();
         setSelected();

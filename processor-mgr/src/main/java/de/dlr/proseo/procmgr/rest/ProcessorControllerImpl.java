@@ -76,13 +76,13 @@ public class ProcessorControllerImpl implements ProcessorController {
 	 */
 	@Override
 	public ResponseEntity<List<RestProcessor>> getProcessors(String mission, String processorName, String processorVersion,
-			Integer recordFrom, Integer recordTo) {
+			Integer recordFrom, Integer recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getProcessors({}, {}, {})", mission, processorName, processorVersion);
 
 		try {
 			return new ResponseEntity<>(
-					processorManager.getProcessors(mission, processorName, processorVersion, recordFrom, recordTo), HttpStatus.OK);
+					processorManager.getProcessors(mission, processorName, processorVersion, recordFrom, recordTo, orderBy), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {

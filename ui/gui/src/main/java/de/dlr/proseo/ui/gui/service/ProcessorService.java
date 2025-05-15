@@ -54,7 +54,7 @@ public class ProcessorService {
 	 * @return a ResponseSpec; providing access to the response status and headers, and as well as methods to consume the response
 	 *         body
 	 */
-	public ResponseSpec get(String processorName) {
+	public ResponseSpec get(String processorName, String productClass, Long from, Long to) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -70,7 +70,16 @@ public class ProcessorService {
 		if (processorName != null && !processorName.isBlank()) {
 			uriBuilder.queryParam("processorName", processorName.trim());
 		}
-
+		if (productClass != null && !productClass.isBlank()) {
+			uriBuilder.queryParam("productClass", productClass.trim());
+		}
+		if (from != null) {
+			uriBuilder.queryParam("recordFrom", from);
+		}
+		if (to != null) {
+			uriBuilder.queryParam("recordTo", to);
+		}
+		uriBuilder.queryParam("orderBy", "processorName ASC");
 		URI uri = uriBuilder.build().toUri();
 		logger.trace("URI " + uri);
 

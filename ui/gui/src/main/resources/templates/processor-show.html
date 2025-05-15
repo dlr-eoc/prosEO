@@ -91,7 +91,7 @@
                 <td th:id="${processor?.processorName}" class="first-row" th:rowspan="${#lists.size(processor?.tasks) + 1}" th:text="${processor?.id}"></td>
                 <td class="first-row"> <a 
                   th:if="${hasroleprocessorreader}"
-                  th:href="'/processor-class-show#' + ${processor?.processorName}" 
+                  th:href="'/processor-class-show?processorclassName=' + ${processor?.processorName}" 
                   th:text="${processor?.processorName}"></a><span 
                   th:unless="${hasroleprocessorreader}"
                   th:text="${processor?.processorName}"></span></td>
@@ -133,6 +133,7 @@
               </div>
             </tbody>
           </table>
+                <div th:replace="fragments/navbar.html :: alternatePageNav"></div>
         </div>
       <div th:insert="fragments/footer.html :: footer"></div>
       </main>
@@ -157,18 +158,108 @@
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
 <script type="text/javascript" th:inline="javascript">
-    function retrieveData(processorName) {
+    //
+    
+    // Global variables
+    // paging
+    var currentPage = 1; // Current page number
+    var pageSize = 10; // Number of objects per page
+    
+    var sortCol = "id";
+    var upText = "true";
+    
+    // filters
+    var processorName = null;
+    var processorVersion = null;
+
+    // set paging and sorting parameters
+    function setParams(ele, selup, newPage, newPageSize) {
+        var newSortCol = null;
+        var newUpText = null;
+        var newProcessorName = null;
+        var newProcessorVersion = null;
+        
+        var hasChanged = false;
+
+        hasChanged |= setPageParams(newPage, newPageSize);
+        
+        if (ele != null && selup != null) {
+            newSortCol = ele.replace("select-", "");
+            if (selup == "select-up") {
+                newUpText = "true";
+            } else {
+                newUpText = "false";
+            }
+        } else {
+            newSortCol = sortCol;
+            newUpText = upText;
+        }
+        if (newSortCol != sortCol
+            || newUpText != upText) {
+            hasChanged = true;
+        } 
+                
+        if (hasChanged) {
+            setHTMLParams();
+        }
+    }
+
+    // set parameters in URI
+    function setHTMLParams() {
+        // build parameter string
+        var paramString = "";
+        paramString = addURLParamValuePrim('processorName', processorName, paramString);
+        paramString = addURLParamValuePrim('processorVersion', processorVersion, paramString);
+        paramString = setPageHTMLParams(paramString);
+        var newHref = location.origin + location.pathname + paramString;
+        if (newHref != location.href) {
+            history.pushState({}, null, newHref);
+        }
+    }
+
+    // read URI parameters
+    function readHTMLParams() {
+        readPageHTMLParams();
+        processorName = getURLParam('processorName');
+        processorVersion = getURLParam('processorVersion');
+        tmp = getURLParam('sortCol');
+    }
+
+    // set selection in filter parameters
+    function setSelected() {
+    }
+
+    function updateTable(newPage, newPageSize) {
+        setParams(null, null, newPage, newPageSize);
+        retrieveData();
+    }
+
+    function retrieveData() {
         if ([[${hasroleprocessorreader}]]) {
             showLoader();
             var tableRows = $("processorTable").rows;
             if(tableRows > 1 && tableRows != null) {
                 $("processorTable > tbody").empty();
             }
+            var from = getFromRow();
+            var to = getToRow();      
             var url = "/processor-show/get";      
 
             var divider = "?";
-            if (processorName != null) {
+            if (parameterHasValue(processorName)) {
                 url = url + divider + "processorName=" + processorName.toString().trim();
+                divider = "&";
+            }
+            if (parameterHasValue(processorVersion)) {
+                url = url + divider + "processorVersion=" + processorVersion.toString().trim();
+                divider = "&";
+            }
+            if (parameterHasValue(from)) {
+                url = url + divider + "recordFrom=" + from;
+                divider = "&";
+            }
+            if (parameterHasValue(to)) {
+                url = url + divider + "recordTo=" + to;
                 divider = "&";
             }
             
@@ -177,6 +268,7 @@
                 method: "GET",
                 success: function (res) {
                     $("#processorcontent").html(res);
+                    feather.replace();
                     scrollToHash();
                     hideLoader();
                 },
@@ -191,14 +283,6 @@
     };
 </script>
 <script>
-    window.onload = function () {
-     // $('.collapse').collapse();
-     var elem = document.getElementById('sb-processor');
-     $(elem).addClass('active');
-     feather.replace();
-     var processorName = getURLParam('processorName');
-     retrieveData(processorName);
-     
      // correct scroll due to "sticky" elements
      var handler = function ( ) {
         var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
@@ -206,8 +290,29 @@
     	  window.scrollBy(0, h);
       };
       window.addEventListener('hashchange', handler);
-     
-    }
+
+      // Read the HTML parameters from URI and retrieve the corresponding data
+      function loadWindow() {
+    	    activateSidebarElem('sb-processor');
+          feather.replace();
+          readHTMLParams();
+          setSelected();
+          updateTable(currentPage, pageSize);
+      };
+      
+      window.onload = function () {
+          loadWindow();
+          // correct scroll due to "sticky" elements
+          var handler = function ( ) {
+              var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+                       + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+              window.scrollBy(0, h);
+          };        
+      };
+      // re-load window to read and set all HTML parameters
+      $(window).on('popstate', function (e) {
+        loadWindow();
+      });
 </script>
 
 </html>

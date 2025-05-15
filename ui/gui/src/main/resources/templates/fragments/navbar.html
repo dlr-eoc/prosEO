@@ -77,7 +77,8 @@
 
 <div th:fragment="alternatePageNav">
 	<nav th:unless="${numberOfPages eq 1}" th:fragment="alternatePageNav"
-		id="alternatePageNav" aria-label="Page navigation">
+		id="alternatePageNav" aria-label="Page navigation"
+    th:data-page="${page}">
 
 		<!-- Paging buttons -->
 		<ul class="pagination justify-content-center">
@@ -126,7 +127,7 @@
 	<!-- Customize page size -->
 	<div>
 		<label for="pageSizeField"><span th:text="#{show-page-size}"></span></label>
-		<input type="number" min="1" max="50" step="1" id="pageSizeField" th:value="${pageSize}" th:onkeyup="inputSetPageSize()">
+		<input type="number" min="1" max="50" step="1" id="pageSizeField" th:value="${pageSize}">
 		<button onclick="updatePageSize()" id="pageSizeButton"
 			class="btn btn-sm btn-outline-secondary">
 			<span th:text="#{update-page-size}"></span>

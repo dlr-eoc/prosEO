@@ -88,6 +88,7 @@
 							</tr>
 						</tbody>
 					</table>
+                <div th:replace="fragments/navbar.html :: alternatePageNav"></div>
 				</div>
 		
 			<div th:insert="fragments/footer.html :: footer"></div>
@@ -114,6 +115,59 @@
 
 
 <script type="text/javascript" th:inline="javascript">
+
+    // Global variables
+    // paging
+    var currentPage = 1; // Current page number
+    var pageSize = 20; // Maximum objects per page
+
+    var processorclassName = null;
+    var productClass = null;
+
+    // set paging and sorting parameters
+    function setParams(ele, selup, newPage, newPageSize) {
+        var newProcessorclassName = null;
+        var newProductClass = null;
+        
+        var hasChanged = false;
+
+        hasChanged |= setPageParams(newPage, newPageSize);
+        
+        if (hasChanged) {
+            setHTMLParams();
+        }
+    }
+
+    // set parameters in URI
+    function setHTMLParams() {
+        // build parameter string
+        var paramString = "";
+        paramString = addURLParamValuePrim('processorclassName', processorclassName, paramString);
+        paramString = addURLParamValuePrim('productClass', productClass, paramString);
+        paramString = setPageHTMLParams(paramString);
+        var newHref = location.origin + location.pathname + paramString;
+        if (newHref != location.href) {
+            history.pushState({}, null, newHref);
+        }
+    }
+
+    // read URI parameters
+    function readHTMLParams() {
+        readPageHTMLParams();
+        processorclassName = getURLParam('processorclassName');
+        productClass = getURLParam('productClass');
+    }
+
+    // set selection in filter parameters
+    function setSelected() {
+    }
+
+    function updateTable(newPage, newPageSize) {
+        setParams(null, null, newPage, newPageSize);
+        retrieveData();
+    }
+
+
 	  function retrieveData() {
         if ([[${hasroleprocessorreader}]]) {
             showLoader();
@@ -121,13 +175,34 @@
 	          if(tableRows > 1 && tableRows != null) {
 	              $("processorTable > tbody").empty();
 	          }
-	          var url = "/processor-class-show/get";	    
+	          var url = "/processor-class-show/get";	   
+	            var divider = "?";  
+              if (parameterHasValue(processorclassName)) {
+                  url = url + divider + "processorclassName=" + processorclassName;
+                  divider = "&";
+              }
+              if (parameterHasValue(productClass)) {
+                  url = url + divider + "productClass=" + productClass;
+                  divider = "&";
+              }
+	            var from = getFromRow();
+	            var to = getToRow();     
+	            if (parameterHasValue(from)) {
+	                url = url + divider + "recordFrom=" + from;
+	                divider = "&";
+	            }
+	            if (parameterHasValue(to)) {
+	                url = url + divider + "recordTo=" + to;
+	                divider = "&";
+	            }
+	             
 	          
 	          $.ajax({
 	              url: url,
 	              method: "GET",
 	              success: function (res) {
 	                  $("#processorclasscontent").html(res);
+	                  feather.replace();
 	                  scrollToHash();
 	                  hideLoader();
 	              },
@@ -142,22 +217,36 @@
     };
 </script>
 <script>
-    window.onload = function () {
-     // $('.collapse').collapse();
-     var elem = document.getElementById('sb-processor-class');
-     $(elem).addClass('active');
+// correct scroll due to "sticky" elements
+var handler = function ( ) {
+   var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+           + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+   window.scrollBy(0, h);
+ };
+ window.addEventListener('hashchange', handler);
+
+ // Read the HTML parameters from URI and retrieve the corresponding data
+ function loadWindow() {
+	   activateSidebarElem('sb-processor-class');
      feather.replace();
-     retrieveData();
-     
+     readHTMLParams();
+     setSelected();
+     updateTable(currentPage, pageSize);
+ };
+ 
+ window.onload = function () {
+     loadWindow();
      // correct scroll due to "sticky" elements
      var handler = function ( ) {
-        var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
-    			      + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
-    	  window.scrollBy(0, h);
-      };
-      window.addEventListener('hashchange', handler);
-     
-    }
+         var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+                  + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+         window.scrollBy(0, h);
+     };        
+ };
+ // re-load window to read and set all HTML parameters
+ $(window).on('popstate', function (e) {
+   loadWindow();
+ });
 </script>
 
 </html>

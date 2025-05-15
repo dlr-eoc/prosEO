@@ -263,7 +263,7 @@ public class ProductManager {
 		}
 
 		Long numberOfResults = Long.parseLong(this.countProducts(mission, productClass, mode, fileClass, quality, startTimeFrom,
-				startTimeTo, genTimeFrom, genTimeTo, jobStepId));
+				startTimeTo, genTimeFrom, genTimeTo, jobStepId, null));
 		Integer maxResults = ingestorConfig.getMaxResults();
 		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults && (numberOfResults - recordFrom) > maxResults) {
 			throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS,
@@ -315,11 +315,11 @@ public class ProductManager {
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public String countProducts(String mission, String[] productClass, String mode, String fileClass, String quality,
-			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, Long jobStepId)
+			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, Long jobStepId, Long id)
 			throws SecurityException {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> countProducts({}, {}, {}, {}, {}, {}, {}, {}, {})", mission, productClass, mode, fileClass, quality,
-					startTimeFrom, startTimeTo, genTimeFrom, genTimeTo);
+			logger.trace(">>> countProducts({}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, productClass, mode, fileClass, quality,
+					startTimeFrom, startTimeTo, genTimeFrom, genTimeTo, id);
 
 		if (null == mission) {
 			mission = securityService.getMission();
@@ -330,8 +330,17 @@ public class ProductManager {
 						logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, mission, securityService.getMission()));
 			}
 		}
-		Query query = createProductsQuery(mission, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom,
-				genTimeTo, null, null, jobStepId, null, true);
+		Query query = null;
+		if (id != null && id > 0) {
+			// id wins
+			String queryString = "select count(p) from Product p where p.id = " + id;
+			if (logger.isTraceEnabled())
+				logger.trace(queryString);
+			query = em.createQuery(queryString);
+		} else {
+			query = createProductsQuery(mission, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom,
+					genTimeTo, null, null, jobStepId, null, true);
+		}
 		Object resultObject = query.getSingleResult();
 		if (resultObject instanceof Long) {
 			return ((Long) resultObject).toString();

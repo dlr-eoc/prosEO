@@ -388,6 +388,7 @@
 	      workflowVersion = getURLParam('workflowVersion');
 	      inputProductClass = getURLParam('inputProductClass');
 		}
+		
 		function setSelected() {
 		      $('#id').val(id);
 		      $('#name').val(wname);
@@ -412,16 +413,16 @@
 					+ "&currentPage=" + currentPage 
 					+ "&pageSize=" + pageSize;
 			
-			if (id != null && id != "null")
+			if (parameterHasValue(id))
 				url += "&id=" + id;
 			
-			if (wname != null && wname != "null")
+			if (parameterHasValue(wname))
 				url += "&name=" + wname;
 					
-			if (workflowVersion != null && workflowVersion != "null")
+			if (parameterHasValue(workflowVersion))
 				url += "&workflowVersion=" + workflowVersion;
 			
-			if (inputProductClass != null && inputProductClass != "null")
+			if (parameterHasValue(inputProductClass))
 				url += "&inputProductClass=" + inputProductClass;
 			
 			console.log(url);

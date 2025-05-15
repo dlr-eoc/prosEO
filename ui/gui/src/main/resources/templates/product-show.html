@@ -746,8 +746,7 @@ window.onpopstate = function(event) {
 
     window.onload = function () {
      // $('.collapse').collapse();
-     var elem = document.getElementById('sb-product');
-     $(elem).addClass('active');
+     activateSidebarElem('sb-product');
      feather.replace();
      readHTMLParams();
      setSelected();

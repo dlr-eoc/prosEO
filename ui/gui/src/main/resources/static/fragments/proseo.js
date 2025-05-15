@@ -96,15 +96,16 @@ function addURLParamValuePrim(name, value, paramstring) {
 
 function addURLParamValuesPrim(name, value, paramstring) {
     var searchTmp = "";
-    var search = trimLeftChar(paramstring, '?');;
+    if (paramstring != null) {
+      searchTmp = paramstring;
+    }
     if (value != null && value.length > 0 && name != null && name.length > null) {
         for (var i = 0; i < value.length; i++) {
-            searchTmp = addURLParamPrim(name + '=' + value[i], search);
-            if (searchTmp != null) {search = searchTmp};
+            searchTmp = addURLParamPrim(name + '=' + value[i], searchTmp);
         }
-        return search;
+        return searchTmp;
     }
-    return search;
+    return paramstring;
 };
 
 function removeURLParam(param) {
@@ -302,6 +303,26 @@ function arrayEquals(a1, a2) {
     }
 };
 
+function arrayAdd(a, elem) {
+    var anArray = a;
+    var index = anArray.indexOf(elem);
+    if (index < 0) {
+        anArray.push(elem);
+    }
+    return anArray;
+}
+
+function arrayRemove(a, elem) {
+    var anArray = new Array;
+    for(i = 0; i < a.length; i++) {
+        if (a[i] != elem) {
+            anArray.push(a[i]);
+        }
+    }
+    return anArray;
+}
+
+
 function isEmpty(s) {
     if (s == null || s.trim().length == 0) {
         return true;
@@ -367,7 +388,7 @@ function readPageHTMLParams() {
 	  var tmp = getURLParam('currentPage');
 	  currentPage = (isEmpty(tmp) || tmp < 1) ? 1 : Number(tmp);
 	  tmp = getURLParam('pageSize');
-	  pageSize = (isEmpty(tmp) || tmp < 1) ? 20 : Number(tmp);
+	  pageSize = (isEmpty(tmp) || tmp < 1) ? pageSize : Number(tmp);
 }
 
 //Function to customize the page size
@@ -382,4 +403,34 @@ function updatePageSize() {
 	      // Call the function to update the table with the new page size         
 	      updateTable(currentPage, newPageSize);
 	  }
+}
+
+function parameterHasValue(parameterValue) {
+  if  (parameterValue != null) {
+    if (typeof parameterValue == 'string') {
+      return (parameterValue != "null" && parameterValue.trim().length > 0);
+    } else {
+      return true;
+    }
+  } else {
+    return false;
+  }
+}
+
+function arrayToHTMLString(anArray) {
+  var result = null;
+  if (anArray != null && anArray.length > 0) {
+    result = "";
+    var divider = "";
+    for (var i = 0; i < anArray.length; i++) {
+      result = result + divider + anArray[i];
+      divider = ",";
+    }     
+  }
+  return result;
+}
+
+function activateSidebarElem(elemName) {
+  var elem = document.getElementById(elemName);
+  $(elem).addClass('active');
 }

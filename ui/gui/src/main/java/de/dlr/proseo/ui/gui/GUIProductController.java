@@ -111,7 +111,7 @@ public class GUIProductController extends GUIBaseController {
 			@RequestParam(required = false, value = "sortby") String sortby,
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 
-		logger.trace(">>> getProducs({}, {}, {}, {}, {}, model)", productClass, mode, fileClass, quality, startTimeFrom,
+		logger.trace(">>> getProducs({}, {}, {}, {}, {}, {}, model)", productId, productClass, mode, fileClass, quality, startTimeFrom,
 				startTimeTo, genTimeFrom, genTimeTo, recordFrom, recordTo);
 		Long from = null;
 		Long to = null;
@@ -120,7 +120,7 @@ public class GUIProductController extends GUIBaseController {
 		} else {
 			from = (long) 0;
 		}
-		Long count = countProducts(productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo,
+		Long count = countProducts(productId, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo,
 				jobStepId);
 		if (recordTo != null && from != null && recordTo > from) {
 			to = recordTo;
@@ -155,28 +155,9 @@ public class GUIProductController extends GUIBaseController {
 						products.addAll((Collection<? extends Object>) entityList.getBody());
 
 						model.addAttribute("products", products);
+
+						modelAddAttributes(model, count, pageSize, pages, page);
 						
-						model.addAttribute("count", count);
-						model.addAttribute("pageSize", pageSize);
-						model.addAttribute("pageCount", pages);
-						model.addAttribute("numberOfPages", pages);
-						model.addAttribute("page", page);
-						model.addAttribute("currentPage", page);
-
-						List<Long> showPages = new ArrayList<>();
-						Long start = Math.max(page - 4, 1);
-						Long end = Math.min(page + 4, pages);
-						if (page < 5) {
-							end = Math.min(end + (5 - page), pages);
-						}
-						if (pages - page < 5) {
-							start = Math.max(start - (4 - (pages - page)), 1);
-						}
-						for (Long i = start; i <= end; i++) {
-							showPages.add(i);
-						}
-
-						model.addAttribute("showPages", showPages);
 						if (logger.isTraceEnabled())
 							logger.trace(model.toString() + "MODEL TO STRING");
 						if (logger.isTraceEnabled())
@@ -313,7 +294,7 @@ public class GUIProductController extends GUIBaseController {
 	 * @param jobStepId     the id of the job step producing the product
 	 * @return the number of products matching the specified parameters
 	 */
-	private Long countProducts(String productClass, String mode, String fileClass, String quality, String startTimeFrom,
+	private Long countProducts(Long productId, String productClass, String mode, String fileClass, String quality, String startTimeFrom,
 			String startTimeTo, String genTimeFrom, String genTimeTo, Long jobStepId) {
 
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -363,6 +344,11 @@ public class GUIProductController extends GUIBaseController {
 			uriString += divider + "jobStep=" + jobStepId;
 			divider = "&";
 		}
+		if (productId != null) {
+			uriString += divider + "id=" + productId;
+			divider = "&";
+		}
+		logger.trace(uriString);
 		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
 		Long result = (long) -1;
 		try {

@@ -383,26 +383,33 @@
 	      updateTablePrim(currentPage);
 	    }
 		// Function to fetch objects from the REST controller
-		function updateTablePrim(newPage) {
+		function updateTablePrim() {
 			
-			currentPage = newPage;
+			var url = "/productarchive/get";
+
+      var divider = "?";
+      var from = getFromRow();
+      var to = getToRow();     
+      if (parameterHasValue(from)) {
+          url = url + divider + "recordFrom=" + from;
+          divider = "&";
+      }
+      if (parameterHasValue(to)) {
+          url = url + divider + "recordTo=" + to;
+          divider = "&";
+      }
+									
+			if (parameterHasValue(id))
+				url = url + divider + "id=" + id;
+        divider = "&";
 			
-			var recordFrom = (currentPage - 1) * pageSize;
-			var recordTo = currentPage * pageSize;			
-			
-			var url = "/productarchive/get?recordFrom=" + recordFrom 
-					+ "&recordTo=" + recordTo 
-					+ "&currentPage=" + currentPage 
-					+ "&pageSize=" + pageSize;
-			
-			if (id != null && id != "null")
-				url += "&id=" + id;
-			
-			if (wname != null && wname != "null")
-				url += "&name=" + wname;
+			if (parameterHasValue(wname))
+				url = url + divider + "name=" + wname;
+        divider = "&";
 					
-			if (archiveType != null && archiveType != "null")
-				url += "&archiveType=" + archiveType;
+			if (parameterHasValue(archiveType))
+				url = url + divider + "archiveType=" + archiveType;
+        divider = "&";
 			
 			console.log(url);
 			
@@ -444,20 +451,36 @@
 	</script>
 
 	<script>
-    window.onpopstate = function(event) {
-        if (location.toString().charAt(location.toString().length-1) != '#') {
-          document.location.reload();
-        }
-      };
-    window.onload = function init() {					
-    	  // Call the updateTable(currentPage) function initially to populate the table on page load
-        readHTMLParams();
-        setSelected();
-        updateTablePrim(currentPage);
-		
-        // Add an event listener to the form so that the filters will be applied
-		    document.getElementById("productarchiveFilters").addEventListener("submit", setFilters);
-		}
+    // correct scroll due to "sticky" elements
+    var handler = function ( ) {
+       var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+               + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+       window.scrollBy(0, h);
+     };
+     window.addEventListener('hashchange', handler);
+
+     // Read the HTML parameters from URI and retrieve the corresponding data
+     function loadWindow() {
+    	   activateSidebarElem('sb-product-archive');
+         feather.replace();
+         readHTMLParams();
+         setSelected();
+         updateTable(currentPage, pageSize);
+     };
+     
+     window.onload = function () {
+         loadWindow();
+         // correct scroll due to "sticky" elements
+         var handler = function ( ) {
+             var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+                      + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+             window.scrollBy(0, h);
+         };        
+     };
+     // re-load window to read and set all HTML parameters
+     $(window).on('popstate', function (e) {
+       loadWindow();
+     });
 	</script>
 </body>
 

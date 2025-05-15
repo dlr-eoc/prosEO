@@ -151,7 +151,7 @@ public class ProcessorManager {
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public List<RestProcessor> getProcessors(String mission, String processorName, String processorVersion, Integer recordFrom,
-			Integer recordTo) throws NoResultException, SecurityException {
+			Integer recordTo, String[] orderBy) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getProcessors({}, {}, {})", mission, processorName, processorVersion);
 
@@ -173,24 +173,8 @@ public class ProcessorManager {
 		}
 
 		List<RestProcessor> result = new ArrayList<>();
-
-		String jpqlQuery = "select p from Processor p where processorClass.mission.code = :missionCode";
-		if (null != processorName) {
-			jpqlQuery += " and processorClass.processorName = :processorName";
-		}
-		if (null != processorVersion) {
-			jpqlQuery += " and processorVersion = :processorVersion";
-		}
-		Query query = em.createQuery(jpqlQuery);
-		query.setParameter("missionCode", mission);
-		if (null != processorName) {
-			query.setParameter("processorName", processorName);
-		}
-		if (null != processorVersion) {
-			query.setParameter("processorVersion", processorVersion);
-		}
-		query.setFirstResult(recordFrom);
-		query.setMaxResults(recordTo - recordFrom);
+		Query query = createProcossorsQuery(mission, processorName, processorVersion, recordFrom,
+			recordTo, orderBy, false);
 
 		for (Object resultObject : query.getResultList()) {
 			if (resultObject instanceof Processor) {
@@ -527,24 +511,68 @@ public class ProcessorManager {
 		}
 
 		// build query
-		CriteriaBuilder cb = em.getCriteriaBuilder();
-		CriteriaQuery<Long> query = cb.createQuery(Long.class);
-		Root<Processor> rootProcessor = query.from(Processor.class);
+		Query query = createProcossorsQuery(missionCode, processorName, processorVersion, null,
+				null, null, true);
+		Object resultObject = query.getSingleResult();
+		if (resultObject instanceof Long) {
+			return ((Long) resultObject).toString();
+		}
+		if (resultObject instanceof String) {
+			return (String) resultObject;
+		}
+		return "0";
+	}
+	
+	private Query createProcossorsQuery(String mission, String processorName, String processorVersion, Integer recordFrom,
+			Integer recordTo, String[] orderBy, Boolean count) {
 
-		List<Predicate> predicates = new ArrayList<>();
+		if (logger.isTraceEnabled())
+			logger.trace(">>> createProcossorsQuery({}, {}, {}, {}, {}, {})", mission, processorName, recordFrom, recordTo,
+					orderBy, count);
 
-		predicates.add(cb.equal(rootProcessor.get("processorClass").get("mission").get("code"), missionCode));
-		if (processorName != null)
-			predicates.add(cb.equal(rootProcessor.get("processorClass").get("processorName"), processorName));
-		if (processorVersion != null)
-			predicates.add(cb.equal(rootProcessor.get("processorVersion"), processorVersion));
-		query.select(cb.count(rootProcessor)).where(predicates.toArray(new Predicate[predicates.size()]));
+		// Find using search parameters
+		String jpqlQuery = null;
+		String join = "";
+		if (count) {
+			jpqlQuery = "select count(p) from Processor p where processorClass.mission.code = :missionCode";
+		} else {
+			jpqlQuery = "select p from Processor p where processorClass.mission.code = :missionCode";
+		}
 
-		Long result = em.createQuery(query).getSingleResult();
+		if (null != processorName) {
+			jpqlQuery += " and processorClass.processorName = :processorName";
+		}
+		if (null != processorVersion) {
+			jpqlQuery += " and processorVersion = :processorVersion";
+		}
+		// order by
+		if (null != orderBy && 0 < orderBy.length) {
+			jpqlQuery += " order by ";
+			for (int i = 0; i < orderBy.length; ++i) {
+				if (0 < i)
+					jpqlQuery += ", ";
+				jpqlQuery += "p.";
+				jpqlQuery += orderBy[i];
+			}
+		}
+		
+		Query query = em.createQuery(jpqlQuery);
+		query.setParameter("missionCode", mission);
+		if (null != processorName) {
+			query.setParameter("processorName", processorName);
+		}
+		if (null != processorVersion) {
+			query.setParameter("processorVersion", processorVersion);
+		}
 
-		logger.log(ProcessorMgrMessage.PROCESSORS_COUNTED, result, missionCode, processorName, processorVersion);
-
-		return result.toString();
+		// length of record list
+		if (recordFrom != null && recordFrom >= 0) {
+			query.setFirstResult(recordFrom.intValue());
+		}
+		if (recordTo != null && recordTo >= 0) {
+			query.setMaxResults(recordTo.intValue() - recordFrom.intValue());
+		}
+		return query;
 	}
 
 }

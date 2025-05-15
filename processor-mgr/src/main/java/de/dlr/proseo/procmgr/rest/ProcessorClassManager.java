@@ -77,7 +77,8 @@ public class ProcessorClassManager {
 	 * @throws NoResultException if no processor classes matching the given search criteria could be found
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public List<RestProcessorClass> getProcessorClasses(String mission, String processorName, Integer recordFrom, Integer recordTo)
+	public List<RestProcessorClass> getProcessorClasses(String mission, String processorName, Integer recordFrom, Integer recordTo, 
+			String[] orderBy)
 			throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getProcessorClasses({}, {})", mission, processorName);
@@ -112,6 +113,8 @@ public class ProcessorClassManager {
 		if (null != processorName) {
 			jpqlQuery += " and processorName = :processorName";
 		}
+
+		jpqlQuery += " order by processorName ASC";
 		Query query = em.createQuery(jpqlQuery);
 		query.setParameter("missionCode", mission);
 		if (null != processorName) {

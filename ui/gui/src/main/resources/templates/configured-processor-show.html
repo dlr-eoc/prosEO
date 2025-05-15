@@ -82,19 +82,19 @@
                 <td class="first-row" th:text="${configuredprocessor?.uuid}"></td>
                 <td class="first-row"><a 
                   th:if="${hasroleprocessorreader}"
-                  th:href="'/processor-show#' + ${configuredprocessor?.processorName}" 
+                  th:href="'/processor-show?processorName=' + ${configuredprocessor?.processorName}" 
                   th:text="${configuredprocessor?.processorName}"></a><span 
                   th:unless="${hasroleprocessorreader}"
                   th:text="${configuredprocessor?.processorName}"></span></td>
                 <td class="first-row"><a 
                   th:if="${hasroleprocessorreader}"
-                  th:href="'/processor-show#' + ${configuredprocessor?.processorName} + '-' + ${configuredprocessor?.processorVersion}" 
+                  th:href="'/processor-show?processorName=' + ${configuredprocessor?.processorName} + '&processorVersion=' + ${configuredprocessor?.processorVersion}" 
                   th:text="${configuredprocessor?.processorVersion}"></a><span 
                   th:unless="${hasroleprocessorreader}"
                   th:text="${configuredprocessor?.processorVersion}"></span></td>
                 <td class="first-row"><a 
                   th:if="${hasroleconfigurationreader}"
-                  th:href="'/configuration-show#' + ${configuredprocessor?.configurationVersion}" 
+                  th:href="'/configuration-show?configurationVersion=' + ${configuredprocessor?.configurationVersion} + '&processorClass=' + ${configuredprocessor?.processorName}"
                   th:text="${configuredprocessor?.configurationVersion}"></a><span 
                   th:unless="${hasroleconfigurationreader}"
                   th:text="${configuredprocessor?.configurationVersion}"></span></td>
@@ -102,6 +102,7 @@
               </div>
             </tbody>
           </table>
+          <div th:replace="fragments/navbar.html :: alternatePageNav"></div>
         </div>
       <div th:insert="fragments/footer.html :: footer"></div>
       </main>
@@ -126,18 +127,72 @@
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
 <script type="text/javascript" th:inline="javascript">
-    function retrieveData(configuredprocessorName) {
+		// Global variables
+		// paging
+		var currentPage = 1; // Current page number
+		var pageSize = 20; // Maximum objects per page
+		
+		var identifier = null;
+		
+		// set paging and sorting parameters
+		function setParams(ele, selup, newPage, newPageSize) {
+		    
+		    var hasChanged = false;
+		
+		    hasChanged |= setPageParams(newPage, newPageSize);
+		    
+		    if (hasChanged) {
+		        setHTMLParams();
+		    }
+		}
+		
+		// set parameters in URI
+		function setHTMLParams() {
+		    // build parameter string
+		    var paramString = "";
+		    paramString = setPageHTMLParams(paramString);
+		    var newHref = location.origin + location.pathname + paramString;
+		    if (newHref != location.href) {
+		        history.pushState({}, null, newHref);
+		    }
+		}
+		
+		// read URI parameters
+		function readHTMLParams() {
+		    readPageHTMLParams();
+		    identifier = getURLParam('cp');
+		}
+		
+		// set selection in filter parameters
+		function setSelected() {
+		}
+		
+		function updateTable(newPage, newPageSize) {
+		    setParams(null, null, newPage, newPageSize);
+		    retrieveData();
+		}
+
+    function retrieveData() {
         if ([[${hasroleprocessorreader}]]) {
             showLoader();
             var tableRows = $("configuredprocessorTable").rows;
             if(tableRows > 1 && tableRows != null) {
                 $("configuredprocessorTable > tbody").empty();
             }
-            var url = "/configuredprocessor/get";      
-
+            var url = "/configuredprocessor/get";  
             var divider = "?";
-            if (configuredprocessorName != null) {
-                url = url + divider + "processorName=" + configuredprocessorName.toString().trim();
+            if (parameterHasValue(identifier)) {
+                url = url + divider + "identifier=" + identifier.toString().trim();
+                divider = "&";
+            }
+            var from = getFromRow();
+            var to = getToRow();     
+            if (parameterHasValue(from)) {
+                url = url + divider + "recordFrom=" + from;
+                divider = "&";
+            }
+            if (parameterHasValue(to)) {
+                url = url + divider + "recordTo=" + to;
                 divider = "&";
             }
             
@@ -146,6 +201,7 @@
                 method: "GET",
                 success: function (res) {
                     $("#configuredprocessorcontent").html(res);
+                    feather.replace();
                     scrollToHash();
                     hideLoader();
                 },
@@ -160,23 +216,37 @@
     };
 </script>
 <script>
-    window.onload = function () {
-     // $('.collapse').collapse();
-     var elem = document.getElementById('sb-configured-processor');
-     $(elem).addClass('active');
-     feather.replace();
-     var processorName = getURLParam('cp');
-     retrieveData(processorName);
-     
-     // correct scroll due to "sticky" elements
-     var handler = function ( ) {
-        var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
-    			      + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
-    	  window.scrollBy(0, h);
-      };
-      window.addEventListener('hashchange', handler);
-     
-    }
+
+		//correct scroll due to "sticky" elements
+		var handler = function ( ) {
+		var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+		        + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+		window.scrollBy(0, h);
+		};
+		window.addEventListener('hashchange', handler);
+		
+		// Read the HTML parameters from URI and retrieve the corresponding data
+		function loadWindow() {
+			activateSidebarElem('sb-configured-processor');
+		  feather.replace();
+		  readHTMLParams();
+		  setSelected();
+		  updateTable(currentPage, pageSize);
+		};
+		
+		window.onload = function () {
+		  loadWindow();
+		  // correct scroll due to "sticky" elements
+		  var handler = function ( ) {
+		      var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+		               + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+		      window.scrollBy(0, h);
+		  };        
+		};
+		// re-load window to read and set all HTML parameters
+		$(window).on('popstate', function (e) {
+		loadWindow();
+		});
 </script>
 
 </html>

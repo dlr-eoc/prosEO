@@ -24,6 +24,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -83,121 +84,70 @@ public class GUIProductArchiveController extends GUIBaseController {
 			@RequestParam(required = false, value = "recordFrom") Long recordFrom,
 			@RequestParam(required = false, value = "recordTo") Long recordTo,
 			@RequestParam(required = false, value = "currentPage") Long currentPage,
-			@RequestParam(required = false, value = "pageSize") Long pageSize, Model model) {
+			@RequestParam(required = false, value = "pageSize") Long pageSizeNotUsed, Model model) {
 
 		logger.trace(">>> getProductArchives({}, {}, {}, {}, {}, model)", id, name, archiveType, recordFrom, recordTo);
 
-		DeferredResult<String> deferredResult = new DeferredResult<>();
-
-		// Count productarchives
-		final Long count;
-		if (id != null && id > 0) {
-			count = -1l;
+		Long from = null;
+		Long to = null;
+		if (recordFrom != null && recordFrom >= 0) {
+			from = recordFrom;
 		} else {
-			count = countProductArchives(name, archiveType);
+			from = (long) 0;
 		}
+		Long count = countProductArchives(name, archiveType);
+		if (recordTo != null && from != null && recordTo > from) {
+			to = recordTo;
+		} else if (from != null) {
+			to = count;
+		}
+		Long pageSize = to - from;
+		long deltaPage = (count % pageSize) == 0 ? 0 : 1;
+		Long pages = (count / pageSize) + deltaPage;
+		Long page = (from / pageSize) + 1;
 
-		makeGetRequest(id, name, archiveType, recordFrom, recordTo).subscribe(
+		ResponseSpec responseSpec = makeGetRequest(id, name, archiveType, recordFrom, recordTo);
+		DeferredResult<String> deferredResult = new DeferredResult<>();
+		List<Object> productArchives = new ArrayList<>();
 
-				// In case of success, handle HTTP response
-				clientResponse -> {
+		// Subscribe to the response
+		responseSpec.toEntityList(Object.class)
+			// Handle errors
+			.doOnError(e -> {
+				model.addAttribute("errormsg", e.getMessage());
+				deferredResult.setResult("productarchive-show :: #errormsg");
+			})
+			// Handle successful response
+			.subscribe(entityList -> {
 
-					logger.trace("Now in Consumer::accept({})", clientResponse);
+				logger.trace("Now in Consumer::accept({})", entityList);
 
-					if (clientResponse.statusCode().is2xxSuccessful()) {
+				if (entityList.getStatusCode().is2xxSuccessful()) {
+					// Process the response body and add the configurations to the model
+					productArchives.addAll(entityList.getBody());
+					model.addAttribute("productarchives", productArchives);
 
-						if (id != null && id > 0) {
+					modelAddAttributes(model, count, pageSize, pages, page);
+					
+					deferredResult.setResult("productarchive-show :: #productarchivecontent");
+				} else {
+					ClientResponse errorResponse = ClientResponse.create(entityList.getStatusCode())
+						.headers(headers -> headers.addAll(entityList.getHeaders()))
+						.build();
+					handleHTTPError(errorResponse, model);
 
-							// If an ID was provided, only one productarchive is retrieved
-
-							clientResponse.bodyToMono(HashMap.class).subscribe(productarchive -> {
-
-								List<Object> productarchives = new ArrayList<>();
-								productarchives.add(productarchive);
-
-								model.addAttribute("productarchives", productarchives);
-								model.addAttribute("numberOfPages", 1);
-								model.addAttribute("currentPage", 1);
-								model.addAttribute("count", 1);
-
-								// Helper list for the buttons with page numbers
-								List<Long> showPages = new ArrayList<>();
-								showPages.add(1l);
-								model.addAttribute("showPages", showPages);
-
-								if (logger.isTraceEnabled())
-									logger.trace(model.toString() + "MODEL TO STRING");
-								if (logger.isTraceEnabled())
-									logger.trace(">>>>MONO" + productarchives.toString());
-
-								deferredResult.setResult("productarchive-show :: #productarchivecontent");
-								logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-							});
-
-						} else {
-
-							// If no ID was provided, several productarchives may be retrieved
-
-							clientResponse.bodyToMono(List.class).subscribe(productarchives -> {
-
-								// Determine number of pages
-								Long numberOfPages = count % pageSize == 0 ? count / pageSize : count / pageSize + 1;
-
-								// Determine which page buttons to show (maximum of nine buttons)
-								List<Long> showPages = new ArrayList<>();
-								Long start = Math.max(currentPage - 4, 1);
-								Long end = Math.min(currentPage + 4, numberOfPages);
-								if (currentPage < 5) {
-									end = Math.min(end - currentPage + 5, numberOfPages);
-								}
-								if (numberOfPages - currentPage < 5) {
-									start = Math.max(start - 4 + numberOfPages - currentPage, 1);
-								}
-								for (Long i = start; i <= end; i++) {
-									showPages.add(i);
-								}
-
-								// Fill model with attributes to return
-								model.addAttribute("productarchives", productarchives);
-								model.addAttribute("numberOfPages", numberOfPages);
-								model.addAttribute("currentPage", currentPage);
-								model.addAttribute("showPages", showPages);
-								model.addAttribute("count", count);
-
-								if (logger.isTraceEnabled())
-									logger.trace(model.toString() + "MODEL TO STRING");
-								if (logger.isTraceEnabled())
-									logger.trace(">>>>MONO" + productarchives.toString());
-								deferredResult.setResult("productarchive-show :: #productarchivecontent");
-
-								logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-							});
-						}
-
-					} else {
-						// Handle and display HTTP error
-						handleHTTPError(clientResponse, model);
-						deferredResult.setResult("productarchive-show :: #errormsg");
-					}
-
-					logger.trace(">>>>MODEL" + model.toString());
-
-				},
-
-				// In case of errors, display an error message
-				error -> {
-					model.addAttribute("errormsg", error.getMessage());
 					deferredResult.setResult("productarchive-show :: #errormsg");
 				}
+			}, e -> {
+				model.addAttribute("errormsg", e.getMessage());
+				deferredResult.setResult("productarchive-show :: #errormsg");
+			});
 
-		);
-
-		logger.trace(model.toString() + "MODEL TO STRING");
-		logger.trace(">>>>MODEL" + model.toString());
-		logger.trace("DEREFFERED STRING: {}", deferredResult);
-
+		// Return the deferred result
 		return deferredResult;
 	}
+
+			
 
 	/**
 	 * Retrieve the number of product archives matching a given name, archive type.
@@ -278,7 +228,7 @@ public class GUIProductArchiveController extends GUIBaseController {
 	 * @param recordTo          the last record to retrieve
 	 * @return a Mono containing the HTTP response
 	 */
-	private Mono<ClientResponse> makeGetRequest(Long id, String name, String archiveType,
+	private ResponseSpec makeGetRequest(Long id, String name, String archiveType,
 			Long recordFrom, Long recordTo) {
 
 		// Provide authentication
@@ -341,7 +291,7 @@ public class GUIProductArchiveController extends GUIBaseController {
 			.uri(uri)
 			.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 			.accept(MediaType.APPLICATION_JSON)
-			.exchange();
+			.retrieve();
 
 	}
 }

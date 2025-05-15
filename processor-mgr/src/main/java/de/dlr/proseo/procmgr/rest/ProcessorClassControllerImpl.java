@@ -53,12 +53,12 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 */
 	@Override
 	public ResponseEntity<List<RestProcessorClass>> getProcessorClasses(String mission, String processorName, Integer recordFrom,
-			Integer recordTo) {
+			Integer recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getProcessorClass({}, {})", mission, processorName);
 
 		try {
-			return new ResponseEntity<>(processorClassManager.getProcessorClasses(mission, processorName, recordFrom, recordTo),
+			return new ResponseEntity<>(processorClassManager.getProcessorClasses(mission, processorName, recordFrom, recordTo, orderBy),
 					HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);

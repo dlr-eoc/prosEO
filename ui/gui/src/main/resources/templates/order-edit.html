@@ -2377,8 +2377,7 @@ function confirm(event) {
 <script>
     window.onload = function () {
         // $('.collapse').collapse();
-        var elem = document.getElementById('sb-order');
-        $(elem).addClass('active');
+        activateSidebarElem('sb-order');
         feather.replace();
         var myid = getURLParam('id');
         if (myid != null) {

@@ -55,13 +55,13 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	 */
 	@Override
 	public ResponseEntity<List<RestConfiguration>> getConfigurations(String mission, String processorName,
-			String configurationVersion, Integer recordFrom, Integer recordTo) {
+			String configurationVersion, Integer recordFrom, Integer recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getConfigurations({}, {}, {})", mission, processorName, configurationVersion);
 
 		try {
 			return new ResponseEntity<>(
-					configurationManager.getConfigurations(mission, processorName, configurationVersion, recordFrom, recordTo),
+					configurationManager.getConfigurations(mission, processorName, configurationVersion, recordFrom, recordTo, orderBy),
 					HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);

@@ -1153,4 +1153,31 @@ public class GUIBaseController {
 		}
 	}
 
+	protected List<Long> calcShowPages(Long page, Long pages) {
+		List<Long> showPages = new ArrayList<>();
+		Long start = Math.max(page - 4, 1);
+		Long end = Math.min(page + 4, pages);
+		if (page < 5) {
+			end = Math.min(end + (5 - page), pages);
+		}
+		if (pages - page < 5) {
+			start = Math.max(start - (4 - (pages - page)), 1);
+		}
+		for (Long i = start; i <= end; i++) {
+			showPages.add(i);
+		}
+		return showPages;
+	}
+	
+	protected void modelAddAttributes(Model model, Long count, Long pageSize, Long pages, Long page) {
+		model.addAttribute("count", count);
+		model.addAttribute("pageSize", pageSize);
+		model.addAttribute("pageCount", pages);
+		model.addAttribute("page", page);
+		model.addAttribute("numberOfPages", pages);
+		model.addAttribute("currentPage", page);
+		
+		List<Long> showPages = calcShowPages(page, pages);
+		model.addAttribute("showPages", showPages);
+	}
 }

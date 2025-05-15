@@ -147,15 +147,15 @@ public class ProductControllerImpl implements ProductController {
 	 */
 	@Override
 	public ResponseEntity<?> countProducts(String mission, String[] productClass, String mode, String fileClass, String quality,
-			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, Long jobStepId,
+			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, Long jobStepId, Long id,
 			HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> countProducts({}, {}, {}, {}, {}, {}, {}, {}, {})", mission, productClass, mode, fileClass, quality,
-					startTimeFrom, startTimeTo, genTimeFrom, genTimeTo);
+			logger.trace(">>> countProducts({}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, productClass, mode, fileClass, quality,
+					startTimeFrom, startTimeTo, genTimeFrom, genTimeTo, id);
 
 		try {
 			return new ResponseEntity<>(productManager.countProducts(mission, productClass, mode, fileClass, quality, startTimeFrom,
-					startTimeTo, genTimeFrom, genTimeTo, jobStepId), HttpStatus.OK);
+					startTimeTo, genTimeFrom, genTimeTo, jobStepId, id), HttpStatus.OK);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}

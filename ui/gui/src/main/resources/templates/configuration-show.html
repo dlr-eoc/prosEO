@@ -85,7 +85,7 @@
                 <td th:id="${configuration?.id}" th:rowspan="2" class="first-row" th:text="${configuration?.id}"></td>
                 <td class="first-row"> <a 
                   th:if="${hasroleprocessorreader}"
-                  th:href="'/processor-class-show?pc=' + ${configuration?.processorName}" 
+                  th:href="'/processor-class-show?processorclassName=' + ${configuration?.processorName}" 
                   th:text="${configuration?.processorName}"></a><span 
                   th:unless="${hasroleprocessorreader}"
                   th:text="${configuration?.processorName}"></span></td>
@@ -149,6 +149,7 @@
               </div>
             </tbody>
           </table>
+          <div th:replace="fragments/navbar.html :: alternatePageNav"></div>
         </div>
       <div th:insert="fragments/footer.html :: footer"></div>
       </main>
@@ -173,6 +174,58 @@
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
 <script type="text/javascript" th:inline="javascript">
+		// Global variables
+		// paging
+		var currentPage = 1; // Current page number
+		var pageSize = 5; // Maximum objects per page
+		
+
+	  var configurationVersion = null;
+	  var processorClass = null;
+		
+		// set paging and sorting parameters
+		function setParams(ele, selup, newPage, newPageSize) {
+		    var newConfigurationVersion = null;
+		    var newProcessorClass = null;
+		    
+		    var hasChanged = false;
+		
+		    hasChanged |= setPageParams(newPage, newPageSize);
+		    
+		    if (hasChanged) {
+		        setHTMLParams();
+		    }
+		}
+		
+		// set parameters in URI
+		function setHTMLParams() {
+		    // build parameter string
+		    var paramString = "";
+	      paramString = addURLParamValuePrim('configurationVersion', configurationVersion, paramString);
+	      paramString = addURLParamValuePrim('processorClass', processorClass, paramString);
+		    paramString = setPageHTMLParams(paramString);
+		    var newHref = location.origin + location.pathname + paramString;
+		    if (newHref != location.href) {
+		        history.pushState({}, null, newHref);
+		    }
+		}
+		
+		// read URI parameters
+		function readHTMLParams() {
+		    readPageHTMLParams();
+		    configurationVersion = getURLParam('configurationVersion');
+		    processorClass = getURLParam('processorClass');
+		}
+		
+		// set selection in filter parameters
+		function setSelected() {
+		}
+		
+		function updateTable(newPage, newPageSize) {
+		    setParams(null, null, newPage, newPageSize);
+		    retrieveData();
+		}
+
     function retrieveData() {
         if ([[${hasroleprocessorreader}]]) {
             showLoader();
@@ -180,13 +233,33 @@
             if(tableRows > 1 && tableRows != null) {
                 $("configurationTable > tbody").empty();
             }
-            var url = "/configurations/get";      
+            var url = "/configurations/get";         
+            var divider = "?";   
+            if (parameterHasValue(configurationVersion)) {
+                url = url + divider + "configurationVersion=" + configurationVersion;
+                divider = "&";
+            }   
+            if (parameterHasValue(processorClass)) {
+                url = url + divider + "processorClass=" + processorClass;
+                divider = "&";
+            }
+            var from = getFromRow();
+            var to = getToRow();     
+            if (parameterHasValue(from)) {
+                url = url + divider + "recordFrom=" + from;
+                divider = "&";
+            }
+            if (parameterHasValue(to)) {
+                url = url + divider + "recordTo=" + to;
+                divider = "&";
+            }
             
             $.ajax({
                 url: url,
                 method: "GET",
                 success: function (res) {
                     $("#configurationcontent").html(res);
+                    feather.replace();
                     scrollToHash();
                     hideLoader();
                 },
@@ -201,22 +274,36 @@
     };
 </script>
 <script>
-    window.onload = function () {
-     // $('.collapse').collapse();
-     var elem = document.getElementById('sb-configuration');
-     $(elem).addClass('active');
+// correct scroll due to "sticky" elements
+var handler = function ( ) {
+   var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+           + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+   window.scrollBy(0, h);
+ };
+ window.addEventListener('hashchange', handler);
+
+ // Read the HTML parameters from URI and retrieve the corresponding data
+ function loadWindow() {
+     activateSidebarElem('sb-configuration');
      feather.replace();
-     retrieveData();
-     
+     readHTMLParams();
+     setSelected();
+     updateTable(currentPage, pageSize);
+ };
+ 
+ window.onload = function () {
+     loadWindow();
      // correct scroll due to "sticky" elements
      var handler = function ( ) {
-        var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
-    			      + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
-    	  window.scrollBy(0, h);
-      };
-      window.addEventListener('hashchange', handler);
-     
-    }
+         var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+                  + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+         window.scrollBy(0, h);
+     };        
+ };
+ // re-load window to read and set all HTML parameters
+ $(window).on('popstate', function (e) {
+   loadWindow();
+ });
 </script>
 
 </html>

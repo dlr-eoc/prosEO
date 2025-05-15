@@ -88,7 +88,7 @@ public class ConfigurationManager {
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public List<RestConfiguration> getConfigurations(String mission, String processorName, String configurationVersion,
-			Integer recordFrom, Integer recordTo) throws NoResultException, SecurityException {
+			Integer recordFrom, Integer recordTo, String[] orderBy) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getConfigurations({}, {}, {})", mission, processorName, configurationVersion);
 
@@ -125,8 +125,17 @@ public class ConfigurationManager {
 		if (null != configurationVersion) {
 			jpqlQuery += " and configurationVersion = :configurationVersion";
 		}
-		jpqlQuery += " ORDER BY c.id";
-
+		// order by
+		if (null != orderBy && 0 < orderBy.length) {
+			jpqlQuery += " order by ";
+			for (int i = 0; i < orderBy.length; ++i) {
+				if (0 < i)
+					jpqlQuery += ", ";
+				jpqlQuery += "c.";
+				jpqlQuery += orderBy[i];
+			}
+		}
+		
 		Query query = em.createQuery(jpqlQuery);
 		query.setParameter("missionCode", mission);
 		if (null != processorName) {

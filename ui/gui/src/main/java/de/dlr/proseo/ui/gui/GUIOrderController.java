@@ -225,30 +225,8 @@ public class GUIOrderController extends GUIBaseController {
 					model.addAttribute("orders", orders);
 					model.addAttribute("selcol", key);
 					model.addAttribute("selorder", (isUp ? "select-up" : "select-down"));
-					model.addAttribute("count", count);
-					model.addAttribute("pageSize", pageSize);
-					model.addAttribute("pageCount", pages);
-					model.addAttribute("numberOfPages", pages);
-					model.addAttribute("page", page);
-					model.addAttribute("currentPage", page);
-
-					List<Long> showPages = new ArrayList<>();
-					Long start = Math.max(page - 4, 1);
-					Long end = Math.min(page + 4, pages);
-
-					if (page < 5) {
-						end = Math.min(end + (5 - page), pages);
-					}
-
-					if (pages - page < 5) {
-						start = Math.max(start - (4 - (pages - page)), 1);
-					}
-
-					for (Long i = start; i <= end; i++) {
-						showPages.add(i);
-					}
-
-					model.addAttribute("showPages", showPages);
+					
+					modelAddAttributes(model, count, pageSize, pages, page);
 
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + orders.toString());
@@ -908,28 +886,10 @@ public class GUIOrderController extends GUIBaseController {
 					 * auth); h.put("graph", result); } }
 					 */
 					model.addAttribute("jobs", jobs);
-					model.addAttribute("count", count);
-					model.addAttribute("pageSize", pageSize);
-					model.addAttribute("pageCount", pages);
-					model.addAttribute("numberOfPages", pages);
-					model.addAttribute("page", page);
-					model.addAttribute("currentPage", page);
 					model.addAttribute("orderState", orderState);
 
-					List<Long> showPages = new ArrayList<>();
-					Long start = Math.max(page - 4, 1);
-					Long end = Math.min(page + 4, pages);
-					if (page < 5) {
-						end = Math.min(end + (5 - page), pages);
-					}
-					if (pages - page < 5) {
-						start = Math.max(start - (4 - (pages - page)), 1);
-					}
-					for (Long i = start; i <= end; i++) {
-						showPages.add(i);
-					}
-
-					model.addAttribute("showPages", showPages);
+					modelAddAttributes(model, count, pageSize, pages, page);
+					
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + jobs.toString());
 

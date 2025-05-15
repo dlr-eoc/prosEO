@@ -117,19 +117,7 @@ public class GUIWorkflowController extends GUIBaseController {
 								Long numberOfPages = count % pageSize == 0 ? count / pageSize : count / pageSize + 1;
 
 								// Determine which page buttons to show (maximum of nine buttons)
-								List<Long> showPages = new ArrayList<>();
-								Long start = Math.max(currentPage - 4, 1);
-								Long end = Math.min(currentPage + 4, numberOfPages);
-								if (currentPage < 5) {
-									end = Math.min(end - currentPage + 5, numberOfPages);
-								}
-								if (numberOfPages - currentPage < 5) {
-									start = Math.max(start - 4 + numberOfPages - currentPage, 1);
-								}
-								for (Long i = start; i <= end; i++) {
-									showPages.add(i);
-								}
-
+								List<Long> showPages = calcShowPages(currentPage, numberOfPages);
 								// Fill model with attributes to return
 								model.addAttribute("workflows", clientResponse.getBody());
 								model.addAttribute("numberOfPages", numberOfPages);
