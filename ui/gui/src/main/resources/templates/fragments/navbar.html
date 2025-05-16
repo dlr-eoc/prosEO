@@ -76,7 +76,7 @@
 </nav>
 
 <div th:fragment="alternatePageNav">
-	<nav th:unless="${numberOfPages eq 1}" th:fragment="alternatePageNav"
+	<nav th:unless="${numberOfPages le 1}" th:fragment="alternatePageNav"
 		id="alternatePageNav" aria-label="Page navigation"
     th:data-page="${page}">
 

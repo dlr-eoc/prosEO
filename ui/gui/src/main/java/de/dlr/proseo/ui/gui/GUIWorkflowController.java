@@ -23,6 +23,7 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -176,8 +177,19 @@ public class GUIWorkflowController extends GUIBaseController {
 
 					// In case of errors, display an error message
 					error -> {
-						model.addAttribute("errormsg", error.getMessage());
-						deferredResult.setResult("workflow-show :: #errormsg");
+						if (error instanceof WebClientResponseException.NotFound) {
+							model.addAttribute("workflows", new ArrayList());
+
+							modelAddAttributes(model, count, pageSize, 1L, 1L);
+
+							if (logger.isTraceEnabled())
+								logger.trace(model.toString() + "MODEL TO STRING");
+
+							deferredResult.setResult("workflow-show :: #workflowcontent");
+						} else {
+							model.addAttribute("errormsg", error.getMessage());
+							deferredResult.setResult("workflow-show :: #errormsg");
+						}
 					}
 
 			);

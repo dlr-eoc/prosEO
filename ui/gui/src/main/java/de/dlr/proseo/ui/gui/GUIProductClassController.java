@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,6 +27,7 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -117,13 +119,23 @@ public class GUIProductClassController extends GUIBaseController {
 		responseSpec.toEntityList(Object.class)
 			// Handle errors
 			.doOnError(e -> {
-				model.addAttribute("errormsg", e.getMessage());
-				deferredResult.setResult("productclass-show :: #errormsg");
+				if (e instanceof WebClientResponseException.NotFound) {
+					model.addAttribute("productclasses", productclasses);
+
+					modelAddAttributes(model, count, pageSize, pages, page);
+					
+					logger.trace(model.toString() + "MODEL TO STRING");
+					deferredResult.setResult("productclass-show :: #productclasscontent");
+				} else {
+					model.addAttribute("errormsg", e.getMessage());
+					deferredResult.setResult("productclass-show :: #errormsg");
+				}
 			})// Handle successful response
 			.subscribe(entityList -> {
 				logger.trace("Now in Consumer::accept({})", entityList);
 
-				if (entityList.getStatusCode().is2xxSuccessful()) {
+				if (entityList.getStatusCode().is2xxSuccessful() 
+						|| entityList.getStatusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
 					productclasses.addAll(entityList.getBody());
 
 					MapComparator oc = new MapComparator("productType", true);

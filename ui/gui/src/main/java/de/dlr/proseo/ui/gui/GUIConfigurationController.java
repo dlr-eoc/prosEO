@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,6 +23,7 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -104,14 +106,26 @@ public class GUIConfigurationController extends GUIBaseController {
 		responseSpec.toEntityList(Object.class)
 			// Handle errors
 			.doOnError(e -> {
-				model.addAttribute("errormsg", e.getMessage());
-				deferredResult.setResult("configuration-show :: #errormsg");
+				if (e instanceof WebClientResponseException.NotFound) {
+					model.addAttribute("configurations", configurations);
+
+					modelAddAttributes(model, count, pageSize, pages, page);
+
+					if (logger.isTraceEnabled())
+						logger.trace(model.toString() + "MODEL TO STRING");
+
+					deferredResult.setResult("configuration-show :: #configurationcontent");
+				} else {
+					model.addAttribute("errormsg", e.getMessage());
+					deferredResult.setResult("configuration-show :: #errormsg");
+				}
 			})
 			// Handle successful response
 			.subscribe(entityList -> {
 				logger.trace("Now in Consumer::accept({})", entityList);
 
-				if (entityList.getStatusCode().is2xxSuccessful()) {
+				if (entityList.getStatusCode().is2xxSuccessful() 
+						|| entityList.getStatusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
 					// Process the response body and add the configurations to the model
 					configurations.addAll(entityList.getBody());
 					model.addAttribute("configurations", configurations);
@@ -130,7 +144,8 @@ public class GUIConfigurationController extends GUIBaseController {
 			}, e -> {
 				model.addAttribute("errormsg", e.getMessage());
 				deferredResult.setResult("configuration-show :: #errormsg");
-			});
+			})
+			;
 
 		// Return the deferred result
 		return deferredResult;
