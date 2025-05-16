@@ -25,7 +25,7 @@
 					data-feather="chevron-right"></span> <span th:text="#{roles}">roles</span></a>
 				<div class="dropdown-menu dropdown-menu-right menu">
 					<span th:each="role : ${userroles}" class="dropdown-item enabled"><span
-						th:text="${role}"></span></span>
+						th:text="${role}" th:attr="title=#{${role}}"></span></span>
 				</div>
 			</div></li>
 		<li class="nav-item dropdown text-nowrap btn menu"><a
