@@ -344,7 +344,7 @@ public class ProductArchiveManager {
 		List<Predicate> predicates = new ArrayList<>();
 
 		if (name != null)
-			predicates.add(cb.equal(rootArchive.get("name"), name));
+			predicates.add(cb.like(rootArchive.get("name"), name));
 
 		try {
 			if (archiveType != null)

@@ -224,11 +224,13 @@ public class GUIWorkflowController extends GUIBaseController {
 			divider = "&";
 		}
 		if (name != null && !name.isEmpty()) {
-			uriString += divider + "name=" + name;
+			String nameParam = name.replaceAll("[*]", "%");
+			uriString += divider + "name=" + nameParam;
 			divider = "&";
 		}
 		if (workflowVersion != null && !workflowVersion.isEmpty()) {
-			uriString += divider + "workflowVersion=" + workflowVersion;
+			String versionParam = workflowVersion.replaceAll("[*]", "%");
+			uriString += divider + "workflowVersion=" + versionParam;
 			divider = "&";
 		}
 		if (inputProductClass != null && !inputProductClass.isEmpty()) {
@@ -309,11 +311,13 @@ public class GUIWorkflowController extends GUIBaseController {
 				divider = "&";
 			}
 			if (name != null && !name.isEmpty()) {
-				uriString += divider + "name=" + name;
+				String nameParam = name.replaceAll("[*]", "%");
+				uriString += divider + "name=" + nameParam;
 				divider = "&";
 			}
 			if (workflowVersion != null && !workflowVersion.isEmpty()) {
-				uriString += divider + "workflowVersion=" + workflowVersion;
+				String versionParam = workflowVersion.replaceAll("[*]", "%");
+				uriString += divider + "workflowVersion=" + versionParam;
 				divider = "&";
 			}
 			if (inputProductClass != null && !inputProductClass.isEmpty()) {

@@ -179,7 +179,8 @@ public class GUIProductArchiveController extends GUIBaseController {
 		String uriString = "/archives/count";
 
 		if (name != null && !name.isEmpty()) {
-			uriString += divider + "name=" + name;
+			String nameParam = name.replaceAll("[*]", "%");
+			uriString += divider + "name=" + nameParam;
 			divider = "&";
 		}
 		if (archiveType != null && !archiveType.isEmpty()) {
@@ -255,9 +256,10 @@ public class GUIProductArchiveController extends GUIBaseController {
 		} else {
 			// Else build a request URI with all other parameters
 			String divider = "?";
-			
+
 			if (name != null && !name.isEmpty()) {
-				uriString += divider + "name=" + name;
+				String nameParam = name.replaceAll("[*]", "%");
+				uriString += divider + "name=" + nameParam;
 				divider = "&";
 			}
 			if (archiveType != null && !archiveType.isEmpty()) {

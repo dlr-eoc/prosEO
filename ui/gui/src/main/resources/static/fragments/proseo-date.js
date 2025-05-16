@@ -130,11 +130,11 @@ class ProseoDate {
   norm(delta) {
     if (this.isValid()) {
       if (this.type == 'DAY') {
-        this.date.setDate(this.date.getDate() - delta);
+        this.date.setUTCDate(this.date.getUTCDate() - delta);
       } else if (this.type == 'MONTH') {
-        this.date.setMonth(this.date.getMonth() - delta);
+        this.date.setUTCMonth(this.date.getUTCMonth() - delta);
       } else if (this.type == 'YEAR') {
-         this.date.setFullYear(this.date.getFullYear() - delta);
+         this.date.setUTCFullYear(this.date.getUTCFullYear() - delta);
       }
     }
     return this.toTypeString();
