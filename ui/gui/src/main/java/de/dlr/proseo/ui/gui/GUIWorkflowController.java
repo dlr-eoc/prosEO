@@ -95,10 +95,27 @@ public class GUIWorkflowController extends GUIBaseController {
 		// Count workflows
 		final Long count;
 		if (id != null && id > 0) {
-			count = -1l;
+			count = 1l;
 		} else {
 			count = countWorkflows(name, workflowVersion, inputProductClass);
 		}
+
+		Long from = null;
+		Long to = null;
+		if (recordFrom != null && recordFrom >= 0) {
+			from = recordFrom;
+		} else {
+			from = (long) 0;
+		}
+		if (recordTo != null && from != null && recordTo > from) {
+			to = recordTo;
+		} else if (from != null) {
+			to = count;
+		}
+		Long aPageSize = to - from;
+		long deltaPage = (count % pageSize) == 0 ? 0 : 1;
+		Long pages = (count / pageSize) + deltaPage;
+		Long page = (from / pageSize) + 1;
 
 		makeGetRequest(id, name, workflowVersion, inputProductClass, recordFrom, recordTo).toEntityList(Object.class)
 			.subscribe(
@@ -113,18 +130,10 @@ public class GUIWorkflowController extends GUIBaseController {
 							if (clientResponse.getBody() instanceof Collection) {
 								
 								// If no ID was provided, several workflows may be retrieved
-
-								// Determine number of pages
-								Long numberOfPages = count % pageSize == 0 ? count / pageSize : count / pageSize + 1;
-
-								// Determine which page buttons to show (maximum of nine buttons)
-								List<Long> showPages = calcShowPages(currentPage, numberOfPages);
 								// Fill model with attributes to return
 								model.addAttribute("workflows", clientResponse.getBody());
-								model.addAttribute("numberOfPages", numberOfPages);
-								model.addAttribute("currentPage", currentPage);
-								model.addAttribute("showPages", showPages);
-								model.addAttribute("count", count);
+
+								modelAddAttributes(model, count, aPageSize, pages, page);
 
 								if (logger.isTraceEnabled())
 									logger.trace(model.toString() + "MODEL TO STRING");
@@ -142,14 +151,7 @@ public class GUIWorkflowController extends GUIBaseController {
 								workflows.add(clientResponse.getBody());
 
 								model.addAttribute("workflows", workflows);
-								model.addAttribute("numberOfPages", 1);
-								model.addAttribute("currentPage", 1);
-
-								// Helper list for the buttons with page numbers
-								List<Long> showPages = new ArrayList<>();
-								showPages.add(1l);
-								model.addAttribute("showPages", showPages);
-								model.addAttribute("count", 1);
+								modelAddAttributes(model, count, aPageSize, pages, page);
 
 								if (logger.isTraceEnabled())
 									logger.trace(model.toString() + "MODEL TO STRING");
@@ -225,7 +227,7 @@ public class GUIWorkflowController extends GUIBaseController {
 		}
 		if (name != null && !name.isEmpty()) {
 			String nameParam = name.replaceAll("[*]", "%");
-			uriString += divider + "name=" + nameParam;
+			uriString += divider + "name=" + nameParam.toUpperCase();
 			divider = "&";
 		}
 		if (workflowVersion != null && !workflowVersion.isEmpty()) {
@@ -312,7 +314,7 @@ public class GUIWorkflowController extends GUIBaseController {
 			}
 			if (name != null && !name.isEmpty()) {
 				String nameParam = name.replaceAll("[*]", "%");
-				uriString += divider + "name=" + nameParam;
+				uriString += divider + "name=" + nameParam.toUpperCase();
 				divider = "&";
 			}
 			if (workflowVersion != null && !workflowVersion.isEmpty()) {

@@ -97,7 +97,7 @@ public class GUIProductArchiveController extends GUIBaseController {
 		} else {
 			from = (long) 0;
 		}
-		Long count = countProductArchives(name, archiveType);
+		Long count = countProductArchives(null, name, archiveType);
 		if (recordTo != null && from != null && recordTo > from) {
 			to = recordTo;
 		} else if (from != null) {
@@ -108,7 +108,7 @@ public class GUIProductArchiveController extends GUIBaseController {
 		Long pages = (count / pageSize) + deltaPage;
 		Long page = (from / pageSize) + 1;
 
-		ResponseSpec responseSpec = makeGetRequest(id, name, archiveType, recordFrom, recordTo);
+		ResponseSpec responseSpec = makeGetRequest(id, name, archiveType, from, to);
 		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> productArchives = new ArrayList<>();
 
@@ -168,7 +168,7 @@ public class GUIProductArchiveController extends GUIBaseController {
 	 * @param archiveType   		  the archive type
 	 * @return the number of product archives with the respective name, archive type
 	 */
-	private Long countProductArchives(String name, String archiveType) {
+	private Long countProductArchives(String code, String name, String archiveType) {
 		
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -178,9 +178,13 @@ public class GUIProductArchiveController extends GUIBaseController {
 		String divider = "?";
 		String uriString = "/archives/count";
 
+		if (code != null && !code.isEmpty()) {
+			uriString += divider + "code=" + code;
+			divider = "&";
+		}
 		if (name != null && !name.isEmpty()) {
 			String nameParam = name.replaceAll("[*]", "%");
-			uriString += divider + "name=" + nameParam;
+			uriString += divider + "name=" + nameParam.toUpperCase();
 			divider = "&";
 		}
 		if (archiveType != null && !archiveType.isEmpty()) {
@@ -259,7 +263,7 @@ public class GUIProductArchiveController extends GUIBaseController {
 
 			if (name != null && !name.isEmpty()) {
 				String nameParam = name.replaceAll("[*]", "%");
-				uriString += divider + "name=" + nameParam;
+				uriString += divider + "name=" + nameParam.toUpperCase();
 				divider = "&";
 			}
 			if (archiveType != null && !archiveType.isEmpty()) {

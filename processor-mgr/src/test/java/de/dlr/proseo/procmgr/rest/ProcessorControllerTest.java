@@ -221,7 +221,7 @@ public class ProcessorControllerTest {
 		// from the
 		// database via the processor controller
 		ResponseEntity<List<RestProcessor>> retrievedProcessors = pci.getProcessors(testMissionData[0],
-				null, null, null, null);
+				null, null, null, null, null);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedProcessors.getStatusCode());
 		assertTrue("Wrong number of processors retrieved.",
 				expectedProcessors.size() == retrievedProcessors.getBody().size());

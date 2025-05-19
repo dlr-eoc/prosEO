@@ -177,13 +177,13 @@ public class ProductArchiveControllerImpl implements ArchiveController {
 	 * @param archiveType      the product archive type
 	 * @return the number of matching archives as a String (may be zero) or HTTP status "FORBIDDEN" and an error message */
 	@Override
-	public ResponseEntity<String> countArchives(String name, String archiveType) {
+	public ResponseEntity<String> countArchives(String code, String name, String archiveType) {
 		
 		if (logger.isTraceEnabled())
-			logger.trace(">>> countArchives({}, {})", name, archiveType);
+			logger.trace(">>> countArchives({}, {}, {})", code, name, archiveType);
 
 		try {
-			return new ResponseEntity<>(productArchiveManager.countArchives(name, archiveType), HttpStatus.OK);
+			return new ResponseEntity<>(productArchiveManager.countArchives(code, name, archiveType), HttpStatus.OK);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
