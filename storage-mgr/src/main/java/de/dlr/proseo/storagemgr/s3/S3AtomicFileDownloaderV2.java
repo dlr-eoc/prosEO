@@ -210,7 +210,7 @@ public class S3AtomicFileDownloaderV2 implements AtomicCommand<String> {
 	private void downloadWithTransferManagerV2(String s3Key, String targetPathString) throws IOException {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> downloadWithTransferManagerV1({}, {})", s3Key, targetPathString);
+			logger.trace(">>> downloadWithTransferManagerV2({}, {})", s3Key, targetPathString);
 
 		Path targetPath = Paths.get(targetPathString);
 		
