@@ -5,10 +5,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermissions;
-import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoField;
+import java.util.concurrent.Semaphore;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.ApiMonitorMessage;
 import de.dlr.proseo.logging.messages.StorageMgrMessage;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
@@ -45,6 +46,12 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 	/** The file permission with read-only permissions for all users */
 	private static final String READ_ONLY_FOR_ALL_USERS = "r--r--r--";
+
+	/** Semaphore to limit number of parallel download requests to archive */
+	private static Semaphore downloadSemaphore = null;
+
+	/** Semaphore to limit number of parallel upload requests to archive */
+	private static Semaphore uploadSemaphore = null;
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductfileControllerImpl.class);
@@ -100,7 +107,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 		} catch (IOException e) {
 
 			String msg = logger.log(StorageMgrMessage.PRODUCT_FILE_CANNOT_BE_DOWNLOADED, e.getMessage());
-			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.INTERNAL_SERVER_ERROR);
 
 		} catch (Exception e) {
 
@@ -229,6 +236,18 @@ public class ProductfileControllerImpl implements ProductfileController {
 		if (!cache.containsKey(destCacheFile.getFullPath())) {
 
 			try {
+				
+				// Restrict number of parallel downloads
+				if (null == downloadSemaphore) {
+					downloadSemaphore = new Semaphore(cfg.getMaxDownloadThreads(), true);
+					if (logger.isDebugEnabled())
+						logger.debug("... file download semaphore {} created", downloadSemaphore);
+				}
+				
+				downloadSemaphore.acquire();
+				if (logger.isDebugEnabled())
+					logger.debug("... file download semaphore {} acquired, {} permits remaining",
+							downloadSemaphore, downloadSemaphore.availablePermits());
 
 				// active thread - copies the file to the cache storage and puts it to the cache
 				logger.debug("... active-thread: copies the file to the cache storage and puts it to the cache: {}",
@@ -251,12 +270,20 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 				cache.put(destCacheFile.getFullPath()); // cache file status = READY
 
+			} catch (InterruptedException e) {
+				throw new IOException(logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString()));
+				
 			} catch (Exception e) {
-
 				throw e;
 
 			} finally {
 
+				// Release parallel thread
+				downloadSemaphore.release();
+				if (logger.isDebugEnabled())
+					logger.debug("... file download semaphore {} released, {} permits now available",
+							downloadSemaphore, downloadSemaphore.availablePermits());
+				
 				fileLocker.unlock();
 			}
 
@@ -409,8 +436,33 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		StorageFile cacheFile = storageProvider.getCacheFile(relativeCachePath);
 		StorageFile storageFile = storageProvider.getStorageFile(storage, relativeCachePath);
+		
+		try {
+			// Restrict number of parallel downloads
+			if (null == uploadSemaphore) {
+				uploadSemaphore = new Semaphore(cfg.getMaxDownloadThreads(), true);
+				if (logger.isDebugEnabled())
+					logger.debug("... file upload semaphore {} created", uploadSemaphore);
+			}
+			
+			uploadSemaphore.acquire();
+			if (logger.isDebugEnabled())
+				logger.debug("... file upload semaphore {} acquired, {} permits remaining",
+						uploadSemaphore, uploadSemaphore.availablePermits());
 
-		storage.uploadFile(cacheFile, storageFile);
+			// Upload file
+			storage.uploadFile(cacheFile, storageFile);
+		
+		} catch (InterruptedException e) {
+			throw new IOException(logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString()));
+		} finally {
+			// Release parallel thread
+			uploadSemaphore.release();
+			if (logger.isDebugEnabled())
+				logger.debug("... file upload semaphore {} released, {} permits now available",
+						uploadSemaphore, uploadSemaphore.availablePermits());
+			
+		}
 
 		logger.log(StorageMgrMessage.PRODUCT_FILE_UPLOADED_FROM_CACHE_TO_STORAGE, storageFile.getFullPath());
 
