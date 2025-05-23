@@ -189,14 +189,14 @@
 							<th onclick="selectSort('select-className')" 
                         class="cursorpointer"><span id="select-className" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
                         th:text="#{product-class}">product-class</span></th>
+              <th onclick="selectSort('select-sensingStartTime')" 
+                        class="cursorpointer"><span id="select-sensingStartTime" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{sensingstarttime}">sensingstarttime</span></th>
+              <th><span th:text="#{sensingstoptime}">sensingstoptime</span></th>
 							<th onclick="selectSort('select-generationTime')" 
                         class="cursorpointer"><span id="select-generationTime" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
                         th:text="#{generationtime}">generationtime</span></th>
 							<th><span th:text="#{mode}">mode</span></th>
-							<th onclick="selectSort('select-sensingStartTime')" 
-                        class="cursorpointer"><span id="select-sensingStartTime" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
-                        th:text="#{sensingstarttime}">sensingstarttime</span></th>
-							<th><span th:text="#{sensingstoptime}">sensingstoptime</span></th>
 							<th><span th:text="#{productquality}">productquality</span></th>
 							<th><span th:text="#{fileclass}">fileclass</span></th>
 						</tr>
@@ -222,10 +222,10 @@
 									th:text="${elem?.productClass}"></a><span 
                   th:unless="${hasroleproductclassreader}"
                   th:text="${elem?.productClass}"></span></td>
+                <td th:text="${elem?.sensingStartTime}" class="first-row"></td>
+                <td th:text="${elem?.sensingStopTime}" class="first-row"></td>
 								<td th:text="${elem?.generationTime}" class="first-row"></td>
 								<td th:text="${elem?.mode}" class="first-row"></td>
-								<td th:text="${elem?.sensingStartTime}" class="first-row"></td>
-								<td th:text="${elem?.sensingStopTime}" class="first-row"></td>
 								<td th:text="${elem?.productQuality}" class="first-row"></td>
 								<td th:text="${elem?.fileClass}" class="first-row"></td>
 							</tr>
