@@ -470,6 +470,9 @@ resourceTypes:
         type: integer
         format: int32
         description: last record of filtered and ordered result to return
+      orderBy?:
+        type: string[]
+        description: an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
     responses:
       200:
         body:
@@ -595,6 +598,9 @@ resourceTypes:
         type: integer
         format: int32
         description: last record of filtered and ordered result to return
+      orderBy?:
+        type: string[]
+        description: an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
     responses:
       200:
         body:

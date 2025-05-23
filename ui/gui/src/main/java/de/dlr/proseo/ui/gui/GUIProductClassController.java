@@ -138,9 +138,6 @@ public class GUIProductClassController extends GUIBaseController {
 						|| entityList.getStatusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
 					productclasses.addAll(entityList.getBody());
 
-					MapComparator oc = new MapComparator("productType", true);
-					productclasses.sort(oc);
-
 					sortSelectionRules(productclasses);
 
 					model.addAttribute("productclasses", productclasses);

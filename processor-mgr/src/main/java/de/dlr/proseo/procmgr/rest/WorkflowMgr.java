@@ -88,7 +88,7 @@ public class WorkflowMgr {
 	private static ProseoLogger logger = new ProseoLogger(WorkflowMgr.class);
 
 	private Query createWorkflowsQuery(String missionCode, String workflowName, String workflowVersion, String inputProductClass,
-			String configuredProcessor, Boolean enabled, Boolean count) {
+			String configuredProcessor, Boolean enabled, String[] orderBy, Boolean count) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createWorkflowsQuery({}, {}, {}, {}, {}, {})", missionCode, workflowName, workflowVersion,
 					inputProductClass, configuredProcessor, enabled);
@@ -117,7 +117,17 @@ public class WorkflowMgr {
 			jpqlQuery += " and enabled = :enabled";
 		}
 		if (!count) {
-			jpqlQuery += " ORDER BY w.id";
+			// order by
+			if (null != orderBy && 0 < orderBy.length) {
+				jpqlQuery += " order by ";
+				for (int i = 0; i < orderBy.length; ++i) {
+					if (0 < i)
+						jpqlQuery += ", ";
+					jpqlQuery += "w.";
+					jpqlQuery += orderBy[i];
+				}
+			}
+			
 		}
 
 		Query query = em.createQuery(jpqlQuery);
@@ -169,7 +179,7 @@ public class WorkflowMgr {
 		}
 
 		// build query
-		Query query = createWorkflowsQuery(missionCode, workflowName, workflowVersion, inputProductClass, configuredProcessor, enabled, true);
+		Query query = createWorkflowsQuery(missionCode, workflowName, workflowVersion, inputProductClass, configuredProcessor, enabled, null, true);
 
 		Object resultObject = query.getSingleResult();
 
@@ -1375,12 +1385,13 @@ public class WorkflowMgr {
 	 * @param enabled             whether the workflow is enabled
 	 * @param recordFrom      first record of filtered and ordered result to return
 	 * @param recordTo        last record of filtered and ordered result to return
+	 * @param orderBy		an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
 	 * @return a list of Json objects representing workflows satisfying the search criteria
 	 * @throws NoResultException if no workflows matching the given search criteria could be found
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public List<RestWorkflow> getWorkflows(String missionCode, String workflowName, String workflowVersion,
-			String inputProductClass, String configuredProcessor, Boolean enabled, Integer recordFrom, Integer recordTo)
+			String inputProductClass, String configuredProcessor, Boolean enabled, Integer recordFrom, Integer recordTo, String[] orderBy)
 			throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getWorkflows({}, {}, {}, {}, {}, {})", missionCode, workflowName, workflowVersion, inputProductClass,
@@ -1413,7 +1424,7 @@ public class WorkflowMgr {
 
 		List<RestWorkflow> result = new ArrayList<>();
 		
-		Query query = createWorkflowsQuery(missionCode, workflowName, workflowVersion, inputProductClass, configuredProcessor, enabled, false);
+		Query query = createWorkflowsQuery(missionCode, workflowName, workflowVersion, inputProductClass, configuredProcessor, enabled, orderBy, false);
 
 		query.setFirstResult(recordFrom);
 		query.setMaxResults(recordTo - recordFrom);

@@ -139,10 +139,18 @@
 							<tr>
 								<th><span>&nbsp;</span></th>
 								<th><span th:text="#{id}">id</span></th>
-								<th><span th:text="#{name}">name</span></th>
-								<th><span th:text="#{workflowversion}">workflowversion</span></th>
-								<th><span th:text="#{inputproductclass}">inputproductclass</span></th>
-								<th><span th:text="#{outputproductclass}">outputproductclass</span></th>
+								<th onclick="selectSort('select-name')" 
+                        class="cursorpointer"><span id="select-name" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{name}">name</span></th>
+								<th onclick="selectSort('select-workflowversion')" 
+                        class="cursorpointer"><span id="select-workflowversion" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{workflowversion}">workflowversion</span></th>
+								<th onclick="selectSort('select-inputproductclass')" 
+                        class="cursorpointer"><span id="select-inputproductclass" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{inputproductclass}">inputproductclass</span></th>
+								<th onclick="selectSort('select-outputproductclass')" 
+                        class="cursorpointer"><span id="select-outputproductclass" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{outputproductclass}">outputproductclass</span></th>
 								<th><span th:text="#{description}">description</span></th>
 								<th><span th:text="#{processingmode}">processingmode</span></th>
 							</tr>
@@ -329,6 +337,11 @@
 		var workflowVersion = null;
 		var inputProductClass = null;
 
+	  // sorting
+	  var sortCols = ['select-name', 'select-workflowversion', 'select-inputproductclass', 'select-outputproductclass'];
+	  var sortCol = "name";
+	  var upText = "true";
+
 		function setParams(ele, selup, newPage, newPageSize) {
 	      var newId = null;
 	      var newName = null;
@@ -338,6 +351,7 @@
 		    var hasChanged = false;
 		      
 		    hasChanged |= setPageParams(newPage, newPageSize);
+		    hasChanged |= setSortParams(ele, selup);
         newId = $('#id').val();
         if (isEmpty(newId)) {newId = null};
         newName = $('#name').val();
@@ -375,6 +389,7 @@
 		    paramString = addURLParamValuePrim('workflowVersion', workflowVersion, paramString);
 		    paramString = addURLParamValuePrim('inputProductClass', inputProductClass, paramString);
 		    paramString = setPageHTMLParams(paramString);
+		    paramString = setSortHTMLParams(paramString);
 		    var newHref = location.origin + location.pathname + paramString;
 		    if (newHref != location.href) {
 		        history.pushState({}, null, newHref);
@@ -383,6 +398,7 @@
 
 		function readHTMLParams() {
 		    readPageHTMLParams();
+		    readSortHTMLParams();
 		    id = getURLParam('id');
 	      wname = getURLParam('name');
 	      workflowVersion = getURLParam('workflowVersion');
@@ -400,6 +416,10 @@
 		  setParams(null, null, newPage, newPageSize);
 			updateTablePrim(currentPage);
 		}
+
+		function retrieveDataPrim(notUsed) {
+		    updateTablePrim(currentPage);
+		}
 		
 		// Function to fetch objects from the REST controller
 		function updateTablePrim(newPage) {
@@ -411,7 +431,9 @@
 			var url = "/workflow/get?recordFrom=" + recordFrom 
 					+ "&recordTo=" + recordTo 
 					+ "&currentPage=" + currentPage 
-					+ "&pageSize=" + pageSize;
+					+ "&pageSize=" + pageSize
+	        + "&sortby=" + sortCol.replace("select-", "")
+	        + "&up=" + upText;
 			
 			if (parameterHasValue(id))
 				url += "&id=" + id;
@@ -434,6 +456,7 @@
 				  feather.replace(); // Display the arrows on the buttons
 				  readHTMLParams();
 				  setSelected();
+				  setSort();
           document.getElementById("pageSizeField").value = pageSize; //Display correct page size
         })
 			  .catch(console.error);
@@ -473,6 +496,7 @@
     window.onload = function init() {	
     	  readHTMLParams();
     	  setSelected();
+        setSort();
     	  // Call the updateTable(currentPage) function initially to populate the table on page load
 		    updateTablePrim(currentPage);
 		

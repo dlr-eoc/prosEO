@@ -153,12 +153,12 @@
                 <table class="table table-hover" id="orderTable">
                   <thead class="thead-proseo" id="proseo-thead">
                     <tr>
-                      <th onclick="selectOrder('select-id', ['select-identifier', 'select-orderState'])" 
-                        class="selectord cursorpointer"><span id="select-id" class="select-up xyz" th:class="('selectord ' + (${selcol} == 'id' ? ${selorder} : ''))" th:text="#{id}">id</span></th>
-                      <th onclick="selectOrder('select-identifier', ['select-id', 'select-orderState'])" 
-                        class="selectord cursorpointer"><span id="select-identifier" th:class="('selectord ' + (${selcol} == 'identifier' ? ${selorder} : ''))" th:text="#{name}">name</span></th>
-                      <th onclick="selectOrder('select-orderState', ['select-identifier', 'select-id'])" 
-                        class="selectord cursorpointer"><span id="select-orderState" th:class="('selectord ' + (${selcol} == 'orderState' ? ${selorder} : ''))" th:text="#{state}">state</span></th>
+                      <th onclick="selectSort('select-id')" 
+                        class="cursorpointer"><span id="select-id" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" th:text="#{id}">id</span></th>
+                      <th onclick="selectSort('select-identifier')" 
+                        class="cursorpointer"><span id="select-identifier" th:class="((${selcol} == 'identifier' ? ${selorder} : ''))" th:text="#{name}">name</span></th>
+                      <th onclick="selectSort('select-orderState')" 
+                        class="cursorpointer"><span id="select-orderState" th:class="((${selcol} == 'orderState' ? ${selorder} : ''))" th:text="#{state}">state</span></th>
                       <th><span th:text="#{startstoptime}">startstoptime</span></th>
                       <th><span th:text="#{product}">product</span></th>
                       <th><span th:text="#{jobstepstates}">jobstepstates</span></th>
@@ -273,12 +273,15 @@ if (event.key === "Enter") {
   
   // order filters
   var identifier = null;
-  var sortCol = "id";
-  var upText = "true";
   var products = null;
 	var orderStates = null;
   var fromDate = null;
   var toDate = null;
+  
+  // sorting
+  var sortCols = ['select-id', 'select-identifier', 'select-orderState'];
+  var sortCol = "id";
+  var upText = "true";
 
   function addEventHandler() {
       $("input[name='fromDate']").change(checkTime);
@@ -336,77 +339,6 @@ if (event.key === "Enter") {
       }
       startElem[0].form.classList.add('was-validated')
   }
-
-function selectOrder(ele, others) {
-    var loc = location.search.slice(0);
-    var search = location.search.slice(1);
-		var elem = $("#" + ele);
-		var sel = "select-down";
-		var newsel = "select-up";
-		var styles = $(elem).attr("class");
-		if (styles != null) {
-				var styless = styles.split(" ");
-				for (i = 0; i < styless.length; i++) {
-						var s = styless[i];
-						if (s == "select-up") {
-							  sel = "select-up";
-							  newsel = "select-down";
-							  break;
-						} else if (s == "select-down") {
-							  sel = "select-down";
-							  newsel = "select-up";
-							  break;
-						}
-				}
-		}
-		$(elem).removeClass(sel);
-		$(elem).addClass(newsel);
-		for (i = 0; i < others.length; i++) {
-				var e = others[i];
-				var eleidentifier = $("#" + e);
-				$(eleidentifier).removeClass("select-up");
-				$(eleidentifier).removeClass("select-down");
-		}
-		setParams(ele, newsel, null, null);
-		retrieveDataPrim(false);
-};
-
-function setSort() {
-    var ele = sortCol;
-    if (ele == null) {
-    	ele = 'id';
-    }
-    ele = "select-" + ele;
-    var up = true;
-    if (upText == "false") {
-    	up = false;
-    }
-    var cols = ['select-id', 'select-identifier', 'select-orderState'];
-    let others = new Array(2);
-    var j = 0;
-    for (let i = 0; i < cols.length; i++) {
-    	if (ele != cols[i]) {
-    		others[j] = cols[i];
-    		j++;
-    	}
-    }
-    var elem = $("#" + ele);
-    var sel = "select-up";
-    var newsel = "select-down";
-    if (up) {
-    	sel = "select-down";
-    	newsel = "select-up";
-    }
-    $(elem).removeClass(sel);
-    $(elem).removeClass(newsel);
-    $(elem).addClass(newsel);
-    for (i = 0; i < others.length; i++) {
-        var e = others[i];
-        var eleidentifier = $("#" + e);
-        $(eleidentifier).removeClass("select-up");
-        $(eleidentifier).removeClass("select-down");
-    }
-}
 
 function plan(oId, state) {
 		var dialog = document.getElementById('plan' + oId);
@@ -525,8 +457,7 @@ function setHTMLParams() {
     paramString = addURLParamValuePrim('fromDate', fromDate, paramString);
     paramString = addURLParamValuePrim('toDate', toDate, paramString);
     paramString = setPageHTMLParams(paramString);
-    paramString = addURLParamValuePrim('sortCol', sortCol.replace("select-", ""), paramString);
-    paramString = addURLParamValuePrim('up', upText, paramString);
+    paramString = setSortHTMLParams(paramString);
     var newHref = location.origin + location.pathname + paramString;
     if (newHref != location.href) {
     	  history.pushState({}, null, newHref);
@@ -535,11 +466,8 @@ function setHTMLParams() {
 
 function readHTMLParams() {
 	  readPageHTMLParams();
+	  readSortHTMLParams();
 	  identifier = getURLParam('identifier');
-	  tmp = getURLParam('sortCol');
-	  sortCol = isEmpty(tmp) ? "id" : tmp;
-	  tmp = getURLParam('up');
-	  upText = isEmpty(tmp) ? "true" : tmp;
 	  products = getURLParams('products');
 	  orderStates = getURLParams('orderStates');
 	  fromDate = getURLParam('fromDate');
@@ -547,8 +475,6 @@ function readHTMLParams() {
 }
 
 function setParams(ele, selup, newPage, newPageSize) {
-	  var newSortCol = null;
-	  var newUpText = null;
 	  var newIdentifier = "";
 	  var newProducts = null;
 	  var newOrderStates = null;
@@ -557,19 +483,9 @@ function setParams(ele, selup, newPage, newPageSize) {
 	  
 	  var hasChanged = false;
 
-    hasChanged |= setPageParams(newPage, newPageSize);
-    if (ele != null && selup != null) {
-    	newSortCol = ele.replace("select-", "");
-      if (selup == "select-up") {
-    	  newUpText = "true";
-      } else {
-    	  newUpText = "false";
-      }
-    } else {
-    	newSortCol = sortCol;
-    	newUpText = upText;
-    }
-    
+	  hasChanged |= setPageParams(newPage, newPageSize);
+	  hasChanged |= setSortParams(ele, selup);
+	    
     newIdentifier = $('#identifier').val();
     if (isEmpty(newIdentifier)) {
         newIdentifier = null;
@@ -582,10 +498,6 @@ function setParams(ele, selup, newPage, newPageSize) {
     newOrderStates = $('#orderStates').val();
     newProducts = $('#products').val();
     	
-    if (   newSortCol != sortCol
-    		|| newUpText != upText) {
-      hasChanged = true;
-    }	
     if (   identifier != newIdentifier
     		|| fromDate != newFromDate
     		|| toDate != newToDate
@@ -597,12 +509,6 @@ function setParams(ele, selup, newPage, newPageSize) {
     	hasChanged = true;
     } 	
     
-    if (!hasChanged && (sortCol != newSortCol || upText != newUpText)) {
-    	hasChanged = true;
-    }
-    
-    sortCol = newSortCol;
-    upText = newUpText;
     identifier = newIdentifier;
     products = newProducts;
     orderStates = newOrderStates;
@@ -612,74 +518,6 @@ function setParams(ele, selup, newPage, newPageSize) {
     if (hasChanged) {
     	setHTMLParams();
     }
-}
-
-function getSort() {
-	  var done = false;
-	  var sortCol = "id";
-	  var up = true;
-    var elem = $("#select-identifier");
-    var styles = $(elem).attr("class");
-    if (styles != null) {
-        var styless = styles.split(" ");
-        for (i = 0; i < styless.length; i++) {
-            var s = styless[i];
-            if (s == "select-up") {
-                done = true;
-                sortCol = "identifier";
-                up = true;
-                break;
-            } else if (s == "select-down") {
-                done = true;
-                sortCol = "identifier";
-                up = false;
-                break;
-            }
-        }
-    }
-    if (!done) {
-        var elem = $("#select-id");
-        styles = $(elem).attr("class");
-        if (styles != null) {
-            var styless = styles.split(" ");
-            for (i = 0; i < styless.length; i++) {
-                var s = styless[i];
-                if (s == "select-up") {
-                    done = true;
-                    sortCol = "id";
-                    up = true;
-                    break;
-                } else if (s == "select-down") {
-                    done = true;
-                    sortCol = "id";
-                    up = false;
-                    break;
-                }
-            }
-        }
-    }
-    if (!done) {
-        var elem = $("#select-orderState");
-        styles = $(elem).attr("class");
-        if (styles != null) {
-            var styless = styles.split(" ");
-            for (i = 0; i < styless.length; i++) {
-                var s = styless[i];
-                if (s == "select-up") {
-                    done = true;
-                    sortCol = "orderState";
-                    up = true;
-                    break;
-                } else if (s == "select-down") {
-                    done = true;
-                    sortCol = "orderState";
-                    up = false;
-                    break;
-                }
-            }
-        }
-    }
-    return sortCol + ":" + up.toString();
 }
   
 function retrieveDataPrim(setPar) {

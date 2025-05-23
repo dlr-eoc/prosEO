@@ -146,6 +146,7 @@ public class ProcessorManager {
 	 * @param processorVersion the processor version
 	 * @param recordFrom          first record of filtered and ordered result to return
 	 * @param recordTo            last record of filtered and ordered result to return
+	 * @param orderBy		an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
 	 * @return a list of Json objects representing processors satisfying the search criteria
 	 * @throws NoResultException if no processors matching the given search criteria could be found
 	 * @throws SecurityException if a cross-mission data access was attempted

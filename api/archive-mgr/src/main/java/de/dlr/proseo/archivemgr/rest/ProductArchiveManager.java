@@ -231,19 +231,15 @@ public class ProductArchiveManager {
 
 
 	/**
-	 * Get product archives by name and archive type
+	 * Create database query to count or get objects
 	 *
 	 * @param code        the archive code
 	 * @param name        the archive name
 	 * @param archiveType the archive type
-	 * @param recordFrom  first record of filtered and ordered result to return
-	 * @param recordTo    last record of filtered and ordered result to return
-	 * @return a list of Json objects representing product archives satisfying the
-	 *         search criteria
-	 * @throws NoResultException if no product archives matching the given search
-	 *                           criteria could be found
+	 * @param count       if true create query for count of objects
+	 * @return a database query
 	 */
-	public Query createArchivesQuery(String code, String name, String archiveType, Boolean count) throws NoResultException {
+	public Query createArchivesQuery(String code, String name, String archiveType, Boolean count) {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createArchivesQuery({}, {}, {})", code, name, archiveType);

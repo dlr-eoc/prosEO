@@ -77,13 +77,14 @@ public class ConfiguredProcessorManager {
 	 * @param uuid                 the UUID of the configured processor
 	 * @param recordFrom           first record of filtered and ordered result to return
 	 * @param recordTo             last record of filtered and ordered result to return
+	 * @param orderBy		an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
 	 *
 	 * @return a list of Json objects representing configured processors satisfying the search criteria
 	 * @throws NoResultException if no configured processors matching the given search criteria could be found
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public List<RestConfiguredProcessor> getConfiguredProcessors(String mission, String identifier, String processorName,
-			String processorVersion, String configurationVersion, String uuid, Integer recordFrom, Integer recordTo)
+			String processorVersion, String configurationVersion, String uuid, Integer recordFrom, Integer recordTo, String[] orderBy)
 			throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getConfiguredProcessors({}, {}, {}, {}, {}, {})", mission, identifier, processorName,
@@ -132,7 +133,18 @@ public class ConfiguredProcessorManager {
 		if (null != uuid) {
 			jpqlQuery += " and c.uuid = :uuid";
 		}
-		jpqlQuery += " order by identifier ASC";
+		// order by
+		if (null != orderBy && 0 < orderBy.length) {
+			jpqlQuery += " order by ";
+			for (int i = 0; i < orderBy.length; ++i) {
+				if (0 < i)
+					jpqlQuery += ", ";
+				jpqlQuery += "c.";
+				jpqlQuery += orderBy[i];
+			}
+		} else {
+			jpqlQuery += " order by identifier ASC";
+		}
 		Query query = em.createQuery(jpqlQuery);
 		query.setParameter("missionCode", mission);
 		if (null != identifier) {

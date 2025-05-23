@@ -51,6 +51,7 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	 * @param uuid                 the UUID of the configured processor
 	 * @param recordFrom           first record of filtered and ordered result to return
 	 * @param recordTo             last record of filtered and ordered result to return
+	 * @param orderBy		an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
 	 * @return HTTP status "OK" and a list of JSON objects representing configured processors satisfying the search criteria or HTTP
 	 *         status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "NOT_FOUND" and
 	 *         an error message, if no configurations matching the search criteria were found, or HTTP status "TOO MANY REQUESTS" if
@@ -59,14 +60,14 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	@Override
 	public ResponseEntity<List<RestConfiguredProcessor>> getConfiguredProcessors(String mission, String identifier,
 			String processorName, String processorVersion, String configurationVersion, String uuid, Integer recordFrom,
-			Integer recordTo) {
+			Integer recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getConfiguredProcessors({}, {}, {}, {}, {}, {})", mission, identifier, processorName,
 					processorVersion, configurationVersion, uuid);
 
 		try {
 			return new ResponseEntity<>(configuredProcessorManager.getConfiguredProcessors(mission, identifier, processorName,
-					processorVersion, configurationVersion, uuid, recordFrom, recordTo), HttpStatus.OK);
+					processorVersion, configurationVersion, uuid, recordFrom, recordTo, orderBy), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {

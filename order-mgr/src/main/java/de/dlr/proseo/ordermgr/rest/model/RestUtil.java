@@ -6,6 +6,8 @@
 package de.dlr.proseo.ordermgr.rest.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +62,8 @@ public class RestUtil {
 			for (JobStep js : modelJob.getJobSteps()) {
 				jobSteps.add(RestUtil.createRestJobStep(js, logs));
 			}
+			
+			Collections.sort(jobSteps, Comparator.comparing(RestJobStep::getId));
 			rj.setJobSteps(jobSteps);
 
 			if (modelJob.getPriority() != null) {

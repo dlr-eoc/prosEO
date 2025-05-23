@@ -48,6 +48,7 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	 * @param configurationVersion the configuration version
 	 * @param recordFrom           first record of filtered and ordered result to return
 	 * @param recordTo             last record of filtered and ordered result to return
+	 * @param orderBy		an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
 	 * @return HTTP status "OK" and a list of JSON objects representing configurations satisfying the search criteria or HTTP status
 	 *         "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "NOT_FOUND" and an
 	 *         error message, if no configurations matching the search criteria were found, or HTTP status "TOO MANY REQUESTS" if

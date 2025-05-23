@@ -86,7 +86,9 @@ public class GUIWorkflowController extends GUIBaseController {
 			@RequestParam(required = false, value = "recordFrom") Long recordFrom,
 			@RequestParam(required = false, value = "recordTo") Long recordTo,
 			@RequestParam(required = false, value = "currentPage") Long currentPage,
-			@RequestParam(required = false, value = "pageSize") Long pageSize, Model model) {
+			@RequestParam(required = false, value = "pageSize") Long pageSize,
+			@RequestParam(required = false, value = "sortby") String sortby,
+			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 
 		logger.trace(">>> getProducs({}, {}, {}, {}, {}, model)", name, workflowVersion, inputProductClass, recordFrom, recordTo);
 
@@ -117,7 +119,7 @@ public class GUIWorkflowController extends GUIBaseController {
 		Long pages = (count / pageSize) + deltaPage;
 		Long page = (from / pageSize) + 1;
 
-		makeGetRequest(id, name, workflowVersion, inputProductClass, recordFrom, recordTo).toEntityList(Object.class)
+		makeGetRequest(id, name, workflowVersion, inputProductClass, recordFrom, recordTo, sortby, up).toEntityList(Object.class)
 			.subscribe(
 
 					// In case of success, handle HTTP response
@@ -292,7 +294,7 @@ public class GUIWorkflowController extends GUIBaseController {
 	 * @return a Mono containing the HTTP response
 	 */
 	private ResponseSpec makeGetRequest(Long id, String name, String workflowVersion, String inputProductClass, Long recordFrom,
-			Long recordTo) {
+			Long recordTo, String sortby, Boolean up) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -335,7 +337,23 @@ public class GUIWorkflowController extends GUIBaseController {
 				divider = "&";
 			}
 
-			uriString += divider + "orderBy=name ASC,workflowVersion ASC";
+			String sortString = "orderBy=name ASC,workflowVersion ASC";
+			String direction = "ASC";
+			if (up != null && !up) {
+				direction = "DESC";
+			}
+			if (sortby != null) {
+				if (sortby.equals("name")) {
+					sortString = "orderBy=name " + direction + ",workflowVersion ASC";
+				} else if (sortby.equals("workflowversion")) {
+					sortString = "orderBy=workflowVersion " + direction + ",name ASC";
+				} else if (sortby.equals("inputproductclass")) {
+					sortString = "orderBy=inputProductClass.productType " + direction + ",name ASC,workflowVersion ASC";
+				} else if (sortby.equals("outputproductclass")) {
+					sortString = "orderBy=outputProductClass.productType " + direction + ",name ASC,workflowVersion ASC";
+				}
+			}
+			uriString += divider + sortString;
 		}
 
 		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();

@@ -65,12 +65,22 @@
             <thead class="thead-proseo" id="proseo-thead">
               <tr>
                     <th><span th:text="#{id}">id</span></th>
-                    <th><span th:text="#{name}">name</span></th>
+                    <th onclick="selectSort('select-name')" 
+                        class="cursorpointer"><span id="select-name" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{name}">name</span></th>
                     <th><span th:text="#{uuid}">uuid</span></th>
-                    <th><span th:text="#{processorname}">processorname</span></th>
-                    <th><span th:text="#{processorversion}">processorversion</span></th>
-                    <th><span th:text="#{configuration}">configuration</span></th>
-                    <th><span th:text="#{enabled}">enabled</span></th>
+                    <th onclick="selectSort('select-processorname')" 
+                        class="cursorpointer"><span id="select-processorname" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{processorname}">processorname</span></th>
+                    <th onclick="selectSort('select-processorversion')" 
+                        class="cursorpointer"><span id="select-processorversion" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{processorversion}">processorversion</span></th>
+                    <th onclick="selectSort('select-configuration')" 
+                        class="cursorpointer"><span id="select-configuration" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{configuration}">configuration</span></th>
+                    <th onclick="selectSort('select-enabled')" 
+                        class="cursorpointer"><span id="select-enabled" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{enabled}">enabled</span></th>
               </tr>
             </thead>
             <tbody th:unless="${configuredprocessors} == null">
@@ -133,13 +143,19 @@
 		var pageSize = 20; // Maximum objects per page
 		
 		var identifier = null;
-		
+
+		// sorting
+	  var sortCols = ['select-name', 'select-processorname', 'select-processorversion', 'select-configuration', 'select-enabled'];
+	  var sortCol = "name";
+	  var upText = "true";
+
 		// set paging and sorting parameters
 		function setParams(ele, selup, newPage, newPageSize) {
 		    
 		    var hasChanged = false;
 		
 		    hasChanged |= setPageParams(newPage, newPageSize);
+		    hasChanged |= setSortParams(ele, selup);
 		    
 		    if (hasChanged) {
 		        setHTMLParams();
@@ -150,7 +166,8 @@
 		function setHTMLParams() {
 		    // build parameter string
 		    var paramString = "";
-		    paramString = setPageHTMLParams(paramString);
+	        paramString = setPageHTMLParams(paramString);
+	        paramString = setSortHTMLParams(paramString);
 		    var newHref = location.origin + location.pathname + paramString;
 		    if (newHref != location.href) {
 		        history.pushState({}, null, newHref);
@@ -159,7 +176,8 @@
 		
 		// read URI parameters
 		function readHTMLParams() {
-		    readPageHTMLParams();
+	      readPageHTMLParams();
+	      readSortHTMLParams();
 		    identifier = getURLParam('cp');
 		}
 		
@@ -169,6 +187,10 @@
 		
 		function updateTable(newPage, newPageSize) {
 		    setParams(null, null, newPage, newPageSize);
+		    retrieveData();
+		}
+
+		function retrieveDataPrim(notUsed) {
 		    retrieveData();
 		}
 
@@ -195,15 +217,22 @@
                 url = url + divider + "recordTo=" + to;
                 divider = "&";
             }
+            url = url + divider + "sortby=" + sortCol.replace("select-", "");
+            divider = "&";
+            url = url + divider + "up=" + upText;
+            divider = "&";
             
             $.ajax({
                 url: url,
                 method: "GET",
                 success: function (res) {
                     $("#configuredprocessorcontent").html(res);
+                    hideLoader();
+                    readHTMLParams();
                     feather.replace();
                     scrollToHash();
-                    hideLoader();
+                    setSelected();
+                    setSort();
                 },
                 fail: function (err) {
                     hideLoader();
@@ -231,6 +260,7 @@
 		  feather.replace();
 		  readHTMLParams();
 		  setSelected();
+      setSort();
 		  updateTable(currentPage, pageSize);
 		};
 		

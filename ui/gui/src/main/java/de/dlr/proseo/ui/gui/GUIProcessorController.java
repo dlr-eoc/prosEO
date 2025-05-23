@@ -303,7 +303,7 @@ public class GUIProcessorController extends GUIBaseController {
 		Long page = (from / pageSize) + 1;
 
 		// Perform the HTTP request to retrieve configured processors
-		ResponseSpec responseSpec = getCP(identifier, from, to);
+		ResponseSpec responseSpec = getCP(identifier, from, to, sortby, up);
 		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> configuredprocessors = new ArrayList<>();
 
@@ -329,9 +329,6 @@ public class GUIProcessorController extends GUIBaseController {
 				if (entityList.getStatusCode().is2xxSuccessful() 
 						|| entityList.getStatusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
 					configuredprocessors.addAll(entityList.getBody());
-
-					MapComparator oc = new MapComparator("identifier", true);
-					configuredprocessors.sort(oc);
 
 					model.addAttribute("configuredprocessors", configuredprocessors);
 
@@ -399,7 +396,7 @@ public class GUIProcessorController extends GUIBaseController {
 			uriString += divider + "recordTo=" + to;
 			divider = "&";
 		}
-		uriString += divider + "orderBy=processorClass.processorName ASC";
+		uriString += divider + "orderBy=processorClass.processorName ASC, processorVersion ASC";
 		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
 		logger.trace("URI " + uri);
 
@@ -432,7 +429,8 @@ public class GUIProcessorController extends GUIBaseController {
 	 * @param processorName the processor name
 	 * @return a Mono containing the HTTP response
 	 */
-	private ResponseSpec getCP(String identifier, Long from, Long to) {
+	private ResponseSpec getCP(String identifier, Long from, Long to,
+			String sortby, Boolean up) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -454,6 +452,25 @@ public class GUIProcessorController extends GUIBaseController {
 			uriString += divider + "recordTo=" + to;
 			divider = "&";
 		}
+		String sortString = "orderBy=identifier ASC";
+		String direction = "ASC";
+		if (up != null && !up) {
+			direction = "DESC";
+		}
+		if (sortby != null) {
+			if (sortby.equals("name")) {
+				sortString = "orderBy=identifier " + direction;
+			} else if (sortby.equals("processorname")) {
+				sortString = "orderBy=processor.processorClass.processorName " + direction + ",processor.processorVersion ASC";
+			} else if (sortby.equals("processorversion")) {
+				sortString = "orderBy=processor.processorVersion " + direction + ",processor.processorClass.processorName ASC";
+			} else if (sortby.equals("configuration")) {
+				sortString = "orderBy=configuration.configurationVersion " + direction + ",processor.processorClass.processorName ASC";
+			} else if (sortby.equals("enabled")) {
+				sortString = "orderBy=enabled " + direction + ",processor.processorClass.processorName ASC";
+			}
+		}
+		uriString += divider + sortString;
 		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
 		logger.trace("URI " + uri);
 

@@ -183,11 +183,19 @@
 					th:if="${products != null and (not #lists.isEmpty(products))}">
 					<thead class="thead-proseo" id="proseo-thead">
 						<tr>
-							<th colspan="2"><span th:text="#{id}">id</span></th>
-							<th><span th:text="#{product-class}">product-class</span></th>
-							<th><span th:text="#{generationtime}">generationtime</span></th>
+							<th colspan="2" onclick="selectSort('select-id')" 
+                        class="cursorpointer"><span id="select-id" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{id}">id</span></th>
+							<th onclick="selectSort('select-className')" 
+                        class="cursorpointer"><span id="select-className" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{product-class}">product-class</span></th>
+							<th onclick="selectSort('select-generationTime')" 
+                        class="cursorpointer"><span id="select-generationTime" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{generationtime}">generationtime</span></th>
 							<th><span th:text="#{mode}">mode</span></th>
-							<th><span th:text="#{sensingstarttime}">sensingstarttime</span></th>
+							<th onclick="selectSort('select-sensingStartTime')" 
+                        class="cursorpointer"><span id="select-sensingStartTime" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{sensingstarttime}">sensingstarttime</span></th>
 							<th><span th:text="#{sensingstoptime}">sensingstoptime</span></th>
 							<th><span th:text="#{productquality}">productquality</span></th>
 							<th><span th:text="#{fileclass}">fileclass</span></th>
@@ -399,6 +407,11 @@
   var genTimeTo = null;
   var jobStep = null;
   
+  // sorting
+  var sortCols = ['select-id', 'select-', 'select-sensingStartTime', 'select-generationTime'];
+  var sortCol = "className";
+  var upText = "true";
+  
     function toggleProd(id) {
         var content = document.getElementById("prodcont" + id);
         var eleshow = document.getElementById("prods" + id);
@@ -524,6 +537,7 @@ function setParams(ele, selup, newPage, newPageSize) {
     var hasChanged = false;
       
     hasChanged |= setPageParams(newPage, newPageSize);
+    hasChanged |= setSortParams(ele, selup);
     newId = $('#pid').val();
     if (isEmpty(newId)) {newId = null};
     newProductClass = $('#productClasses').val();
@@ -586,6 +600,7 @@ function setHTMLParams() {
     paramString = addURLParamValuePrim('genTimeFrom', genTimeFrom, paramString);
     paramString = addURLParamValuePrim('genTimeTo', genTimeTo, paramString);
     paramString = setPageHTMLParams(paramString);
+    paramString = setSortHTMLParams(paramString);
     var newHref = location.origin + location.pathname + paramString;
     if (newHref != location.href) {
         history.pushState({}, null, newHref);
@@ -594,6 +609,7 @@ function setHTMLParams() {
 
 function readHTMLParams() {
     readPageHTMLParams();
+    readSortHTMLParams();
     id = getURLParam('id');
     mode = getURLParam('mode');
     quality = getURLParam('quality');
@@ -632,10 +648,15 @@ function retrieveDataPage(newPage, newPageSize) {
     		divider = ",";
     	}    	
     }
-    var jobStepId = getURLParam('jobStep');
     readPageHTMLParams();
+    retrieveDataPrim(false);
+}
+
+function retrieveDataPrim(notUsed) {
+    var jobStepId = getURLParam('jobStep');
     retrieveData(getFromRow(), getToRow(), jobStepId);
 }
+
 function retrieveData(from, to, jobStepId) {
     if ([[${hasroleproductreader}]]) {
 	      showLoader(); 
@@ -702,6 +723,11 @@ function retrieveData(from, to, jobStepId) {
 		        url = url + divider + "jobStepId=" + jobStepId.toString().trim();
 		        divider = "&";
 		    }
+        url = url + divider + "sortby=" + sortCol.replace("select-", "");
+        divider = "&";
+        url = url + divider + "up=" + upText;
+        divider = "&";
+
         $.ajax({
             url : url,
             method : "GET",
@@ -720,6 +746,7 @@ function retrieveData(from, to, jobStepId) {
                     nonSelectedText : ''
                 });
                 setSelected();
+                setSort();
                 if (id != null) {
                     scrollToElem(id);
             	      openProd(id);

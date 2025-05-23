@@ -376,6 +376,30 @@ function setPageParams(newPage, newPageSize) {
     return hasChanged;
 }
 
+function setSortParams(ele, selup) {
+    var hasChanged = false;  
+    var newSortCol = null;
+    var newUpText = null;
+
+    if (ele != null && selup != null) {
+      newSortCol = ele.replace("select-", "");
+      if (selup == "select-up") {
+        newUpText = "true";
+      } else {
+        newUpText = "false";
+      }
+    } else {
+      newSortCol = sortCol;
+      newUpText = upText;
+    }    
+    if (sortCol != newSortCol || upText != newUpText) {
+      hasChanged = true;
+    }    
+    sortCol = newSortCol;
+    upText = newUpText;
+    return hasChanged;
+}
+
 function setPageHTMLParams(paramString) {
     paramString = removeURLKeyPrim('currentPage', paramString);
     paramString = removeURLKeyPrim('pageSize', paramString);
@@ -384,11 +408,24 @@ function setPageHTMLParams(paramString) {
     return paramString;
 }
 
+function setSortHTMLParams(paramString) {
+    paramString = addURLParamValuePrim('sortCol', sortCol.replace("select-", ""), paramString);
+    paramString = addURLParamValuePrim('up', upText, paramString);
+    return paramString;
+}
+
 function readPageHTMLParams() {
 	  var tmp = getURLParam('currentPage');
 	  currentPage = (isEmpty(tmp) || tmp < 1) ? 1 : Number(tmp);
 	  tmp = getURLParam('pageSize');
 	  pageSize = (isEmpty(tmp) || tmp < 1) ? pageSize : Number(tmp);
+}
+
+function readSortHTMLParams() {
+    var tmp = getURLParam('sortCol');
+    sortCol = isEmpty(tmp) ? (isEmpty(sortCol) ? "id" : sortCol) : tmp;
+    tmp = getURLParam('up');
+    upText = isEmpty(tmp) ? "true" : tmp;
 }
 
 //Function to customize the page size
@@ -433,4 +470,113 @@ function arrayToHTMLString(anArray) {
 function activateSidebarElem(elemName) {
   var elem = document.getElementById(elemName);
   $(elem).addClass('active');
+}
+
+function selectSort(ele) {
+    var others = [];
+    for (i = 0; i < sortCols.length; i++) {
+      if (sortCols[i] != ele) {
+        others.push(sortCols[i]);
+      }
+    }
+    var elem = $("#" + ele);
+    var sel = "select-down";
+    var newsel = "select-up";
+    var styles = $(elem).attr("class");
+    if (styles != null) {
+        var styless = styles.split(" ");
+        for (i = 0; i < styless.length; i++) {
+            var s = styless[i];
+            if (s == "select-up") {
+                sel = "select-up";
+                newsel = "select-down";
+                break;
+            } else if (s == "select-down") {
+                sel = "select-down";
+                newsel = "select-up";
+                break;
+            }
+        }
+    }
+    $(elem).removeClass(sel);
+    $(elem).addClass(newsel);
+    for (i = 0; i < others.length; i++) {
+        var e = others[i];
+        var eleidentifier = $("#" + e);
+        $(eleidentifier).removeClass("select-up");
+        $(eleidentifier).removeClass("select-down");
+    }
+    setParams(ele, newsel, null, null);
+    retrieveDataPrim(false);
+};
+
+function setSort() {
+    var ele = sortCol;
+    if (ele == null) {
+      ele = 'id';
+    }
+    ele = "select-" + ele;
+    var up = true;
+    if (upText == "false") {
+      up = false;
+    }
+
+    let others = new Array(sortCols.length - 1);
+    var j = 0;
+    for (let i = 0; i < sortCols.length; i++) {
+      if (ele != sortCols[i]) {
+        others[j] = sortCols[i];
+        j++;
+      }
+    }
+    var elem = $("#" + ele);
+    var sel = "select-up";
+    var newsel = "select-down";
+    if (up) {
+      sel = "select-down";
+      newsel = "select-up";
+    }
+    $(elem).removeClass(sel);
+    $(elem).removeClass(newsel);
+    $(elem).addClass(newsel);
+    for (i = 0; i < others.length; i++) {
+        var e = others[i];
+        var eleidentifier = $("#" + e);
+        $(eleidentifier).removeClass("select-up");
+        $(eleidentifier).removeClass("select-down");
+    }
+}
+
+
+function getSort() {
+    var done = false;
+    var sortCol = sortCols[0].replace("select-", "");
+    var up = true;
+    
+    var i = 0;
+    while (!done && i < sortCols.length) {
+      var elem = $("#" + sortCols[i]);
+      var currSortCol = sortCols[i].replace("select-", "");
+      var styles = $(elem).attr("class");
+      if (styles != null) {
+          var styless = styles.split(" ");
+          for (j = 0; j < styless.length; j++) {
+              var s = styless[j];
+              if (s == "select-up") {
+                  done = true;
+                  sortCol = currSortCol;
+                  up = true;
+                  break;
+              } else if (s == "select-down") {
+                  done = true;
+                  sortCol = currSortCol;
+                  up = false;
+                  break;
+              }
+          }
+      }
+      i++;
+    }
+
+    return sortCol + ":" + up.toString();
 }
