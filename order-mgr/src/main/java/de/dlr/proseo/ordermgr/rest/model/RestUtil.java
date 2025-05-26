@@ -149,6 +149,9 @@ public class RestUtil {
 					pjs.getInputProductClasses().add(pt);
 				}
 			}
+			Collections.sort(pjs.getInputProductClasses(), (o1, o2) -> {
+				return o1.compareTo(o2);
+			});
 
 			if (modelJobStep.getOutputProduct() != null) {
 				pjs.setOutputProduct(modelJobStep.getOutputProduct().getId());
