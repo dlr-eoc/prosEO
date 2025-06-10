@@ -53,13 +53,13 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 *         the result list exceeds a configured maximum
 	 */
 	@Override
-	public ResponseEntity<List<RestProcessorClass>> getProcessorClasses(String mission, String processorName, Integer recordFrom,
+	public ResponseEntity<List<RestProcessorClass>> getProcessorClasses(String mission, Long id, String[] productClass, String processorName, Integer recordFrom,
 			Integer recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getProcessorClass({}, {})", mission, processorName);
+			logger.trace(">>> getProcessorClass({}, {}, {}, {})", mission, id, productClass, processorName);
 
 		try {
-			return new ResponseEntity<>(processorClassManager.getProcessorClasses(mission, processorName, recordFrom, recordTo, orderBy),
+			return new ResponseEntity<>(processorClassManager.getProcessorClasses(mission, id, productClass, processorName, recordFrom, recordTo, orderBy),
 					HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
@@ -186,12 +186,12 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 *         cross-mission data access was attempted
 	 */
 	@Override
-	public ResponseEntity<String> countProcessorClasses(String missionCode, String processorName) {
+	public ResponseEntity<String> countProcessorClasses(String missionCode, Long id, String[] productClass, String processorName) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> countProcessorClasses({}, {})", missionCode, processorName);
+			logger.trace(">>> countProcessorClasses({}, {}, {}, {})", missionCode, id, productClass, processorName);
 
 		try {
-			return new ResponseEntity<>(processorClassManager.countProcessorClasses(missionCode, processorName), HttpStatus.OK);
+			return new ResponseEntity<>(processorClassManager.countProcessorClasses(missionCode, id, productClass, processorName), HttpStatus.OK);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}

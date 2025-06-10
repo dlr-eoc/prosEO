@@ -239,7 +239,7 @@ public class ProductManager {
 	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public List<RestProduct> getProducts(String mission, String[] productClass, String mode, String fileClass, String quality,
 			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, Integer recordFrom, Integer recordTo,
-			Long jobStepId, String[] orderBy) throws NoResultException, SecurityException {
+			Boolean onlyWithFile, Long jobStepId, String[] orderBy) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getProducts({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission,
 					(null == productClass ? "null" : Arrays.asList(productClass).toString()), mode, fileClass, quality,
@@ -263,7 +263,7 @@ public class ProductManager {
 		}
 
 		Long numberOfResults = Long.parseLong(this.countProducts(mission, productClass, mode, fileClass, quality, startTimeFrom,
-				startTimeTo, genTimeFrom, genTimeTo, jobStepId, null));
+				startTimeTo, genTimeFrom, genTimeTo, onlyWithFile, jobStepId, null));
 		Integer maxResults = ingestorConfig.getMaxResults();
 		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults && (numberOfResults - recordFrom) > maxResults) {
 			throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS,
@@ -274,7 +274,7 @@ public class ProductManager {
 
 		// Find using search parameters
 		Query query = createProductsQuery(mission, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom,
-				genTimeTo, recordFrom, recordTo, jobStepId, orderBy, false);
+				genTimeTo, recordFrom, recordTo, onlyWithFile, jobStepId, orderBy, false);
 		query.setFirstResult(recordFrom);
 		query.setMaxResults(recordTo - recordFrom);
 		for (Object resultObject : query.getResultList()) {
@@ -315,7 +315,8 @@ public class ProductManager {
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public String countProducts(String mission, String[] productClass, String mode, String fileClass, String quality,
-			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, Long jobStepId, Long id)
+			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, 
+			Boolean onlyWithFile, Long jobStepId, Long id)
 			throws SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> countProducts({}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, productClass, mode, fileClass, quality,
@@ -339,7 +340,7 @@ public class ProductManager {
 			query = em.createQuery(queryString);
 		} else {
 			query = createProductsQuery(mission, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom,
-					genTimeTo, null, null, jobStepId, null, true);
+					genTimeTo, null, null, onlyWithFile, jobStepId, null, true);
 		}
 		Object resultObject = query.getSingleResult();
 		if (resultObject instanceof Long) {
@@ -961,7 +962,7 @@ public class ProductManager {
 	 */
 	private Query createProductsQuery(String mission, String[] productClass, String mode, String fileClass, String quality,
 			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, Integer recordFrom, Integer recordTo,
-			Long jobStepId, String[] orderBy, Boolean count) {
+			Boolean onlyWithFile, Long jobStepId, String[] orderBy, Boolean count) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createProductsQuery({}, {}, {}, {}, {}, {}, {}, {}, {})", mission, productClass, startTimeFrom,
 					startTimeTo, recordFrom, recordTo, jobStepId, orderBy, count);
@@ -969,6 +970,9 @@ public class ProductManager {
 		// Find using search parameters
 		String jpqlQuery = null;
 		String join = "";
+		if (onlyWithFile) {
+			join = " join ProductFile pf on pf.product.id = p.id ";
+		}
 		if (jobStepId != null) {
 			if (count) {
 				jpqlQuery = "select count(p) from ProductQuery pq join pq.satisfyingProducts p " + join
@@ -1013,6 +1017,9 @@ public class ProductManager {
 		}
 		if (null != genTimeTo) {
 			jpqlQuery += " and p.generationTime <= :genTimeTo";
+		}
+		if (onlyWithFile) {
+			// jpqlQuery += " and (select count(pf) from ProductFile pf where pf.product.id = p.id) > 0";
 		}
 		// visibility
 		List<ProductVisibility> visibilities = new ArrayList<>();

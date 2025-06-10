@@ -59,6 +59,43 @@
             <br> <span th:text="${errormsg}"></span></h5>
         </div>
 
+        <div th:unless="${errormsg != null}" class="container-fluid">
+            <p>&nbsp;</p>
+	        <form th:unless="${errormsg != null}" class="needs-validation" name="proc-shw" id="proc-shw" action="javascript:retrieveDataPrim();">
+	          <div class="row py-lg-1">
+              <div class="col-2">
+                <button id="processorselect" type="button"
+                  onclick="retrieveDataPrim();"
+                  class="btn btn-sm btn-outline-secondary">
+                  <span th:text="#{processor-show}"></span>
+                </button>
+              </div>  
+	            <div class="col-1 pr-lg-0">
+	              <p class="input-group-text word-wrap"
+	                th:text="#{id}"></p>
+	            </div>
+	            <div class="col-1 pl-lg-0">
+	                    <input type="number" min="1" class="form-control" autocomplete="on"
+	                      name="pid" id="pid">
+	            </div>
+	            <div class="col-1 pr-lg-0">
+	              <p class="input-group-text word-wrap"
+	                th:text="#{name}"></p>
+	            </div>
+	            <div class="col-2 pl-lg-0">
+	              <input type="text" class="form-control" id="pname">
+	            </div>   
+              <div class="col-1 pr-lg-0">
+                <p class="input-group-text word-wrap"
+                  th:text="#{processorversion}"></p>
+              </div>
+              <div class="col-2 pl-lg-0">
+                <input type="text" class="form-control" id="pversion">
+              </div>    
+	          </div>
+	        </form>
+	
+	      </div>
         <div id="processorcontent" name="processorcontent">
           <table class="table" id="processorTable" name="processorTable">
             <thead class="thead-proseo" id="proseo-thead">
@@ -157,6 +194,20 @@
     src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
+<script>
+  var clickHandler = function(event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        document.getElementById("processorselect").click();
+    }
+	};
+	var input = document.getElementById("pname");
+	input.addEventListener("keyup", clickHandler);
+	input = document.getElementById("pversion");
+	input.addEventListener("keyup", clickHandler);
+  input = document.getElementById("pid");
+  input.addEventListener("keyup", clickHandler);
+</script>
 <script type="text/javascript" th:inline="javascript">
     //
     
@@ -169,15 +220,17 @@
     var upText = "true";
     
     // filters
-    var processorName = null;
-    var processorVersion = null;
+    var pid = null;
+    var pname = null;
+    var pversion = null;
 
     // set paging and sorting parameters
     function setParams(ele, selup, newPage, newPageSize) {
         var newSortCol = null;
         var newUpText = null;
-        var newProcessorName = null;
-        var newProcessorVersion = null;
+        var newPid = null;
+        var newpname = null;
+        var newpversion = null;
         
         var hasChanged = false;
 
@@ -198,7 +251,26 @@
             || newUpText != upText) {
             hasChanged = true;
         } 
-                
+
+        newPid = $('#pid').val();
+        if (isEmpty(newPid)) {newPid = null};  
+        newpname = $('#pname').val();
+        if (isEmpty(newpname)) {newpname = null};  
+        newpversion = $('#pversion').val();
+        if (isEmpty(newpversion)) {newpversion = null};  
+
+        if (   pid != newPid
+            || pname != newpname
+            || pversion != newpversion) {
+          // table size may be changed, go to first page
+          currentPage = 1;
+          newPage = 1;
+          hasChanged = true;
+        }   
+        pid = newPid;
+        pname = newpname;
+        pversion = newpversion;        
+        
         if (hasChanged) {
             setHTMLParams();
         }
@@ -208,8 +280,9 @@
     function setHTMLParams() {
         // build parameter string
         var paramString = "";
-        paramString = addURLParamValuePrim('processorName', processorName, paramString);
-        paramString = addURLParamValuePrim('processorVersion', processorVersion, paramString);
+        paramString = addURLParamValuePrim('pid', pid, paramString);
+        paramString = addURLParamValuePrim('processorName', pname, paramString);
+        paramString = addURLParamValuePrim('processorVersion', pversion, paramString);
         paramString = setPageHTMLParams(paramString);
         var newHref = location.origin + location.pathname + paramString;
         if (newHref != location.href) {
@@ -220,15 +293,24 @@
     // read URI parameters
     function readHTMLParams() {
         readPageHTMLParams();
-        processorName = getURLParam('processorName');
-        processorVersion = getURLParam('processorVersion');
+        pid = getURLParam('pid');
+        pname = getURLParam('processorName');
+        pversion = getURLParam('processorVersion');
         tmp = getURLParam('sortCol');
     }
 
     // set selection in filter parameters
     function setSelected() {
+    	  $('#pid').val(pid);
+    	  $('#pname').val(pname);
+    	  $('#pversion').val(pversion);
     }
 
+    function retrieveDataPrim() {
+    	  setParams(null, null, null, null);
+        retrieveData();
+    }
+    
     function updateTable(newPage, newPageSize) {
         setParams(null, null, newPage, newPageSize);
         retrieveData();
@@ -246,12 +328,16 @@
             var url = "/processor-show/get";      
 
             var divider = "?";
-            if (parameterHasValue(processorName)) {
-                url = url + divider + "processorName=" + processorName.toString().trim();
+            if (pid != null) {
+                url = url + divider + "pid=" + pid.toString().trim();
                 divider = "&";
             }
-            if (parameterHasValue(processorVersion)) {
-                url = url + divider + "processorVersion=" + processorVersion.toString().trim();
+            if (parameterHasValue(pname)) {
+                url = url + divider + "processorName=" + pname.toString().trim();
+                divider = "&";
+            }
+            if (parameterHasValue(pversion)) {
+                url = url + divider + "processorVersion=" + pversion.toString().trim();
                 divider = "&";
             }
             if (parameterHasValue(from)) {

@@ -76,14 +76,14 @@ public class ProcessorControllerImpl implements ProcessorController {
 	 *         result list exceeds a configured maximum
 	 */
 	@Override
-	public ResponseEntity<List<RestProcessor>> getProcessors(String mission, String processorName, String processorVersion,
+	public ResponseEntity<List<RestProcessor>> getProcessors(String mission, Long id, String processorName, String processorVersion,
 			Integer recordFrom, Integer recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getProcessors({}, {}, {})", mission, processorName, processorVersion);
 
 		try {
 			return new ResponseEntity<>(
-					processorManager.getProcessors(mission, processorName, processorVersion, recordFrom, recordTo, orderBy), HttpStatus.OK);
+					processorManager.getProcessors(id, mission, processorName, processorVersion, recordFrom, recordTo, orderBy), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {
@@ -185,12 +185,12 @@ public class ProcessorControllerImpl implements ProcessorController {
 	 *         cross-mission data access was attempted
 	 */
 	@Override
-	public ResponseEntity<String> countProcessors(String missionCode, String processorName, String processorVersion) {
+	public ResponseEntity<String> countProcessors(String missionCode, Long id, String processorName, String processorVersion) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> countProcessors({}, {}, {})", missionCode, processorName, processorVersion);
 
 		try {
-			return new ResponseEntity<>(processorManager.countProcessors(missionCode, processorName, processorVersion),
+			return new ResponseEntity<>(processorManager.countProcessors(id, missionCode, processorName, processorVersion),
 					HttpStatus.OK);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);

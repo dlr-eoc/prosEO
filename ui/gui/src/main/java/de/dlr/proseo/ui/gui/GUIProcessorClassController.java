@@ -186,7 +186,8 @@ public class GUIProcessorClassController extends GUIBaseController {
 			divider = "&";
 		}
 		if (processorName != null && !processorName.isEmpty()) {
-			uriString += divider + "processorName=" + processorName;
+			String queryParam = processorName.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "processorName=" + queryParam;
 			divider = "&";
 	}
 		if (productClass != null && !productClass.isEmpty()) {

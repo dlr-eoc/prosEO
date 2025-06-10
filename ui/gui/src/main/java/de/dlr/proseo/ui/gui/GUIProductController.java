@@ -109,6 +109,7 @@ public class GUIProductController extends GUIBaseController {
 			@RequestParam(required = false, value = "genTimeTo") String genTimeTo,
 			@RequestParam(required = false, value = "recordFrom") Long recordFrom,
 			@RequestParam(required = false, value = "recordTo") Long recordTo,
+			@RequestParam(required = false, value = "onlyWithFile") Boolean onlyWithFile,
 			@RequestParam(required = false, value = "jobStepId") Long jobStepId,
 			@RequestParam(required = false, value = "sortby") String sortby,
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
@@ -123,7 +124,7 @@ public class GUIProductController extends GUIBaseController {
 			from = (long) 0;
 		}
 		Long count = countProducts(productId, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo,
-				jobStepId);
+				onlyWithFile, jobStepId);
 		if (recordTo != null && from != null && recordTo > from) {
 			to = recordTo;
 		} else if (from != null) {
@@ -132,7 +133,7 @@ public class GUIProductController extends GUIBaseController {
 
 		// Perform the HTTP request to retrieve missions
 		ResponseSpec responseSpec = get(productId, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom,
-				genTimeTo, from, to, jobStepId, sortby, up);
+				genTimeTo, from, to, onlyWithFile, jobStepId, sortby, up);
 		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> products = new ArrayList<>();
 
@@ -244,7 +245,7 @@ public class GUIProductController extends GUIBaseController {
 		logger.trace(">>> getProductFiles({}, {}, {}, {}, model)", id);
 
 		// Perform the HTTP request to retrieve missions
-		ResponseSpec responseSpec = get(id, null, null, null, null, null, null, null, null, null, null, null, null, null);
+		ResponseSpec responseSpec = get(id, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> productfiles = new ArrayList<>();
 
@@ -309,7 +310,7 @@ public class GUIProductController extends GUIBaseController {
 	 * @return the number of products matching the specified parameters
 	 */
 	private Long countProducts(Long productId, String productClass, String mode, String fileClass, String quality, String startTimeFrom,
-			String startTimeTo, String genTimeFrom, String genTimeTo, Long jobStepId) {
+			String startTimeTo, String genTimeFrom, String genTimeTo, Boolean onlyWithFile, Long jobStepId) {
 
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
@@ -354,6 +355,8 @@ public class GUIProductController extends GUIBaseController {
 			uriString += divider + "genTimeTo=" + genTimeTo;
 			divider = "&";
 		}
+		uriString += divider + "onlyWithFile=" + (onlyWithFile == null ? false : onlyWithFile);
+		divider = "&";
 		if (jobStepId != null) {
 			uriString += divider + "jobStep=" + jobStepId;
 			divider = "&";
@@ -413,8 +416,8 @@ public class GUIProductController extends GUIBaseController {
 	 * @return a Mono containing the HTTP response
 	 */
 	private ResponseSpec get(Long id, String productClass, String mode, String fileClass, String quality, String startTimeFrom,
-			String startTimeTo, String genTimeFrom, String genTimeTo, Long recordFrom, Long recordTo, Long jobStepId,
-			String sortby, Boolean up) {
+			String startTimeTo, String genTimeFrom, String genTimeTo, Long recordFrom, Long recordTo, Boolean onlyWithFile, 
+			Long jobStepId, String sortby, Boolean up) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -465,6 +468,8 @@ public class GUIProductController extends GUIBaseController {
 				uriString += divider + "genTimeTo=" + genTimeTo;
 				divider = "&";
 			}
+			uriString += divider + "onlyWithFile=" + (onlyWithFile == null ? false : onlyWithFile);
+			divider = "&";
 			if (recordFrom != null) {
 				uriString += divider + "recordFrom=" + recordFrom;
 				divider = "&";
@@ -486,11 +491,11 @@ public class GUIProductController extends GUIBaseController {
 				if (sortby.equals("id")) {
 					sortString = "orderBy=id " + direction;
 				} else if (sortby.equals("className")) {
-					sortString = "orderBy=productClass.productType " + direction + ",sensingStartTime ASC";
+					sortString = "orderBy=productClass.productType " + direction + ",sensingStartTime " + direction;
 				} else if (sortby.equals("sensingStartTime")) {
-					sortString = "orderBy=sensingStartTime " + direction + ",productClass.productType ASC";
+					sortString = "orderBy=sensingStartTime " + direction + ",productClass.productType " + direction;
 				} else if (sortby.equals("generationTime")) {
-					sortString = "orderBy=generationTime " + direction + ",productClass.productType ASC";
+					sortString = "orderBy=generationTime " + direction + ",productClass.productType " + direction;
 				}
 			}
 			uriString += divider + sortString;

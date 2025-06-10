@@ -150,6 +150,9 @@ resourceTypes:
         type: integer
         format: int32
         description: Last result to display from an ordered result list
+      onlyWithFile?:
+        type: boolean
+        description: only products with a product file
       jobStep?:
         type: integer
         description: Job step that produced this product (if any)
@@ -217,6 +220,9 @@ resourceTypes:
         genTimeTo?:
           type: string
           description: Product generation time, latest
+        onlyWithFile?:
+          type: boolean
+          description: only products with a product file
         jobStep?:
           type: integer
           description: Job step that produced this product (if any)

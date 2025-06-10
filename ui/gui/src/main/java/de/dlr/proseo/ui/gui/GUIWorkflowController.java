@@ -344,13 +344,13 @@ public class GUIWorkflowController extends GUIBaseController {
 			}
 			if (sortby != null) {
 				if (sortby.equals("name")) {
-					sortString = "orderBy=name " + direction + ",workflowVersion ASC";
+					sortString = "orderBy=name " + direction + ",workflowVersion " + direction;
 				} else if (sortby.equals("workflowversion")) {
-					sortString = "orderBy=workflowVersion " + direction + ",name ASC";
+					sortString = "orderBy=workflowVersion " + direction + ",name " + direction;
 				} else if (sortby.equals("inputproductclass")) {
-					sortString = "orderBy=inputProductClass.productType " + direction + ",name ASC,workflowVersion ASC";
+					sortString = "orderBy=inputProductClass.productType " + direction + ",name " + direction + ",workflowVersion " + direction;
 				} else if (sortby.equals("outputproductclass")) {
-					sortString = "orderBy=outputProductClass.productType " + direction + ",name ASC,workflowVersion ASC";
+					sortString = "orderBy=outputProductClass.productType " + direction + ",name " + direction + ",workflowVersion " + direction;
 				}
 			}
 			uriString += divider + sortString;

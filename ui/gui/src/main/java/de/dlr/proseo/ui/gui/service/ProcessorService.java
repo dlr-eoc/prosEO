@@ -68,7 +68,8 @@ public class ProcessorService {
 			uriBuilder.queryParam("mission", mission.trim());
 		}
 		if (processorName != null && !processorName.isBlank()) {
-			uriBuilder.queryParam("processorName", processorName.trim());
+			String queryParam = processorName.replaceAll("[*]", "%").trim().toUpperCase();
+			uriBuilder.queryParam("processorName", queryParam);
 		}
 		if (productClass != null && !productClass.isBlank()) {
 			uriBuilder.queryParam("productClass", productClass.trim());

@@ -143,12 +143,16 @@
             </div>
           </div>
           <div class="row py-lg-1">
-            <div class="col-2">
+            <div class="col-1">
               <button id="productselect" type="submit"
                     onclick="submit();"
                     class="btn btn-sm btn-outline-secondary">
                     <span th:text="#{product-show}"></span>
               </button>
+            </div>
+            <div class="col-1 pr-lg-0">
+              <input class="form-check-input" type="checkbox" name="withfile" value="wf" id="withfile">
+              <label class="form-check-label" for="withfile" th:text="#{onlywithfile}">onlywithfile</label>
             </div>
             
             <div class="col-2 pr-lg-0">
@@ -406,6 +410,7 @@
   var genTimeFrom = null;
   var genTimeTo = null;
   var jobStep = null;
+  var withfile = false;
   
   // sorting
   var sortCols = ['select-id', 'select-', 'select-sensingStartTime', 'select-generationTime'];
@@ -516,6 +521,7 @@ function setSelected() {
 	setSelectedOption('processingMode', mode);
 	setSelectedOption('fileClass', fileClass);
 	setSelectedOption('productQuality', quality);
+	document.getElementById('withfile').checked = withfile;
   $('#pid').val(id);
   $('#startTimeFrom').val(startTimeFrom);
   $('#startTimeTo').val(startTimeTo);
@@ -535,6 +541,7 @@ function setParams(ele, selup, newPage, newPageSize) {
     var newGenTimeFrom = null;
     var newGenTimeTo = null;
     var hasChanged = false;
+    var newWithfile = false;
       
     hasChanged |= setPageParams(newPage, newPageSize);
     hasChanged |= setSortParams(ele, selup);
@@ -555,7 +562,7 @@ function setParams(ele, selup, newPage, newPageSize) {
     if (isEmpty(newGenTimeFrom)) {newGenTimeFrom = null};
     newGenTimeTo = $('#genTimeTo').val();
     if (isEmpty(newGenTimeTo)) {newGenTimeTo = null};
-    
+    newWithfile = document.getElementById('withfile').checked;
 
     if (   id != newId
         || mode != newMode
@@ -565,7 +572,8 @@ function setParams(ele, selup, newPage, newPageSize) {
         || startTimeFrom != newStartTimeFrom
         || startTimeTo != newStartTimeTo
         || genTimeFrom != newGenTimeFrom
-        || genTimeTo != newGenTimeTo) {
+        || genTimeTo != newGenTimeTo
+        || withfile != newWithfile) {
       // table size may be changed, go to first page
       currentPage = 1;
       newPage = 1;
@@ -580,6 +588,7 @@ function setParams(ele, selup, newPage, newPageSize) {
     startTimeTo = newStartTimeTo;
     genTimeFrom = newGenTimeFrom;
     genTimeTo = newGenTimeTo;
+    withfile = newWithfile;
     if (hasChanged) {
         setHTMLParams();
     }
@@ -599,6 +608,7 @@ function setHTMLParams() {
     paramString = addURLParamValuePrim('startTimeTo', startTimeTo, paramString);
     paramString = addURLParamValuePrim('genTimeFrom', genTimeFrom, paramString);
     paramString = addURLParamValuePrim('genTimeTo', genTimeTo, paramString);
+    paramString = addURLParamValuePrim('withfile', withfile.toString(), paramString);
     paramString = setPageHTMLParams(paramString);
     paramString = setSortHTMLParams(paramString);
     var newHref = location.origin + location.pathname + paramString;
@@ -619,6 +629,12 @@ function readHTMLParams() {
     startTimeTo = getURLParam('startTimeTo');
     genTimeFrom = getURLParam('genTimeFrom');
     genTimeTo = getURLParam('genTimeTo');
+    withfile = getURLParam('withfile');
+    if (withfile == "true") {
+    	withfile = true;
+    } else {
+    	withfile = false;
+    }
 }
 
 function productref(ref) {
@@ -711,10 +727,14 @@ function retrieveData(from, to, jobStepId) {
 		        url = url + divider + "recordFrom=" + from;
 		        divider = "&";
 		    }
-		    if (to != null) {
-		        url = url + divider + "recordTo=" + to;
-		        divider = "&";
-		    }
+        if (to != null) {
+            url = url + divider + "recordTo=" + to;
+            divider = "&";
+        }
+        if (withfile != null) {
+            url = url + divider + "onlyWithFile=" + withfile;
+            divider = "&";
+        }
 		    if (id != null) {
 		        url = url + divider + "id=" + id.toString().trim();
 		        divider = "&";

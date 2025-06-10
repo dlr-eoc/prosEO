@@ -86,7 +86,8 @@ public class GUIProcessorController extends GUIBaseController {
 	 * @return The result
 	 */
 	@GetMapping("/processor-show/get")
-	public DeferredResult<String> getProcessors(@RequestParam(required = false, value = "processorName") String processorName,
+	public DeferredResult<String> getProcessors(@RequestParam(required = false, value = "pid") Long processorId,
+			@RequestParam(required = false, value = "processorName") String processorName,
 			@RequestParam(required = false, value = "processorVersion") String processorVersion,
 			Long recordFrom, Long recordTo, Model model) {
 
@@ -100,7 +101,7 @@ public class GUIProcessorController extends GUIBaseController {
 		} else {
 			from = (long) 0;
 		}
-		Long count = countProcessors(processorName, processorVersion);
+		Long count = countProcessors(processorId, processorName, processorVersion);
 		if (recordTo != null && from != null && recordTo > from) {
 			to = recordTo;
 		} else if (from != null) {
@@ -112,7 +113,7 @@ public class GUIProcessorController extends GUIBaseController {
 		Long page = (from / pageSize) + 1;
 
 		// Perform the HTTP request to retrieve processors
-		ResponseSpec responseSpec = get(processorName, processorVersion, from, to);
+		ResponseSpec responseSpec = get(processorId, processorName, processorVersion, from, to);
 		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> processors = new ArrayList<>();
 		// Subscribe to the response
@@ -177,7 +178,7 @@ public class GUIProcessorController extends GUIBaseController {
 		return deferredResult;
 	}
 
-	private Long countProcessors(String processorName, String processorVersion) {
+	private Long countProcessors(Long processorId, String processorName, String processorVersion) {
 
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
@@ -185,11 +186,19 @@ public class GUIProcessorController extends GUIBaseController {
 		String divider = "?";
 		uriString += divider + "mission=" + mission;
 		divider = "&";
-		if (processorName != null) {
-			uriString += divider + "processorName=" + processorName;
+		if (processorId != null) {
+			uriString += divider + "id=" + processorId;
+			divider = "&";
 		}
-		if (processorVersion != null) {
-			uriString += divider + "processorVersion=" + processorVersion;
+		if (processorName != null && !processorName.isEmpty()) {
+			String queryParam = processorName.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "processorName=" + queryParam;
+			divider = "&";
+		}
+		if (processorVersion != null && !processorVersion.isEmpty()) {
+			String queryParam = processorVersion.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "processorVersion=" + queryParam;
+			divider = "&";
 		}
 		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
 		Long result = (long) -1;
@@ -371,7 +380,7 @@ public class GUIProcessorController extends GUIBaseController {
 	 * @param processorName the processor name
 	 * @return a Mono containing the HTTP response
 	 */
-	private ResponseSpec get(String processorName, String processorVersion, Long from, Long to) {
+	private ResponseSpec get(Long processorId, String processorName, String processorVersion, Long from, Long to) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -382,11 +391,19 @@ public class GUIProcessorController extends GUIBaseController {
 		String divider = "?";
 		uriString += divider + "mission=" + mission;
 		divider = "&";
-		if (processorName != null) {
-			uriString += divider + "processorName=" + processorName;
+		if (processorId != null) {
+			uriString += divider + "id=" + processorId;
+			divider = "&";
 		}
-		if (processorVersion != null) {
-			uriString += divider + "processorVersion=" + processorVersion;
+		if (processorName != null && !processorName.isEmpty()) {
+			String queryParam = processorName.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "processorName=" + queryParam;
+			divider = "&";
+		}
+		if (processorVersion != null && !processorVersion.isEmpty()) {
+			String queryParam = processorVersion.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "processorVersion=" + queryParam;
+			divider = "&";
 		}
 		if (from != null) {
 			uriString += divider + "recordFrom=" + from;
@@ -461,13 +478,13 @@ public class GUIProcessorController extends GUIBaseController {
 			if (sortby.equals("name")) {
 				sortString = "orderBy=identifier " + direction;
 			} else if (sortby.equals("processorname")) {
-				sortString = "orderBy=processor.processorClass.processorName " + direction + ",processor.processorVersion ASC";
+				sortString = "orderBy=processor.processorClass.processorName " + direction + ",processor.processorVersion " + direction;
 			} else if (sortby.equals("processorversion")) {
-				sortString = "orderBy=processor.processorVersion " + direction + ",processor.processorClass.processorName ASC";
+				sortString = "orderBy=processor.processorVersion " + direction + ",processor.processorClass.processorName " + direction;
 			} else if (sortby.equals("configuration")) {
-				sortString = "orderBy=configuration.configurationVersion " + direction + ",processor.processorClass.processorName ASC";
+				sortString = "orderBy=configuration.configurationVersion " + direction + ",processor.processorClass.processorName " + direction;
 			} else if (sortby.equals("enabled")) {
-				sortString = "orderBy=enabled " + direction + ",processor.processorClass.processorName ASC";
+				sortString = "orderBy=enabled " + direction + ",processor.processorClass.processorName " + direction;
 			}
 		}
 		uriString += divider + sortString;

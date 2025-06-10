@@ -78,8 +78,8 @@ public class ProcessorClassManager {
 	 * @throws NoResultException if no processor classes matching the given search criteria could be found
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public List<RestProcessorClass> getProcessorClasses(String mission, String processorName, Integer recordFrom, Integer recordTo, 
-			String[] orderBy)
+	public List<RestProcessorClass> getProcessorClasses(String mission, Long id, String[] productClasses, String processorName, 
+			Integer recordFrom, Integer recordTo, String[] orderBy)
 			throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getProcessorClasses({}, {})", mission, processorName);
@@ -101,7 +101,7 @@ public class ProcessorClassManager {
 			recordTo = Integer.MAX_VALUE;
 		}
 
-		Long numberOfResults = Long.parseLong(this.countProcessorClasses(mission, processorName));
+		Long numberOfResults = Long.parseLong(this.countProcessorClasses(mission, id, productClasses, processorName));
 		Integer maxResults = config.getMaxResults();
 		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults && (numberOfResults - recordFrom) > maxResults) {
 			throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS,
@@ -109,18 +109,7 @@ public class ProcessorClassManager {
 		}
 
 		List<RestProcessorClass> result = new ArrayList<>();
-
-		String jpqlQuery = "select pc from ProcessorClass pc where mission.code = :missionCode";
-		if (null != processorName) {
-			jpqlQuery += " and processorName = :processorName";
-		}
-
-		jpqlQuery += " order by processorName ASC";
-		Query query = em.createQuery(jpqlQuery);
-		query.setParameter("missionCode", mission);
-		if (null != processorName) {
-			query.setParameter("processorName", processorName);
-		}
+		Query query = createProcessorClassesQuery(mission, id, productClasses, processorName, false);
 		query.setFirstResult(recordFrom);
 		query.setMaxResults(recordTo - recordFrom);
 
@@ -138,6 +127,53 @@ public class ProcessorClassManager {
 		return result;
 	}
 
+	private Query createProcessorClassesQuery(String mission, Long id, String[] productClasses, String processorName, Boolean count) {
+		String join = "";
+		if (null != productClasses && 0 < productClasses.length) {
+			join = "join ProductClass rpc on rpc.processorClass = pc ";
+		}
+		String jpqlQuery = "";
+		if (count) {
+			jpqlQuery = "select count(pc) from ProcessorClass pc ";
+		} else {
+			jpqlQuery = "select pc from ProcessorClass pc ";
+		}
+		jpqlQuery += " where pc.mission.code = :missionCode";
+		if (null != processorName) {
+			jpqlQuery += " and pc.processorName = :processorName";
+		}
+		if (null != id && id > 0) {
+			jpqlQuery += " and pc.id = :id";
+		}
+		if (null != productClasses && 0 < productClasses.length) {
+			jpqlQuery += " and pc in (select rpc.processorClass from ProductClass rpc where rpc.mission.code = :missionCode1 "
+					+ " and rpc.productType in (";
+			for (int i = 0; i < productClasses.length; ++i) {
+				if (0 < i)
+					jpqlQuery += ", ";
+				jpqlQuery += ":productClasses" + i;
+			}
+			jpqlQuery += ")) ";
+			
+		}
+
+		jpqlQuery += " group by pc, pc.processorName order by pc.processorName ASC";
+		Query query = em.createQuery(jpqlQuery);
+		query.setParameter("missionCode", mission);
+		if (null != id && id > 0) {
+			query.setParameter("id", id);
+		}
+		if (null != processorName) {
+			query.setParameter("processorName", processorName);
+		}
+		if (null != productClasses && 0 < productClasses.length) {
+			query.setParameter("missionCode1", mission);
+			for (int i = 0; i < productClasses.length; ++i) {
+				query.setParameter("productClasses" + i, productClasses[i]);
+			}
+		}
+		return query;
+	}
 	/**
 	 * Create a new processor class
 	 *
@@ -418,7 +454,7 @@ public class ProcessorClassManager {
 	 * @return the number of processor classes found as string
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public String countProcessorClasses(String missionCode, String processorName) {
+	public String countProcessorClasses(String missionCode, Long id, String[] productClasses, String processorName) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> countProcessorClasses({}, {})", missionCode, processorName);
 
@@ -433,21 +469,17 @@ public class ProcessorClassManager {
 		}
 
 		// build query
-		CriteriaBuilder cb = em.getCriteriaBuilder();
-		CriteriaQuery<Long> query = cb.createQuery(Long.class);
-		Root<ProcessorClass> rootProcessorClass = query.from(ProcessorClass.class);
 
-		List<Predicate> predicates = new ArrayList<>();
+		Query query = createProcessorClassesQuery(missionCode, id, productClasses, processorName, true);
 
-		predicates.add(cb.equal(rootProcessorClass.get("mission").get("code"), missionCode));
-		if (processorName != null)
-			predicates.add(cb.equal(rootProcessorClass.get("processorName"), processorName));
-		query.select(cb.count(rootProcessorClass)).where(predicates.toArray(new Predicate[predicates.size()]));
+		Object resultObject = query.getSingleResult();
+		if (resultObject instanceof Long) {
+			return ((Long) resultObject).toString();
+		}
+		if (resultObject instanceof String) {
+			return (String) resultObject;
+		}
 
-		Long result = em.createQuery(query).getSingleResult();
-
-		logger.log(ProcessorMgrMessage.CONFIGURATIONS_COUNTED, result, missionCode, processorName);
-
-		return result.toString();
+		return "0";
 	}
 }

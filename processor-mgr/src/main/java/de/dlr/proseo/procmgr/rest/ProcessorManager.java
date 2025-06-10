@@ -151,7 +151,7 @@ public class ProcessorManager {
 	 * @throws NoResultException if no processors matching the given search criteria could be found
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public List<RestProcessor> getProcessors(String mission, String processorName, String processorVersion, Integer recordFrom,
+	public List<RestProcessor> getProcessors(Long id, String mission, String processorName, String processorVersion, Integer recordFrom,
 			Integer recordTo, String[] orderBy) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getProcessors({}, {}, {})", mission, processorName, processorVersion);
@@ -174,7 +174,7 @@ public class ProcessorManager {
 		}
 
 		List<RestProcessor> result = new ArrayList<>();
-		Query query = createProcossorsQuery(mission, processorName, processorVersion, recordFrom,
+		Query query = createProcossorsQuery(id, mission, processorName, processorVersion, recordFrom,
 			recordTo, orderBy, false);
 
 		for (Object resultObject : query.getResultList()) {
@@ -497,7 +497,7 @@ public class ProcessorManager {
 	 * @return the number of processors found as string
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public String countProcessors(String missionCode, String processorName, String processorVersion) {
+	public String countProcessors(Long id, String missionCode, String processorName, String processorVersion) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> countProcessors({}, {}, {})", missionCode, processorName, processorVersion);
 
@@ -512,7 +512,7 @@ public class ProcessorManager {
 		}
 
 		// build query
-		Query query = createProcossorsQuery(missionCode, processorName, processorVersion, null,
+		Query query = createProcossorsQuery(id, missionCode, processorName, processorVersion, null,
 				null, null, true);
 		Object resultObject = query.getSingleResult();
 		if (resultObject instanceof Long) {
@@ -524,7 +524,7 @@ public class ProcessorManager {
 		return "0";
 	}
 	
-	private Query createProcossorsQuery(String mission, String processorName, String processorVersion, Integer recordFrom,
+	private Query createProcossorsQuery(Long id, String mission, String processorName, String processorVersion, Integer recordFrom,
 			Integer recordTo, String[] orderBy, Boolean count) {
 
 		if (logger.isTraceEnabled())
@@ -540,11 +540,14 @@ public class ProcessorManager {
 			jpqlQuery = "select p from Processor p where processorClass.mission.code = :missionCode";
 		}
 
+		if (null != id) {
+			jpqlQuery += " and id = :id";
+		}
 		if (null != processorName) {
-			jpqlQuery += " and processorClass.processorName = :processorName";
+			jpqlQuery += " and upper(processorClass.processorName) like :processorName";
 		}
 		if (null != processorVersion) {
-			jpqlQuery += " and processorVersion = :processorVersion";
+			jpqlQuery += " and upper(processorVersion) like :processorVersion";
 		}
 		// order by
 		if (null != orderBy && 0 < orderBy.length) {
@@ -559,6 +562,9 @@ public class ProcessorManager {
 		
 		Query query = em.createQuery(jpqlQuery);
 		query.setParameter("missionCode", mission);
+		if (null != id) {
+			query.setParameter("id", id);
+		}
 		if (null != processorName) {
 			query.setParameter("processorName", processorName);
 		}
