@@ -54,7 +54,7 @@ public class ProcessorService {
 	 * @return a ResponseSpec; providing access to the response status and headers, and as well as methods to consume the response
 	 *         body
 	 */
-	public ResponseSpec get(String processorName, String productClass, Long from, Long to) {
+	public ResponseSpec get(Long pId, String processorName, String productClass, Long from, Long to) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -66,6 +66,9 @@ public class ProcessorService {
 
 		if (mission != null && !mission.isBlank()) {
 			uriBuilder.queryParam("mission", mission.trim());
+		}
+		if (pId != null && pId > 0) {
+			uriBuilder.queryParam("id", pId);
 		}
 		if (processorName != null && !processorName.isBlank()) {
 			String queryParam = processorName.replaceAll("[*]", "%").trim().toUpperCase();

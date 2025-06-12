@@ -233,7 +233,7 @@
         readPageHTMLParams();
         pid = getURLParam('pid');
         pname = getURLParam('processorclassName');
-        productClass = getURLParam('productClass');
+        productClass = getURLParams('productClass');
     }
 
     // set selection in filter parameters
@@ -278,7 +278,7 @@
 	                divider = "&";
 	            }
               if (parameterHasValue(pname)) {
-                  url = url + divider + "processorclassName=" + pname;
+                  url = url + divider + "processorclassName=" + pname.toString().trim();
                   divider = "&";
               }
               if (productClass != null) {

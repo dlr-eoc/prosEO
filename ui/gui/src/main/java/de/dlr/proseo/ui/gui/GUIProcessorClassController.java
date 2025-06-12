@@ -29,7 +29,6 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
-import de.dlr.proseo.ui.gui.service.MapComparator;
 import de.dlr.proseo.ui.gui.service.ProcessorService;
 
 /**
@@ -77,6 +76,7 @@ public class GUIProcessorClassController extends GUIBaseController {
 	 */
 	@GetMapping("/processor-class-show/get")
 	public DeferredResult<String> getProcessorClassName(
+			@RequestParam(required = false, value = "pid") Long pId,
 			@RequestParam(required = false, value = "processorclassName") String processorClassName,
 			@RequestParam(required = false, value = "productClass") String productClass,
 			Long recordFrom, Long recordTo, Model model) {
@@ -90,7 +90,7 @@ public class GUIProcessorClassController extends GUIBaseController {
 		} else {
 			from = (long) 0;
 		}
-		Long count = countProcessorClasses(processorClassName, productClass);
+		Long count = countProcessorClasses(pId, processorClassName, productClass);
 		if (recordTo != null && from != null && recordTo > from) {
 			to = recordTo;
 		} else if (from != null) {
@@ -102,7 +102,7 @@ public class GUIProcessorClassController extends GUIBaseController {
 		Long page = (from / pageSize) + 1;
 
 		// Perform the HTTP request to retrieve processor classes
-		ResponseSpec responseSpec = processorService.get(processorClassName, productClass, from, to);
+		ResponseSpec responseSpec = processorService.get(pId, processorClassName, productClass, from, to);
 		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> procs = new ArrayList<>();
 
@@ -174,7 +174,7 @@ public class GUIProcessorClassController extends GUIBaseController {
 		return ResponseEntity.status(ex.getRawStatusCode()).body(ex.getResponseBodyAsString());
 	}
 
-	private Long countProcessorClasses(String processorName, String productClass) {
+	private Long countProcessorClasses(Long pId, String processorName, String productClass) {
 
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
@@ -183,6 +183,10 @@ public class GUIProcessorClassController extends GUIBaseController {
 		String uriString = "/processorclasses/count";
 		if (mission != null && !mission.isEmpty()) {
 			uriString += divider + "mission=" + mission;
+			divider = "&";
+		}
+		if (pId != null && pId > 0) {
+			uriString += divider + "id=" + pId;
 			divider = "&";
 		}
 		if (processorName != null && !processorName.isEmpty()) {

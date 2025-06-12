@@ -140,7 +140,7 @@ public class ProcessorClassManager {
 		}
 		jpqlQuery += " where pc.mission.code = :missionCode";
 		if (null != processorName) {
-			jpqlQuery += " and pc.processorName = :processorName";
+			jpqlQuery += "  and upper(processorName) like :processorName";;
 		}
 		if (null != id && id > 0) {
 			jpqlQuery += " and pc.id = :id";
@@ -156,8 +156,9 @@ public class ProcessorClassManager {
 			jpqlQuery += ")) ";
 			
 		}
-
-		jpqlQuery += " group by pc, pc.processorName order by pc.processorName ASC";
+		if (!count) {
+			jpqlQuery += " group by pc, pc.processorName order by pc.processorName ASC";
+		}
 		Query query = em.createQuery(jpqlQuery);
 		query.setParameter("missionCode", mission);
 		if (null != id && id > 0) {
