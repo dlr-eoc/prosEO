@@ -1,331 +1,507 @@
-Example: Setting up a Single-Node Processing Facility
-=====================================================
+# Deploying prosEO on a Single Node for Testing and Development
 
-Assuming there is a MacOS or Windows machine available with sufficient RAM and disk capacity, a single-node setup
-can be achieved for both the prosEO Control Instance and the prosEO Processing Facility. The following
-example shows a setup based on MacOS.
+For development and testing purposes, a single-node setup can be used to host both the **prosEO Control Instance** (brain) and the **prosEO Processing Facility** (hands) , provided the machine has sufficient RAM and disk capacity.
 
-Note that for the following to work the target machine must have unrestricted access
-to resources on the Internet.
+## Pre-requisites
 
+The target machine must have unrestricted access to the internet and meet the following minimum hardware requirements:
 
-## Step 1: Install Docker and Kubernetes
+- **CPU:** At least 4 cores
+- **RAM:** At least 16 GB
+- **Disk:** At least 200 GB of available storage
 
-Download Docker Desktop from <https://www.docker.com/products/docker-desktop>.
+## Disclaimer
 
-Install and run Docker Desktop and activate Kubernetes as described here:
-- For MacOS:
-  1) Install and run: <https://docs.docker.com/desktop/install/mac-install/>
-  2) Activate Kubernetes: <https://docs.docker.com/desktop/settings/mac/#kubernetes>
-- For Windows:
-  1) Install and run: <https://docs.docker.com/desktop/install/windows-install/>
-  2) Activate Kubernetes: <https://docs.docker.com/desktop/settings/windows/#kubernetes>
+> **Caution:** Only execute the following commands if you fully understand their purpose and the current state of your system. This guide assumes a single-node (VM) deployment on **Rocky Linux 9.5 (Blue Onyx)** using:
 
-*Caution:* Configurations and version numbers below are based on Docker Desktop 4.15.0 and Kubernetes 1.25.2. Newer (or older) 
-versions may require modified approaches.
+- Docker: v28.1.1
+- Docker Compose: v2.35.1
+- Minikube: v1.35.0
+- Java: OpenJDK 17.0.15 (LTS)
+- Maven: Apache Maven 3.6.3 (Red Hat 3.6.3-22)
+- Raml2html: 7.8.0
 
-Deploy and run a Kubernetes dashboard:
-1) Download the recommended dashboard configuration from 
-   <https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml>
-   to a new file `kubernetes/kubernetes-dashboard.yaml` (a copy may already be provided in the `kubernetes` directory).
-2) Run the dashboard:
-   ```
-   kubectl apply -f kubernetes/kubernetes-dashboard.yaml
-   nohup kubectl proxy --accept-hosts='.*' &
-   ```
-3) Create a user with administrative privileges for the dashboard as per
-   <https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md> and (from Kubernetes 1.22)
-   an associated secret as per 
-   <https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#manually-create-a-long-lived-api-token-for-a-serviceaccount>
-   (you may use the configuration provided in the file `kubernetes/kube-admin.yaml`).
-4) Retrieve the secret token for this user:
-   ```
-   kubectl describe secret/$(kubectl get secrets --namespace kube-system | grep admin-user | cut -d ' ' -f 1) --namespace kube-system
-   ```
-5) Access the dashboard at <http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/>
-   using the token retrieved in step 4.
+> **Note:** Minikube currently does **not** fully support the Podman container engine. (Tested versions: Podman 5.4.0, Podman-Compose 1.0.6)
 
+# 1. Prepare Your Environment
 
-## Step 2: Build the prosEO Control Instance
+This tutorial shows how to deploy prosEO on a single node using [Docker](https://www.docker.com/) as the container engine and [Minikube](https://minikube.sigs.k8s.io/docs/) as the [Kubernetes](https://kubernetes.io/) cluster manager.
 
-First build prosEO from source code as described in `<project root>/README.md`. Thereafter, create specific images for your
-environment using the Dockerfiles and `application.yml.template` files in `proseo-images/proseo-components/*`. Create files
-named `application.yml` by copying from `application.yml.template` and adapt the following items:
+> **Note:** The commands below may change over time. Refer to the official documentation when installing the required dependencies.
 
-- In all files: `spring.datasource.password` (must match the PostgreSQL password used in step 3 below)
-- In `proseo-ingestor/application.yml` and `proseo-storage-mgr/application.yml`: `proseo.storageManager.secret`
-  (must be the same in both files)
-- In `proseo-planner/application.yml`: `proseo.wrapper.password` (must match the setting for the `wrapper` user in the
-  mission configuration)
+## 1.1 Define Storage Locations
 
-Other parameters (esp. logging settings) may be changed as deemed suitable for the installation at hand.
+To keep the environment organized, it's recommended to define custom storage paths for Docker and prosEO-related data. This is especially important if your system's default Docker storage location has space constraints.
 
-When all `application.yml` files have been created, for each component a configured image (containing the update `application.yml`
-file) must be created and pushed to the Docker registry to be used:
-```
-export REGISTRY_URL=<your preferred prosEO repository, e. g. localhost:5000>
+**Recommended directories:**
+- `/docker-storage`: Docker's data directory
+- `/registry-bind-mount`: For the local Docker registry
+- `/proseo-data`: Stores prosEO-generated data and logs
+- `/proseo-shared-storage`: Shared input/output directory used by the prosEO storage manager microservice
 
-cd proseo-images/proseo-components
+Create the directories:
 
-for component in proseo-* ; do
-  cd $component
-
-  COMPONENT_NAME=$(cat Dockerfile | grep FROM | awk '{gsub("localhost:5000/",""); split($0,a," "); print a[2]}')
-  TAGGED_NAME=${REGISTRY_URL}/${COMPONENT_NAME}-proseo
-
-  docker build -t ${TAGGED_NAME}
-  docker push ${TAGGED_NAME}
-
-  cd -
-done
-```
-The `proseo-images` directory may be populated with convenience scripts for these steps (see `proseo-images/README.md`).
-
-
-## Step 3: Deploy the prosEO Control Instance
-
-Create the prosEO Control Instance from a `docker-compose.yml` file. A working `docker-compose.yml.template`
-file is provided in the `proseo-images` directory, a simplified file restricted to the core microservices
-would look something like the following:
-```yaml
-version: '3'
-services:
-  proseo-db:
-    image: ${REGISTRY_URL}/postgres:11-proseo
-    environment:
-      - POSTGRES_DB=proseo
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-  proseo-ingestor:
-    image: ${REGISTRY_URL}/proseo-ingestor:${VERSION}-proseo
-    ports:
-      - "8081:8080"
-    depends_on:
-      - proseo-db
-  proseo-order-mgr:
-    image: ${REGISTRY_URL}/proseo-order-mgr:${VERSION}-proseo
-    ports:
-      - "8082:8080"
-    depends_on:
-      - proseo-db
-  proseo-prodplanner:
-    image: ${REGISTRY_URL}/proseo-planner:${VERSION}-proseo
-    ports:
-      - "8083:8080"
-    depends_on:
-      - proseo-db
-  proseo-processor-mgr:
-    image: ${REGISTRY_URL}/proseo-processor-mgr:${VERSION}-proseo
-    ports:
-      - "8084:8080"
-    depends_on:
-      - proseo-db
-  proseo-productclass-mgr:
-    image: ${REGISTRY_URL}/proseo-productclass-mgr:${VERSION}-proseo
-    ports:
-      - "8085:8080"
-    depends_on:
-      - proseo-db
-  proseo-user-mgr:
-    image: ${REGISTRY_URL}/proseo-user-mgr:${VERSION}-proseo
-    ports:
-      - "8086:8080"
-    depends_on:
-      - proseo-db
-  proseo-facility-mgr:
-    image: ${REGISTRY_URL}/proseo-facility-mgr:${VERSION}-proseo
-    ports:
-      - "8087:8080"
-    depends_on:
-      - proseo-db
-  proseo-gui:
-    image: ${REGISTRY_URL}/proseo-ui-gui:${VERSION}-proseo
-    ports:
-      - "8088:8080"
-    depends_on:
-      - proseo-ingestor
-      - proseo-prodplanner
-      - proseo-order-mgr
-      - proseo-processor-mgr
-      - proseo-productclass-mgr
-  proseo-api-prip:
-    image: ${REGISTRY_URL}/proseo-api-prip:${VERSION}-proseo
-    platform: linux/amd64
-    ports:
-      - "8089:8080"
-    depends_on:
-      - proseo-user-mgr
-      - proseo-ingestor
-  proseo-api-odip:
-    image: ${REGISTRY_URL}/proseo-api-odip:${VERSION}-proseo
-    platform: linux/amd64
-    ports:
-      - "8090:8080"
-    depends_on:
-      - proseo-user-mgr
-      - proseo-ingestor
-      - proseo-order-mgr
-      - proseo-prodplanner
-  proseo-notification:
-    image: ${REGISTRY_URL}/proseo-notification:${VERSION}-proseo
-    platform: linux/amd64
-    ports:
-      - "8091:8080"
-  proseo-aip-client:
-    image: ${REGISTRY_URL}/proseo-aip-client:${VERSION}-proseo
-    platform: linux/amd64
-    volumes:
-      - <local path to transfer directory>:/proseo/transfer
-    ports:
-      - "8092:8080"
-  proseo-archive-mgr:
-    image: ${REGISTRY_URL}/proseo-archive-mgr:${VERSION}-proseo
-    platform: linux/amd64
-    ports:
-      - "8093:8080"
-  proseo-pgadmin:
-    image: dpage/pgadmin4
-    environment:
-      - PGADMIN_ENABLE_TLS=True
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
-    volumes:
-      - "./proseo-components/proseo-pgadmin/certs/proseo-selfsigned.crt:/certs/server.cert"
-      - "./proseo-components/proseo-pgadmin/certs/proseo-selfsigned.key:/certs/server.key"
-    ports:
-      - "8443:443"
-    depends_on:
-      - proseo-db
-volumes:
-  pgdata:
-networks:
-  default:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.177.57.0/24
-```
-
-To run the Control Instance issue the following commands from the directory, where the
-`docker-compose.yml` file resides:
-```
-export REGISTRY_URL=<your preferred prosEO repository>
-export VERSION=<the prosEO version to install>
-export POSTGRES_PASSWORD=<password for postgres user as configured in prosEO images, see step 2 above>
-export PGADMIN_EMAIL=<email address for pgAdmin authentication>
-export PGADMIN_PASSWORD=<some password for pgAdmin authentication>
-docker-compose -p proseo up -d
-```
-
-The `proseo-images` directory may be populated with convenience scripts for these steps (see `proseo-images/README.md`).
-
-After starting the prosEO control instance two SQL scripts need to be executed. First login to the proseo-db container,
-either via the Docker Desktop dashboard (and the command `su - postgres`) or from the command line:
-```
-docker exec -it proseo-proseo-db-1 su - postgres
-```
-From within the container (which should now show a prompt like `postgres@...:~$ `) execute the SQL command files provided:
-```
-psql proseo </proseo/create_view_product_processing_facilities.sql
-psql proseo </proseo/populate_mon_service_state.sql
-```
-
-
-# Step 4: Install and Run the prosEO Command Line Interface
-
-A build of prosEO will create the JAR file for the Command Line Interface in `<project root>/ui/cli/target`. A sample
-`application.yml` file can be found at `<project root>/ui/cli/src/main/resources`. In this file the hostnames point to
-`localhost`, which is where the Docker Desktop engine is presumably located.
-
-Start the CLI with `java -jar proseo-ui-cli.jar`. On a newly created prosEO Control Instance
-a default user `sysadm` (password `sysadm`) is provided.
-
-To initialize the prosEO instance, run the following CLI commands:
-```
-login
-# at the prompt enter the username and password as given above
-password
-# at the prompts enter and repeat the new password for the user
-exit
-```
-
-
-# Step 5: Create a Planner Account
-
-For the Production Planner, an account with access to the Kubernetes API is required. The account must be able to read general
-information about the Kubernetes cluster (health state, node list) and to fully manage jobs and pods (create, update, list, delete).
-Create a file `planner-account.yaml` like this (or use the file in `<project root>/deploy/hands/kubernetes`):
-```
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: proseo-planner
-  namespace: default
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: proseo-planner-role
-  # namespace not applicable for ClusterRole
-rules:
-- apiGroups: [""]
-  resources: ["nodes"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: [""]
-  resources: ["events"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
-- apiGroups: [""]
-  resources: ["pods/log"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: ["batch"]
-  resources: ["jobs"]
-  verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: proseo-planner-binding
-  # namespace not applicable for ClusterRoleBinding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: proseo-planner-role
-subjects:
-- kind: ServiceAccount
-  name: proseo-planner
-  namespace: default
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: proseo-planner-secret
-  namespace: default
-  annotations:
-    kubernetes.io/service-account.name: proseo-planner
-type: kubernetes.io/service-account-token
-```
-
-Create the account, role and role binding, and retrieve the authentication token for the new account:
 ```bash
-kubectl apply -f ../deploy/hands/kubernetes/planner-account.yaml
+mkdir -p /path-to-your-desired-location/{docker-storage,proseo-data,proseo-shared-storage,registry-bind-mount}
+```
+
+Ensure **Minikube** has read/write access to the shared storage directory:
+
+```bash
+chmod 757 -R /path-to-your-desired-location/proseo-shared-storage/
+```
+
+## 1.2 Install Docker
+
+On your Rocky Linux machine:
+
+```bash
+sudo dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+
+sudo dnf -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+### 1.2.1 Configure Docker Storage
+
+If you're using a custom storage path, configure Docker accordingly:
+
+1. **Stop Docker:**
+
+```bash
+sudo systemctl stop docker.service
+sudo systemctl stop docker.socket
+```
+
+2. **Edit `/etc/docker/daemon.json`**:
+
+```json
+{
+  "insecure-registries": ["localhost:5000"],
+  "data-root": "/path-to-your-desired-location/docker-storage"
+}
+```
+
+- `insecure-registries`: Allows local registries without SSL (used by prosEO for local images).
+- `data-root`: Redirects Docker's default data directory to the custom storage path.
+
+3. **Restart Docker:**
+
+```bash
+sudo systemctl start docker.socket
+sudo systemctl start docker.service
+sudo systemctl status docker.socket
+sudo systemctl --no-pager status docker.service
+```
+
+### 1.2.2 Set Up a Local Docker Registry
+
+prosEO requires a container registry for storing its microservices:
+
+```bash
+docker run -d -p 5000:5000 --restart always \
+  -e STORAGE_DELETE_ENABLED=true \
+  -v /path-to-your-desired-location/registry-bind-mount:/var/lib/registry \
+  --name registry registry:2
+```
+
+The `-e` and `-v` options are recommended for better maintenance of the local registry.
+
+**Optional test:**
+
+```bash
+docker image pull openjdk:11
+docker image tag openjdk:11 localhost:5000/openjdk:11
+docker image push localhost:5000/openjdk:11
+docker image rm openjdk:11
+docker image rm localhost:5000/openjdk:11
+docker image pull localhost:5000/openjdk:11
+```
+
+## 1.3 Install kubectl
+
+Follow the official instructions:  
+[Install kubectl on Linux](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
+
+## 1.4 Install Minikube
+
+Download and install the latest release:  
+[Install Minikube](https://minikube.sigs.k8s.io/docs/start/)
+
+### 1.4.1 Start Minikube
+
+Launch Minikube with suitable resource limits and mount the shared storage directory:
+
+```bash
+minikube start \
+  --cpus 6 \
+  --memory 32GB \
+  --driver docker \
+  --mount=true \
+  --mount-string='/path-to-your-desired-location/proseo-shared-storage:/minikube-host' \
+  --insecure-registry="host.minikube.internal:5000"
+```
+
+This command allocates sufficient resources to Minikube for running prosEO (6 CPUs and 32 GB of memory), though you should adjust these values based on your hardware capacity. The driver is set to docker. The mount option is enabled, and the mount-string points to the storage location specified in [[01-projects/proseo/work-packages/integration-wp/02-setup-k8s-cluster/deploy-single-node/single-node-deployment-guide#1.1 Storage location|step 1.1]] of this guide. If you haven't set a storage location, please specify an appropriate path. Note that the important part is the path inside Minikube (e.g., /minikube-host). Lastly, the --insecure-registry option must be set to allow Minikube access to the local container registry where prosEO’s images are stored and required for processing.
+
+If you encounter the error:  
+**`StartHost failed... failed to acquire bootstrap client lock: bad file descriptor`**,  
+try setting a custom Minikube home:
+
+```bash
+minikube stop
+minikube delete --all --purge
+echo 'export MINIKUBE_HOME=/path-to-your-desired-location' >> ~/.bashrc
+source ~/.bashrc
+minikube start ... # use the full command again
+```
+
+### 1.4.2 Configure Minikube DNS
+
+To enable proper networking between Kubernetes services and prosEO:
+
+1. Get Minikube IP:
+
+```bash
+minikube ip
+```
+
+2. Add entry to `/etc/hosts`:
+
+```bash
+echo "192.168.49.2    host.minikube.internal" | sudo tee -a /etc/hosts
+```
+
+_Replace the IP with your actual Minikube IP._
+
+
+## 1.5 Install Java and Maven
+
+Install Maven (OpenJDK will be installed as a dependency):
+
+```bash
+sudo dnf install maven
+```
+
+Verify that your user can run the `mvn` command. If not, check the PATH and permissions.
+
+### 1.5.1 Configure Maven
+
+Add the following to your Maven settings file (usually at `$HOME/.m2/settings.xml`):
+
+```xml
+<settings>
+  <profiles>
+    <profile>
+      <id>dev-local</id><!-- or any other id you prefer -->
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <docker.registry>localhost:5000</docker.registry>
+      </properties>
+    </profile>
+  </profiles>
+</settings>
+```
+
+If you already have a `properties` element in your settings file, it is of course sufficient to just add the `docker.registry` property there.
+
+## 1.6 Install raml2html
+
+Install Node.js and `raml2html`:
+
+```bash
+sudo dnf install nodejs
+npm i -g raml2html
+```
+
+Verify that your user can run `raml2html`. If not, inspect the install location and permissions.
+
+# 2. Build the prosEO Control Instance
+
+## 2.1 Clone the Git Repository
+
+To begin, clone the prosEO repository from GitHub by running the following command:
+
+```bash
+git clone https://github.com/dlr-eoc/prosEO.git
+```
+
+## 2.2 Compile Code Without Running Unit Tests
+
+Navigate into the cloned prosEO directory and compile the project, skipping the unit tests for faster execution:
+
+```bash
+cd prosEO/
+mvn clean install -Dmaven.test.skip=true
+```
+## 2.3 Set Up Kubernetes Configuration
+
+Locate the Kubernetes configuration file that was automatically generated when you [[01-projects/proseo/work-packages/integration-wp/02-setup-k8s-cluster/deploy-single-node/single-node-deployment-guide#1.4.1 Start Minikube|started]] Minikube. This file is typically located in the `${HOME}` directory. Once you find the configuration file, copy it into the `proseo-planner` component directory:
+
+```bash
+cd <proseo-root>/deploy-single-node/proseo-images/proseo-components
+cp ~/.kube/config proseo-planner/kube_config
+
+```
+
+The `proseo-planner` microservice requires access to the Kubernetes API to manage processing orders, plan, and release tasks. Ensure that the Kubernetes configuration file is in the correct location (`${HOME}/.kube/config`). If it's not, revisit the Minikube setup process to ensure the configuration is properly created.
+
+## 2.4 Set Environment Variables
+
+Next, change to the `proseo-images` directory located within the prosEO repository:
+
+```bash
+cd <proseo-root>/deploy-single-node/proseo-images
+```
+
+Once you're in this directory, you need to create the `.env` file by copying the template: 
+
+```bash
+cp .env.template .env
+```
+
+> **Note**: Ensure that the new file is named `.env`, as this file contains essential environment variable configurations.
+
+Open the `.env` file in your preferred text editor and update the necessary environment variables. These variables typically define usernames, passwords, and service connection details for proper functionality:
+
+```bash
+vim .env
+```
+
+Once the variables are updated (such as access credentials), export them to your environment using the following command:
+
+```bash
+export $(cat .env | xargs)
+```
+
+>**Note**: To verify that the environment variables were successfully set, you can check the system environment by running:
+
+```bash
+env
+```
+
+This command will display all the environment variables, including the ones you just configured.
+
+## 2.5 Build Components
+
+Finally, to build all the prosEO microservices, run the `build-components.sh` script. This script automates the process of building the necessary components for prosEO.
+
+```bash
+cd <proseo-root>/deploy-single-node/proseo-images/proseo-components
+./build-components.sh
+```
+
+> **Note**: For a detailed explanation of the steps performed by this script, refer to the comments inside the script file itself.
+
+
+# 3. Deploy the prosEO Control Instance
+
+To deploy the prosEO Control Instance, simply navigate to the directory containing the appropriate Docker Compose file and start the containers.
+
+```bash
+cd <proseo-root>/deploy-single-node/proseo-images/
+docker compose -p proseo up -d
+```
+
+This command will launch all containers in **detached mode**.  After execution, verify that all containers are running stably and are not in a restart loop. You can use the `watch` command to continuously monitor container status:
+
+```bash
+watch docker container ls -a
+```
+
+Make sure all containers show a healthy and stable status. If any container repeatedly restarts or fails, consult the logs with:
+
+```bash
+docker container logs <container-name>
+```
+
+## 3.1 Connect Kubernetes and Docker Networks
+
+Since the **prosEO Control Instance** (the "brain") and the **prosEO Processing Facility** (the "hands") operate in separate network environments, they must be connected to enable communication and allow the scheduling of processing orders.
+
+To bridge these networks, connect the relevant prosEO containers to the `minikube` network using the following Docker commands:
+
+```bash
+docker network connect minikube proseo-proseo-ingestor-1
+docker network connect minikube proseo-proseo-prodplanner-1
+```
+
+
+# 4. Set Up ProsEO
+## 4.1 create view and populate table -  containerized proseo database
+
+After starting the prosEO Control Instance, two SQL scripts must be executed to finalize the database setup. These commands are run inside the `proseo-proseo-db-1` container and initialize essential components required for prosEO to operate correctly.
+
+- The first script creates a database view that presents information about the available product processing facilities.
+- The second script populates monitoring-related data used to track the service state of prosEO components.
+
+```bash
+$ docker container exec proseo-proseo-db-1 psql -U postgres -d proseo -f /proseo/create_view_product_processing_facilities.sql
+
+$ docker container exec proseo-proseo-db-1 psql -U postgres -d proseo -f /proseo/populate_mon_service_state.sql
+```
+
+Ensure both commands complete successfully without errors to confirm the system is properly initialized.
+
+## 4.2 Create Planner Account
+
+To enable the **prosEO Production Planner** to manage workloads, an account with appropriate permissions to the Kubernetes API is required. This account must have read access to general cluster information (e.g., health status, node list) and full control over Kubernetes Jobs and Pods (create, list, update, delete).
+
+A predefined Kubernetes configuration file is provided for this purpose. It includes the necessary definitions for the user account, ClusterRole, ClusterRoleBinding, and secrets.
+
+Apply the configuration using the following command:
+
+```bash
+kubectl apply -f <proseo-root>/deploy-single-node/kubernetes/planner-account-single-node.yaml
+```
+
+Once applied, retrieve the authentication token for the new `proseo-planner` account:
+
+```bash
 kubectl describe secret/$(kubectl get secrets | grep proseo-planner | cut -d ' ' -f 1)
 ```
 
+> [!info] Info:
+> Save the token securely. It will be required by the planner service to authenticate with the Kubernetes cluster.
 
-# Step 6: Configure a prosEO Mission
+# 5. Configure a ProseO Mission
 
-You are now ready to configure your first mission. See `<project root>/samples/testdata` for
-an example, which works with the prosEO Sample Processor. Test input data and processing orders
-can be generated as described below using the script `deploy-single-node/ptm-config/create_data_local.sh`.
-Note that this script deliberately creates an order set, which does not result in a fully completed
-processing (one job will remain in `RELEASED` state due to missing input, this requires generation
-of an additional order to process from L0 to L2A/B data - this is left as an exercise to the reader ;-) ).
+A _mission_ in ProseO refers to a specific configuration that includes key components such as users, satellites, orbits, and processor workflows. At this stage, the system is ready to configure its first mission.
+
+An example configuration script is provided at:
+
+```
+<proseo-root>/samples/testdata/configure_proseo_test_mission.pl
+```
+
+## 5.1 Adapt Access Credentials
+
+This Perl script sets up the **ProseO Test Mission (PTM)** using the **ProseO Sample Processor**. It configures the following components:
+
+- Default values    
+- Users for managing the Control Instance    
+- A basic satellite mission setup, including the spacecraft and orbit parameters    
+- Processor classes, versions, configurations, and associated workflows
+
+> [!info] Note 
+> It is crucial to ensure that the values for `PROSEO_WRAPPER_USER` and `PROSEO_WRAPPER_PWD` in the script match those defined in your environment variables. These are initially configured in [[01-projects/proseo/work-packages/integration-wp/02-setup-k8s-cluster/deploy-single-node/single-node-deployment-guide#2.4 Set Environment Variables|Chapter 2.4: Set Environment Variables]].
+
+In particular, update the following lines in the `configure_proseo_test_mission.pl` script (lines 114 and 115):
+
+```perl
+113    {
+114        name => 'wrapper',        # Update this to match your environment variable PROSEO_WRAPPER_USER
+115        pwd => 'ingest&Plan',     # Update this to match your environment variable PROSEO_WRAPPER_PWD
+116        authorities => [],
+117        groups => [ 'internalprocessor' ]
+118    }
+
+```
+
+
+## 5.2 Updating the Processor Wrapper Location
+
+In addition to setting mission parameters, it is necessary to **adapt the Docker image URL** for the `processor-wrapper` within the Perl script. This wrapper is responsible for executing the processor (i.e., the algorithm that processes satellite data to generate specific output products).
+
+Both the test _processor_ and the corresponding _processor-wrapper_ were already created during the ProseO build process—when the system was compiled and the Docker images for ProseO components were generated.
+
+At this stage, you only need to **specify where the relevant Docker images are stored**, so that **Minikube (Kubernetes)** can pull them and deploy the necessary pods during processing.
+
+Update the Docker image path from:
+
+```
+localhost:5000/proseo-sample-wrapper:1.1.0
+```
+
+to
+
+```
+host.minikube.internal:5000/proseo-sample-wrapper:1.1.0
+```
+
+This change is required in three specific places—lines **162**, **171**, and **180** of the `configure_proseo_test_mission.pl` script:
+
+```perl
+154	my @processors = (
+155	    {
+156	    	processorName => 'PTML1B', 
+157	    	processorVersion => '1.1.0',
+158	    	configuredProcessors => [ 'PTML1B_1.1.0_OPER_2020-03-25' ],
+159	    	tasks => [ 
+160	    	   { taskName => 'ptm_l01b', taskVersion => '1.1.0' }
+161	    	],
+162	    	dockerImage => 'localhost:5000/proseo-sample-wrapper:1.1.0'
+163	    },
+164	    {
+165	        processorName => 'PTML2', 
+166	        processorVersion => '1.1.0',
+167	        configuredProcessors => [ 'PTML2_1.1.0_OPER_2020-03-25' ],
+168	        tasks => [ 
+169	           { taskName => 'ptm_l2', taskVersion => '1.1.0' }
+170	        ],
+171	        dockerImage => 'localhost:5000/proseo-sample-wrapper:1.1.0'
+172	    },
+173	    {
+174	        processorName => 'PTML3', 
+175	        processorVersion => '1.1.0',
+176	        configuredProcessors => [ 'PTML3_1.1.0_OPER_2020-03-25' ],
+177	        tasks => [ 
+178	           { taskName => 'ptm_l3', taskVersion => '1.1.0' }
+179	        ],
+180	        dockerImage => 'localhost:5000/proseo-sample-wrapper:1.1.0'
+181	    }
+182	);
+```
+
+`localhost` inside the Kubernetes cluster does **not** refer to your host machine. Replacing it with `host.minikube.internal` allows Minikube pods to correctly resolve and pull the Docker image from the host system's registry.
+
+This ensures seamless integration between the mission configuration and the processing environment.
+
+Finally, execute the perl script
+```bash
+cd <proseo-root>/samples/testdata/
+./configure_proseo_test_mission.pl
+```
+
+## 5.1 Create the Mission
+
+Once you've executed the Perl script from the previous step, a file named `cli_script.txt` is generated. This file contains the necessary instructions to create the mission using the **prosEO CLI tool**.
+
+Before this file can be used and to automate this process, you must first **authenticate** with the prosEO CLI.  This is done by creating a credentials file containing the system administrator's username and password.
+
+```bash
+cd <proseo-root>/samples/testdata/
+cat >> sysadm.cred
+sysadm
+sysadm
+
+# ( to exit from 'cat standard input' just press crtl+c )
+```
+
+This creates a file named `sysadm.cred` containing the default **username and password** for the prosEO system administrator—both set to `sysadm` by default.
+
+It is important to set the permission of `sysadm.cred` to only read and write for the owner.
+
+```bash
+cd <proseo-root>/samples/testdata/
+chmod 600 sysadm.cred
+```
+
+You can change the administrator password later using the prosEO CLI if needed.
+
+With the credentials in place and `cli_script.txt` generated, run the prosEO CLI to create the mission. Ensure you're still in the `testdata` directory:
+
+```bash
+$ cd <proseo-root>/samples/testdata/
+$ java -jar <proseo-root>/ui/cli/target/proseo-ui-cli.jar < cli_script.txt
+```
+
+After successful execution, the **prosEO mission will be created**, and the system will be ready to handle satellite data processing as configured.
+
+>[!info] Info
+> Another way to verify that the mission creation was successful is to check whether the **prosEO user interface** is accessible.  To do this, open a web browser and navigate to `http://<ip-or-domain>:8088`
+> If the UI loads correctly, it indicates that the prosEO UI is up and running. The **PTM** should now be displayed in the drop-down menu **Missionen**. You should now be able to login in the UI for the PTM mission with the proseo username and password defined in the `configure_proseo_test_mission.pl` (i.e. username=proseo and password=proseo.789)
 
 
 # Step 7: Setup the Kubernetes Cluster with Storage Manager and File System Cache
