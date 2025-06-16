@@ -50,7 +50,7 @@ for component in proseo-*; do
     TAGGED_NAME="${REGISTRY_URL}/${COMPONENT_NAME}-proseo"
     
     # Build and push the Docker image
-    podman build -t "${TAGGED_NAME}" .
+    docker build -t "${TAGGED_NAME}" .
     if [ $? -ne 0 ]; then
         echo "Error: Docker build failed for ${component}."
         # cd - || exit
@@ -59,7 +59,7 @@ for component in proseo-*; do
     fi
 
     # Push the Docker image to the registry
-    podman push "${TAGGED_NAME}"
+    docker push "${TAGGED_NAME}"
     if [ $? -ne 0 ]; then
         echo "Error: Docker push failed for $TAGGED_NAME."
         # cd - || exit
