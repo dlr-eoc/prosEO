@@ -12,10 +12,10 @@ proseo:
       sourcePath: /proseo/data/source
 
     s3:
-      s3AccessKey: XXXX
-      s3SecretAccessKey: XXXX
-      s3EndPoint: https://my.cloud.provider.com 
-      s3Region: eu-de
+      s3AccessKey: ${PROSEO_S3_KEY}
+      s3SecretAccessKey: ${PROSEO_S3_SECRET}
+      s3EndPoint: ${PROSEO_S3_URL}
+      s3Region: ${PROSEO_S3_REGION}
       s3MaxNumberOfBuckets: 50
       s3DefaultBucket: proseo-backend
       s3DefaultEndPoint: false
@@ -44,7 +44,7 @@ proseo:
         maxRequestAttempts: 3 
       
       # Shared secret for download token
-      secret: MyVeryLongSecretMustBeAtLeast32Bytes
+      secret: ${PROSEO_STORAGE_MANAGER_SECRET}
        
       # File cache control
       cache:

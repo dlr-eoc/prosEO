@@ -6,8 +6,8 @@ spring:
         properties.hibernate.jdbc.time_zone: UTC
     datasource:
         url: jdbc:postgresql://proseo-db:5432/proseo
-        username: postgres
-        password: ********
+        username: ${POSTGRES_USER}
+        password: ${POSTGRES_PWD}
         hikari.transaction-isolation: TRANSACTION_SERIALIZABLE
 logging:
     file:
@@ -23,8 +23,8 @@ management:
 proseo:
     wrapper:
         # User and password for wrapper callbacks
-        user: wrapper
-        password: somepw
+        user: ${PROSEO_WRAPPER_USER}
+        password: ${PROSEO_WRAPPER_PWD}
     productionPlanner:
         # Callback URL for wrapper
         url: http://host.docker.internal:8083/proseo/planner/v0.1
@@ -58,9 +58,9 @@ proseo:
         # URL for AIP client
         url: http://proseo-aip-client:8080/proseo/api/aip-client/v0.1
         # user without mission prefix for AIP client, user has to be defined in all missions of system
-        user: user
+        user: ${PROSEO_AIP_USER}
         # password for AIP client
-        password: password
+        password: ${PROSEO_AIP_USER}
     posix:
         workerMountPoint: /proseo/data
 
