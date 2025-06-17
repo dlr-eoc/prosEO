@@ -28,8 +28,8 @@ fi
 # -------------------------
 # Tag Storage Manager image
 # -------------------------
-docker tag localhost:5000/proseo-storage-mgr:$STORAGE_MGR_TAG localhost:5000/proseo-storage-mgr:latest
-docker push localhost:5000/proseo-storage-mgr:latest
+# docker tag localhost:5000/proseo-storage-mgr:$STORAGE_MGR_TAG localhost:5000/proseo-storage-mgr:latest
+# docker push localhost:5000/proseo-storage-mgr:latest
 
 # -------------------------
 # Prepare local file server
@@ -39,13 +39,13 @@ docker push localhost:5000/proseo-storage-mgr:latest
 # Update the path in the Persistent Volume configuration
 # sed "s|%SHARED_STORAGE_PATH%|${SHARED_STORAGE_PATH}|" <../kubernetes/nfs-pv.yaml.template >../kubernetes/nfs-pv.yaml
 # Create the Persistent Volumes
-kubectl apply -f ../kubernetes/nfs-pv.yaml
+# kubectl apply -f ../kubernetes/nfs-pv.yaml
 
 # Simulated "internal" POSIX storage area (must correspond to the specs in nfs-server-local.yaml)
-mkdir -p ${SHARED_STORAGE_PATH}/proseodata
+# mkdir -p ${SHARED_STORAGE_PATH}/proseodata
 
 # Simulated "external" mount point for product ingestion (must correspond to the specs in nfs-server-local.yaml)
-mkdir -p ${SHARED_STORAGE_PATH}/transfer
+# mkdir -p ${SHARED_STORAGE_PATH}/transfer
 
 # Ingest mount point in storage manager (must correspond to the specs in storage-mgr-local.yaml)
 INGEST_MOUNT_POINT=/proseo/transfer
@@ -139,7 +139,7 @@ cp -pR ${INGEST_DIR}/* ${SHARED_STORAGE_PATH}/transfer/
 # -------------------------
 
 # Create the storage manager in the local Minikube
-kubectl apply -f ../kubernetes/storage-mgr-local.yaml
+# kubectl apply -f ../kubernetes/storage-mgr-local.yaml
 
 
 # -------------------------
@@ -157,7 +157,7 @@ kubectl apply -f ../kubernetes/storage-mgr-local.yaml
 
 # Create a new CLI command script
 CLI_SCRIPT=cli_data_script.txt
-echo "" >$CLI_SCRIPT
+echo "login --identFile=proseo.cred PTM" >$CLI_SCRIPT
 
 # Create a processing facility
 cat >$TEST_DATA_DIR/facility.json <<EOF
