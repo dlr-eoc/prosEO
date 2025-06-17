@@ -1,6 +1,6 @@
 # Deploying prosEO on a Single Node for Testing and Development
 
-For development and testing purposes, a single-node setup can be used to host both the **prosEO Control Instance** (brain) and the **prosEO Processing Facility** (hands) , provided the machine has sufficient RAM and disk capacity.
+For development and testing purposes, a single-node setup can be used to host both the **prosEO Control Instance** (the "brain") and the **prosEO Processing Facility** (the "hands") , provided the machine has sufficient RAM and disk capacity.
 
 ## Pre-requisites
 
@@ -10,17 +10,15 @@ The target machine must have unrestricted access to the internet and meet the fo
 - **RAM:** At least 16 GB
 - **Disk:** At least 200 GB of available storage
 
-## Disclaimer
-
-> **Caution:** Only execute the following commands if you fully understand their purpose and the current state of your system. This guide assumes a single-node (VM) deployment on **Rocky Linux 9.5 (Blue Onyx)** using:
-
-- Docker: v28.1.1
-- Docker Compose: v2.35.1
-- Minikube: v1.35.0
-- Java: OpenJDK 17.0.15 (LTS)
-- Maven: Apache Maven 3.6.3 (Red Hat 3.6.3-22)
-- Raml2html: 7.8.0
-
+> **Disclaimer**: Only execute the following commands if you fully understand their purpose and the current state of your system. This guide assumes a single-node (VM) deployment on **Rocky Linux 9.5 (Blue Onyx)** using:
+> 
+> - Docker: v28.1.1
+> - Docker Compose: v2.35.1
+> - Minikube: v1.35.0
+> - Java: OpenJDK 17.0.15 (LTS)
+> - Maven: Apache Maven 3.6.3 (Red Hat 3.6.3-22)
+> - Raml2html: 7.8.0
+> 
 > **Note:** Minikube currently does **not** fully support the Podman container engine. (Tested versions: Podman 5.4.0, Podman-Compose 1.0.6)
 
 # 1. Prepare Your Environment
@@ -31,9 +29,9 @@ This tutorial shows how to deploy prosEO on a single node using [Docker](https:/
 
 ## 1.1 Define Storage Locations
 
-To keep the environment organized, it's recommended to define custom storage paths for Docker and prosEO-related data. This is especially important if your system's default Docker storage location has space constraints.
+To keep the environment organized and avoid storage constrains, define custom storage paths for Docker and prosEO related data. This is especially important if your system's default Docker storage location has space constraints.
 
-**Recommended directories:**
+**Naming directories:**
 - `/docker-storage`: Docker's data directory
 - `/registry-bind-mount`: For the local Docker registry
 - `/proseo-data`: Stores prosEO-generated data and logs
@@ -42,13 +40,13 @@ To keep the environment organized, it's recommended to define custom storage pat
 Create the directories:
 
 ```bash
-mkdir -p /path-to-your-desired-location/{docker-storage,proseo-data,proseo-shared-storage,registry-bind-mount}
+mkdir -p /data/proseo-environment/{docker-storage,proseo-data,proseo-shared-storage,registry-bind-mount}
 ```
 
-Ensure **Minikube** has read/write access to the shared storage directory:
+Ensure the directory `proseo-shared-storage` has read/write access to *others*. *Minikube* has to have permissions to get and store data from this directory:
 
 ```bash
-chmod 757 -R /path-to-your-desired-location/proseo-shared-storage/
+chmod 757 -R /data/proseo-environment/proseo-shared-storage/
 ```
 
 ## 1.2 Install Docker
@@ -77,7 +75,7 @@ sudo systemctl stop docker.socket
 ```json
 {
   "insecure-registries": ["localhost:5000"],
-  "data-root": "/path-to-your-desired-location/docker-storage"
+  "data-root": "/data/proseo-environment/docker-storage"
 }
 ```
 
@@ -100,22 +98,39 @@ prosEO requires a container registry for storing its microservices:
 ```bash
 docker run -d -p 5000:5000 --restart always \
   -e STORAGE_DELETE_ENABLED=true \
-  -v /path-to-your-desired-location/registry-bind-mount:/var/lib/registry \
+  -v /data/proseo-environment/registry-bind-mount:/var/lib/registry \
   --name registry registry:2
 ```
 
 The `-e` and `-v` options are recommended for better maintenance of the local registry.
 
-**Optional test:**
+#### **Optional Test: Verifying Local Docker Registry Workflow**
+
+In this test, the process begins by downloading a fresh `openjdk:11` image from [Docker Hub](https://hub.docker.com/). The image is then retagged and stored in the local Docker registry for further validation. To ensure that the image is pulled exclusively from the local registry, all Docker Hub images are removed, and the image is re-pulled from the local registry. The goal is for all commands to execute successfully, demonstrating the proper flow of images within the local registry.
+
+ **Steps**:
 
 ```bash
+# 1. Pull the openjdk:11 image from Docker Hub:
 docker image pull openjdk:11
+
+# 2. Retag the image for storage in the local registry (localhost:5000):
 docker image tag openjdk:11 localhost:5000/openjdk:11
+
+# 3. Push the retagged image to the local registry:
 docker image push localhost:5000/openjdk:11
+
+# 4. Remove the original openjdk:11 image from Docker Hub:
 docker image rm openjdk:11
+
+# 5. Remove the localhost:5000/openjdk:11 image from the local registry (optional, for cleanup):
 docker image rm localhost:5000/openjdk:11
+
+# 6. Pull the image again from the local registry:
 docker image pull localhost:5000/openjdk:11
 ```
+
+By following these steps, you can ensure that Docker is pulling the image from the local registry, confirming that the image flow from Hub to local registry and back works as expected.
 
 ## 1.3 Install kubectl
 
@@ -137,11 +152,11 @@ minikube start \
   --memory 32GB \
   --driver docker \
   --mount=true \
-  --mount-string='/path-to-your-desired-location/proseo-shared-storage:/minikube-host' \
+  --mount-string='/data/proseo-environment/proseo-shared-storage:/minikube-host' \
   --insecure-registry="host.minikube.internal:5000"
 ```
 
-This command allocates sufficient resources to Minikube for running prosEO (6 CPUs and 32 GB of memory), though you should adjust these values based on your hardware capacity. The driver is set to docker. The mount option is enabled, and the mount-string points to the storage location specified in [[01-projects/proseo/work-packages/integration-wp/02-setup-k8s-cluster/deploy-single-node/single-node-deployment-guide#1.1 Storage location|step 1.1]] of this guide. If you haven't set a storage location, please specify an appropriate path. Note that the important part is the path inside Minikube (e.g., /minikube-host). Lastly, the --insecure-registry option must be set to allow Minikube access to the local container registry where prosEO’s images are stored and required for processing.
+This command allocates sufficient resources to Minikube for running prosEO (6 CPUs and 32 GB of memory), though you should adjust these values based on your hardware capacity. The driver is set to docker. The mount option is enabled, and the mount-string points to the storage location specified in **Chapter 1.1** of this guide. Please specify an appropriate path for your case accordingly. Note that the important part is the path inside Minikube (e.g., /minikube-host). Lastly, the --insecure-registry option must be set to allow Minikube access to the local container registry where prosEO’s images are stored and required for processing.
 
 If you encounter the error:  
 **`StartHost failed... failed to acquire bootstrap client lock: bad file descriptor`**,  
@@ -150,7 +165,7 @@ try setting a custom Minikube home:
 ```bash
 minikube stop
 minikube delete --all --purge
-echo 'export MINIKUBE_HOME=/path-to-your-desired-location' >> ~/.bashrc
+echo 'export MINIKUBE_HOME=/data/proseo-environment' >> ~/.bashrc
 source ~/.bashrc
 minikube start ... # use the full command again
 ```
@@ -227,6 +242,8 @@ To begin, clone the prosEO repository from GitHub by running the following comma
 git clone https://github.com/dlr-eoc/prosEO.git
 ```
 
+For now on the string `<proseo-root>` will refer to the prosEO github root directory.
+
 ## 2.2 Compile Code Without Running Unit Tests
 
 Navigate into the cloned prosEO directory and compile the project, skipping the unit tests for faster execution:
@@ -237,7 +254,7 @@ mvn clean install -Dmaven.test.skip=true
 ```
 ## 2.3 Set Up Kubernetes Configuration
 
-Locate the Kubernetes configuration file that was automatically generated when you [[01-projects/proseo/work-packages/integration-wp/02-setup-k8s-cluster/deploy-single-node/single-node-deployment-guide#1.4.1 Start Minikube|started]] Minikube. This file is typically located in the `${HOME}` directory. Once you find the configuration file, copy it into the `proseo-planner` component directory:
+Locate the Kubernetes configuration file that was automatically generated when you started (i.e. **Chapter 1.4.1**) Minikube. This file is typically located in the `${HOME}` directory. Once you find the configuration file, copy it into the `proseo-planner` component directory:
 
 ```bash
 cd <proseo-root>/deploy-single-node/proseo-images/proseo-components
@@ -310,7 +327,7 @@ This command will launch all containers in **detached mode**.  After execution, 
 watch docker container ls -a
 ```
 
-Make sure all containers show a healthy and stable status. If any container repeatedly restarts or fails, consult the logs with:
+> **Note**: Make sure all containers show a healthy and stable status. If any container repeatedly restarts or fails, consult the logs with:
 
 ```bash
 docker container logs <container-name>
@@ -344,7 +361,56 @@ $ docker container exec proseo-proseo-db-1 psql -U postgres -d proseo -f /proseo
 
 Ensure both commands complete successfully without errors to confirm the system is properly initialized.
 
-## 4.2 Create Planner Account
+
+## 4.2 Install and Run the prosEO Command Line Interface
+
+After building prosEO, the Command Line Interface (CLI) JAR file will be created at:
+
+```
+<proseo-root>/ui/cli/target/proseo-ui-cli.jar
+```
+
+
+This CLI tool can be executed on any system. However, for it to work, you need to define a configuration file named `application.yaml` in the **same directory** where the `proseo-ui-cli.jar` file resides.
+
+A sample `application.yaml` file is available here:
+
+```
+<proseo-root>/ui/cli/src/main/resources/application.yaml
+```
+
+By default, this sample configuration points to `localhost` for all prosEO component hostnames, assuming Docker is running locally. If your setup uses different hosts or URLs, you must update the configuration file accordingly.
+
+### Running the prosEO CLI
+
+1. Navigate to the directory containing `proseo-ui-cli.jar` and your `application.yaml` file.
+2. Start the CLI using the command:
+```bash
+java -jar proseo-ui-cli.jar
+```
+
+On a fresh prosEO Control instance, a default user is provided:
+
+- **Username:** `sysadm`
+- **Password:** `sysadm`
+
+### Initializing the prosEO Instance
+
+Run the following commands in the CLI to log in and change the default password:
+
+```bash
+login
+# When prompted, enter the username and password above
+
+password
+# Enter the new password twice when prompted
+
+exit
+```
+
+> **Tip:** Use the `help` command within the prosEO CLI to explore available utilities and commands.
+
+## 4.3 Create Planner Account
 
 To enable the **prosEO Production Planner** to manage workloads, an account with appropriate permissions to the Kubernetes API is required. This account must have read access to general cluster information (e.g., health status, node list) and full control over Kubernetes Jobs and Pods (create, list, update, delete).
 
@@ -362,10 +428,9 @@ Once applied, retrieve the authentication token for the new `proseo-planner` acc
 kubectl describe secret/$(kubectl get secrets | grep proseo-planner | cut -d ' ' -f 1)
 ```
 
-> [!info] Info:
-> Save the token securely. It will be required by the planner service to authenticate with the Kubernetes cluster.
+> **Info**: Save the token securely. It will be required by the planner service to authenticate with the Kubernetes cluster.
 
-# 5. Configure a ProseO Mission
+# 5. Configure a ProsEO Mission
 
 A _mission_ in ProseO refers to a specific configuration that includes key components such as users, satellites, orbits, and processor workflows. At this stage, the system is ready to configure its first mission.
 
@@ -384,8 +449,7 @@ This Perl script sets up the **ProseO Test Mission (PTM)** using the **ProseO Sa
 - A basic satellite mission setup, including the spacecraft and orbit parameters    
 - Processor classes, versions, configurations, and associated workflows
 
-> [!info] Note 
-> It is crucial to ensure that the values for `PROSEO_WRAPPER_USER` and `PROSEO_WRAPPER_PWD` in the script match those defined in your environment variables. These are initially configured in [[01-projects/proseo/work-packages/integration-wp/02-setup-k8s-cluster/deploy-single-node/single-node-deployment-guide#2.4 Set Environment Variables|Chapter 2.4: Set Environment Variables]].
+> **Note**: It is crucial to ensure that the values for `PROSEO_WRAPPER_USER` and `PROSEO_WRAPPER_PWD` in the script match those defined in your environment variables. These are initially configured in **Chapter 2.4**.
 
 In particular, update the following lines in the `configure_proseo_test_mission.pl` script (lines 114 and 115):
 
@@ -404,7 +468,7 @@ In particular, update the following lines in the `configure_proseo_test_mission.
 
 In addition to setting mission parameters, it is necessary to **adapt the Docker image URL** for the `processor-wrapper` within the Perl script. This wrapper is responsible for executing the processor (i.e., the algorithm that processes satellite data to generate specific output products).
 
-Both the test _processor_ and the corresponding _processor-wrapper_ were already created during the ProseO build process—when the system was compiled and the Docker images for ProseO components were generated.
+Both the test _processor_ and the corresponding _processor-wrapper_ were already created during the ProseO build process (**Chapter 2.2**) when the system was compiled and the Docker images for ProseO components were generated.
 
 At this stage, you only need to **specify where the relevant Docker images are stored**, so that **Minikube (Kubernetes)** can pull them and deploy the necessary pods during processing.
 
@@ -499,85 +563,251 @@ $ java -jar <proseo-root>/ui/cli/target/proseo-ui-cli.jar < cli_script.txt
 
 After successful execution, the **prosEO mission will be created**, and the system will be ready to handle satellite data processing as configured.
 
->[!info] Info
-> Another way to verify that the mission creation was successful is to check whether the **prosEO user interface** is accessible.  To do this, open a web browser and navigate to `http://<ip-or-domain>:8088`
+> **Info**: Another way to verify that the mission creation was successful is to check whether the **prosEO user interface (UI)** is accessible.  To do this, open a web browser and navigate to `http://<ip-or-domain>:8088`
+> 
 > If the UI loads correctly, it indicates that the prosEO UI is up and running. The **PTM** should now be displayed in the drop-down menu **Missionen**. You should now be able to login in the UI for the PTM mission with the proseo username and password defined in the `configure_proseo_test_mission.pl` (i.e. username=proseo and password=proseo.789)
 
 
-# Step 7: Setup the Kubernetes Cluster with Storage Manager and File System Cache
+# 6. Setup the Kubernetes Cluster with Storage Manager and File System Cache
 
-For the single-node installation we will use POSIX as the default file system, thereby
-avoiding the overhead of running an S3 object storage provider. We will not make Alluxio
-available either. This does not place any functional constraints on prosEO, since these
-storage options are meant for externally provided installations only, where online storage
-is expensive (a multi-TB USB-3 disk on a laptop is not).
+Input and output data must be ingested and stored in a designated location, which needs to be configured beforehand. For the single-node installation, we will use POSIX as the default file system. This choice avoids the overhead of running an S3 object storage provider and does not impose any functional limitations on prosEO. Note that storage options like S3 are intended primarily for externally provided installations where online storage costs are significant.
 
-This step requires configuring a "host path" file server to serve the common storage area
-to both the Storage Manager and the Processing Engine. Note that Docker Desktop imposes certain
-*restrictions on the location of the data:*
-- On macOS, the directory must be located below any of the paths available for sharing *by default* (e. g. `/Users`),
-  using other paths (e. g. `/opt`) does not work, even if they are declared as sharable in the Docker Desktop
-  preferences.
-- On Windows it appears that the paths to use are somewhat weird, see for example this discussion: 
-  <https://stackoverflow.com/questions/54073794/kubernetes-persistent-volume-on-docker-desktop-windows>
-  (However this has not been verified by the author of this documentation)
+This step involves configuring a _hostPath_ file server to provide a shared storage area accessible by both the Storage Manager and the Processing Engine. Keep in mind that Docker enforces restrictions on where data can be stored. Please verify your system’s storage constraints; **Chapter 1.1** in this guide covers this topic in detail.
 
-Assuming a configuration as in the files given in the current (example) directory, the following commands must be issued
-(also available as part of the script `ptm-config/create_data_local.sh`):
-```sh
-# Define actual path to storage area
-SHARED_STORAGE_PATH=<path on Docker Desktop host>
+## 6.1 Set up Kubernetes Persistent Volumes
 
-# Update the path in the Persistent Volume configuration
-sed "s|%SHARED_STORAGE_PATH%|${SHARED_STORAGE_PATH}|" <nfs-pv.yaml.template >nfs-pv.yaml
+Kubernetes uses the `PersistentVolume` resource to locate input data and store processed output. Inside the directory:
 
-# Create the Persistent Volumes
-kubectl apply -f nfs-pv.yaml
-
-# Create the export directories
-mkdir -p ${SHARED_STORAGE_PATH}/proseodata ${SHARED_STORAGE_PATH}/transfer
+```bash
+<proseo-root>/deploy-single-node/kubernetes
 ```
 
-Locate the file `storage-mgr.yaml` and edit the image reference (around line 20) to point
-to your preferred prosEO repository, then create the Storage Manager:
+you will find a file named `nfs-pv.yaml.template`. Copy this file and rename it as `nfs-pv.yaml`:
+
+```bash
+cd <proseo-root>/deploy-single-node/kubernetes
+cp nfs-pv.yaml.template nfs-pv.yaml
+vim nfs-pv.yaml
 ```
-kubectl apply -f storage-mgr-local.yaml
+
+Using your preferred text editor, update the hostPath entries for proseo-ingest-share and proseo-nfs-share. Specifically, edit lines **16** and **24**. Since we are using Minikube as our Kubernetes cluster, set the paths to /minikube-host/.... The relevant section should look like this:
+
+```yaml
+..	...
+15	  hostPath:
+16	    path: /minikube-host/transfer
+17	    type: Directory
+..	...
+23	  hostPath:
+24	    path: /minikube-host/proseodata
+25	    type: Directory
+..	...
+```
+
+## 6.2 Configure Storage Manager Volumes
+
+Among other responsabilities, the prosEO Storage Manager is in charge of transferring processed data from the local file system to an external location (such as an S3 bucket). For this test setup, a POSIX filesystem serves as both the internal and external storage.
+
+In the directory:
+```bash
+<proseo-root>/deploy-single-node/kubernetes
+```
+locate the file `storage-mgr-local.yaml`'
+
+It is important to confirm that the Storage Manager container’s image reference is correct. Open the file and check line **51**, it should specify host.minikube.internal as the image registry, like this:
+
+```yaml
+..    ...
+49    containers:
+50      - name: proseo-storage-mgr
+51        image: host.minikube.internal:5000/proseo-storage-mgr:latest
+52        resources:
+53          requests:
+..    ...
+```
+
+## 6.3 Deploy Kubernetes Resources 
+
+After configuring the persistent volumes (`nfs-pv.yaml`) and the Storage Manager manifest (`storage-mgr-local.yaml`), you can deploy these resources to your Minikube cluster by running the provided script `create_k8s_resources.sh`:
+
+```bash
+cd <proseo-root>/deploy-single-node/kubernetes
+
+# ./create_k8s_resources.sh <Storage Manager image tag> <path to shared storage>"
+
+./create_k8s_resources.sh 1.1.0-proseo /data/proseo-environment/proseo-shared-storage
+```
+
+This script performs the following steps:
+
+1. Builds a new container image for the prosEO Storage Manager service, tagging it as `latest`.
+2. Creates the necessary directories where the data will be stored.
+3. Applies the persistent volume definitions and deploys the Storage Manager pod to the Kubernetes cluster.
+
+
+# 7. Using ProsEO
+
+## 7.1 Set Up the Processing Facility, Prepare Data, and Create Processing Orders
+
+The processing facility (the "hands") is already set up, but it must now be recognized and configured within the prosEO Control instance (the "brain"). This is the final configuration step before processing any data. Afterward, test data will be ingested, and processing orders will be created.
+
+A helper script is provided to generate the necessary configuration files (in JSON format). These files are then passed as standard input to the prosEO CLI. The script is located at:
+
+```
+cd <proseo-root>/deploy-single-node/ptm-config
 ```
 
 
-# Step 8: Configure the prosEO Processing Facility
+### What the Script Does
 
-Unless the configuration script was used create a JSON file `facility.json` describing the local processing facility:
-```
-{
-  "name" : "localhost",
-  "description" : "Docker Desktop Minikube",
-  "processingEngineUrl" : "http://host.docker.internal:8001/",
-  "processingEngineToken" : "<authentication token from step 5>",
-  "storageManagerUrl" : "http://host.docker.internal:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1",
-  "localStorageManagerUrl" : "http://storage-mgr-service.default.svc.cluster.local:3000/proseo/storage-mgr/v0.1",
-  "storageManagerUser" : "smuser",
-  "storageManagerPassword" : "smpwd-but-that-would-be-way-too-short",
-  "defaultStorageType" : "POSIX"
-}
-```
+The `create_data_local.sh` script performs the following tasks:
+1. Creates dynamic test data for the prosEO test mission:
+    - Level 0 (L0) input data
+    - IERSB AUX input data
+2. Sets up a processing facility in Docker Desktop
+3. Creates processing orders for:
+    - Level 2 (L2) products
+    - Level 3 (L3) products
 
-On the prosEO CLI issue the following commands:
-```
-login PTM
-# at the prompt enter your username and password
-facility create --file=facility.json
+
+### Running the Script
+
+Execute the script by providing the Storage Manager image tag and the path to the shared storage:
+
+```bash
+# ./create_data_local.sh <Storage Manager image tag> <path to shared storage>"
+
+./create_data_local.sh 1.1.0-proseo /data/proseo-environment/proseo-shared-storage
 ```
 
-If the facility was already created using the configuration script, the authentication token must be updated:
-```
-facility update localhost processingEngineToken=<authentication token from step 5>
+
+After running the script, a new directory named `testproducts` is created inside `ptm-config`. Its contents include:
+
+```bash
+testproducts/
+├── facility.json              # Configuration for creating the facility
+├── ingest_products.json       # Configuration for ingesting products
+├── order_l2.json              # Processing order for L2 data
+├── order_l3.json              # Processing order for L3 data
+└── transfer/
+    └── import/
+        └── products/          # L0 products to be ingested
+            ├── bulletinb-380.xml
+            ├── PTM_L0_20191104090000_20191104094500_20191104120000.RAW
+            ├── ...
+
 ```
 
-In any case the processing facility will be in DISABLED state, so it must be "started" to be available for use:
+> **Note:** The script intentionally creates an incomplete processing setup—one job will remain in the `RELEASED` state due to missing inputs. Creating an additional processing order (from L0 to L2A/B) is left as an exercise for the reader.
 
+
+
+### 7.1.1 Add the Kubernetes Secret to the Facility Configuration
+
+After the script runs, the `facility.json` file still lacks the required Kubernetes secret token. To inject it:
+
+```bash
+cd <proseo-root>/deploy-single-node/ptm-config/testproducts
+
+TOKEN=$(kubectl get secret proseo-planner-secret -o jsonpath="{.data.token}" | base64 --decode)
+
+sed -i "s/TBD/${TOKEN}/" facility.json
 ```
-facility update localhost facilityState=STOPPED
-facility update localhost facilityState=STARTING
-facility update localhost facilityState=RUNNING
+
+This command retrieves the Kubernetes secret, decodes it, and replaces the placeholder (`TBD`) in the `facility.json` file with the actual token.
+
+
+
+## 7.2 Create the Facility, Ingest Data, and Submit Processing Orders
+
+At this stage, you have two options:
+
+### 7.2.1 Option 1: Manual Execution (Recommended for Debugging)
+
+Log in to the prosEO CLI using the `proseo` user and the `PTM` mission. This approach lets you run each command step-by-step for easier troubleshooting.
+
+```bash
+cd /users/cort_ni/prosEO/deploy-single-node/ptm-config
+java -jar /users/cort_ni/prosEO/ui/cli/target/proseo-ui-cli.jar
 ```
+
+CLI Login
+
+```bash
+                            /-------\ /-------\
+                            |       | |       |
+                            |   /---/ |  /-\  |
+                            |   \---\ |  | |  |   prosEO - The Processing System for Earth Observation Data
+/----\ /----\ /----\ /----\ |       | |  | |  |
+|    | |    | |    | | ---+ |   /---/ |  | |  |   Command Line Interface  (v1.1.0)
+| {} | |  /-/ | {} | \    \ |   \---\ |  \-/  |
+|    | |  |   |    | +--- | |       | |       |   :: Spring Boot ::       (v2.7.18)
+|  /-/ \--/   \----/ \----/ \-------/ \-------/
+|  |
+\--/
+
+(Type "help" for help.)
+
+prosEO (no mission)> login PTM
+Username (empty field cancels): proseo
+Password for user proseo: prosEO.789
+(I6094) User proseo logged in
+prosEO (PTM)>
+```
+
+Execute the Following CLI Commands:
+
+```bash
+prosEO (PTM)> facility create --file=testproducts/facility.json
+prosEO (PTM)> ingest --file=testproducts/ingest_products.json localhost
+prosEO (PTM)> order create --file=testproducts/order_l2.json
+prosEO (PTM)> order create --file=testproducts/order_l3.json
+```
+
+### 7.2.2 Option 2: Automated Execution
+
+You can also automate the process using a credentials file and a prewritten CLI script.
+
+#### Step 1: Create the Credentials File
+
+This step is the similar as described in **Chapter 5.1**.
+
+```bash
+cd <proseo-root>/deploy-single-node/ptm-config
+
+cat >> proseo.cred
+proseo
+prosEO.789
+
+# ( to exit from 'cat standard input' just press crtl+c )
+```
+
+#### Step 2: Run the CLI with the Script
+
+Assuming the file `cli_data_script.txt` was successfully generated by executing the `create_data_local.sh` script and with the `proseo` access credentials in place, run the following CLI commands:
+
+```bash
+cd <proseo-root>/deploy-single-node/ptm-config
+
+java -jar <proseo-root>/ui/cli/target/proseo-ui-cli.jar < cli_data_script.txt
+```
+
+After successful execution, the prosEO system will begin processing the data.
+
+> **Reminder:** As previously noted, one job will remain in the `RELEASED` state due to missing input. You must create an additional processing order (L0 to L2A/B) using the prosEO UI to fully complete processing. This step is intentionally left to the user.
+
+
+# 17. Final Steps
+
+At this stage, prosEO should be fully operational with the **PTM mission**, and processing orders have been successfully created.
+
+To proceed:
+1. Open the prosEO web interface by navigating to:  
+    http://ip-or-domain:8088/
+2. In the GUI, locate the **processing orders**.
+3. For each order, follow these steps:
+    - **Approve** the order
+    - **Plan** the order
+    - **Release** the order
+
+These steps initiate actual data processing within the prosEO environment.
