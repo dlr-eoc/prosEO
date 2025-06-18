@@ -27,7 +27,7 @@ proseo:
         password: ${PROSEO_WRAPPER_PWD}
     productionPlanner:
         # Callback URL for wrapper
-        url: http://host.docker.internal:8083/proseo/planner/v0.1
+        url: http://host.minikube.internal:8083/proseo/planner/v0.1
         # maximum cycles to check finish of k8s proseo job 
         maxcycles: 50
         # wait time between cycle in milliseconds  
@@ -50,7 +50,7 @@ proseo:
         jobStepSort: sensingTime
     ingestor:
         # Callback URL for wrapper
-        url: http://host.docker.internal:8081/proseo/ingestor/v0.1
+        url: http://host.minikube.internal:8081/proseo/ingestor/v0.1
     notification:
         # URL for notification service
         url: http://proseo-notification:8080/proseo/notification/v0.1
