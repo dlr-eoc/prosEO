@@ -13,6 +13,7 @@
 
           <!-- Custom styles for prosEO -->
           <link href="../static/fragments/proseo.css" th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css" />
+        <link rel="stylesheet" href="../static/fragments/bootstrap-multiselect.css" th:href="@{/fragments/bootstrap-multiselect.css}" type="text/css"/>
   </head>
 
 <body>
@@ -59,6 +60,73 @@
 	        <h5>
 	          <br> <span th:text="${errormsg}"></span></h5>
 	      </div>
+	      
+        <div th:unless="${errormsg != null}" class="container-fluid">
+            <p>&nbsp;</p>
+          <form th:unless="${errormsg != null}" class="needs-validation" name="procc-shw" id="procc-shw" action="javascript:retrieveDataPrim();">
+            <div class="row py-lg-1">
+              <div class="col-1 pr-lg-0">
+                <p class="input-group-text word-wrap"
+                  th:text="#{id}"></p>
+              </div>
+              <div class="col-1 pl-lg-0">
+                      <input type="number" min="1" class="form-control" autocomplete="on"
+                        name="cid" id="cid">
+              </div>
+              <div class="col-2 pr-lg-0">
+                <p class="input-group-text word-wrap"
+                  th:text="#{name}"></p>
+              </div>
+              <div class="col-2 pl-lg-0">
+                <input type="text" class="form-control" id="identifier">
+              </div>   
+              <div class="col-2 pr-lg-0">
+                <p class="input-group-text word-wrap"
+                  th:text="#{processorname}"></p>
+              </div>
+              <div class="col-2 pl-lg-0">
+                <select name="processorClasses" id="processorClasses" multiple="multiple">
+                  <option th:each="obj : ${processorclassnames}" th:text="${obj}"
+                    th:label="${obj}"></option>
+                </select>
+              </div> 
+            </div>   
+            <div class="row py-lg-1">
+              <div class="col-2">
+                <button id="configprocselect" type="button"
+                  onclick="retrieveDataPrim();"
+                  class="btn btn-sm btn-outline-secondary">
+                  <span th:text="#{configuredprocessors-show}"></span>
+                </button>
+              </div> 
+              <div class="col-2 pr-lg-0">
+                <p class="input-group-text word-wrap"
+                  th:text="#{processor-version}"></p>
+              </div>
+              <div class="col-2 pl-lg-0">
+                <input type="text" class="form-control" id="processorVersion">
+              </div>   
+              <div class="col-2 pr-lg-0">
+                <p class="input-group-text word-wrap"
+                  th:text="#{configuration}"></p>
+              </div>
+              <div class="col-2 pl-lg-0">
+                <input type="text" class="form-control" id="configuration">
+              </div>  
+              <div class="col-1 pr-lg-0">
+                <p class="input-group-text word-wrap"
+                  th:text="#{enabled}"></p>
+              </div>
+              <div class="col-1 pl-lg-0">
+                <select name="enabled" id="enabled" multiple="multiple">
+                  <option label="true">true</option>
+                  <option label="false">false</option>
+                </select>
+              </div> 
+            </div>   
+          </form>
+  
+        </div>
 
         <div id="configuredprocessorcontent" name="configuredprocessorcontent">
           <table class="table" id="configuredprocessorTable" name="configuredprocessorTable">
@@ -135,14 +203,38 @@
   <script
     src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
+  <script src="../static/fragments/bootstrap-multiselect.js" th:src="@{/fragments/bootstrap-multiselect.js}" type="text/javascript"></script>
+  <script src="../static/fragments/jquery.serialize-object.js" th:src="@{/fragments/jquery.serialize-object.js}" type="text/javascript"></script>
+
+<script>
+  var clickHandler = function(event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        document.getElementById("configprocselect").click();
+    }
+  };
+  var input = document.getElementById("identifier");
+  input.addEventListener("keyup", clickHandler);
+  input = document.getElementById("cid");
+  input.addEventListener("keyup", clickHandler);
+  input = document.getElementById("configuration");
+  input.addEventListener("keyup", clickHandler);
+  input = document.getElementById("processorVersion");
+  input.addEventListener("keyup", clickHandler);
+</script>
 
 <script type="text/javascript" th:inline="javascript">
 		// Global variables
 		// paging
 		var currentPage = 1; // Current page number
 		var pageSize = 20; // Maximum objects per page
-		
-		var identifier = null;
+
+    var cid = null;
+    var identifier = null;
+    var processorClasses = null;
+    var processorVersion = null;
+    var configuration = null;
+    var enabled = null;
 
 		// sorting
 	  var sortCols = ['select-name', 'select-processorname', 'select-processorversion', 'select-configuration', 'select-enabled'];
@@ -151,12 +243,49 @@
 
 		// set paging and sorting parameters
 		function setParams(ele, selup, newPage, newPageSize) {
+		    var newCid = null;
+		    var newIdentifier = null;
+		    var newProcessorClasses = null;
+		    var newProcessorVersion = null;
+		    var newConfiguration = null;
+		    var newEnabled = null;
 		    
 		    var hasChanged = false;
 		
 		    hasChanged |= setPageParams(newPage, newPageSize);
 		    hasChanged |= setSortParams(ele, selup);
+
+        newCid = $('#cid').val();
+        if (isEmpty(newCid)) {newCid = null};  
+        newIdentifier = $('#identifier').val();
+        if (isEmpty(newIdentifier)) {newIdentifier = null};    
+        newProcessorVersion = $('#processorVersion').val();
+        if (isEmpty(newProcessorVersion)) {newProcessorVersion = null};    
+        newConfiguration = $('#configuration').val();
+        if (isEmpty(newConfiguration)) {newConfiguration = null};  
+        newProcessorClasses = $('#processorClasses').val();
+        newEnabled = $('#enabled').val();
 		    
+
+        if (   cid != newCid
+            || identifier != newIdentifier
+            || processorVersion != newProcessorVersion
+            || configuration != newConfiguration
+            || !arrayEquals(processorClasses, newProcessorClasses)
+            || !arrayEquals(enabled, newEnabled)) {
+          // table size may be changed, go to first page
+          currentPage = 1;
+          newPage = 1;
+          hasChanged = true;
+          $('#processorClasses').multiselect('select', processorClasses);
+          $('#enabled').multiselect('select', enabled);
+        }   
+        cid = newCid;
+        identifier = newIdentifier;
+        processorVersion = newProcessorVersion;
+        configuration = newConfiguration;
+        processorClasses = newProcessorClasses;
+        enabled = newEnabled;
 		    if (hasChanged) {
 		        setHTMLParams();
 		    }
@@ -166,8 +295,14 @@
 		function setHTMLParams() {
 		    // build parameter string
 		    var paramString = "";
-	        paramString = setPageHTMLParams(paramString);
-	        paramString = setSortHTMLParams(paramString);
+		    paramString = addURLParamValuePrim('id', cid, paramString);
+		    paramString = addURLParamValuePrim('identifier', identifier, paramString);
+		    paramString = addURLParamValuePrim('processorVersion', processorVersion, paramString);
+		    paramString = addURLParamValuePrim('configuration', configuration, paramString);
+	      paramString = addURLParamValuesPrim('processorClass', processorClasses, paramString);
+	      paramString = addURLParamValuesPrim('enabled', enabled, paramString);
+        paramString = setPageHTMLParams(paramString);
+        paramString = setSortHTMLParams(paramString);
 		    var newHref = location.origin + location.pathname + paramString;
 		    if (newHref != location.href) {
 		        history.pushState({}, null, newHref);
@@ -176,35 +311,93 @@
 		
 		// read URI parameters
 		function readHTMLParams() {
+	      cid = getURLParam('id');
+	      identifier = getURLParam('identifier');
+        processorVersion = getURLParam('processorVersion');
+        configuration = getURLParam('configuration');
+        processorClasses = getURLParams('processorClass');
+        enabled = getURLParams('enabled');
 	      readPageHTMLParams();
 	      readSortHTMLParams();
-		    identifier = getURLParam('cp');
 		}
 		
-		// set selection in filter parameters
-		function setSelected() {
-		}
-		
+    // set selection in filter parameters
+    function setSelected() {
+        $('#cid').val(cid);
+        $('#identifier').val(identifier);
+        $('#processorVersion').val(processorVersion);
+        $('#configuration').val(configuration);
+        if (processorClasses != null && processorClasses.length > 0) {
+          $('#processorClasses').multiselect('select', processorClasses);
+        }
+        if (enabled != null && enabled.length > 0) {
+          $('#enabled').multiselect('select', enabled);
+        }
+    }
 		function updateTable(newPage, newPageSize) {
 		    setParams(null, null, newPage, newPageSize);
 		    retrieveData();
 		}
 
-		function retrieveDataPrim(notUsed) {
-		    retrieveData();
-		}
+    function retrieveDataPrim() {
+        setParams(null, null, null, null);
+        retrieveData();
+    }
+	    
+
+    function initMultiselect() {
+         $('#processorClasses').multiselect({
+             buttonWidth : '99%',
+             enableFiltering : true,
+             numberDisplayed : 0,
+             maxHeight : 400,
+             enableCaseInsensitiveFiltering : true,
+             nonSelectedText : ''
+         });
+         $('#enabled').multiselect({
+             buttonWidth : '99%',
+             enableFiltering : true,
+             numberDisplayed : 0,
+             maxHeight : 400,
+             enableCaseInsensitiveFiltering : true,
+             nonSelectedText : ''
+         });
+    }
 
     function retrieveData() {
         if ([[${hasroleprocessorreader}]]) {
             showLoader();
+            initMultiselect();
+            setParams(null, null, null, null);
+            setSelected();
             var tableRows = $("configuredprocessorTable").rows;
             if(tableRows > 1 && tableRows != null) {
                 $("configuredprocessorTable > tbody").empty();
             }
             var url = "/configuredprocessor/get";  
-            var divider = "?";
+            var divider = "?"; 
+            if (parameterHasValue(cid)) {
+                url = url + divider + "id=" + cid;
+                divider = "&";
+            }   
             if (parameterHasValue(identifier)) {
                 url = url + divider + "identifier=" + identifier.toString().trim();
+                divider = "&";
+            }
+            if (parameterHasValue(processorVersion)) {
+                url = url + divider + "processorVersion=" + processorVersion.toString().trim();
+                divider = "&";
+            }
+            if (parameterHasValue(configuration)) {
+                url = url + divider + "configuration=" + configuration.toString().trim();
+                divider = "&";
+            }
+            if (processorClasses != null) {
+                url = url + divider + "processorClass=" + processorClasses;
+                divider = "&";
+            }
+            if (enabled != null) {
+                url = url + divider + "enabled=" + enabled;
                 divider = "&";
             }
             var from = getFromRow();
@@ -230,6 +423,7 @@
                     hideLoader();
                     readHTMLParams();
                     feather.replace();
+                    initMultiselect();
                     scrollToHash();
                     setSelected();
                     setSort();
@@ -237,6 +431,7 @@
                 fail: function (err) {
                     hideLoader();
                     console.log(err);
+                    initMultiselect();
                     prop.innerHTML = "Fehler!" + err;
                 }
 
@@ -261,7 +456,8 @@
 		  readHTMLParams();
 		  setSelected();
       setSort();
-		  updateTable(currentPage, pageSize);
+      retrieveData();
+		  //updateTable(currentPage, pageSize);
 		};
 		
 		window.onload = function () {

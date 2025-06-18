@@ -232,7 +232,7 @@ public class GUIProcessorController extends GUIBaseController {
 		return result;
 	}
 
-	private Long countConfiguredProcessors(String identifier) {
+	private Long countConfiguredProcessors(Long id, String identifier, String processorVersion, String configuration, String processorClass, String enabled) {
 
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
@@ -240,8 +240,26 @@ public class GUIProcessorController extends GUIBaseController {
 		String divider = "?";
 		uriString += divider + "mission=" + mission;
 		divider = "&";
+		if (id != null) {
+			uriString += divider + "id=" + id;
+		}
 		if (identifier != null) {
-			uriString += divider + "identifier=" + identifier;
+			String queryParam = identifier.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "identifier=" + queryParam;
+		}
+		if (processorVersion != null) {
+			String queryParam = processorVersion.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "processorVersion=" + queryParam;
+		}
+		if (configuration != null) {
+			String queryParam = configuration.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "configurationVersion=" + queryParam;
+		}
+		if (processorClass != null) {
+			uriString += divider + "processorClass=" + processorClass;
+		}
+		if (enabled != null) {
+			uriString += divider + "enabled=" + enabled;
 		}
 		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
 		Long result = (long) -1;
@@ -286,7 +304,12 @@ public class GUIProcessorController extends GUIBaseController {
 	 */
 	@GetMapping("/configuredprocessor/get")
 	public DeferredResult<String> getConfiguredProcessors(
+			@RequestParam(required = false, value = "id") Long id,
 			@RequestParam(required = false, value = "identifier") String identifier,
+			@RequestParam(required = false, value = "processorVersion") String processorVersion,
+			@RequestParam(required = false, value = "configuration") String configuration,
+			@RequestParam(required = false, value = "processorClass") String processorClass,
+			@RequestParam(required = false, value = "enabled") String enabled,
 			@RequestParam(required = false, value = "sortby") String sortby,
 			@RequestParam(required = false, value = "up") Boolean up, 
 			Long recordFrom, Long recordTo, Model model) {
@@ -300,7 +323,7 @@ public class GUIProcessorController extends GUIBaseController {
 		} else {
 			from = (long) 0;
 		}
-		Long count = countConfiguredProcessors(identifier);
+		Long count = countConfiguredProcessors(id, identifier, processorVersion, configuration, processorClass, enabled);
 		if (recordTo != null && from != null && recordTo > from) {
 			to = recordTo;
 		} else if (from != null) {
@@ -312,7 +335,7 @@ public class GUIProcessorController extends GUIBaseController {
 		Long page = (from / pageSize) + 1;
 
 		// Perform the HTTP request to retrieve configured processors
-		ResponseSpec responseSpec = getCP(identifier, from, to, sortby, up);
+		ResponseSpec responseSpec = getCP(id, identifier, processorVersion, configuration, processorClass, enabled, from, to, sortby, up);
 		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> configuredprocessors = new ArrayList<>();
 
@@ -446,8 +469,8 @@ public class GUIProcessorController extends GUIBaseController {
 	 * @param processorName the processor name
 	 * @return a Mono containing the HTTP response
 	 */
-	private ResponseSpec getCP(String identifier, Long from, Long to,
-			String sortby, Boolean up) {
+	private ResponseSpec getCP(Long id, String identifier, String processorVersion, String configuration, String processorClass, String enabled, 
+			Long from, Long to, String sortby, Boolean up) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -458,8 +481,26 @@ public class GUIProcessorController extends GUIBaseController {
 		String divider = "?";
 		uriString += divider + "mission=" + mission;
 		divider = "&";
+		if (id != null) {
+			uriString += divider + "id=" + id;
+		}
 		if (identifier != null) {
-			uriString += divider + "identifier=" + identifier;
+			String queryParam = identifier.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "identifier=" + queryParam;
+		}
+		if (processorVersion != null) {
+			String queryParam = processorVersion.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "processorVersion=" + queryParam;
+		}
+		if (configuration != null) {
+			String queryParam = configuration.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "configurationVersion=" + queryParam;
+		}
+		if (processorClass != null) {
+			uriString += divider + "processorClass=" + processorClass;
+		}
+		if (enabled != null) {
+			uriString += divider + "enabled=" + enabled;
 		}
 		if (from != null) {
 			uriString += divider + "recordFrom=" + from;

@@ -41,6 +41,7 @@ import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.ConfigurationFile;
 import de.dlr.proseo.model.ConfigurationInputFile;
 import de.dlr.proseo.model.Parameter;
+import de.dlr.proseo.model.enums.ProductQuality;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.procmgr.ProcessorManagerConfiguration;
@@ -88,7 +89,8 @@ public class ConfigurationManager {
 	 * @throws NoResultException if no processor classes matching the given search criteria could be found
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public List<RestConfiguration> getConfigurations(String mission, String processorName, String configurationVersion,
+	public List<RestConfiguration> getConfigurations(String mission, Long id, String processorName[], String configurationVersion, 
+			String productQuality[], String processingMode[],
 			Integer recordFrom, Integer recordTo, String[] orderBy) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getConfigurations({}, {}, {})", mission, processorName, configurationVersion);
@@ -110,7 +112,7 @@ public class ConfigurationManager {
 			recordTo = Integer.MAX_VALUE;
 		}
 
-		Long numberOfResults = Long.parseLong(this.countConfigurations(mission, processorName, configurationVersion));
+		Long numberOfResults = Long.parseLong(this.countConfigurations(mission, id, processorName, configurationVersion, productQuality, processingMode));
 		Integer maxResults = config.getMaxResults();
 		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults && (numberOfResults - recordFrom) > maxResults) {
 			throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS,
@@ -118,33 +120,10 @@ public class ConfigurationManager {
 		}
 
 		List<RestConfiguration> result = new ArrayList<>();
-
-		String jpqlQuery = "select c from Configuration c where processorClass.mission.code = :missionCode";
-		if (null != processorName) {
-			jpqlQuery += " and processorClass.processorName = :processorName";
-		}
-		if (null != configurationVersion) {
-			jpqlQuery += " and configurationVersion = :configurationVersion";
-		}
-		// order by
-		if (null != orderBy && 0 < orderBy.length) {
-			jpqlQuery += " order by ";
-			for (int i = 0; i < orderBy.length; ++i) {
-				if (0 < i)
-					jpqlQuery += ", ";
-				jpqlQuery += "c.";
-				jpqlQuery += orderBy[i];
-			}
-		}
 		
-		Query query = em.createQuery(jpqlQuery);
-		query.setParameter("missionCode", mission);
-		if (null != processorName) {
-			query.setParameter("processorName", processorName);
-		}
-		if (null != configurationVersion) {
-			query.setParameter("configurationVersion", configurationVersion);
-		}
+		Query query = createConfigurationsQuery(mission, id, processorName, configurationVersion, 
+				productQuality, processingMode, orderBy, false);
+
 		query.setFirstResult(recordFrom);
 		query.setMaxResults(recordTo - recordFrom);
 
@@ -546,7 +525,8 @@ public class ConfigurationManager {
 	 * @return the number of configurations found as string
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public String countConfigurations(String missionCode, String processorName, String configurationVersion) {
+	public String countConfigurations(String missionCode, Long id, String processorName[], String configurationVersion, 
+			String productQuality[], String processingMode[]) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> countConfigurations({}, {}, {})", missionCode, processorName, configurationVersion);
 
@@ -561,23 +541,102 @@ public class ConfigurationManager {
 		}
 
 		// build query
-		CriteriaBuilder cb = em.getCriteriaBuilder();
-		CriteriaQuery<Long> query = cb.createQuery(Long.class);
-		Root<Configuration> rootConfiguration = query.from(Configuration.class);
 
-		List<Predicate> predicates = new ArrayList<>();
+		Query query = createConfigurationsQuery(missionCode, id, processorName, configurationVersion, 
+				productQuality, processingMode, null, true);
 
-		predicates.add(cb.equal(rootConfiguration.get("processorClass").get("mission").get("code"), missionCode));
-		if (processorName != null)
-			predicates.add(cb.equal(rootConfiguration.get("processorClass").get("processorName"), processorName));
-		if (configurationVersion != null)
-			predicates.add(cb.equal(rootConfiguration.get("configurationVersion"), configurationVersion));
-		query.select(cb.count(rootConfiguration)).where(predicates.toArray(new Predicate[predicates.size()]));
-
-		Long result = em.createQuery(query).getSingleResult();
-
-		logger.log(ProcessorMgrMessage.CONFIGURATIONS_COUNTED, result, missionCode, processorName, configurationVersion);
-
-		return result.toString();
+		Object resultObject = query.getSingleResult();
+		if (resultObject instanceof Long) {
+			return ((Long) resultObject).toString();
+		}
+		if (resultObject instanceof String) {
+			return (String) resultObject;
+		}
+		return "0";
+	}
+	
+	private Query createConfigurationsQuery(String mission, Long id, String[] processorName, String configurationVersion, 
+			String productQuality[], String processingMode[], String[] orderBy, Boolean count) {
+		String jpqlQuery = "";
+		if (count) {
+			jpqlQuery = "select count(pc) from Configuration  pc ";
+		} else {
+			jpqlQuery = "select pc from Configuration pc ";
+		}
+		jpqlQuery += " where pc.processorClass.mission.code = :missionCode";
+		if (null != configurationVersion) {
+			jpqlQuery += "  and upper(configurationVersion) like :configurationVersion";;
+		}
+		if (null != id && id > 0) {
+			jpqlQuery += " and pc.id = :id";
+		}
+		if (null != processorName && 0 < processorName.length) {
+			jpqlQuery += " and pc.processorClass.processorName in (";
+			for (int i = 0; i < processorName.length; ++i) {
+				if (0 < i)
+					jpqlQuery += ", ";
+				jpqlQuery += ":processorName" + i;
+			}
+			jpqlQuery += ") ";
+			
+		}
+		if (null != productQuality && 0 < productQuality.length) {
+			jpqlQuery += " and pc.productQuality in (";
+			for (int i = 0; i < productQuality.length; ++i) {
+				if (0 < i)
+					jpqlQuery += ", ";
+				jpqlQuery += ":productQuality" + i;
+			}
+			jpqlQuery += ") ";
+			
+		}
+		if (null != processingMode && 0 < processingMode.length) {
+			jpqlQuery += " and pc.mode in (";
+			for (int i = 0; i < processingMode.length; ++i) {
+				if (0 < i)
+					jpqlQuery += ", ";
+				jpqlQuery += ":processingMode" + i;
+			}
+			jpqlQuery += ") ";
+			
+		}
+		if (!count) {
+			// order by
+			if (null != orderBy && 0 < orderBy.length) {
+				jpqlQuery += " order by ";
+				for (int i = 0; i < orderBy.length; ++i) {
+					if (0 < i)
+						jpqlQuery += ", ";
+					jpqlQuery += "pc.";
+					jpqlQuery += orderBy[i];
+				}
+			}
+			
+		}
+		Query query = em.createQuery(jpqlQuery);
+		query.setParameter("missionCode", mission);
+		if (null != id && id > 0) {
+			query.setParameter("id", id);
+		}
+		if (null != configurationVersion) {
+			query.setParameter("configurationVersion", configurationVersion);
+		}
+		if (null != processorName && 0 < processorName.length) {
+			for (int i = 0; i < processorName.length; ++i) {
+				query.setParameter("processorName" + i, processorName[i]);
+			}
+		}
+		if (null != productQuality && 0 < productQuality.length) {
+			for (int i = 0; i < productQuality.length; ++i) {
+				query.setParameter("productQuality" + i, ProductQuality.valueOf(productQuality[i]));
+			}
+		}
+		if (null != processingMode && 0 < processingMode.length) {
+			for (int i = 0; i < processingMode.length; ++i) {
+				query.setParameter("processingMode" + i, processingMode[i]);
+			}
+		}
+		
+		return query;
 	}
 }

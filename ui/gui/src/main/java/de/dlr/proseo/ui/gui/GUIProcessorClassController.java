@@ -193,11 +193,11 @@ public class GUIProcessorClassController extends GUIBaseController {
 			String queryParam = processorName.replaceAll("[*]", "%").trim().toUpperCase();
 			uriString += divider + "processorName=" + queryParam;
 			divider = "&";
-	}
+		}
 		if (productClass != null && !productClass.isEmpty()) {
 			uriString += divider + "productClass=" + productClass;
 			divider = "&";
-	}
+		}
 		
 		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
 		Long result = (long) -1;

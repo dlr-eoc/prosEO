@@ -75,9 +75,15 @@ public class GUIConfigurationController extends GUIBaseController {
 	 * @return a DeferredResult object representing the result of the asynchronous request
 	 */
 	@GetMapping("/configurations/get")
-	public DeferredResult<String> getConfigurations(String configurationVersion, String processorClass, Long recordFrom, Long recordTo, Model model) {
+	public DeferredResult<String> getConfigurations(
+			@RequestParam(required = false, value = "id") Long id,
+			@RequestParam(required = false, value = "configurationVersion") String configurationVersion,
+			@RequestParam(required = false, value = "processorClass") String processorClass,
+			@RequestParam(required = false, value = "productQuality") String productQuality,
+			@RequestParam(required = false, value = "processingMode") String processingMode,
+			Long recordFrom, Long recordTo, Model model) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getConfigurations(model, {}, {})", configurationVersion, processorClass);
+			logger.trace(">>> getConfigurations(model, {}, {}, {}, {}, {})", id, configurationVersion, processorClass, productQuality, processingMode);
 
 		Long from = null;
 		Long to = null;
@@ -86,7 +92,7 @@ public class GUIConfigurationController extends GUIBaseController {
 		} else {
 			from = (long) 0;
 		}
-		Long count = countConfigurations(configurationVersion, processorClass);
+		Long count = countConfigurations(id, configurationVersion, processorClass, productQuality, processingMode);
 		if (recordTo != null && from != null && recordTo > from) {
 			to = recordTo;
 		} else if (from != null) {
@@ -98,7 +104,7 @@ public class GUIConfigurationController extends GUIBaseController {
 		Long page = (from / pageSize) + 1;
 
 		// Perform the GET request asynchronously
-		ResponseSpec responseSpec = get(configurationVersion, processorClass, from, to);
+		ResponseSpec responseSpec = get(id, configurationVersion, processorClass, productQuality, processingMode, from, to);
 		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> configurations = new ArrayList<>();
 
@@ -156,19 +162,33 @@ public class GUIConfigurationController extends GUIBaseController {
 	 *
 	 * @return a ResponseSpec representing the response of the GET request
 	 */
-	private ResponseSpec get(String configurationVersion, String processorClass, Long from, Long to) {
+	private ResponseSpec get(Long id, String configurationVersion, String processorClass, String productQuality, 
+			String processingMode, Long from, Long to) {
 		// Retrieve the authentication token from the security context
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
 		String uriString = serviceConfig.getProcessorManagerUrl() + "/configurations";
 		uriString += "?mission=" + mission;
 		String divider = "&";
+		if (id != null && id > 0) {
+			uriString += divider + "id=" + id;
+			divider = "&";
+		}
 		if (configurationVersion != null && !configurationVersion.isEmpty()) {
-			uriString += divider + "configurationVersion=" + configurationVersion;
+			String queryParam = configurationVersion.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "configurationVersion=" + queryParam;
 			divider = "&";
 		}
 		if (processorClass != null && !processorClass.isEmpty()) {
 			uriString += divider + "processorName=" + processorClass;
+			divider = "&";
+		}
+		if (productQuality != null && !productQuality.isEmpty()) {
+			uriString += divider + "productQuality=" + productQuality;
+			divider = "&";
+		}
+		if (processingMode != null && !processingMode.isEmpty()) {
+			uriString += divider + "processingMode=" + processingMode;
 			divider = "&";
 		}
 		if (from != null) {
@@ -202,7 +222,7 @@ public class GUIConfigurationController extends GUIBaseController {
 			.retrieve();
 	}	
 	
-	private Long countConfigurations(String configurationVersion, String processorClass) {
+	private Long countConfigurations(Long id, String configurationVersion, String processorClass, String productQuality, String processingMode) {
 
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
@@ -213,12 +233,25 @@ public class GUIConfigurationController extends GUIBaseController {
 			uriString += divider + "mission=" + mission;
 			divider = "&";
 		}
+		if (id != null && id > 0) {
+			uriString += divider + "id=" + id;
+			divider = "&";
+		}
 		if (configurationVersion != null && !configurationVersion.isEmpty()) {
-			uriString += divider + "configurationVersion=" + configurationVersion;
+			String queryParam = configurationVersion.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "configurationVersion=" + queryParam;
 			divider = "&";
 		}
 		if (processorClass != null && !processorClass.isEmpty()) {
 			uriString += divider + "processorName=" + processorClass;
+			divider = "&";
+		}
+		if (productQuality != null && !productQuality.isEmpty()) {
+			uriString += divider + "productQuality=" + productQuality;
+			divider = "&";
+		}
+		if (processingMode != null && !processingMode.isEmpty()) {
+			uriString += divider + "processingMode=" + processingMode;
 			divider = "&";
 		}
 		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();

@@ -55,14 +55,14 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	 *         the result list exceeds a configured maximum
 	 */
 	@Override
-	public ResponseEntity<List<RestConfiguration>> getConfigurations(String mission, String processorName,
-			String configurationVersion, Integer recordFrom, Integer recordTo, String[] orderBy) {
+	public ResponseEntity<List<RestConfiguration>> getConfigurations(String mission, Long id, String processorName[], String configurationVersion, 
+			String productQuality[], String processingMode[], Integer recordFrom, Integer recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getConfigurations({}, {}, {})", mission, processorName, configurationVersion);
 
 		try {
 			return new ResponseEntity<>(
-					configurationManager.getConfigurations(mission, processorName, configurationVersion, recordFrom, recordTo, orderBy),
+					configurationManager.getConfigurations(mission, id, processorName, configurationVersion, productQuality, processingMode, recordFrom, recordTo, orderBy),
 					HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
@@ -194,12 +194,13 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	 *         cross-mission data access was attempted
 	 */
 	@Override
-	public ResponseEntity<String> countConfigurations(String missionCode, String processorName, String configurationVersion) {
+	public ResponseEntity<String> countConfigurations(String mission, Long id, String processorName[], String configurationVersion, 
+			String productQuality[], String processingMode[]) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> countConfigurations({}, {}, {})", missionCode, processorName, configurationVersion);
+			logger.trace(">>> countConfigurations({}, {}, {})", mission, processorName, configurationVersion);
 
 		try {
-			return new ResponseEntity<>(configurationManager.countConfigurations(missionCode, processorName, configurationVersion),
+			return new ResponseEntity<>(configurationManager.countConfigurations(mission, id, processorName, configurationVersion, productQuality, processingMode),
 					HttpStatus.OK);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);

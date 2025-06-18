@@ -350,12 +350,21 @@ resourceTypes:
       mission?: 
         type: string
         description: the mission code
+      id?:
+        type: integer
+        format: long
       processorName?: 
-        type: string
-        description: the name of the processor class this configuration belongs to
+        type: string[]
+        description: an array of processor names the configurations belongs to
       configurationVersion?: 
         type: string
         description: the configuration version
+      productQuality?: 
+        type: string[]
+        description: an array of product qualities
+      processingMode?: 
+        type: string[]
+        description: an array of processing modes
       recordFrom?: 
         type: integer
         format: int32
@@ -397,15 +406,24 @@ resourceTypes:
         Count the configurations matching the specified mission, processor name, and configuration version.
       displayName: countConfigurations
       queryParameters:
-        missionCode?: 
+        mission?: 
           type: string
           description: the mission code
+        id?:
+          type: integer
+          format: long
         processorName?: 
-          type: string
-          description: the name of the processor class this configuration belongs to
+          type: string[]
+          description: an array of processor names the configurations belongs to
         configurationVersion?: 
           type: string
           description: the configuration version
+        productQuality?: 
+          type: string[]
+          description: an array of product qualities
+        processingMode?: 
+          type: string[]
+          description: an array of processing modes
       responses:
         200:
           body:
@@ -465,21 +483,24 @@ resourceTypes:
       mission?: 
         type: string
         description: the mission code
+      id?:
+        type: integer
+        format: long
       identifier?: 
         type: string
         description: the identifier for the configured processor
-      processorName?: 
-        type: string
-        description: the processor name
+      processorClass?: 
+        type: string[]
+        description: the processor class name
       processorVersion?: 
         type: string
         description: the processor version
       configurationVersion?: 
         type: string
         description: the configuration version
-      uuid?: 
-        type: string
-        description: the UUID of the configured processor
+      enabled?: 
+        type: string[]
+        description: whether the workflow is enabled
       recordFrom?: 
         type: integer
         format: int32
@@ -524,15 +545,24 @@ resourceTypes:
         mission?: 
           type: string
           description: the mission code
+        id?:
+          type: integer
+          format: long
         identifier?: 
           type: string
           description: the identifier
+        processorClass?: 
+          type: string[]
+          description: the processor class name
         processorVersion?: 
           type: string
           description: the processor version
         configurationVersion?: 
           type: string
           description: the configuration version
+        enabled?: 
+          type: string[]
+          description: whether the workflow is enabled
       responses:
         200:
           body:
