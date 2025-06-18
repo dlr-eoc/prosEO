@@ -804,7 +804,7 @@ After successful execution, the prosEO system will begin processing the data.
 > **Reminder:** As previously noted, one job will remain in the `RELEASED` state due to missing input. You must create an additional processing order (L0 to L2A/B) using the prosEO UI to fully complete processing. This step is intentionally left to the user.
 
 
-# 17. Final Steps
+# 8. Final Steps
 
 At this stage, prosEO should be fully operational with the **PTM mission**, and processing orders have been successfully created.
 
