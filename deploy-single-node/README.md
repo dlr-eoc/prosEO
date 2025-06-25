@@ -239,7 +239,7 @@ Verify that your user can run `raml2html`. If not, inspect the install location 
 To begin, clone the prosEO repository from GitHub by running the following command:
 
 ```bash
-git clone https://github.com/dlr-eoc/prosEO.git
+git clone https://github.com/ncortim/prosEO.git
 ```
 
 For now on the string `<proseo-root>` will refer to the prosEO github root directory.
