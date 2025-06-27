@@ -29,7 +29,7 @@ This tutorial shows how to deploy prosEO on a single node using [Docker](https:/
 
 ## 1.1 Define Storage Locations
 
-To keep the environment organized and avoid storage constrains, define custom storage paths for Docker and prosEO related data. This is especially important if your system's default Docker storage location has space constraints.
+To keep the environment organized and avoid storage constraints, define custom storage paths for Docker and prosEO-related data. This is especially important if your system's default Docker storage location has limited space.
 
 **Naming directories:**
 - `/docker-storage`: Docker's data directory
