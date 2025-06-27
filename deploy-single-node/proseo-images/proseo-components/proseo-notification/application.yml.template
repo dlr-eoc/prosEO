@@ -20,9 +20,9 @@ proseo:
         mail:
             host: "mail.host"
             port: 587
-            user: "user@proseo.de"
-            password: "secret"
+            user: "${NOTIFICATION_RECIPIENT}"
+            password: "${NOTIFICATION_RECIPIENT_PWD}"
             auth: true
             starttls: true
             timeout: 10000
-            sender: "noreply@proseo.de"
+            sender: "${NOTIFICATION_SENDER}"

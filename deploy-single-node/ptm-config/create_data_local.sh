@@ -28,8 +28,8 @@ fi
 # -------------------------
 # Tag Storage Manager image
 # -------------------------
-docker tag localhost:5000/proseo-storage-mgr:$STORAGE_MGR_TAG localhost:5000/proseo-storage-mgr:latest
-docker push localhost:5000/proseo-storage-mgr:latest
+# docker tag localhost:5000/proseo-storage-mgr:$STORAGE_MGR_TAG localhost:5000/proseo-storage-mgr:latest
+# docker push localhost:5000/proseo-storage-mgr:latest
 
 # -------------------------
 # Prepare local file server
@@ -37,18 +37,18 @@ docker push localhost:5000/proseo-storage-mgr:latest
 
 # File server is on "hostPath"
 # Update the path in the Persistent Volume configuration
-sed "s|%SHARED_STORAGE_PATH%|${SHARED_STORAGE_PATH}|" <../kubernetes/nfs-pv.yaml.template >../kubernetes/nfs-pv.yaml
+# sed "s|%SHARED_STORAGE_PATH%|${SHARED_STORAGE_PATH}|" <../kubernetes/nfs-pv.yaml.template >../kubernetes/nfs-pv.yaml
 # Create the Persistent Volumes
-kubectl apply -f ../kubernetes/nfs-pv.yaml
+# kubectl apply -f ../kubernetes/nfs-pv.yaml
 
 # Simulated "internal" POSIX storage area (must correspond to the specs in nfs-server-local.yaml)
-mkdir -p ${SHARED_STORAGE_PATH}/proseodata
+# mkdir -p ${SHARED_STORAGE_PATH}/proseodata
 
 # Simulated "external" mount point for product ingestion (must correspond to the specs in nfs-server-local.yaml)
-mkdir -p ${SHARED_STORAGE_PATH}/transfer
+# mkdir -p ${SHARED_STORAGE_PATH}/transfer
 
 # Ingest mount point in storage manager (must correspond to the specs in storage-mgr-local.yaml)
-INGEST_MOUNT_POINT=/mnt
+INGEST_MOUNT_POINT=/proseo/transfer
 
 # -------------------------
 # Create L0/AUX input data
@@ -139,7 +139,7 @@ cp -pR ${INGEST_DIR}/* ${SHARED_STORAGE_PATH}/transfer/
 # -------------------------
 
 # Create the storage manager in the local Minikube
-kubectl apply -f ../kubernetes/storage-mgr-local.yaml
+# kubectl apply -f ../kubernetes/storage-mgr-local.yaml
 
 
 # -------------------------
@@ -147,8 +147,8 @@ kubectl apply -f ../kubernetes/storage-mgr-local.yaml
 # -------------------------
 
 # Create a dashboard at http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
-kubectl apply -f ../kubernetes/kubernetes-dashboard.yaml
-kubectl proxy --accept-hosts='.*' &
+# kubectl apply -f ../kubernetes/kubernetes-dashboard.yaml
+# kubectl proxy --accept-hosts='.*' &
 
 
 # -------------------------
@@ -157,24 +157,22 @@ kubectl proxy --accept-hosts='.*' &
 
 # Create a new CLI command script
 CLI_SCRIPT=cli_data_script.txt
-echo "" >$CLI_SCRIPT
+echo "login --identFile=proseo.cred PTM" >$CLI_SCRIPT
 
 # Create a processing facility
 cat >$TEST_DATA_DIR/facility.json <<EOF
-{
+{                                                                 
     "name": "localhost",
     "description": "Docker Desktop Minikube",
     "facilityState": "RUNNING",
-    "processingEngineUrl": "http://host.docker.internal:8001/",
+    "processingEngineUrl": "https://minikube:8443/",
     "processingEngineToken": "TBD",
-    "storageManagerUrl": 
-    	"http://host.docker.internal:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1",
+    "storageManagerUrl": "http://minikube:30001/proseo/storage-mgr/v0.1",
     "localStorageManagerUrl": "http://storage-mgr-service.default.svc.cluster.local:3000/proseo/storage-mgr/v0.1",
-    "externalStorageManagerUrl": 
-        "http://localhost:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1",
+    "externalStorageManagerUrl": "http://minikube:30001/proseo/storage-mgr/v0.1",
     "storageManagerUser": "smuser",
     "storageManagerPassword": "smpwd-but-that-would-be-way-too-short",
-    "defaultStorageType": "POSIX"
+    "defaultStorageType": "POSIX"                                 
 }
 EOF
 echo "Set authentication token for processing facility 'localhost' manually!"

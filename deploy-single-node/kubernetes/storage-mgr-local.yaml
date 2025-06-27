@@ -25,6 +25,7 @@ apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
   name: storage-mgr
+  namespace: default
 spec:
   replicas: 1
   selector:
@@ -47,7 +48,7 @@ spec:
           claimName: proseo-ingest
       containers:
         - name: proseo-storage-mgr
-          image: localhost:5000/proseo-storage-mgr:latest
+          image: host.minikube.internal:5000/proseo-storage-mgr:latest
           resources:
             requests:
               cpu: "1.0"
@@ -62,7 +63,7 @@ spec:
           - name: proseo-mnt
             mountPath: "/proseo/data"
           - name: proseo-mnt-ingest
-            mountPath: "/mnt"
+            mountPath: "/proseo/transfer"
       restartPolicy: Always
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
