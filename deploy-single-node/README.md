@@ -354,9 +354,9 @@ After starting the prosEO Control Instance, two SQL scripts must be executed to 
 - The second script populates monitoring-related data used to track the service state of prosEO components.
 
 ```bash
-$ docker container exec proseo-proseo-db-1 psql -U postgres -d proseo -f /proseo/create_view_product_processing_facilities.sql
+docker container exec proseo-proseo-db-1 psql -U postgres -d proseo -f /proseo/create_view_product_processing_facilities.sql
 
-$ docker container exec proseo-proseo-db-1 psql -U postgres -d proseo -f /proseo/populate_mon_service_state.sql
+docker container exec proseo-proseo-db-1 psql -U postgres -d proseo -f /proseo/populate_mon_service_state.sql
 ```
 
 Ensure both commands complete successfully without errors to confirm the system is properly initialized.
@@ -454,13 +454,14 @@ This Perl script sets up the **ProseO Test Mission (PTM)** using the **ProseO Sa
 In particular, update the following lines in the `configure_proseo_test_mission.pl` script (lines 114 and 115):
 
 ```perl
+...
 113    {
 114        name => 'wrapper',        # Update this to match your environment variable PROSEO_WRAPPER_USER
 115        pwd => 'ingest&Plan',     # Update this to match your environment variable PROSEO_WRAPPER_PWD
 116        authorities => [],
 117        groups => [ 'internalprocessor' ]
 118    }
-
+...
 ```
 
 
@@ -487,6 +488,7 @@ host.minikube.internal:5000/proseo-sample-wrapper:1.1.0
 This change is required in three specific places—lines **162**, **171**, and **180** of the `configure_proseo_test_mission.pl` script:
 
 ```perl
+...
 154	my @processors = (
 155	    {
 156	    	processorName => 'PTML1B', 
@@ -516,6 +518,7 @@ This change is required in three specific places—lines **162**, **171**, and *
 180	        dockerImage => 'localhost:5000/proseo-sample-wrapper:1.1.0'
 181	    }
 182	);
+...
 ```
 
 `localhost` inside the Kubernetes cluster does **not** refer to your host machine. Replacing it with `host.minikube.internal` allows Minikube pods to correctly resolve and pull the Docker image from the host system's registry.
@@ -557,8 +560,8 @@ You can change the administrator password later using the prosEO CLI if needed.
 With the credentials in place and `cli_script.txt` generated, run the prosEO CLI to create the mission. Ensure you're still in the `testdata` directory:
 
 ```bash
-$ cd <proseo-root>/samples/testdata/
-$ java -jar <proseo-root>/ui/cli/target/proseo-ui-cli.jar < cli_script.txt
+cd <proseo-root>/samples/testdata/
+java -jar <proseo-root>/ui/cli/target/proseo-ui-cli.jar < cli_script.txt
 ```
 
 After successful execution, the **prosEO mission will be created**, and the system will be ready to handle satellite data processing as configured.
