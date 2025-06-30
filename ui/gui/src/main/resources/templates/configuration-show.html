@@ -326,9 +326,18 @@
 		    readPageHTMLParams();
 	      cid = getURLParam('id');
 		    configurationVersion = getURLParam('configurationVersion');
-		    processorClass = getURLParams('processorClass');
-		    productQuality = getURLParams('productQuality');
-		    processingMode = getURLParams('processingMode');
+        if (processorClass != null && processorClass.length > 0) {
+            $('#processorClasses').multiselect('deselect', processorClass);
+          }
+          if (productQuality != null && productQuality.length > 0) {
+            $('#productQuality').multiselect('deselect', productQuality);
+          }
+          if (processingMode != null && processingMode.length > 0) {
+            $('#processingModes').multiselect('deselect', processingMode);
+          }
+			    processorClass = getURLParams('processorClass');
+			    productQuality = getURLParams('productQuality');
+			    processingMode = getURLParams('processingMode');
 		}
 		
 		// set selection in filter parameters
@@ -427,15 +436,16 @@
             $.ajax({
                 url: url,
                 method: "GET",
-                success: function (res) {
+                success: function (res, textStatus, jqXHR) {
                     $("#configurationcontent").html(res);
                     feather.replace();
-                    initMultiselect();
                     scrollToHash();
+                    initMultiselect();
+                    setSelected();
                     hideLoader();
                 },
                 fail: function (err) {
-                    initMultiselect();
+
                     hideLoader();
                     console.log(err);
                     prop.innerHTML = "Fehler!" + err;

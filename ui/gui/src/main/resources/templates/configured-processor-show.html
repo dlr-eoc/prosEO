@@ -315,6 +315,12 @@
 	      identifier = getURLParam('identifier');
         processorVersion = getURLParam('processorVersion');
         configuration = getURLParam('configuration');
+        if (processorClasses != null && processorClasses.length > 0) {
+            $('#processorClasses').multiselect('deselect', processorClasses);
+        }
+        if (enabled != null && enabled.length > 0) {
+            $('#enabled').multiselect('deselect', enabled);
+        }
         processorClasses = getURLParams('processorClass');
         enabled = getURLParams('enabled');
 	      readPageHTMLParams();

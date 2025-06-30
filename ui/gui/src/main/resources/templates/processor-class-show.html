@@ -233,6 +233,9 @@
         readPageHTMLParams();
         pid = getURLParam('pid');
         pname = getURLParam('processorclassName');
+        if (productClass != null && productClass.length > 0) {
+            $('#productClasses').multiselect('deselect', productClass);
+        }
         productClass = getURLParams('productClass');
     }
 
