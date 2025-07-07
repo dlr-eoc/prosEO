@@ -97,7 +97,7 @@ public class GUIProductArchiveController extends GUIBaseController {
 		} else {
 			from = (long) 0;
 		}
-		Long count = countProductArchives(null, name, archiveType);
+		Long count = countProductArchives(id, name, archiveType);
 		if (recordTo != null && from != null && recordTo > from) {
 			to = recordTo;
 		} else if (from != null) {
@@ -168,7 +168,7 @@ public class GUIProductArchiveController extends GUIBaseController {
 	 * @param archiveType   		  the archive type
 	 * @return the number of product archives with the respective name, archive type
 	 */
-	private Long countProductArchives(String code, String name, String archiveType) {
+	private Long countProductArchives(Long id, String name, String archiveType) {
 		
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -178,8 +178,8 @@ public class GUIProductArchiveController extends GUIBaseController {
 		String divider = "?";
 		String uriString = "/archives/count";
 
-		if (code != null && !code.isEmpty()) {
-			uriString += divider + "code=" + code;
+		if (id != null) {
+			uriString += divider + "id=" + id;
 			divider = "&";
 		}
 		if (name != null && !name.isEmpty()) {
@@ -254,33 +254,32 @@ public class GUIProductArchiveController extends GUIBaseController {
 		// Build request URI
 		String uriString = serviceConfig.getArchiveManagerUrl() + "/archives";
 
-		if (id != null && id > 0) {
-			// If an ID was given, it is the only relevant parameter
-			uriString += "/" + id.toString();
-		} else {
-			// Else build a request URI with all other parameters
-			String divider = "?";
+		// Else build a request URI with all other parameters
+		String divider = "?";
 
-			if (name != null && !name.isEmpty()) {
-				String nameParam = name.replaceAll("[*]", "%");
-				uriString += divider + "name=" + nameParam.toUpperCase();
-				divider = "&";
-			}
-			if (archiveType != null && !archiveType.isEmpty()) {
-				uriString += divider + "archiveType=" + archiveType;
-				divider = "&";
-			}
-			if (recordFrom != null) {
-				uriString += divider + "recordFrom=" + recordFrom;
-				divider = "&";
-			}
-			if (recordTo != null) {
-				uriString += divider + "recordTo=" + recordTo;
-				divider = "&";
-			}
-
-			uriString += divider + "orderBy=name ASC,archiveType ASC";
+		if (id != null) {
+			uriString += divider + "id=" + id;
+			divider = "&";
 		}
+		if (name != null && !name.isEmpty()) {
+			String nameParam = name.replaceAll("[*]", "%");
+			uriString += divider + "name=" + nameParam.toUpperCase();
+			divider = "&";
+		}
+		if (archiveType != null && !archiveType.isEmpty()) {
+			uriString += divider + "archiveType=" + archiveType;
+			divider = "&";
+		}
+		if (recordFrom != null) {
+			uriString += divider + "recordFrom=" + recordFrom;
+			divider = "&";
+		}
+		if (recordTo != null) {
+			uriString += divider + "recordTo=" + recordTo;
+			divider = "&";
+		}
+
+		uriString += divider + "orderBy=name ASC,archiveType ASC";
 
 		URI uri = UriComponentsBuilder.fromUriString(uriString)
 				.build()

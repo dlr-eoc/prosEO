@@ -99,7 +99,7 @@ public class GUIOrbitController extends GUIBaseController {
 		} else {
 			from = (long) 0;
 		}
-		Long count = countOrbits(spacecraft);
+		Long count = countOrbits(spacecraft, startTimeFrom, startTimeTo, numberFrom, numberTo);
 		if (toIndex != null && from != null && toIndex > from) {
 			to = toIndex;
 		} else if (from != null) {
@@ -250,21 +250,37 @@ public class GUIOrbitController extends GUIBaseController {
 			.retrieve();
 	}
 
-	private Long countOrbits(String spacecraft) {
+	private Long countOrbits(String spacecraft, String startTimeFrom, String startTimeTo, Long numberFrom, Long numberTo) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
 		// Build the request URI
-		String uri = "/orbits/count";
+		String uriString = "/orbits/count";
 		String divider = "?";
 		if (spacecraft != null) {
-			uri += divider + "spacecraftCode=" + spacecraft;
+			uriString += divider + "spacecraftCode=" + spacecraft;
+			divider = "&";
+		}
+		if (startTimeFrom != null) {
+			uriString += divider + "startTimeFrom=" + startTimeFrom;
+			divider = "&";
+		}
+		if (startTimeTo != null) {
+			uriString += divider + "startTimeTo=" + startTimeTo;
+			divider = "&";
+		}
+		if (numberFrom != null) {
+			uriString += divider + "orbitNumberFrom=" + numberFrom;
+			divider = "&";
+		}
+		if (numberTo != null) {
+			uriString += divider + "orbitNumberTo=" + numberTo;
 			divider = "&";
 		}
 		Long result = (long) -1;
 		try {
-			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(), uri, String.class,
+			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(), uriString, String.class,
 					auth.getProseoName(), auth.getPassword());
 
 			if (resStr != null && resStr.length() > 0) {

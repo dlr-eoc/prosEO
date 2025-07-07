@@ -239,10 +239,10 @@ public class ProductArchiveManager {
 	 * @param count       if true create query for count of objects
 	 * @return a database query
 	 */
-	public Query createArchivesQuery(String code, String name, String archiveType, Boolean count) {
+	public Query createArchivesQuery(Long id, String code, String name, String archiveType, Boolean count) {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> createArchivesQuery({}, {}, {})", code, name, archiveType);
+			logger.trace(">>> createArchivesQuery({}, {}, {})", id, name, archiveType);
 
 		String jpqlQuery = "";
 		if (count) {
@@ -252,21 +252,26 @@ public class ProductArchiveManager {
 		}
 
 		// adds WHERE condition
-		if ((null != code) || (null != name) || (null != archiveType)) {
+		if ((null != id) || (null != name) || (null != archiveType)) {
 			
 			jpqlQuery += " where ";
 			String and = " ";
-			if (null != code) {
+			if (null != id) {
+				jpqlQuery += and + "id = :id";
+				and = " and ";
+			}
+
+			if (null != code && !code.isEmpty()) {
 				jpqlQuery += and + "code = :code";
 				and = " and ";
 			}
 
-			if (null != name) {
+			if (null != name && !name.isEmpty()) {
 				jpqlQuery += and + "upper(name) like :name";
 				and = " and ";
 			}
 
-			if (null != archiveType) {
+			if (null != archiveType && !archiveType.isEmpty()) {
 				jpqlQuery += and + "archiveType = :archiveType";
 				and = " and ";
 			}
@@ -278,8 +283,8 @@ public class ProductArchiveManager {
 
 		Query query = em.createQuery(jpqlQuery);
 
-		if (null != code) {
-			query.setParameter("code", code);
+		if (null != id) {
+			query.setParameter("id", id);
 		}
 
 		if (null != name) {
@@ -311,11 +316,11 @@ public class ProductArchiveManager {
 	 * @throws NoResultException if no product archives matching the given search
 	 *                           criteria could be found
 	 */
-	public List<RestProductArchive> getArchives(String code, String name, String archiveType, Integer recordFrom,
+	public List<RestProductArchive> getArchives(Long id, String code, String name, String archiveType, Integer recordFrom,
 			Integer recordTo) throws NoResultException {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getArchives({}, {}, {}, {}, {})", code, name, archiveType, recordFrom, recordTo);
+			logger.trace(">>> getArchives({}, {}, {}, {}, {}, {})", id, code, name, archiveType, recordFrom, recordTo);
 
 		if (recordFrom == null) {
 			recordFrom = 0;
@@ -324,7 +329,7 @@ public class ProductArchiveManager {
 			recordTo = Integer.MAX_VALUE;
 		}
 
-		Long numberOfResults = Long.parseLong(this.countArchives(code, name, archiveType));
+		Long numberOfResults = Long.parseLong(this.countArchives(id, code, name, archiveType));
 		Integer maxResults = config.getMaxResults();
 		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults
 				&& (numberOfResults - recordFrom) > maxResults) {
@@ -334,7 +339,7 @@ public class ProductArchiveManager {
 
 		List<RestProductArchive> result = new ArrayList<>();
 
-		Query query = createArchivesQuery(code, name, archiveType, false);
+		Query query = createArchivesQuery(id, code, name, archiveType, false);
 
 		query.setFirstResult(recordFrom);
 		query.setMaxResults(recordTo - recordFrom);
@@ -361,11 +366,11 @@ public class ProductArchiveManager {
 	 * @param archiveType the product archive type
 	 * @return the number of product archives found as string
 	 */
-	public String countArchives(String code, String name, String archiveType) {
+	public String countArchives(Long id, String code, String name, String archiveType) {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> countArchives({}, {}, {})", code, name, archiveType);
-		Query query = createArchivesQuery(code, name, archiveType, true);
+			logger.trace(">>> countArchives({}, {}, {}, {})", id, code, name, archiveType);
+		Query query = createArchivesQuery(id, code, name, archiveType, true);
 
 		Object resultObject = query.getSingleResult();
 

@@ -306,16 +306,11 @@ function getDate(val, up) {
         setParams(null, null, newPage, newPageSize);
         retrieveData();
     }
-    
-function retrieveDataPage(from, to) {
-    setParams();
-    var spacecraft = getURLParam('sp');
-    var startTimeFrom = getURLParam('startTimeFrom');
-    var startTimeTo = getURLParam('startTimeTo');
-    var numberFrom = getURLParam('numberFrom');
-    var numberTo = getURLParam('numberTo');
-    retrieveData(spacecraft, startTimeFrom, startTimeTo, numberFrom, numberTo, from, to);
-}
+
+    function retrieveDataPage(newPage, newPageSize) {
+      setParams(null, null, newPage, newPageSize);
+      retrieveData();
+    }
 
 function addEventHandler() {
     $("input[name='startTimeFrom']").change(checkTime);

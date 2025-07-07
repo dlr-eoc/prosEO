@@ -71,13 +71,13 @@ public class ProductArchiveControllerImpl implements ArchiveController {
 	 *         indicating failure
 	 */
 	@Override
-	public ResponseEntity<List<RestProductArchive>> getArchives(String code, String name, String archiveType, Integer recordFrom, Integer recordTo) {
+	public ResponseEntity<List<RestProductArchive>> getArchives(Long id, String code, String name, String archiveType, Integer recordFrom, Integer recordTo) {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getArchives({}, {}, {}, {}, {})", code, name, archiveType, recordFrom, recordTo);
+			logger.trace(">>> getArchives({}, {}, {}, {}, {}, {})", id, code, name, archiveType, recordFrom, recordTo);
 
 		try {
-			return new ResponseEntity<>(productArchiveManager.getArchives(code, name, archiveType, recordFrom, recordTo), HttpStatus.OK);
+			return new ResponseEntity<>(productArchiveManager.getArchives(id, code, name, archiveType, recordFrom, recordTo), HttpStatus.OK);
 
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
@@ -177,13 +177,13 @@ public class ProductArchiveControllerImpl implements ArchiveController {
 	 * @param archiveType      the product archive type
 	 * @return the number of matching archives as a String (may be zero) or HTTP status "FORBIDDEN" and an error message */
 	@Override
-	public ResponseEntity<String> countArchives(String code, String name, String archiveType) {
+	public ResponseEntity<String> countArchives(Long id, String code, String name, String archiveType) {
 		
 		if (logger.isTraceEnabled())
-			logger.trace(">>> countArchives({}, {}, {})", code, name, archiveType);
+			logger.trace(">>> countArchives({}, {}, {}, {})", id, code, name, archiveType);
 
 		try {
-			return new ResponseEntity<>(productArchiveManager.countArchives(code, name, archiveType), HttpStatus.OK);
+			return new ResponseEntity<>(productArchiveManager.countArchives(id, code, name, archiveType), HttpStatus.OK);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}

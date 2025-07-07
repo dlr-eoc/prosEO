@@ -215,8 +215,19 @@ public class GUIProductController extends GUIBaseController {
 
 				logger.trace(">>>>MODEL" + model.toString());
 			}, e -> {
-				model.addAttribute("errormsg", e.getMessage());
-				deferredResult.setResult("product-show :: #errormsg");
+				if (e instanceof WebClientResponseException.NotFound) {
+					model.addAttribute("products", products);
+
+					modelAddAttributes(model, count, pageSize, pages, page);
+
+					if (logger.isTraceEnabled())
+						logger.trace(model.toString() + "MODEL TO STRING");
+
+					deferredResult.setResult("product-show :: #productcontent");
+				} else {
+					model.addAttribute("errormsg", e.getMessage());
+					deferredResult.setResult("product-show :: #errormsg");
+				}
 			});
 
 		logger.trace(model.toString() + "MODEL TO STRING");

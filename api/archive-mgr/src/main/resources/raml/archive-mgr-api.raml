@@ -62,6 +62,9 @@ resourceTypes:
       List of product archives with search criteria
     displayName: getArchives
     queryParameters:
+      id?:
+        type: integer
+        format: long
       code?: 
         type: string
         description: the product archive code
@@ -106,6 +109,9 @@ resourceTypes:
         Count the product archive matching the specified name, archive type.
       displayName: countArchives
       queryParameters:
+        id?:
+          type: integer
+          format: long
         code?: 
           type: string
           description: the product archive code
