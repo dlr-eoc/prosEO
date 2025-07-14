@@ -201,9 +201,12 @@
               <table class="table table-hover" id="orderfilters">
                 <thead class="thead-proseo-order">
                   <tr>
-                    <th id="togglefilter" class="cursorpointer" onclick="toggleFilter()"><div id="filterhide"><span
-                          data-feather="minus-circle"></span>&nbsp;<span th:text="#{filterandparams}">filterandparams</span></div><div id="filtershow"><span
-                          data-feather="plus-circle"></span>&nbsp;<span th:text="#{filterandparams}">filterandparams</span></div></th>
+                    <th id="togglefilter" class="cursorpointer" onclick="toggleFilter()"><div id="filterhide" th:title="#{hideFilter}"><span
+                          data-feather="minus-circle"
+                          th:title="#{hideFilter}"></span>&nbsp;<span th:text="#{filterandparams}">filterandparams</span></div>
+                        <div id="filtershow" th:title="#{showFilter}"><span
+                          data-feather="plus-circle"
+                          th:title="#{showFilter}"></span>&nbsp;<span th:text="#{filterandparams}">filterandparams</span></div></th>
                     <th><span th:text="#{productclass}">productclass</span></th>
                     <th><span th:text="#{key}">key</span></th>
                     <th><span th:text="#{value}">value</span></th>
@@ -292,9 +295,9 @@
                     <td th:id="'togglejob' + ${job?.id}" 
                         class="cursorpointer first-row" 
                         th:onclick="'toggleJob(' + ${job?.id} + ')'"
-                      ><div class="jobhide" 
+                      ><div class="jobhide" th:title="#{hideJobsteps}"
                             th:id="'jobh' + ${job?.id}"><span data-feather="minus-circle"></span></div>
-                       <div class="jobshow" th:id="'jobs' + ${job?.id}"><span
+                       <div class="jobshow" th:title="#{showJobsteps}" th:id="'jobs' + ${job?.id}"><span
                                   data-feather="plus-circle"></span></div></td>
                     <td class="first-row"><span th:text="${job?.id}"></span></td>
                     <td th:class="(${job?.hasFailedJobSteps} == true) ? 'FAILED' : ${job?.jobState} + ' first-row'"><span th:text="${job?.jobState}"></span></td>
@@ -327,8 +330,9 @@
                         <tbody>
                           <div th:each="jobstep : ${job?.jobSteps}">
                             <tr>
-                              <td th:id="'togglejs' + ${jobstep?.id}" class="cursorpointer" th:onclick="'toggleJS(' + ${jobstep?.id} + ')'"><div class="jshide" th:id="'jsh' + ${jobstep?.id}"><span
-                                  data-feather="minus-circle"></span></div><div class="jsshow" th:id="'jss' + ${jobstep?.id}"><span
+                              <td th:id="'togglejs' + ${jobstep?.id}" class="cursorpointer" th:onclick="'toggleJS(' + ${jobstep?.id} + ')'"><div th:title="#{hideJobstepDetails}" 
+                              class="jshide" th:id="'jsh' + ${jobstep?.id}"><span
+                                  data-feather="minus-circle"></span></div><div class="jsshow" th:title="#{showJobstepDetails}" th:id="'jss' + ${jobstep?.id}"><span
                                   data-feather="plus-circle"></span></div></td>
                               <td class="first-row" th:id="${jobstep?.id}"><span th:text="${jobstep?.id}"></span></td>
                               <td th:class="${jobstep?.jobStepState} + ' first-row'"><span th:text="${jobstep?.jobStepState}"></span></td>
@@ -408,6 +412,9 @@
   <script src="../static/fragments/jquery.serialize-object.js" th:src="@{/fragments/jquery.serialize-object.js}" type="text/javascript"></script>
 
 <script type="text/javascript" th:inline="javascript"> 
+function wikiPage() {
+    window.open('https://github.com/dlr-eoc/prosEO/wiki/GUI-Order-Details#order-details');
+  }
 // Global variables
 // paging
 var currentPage = 1; // Current page number

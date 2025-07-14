@@ -296,6 +296,10 @@
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
   <script type="text/javascript" th:inline="javascript">
+    function wikiPage() {
+	    window.open('https://github.com/dlr-eoc/prosEO/wiki/GUI-Dashboard#dashboard');
+	  }
+  
     function getFailedJobSteps(count) {
         if ([[${hasroleordermonitor}]]) {
             showLoader();

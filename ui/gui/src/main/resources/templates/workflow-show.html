@@ -82,27 +82,27 @@
 					<div class="row py-lg-1">
 
 						<!-- Filter id -->
-						<div class="col-1 pr-lg-0">
+						<div class="col-1 pr-lg-0" th:title="#{selectId}">
 							<p class="input-group-text word-wrap" th:text="#{id}"></p>
 						</div>
-						<div class="col-1 pl-lg-0">
+						<div class="col-1 pl-lg-0" th:title="#{selectId}">
 							<input type="number" class="form-control" name="id" id="id">
 						</div>
 
 						<!-- Filter name -->
-						<div class="col-1 pr-lg-0">
+						<div class="col-1 pr-lg-0" th:title="#{selectNamePattern}">
 							<p class="input-group-text word-wrap" th:text="#{name}"></p>
 						</div>
-						<div class="col-3 pl-lg-0">
+						<div class="col-3 pl-lg-0" th:title="#{selectNamePattern}">
 							<input type="text" class="form-control" name="name" id="name">
 						</div>
 
 						<!-- Filter version -->
-						<div class="col-2 pr-lg-0">
+						<div class="col-2 pr-lg-0" th:title="#{selectWorkflowVersion}">
 							<p class="input-group-text word-wrap"
 								th:text="#{workflowversion}"></p>
 						</div>
-						<div class="col-1 pl-lg-0">
+						<div class="col-1 pl-lg-0" th:title="#{selectWorkflowVersion}">
 							<input type="text" class="form-control" name="workflowVersion"
 								id="workflowVersion">
 						</div>
@@ -118,11 +118,11 @@
 						</div>
 
 						<!-- Filter input product class -->
-						<div class="col-3 pr-lg-0">
+						<div class="col-3 pr-lg-0" th:title="#{selectWorkflowInput}">
 							<p class="input-group-text word-wrap"
 								th:text="#{inputproductclass}"></p>
 						</div>
-						<div class="col-3 pl-lg-0">
+						<div class="col-3 pl-lg-0" th:title="#{selectWorkflowInput}">
 							<input type="text" class="form-control" name="inputProductClass"
 								id="inputProductClass">
 						</div>
@@ -166,11 +166,11 @@
 											class="cursorpointer first-row no-right-border"
 											th:onclick="'toggleWorkflow('+${workflow.id}+')'">
 											<div class="hideworkflow" th:id="'hidewf' + ${workflow.id}"
-												th:style="${'display: none;'}">
+												th:title="#{hideWorkflowDetails}" th:style="${'display: none;'}">
 												<span data-feather="minus-circle"></span>
 											</div>
 											<div class="showworkflow" th:id="'showwf' + ${workflow.id}"
-												th:style="${'display: block;'}">
+												th:title="#{showWorkflowDetails}" th:style="${'display: block;'}">
 												<span data-feather="plus-circle"></span>
 											</div>
 										</td>
@@ -327,6 +327,10 @@
 		th:src="@{/fragments/bootstrap-multiselect.js}" type="text/javascript"></script>
 
 	<script type="text/javascript" th:inline="javascript">
+	function wikiPage() {
+	    window.open('https://github.com/dlr-eoc/prosEO/wiki/GUI-Workflow#workflow');
+	}
+
 		// Global variables
 		var currentPage = 1; // Current page number
 		var pageSize = 20; // Maximum objects per page

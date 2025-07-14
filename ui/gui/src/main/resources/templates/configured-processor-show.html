@@ -65,26 +65,26 @@
             <p>&nbsp;</p>
           <form th:unless="${errormsg != null}" class="needs-validation" name="procc-shw" id="procc-shw" action="javascript:retrieveDataPrim();">
             <div class="row py-lg-1">
-              <div class="col-1 pr-lg-0">
+              <div class="col-1 pr-lg-0" th:title="#{selectId}">
                 <p class="input-group-text word-wrap"
                   th:text="#{id}"></p>
               </div>
-              <div class="col-1 pl-lg-0">
+              <div class="col-1 pl-lg-0" th:title="#{selectId}">
                       <input type="number" min="1" class="form-control" autocomplete="on"
                         name="cid" id="cid">
               </div>
-              <div class="col-2 pr-lg-0">
+              <div class="col-2 pr-lg-0" th:title="#{selectNamePattern}">
                 <p class="input-group-text word-wrap"
                   th:text="#{name}"></p>
               </div>
-              <div class="col-2 pl-lg-0">
+              <div class="col-2 pl-lg-0" th:title="#{selectNamePattern}">
                 <input type="text" class="form-control" id="identifier">
               </div>   
-              <div class="col-2 pr-lg-0">
+              <div class="col-2 pr-lg-0" th:title="#{selectProcessorClass}">
                 <p class="input-group-text word-wrap"
                   th:text="#{processorname}"></p>
               </div>
-              <div class="col-2 pl-lg-0">
+              <div class="col-2 pl-lg-0" th:title="#{selectProcessorClass}">
                 <select name="processorClasses" id="processorClasses" multiple="multiple">
                   <option th:each="obj : ${processorclassnames}" th:text="${obj}"
                     th:label="${obj}"></option>
@@ -99,25 +99,25 @@
                   <span th:text="#{configuredprocessors-show}"></span>
                 </button>
               </div> 
-              <div class="col-2 pr-lg-0">
+              <div class="col-2 pr-lg-0" th:title="#{selectProcessorVersionPattern}">
                 <p class="input-group-text word-wrap"
                   th:text="#{processor-version}"></p>
               </div>
-              <div class="col-2 pl-lg-0">
+              <div class="col-2 pl-lg-0" th:title="#{selectProcessorVersionPattern}">
                 <input type="text" class="form-control" id="processorVersion">
               </div>   
-              <div class="col-2 pr-lg-0">
+              <div class="col-2 pr-lg-0" th:title="#{selectConfigurationPattern}">
                 <p class="input-group-text word-wrap"
                   th:text="#{configuration}"></p>
               </div>
-              <div class="col-2 pl-lg-0">
+              <div class="col-2 pl-lg-0" th:title="#{selectConfigurationPattern}">
                 <input type="text" class="form-control" id="configuration">
               </div>  
-              <div class="col-1 pr-lg-0">
+              <div class="col-1 pr-lg-0" th:title="#{selectEnabled}">
                 <p class="input-group-text word-wrap"
                   th:text="#{enabled}"></p>
               </div>
-              <div class="col-1 pl-lg-0">
+              <div class="col-1 pl-lg-0" th:title="#{selectEnabled}">
                 <select name="enabled" id="enabled" multiple="multiple">
                   <option label="true">true</option>
                   <option label="false">false</option>
@@ -224,6 +224,10 @@
 </script>
 
 <script type="text/javascript" th:inline="javascript">
+function wikiPage() {
+    window.open('https://github.com/dlr-eoc/prosEO/wiki/GUI-Configured-Processor#configured-processor');
+}
+
 		// Global variables
 		// paging
 		var currentPage = 1; // Current page number

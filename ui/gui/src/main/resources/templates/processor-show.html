@@ -70,26 +70,26 @@
                   <span th:text="#{processor-show}"></span>
                 </button>
               </div>  
-	            <div class="col-1 pr-lg-0">
+	            <div class="col-1 pr-lg-0" th:title="#{selectId}">
 	              <p class="input-group-text word-wrap"
 	                th:text="#{id}"></p>
 	            </div>
-	            <div class="col-1 pl-lg-0">
+	            <div class="col-1 pl-lg-0" th:title="#{selectId}">
 	                    <input type="number" min="1" class="form-control" autocomplete="on"
 	                      name="pid" id="pid">
 	            </div>
-	            <div class="col-1 pr-lg-0">
+	            <div class="col-1 pr-lg-0" th:title="#{selectNamePattern}">
 	              <p class="input-group-text word-wrap"
 	                th:text="#{name}"></p>
 	            </div>
-	            <div class="col-2 pl-lg-0">
+	            <div class="col-2 pl-lg-0" th:title="#{selectNamePattern}">
 	              <input type="text" class="form-control" id="pname">
 	            </div>   
-              <div class="col-1 pr-lg-0">
+              <div class="col-1 pr-lg-0" th:title="#{selectProcessorVersionPattern}">
                 <p class="input-group-text word-wrap"
                   th:text="#{processorversion}"></p>
               </div>
-              <div class="col-2 pl-lg-0">
+              <div class="col-2 pl-lg-0" th:title="#{selectProcessorVersionPattern}">
                 <input type="text" class="form-control" id="pversion">
               </div>    
 	          </div>
@@ -210,6 +210,10 @@
 </script>
 <script type="text/javascript" th:inline="javascript">
     //
+  function wikiPage() {
+      window.open('https://github.com/dlr-eoc/prosEO/wiki/GUI-Processor#processor');
+  }
+  
     
     // Global variables
     // paging

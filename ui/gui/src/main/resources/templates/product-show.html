@@ -60,21 +60,21 @@
       </div>
       <form class="needs-validation" name="prod-shw" id="prod-shw" action="javascript:submit();" >
         <div class="row py-lg-1">
-            <div class="col-1 pr-lg-0">
+            <div class="col-1 pr-lg-0" th:title="#{selectProductClass}">
               <p class="input-group-text word-wrap"
                 th:text="#{product-class}"></p>
             </div>
-            <div class="col-3 pl-lg-0">
+            <div class="col-3 pl-lg-0" th:title="#{selectProductClass}">
               <select name="productClasses" id="productClasses" multiple="multiple">
                 <option th:each="obj : ${productclassnames}" th:text="${obj}"
                   th:label="${obj}"></option>
               </select>
             </div>
-            <div class="col-1 pr-lg-0">
+            <div class="col-1 pr-lg-0" th:title="#{selectMode}">
               <p class="input-group-text word-wrap"
                 th:text="#{mode}"></p>
             </div>
-            <div class="col-1 pl-lg-0"><select name="processingMode" id="processingMode"
+            <div class="col-1 pl-lg-0" th:title="#{selectMode}"><select name="processingMode" id="processingMode"
                   class="custom-select">
                 <option text=""
                   label=""></option>
@@ -82,11 +82,11 @@
                   th:label="${obj}"></option>
                 </select>
             </div>
-            <div class="col-1 pr-lg-0">
+            <div class="col-1 pr-lg-0" th:title="#{selectProductQuality}">
               <p class="input-group-text word-wrap"
                 th:text="#{quality}"></p>
             </div>
-            <div class="col-2 pl-lg-0">
+            <div class="col-2 pl-lg-0" th:title="#{selectProductQuality}">
               <select name="productQuality" id="productQuality"
                   class="custom-select">
                 <option text=""
@@ -95,11 +95,11 @@
                   th:label="${obj}"></option>
                 </select>
             </div>
-            <div class="col-1 pr-lg-0">
+            <div class="col-1 pr-lg-0" th:title="#{selectProductFileClass}">
               <p class="input-group-text word-wrap"
                 th:text="#{fileclass}"></p>
             </div>
-            <div class="col-1 pl-lg-0">
+            <div class="col-1 pl-lg-0" th:title="#{selectProductFileClass}">
               <select name="fileClass" id="fileClass"
                   class="custom-select">
                 <option text=""
@@ -110,34 +110,34 @@
             </div>
           </div>
           <div class="row py-lg-1">
-            <div class="col-1 pr-lg-0">
+            <div class="col-1 pr-lg-0" th:title="#{selectId}">
               <p class="input-group-text word-wrap"
                 th:text="#{id}"></p>
             </div>
-            <div class="col-1 pl-lg-0">
+            <div class="col-1 pl-lg-0" th:title="#{selectId}">
                     <input type="number" min="1" class="form-control" autocomplete="on"
                       name="pid" id="pid">
             </div>
             
-            <div class="col-2 pr-lg-0">
+            <div class="col-2 pr-lg-0"  th:title="#{selectTime}">
               <p class="input-group-text word-wrap"
                 th:text="#{starttimebetween}"></p>
             </div>
-            <div class="col-3 pl-lg-0">
+            <div class="col-3 pl-lg-0"  th:title="#{selectTime}">
                     <input type="text" class="form-control" autocomplete="on"
                       pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
-                      title="yyyy-mm-dd[Thh:mm:ss[.ssssss]]" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
+                      th:title="#{selectTime}" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
                       name="startTimeFrom" id="startTimeFrom" data-type="TIME">
                     <div class="invalid-feedback" th:text="#{invaliddate}"></div>
             </div>
-            <div class="col-1 pr-lg-0">
+            <div class="col-1 pr-lg-0"  th:title="#{selectTime}">
               <p class="input-group-text word-wrap"
                 th:text="#{and}"></p>
             </div>
-            <div class="col-3 pl-lg-0">
+            <div class="col-3 pl-lg-0"  th:title="#{selectTime}">
                     <input type="text" class="form-control" autocomplete="on" 
                       pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
-                      title="yyyy-mm-dd[Thh:mm:ss[.ssssss]]" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
+                      th:title="#{selectTime}" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
                       name="startTimeTo" id="startTimeTo" data-type="TIME">
                     <div class="invalid-feedback" th:text="#{invaliddate}"></div>
             </div>
@@ -150,30 +150,30 @@
                     <span th:text="#{product-show}"></span>
               </button>
             </div>
-            <div class="col-1 pr-lg-0">
+            <div class="col-1 pr-lg-0" th:title="#{selectWithFile}">
               <input class="form-check-input" type="checkbox" name="withfile" value="wf" id="withfile">
               <label class="form-check-label" for="withfile" th:text="#{onlywithfile}">onlywithfile</label>
             </div>
             
-            <div class="col-2 pr-lg-0">
+            <div class="col-2 pr-lg-0"  th:title="#{selectTime}">
               <p class="input-group-text word-wrap"
                 th:text="#{gentimebetween}"></p>
             </div>
-            <div class="col-3 pl-lg-0">
+            <div class="col-3 pl-lg-0"  th:title="#{selectTime}">
                     <input type="text" class="form-control" autocomplete="on" 
                       pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
-                      title="yyyy-mm-dd[Thh:mm:ss[.ssssss]]" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
+                      th:title="#{selectTime}" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
                       name="genTimeFrom" id="genTimeFrom" data-type="TIME">
                     <div class="invalid-feedback" th:text="#{invaliddate}"></div>
             </div>
-            <div class="col-1 pr-lg-0">
+            <div class="col-1 pr-lg-0"  th:title="#{selectTime}">
               <p class="input-group-text word-wrap"
                 th:text="#{and}"></p>
             </div>
-            <div class="col-3 pl-lg-0">
+            <div class="col-3 pl-lg-0"  th:title="#{selectTime}">
                     <input type="text" class="form-control" autocomplete="on" 
                       pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
-                      title="yyyy-mm-dd[Thh:mm:ss[.ssssss]]" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
+                      th:title="#{selectTime}" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
                       name="genTimeTo" id="genTimeTo" data-type="TIME">
                     <div class="invalid-feedback" th:text="#{invaliddate}"></div>
             </div>
@@ -211,10 +211,10 @@
 								<td th:id="'toggleprod' + ${elem?.id}"
 									class="cursorpointer first-row no-right-border"
 									th:onclick="'toggleProd(' + ${elem?.id} + ')'"><div
-										class="prodhide" th:id="'prodh' + ${elem?.id}">
+										th:title="#{hideProductDetails}" class="prodhide" th:id="'prodh' + ${elem?.id}">
 										<span data-feather="minus-circle"></span>
 									</div>
-									<div class="prodshow" th:id="'prods' + ${elem?.id}">
+									<div th:title="#{showProductDetails}" class="prodshow" th:id="'prods' + ${elem?.id}">
 										<span data-feather="plus-circle"></span>
 									</div></td>
 								<td th:id="${elem?.id}" th:text="${elem?.id}"
@@ -393,6 +393,10 @@
   <script src="../static/fragments/jquery.serialize-object.js" th:src="@{/fragments/jquery.serialize-object.js}" type="text/javascript"></script>
 
   <script type="text/javascript" th:inline="javascript"> 
+    function wikiPage() {
+      window.open('https://github.com/dlr-eoc/prosEO/wiki/GUI-Product#product');
+    }
+  
 
   // Global variables
   var currentPage = 1; // Current page number

@@ -10,23 +10,23 @@
         <a
           th:if="${hasroleorderplanner}"
           th:class="('dropdown-item ' + (((${jobstep?.jobStepState} == 'PLANNED') and (${orderState} == 'RELEASING' or ${orderState} == 'RELEASED' or ${orderState} == 'RUNNING')) ? 'enabled' : 'disabled font-italic'))"
-          th:onclick="'setJobStepState(' + ${jobstep?.id} + ', \'RELEASE\')'" href="#"><span
+          th:onclick="'setJobStepState(' + ${jobstep?.id} + ', \'RELEASE\')'" href="#" th:title="#{helpjsrelease}"><span
           th:text="#{release}">release</span></a> <a
           th:if="${hasroleorderplanner}"
           th:class="('dropdown-item ' + ((${jobstep?.jobStepState} == 'WAITING_INPUT' or ${jobstep?.jobStepState} == 'READY') ? 'enabled' : 'disabled font-italic'))"
-          th:onclick="'setJobStepState(' + ${jobstep?.id} + ', \'SUSPEND\')'" href="#"><span
+          th:onclick="'setJobStepState(' + ${jobstep?.id} + ', \'SUSPEND\')'" href="#" th:title="#{helpjssuspend}"><span
           th:text="#{suspend}">suspend</span></a> <a
           th:if="${hasroleorderplanner}"
           th:class="('dropdown-item ' + ((${jobstep?.jobStepState} == 'WAITING_INPUT' or ${jobstep?.jobStepState} == 'READY' or ${jobstep?.jobStepState} == 'RUNNING') ? 'enabled' : 'disabled font-italic'))"
           th:onclick="'setJobStepState(' + ${jobstep?.id} + ', \'SUSPENDFORCE\')'"
-          href="#"><span th:text="#{suspendforce}">suspendforce</span></a> <a
+          href="#" th:title="#{helpjssuspendforce}"><span th:text="#{suspendforce}">suspendforce</span></a> <a
           th:if="${hasroleorderplanner}"
           th:class="('dropdown-item ' + ((${jobstep?.jobStepState} == 'INITIAL') ? 'enabled' : 'disabled font-italic'))"
-          th:onclick="'setJobStepState(' + ${jobstep?.id} + ', \'CANCEL\')'" href="#"><span
+          th:onclick="'setJobStepState(' + ${jobstep?.id} + ', \'CANCEL\')'" href="#" th:title="#{helpjscancel}"><span
           th:text="#{cancel}">cancel</span></a> <a
           th:if="${hasroleorderplanner}"
           th:class="('dropdown-item ' + ((${jobstep?.jobStepState} == 'FAILED') ? 'enabled' : 'disabled font-italic'))"
-          th:onclick="'setJobStepState(' + ${jobstep?.id} + ', \'RETRY\')'" href="#"><span
+          th:onclick="'setJobStepState(' + ${jobstep?.id} + ', \'RETRY\')'" href="#" th:title="#{helpjsretry}"><span
           th:text="#{retry}">retry</span></a>
       </div>
     </div>

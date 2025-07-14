@@ -60,21 +60,21 @@
         </div>
         <form class="needs-validation" name="prod-shw" id="prod-shw" action="javascript:submit();" >
         <div class="row py-lg-1">
-            <div class="col-2 pr-lg-0">
+            <div class="col-2 pr-lg-0" th:title="#{selectProductClass}">
               <p class="input-group-text word-wrap"
                 th:text="#{product-class}"></p>
             </div>
-            <div class="col-3 pl-lg-0">
+            <div class="col-3 pl-lg-0" th:title="#{selectProductClass}">
               <select name="productClasses" id="productClasses" multiple="multiple">
                 <option th:each="obj : ${productclassnames}" th:text="${obj}"
                   th:label="${obj}"></option>
               </select>
             </div>
-            <div class="col-2 pr-lg-0">
+            <div class="col-2 pr-lg-0" th:title="#{selectProcessorClass}">
               <p class="input-group-text word-wrap"
                 th:text="#{processor-class}"></p>
             </div>
-            <div class="col-3 pl-lg-0">
+            <div class="col-3 pl-lg-0" th:title="#{selectProcessorClass}">
               <select name="processorClasses" id="processorClasses" multiple="multiple">
                 <option th:each="obj : ${processorclassnames}" th:text="${obj}"
                   th:label="${obj}"></option>
@@ -89,11 +89,11 @@
                     <span th:text="#{product-class-show}"></span>
               </button>
             </div>
-            <div class="col-1 pr-lg-0">
+            <div class="col-1 pr-lg-0" th:title="#{selectProductLevel}">
               <p class="input-group-text word-wrap"
                 th:text="#{processinglevel}"></p>
             </div>
-            <div class="col-2 pl-lg-0"><select name="processingLevel" id="processingLevel"
+            <div class="col-2 pl-lg-0" th:title="#{selectProductLevel}"><select name="processingLevel" id="processingLevel"
                   class="custom-select">
                 <option text=""
                   label=""></option>
@@ -101,11 +101,11 @@
                   th:label="${obj}"></option>
                 </select>
             </div>
-            <div class="col-1 pr-lg-0">
+            <div class="col-1 pr-lg-0" th:title="#{selectProductVisibility}">
               <p class="input-group-text word-wrap"
                 th:text="#{visibility}"></p>
             </div>
-            <div class="col-2 pl-lg-0">
+            <div class="col-2 pl-lg-0" th:title="#{selectProductVisibility}">
               <select name="visibility" id="visibility"
                   class="custom-select">
                 <option text=""
@@ -139,10 +139,10 @@
 									<td th:id="'toggleprod' + ${class?.id}"
 										class="cursorpointer first-row no-right-border"
 										th:onclick="'toggleProd(' + ${class?.id} + ')'"><div
-											class="prodhide" th:id="'prodh' + ${class?.id}">
+											th:title="#{hideProductClassDetails}" class="prodhide" th:id="'prodh' + ${class?.id}">
 											<span data-feather="minus-circle"></span>
 										</div>
-										<div class="prodshow" th:id="'prods' + ${class?.id}">
+										<div th:title="#{showProductClassDetails}" class="prodshow" th:id="'prods' + ${class?.id}">
 											<span data-feather="plus-circle"></span>
 										</div></td>
 									<td th:id="${class?.id}" th:name="${class?.productType}" th:text="${class?.id}"
@@ -260,6 +260,10 @@
   <script src="../static/fragments/bootstrap-multiselect.js" th:src="@{/fragments/bootstrap-multiselect.js}" type="text/javascript"></script>
 
   <script type="text/javascript" th:inline="javascript">   
+  function wikiPage() {
+      window.open('https://github.com/dlr-eoc/prosEO/wiki/GUI-Product-Class#product-class');
+  }
+  
 
   // Global variables
   var currentPage = 1; // Current page number
