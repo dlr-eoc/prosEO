@@ -52,6 +52,10 @@ public class AipClientConfiguration {
 	@Value("${proseo.order.check.interval}")
 	private Long orderCheckInterval;
 
+	/** Maximum number of records to retrieve in one OData request ("$top" query parameter) */
+	@Value("${proseo.archive.maxrecords}")
+	private Integer archiveMaxRecords;
+
 	/** Timeout for archive connections in milliseconds */
 	@Value("${proseo.archive.timeout}")
 	private Long archiveTimeout;
@@ -146,6 +150,15 @@ public class AipClientConfiguration {
 	 */
 	public Long getOrderCheckInterval() {
 		return orderCheckInterval;
+	}
+
+	/**
+	 * Gets the maximum number of records to retrieve in one OData request ("$top" query parameter)
+	 * 
+	 * @return the maximum number of records to retrieve from archive
+	 */
+	public Integer getArchiveMaxRecords() {
+		return archiveMaxRecords;
 	}
 
 	/**

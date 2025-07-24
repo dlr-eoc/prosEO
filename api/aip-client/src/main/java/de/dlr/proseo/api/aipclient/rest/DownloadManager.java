@@ -128,7 +128,6 @@ public class DownloadManager {
 	private static final String ODATA_FILTER_NAME = "Name eq ";
 	private static final String ODATA_FILTER_ID = "Id eq ";
 	private static final String ODATA_EXPAND_ATTRIBUTES = "Attributes";
-	private static final int ODATA_TOP_COUNT = 10000;
 	private static final String ODATA_CSC_ORDER = "OData.CSC.Order";
 
 	// OData response properties
@@ -947,7 +946,7 @@ public class DownloadManager {
 			.appendEntitySetSegment(queryEntity)
 			.addQueryOption(QueryOption.FILTER, queryFilter.toString())
 			.addQueryOption(QueryOption.COUNT, "true")
-			.top(ODATA_TOP_COUNT);
+			.top(config.getArchiveMaxRecords());
 
 		if (ODATA_ENTITY_PRODUCTS.equals(queryEntity)) {
 			uriBuilder = uriBuilder.orderBy("OriginDate asc");
