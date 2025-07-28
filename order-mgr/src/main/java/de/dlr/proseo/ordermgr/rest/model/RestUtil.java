@@ -144,7 +144,21 @@ public class RestUtil {
 			}
 
 			for (ProductQuery pq : modelJobStep.getInputProductQueries()) {
-				String pt = pq.getRequestedProductClass().getProductType();
+				Boolean isSatisfied = pq.getIsSatisfied();
+				Boolean isMandatory = pq.getGeneratingRule().getIsMandatory();
+				String flag = "|";
+				if (isMandatory) {
+					flag += "M-";
+				} else {
+					flag += "O-";
+				}
+				if (isSatisfied) {
+					flag += "1";
+				} else {
+					flag += "0";
+				}
+				
+				String pt = pq.getRequestedProductClass().getProductType() + flag;
 				if (!pjs.getInputProductClasses().contains(pt)) {
 					pjs.getInputProductClasses().add(pt);
 				}

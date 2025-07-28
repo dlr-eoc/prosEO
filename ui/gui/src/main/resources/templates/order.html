@@ -345,15 +345,29 @@
                                 th:if="${hasroleproductreader}"
                                 th:href="'/product-show?id=' + ${jobstep?.outputProduct}"><span th:text="${jobstep?.outputProductClass}"></span></a><span  
                                 th:unless="${hasroleproductreader}"><span th:text="${jobstep?.outputProductClass}"></span></span></td>
-                              <td class="first-row"><a 
-                                th:if="${hasroleproductreader}"
-                                th:each="comp : ${jobstep?.inputProductClasses}" 
+                              <td class="first-row"><span th:each="comp : ${jobstep?.inputProductClasses}">
+                              <span th:if="${hasroleproductreader}">
+                                <a 
+                                  th:if="${#strings.equals(#strings.arraySplit(#strings.arraySplit(comp, '|')[1], '-')[1], '1')}"
+                                  class="proseo-list-item"  
+                                  th:href="'/product-show?jobStep=' + ${jobstep?.id} + '&productClass=' + ${#strings.arraySplit(comp, '|')[0]}"> 
+                                  <span th:text="' ' + ${#strings.arraySplit(comp, '|')[0]}"
+                                  th:class="${#strings.equals(#strings.arraySplit(#strings.arraySplit(comp, '|')[1], '-')[0], 'M')} ? 'mandatory-1' : 'optional-1'"
+                                  th:title="${#strings.equals(#strings.arraySplit(#strings.arraySplit(comp, '|')[1], '-')[0], 'M')} ? #{mandatory-1} : #{optional-1}"></span>
+                                  
+                                </a>
+                                <span th:if="${#strings.equals(#strings.arraySplit(#strings.arraySplit(comp, '|')[1], '-')[1], '0')}"
+                                  class="proseo-list-item">
+                                  <span 
+                                  th:class="${#strings.equals(#strings.arraySplit(#strings.arraySplit(comp, '|')[1], '-')[0], 'M')} ? 'mandatory-0' : 'optional-0'"  
+                                  th:text="' ' + ${#strings.arraySplit(comp, '|')[0]}"
+                                  th:title="${#strings.equals(#strings.arraySplit(#strings.arraySplit(comp, '|')[1], '-')[0], 'M')} ? #{mandatory-0} : #{optional-0}"></span>
+                                </span>
+                                </span>
+                                <span th:unless="${hasroleproductreader}"><span 
+                                th:if="${hasroleproductreader} and ${#strings.equals(#strings.arraySplit(#strings.arraySplit(comp, '|')[1], '-')[1], '1')}"
                                 class="proseo-list-item"  
-                                th:href="'/product-show?jobStep=' + ${jobstep?.id} + '&productClass=' + ${comp}" th:text="' ' + ${comp}"></a><span 
-                                th:unless="${hasroleproductreader}"
-                                th:each="comp : ${jobstep?.inputProductClasses}" 
-                                class="proseo-list-item"  
-                                th:text="' ' + ${comp}"></span></td>
+                                th:text="' ' + ${#strings.arraySplit(comp, '|')[0]}"></span></span></span></td>
                               <td class="first-row"><span th:text="${jobstep?.processingStartTime}"></span></td>
                               <td class="first-row"><span th:text="${jobstep?.processingCompletionTime}"></span></td>
                               <td class="first-row"><span th:text="${jobstep?.stdoutLogLevel}"></span></td>

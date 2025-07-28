@@ -585,6 +585,19 @@ code {
   background-color: #ffeeba !important;
 }
 
+.mandatory-0 {
+  color: #ff0000 !important;
+}
+.mandatory-1 {
+  color: #0000ff !important;
+}
+.optional-0 {
+  color: #000000 !important;
+}
+.optional-1 {
+  color: #00d500 !important;
+}
+
 .ON_HOLD-c {
   color: #c3e6cb !important;
 }
