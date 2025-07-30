@@ -78,6 +78,10 @@
             th:if="${hasroleproductarchivereader}"
              class="nav-item"><a id="sb-productarchive" class="nav-link"
             href="/productarchive-show"><span th:text="#{productarchive}">product archive</span></a></li>
+          <li 
+            th:if="${hasroleproductarchivereader}"
+             class="nav-item"><a id="sb-grafana" class="nav-link"
+            th:href="${grafana}" target="_blank"><span th:text="#{grafana}">grafana</span></a></li>
 				</ul>
 			</div>
 		</nav>

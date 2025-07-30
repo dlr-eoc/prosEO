@@ -57,6 +57,10 @@ public class GUIBaseController {
 	@Autowired
 	private ServiceConfiguration serviceConfig;
 
+	/** The configuration object for the GUI */
+	@Autowired
+	private GUIConfiguration guiConfig;
+
 	/** List with cached production types */
 	private List<String> productiontypes = null;
 
@@ -105,6 +109,17 @@ public class GUIBaseController {
 			}
 		}
 		return version;
+	}
+
+	/**
+	 * Gets the current version of prosEO
+	 *
+	 * @return the prosEO version
+	 */
+	
+	@ModelAttribute("grafana")
+	public String grafana() {
+		return guiConfig.getGrafana();
 	}
 
 	/**
