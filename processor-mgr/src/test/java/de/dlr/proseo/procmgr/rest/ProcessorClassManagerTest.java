@@ -209,11 +209,11 @@ public class ProcessorClassManagerTest {
 		 * mission.
 		 */
 		assertTrue("More or less processors retrieved than expected.",
-				processorMgr.getProcessorClasses(null, null, 0, 10).size() == 2);
+				processorMgr.getProcessorClasses(null, null, 0, 10, null).size() == 2);
 		assertTrue("More or less processors retrieved than expected.",
-				processorMgr.getProcessorClasses(testMissionData[0], null, 0, 100).size() == 2);
+				processorMgr.getProcessorClasses(testMissionData[0], null, 0, 100, null).size() == 2);
 		assertTrue("More or less processors retrieved than expected.", processorMgr
-				.getProcessorClasses(testMissionData[0], testProcessorClassData[0], null, null).size() == 1);
+				.getProcessorClasses(testMissionData[0], testProcessorClassData[0], null, null, null).size() == 1);
 	}
 
 }

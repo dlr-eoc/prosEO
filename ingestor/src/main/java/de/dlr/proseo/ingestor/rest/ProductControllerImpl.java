@@ -108,14 +108,14 @@ public class ProductControllerImpl implements ProductController {
 	@Override
 	public ResponseEntity<List<RestProduct>> getProducts(String mission, String[] productClass, String mode, String fileClass,
 			String quality, String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, Integer recordFrom,
-			Integer recordTo, Long jobStepId, String[] orderBy, HttpHeaders httpHeaders) {
+			Integer recordTo, Boolean onlyWithFile, Long jobStepId, String[] orderBy, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getProducts({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, productClass, mode, fileClass,
 					quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo, recordFrom, recordTo, orderBy);
 
 		try {
 			return new ResponseEntity<>(productManager.getProducts(mission, productClass, mode, fileClass, quality, startTimeFrom,
-					startTimeTo, genTimeFrom, genTimeTo, recordFrom, recordTo, jobStepId, orderBy), HttpStatus.OK);
+					startTimeTo, genTimeFrom, genTimeTo, recordFrom, recordTo, onlyWithFile, jobStepId, orderBy), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {
@@ -147,15 +147,15 @@ public class ProductControllerImpl implements ProductController {
 	 */
 	@Override
 	public ResponseEntity<?> countProducts(String mission, String[] productClass, String mode, String fileClass, String quality,
-			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, Long jobStepId,
+			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, Boolean onlyWithFile, Long jobStepId, Long id,
 			HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> countProducts({}, {}, {}, {}, {}, {}, {}, {}, {})", mission, productClass, mode, fileClass, quality,
-					startTimeFrom, startTimeTo, genTimeFrom, genTimeTo);
+			logger.trace(">>> countProducts({}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, productClass, mode, fileClass, quality,
+					startTimeFrom, startTimeTo, genTimeFrom, genTimeTo, id);
 
 		try {
 			return new ResponseEntity<>(productManager.countProducts(mission, productClass, mode, fileClass, quality, startTimeFrom,
-					startTimeTo, genTimeFrom, genTimeTo, jobStepId), HttpStatus.OK);
+					startTimeTo, genTimeFrom, genTimeTo, onlyWithFile, jobStepId, id), HttpStatus.OK);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}

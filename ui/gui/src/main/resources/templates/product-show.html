@@ -60,21 +60,21 @@
       </div>
       <form class="needs-validation" name="prod-shw" id="prod-shw" action="javascript:submit();" >
         <div class="row py-lg-1">
-            <div class="col-1 pr-lg-0">
+            <div class="col-1 pr-lg-0" th:title="#{selectProductClass}">
               <p class="input-group-text word-wrap"
                 th:text="#{product-class}"></p>
             </div>
-            <div class="col-3 pl-lg-0">
+            <div class="col-3 pl-lg-0" th:title="#{selectProductClass}">
               <select name="productClasses" id="productClasses" multiple="multiple">
                 <option th:each="obj : ${productclassnames}" th:text="${obj}"
                   th:label="${obj}"></option>
               </select>
             </div>
-            <div class="col-1 pr-lg-0">
+            <div class="col-1 pr-lg-0" th:title="#{selectMode}">
               <p class="input-group-text word-wrap"
                 th:text="#{mode}"></p>
             </div>
-            <div class="col-1 pl-lg-0"><select name="processingMode" id="processingMode"
+            <div class="col-1 pl-lg-0" th:title="#{selectMode}"><select name="processingMode" id="processingMode"
                   class="custom-select">
                 <option text=""
                   label=""></option>
@@ -82,11 +82,11 @@
                   th:label="${obj}"></option>
                 </select>
             </div>
-            <div class="col-1 pr-lg-0">
+            <div class="col-1 pr-lg-0" th:title="#{selectProductQuality}">
               <p class="input-group-text word-wrap"
                 th:text="#{quality}"></p>
             </div>
-            <div class="col-2 pl-lg-0">
+            <div class="col-2 pl-lg-0" th:title="#{selectProductQuality}">
               <select name="productQuality" id="productQuality"
                   class="custom-select">
                 <option text=""
@@ -95,11 +95,11 @@
                   th:label="${obj}"></option>
                 </select>
             </div>
-            <div class="col-1 pr-lg-0">
+            <div class="col-1 pr-lg-0" th:title="#{selectProductFileClass}">
               <p class="input-group-text word-wrap"
                 th:text="#{fileclass}"></p>
             </div>
-            <div class="col-1 pl-lg-0">
+            <div class="col-1 pl-lg-0" th:title="#{selectProductFileClass}">
               <select name="fileClass" id="fileClass"
                   class="custom-select">
                 <option text=""
@@ -110,66 +110,70 @@
             </div>
           </div>
           <div class="row py-lg-1">
-            <div class="col-1 pr-lg-0">
+            <div class="col-1 pr-lg-0" th:title="#{selectId}">
               <p class="input-group-text word-wrap"
                 th:text="#{id}"></p>
             </div>
-            <div class="col-1 pl-lg-0">
+            <div class="col-1 pl-lg-0" th:title="#{selectId}">
                     <input type="number" min="1" class="form-control" autocomplete="on"
                       name="pid" id="pid">
             </div>
             
-            <div class="col-2 pr-lg-0">
+            <div class="col-2 pr-lg-0"  th:title="#{selectTime}">
               <p class="input-group-text word-wrap"
                 th:text="#{starttimebetween}"></p>
             </div>
-            <div class="col-3 pl-lg-0">
+            <div class="col-3 pl-lg-0"  th:title="#{selectTime}">
                     <input type="text" class="form-control" autocomplete="on"
                       pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
-                      title="yyyy-mm-dd[Thh:mm:ss[.ssssss]]" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
+                      th:title="#{selectTime}" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
                       name="startTimeFrom" id="startTimeFrom" data-type="TIME">
                     <div class="invalid-feedback" th:text="#{invaliddate}"></div>
             </div>
-            <div class="col-1 pr-lg-0">
+            <div class="col-1 pr-lg-0"  th:title="#{selectTime}">
               <p class="input-group-text word-wrap"
                 th:text="#{and}"></p>
             </div>
-            <div class="col-3 pl-lg-0">
+            <div class="col-3 pl-lg-0"  th:title="#{selectTime}">
                     <input type="text" class="form-control" autocomplete="on" 
                       pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
-                      title="yyyy-mm-dd[Thh:mm:ss[.ssssss]]" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
+                      th:title="#{selectTime}" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
                       name="startTimeTo" id="startTimeTo" data-type="TIME">
                     <div class="invalid-feedback" th:text="#{invaliddate}"></div>
             </div>
           </div>
           <div class="row py-lg-1">
-            <div class="col-2">
+            <div class="col-1">
               <button id="productselect" type="submit"
                     onclick="submit();"
                     class="btn btn-sm btn-outline-secondary">
                     <span th:text="#{product-show}"></span>
               </button>
             </div>
+            <div class="col-1 pr-lg-0" th:title="#{selectWithFile}">
+              <input class="form-check-input" type="checkbox" name="withfile" value="wf" id="withfile">
+              <label class="form-check-label" for="withfile" th:text="#{onlywithfile}">onlywithfile</label>
+            </div>
             
-            <div class="col-2 pr-lg-0">
+            <div class="col-2 pr-lg-0"  th:title="#{selectTime}">
               <p class="input-group-text word-wrap"
                 th:text="#{gentimebetween}"></p>
             </div>
-            <div class="col-3 pl-lg-0">
+            <div class="col-3 pl-lg-0"  th:title="#{selectTime}">
                     <input type="text" class="form-control" autocomplete="on" 
                       pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
-                      title="yyyy-mm-dd[Thh:mm:ss[.ssssss]]" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
+                      th:title="#{selectTime}" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
                       name="genTimeFrom" id="genTimeFrom" data-type="TIME">
                     <div class="invalid-feedback" th:text="#{invaliddate}"></div>
             </div>
-            <div class="col-1 pr-lg-0">
+            <div class="col-1 pr-lg-0"  th:title="#{selectTime}">
               <p class="input-group-text word-wrap"
                 th:text="#{and}"></p>
             </div>
-            <div class="col-3 pl-lg-0">
+            <div class="col-3 pl-lg-0"  th:title="#{selectTime}">
                     <input type="text" class="form-control" autocomplete="on" 
                       pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
-                      title="yyyy-mm-dd[Thh:mm:ss[.ssssss]]" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
+                      th:title="#{selectTime}" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
                       name="genTimeTo" id="genTimeTo" data-type="TIME">
                     <div class="invalid-feedback" th:text="#{invaliddate}"></div>
             </div>
@@ -183,12 +187,20 @@
 					th:if="${products != null and (not #lists.isEmpty(products))}">
 					<thead class="thead-proseo" id="proseo-thead">
 						<tr>
-							<th colspan="2"><span th:text="#{id}">id</span></th>
-							<th><span th:text="#{product-class}">product-class</span></th>
-							<th><span th:text="#{generationtime}">generationtime</span></th>
+							<th colspan="2" onclick="selectSort('select-id')" 
+                        class="cursorpointer"><span id="select-id" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{id}">id</span></th>
+							<th onclick="selectSort('select-className')" 
+                        class="cursorpointer"><span id="select-className" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{product-class}">product-class</span></th>
+              <th onclick="selectSort('select-sensingStartTime')" 
+                        class="cursorpointer"><span id="select-sensingStartTime" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{sensingstarttime}">sensingstarttime</span></th>
+              <th><span th:text="#{sensingstoptime}">sensingstoptime</span></th>
+							<th onclick="selectSort('select-generationTime')" 
+                        class="cursorpointer"><span id="select-generationTime" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{generationtime}">generationtime</span></th>
 							<th><span th:text="#{mode}">mode</span></th>
-							<th><span th:text="#{sensingstarttime}">sensingstarttime</span></th>
-							<th><span th:text="#{sensingstoptime}">sensingstoptime</span></th>
 							<th><span th:text="#{productquality}">productquality</span></th>
 							<th><span th:text="#{fileclass}">fileclass</span></th>
 						</tr>
@@ -199,10 +211,10 @@
 								<td th:id="'toggleprod' + ${elem?.id}"
 									class="cursorpointer first-row no-right-border"
 									th:onclick="'toggleProd(' + ${elem?.id} + ')'"><div
-										class="prodhide" th:id="'prodh' + ${elem?.id}">
+										th:title="#{hideProductDetails}" class="prodhide" th:id="'prodh' + ${elem?.id}">
 										<span data-feather="minus-circle"></span>
 									</div>
-									<div class="prodshow" th:id="'prods' + ${elem?.id}">
+									<div th:title="#{showProductDetails}" class="prodshow" th:id="'prods' + ${elem?.id}">
 										<span data-feather="plus-circle"></span>
 									</div></td>
 								<td th:id="${elem?.id}" th:text="${elem?.id}"
@@ -214,10 +226,10 @@
 									th:text="${elem?.productClass}"></a><span 
                   th:unless="${hasroleproductclassreader}"
                   th:text="${elem?.productClass}"></span></td>
+                <td th:text="${elem?.sensingStartTime}" class="first-row"></td>
+                <td th:text="${elem?.sensingStopTime}" class="first-row"></td>
 								<td th:text="${elem?.generationTime}" class="first-row"></td>
 								<td th:text="${elem?.mode}" class="first-row"></td>
-								<td th:text="${elem?.sensingStartTime}" class="first-row"></td>
-								<td th:text="${elem?.sensingStopTime}" class="first-row"></td>
 								<td th:text="${elem?.productQuality}" class="first-row"></td>
 								<td th:text="${elem?.fileClass}" class="first-row"></td>
 							</tr>
@@ -353,7 +365,7 @@
 					</div>
 					</tbody>
 				</table>
-        <div th:replace="fragments/navbar.html :: pagenav"></div>
+        <div th:replace="fragments/navbar.html :: alternatePageNav"></div>
       </div>
 			<div th:insert="fragments/footer.html :: footer"></div>
 			</main>
@@ -381,6 +393,34 @@
   <script src="../static/fragments/jquery.serialize-object.js" th:src="@{/fragments/jquery.serialize-object.js}" type="text/javascript"></script>
 
   <script type="text/javascript" th:inline="javascript"> 
+    function wikiPage() {
+      window.open('https://github.com/dlr-eoc/prosEO/wiki/GUI-Product#product');
+    }
+  
+
+  // Global variables
+  var currentPage = 1; // Current page number
+  var pageSize = 20; // Maximum objects per page
+  
+  // order filters
+  var id = null;
+  var productClass = null;
+  var mode = null;
+  var quality = null;
+  var fileClass = null;
+  var quality = null;
+  var startTimeFrom = null;
+  var startTimeTo = null;
+  var genTimeFrom = null;
+  var genTimeTo = null;
+  var jobStep = null;
+  var withfile = false;
+  
+  // sorting
+  var sortCols = ['select-id', 'select-', 'select-sensingStartTime', 'select-generationTime'];
+  var sortCol = "className";
+  var upText = "true";
+  
     function toggleProd(id) {
         var content = document.getElementById("prodcont" + id);
         var eleshow = document.getElementById("prods" + id);
@@ -475,58 +515,129 @@ function submit() {
     $('#prod-shw')[0].classList.add('was-validated');
 	} else {
 	  $('#prod-shw')[0].classList.add('was-validated');
-	  retrieveDataPage(0, 25);
+	  retrieveDataPage(0, pageSize);
 	}
 }
 function setSelected() {
-	var cls = getURLParams('productClass');
-	if (cls != null && cls.length > 0) {
-	  $('#productClasses').multiselect('select', getURLParams('productClass'));
+	if (productClass != null && productClass.length > 0) {
+	  $('#productClasses').multiselect('select', productClass);
 	}
-	setSelectedOption('processingMode', getURLParam('mode'));
-	setSelectedOption('fileClass', getURLParam('fileClass'));
-	setSelectedOption('productQuality', getURLParam('quality'));
-    $('#pid').val(getURLParam('id'));
-    $('#startTimeFrom').val(getURLParam('startTimeFrom'));
-	  $('#startTimeTo').val(getURLParam('startTimeTo'));
-	  $('#genTimeFrom').val(getURLParam('genTimeFrom'));
-	  $('#genTimeTo').val(getURLParam('genTimeTo'));
+	setSelectedOption('processingMode', mode);
+	setSelectedOption('fileClass', fileClass);
+	setSelectedOption('productQuality', quality);
+	document.getElementById('withfile').checked = withfile;
+  $('#pid').val(id);
+  $('#startTimeFrom').val(startTimeFrom);
+  $('#startTimeTo').val(startTimeTo);
+  $('#genTimeFrom').val(genTimeFrom);
+  $('#genTimeTo').val(genTimeTo);
 }
 
-function setParams() {
+function setParams(ele, selup, newPage, newPageSize) {
+    var newId = null;
+    var newProductClass = null;
+    var newMode = null;
+    var newQuality = null;
+    var newFileClass = null;
+    var newQuality = null;
+    var newStartTimeFrom = null;
+    var newStartTimeTo = null;
+    var newGenTimeFrom = null;
+    var newGenTimeTo = null;
+    var hasChanged = false;
+    var newWithfile = false;
+      
+    hasChanged |= setPageParams(newPage, newPageSize);
+    hasChanged |= setSortParams(ele, selup);
+    newId = $('#pid').val();
+    if (isEmpty(newId)) {newId = null};
+    newProductClass = $('#productClasses').val();
+    newMode = $('#processingMode').val();
+    if (isEmpty(newMode)) {newMode = null};
+    newQuality = $('#productQuality').val();
+    if (isEmpty(newQuality)) {newQuality = null};
+    newFileClass = $('#fileClass').val();
+    if (isEmpty(newFileClass)) {newFileClass = null};
+    newStartTimeFrom = $('#startTimeFrom').val();
+    if (isEmpty(newStartTimeFrom)) {newStartTimeFrom = null};
+    newStartTimeTo = $('#startTimeTo').val();
+    if (isEmpty(newStartTimeTo)) {newStartTimeTo = null};
+    newGenTimeFrom = $('#genTimeFrom').val();
+    if (isEmpty(newGenTimeFrom)) {newGenTimeFrom = null};
+    newGenTimeTo = $('#genTimeTo').val();
+    if (isEmpty(newGenTimeTo)) {newGenTimeTo = null};
+    newWithfile = document.getElementById('withfile').checked;
+
+    if (   id != newId
+        || mode != newMode
+        || quality != newQuality
+        || fileClass != newFileClass
+        || !arrayEquals(productClass, newProductClass)  
+        || startTimeFrom != newStartTimeFrom
+        || startTimeTo != newStartTimeTo
+        || genTimeFrom != newGenTimeFrom
+        || genTimeTo != newGenTimeTo
+        || withfile != newWithfile) {
+      // table size may be changed, go to first page
+      currentPage = 1;
+      newPage = 1;
+      hasChanged = true;
+    }   
+    id = newId;
+    mode = newMode;
+    quality = newQuality;
+    fileClass = newFileClass;
+    productClass = newProductClass; 
+    startTimeFrom = newStartTimeFrom;
+    startTimeTo = newStartTimeTo;
+    genTimeFrom = newGenTimeFrom;
+    genTimeTo = newGenTimeTo;
+    withfile = newWithfile;
+    if (hasChanged) {
+        setHTMLParams();
+    }
+}
+
+function setHTMLParams() {
     var loc = location.search.slice(0);
     var search = location.search.slice(1);
-    var paramString = search;
-    search = removeURLKeyPrim('id', search);
-    search = removeURLKeyPrim('productClass', search);
-	  search = removeURLKeyPrim('mode', search);
-	  search = removeURLKeyPrim('fileClass', search);
-	  search = removeURLKeyPrim('quality', search);
-	  search = removeURLKeyPrim('startTimeFrom', search);
-	  search = removeURLKeyPrim('startTimeTo', search);
-	  search = removeURLKeyPrim('genTimeFrom', search);
-	  search = removeURLKeyPrim('genTimeTo', search);
-	  searchTmp = addURLParamValuePrim('id', $('#pid').val(), search);
-	  if (searchTmp != null) {search = searchTmp};
-    var searchTmp = addURLParamValuesPrim('productClass', $('#productClasses').val(), search);
-    if (searchTmp != null) {search = searchTmp};
-    searchTmp = addURLParamValuePrim('mode', $('#processingMode').val(), search);
-    if (searchTmp != null) {search = searchTmp};
-    searchTmp = addURLParamValuePrim('fileClass', $('#fileClass').val(), search);
-    if (searchTmp != null) {search = searchTmp};
-    searchTmp = addURLParamValuePrim('startTimeFrom', getDateString($('#startTimeFrom').val(), false), search);
-    if (searchTmp != null) {search = searchTmp};
-    searchTmp = addURLParamValuePrim('startTimeTo', getDateString($('#startTimeTo').val(), true), search);
-    if (searchTmp != null) {search = searchTmp};
-    searchTmp = addURLParamValuePrim('genTimeFrom', getDateString($('#genTimeFrom').val(), false), search);
-    if (searchTmp != null) {search = searchTmp};
-    searchTmp = addURLParamValuePrim('genTimeTo', getDateString($('#genTimeTo').val(), true), search);
-    if (searchTmp != null) {search = searchTmp};
-    if (search != loc) {
-    	  if (search == '') {
-    		  search = '?';
-    	  }
-    	  history.pushState({}, null, search);
+    // build parameter string
+    var paramString = "";
+    paramString = addURLParamValuePrim('id', id, paramString);
+    paramString = addURLParamValuePrim('mode', mode, paramString);
+    paramString = addURLParamValuePrim('quality', quality, paramString);
+    paramString = addURLParamValuesPrim('productClass', productClass, paramString);
+    paramString = addURLParamValuePrim('fileClass', fileClass, paramString);
+    paramString = addURLParamValuePrim('startTimeFrom', startTimeFrom, paramString);
+    paramString = addURLParamValuePrim('startTimeTo', startTimeTo, paramString);
+    paramString = addURLParamValuePrim('genTimeFrom', genTimeFrom, paramString);
+    paramString = addURLParamValuePrim('genTimeTo', genTimeTo, paramString);
+    paramString = addURLParamValuePrim('withfile', withfile.toString(), paramString);
+    paramString = setPageHTMLParams(paramString);
+    paramString = setSortHTMLParams(paramString);
+    var newHref = location.origin + location.pathname + paramString;
+    if (newHref != location.href) {
+        history.pushState({}, null, newHref);
+    }
+}
+
+function readHTMLParams() {
+    readPageHTMLParams();
+    readSortHTMLParams();
+    id = getURLParam('id');
+    mode = getURLParam('mode');
+    quality = getURLParam('quality');
+    productClass = getURLParams('productClass');
+    fileClass = getURLParam('fileClass');
+    startTimeFrom = getURLParam('startTimeFrom');
+    startTimeTo = getURLParam('startTimeTo');
+    genTimeFrom = getURLParam('genTimeFrom');
+    genTimeTo = getURLParam('genTimeTo');
+    withfile = getURLParam('withfile');
+    if (withfile == "true") {
+    	withfile = true;
+    } else {
+    	withfile = false;
     }
 }
 
@@ -541,8 +652,12 @@ function productref(ref) {
 	  }
 }
 
-function retrieveDataPage(from, to) {
-	  setParams();
+function updateTable(newPage, newPageSize) {
+  retrieveDataPage(newPage, newPageSize);
+}
+
+function retrieveDataPage(newPage, newPageSize) {
+	  setParams(null, null, newPage, newPageSize);
     var productClasses = getURLParams('productClass');
     var productClass = null;
     if (productClasses != null && productClasses.length > 0) {
@@ -553,18 +668,16 @@ function retrieveDataPage(from, to) {
     		divider = ",";
     	}    	
     }
-    var mode = getURLParam('mode');
-    var fileClass = getURLParam('fileClass');
-    var quality = getURLParam('quality');
-    var startTimeFrom = getURLParam('startTimeFrom');
-    var startTimeTo = getURLParam('startTimeTo');
-    var genTimeFrom = getURLParam('genTimeFrom');
-    var genTimeTo = getURLParam('genTimeTo');
-    var id = getURLParam('id');
-    var jobStepId = getURLParam('jobStep');
-    retrieveData(id, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo, from, to, jobStepId);
+    readPageHTMLParams();
+    retrieveDataPrim(false);
 }
-function retrieveData(id, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo, from, to, jobStepId) {
+
+function retrieveDataPrim(notUsed) {
+    var jobStepId = getURLParam('jobStep');
+    retrieveData(getFromRow(), getToRow(), jobStepId);
+}
+
+function retrieveData(from, to, jobStepId) {
     if ([[${hasroleproductreader}]]) {
 	      showLoader(); 
           $('#productClasses').multiselect({
@@ -618,10 +731,14 @@ function retrieveData(id, productClass, mode, fileClass, quality, startTimeFrom,
 		        url = url + divider + "recordFrom=" + from;
 		        divider = "&";
 		    }
-		    if (to != null) {
-		        url = url + divider + "recordTo=" + to;
-		        divider = "&";
-		    }
+        if (to != null) {
+            url = url + divider + "recordTo=" + to;
+            divider = "&";
+        }
+        if (withfile != null) {
+            url = url + divider + "onlyWithFile=" + withfile;
+            divider = "&";
+        }
 		    if (id != null) {
 		        url = url + divider + "id=" + id.toString().trim();
 		        divider = "&";
@@ -630,12 +747,18 @@ function retrieveData(id, productClass, mode, fileClass, quality, startTimeFrom,
 		        url = url + divider + "jobStepId=" + jobStepId.toString().trim();
 		        divider = "&";
 		    }
+        url = url + divider + "sortby=" + sortCol.replace("select-", "");
+        divider = "&";
+        url = url + divider + "up=" + upText;
+        divider = "&";
+
         $.ajax({
             url : url,
             method : "GET",
             success : function(res, textStatus, jqXHR) {
                 $("#productcontent").html(res);
                 hideLoader();
+                readHTMLParams();
                 initPlusMinus();
                 feather.replace(); 
                 $('#productClasses').multiselect({
@@ -647,6 +770,7 @@ function retrieveData(id, productClass, mode, fileClass, quality, startTimeFrom,
                     nonSelectedText : ''
                 });
                 setSelected();
+                setSort();
                 if (id != null) {
                     scrollToElem(id);
             	      openProd(id);
@@ -655,6 +779,7 @@ function retrieveData(id, productClass, mode, fileClass, quality, startTimeFrom,
             },
             error : function(jqXHR, textStatus, errorThrown) {
                 hideLoader();
+                readHTMLParams();
                 console.log(textStatus + errorThrown);
                 alert("Error: " + errorThrown);
             }
@@ -672,11 +797,11 @@ window.onpopstate = function(event) {
 
     window.onload = function () {
      // $('.collapse').collapse();
-     var elem = document.getElementById('sb-product');
-     $(elem).addClass('active');
+     activateSidebarElem('sb-product');
      feather.replace();
+     readHTMLParams();
      setSelected();
-     retrieveDataPage(0, 25);
+     retrieveDataPage(currentPage, pageSize);
      
      // correct scroll due to "sticky" elements
      var handler = function ( ) {

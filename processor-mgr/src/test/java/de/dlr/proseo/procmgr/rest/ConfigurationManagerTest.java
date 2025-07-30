@@ -312,13 +312,13 @@ public class ConfigurationManagerTest {
 		 * the given mission.
 		 */
 		assertTrue("More or less configurations retrieved than expected.",
-				configurationMgr.getConfigurations(null, null, null, 0, 10).size() == 2);
+				configurationMgr.getConfigurations(null, null, null, 0, 10, null).size() == 2);
 		assertTrue("More or less configurations retrieved than expected.",
-				configurationMgr.getConfigurations(testMissionData[0], null, null, 0, 100).size() == 2);
+				configurationMgr.getConfigurations(testMissionData[0], null, null, 0, 100, null).size() == 2);
 		assertTrue("More or less configurations retrieved than expected.", configurationMgr
-				.getConfigurations(testMissionData[0], testConfigurationData[0][1], null, null, null).size() == 1);
+				.getConfigurations(testMissionData[0], testConfigurationData[0][1], null, null, null, null).size() == 1);
 		assertTrue("More or less configurations retrieved than expected.", configurationMgr
-				.getConfigurations(testMissionData[0], null, testConfigurationData[0][2], null, null).size() == 1);
+				.getConfigurations(testMissionData[0], null, testConfigurationData[0][2], null, null, null).size() == 1);
 	}
 
 }

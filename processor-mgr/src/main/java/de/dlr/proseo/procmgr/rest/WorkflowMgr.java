@@ -27,6 +27,7 @@ import javax.persistence.criteria.Root;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,7 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.OrderMgrMessage;
 import de.dlr.proseo.logging.messages.ProcessorMgrMessage;
 import de.dlr.proseo.model.ClassOutputParameter;
 import de.dlr.proseo.model.ConfiguredProcessor;
@@ -85,6 +87,69 @@ public class WorkflowMgr {
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(WorkflowMgr.class);
 
+	private Query createWorkflowsQuery(String missionCode, String workflowName, String workflowVersion, String inputProductClass,
+			String configuredProcessor, Boolean enabled, String[] orderBy, Boolean count) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> createWorkflowsQuery({}, {}, {}, {}, {}, {})", missionCode, workflowName, workflowVersion,
+					inputProductClass, configuredProcessor, enabled);
+
+		// Find using search parameters
+		String jpqlQuery = null;
+		String join = "";
+		if (count) {
+			jpqlQuery = "select count(w) from Workflow w where configuredProcessor.processor.processorClass.mission.code = :missionCode";
+		} else {
+			jpqlQuery = "select w from Workflow w where configuredProcessor.processor.processorClass.mission.code = :missionCode";
+		}
+		if (null != workflowName) {
+			jpqlQuery += " and upper(name) like :workflowName";
+		}
+		if (null != workflowVersion) {
+			jpqlQuery += " and workflowVersion = :workflowVersion";
+		}
+		if (null != inputProductClass) {
+			jpqlQuery += " and inputProductClass.productType = :inputProductClass";
+		}
+		if (null != configuredProcessor) {
+			jpqlQuery += " and configuredProcessor.identifier = :configuredProcessor";
+		}
+		if (null != enabled) {
+			jpqlQuery += " and enabled = :enabled";
+		}
+		if (!count) {
+			// order by
+			if (null != orderBy && 0 < orderBy.length) {
+				jpqlQuery += " order by ";
+				for (int i = 0; i < orderBy.length; ++i) {
+					if (0 < i)
+						jpqlQuery += ", ";
+					jpqlQuery += "w.";
+					jpqlQuery += orderBy[i];
+				}
+			}
+			
+		}
+
+		Query query = em.createQuery(jpqlQuery);
+		query.setParameter("missionCode", missionCode);
+		if (null != workflowName) {
+			query.setParameter("workflowName", workflowName);
+		}
+		if (null != workflowVersion) {
+			query.setParameter("workflowVersion", workflowVersion);
+		}
+		if (null != inputProductClass) {
+			query.setParameter("inputProductClass", inputProductClass);
+		}
+		if (null != configuredProcessor) {
+			query.setParameter("configuredProcessor", configuredProcessor);
+		}
+		if (null != enabled) {
+			query.setParameter("enabled", enabled);
+		}
+		return query;
+	}
+	
 	/**
 	 * Count the workflows matching the specified workflowName, workflowVersion, inputProductClass, or configured processor.
 	 *
@@ -114,33 +179,21 @@ public class WorkflowMgr {
 		}
 
 		// build query
-		CriteriaBuilder cb = em.getCriteriaBuilder();
-		CriteriaQuery<Long> query = cb.createQuery(Long.class);
-		Root<Workflow> rootWorkflow = query.from(Workflow.class);
+		Query query = createWorkflowsQuery(missionCode, workflowName, workflowVersion, inputProductClass, configuredProcessor, enabled, null, true);
 
-		List<Predicate> predicates = new ArrayList<>();
+		Object resultObject = query.getSingleResult();
 
-		predicates
-			.add(cb.equal(rootWorkflow.get("configuredProcessor").get("processor").get("processorClass").get("mission").get("code"),
-					missionCode));
-		if (workflowName != null)
-			predicates.add(cb.equal(rootWorkflow.get("name"), workflowName));
-		if (workflowVersion != null)
-			predicates.add(cb.equal(rootWorkflow.get("workflowVersion"), workflowVersion));
-		if (inputProductClass != null)
-			predicates.add(cb.equal(rootWorkflow.get("inputProductClass").get("productType"), inputProductClass));
-		if (configuredProcessor != null)
-			predicates.add(cb.equal(rootWorkflow.get("configuredProcessor").get("identifier"), configuredProcessor));
-		if (enabled != null)
-			predicates.add(cb.equal(rootWorkflow.get("enabled"), enabled));
-		query.select(cb.count(rootWorkflow)).where(predicates.toArray(new Predicate[predicates.size()]));
-
-		Long result = em.createQuery(query).getSingleResult();
-
+		String result = "";
+		if (resultObject instanceof Long) {
+			result = ((Long) resultObject).toString();
+		}
+		if (resultObject instanceof String) {
+			result = (String) resultObject;
+		}
 		logger.log(ProcessorMgrMessage.WORKFLOWS_COUNTED, result, missionCode, workflowName, workflowVersion, inputProductClass,
 				configuredProcessor, enabled);
 
-		return result.toString();
+		return result;
 	}
 
 	/**
@@ -1332,12 +1385,13 @@ public class WorkflowMgr {
 	 * @param enabled             whether the workflow is enabled
 	 * @param recordFrom      first record of filtered and ordered result to return
 	 * @param recordTo        last record of filtered and ordered result to return
+	 * @param orderBy		an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
 	 * @return a list of Json objects representing workflows satisfying the search criteria
 	 * @throws NoResultException if no workflows matching the given search criteria could be found
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public List<RestWorkflow> getWorkflows(String missionCode, String workflowName, String workflowVersion,
-			String inputProductClass, String configuredProcessor, Boolean enabled, Integer recordFrom, Integer recordTo)
+			String inputProductClass, String configuredProcessor, Boolean enabled, Integer recordFrom, Integer recordTo, String[] orderBy)
 			throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getWorkflows({}, {}, {}, {}, {}, {})", missionCode, workflowName, workflowVersion, inputProductClass,
@@ -1369,42 +1423,9 @@ public class WorkflowMgr {
 		}
 
 		List<RestWorkflow> result = new ArrayList<>();
+		
+		Query query = createWorkflowsQuery(missionCode, workflowName, workflowVersion, inputProductClass, configuredProcessor, enabled, orderBy, false);
 
-		String jpqlQuery = "select w from Workflow w where configuredProcessor.processor.processorClass.mission.code = :missionCode";
-		if (null != workflowName) {
-			jpqlQuery += " and name = :workflowName";
-		}
-		if (null != workflowVersion) {
-			jpqlQuery += " and workflowVersion = :workflowVersion";
-		}
-		if (null != inputProductClass) {
-			jpqlQuery += " and inputProductClass.productType = :inputProductClass";
-		}
-		if (null != configuredProcessor) {
-			jpqlQuery += " and configuredProcessor.identifier = :configuredProcessor";
-		}
-		if (null != enabled) {
-			jpqlQuery += " and enabled = :enabled";
-		}
-		jpqlQuery += " ORDER BY w.id";
-
-		Query query = em.createQuery(jpqlQuery);
-		query.setParameter("missionCode", missionCode);
-		if (null != workflowName) {
-			query.setParameter("workflowName", workflowName);
-		}
-		if (null != workflowVersion) {
-			query.setParameter("workflowVersion", workflowVersion);
-		}
-		if (null != inputProductClass) {
-			query.setParameter("inputProductClass", inputProductClass);
-		}
-		if (null != configuredProcessor) {
-			query.setParameter("configuredProcessor", configuredProcessor);
-		}
-		if (null != enabled) {
-			query.setParameter("enabled", enabled);
-		}
 		query.setFirstResult(recordFrom);
 		query.setMaxResults(recordTo - recordFrom);
 

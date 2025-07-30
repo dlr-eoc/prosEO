@@ -21,23 +21,23 @@
               ) ? 'enabled' : 'disabled font-italic'
             )
           )"
-          th:onclick="'setJobState(' + ${job?.id} + ', \'RELEASE\')'" href="#"><span
+          th:onclick="'setJobState(' + ${job?.id} + ', \'RELEASE\')'" href="#" th:title="#{helpjrelease}"><span
           th:text="#{release}">release</span></a> <a
           th:if="${hasroleorderplanner}"
           th:class="('dropdown-item ' + ((${job?.jobState} == 'STARTED' or ${job?.jobState} == 'RELEASED') ? 'enabled' : 'disabled font-italic'))"
-          th:onclick="'setJobState(' + ${job?.id} + ', \'SUSPEND\')'" href="#"><span
+          th:onclick="'setJobState(' + ${job?.id} + ', \'SUSPEND\')'" href="#" th:title="#{helpjsuspend}"><span
           th:text="#{suspend}">suspend</span></a> <a
           th:if="${hasroleorderplanner}"
           th:class="('dropdown-item ' + ((${job?.jobState} == 'STARTED' or ${job?.jobState} == 'RELEASED') ? 'enabled' : 'disabled font-italic'))"
           th:onclick="'setJobState(' + ${job?.id} + ', \'SUSPENDFORCE\')'"
-          href="#"><span th:text="#{suspendforce}">suspendforce</span></a> <a
+          href="#" th:title="#{helpjsuspendforce}"><span th:text="#{suspendforce}">suspendforce</span></a> <a
           th:if="${hasroleorderplanner}"
           th:class="('dropdown-item ' + ((${job?.jobState} == 'INITIAL' or ${job?.jobState} == 'PLANNED') ? 'enabled' : 'disabled font-italic'))"
-          th:onclick="'setJobState(' + ${job?.id} + ', \'CANCEL\')'" href="#"><span
+          th:onclick="'setJobState(' + ${job?.id} + ', \'CANCEL\')'" href="#" th:title="#{helpjcancel}"><span
           th:text="#{cancel}">cancel</span></a> <a
           th:if="${hasroleorderplanner}"
           th:class="('dropdown-item ' + ((${job?.jobState} == 'FAILED') ? 'enabled' : 'disabled font-italic'))"
-          th:onclick="'setJobState(' + ${job?.id} + ', \'RETRY\')'" href="#"><span
+          th:onclick="'setJobState(' + ${job?.id} + ', \'RETRY\')'" href="#" th:title="#{helpjretry}"><span
           th:text="#{retry}">retry</span></a>
       </div>
     </div>

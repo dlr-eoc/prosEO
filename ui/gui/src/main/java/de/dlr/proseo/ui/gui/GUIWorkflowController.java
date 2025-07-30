@@ -23,6 +23,7 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -85,7 +86,9 @@ public class GUIWorkflowController extends GUIBaseController {
 			@RequestParam(required = false, value = "recordFrom") Long recordFrom,
 			@RequestParam(required = false, value = "recordTo") Long recordTo,
 			@RequestParam(required = false, value = "currentPage") Long currentPage,
-			@RequestParam(required = false, value = "pageSize") Long pageSize, Model model) {
+			@RequestParam(required = false, value = "pageSize") Long pageSize,
+			@RequestParam(required = false, value = "sortby") String sortby,
+			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 
 		logger.trace(">>> getProducs({}, {}, {}, {}, {}, model)", name, workflowVersion, inputProductClass, recordFrom, recordTo);
 
@@ -94,12 +97,29 @@ public class GUIWorkflowController extends GUIBaseController {
 		// Count workflows
 		final Long count;
 		if (id != null && id > 0) {
-			count = -1l;
+			count = 1l;
 		} else {
 			count = countWorkflows(name, workflowVersion, inputProductClass);
 		}
 
-		makeGetRequest(id, name, workflowVersion, inputProductClass, recordFrom, recordTo).toEntityList(Object.class)
+		Long from = null;
+		Long to = null;
+		if (recordFrom != null && recordFrom >= 0) {
+			from = recordFrom;
+		} else {
+			from = (long) 0;
+		}
+		if (recordTo != null && from != null && recordTo > from) {
+			to = recordTo;
+		} else if (from != null) {
+			to = count;
+		}
+		Long aPageSize = to - from;
+		long deltaPage = (count % pageSize) == 0 ? 0 : 1;
+		Long pages = (count / pageSize) + deltaPage;
+		Long page = (from / pageSize) + 1;
+
+		makeGetRequest(id, name, workflowVersion, inputProductClass, recordFrom, recordTo, sortby, up).toEntityList(Object.class)
 			.subscribe(
 
 					// In case of success, handle HTTP response
@@ -112,29 +132,10 @@ public class GUIWorkflowController extends GUIBaseController {
 							if (clientResponse.getBody() instanceof Collection) {
 								
 								// If no ID was provided, several workflows may be retrieved
-
-								// Determine number of pages
-								Long numberOfPages = count % pageSize == 0 ? count / pageSize : count / pageSize + 1;
-
-								// Determine which page buttons to show (maximum of nine buttons)
-								List<Long> showPages = new ArrayList<>();
-								Long start = Math.max(currentPage - 4, 1);
-								Long end = Math.min(currentPage + 4, numberOfPages);
-								if (currentPage < 5) {
-									end = Math.min(end - currentPage + 5, numberOfPages);
-								}
-								if (numberOfPages - currentPage < 5) {
-									start = Math.max(start - 4 + numberOfPages - currentPage, 1);
-								}
-								for (Long i = start; i <= end; i++) {
-									showPages.add(i);
-								}
-
 								// Fill model with attributes to return
 								model.addAttribute("workflows", clientResponse.getBody());
-								model.addAttribute("numberOfPages", numberOfPages);
-								model.addAttribute("currentPage", currentPage);
-								model.addAttribute("showPages", showPages);
+
+								modelAddAttributes(model, count, aPageSize, pages, page);
 
 								if (logger.isTraceEnabled())
 									logger.trace(model.toString() + "MODEL TO STRING");
@@ -152,13 +153,7 @@ public class GUIWorkflowController extends GUIBaseController {
 								workflows.add(clientResponse.getBody());
 
 								model.addAttribute("workflows", workflows);
-								model.addAttribute("numberOfPages", 1);
-								model.addAttribute("currentPage", 1);
-
-								// Helper list for the buttons with page numbers
-								List<Long> showPages = new ArrayList<>();
-								showPages.add(1l);
-								model.addAttribute("showPages", showPages);
+								modelAddAttributes(model, count, aPageSize, pages, page);
 
 								if (logger.isTraceEnabled())
 									logger.trace(model.toString() + "MODEL TO STRING");
@@ -186,8 +181,19 @@ public class GUIWorkflowController extends GUIBaseController {
 
 					// In case of errors, display an error message
 					error -> {
-						model.addAttribute("errormsg", error.getMessage());
-						deferredResult.setResult("workflow-show :: #errormsg");
+						if (error instanceof WebClientResponseException.NotFound) {
+							model.addAttribute("workflows", new ArrayList());
+
+							modelAddAttributes(model, count, pageSize, 1L, 1L);
+
+							if (logger.isTraceEnabled())
+								logger.trace(model.toString() + "MODEL TO STRING");
+
+							deferredResult.setResult("workflow-show :: #workflowcontent");
+						} else {
+							model.addAttribute("errormsg", error.getMessage());
+							deferredResult.setResult("workflow-show :: #errormsg");
+						}
 					}
 
 			);
@@ -222,11 +228,13 @@ public class GUIWorkflowController extends GUIBaseController {
 			divider = "&";
 		}
 		if (name != null && !name.isEmpty()) {
-			uriString += divider + "name=" + name;
+			String nameParam = name.replaceAll("[*]", "%");
+			uriString += divider + "name=" + nameParam.toUpperCase();
 			divider = "&";
 		}
 		if (workflowVersion != null && !workflowVersion.isEmpty()) {
-			uriString += divider + "workflowVersion=" + workflowVersion;
+			String versionParam = workflowVersion.replaceAll("[*]", "%");
+			uriString += divider + "workflowVersion=" + versionParam;
 			divider = "&";
 		}
 		if (inputProductClass != null && !inputProductClass.isEmpty()) {
@@ -286,7 +294,7 @@ public class GUIWorkflowController extends GUIBaseController {
 	 * @return a Mono containing the HTTP response
 	 */
 	private ResponseSpec makeGetRequest(Long id, String name, String workflowVersion, String inputProductClass, Long recordFrom,
-			Long recordTo) {
+			Long recordTo, String sortby, Boolean up) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -307,11 +315,13 @@ public class GUIWorkflowController extends GUIBaseController {
 				divider = "&";
 			}
 			if (name != null && !name.isEmpty()) {
-				uriString += divider + "name=" + name;
+				String nameParam = name.replaceAll("[*]", "%");
+				uriString += divider + "name=" + nameParam.toUpperCase();
 				divider = "&";
 			}
 			if (workflowVersion != null && !workflowVersion.isEmpty()) {
-				uriString += divider + "workflowVersion=" + workflowVersion;
+				String versionParam = workflowVersion.replaceAll("[*]", "%");
+				uriString += divider + "workflowVersion=" + versionParam;
 				divider = "&";
 			}
 			if (inputProductClass != null && !inputProductClass.isEmpty()) {
@@ -327,7 +337,23 @@ public class GUIWorkflowController extends GUIBaseController {
 				divider = "&";
 			}
 
-			uriString += divider + "orderBy=name ASC,workflowVersion ASC";
+			String sortString = "orderBy=name ASC,workflowVersion ASC";
+			String direction = "ASC";
+			if (up != null && !up) {
+				direction = "DESC";
+			}
+			if (sortby != null) {
+				if (sortby.equals("name")) {
+					sortString = "orderBy=name " + direction + ",workflowVersion " + direction;
+				} else if (sortby.equals("workflowversion")) {
+					sortString = "orderBy=workflowVersion " + direction + ",name " + direction;
+				} else if (sortby.equals("inputproductclass")) {
+					sortString = "orderBy=inputProductClass.productType " + direction + ",name " + direction + ",workflowVersion " + direction;
+				} else if (sortby.equals("outputproductclass")) {
+					sortString = "orderBy=outputProductClass.productType " + direction + ",name " + direction + ",workflowVersion " + direction;
+				}
+			}
+			uriString += divider + sortString;
 		}
 
 		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();

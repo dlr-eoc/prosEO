@@ -59,6 +59,43 @@
             <br> <span th:text="${errormsg}"></span></h5>
         </div>
 
+        <div th:unless="${errormsg != null}" class="container-fluid">
+            <p>&nbsp;</p>
+	        <form th:unless="${errormsg != null}" class="needs-validation" name="proc-shw" id="proc-shw" action="javascript:retrieveDataPrim();">
+	          <div class="row py-lg-1">
+              <div class="col-2">
+                <button id="processorselect" type="button"
+                  onclick="retrieveDataPrim();"
+                  class="btn btn-sm btn-outline-secondary">
+                  <span th:text="#{processor-show}"></span>
+                </button>
+              </div>  
+	            <div class="col-1 pr-lg-0" th:title="#{selectId}">
+	              <p class="input-group-text word-wrap"
+	                th:text="#{id}"></p>
+	            </div>
+	            <div class="col-1 pl-lg-0" th:title="#{selectId}">
+	                    <input type="number" min="1" class="form-control" autocomplete="on"
+	                      name="pid" id="pid">
+	            </div>
+	            <div class="col-1 pr-lg-0" th:title="#{selectNamePattern}">
+	              <p class="input-group-text word-wrap"
+	                th:text="#{name}"></p>
+	            </div>
+	            <div class="col-2 pl-lg-0" th:title="#{selectNamePattern}">
+	              <input type="text" class="form-control" id="pname">
+	            </div>   
+              <div class="col-1 pr-lg-0" th:title="#{selectProcessorVersionPattern}">
+                <p class="input-group-text word-wrap"
+                  th:text="#{processorversion}"></p>
+              </div>
+              <div class="col-2 pl-lg-0" th:title="#{selectProcessorVersionPattern}">
+                <input type="text" class="form-control" id="pversion">
+              </div>    
+	          </div>
+	        </form>
+	
+	      </div>
         <div id="processorcontent" name="processorcontent">
           <table class="table" id="processorTable" name="processorTable">
             <thead class="thead-proseo" id="proseo-thead">
@@ -91,7 +128,7 @@
                 <td th:id="${processor?.processorName}" class="first-row" th:rowspan="${#lists.size(processor?.tasks) + 1}" th:text="${processor?.id}"></td>
                 <td class="first-row"> <a 
                   th:if="${hasroleprocessorreader}"
-                  th:href="'/processor-class-show#' + ${processor?.processorName}" 
+                  th:href="'/processor-class-show?processorclassName=' + ${processor?.processorName}" 
                   th:text="${processor?.processorName}"></a><span 
                   th:unless="${hasroleprocessorreader}"
                   th:text="${processor?.processorName}"></span></td>
@@ -133,6 +170,7 @@
               </div>
             </tbody>
           </table>
+                <div th:replace="fragments/navbar.html :: alternatePageNav"></div>
         </div>
       <div th:insert="fragments/footer.html :: footer"></div>
       </main>
@@ -156,19 +194,162 @@
     src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
+<script>
+  var clickHandler = function(event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        document.getElementById("processorselect").click();
+    }
+	};
+	var input = document.getElementById("pname");
+	input.addEventListener("keyup", clickHandler);
+	input = document.getElementById("pversion");
+	input.addEventListener("keyup", clickHandler);
+  input = document.getElementById("pid");
+  input.addEventListener("keyup", clickHandler);
+</script>
 <script type="text/javascript" th:inline="javascript">
-    function retrieveData(processorName) {
+    //
+  function wikiPage() {
+      window.open('https://github.com/dlr-eoc/prosEO/wiki/GUI-Processor#processor');
+  }
+  
+    
+    // Global variables
+    // paging
+    var currentPage = 1; // Current page number
+    var pageSize = 10; // Number of objects per page
+    
+    var sortCol = "id";
+    var upText = "true";
+    
+    // filters
+    var pid = null;
+    var pname = null;
+    var pversion = null;
+
+    // set paging and sorting parameters
+    function setParams(ele, selup, newPage, newPageSize) {
+        var newSortCol = null;
+        var newUpText = null;
+        var newPid = null;
+        var newpname = null;
+        var newpversion = null;
+        
+        var hasChanged = false;
+
+        hasChanged |= setPageParams(newPage, newPageSize);
+        
+        if (ele != null && selup != null) {
+            newSortCol = ele.replace("select-", "");
+            if (selup == "select-up") {
+                newUpText = "true";
+            } else {
+                newUpText = "false";
+            }
+        } else {
+            newSortCol = sortCol;
+            newUpText = upText;
+        }
+        if (newSortCol != sortCol
+            || newUpText != upText) {
+            hasChanged = true;
+        } 
+
+        newPid = $('#pid').val();
+        if (isEmpty(newPid)) {newPid = null};  
+        newpname = $('#pname').val();
+        if (isEmpty(newpname)) {newpname = null};  
+        newpversion = $('#pversion').val();
+        if (isEmpty(newpversion)) {newpversion = null};  
+
+        if (   pid != newPid
+            || pname != newpname
+            || pversion != newpversion) {
+          // table size may be changed, go to first page
+          currentPage = 1;
+          newPage = 1;
+          hasChanged = true;
+        }   
+        pid = newPid;
+        pname = newpname;
+        pversion = newpversion;        
+        
+        if (hasChanged) {
+            setHTMLParams();
+        }
+    }
+
+    // set parameters in URI
+    function setHTMLParams() {
+        // build parameter string
+        var paramString = "";
+        paramString = addURLParamValuePrim('pid', pid, paramString);
+        paramString = addURLParamValuePrim('processorName', pname, paramString);
+        paramString = addURLParamValuePrim('processorVersion', pversion, paramString);
+        paramString = setPageHTMLParams(paramString);
+        var newHref = location.origin + location.pathname + paramString;
+        if (newHref != location.href) {
+            history.pushState({}, null, newHref);
+        }
+    }
+
+    // read URI parameters
+    function readHTMLParams() {
+        readPageHTMLParams();
+        pid = getURLParam('pid');
+        pname = getURLParam('processorName');
+        pversion = getURLParam('processorVersion');
+        tmp = getURLParam('sortCol');
+    }
+
+    // set selection in filter parameters
+    function setSelected() {
+    	  $('#pid').val(pid);
+    	  $('#pname').val(pname);
+    	  $('#pversion').val(pversion);
+    }
+
+    function retrieveDataPrim() {
+    	  setParams(null, null, null, null);
+        retrieveData();
+    }
+    
+    function updateTable(newPage, newPageSize) {
+        setParams(null, null, newPage, newPageSize);
+        retrieveData();
+    }
+
+    function retrieveData() {
         if ([[${hasroleprocessorreader}]]) {
             showLoader();
             var tableRows = $("processorTable").rows;
             if(tableRows > 1 && tableRows != null) {
                 $("processorTable > tbody").empty();
             }
+            var from = getFromRow();
+            var to = getToRow();      
             var url = "/processor-show/get";      
 
             var divider = "?";
-            if (processorName != null) {
-                url = url + divider + "processorName=" + processorName.toString().trim();
+            if (pid != null) {
+                url = url + divider + "pid=" + pid.toString().trim();
+                divider = "&";
+            }
+            if (parameterHasValue(pname)) {
+                url = url + divider + "processorName=" + pname.toString().trim();
+                divider = "&";
+            }
+            if (parameterHasValue(pversion)) {
+                url = url + divider + "processorVersion=" + pversion.toString().trim();
+                divider = "&";
+            }
+            if (parameterHasValue(from)) {
+                url = url + divider + "recordFrom=" + from;
+                divider = "&";
+            }
+            if (parameterHasValue(to)) {
+                url = url + divider + "recordTo=" + to;
                 divider = "&";
             }
             
@@ -177,6 +358,7 @@
                 method: "GET",
                 success: function (res) {
                     $("#processorcontent").html(res);
+                    feather.replace();
                     scrollToHash();
                     hideLoader();
                 },
@@ -191,14 +373,6 @@
     };
 </script>
 <script>
-    window.onload = function () {
-     // $('.collapse').collapse();
-     var elem = document.getElementById('sb-processor');
-     $(elem).addClass('active');
-     feather.replace();
-     var processorName = getURLParam('processorName');
-     retrieveData(processorName);
-     
      // correct scroll due to "sticky" elements
      var handler = function ( ) {
         var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
@@ -206,8 +380,29 @@
     	  window.scrollBy(0, h);
       };
       window.addEventListener('hashchange', handler);
-     
-    }
+
+      // Read the HTML parameters from URI and retrieve the corresponding data
+      function loadWindow() {
+    	    activateSidebarElem('sb-processor');
+          feather.replace();
+          readHTMLParams();
+          setSelected();
+          updateTable(currentPage, pageSize);
+      };
+      
+      window.onload = function () {
+          loadWindow();
+          // correct scroll due to "sticky" elements
+          var handler = function ( ) {
+              var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+                       + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+              window.scrollBy(0, h);
+          };        
+      };
+      // re-load window to read and set all HTML parameters
+      $(window).on('popstate', function (e) {
+        loadWindow();
+      });
 </script>
 
 </html>

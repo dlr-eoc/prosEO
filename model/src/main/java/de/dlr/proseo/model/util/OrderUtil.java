@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +54,7 @@ public class OrderUtil {
 			return null;
 		
 		RestOrder restOrder = new RestOrder();
+		Comparator<String> c = Comparator.comparing((String x) -> x);
 		
 		restOrder.setId(processingOrder.getId());
 		restOrder.setVersion(Long.valueOf(processingOrder.getVersion()));
@@ -120,8 +122,14 @@ public class OrderUtil {
 									filterConditions.get(paramKey).getParameterType().toString(),
 									filterConditions.get(paramKey).getParameterValue()));
 				}
+				Collections.sort(restInputFilter.getFilterConditions(), (o1, o2) -> {
+					return o1.getKey().compareTo(o2.getKey());
+				});
 				restOrder.getInputFilters().add(restInputFilter);
 			}
+			Collections.sort(restOrder.getInputFilters(), (o1, o2) -> {
+				return o1.getProductClass().compareTo(o2.getProductClass());
+			});
 		}
 
 		if (null != processingOrder.getClassOutputParameters()) {
@@ -136,8 +144,14 @@ public class OrderUtil {
 									outputParameters.get(paramKey).getParameterType().toString(),
 									outputParameters.get(paramKey).getParameterValue()));
 				}
+				Collections.sort(restClassOutputParameter.getOutputParameters(), (o1, o2) -> {
+					return o1.getKey().compareTo(o2.getKey());
+				});
 				restOrder.getClassOutputParameters().add(restClassOutputParameter);
 			}
+			Collections.sort(restOrder.getClassOutputParameters(), (o1, o2) -> {
+				return o1.getProductClass().compareTo(o2.getProductClass());
+			});
 		}
 		
 		if(null != processingOrder.getOutputParameters()) {
@@ -148,19 +162,23 @@ public class OrderUtil {
 							processingOrder.getOutputParameters().get(paramKey).getParameterType().toString(),
 							processingOrder.getOutputParameters().get(paramKey).getParameterValue()));
 			}
+			Collections.sort(restOrder.getOutputParameters(), (o1, o2) -> {
+				return o1.getKey().compareTo(o2.getKey());
+			});
 		}
 		if (null != processingOrder.getRequestedProductClasses()) {
 			
 			for (ProductClass productClass : processingOrder.getRequestedProductClasses()) {
 				restOrder.getRequestedProductClasses().add(productClass.getProductType());
 			}
+			restOrder.getRequestedProductClasses().sort(c);
 			
 		}
 		if (null != processingOrder.getInputProductClasses()) {
 			for (ProductClass productClass : processingOrder.getInputProductClasses()) {
 				restOrder.getInputProductClasses().add(productClass.getProductType());
 			}
-			
+			restOrder.getInputProductClasses().sort(c);
 		}
 		
 		if(null != processingOrder.getOutputFileClass()) {
@@ -188,6 +206,7 @@ public class OrderUtil {
 			for (ConfiguredProcessor toAddProcessor: processingOrder.getRequestedConfiguredProcessors()) {
 				restOrder.getConfiguredProcessors().add(toAddProcessor.getIdentifier());
 			}
+			restOrder.getConfiguredProcessors().sort(c);
 		}	
 		
 		if (null != processingOrder.getDynamicProcessingParameters()
@@ -199,6 +218,9 @@ public class OrderUtil {
 						param.getStringValue());
 				dynamicProcessingParameters.add(restParam);
 			}
+			Collections.sort(dynamicProcessingParameters, (o1, o2) -> {
+				return o1.getKey().compareTo(o2.getKey());
+			});
 			restOrder.setDynamicProcessingParameters(dynamicProcessingParameters);
 		}
 		

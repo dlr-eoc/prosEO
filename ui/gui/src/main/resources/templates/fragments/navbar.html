@@ -13,6 +13,13 @@
 
 <div th:fragment="navbarRight">
 	<ul class="nav navbar-nav px-3 navbar-right">
+	  <li class="nav-item btn">
+      <button id="wikiPage" type="button"
+        onclick="wikiPage();"
+        class="btn btn-sm btn-outline-secondary">
+        <span>&nbsp;?&nbsp;</span>
+      </button>
+    </li>
 		<li class="nav-item dropdown text-nowrap btn menu"><a
 			class="nav-link dropdown-toggle" id="dropdown09"
 			data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span
@@ -25,7 +32,7 @@
 					data-feather="chevron-right"></span> <span th:text="#{roles}">roles</span></a>
 				<div class="dropdown-menu dropdown-menu-right menu">
 					<span th:each="role : ${userroles}" class="dropdown-item enabled"><span
-						th:text="${role}"></span></span>
+						th:text="${role}" th:attr="title=#{${role}}"></span></span>
 				</div>
 			</div></li>
 		<li class="nav-item dropdown text-nowrap btn menu"><a
@@ -76,8 +83,9 @@
 </nav>
 
 <div th:fragment="alternatePageNav">
-	<nav th:unless="${numberOfPages eq 1}" th:fragment="alternatePageNav"
-		id="alternatePageNav" aria-label="Page navigation">
+	<nav th:unless="${numberOfPages le 1}" th:fragment="alternatePageNav"
+		id="alternatePageNav" aria-label="Page navigation"
+    th:data-page="${page}">
 
 		<!-- Paging buttons -->
 		<ul class="pagination justify-content-center">
@@ -126,11 +134,15 @@
 	<!-- Customize page size -->
 	<div>
 		<label for="pageSizeField"><span th:text="#{show-page-size}"></span></label>
-		<input type="number" min="1" max="50" step="1" id="pageSizeField" th:value="${pageSize}" th:onkeyup="inputSetPageSize()">
+		<input type="number" min="1" max="50" step="1" id="pageSizeField" th:value="${pageSize}">
 		<button onclick="updatePageSize()" id="pageSizeButton"
 			class="btn btn-sm btn-outline-secondary">
 			<span th:text="#{update-page-size}"></span>
 		</button>
+		<span>&nbsp;&nbsp;&nbsp;</span>
+		<span th:text="#{no-of-elements}"></span> 
+    <span>&nbsp;</span>
+		<span th:text="${count}"></span>
 	</div>
 
 </div>

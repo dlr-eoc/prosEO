@@ -32,6 +32,7 @@ import de.dlr.proseo.storagemgr.utils.PathConverter;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
@@ -54,11 +55,17 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
  */
 public class S3DAL {
 
-	/** S3 client for v2 */
-	private S3Client s3ClientV2;
+	/** Chunk size for downloads to S3 storage (128 MB) */
+	private static final Long MULTIPART_DOWNLOAD_PARTSIZE_BYTES = (long) (128 * 1024 * 1024);
 
 	/** S3 client for v1 */
-	private AmazonS3 s3ClientV1;
+	private static AmazonS3 s3ClientV1 = null;
+
+	/** S3 client for v2 */
+	private static S3Client s3ClientV2 = null;
+
+	/** Asynchronous S3 client for v2 */
+	private static S3AsyncClient s3AsyncClientV2 = null;
 
 	/** s3 configuration */
 	private S3Configuration cfg;
@@ -82,7 +89,10 @@ public class S3DAL {
 
 		this.cfg = cfg;
 
-		initS3ClientV2(); // also sets default bucket
+		initS3ClientV2();
+		
+		setDefaultBucket(cfg.getBucket()); // requires existing V2 client
+		
 		initS3ClientV1(); // for transfer manager only
 	}
 
@@ -99,12 +109,22 @@ public class S3DAL {
 	/**
 	 * Initializes the S3 v1 client.
 	 *
+	 * Note that this method relies on the configuration passed to the current object upon construction.
+	 * It is assumed that this configuration is derived from the application configuration without modification,
+	 * so it is the same for every S3DAL object.
+	 *
 	 * @throws IOException if an I/O exception occurs
 	 */
-	public void initS3ClientV1() throws IOException {
+	public synchronized void initS3ClientV1() throws IOException {
 
 		if (logger.isTraceEnabled()) logger.trace(">>> initS3ClientV1()");
+		
+		// If S3 Client V1 exists, reuse
+		if (null != s3ClientV1) {
+			return;
+		}
 
+		// Build a new S3 Client V1
 		logger.trace("... using access key {} and secret {}", cfg.getS3AccessKey(), "***");
 		AWSCredentials awsCredentialsV1 = new BasicAWSCredentials(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
 
@@ -132,34 +152,55 @@ public class S3DAL {
 
 	/**
 	 * Initializes the S3 v2 client.
+	 * 
+	 * Note that this method relies on the configuration passed to the current object upon construction.
+	 * It is assumed that this configuration is derived from the application configuration without modification,
+	 * so it is the same for every S3DAL object.
 	 *
 	 * @throws IOException if an I/O exception occurs
 	 */
-	public void initS3ClientV2() throws IOException {
+	public synchronized void initS3ClientV2() throws IOException {
 
 		if (logger.isTraceEnabled()) logger.trace(">>> initS3ClientV2()");
-
+		
+		// If both S3 V2 Clients exist, reuse
+		if (null != s3ClientV2 && null != s3AsyncClientV2) {
+			return;
+		}
+		
+		// Build a new S3 Client V1
 		Region s3Region = Region.of(cfg.getS3Region()); // Region.EU_CENTRAL_1;
 
 		logger.trace("... using access key {} and secret {}", cfg.getS3AccessKey(), "***");
 		initCredentials(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
 
 		if (cfg.isDefaultEndPoint()) {
-			s3ClientV2 = S3Client.builder()
-				.forcePathStyle(true)
-				.region(s3Region)
-				.credentialsProvider(StaticCredentialsProvider.create(credentials))
-				.build();
+			
+			if (null == s3ClientV2) {
+				s3ClientV2 = S3Client.builder().forcePathStyle(true).region(s3Region)
+					.credentialsProvider(StaticCredentialsProvider.create(credentials)).build();
+			}
+			if (null == s3AsyncClientV2) {
+				s3AsyncClientV2 = S3AsyncClient.crtBuilder().credentialsProvider(StaticCredentialsProvider.create(credentials))
+					.region(s3Region).targetThroughputInGbps(20.0).minimumPartSizeInBytes(MULTIPART_DOWNLOAD_PARTSIZE_BYTES)
+					.forcePathStyle(true).build();
+			}
+			
 		} else {
-			s3ClientV2 = S3Client.builder()
-				.forcePathStyle(true)
-				.region(s3Region)
-				.endpointOverride(URI.create(cfg.getS3EndPoint()))
-				.credentialsProvider(StaticCredentialsProvider.create(credentials))
-				.build();
+			
+			if (null == s3ClientV2) {
+				s3ClientV2 = S3Client.builder().forcePathStyle(true).region(s3Region)
+					.endpointOverride(URI.create(cfg.getS3EndPoint()))
+					.credentialsProvider(StaticCredentialsProvider.create(credentials)).build();
+			}
+			if (null == s3AsyncClientV2) {
+				s3AsyncClientV2 = S3AsyncClient.crtBuilder().credentialsProvider(StaticCredentialsProvider.create(credentials))
+					.region(s3Region).targetThroughputInGbps(20.0).minimumPartSizeInBytes(MULTIPART_DOWNLOAD_PARTSIZE_BYTES)
+					.endpointOverride(URI.create(cfg.getS3EndPoint())).forcePathStyle(true).build();
+			}
+			
 		}
 
-		setDefaultBucket(cfg.getBucket());
 	}
 
 	/**
@@ -470,7 +511,7 @@ public class S3DAL {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> downloadFile({},{},{})", bucket, sourceFile, targetFileOrDir);
 
-		AtomicCommand<String> fileDownloader = new S3AtomicFileDownloader(s3ClientV1, bucket, sourceFile, targetFileOrDir,
+		AtomicCommand<String> fileDownloader = new S3AtomicFileDownloaderV2(s3AsyncClientV2, bucket, sourceFile, targetFileOrDir,
 				cfg.getFileCheckWaitTime(), cfg.getMaxRequestAttempts());
 		return new DefaultRetryStrategy<>(fileDownloader, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}

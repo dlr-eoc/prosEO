@@ -229,70 +229,62 @@ public class ProductArchiveManager {
 		return new ProductArchiveModelMapper(modelArchive).toRest();
 	}
 
+
 	/**
-	 * Get product archives by name and archive type
+	 * Create database query to count or get objects
 	 *
 	 * @param code        the archive code
 	 * @param name        the archive name
 	 * @param archiveType the archive type
-	 * @param recordFrom  first record of filtered and ordered result to return
-	 * @param recordTo    last record of filtered and ordered result to return
-	 * @return a list of Json objects representing product archives satisfying the
-	 *         search criteria
-	 * @throws NoResultException if no product archives matching the given search
-	 *                           criteria could be found
+	 * @param count       if true create query for count of objects
+	 * @return a database query
 	 */
-	public List<RestProductArchive> getArchives(String code, String name, String archiveType, Integer recordFrom,
-			Integer recordTo) throws NoResultException {
+	public Query createArchivesQuery(Long id, String code, String name, String archiveType, Boolean count) {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getArchives({}, {}, {}, {}, {})", code, name, archiveType, recordFrom, recordTo);
+			logger.trace(">>> createArchivesQuery({}, {}, {})", id, name, archiveType);
 
-		if (recordFrom == null) {
-			recordFrom = 0;
+		String jpqlQuery = "";
+		if (count) {
+			jpqlQuery = "select count(pa) from ProductArchive pa";
+		} else {
+			jpqlQuery = "select pa from ProductArchive pa";
 		}
-		if (recordTo == null) {
-			recordTo = Integer.MAX_VALUE;
-		}
-
-		Long numberOfResults = Long.parseLong(this.countArchives(name, archiveType));
-		Integer maxResults = config.getMaxResults();
-		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults
-				&& (numberOfResults - recordFrom) > maxResults) {
-			throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS, logger.log(GeneralMessage.TOO_MANY_RESULTS,
-					"productArchives", numberOfResults, config.getMaxResults()));
-		}
-
-		List<RestProductArchive> result = new ArrayList<>();
-
-		String jpqlQuery = "select w from ProductArchive w";
 
 		// adds WHERE condition
-		if ((null != code) || (null != name) || (null != archiveType)) {
+		if ((null != id) || (null != name) || (null != archiveType)) {
 			
-			jpqlQuery += " where";
-
-			if (null != code) {
-				jpqlQuery += " code = :code and";
+			jpqlQuery += " where ";
+			String and = " ";
+			if (null != id) {
+				jpqlQuery += and + "id = :id";
+				and = " and ";
 			}
 
-			if (null != name) {
-				jpqlQuery += " name = :name and";
+			if (null != code && !code.isEmpty()) {
+				jpqlQuery += and + "code = :code";
+				and = " and ";
 			}
 
-			if (null != archiveType) {
-				jpqlQuery += " archiveType = :archiveType and";
+			if (null != name && !name.isEmpty()) {
+				jpqlQuery += and + "upper(name) like :name";
+				and = " and ";
 			}
 
-			jpqlQuery = jpqlQuery.substring(0, jpqlQuery.length() - 4); // removes last " and"
+			if (null != archiveType && !archiveType.isEmpty()) {
+				jpqlQuery += and + "archiveType = :archiveType";
+				and = " and ";
+			}
 		}
 
-		jpqlQuery += " ORDER BY w.id";
+		if (!count) {
+			jpqlQuery += " ORDER BY pa.code";
+		}
 
 		Query query = em.createQuery(jpqlQuery);
 
-		if (null != code) {
-			query.setParameter("code", code);
+		if (null != id) {
+			query.setParameter("id", id);
 		}
 
 		if (null != name) {
@@ -306,6 +298,48 @@ public class ProductArchiveManager {
 		} catch (Exception e) {
 			throw new NoResultException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND, name, archiveType));
 		}
+
+		return query;
+	}
+
+	
+	/**
+	 * Get product archives by name and archive type
+	 *
+	 * @param code        the archive code
+	 * @param name        the archive name
+	 * @param archiveType the archive type
+	 * @param recordFrom  first record of filtered and ordered result to return
+	 * @param recordTo    last record of filtered and ordered result to return
+	 * @return a list of Json objects representing product archives satisfying the
+	 *         search criteria
+	 * @throws NoResultException if no product archives matching the given search
+	 *                           criteria could be found
+	 */
+	public List<RestProductArchive> getArchives(Long id, String code, String name, String archiveType, Integer recordFrom,
+			Integer recordTo) throws NoResultException {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getArchives({}, {}, {}, {}, {}, {})", id, code, name, archiveType, recordFrom, recordTo);
+
+		if (recordFrom == null) {
+			recordFrom = 0;
+		}
+		if (recordTo == null) {
+			recordTo = Integer.MAX_VALUE;
+		}
+
+		Long numberOfResults = Long.parseLong(this.countArchives(id, code, name, archiveType));
+		Integer maxResults = config.getMaxResults();
+		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults
+				&& (numberOfResults - recordFrom) > maxResults) {
+			throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS, logger.log(GeneralMessage.TOO_MANY_RESULTS,
+					"productArchives", numberOfResults, config.getMaxResults()));
+		}
+
+		List<RestProductArchive> result = new ArrayList<>();
+
+		Query query = createArchivesQuery(id, code, name, archiveType, false);
 
 		query.setFirstResult(recordFrom);
 		query.setMaxResults(recordTo - recordFrom);
@@ -332,33 +366,23 @@ public class ProductArchiveManager {
 	 * @param archiveType the product archive type
 	 * @return the number of product archives found as string
 	 */
-	public String countArchives(String name, String archiveType) {
+	public String countArchives(Long id, String code, String name, String archiveType) {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> countArchives({}, {})", name, archiveType);
+			logger.trace(">>> countArchives({}, {}, {}, {})", id, code, name, archiveType);
+		Query query = createArchivesQuery(id, code, name, archiveType, true);
 
-		CriteriaBuilder cb = em.getCriteriaBuilder();
-		CriteriaQuery<Long> query = cb.createQuery(Long.class);
-		Root<ProductArchive> rootArchive = query.from(ProductArchive.class);
+		Object resultObject = query.getSingleResult();
 
-		List<Predicate> predicates = new ArrayList<>();
-
-		if (name != null)
-			predicates.add(cb.equal(rootArchive.get("name"), name));
-
-		try {
-			if (archiveType != null)
-				predicates.add(cb.equal(rootArchive.get("archiveType"), ArchiveType.valueOf(archiveType)));
-		} catch (Exception e) {
-			logger.trace("... wrong archive type: " + archiveType);
-			return "0";
+		String result = "";
+		if (resultObject instanceof Long) {
+			result = ((Long) resultObject).toString();
+		}
+		if (resultObject instanceof String) {
+			result = (String) resultObject;
 		}
 
-		query.select(cb.count(rootArchive)).where(predicates.toArray(new Predicate[predicates.size()]));
-		Long result = em.createQuery(query).getSingleResult();
-		logger.trace("... product archive count: " + result);
-
-		return result.toString();
+		return result;
 	}
 
 	/**

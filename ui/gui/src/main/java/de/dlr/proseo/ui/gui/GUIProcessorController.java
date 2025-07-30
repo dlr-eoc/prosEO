@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,15 +19,19 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
+import de.dlr.proseo.ui.backend.ServiceConnection;
 import de.dlr.proseo.ui.gui.service.MapComparator;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.netty.http.client.HttpClient;
@@ -45,6 +50,10 @@ public class GUIProcessorController extends GUIBaseController {
 	/** The configuration object for the prosEO backend services */
 	@Autowired
 	private ServiceConfiguration serviceConfig;
+
+	/** The connector service to the prosEO backend services */
+	@Autowired
+	private ServiceConnection serviceConnection;
 
 	/**
 	 * Show the processor view
@@ -77,35 +86,67 @@ public class GUIProcessorController extends GUIBaseController {
 	 * @return The result
 	 */
 	@GetMapping("/processor-show/get")
-	public DeferredResult<String> getProcessors(@RequestParam(required = false, value = "processorName") String processorName,
-			@RequestParam(required = false, value = "sortby") String sortby,
-			@RequestParam(required = false, value = "up") Boolean up, Model model) {
+	public DeferredResult<String> getProcessors(@RequestParam(required = false, value = "pid") Long processorId,
+			@RequestParam(required = false, value = "processorName") String processorName,
+			@RequestParam(required = false, value = "processorVersion") String processorVersion,
+			Long recordFrom, Long recordTo, Model model) {
 
 		logger.trace(">>> getProcessors(model)");
 
+
+		Long from = null;
+		Long to = null;
+		if (recordFrom != null && recordFrom >= 0) {
+			from = recordFrom;
+		} else {
+			from = (long) 0;
+		}
+		Long count = countProcessors(processorId, processorName, processorVersion);
+		if (recordTo != null && from != null && recordTo > from) {
+			to = recordTo;
+		} else if (from != null) {
+			to = count;
+		}
+		Long pageSize = to - from;
+		long deltaPage = (count % pageSize) == 0 ? 0 : 1;
+		Long pages = (count / pageSize) + deltaPage;
+		Long page = (from / pageSize) + 1;
+
 		// Perform the HTTP request to retrieve processors
-		ResponseSpec responseSpec = get(processorName);
+		ResponseSpec responseSpec = get(processorId, processorName, processorVersion, from, to);
 		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> processors = new ArrayList<>();
-
 		// Subscribe to the response
 		responseSpec.toEntityList(Object.class)
 			// Handle errors
 			.doOnError(e -> {
-				model.addAttribute("errormsg", e.getMessage());
-				deferredResult.setResult("processor-show :: #errormsg");
+				if (e instanceof WebClientResponseException.NotFound) {
+					model.addAttribute("processors", processors);
+
+					modelAddAttributes(model, count, pageSize, pages, page);
+					
+					logger.trace(model.toString() + "MODEL TO STRING");
+					deferredResult.setResult("processor-show :: #processorcontent");
+				} else {
+					model.addAttribute("errormsg", e.getMessage());
+					deferredResult.setResult("processor-show :: #errormsg");
+				}
 			})
 			// Handle successful response
 			.subscribe(entityList -> {
 				logger.trace("Now in Consumer::accept({})", entityList);
 
-				if (entityList.getStatusCode().is2xxSuccessful()) {
+				if (entityList.getStatusCode().is2xxSuccessful() 
+						|| entityList.getStatusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
 					processors.addAll(entityList.getBody());
 
 					MapComparator oc = new MapComparator("processorName", true);
 					processors.sort(oc);
 
 					model.addAttribute("processors", processors);
+
+					modelAddAttributes(model, count, pageSize, pages, page);
+					
 					if (logger.isTraceEnabled())
 						logger.trace(model.toString() + "MODEL TO STRING");
 					if (logger.isTraceEnabled())
@@ -137,6 +178,121 @@ public class GUIProcessorController extends GUIBaseController {
 		return deferredResult;
 	}
 
+	private Long countProcessors(Long processorId, String processorName, String processorVersion) {
+
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+		String mission = auth.getMission();
+		String uriString = "/processors/count";
+		String divider = "?";
+		uriString += divider + "mission=" + mission;
+		divider = "&";
+		if (processorId != null) {
+			uriString += divider + "id=" + processorId;
+			divider = "&";
+		}
+		if (processorName != null && !processorName.isEmpty()) {
+			String queryParam = processorName.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "processorName=" + queryParam;
+			divider = "&";
+		}
+		if (processorVersion != null && !processorVersion.isEmpty()) {
+			String queryParam = processorVersion.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "processorVersion=" + queryParam;
+			divider = "&";
+		}
+		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
+		Long result = (long) -1;
+		try {
+			String resStr = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(), uri.toString(),
+					String.class, auth.getProseoName(), auth.getPassword());
+
+			if (resStr != null && resStr.length() > 0) {
+				result = Long.valueOf(resStr);
+			}
+		} catch (RestClientResponseException e) {
+
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				logger.log(UIMessage.NO_MISSIONS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				logger.log(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				logger.log(UIMessage.EXCEPTION, e.getMessage());
+			}
+
+			return result;
+		} catch (RuntimeException e) {
+			logger.log(UIMessage.EXCEPTION, e.getMessage());
+			return result;
+		}
+
+		return result;
+	}
+
+	private Long countConfiguredProcessors(Long id, String identifier, String processorVersion, String configuration, String processorClass, String enabled) {
+
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+		String mission = auth.getMission();
+		String uriString = "/configuredprocessors/count";
+		String divider = "?";
+		uriString += divider + "mission=" + mission;
+		divider = "&";
+		if (id != null) {
+			uriString += divider + "id=" + id;
+		}
+		if (identifier != null) {
+			String queryParam = identifier.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "identifier=" + queryParam;
+		}
+		if (processorVersion != null) {
+			String queryParam = processorVersion.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "processorVersion=" + queryParam;
+		}
+		if (configuration != null) {
+			String queryParam = configuration.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "configurationVersion=" + queryParam;
+		}
+		if (processorClass != null) {
+			uriString += divider + "processorClass=" + processorClass;
+		}
+		if (enabled != null) {
+			uriString += divider + "enabled=" + enabled;
+		}
+		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
+		Long result = (long) -1;
+		try {
+			String resStr = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(), uri.toString(),
+					String.class, auth.getProseoName(), auth.getPassword());
+
+			if (resStr != null && resStr.length() > 0) {
+				result = Long.valueOf(resStr);
+			}
+		} catch (RestClientResponseException e) {
+
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				logger.log(UIMessage.NO_MISSIONS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				logger.log(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				logger.log(UIMessage.EXCEPTION, e.getMessage());
+			}
+
+			return result;
+		} catch (RuntimeException e) {
+			logger.log(UIMessage.EXCEPTION, e.getMessage());
+			return result;
+		}
+
+		return result;
+	}
+
 	/**
 	 * Retrieve the configured processors of a processor or all if processor is null
 	 *
@@ -148,14 +304,38 @@ public class GUIProcessorController extends GUIBaseController {
 	 */
 	@GetMapping("/configuredprocessor/get")
 	public DeferredResult<String> getConfiguredProcessors(
-			@RequestParam(required = false, value = "processorName") String processorName,
+			@RequestParam(required = false, value = "id") Long id,
+			@RequestParam(required = false, value = "identifier") String identifier,
+			@RequestParam(required = false, value = "processorVersion") String processorVersion,
+			@RequestParam(required = false, value = "configuration") String configuration,
+			@RequestParam(required = false, value = "processorClass") String processorClass,
+			@RequestParam(required = false, value = "enabled") String enabled,
 			@RequestParam(required = false, value = "sortby") String sortby,
-			@RequestParam(required = false, value = "up") Boolean up, Model model) {
+			@RequestParam(required = false, value = "up") Boolean up, 
+			Long recordFrom, Long recordTo, Model model) {
 
 		logger.trace(">>> getConfiguredProcessors(model)");
 
+		Long from = null;
+		Long to = null;
+		if (recordFrom != null && recordFrom >= 0) {
+			from = recordFrom;
+		} else {
+			from = (long) 0;
+		}
+		Long count = countConfiguredProcessors(id, identifier, processorVersion, configuration, processorClass, enabled);
+		if (recordTo != null && from != null && recordTo > from) {
+			to = recordTo;
+		} else if (from != null) {
+			to = count;
+		}
+		Long pageSize = to - from;
+		long deltaPage = (count % pageSize) == 0 ? 0 : 1;
+		Long pages = (count / pageSize) + deltaPage;
+		Long page = (from / pageSize) + 1;
+
 		// Perform the HTTP request to retrieve configured processors
-		ResponseSpec responseSpec = getCP(processorName);
+		ResponseSpec responseSpec = getCP(id, identifier, processorVersion, configuration, processorClass, enabled, from, to, sortby, up);
 		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> configuredprocessors = new ArrayList<>();
 
@@ -163,19 +343,29 @@ public class GUIProcessorController extends GUIBaseController {
 		responseSpec.toEntityList(Object.class)
 			// Handle errors
 			.doOnError(e -> {
-				model.addAttribute("errormsg", e.getMessage());
-				deferredResult.setResult("configured-processor-show :: #errormsg");
+				if (e instanceof WebClientResponseException.NotFound) {
+					model.addAttribute("configuredprocessors", configuredprocessors);
+
+					modelAddAttributes(model, count, pageSize, pages, page);
+					
+					logger.trace(model.toString() + "MODEL TO STRING");
+					deferredResult.setResult("configured-processor-show :: #configuredprocessorcontent");
+				} else {
+					model.addAttribute("errormsg", e.getMessage());
+					deferredResult.setResult("configured-processor-show :: #errormsg");
+				}
 			})// Handle successful response
 			.subscribe(entityList -> {
 				logger.trace("Now in Consumer::accept({})", entityList);
 
-				if (entityList.getStatusCode().is2xxSuccessful()) {
+				if (entityList.getStatusCode().is2xxSuccessful() 
+						|| entityList.getStatusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
 					configuredprocessors.addAll(entityList.getBody());
 
-					MapComparator oc = new MapComparator("identifier", true);
-					configuredprocessors.sort(oc);
-
 					model.addAttribute("configuredprocessors", configuredprocessors);
+
+					modelAddAttributes(model, count, pageSize, pages, page);
+					
 					if (logger.isTraceEnabled())
 						logger.trace(model.toString() + "MODEL TO STRING");
 					if (logger.isTraceEnabled())
@@ -213,7 +403,7 @@ public class GUIProcessorController extends GUIBaseController {
 	 * @param processorName the processor name
 	 * @return a Mono containing the HTTP response
 	 */
-	private ResponseSpec get(String processorName) {
+	private ResponseSpec get(Long processorId, String processorName, String processorVersion, Long from, Long to) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -224,9 +414,29 @@ public class GUIProcessorController extends GUIBaseController {
 		String divider = "?";
 		uriString += divider + "mission=" + mission;
 		divider = "&";
-		if (processorName != null) {
-			uriString += divider + "processorName=" + processorName;
+		if (processorId != null) {
+			uriString += divider + "id=" + processorId;
+			divider = "&";
 		}
+		if (processorName != null && !processorName.isEmpty()) {
+			String queryParam = processorName.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "processorName=" + queryParam;
+			divider = "&";
+		}
+		if (processorVersion != null && !processorVersion.isEmpty()) {
+			String queryParam = processorVersion.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "processorVersion=" + queryParam;
+			divider = "&";
+		}
+		if (from != null) {
+			uriString += divider + "recordFrom=" + from;
+			divider = "&";
+		}
+		if (to != null) {
+			uriString += divider + "recordTo=" + to;
+			divider = "&";
+		}
+		uriString += divider + "orderBy=processorClass.processorName ASC, processorVersion ASC";
 		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
 		logger.trace("URI " + uri);
 
@@ -259,7 +469,8 @@ public class GUIProcessorController extends GUIBaseController {
 	 * @param processorName the processor name
 	 * @return a Mono containing the HTTP response
 	 */
-	private ResponseSpec getCP(String processorName) {
+	private ResponseSpec getCP(Long id, String identifier, String processorVersion, String configuration, String processorClass, String enabled, 
+			Long from, Long to, String sortby, Boolean up) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -270,9 +481,54 @@ public class GUIProcessorController extends GUIBaseController {
 		String divider = "?";
 		uriString += divider + "mission=" + mission;
 		divider = "&";
-		if (processorName != null) {
-			uriString += divider + "identifier=" + processorName;
+		if (id != null) {
+			uriString += divider + "id=" + id;
 		}
+		if (identifier != null) {
+			String queryParam = identifier.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "identifier=" + queryParam;
+		}
+		if (processorVersion != null) {
+			String queryParam = processorVersion.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "processorVersion=" + queryParam;
+		}
+		if (configuration != null) {
+			String queryParam = configuration.replaceAll("[*]", "%").trim().toUpperCase();
+			uriString += divider + "configurationVersion=" + queryParam;
+		}
+		if (processorClass != null) {
+			uriString += divider + "processorClass=" + processorClass;
+		}
+		if (enabled != null) {
+			uriString += divider + "enabled=" + enabled;
+		}
+		if (from != null) {
+			uriString += divider + "recordFrom=" + from;
+			divider = "&";
+		}
+		if (to != null) {
+			uriString += divider + "recordTo=" + to;
+			divider = "&";
+		}
+		String sortString = "orderBy=identifier ASC";
+		String direction = "ASC";
+		if (up != null && !up) {
+			direction = "DESC";
+		}
+		if (sortby != null) {
+			if (sortby.equals("name")) {
+				sortString = "orderBy=identifier " + direction;
+			} else if (sortby.equals("processorname")) {
+				sortString = "orderBy=processor.processorClass.processorName " + direction + ",processor.processorVersion " + direction;
+			} else if (sortby.equals("processorversion")) {
+				sortString = "orderBy=processor.processorVersion " + direction + ",processor.processorClass.processorName " + direction;
+			} else if (sortby.equals("configuration")) {
+				sortString = "orderBy=configuration.configurationVersion " + direction + ",processor.processorClass.processorName " + direction;
+			} else if (sortby.equals("enabled")) {
+				sortString = "orderBy=enabled " + direction + ",processor.processorClass.processorName " + direction;
+			}
+		}
+		uriString += divider + sortString;
 		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
 		logger.trace("URI " + uri);
 

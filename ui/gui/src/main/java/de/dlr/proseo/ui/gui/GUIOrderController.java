@@ -189,23 +189,26 @@ public class GUIOrderController extends GUIBaseController {
 		responseSpec.toEntityList(Object.class)
 			// Handle errors
 			.doOnError(e -> {
-				model.addAttribute("errormsg", e.getMessage());
-				deferredResult.setResult("order-show :: #errormsg");
+				if (e instanceof WebClientResponseException.NotFound) {
+					model.addAttribute("orders", orders);
+
+					modelAddAttributes(model, count, pageSize, pages, page);
+
+					if (logger.isTraceEnabled())
+						logger.trace(model.toString() + "MODEL TO STRING");
+
+					deferredResult.setResult("order-show :: #orderscontent");
+				} else {
+					model.addAttribute("errormsg", e.getMessage());
+					deferredResult.setResult("order-show :: #errormsg");
+				}
 			})
 			// Handle successful response
 			.subscribe(entityList -> {
 				logger.trace("Now in Consumer::accept({})", entityList);
 
-				if (entityList.getStatusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
-					// This is not an error because only already planned orders have job steps
-					model.addAttribute("count", 0);
-					model.addAttribute("pageSize", 0);
-					model.addAttribute("pageCount", 0);
-					model.addAttribute("numberOfPages", 0);
-					model.addAttribute("page", 0);
-					model.addAttribute("currentPage", 0);
-					deferredResult.setResult("order :: #jobscontent");
-				} else if (entityList.getStatusCode().is2xxSuccessful()) {
+				if (entityList.getStatusCode().is2xxSuccessful() 
+						|| entityList.getStatusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
 					// orders.addAll(selectOrders(orderList, identifier, states, from, to, products));
 					orders.addAll(entityList.getBody());
 
@@ -225,30 +228,8 @@ public class GUIOrderController extends GUIBaseController {
 					model.addAttribute("orders", orders);
 					model.addAttribute("selcol", key);
 					model.addAttribute("selorder", (isUp ? "select-up" : "select-down"));
-					model.addAttribute("count", count);
-					model.addAttribute("pageSize", pageSize);
-					model.addAttribute("pageCount", pages);
-					model.addAttribute("numberOfPages", pages);
-					model.addAttribute("page", page);
-					model.addAttribute("currentPage", page);
-
-					List<Long> showPages = new ArrayList<>();
-					Long start = Math.max(page - 4, 1);
-					Long end = Math.min(page + 4, pages);
-
-					if (page < 5) {
-						end = Math.min(end + (5 - page), pages);
-					}
-
-					if (pages - page < 5) {
-						start = Math.max(start - (4 - (pages - page)), 1);
-					}
-
-					for (Long i = start; i <= end; i++) {
-						showPages.add(i);
-					}
-
-					model.addAttribute("showPages", showPages);
+					
+					modelAddAttributes(model, count, pageSize, pages, page);
 
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + orders.toString());
@@ -874,12 +855,11 @@ public class GUIOrderController extends GUIBaseController {
 			.doOnError(e -> {
 				if (e instanceof WebClientResponseException.NotFound) {
 					model.addAttribute("jobs", jobs);
-					model.addAttribute("count", 0);
-					model.addAttribute("pageSize", 0);
-					model.addAttribute("pageCount", 0);
-					model.addAttribute("numberOfPages", pages);
-					model.addAttribute("page", 0);
-					model.addAttribute("currentPage", 0);
+					model.addAttribute("orderState", orderState);
+
+					modelAddAttributes(model, count, pageSize, pages, page);
+					
+					logger.trace(model.toString() + "MODEL TO STRING");
 					deferredResult.setResult("order :: #jobscontent");
 				} else {
 					model.addAttribute("errormsg", e.getMessage());
@@ -889,18 +869,8 @@ public class GUIOrderController extends GUIBaseController {
 			// Handle successful response
 			.subscribe(entityList -> {
 				logger.trace("Now in Consumer::accept({})", entityList);
-
-				if (entityList.getStatusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
-					// this is no error cause only already planned orders have job steps
-					model.addAttribute("jobs", jobs);
-					model.addAttribute("count", 0);
-					model.addAttribute("pageSize", 0);
-					model.addAttribute("pageCount", 0);
-					model.addAttribute("numberOfPages", pages);
-					model.addAttribute("page", 0);
-					model.addAttribute("currentPage", 0);
-					deferredResult.setResult("order :: #jobscontent");
-				} else if (entityList.getStatusCode().is2xxSuccessful()) {
+				if (entityList.getStatusCode().is2xxSuccessful() 
+						|| entityList.getStatusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
 					jobs.addAll(entityList.getBody());
 					/*
 					 * for (Object o : jobs) { if (o instanceof HashMap) { HashMap<String, Object> h = (HashMap<String, Object>) o;
@@ -908,28 +878,10 @@ public class GUIOrderController extends GUIBaseController {
 					 * auth); h.put("graph", result); } }
 					 */
 					model.addAttribute("jobs", jobs);
-					model.addAttribute("count", count);
-					model.addAttribute("pageSize", pageSize);
-					model.addAttribute("pageCount", pages);
-					model.addAttribute("numberOfPages", pages);
-					model.addAttribute("page", page);
-					model.addAttribute("currentPage", page);
 					model.addAttribute("orderState", orderState);
 
-					List<Long> showPages = new ArrayList<>();
-					Long start = Math.max(page - 4, 1);
-					Long end = Math.min(page + 4, pages);
-					if (page < 5) {
-						end = Math.min(end + (5 - page), pages);
-					}
-					if (pages - page < 5) {
-						start = Math.max(start - (4 - (pages - page)), 1);
-					}
-					for (Long i = start; i <= end; i++) {
-						showPages.add(i);
-					}
-
-					model.addAttribute("showPages", showPages);
+					modelAddAttributes(model, count, pageSize, pages, page);
+					
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + jobs.toString());
 

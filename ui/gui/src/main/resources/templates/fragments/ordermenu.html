@@ -22,63 +22,63 @@
 				<a
 				  th:if="${hasroleorderapprover}"
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'INITIAL') ? 'enabled' : 'disabled font-italic'))"
-					th:onclick="'setState(' + ${ord?.id} + ', \'APPROVE\')'" href="#"><span
+					th:onclick="'setState(' + ${ord?.id} + ', \'APPROVE\')'" href="#" th:title="#{helpapprove}"><span
 					th:text="#{approve}">approve</span></a> <a
           th:if="${hasroleorderplanner}"
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'APPROVED' or ${ord?.orderState} == 'PLANNING_FAILED') ? 'enabled' : 'disabled font-italic'))"
-					th:onclick="'plan(' + ${ord?.id} + ', \'PLAN\')'" href="#"><span
+					th:onclick="'plan(' + ${ord?.id} + ', \'PLAN\')'" href="#" th:title="#{helpplan}"><span
 					th:text="#{plan}">plan</span></a> <a
           th:if="${hasroleorderplanner}"
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'PLANNED') ? 'enabled' : 'disabled font-italic'))"
-					th:onclick="'setState(' + ${ord?.id} + ', \'RELEASE\')'" href="#"><span
+					th:onclick="'setState(' + ${ord?.id} + ', \'RELEASE\')'" href="#" th:title="#{helprelease}"><span
 					th:text="#{release}">release</span></a> <a
           th:if="${hasroleorderplanner}"
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'RUNNING' or ${ord?.orderState} == 'RELEASING' or ${ord?.orderState} == 'RELEASED') ? 'enabled' : 'disabled font-italic'))"
-					th:onclick="'setState(' + ${ord?.id} + ', \'SUSPEND\')'" href="#"><span
+					th:onclick="'setState(' + ${ord?.id} + ', \'SUSPEND\')'" href="#" th:title="#{helpsuspend}"><span
 					th:text="#{suspend}">suspend</span></a> <a
           th:if="${hasroleorderplanner}"
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'RUNNING' or ${ord?.orderState} == 'RELEASING' or ${ord?.orderState} == 'RELEASED' or ${ord?.orderState} == 'SUSPENDING') ? 'enabled' : 'disabled font-italic'))"
 					th:onclick="'setState(' + ${ord?.id} + ', \'SUSPENDFORCE\')'"
-					href="#"><span th:text="#{suspendforce}">suspendforce</span></a> <a
+					href="#" th:title="#{helpsuspendforce}"><span th:text="#{suspendforce}">suspendforce</span></a> <a
           th:if="${hasroleorderplanner}"
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'PLANNED') ? 'enabled' : 'disabled font-italic'))"
-					th:onclick="'setState(' + ${ord?.id} + ', \'RESUME\')'" href="#"><span
+					th:onclick="'setState(' + ${ord?.id} + ', \'RESUME\')'" href="#" th:title="#{helpresume}"><span
 					th:text="#{resume}">resume</span></a>
         <div class="dropdown-divider"></div> <a
           th:if="${hasroleorderplanner}"
           th:class="('dropdown-item ' + ((${ord?.orderState} == 'FAILED') ? 'enabled' : 'disabled font-italic'))"
-          th:onclick="'setState(' + ${ord?.id} + ', \'RETRY\')'" href="#"><span
+          th:onclick="'setState(' + ${ord?.id} + ', \'RETRY\')'" href="#" th:title="#{helpretry}"><span
           th:text="#{retry}">retry</span></a>
         <a
           th:if="${hasroleorderplanner}"
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'PLANNED' or ${ord?.orderState} == 'APPROVED' or ${ord?.orderState} == 'PLANNING_FAILED' or ${ord?.orderState} == 'PLANNING') ? 'enabled' : 'disabled font-italic'))"
-					th:onclick="'setState(' + ${ord?.id} + ', \'RESET\')'" href="#"><span style="color:#c82f04"
+					th:onclick="'setState(' + ${ord?.id} + ', \'RESET\')'" href="#" th:title="#{helpreset}"><span style="color:#c82f04"
 					th:text="#{reset}">reset</span></a> 
 				<div class="dropdown-divider"></div>
         <a
           th:if="${hasroleorderplanner}"
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'PLANNED') ? 'enabled' : 'disabled font-italic'))"
-					th:onclick="'setState(' + ${ord?.id} + ', \'CANCEL\')'" href="#"><span
+					th:onclick="'setState(' + ${ord?.id} + ', \'CANCEL\')'" href="#" th:title="#{helpcancel}"><span
 					th:text="#{cancel}">cancel</span></a> <a
           th:if="${hasroleordermgr}"
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'COMPLETED' or ${ord?.orderState} == 'FAILED') ? 'enabled' : 'disabled font-italic'))"
-					th:onclick="'setState(' + ${ord?.id} + ', \'CLOSE\')'" href="#"><span
+					th:onclick="'setState(' + ${ord?.id} + ', \'CLOSE\')'" href="#" th:title="#{helpclose}"><span
 					th:text="#{close}">close</span></a>
         <div class="dropdown-divider"></div>
         <a
           th:if="${hasroleordermgr}"
           th:class="('dropdown-item ' + ((${ord?.orderState} == 'INITIAL') ? 'enabled' : 'disabled font-italic'))"
-          th:href="'/order-edit?id=' + ${ord?.id}"><span
+          th:href="'/order-edit?id=' + ${ord?.id}" th:title="#{helpedit}"><span
           th:text="#{edit}">edit</span></a>
         <a
           th:if="${hasroleordermgr}"
           class="dropdown-item enabled"
-          th:href="'/order-edit?id=' + ${ord?.id} + '&cp=true'"><span
+          th:href="'/order-edit?id=' + ${ord?.id} + '&cp=true'" th:title="#{helpcopy}"><span
           th:text="#{copy}">copy</span></a>
         <a
           th:if="${hasroleordermgr}"
           th:class="('dropdown-item ' + ((${ord?.orderState} == 'CLOSED' or ${ord?.orderState} == 'INITIAL') ? 'enabled' : 'disabled font-italic'))"
-          th:onclick="'setState(' + ${ord?.id} + ', \'DELETE\')'" href="#"><span
+          th:onclick="'setState(' + ${ord?.id} + ', \'DELETE\')'" href="#" th:title="#{helpdelete}"><span
           th:text="#{delete}">delete</span></a>
 			</div>
 		</div>

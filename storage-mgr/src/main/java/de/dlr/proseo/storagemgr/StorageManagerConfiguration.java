@@ -54,6 +54,14 @@ public class StorageManagerConfiguration {
 
 	@Value("${proseo.s3.s3DefaultEndPoint}")
 	private String s3DefaultEndPoint;
+	
+	/** Maximum number of parallel threads for Transfer Manager uploads */
+	@Value("${proseo.s3.maxUploadThreads}")
+	private Integer maxUploadThreads;
+
+	/** Maximum number of parallel threads for Transfer Manager downloads */
+	@Value("${proseo.s3.maxDownloadThreads}")
+	private Integer maxDownloadThreads;
 
 	/** Mount point for backend storage (must be different from cachePath) */
 	@Value("${proseo.posix.backendPath}")
@@ -263,12 +271,29 @@ public class StorageManagerConfiguration {
 		return s3EndPoint;
 	}
 	
-	
 	/**
 	 * @return the s3DefaultEndPoint
 	 */
 	public String getS3DefaultEndPoint() {
 		return s3DefaultEndPoint;
+	}
+	
+	/**
+	 * Gets the maximum number of parallel threads for Transfer Manager uploads
+	 * 
+	 * @return the maximum number of parallel uploads
+	 */
+	public Integer getMaxUploadThreads() {
+		return maxUploadThreads;
+	}
+	
+	/**
+	 * Gets the maximum number of parallel threads for Transfer Manager downloads
+	 * 
+	 * @return the maximum number of parallel downloads
+	 */
+	public Integer getMaxDownloadThreads() {
+		return maxDownloadThreads;
 	}
 	
 	/**

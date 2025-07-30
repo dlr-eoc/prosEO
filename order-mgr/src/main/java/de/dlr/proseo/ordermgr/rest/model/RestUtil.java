@@ -6,6 +6,8 @@
 package de.dlr.proseo.ordermgr.rest.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +62,8 @@ public class RestUtil {
 			for (JobStep js : modelJob.getJobSteps()) {
 				jobSteps.add(RestUtil.createRestJobStep(js, logs));
 			}
+			
+			Collections.sort(jobSteps, Comparator.comparing(RestJobStep::getId));
 			rj.setJobSteps(jobSteps);
 
 			if (modelJob.getPriority() != null) {
@@ -140,11 +144,28 @@ public class RestUtil {
 			}
 
 			for (ProductQuery pq : modelJobStep.getInputProductQueries()) {
-				String pt = pq.getRequestedProductClass().getProductType();
+				Boolean isSatisfied = pq.getIsSatisfied();
+				Boolean isMandatory = pq.getGeneratingRule().getIsMandatory();
+				String flag = "|";
+				if (isMandatory) {
+					flag += "M-";
+				} else {
+					flag += "O-";
+				}
+				if (isSatisfied) {
+					flag += "1";
+				} else {
+					flag += "0";
+				}
+				
+				String pt = pq.getRequestedProductClass().getProductType() + flag;
 				if (!pjs.getInputProductClasses().contains(pt)) {
 					pjs.getInputProductClasses().add(pt);
 				}
 			}
+			Collections.sort(pjs.getInputProductClasses(), (o1, o2) -> {
+				return o1.compareTo(o2);
+			});
 
 			if (modelJobStep.getOutputProduct() != null) {
 				pjs.setOutputProduct(modelJobStep.getOutputProduct().getId());

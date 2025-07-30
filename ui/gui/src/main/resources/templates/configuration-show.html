@@ -12,7 +12,8 @@
           crossorigin="anonymous" />
 
           <!-- Custom styles for prosEO -->
-          <link href="../static/fragments/proseo.css" th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css" />
+        <link href="../static/fragments/proseo.css" th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css" />
+        <link rel="stylesheet" href="../static/fragments/bootstrap-multiselect.css" th:href="@{/fragments/bootstrap-multiselect.css}" type="text/css"/>
   </head>
 
 <body>
@@ -60,6 +61,68 @@
           <br> <span th:text="${errormsg}"></span></h5>
       </div>
 
+        <div th:unless="${errormsg != null}" class="container-fluid">
+            <p>&nbsp;</p>
+          <form th:unless="${errormsg != null}" class="needs-validation" name="procc-shw" id="procc-shw" action="javascript:retrieveDataPrim();">
+            <div class="row py-lg-1">
+              <div class="col-1 pr-lg-0" th:title="#{selectId}">
+                <p class="input-group-text word-wrap"
+                  th:text="#{id}"></p>
+              </div>
+              <div class="col-1 pl-lg-0" th:title="#{selectId}">
+                      <input type="number" min="1" class="form-control" autocomplete="on"
+                        name="cid" id="cid">
+              </div>
+              <div class="col-2 pr-lg-0" th:title="#{selectConfigProcClass}">
+                <p class="input-group-text word-wrap"
+                  th:text="#{processor-class}"></p>
+              </div>
+              <div class="col-2 pl-lg-0" th:title="#{selectConfigProcClass}">
+                <select name="processorClasses" id="processorClasses" multiple="multiple">
+                  <option th:each="obj : ${processorclassnames}" th:text="${obj}"
+                    th:label="${obj}"></option>
+                </select>
+              </div> 
+              <div class="col-2 pr-lg-0" th:title="#{selectConfigVersionPattern}">
+                <p class="input-group-text word-wrap"
+                  th:text="#{configurationversion}"></p>
+              </div>
+              <div class="col-2 pl-lg-0" th:title="#{selectConfigVersionPattern}">
+                <input type="text" class="form-control" id="configurationVersion">
+              </div>   
+            </div>   
+            <div class="row py-lg-1">
+              <div class="col-2">
+                <button id="configurationselect" type="button"
+                  onclick="retrieveDataPrim();"
+                  class="btn btn-sm btn-outline-secondary">
+                  <span th:text="#{configurations-show}"></span>
+                </button>
+              </div>  
+              <div class="col-2 pr-lg-0" th:title="#{selectConfigProcMode}">
+                <p class="input-group-text word-wrap"
+                  th:text="#{processingmode}"></p>
+              </div>
+              <div class="col-2 pl-lg-0" th:title="#{selectConfigProcMode}">
+                <select name="processingModes" id="processingModes" multiple="multiple">
+                  <option th:each="obj : ${processingmodes}" th:text="${obj}"
+                    th:label="${obj}"></option>
+                </select>
+              </div>   
+              <div class="col-2 pr-lg-0" th:title="#{selectConfigProductQuality}">
+                <p class="input-group-text word-wrap"
+                  th:text="#{productquality}"></p>
+              </div>
+              <div class="col-2 pl-lg-0" th:title="#{selectConfigProductQuality}">
+                <select name="productQuality" id="productQuality" multiple="multiple">
+                  <option th:each="obj : ${productqualities}" th:text="${obj}"
+                    th:label="${obj}"></option>
+                </select>
+              </div> 
+            </div>   
+          </form>
+  
+        </div>
         <div id="configurationcontent" name="configurationcontent">
           <table class="table" id="configurationTable" name="configurationTable">
             <thead class="thead-proseo" id="proseo-thead">
@@ -85,7 +148,7 @@
                 <td th:id="${configuration?.id}" th:rowspan="2" class="first-row" th:text="${configuration?.id}"></td>
                 <td class="first-row"> <a 
                   th:if="${hasroleprocessorreader}"
-                  th:href="'/processor-class-show?pc=' + ${configuration?.processorName}" 
+                  th:href="'/processor-class-show?processorclassName=' + ${configuration?.processorName}" 
                   th:text="${configuration?.processorName}"></a><span 
                   th:unless="${hasroleprocessorreader}"
                   th:text="${configuration?.processorName}"></span></td>
@@ -149,6 +212,7 @@
               </div>
             </tbody>
           </table>
+          <div th:replace="fragments/navbar.html :: alternatePageNav"></div>
         </div>
       <div th:insert="fragments/footer.html :: footer"></div>
       </main>
@@ -171,26 +235,221 @@
   <script
     src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
+  <script src="../static/fragments/bootstrap-multiselect.js" th:src="@{/fragments/bootstrap-multiselect.js}" type="text/javascript"></script>
+  <script src="../static/fragments/jquery.serialize-object.js" th:src="@{/fragments/jquery.serialize-object.js}" type="text/javascript"></script>
+
+
+<script>
+  var clickHandler = function(event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        document.getElementById("configurationselect").click();
+    }
+  };
+  var input = document.getElementById("configurationVersion");
+  input.addEventListener("keyup", clickHandler);
+  input = document.getElementById("cid");
+  input.addEventListener("keyup", clickHandler);
+</script>
 
 <script type="text/javascript" th:inline="javascript">
+function wikiPage() {
+    window.open('https://github.com/dlr-eoc/prosEO/wiki/GUI-Configuration#configuration');
+}
+
+		// Global variables
+		// paging
+		var currentPage = 1; // Current page number
+		var pageSize = 5; // Maximum objects per page
+		
+		var cid = null;
+	  var configurationVersion = null;
+	  var processorClass = null;
+	  var processingMode = null;
+	  var productQuality = null;
+		
+		// set paging and sorting parameters
+		function setParams(ele, selup, newPage, newPageSize) {
+		    var newConfigurationVersion = null;
+	      var newProcessorClass = null;
+        var newCid = null;
+        var newProductQuality = null;
+        var newProcessingMode = null;
+		    
+		    var hasChanged = false;
+		
+		    hasChanged |= setPageParams(newPage, newPageSize);
+
+        newCid = $('#cid').val();
+        if (isEmpty(newCid)) {newCid = null};  
+        newConfigurationVersion = $('#configurationVersion').val();
+        if (isEmpty(newConfigurationVersion)) {newConfigurationVersion = null};  
+        newProcessorClass = $('#processorClasses').val();
+        newProductQuality = $('#productQuality').val();
+        newProcessingMode = $('#processingModes').val();
+
+        if (   cid != newCid
+            || configurationVersion != newConfigurationVersion
+            || !arrayEquals(processorClass, newProcessorClass)
+            || !arrayEquals(productQuality, newProductQuality)
+            || !arrayEquals(processingMode, newProcessingMode)) {
+          // table size may be changed, go to first page
+          currentPage = 1;
+          newPage = 1;
+          hasChanged = true;
+        }   
+        cid = newCid;
+        configurationVersion = newConfigurationVersion;
+        processorClass = newProcessorClass;
+        productQuality = newProductQuality;
+        processingMode = newProcessingMode;
+        
+		    if (hasChanged) {
+		        setHTMLParams();
+		    }
+		}
+		
+		// set parameters in URI
+		function setHTMLParams() {
+		    // build parameter string
+		    var paramString = "";
+	      paramString = addURLParamValuePrim('id', cid, paramString);
+	      paramString = addURLParamValuePrim('configurationVersion', configurationVersion, paramString);
+        paramString = addURLParamValuesPrim('processorClass', processorClass, paramString);
+        paramString = addURLParamValuesPrim('productQuality', productQuality, paramString);
+        paramString = addURLParamValuesPrim('processingMode', processingMode, paramString);
+		    paramString = setPageHTMLParams(paramString);
+		    var newHref = location.origin + location.pathname + paramString;
+		    if (newHref != location.href) {
+		        history.pushState({}, null, newHref);
+		    }
+		}
+		
+		// read URI parameters
+		function readHTMLParams() {
+		    readPageHTMLParams();
+	      cid = getURLParam('id');
+		    configurationVersion = getURLParam('configurationVersion');
+        if (processorClass != null && processorClass.length > 0) {
+            $('#processorClasses').multiselect('deselect', processorClass);
+          }
+          if (productQuality != null && productQuality.length > 0) {
+            $('#productQuality').multiselect('deselect', productQuality);
+          }
+          if (processingMode != null && processingMode.length > 0) {
+            $('#processingModes').multiselect('deselect', processingMode);
+          }
+			    processorClass = getURLParams('processorClass');
+			    productQuality = getURLParams('productQuality');
+			    processingMode = getURLParams('processingMode');
+		}
+		
+		// set selection in filter parameters
+		function setSelected() {
+	      $('#cid').val(cid);
+	      $('#configurationVersion').val(configurationVersion);
+	      if (processorClass != null && processorClass.length > 0) {
+	        $('#processorClasses').multiselect('select', processorClass);
+	      }
+	      if (productQuality != null && productQuality.length > 0) {
+	        $('#productQuality').multiselect('select', productQuality);
+	      }
+	      if (processingMode != null && processingMode.length > 0) {
+	        $('#processingModes').multiselect('select', processingMode);
+	      }
+		}
+		
+    function retrieveDataPrim() {
+        setParams(null, null, null, null);
+        retrieveData();
+    }
+		
+		function updateTable(newPage, newPageSize) {
+		    setParams(null, null, newPage, newPageSize);
+		    retrieveData();
+		}
+		
+		function initMultiselect() {
+	       $('#processorClasses').multiselect({
+	           buttonWidth : '99%',
+	           enableFiltering : true,
+	           numberDisplayed : 0,
+	           maxHeight : 400,
+	           enableCaseInsensitiveFiltering : true,
+	           nonSelectedText : ''
+	       });
+	       $('#processingModes').multiselect({
+	           buttonWidth : '99%',
+	           enableFiltering : true,
+	           numberDisplayed : 0,
+	           maxHeight : 400,
+	           enableCaseInsensitiveFiltering : true,
+	           nonSelectedText : ''
+	       });
+	       $('#productQuality').multiselect({
+	           buttonWidth : '99%',
+	           enableFiltering : true,
+	           numberDisplayed : 0,
+	           maxHeight : 400,
+	           enableCaseInsensitiveFiltering : true,
+	           nonSelectedText : ''
+	       });
+		}
+
     function retrieveData() {
         if ([[${hasroleprocessorreader}]]) {
             showLoader();
+            initMultiselect();
             var tableRows = $("configurationTable").rows;
             if(tableRows > 1 && tableRows != null) {
                 $("configurationTable > tbody").empty();
             }
-            var url = "/configurations/get";      
+            var url = "/configurations/get";         
+            var divider = "?";   
+            if (parameterHasValue(cid)) {
+                url = url + divider + "id=" + cid;
+                divider = "&";
+            }   
+            if (parameterHasValue(configurationVersion)) {
+                url = url + divider + "configurationVersion=" + configurationVersion;
+                divider = "&";
+            }   
+            if (processorClass != null) {
+                url = url + divider + "processorClass=" + processorClass;
+                divider = "&";
+            }
+            if (productQuality != null) {
+                url = url + divider + "productQuality=" + productQuality;
+                divider = "&";
+            }
+            if (processingMode != null) {
+                url = url + divider + "processingMode=" + processingMode;
+                divider = "&";
+            }
+            var from = getFromRow();
+            var to = getToRow();     
+            if (parameterHasValue(from)) {
+                url = url + divider + "recordFrom=" + from;
+                divider = "&";
+            }
+            if (parameterHasValue(to)) {
+                url = url + divider + "recordTo=" + to;
+                divider = "&";
+            }
             
             $.ajax({
                 url: url,
                 method: "GET",
-                success: function (res) {
+                success: function (res, textStatus, jqXHR) {
                     $("#configurationcontent").html(res);
+                    feather.replace();
                     scrollToHash();
+                    initMultiselect();
+                    setSelected();
                     hideLoader();
                 },
                 fail: function (err) {
+
                     hideLoader();
                     console.log(err);
                     prop.innerHTML = "Fehler!" + err;
@@ -201,22 +460,36 @@
     };
 </script>
 <script>
-    window.onload = function () {
-     // $('.collapse').collapse();
-     var elem = document.getElementById('sb-configuration');
-     $(elem).addClass('active');
+// correct scroll due to "sticky" elements
+var handler = function ( ) {
+   var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+           + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+   window.scrollBy(0, h);
+ };
+ window.addEventListener('hashchange', handler);
+
+ // Read the HTML parameters from URI and retrieve the corresponding data
+ function loadWindow() {
+     activateSidebarElem('sb-configuration');
      feather.replace();
-     retrieveData();
-     
+     readHTMLParams();
+     setSelected();
+     updateTable(currentPage, pageSize);
+ };
+ 
+ window.onload = function () {
+     loadWindow();
      // correct scroll due to "sticky" elements
      var handler = function ( ) {
-        var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
-    			      + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
-    	  window.scrollBy(0, h);
-      };
-      window.addEventListener('hashchange', handler);
-     
-    }
+         var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+                  + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+         window.scrollBy(0, h);
+     };        
+ };
+ // re-load window to read and set all HTML parameters
+ $(window).on('popstate', function (e) {
+   loadWindow();
+ });
 </script>
 
 </html>

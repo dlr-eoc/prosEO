@@ -51,22 +51,23 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	 * @param uuid                 the UUID of the configured processor
 	 * @param recordFrom           first record of filtered and ordered result to return
 	 * @param recordTo             last record of filtered and ordered result to return
+	 * @param orderBy		an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
 	 * @return HTTP status "OK" and a list of JSON objects representing configured processors satisfying the search criteria or HTTP
 	 *         status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "NOT_FOUND" and
 	 *         an error message, if no configurations matching the search criteria were found, or HTTP status "TOO MANY REQUESTS" if
 	 *         the result list exceeds a configured maximum
 	 */
 	@Override
-	public ResponseEntity<List<RestConfiguredProcessor>> getConfiguredProcessors(String mission, String identifier,
-			String processorName, String processorVersion, String configurationVersion, String uuid, Integer recordFrom,
-			Integer recordTo) {
+	public ResponseEntity<List<RestConfiguredProcessor>> getConfiguredProcessors(String mission, Long id, String identifier,
+			String processorClass[], String processorVersion, String configurationVersion, String[] enabled, Integer recordFrom,
+			Integer recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getConfiguredProcessors({}, {}, {}, {}, {}, {})", mission, identifier, processorName,
-					processorVersion, configurationVersion, uuid);
+			logger.trace(">>> getConfiguredProcessors({}, {}, {}, {}, {}, {})", mission, identifier, processorClass,
+					processorVersion, configurationVersion, enabled);
 
 		try {
-			return new ResponseEntity<>(configuredProcessorManager.getConfiguredProcessors(mission, identifier, processorName,
-					processorVersion, configurationVersion, uuid, recordFrom, recordTo), HttpStatus.OK);
+			return new ResponseEntity<>(configuredProcessorManager.getConfiguredProcessors(mission, id, identifier, processorClass,
+					processorVersion, configurationVersion, enabled, recordFrom, recordTo, orderBy), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {
@@ -198,15 +199,15 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	 *         message, if a cross-mission data access was attempted
 	 */
 	@Override
-	public ResponseEntity<String> countConfiguredProcessors(String missionCode, String processorName, String processorVersion,
-			String configurationVersion) {
+	public ResponseEntity<String> countConfiguredProcessors(String mission, Long id, String identifier,
+			String[] processorClass, String processorVersion, String configurationVersion, String[] enabled) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> countConfiguredProcessors({}, {}, {}, {})", missionCode, processorName, processorVersion,
+			logger.trace(">>> countConfiguredProcessors({}, {}, {}, {})", mission, processorClass, processorVersion,
 					configurationVersion);
 
 		try {
-			return new ResponseEntity<>(configuredProcessorManager.countConfiguredProcessors(missionCode, processorName,
-					processorVersion, configurationVersion), HttpStatus.OK);
+			return new ResponseEntity<>(configuredProcessorManager.countConfiguredProcessors(mission, id, identifier, processorClass,
+					processorVersion, configurationVersion, enabled), HttpStatus.OK);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}

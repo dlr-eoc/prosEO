@@ -21,6 +21,10 @@ proseo:
       s3MaxNumberOfBuckets: 50
       s3DefaultBucket: proseo-data-001
       s3DefaultEndPoint: false
+      # Maximum number of parallel threads for Transfer Manager uploads
+      maxUploadThreads: 6
+      # Maximum number of parallel threads for Transfer Manager downloads
+      maxDownloadThreads: 6
 
     posix:
       # Mount point for backend storage (must be different from cachePath)

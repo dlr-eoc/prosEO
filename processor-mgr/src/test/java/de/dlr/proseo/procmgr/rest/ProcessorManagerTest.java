@@ -227,13 +227,13 @@ public class ProcessorManagerTest {
 		 * mission.
 		 */
 		assertTrue("More or less processors retrieved than expected.",
-				processorMgr.getProcessors(null, null, null, 0, 10).size() == 2);
+				processorMgr.getProcessors(null, null, null, 0, 10, null).size() == 2);
 		assertTrue("More or less processors retrieved than expected.",
-				processorMgr.getProcessors(testMissionData[0], null, null, 0, 100).size() == 2);
+				processorMgr.getProcessors(testMissionData[0], null, null, 0, 100, null).size() == 2);
 		assertTrue("More or less processors retrieved than expected.",
-				processorMgr.getProcessors(testMissionData[0], testProcessorData[0][0], null, null, null).size() == 1);
+				processorMgr.getProcessors(testMissionData[0], testProcessorData[0][0], null, null, null, null).size() == 1);
 		assertTrue("More or less processors retrieved than expected.",
-				processorMgr.getProcessors(testMissionData[0], null, testProcessorData[0][1], null, null).size() == 1);
+				processorMgr.getProcessors(testMissionData[0], null, testProcessorData[0][1], null, null, null).size() == 1);
 	}
 
 }

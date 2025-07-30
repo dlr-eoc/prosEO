@@ -66,6 +66,7 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.ApiMonitorMessage;
 import de.dlr.proseo.logging.messages.OAuthMessage;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
+import de.dlr.proseo.model.util.ProseoUtil;
 
 /**
  * Monitor for Auxiliary Data Interface Points (AUXIP)
@@ -123,6 +124,7 @@ public class AuxipMonitor extends BaseMonitor {
 	private static final String MSG_ODATA_REQUEST_ABORTED = "(E%d) OData request for reference time %s aborted (cause: %s / %s)";
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown in AUXIP monitor: ";
 	private static final String MSG_PRODUCT_DOWNLOAD_FAILED = "(E%d) Download of product file %s failed (cause: %s)";
+	private static final String MSG_PRODUCT_DOWNLOAD_FAILED_AFTER_RETRIES = "(E%d) Download of product file %s failed after %s retries (cause: %s)";
 	private static final String MSG_FILE_SIZE_MISMATCH = "(E%d) File size mismatch for product file %s (expected: %d Bytes, got %d Bytes)";
 	private static final String MSG_CHECKSUM_MISMATCH = "(E%d) Checksum mismatch for product file %s (expected: %s, got %s)";
 	private static final String MSG_PRODUCT_EVICTED = "(W%d) Product %s already evicted at %s – skipped";
@@ -136,6 +138,11 @@ public class AuxipMonitor extends BaseMonitor {
 	private static Logger oldLogger = LoggerFactory.getLogger(AuxipMonitor.class);
 	private static ProseoLogger logger = new ProseoLogger(AuxipMonitor.class);
 
+	// maximum number of retries to transfer a file
+	private static final int MAX_RETRY = 20;
+	// Wait interval in ms before retrying database operation
+	public static final int AUXIP_WAIT = 1000;
+	
 	/**
 	 * Class describing a download session
 	 */
@@ -288,7 +295,9 @@ public class AuxipMonitor extends BaseMonitor {
 		oldLogger.info("Max. transfer sessions . . : " + this.getMaxDownloadThreads());
 		oldLogger.info("Transfer session wait time : " + this.getTaskWaitInterval());
 		oldLogger.info("Max. session wait cycles . : " + this.getMaxWaitCycles());
-
+		
+		oldLogger.info("Maximum number of retries  : " + MAX_RETRY);
+		oldLogger.info("AUXIP wait interval in ms  : " + AUXIP_WAIT);
 	}
 
 	/**
@@ -751,41 +760,55 @@ public class AuxipMonitor extends BaseMonitor {
 				File productFile = new File(config.getAuxipDirectoryPath() + File.separator + transferProduct.getName());
 				
 				Instant copyStart = Instant.now();
-				
-				try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-					logger.trace("... starting request for URL '{}'", requestUri);
+				for (int i = 0; i < MAX_RETRY; i++) {
+					try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+						logger.trace("... starting request for URL '{}'", requestUri);
 
-					HttpGet httpGet = new HttpGet(requestUri);
+						HttpGet httpGet = new HttpGet(requestUri);
 
-					if (config.getAuxipUseToken()) {
-						httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
-					} else {
-						httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Basic "
-							+ Base64.getEncoder().encodeToString((config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
+						if (config.getAuxipUseToken()) {
+							httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
+						} else {
+							httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Basic "
+									+ Base64.getEncoder().encodeToString((config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
+						}
+
+						CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
+						HttpEntity httpEntity = httpResponse.getEntity();
+
+						if (httpEntity != null) {
+							FileUtils.copyInputStreamToFile(httpEntity.getContent(), productFile);
+						}
+
+						httpResponse.close();
+						break;
+					} catch (FileNotFoundException e) {
+						oldLogger.error(String.format(MSG_FILE_NOT_WRITABLE, MSG_ID_FILE_NOT_WRITABLE, productFile.toString()));
+						return false;
+					} catch (HttpResponseException e) {
+						if ((i + 1) < MAX_RETRY) {
+							oldLogger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED,
+									transferProduct.getName(), e.getMessage() + " / " + e.getReasonPhrase()));
+							// retry
+							ProseoUtil.randomWait(i, AUXIP_WAIT);
+						} else {
+							oldLogger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED_AFTER_RETRIES, MAX_RETRY, MSG_ID_PRODUCT_DOWNLOAD_FAILED,
+									transferProduct.getName(), e.getMessage() + " / " + e.getReasonPhrase()));
+							return false;
+						}
+					} catch (Exception e) {
+						if ((i + 1) < MAX_RETRY) {
+							oldLogger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED,
+									transferProduct.getName(), e.getMessage()));
+							// retry
+							ProseoUtil.randomWait(i, AUXIP_WAIT);
+						} else {
+							oldLogger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED_AFTER_RETRIES, MAX_RETRY, MSG_ID_PRODUCT_DOWNLOAD_FAILED,
+									transferProduct.getName(), e.getClass().getName() + " / " + e.getMessage()), e);
+							return false;
+						}
 					}
-
-					CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
-					HttpEntity httpEntity = httpResponse.getEntity();
-					
-					if (httpEntity != null) {
-						FileUtils.copyInputStreamToFile(httpEntity.getContent(), productFile);
-					}
-				
-					httpResponse.close();
-
-				} catch (FileNotFoundException e) {
-					oldLogger.error(String.format(MSG_FILE_NOT_WRITABLE, MSG_ID_FILE_NOT_WRITABLE, productFile.toString()));
-					return false;
-				} catch (HttpResponseException e) {
-					oldLogger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED,
-							transferProduct.getName(), e.getMessage() + " / " + e.getReasonPhrase()));
-					return false;
-				} catch (Exception e) {
-					oldLogger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED,
-							transferProduct.getName(), e.getClass().getName() + " / " + e.getMessage()), e);
-					return false;
 				}
-
 				// Compare file size with value given by AUXIP
 				Long productFileLength = productFile.length();
 				if (!productFileLength.equals(transferProduct.getSize())) {

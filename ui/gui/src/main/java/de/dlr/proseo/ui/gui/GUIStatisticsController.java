@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.ui.gui.service.StatisticsService;
@@ -77,8 +78,15 @@ public class GUIStatisticsController extends GUIBaseController {
 		responseSpec.toEntityList(Object.class)
 			// Handle errors
 			.doOnError(e -> {
-				model.addAttribute("errormsg", e.getMessage());
-				deferredResult.setResult("dashboard :: #errormsg");
+				if (e instanceof WebClientResponseException.NotFound) {
+					model.addAttribute("failedjobsteps", jobsteps);
+					
+					logger.trace(model.toString() + "MODEL TO STRING");
+					deferredResult.setResult("dashboard :: #failedjs");
+				} else {
+					model.addAttribute("errormsg", e.getMessage());
+					deferredResult.setResult("dashboard :: #errormsg");
+				}
 			})
 			// Handle successful response
 			.subscribe(entityList -> {
@@ -145,8 +153,15 @@ public class GUIStatisticsController extends GUIBaseController {
 		responseSpec.toEntityList(Object.class)
 			// Handle errors
 			.doOnError(e -> {
-				model.addAttribute("errormsg", e.getMessage());
-				deferredResult.setResult("dashboard :: #errormsg");
+				if (e instanceof WebClientResponseException.NotFound) {
+					model.addAttribute("completedjobsteps", jobsteps);
+					
+					logger.trace(model.toString() + "MODEL TO STRING");
+					deferredResult.setResult("dashboard :: #completedjs");
+				} else {
+					model.addAttribute("errormsg", e.getMessage());
+					deferredResult.setResult("dashboard :: #errormsg");
+				}
 			})
 			// Handle successful response
 			.subscribe(entityList -> {
