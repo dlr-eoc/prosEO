@@ -82,27 +82,27 @@
 					<div class="row py-lg-1">
 
 						<!-- Filter id -->
-						<div class="col-1 pr-lg-0">
+						<div class="col-1 pr-lg-0" th:title="#{selectId}">
 							<p class="input-group-text word-wrap" th:text="#{id}"></p>
 						</div>
-						<div class="col-1 pl-lg-0">
+						<div class="col-1 pl-lg-0" th:title="#{selectId}">
 							<input type="number" class="form-control" name="id" id="id">
 						</div>
 
 						<!-- Filter name -->
-						<div class="col-1 pr-lg-0">
+						<div class="col-1 pr-lg-0" th:title="#{selectNamePattern}">
 							<p class="input-group-text word-wrap" th:text="#{name}"></p>
 						</div>
-						<div class="col-3 pl-lg-0">
+						<div class="col-3 pl-lg-0" th:title="#{selectNamePattern}">
 							<input type="text" class="form-control" name="name" id="name">
 						</div>
 
 						<!-- Filter version -->
-						<div class="col-2 pr-lg-0">
+						<div class="col-2 pr-lg-0" th:title="#{selectWorkflowVersion}">
 							<p class="input-group-text word-wrap"
 								th:text="#{workflowversion}"></p>
 						</div>
-						<div class="col-1 pl-lg-0">
+						<div class="col-1 pl-lg-0" th:title="#{selectWorkflowVersion}">
 							<input type="text" class="form-control" name="workflowVersion"
 								id="workflowVersion">
 						</div>
@@ -118,11 +118,11 @@
 						</div>
 
 						<!-- Filter input product class -->
-						<div class="col-3 pr-lg-0">
+						<div class="col-3 pr-lg-0" th:title="#{selectWorkflowInput}">
 							<p class="input-group-text word-wrap"
 								th:text="#{inputproductclass}"></p>
 						</div>
-						<div class="col-3 pl-lg-0">
+						<div class="col-3 pl-lg-0" th:title="#{selectWorkflowInput}">
 							<input type="text" class="form-control" name="inputProductClass"
 								id="inputProductClass">
 						</div>
@@ -139,10 +139,18 @@
 							<tr>
 								<th><span>&nbsp;</span></th>
 								<th><span th:text="#{id}">id</span></th>
-								<th><span th:text="#{name}">name</span></th>
-								<th><span th:text="#{workflowversion}">workflowversion</span></th>
-								<th><span th:text="#{inputproductclass}">inputproductclass</span></th>
-								<th><span th:text="#{outputproductclass}">outputproductclass</span></th>
+								<th onclick="selectSort('select-name')" 
+                        class="cursorpointer"><span id="select-name" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{name}">name</span></th>
+								<th onclick="selectSort('select-workflowversion')" 
+                        class="cursorpointer"><span id="select-workflowversion" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{workflowversion}">workflowversion</span></th>
+								<th onclick="selectSort('select-inputproductclass')" 
+                        class="cursorpointer"><span id="select-inputproductclass" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{inputproductclass}">inputproductclass</span></th>
+								<th onclick="selectSort('select-outputproductclass')" 
+                        class="cursorpointer"><span id="select-outputproductclass" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
+                        th:text="#{outputproductclass}">outputproductclass</span></th>
 								<th><span th:text="#{description}">description</span></th>
 								<th><span th:text="#{processingmode}">processingmode</span></th>
 							</tr>
@@ -158,11 +166,11 @@
 											class="cursorpointer first-row no-right-border"
 											th:onclick="'toggleWorkflow('+${workflow.id}+')'">
 											<div class="hideworkflow" th:id="'hidewf' + ${workflow.id}"
-												th:style="${'display: none;'}">
+												th:title="#{hideWorkflowDetails}" th:style="${'display: none;'}">
 												<span data-feather="minus-circle"></span>
 											</div>
 											<div class="showworkflow" th:id="'showwf' + ${workflow.id}"
-												th:style="${'display: block;'}">
+												th:title="#{showWorkflowDetails}" th:style="${'display: block;'}">
 												<span data-feather="plus-circle"></span>
 											</div>
 										</td>
@@ -319,18 +327,106 @@
 		th:src="@{/fragments/bootstrap-multiselect.js}" type="text/javascript"></script>
 
 	<script type="text/javascript" th:inline="javascript">
+	function wikiPage() {
+	    window.open('https://github.com/dlr-eoc/prosEO/wiki/GUI-Workflow#workflow');
+	}
+
 		// Global variables
 		var currentPage = 1; // Current page number
-		var pageSize = 50; // Maximum objects per page
+		var pageSize = 20; // Maximum objects per page
 		
 		// Workflow filters
 		var id = null;
-		var name = null;
+		var wname = null;
 		var workflowVersion = null;
 		var inputProductClass = null;
+
+	  // sorting
+	  var sortCols = ['select-name', 'select-workflowversion', 'select-inputproductclass', 'select-outputproductclass'];
+	  var sortCol = "name";
+	  var upText = "true";
+
+		function setParams(ele, selup, newPage, newPageSize) {
+	      var newId = null;
+	      var newName = null;
+	      var newWorkflowVersion = null;
+	      var newInputProductClass = null;
+
+		    var hasChanged = false;
+		      
+		    hasChanged |= setPageParams(newPage, newPageSize);
+		    hasChanged |= setSortParams(ele, selup);
+        newId = $('#id').val();
+        if (isEmpty(newId)) {newId = null};
+        newName = $('#name').val();
+        if (isEmpty(newName)) {newName = null};
+        newWorkflowVersion = $('#workflowVersion').val();
+        if (isEmpty(newWorkflowVersion)) {newWorkflowVersion = null};
+        newInputProductClass = $('#inputProductClass').val();
+        if (isEmpty(newInputProductClass)) {newInputProductClass = null};
+
+        if (   id != newId
+            || wname != newName
+            || workflowVersion != newWorkflowVersion
+            || inputProductClass != newInputProductClass) {
+          // table size may be changed, go to first page
+          currentPage = 1;
+          newPage = 1;
+          hasChanged = true;
+        }   
+        id = newId;
+        wname = newName;
+        workflowVersion = newWorkflowVersion;
+        inputProductClass = newInputProductClass;
+        if (hasChanged) {
+            setHTMLParams();
+        }
+		}
+		
+		function setHTMLParams() {
+		    var loc = location.search.slice(0);
+		    var search = location.search.slice(1);
+		    // build parameter string
+		    var paramString = "";
+		    paramString = addURLParamValuePrim('id', id, paramString);
+		    paramString = addURLParamValuePrim('name', wname, paramString);
+		    paramString = addURLParamValuePrim('workflowVersion', workflowVersion, paramString);
+		    paramString = addURLParamValuePrim('inputProductClass', inputProductClass, paramString);
+		    paramString = setPageHTMLParams(paramString);
+		    paramString = setSortHTMLParams(paramString);
+		    var newHref = location.origin + location.pathname + paramString;
+		    if (newHref != location.href) {
+		        history.pushState({}, null, newHref);
+		    }
+		}
+
+		function readHTMLParams() {
+		    readPageHTMLParams();
+		    readSortHTMLParams();
+		    id = getURLParam('id');
+	      wname = getURLParam('name');
+	      workflowVersion = getURLParam('workflowVersion');
+	      inputProductClass = getURLParam('inputProductClass');
+		}
+		
+		function setSelected() {
+		      $('#id').val(id);
+		      $('#name').val(wname);
+		      $('#workflowVersion').val(workflowVersion);
+		      $('#inputProductClass').val(inputProductClass);
+		}
+
+		function updateTable(newPage, newPageSize) {
+		  setParams(null, null, newPage, newPageSize);
+			updateTablePrim(currentPage);
+		}
+
+		function retrieveDataPrim(notUsed) {
+		    updateTablePrim(currentPage);
+		}
 		
 		// Function to fetch objects from the REST controller
-		function updateTable(newPage) {
+		function updateTablePrim(newPage) {
 			currentPage = newPage;
 			
 			var recordFrom = (currentPage - 1) * pageSize;
@@ -339,18 +435,20 @@
 			var url = "/workflow/get?recordFrom=" + recordFrom 
 					+ "&recordTo=" + recordTo 
 					+ "&currentPage=" + currentPage 
-					+ "&pageSize=" + pageSize;
+					+ "&pageSize=" + pageSize
+	        + "&sortby=" + sortCol.replace("select-", "")
+	        + "&up=" + upText;
 			
-			if (id != null && id != "null")
+			if (parameterHasValue(id))
 				url += "&id=" + id;
 			
-			if (name != null && name != "null")
-				url += "&name=" + name;
+			if (parameterHasValue(wname))
+				url += "&name=" + wname;
 					
-			if (workflowVersion != null && workflowVersion != "null")
+			if (parameterHasValue(workflowVersion))
 				url += "&workflowVersion=" + workflowVersion;
 			
-			if (inputProductClass != null && inputProductClass != "null")
+			if (parameterHasValue(inputProductClass))
 				url += "&inputProductClass=" + inputProductClass;
 			
 			console.log(url);
@@ -360,8 +458,11 @@
 			  .then(html => {
 				  $("#workflowcontent").html(html); // Set the HTML content of the element
 				  feather.replace(); // Display the arrows on the buttons
-                  document.getElementById("pageSizeField").placeholder = pageSize; //Display correct page size
-                  })
+				  readHTMLParams();
+				  setSelected();
+				  setSort();
+          document.getElementById("pageSizeField").value = pageSize; //Display correct page size
+        })
 			  .catch(console.error);
 		}
 		
@@ -369,15 +470,8 @@
 		function setFilters(event) {	
 			// Allow for custom form handling
 			event.preventDefault();
-			
-			// Retrieve the values from the form inputs
-			id = document.getElementById("id").value.trim() === "" ? null : document.getElementById("id").value;
-			name = document.getElementById("name").value.trim() === "" ? null : document.getElementById("name").value;
-			workflowVersion = document.getElementById("workflowVersion").value.trim() === "" ? null : document.getElementById("workflowVersion").value;
-			inputProductClass = document.getElementById("inputProductClass").value.trim() === "" ? null : document.getElementById("inputProductClass").value;
-		    
-		    // Update the table according to the new filters
-		    updateTable(currentPage);
+			// Update the table according to the new filters
+		  updateTable(null, null);
 		}
 		
 		// Function to hide or show workflow details
@@ -395,25 +489,23 @@
 		      }
 		  }
 		
-		// Function to customize the page size
-	    function updatePageSize() {
-			
-			// Retrieve the new page size
-			var newPageSize = document.getElementById("pageSizeField").value;
-			pageSize = (!isNaN(newPageSize) && newPageSize > 0) ? parseInt(newPageSize) : pageSize;console.log("New page size: " + pageSize);
-	        
-	        // Call the function to update the table with the new page size	        
-	        updateTable(currentPage);
-	    }
 	</script>
 
 	<script>
-    window.onload = function init() {					
-		// Call the updateTable(currentPage) function initially to populate the table on page load
-		updateTable(currentPage);
+	  window.onpopstate = function(event) {
+		  if (location.toString().charAt(location.toString().length-1) != '#') {
+		    document.location.reload();
+		  }
+		};
+    window.onload = function init() {	
+    	  readHTMLParams();
+    	  setSelected();
+        setSort();
+    	  // Call the updateTable(currentPage) function initially to populate the table on page load
+		    updateTablePrim(currentPage);
 		
-		// Add an event listener to the form so that the filters will be applied
-		document.getElementById("workflowFilters").addEventListener("submit", setFilters);
+		    // Add an event listener to the form so that the filters will be applied
+		    document.getElementById("workflowFilters").addEventListener("submit", setFilters);
 		}
 	</script>
 </body>

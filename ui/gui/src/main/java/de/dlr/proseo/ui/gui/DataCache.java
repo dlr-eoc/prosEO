@@ -51,6 +51,7 @@ public class DataCache {
 		fileClasses = null;
 		processingModes = null;
 		spaceCrafts = null;
+		workflows = null;
 		productarchives = null; 
 	}
 

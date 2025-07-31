@@ -46,19 +46,20 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 * @param processorName the processor name (optional)
 	 * @param recordFrom    first record of filtered and ordered result to return
 	 * @param recordTo      last record of filtered and ordered result to return
+	 * @param orderBy		an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
 	 * @return HTTP status "OK" and a list of Json objects representing processor classes satisfying the search criteria or HTTP
 	 *         status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "NOT_FOUND" and
 	 *         an error message, if no processor classes matching the search criteria were found HTTP status "TOO MANY REQUESTS" if
 	 *         the result list exceeds a configured maximum
 	 */
 	@Override
-	public ResponseEntity<List<RestProcessorClass>> getProcessorClasses(String mission, String processorName, Integer recordFrom,
-			Integer recordTo) {
+	public ResponseEntity<List<RestProcessorClass>> getProcessorClasses(String mission, Long id, String[] productClass, String processorName, Integer recordFrom,
+			Integer recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getProcessorClass({}, {})", mission, processorName);
+			logger.trace(">>> getProcessorClass({}, {}, {}, {})", mission, id, productClass, processorName);
 
 		try {
-			return new ResponseEntity<>(processorClassManager.getProcessorClasses(mission, processorName, recordFrom, recordTo),
+			return new ResponseEntity<>(processorClassManager.getProcessorClasses(mission, id, productClass, processorName, recordFrom, recordTo, orderBy),
 					HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
@@ -185,12 +186,12 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 *         cross-mission data access was attempted
 	 */
 	@Override
-	public ResponseEntity<String> countProcessorClasses(String missionCode, String processorName) {
+	public ResponseEntity<String> countProcessorClasses(String missionCode, Long id, String[] productClass, String processorName) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> countProcessorClasses({}, {})", missionCode, processorName);
+			logger.trace(">>> countProcessorClasses({}, {}, {}, {})", missionCode, id, productClass, processorName);
 
 		try {
-			return new ResponseEntity<>(processorClassManager.countProcessorClasses(missionCode, processorName), HttpStatus.OK);
+			return new ResponseEntity<>(processorClassManager.countProcessorClasses(missionCode, id, productClass, processorName), HttpStatus.OK);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}

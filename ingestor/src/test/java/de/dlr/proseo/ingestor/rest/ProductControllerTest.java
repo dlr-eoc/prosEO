@@ -220,7 +220,7 @@ public class ProductControllerTest {
 		testHeader.add(HttpHeaders.AUTHORIZATION, "Basic VVRNLXRlc3R1c2VyOnBhc3N3b3Jk");
 
 		ResponseEntity<List<RestProduct>> response = pci.getProducts(null, null, null, null, null, null, null, null,
-				null, null, null, null, null, null);
+				null, null, null, null, null, null, testHeader);
 
 		assertEquals("Unexpected HTTP status code: ", HttpStatus.OK, response.getStatusCode());
 		assertEquals("Unexpected number of results: ", testProductData.length, response.getBody().size());

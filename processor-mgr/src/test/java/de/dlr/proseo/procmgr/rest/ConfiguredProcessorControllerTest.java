@@ -262,7 +262,7 @@ public class ConfiguredProcessorControllerTest {
 		// configuredProcessors
 		// from the database via the configuredProcessor controller
 		ResponseEntity<String> retrievedConfiguredProcessors = cci.countConfiguredProcessors(testMissionData[0], null,
-				null, null);
+				null, null, null, null, null);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedConfiguredProcessors.getStatusCode());
 		assertTrue("Wrong number of configuredProcessors retrieved.", Integer
 				.toUnsignedString(expectedConfiguredProcessors.size()).equals(retrievedConfiguredProcessors.getBody()));
@@ -288,7 +288,7 @@ public class ConfiguredProcessorControllerTest {
 		// from the
 		// database via the configuredProcessor controller
 		ResponseEntity<List<RestConfiguredProcessor>> retrievedConfiguredProcessors = cci
-				.getConfiguredProcessors(testMissionData[0], null, null, null, null, null, null, null);
+				.getConfiguredProcessors(testMissionData[0], null, null, null, null, null, null, null, null, null);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedConfiguredProcessors.getStatusCode());
 		assertTrue("Wrong number of configuredProcessors retrieved.",
 				expectedConfiguredProcessors.size() == retrievedConfiguredProcessors.getBody().size());

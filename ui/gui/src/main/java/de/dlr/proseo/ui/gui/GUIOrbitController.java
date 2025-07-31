@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,6 +23,7 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -97,7 +99,7 @@ public class GUIOrbitController extends GUIBaseController {
 		} else {
 			from = (long) 0;
 		}
-		Long count = countOrbits(spacecraft);
+		Long count = countOrbits(spacecraft, startTimeFrom, startTimeTo, numberFrom, numberTo);
 		if (toIndex != null && from != null && toIndex > from) {
 			to = toIndex;
 		} else if (from != null) {
@@ -117,37 +119,31 @@ public class GUIOrbitController extends GUIBaseController {
 		responseSpec.toEntityList(Object.class)
 			// Handle errors
 			.doOnError(e -> {
-				model.addAttribute("errormsg", e.getMessage());
-				deferredResult.setResult("orbit-show :: #errormsg");
+				if (e instanceof WebClientResponseException.NotFound) {
+					model.addAttribute("orbits", orbits);
+
+					modelAddAttributes(model, count, pageSize, pages, page);
+
+					if (logger.isTraceEnabled())
+						logger.trace(model.toString() + "MODEL TO STRING");
+
+					deferredResult.setResult("orbit-show :: #orbitcontent");
+				} else {
+					model.addAttribute("errormsg", e.getMessage());
+					deferredResult.setResult("orbit-show :: #errormsg");
+				}
 			})
 			// Handle successful response
 			.subscribe(entityList -> {
 				logger.trace("Now in Consumer::accept({})", entityList);
 
-				if (entityList.getStatusCode().is2xxSuccessful()) {
+				if (entityList.getStatusCode().is2xxSuccessful() 
+						|| entityList.getStatusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
 					orbits.addAll(entityList.getBody());
-
 					model.addAttribute("orbits", orbits);
-					model.addAttribute("count", count);
-					model.addAttribute("pageSize", pageSize);
-					model.addAttribute("pageCount", pages);
-					model.addAttribute("page", page);
 
-					List<Long> showPages = new ArrayList<>();
-					Long start = Math.max(page - 4, 1);
-					Long end = Math.min(page + 4, pages);
-					if (page < 5) {
-						end = Math.min(end + (5 - page), pages);
-					}
-					if (pages - page < 5) {
-						start = Math.max(start - (4 - (pages - page)), 1);
-					}
-					for (Long i = start; i <= end; i++) {
-						showPages.add(i);
-					}
-
-					model.addAttribute("showPages", showPages);
-
+					modelAddAttributes(model, count, pageSize, pages, page);
+					
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + orbits.toString());
 
@@ -254,21 +250,37 @@ public class GUIOrbitController extends GUIBaseController {
 			.retrieve();
 	}
 
-	private Long countOrbits(String spacecraft) {
+	private Long countOrbits(String spacecraft, String startTimeFrom, String startTimeTo, Long numberFrom, Long numberTo) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
 		// Build the request URI
-		String uri = "/orbits/count";
+		String uriString = "/orbits/count";
 		String divider = "?";
 		if (spacecraft != null) {
-			uri += divider + "spacecraftCode=" + spacecraft;
+			uriString += divider + "spacecraftCode=" + spacecraft;
+			divider = "&";
+		}
+		if (startTimeFrom != null) {
+			uriString += divider + "startTimeFrom=" + startTimeFrom;
+			divider = "&";
+		}
+		if (startTimeTo != null) {
+			uriString += divider + "startTimeTo=" + startTimeTo;
+			divider = "&";
+		}
+		if (numberFrom != null) {
+			uriString += divider + "orbitNumberFrom=" + numberFrom;
+			divider = "&";
+		}
+		if (numberTo != null) {
+			uriString += divider + "orbitNumberTo=" + numberTo;
 			divider = "&";
 		}
 		Long result = (long) -1;
 		try {
-			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(), uri, String.class,
+			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(), uriString, String.class,
 					auth.getProseoName(), auth.getPassword());
 
 			if (resStr != null && resStr.length() > 0) {

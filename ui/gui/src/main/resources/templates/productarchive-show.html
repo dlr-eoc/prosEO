@@ -84,35 +84,37 @@
 					<div class="row py-lg-1">
 
 						<!-- Filter id -->
-						<div class="col-1 pr-lg-0">
+						<div class="col-1 pr-lg-0" th:title="#{selectId}">
 							<p class="input-group-text word-wrap" th:text="#{id}"></p>
 						</div>
-						<div class="col-2 pl-lg-0">
+						<div class="col-2 pl-lg-0" th:title="#{selectId}">
 							<input type="number" class="form-control" name="id" id="id">
 						</div>
 
 						<!-- Filter name -->
-						<div class="col-2 pr-lg-0">
+						<div class="col-2 pr-lg-0" th:title="#{selectNamePattern}">
 							<p class="input-group-text word-wrap" th:text="#{productarchive-name}"></p>
 						</div>
-						<div class="col-3 pl-lg-0">
+						<div class="col-3 pl-lg-0" th:title="#{selectNamePattern}">
 							<input type="text" class="form-control" name="name" id="name">
 						</div>
 
 						<!-- Filter archiveType -->
-						<div class="col-2 pr-lg-0">
+						<div class="col-2 pr-lg-0" th:title="#{selectArchiveType}">
 							<p class="input-group-text word-wrap"
 								th:text="#{productarchive-archive-type}"></p>
 						</div>
 			
 						       
-          				<div class="col-2 pl-lg-0">
-  				            <select name="archiveType" id="archiveType" multiple="multiple">
-                				<option>AIP</option>
-                				<option>AUXIP</option>
-                				<option>PODIP</option>
-                				<option>PRIP</option>
-          					    <option>SIMPLEAIP</option>
+          				<div class="col-2 pl-lg-0" th:title="#{selectArchiveType}">
+  				            <select name="archiveType" id="archiveType"
+                          class="custom-select"> <!-- multiple="multiple" --> 
+                        <option text="" label=""></option>
+                        <option text="AIP" label="AIP">AIP</option>
+                				<option text="AUXIP" label="AUXIP">AUXIP</option>
+                				<option text="PODIP" label="PODIP">PODIP</option>
+                				<option text="PRIP" label="PRIP">PRIP</option>
+          					    <option text="SIMPLEAIP" label="SIMPLEAIP">SIMPLEAIP</option>
               				</select>
             			</div>                    
                     
@@ -158,11 +160,11 @@
 											class="cursorpointer first-row no-right-border"
 											th:onclick="'toggleProductArchive('+${productarchive.id}+')'">
 											<div class="hideproductarchive" th:id="'hidepa' + ${productarchive.id}"
-												th:style="${'display: none;'}">
+												th:title="#{hideProductArchiveDetails}" th:style="${'display: none;'}">
 												<span data-feather="minus-circle"></span>
 											</div>
 											<div class="showproductarchive" th:id="'showpa' + ${productarchive.id}"
-												th:style="${'display: block;'}">
+												th:title="#{showProductArchiveDetails}" th:style="${'display: block;'}">
 												<span data-feather="plus-circle"></span>
 											</div>
 										</td>
@@ -285,13 +287,17 @@
 		th:src="@{/fragments/bootstrap-multiselect.js}" type="text/javascript"></script>
 
 	<script type="text/javascript" th:inline="javascript">
+	function wikiPage() {
+	    window.open('https://github.com/dlr-eoc/prosEO/wiki/GUI-Product-Archive#product-archive');
+	}
+
 		// Global variables
 		var currentPage = 1; // Current page number
-		var pageSize = 50; // Maximum objects per page
+		var pageSize = 20; // Maximum objects per page
 		
 		// product archive filters
 		var id = null;
-		var name = null;
+		var wname = null;
 		var archiveType = null;
 		
 		function showHideClientSecret(id) {
@@ -317,37 +323,97 @@
 	            feather.replace();
 	        }
 	    };
-		
+
+	    function setParams(ele, selup, newPage, newPageSize) {
+	        var newId = null;
+	        var newName = null;
+	        var newArchiveType = null;
+
+	        var hasChanged = false;
+	          
+	        hasChanged |= setPageParams(newPage, newPageSize);
+	        newId = $('#id').val();
+	        if (isEmpty(newId)) {newId = null};
+	        newName = $('#name').val();
+	        if (isEmpty(newName)) {newName = null};
+
+	        newArchiveType = $('#archiveType').val();
+
+	        if (   id != newId
+	            || wname != newName
+	            || archiveType != newArchiveType) {
+	          // table size may be changed, go to first page
+	          currentPage = 1;
+	          newPage = 1;
+	          hasChanged = true;
+	        }   
+	        id = newId;
+	        wname = newName;
+	        archiveType = newArchiveType;
+	        if (hasChanged) {
+	            setHTMLParams();
+	        }
+	    }
+	    
+	    function setHTMLParams() {
+	        var loc = location.search.slice(0);
+	        var search = location.search.slice(1);
+	        // build parameter string
+	        var paramString = "";
+	        paramString = addURLParamValuePrim('id', id, paramString);
+	        paramString = addURLParamValuePrim('name', wname, paramString);
+	        paramString = addURLParamValuePrim('archiveType', archiveType, paramString);
+	        paramString = setPageHTMLParams(paramString);
+	        var newHref = location.origin + location.pathname + paramString;
+	        if (newHref != location.href) {
+	            history.pushState({}, null, newHref);
+	        }
+	    }
+
+	    function readHTMLParams() {
+	        readPageHTMLParams();
+	        id = getURLParam('id');
+	        wname = getURLParam('name');
+	        archiveType = getURLParam('archiveType');
+	    }
+	    function setSelected() {
+	          $('#id').val(id);
+	          $('#name').val(wname);
+	          setSelectedOption('archiveType', archiveType);
+	    }
+
+	    function updateTable(newPage, newPageSize) {
+	      setParams(null, null, newPage, newPageSize);
+	      updateTablePrim(currentPage);
+	    }
 		// Function to fetch objects from the REST controller
-		function updateTable(newPage) {
+		function updateTablePrim() {
 			
-			$('#archiveType').multiselect({
-	              buttonWidth : '99%',
-	              enableFiltering : true,
-	              numberDisplayed : 0,
-	              maxHeight : 400,
-	              enableCaseInsensitiveFiltering : true,
-	              nonSelectedText : ''
-	        });
+			var url = "/productarchive/get";
+
+      var divider = "?";
+      var from = getFromRow();
+      var to = getToRow();     
+      if (parameterHasValue(from)) {
+          url = url + divider + "recordFrom=" + from;
+          divider = "&";
+      }
+      if (parameterHasValue(to)) {
+          url = url + divider + "recordTo=" + to;
+          divider = "&";
+      }
+									
+			if (parameterHasValue(id))
+				url = url + divider + "id=" + id;
+        divider = "&";
+			
+			if (parameterHasValue(wname))
+				url = url + divider + "name=" + wname;
+        divider = "&";
 					
-			currentPage = newPage;
-			
-			var recordFrom = (currentPage - 1) * pageSize;
-			var recordTo = currentPage * pageSize;			
-			
-			var url = "/productarchive/get?recordFrom=" + recordFrom 
-					+ "&recordTo=" + recordTo 
-					+ "&currentPage=" + currentPage 
-					+ "&pageSize=" + pageSize;
-			
-			if (id != null && id != "null")
-				url += "&id=" + id;
-			
-			if (name != null && name != "null")
-				url += "&name=" + name;
-					
-			if (archiveType != null && archiveType != "null")
-				url += "&archiveType=" + archiveType;
+			if (parameterHasValue(archiveType))
+				url = url + divider + "archiveType=" + archiveType;
+        divider = "&";
 			
 			console.log(url);
 			
@@ -356,23 +422,19 @@
 			  .then(html => {
 				  $("#productarchivecontent").html(html); // Set the HTML content of the element
 				  feather.replace(); // Display the arrows on the buttons
-                  document.getElementById("pageSizeField").placeholder = pageSize; //Display correct page size
-                  })
+		      readHTMLParams();
+		      setSelected();
+          document.getElementById("pageSizeField").value = pageSize; //Display correct page size
+        })
 			  .catch(console.error);
 		}
 		
 		// Function to fetch and apply filters
 		function setFilters(event) {	
-			// Allow for custom form handling
-			event.preventDefault();
-			
-			// Retrieve the values from the form inputs
-			id = document.getElementById("id").value.trim() === "" ? null : document.getElementById("id").value;
-			name = document.getElementById("name").value.trim() === "" ? null : document.getElementById("name").value;
-			archiveType = document.getElementById("archiveType").value.trim() === "" ? null : document.getElementById("archiveType").value;
-		    
+			  // Allow for custom form handling
+			  event.preventDefault();
 		    // Update the table according to the new filters
-		    updateTable(currentPage);
+		    updateTable(null, null);
 		}
 		
 		// Function to hide or show product archive details
@@ -390,26 +452,39 @@
 		      }
 		  }
 		
-		// Function to customize the page size
-	    function updatePageSize() {
-			
-			// Retrieve the new page size
-			var newPageSize = document.getElementById("pageSizeField").value;
-			pageSize = (!isNaN(newPageSize) && newPageSize > 0) ? parseInt(newPageSize) : pageSize;console.log("New page size: " + pageSize);
-	        
-	        // Call the function to update the table with the new page size	        
-	        updateTable(currentPage);
-	    }
 	</script>
 
 	<script>
-    window.onload = function init() {					
-		// Call the updateTable(currentPage) function initially to populate the table on page load
-		updateTable(currentPage);
-		
-		// Add an event listener to the form so that the filters will be applied
-		document.getElementById("productarchiveFilters").addEventListener("submit", setFilters);
-		}
+    // correct scroll due to "sticky" elements
+    var handler = function ( ) {
+       var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+               + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+       window.scrollBy(0, h);
+     };
+     window.addEventListener('hashchange', handler);
+
+     // Read the HTML parameters from URI and retrieve the corresponding data
+     function loadWindow() {
+    	   activateSidebarElem('sb-product-archive');
+         feather.replace();
+         readHTMLParams();
+         setSelected();
+         updateTable(currentPage, pageSize);
+     };
+     
+     window.onload = function () {
+         loadWindow();
+         // correct scroll due to "sticky" elements
+         var handler = function ( ) {
+             var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+                      + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+             window.scrollBy(0, h);
+         };        
+     };
+     // re-load window to read and set all HTML parameters
+     $(window).on('popstate', function (e) {
+       loadWindow();
+     });
 	</script>
 </body>
 

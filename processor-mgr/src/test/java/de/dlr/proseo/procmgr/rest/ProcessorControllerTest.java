@@ -198,7 +198,7 @@ public class ProcessorControllerTest {
 
 		// count all processors with the same mission as the test processors
 		// from the database via the processor controller
-		ResponseEntity<String> retrievedProcessors = pci.countProcessors(testMissionData[0], null, null);
+		ResponseEntity<String> retrievedProcessors = pci.countProcessors(testMissionData[0], null, null, null);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedProcessors.getStatusCode());
 		assertTrue("Wrong number of processors retrieved.",
 				Integer.toUnsignedString(expectedProcessors.size()).equals(retrievedProcessors.getBody()));
@@ -221,7 +221,7 @@ public class ProcessorControllerTest {
 		// from the
 		// database via the processor controller
 		ResponseEntity<List<RestProcessor>> retrievedProcessors = pci.getProcessors(testMissionData[0],
-				null, null, null, null);
+				null, null, null, null, null, null);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedProcessors.getStatusCode());
 		assertTrue("Wrong number of processors retrieved.",
 				expectedProcessors.size() == retrievedProcessors.getBody().size());

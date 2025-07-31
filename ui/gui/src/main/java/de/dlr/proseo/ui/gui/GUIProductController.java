@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,6 +28,7 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -107,11 +109,12 @@ public class GUIProductController extends GUIBaseController {
 			@RequestParam(required = false, value = "genTimeTo") String genTimeTo,
 			@RequestParam(required = false, value = "recordFrom") Long recordFrom,
 			@RequestParam(required = false, value = "recordTo") Long recordTo,
+			@RequestParam(required = false, value = "onlyWithFile") Boolean onlyWithFile,
 			@RequestParam(required = false, value = "jobStepId") Long jobStepId,
 			@RequestParam(required = false, value = "sortby") String sortby,
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 
-		logger.trace(">>> getProducs({}, {}, {}, {}, {}, model)", productClass, mode, fileClass, quality, startTimeFrom,
+		logger.trace(">>> getProducs({}, {}, {}, {}, {}, {}, model)", productId, productClass, mode, fileClass, quality, startTimeFrom,
 				startTimeTo, genTimeFrom, genTimeTo, recordFrom, recordTo);
 		Long from = null;
 		Long to = null;
@@ -120,8 +123,8 @@ public class GUIProductController extends GUIBaseController {
 		} else {
 			from = (long) 0;
 		}
-		Long count = countProducts(productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo,
-				jobStepId);
+		Long count = countProducts(productId, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo,
+				onlyWithFile, jobStepId);
 		if (recordTo != null && from != null && recordTo > from) {
 			to = recordTo;
 		} else if (from != null) {
@@ -130,7 +133,7 @@ public class GUIProductController extends GUIBaseController {
 
 		// Perform the HTTP request to retrieve missions
 		ResponseSpec responseSpec = get(productId, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom,
-				genTimeTo, from, to, jobStepId);
+				genTimeTo, from, to, onlyWithFile, jobStepId, sortby, up);
 		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> products = new ArrayList<>();
 
@@ -143,37 +146,33 @@ public class GUIProductController extends GUIBaseController {
 		responseSpec.toEntityList(Object.class)
 			// Handle errors
 			.doOnError(e -> {
-				model.addAttribute("errormsg", e.getMessage());
-				deferredResult.setResult("product-show :: #errormsg");
+				if (e instanceof WebClientResponseException.NotFound) {
+					model.addAttribute("products", products);
+
+					modelAddAttributes(model, count, pageSize, pages, page);
+
+					if (logger.isTraceEnabled())
+						logger.trace(model.toString() + "MODEL TO STRING");
+
+					deferredResult.setResult("product-show :: #productcontent");
+				} else {
+					model.addAttribute("errormsg", e.getMessage());
+					deferredResult.setResult("product-show :: #errormsg");
+				}
 			})
 			// Handle successful response
 			.subscribe(entityList -> {
 				logger.trace("Now in Consumer::accept({})", entityList);
 
-				if (entityList.getStatusCode().is2xxSuccessful()) {
+				if (entityList.getStatusCode().is2xxSuccessful() 
+						|| entityList.getStatusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
 					if (entityList.getBody() instanceof Collection) {
 						products.addAll((Collection<? extends Object>) entityList.getBody());
 
 						model.addAttribute("products", products);
-						model.addAttribute("count", count);
-						model.addAttribute("pageSize", pageSize);
-						model.addAttribute("pageCount", pages);
-						model.addAttribute("page", page);
 
-						List<Long> showPages = new ArrayList<>();
-						Long start = Math.max(page - 4, 1);
-						Long end = Math.min(page + 4, pages);
-						if (page < 5) {
-							end = Math.min(end + (5 - page), pages);
-						}
-						if (pages - page < 5) {
-							start = Math.max(start - (4 - (pages - page)), 1);
-						}
-						for (Long i = start; i <= end; i++) {
-							showPages.add(i);
-						}
-
-						model.addAttribute("showPages", showPages);
+						modelAddAttributes(model, count, pageSize, pages, page);
+						
 						if (logger.isTraceEnabled())
 							logger.trace(model.toString() + "MODEL TO STRING");
 						if (logger.isTraceEnabled())
@@ -185,10 +184,13 @@ public class GUIProductController extends GUIBaseController {
 						products.add(entityList.getBody());
 
 						model.addAttribute("products", products);
+						
 						model.addAttribute("count", 1);
 						model.addAttribute("pageSize", 1);
 						model.addAttribute("pageCount", 1);
+						model.addAttribute("numberOfPages", 1);
 						model.addAttribute("page", 1);
+						model.addAttribute("currentPage", 1);
 
 						List<Long> showPages = new ArrayList<>();
 						showPages.add((long) 1);
@@ -213,8 +215,19 @@ public class GUIProductController extends GUIBaseController {
 
 				logger.trace(">>>>MODEL" + model.toString());
 			}, e -> {
-				model.addAttribute("errormsg", e.getMessage());
-				deferredResult.setResult("product-show :: #errormsg");
+				if (e instanceof WebClientResponseException.NotFound) {
+					model.addAttribute("products", products);
+
+					modelAddAttributes(model, count, pageSize, pages, page);
+
+					if (logger.isTraceEnabled())
+						logger.trace(model.toString() + "MODEL TO STRING");
+
+					deferredResult.setResult("product-show :: #productcontent");
+				} else {
+					model.addAttribute("errormsg", e.getMessage());
+					deferredResult.setResult("product-show :: #errormsg");
+				}
 			});
 
 		logger.trace(model.toString() + "MODEL TO STRING");
@@ -243,7 +256,7 @@ public class GUIProductController extends GUIBaseController {
 		logger.trace(">>> getProductFiles({}, {}, {}, {}, model)", id);
 
 		// Perform the HTTP request to retrieve missions
-		ResponseSpec responseSpec = get(id, null, null, null, null, null, null, null, null, null, null, null);
+		ResponseSpec responseSpec = get(id, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 		DeferredResult<String> deferredResult = new DeferredResult<>();
 		List<Object> productfiles = new ArrayList<>();
 
@@ -307,8 +320,8 @@ public class GUIProductController extends GUIBaseController {
 	 * @param jobStepId     the id of the job step producing the product
 	 * @return the number of products matching the specified parameters
 	 */
-	private Long countProducts(String productClass, String mode, String fileClass, String quality, String startTimeFrom,
-			String startTimeTo, String genTimeFrom, String genTimeTo, Long jobStepId) {
+	private Long countProducts(Long productId, String productClass, String mode, String fileClass, String quality, String startTimeFrom,
+			String startTimeTo, String genTimeFrom, String genTimeTo, Boolean onlyWithFile, Long jobStepId) {
 
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
@@ -353,10 +366,17 @@ public class GUIProductController extends GUIBaseController {
 			uriString += divider + "genTimeTo=" + genTimeTo;
 			divider = "&";
 		}
+		uriString += divider + "onlyWithFile=" + (onlyWithFile == null ? false : onlyWithFile);
+		divider = "&";
 		if (jobStepId != null) {
 			uriString += divider + "jobStep=" + jobStepId;
 			divider = "&";
 		}
+		if (productId != null) {
+			uriString += divider + "id=" + productId;
+			divider = "&";
+		}
+		logger.trace(uriString);
 		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
 		Long result = (long) -1;
 		try {
@@ -407,7 +427,8 @@ public class GUIProductController extends GUIBaseController {
 	 * @return a Mono containing the HTTP response
 	 */
 	private ResponseSpec get(Long id, String productClass, String mode, String fileClass, String quality, String startTimeFrom,
-			String startTimeTo, String genTimeFrom, String genTimeTo, Long recordFrom, Long recordTo, Long jobStepId) {
+			String startTimeTo, String genTimeFrom, String genTimeTo, Long recordFrom, Long recordTo, Boolean onlyWithFile, 
+			Long jobStepId, String sortby, Boolean up) {
 
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -458,6 +479,8 @@ public class GUIProductController extends GUIBaseController {
 				uriString += divider + "genTimeTo=" + genTimeTo;
 				divider = "&";
 			}
+			uriString += divider + "onlyWithFile=" + (onlyWithFile == null ? false : onlyWithFile);
+			divider = "&";
 			if (recordFrom != null) {
 				uriString += divider + "recordFrom=" + recordFrom;
 				divider = "&";
@@ -470,7 +493,23 @@ public class GUIProductController extends GUIBaseController {
 				uriString += divider + "jobStep=" + jobStepId;
 				divider = "&";
 			}
-			uriString += divider + "orderBy=productClass.productType ASC,sensingStartTime ASC";
+			String sortString = "orderBy=productClass.productType ASC,sensingStartTime ASC";
+			String direction = "ASC";
+			if (up != null && !up) {
+				direction = "DESC";
+			}
+			if (sortby != null) {
+				if (sortby.equals("id")) {
+					sortString = "orderBy=id " + direction;
+				} else if (sortby.equals("className")) {
+					sortString = "orderBy=productClass.productType " + direction + ",sensingStartTime " + direction;
+				} else if (sortby.equals("sensingStartTime")) {
+					sortString = "orderBy=sensingStartTime " + direction + ",productClass.productType " + direction;
+				} else if (sortby.equals("generationTime")) {
+					sortString = "orderBy=generationTime " + direction + ",productClass.productType " + direction;
+				}
+			}
+			uriString += divider + sortString;
 		}
 		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
 		logger.trace("URI " + uri);

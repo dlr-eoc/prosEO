@@ -85,20 +85,21 @@ public class WorkflowControllerImpl implements WorkflowController {
 	 * @param enabled             whether the workflow is enabled
 	 * @param recordFrom          first record of filtered and ordered result to return
 	 * @param recordTo            last record of filtered and ordered result to return
+	 * @param orderBy		an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
 	 * @return HTTP status "OK" and a list of workflows or HTTP status "NOT_FOUND" and an error message, if no workflows match the
 	 *         search criteria, or HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "TOO MANY REQUESTS" if the result list exceeds a configured maximum
 	 */
 	@Override
 	public ResponseEntity<List<RestWorkflow>> getWorkflows(String missionCode, String workflowName, String workflowVersion,
-			String inputProductClass, String configuredProcessor, Boolean enabled, Integer recordFrom, Integer recordTo) {
+			String inputProductClass, String configuredProcessor, Boolean enabled, Integer recordFrom, Integer recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getWorkflows({}, {}, {}, {}, {})", missionCode, workflowName, workflowVersion, inputProductClass,
 					configuredProcessor);
 
 		try {
 			return new ResponseEntity<>(workflowManager.getWorkflows(missionCode, workflowName, workflowVersion, inputProductClass,
-					configuredProcessor, enabled, recordFrom, recordTo), HttpStatus.OK);
+					configuredProcessor, enabled, recordFrom, recordTo, orderBy), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {

@@ -69,20 +69,21 @@ public class ProcessorControllerImpl implements ProcessorController {
 	 * @param processorVersion the processor version
 	 * @param recordFrom          first record of filtered and ordered result to return
 	 * @param recordTo            last record of filtered and ordered result to return
+	 * @param orderBy		an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
 	 * @return HTTP status "OK" and a list of Json objects representing processors satisfying the search criteria or HTTP status
 	 *         "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or HTTP status "NOT_FOUND" and an
 	 *         error message, if no processors matching the search criteria were found, or HTTP status "TOO MANY REQUESTS" if the
 	 *         result list exceeds a configured maximum
 	 */
 	@Override
-	public ResponseEntity<List<RestProcessor>> getProcessors(String mission, String processorName, String processorVersion,
-			Integer recordFrom, Integer recordTo) {
+	public ResponseEntity<List<RestProcessor>> getProcessors(String mission, Long id, String processorName, String processorVersion,
+			Integer recordFrom, Integer recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getProcessors({}, {}, {})", mission, processorName, processorVersion);
 
 		try {
 			return new ResponseEntity<>(
-					processorManager.getProcessors(mission, processorName, processorVersion, recordFrom, recordTo), HttpStatus.OK);
+					processorManager.getProcessors(id, mission, processorName, processorVersion, recordFrom, recordTo, orderBy), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {
@@ -184,12 +185,12 @@ public class ProcessorControllerImpl implements ProcessorController {
 	 *         cross-mission data access was attempted
 	 */
 	@Override
-	public ResponseEntity<String> countProcessors(String missionCode, String processorName, String processorVersion) {
+	public ResponseEntity<String> countProcessors(String missionCode, Long id, String processorName, String processorVersion) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> countProcessors({}, {}, {})", missionCode, processorName, processorVersion);
 
 		try {
-			return new ResponseEntity<>(processorManager.countProcessors(missionCode, processorName, processorVersion),
+			return new ResponseEntity<>(processorManager.countProcessors(id, missionCode, processorName, processorVersion),
 					HttpStatus.OK);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
