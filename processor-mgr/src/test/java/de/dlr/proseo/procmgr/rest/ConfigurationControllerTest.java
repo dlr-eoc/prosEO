@@ -259,7 +259,7 @@ public class ConfigurationControllerTest {
 
 		// count all configurations with the same mission as the test configurations
 		// from the database via the configuration controller
-		ResponseEntity<String> retrievedConfigurations = cci.countConfigurations(testMissionData[0], null, null);
+		ResponseEntity<String> retrievedConfigurations = cci.countConfigurations(testMissionData[0], null, null, null, null, null);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedConfigurations.getStatusCode());
 		assertTrue("Wrong number of configurations retrieved.",
 				Integer.toUnsignedString(expectedConfigurations.size()).equals(retrievedConfigurations.getBody()));
@@ -282,7 +282,7 @@ public class ConfigurationControllerTest {
 		// from the
 		// database via the configuration controller
 		ResponseEntity<List<RestConfiguration>> retrievedConfigurations = cci.getConfigurations(testMissionData[0],
-				null, null, null, null, null);
+				null, null, null, null, null, null, null, null);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedConfigurations.getStatusCode());
 		assertTrue("Wrong number of configurations retrieved.",
 				expectedConfigurations.size() == retrievedConfigurations.getBody().size());

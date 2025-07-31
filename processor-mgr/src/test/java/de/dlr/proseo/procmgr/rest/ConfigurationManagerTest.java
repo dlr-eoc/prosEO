@@ -9,6 +9,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.After;
@@ -230,12 +232,13 @@ public class ConfigurationManagerTest {
 	public final void testCountConfigurations() {
 		logger.trace(">>> testCountConfigurations()");
 
+		String[] names = {testConfigurationData[0][1]};
 		// Count configurations and assert success.
-		assertEquals("Wrong configuration count.", "2", configurationMgr.countConfigurations("UTM", null, null));
+		assertEquals("Wrong configuration count.", "2", configurationMgr.countConfigurations("UTM", null, null, null, null, null));
 		assertEquals("Wrong configuration count.", "1",
-				configurationMgr.countConfigurations("UTM", testConfigurationData[0][1], null));
+				configurationMgr.countConfigurations("UTM", null, names, null, null, null));
 		assertEquals("Wrong configuration count.", "1",
-				configurationMgr.countConfigurations("UTM", null, testConfigurationData[0][2]));
+				configurationMgr.countConfigurations("UTM", null, null, testConfigurationData[0][2], null, null));
 	}
 
 	/**
@@ -311,14 +314,15 @@ public class ConfigurationManagerTest {
 		 * service. Not specifying additional parameters returns all configurations for
 		 * the given mission.
 		 */
+		String[] names = {testConfigurationData[0][1]};
 		assertTrue("More or less configurations retrieved than expected.",
-				configurationMgr.getConfigurations(null, null, null, 0, 10, null).size() == 2);
+				configurationMgr.getConfigurations(null, null, null, null, null, null, 0, 10, null).size() == 2);
 		assertTrue("More or less configurations retrieved than expected.",
-				configurationMgr.getConfigurations(testMissionData[0], null, null, 0, 100, null).size() == 2);
+				configurationMgr.getConfigurations(testMissionData[0], null, null, null, null, null, 0, 100, null).size() == 2);
 		assertTrue("More or less configurations retrieved than expected.", configurationMgr
-				.getConfigurations(testMissionData[0], testConfigurationData[0][1], null, null, null, null).size() == 1);
+				.getConfigurations(testMissionData[0], null, names, null, null, null, null, null, null).size() == 1);
 		assertTrue("More or less configurations retrieved than expected.", configurationMgr
-				.getConfigurations(testMissionData[0], null, testConfigurationData[0][2], null, null, null).size() == 1);
+				.getConfigurations(testMissionData[0], null, null, testConfigurationData[0][2], null, null, null, null, null).size() == 1);
 	}
 
 }

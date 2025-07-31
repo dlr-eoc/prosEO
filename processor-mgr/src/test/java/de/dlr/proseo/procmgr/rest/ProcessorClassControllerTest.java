@@ -164,7 +164,7 @@ public class ProcessorClassControllerTest {
 
 		// count all processorClasss with the same mission as the test processorClasss
 		// from the database via the processorClass controller
-		ResponseEntity<String> retrievedProcessorClasss = pci.countProcessorClasses(testMissionData[0], null);
+		ResponseEntity<String> retrievedProcessorClasss = pci.countProcessorClasses(testMissionData[0], null, null, null);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedProcessorClasss.getStatusCode());
 		assertTrue("Wrong number of processorClasss retrieved.",
 				Integer.toUnsignedString(expectedProcessorClasss.size()).equals(retrievedProcessorClasss.getBody()));
@@ -188,7 +188,7 @@ public class ProcessorClassControllerTest {
 		// from the
 		// database via the processorClass controller
 		ResponseEntity<List<RestProcessorClass>> retrievedProcessorClasss = pci.getProcessorClasses(testMissionData[0],
-				null, null, null, null);
+				null, null, null, null, null, null);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedProcessorClasss.getStatusCode());
 		assertTrue("Wrong number of processorClasss retrieved.",
 				expectedProcessorClasss.size() == retrievedProcessorClasss.getBody().size());

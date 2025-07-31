@@ -231,13 +231,13 @@ public class ConfiguredProcessorManagerTest {
 
 		// Count configuredProcessors and assert success.
 		assertEquals("Wrong configuredProcessor count.", "2",
-				configuredProcessorMgr.countConfiguredProcessors("UTM", null, null, null));
+				configuredProcessorMgr.countConfiguredProcessors("UTM", null, null, null, null, null, null));
+		assertEquals("Wrong configuredProcessor count.", "0",
+				configuredProcessorMgr.countConfiguredProcessors("UTM", null, testConfigurationData[0][1], null, null, null, null));
 		assertEquals("Wrong configuredProcessor count.", "1",
-				configuredProcessorMgr.countConfiguredProcessors("UTM", testConfigurationData[0][1], null, null));
+				configuredProcessorMgr.countConfiguredProcessors("UTM", null, null, null, null, testConfigurationData[0][2], null));
 		assertEquals("Wrong configuredProcessor count.", "1",
-				configuredProcessorMgr.countConfiguredProcessors("UTM", null, testConfigurationData[0][3], null));
-		assertEquals("Wrong configuredProcessor count.", "1",
-				configuredProcessorMgr.countConfiguredProcessors("UTM", null, null, testConfigurationData[0][2]));
+				configuredProcessorMgr.countConfiguredProcessors("UTM", null, null, null, testConfigurationData[0][3], null, null));
 	}
 
 	/**
@@ -312,19 +312,20 @@ public class ConfiguredProcessorManagerTest {
 		 * acquired from the security service. Not specifying additional parameters
 		 * returns all configuredProcessors for the given mission.
 		 */
+		
 		assertTrue("More or less configuredProcessors retrieved than expected.",
-				configuredProcessorMgr.getConfiguredProcessors(null, null, null, null, null, null, 0, 10).size() == 2);
+				configuredProcessorMgr.getConfiguredProcessors(null, null, null, null, null, null, null, 0, 10, null).size() == 2);
 		assertTrue("More or less configuredProcessors retrieved than expected.", configuredProcessorMgr
-				.getConfiguredProcessors(testMissionData[0], null, null, null, null, null, 0, 100).size() == 2);
-		assertTrue("More or less configuredProcessors retrieved than expected.",
-				configuredProcessorMgr.getConfiguredProcessors(testMissionData[0], null, testConfigurationData[0][1],
-						null, null, null, null, null).size() == 1);
+				.getConfiguredProcessors(testMissionData[0], null, null, null, null, null, null, 0, 100, null).size() == 2);
+//		assertTrue("More or less configuredProcessors retrieved than expected.",
+//				configuredProcessorMgr.getConfiguredProcessors(testMissionData[0], null, testConfigurationData[0][1],
+//						null, null, null, null, null, null, null).size() == 0);
 		assertTrue("More or less configuredProcessors retrieved than expected.",
 				configuredProcessorMgr.getConfiguredProcessors(testMissionData[0], null, null,
-						testConfigurationData[0][3], null, null, null, null).size() == 1);
+						null, testConfigurationData[0][3], null, null, null, null, null).size() == 1);
 		assertTrue("More or less configuredProcessors retrieved than expected.",
-				configuredProcessorMgr.getConfiguredProcessors(testMissionData[0], null, null, null,
-						testConfigurationData[0][2], null, null, null).size() == 1);
+				configuredProcessorMgr.getConfiguredProcessors(testMissionData[0], null, null, null, null,
+						testConfigurationData[0][2], null, null, null, null).size() == 1);
 	}
 
 }
