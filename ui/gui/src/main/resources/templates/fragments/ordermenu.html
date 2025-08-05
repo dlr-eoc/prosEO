@@ -27,7 +27,11 @@
           th:if="${hasroleorderplanner}"
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'APPROVED' or ${ord?.orderState} == 'PLANNING_FAILED') ? 'enabled' : 'disabled font-italic'))"
 					th:onclick="'plan(' + ${ord?.id} + ', \'PLAN\')'" href="#" th:title="#{helpplan}"><span
-					th:text="#{plan}">plan</span></a> <a
+					th:text="#{plan}">plan</span></a><a
+          th:if="${hasroleorderplanner}"
+          th:class="('dropdown-item ' + ((${ord?.orderState} == 'APPROVED' or ${ord?.orderState} == 'PLANNING_FAILED') ? 'enabled' : 'disabled font-italic'))"
+          th:id="'mplan' + ${ord?.id}" th:title="#{helpplan}"><span
+          th:text="#{plan}">plan</span></a> <a
           th:if="${hasroleorderplanner}"
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'PLANNED') ? 'enabled' : 'disabled font-italic'))"
 					th:onclick="'setState(' + ${ord?.id} + ', \'RELEASE\')'" href="#" th:title="#{helprelease}"><span
@@ -84,4 +88,27 @@
 		</div>
 	</div>
 </body>
+<script>document.addEventListener('DOMContentLoaded', function () {
+	  document.getElementById("'mplan' + ${ord?.id}")
+	    .addEventListener("click", () => {
+	      document.getElementById("'plan' + ${ord?.id}")
+	        .showModal();
+	    });
+	  document.getElementById("'cancel' + ${ord?.id}")
+	   .addEventListener("click", () => {
+	     document.getElementById("'plan' + ${ord?.id}")
+	       .close();
+	   });
+	  document.getElementById("'ok' + ${ord?.id}")
+	     .addEventListener("click", () => {
+	       var menu = document.getElementById("'facilities' + ${ord?.id}");
+	       var facility = menu.options[menu.selectedIndex].value;
+	       document.getElementById("'plan' + ${ord?.id}")
+	         .close();
+	       doPlan("${ord?.id}", facility);
+	     });
+	});
+
+</script>
+
 </html>

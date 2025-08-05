@@ -343,7 +343,25 @@ if (event.key === "Enter") {
       startElem[0].form.classList.add('was-validated')
   }
 
+
 function plan(oId, state) {
+	 document.getElementById('cancel' + oId)
+	    .addEventListener("click", () => {
+	      document.getElementById('plan' + oId)
+	        .close();
+	    });
+	   document.getElementById('ok' + oId)
+	      .addEventListener("click", () => {
+	        var menu = document.getElementById('facilities' + oId);
+	        var facility = menu.options[menu.selectedIndex].value;
+	        document.getElementById('plan' + oId)
+	          .close();
+	        doPlan(oId, facility);
+	      });
+	 document.getElementById('plan' + oId)
+    .showModal();
+}
+function planOld(oId, state) {
 		var dialog = document.getElementById('plan' + oId);
 		var ok = document.getElementById('ok' + oId);
 		var cancel = document.getElementById('cancel' + oId);
@@ -372,7 +390,7 @@ function plan(oId, state) {
 							  div.parentNode.removeChild(div);
 						}
 				});
-		}
+    }
 };
 
 function doPlan(oId, facility) {
