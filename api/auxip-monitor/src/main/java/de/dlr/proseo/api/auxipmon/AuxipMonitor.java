@@ -139,7 +139,7 @@ public class AuxipMonitor extends BaseMonitor {
 	private static ProseoLogger logger = new ProseoLogger(AuxipMonitor.class);
 
 	// maximum number of retries to transfer a file
-	private static final int MAX_RETRY = 20;
+	private static final int MAX_RETRY = 40;
 	// Wait interval in ms before retrying database operation
 	public static final int AUXIP_WAIT = 1000;
 	
