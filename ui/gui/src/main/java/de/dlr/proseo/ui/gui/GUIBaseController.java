@@ -42,6 +42,7 @@ import de.dlr.proseo.model.rest.model.RestSpacecraft;
 import de.dlr.proseo.model.rest.model.RestWorkflow;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
+import de.dlr.proseo.ui.gui.service.MapComparator;
 
 /** A base controller for the prosEO GUI, to be extended for specific entities */
 public class GUIBaseController {
@@ -182,15 +183,15 @@ public class GUIBaseController {
 	 *
 	 * @return a list with the names of available processing facilities
 	 */
-	@ModelAttribute("enabledfacilitynames")
-	public List<String> enabledfacilities() {
+	@ModelAttribute("enabledfacilities")
+	public List<Object> enabledfacilities() {
 		if (!hasrolefacilityreader()) {
 			return new ArrayList<>();
 		}
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
 		logger.trace("Get facilities");
-		List<String> enabledFacilities = new ArrayList<String>();
+		List<Object> enabledFacilities = new ArrayList<Object>();
 		List<?> resultList = null;
 
 		try {
@@ -213,7 +214,7 @@ public class GUIBaseController {
 			return enabledFacilities;
 		} catch (RuntimeException e) {
 			logger.log(UIMessage.EXCEPTION, e.getMessage());
-			return auth.getDataCache().getFacilities();
+			return enabledFacilities;
 		}
 
 		if (resultList != null) {
@@ -221,13 +222,13 @@ public class GUIBaseController {
 			for (Object object : resultList) {
 				RestProcessingFacility restFacility = mapper.convertValue(object, RestProcessingFacility.class);
 				if (!restFacility.getFacilityState().equals("DISABLED")) {
-					enabledFacilities.add(restFacility.getName());
+					enabledFacilities.add(object);
 				}
 			}
 		}
 
-		Comparator<String> c = Comparator.comparing((String x) -> x);
-		enabledFacilities.sort(c);
+		MapComparator oc = new MapComparator("name", true);
+		enabledFacilities.sort(oc);
 		return enabledFacilities;
 	}
 	

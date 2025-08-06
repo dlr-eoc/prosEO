@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -334,7 +335,21 @@ public class ProductionPlanner implements CommandLineRunner {
 
 		ProcessingFacility processingFacility = RepositoryService.getFacilityRepository().findByName(facilityName);
 		if (processingFacility == null) {
-			return null;
+			try {
+				Long anId = Long.valueOf(facilityName);
+				if (anId > 0) {
+					Optional<ProcessingFacility> opt =RepositoryService.getFacilityRepository().findById(anId);
+					if (opt != null) {
+						processingFacility = opt.get();
+					} else {
+						return null;
+					}
+				} else {
+					return null;
+				}
+			} catch (NumberFormatException e) {
+				return null;
+			}
 		}
 
 		KubeConfig kubeConfig = getKubeConfig(processingFacility.getName());
