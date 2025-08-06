@@ -343,54 +343,8 @@ if (event.key === "Enter") {
       startElem[0].form.classList.add('was-validated')
   }
 
-
-function plan(oId, state) {
-	 document.getElementById('cancel' + oId)
-	    .addEventListener("click", () => {
-	      document.getElementById('plan' + oId)
-	        .close();
-	    });
-	   document.getElementById('ok' + oId)
-	      .addEventListener("click", () => {
-	        var menu = document.getElementById('facilities' + oId);
-	        var facility = menu.options[menu.selectedIndex].value;
-	        document.getElementById('plan' + oId)
-	          .close();
-	        doPlan(oId, facility);
-	      });
-	 document.getElementById('plan' + oId)
-    .showModal();
-}
-function planOld(oId, state) {
-		var dialog = document.getElementById('plan' + oId);
-		var ok = document.getElementById('ok' + oId);
-		var cancel = document.getElementById('cancel' + oId);
-		if (!dialog.hasAttribute('open')) {
-				// show the dialog 
-				var div = document.createElement('div');
-				div.id = 'backdrop';
-				document.body.appendChild(div);
-				dialog.setAttribute('open', 'open');
-				ok.addEventListener('click', function() {
-						var menu = document.getElementById('facilities' + oId);
-						var facility = menu.options[menu.selectedIndex].value;
-						doPlan(oId, facility);
-						var dialog = document.getElementById('plan' + oId);
-						dialog.removeAttribute('open');
-						var div = document.querySelector('#backdrop');
-						if (div != null) {
-							  div.parentNode.removeChild(div);
-						}
-				});
-				cancel.addEventListener('click', function() {
-						var dialog = document.getElementById('plan' + oId);
-						dialog.removeAttribute('open');
-						var div = document.querySelector('#backdrop');
-						if (div != null) {
-							  div.parentNode.removeChild(div);
-						}
-				});
-    }
+function plan(oId, state, facility) {
+	doPlan(oId, facility);
 };
 
 function doPlan(oId, facility) {
