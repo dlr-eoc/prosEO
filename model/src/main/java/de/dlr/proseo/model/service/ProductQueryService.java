@@ -12,15 +12,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import javax.annotation.PostConstruct;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.persistence.metamodel.Metamodel;
+import jakarta.annotation.PostConstruct;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
+import jakarta.persistence.metamodel.Metamodel;
 
+import org.hibernate.metamodel.MappingMetamodel;
+import org.hibernate.metamodel.model.domain.internal.MappingMetamodelImpl;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
 import org.hibernate.persister.entity.AbstractEntityPersister;
 import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.property.access.spi.PropertyAccessException;
 import org.hibernate.type.BasicType;
 import org.springframework.stereotype.Service;
 
@@ -65,22 +68,26 @@ public class ProductQueryService {
 		
 		Metamodel metamodel = em.getMetamodel();
 		
-		if (metamodel instanceof MetamodelImplementor) {
-			EntityPersister persister = ((MetamodelImplementor) metamodel).entityPersister(Product.class.getName());
+		if (metamodel instanceof MappingMetamodelImpl) {
+			EntityPersister persister = ((MappingMetamodelImpl) metamodel). entityPersister(Product.class.getName());
 			if (persister instanceof AbstractEntityPersister) {
 				AbstractEntityPersister aep = (AbstractEntityPersister) persister;
 				String[] propertyNames = aep.getPropertyNames();
 				if (logger.isTraceEnabled()) logger.trace("Found {} properties for class {}", propertyNames.length, Product.class.getName());
 				for (int i = 0; i < propertyNames.length; ++i) {
-					if (aep.getPropertyType(propertyNames[i]) instanceof BasicType) {
-						String[] columnNames = aep.getPropertyColumnNames(propertyNames[i]);
-						if (1 != columnNames.length) {
-							logger.log(ModelMessage.PROPERTY_COLUMNS_FOUND, columnNames.length, propertyNames[i]);
+					try {
+						if (aep.getPropertyType(propertyNames[i]) instanceof BasicType) {
+							String[] columnNames = aep.getPropertyColumnNames(propertyNames[i]);
+							if (1 != columnNames.length) {
+								logger.log(ModelMessage.PROPERTY_COLUMNS_FOUND, columnNames.length, propertyNames[i]);
+							}
+							if (logger.isTraceEnabled()) logger.trace("... mapping Product attribute {} to SQL column {}",
+									propertyNames[i], columnNames[0]);
+							productColumnMapping.put(propertyNames[i], columnNames[0]);
+						} else {
+							if (logger.isTraceEnabled()) logger.trace("Skipping non-basic property {}", propertyNames[i]);
 						}
-						if (logger.isTraceEnabled()) logger.trace("... mapping Product attribute {} to SQL column {}",
-								propertyNames[i], columnNames[0]);
-						productColumnMapping.put(propertyNames[i], columnNames[0]);
-					} else {
+					} catch (PropertyAccessException e) {
 						if (logger.isTraceEnabled()) logger.trace("Skipping non-basic property {}", propertyNames[i]);
 					}
 				}

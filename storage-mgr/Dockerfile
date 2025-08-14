@@ -1,4 +1,4 @@
-FROM openjdk:11
+FROM eclipse-temurin:21
 
 ADD target/proseo-storage-mgr.jar /usr/share/proseo-storage-mgr/proseo-storage-mgr.jar
 WORKDIR /usr/share/proseo-storage-mgr

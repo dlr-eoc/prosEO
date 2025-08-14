@@ -88,7 +88,7 @@ public class ServiceConnection {
 		ResponseEntity<T> entity = null;
 		try {
 			RestTemplate restTemplate = (null == username ? rtb : rtb.basicAuthentication(username, password))
-				.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+				.readTimeout(Duration.ofSeconds(config.getHttpTimeout()))
 				.build();
 			URI requestUrl = URI.create(serviceUrl + requestPath);
 			if (logger.isTraceEnabled())
@@ -148,7 +148,7 @@ public class ServiceConnection {
 		ResponseEntity<T> entity = null;
 		try {
 			RestTemplate restTemplate = (null == username ? rtb : rtb.basicAuthentication(username, password))
-				.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+				.readTimeout(Duration.ofSeconds(config.getHttpTimeout()))
 				.build();
 			RequestEntity<Void> requestEntity = RequestEntity.put(URI.create(serviceUrl + requestPath)).build();
 			if (logger.isTraceEnabled())
@@ -209,7 +209,7 @@ public class ServiceConnection {
 		ResponseEntity<T> entity = null;
 		try {
 			RestTemplate restTemplate = (null == username ? rtb : rtb.basicAuthentication(username, password))
-				.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+				.readTimeout(Duration.ofSeconds(config.getHttpTimeout()))
 				.build();
 			URI requestUrl = URI.create(serviceUrl + requestPath);
 			if (logger.isTraceEnabled())
@@ -388,7 +388,7 @@ public class ServiceConnection {
 		ResponseEntity<Object> entity = null;
 		try {
 			RestTemplate restTemplate = (null == username ? rtb : rtb.basicAuthentication(username, password))
-				.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+				.readTimeout(Duration.ofSeconds(config.getHttpTimeout()))
 				.build();
 			URI requestUrl = URI.create(serviceUrl + requestPath);
 			if (logger.isTraceEnabled())
@@ -398,7 +398,7 @@ public class ServiceConnection {
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
 			String message = http.createMessageFromHeaders(e.getStatusCode(), e.getResponseHeaders());
 			logger.log(UIMessage.EXTRACTED_MESSAGE, message);
-			throw new RestClientResponseException(message, e.getRawStatusCode(), e.getStatusCode().getReasonPhrase(),
+			throw new RestClientResponseException(message, e.getStatusCode(), e.getStatusText(),
 					e.getResponseHeaders(), e.getResponseBodyAsByteArray(), StandardCharsets.UTF_8);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
 			String warningMessage = http.extractProseoMessage(e.getResponseHeaders().getFirst(HttpHeaders.WARNING));
@@ -422,11 +422,11 @@ public class ServiceConnection {
 		if (HttpStatus.NOT_MODIFIED.equals(entity.getStatusCode())) {
 			String message = http.createMessageFromHeaders(entity.getStatusCode(), entity.getHeaders());
 			logger.log(UIMessage.EXTRACTED_MESSAGE, message);
-			throw new RestClientResponseException(message, entity.getStatusCodeValue(), entity.getStatusCode().getReasonPhrase(),
+			throw new RestClientResponseException(message, HttpStatus.valueOf(entity.getStatusCode().value()), "",
 					entity.getHeaders(), null, StandardCharsets.UTF_8);
 		} else if (!HttpStatus.NO_CONTENT.equals(entity.getStatusCode())) {
 			// Ignore unexpected status code, but log it as warning
-			logger.log(UIMessage.WARN_UNEXPECTED_STATUS, entity.getStatusCode().getReasonPhrase());
+			logger.log(UIMessage.WARN_UNEXPECTED_STATUS, entity.getStatusCode());
 		}
 
 		if (logger.isTraceEnabled())

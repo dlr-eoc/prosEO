@@ -160,8 +160,8 @@ public class MicroService {
 		if (serviceUrl != null) {
 			if (this.getHasActuator()) {
 				RestTemplate restTemplate = MonitorApplication.rtb
-						.setReadTimeout(Duration.ofMillis(MonitorApplication.config.getReadTimeout()))
-						.setConnectTimeout(Duration.ofMillis(MonitorApplication.config.getConnectTimeout()))
+						.readTimeout(Duration.ofMillis(MonitorApplication.config.getReadTimeout()))
+						.connectTimeout(Duration.ofMillis(MonitorApplication.config.getConnectTimeout()))
 						.build();
 				try {
 					ResponseEntity<RestHealth> response = restTemplate.getForEntity(serviceUrl, RestHealth.class);
@@ -188,8 +188,8 @@ public class MicroService {
 				}
 			} else {
 				RestTemplate restTemplate = MonitorApplication.rtb
-						.setReadTimeout(Duration.ofMillis(MonitorApplication.config.getReadTimeout()))
-						.setConnectTimeout(Duration.ofMillis(MonitorApplication.config.getConnectTimeout()))
+						.readTimeout(Duration.ofMillis(MonitorApplication.config.getReadTimeout()))
+						.connectTimeout(Duration.ofMillis(MonitorApplication.config.getConnectTimeout()))
 						.build();
 				try {
 					ResponseEntity<?> response = restTemplate.getForEntity(serviceUrl, String.class);

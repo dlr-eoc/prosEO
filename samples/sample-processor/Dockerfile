@@ -1,4 +1,4 @@
-FROM openjdk:11
+FROM eclipse-temurin:21
 WORKDIR /usr/share/sample-processor
 
 #ADD target/lib /usr/share/sample-processor/lib

@@ -8,9 +8,9 @@ package de.dlr.proseo.model;
 import java.time.Instant;
 import java.util.Objects;
 
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
-import javax.persistence.ManyToOne;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.ManyToOne;
 
 /**
  * History of product downloads; while originially bound to a ProductFile, the entry persists even after deletion

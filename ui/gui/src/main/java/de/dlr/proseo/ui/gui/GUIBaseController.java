@@ -12,7 +12,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -1107,20 +1107,20 @@ public class GUIBaseController {
 	 * @param model          The model to hold the error message
 	 */
 	protected void handleHTTPError(ClientResponse clientResponse, Model model) {
-		if (clientResponse.statusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
+		if (clientResponse.statusCode().value() == HttpStatus.NOT_FOUND.value()) {
 			// Not Found error
-			logger.trace(">>>Client error ({}, {})", clientResponse.statusCode(), clientResponse.statusCode().getReasonPhrase());
+			logger.trace(">>>Client error ({}, {})", clientResponse.statusCode(), HttpStatus.valueOf(clientResponse.statusCode().value()).getReasonPhrase());
 			model.addAttribute("errormsg", "No elements found");
 		} else if (clientResponse.statusCode().is5xxServerError()) {
 			// Server error
-			logger.trace(">>>Server error ({}, {})", clientResponse.statusCode(), clientResponse.statusCode().getReasonPhrase());
+			logger.trace(">>>Server error ({}, {})", clientResponse.statusCode(), HttpStatus.valueOf(clientResponse.statusCode().value()).getReasonPhrase());
 			model.addAttribute("errormsg", "Server error " + clientResponse.statusCode().toString() + ": "
-					+ clientResponse.statusCode().getReasonPhrase());
+					+ HttpStatus.valueOf(clientResponse.statusCode().value()).getReasonPhrase());
 		} else if (clientResponse.statusCode().is4xxClientError()) {
 			// Client error
-			logger.trace(">>>Client error ({}, {})", clientResponse.statusCode(), clientResponse.statusCode().getReasonPhrase());
+			logger.trace(">>>Client error ({}, {})", clientResponse.statusCode(), HttpStatus.valueOf(clientResponse.statusCode().value()).getReasonPhrase());
 			model.addAttribute("errormsg", "Client error " + clientResponse.statusCode().toString() + ": "
-					+ clientResponse.statusCode().getReasonPhrase());
+					+ HttpStatus.valueOf(clientResponse.statusCode().value()).getReasonPhrase());
 		} else {
 			// Other status codes, do nothing
 		}
@@ -1136,9 +1136,9 @@ public class GUIBaseController {
 	protected void handleHTTPWarning(ClientResponse clientResponse, Model model, HttpServletResponse httpResponse) {
 		if (clientResponse.statusCode().is5xxServerError()) {
 			// Server error warning
-			logger.trace(">>>Server error ({}, {})", clientResponse.statusCode(), clientResponse.statusCode().getReasonPhrase());
+			logger.trace(">>>Server error ({}, {})", clientResponse.statusCode(), HttpStatus.valueOf(clientResponse.statusCode().value()).getReasonPhrase());
 			model.addAttribute("warnmsg", "Server error " + clientResponse.statusCode().toString() + ": "
-					+ clientResponse.statusCode().getReasonPhrase());
+					+ HttpStatus.valueOf(clientResponse.statusCode().value()).getReasonPhrase());
 			List<String> descList = clientResponse.headers().header("Warning");
 			String desc = "";
 			for (String d : descList) {
@@ -1151,9 +1151,9 @@ public class GUIBaseController {
 			httpResponse.setHeader("warndesc", (String) model.asMap().get("warndesc"));
 		} else if (clientResponse.statusCode().is4xxClientError()) {
 			// Client error warning
-			logger.trace(">>>Client error ({}, {})", clientResponse.statusCode(), clientResponse.statusCode().getReasonPhrase());
+			logger.trace(">>>Client error ({}, {})", clientResponse.statusCode(), HttpStatus.valueOf(clientResponse.statusCode().value()).getReasonPhrase());
 			model.addAttribute("warnmsg", "Client error " + clientResponse.statusCode().toString() + ": "
-					+ clientResponse.statusCode().getReasonPhrase());
+					+ HttpStatus.valueOf(clientResponse.statusCode().value()).getReasonPhrase());
 			List<String> descList = clientResponse.headers().header("Warning");
 			String desc = "";
 			for (String d : descList) {

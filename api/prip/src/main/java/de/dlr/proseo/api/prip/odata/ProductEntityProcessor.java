@@ -17,13 +17,13 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
+import jakarta.servlet.http.HttpServletResponse;
 
-import org.apache.http.client.utils.URIBuilder;
+import org.apache.hc.core5.net.URIBuilder;
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.ContextURL.Suffix;
 import org.apache.olingo.commons.api.data.Entity;
@@ -256,7 +256,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 
 		// All GET requests should return HTTP status OK
 		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
-			String message = logger.log(PripMessage.MSG_SERVICE_REQUEST_FAILED, entity.getStatusCodeValue(),
+			String message = logger.log(PripMessage.MSG_SERVICE_REQUEST_FAILED, entity.getStatusCode().value(),
 					entity.getStatusCode().toString(), entity.getHeaders().getFirst(HTTP_HEADER_WARNING));
 			throw new RuntimeException(message);
 		}
@@ -495,8 +495,8 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		try {
 			downloadToken = retrieveDownloadToken(modelProduct.getId(), productFileName);
 		} catch (HttpClientErrorException e) {
-			response.setContent(serializer.error(LogUtil.oDataServerError(e.getRawStatusCode(), e.getMessage())).getContent());
-			response.setStatusCode(e.getRawStatusCode());
+			response.setContent(serializer.error(LogUtil.oDataServerError(e.getStatusCode().value(), e.getMessage())).getContent());
+			response.setStatusCode(e.getStatusCode().value());
 			response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 			return;
 		} catch (RestClientException e) {

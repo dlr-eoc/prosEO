@@ -92,6 +92,10 @@
             <version>${olingo.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
             <version>${nimbus.jwt.version}</version>
@@ -112,7 +116,7 @@
             <version>${project.version}</version>
             <exclusions>
                 <exclusion>
-                    <groupId>javax</groupId>
+                    <groupId>jakarta</groupId>
                     <artifactId>javaee-api</artifactId>
                 </exclusion>
                 <exclusion>

@@ -115,7 +115,7 @@
             <version>${project.version}</version>
             <exclusions>
                 <exclusion>
-                    <groupId>javax</groupId>
+                    <groupId>jakarta</groupId>
                     <artifactId>javaee-api</artifactId>
                 </exclusion>
                 <exclusion>
@@ -144,6 +144,10 @@
                     <artifactId>hamcrest-core</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
         </dependency>
     </dependencies>
 

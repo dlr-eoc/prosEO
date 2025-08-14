@@ -76,30 +76,31 @@ public class ProductionPlannerSecurityConfig {
 	 */
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		String base ="/proseo/planner/v0.1";
 		http.httpBasic(it -> {
 		})
-			.authorizeHttpRequests(requests -> requests.antMatchers("/**/actuator/health")
+			.authorizeHttpRequests(requests -> requests.requestMatchers("/actuator/health")
 				.permitAll()
-				.antMatchers(HttpMethod.GET, "/**/orders")
+				.requestMatchers(HttpMethod.GET, base + "/orders")
 				.hasAnyRole(UserRole.ORDER_READER.toString())
-				.antMatchers("/**/orders/approve")
+				.requestMatchers(base + "/orders/approve")
 				.hasAnyRole(UserRole.ORDER_APPROVER.toString())
-				.antMatchers("/**/orders/plan", "/**/orders/release", "/**/orders/reset", "/**/orders/cancel", "/**/orders/retry",
-						"/**/orders/suspend")
+				.requestMatchers(base + "/orders/plan", base + "/orders/release", base + "/orders/reset", base + "/orders/cancel", base + "/orders/retry",
+						base + "/orders/suspend")
 				.hasAnyRole(UserRole.ORDER_PLANNER.toString())
-				.antMatchers("/**/orders")
+				.requestMatchers(base + "/orders")
 				.hasAnyRole(UserRole.ORDER_MGR.toString())
-				.antMatchers(HttpMethod.GET, "/**/jobs", "/**/jobsteps")
+				.requestMatchers(HttpMethod.GET, base + "/jobs", base + "/jobsteps")
 				.hasAnyRole(UserRole.ORDER_READER.toString())
-				.antMatchers("/**/jobs", "/**/jobsteps")
+				.requestMatchers(base + "/jobs", base + "/jobsteps")
 				.hasAnyRole(UserRole.ORDER_PLANNER.toString())
-				.antMatchers("/**/processingfacilities/synchronize")
+				.requestMatchers(base + "/processingfacilities/synchronize")
 				.hasAnyRole(UserRole.FACILITY_MGR.toString(), UserRole.ORDER_PLANNER.toString())
-				.antMatchers(HttpMethod.GET, "/**/processingfacilities")
+				.requestMatchers(HttpMethod.GET, base + "/processingfacilities")
 				.hasAnyRole(UserRole.FACILITY_READER.toString())
-				.antMatchers("/**/processingfacilities/*/finish/*")
+				.requestMatchers(base + "/processingfacilities/*/finish/*")
 				.hasAnyRole(UserRole.JOBSTEP_PROCESSOR.toString())
-				.antMatchers("/**/product/*")
+				.requestMatchers(base + "/product/*")
 				.hasAnyRole(UserRole.PRODUCT_INGESTOR.toString(), UserRole.JOBSTEP_PROCESSOR.toString())
 				.anyRequest()
 				.hasAnyRole(UserRole.ORDER_MGR.toString()))

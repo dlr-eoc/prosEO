@@ -46,17 +46,18 @@ public class ProcessorManagerSecurityConfig {
 	 */
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		String base ="/proseo/processor-mgr/v0.1";
 		http.httpBasic(it -> {})
 			.authorizeHttpRequests(requests -> requests
-			.antMatchers("/**/actuator/health")
+			.requestMatchers("/actuator/health")
 			.permitAll()
-			.antMatchers(HttpMethod.GET)
+			.requestMatchers(HttpMethod.GET)
 			.hasAnyRole(UserRole.PROCESSOR_READER.toString())
-			.antMatchers("/**/processorclasses", "/**/processors")
+			.requestMatchers(base + "/processorclasses", base + "/processors")
 			.hasAnyRole(UserRole.PROCESSORCLASS_MGR.toString())
-			.antMatchers("/**/configurations", "/**/configuredprocessors")
+			.requestMatchers(base + "/configurations", base + "/configuredprocessors")
 			.hasAnyRole(UserRole.CONFIGURATION_MGR.toString())
-			.antMatchers("/**/workflows")
+			.requestMatchers(base + "/workflows")
 			.hasAnyRole(UserRole.WORKFLOW_MGR.toString())
 			.anyRequest()
 			.hasAnyRole(UserRole.PROCESSORCLASS_MGR.toString()))

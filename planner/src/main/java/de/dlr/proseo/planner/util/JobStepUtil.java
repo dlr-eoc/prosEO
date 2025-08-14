@@ -18,9 +18,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -316,7 +316,9 @@ public class JobStepUtil {
 
 				// Extract the job step ID for ordering the result list
 				Long jobStepId = jobStep[1] instanceof BigInteger ? ((BigInteger) jobStep[1]).longValue() : null;
-
+				if (null == jobStepId) {
+					jobStepId = jobStep[1] instanceof Long ? ((Long) jobStep[1]) : null;
+				}
 				if (null == jobStepId) {
 					throw new RuntimeException("Invalid query result: " + Arrays.asList(jobStep));
 				}

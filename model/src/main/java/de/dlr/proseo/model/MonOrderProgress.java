@@ -2,11 +2,11 @@ package de.dlr.proseo.model;
 
 import java.time.Instant;
 
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
-import javax.persistence.Index;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.Index;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @Embeddable
 @Table(indexes = {

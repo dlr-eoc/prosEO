@@ -7,7 +7,7 @@ package de.dlr.proseo.usermgr.model;
 
 import java.util.Date;
 
-import javax.persistence.Embeddable;
+import jakarta.persistence.Embeddable;
 
 /**
  * Monthly data volume granted to and actually used by a user

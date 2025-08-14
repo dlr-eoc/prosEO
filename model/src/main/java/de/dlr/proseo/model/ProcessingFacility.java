@@ -7,12 +7,12 @@ package de.dlr.proseo.model;
 
 import java.util.Objects;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Index;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.enums.StorageType;
@@ -45,7 +45,7 @@ public class ProcessingFacility extends PersistentObject {
 	private String processingEngineUrl;
 	
 	/** Authentication token for connecting to this facility's processing engine (Kubernetes instance) */
-	@org.hibernate.annotations.Type(type = "materialized_clob")
+	@Column(columnDefinition="CLOB")
 	private String processingEngineToken;
 	
 	/**

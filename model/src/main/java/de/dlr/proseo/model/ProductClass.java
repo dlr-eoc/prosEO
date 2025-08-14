@@ -10,15 +10,15 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Index;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Index;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.ProcessingLevel;
@@ -73,7 +73,7 @@ public class ProductClass extends PersistentObject {
 	 * Template for the generation of product files, indicating variable parts using Spring Expression Language;
 	 * overrides file naming convention set in the Mission object.
 	 */
-	@org.hibernate.annotations.Type(type = "materialized_clob")
+	@Column(columnDefinition="CLOB")
 	private String productFileTemplate;
 	
 	/** The default slice length to be applied; mandatory if the default slicing type is "TIME_SLICE" */

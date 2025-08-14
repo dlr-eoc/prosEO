@@ -14,7 +14,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -208,7 +208,7 @@ public class GUIOrderController extends GUIBaseController {
 				logger.trace("Now in Consumer::accept({})", entityList);
 
 				if (entityList.getStatusCode().is2xxSuccessful() 
-						|| entityList.getStatusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
+						|| entityList.getStatusCode().value() ==  HttpStatus.NOT_FOUND.value()) {
 					// orders.addAll(selectOrders(orderList, identifier, states, from, to, products));
 					orders.addAll(entityList.getBody());
 
@@ -293,7 +293,7 @@ public class GUIOrderController extends GUIBaseController {
 			.subscribe(clientResponse -> {
 				logger.trace("Now in Consumer::accept({})", clientResponse);
 				if (clientResponse.getStatusCode().is2xxSuccessful()) {
-					if (clientResponse.getStatusCode().compareTo(HttpStatus.NO_CONTENT) == 0) {
+					if (clientResponse.getStatusCode().value() ==  HttpStatus.NO_CONTENT.value()) {
 						deferredResult.setResult("order-show :: #warnmsg");
 						httpResponse.setHeader("warnstatus", "nocontent");
 					} else {
@@ -360,7 +360,7 @@ public class GUIOrderController extends GUIBaseController {
 			.subscribe(clientResponse -> {
 				logger.trace("Now in Consumer::accept({})", clientResponse);
 				if (clientResponse.getStatusCode().is2xxSuccessful()) {
-					if (clientResponse.getStatusCode().compareTo(HttpStatus.NO_CONTENT) == 0) {
+					if (clientResponse.getStatusCode().value() ==  HttpStatus.NO_CONTENT.value()) {
 						deferredResult.setResult("order-show :: #warnmsg");
 						httpResponse.setHeader("warnstatus", "nocontent");
 					} else {
@@ -447,7 +447,7 @@ public class GUIOrderController extends GUIBaseController {
 			.subscribe(clientResponse -> {
 				logger.trace("Now in Consumer::accept({})", clientResponse);
 				if (clientResponse.getStatusCode().is2xxSuccessful()) {
-					if (clientResponse.getStatusCode().compareTo(HttpStatus.NO_CONTENT) == 0) {
+					if (clientResponse.getStatusCode().value() ==  HttpStatus.NO_CONTENT.value()) {
 						deferredResult.setResult("order-show :: #warnmsg");
 						httpResponse.setHeader("warnstatus", "nocontent");
 					} else {
@@ -870,7 +870,7 @@ public class GUIOrderController extends GUIBaseController {
 			.subscribe(entityList -> {
 				logger.trace("Now in Consumer::accept({})", entityList);
 				if (entityList.getStatusCode().is2xxSuccessful() 
-						|| entityList.getStatusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
+						|| entityList.getStatusCode().value() ==  HttpStatus.NOT_FOUND.value()) {
 					jobs.addAll(entityList.getBody());
 					/*
 					 * for (Object o : jobs) { if (o instanceof HashMap) { HashMap<String, Object> h = (HashMap<String, Object>) o;

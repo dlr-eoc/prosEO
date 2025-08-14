@@ -7,7 +7,7 @@ package de.dlr.proseo.model;
 
 import java.util.Objects;
 
-import javax.persistence.Embeddable;
+import jakarta.persistence.Embeddable;
 
 /**
  * The payload of a spacecraft, e. g. the TROPOMI instrument of Sentinel-5P. A spacecraft may have multiple payloads.

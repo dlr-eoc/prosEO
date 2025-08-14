@@ -126,7 +126,7 @@ public class GUIProcessorClassController extends GUIBaseController {
 			.subscribe(entityList -> {
 				logger.trace("Now in Consumer::accept({})", entityList);
 				if (entityList.getStatusCode().is2xxSuccessful() 
-						|| entityList.getStatusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
+						|| entityList.getStatusCode().value() ==  HttpStatus.NOT_FOUND.value()) {
 					procs.addAll(entityList.getBody());
 
 					model.addAttribute("procs", procs);
@@ -170,8 +170,8 @@ public class GUIProcessorClassController extends GUIBaseController {
 	 */
 	@ExceptionHandler(WebClientResponseException.class)
 	public ResponseEntity<String> handleWebClientResponseException(WebClientResponseException ex) {
-		logger.log(UIMessage.WEBCLIENT_ERROR, ex.getRawStatusCode(), ex.getResponseBodyAsString(), ex);
-		return ResponseEntity.status(ex.getRawStatusCode()).body(ex.getResponseBodyAsString());
+		logger.log(UIMessage.WEBCLIENT_ERROR, ex.getStatusCode(), ex.getResponseBodyAsString(), ex);
+		return ResponseEntity.status(ex.getStatusCode()).body(ex.getResponseBodyAsString());
 	}
 
 	private Long countProcessorClasses(Long pId, String processorName, String productClass) {

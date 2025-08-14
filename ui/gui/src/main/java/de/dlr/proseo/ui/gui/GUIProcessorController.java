@@ -137,7 +137,7 @@ public class GUIProcessorController extends GUIBaseController {
 				logger.trace("Now in Consumer::accept({})", entityList);
 
 				if (entityList.getStatusCode().is2xxSuccessful() 
-						|| entityList.getStatusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
+						|| entityList.getStatusCode().value() ==  HttpStatus.NOT_FOUND.value()) {
 					processors.addAll(entityList.getBody());
 
 					MapComparator oc = new MapComparator("processorName", true);
@@ -211,7 +211,7 @@ public class GUIProcessorController extends GUIBaseController {
 			}
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;
@@ -272,7 +272,7 @@ public class GUIProcessorController extends GUIBaseController {
 			}
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;
@@ -359,7 +359,7 @@ public class GUIProcessorController extends GUIBaseController {
 				logger.trace("Now in Consumer::accept({})", entityList);
 
 				if (entityList.getStatusCode().is2xxSuccessful() 
-						|| entityList.getStatusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
+						|| entityList.getStatusCode().value() ==  HttpStatus.NOT_FOUND.value()) {
 					configuredprocessors.addAll(entityList.getBody());
 
 					model.addAttribute("configuredprocessors", configuredprocessors);

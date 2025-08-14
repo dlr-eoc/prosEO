@@ -12,8 +12,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.transaction.TransactionDefinition;
@@ -283,7 +283,7 @@ public class OrderReleaseThread extends Thread {
 
 									if (jobList.get(curJList.get(0)).getJobState() == JobState.PLANNED) {
 										Job locJob = RepositoryService.getJobRepository()
-											.getOne(jobList.get(curJList.get(0)).getId());
+											.getReferenceById(jobList.get(curJList.get(0)).getId());
 
 										try {
 											locAnswer = jobUtil.resume(locJob);

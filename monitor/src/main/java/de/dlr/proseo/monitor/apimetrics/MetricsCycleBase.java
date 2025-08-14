@@ -5,8 +5,8 @@
  */
 package de.dlr.proseo.monitor.apimetrics;
 
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
 
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionException;

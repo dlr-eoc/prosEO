@@ -1,4 +1,4 @@
-FROM openjdk:11
+FROM eclipse-temurin:21
 
 #install configuration and shapes
 COPY docker/application.yml /usr/share/proseo-geotools/application.yml

@@ -2,17 +2,13 @@ package de.dlr.proseo.model;
 
 import java.time.Instant;
 
-import javax.persistence.Column;
-import javax.persistence.Index;
-import javax.persistence.ManyToOne;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Index;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Table;
 
 @MappedSuperclass
-@Table(indexes = {
-		@Index(unique = false, columnList = "datetime"),
-		@Index(unique = false, columnList = "mission_id, productionType")
-	})
 abstract public class MonProductProduction extends PersistentObject {
 	/**
 	 * The mission

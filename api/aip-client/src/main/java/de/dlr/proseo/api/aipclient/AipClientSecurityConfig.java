@@ -75,7 +75,7 @@ public class AipClientSecurityConfig {
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.httpBasic(it -> {})
                 .authorizeHttpRequests(requests -> requests
-                        .antMatchers("/**/actuator/health")
+                        .requestMatchers("/actuator/health")
                         .permitAll()
                         .anyRequest()
                         .hasAnyRole(UserRole.PRODUCT_INGESTOR.toString()))

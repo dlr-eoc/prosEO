@@ -14,14 +14,15 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 
 import org.apache.http.auth.AUTH;
-import org.apache.http.client.config.AuthSchemes;
+import org.apache.hc.client5.http.auth.StandardAuthScheme;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.protocol.HTTP;
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.ContextURL.Suffix;
 import org.apache.olingo.commons.api.data.Entity;
@@ -455,7 +456,7 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 				response.setStatusCode(HttpStatusCode.TEMPORARY_REDIRECT.getStatusCode());
 				response.setHeader(HttpHeader.LOCATION, uri);
 				BasicHeader token = new BasicHeader(AUTH.WWW_AUTH_RESP,
-						AuthSchemes.BASIC + " " + Base64.getEncoder().encodeToString((securityConfig.getMission() + "\\" 
+						StandardAuthScheme.BASIC + " " + Base64.getEncoder().encodeToString((securityConfig.getMission() + "\\" 
 								+ securityConfig.getUser() + ":" + securityConfig.getPassword()).getBytes()));
 				response.setHeader(HttpHeader.AUTHORIZATION, token.getValue());
 				response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
@@ -789,7 +790,7 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 			response.setStatusCode(HttpStatusCode.TEMPORARY_REDIRECT.getStatusCode());
 			response.setHeader(HttpHeader.LOCATION, uri);
 			BasicHeader token = new BasicHeader(AUTH.WWW_AUTH_RESP,
-					AuthSchemes.BASIC + " " + Base64.getEncoder().encodeToString((securityConfig.getMission() + "\\" 
+					StandardAuthScheme.BASIC + " " + Base64.getEncoder().encodeToString((securityConfig.getMission() + "\\" 
 							+ securityConfig.getUser() + ":" + securityConfig.getPassword()).getBytes()));
 			response.setHeader(HttpHeader.AUTHORIZATION, token.getValue());
 			response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());

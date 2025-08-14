@@ -36,7 +36,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import javax.persistence.NoResultException;
+import jakarta.persistence.NoResultException;
 import javax.transaction.Transactional;
 import javax.validation.constraints.Pattern;
 

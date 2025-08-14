@@ -30,11 +30,12 @@ public class NotificationSecurityConfig {
 	 */
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		String base = "/proseo/notification/v0.1";
 		http.httpBasic(it -> {})
 		.authorizeHttpRequests(requests -> requests
-				.antMatchers("/**/notify")
+				.requestMatchers(base + "/notify")
 				.permitAll()
-				.antMatchers("/**/actuator/health")
+				.requestMatchers("/actuator/health")
 				.permitAll())
 		.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
 		return http.build();

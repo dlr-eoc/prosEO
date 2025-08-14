@@ -422,7 +422,7 @@ public class JobDispatcher {
 		try {
 			// Create a RestTemplate for making HTTP requests
 			RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder();
-			RestTemplate restTemplate = restTemplateBuilder.setConnectTimeout(Duration.ofMillis(5000))
+			RestTemplate restTemplate = restTemplateBuilder.connectTimeout(Duration.ofMillis(5000))
 				.basicAuthentication(kubeConfig.getStorageManagerUser(), kubeConfig.getStorageManagerPassword())
 				.build();
 

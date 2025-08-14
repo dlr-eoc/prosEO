@@ -8,8 +8,7 @@ package de.dlr.proseo.model.dao;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-
+import org.springframework.data.jpa.repository.NativeQuery;
 import de.dlr.proseo.model.ProductFile;
 
 /**
@@ -26,7 +25,7 @@ public interface ProductFileRepository extends JpaRepository<ProductFile, Long> 
 	 * @param productId the database id of the product
 	 * @return a (possibly empty) list of product files
 	 */
-	@Query("select pf from ProductFile pf where product_id = ?1")
+	@NativeQuery("select pf from PRODUCT_FILE pf where pf.product_id = ?1")
 	public List<ProductFile> findByProductId(long productId);
 
 	/**
@@ -35,7 +34,7 @@ public interface ProductFileRepository extends JpaRepository<ProductFile, Long> 
 	 * @param facilityId the database id of the processing facility
 	 * @return a (possibly empty) list of product files
 	 */
-	@Query("select pf from ProductFile pf where processing_facility_id = ?1")
+	@NativeQuery("select pf from PRODUCT_FILE pf where pf.processing_facility_id = ?1")
 	public List<ProductFile> findByProcessingFacilityId(long facilityId);
 
 	/**
@@ -44,7 +43,7 @@ public interface ProductFileRepository extends JpaRepository<ProductFile, Long> 
 	 * @param fileName the name of the product file
 	 * @return a (possibly empty) list of product files
 	 */
-	@Query("select pf from ProductFile pf where product_file_name = ?1")
+	@NativeQuery("select pf from PRODUCT_FILE pf where pf.product_file_name = ?1")
 	public List<ProductFile> findByFileName(String fileName);
 
 }

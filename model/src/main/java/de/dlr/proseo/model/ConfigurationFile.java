@@ -7,7 +7,7 @@ package de.dlr.proseo.model;
 
 import java.util.Objects;
 
-import javax.persistence.Embeddable;
+import jakarta.persistence.Embeddable;
 
 /**
  * A processor configuration file

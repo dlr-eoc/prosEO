@@ -10,11 +10,13 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.Index;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+
+import jakarta.persistence.Column;
 
 /**
  * An Earth Observation mission.
@@ -65,7 +67,7 @@ public class Mission extends PersistentObject {
 	 *			"${T(java.time.format.DateTimeFormatter).ofPattern(\"uuuuMMdd'T'HHmmss\").withZone(T(java.time.ZoneId).of(\"UTC\")).format(generationTime)}.nc";
 	 * (based on the Sentinel-5P file naming convention)
 	 */
-	@org.hibernate.annotations.Type(type = "materialized_clob")
+	@Column(columnDefinition="CLOB")
 	private String productFileTemplate;
 	
 	/**

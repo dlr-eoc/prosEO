@@ -7,8 +7,8 @@ package de.dlr.proseo.notification.service;
 
 import java.util.Properties;
 
-import javax.mail.MessagingException;
-import javax.mail.internet.MimeMessage;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;

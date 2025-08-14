@@ -85,8 +85,8 @@ public class LoginManager {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled())
 				logger.trace("Caught HttpClientErrorException " + e.getMessage());
-			if (!(HttpStatus.NOT_FOUND.value() == e.getRawStatusCode())
-					&& !(HttpStatus.UNAUTHORIZED.value() == e.getRawStatusCode())) {
+			if (!(HttpStatus.NOT_FOUND.value() == e.getStatusCode().value())
+					&& !(HttpStatus.UNAUTHORIZED.value() == e.getStatusCode().value())) {
 				System.err.println(ProseoLogger.format(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage()));
 			}
 		} catch (RuntimeException e) {

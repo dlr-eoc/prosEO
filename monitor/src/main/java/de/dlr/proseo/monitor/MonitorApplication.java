@@ -19,8 +19,8 @@ import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Duration;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.monitor.microservice.MonServiceAggregation;

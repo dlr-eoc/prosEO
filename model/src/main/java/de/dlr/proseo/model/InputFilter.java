@@ -9,8 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
 
 /**
  * Filter conditions to apply to an order input product of a specific product class in addition to filter conditions contained in the

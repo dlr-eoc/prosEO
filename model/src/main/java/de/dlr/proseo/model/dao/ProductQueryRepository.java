@@ -8,6 +8,7 @@ package de.dlr.proseo.model.dao;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.data.jpa.repository.Query;
 
 import de.dlr.proseo.model.ProductQuery;
@@ -26,7 +27,7 @@ public interface ProductQueryRepository extends JpaRepository<ProductQuery, Long
 	 * @param productClassId the database id of the product class
 	 * @return a (possibly empty) list of unsatisfied product queries
 	 */
-	@Query("select pq from ProductQuery pq where requested_product_class_id = ?1 and is_satisfied = false")
+	@NativeQuery("select pq from Product_Query pq where requested_product_class_id = ?1 and is_satisfied = false")
 	public List<ProductQuery> findUnsatisfiedByProductClass(long productClassId);
 
 }

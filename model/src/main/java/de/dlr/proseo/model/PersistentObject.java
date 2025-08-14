@@ -7,9 +7,9 @@ package de.dlr.proseo.model;
 
 import java.util.Objects;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
 
 /**
  * Abstract superclass of all persistent classes

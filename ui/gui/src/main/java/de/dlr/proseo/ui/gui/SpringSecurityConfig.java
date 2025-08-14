@@ -48,13 +48,21 @@ public class SpringSecurityConfig {
 		// Configure HTTP security
 		http.addFilter(authenticationFilter)
 			.authenticationProvider(authenticationProvider)
-			.authorizeRequests(requests -> requests
-				.antMatchers("/static/**", "/fragments/**", "/background.jpg", "/customlogin", "/**/actuator/health")
+			.authorizeHttpRequests(requests -> requests
+				.requestMatchers("/static", "/fragments", "/background.jpg", "/customlogin", "/actuator/health")
 				.permitAll()
 				.anyRequest()
 				.authenticated())
-			.formLogin(login -> login.loginPage("/customlogin").failureUrl("/customlogin?error").permitAll())
-			.logout(logout -> logout.logoutUrl("/logout").logoutSuccessUrl("/customlogin?logout").permitAll())
+
+            .formLogin((form) -> form
+                .loginPage("/customlogin")
+                .defaultSuccessUrl("/dashboard", true)
+                .failureUrl("/customlogin?error=true")
+                .permitAll())
+			.logout(logout -> logout
+					.logoutUrl("/logout")
+					.logoutSuccessUrl("/customlogin?logout")
+					.permitAll())
 			.csrf(csrf -> csrf.disable());
 
 		return http.build();

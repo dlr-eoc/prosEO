@@ -75,18 +75,17 @@ public class IngestorSecurityConfig {
 	 */
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		String base = "/proseo/ingestor/v0.1";
         http.httpBasic(it -> {})
                 .authorizeHttpRequests(requests -> requests
-                        .antMatchers("/**/actuator/health")
+                        .requestMatchers("/actuator/health")
                         .permitAll()
-                        .antMatchers(HttpMethod.GET, "/**/products", "/**/products/*", "/**/products/*/*", "/**/products/*/*/*",
-                                "/**/ingest/*/*")
+                        .requestMatchers(HttpMethod.GET, base + "/products", base + "/products/**",
+                                base + "/ingest/**")
                         .hasAnyRole(UserRole.PRODUCT_READER.toString(), UserRole.PRODUCT_READER_RESTRICTED.toString(),
                                 UserRole.PRODUCT_READER_ALL.toString())
-                        .antMatchers(HttpMethod.POST, "/**/ingest/*")
+                        .requestMatchers(HttpMethod.POST, base + "/ingest/**")
                         .hasAnyRole(UserRole.PRODUCT_INGESTOR.toString())
-                        .antMatchers(HttpMethod.POST, "/**/ingest/*/*")
-                        .hasAnyRole(UserRole.PRODUCT_GENERATOR.toString())
                         .anyRequest()
                         .hasAnyRole(UserRole.PRODUCT_MGR.toString()))
                 .csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)

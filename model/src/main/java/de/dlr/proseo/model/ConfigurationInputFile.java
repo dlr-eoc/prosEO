@@ -7,8 +7,8 @@ package de.dlr.proseo.model;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
 
 /**
  * An additional input file for a processor configuration for inclusion in generated Job Order Files

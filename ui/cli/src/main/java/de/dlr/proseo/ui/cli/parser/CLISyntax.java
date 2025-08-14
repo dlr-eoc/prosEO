@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -259,7 +260,7 @@ public class CLISyntax {
 		// Parse YAML syntax file
 		InputStream input = CLISyntax.class.getClassLoader().getResourceAsStream(syntaxFileName);
 
-		Constructor syntaxConstructor = new Constructor(CLISyntax.class);
+		Constructor syntaxConstructor = new Constructor(CLISyntax.class, new LoaderOptions());
 		TypeDescription syntaxTypeDescription = new TypeDescription(CLISyntax.class);
 		syntaxTypeDescription.addPropertyParameters("globalOptions", CLIOption.class);
 		syntaxTypeDescription.addPropertyParameters("options", CLIOption.class);

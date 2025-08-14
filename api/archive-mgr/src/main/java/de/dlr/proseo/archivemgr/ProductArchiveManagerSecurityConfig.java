@@ -48,9 +48,9 @@ public class ProductArchiveManagerSecurityConfig {
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http.httpBasic(it -> {})
 			.authorizeHttpRequests(requests -> requests
-			.antMatchers("/**/actuator/health")
+			.requestMatchers("/actuator/health")
 			.permitAll()
-			.antMatchers(HttpMethod.GET)
+			.requestMatchers(HttpMethod.GET)
 			.hasAnyRole(UserRole.ARCHIVE_READER.toString())			
 			.anyRequest().hasAnyRole(UserRole.ARCHIVE_MGR.toString()))
 			.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
