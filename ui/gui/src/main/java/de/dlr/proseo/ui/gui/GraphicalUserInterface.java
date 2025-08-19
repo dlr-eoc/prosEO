@@ -22,7 +22,7 @@ import org.springframework.context.annotation.ComponentScan;
 @ComponentScan(basePackages = { "de.dlr.proseo.ui" })
 //@Configuration
 //@EnableAutoConfiguration
-@EnableConfigurationProperties
+//@EnableConfigurationProperties
 public class GraphicalUserInterface {
 
 	/**

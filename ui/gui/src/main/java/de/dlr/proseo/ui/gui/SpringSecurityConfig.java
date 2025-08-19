@@ -12,9 +12,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.RequestCacheConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 
 /**
  * Configuration class for Spring Security. Enables web security and provides customization for authentication and authorization.
@@ -30,6 +34,12 @@ public class SpringSecurityConfig {
 	@Autowired
 	private GUIAuthenticationProvider authenticationProvider;
 
+
+    @Bean
+    public SecurityContextRepository securityContextRepository() {
+        return new HttpSessionSecurityContextRepository();
+    }
+    
 	/**
 	 * Configures the HTTP security settings, including the authentication filter, URL permissions, login and logout pages, and CSRF
 	 * protection.
@@ -38,7 +48,7 @@ public class SpringSecurityConfig {
 	 * @throws Exception if an error occurs during configuration
 	 */
 	@Bean
-	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
 		// Create an instance of the custom authentication filter
 		SpringAuthenticationFilter authenticationFilter = new SpringAuthenticationFilter();
@@ -46,7 +56,11 @@ public class SpringSecurityConfig {
 		authenticationFilter.setFilterProcessesUrl("/customlogin");
 
 		// Configure HTTP security
-		http.addFilter(authenticationFilter)
+		http
+            .securityContext(context -> context.securityContextRepository(securityContextRepository()))
+            .requestCache(RequestCacheConfigurer::disable)
+
+		    .addFilter(authenticationFilter)
 			.authenticationProvider(authenticationProvider)
 			.authorizeHttpRequests(requests -> requests
 				.requestMatchers("/static", "/fragments", "/background.jpg", "/customlogin", "/actuator/health")
@@ -63,7 +77,9 @@ public class SpringSecurityConfig {
 					.logoutUrl("/logout")
 					.logoutSuccessUrl("/customlogin?logout")
 					.permitAll())
-			.csrf(csrf -> csrf.disable());
+			.csrf(csrf -> csrf.disable())
+			.headers().httpStrictTransportSecurity().disable()
+			;
 
 		return http.build();
 	}
@@ -78,4 +94,9 @@ public class SpringSecurityConfig {
 	AuthenticationManager authenticationManagerBean() throws Exception {
 		return new ProviderManager(Collections.singletonList(authenticationProvider));
 	}
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
+    }
 }
