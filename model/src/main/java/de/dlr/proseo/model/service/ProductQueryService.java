@@ -18,9 +18,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import jakarta.persistence.metamodel.Metamodel;
 
-import org.hibernate.metamodel.MappingMetamodel;
 import org.hibernate.metamodel.model.domain.internal.MappingMetamodelImpl;
-import org.hibernate.metamodel.spi.MetamodelImplementor;
 import org.hibernate.persister.entity.AbstractEntityPersister;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.property.access.spi.PropertyAccessException;
@@ -88,7 +86,7 @@ public class ProductQueryService {
 							if (logger.isTraceEnabled()) logger.trace("Skipping non-basic property {}", propertyNames[i]);
 						}
 					} catch (PropertyAccessException e) {
-						if (logger.isTraceEnabled()) logger.trace("Skipping non-basic property {}", propertyNames[i]);
+						if (logger.isTraceEnabled()) logger.trace("PropertyAccessException for property {}", propertyNames[i]);
 					}
 				}
 			} else {
