@@ -14,46 +14,30 @@ import jakarta.persistence.MappedSuperclass;
 /**
  * Abstract superclass of all persistent classes
  * 
+ * Updated for Spring Data 3.5 / Hibernate 6.6 as per https://docs.spring.io/spring-data/jpa/reference/jpa/entity-persistence.html
+ * 
  * @author Thomas Bassler
  */
 @MappedSuperclass
 abstract public class PersistentObject {
-	/** Next object id for assignment */
-	private static long nextId = System.currentTimeMillis(); // Seeded by the current time
 
 	/**
-	 * The persistent id of this object (an "assigned identifier" according to JPA).
+	 * The persistent id of this object
 	 */
 	@GeneratedValue
 	@Id
-	private long id;
+	private Long id;
 	
 	/**
 	 * A version identifier to track updates to the object (especially to detect concurrent update attempts), default 1.
 	 */
-	private int version = 1;
+	private Integer version = 1;
 	
-	/**
-	 * Get the next available object id
-	 * @return a unique object id
-	 */
-	private static synchronized long getNextId() {
-		return ++nextId;
-	}
-
-	/**
-	 * No-argument constructor that assigns the object id
-	 */
-	public PersistentObject() {
-		super();
-		id = getNextId();
-	}
-
 	/**
 	 * Set the id of the persistent object.
 	 * @param id the id to set
 	 */
-	public void setId(long id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 
@@ -61,7 +45,7 @@ abstract public class PersistentObject {
 	 * Gets the id of the persistent object
 	 * @return the object id
 	 */
-	public long getId() {
+	public Long getId() {
 		return this.id;
 	}
 
@@ -79,7 +63,7 @@ abstract public class PersistentObject {
 	public void incrementVersion() {
 		this.version++;
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */

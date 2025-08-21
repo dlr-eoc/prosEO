@@ -30,8 +30,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.client.WireMock;
-
 import de.dlr.proseo.ingestor.IngestorApplication;
 import de.dlr.proseo.ingestor.IngestorTestConfiguration;
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
@@ -220,7 +218,7 @@ public class ProductControllerTest {
 		testHeader.add(HttpHeaders.AUTHORIZATION, "Basic VVRNLXRlc3R1c2VyOnBhc3N3b3Jk");
 
 		ResponseEntity<List<RestProduct>> response = pci.getProducts(null, null, null, null, null, null, null, null,
-				null, null, null, null, null, null, testHeader);
+				null, null, null, false, null, null, testHeader);
 
 		assertEquals("Unexpected HTTP status code: ", HttpStatus.OK, response.getStatusCode());
 		assertEquals("Unexpected number of results: ", testProductData.length, response.getBody().size());

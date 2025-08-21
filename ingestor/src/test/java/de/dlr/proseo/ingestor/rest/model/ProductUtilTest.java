@@ -131,7 +131,7 @@ public class ProductUtilTest {
 			e.printStackTrace();
 			fail("Exception testing 'toRestProduct()' from model product");
 		}
-		assertEquals("Unexpected ID: ", modelProduct.getId(), restProduct.getId().longValue());
+		assertEquals("Unexpected ID: ", modelProduct.getId(), restProduct.getId());
 		assertEquals("Unexpected version: ", modelProduct.getVersion(), restProduct.getVersion().longValue());
 		assertEquals("Unexpected UUID: ", modelProduct.getUuid().toString(), restProduct.getUuid());
 		assertEquals("Unexpected mission code: ", modelProduct.getProductClass().getMission().getCode(),

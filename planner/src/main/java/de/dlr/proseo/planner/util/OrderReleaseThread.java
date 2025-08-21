@@ -98,6 +98,8 @@ public class OrderReleaseThread extends Thread {
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
+		this.resultMessage = answer;
+
 		if (order != null && productionPlanner != null && jobUtil != null) {
 			answer = new PlannerResultMessage(GeneralMessage.TRUE);
 			final long orderId = order.getId();

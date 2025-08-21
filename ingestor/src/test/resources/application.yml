@@ -11,10 +11,10 @@ spring:
         username: any       
         password: any
 management:
-  endpoints.web.exposure.include: "health,info"
+    endpoints.web.exposure.include: "health,info"
 logging:
-    file:
-        name: /proseo/log/proseo-ingestor.log
+    #file:
+    #    name: /proseo/log/proseo-ingestor.log
     level:
         root: INFO
         de.dlr.proseo: TRACE
