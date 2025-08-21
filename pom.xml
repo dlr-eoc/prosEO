@@ -34,8 +34,8 @@
 		<raml-plugin-version>2.0.5</raml-plugin-version>
 		<raml-output-path>target/generated-raml-mvc</raml-output-path>
 		<maven-site-plugin.version>3.12.1</maven-site-plugin.version>
-		<maven-javadoc-plugin.version>3.9.11</maven-javadoc-plugin.version>
-		<maven-project-info-reports-plugin.version>3.9.11</maven-project-info-reports-plugin.version>
+		<maven-javadoc-plugin.version>3.11.3</maven-javadoc-plugin.version>
+		<maven-project-info-reports-plugin.version>3.9.0</maven-project-info-reports-plugin.version>
 		<exec-maven-plugin.version>3.5.1</exec-maven-plugin.version>
 		<junit.version>4.13.2</junit.version>
 		<spring-boot-starter-test.version>3.5.4</spring-boot-starter-test.version> <!-- Not in parent POM! -->
