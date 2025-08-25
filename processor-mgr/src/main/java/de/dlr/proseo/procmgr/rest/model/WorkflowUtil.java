@@ -46,7 +46,7 @@ public class WorkflowUtil {
 
 		RestWorkflow restWorkflow = new RestWorkflow();
 
-		if (0 != modelWorkflow.getId()) {
+		if (null != modelWorkflow.getId() && 0 != modelWorkflow.getId()) {
 			restWorkflow.setId(modelWorkflow.getId());
 		}
 		if (0 != modelWorkflow.getVersion()) {
@@ -113,7 +113,7 @@ public class WorkflowUtil {
 						restOption.getValueRange().add(str);
 					}
 				}
-				if (0 != option.getId()) {
+				if (null != option.getId() && 0 != option.getId()) {
 					restOption.setId(option.getId());
 				}
 				if (0 != option.getVersion()) {
@@ -200,7 +200,7 @@ public class WorkflowUtil {
 
 		Workflow modelWorkflow = new Workflow();
 
-		if (null != restWorkflow.getId()) {
+		if (null != restWorkflow.getId() && 0 != restWorkflow.getId()) {
 			modelWorkflow.setId(restWorkflow.getId());
 		}
 		if (null != restWorkflow.getVersion() && 0 != restWorkflow.getVersion()) {
