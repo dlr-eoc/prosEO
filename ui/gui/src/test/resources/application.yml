@@ -8,7 +8,8 @@ spring:
         username: any       
         password: any
 logging:
-    file: /proseo/log/proseo-ui-gui.log
+    #file:
+    #    name: /proseo/log/proseo-ui-gui.log
     level:
         root: INFO
         de.dlr.proseo: TRACE
@@ -32,6 +33,8 @@ proseo:
         url: http://proseo-facility-mgr:8080/proseo/facility-mgr/v0.1
     archiveManager:
         url: http://proseo-archive-mgr:8080/proseo/archive-mgr/v0.1
+    grafana:
+        url: http://localhost:3000/
     
     # Connection timeout for asynchronous requests in ms
     gui.timeout: 240000

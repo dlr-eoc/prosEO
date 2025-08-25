@@ -14,11 +14,11 @@ spring:
 management:
     endpoints.web.exposure.include: "health,info"
 logging:
+    #file: 
+    #    name: /proseo/log/proseo-productclass-mgr.log
     level:
         root: INFO
-        de:
-            dlr:
-                proseo: TRACE
+        de.dlr.proseo: TRACE
 proseo:
     user:
         name: sysadm
