@@ -540,6 +540,7 @@ public class ProductIngestor {
 
 		// Create the database product file
 		ProductFile modelProductFile = ProductFileUtil.toModelProductFile(productFile);
+		modelProductFile.setId(null); // Ensure object is marked as new
 		modelProductFile.setProcessingFacility(facility);
 		modelProductFile.setProduct(product.get());
 		modelProductFile = RepositoryService.getProductFileRepository().save(modelProductFile);

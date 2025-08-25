@@ -24,6 +24,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import de.dlr.proseo.logging.logger.ProseoLogger;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -50,18 +53,27 @@ public class IngestorTest {
 	@LocalServerPort
 	private int port;
 
+	/** A logger for this class */
+	private static ProseoLogger logger = new ProseoLogger(IngestorTest.class);
+	
 	@Test
 	public void testHomeIsSecure() throws Exception {
+		logger.trace(">>> testHomeIsSecure()");
+
 		@SuppressWarnings("rawtypes")
 		ResponseEntity<Map> entity = new TestRestTemplate().getForEntity(
 				"http://localhost:" + this.port, Map.class);
 		assertEquals(HttpStatus.UNAUTHORIZED, entity.getStatusCode());
 		assertFalse("Wrong headers: " + entity.getHeaders(), entity.getHeaders()
 				.containsKey("Set-Cookie"));
+
+		logger.trace("<<< testHomeIsSecure()");
 	}
 
 	@Test
 	public void testMetricsIsSecure() throws Exception {
+		logger.trace(">>> testMetricsIsSecure()");
+
 		@SuppressWarnings("rawtypes")
 		ResponseEntity<Map> entity = new TestRestTemplate().getForEntity(
 				"http://localhost:" + this.port + "/metrics", Map.class);
@@ -75,38 +87,54 @@ public class IngestorTest {
 		entity = new TestRestTemplate().getForEntity("http://localhost:" + this.port
 				+ "/metrics.json", Map.class);
 		assertEquals(HttpStatus.UNAUTHORIZED, entity.getStatusCode());
+
+		logger.trace("<<< testMetricsIsSecure()");
 	}
 
 	@Test
 	public void testInfo() throws Exception {
+		logger.trace(">>> testInfo()");
+
 		ResponseEntity<String> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.getForEntity("http://localhost:" + this.port + "/actuator/info", String.class);
 		assertEquals(HttpStatus.OK, entity.getStatusCode());
 		assertTrue("Wrong body: " + entity.getBody(),
 				entity.getBody().equals("{}"));
+
+		logger.trace("<<< testInfo()");
 	}
 
 	@Test
 	public void testHealth() throws Exception {
+		logger.trace(">>> testHealth()");
+
 		ResponseEntity<String> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.getForEntity("http://localhost:" + this.port + "/actuator/health", String.class);
 		assertEquals(HttpStatus.OK, entity.getStatusCode());
 		assertTrue("Wrong body: " + entity.getBody(),
 				entity.getBody().contains("\"status\":\"UP\""));
+
+		logger.trace("<<< testHealth()");
 	}
 
 	@Test
 	public void testErrorPage() throws Exception {
+		logger.trace(">>> testErrorPage()");
+
 		ResponseEntity<String> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.getForEntity("http://localhost:" + this.port + "/foo", String.class);
 		assertEquals(HttpStatus.NOT_FOUND, entity.getStatusCode());
 		String body = entity.getBody();
 		assertNotNull(body);
 		assertTrue("Wrong body: " + body, body.contains("Not Found"));
+
+		logger.trace("<<< testErrorPage()");
 	}
 
 	@Test
 	public void testHtmlErrorPage() throws Exception {
+		logger.trace(">>> testHtmlErrorPage()");
+
 		HttpHeaders headers = new HttpHeaders();
 		headers.setAccept(Arrays.asList(MediaType.TEXT_HTML));
 		HttpEntity<?> request = new HttpEntity<Void>(headers);
@@ -118,6 +146,8 @@ public class IngestorTest {
 		assertNotNull("Body was null", body);
 		assertTrue("Wrong body: " + body,
 				body.contains("This application has no explicit mapping for /error"));
+
+		logger.trace("<<< testHtmlErrorPage()");
 	}
 
 }

@@ -101,7 +101,7 @@ public class OrderUtilTest {
 		// Copy a model order to rest order
 		modelOrder = createOrder(testOrderData[0]);
 		restOrder = OrderUtil.toRestOrder(modelOrder);
-		assertEquals("Unexpected ID: ", modelOrder.getId(), restOrder.getId().longValue());
+		assertEquals("Unexpected ID: ", modelOrder.getId().longValue(), restOrder.getId().longValue());
 		assertEquals("Unexpected Mission code: ", modelOrder.getMission().getCode(), restOrder.getMissionCode());
 		assertEquals("Unexpected Identifier: ", modelOrder.getIdentifier(), restOrder.getIdentifier());
 		assertEquals("Unexpected UUID: ", modelOrder.getUuid().toString(), restOrder.getUuid());

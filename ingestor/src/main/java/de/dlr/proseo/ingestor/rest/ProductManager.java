@@ -415,6 +415,7 @@ public class ProductManager {
 
 		// Create a database model product
 		Product modelProduct = ProductUtil.toModelProduct(product);
+		modelProduct.setId(null); // Mark the product object as new
 
 		if (null == modelProduct.getUuid()) {
 			modelProduct.setUuid(UUID.randomUUID());
