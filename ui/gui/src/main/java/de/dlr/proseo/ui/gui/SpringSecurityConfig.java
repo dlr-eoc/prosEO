@@ -12,13 +12,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.RequestCacheConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.security.web.context.SecurityContextRepository;
 
 /**
  * Configuration class for Spring Security. Enables web security and provides customization for authentication and authorization.
@@ -31,13 +28,16 @@ import org.springframework.security.web.context.SecurityContextRepository;
 public class SpringSecurityConfig {
 
 	/** The GUI authentication provider */
-	@Autowired
-	private GUIAuthenticationProvider authenticationProvider;
+	 @Autowired
+	 private GUIAuthenticationProvider authenticationProvider;
 
 
     @Bean
-    public SecurityContextRepository securityContextRepository() {
-        return new HttpSessionSecurityContextRepository();
+    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+      AuthenticationManagerBuilder authenticationManagerBuilder =
+          http.getSharedObject(AuthenticationManagerBuilder.class);
+      authenticationManagerBuilder.authenticationProvider(authenticationProvider);
+      return authenticationManagerBuilder.build();
     }
     
 	/**
@@ -48,20 +48,11 @@ public class SpringSecurityConfig {
 	 * @throws Exception if an error occurs during configuration
 	 */
 	@Bean
-	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
-		// Create an instance of the custom authentication filter
-		SpringAuthenticationFilter authenticationFilter = new SpringAuthenticationFilter();
-		authenticationFilter.setAuthenticationManager(authenticationManagerBean());
-		authenticationFilter.setFilterProcessesUrl("/customlogin");
+	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
 		// Configure HTTP security
-		http
-            .securityContext(context -> context.securityContextRepository(securityContextRepository()))
-            .requestCache(RequestCacheConfigurer::disable)
-
-		    .addFilter(authenticationFilter)
-			.authenticationProvider(authenticationProvider)
+		http // .addFilter(authenticationFilter)
+			// .authenticationProvider(authenticationProvider)
 			.authorizeHttpRequests(requests -> requests
 				.requestMatchers("/static", "/fragments", "/background.jpg", "/customlogin", "/actuator/health")
 				.permitAll()
@@ -77,9 +68,7 @@ public class SpringSecurityConfig {
 					.logoutUrl("/logout")
 					.logoutSuccessUrl("/customlogin?logout")
 					.permitAll())
-			.csrf(csrf -> csrf.disable())
-			.headers().httpStrictTransportSecurity().disable()
-			;
+			.csrf(csrf -> csrf.disable());
 
 		return http.build();
 	}
@@ -90,13 +79,14 @@ public class SpringSecurityConfig {
 	 * @return An instance of AuthenticationManager configured with the GUIAuthenticationProvider.
 	 * @throws Exception if an error occurs during the instantiation of AuthenticationManager.
 	 */
+
 	@Bean
 	AuthenticationManager authenticationManagerBean() throws Exception {
 		return new ProviderManager(Collections.singletonList(authenticationProvider));
 	}
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-        return configuration.getAuthenticationManager();
-    }
-}
+// 	@Bean
+//    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+//        return configuration.getAuthenticationManager();
+//    }
+ }

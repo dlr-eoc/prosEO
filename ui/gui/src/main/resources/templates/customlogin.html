@@ -53,9 +53,11 @@
             You have been logged out.
          </div>
          
+         <input type="hidden" id="username" name="username" required>
+         
          <div style="margin-bottom: 10px;">
-            <label for="username" style="display: inline-block; width: 100px;"><span th:text="#{username}"></label>
-            <input type="text" id="username" name="username" required>
+            <label for="userN" style="display: inline-block; width: 100px;"><span th:text="#{username}"></label>
+            <input type="text" id="userN" name="userN" required>
          </div>
          
          <div style="margin-bottom: 10px;">
@@ -77,5 +79,17 @@
       <p><span th:text="#{proseo}"></span> - <span th:text="#{missioncontrol}"></span> - <span th:text="#{version}"></span> <span th:text="${proseoversion}"></span> - <span th:text="#{copyright}"></span></p>	
 
    </body>
-   
+   <script type="text/javascript"> 
+			window.onload = function () {
+			    document.getElementById('userN').addEventListener('change', updateUserMission);
+			    document.getElementById('mission').addEventListener('change', updateUserMission);
+			}
+	    function updateUserMission() {
+	          var userN = document.getElementById('userN');
+	          var username = document.getElementById('username');
+	          var mission = document.getElementById('mission');
+	          var name = mission.options[mission.selectedIndex].value +'/' + userN.value;
+	          username.value = name;
+	    }
+	  </script>
 </html>

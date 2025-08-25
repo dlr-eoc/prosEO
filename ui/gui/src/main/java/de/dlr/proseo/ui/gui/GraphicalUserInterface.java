@@ -7,7 +7,6 @@ package de.dlr.proseo.ui.gui;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
 
 /**
@@ -20,9 +19,6 @@ import org.springframework.context.annotation.ComponentScan;
 //@EnableAutoConfiguration
 //@EnableConfigurationProperties
 @ComponentScan(basePackages = { "de.dlr.proseo.ui" })
-//@Configuration
-//@EnableAutoConfiguration
-//@EnableConfigurationProperties
 public class GraphicalUserInterface {
 
 	/**
