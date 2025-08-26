@@ -59,12 +59,14 @@ public class OrdermgrSecurityConfig {
 			.hasAnyRole(UserRole.ROOT.toString())
 			.requestMatchers(base + "/missions")
 			.hasAnyRole(UserRole.MISSION_MGR.toString())
-
-			.requestMatchers(HttpMethod.GET, base + "/orders")
+			
+			.requestMatchers(HttpMethod.GET, base + "/orderjobstepsofstates/**")
 			.hasAnyRole(UserRole.ORDER_READER.toString())
-			.requestMatchers(HttpMethod.PATCH, base + "/orders/*")
+			.requestMatchers(HttpMethod.GET, base + "/orders/**")
+			.hasAnyRole(UserRole.ORDER_READER.toString())
+			.requestMatchers(HttpMethod.PATCH, base + "/orders/**")
 			.hasAnyRole(UserRole.ORDER_MGR.toString(), UserRole.ORDER_APPROVER.toString(), UserRole.ORDER_PLANNER.toString())
-			.requestMatchers(HttpMethod.DELETE, base + "/orders/*")
+			.requestMatchers(HttpMethod.DELETE, base + "/orders/**")
 			.hasAnyRole(UserRole.ORDER_MGR.toString())
 			.requestMatchers(base + "/orders")
 			.hasAnyRole(UserRole.ORDER_MGR.toString())
