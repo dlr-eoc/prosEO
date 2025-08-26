@@ -59,8 +59,12 @@ public class OrdermgrSecurityConfig {
 			.hasAnyRole(UserRole.ROOT.toString())
 			.requestMatchers(base + "/missions")
 			.hasAnyRole(UserRole.MISSION_MGR.toString())
-			
+
 			.requestMatchers(HttpMethod.GET, base + "/orderjobstepsofstates/**")
+			.hasAnyRole(UserRole.ORDER_READER.toString())
+			.requestMatchers(HttpMethod.GET, base + "/orderjobsteps/**")
+			.hasAnyRole(UserRole.ORDER_READER.toString())
+			.requestMatchers(HttpMethod.GET, base + "/orderjobs/**")
 			.hasAnyRole(UserRole.ORDER_READER.toString())
 			.requestMatchers(HttpMethod.GET, base + "/orders/**")
 			.hasAnyRole(UserRole.ORDER_READER.toString())
@@ -71,9 +75,9 @@ public class OrdermgrSecurityConfig {
 			.requestMatchers(base + "/orders")
 			.hasAnyRole(UserRole.ORDER_MGR.toString())
 
-			.requestMatchers(HttpMethod.GET, base + "/orbits")
+			.requestMatchers(HttpMethod.GET, base + "/orbits/**")
 			.hasAnyRole(UserRole.MISSION_READER.toString())
-			.requestMatchers(base + "/orbits")
+			.requestMatchers(base + "/orbits/**")
 			.hasAnyRole(UserRole.MISSION_MGR.toString()))
 			.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
 		return http.build();
