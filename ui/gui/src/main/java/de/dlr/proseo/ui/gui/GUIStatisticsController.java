@@ -54,7 +54,7 @@ public class GUIStatisticsController extends GUIBaseController {
 	 */
 	@GetMapping("/")
 	public String index(Model model) {
-		return "proseo-home";
+		return "dashboard";
 	}
 
 	/**
