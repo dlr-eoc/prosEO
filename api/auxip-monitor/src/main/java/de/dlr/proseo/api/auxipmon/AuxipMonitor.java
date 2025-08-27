@@ -139,7 +139,7 @@ public class AuxipMonitor extends BaseMonitor {
 	private static ProseoLogger logger = new ProseoLogger(AuxipMonitor.class);
 
 	// maximum number of retries to transfer a file
-	private static final int MAX_RETRY = 5;
+	private static final int MAX_RETRY = 40;
 	// Wait interval in ms before retrying database operation
 	public static final int AUXIP_WAIT = 1000;
 	
@@ -295,7 +295,9 @@ public class AuxipMonitor extends BaseMonitor {
 		oldLogger.info("Max. transfer sessions . . : " + this.getMaxDownloadThreads());
 		oldLogger.info("Transfer session wait time : " + this.getTaskWaitInterval());
 		oldLogger.info("Max. session wait cycles . : " + this.getMaxWaitCycles());
-
+		
+		oldLogger.info("Maximum number of retries  : " + MAX_RETRY);
+		oldLogger.info("AUXIP wait interval in ms  : " + AUXIP_WAIT);
 	}
 
 	/**
