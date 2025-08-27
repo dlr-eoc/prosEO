@@ -85,10 +85,7 @@ public class ProcessorClassManagerTest {
 	 */
 	@After
 	public void tearDown() throws Exception {
-		logger.trace(">>> Starting to delete test data in database");
-		RepositoryService.getProcessorClassRepository().deleteAll();
-		RepositoryService.getMissionRepository().deleteAll();
-		logger.trace("<<< Finished deleting test data in database");
+		// Nothing to do, test data will be deleted by automatic rollback of test transaction
 	}
 
 	/**

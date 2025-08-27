@@ -25,7 +25,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.Configuration;
@@ -91,6 +94,10 @@ public class ConfiguredProcessorControllerTest {
 			// identifier
 			"KNMI L2 01.03.02 2019-03-30", "KNMI L3 01.03.02 2019-04-27" };
 
+	/** Database transaction manager */
+	@Autowired
+	private PlatformTransactionManager txManager;
+
 	/**
 	 *
 	 * Create a test mission, a test spacecraft and test orders in the database.
@@ -99,11 +106,6 @@ public class ConfiguredProcessorControllerTest {
 	 */
 	@Before
 	public void setUp() throws Exception {
-		logger.trace(">>> Starting to create test data in the database");
-
-		fillDatabase();
-
-		logger.trace("<<< Finished creating test data in database");
 	}
 
 	/**
@@ -114,13 +116,6 @@ public class ConfiguredProcessorControllerTest {
 	 */
 	@After
 	public void tearDown() throws Exception {
-		logger.trace(">>> Starting to delete test data in database");
-		RepositoryService.getConfiguredProcessorRepository().deleteAll();
-		RepositoryService.getConfigurationRepository().deleteAll();
-		RepositoryService.getProcessorRepository().deleteAll();
-		RepositoryService.getProcessorClassRepository().deleteAll();
-		RepositoryService.getMissionRepository().deleteAll();
-		logger.trace("<<< Finished deleting test data in database");
 	}
 
 	/**
@@ -129,7 +124,7 @@ public class ConfiguredProcessorControllerTest {
 	 * @param mission the mission to be referenced by the data filled in the
 	 *                database
 	 */
-	private static void fillDatabase() {
+	private void fillDatabase() {
 		logger.trace("... creating testMission {}", testMissionData[0]);
 		Mission testMission = new Mission();
 		testMission.setCode(testMissionData[0]);
@@ -175,11 +170,11 @@ public class ConfiguredProcessorControllerTest {
 		configFile0.setFileVersion(testConfigurationFiles[0][0]);
 		configuration0.getConfigurationFiles().add(configFile0);
 
-		ConfigurationInputFile configInputFile = new ConfigurationInputFile();
-		configInputFile.setFileType(testStaticInputFile[0]);
-		configInputFile.setFileNameType(testStaticInputFile[1]);
-		configInputFile.getFileNames().add(testStaticInputFile[2]);
-		configuration0.getStaticInputFiles().add(configInputFile);
+		ConfigurationInputFile configInputFile0 = new ConfigurationInputFile();
+		configInputFile0.setFileType(testStaticInputFile[0]);
+		configInputFile0.setFileNameType(testStaticInputFile[1]);
+		configInputFile0.getFileNames().add(testStaticInputFile[2]);
+		configuration0.getStaticInputFiles().add(configInputFile0);
 
 		configuration0.getConfiguredProcessors().add(RepositoryService.getConfiguredProcessorRepository()
 				.findByMissionCodeAndIdentifier(testMissionData[0], testConfiguredProcessors[0]));
@@ -200,7 +195,12 @@ public class ConfiguredProcessorControllerTest {
 		configFile1.setFileVersion(testConfigurationFiles[1][0]);
 		configuration1.getConfigurationFiles().add(configFile1);
 
-		configuration1.getStaticInputFiles().add(configInputFile);
+		ConfigurationInputFile configInputFile1 = new ConfigurationInputFile();
+		configInputFile1.setFileType(testStaticInputFile[0]);
+		configInputFile1.setFileNameType(testStaticInputFile[1]);
+		configInputFile1.getFileNames().add(testStaticInputFile[2]);
+		configuration1.getStaticInputFiles().add(configInputFile1);
+		
 		configuration1.getConfiguredProcessors().add(RepositoryService.getConfiguredProcessorRepository()
 				.findByMissionCodeAndIdentifier(testMissionData[0], testConfiguredProcessors[1]));
 		configuration1.getDockerRunParameters().put(testDockerRunParameter[0], testDockerRunParameter[1]);
@@ -232,16 +232,28 @@ public class ConfiguredProcessorControllerTest {
 	public final void testCreateConfiguredProcessor() {
 		logger.trace(">>> testCreateConfiguredProcessor()");
 
-		// retrieve and delete the test configuredProcessor from the database
-		RestConfiguredProcessor toBeCreated = ConfiguredProcessorUtil
-				.toRestConfiguredProcessor(RepositoryService.getConfiguredProcessorRepository().findAll().get(0));
-		RepositoryService.getConfiguredProcessorRepository().deleteById(toBeCreated.getId());
+		fillDatabase();
+		
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
-		// testing configuredProcessor creation with the configuredProcessor controller
-		ResponseEntity<RestConfiguredProcessor> created = cci.createConfiguredProcessor(toBeCreated);
-		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, created.getStatusCode());
-		assertEquals("Error during configuredProcessor creation.", toBeCreated.getProcessorName(),
-				created.getBody().getProcessorName());
+		transactionTemplate.execute(status -> {
+			// retrieve and delete the test configuredProcessor from the
+			// database
+			RestConfiguredProcessor toBeCreated = ConfiguredProcessorUtil
+					.toRestConfiguredProcessor(RepositoryService.getConfiguredProcessorRepository().findAll().get(0));
+			RepositoryService.getConfiguredProcessorRepository().deleteById(toBeCreated.getId());
+
+			// testing configuredProcessor creation with the configuredProcessor
+			// controller
+			toBeCreated.setId(null);
+			ResponseEntity<RestConfiguredProcessor> created = cci.createConfiguredProcessor(toBeCreated);
+			assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, created.getStatusCode());
+			assertEquals("Error during configuredProcessor creation.", toBeCreated.getProcessorName(),
+					created.getBody().getProcessorName());
+
+			return true;
+		});
 	}
 
 	/**
@@ -251,6 +263,8 @@ public class ConfiguredProcessorControllerTest {
 	@Test
 	public final void testCountConfiguredProcessors() {
 		logger.trace(">>> testCountConfiguredProcessors()");
+		
+		fillDatabase();
 
 		// count all configuredProcessors from the database, as all were created with
 		// the
@@ -275,6 +289,8 @@ public class ConfiguredProcessorControllerTest {
 	@Test
 	public final void testGetConfiguredProcessors() {
 		logger.trace(">>> testGetConfiguredProcessors()");
+
+		fillDatabase();
 
 		// retrieve all configuredProcessors from the database, as all were created with
 		// the
@@ -302,6 +318,8 @@ public class ConfiguredProcessorControllerTest {
 	public final void testGetConfiguredProcessorById() {
 		logger.trace(">>> testGetConfiguredProcessorById()");
 
+		fillDatabase();
+
 		// retrieve a test configuredProcessor from the database
 		ConfiguredProcessor expectedConfiguredProcessor = RepositoryService.getConfiguredProcessorRepository().findAll()
 				.get(0);
@@ -326,6 +344,8 @@ public class ConfiguredProcessorControllerTest {
 	public final void testDeleteConfiguredProcessorById() {
 		logger.trace(">>> testDeleteConfiguredProcessorById()");
 
+		fillDatabase();
+
 		// chose one configuredProcessor from the database for deletion
 		ConfiguredProcessor toBeDeleted = RepositoryService.getConfiguredProcessorRepository().findAll().get(0);
 
@@ -345,6 +365,8 @@ public class ConfiguredProcessorControllerTest {
 	@Test
 	public final void testModifyConfiguredProcessor() {
 		logger.trace(">>> testModifyConfiguredProcessor()");
+
+		fillDatabase();
 
 		ConfiguredProcessor inRepository = RepositoryService.getConfiguredProcessorRepository()
 				.findAll().get(0);

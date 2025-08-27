@@ -24,7 +24,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.Mission;
@@ -53,7 +56,7 @@ public class ProcessorClassControllerTest {
 
 	/** The ProcessorClassControllerImpl under test */
 	@Autowired
-	private ProcessorClassControllerImpl pci;
+	private ProcessorClassControllerImpl pcci;
 
 	/** A REST template builder for this class */
 	@MockBean
@@ -66,6 +69,10 @@ public class ProcessorClassControllerTest {
 	private static String[] testProcessorClassData =
 			// name, version
 			{ "KNMI L2", "DLR L2 (upas)" };
+
+	/** Database transaction manager */
+	@Autowired
+	private PlatformTransactionManager txManager;
 
 	/**
 	 *
@@ -90,10 +97,7 @@ public class ProcessorClassControllerTest {
 	 */
 	@After
 	public void tearDown() throws Exception {
-		logger.trace(">>> Starting to delete test data in database");
-		RepositoryService.getProcessorClassRepository().deleteAll();
-		RepositoryService.getMissionRepository().deleteAll();
-		logger.trace("<<< Finished deleting test data in database");
+		// Nothing to do, test data will be deleted by automatic rollback of test transaction
 	}
 
 	/**
@@ -138,16 +142,23 @@ public class ProcessorClassControllerTest {
 	public final void testCreateProcessorClass() {
 		logger.trace(">>> testCreateProcessorClass()");
 
-		// retrieve and delete the test processorClass from the database
-		RestProcessorClass toBeCreated = ProcessorClassUtil
-				.toRestProcessorClass(RepositoryService.getProcessorClassRepository().findAll().get(0));
-		RepositoryService.getProcessorClassRepository().deleteById(toBeCreated.getId());
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
-		// testing processorClass creation with the processorClass controller
-		ResponseEntity<RestProcessorClass> created = pci.createProcessorClass(toBeCreated);
-		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, created.getStatusCode());
-		assertEquals("Error during processorClass creation.", toBeCreated.getProcessorName(),
-				created.getBody().getProcessorName());
+		transactionTemplate.execute(status -> {
+			// retrieve and delete the test processorClass from the database
+			RestProcessorClass toBeCreated = ProcessorClassUtil
+					.toRestProcessorClass(RepositoryService.getProcessorClassRepository().findAll().get(0));
+			RepositoryService.getProcessorClassRepository().deleteById(toBeCreated.getId());
+
+			// testing processorClass creation with the processorClass controller
+			toBeCreated.setId(null);
+			ResponseEntity<RestProcessorClass> created = pcci.createProcessorClass(toBeCreated);
+			assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, created.getStatusCode());
+			assertEquals("Error during processorClass creation.", toBeCreated.getProcessorName(), created.getBody().getProcessorName());
+
+			return true;
+		});
 	}
 
 	/**
@@ -164,7 +175,7 @@ public class ProcessorClassControllerTest {
 
 		// count all processorClasss with the same mission as the test processorClasss
 		// from the database via the processorClass controller
-		ResponseEntity<String> retrievedProcessorClasss = pci.countProcessorClasses(testMissionData[0], null, null, null);
+		ResponseEntity<String> retrievedProcessorClasss = pcci.countProcessorClasses(testMissionData[0], null, null, null);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedProcessorClasss.getStatusCode());
 		assertTrue("Wrong number of processorClasss retrieved.",
 				Integer.toUnsignedString(expectedProcessorClasss.size()).equals(retrievedProcessorClasss.getBody()));
@@ -187,7 +198,7 @@ public class ProcessorClassControllerTest {
 		// processorClasss
 		// from the
 		// database via the processorClass controller
-		ResponseEntity<List<RestProcessorClass>> retrievedProcessorClasss = pci.getProcessorClasses(testMissionData[0],
+		ResponseEntity<List<RestProcessorClass>> retrievedProcessorClasss = pcci.getProcessorClasses(testMissionData[0],
 				null, null, null, null, null, null);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedProcessorClasss.getStatusCode());
 		assertTrue("Wrong number of processorClasss retrieved.",
@@ -208,7 +219,7 @@ public class ProcessorClassControllerTest {
 		// retrieve a processorClass with the processorClass controller by using the id
 		// from the
 		// test processorClass
-		ResponseEntity<RestProcessorClass> retrievedProcessorClass = pci
+		ResponseEntity<RestProcessorClass> retrievedProcessorClass = pcci
 				.getProcessorClassById(expectedProcessorClass.getId());
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedProcessorClass.getStatusCode());
 		assertTrue("Wrong processorClass retrieved.",
@@ -227,7 +238,7 @@ public class ProcessorClassControllerTest {
 		ProcessorClass toBeDeleted = RepositoryService.getProcessorClassRepository().findAll().get(0);
 
 		// delete the chosen processor class via the processor class controller
-		ResponseEntity<?> entity = pci.deleteProcessorClassById(toBeDeleted.getId());
+		ResponseEntity<?> entity = pcci.deleteProcessorClassById(toBeDeleted.getId());
 		assertEquals("Wrong HTTP status: ", HttpStatus.NO_CONTENT, entity.getStatusCode());
 
 		// assert that the processor class was deleted
@@ -248,7 +259,7 @@ public class ProcessorClassControllerTest {
 		String oldName = toBeModified.getProcessorName();
 		toBeModified.setProcessorName("newName");
 
-		ResponseEntity<RestProcessorClass> entity = pci.modifyProcessorClass(toBeModified.getId(), toBeModified);
+		ResponseEntity<RestProcessorClass> entity = pcci.modifyProcessorClass(toBeModified.getId(), toBeModified);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, entity.getStatusCode());
 		assertTrue("Modification unsuccessfull", toBeModified.getVersion() + 1 == entity.getBody().getVersion());
 		assertNotEquals("Modification unsuccessfull", oldName, entity.getBody().getProcessorName());

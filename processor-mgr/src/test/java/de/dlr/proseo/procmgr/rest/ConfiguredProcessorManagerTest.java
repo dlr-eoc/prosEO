@@ -96,11 +96,6 @@ public class ConfiguredProcessorManagerTest {
 	 */
 	@Before
 	public void setUp() throws Exception {
-		logger.trace(">>> Starting to create test data in the database");
-
-		fillDatabase();
-
-		logger.trace("<<< Finished creating test data in database");
 	}
 
 	/**
@@ -111,13 +106,6 @@ public class ConfiguredProcessorManagerTest {
 	 */
 	@After
 	public void tearDown() throws Exception {
-		logger.trace(">>> Starting to delete test data in database");
-		RepositoryService.getConfiguredProcessorRepository().deleteAll();
-		RepositoryService.getConfigurationRepository().deleteAll();
-		RepositoryService.getProcessorRepository().deleteAll();
-		RepositoryService.getProcessorClassRepository().deleteAll();
-		RepositoryService.getMissionRepository().deleteAll();
-		logger.trace("<<< Finished deleting test data in database");
 	}
 
 	/**
@@ -126,7 +114,7 @@ public class ConfiguredProcessorManagerTest {
 	 * @param mission the mission to be referenced by the data filled in the
 	 *                database
 	 */
-	private static void fillDatabase() {
+	private void fillDatabase() {
 		logger.trace("... creating testMission {}", testMissionData[0]);
 		Mission testMission = new Mission();
 		testMission.setCode(testMissionData[0]);
@@ -172,11 +160,11 @@ public class ConfiguredProcessorManagerTest {
 		configFile0.setFileVersion(testConfigurationFiles[0][0]);
 		configuration0.getConfigurationFiles().add(configFile0);
 
-		ConfigurationInputFile configInputFile = new ConfigurationInputFile();
-		configInputFile.setFileType(testStaticInputFile[0]);
-		configInputFile.setFileNameType(testStaticInputFile[1]);
-		configInputFile.getFileNames().add(testStaticInputFile[2]);
-		configuration0.getStaticInputFiles().add(configInputFile);
+		ConfigurationInputFile configInputFile0 = new ConfigurationInputFile();
+		configInputFile0.setFileType(testStaticInputFile[0]);
+		configInputFile0.setFileNameType(testStaticInputFile[1]);
+		configInputFile0.getFileNames().add(testStaticInputFile[2]);
+		configuration0.getStaticInputFiles().add(configInputFile0);
 
 		configuration0.getConfiguredProcessors().add(RepositoryService.getConfiguredProcessorRepository()
 				.findByMissionCodeAndIdentifier(testMissionData[0], testConfiguredProcessors[0]));
@@ -197,7 +185,12 @@ public class ConfiguredProcessorManagerTest {
 		configFile1.setFileVersion(testConfigurationFiles[1][0]);
 		configuration1.getConfigurationFiles().add(configFile1);
 
-		configuration1.getStaticInputFiles().add(configInputFile);
+		ConfigurationInputFile configInputFile1 = new ConfigurationInputFile();
+		configInputFile1.setFileType(testStaticInputFile[0]);
+		configInputFile1.setFileNameType(testStaticInputFile[1]);
+		configInputFile1.getFileNames().add(testStaticInputFile[2]);
+		configuration1.getStaticInputFiles().add(configInputFile1);
+		
 		configuration1.getConfiguredProcessors().add(RepositoryService.getConfiguredProcessorRepository()
 				.findByMissionCodeAndIdentifier(testMissionData[0], testConfiguredProcessors[1]));
 		configuration1.getDockerRunParameters().put(testDockerRunParameter[0], testDockerRunParameter[1]);
@@ -229,6 +222,8 @@ public class ConfiguredProcessorManagerTest {
 	public final void testCountConfiguredProcessors() {
 		logger.trace(">>> testCountConfiguredProcessors()");
 
+		fillDatabase();
+
 		// Count configuredProcessors and assert success.
 		assertEquals("Wrong configuredProcessor count.", "2",
 				configuredProcessorMgr.countConfiguredProcessors("UTM", null, null, null, null, null, null));
@@ -247,6 +242,9 @@ public class ConfiguredProcessorManagerTest {
 	@Test
 	public final void testCreateConfiguredProcessor() {
 		logger.trace(">>> testCreateConfiguredProcessor()");
+		
+		fillDatabase();
+
 		// TODO implement method
 	}
 
@@ -257,6 +255,8 @@ public class ConfiguredProcessorManagerTest {
 	@Test
 	public final void testDeleteConfiguredProcessorById() {
 		logger.trace(">>> testDeleteConfiguredProcessorById()");
+
+		fillDatabase();
 
 		// Get a test configuredProcessor to delete.
 		ConfiguredProcessor testConfiguredProcessor = RepositoryService.getConfiguredProcessorRepository().findAll()
@@ -278,6 +278,8 @@ public class ConfiguredProcessorManagerTest {
 	public final void testGetConfiguredProcessorById() {
 		logger.trace(">>> testGetConfiguredProcessorById()");
 
+		fillDatabase();
+
 		// Get a test configuredProcessor to retrieve.
 		RestConfiguredProcessor testConfiguredProcessor = ConfiguredProcessorUtil
 				.toRestConfiguredProcessor(RepositoryService.getConfiguredProcessorRepository().findAll().get(0));
@@ -294,6 +296,9 @@ public class ConfiguredProcessorManagerTest {
 	@Test
 	public final void testModifyConfiguredProcessor() {
 		logger.trace(">>> testModifyConfiguredProcessor()");
+		
+		fillDatabase();
+
 		// TODO implement method
 	}
 
@@ -304,6 +309,8 @@ public class ConfiguredProcessorManagerTest {
 	@Test
 	public final void testGetConfiguredProcessors() {
 		logger.trace(">>> testGetConfiguredProcessors()");
+
+		fillDatabase();
 
 		/*
 		 * Using values from the test configuredProcessor data which was used to
