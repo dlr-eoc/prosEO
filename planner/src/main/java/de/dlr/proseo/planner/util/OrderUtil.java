@@ -1326,6 +1326,8 @@ public class OrderUtil {
 			for (Object o : ol) {
 				if (o instanceof BigInteger) {
 					jobIds.add(((BigInteger) o).longValue());
+				} else if (o instanceof Long) {
+					jobIds.add((Long)o);
 				}
 			}
 			return null;

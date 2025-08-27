@@ -147,6 +147,8 @@ public class JobUtil {
 			for (Object o : ol) {
 				if (o instanceof BigInteger) {
 					jobStepIds.add(((BigInteger) o).longValue());
+				} else if (o instanceof Long) {
+					jobStepIds.add((Long)o);
 				}
 			}
 			return null;

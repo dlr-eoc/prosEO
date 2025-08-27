@@ -71,11 +71,11 @@ public class UsermgrSecurityConfig {
 			.authorizeHttpRequests(requests -> requests
 			.requestMatchers("/actuator/health")
 			.permitAll()
-			.requestMatchers(base + "/login")
+			.requestMatchers(base + "/login/**")
 			.authenticated()
-			.requestMatchers(HttpMethod.GET, base + "/users/*")
+			.requestMatchers(HttpMethod.GET, base + "/users/**")
 			.authenticated() // Any user may change their own password
-			.requestMatchers(HttpMethod.PATCH, base + "/users/*")
+			.requestMatchers(HttpMethod.PATCH, base + "/users/**")
 			.authenticated() // Any user may change their own password
 			.anyRequest()
 			.hasAnyRole(UserRole.ROOT.toString(), UserRole.USERMGR.toString()))

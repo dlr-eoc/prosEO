@@ -363,7 +363,9 @@ public class OrderReleaseThread extends Thread {
 										Object jsIdObject = jobStep[1];
 										Object pfNameObject = jobStep[2];
 
-										Long jsId = jsIdObject instanceof BigInteger ? ((BigInteger) jsIdObject).longValue() : null;
+										Long jsId = jsIdObject instanceof BigInteger 
+												? ((BigInteger) jsIdObject).longValue() 
+												: (jsIdObject instanceof Long ? (Long)jsIdObject : null);
 										String pfName = pfNameObject instanceof String ? (String) pfNameObject : null;
 
 										if (null == jsId || null == pfName) {

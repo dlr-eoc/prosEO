@@ -315,7 +315,9 @@ public class JobStepUtil {
 					logger.trace("... found job step info {}", Arrays.asList(jobStep));
 
 				// Extract the job step ID for ordering the result list
-				Long jobStepId = jobStep[1] instanceof BigInteger ? ((BigInteger) jobStep[1]).longValue() : null;
+				Long jobStepId = jobStep[1] instanceof BigInteger 
+						? ((BigInteger) jobStep[1]).longValue() 
+						: (jobStep[1] instanceof Long ? (Long)jobStep[1] : null);
 				if (null == jobStepId) {
 					jobStepId = jobStep[1] instanceof Long ? ((Long) jobStep[1]) : null;
 				}
@@ -800,8 +802,13 @@ public class JobStepUtil {
 					List<?> pqIds = query.getResultList();
 
 					for (Object o : pqIds) {
+						Long pqId = null; 
 						if (o instanceof BigInteger) {
-							Long pqId = ((BigInteger) o).longValue();
+							pqId = ((BigInteger) o).longValue();
+						} else if (o instanceof Long) {
+							pqId = (Long)o;
+						}
+						if (pqId != null) {
 							sqlQuery = "delete from product_query_satisfying_products where satisfied_product_queries_id = " + pqId
 									+ ";";
 							query = em.createNativeQuery(sqlQuery);
@@ -1235,7 +1242,9 @@ public class JobStepUtil {
 									logger.trace("... found job step info {}", Arrays.asList(jobStep));
 
 								// jobStep[0] is only used for ordering the result list
-								Long jsId = jobStep[1] instanceof BigInteger ? ((BigInteger) jobStep[1]).longValue() : null;
+								Long jsId = jobStep[1] instanceof BigInteger 
+										? ((BigInteger) jobStep[1]).longValue() 
+										: (jobStep[1] instanceof Long ? (Long)jobStep[1] : null);
 
 								if (null == jsId) {
 									throw new RuntimeException("Invalid query result: " + Arrays.asList(jobStep));

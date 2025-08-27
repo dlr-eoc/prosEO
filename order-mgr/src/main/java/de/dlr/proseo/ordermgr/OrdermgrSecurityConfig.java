@@ -51,13 +51,13 @@ public class OrdermgrSecurityConfig {
 		.authorizeHttpRequests(requests -> requests
 			.requestMatchers("/actuator/health")
 			.permitAll()
-			.requestMatchers(HttpMethod.GET, base + "/missions")
+			.requestMatchers(HttpMethod.GET, base + "/missions/**")
 			.permitAll()
-			.requestMatchers(HttpMethod.POST, base + "/missions")
+			.requestMatchers(HttpMethod.POST, base + "/missions/**")
 			.hasAnyRole(UserRole.ROOT.toString())
-			.requestMatchers(HttpMethod.DELETE, base + "/missions")
+			.requestMatchers(HttpMethod.DELETE, base + "/missions/**")
 			.hasAnyRole(UserRole.ROOT.toString())
-			.requestMatchers(base + "/missions")
+			.requestMatchers(base + "/missions/**")
 			.hasAnyRole(UserRole.MISSION_MGR.toString())
 
 			.requestMatchers(HttpMethod.GET, base + "/orderjobstepsofstates/**")
@@ -72,7 +72,7 @@ public class OrdermgrSecurityConfig {
 			.hasAnyRole(UserRole.ORDER_MGR.toString(), UserRole.ORDER_APPROVER.toString(), UserRole.ORDER_PLANNER.toString())
 			.requestMatchers(HttpMethod.DELETE, base + "/orders/**")
 			.hasAnyRole(UserRole.ORDER_MGR.toString())
-			.requestMatchers(base + "/orders")
+			.requestMatchers(base + "/orders/**")
 			.hasAnyRole(UserRole.ORDER_MGR.toString())
 
 			.requestMatchers(HttpMethod.GET, base + "/orbits/**")
