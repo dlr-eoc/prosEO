@@ -29,6 +29,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.Mission;
@@ -71,19 +74,24 @@ public class ProductClassControllerTest {
 	private static final String TEST_PARAM_TYPE = "STRING";
 	private static final String TEST_PARAM_KEY = "revision";
 	private static final String TEST_NEW_PRODUCT_TYPE = "$L2__AAI___$";
-	private static final String TEST_SELECTION_RULE = "FOR " + TEST_PRODUCT_TYPE + "/" + TEST_PARAM_KEY + ":"
-			+ TEST_PARAM_VALUE + " SELECT LatestValIntersect(180 M, 180 M) OR LatestValidity OPTIONAL";
+	private static final String TEST_SELECTION_RULE = "FOR " + TEST_PRODUCT_TYPE + "/" + TEST_PARAM_KEY + ":" + TEST_PARAM_VALUE
+			+ " SELECT LatestValIntersect(180 M, 180 M) OR LatestValidity OPTIONAL";
 	private static final ProductVisibility TEST_VISIBILITY = ProductVisibility.PUBLIC;
 
 	/** The ProductClassControllerImpl under test */
 	@Autowired
 	private ProductClassControllerImpl pci;
 
+	/** Database transaction manager */
+	@Autowired
+	private PlatformTransactionManager txManager;
+
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductClassControllerTest.class);
 
 	/**
-	 * @throws java.lang.Exception if any error occurs
+	 * @throws java.lang.Exception
+	 *             if any error occurs
 	 */
 	@Before
 	public void setUp() throws Exception {
@@ -91,7 +99,8 @@ public class ProductClassControllerTest {
 	}
 
 	/**
-	 * @throws java.lang.Exception if any error occurs
+	 * @throws java.lang.Exception
+	 *             if any error occurs
 	 */
 	@After
 	public void tearDown() throws Exception {
@@ -174,49 +183,58 @@ public class ProductClassControllerTest {
 	public final void testCreateRestProductClass() {
 		logger.trace(">>> testCreateRestProductClass()");
 
-		//
-		RestProductClass testProductClass = ProductClassUtil
-				.toRestProductClass(RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(testMissionData[0], TEST_NEW_PRODUCT_TYPE));
-		RestSimpleSelectionRule testSelectionRule = testProductClass.getSelectionRule().get(0);
-		RestSimplePolicy restSimplePolicy = testSelectionRule.getSimplePolicies().get(0);
-		RepositoryService.getProductClassRepository().deleteById(testProductClass.getId());
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
-		//
-		ResponseEntity<RestProductClass> postEntity = pci.createRestProductClass(testProductClass);
+		transactionTemplate.execute(status -> {
+			// Wrap in transaction to ensure that either all product creates
+			// succeed or all fail
 
-		assertEquals("Unexpected HTTP status code: ", HttpStatus.CREATED, postEntity.getStatusCode());
+			//
+			RestProductClass testProductClass = ProductClassUtil.toRestProductClass(RepositoryService.getProductClassRepository()
+					.findByMissionCodeAndProductType(testMissionData[0], TEST_NEW_PRODUCT_TYPE));
+			RestSimpleSelectionRule testSelectionRule = testProductClass.getSelectionRule().get(0);
+			RestSimplePolicy restSimplePolicy = testSelectionRule.getSimplePolicies().get(0);
+			RepositoryService.getProductClassRepository().deleteById(testProductClass.getId());
 
-		// Check the result
-		RestProductClass responseProductClass = postEntity.getBody();
-		assertNotNull("Product class missing", responseProductClass);
-		assertNotEquals("Database ID should be set: ", 0L, responseProductClass.getId().longValue());
-		assertEquals("Unexpected mission code: ", testProductClass.getMissionCode(),
-				responseProductClass.getMissionCode());
-		assertEquals("Unexpected product type: ", testProductClass.getProductType(),
-				responseProductClass.getProductType());
-		assertNotNull("List of selection rules missing", responseProductClass.getSelectionRule());
-		assertEquals("Unexpected number of selection rules: ", testProductClass.getSelectionRule().size(),
-				responseProductClass.getSelectionRule().size());
-		RestSimpleSelectionRule responseSelectionRule = responseProductClass.getSelectionRule().get(0);
-		assertEquals("Unexpected selection rule mode: ", testSelectionRule.getMode(), responseSelectionRule.getMode());
-		assertEquals("Unexpected mandatory value: ", testSelectionRule.getIsMandatory(),
-				responseSelectionRule.getIsMandatory());
-		assertNotNull("List of filter conditions missing", responseSelectionRule.getFilterConditions());
-		assertEquals("Unexpected number of filter conditions: ", testSelectionRule.getFilterConditions().size(),
-				responseSelectionRule.getFilterConditions().size());
-		assertEquals("Unexpected filter condition: ", testSelectionRule.getFilterConditions().get(0),
-				responseSelectionRule.getFilterConditions().get(0));
-		assertNotNull("List of simple policies missing", responseSelectionRule.getSimplePolicies());
-		assertEquals("Unexpected number of simple policies: ", testSelectionRule.getSimplePolicies().size(),
-				responseSelectionRule.getSimplePolicies().size());
-		RestSimplePolicy responsePolicy = responseSelectionRule.getSimplePolicies().get(0);
-		assertEquals("Unexpected policy type: ", restSimplePolicy.getPolicyType(), responsePolicy.getPolicyType());
-		assertEquals("Unexpected delta time T0: ", restSimplePolicy.getDeltaTimeT0(), responsePolicy.getDeltaTimeT0());
-		assertEquals("Unexpected delta time T1: ", restSimplePolicy.getDeltaTimeT1(), responsePolicy.getDeltaTimeT1());
+			//
+			testProductClass.setId(null);
+			ResponseEntity<RestProductClass> postEntity = pci.createRestProductClass(testProductClass);
 
-		Optional<ProductClass> dbProductClass = RepositoryService.getProductClassRepository()
-				.findById(responseProductClass.getId());
-		assertFalse("Product class not in database", dbProductClass.isEmpty());
+			assertEquals("Unexpected HTTP status code: ", HttpStatus.CREATED, postEntity.getStatusCode());
+
+			// Check the result
+			RestProductClass responseProductClass = postEntity.getBody();
+			assertNotNull("Product class missing", responseProductClass);
+			assertNotEquals("Database ID should be set: ", 0L, responseProductClass.getId().longValue());
+			assertEquals("Unexpected mission code: ", testProductClass.getMissionCode(), responseProductClass.getMissionCode());
+			assertEquals("Unexpected product type: ", testProductClass.getProductType(), responseProductClass.getProductType());
+			assertNotNull("List of selection rules missing", responseProductClass.getSelectionRule());
+			assertEquals("Unexpected number of selection rules: ", testProductClass.getSelectionRule().size(),
+					responseProductClass.getSelectionRule().size());
+			RestSimpleSelectionRule responseSelectionRule = responseProductClass.getSelectionRule().get(0);
+			assertEquals("Unexpected selection rule mode: ", testSelectionRule.getMode(), responseSelectionRule.getMode());
+			assertEquals("Unexpected mandatory value: ", testSelectionRule.getIsMandatory(),
+					responseSelectionRule.getIsMandatory());
+			assertNotNull("List of filter conditions missing", responseSelectionRule.getFilterConditions());
+			assertEquals("Unexpected number of filter conditions: ", testSelectionRule.getFilterConditions().size(),
+					responseSelectionRule.getFilterConditions().size());
+			assertEquals("Unexpected filter condition: ", testSelectionRule.getFilterConditions().get(0),
+					responseSelectionRule.getFilterConditions().get(0));
+			assertNotNull("List of simple policies missing", responseSelectionRule.getSimplePolicies());
+			assertEquals("Unexpected number of simple policies: ", testSelectionRule.getSimplePolicies().size(),
+					responseSelectionRule.getSimplePolicies().size());
+			RestSimplePolicy responsePolicy = responseSelectionRule.getSimplePolicies().get(0);
+			assertEquals("Unexpected policy type: ", restSimplePolicy.getPolicyType(), responsePolicy.getPolicyType());
+			assertEquals("Unexpected delta time T0: ", restSimplePolicy.getDeltaTimeT0(), responsePolicy.getDeltaTimeT0());
+			assertEquals("Unexpected delta time T1: ", restSimplePolicy.getDeltaTimeT1(), responsePolicy.getDeltaTimeT1());
+
+			Optional<ProductClass> dbProductClass = RepositoryService.getProductClassRepository()
+					.findById(responseProductClass.getId());
+			assertFalse("Product class not in database", dbProductClass.isEmpty());
+
+			return true;
+		});
 
 		logger.trace("Test OK: Insert a single product class");
 	}
@@ -277,74 +295,85 @@ public class ProductClassControllerTest {
 	public final void testCreateSelectionRuleString() {
 		logger.trace(">>> testCreateSelectionRuleString()");
 
-		// Retrieve a test product class from the repository and remove the selection rule
-		ProductClass testProductClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(testMissionData[0], TEST_NEW_PRODUCT_TYPE);
-		testProductClass.getRequiredSelectionRules().clear();
-		logger.trace("Success? " + RepositoryService.getProductClassRepository().findByMissionCodeAndProductType("UTM", TEST_PRODUCT_TYPE));
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
-		// Now create a selection rule for this product class
-		SelectionRuleString ruleString = new SelectionRuleString();
-		ruleString.setMode("OFFL");
-		ruleString.setSelectionRule(TEST_SELECTION_RULE);
-		// TODO We could add a configured processor here, if one was created beforehand
-		List<SelectionRuleString> ruleStrings = new ArrayList<>();
-		ruleStrings.add(ruleString);
+		transactionTemplate.execute(status -> {
+			// Retrieve a test product class from the repository and remove the
+			// selection rule
+			ProductClass testProductClass = RepositoryService.getProductClassRepository()
+					.findByMissionCodeAndProductType(testMissionData[0], TEST_NEW_PRODUCT_TYPE);
+			testProductClass.getRequiredSelectionRules().clear();
+			logger.trace("Success? "
+					+ RepositoryService.getProductClassRepository().findByMissionCodeAndProductType("UTM", TEST_PRODUCT_TYPE));
 
-		ResponseEntity<RestProductClass> postEntity = pci.createSelectionRuleString(testProductClass.getId(), ruleStrings);
-		assertEquals("Unexpected HTTP status code: ", HttpStatus.CREATED, postEntity.getStatusCode());
+			// Now create a selection rule for this product class
+			SelectionRuleString ruleString = new SelectionRuleString();
+			ruleString.setMode("OFFL");
+			ruleString.setSelectionRule(TEST_SELECTION_RULE);
+			// TODO We could add a configured processor here, if one was created
+			// beforehand
+			List<SelectionRuleString> ruleStrings = new ArrayList<>();
+			ruleStrings.add(ruleString);
 
-		RestProductClass restProductClass = postEntity.getBody();
+			ResponseEntity<RestProductClass> postEntity = pci.createSelectionRuleString(testProductClass.getId(), ruleStrings);
+			assertEquals("Unexpected HTTP status code: ", HttpStatus.CREATED, postEntity.getStatusCode());
 
-		// Check result
-		assertNotNull("Product class missing", restProductClass);
-		assertNotNull("List of selection rules missing", restProductClass.getSelectionRule());
-		assertEquals("Unexpected number of selection rules:", ruleStrings.size(),
-				restProductClass.getSelectionRule().size());
+			RestProductClass restProductClass = postEntity.getBody();
 
-		RestSimpleSelectionRule responseRule = restProductClass.getSelectionRule().get(0);
-		assertEquals("Unexpected mode:", testMissionData[2], responseRule.getMode());
-		assertEquals("Unexpected mandatory value:", false, responseRule.getIsMandatory());
-		assertEquals("Unexpected target product class:", TEST_NEW_PRODUCT_TYPE, responseRule.getTargetProductClass());
-		assertEquals("Unexpected source product class:", TEST_PRODUCT_TYPE, responseRule.getSourceProductClass());
-		assertNotNull("List of configured processors missing", responseRule.getConfiguredProcessors());
-		assertEquals("Unexpected number of configured processors:", 0, responseRule.getConfiguredProcessors().size());
-		
-		assertNotNull("List of filter conditions missing", responseRule.getFilterConditions());
-		assertEquals("Unexpected number of filter conditions:", 1, responseRule.getFilterConditions().size());
+			// Check result
+			assertNotNull("Product class missing", restProductClass);
+			assertNotNull("List of selection rules missing", restProductClass.getSelectionRule());
+			assertEquals("Unexpected number of selection rules:", ruleStrings.size(), restProductClass.getSelectionRule().size());
 
-		RestParameter filterParameter = responseRule.getFilterConditions().get(0);
-		assertEquals("Unexpected filter condition key:", TEST_PARAM_KEY, filterParameter.getKey());
-		assertEquals("Unexpected filter condition type:", TEST_PARAM_TYPE, filterParameter.getParameterType());
-		assertEquals("Unexpected filter condition value:", TEST_PARAM_VALUE, filterParameter.getParameterValue());
+			RestSimpleSelectionRule responseRule = restProductClass.getSelectionRule().get(0);
+			assertEquals("Unexpected mode:", testMissionData[2], responseRule.getMode());
+			assertEquals("Unexpected mandatory value:", false, responseRule.getIsMandatory());
+			assertEquals("Unexpected target product class:", TEST_NEW_PRODUCT_TYPE, responseRule.getTargetProductClass());
+			assertEquals("Unexpected source product class:", TEST_PRODUCT_TYPE, responseRule.getSourceProductClass());
+			assertNotNull("List of configured processors missing", responseRule.getConfiguredProcessors());
+			assertEquals("Unexpected number of configured processors:", 0, responseRule.getConfiguredProcessors().size());
 
-		assertNotNull("List of simple policies missing", responseRule.getSimplePolicies());
-		assertEquals("Unexpected number of simple policies:", 2, responseRule.getSimplePolicies().size());
+			assertNotNull("List of filter conditions missing", responseRule.getFilterConditions());
+			assertEquals("Unexpected number of filter conditions:", 1, responseRule.getFilterConditions().size());
 
-		for (RestSimplePolicy responsePolicy : responseRule.getSimplePolicies()) {
-			if ("LatestValIntersect".equals(responsePolicy.getPolicyType())) {
-				// 3 hours are expected instead of 180 minutes, as the delta time is normalized
-				// during selection rule creation
-				assertEquals("Unexpected LatestValIntersect delta time 0 duration:", 3L,
-						responsePolicy.getDeltaTimeT0().getDuration().longValue());
-				assertEquals("Unexpected LatestValIntersect delta time 0 unit:", TimeUnit.HOURS.toString(),
-						responsePolicy.getDeltaTimeT0().getUnit());
-				assertEquals("Unexpected LatestValIntersect delta time 1 duration:", 3L,
-						responsePolicy.getDeltaTimeT1().getDuration().longValue());
-				assertEquals("Unexpected LatestValIntersect delta time 1 unit:", TimeUnit.HOURS.toString(),
-						responsePolicy.getDeltaTimeT1().getUnit());
-			} else if ("LatestValidity".equals(responsePolicy.getPolicyType())) {
-				assertEquals("Unexpected LatestValidity delta time 0 duration:", 0,
-						responsePolicy.getDeltaTimeT0().getDuration().longValue());
-				assertEquals("Unexpected LatestValidity delta time 0 unit:", TimeUnit.DAYS.toString(),
-						responsePolicy.getDeltaTimeT0().getUnit());
-				assertEquals("Unexpected LatestValidity delta time 1 duration:", 0,
-						responsePolicy.getDeltaTimeT1().getDuration().longValue());
-				assertEquals("Unexpected LatestValidity delta time 1 unit:", TimeUnit.DAYS.toString(),
-						responsePolicy.getDeltaTimeT1().getUnit());
-			} else {
-				fail("Unexpected policy type: " + responsePolicy.getPolicyType());
+			RestParameter filterParameter = responseRule.getFilterConditions().get(0);
+			assertEquals("Unexpected filter condition key:", TEST_PARAM_KEY, filterParameter.getKey());
+			assertEquals("Unexpected filter condition type:", TEST_PARAM_TYPE, filterParameter.getParameterType());
+			assertEquals("Unexpected filter condition value:", TEST_PARAM_VALUE, filterParameter.getParameterValue());
+
+			assertNotNull("List of simple policies missing", responseRule.getSimplePolicies());
+			assertEquals("Unexpected number of simple policies:", 2, responseRule.getSimplePolicies().size());
+
+			for (RestSimplePolicy responsePolicy : responseRule.getSimplePolicies()) {
+				if ("LatestValIntersect".equals(responsePolicy.getPolicyType())) {
+					// 3 hours are expected instead of 180 minutes, as the delta
+					// time is normalized
+					// during selection rule creation
+					assertEquals("Unexpected LatestValIntersect delta time 0 duration:", 3L,
+							responsePolicy.getDeltaTimeT0().getDuration().longValue());
+					assertEquals("Unexpected LatestValIntersect delta time 0 unit:", TimeUnit.HOURS.toString(),
+							responsePolicy.getDeltaTimeT0().getUnit());
+					assertEquals("Unexpected LatestValIntersect delta time 1 duration:", 3L,
+							responsePolicy.getDeltaTimeT1().getDuration().longValue());
+					assertEquals("Unexpected LatestValIntersect delta time 1 unit:", TimeUnit.HOURS.toString(),
+							responsePolicy.getDeltaTimeT1().getUnit());
+				} else if ("LatestValidity".equals(responsePolicy.getPolicyType())) {
+					assertEquals("Unexpected LatestValidity delta time 0 duration:", 0,
+							responsePolicy.getDeltaTimeT0().getDuration().longValue());
+					assertEquals("Unexpected LatestValidity delta time 0 unit:", TimeUnit.DAYS.toString(),
+							responsePolicy.getDeltaTimeT0().getUnit());
+					assertEquals("Unexpected LatestValidity delta time 1 duration:", 0,
+							responsePolicy.getDeltaTimeT1().getDuration().longValue());
+					assertEquals("Unexpected LatestValidity delta time 1 unit:", TimeUnit.DAYS.toString(),
+							responsePolicy.getDeltaTimeT1().getUnit());
+				} else {
+					fail("Unexpected policy type: " + responsePolicy.getPolicyType());
+				}
 			}
-		}
+
+			return true;
+		});
 
 		logger.trace("Test OK: Create selection rule from string");
 	}

@@ -419,7 +419,7 @@ public class ConfigurationManager {
 			}
 			ConfigurationInputFile modelInputFile = null;
 			for (ConfigurationInputFile inputFile : modelConfiguration.getStaticInputFiles()) {
-				if (inputFile.getId() == restInputFile.getId().longValue()) {
+				if (inputFile.getId() == restInputFile.getId()) {
 					modelInputFile = inputFile;
 					break;
 				}

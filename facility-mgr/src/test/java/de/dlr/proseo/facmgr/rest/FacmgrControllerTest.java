@@ -139,6 +139,7 @@ public class FacmgrControllerTest {
 		RepositoryService.getFacilityRepository().deleteById(restFacility.getId());
 
 		// Create a facility with the facility controller
+		restFacility.setId(null);
 		ResponseEntity<RestProcessingFacility> response = fci.createFacility(restFacility);
 		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, response.getStatusCode());
 		long idToDelete = response.getBody().getId();

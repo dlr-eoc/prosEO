@@ -26,7 +26,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
-
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.ConfigurationFile;
@@ -41,6 +40,7 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.procmgr.ProcessorManagerApplication;
 import de.dlr.proseo.procmgr.rest.model.ConfigurationUtil;
 import de.dlr.proseo.procmgr.rest.model.RestConfiguration;
+import de.dlr.proseo.procmgr.rest.model.RestConfigurationInputFile;
 
 /**
  * Testing ConfigurationControllerImpl.class.
@@ -102,7 +102,6 @@ public class ConfigurationControllerTest {
 		logger.trace(">>> Starting to create test data in the database");
 
 		fillDatabase();
-		createTestConfigurations();
 
 		logger.trace("<<< Finished creating test data in database");
 	}
@@ -115,19 +114,13 @@ public class ConfigurationControllerTest {
 	 */
 	@After
 	public void tearDown() throws Exception {
-		logger.trace(">>> Starting to delete test data in database");
-		RepositoryService.getConfigurationRepository().deleteAll();
-		RepositoryService.getConfiguredProcessorRepository().deleteAll();
-		RepositoryService.getProcessorRepository().deleteAll();
-		RepositoryService.getProcessorClassRepository().deleteAll();
-		RepositoryService.getMissionRepository().deleteAll();
-		logger.trace("<<< Finished deleting test data in database");
+		// Nothing to do, test data will be deleted by automatic rollback of test transaction
 	}
 
 	/**
 	 * Create test configurations in the database
 	 */
-	private static void createTestConfigurations() {
+	private void createTestConfigurations() {
 		logger.trace("... creating test configurations in the database");
 
 		// add first test configuration
@@ -144,11 +137,12 @@ public class ConfigurationControllerTest {
 		configFile0.setFileVersion(testConfigurationFiles[0][0]);
 		configuration0.getConfigurationFiles().add(configFile0);
 
-		ConfigurationInputFile configInputFile = new ConfigurationInputFile();
-		configInputFile.setFileType(testStaticInputFile[0]);
-		configInputFile.setFileNameType(testStaticInputFile[1]);
-		configInputFile.getFileNames().add(testStaticInputFile[2]);
-		configuration0.getStaticInputFiles().add(configInputFile);
+		ConfigurationInputFile configInputFile0 = new ConfigurationInputFile();
+		configInputFile0.setFileType(testStaticInputFile[0]);
+		configInputFile0.setFileNameType(testStaticInputFile[1]);
+		configInputFile0.getFileNames().add(testStaticInputFile[2]);
+		logger.debug("... created ConfigurationInputFile with ID {}", configInputFile0.getId());
+		configuration0.getStaticInputFiles().add(configInputFile0);
 
 		configuration0.getConfiguredProcessors().add(RepositoryService.getConfiguredProcessorRepository()
 				.findByMissionCodeAndIdentifier(testMissionData[0], testConfiguredProcessors[0]));
@@ -170,7 +164,15 @@ public class ConfigurationControllerTest {
 		configFile1.setFileVersion(testConfigurationFiles[1][0]);
 		configuration1.getConfigurationFiles().add(configFile1);
 
-		configuration1.getStaticInputFiles().add(configInputFile);
+		RepositoryService.getConfigurationRepository().save(configuration1);
+
+		ConfigurationInputFile configInputFile1 = new ConfigurationInputFile();
+		configInputFile1.setFileType(testStaticInputFile[0]);
+		configInputFile1.setFileNameType(testStaticInputFile[1]);
+		configInputFile1.getFileNames().add(testStaticInputFile[2]);
+		logger.debug("... created ConfigurationInputFile with ID {}", configInputFile1.getId());
+		configuration1.getStaticInputFiles().add(configInputFile1);
+
 		configuration1.getConfiguredProcessors().add(RepositoryService.getConfiguredProcessorRepository()
 				.findByMissionCodeAndIdentifier(testMissionData[0], testConfiguredProcessors[1]));
 		configuration1.getDockerRunParameters().put(testDockerRunParameter[0], testDockerRunParameter[1]);
@@ -181,7 +183,7 @@ public class ConfigurationControllerTest {
 	/**
 	 * Filling the database with some initial data for testing purposes
 	 */
-	private static void fillDatabase() {
+	private void fillDatabase() {
 		logger.trace("... creating testMission {}", testMissionData[0]);
 		Mission testMission = new Mission();
 		testMission.setCode(testMissionData[0]);
@@ -233,16 +235,22 @@ public class ConfigurationControllerTest {
 	public final void testCreateConfiguration() {
 		logger.trace(">>> testCreateConfiguration()");
 
+		createTestConfigurations();
+
 		// retrieve and delete the test configuration from the database
 		RestConfiguration toBeCreated = ConfigurationUtil
 				.toRestConfiguration(RepositoryService.getConfigurationRepository().findAll().get(0));
 		RepositoryService.getConfigurationRepository().deleteById(toBeCreated.getId());
 
+		toBeCreated.setId(null);
+		for (RestConfigurationInputFile input : toBeCreated.getStaticInputFiles()) {
+			input.setId(null);
+		}
+
 		// testing configuration creation with the configuration controller
 		ResponseEntity<RestConfiguration> created = cci.createConfiguration(toBeCreated);
 		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, created.getStatusCode());
-		assertEquals("Error during configuration creation.", toBeCreated.getProcessorName(),
-				created.getBody().getProcessorName());
+		assertEquals("Error during configuration creation.", toBeCreated.getProcessorName(), created.getBody().getProcessorName());
 	}
 
 	/**
@@ -253,11 +261,13 @@ public class ConfigurationControllerTest {
 	public final void testCountConfigurations() {
 		logger.trace(">>> testCountConfigurations()");
 
-		// count all configurations from the database, as all were created with the
-		// same mission
+		createTestConfigurations();
+
+		// count all configurations from the database, as all were created with the same mission
 		List<Configuration> expectedConfigurations = RepositoryService.getConfigurationRepository().findAll();
 
-		// count all configurations with the same mission as the test configurations
+		// count all configurations with the same mission as the test
+		// configurations
 		// from the database via the configuration controller
 		ResponseEntity<String> retrievedConfigurations = cci.countConfigurations(testMissionData[0], null, null, null, null, null);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedConfigurations.getStatusCode());
@@ -273,16 +283,15 @@ public class ConfigurationControllerTest {
 	public final void testGetConfigurations() {
 		logger.trace(">>> testGetConfigurations()");
 
-		// retrieve all configurations from the database, as all were created with the
-		// same
-		// mission
+		createTestConfigurations();
+
+		// retrieve all configurations from the database, as all were created with the same mission
 		List<Configuration> expectedConfigurations = RepositoryService.getConfigurationRepository().findAll();
 
-		// retrieve all configurations with the same mission as the test configurations
-		// from the
+		// retrieve all configurations with the same mission as the test configurations from the
 		// database via the configuration controller
-		ResponseEntity<List<RestConfiguration>> retrievedConfigurations = cci.getConfigurations(testMissionData[0],
-				null, null, null, null, null, null, null, null);
+		ResponseEntity<List<RestConfiguration>> retrievedConfigurations = cci.getConfigurations(testMissionData[0], null, null,
+				null, null, null, null, null, null);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedConfigurations.getStatusCode());
 		assertTrue("Wrong number of configurations retrieved.",
 				expectedConfigurations.size() == retrievedConfigurations.getBody().size());
@@ -296,14 +305,13 @@ public class ConfigurationControllerTest {
 	public final void testGetConfigurationById() {
 		logger.trace(">>> testGetConfigurationById()");
 
+		createTestConfigurations();
+
 		// retrieve a test configuration from the database
 		Configuration expectedConfiguration = RepositoryService.getConfigurationRepository().findAll().get(0);
 
-		// retrieve a configuration with the configuration controller by using the id
-		// from the
-		// test configuration
-		ResponseEntity<RestConfiguration> retrievedConfiguration = cci
-				.getConfigurationById(expectedConfiguration.getId());
+		// retrieve a configuration with the configuration controller by using the id from the test configuration
+		ResponseEntity<RestConfiguration> retrievedConfiguration = cci.getConfigurationById(expectedConfiguration.getId());
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedConfiguration.getStatusCode());
 		assertTrue("Wrong configuration retrieved.", expectedConfiguration.getProcessorClass().getProcessorName()
 				.equals(retrievedConfiguration.getBody().getProcessorName()));
@@ -316,6 +324,8 @@ public class ConfigurationControllerTest {
 	@Test
 	public final void testDeleteConfigurationById() {
 		logger.trace(">>> testDeleteConfigurationById()");
+
+		createTestConfigurations();
 
 		// chose one configuration from the database for deletion
 		Configuration toBeDeleted = RepositoryService.getConfigurationRepository().findAll().get(0);
@@ -340,6 +350,8 @@ public class ConfigurationControllerTest {
 	public final void testModifyConfiguration() {
 		logger.trace(">>> testModifyConfiguration()");
 
+		createTestConfigurations();
+
 		Configuration inRepository = RepositoryService.getConfigurationRepository().findAll().get(0);
 		RestConfiguration toBeModified = ConfigurationUtil.toRestConfiguration(inRepository);
 		String previousConfigurationVersion = toBeModified.getConfigurationVersion();
@@ -348,8 +360,7 @@ public class ConfigurationControllerTest {
 		ResponseEntity<RestConfiguration> entity = cci.modifyConfiguration(toBeModified.getId(), toBeModified);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, entity.getStatusCode());
 		assertTrue("Modification unsuccessfull", toBeModified.getVersion() + 1 == entity.getBody().getVersion());
-		assertNotEquals("Modification unsuccessfull", previousConfigurationVersion,
-				entity.getBody().getConfigurationVersion());
+		assertNotEquals("Modification unsuccessfull", previousConfigurationVersion, entity.getBody().getConfigurationVersion());
 	}
 
 }

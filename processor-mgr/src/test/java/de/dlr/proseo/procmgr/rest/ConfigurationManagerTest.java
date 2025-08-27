@@ -101,7 +101,6 @@ public class ConfigurationManagerTest {
 		logger.trace(">>> Starting to create test data in the database");
 
 		fillDatabase();
-		createTestConfigurations();
 
 		logger.trace("<<< Finished creating test data in database");
 	}
@@ -114,19 +113,13 @@ public class ConfigurationManagerTest {
 	 */
 	@After
 	public void tearDown() throws Exception {
-		logger.trace(">>> Starting to delete test data in database");
-		RepositoryService.getConfigurationRepository().deleteAll();
-		RepositoryService.getConfiguredProcessorRepository().deleteAll();
-		RepositoryService.getProcessorRepository().deleteAll();
-		RepositoryService.getProcessorClassRepository().deleteAll();
-		RepositoryService.getMissionRepository().deleteAll();
-		logger.trace("<<< Finished deleting test data in database");
+		// Nothing to do, test data will be deleted by automatic rollback of test transaction
 	}
 
 	/**
 	 * Create test configurations in the database
 	 */
-	private static void createTestConfigurations() {
+	private void createTestConfigurations() {
 		logger.trace("... creating test configurations in the database");
 
 		// add first test configuration
@@ -143,11 +136,11 @@ public class ConfigurationManagerTest {
 		configFile0.setFileVersion(testConfigurationFiles[0][0]);
 		configuration0.getConfigurationFiles().add(configFile0);
 
-		ConfigurationInputFile configInputFile = new ConfigurationInputFile();
-		configInputFile.setFileType(testStaticInputFile[0]);
-		configInputFile.setFileNameType(testStaticInputFile[1]);
-		configInputFile.getFileNames().add(testStaticInputFile[2]);
-		configuration0.getStaticInputFiles().add(configInputFile);
+		ConfigurationInputFile configInputFile0 = new ConfigurationInputFile();
+		configInputFile0.setFileType(testStaticInputFile[0]);
+		configInputFile0.setFileNameType(testStaticInputFile[1]);
+		configInputFile0.getFileNames().add(testStaticInputFile[2]);
+		configuration0.getStaticInputFiles().add(configInputFile0);
 
 		configuration0.getConfiguredProcessors().add(RepositoryService.getConfiguredProcessorRepository()
 				.findByMissionCodeAndIdentifier(testMissionData[0], testConfiguredProcessors[0]));
@@ -169,7 +162,11 @@ public class ConfigurationManagerTest {
 		configFile1.setFileVersion(testConfigurationFiles[1][0]);
 		configuration1.getConfigurationFiles().add(configFile1);
 
-		configuration1.getStaticInputFiles().add(configInputFile);
+		ConfigurationInputFile configInputFile1 = new ConfigurationInputFile();
+		configInputFile1.setFileType(testStaticInputFile[0]);
+		configInputFile1.setFileNameType(testStaticInputFile[1]);
+		configInputFile1.getFileNames().add(testStaticInputFile[2]);
+		configuration1.getStaticInputFiles().add(configInputFile1);
 		configuration1.getConfiguredProcessors().add(RepositoryService.getConfiguredProcessorRepository()
 				.findByMissionCodeAndIdentifier(testMissionData[0], testConfiguredProcessors[1]));
 		configuration1.getDockerRunParameters().put(testDockerRunParameter[0], testDockerRunParameter[1]);
@@ -180,7 +177,7 @@ public class ConfigurationManagerTest {
 	/**
 	 * Filling the database with some initial data for testing purposes
 	 */
-	private static void fillDatabase() {
+	private void fillDatabase() {
 		logger.trace("... creating testMission {}", testMissionData[0]);
 		Mission testMission = new Mission();
 		testMission.setCode(testMissionData[0]);
@@ -232,6 +229,8 @@ public class ConfigurationManagerTest {
 	public final void testCountConfigurations() {
 		logger.trace(">>> testCountConfigurations()");
 
+		createTestConfigurations();
+		
 		String[] names = {testConfigurationData[0][1]};
 		// Count configurations and assert success.
 		assertEquals("Wrong configuration count.", "2", configurationMgr.countConfigurations("UTM", null, null, null, null, null));
@@ -259,6 +258,8 @@ public class ConfigurationManagerTest {
 	public final void testDeleteConfigurationById() {
 		logger.trace(">>> testDeleteConfigurationById()");
 
+		createTestConfigurations();
+		
 		// Get a test configuration to delete.
 		Configuration testConfiguration = RepositoryService.getConfigurationRepository().findAll().get(0);
 
@@ -280,6 +281,8 @@ public class ConfigurationManagerTest {
 	public final void testGetConfigurationById() {
 		logger.trace(">>> testGetConfigurationById()");
 
+		createTestConfigurations();
+		
 		// Get a test configuration to retrieve.
 		RestConfiguration testConfiguration = ConfigurationUtil
 				.toRestConfiguration(RepositoryService.getConfigurationRepository().findAll().get(0));
@@ -307,6 +310,8 @@ public class ConfigurationManagerTest {
 	public final void testGetConfigurations() {
 		logger.trace(">>> testGetConfigurations()");
 
+		createTestConfigurations();
+		
 		/*
 		 * Using values from the test configuration data which was used to initialize
 		 * the configuration repository means that the query must return at least one

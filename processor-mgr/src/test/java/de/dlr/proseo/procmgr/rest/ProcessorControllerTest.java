@@ -24,7 +24,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.Mission;
@@ -35,6 +38,7 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.procmgr.ProcessorManagerApplication;
 import de.dlr.proseo.procmgr.rest.model.ProcessorUtil;
 import de.dlr.proseo.procmgr.rest.model.RestProcessor;
+import de.dlr.proseo.procmgr.rest.model.RestTask;
 
 /**
  * Testing ProcessorControllerImpl.class.
@@ -71,6 +75,10 @@ public class ProcessorControllerTest {
 			{"KNMI L2", "01.03.02"},
 			{"DLR L2 (upas)", "01.01.07",}};
 
+	/** Database transaction manager */
+	@Autowired
+	private PlatformTransactionManager txManager;
+
 	/**
 	 *
 	 * Create a test mission, a test spacecraft and test orders in the database.
@@ -94,11 +102,7 @@ public class ProcessorControllerTest {
 	 */
 	@After
 	public void tearDown() throws Exception {
-		logger.trace(">>> Starting to delete test data in database");
-		RepositoryService.getProcessorRepository().deleteAll();
-		RepositoryService.getProcessorClassRepository().deleteAll();
-		RepositoryService.getMissionRepository().deleteAll();
-		logger.trace("<<< Finished deleting test data in database");
+		// Nothing to do, test data will be deleted by automatic rollback of test transaction
 	}
 
 
@@ -172,16 +176,25 @@ public class ProcessorControllerTest {
 	public final void testCreateProcessor() {
 		logger.trace(">>> testCreateProcessor()");
 
-		// retrieve and delete the test processor from the database
-		RestProcessor toBeCreated = ProcessorUtil
-				.toRestProcessor(RepositoryService.getProcessorRepository().findAll().get(0));
-		RepositoryService.getProcessorRepository().deleteById(toBeCreated.getId());
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
-		// testing processor creation with the processor controller
-		ResponseEntity<RestProcessor> created = pci.createProcessor(toBeCreated);
-		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, created.getStatusCode());
-		assertEquals("Error during processor creation.", toBeCreated.getProcessorName(),
-				created.getBody().getProcessorName());
+		transactionTemplate.execute(status -> {
+			// retrieve and delete the test processor from the database
+			RestProcessor toBeCreated = ProcessorUtil.toRestProcessor(RepositoryService.getProcessorRepository().findAll().get(0));
+			RepositoryService.getProcessorRepository().deleteById(toBeCreated.getId());
+
+			// testing processor creation with the processor controller
+			toBeCreated.setId(null);
+			for (RestTask task: toBeCreated.getTasks()) {
+				task.setId(null);
+			}
+			ResponseEntity<RestProcessor> created = pci.createProcessor(toBeCreated);
+			assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, created.getStatusCode());
+			assertEquals("Error during processor creation.", toBeCreated.getProcessorName(), created.getBody().getProcessorName());
+
+			return true;
+		});
 	}
 
 	/**

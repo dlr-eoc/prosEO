@@ -35,7 +35,7 @@ import de.dlr.proseo.model.SimplePolicy.DeltaTime;
 public class ProductClassUtilTest {
 
 	private static final int TEST_PRODUCT_CLASS_VERSION = 42;
-	private static final long TEST_PRODUCT_CLASS_ID = 4711L;
+	private static final Long TEST_PRODUCT_CLASS_ID = 4711L;
 	private static final String TEST_COMPONENT_PRODUCT_TYPE = "NPP_BD3";
 	private static final String TEST_ENCLOSING_PRODUCT_TYPE = "L2FULL";
 	/* Static test data */
@@ -129,7 +129,7 @@ public class ProductClassUtilTest {
 		
 		// Check the result
 		assertNotNull("REST product class missing", restProductClass);
-		assertEquals("Unexpected id:", TEST_PRODUCT_CLASS_ID, restProductClass.getId().longValue());
+		assertEquals("Unexpected id:", TEST_PRODUCT_CLASS_ID, restProductClass.getId());
 		assertEquals("Unexpected version:", TEST_PRODUCT_CLASS_VERSION, restProductClass.getVersion().intValue());
 		assertEquals("Unexpected mission code:", TEST_MISSION_CODE, restProductClass.getMissionCode());
 		assertEquals("Unexpected product type:", TEST_PRODUCT_TYPE, restProductClass.getProductType());

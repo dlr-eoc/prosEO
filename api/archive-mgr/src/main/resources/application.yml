@@ -4,12 +4,16 @@ spring:
         database-platform: org.hibernate.dialect.PostgreSQLDialect
         hibernate.ddl-auto: update
         open-in-view: false
-        properties.hibernate.jdbc.time_zone: UTC
+        properties.hibernate:
+            jdbc.time_zone: UTC
+            id.db_structure_naming_strategy: single
     datasource:
         url: jdbc:postgresql://proseo-db:5432/proseo
         username: <db_user>
         password: <db_pwd>
     packagesToScan: de.dlr.proseo.model
+management:
+    endpoints.web.exposure.include: "health"
 logging:
     file: 
         name: /proseo/log/proseo-archive-mgr.log
