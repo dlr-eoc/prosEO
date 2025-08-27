@@ -96,6 +96,7 @@ public class IngestorControllerTest {
 			+ "    \"registeredFilesList\": [        "
 			+ "			\"src/test/resources/IDA_test/L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__FRESCO_20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc\""
 			+ "]," + "    \"deleted\": false" + "}";
+	private static final String HEADER_AUTH_BASIC = "Basic VVRNLXRlc3R1c2VyOnBhc3N3b3Jk";
 
 	/* Test products */
 	private static String[][] testProductData = {
@@ -294,7 +295,7 @@ public class IngestorControllerTest {
 		ingestorProducts.add(ingestorProduct);
 
 		HttpHeaders testHeader = new HttpHeaders();
-		testHeader.add(HttpHeaders.AUTHORIZATION, "Basic VVRNLXRlc3R1c2VyOnBhc3N3b3Jk");
+		testHeader.add(HttpHeaders.AUTHORIZATION, HEADER_AUTH_BASIC);
 
 		ResponseEntity<List<RestProduct>> postEntity = ici.ingestProducts(TEST_NAME, false, ingestorProducts,
 				testHeader);
@@ -349,7 +350,7 @@ public class IngestorControllerTest {
 
 		// Create a test header for authentication
 		HttpHeaders testHeader = new HttpHeaders();
-		testHeader.add(HttpHeaders.AUTHORIZATION, "Basic VVRNLXRlc3R1c2VyOnBhc3N3b3Jk");
+		testHeader.add(HttpHeaders.AUTHORIZATION, HEADER_AUTH_BASIC);
 
 		ResponseEntity<RestProductFile> response = ici.getProductFile(testProduct.getId(), TEST_NAME, testHeader);
 		assertEquals("Unexpected HTTP status code: ", HttpStatus.CREATED, response.getStatusCode());
@@ -381,7 +382,7 @@ public class IngestorControllerTest {
 
 		//
 		HttpHeaders testHeader = new HttpHeaders();
-		testHeader.add(HttpHeaders.AUTHORIZATION, "Basic VVRNLXRlc3R1c2VyOnBhc3N3b3Jk");
+		testHeader.add(HttpHeaders.AUTHORIZATION, HEADER_AUTH_BASIC);
 
 		ResponseEntity<RestProductFile> response = ici.ingestProductFile(testProduct.getId(), TEST_NAME,
 				ProductFileUtil.toRestProductFile(testProductFile), testHeader);
@@ -410,7 +411,7 @@ public class IngestorControllerTest {
 
 		//
 		HttpHeaders testHeader = new HttpHeaders();
-		testHeader.add(HttpHeaders.AUTHORIZATION, "Basic VVRNLXRlc3R1c2VyOnBhc3N3b3Jk");
+		testHeader.add(HttpHeaders.AUTHORIZATION, HEADER_AUTH_BASIC);
 
 		ResponseEntity<?> response = ici.deleteProductFile(testProduct.getId(), TEST_NAME, true, testHeader);
 		assertEquals("Unexpected HTTP status code: ", HttpStatus.NO_CONTENT, response.getStatusCode());
@@ -438,7 +439,7 @@ public class IngestorControllerTest {
 		testProductFile.setFilePath(TEST_PRODUCT_PATH_1);
 
 		HttpHeaders testHeader = new HttpHeaders();
-		testHeader.add(HttpHeaders.AUTHORIZATION, "Basic VVRNLXRlc3R1c2VyOnBhc3N3b3Jk");
+		testHeader.add(HttpHeaders.AUTHORIZATION, HEADER_AUTH_BASIC);
 
 		ResponseEntity<RestProductFile> response = ici.modifyProductFile(testProduct.getId(), TEST_NAME,
 				testProductFile, testHeader);

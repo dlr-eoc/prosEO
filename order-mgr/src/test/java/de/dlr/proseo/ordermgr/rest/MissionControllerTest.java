@@ -25,6 +25,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.Mission;
@@ -57,13 +60,18 @@ public class MissionControllerTest {
 
 	// Test data
 	private static String[][] testMissionData = {
-			// id, version, code, name, processing_mode, file_class, product_file_template
+			// id, version, code, name, processing_mode, file_class,
+			// product_file_template
 			{ "1", "0", "UTM", "ABCD Testing", "NRTI", "OPER", "test_file_temp" },
 			{ "2", "0", "PTM", "EFGH Testing", "NRTI", "OPER", "test_file_temp" },
 			{ "3", "0", "XTM", "IJKL Testing", "NRTI", "OPER", "test_file_temp" } };
 	private static String[] testSpacecraftData =
 			// version, code,name,
 			{ "1", "S_TDX1", "Tandom-X" };
+
+	/** Database transaction manager */
+	@Autowired
+	private PlatformTransactionManager txManager;
 
 	/**
 	 *
@@ -96,8 +104,10 @@ public class MissionControllerTest {
 	/**
 	 * Create a test mission and a test spacecraft in the database
 	 *
-	 * @param missionData    The data from which to create the mission
-	 * @param spacecraftData The data from which to create the spacecraft
+	 * @param missionData
+	 *            The data from which to create the mission
+	 * @param spacecraftData
+	 *            The data from which to create the spacecraft
 	 */
 	private static void createMissionAndSpacecraft(String[] missionData, String[] spacecraftData) {
 		if (null != RepositoryService.getMissionRepository().findByCode(missionData[2])) {
@@ -134,7 +144,8 @@ public class MissionControllerTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.ordermgr.rest.MissionControllerImpl#getMissions(java.lang.String)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.ordermgr.rest.MissionControllerImpl#getMissions(java.lang.String)}.
 	 */
 	@Test
 	public final void testGetMissions() {
@@ -180,7 +191,8 @@ public class MissionControllerTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.ordermgr.rest.MissionControllerImpl#getMissionById(java.lang.Long)}.
+	 * Test method for
+	 * {@link de.dlr.proseo.ordermgr.rest.MissionControllerImpl#getMissionById(java.lang.Long)}.
 	 */
 	@Test
 	public final void testGetMissionById() {
@@ -201,48 +213,62 @@ public class MissionControllerTest {
 	 * Test method for
 	 * {@link de.dlr.proseo.ordermgr.rest.MissionControllerImpl#modifyMission(java.lang.Long, de.dlr.proseo.model.rest.model.RestMission)}.
 	 */
-	// TODO Reactivate Test!!!
-//	@Test
-//	public final void testModifyMission() {
-//		logger.trace(">>> testModifyMissions()");
-//
-//		// Retrieve and modify a mission from the database
-//		List<Mission> beforeModification = RepositoryService.getMissionRepository().findAll();
-//		RestMission missionToModify = MissionUtil.toRestMission(beforeModification.get(0));
-//		missionToModify.setName("MNOP Testing");
-//
-//		// Modify a mission with MissionControllerImpl
-//		ResponseEntity<RestMission> entity = mci.modifyMission(missionToModify.getId(), missionToModify);
-//		assertEquals("Wrong HTTP status: ", HttpStatus.OK, entity.getStatusCode());
-//
-//		// Assert that the modification had the expected effect
-//		assertEquals("Mission was not modified as expected.", MissionUtil.toModelMission(missionToModify),
-//				RepositoryService.getMissionRepository().findByCode(missionToModify.getCode()));
-//	}
+	@Test
+	public final void testModifyMission() {
+		logger.trace(">>> testModifyMissions()");
+
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+
+		transactionTemplate.execute(status -> {
+			// Retrieve and modify a mission from the database
+			List<Mission> beforeModification = RepositoryService.getMissionRepository().findAll();
+			RestMission missionToModify = MissionUtil.toRestMission(beforeModification.get(0));
+			missionToModify.setName("MNOP Testing");
+
+			// Modify a mission with MissionControllerImpl
+			ResponseEntity<RestMission> entity = mci.modifyMission(missionToModify.getId(), missionToModify);
+			assertEquals("Wrong HTTP status: ", HttpStatus.OK, entity.getStatusCode());
+
+			// Assert that the modification had the expected effect
+			assertEquals("Mission was not modified as expected.", MissionUtil.toModelMission(missionToModify),
+					RepositoryService.getMissionRepository().findByCode(missionToModify.getCode()));
+
+			return true;
+		});
+
+	}
 
 	/**
 	 * Test method for
 	 * {@link de.dlr.proseo.ordermgr.rest.MissionControllerImpl#deleteMissionById(java.lang.Long, java.lang.Boolean, java.lang.Boolean)}.
 	 */
-	// TODO Reactivate test!!!
-//	@Test
-//	public final void testDeleteMissionById() {
-//		logger.trace(">>> testDeleteMissions()");
-//
-//		List<Mission> beforeDeletion = RepositoryService.getMissionRepository().findAll();
-//		Mission missionToDelete = beforeDeletion.get(0);
-//
-//		// Delete spacecraft referencing mission
-//		missionToDelete.getSpacecrafts()
-//			.forEach(spacecraft -> RepositoryService.getSpacecraftRepository().deleteById(spacecraft.getId()));
-//
-//		// Delete a mission with MissionControllerImpl
-//		mci.deleteMissionById(missionToDelete.getId(), false, false);
-//
-//		// Assert that the mission was deleted
-//		List<Mission> afterDeletion = RepositoryService.getMissionRepository().findAll();
-//		assertTrue("After deletion, repository does not contain less missions.", afterDeletion.size() < beforeDeletion.size());
-//		assertFalse("Deleted mission is still in the repository.", afterDeletion.contains(missionToDelete));
-//	}
+	@Test
+	public final void testDeleteMissionById() {
+		logger.trace(">>> testDeleteMissions()");
+
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+
+		transactionTemplate.execute(status -> {
+			List<Mission> beforeDeletion = RepositoryService.getMissionRepository().findAll();
+			Mission missionToDelete = beforeDeletion.get(0);
+
+			// Delete spacecraft referencing mission
+			missionToDelete.getSpacecrafts()
+					.forEach(spacecraft -> RepositoryService.getSpacecraftRepository().deleteById(spacecraft.getId()));
+
+			// Delete a mission with MissionControllerImpl
+			mci.deleteMissionById(missionToDelete.getId(), false, false);
+
+			// Assert that the mission was deleted
+			List<Mission> afterDeletion = RepositoryService.getMissionRepository().findAll();
+			assertTrue("After deletion, repository does not contain less missions.", afterDeletion.size() < beforeDeletion.size());
+			assertFalse("Deleted mission is still in the repository.", afterDeletion.contains(missionToDelete));
+
+			return true;
+		});
+
+	}
 
 }
