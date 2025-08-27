@@ -3,6 +3,7 @@ package de.dlr.proseo.notification;
 import static org.junit.Assert.assertEquals;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,13 +39,9 @@ public class NotificationTest {
 	
 	/** Mocking the storage manager and planner */
 	private static int WIREMOCK_PORT = 4050;
-	private static WireMockServer wireMockServer;
+	@ClassRule
+	public static WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
 	
-	@Rule
-	public WireMockRule wm = new WireMockRule(WireMockConfiguration.options()
-	    .extensions(new ResponseTemplateTransformer(true))
-	);
-
 	/**
 	 * Prepare the test environment
 	 *
@@ -53,13 +50,14 @@ public class NotificationTest {
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		
-		wireMockServer = new WireMockServer(
-				WireMockConfiguration.options().extensions(new ResponseTemplateTransformer(true)).port(WIREMOCK_PORT));
-		wireMockServer.start();
+		wireMockRule.start();
 
-		wireMockServer
+		wireMockRule
 				.stubFor(WireMock.post(WireMock.urlEqualTo("/notify")).willReturn(WireMock.aResponse()
 						.withStatus(HttpStatus.CREATED.value()).withHeader("Content-Type", "application/json").withBody("{{request.body}}")));
+		wireMockRule
+				.stubFor(WireMock.post(WireMock.urlEqualTo("/notifynotknown")).willReturn(WireMock.aResponse()
+						.withStatus(HttpStatus.NOT_FOUND.value())));
 	}
 
 	/**
@@ -69,7 +67,7 @@ public class NotificationTest {
 	 */
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		wireMockServer.stop();
+		wireMockRule.stop();
 	}
 
 
