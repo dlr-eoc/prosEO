@@ -21,10 +21,11 @@ Install and run Docker Desktop and activate Kubernetes as described here:
   1) Install and run: <https://docs.docker.com/desktop/install/windows-install/>
   2) Activate Kubernetes: <https://docs.docker.com/desktop/settings/windows/#kubernetes>
 
-*Caution:* Configurations and version numbers below are based on Docker Desktop 4.15.0 and Kubernetes 1.25.2. Newer (or older) 
-versions may require modified approaches.
+*Caution:* Configurations and version numbers below are based on Docker Desktop 4.15.0-4.44.3 and Kubernetes 1.25.2-1.32.2.
+Newer (or older) versions may require modified approaches.
 
-Deploy and run a Kubernetes dashboard:
+Deploy and run a Kubernetes dashboard (valid up to Kubernetes Dashboard v2.7.0; for Kubernetes Dashboard 7.0.0 and later
+a Helm-based deployment is required, see <https://github.com/kubernetes/dashboard>):
 1) Download the recommended dashboard configuration from 
    <https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml>
    to a new file `kubernetes/kubernetes-dashboard.yaml` (a copy may already be provided in the `kubernetes` directory).
@@ -324,16 +325,15 @@ You are now ready to configure your first mission. See `<project root>/samples/t
 an example, which works with the prosEO Sample Processor. Test input data and processing orders
 can be generated as described below using the script `deploy-single-node/ptm-config/create_data_local.sh`.
 Note that this script deliberately creates an order set, which does not result in a fully completed
-processing (one job will remain in `RELEASED` state due to missing input, this requires generation
+processing (one job will remain in `RELEASED` state due to missing input, requiring generation
 of an additional order to process from L0 to L2A/B data - this is left as an exercise to the reader ;-) ).
 
 
 # Step 7: Setup the Kubernetes Cluster with Storage Manager and File System Cache
 
 For the single-node installation we will use POSIX as the default file system, thereby
-avoiding the overhead of running an S3 object storage provider. We will not make Alluxio
-available either. This does not place any functional constraints on prosEO, since these
-storage options are meant for externally provided installations only, where online storage
+avoiding the overhead of running an S3 object storage provider. This does not place any functional constraints on prosEO,
+since the S3 storage option is meant for externally provided installations only, where online storage
 is expensive (a multi-TB USB-3 disk on a laptop is not).
 
 This step requires configuring a "host path" file server to serve the common storage area
@@ -396,12 +396,4 @@ facility create --file=facility.json
 If the facility was already created using the configuration script, the authentication token must be updated:
 ```
 facility update localhost processingEngineToken=<authentication token from step 5>
-```
-
-In any case the processing facility will be in DISABLED state, so it must be "started" to be available for use:
-
-```
-facility update localhost facilityState=STOPPED
-facility update localhost facilityState=STARTING
-facility update localhost facilityState=RUNNING
 ```

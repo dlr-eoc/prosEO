@@ -12,11 +12,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -60,14 +60,14 @@ public class ProductQuery extends PersistentObject {
 	 * The product query as a JPQL (Java Persistence Query Language) query condition (if set, sqlQueryCondition must not be set)
 	 * Note: The annotated SQL datatype "TEXT" is not a standard SQL datatype (defined for MySQL and PostgreSQL)
 	 */
-	@Column(columnDefinition = "TEXT")
+	@Lob
 	private String jpqlQueryCondition;
 	
 	/**
 	 * The product query as a native SQL query condition (if set, jpqlQueryCondition must not be set)
 	 * Note: The annotated SQL datatype "TEXT" is not a standard SQL datatype (defined for MySQL and PostgreSQL)
 	 */
-	@Column(columnDefinition = "TEXT")
+	@Lob
 	private String sqlQueryCondition;
 	
 	/**

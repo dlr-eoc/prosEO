@@ -15,10 +15,9 @@ import jakarta.persistence.Basic;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-
+import jakarta.persistence.Lob;
 import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
-import jakarta.persistence.Column;
 
 /**
  * This class allows to add mission-specific parameters to any persistent object. A parameter consists of a type
@@ -48,7 +47,7 @@ public class Parameter {
 	/**
 	 * A string parameter value of more than 255 characters (takes precedence over any value in the parameterValue attribute).
 	 */
-	@Column(columnDefinition="CLOB")
+	@Lob
 	private String parameterClob;
 	
 	/**

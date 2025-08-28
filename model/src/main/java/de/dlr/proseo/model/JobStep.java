@@ -19,14 +19,13 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import org.springframework.transaction.annotation.Transactional;
-
-import jakarta.persistence.Column;
 
 /**
  * A single processor execution to produce a defined output product based on a defined set of required input product
@@ -81,11 +80,11 @@ public class JobStep extends PersistentObject {
 	private Instant processingCompletionTime;
 	
 	/** The standard output of the processing job */
-	@Column(columnDefinition="CLOB")
+	@Lob
 	private String processingStdOut;
 	
 	/** The standard error output of the processing job */
-	@Column(columnDefinition="CLOB")
+	@Lob
 	private String processingStdErr;
 	
 	/** The filename of the Job Order file in the associated processing facility */

@@ -1,1 +1,1 @@
-typeSearchIndex = [{"l":"Alle Klassen und Schnittstellen","u":"allclasses-index.html"},{"p":"de.dlr.proseo.samplewrap","l":"SampleWrapper"}];updateSearchResults();
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"de.dlr.proseo.samplewrap","l":"SampleWrapper"}];updateSearchResults();

@@ -3,7 +3,9 @@ spring:
         database-platform: org.hibernate.dialect.PostgreSQLDialect
         hibernate.ddl-auto: update
         open-in-view: false
-        properties.hibernate.jdbc.time_zone: UTC
+        properties.hibernate:
+            jdbc.time_zone: UTC
+            #id.db_structure_naming_strategy: standard
     datasource:
         url: jdbc:postgresql://proseo-db:5432/proseo
         username: <db_user>
@@ -19,6 +21,8 @@ proseo:
     aipclient:
         # Path to the directory to download files to (must be readable for Storage Manager, see below)
         targetdir: /proseo/transfer/aip/downloads
+        # Delete downloaded files from target directory after ingestion, if true
+        #deletetempfiles: true
         
     ingestor:
         # URL of the Ingestor Service
@@ -39,6 +43,8 @@ proseo:
         check.interval: 1000
         
     archive:
+        # Maximum number of records to retrieve in one OData request ("$top" query parameter)
+        maxrecords: 1000
         # Timeout for archive connections in milliseconds (e. g. 30 s)
         timeout: 30000
         # Maximum number of parallel archive order threads

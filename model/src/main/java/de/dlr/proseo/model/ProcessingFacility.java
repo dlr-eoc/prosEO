@@ -12,6 +12,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Index;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
 import de.dlr.proseo.model.enums.FacilityState;
@@ -45,7 +46,7 @@ public class ProcessingFacility extends PersistentObject {
 	private String processingEngineUrl;
 	
 	/** Authentication token for connecting to this facility's processing engine (Kubernetes instance) */
-	@Column(columnDefinition="CLOB")
+	@Lob
 	private String processingEngineToken;
 	
 	/**

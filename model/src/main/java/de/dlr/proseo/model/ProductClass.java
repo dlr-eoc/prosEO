@@ -16,6 +16,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Index;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -73,7 +74,7 @@ public class ProductClass extends PersistentObject {
 	 * Template for the generation of product files, indicating variable parts using Spring Expression Language;
 	 * overrides file naming convention set in the Mission object.
 	 */
-	@Column(columnDefinition="CLOB")
+	@Lob
 	private String productFileTemplate;
 	
 	/** The default slice length to be applied; mandatory if the default slicing type is "TIME_SLICE" */
