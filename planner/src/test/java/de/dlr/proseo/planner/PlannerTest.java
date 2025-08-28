@@ -1,6 +1,6 @@
 package de.dlr.proseo.planner;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -283,9 +283,7 @@ public class PlannerTest {
 
 		// delete the order
 
-		// TODO REACTIVATE !!! Fails currently!
-		// deleteOrder(transactionTemplate, orderId);
-		logger.debug("*** Skipping broken test 'deleteOrder'***");
+		deleteOrder(transactionTemplate, orderId);
 
 		try {
 			logger.debug(">>> run one cycle");
@@ -294,8 +292,8 @@ public class PlannerTest {
 			Thread.sleep(100);
 			productionPlanner.stopDispatcher();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			fail("Dispatcher run failed with exception: %s/%s".formatted(e.getClass().getName(), e.getMessage()));
 		}
 	}
 
@@ -849,17 +847,13 @@ public class PlannerTest {
 				}
 				for (Job job : orderLoc.getJobs()) {
 					if (!jobStates.contains(job.getJobState())) {
-						// TODO REACTIVATE!!!!
-						// assertEquals("Job state error: ", jobStates.get(0),
-						// job.getJobState());
-						logger.debug("Job state error: unexpected state {}", job.getJobState());
+						assertEquals("Job state error: ", jobStates.get(0), job.getJobState());
+//						logger.debug("Job state error: unexpected state {}", job.getJobState());
 					}
 					for (JobStep jobStep : job.getJobSteps()) {
 						if (!jobStepStates.contains(jobStep.getJobStepState())) {
-							// TODO REACTIVATE!!!!
-							// assertEquals("Job step state error: ",
-							// jobStepStates.get(0), jobStep.getJobStepState());
-							logger.debug("Job step state error: unexpected state {}", jobStep.getJobStepState());
+							assertEquals("Job step state error: ", jobStepStates.get(0), jobStep.getJobStepState());
+//							logger.debug("Job step state error: unexpected state {}", jobStep.getJobStepState());
 						}
 					}
 				}
