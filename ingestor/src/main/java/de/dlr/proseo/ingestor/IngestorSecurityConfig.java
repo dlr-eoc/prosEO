@@ -87,8 +87,8 @@ public class IngestorSecurityConfig {
                         .requestMatchers(HttpMethod.POST, base + "/ingest/**")
                         .hasAnyRole(UserRole.PRODUCT_INGESTOR.toString())
                         .anyRequest()
-                        .hasAnyRole(UserRole.PRODUCT_MGR.toString()))
-                .csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
+                        .hasAnyRole(UserRole.PRODUCT_MGR.toString()));
+//                .csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
         return http.build();
 	}
 

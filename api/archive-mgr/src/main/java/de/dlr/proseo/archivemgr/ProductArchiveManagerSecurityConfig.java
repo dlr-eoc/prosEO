@@ -51,9 +51,9 @@ public class ProductArchiveManagerSecurityConfig {
 			.requestMatchers("/actuator/health")
 			.permitAll()
 			.requestMatchers(HttpMethod.GET)
-			.hasAnyRole(UserRole.ARCHIVE_READER.toString())			
-			.anyRequest().hasAnyRole(UserRole.ARCHIVE_MGR.toString()))
-			.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
+			.hasAnyRole(UserRole.ARCHIVE_READER.toString())
+			.anyRequest().hasAnyRole(UserRole.ARCHIVE_MGR.toString()));
+//			.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
 		return http.build();
 	}
 

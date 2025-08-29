@@ -39,7 +39,7 @@ public class SpringSecurityConfig {
       authenticationManagerBuilder.authenticationProvider(authenticationProvider);
       return authenticationManagerBuilder.build();
     }
-    
+
 	/**
 	 * Configures the HTTP security settings, including the authentication filter, URL permissions, login and logout pages, and CSRF
 	 * protection.
@@ -67,8 +67,8 @@ public class SpringSecurityConfig {
 			.logout(logout -> logout
 					.logoutUrl("/logout")
 					.logoutSuccessUrl("/customlogin?logout")
-					.permitAll())
-			.csrf(csrf -> csrf.disable());
+					.permitAll());
+//			.csrf(csrf -> csrf.disable());
 
 		return http.build();
 	}

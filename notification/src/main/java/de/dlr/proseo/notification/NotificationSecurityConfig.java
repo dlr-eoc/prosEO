@@ -14,9 +14,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * 
+ *
  * Configures the security settings for the notification system in a Java application using the Spring Security framework.
- * 
+ *
  * @author Ernst Melchinger
  */
 @Configuration
@@ -36,8 +36,8 @@ public class NotificationSecurityConfig {
 				.requestMatchers(base + "/notify")
 				.permitAll()
 				.requestMatchers("/actuator/health")
-				.permitAll())
-		.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
+				.permitAll());
+//		.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
 		return http.build();
 	}
 

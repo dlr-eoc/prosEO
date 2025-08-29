@@ -78,8 +78,8 @@ public class UsermgrSecurityConfig {
 			.requestMatchers(HttpMethod.PATCH, base + "/users/**")
 			.authenticated() // Any user may change their own password
 			.anyRequest()
-			.hasAnyRole(UserRole.ROOT.toString(), UserRole.USERMGR.toString()))
-			.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
+			.hasAnyRole(UserRole.ROOT.toString(), UserRole.USERMGR.toString()));
+//			.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
 		return http.build();
 	}
 
@@ -122,8 +122,8 @@ public class UsermgrSecurityConfig {
 
 			TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-			
-			
+
+
 			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 				try {
 					restUser = transactionTemplate.execute((status) -> {
