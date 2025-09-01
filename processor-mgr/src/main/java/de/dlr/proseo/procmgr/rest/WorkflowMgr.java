@@ -89,7 +89,6 @@ public class WorkflowMgr {
 
 		// Find using search parameters
 		String jpqlQuery = null;
-		String join = "";
 		if (count) {
 			jpqlQuery = "select count(w) from Workflow w where configuredProcessor.processor.processorClass.mission.code = :missionCode";
 		} else {

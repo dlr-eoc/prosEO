@@ -529,7 +529,6 @@ public class ProcessorManager {
 
 		// Find using search parameters
 		String jpqlQuery = null;
-		String join = "";
 		if (count) {
 			jpqlQuery = "select count(p) from Processor p where processorClass.mission.code = :missionCode";
 		} else {

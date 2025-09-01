@@ -20,7 +20,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 
-import de.dlr.proseo.ingestor.IngestorSecurityConfig;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
@@ -36,16 +35,12 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 @Component
 public class ProductControllerImpl implements ProductController {
 
-	/** Security configuration for Ingestor */
-	@Autowired
-	private IngestorSecurityConfig securityConfig;
-
 	/** The product manager */
 	@Autowired
 	private ProductManager productManager;
 
 	/** A logger for this class */
-	private static ProseoLogger logger = new ProseoLogger(IngestControllerImpl.class);
+	private static ProseoLogger logger = new ProseoLogger(ProductControllerImpl.class);
 	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.INGESTOR);
 
 	/**

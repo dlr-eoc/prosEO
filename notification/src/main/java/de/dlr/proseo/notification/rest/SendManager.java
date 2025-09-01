@@ -152,6 +152,8 @@ public class SendManager {
 		Object result = null;
 
 		switch (type) {
+		case UNKNOWN:
+			logger.log(NotificationMessage.UNKNOWN_MEDIATYPE, type);
 		case HTTPS:
 		case HTTP:
 			result = serviceConnection.postToService(endpoint, user, password, subject, mediaType, messageCode, message, sender);

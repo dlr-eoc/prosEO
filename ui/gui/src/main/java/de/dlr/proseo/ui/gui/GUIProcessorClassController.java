@@ -44,7 +44,7 @@ public class GUIProcessorClassController extends GUIBaseController {
 	/** WebClient-Service-Builder */
 	@Autowired
 	private ProcessorService processorService;
-	
+
 	/** The configuration object for the prosEO backend services */
 	@Autowired
 	private ServiceConfiguration serviceConfig;
@@ -52,10 +52,6 @@ public class GUIProcessorClassController extends GUIBaseController {
 	/** The connector service to the prosEO backend services */
 	@Autowired
 	private ServiceConnection serviceConnection;
-	
-	/** The GUI configuration */
-	@Autowired
-	private GUIConfiguration config;
 
 	/**
 	 * Show the processor class view
@@ -114,7 +110,7 @@ public class GUIProcessorClassController extends GUIBaseController {
 					model.addAttribute("procs", procs);
 
 					modelAddAttributes(model, count, pageSize, pages, page);
-					
+
 					logger.trace(model.toString() + "MODEL TO STRING");
 					deferredResult.setResult("processor-class-show :: #processorclasscontent");
 				} else {
@@ -125,14 +121,14 @@ public class GUIProcessorClassController extends GUIBaseController {
 			// Handle successful response
 			.subscribe(entityList -> {
 				logger.trace("Now in Consumer::accept({})", entityList);
-				if (entityList.getStatusCode().is2xxSuccessful() 
+				if (entityList.getStatusCode().is2xxSuccessful()
 						|| entityList.getStatusCode().value() ==  HttpStatus.NOT_FOUND.value()) {
 					procs.addAll(entityList.getBody());
 
 					model.addAttribute("procs", procs);
 
 					modelAddAttributes(model, count, pageSize, pages, page);
-					
+
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + procs.toString());
 
@@ -198,7 +194,7 @@ public class GUIProcessorClassController extends GUIBaseController {
 			uriString += divider + "productClass=" + productClass;
 			divider = "&";
 		}
-		
+
 		URI uri = UriComponentsBuilder.fromUriString(uriString).build().toUri();
 		Long result = (long) -1;
 		try {

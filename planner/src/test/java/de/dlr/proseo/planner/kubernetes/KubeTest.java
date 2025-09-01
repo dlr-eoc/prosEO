@@ -66,7 +66,6 @@ public class KubeTest {
 		Mission m = RepositoryService.getMissionRepository().findByCode("PTM");
 		logger.debug("Mission: {}", m);
 		m.setProductFileTemplate("PTM_${fileClass}_${productClass.productType}_${T(java.time.format.DateTimeFormatter).ofPattern(\"uuuuMMdd'T'HHmmss\").withZone(T(java.time.ZoneId).of(\"UTC\")).format(sensingStartTime)}_${T(java.time.format.DateTimeFormatter).ofPattern(\"uuuuMMdd'T'HHmmss\").withZone(T(java.time.ZoneId).of(\"UTC\")).format(sensingStopTime)}_${(new java.text.DecimalFormat(\"00000\")).format(null == orbit ? 0 : orbit.orbitNumber)}_${parameters.get(\"revision\").getParameterValue()}_${configuredProcessor.processor.processorVersion.replaceAll(\"\\.\", \"\")}_${T(java.time.format.DateTimeFormatter).ofPattern(\"uuuuMMdd'T'HHmmss\").withZone(T(java.time.ZoneId).of(\"UTC\")).format(generationTime)}.nc");
-		String pft = m.getProductFileTemplate();
 		RepositoryService.getMissionRepository().save(m);
 //		JobStep js = new JobStep();
 //		js.setProcessingMode("nix");

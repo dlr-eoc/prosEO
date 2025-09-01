@@ -945,7 +945,7 @@ public class BaseWrapper {
 					HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_STORAGE_USER, ENV_STORAGE_PASSWORD,
 							ENV_STORAGE_ENDPOINT, "/productfiles", null, params, RestOps.HttpMethod.PUT);
 
-					if (null == responseInfo && 201 != responseInfo.gethttpCode()) {
+					if (null == responseInfo || 201 != responseInfo.gethttpCode()) {
 						logger.error(MSG_ERROR_PUSHING_OUTPUT_FILE, fn.getFileName(), responseInfo.gethttpCode(),
 								extractProseoMessage(responseInfo));
 						throw new WrapperException();
