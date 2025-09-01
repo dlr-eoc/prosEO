@@ -15,10 +15,6 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -253,7 +249,7 @@ public class ProductArchiveManager {
 
 		// adds WHERE condition
 		if ((null != id) || (null != name) || (null != archiveType)) {
-			
+
 			jpqlQuery += " where ";
 			String and = " ";
 			if (null != id) {
@@ -302,7 +298,7 @@ public class ProductArchiveManager {
 		return query;
 	}
 
-	
+
 	/**
 	 * Get product archives by name and archive type
 	 *

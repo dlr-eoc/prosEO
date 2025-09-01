@@ -16,10 +16,6 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -523,7 +519,7 @@ public class ProcessorManager {
 		}
 		return "0";
 	}
-	
+
 	private Query createProcossorsQuery(Long id, String mission, String processorName, String processorVersion, Integer recordFrom,
 			Integer recordTo, String[] orderBy, Boolean count) {
 
@@ -559,7 +555,7 @@ public class ProcessorManager {
 				jpqlQuery += orderBy[i];
 			}
 		}
-		
+
 		Query query = em.createQuery(jpqlQuery);
 		query.setParameter("missionCode", mission);
 		if (null != id) {

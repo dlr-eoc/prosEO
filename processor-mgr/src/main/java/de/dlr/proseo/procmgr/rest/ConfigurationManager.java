@@ -21,10 +21,6 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,7 +85,7 @@ public class ConfigurationManager {
 	 * @throws NoResultException if no processor classes matching the given search criteria could be found
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public List<RestConfiguration> getConfigurations(String mission, Long id, String processorName[], String configurationVersion, 
+	public List<RestConfiguration> getConfigurations(String mission, Long id, String processorName[], String configurationVersion,
 			String productQuality[], String processingMode[],
 			Integer recordFrom, Integer recordTo, String[] orderBy) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
@@ -120,8 +116,8 @@ public class ConfigurationManager {
 		}
 
 		List<RestConfiguration> result = new ArrayList<>();
-		
-		Query query = createConfigurationsQuery(mission, id, processorName, configurationVersion, 
+
+		Query query = createConfigurationsQuery(mission, id, processorName, configurationVersion,
 				productQuality, processingMode, orderBy, false);
 
 		query.setFirstResult(recordFrom);
@@ -525,7 +521,7 @@ public class ConfigurationManager {
 	 * @return the number of configurations found as string
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public String countConfigurations(String missionCode, Long id, String processorName[], String configurationVersion, 
+	public String countConfigurations(String missionCode, Long id, String processorName[], String configurationVersion,
 			String productQuality[], String processingMode[]) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> countConfigurations({}, {}, {})", missionCode, processorName, configurationVersion);
@@ -542,7 +538,7 @@ public class ConfigurationManager {
 
 		// build query
 
-		Query query = createConfigurationsQuery(missionCode, id, processorName, configurationVersion, 
+		Query query = createConfigurationsQuery(missionCode, id, processorName, configurationVersion,
 				productQuality, processingMode, null, true);
 
 		Object resultObject = query.getSingleResult();
@@ -554,8 +550,8 @@ public class ConfigurationManager {
 		}
 		return "0";
 	}
-	
-	private Query createConfigurationsQuery(String mission, Long id, String[] processorName, String configurationVersion, 
+
+	private Query createConfigurationsQuery(String mission, Long id, String[] processorName, String configurationVersion,
 			String productQuality[], String processingMode[], String[] orderBy, Boolean count) {
 		String jpqlQuery = "";
 		if (count) {
@@ -578,7 +574,7 @@ public class ConfigurationManager {
 				jpqlQuery += ":processorName" + i;
 			}
 			jpqlQuery += ") ";
-			
+
 		}
 		if (null != productQuality && 0 < productQuality.length) {
 			jpqlQuery += " and pc.productQuality in (";
@@ -588,7 +584,7 @@ public class ConfigurationManager {
 				jpqlQuery += ":productQuality" + i;
 			}
 			jpqlQuery += ") ";
-			
+
 		}
 		if (null != processingMode && 0 < processingMode.length) {
 			jpqlQuery += " and pc.mode in (";
@@ -598,7 +594,7 @@ public class ConfigurationManager {
 				jpqlQuery += ":processingMode" + i;
 			}
 			jpqlQuery += ") ";
-			
+
 		}
 		if (!count) {
 			// order by
@@ -611,7 +607,7 @@ public class ConfigurationManager {
 					jpqlQuery += orderBy[i];
 				}
 			}
-			
+
 		}
 		Query query = em.createQuery(jpqlQuery);
 		query.setParameter("missionCode", mission);
@@ -636,7 +632,7 @@ public class ConfigurationManager {
 				query.setParameter("processingMode" + i, processingMode[i]);
 			}
 		}
-		
+
 		return query;
 	}
 }

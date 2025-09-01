@@ -3,10 +3,8 @@ package de.dlr.proseo.model;
 import java.time.Instant;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.Table;
 
 @MappedSuperclass
 abstract public class MonProductProduction extends PersistentObject {

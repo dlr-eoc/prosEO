@@ -22,7 +22,6 @@ import jakarta.persistence.Query;
 import org.apache.http.auth.AUTH;
 import org.apache.hc.client5.http.auth.StandardAuthScheme;
 import org.apache.http.message.BasicHeader;
-import org.apache.http.protocol.HTTP;
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.ContextURL.Suffix;
 import org.apache.olingo.commons.api.data.Entity;
@@ -92,7 +91,7 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 	/** The configuration for the PRIP API */
 	@Autowired
 	private OdipConfiguration config;
-	
+
 	/** The security utilities for the ODIP API */
 	@Autowired
 	private OdipSecurity securityConfig;
@@ -230,7 +229,7 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 				+ "LEFT OUTER JOIN job j ON js.job_id = j.id "
 				+ "LEFT OUTER JOIN processing_order o ON j.processing_order_id = o.id "
 				+ "WHERE o.uuid = '"
-				+ productionOrderUuid 
+				+ productionOrderUuid
 				+ "'";
 		Query query = em.createNativeQuery(sqlQuery, Product.class);
 		List<Object> resultObjectList;
@@ -243,11 +242,11 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 			String message = logger.log(OdipMessage.MSG_PRODUCTIONORDERPRODUCT_NOT_FOUND, productionOrderUuid);
 			throw new NoResultException(message);
 		}
-		
+
 		sqlQuery = "SELECT wf.* FROM workflow wf "
 				+ "LEFT OUTER JOIN processing_order o ON wf.id = o.workflow_id "
 				+ "WHERE o.uuid = '"
-				+ productionOrderUuid 
+				+ productionOrderUuid
 				+ "'";
 		query = em.createNativeQuery(sqlQuery, Workflow.class);
 		Object resultObject;
@@ -262,7 +261,7 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 		}
 		Workflow workflow = (Workflow) resultObject;
 		Product modelProduct = null;
-		
+
 		for (Object o : resultObjectList) {
 			 if (o instanceof Product) {
 				 Product p = (Product) o;
@@ -289,7 +288,7 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 			String message = logger.log(OdipMessage.MSG_PRODUCTIONORDERPRODUCT_NO_FILES, productionOrderUuid);
 			throw new NoResultException(message);
 		}
-		
+
 		if (logger.isDebugEnabled())
 			logger.debug("... product found: " + modelProduct.getUuid());
 		return modelProduct.getUuid().toString();
@@ -302,7 +301,7 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 			return product;
 		}
 	}
-	
+
 	private Product getComponentOfType(Product p, String type) {
 		Product result = null;
 		if (p.getProductClass().getProductType().equals(type)) {
@@ -320,7 +319,7 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Get the metadata for a single workflow from the prosEO service
 	 *
@@ -442,13 +441,13 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 
 		// [2] Fetch the data from backend for this requested EntitySetName (has to be delivered as Entity object)
 		List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
-		
+
 		if ((edmEntitySet.getEntityType().getFullQualifiedName().equals(OdipEdmProvider.ET_PRODUCTIONORDER_FQN)
 				|| edmEntitySet.getEntityType().getFullQualifiedName().equals(OdipEdmProvider.ET_ORDER_FQN))
 				&& resourcePaths.size() == 2
 				&& resourcePaths.get(1).getSegmentValue().equals(OdipEdmProvider.ET_PRODUCT_NAME)) {
 			// special handling for output product of order
-			// find product uuid and forward request to prip 
+			// find product uuid and forward request to prip
 			try {
 				String productUuid = getProductUuidProductionOrder(keyPredicates.get(0).getText());
 				String uri = config.getPripUrl() + "/Products(" + productUuid + ")";
@@ -456,11 +455,11 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 				response.setStatusCode(HttpStatusCode.TEMPORARY_REDIRECT.getStatusCode());
 				response.setHeader(HttpHeader.LOCATION, uri);
 				BasicHeader token = new BasicHeader(AUTH.WWW_AUTH_RESP,
-						StandardAuthScheme.BASIC + " " + Base64.getEncoder().encodeToString((securityConfig.getMission() + "\\" 
+						StandardAuthScheme.BASIC + " " + Base64.getEncoder().encodeToString((securityConfig.getMission() + "\\"
 								+ securityConfig.getUser() + ":" + securityConfig.getPassword()).getBytes()));
 				response.setHeader(HttpHeader.AUTHORIZATION, token.getValue());
 				response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
-				
+
 			} catch (NoResultException e) {
 				response.setContent(serializer.error(LogUtil.oDataServerError(HttpStatusCode.NOT_FOUND.getStatusCode(), e.getMessage()))
 						.getContent());
@@ -572,7 +571,7 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 	}
 
 	/* ------------------------------------------------------------------------------------
-	 * The methods below are not available on the ODIP, since this is a read-only interface 
+	 * The methods below are not available on the ODIP, since this is a read-only interface
 	 * ------------------------------------------------------------------------------------ */
 
 	/**
@@ -620,7 +619,7 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 					e.getMessage() + (e.getCause() == null ? "" : (": " + e.getCause().getMessage()))));
 			return;
 		}
-		Entity requestEntity = result.getEntity();			
+		Entity requestEntity = result.getEntity();
 
 		RestOrder modelOrder = null;
 		try {
@@ -765,7 +764,7 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 			logger.trace(">>> readMediaEntity({}, {}, {}, {})", request, response, uriInfo, responseFormat);
 
 		ODataSerializer serializer = odata.createSerializer(ContentType.JSON); // Serializer for error messages only
-		
+
 		List<UriResource> resourcePaths = uriInfo.getUriResourceParts();
 		// Find the requested product
 		UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriInfo.getUriResourceParts().get(0); // in our example,
@@ -773,7 +772,7 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 																													// segment is
 																													// the EntitySet
 		List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
-		
+
 		if (resourcePaths.size() != 3 || keyPredicates.size() != 1) {
 			// no more check at the moment, the model product is the only one to downlod
 			// nothing to download
@@ -781,7 +780,7 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 			response.setStatusCode(HttpStatusCode.NOT_FOUND.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, "illegal command");
 			return;
-				
+
 		}
 		try {
 			String productUuid = getProductUuidProductionOrder(keyPredicates.get(0).getText());
@@ -790,7 +789,7 @@ public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcesso
 			response.setStatusCode(HttpStatusCode.TEMPORARY_REDIRECT.getStatusCode());
 			response.setHeader(HttpHeader.LOCATION, uri);
 			BasicHeader token = new BasicHeader(AUTH.WWW_AUTH_RESP,
-					StandardAuthScheme.BASIC + " " + Base64.getEncoder().encodeToString((securityConfig.getMission() + "\\" 
+					StandardAuthScheme.BASIC + " " + Base64.getEncoder().encodeToString((securityConfig.getMission() + "\\"
 							+ securityConfig.getUser() + ":" + securityConfig.getPassword()).getBytes()));
 			response.setHeader(HttpHeader.AUTHORIZATION, token.getValue());
 			response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());

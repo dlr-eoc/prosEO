@@ -18,10 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.Mission;
-import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.ProductionPlanner;
-import de.dlr.proseo.planner.dispatcher.JobDispatcher;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = ProductionPlanner.class, webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -36,10 +34,10 @@ public class KubeTest {
 
 //    @Autowired
 //    private JobStepRepository jobSteps;
-//    
+//
 //    @Autowired
 //    private ProductionPlanner productionPlanner;
-    
+
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 	}
@@ -71,7 +69,7 @@ public class KubeTest {
 		String pft = m.getProductFileTemplate();
 		RepositoryService.getMissionRepository().save(m);
 //		JobStep js = new JobStep();
-//		js.setProcessingMode("nix"); 
+//		js.setProcessingMode("nix");
 //		RepositoryService.getJobStepRepository().save(js);
 //		JobDispatcher jd = new JobDispatcher();
 //		try {

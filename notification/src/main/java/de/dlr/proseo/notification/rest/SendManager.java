@@ -8,7 +8,6 @@ package de.dlr.proseo.notification.rest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -73,7 +72,7 @@ public class SendManager {
 		if (null == restMessage.getEndpoint()) {
 			// Throw an exception no send tyoe is set
 			throw new IllegalArgumentException(logger.log(NotificationMessage.MSG_ENDPOINT_NOT_SET));
-		} 
+		}
 
 		String endpoint = restMessage.getEndpoint();
 
@@ -151,7 +150,7 @@ public class SendManager {
 
 		// Send the message based on the detected send type
 		Object result = null;
-		
+
 		switch (type) {
 		case HTTPS:
 		case HTTP:
@@ -161,10 +160,10 @@ public class SendManager {
 			serviceMail.sendMail(endpoint, subject, mediaType, messageCode, message, sender);
 			break;
 		}
-		
+
 		// Log success and return endpoint response, if any
 		logger.log(NotificationMessage.MESSAGE_SENT, endpoint);
-		
+
 		return result;
 	}
 }

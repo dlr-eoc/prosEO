@@ -13,7 +13,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionDefinition;
@@ -31,7 +30,6 @@ import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.Task;
 import de.dlr.proseo.model.enums.JobOrderVersion;
-import de.dlr.proseo.model.enums.OrderSource;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.model.service.ProductQueryService;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -68,7 +66,7 @@ public class KubeJob {
 
 	/** Logger of this class */
 	private static ProseoLogger logger = new ProseoLogger(KubeJob.class);
-	
+
 	/** The job's database id */
 	private long jobId;
 
@@ -95,14 +93,14 @@ public class KubeJob {
 
 	/** The processing facility running the job step */
 	private KubeConfig kubeConfig;
-	
+
 	/**
 	 * Internal class to store data for Job Order creation
 	 */
 	private static class JobOrderData {
 		public JobOrder jobOrder;
 		public JobOrderVersion jobOrderVersion;
-		
+
 		public JobOrderData(JobOrder jobOrder, JobOrderVersion jobOrderVersion) {
 			this.jobOrder = jobOrder;
 			this.jobOrderVersion = jobOrderVersion;
@@ -263,7 +261,7 @@ public class KubeJob {
 
 	/**
 	 * Creates a Kubernetes job on the processing facility based on the provided parameters.
-	 * 
+	 *
 	 * TODO Add retry of database update after job has been sent to Kubernetes
 	 *
 	 * @param kubeConfig     The processing facility's kube configuration
@@ -276,7 +274,7 @@ public class KubeJob {
 	public KubeJob createJob(KubeConfig kubeConfig, String stdoutLogLevel, String stderrLogLevel) throws Exception {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createJob({}, {}, {})", kubeConfig, stdoutLogLevel, stderrLogLevel);
-		
+
 		// Ensure that the kube configuration is given
 		this.kubeConfig = kubeConfig;
 		if (!kubeConfig.isConnected()) {
@@ -306,8 +304,8 @@ public class KubeJob {
 					JobStep jobStep = jobStepOptional.get();
 
 					// Find the execution time
-					return jobStep.getJob().getProcessingOrder().getExecutionTime();				
-				});   
+					return jobStep.getJob().getProcessingOrder().getExecutionTime();
+				});
 				execTime = execTimeLoc;
 				break;
 
@@ -397,7 +395,7 @@ public class KubeJob {
 					}
 
 					return new JobOrderData(jobOrder, configuredProcessor.getProcessor().getJobOrderVersion());
-				});   
+				});
 				jobOrderData = jobOrderDataLoc;
 				break;
 			} catch (CannotAcquireLockException e) {
@@ -414,7 +412,7 @@ public class KubeJob {
 		if (null == jobOrderData || null == jobOrderData.jobOrder) {
 			throw new Exception(logger.log(PlannerMessage.JOB_STEP_CREATION_FAILED, this.getJobId()));
 		}
-		
+
 
 		// Send the job order to the storage manager (outside of database transaction)
 		jobOrderData.jobOrder = jobDispatcher.sendJobOrderToStorageManager(this.kubeConfig, jobOrderData.jobOrder, jobOrderData.jobOrderVersion);
@@ -613,7 +611,7 @@ public class KubeJob {
 				break;
 			} catch (ApiException e) {
 				// look whether job was created or the exception was "real"
-				if (logger.isTraceEnabled()) 
+				if (logger.isTraceEnabled())
 					logger.trace("    createNamespacedJob: ApiException, retry {} of {}", i, jobName);
 				if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
 					Thread.sleep(500);
@@ -622,7 +620,7 @@ public class KubeJob {
 					if (podNames.get(podNames.size() - 1).startsWith(jobName)) {
 						// job was created
 						job = kubeConfig.getBatchApiV1().readNamespacedJob(jobName, kubeConfig.getNamespace(), null, false, false);
-						if (logger.isTraceEnabled()) 
+						if (logger.isTraceEnabled())
 							logger.trace("    createNamespacedJob: retry {} of {} successful", i, jobName);
 						break;
 					}
@@ -653,7 +651,7 @@ public class KubeJob {
 
 					return null;
 
-				}); 
+				});
 				break;
 			} catch (CannotAcquireLockException e) {
 				if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
@@ -741,7 +739,7 @@ public class KubeJob {
 
 			for (int retryNumber = 0; retryNumber < ProseoUtil.K8S_MAX_RETRY; ) {
 				++retryNumber;
-				
+
 				try {
 					// Retrieve the pod list for the namespace
 					podList = kubeConfig.getApiV1().listNamespacedPod(kubeConfig.getNamespace(), null, null, null, null, null, null,
@@ -765,7 +763,7 @@ public class KubeJob {
 					if (logger.isDebugEnabled())
 						logger.debug("... exception stack trace: ", e);
 				}
-				
+
 				if (retryNumber < ProseoUtil.K8S_MAX_RETRY) {
 					ProseoUtil.kubeWait(retryNumber);
 				}
@@ -881,7 +879,7 @@ public class KubeJob {
 
 				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			}
-		} 
+		}
 
 		// Configure and start a KubeJobFinish object to monitor the completion of the kube job
 		KubeJobFinish jobMonitor = new KubeJobFinish(this, kubeConfig.getProductionPlanner(), jobName);
@@ -894,19 +892,19 @@ public class KubeJob {
 	 * TODO Analyze pod. The phase of a Pod is a simple, high-level summary of where the Pod is in its lifecycle. The conditions
 	 * array, the reason and message fields, and the individual container status arrays contain more detail about the pod's status.
 	 * There are five possible phase values:
-	 * 
+	 *
 	 * Pending: The pod has been accepted by the Kubernetes system, but one or more of the container images has not been created.
 	 * This includes time before being scheduled as well as time spent downloading images over the network, which could take a
 	 * while.
-	 * 
+	 *
 	 * Running: The pod has been bound to a node, and all of the containers have been created. At least one container is still
 	 * running, or is in the process of starting or restarting.
-	 * 
+	 *
 	 * Succeeded: All containers in the pod have terminated in success, and will not be restarted.
-	 * 
+	 *
 	 * Failed: All containers in the pod have terminated, and at least one container has terminated in failure. The container either
 	 * exited with non-zero status or was terminated by the system. *
-	 * 
+	 *
 	 * Unknown: For some reason the state of the pod could not be obtained, typically due to an error in communicating with the host
 	 * of the pod. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#pod-phase
 	 *
@@ -1143,7 +1141,7 @@ public class KubeJob {
 		if (success) {
 			TransactionTemplate transactionTemplate = new TransactionTemplate(
 					this.kubeConfig.getProductionPlanner().getTxManager());
-			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);		
+			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 				try {
 
@@ -1230,7 +1228,7 @@ public class KubeJob {
 //				em.lock(product, LockModeType.PESSIMISTIC_WRITE, properties);
 //			} catch (Exception e) {
 //				logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
-//				
+//
 //				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 //			}
 //
@@ -1332,7 +1330,7 @@ public class KubeJob {
 				}
 			} catch (ApiException e) {
 				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
-				
+
 				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			}
 		}
@@ -1351,7 +1349,7 @@ public class KubeJob {
 					logger.trace("    updateInfo: ApiException ignore, normally the pod has no log");
 			} catch (Exception e) {
 				logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
-				
+
 				if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
 			}
 		} else {
@@ -1391,8 +1389,8 @@ public class KubeJob {
 					// If the query is successfully executed, update its state and save
 					RepositoryService.getProductQueryRepository().save(productQuery);
 				}
-			}	
+			}
 			return null;
-		});  
+		});
 	}
 }

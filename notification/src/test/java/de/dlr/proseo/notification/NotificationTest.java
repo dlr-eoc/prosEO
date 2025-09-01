@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,10 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.extension.responsetemplating.ResponseTemplateTransformer;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -33,15 +29,15 @@ import de.dlr.proseo.notification.rest.model.RestMessage;
 public class NotificationTest {
 
 	private static ProseoLogger logger = new ProseoLogger(NotificationTest.class);
-		
+
 	@Autowired
 	private NotifyControllerImpl notifyController;
-	
+
 	/** Mocking the storage manager and planner */
 	private static int WIREMOCK_PORT = 4050;
 	@ClassRule
 	public static WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
-	
+
 	/**
 	 * Prepare the test environment
 	 *
@@ -49,7 +45,7 @@ public class NotificationTest {
 	 */
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		
+
 		wireMockRule.start();
 
 		wireMockRule
@@ -74,7 +70,7 @@ public class NotificationTest {
 	@Test
 	public final void testNotifiy() {
 		logger.trace(">>> testNotifiy()");
-		
+
 		RestMessage restMessage = new RestMessage();
 		restMessage.setEndpoint("http://localhost:" + WIREMOCK_PORT + "/notify");
 		restMessage.setUser("UTM-testuser");
@@ -91,6 +87,6 @@ public class NotificationTest {
 		restMessage.setEndpoint("http://localhost:" + WIREMOCK_PORT + "/notifynotknown");
 		response = notifyController.notifyx(restMessage);
 		assertEquals("Unexpected HTTP status code: ", HttpStatus.NOT_FOUND, response.getStatusCode());
-		
+
 	}
 }

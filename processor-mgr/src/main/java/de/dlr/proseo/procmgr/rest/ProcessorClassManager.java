@@ -17,10 +17,6 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,7 +74,7 @@ public class ProcessorClassManager {
 	 * @throws NoResultException if no processor classes matching the given search criteria could be found
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public List<RestProcessorClass> getProcessorClasses(String mission, Long id, String[] productClasses, String processorName, 
+	public List<RestProcessorClass> getProcessorClasses(String mission, Long id, String[] productClasses, String processorName,
 			Integer recordFrom, Integer recordTo, String[] orderBy)
 			throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
@@ -154,7 +150,7 @@ public class ProcessorClassManager {
 				jpqlQuery += ":productClasses" + i;
 			}
 			jpqlQuery += ")) ";
-			
+
 		}
 		if (!count) {
 			jpqlQuery += " group by pc, pc.processorName order by pc.processorName ASC";

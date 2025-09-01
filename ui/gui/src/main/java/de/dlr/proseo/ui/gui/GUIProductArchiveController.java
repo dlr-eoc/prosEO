@@ -7,7 +7,6 @@ package de.dlr.proseo.ui.gui;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +33,6 @@ import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 /**
@@ -120,7 +118,7 @@ public class GUIProductArchiveController extends GUIBaseController {
 					model.addAttribute("productarchives", productArchives);
 
 					modelAddAttributes(model, count, pageSize, pages, page);
-					
+
 					logger.trace(model.toString() + "MODEL TO STRING");
 					deferredResult.setResult("productarchive-show :: #productarchivecontent");
 				} else {
@@ -133,14 +131,14 @@ public class GUIProductArchiveController extends GUIBaseController {
 
 				logger.trace("Now in Consumer::accept({})", entityList);
 
-				if (entityList.getStatusCode().is2xxSuccessful() 
+				if (entityList.getStatusCode().is2xxSuccessful()
 						|| entityList.getStatusCode().value() ==  HttpStatus.NOT_FOUND.value()) {
 					// Process the response body and add the configurations to the model
 					productArchives.addAll(entityList.getBody());
 					model.addAttribute("productarchives", productArchives);
 
 					modelAddAttributes(model, count, pageSize, pages, page);
-					
+
 					deferredResult.setResult("productarchive-show :: #productarchivecontent");
 				} else {
 					ClientResponse errorResponse = ClientResponse.create(entityList.getStatusCode())
@@ -159,7 +157,7 @@ public class GUIProductArchiveController extends GUIBaseController {
 		return deferredResult;
 	}
 
-			
+
 
 	/**
 	 * Retrieve the number of product archives matching a given name, archive type.
@@ -169,7 +167,7 @@ public class GUIProductArchiveController extends GUIBaseController {
 	 * @return the number of product archives with the respective name, archive type
 	 */
 	private Long countProductArchives(Long id, String name, String archiveType) {
-		
+
 		// Provide authentication
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
@@ -195,7 +193,7 @@ public class GUIProductArchiveController extends GUIBaseController {
 		URI uri = UriComponentsBuilder.fromUriString(uriString)
 				.build()
 				.toUri();
-		
+
 		// Initialize the result with -1 to indicate errors if no valid response is
 		// given
 		Long result = -1l;
@@ -232,7 +230,7 @@ public class GUIProductArchiveController extends GUIBaseController {
 			// Return a result of -1 to indicate that an error occurred
 			return result;
 		}
-		
+
 	}
 
 	/**

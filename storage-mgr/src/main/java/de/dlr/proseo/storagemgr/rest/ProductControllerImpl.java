@@ -1,6 +1,6 @@
 /**
  * StorageControllerImpl.java
- * 
+ *
  * (C) 2019 DLR
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
@@ -12,7 +12,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Paths;
 import java.text.ParseException;
-import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoField;
@@ -54,7 +53,7 @@ import de.dlr.proseo.storagemgr.utils.PathConverter;
  * Spring MVC controller for the prosEO Storage Manager; implements the services
  * required to manage any object storage, e. g. a storage based on the AWS S3
  * API
- * 
+ *
  * @author Dr. Thomas Bassler
  * @author Denys Chaykovskiy
  * @author Hubert Asamer
@@ -78,7 +77,7 @@ public class ProductControllerImpl implements ProductController {
 	 * Copy a file from "ingest" file system to storage manager controlled prosEO
 	 * cache. Source and target are defined in the restProductFS structure.
 	 * Upload is restricted to the default backend storage path/bucket.
-	 * 
+	 *
 	 * @param restProductFS the ingest file information
 	 * @return a response entity containing HTTP status CREATED and the ingest file
 	 *         information updated with the file paths after ingestion on success,
@@ -95,7 +94,7 @@ public class ProductControllerImpl implements ProductController {
 
 		try {
 			String hostName = getLocalHostName();
-			
+
 			ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
 			String prefix = new PathConverter(Paths.get(
 					String.valueOf(now.get(ChronoField.YEAR)),
@@ -105,7 +104,7 @@ public class ProductControllerImpl implements ProductController {
 					String.valueOf(restProductFS.getProductId())).toString())
 				.addSlashAtEnd()
 				.getPath();
-			
+
 			List<String> allUploaded = new ArrayList<String>();
 
 			StorageFile targetFolder = storageProvider.getStorageFileFromDefaultStorage(prefix);
@@ -139,7 +138,7 @@ public class ProductControllerImpl implements ProductController {
 
 	/**
 	 * List the file/object contents of the default repository.
-	 * 
+	 *
 	 * @param storageType S3, POSIX or null
 	 * @param prefix      Path information
 	 * @return a response entity containing HTTP status OK or PARTIAL_CONTENT and
@@ -161,7 +160,7 @@ public class ProductControllerImpl implements ProductController {
 			List<String> response;
 
 			if (storageType == null) { // add both
-				
+
 				response = storageProvider.getDefaultStorage(StorageType.S3).getAbsoluteFiles(prefix);
 				response = storageProvider.getDefaultStorage(StorageType.S3).addFSPrefix(response);
 				response.addAll(storageProvider.getDefaultStorage(StorageType.POSIX).getAbsoluteFiles(prefix));
@@ -188,7 +187,7 @@ public class ProductControllerImpl implements ProductController {
 
 	/**
 	 * Retrieve the byte stream for download of a file object in repository.
-	 * 
+	 *
 	 * @param pathInfo the file path as S3/ALLUXIO/POSIX string for download
 	 * @param token    a JSON Web Token authenticating the download (obtained from
 	 *                 Ingestor)
@@ -236,25 +235,25 @@ public class ProductControllerImpl implements ProductController {
 
 		}
 		// token check end
-		 
+
 
 		// Storage Manager version 2: storage file -> byte page
 
 		try {
 			Storage storage = storageProvider.getStorage(pathInfo);
 			String relativePath = storage.getRelativePath(pathInfo);
-			
+
 			StorageFile cacheFile = storageProvider.getCacheFile(relativePath);
 			FileCache cache = FileCache.getInstance();
 
 			StorageFile sourceFile;
 			if (cache.containsKey(cacheFile.getFullPath())) {
-				
-				sourceFile = cacheFile;	
+
+				sourceFile = cacheFile;
 				logger.debug("... product file found in cache - it will be downloaded from cache: {}", sourceFile.getFullPath());
 			}
 			else {
-				
+
 				sourceFile = storage.getStorageFile(relativePath);
 				logger.debug("... no product file in cache - it will be downloaded from storage: {}", sourceFile.getFullPath());
 			}
@@ -301,9 +300,9 @@ public class ProductControllerImpl implements ProductController {
 	/**
 	 * Delete object(s) from the default storage (deleting from other storages is not supported,
 	 * as they are not managed by the called Storage Manager instance)
-	 * 
+	 *
 	 * @param pathInfo path to the object or directory
-	 * 
+	 *
 	 * @return a response entity containing HTTP status OK and the full metadata of
 	 *         the deleted object, or HTTP status NOT_FOUND and an error message, or
 	 *         HTTP status INTERNAL_SERVER_ERROR and an error message
@@ -346,7 +345,7 @@ public class ProductControllerImpl implements ProductController {
 
 	/**
 	 * Gets OK or PARTIAL_CONTENT status
-	 * 
+	 *
 	 * @param fromByte from byte
 	 * @param toByte   to byte
 	 * @return http status OK or PARTIAL_CONTENT
@@ -366,7 +365,7 @@ public class ProductControllerImpl implements ProductController {
 
 	/**
 	 * Gets file page
-	 * 
+	 *
 	 * @param sourceFile source file
 	 * @param stream     stream
 	 * @param fromByte   from byte
@@ -418,7 +417,7 @@ public class ProductControllerImpl implements ProductController {
 
 	/**
 	 * Check the given token for formal correctness and extract its JWT claims set
-	 * 
+	 *
 	 * @param token the signed JSON Web Token to check
 	 * @return the JWT claims set contained in the token
 	 * @throws IllegalArgumentException if the token cannot be analyzed
@@ -480,7 +479,7 @@ public class ProductControllerImpl implements ProductController {
 
 	/**
 	 * Creates rest product files deleted
-	 * 
+	 *
 	 * @param deletedFiles deleted files
 	 * @param storageType  storage type
 	 * @return RestProductFS
@@ -500,7 +499,7 @@ public class ProductControllerImpl implements ProductController {
 
 	/**
 	 * Set the members of RestProductFS response.
-	 * 
+	 *
 	 * @param restProductFS      the ingest info structure to copy product ID and
 	 *                           source information from
 	 * @param storageId          the ID of the storage used
@@ -544,7 +543,7 @@ public class ProductControllerImpl implements ProductController {
 
 	/**
 	 * Gets Local host name
-	 * 
+	 *
 	 * @return local host name
 	 */
 	private String getLocalHostName() {
