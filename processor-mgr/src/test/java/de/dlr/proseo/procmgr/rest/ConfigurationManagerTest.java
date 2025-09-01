@@ -9,8 +9,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 import org.junit.After;
@@ -230,7 +228,7 @@ public class ConfigurationManagerTest {
 		logger.trace(">>> testCountConfigurations()");
 
 		createTestConfigurations();
-		
+
 		String[] names = {testConfigurationData[0][1]};
 		// Count configurations and assert success.
 		assertEquals("Wrong configuration count.", "2", configurationMgr.countConfigurations("UTM", null, null, null, null, null));
@@ -259,7 +257,7 @@ public class ConfigurationManagerTest {
 		logger.trace(">>> testDeleteConfigurationById()");
 
 		createTestConfigurations();
-		
+
 		// Get a test configuration to delete.
 		Configuration testConfiguration = RepositoryService.getConfigurationRepository().findAll().get(0);
 
@@ -282,7 +280,7 @@ public class ConfigurationManagerTest {
 		logger.trace(">>> testGetConfigurationById()");
 
 		createTestConfigurations();
-		
+
 		// Get a test configuration to retrieve.
 		RestConfiguration testConfiguration = ConfigurationUtil
 				.toRestConfiguration(RepositoryService.getConfigurationRepository().findAll().get(0));
@@ -311,7 +309,7 @@ public class ConfigurationManagerTest {
 		logger.trace(">>> testGetConfigurations()");
 
 		createTestConfigurations();
-		
+
 		/*
 		 * Using values from the test configuration data which was used to initialize
 		 * the configuration repository means that the query must return at least one

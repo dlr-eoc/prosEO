@@ -7,7 +7,6 @@ package de.dlr.proseo.ordermgr.rest;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
