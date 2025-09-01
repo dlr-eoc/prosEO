@@ -149,7 +149,7 @@ public class OrderCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.ORDER_NOT_FOUND, orderIdentifier);
 				break;
@@ -391,7 +391,7 @@ public class OrderCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.ORDER_DATA_INVALID,  e.getStatusText());
 				break;
@@ -472,7 +472,7 @@ public class OrderCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.NO_ORDERS_FOUND);
 				break;
@@ -605,7 +605,7 @@ public class OrderCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.ORDER_NOT_FOUND, updatedOrder.getIdentifier());
 				break;
@@ -743,7 +743,7 @@ public class OrderCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
@@ -802,7 +802,7 @@ public class OrderCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.ORDER_NOT_FOUND, restOrder.getId());
 				break;
@@ -855,7 +855,7 @@ public class OrderCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.ORDER_NOT_FOUND, restOrder.getIdentifier());
 				break;
@@ -929,7 +929,7 @@ public class OrderCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.FACILITY_NOT_FOUND, processingFacility);
 				break;
@@ -969,7 +969,7 @@ public class OrderCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.ORDER_JOBS_NOT_FOUND, restOrder.getIdentifier());
 				break;
@@ -1055,7 +1055,7 @@ public class OrderCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.ORDER_NOT_FOUND, restOrder.getIdentifier());
 				break;
@@ -1124,7 +1124,7 @@ public class OrderCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.ORDER_NOT_FOUND, restOrder.getIdentifier());
 				break;
@@ -1190,7 +1190,7 @@ public class OrderCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.ORDER_NOT_FOUND, restOrder.getIdentifier());
 				break;
@@ -1245,7 +1245,7 @@ public class OrderCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.ORDER_NOT_FOUND, restOrder.getIdentifier());
 				break;
@@ -1302,7 +1302,7 @@ public class OrderCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.ORDER_NOT_FOUND, restOrder.getIdentifier());
 				break;
@@ -1361,7 +1361,7 @@ public class OrderCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.ORDER_NOT_FOUND, restOrder.getIdentifier());
 				break;

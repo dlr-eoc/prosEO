@@ -125,7 +125,7 @@ public class ProductclassCommandRunner {
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.PRODUCTCLASS_NOT_FOUND, productType);
 				break;
@@ -271,7 +271,7 @@ public class ProductclassCommandRunner {
 					restProductClass, RestProductClass.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.PRODUCTCLASS_DATA_INVALID, e.getStatusText());
 				break;
@@ -334,7 +334,7 @@ public class ProductclassCommandRunner {
 					requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.NO_PRODUCTCLASSES_FOUND);
 				break;
@@ -486,7 +486,7 @@ public class ProductclassCommandRunner {
 					restProductClass, RestProductClass.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
@@ -547,7 +547,7 @@ public class ProductclassCommandRunner {
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.PRODUCTCLASS_NOT_FOUND_BY_ID, restProductClass.getId());
 				break;
@@ -693,7 +693,7 @@ public class ProductclassCommandRunner {
 					selectionRuleList, RestProductClass.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.SELECTION_RULE_DATA_INVALID, e.getStatusText());
 				break;
@@ -768,7 +768,7 @@ public class ProductclassCommandRunner {
 					requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = null == sourceClass ?
 						ProseoLogger.format(UIMessage.NO_SELECTION_RULES_FOUND, targetClass) :
@@ -902,7 +902,7 @@ public class ProductclassCommandRunner {
 					requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.NO_SELECTION_RULES_FOUND, targetClass);
 				break;
@@ -991,7 +991,7 @@ public class ProductclassCommandRunner {
 					restSelectionRule, SelectionRuleString.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
@@ -1065,7 +1065,7 @@ public class ProductclassCommandRunner {
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.SELECTION_RULE_NOT_FOUND_BY_ID, ruleId);
 				break;

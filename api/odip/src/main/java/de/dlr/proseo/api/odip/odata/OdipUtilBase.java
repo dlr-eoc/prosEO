@@ -979,13 +979,13 @@ public class OdipUtilBase {
 		}
 		restOrder.setMissionCode(securityConfig.getMission());
 		restOrder.setConfiguredProcessors(confProcs);
-		
+
 		// generate an order name using workflow name and current time
 		String name = workflow.getName() + "_";
 		Instant now = Instant.now();
 		name += instantFormatter.format(now);
 		restOrder.setIdentifier(name);
-		
+
 		// set the mission
 		Date d = Date.from(now);
 		restOrder.setSubmissionTime(d);
@@ -1026,7 +1026,7 @@ public class OdipUtilBase {
 				} catch (RestClientResponseException e) {
 					message = null;
 					status = HttpStatusCode.INTERNAL_SERVER_ERROR;
-					switch (e.getRawStatusCode()) {
+					switch (e.getStatusCode().value()) {
 					case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 						status = HttpStatusCode.BAD_REQUEST;
 						message = logger.log(OdipMessage.ORDER_DATA_INVALID, e.getStatusText());
@@ -1076,7 +1076,7 @@ public class OdipUtilBase {
 				} catch (RestClientResponseException e) {
 					HttpStatusCode status = HttpStatusCode.INTERNAL_SERVER_ERROR;
 					String message = null;
-					switch (e.getRawStatusCode()) {
+					switch (e.getStatusCode().value()) {
 					case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 						message = logger.log(OdipMessage.ORDER_DATA_INVALID, e.getStatusText());
 						status = HttpStatusCode.BAD_REQUEST;
@@ -1101,7 +1101,7 @@ public class OdipUtilBase {
 			if (i > 2) {
 				return createdOrder;
 			}
-			
+
 			i = 0;
 			while (3 > i++) {
 				try {
@@ -1112,7 +1112,7 @@ public class OdipUtilBase {
 				} catch (RestClientResponseException e) {
 					HttpStatusCode status = HttpStatusCode.INTERNAL_SERVER_ERROR;
 					String message = null;
-					switch (e.getRawStatusCode()) {
+					switch (e.getStatusCode().value()) {
 					case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 						message = logger.log(OdipMessage.ORDER_DATA_INVALID, e.getStatusText());
 						status = HttpStatusCode.BAD_REQUEST;
@@ -1137,8 +1137,8 @@ public class OdipUtilBase {
 			if (i > 2) {
 				return createdOrder;
 			}
-			
-			i = 0;			
+
+			i = 0;
 			while (3 > i++) {
 				try {
 					createdOrder = serviceConnection.patchToService(config.getProductionPlannerUrl(),
@@ -1148,7 +1148,7 @@ public class OdipUtilBase {
 				} catch (RestClientResponseException e) {
 					HttpStatusCode status = HttpStatusCode.INTERNAL_SERVER_ERROR;
 					String message = null;
-					switch (e.getRawStatusCode()) {
+					switch (e.getStatusCode().value()) {
 					case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 						message = logger.log(OdipMessage.ORDER_DATA_INVALID, e.getStatusText());
 						status = HttpStatusCode.BAD_REQUEST;
@@ -1172,7 +1172,7 @@ public class OdipUtilBase {
 				}
 			}
 		}
-		
+
 		return createdOrder;
 	}
 
@@ -1185,10 +1185,10 @@ public class OdipUtilBase {
 	public Product findProductByReference(String reference) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> findProductByReference({})", reference);
-		
+
 		List<ProductFile> files = RepositoryService.getProductFileRepository().findByFileName(reference);
 		Product product = null;
-		
+
 		for (ProductFile file : files) {
 			if (file.getProcessingFacility().getName().equals(config.getFacility())) {
 				product = file.getProduct();
@@ -1197,7 +1197,7 @@ public class OdipUtilBase {
 				break;
 			}
 		}
-		
+
 		if (product == null) {
 			try {
 				RestProduct restProduct = serviceConnection.getFromService(config.getAipUrl(),
@@ -1245,7 +1245,7 @@ public class OdipUtilBase {
 			String message = logger.log(OdipMessage.MSG_PRODUCTCLASS_NOT_DEF, productType, securityConfig.getMission());
 			throw new OdipException(message);
 		}
-		
+
 		try {
 			@SuppressWarnings("unchecked")
 			List<Map<String, Object>> restProductList = (List<Map<String, Object>>) serviceConnection.getFromService(config.getAipUrl(),
@@ -1271,7 +1271,7 @@ public class OdipUtilBase {
 			String message = logger.log(OdipMessage.MSG_EXCEPTION, e.getMessage(), e);
 			throw new OdipException(message);
 		}
-		
+
 		return products;
 	}
 

@@ -265,7 +265,7 @@ public class GUIConfigurationController extends GUIBaseController {
 			}
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;

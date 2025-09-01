@@ -19,11 +19,11 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -64,7 +64,7 @@ public class ConfigurationControllerTest {
 	private ConfigurationControllerImpl cci;
 
 	/** A REST template builder for this class */
-	@MockBean
+	@MockitoBean
 	RestTemplateBuilder rtb;
 
 	// Test data

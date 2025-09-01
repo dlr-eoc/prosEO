@@ -90,7 +90,7 @@ public class ProductIngestor {
 	/** Product Manager */
 	@Autowired
 	ProductManager productManager;
-	
+
 	/** Database transaction manager */
 	@Autowired
 	private PlatformTransactionManager txManager;
@@ -100,7 +100,7 @@ public class ProductIngestor {
 	private EntityManager em;
 
 	/**
-	 * 
+	 *
 	 * /** Find a processing facility by name (transaction wrapper for repository method)
 	 *
 	 * @param facilityName the name of the facility to retrieve
@@ -117,7 +117,7 @@ public class ProductIngestor {
 	 * facility. If the ID of a product to ingest is null or 0 (zero), then the
 	 * product will be created, otherwise a matching product will be looked up and
 	 * updated
-	 * 
+	 *
 	 * NOTE: Datatabase transactions are programmatically, therefore no '@Transactional' annotation here.
 	 *
 	 * @param facility        the processing facility to ingest products to
@@ -151,12 +151,12 @@ public class ProductIngestor {
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-		
+
 		transactionTemplate.execute(status -> {
 			// Wrap in transaction to ensure that either all product creates succeed or all fail
-			
+
 			for (IngestorProduct ingestorProduct: ingestorProducts) {
-				
+
 				// Ensure user is authorized for the product's mission
 				if (!securityService.isAuthorizedForMission(ingestorProduct.getMissionCode())) {
 					throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, ingestorProduct.getMissionCode(),
@@ -198,18 +198,18 @@ public class ProductIngestor {
 									productFile.getProductFileName(), facility.getName()));
 						}
 					}
-					
+
 					ingestorProduct.setId(equivalentProduct.getId());
 					// We do not add the product to the list of created products, because we did not create it,
 					// and therefore we do not need to delete it in case of upload errors
 				}
 
 			}
-			
+
 			return true;
 		});
-		
-		
+
+
 		// Upload all products to Storage Manager
 		try {
 			for (IngestorProduct ingestorProduct: ingestorProducts) {
@@ -235,12 +235,12 @@ public class ProductIngestor {
 			}
 			throw e;
 		}
-		
+
 		// Now we know all uploads were successful, and we can update the database metadata in one single transaction
 		List<RestProduct> result = transactionTemplate.execute(status -> {
 			return ingestToDatabase(ingestorProducts, facility);
 		});
-		
+
 		// Database updated, notifying Production Planner if requested
 		if (ingestorConfig.getNotifyPlanner()) {
 			if (logger.isTraceEnabled()) logger.trace("... products ingested, now notifying planner");
@@ -254,19 +254,19 @@ public class ProductIngestor {
 					} catch (Exception e) {
 						// If notification fails, log warning, but otherwise ignore
 						logger.log(IngestorMessage.NOTIFICATION_FAILED, e.getMessage());
-					} 
+					}
 				}
 				return null; // dummy, no return value needed
 			});
 		} else {
 			if (logger.isDebugEnabled()) logger.debug("... skipping Planner notification due to configuration setting");
 		}
-		
+
 		logger.log(IngestorMessage.PRODUCTS_INGESTED, result.size(), facility.getName());
-		
+
 		return result;
 	}
-	
+
 	/**
 	 * Store the given model product with the location information from the ingestor
 	 * product at the given processing facility
@@ -284,7 +284,7 @@ public class ProductIngestor {
 	private String ingestToStorageManager(ProcessingFacility facility, IngestorProduct ingestorProduct, Boolean copyFiles) throws ProcessingException, IllegalArgumentException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> ingestToStorageManager({}, {})", facility.getName(), ingestorProduct.getProductClass());
-	
+
 		// Build post data for storage manager
 		Map<String, Object> postData = new HashMap<>();
 		postData.put("productId", String.valueOf(ingestorProduct.getId()));
@@ -297,13 +297,13 @@ public class ProductIngestor {
 		postData.put("sourceFilePaths", filePaths);
 		postData.put("sourceStorageType", ingestorProduct.getSourceStorageType());
 		postData.put("targetStorageType", facility.getDefaultStorageType());
-	
+
 		// Store the product in the storage manager for the given processing facility
 		String storageManagerUrl = facility.getStorageManagerUrl() + URL_STORAGE_MANAGER_REGISTER;
 		if (logger.isDebugEnabled())
 			logger.debug("Calling Storage Manager with URL " + storageManagerUrl + " and data " + postData);
-	
-		RestTemplate restTemplate = rtb.setConnectTimeout(Duration.ofMillis(ingestorConfig.getStorageManagerTimeout()))
+
+		RestTemplate restTemplate = rtb.connectTimeout(Duration.ofMillis(ingestorConfig.getStorageManagerTimeout()))
 			.basicAuthentication(facility.getStorageManagerUser(), facility.getStorageManagerPassword())
 			.build();
 		@SuppressWarnings("rawtypes")
@@ -322,11 +322,11 @@ public class ProductIngestor {
 		}
 		if (logger.isTraceEnabled())
 			logger.trace("... Call to Storage Manager successful");
-	
+
 		// Extract the product file paths from the response
 		ObjectMapper mapper = new ObjectMapper();
 		RestProductFS restProductFs = mapper.convertValue(responseEntity.getBody(), RestProductFS.class);
-	
+
 		List<String> responseFilePaths = restProductFs.getRegisteredFilesList();
 		if (null == responseFilePaths || responseFilePaths.size() != filePaths.size()) {
 			throw new ProcessingException(logger.log(IngestorMessage.UNEXPECTED_NUMBER_OF_FILE_PATHS,
@@ -342,29 +342,29 @@ public class ProductIngestor {
 
 	/**
 	 * Add the metadata for all ingested products into the database.
-	 * 
+	 *
 	 * Method is public to enable @Transactional annotation. It is not actually part of the public interface of this class.
-	 * 
+	 *
 	 * @param ingestorProducts the list of products ingested
 	 * @param facility the processing facility, to which the products were ingested
-	 * 
+	 *
 	 * @return the update metadata list for the products
 	 */
 	private List<RestProduct> ingestToDatabase(List<IngestorProduct> ingestorProducts, ProcessingFacility facility) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> ingestToDatabase(IngestorProduct[{}], {}", ingestorProducts.size(), facility.getName());
-		
+
 		List<RestProduct> result = new ArrayList<>();
-		
+
 		for (IngestorProduct ingestorProduct: ingestorProducts) {
-			
+
 			// Create product file object in database for the stored files
 			de.dlr.proseo.model.ProductFile newProductFile = new de.dlr.proseo.model.ProductFile();
 			newProductFile.setProcessingFacility(facility);
 
 			// We put a single product file into the ingestor product before just to pass on the file path from the Storage Manager
 			newProductFile.setFilePath(ingestorProduct.getProductFile().get(0).getFilePath());
-			
+
 			newProductFile.setProductFileName(ingestorProduct.getProductFileName());
 			for (String auxFile : ingestorProduct.getAuxFileNames()) {
 				newProductFile.getAuxFileNames().add(auxFile);
@@ -393,10 +393,10 @@ public class ProductIngestor {
 
 			result.add(ProductUtil.toRestProduct(newModelProduct));
 		}
-		
+
 		return result;
 	}
-	
+
 	/**
 	 * Notify the Production Planner component of newly ingested products
 	 *
@@ -415,7 +415,7 @@ public class ProductIngestor {
 			throws IllegalArgumentException, RestClientException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> notifyPlanner({}, PWD, {})", user, ingestorProduct.getProductClass());
-	
+
 		// Retrieve the product class from the database
 		ProductClass modelProductClass = RepositoryService.getProductClassRepository()
 			.findByMissionCodeAndProductType(ingestorProduct.getMissionCode(), ingestorProduct.getProductClass());
@@ -423,7 +423,7 @@ public class ProductIngestor {
 			throw new IllegalArgumentException(
 					logger.log(IngestorMessage.PRODUCT_CLASS_INVALID, ingestorProduct.getProductClass()));
 		}
-	
+
 		// Check whether there are open product queries for this product type
 		List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
 			.findUnsatisfiedByProductClass(modelProductClass.getId());
@@ -432,8 +432,8 @@ public class ProductIngestor {
 			String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl()
 					+ String.format(URL_PLANNER_NOTIFY, ingestorProduct.getId());
 			productionPlannerUrl += "?facility=" + facilityId;
-	
-			RestTemplate restTemplate = rtb.setConnectTimeout(Duration.ofMillis(ingestorConfig.getProductionPlannerTimeout()))
+
+			RestTemplate restTemplate = rtb.connectTimeout(Duration.ofMillis(ingestorConfig.getProductionPlannerTimeout()))
 				.basicAuthentication(user, password)
 				.build();
 			ResponseEntity<String> response = restTemplate.getForEntity(productionPlannerUrl, String.class);

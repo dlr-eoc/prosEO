@@ -28,9 +28,9 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -75,7 +75,7 @@ public class ProcessingOrderMgrTest {
 	ProcessingOrderMgr pom;
 
 	/** A REST template builder for this class */
-	@MockBean
+	@MockitoBean
 	RestTemplateBuilder rtb;
 
 	// Test data
@@ -616,7 +616,7 @@ public class ProcessingOrderMgrTest {
 		// Stop time must not precede start time
 		testOrder.setStopTime(OrbitTimeFormatter.format(Instant.now()));
 		testOrder.setStartTime(OrbitTimeFormatter.format(Instant.now().plusMillis(1)));
-		
+
 		assertThrows(IllegalArgumentException.class, () -> pom.modifyOrder(testOrder.getId(), testOrder));
 		testOrder.setStartTime(OrbitTimeFormatter.format(Instant.now()));
 		testOrder.setStopTime(OrbitTimeFormatter.format(Instant.now()));

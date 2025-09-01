@@ -166,7 +166,7 @@ public class ProcessorCommandRunner {
 					restProcessorClass, RestProcessorClass.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_DATA_INVALID, e.getStatusText());
 				break;
@@ -229,7 +229,7 @@ public class ProcessorCommandRunner {
 					requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.NO_PROCESSORCLASSES_FOUND);
 				break;
@@ -337,7 +337,7 @@ public class ProcessorCommandRunner {
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_NOT_FOUND, updatedProcessorClass.getProcessorName());
 				break;
@@ -377,7 +377,7 @@ public class ProcessorCommandRunner {
 					restProcessorClass, RestProcessorClass.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
@@ -433,7 +433,7 @@ public class ProcessorCommandRunner {
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_NOT_FOUND, processorName);
 				break;
@@ -467,7 +467,7 @@ public class ProcessorCommandRunner {
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_NOT_FOUND_BY_ID, restProcessorClass.getId());
 				break;
@@ -633,7 +633,7 @@ public class ProcessorCommandRunner {
 					restProcessor, RestProcessor.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.PROCESSOR_DATA_INVALID, e.getStatusText());
 				break;
@@ -702,7 +702,7 @@ public class ProcessorCommandRunner {
 					requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.NO_PROCESSORS_FOUND);
 				break;
@@ -821,7 +821,7 @@ public class ProcessorCommandRunner {
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.PROCESSOR_NOT_FOUND, 
 						updatedProcessor.getProcessorName(), updatedProcessor.getProcessorVersion());
@@ -888,7 +888,7 @@ public class ProcessorCommandRunner {
 					restProcessor, RestProcessor.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
@@ -946,7 +946,7 @@ public class ProcessorCommandRunner {
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.PROCESSOR_NOT_FOUND, processorName, processorVersion);
 				break;
@@ -980,7 +980,7 @@ public class ProcessorCommandRunner {
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.PROCESSOR_NOT_FOUND_BY_ID, restProcessor.getId());
 				break;
@@ -1095,7 +1095,7 @@ public class ProcessorCommandRunner {
 					restConfiguration, RestConfiguration.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.CONFIGURATION_DATA_INVALID, e.getStatusText());
 				break;
@@ -1164,7 +1164,7 @@ public class ProcessorCommandRunner {
 					requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.NO_CONFIGURATIONS_FOUND);
 				break;
@@ -1283,7 +1283,7 @@ public class ProcessorCommandRunner {
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.CONFIGURATION_NOT_FOUND, 
 						updatedConfiguration.getProcessorName(), updatedConfiguration.getConfigurationVersion());
@@ -1343,7 +1343,7 @@ public class ProcessorCommandRunner {
 					restConfiguration, RestConfiguration.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
@@ -1403,7 +1403,7 @@ public class ProcessorCommandRunner {
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.CONFIGURATION_NOT_FOUND, processorName, configurationVersion);
 				break;
@@ -1437,7 +1437,7 @@ public class ProcessorCommandRunner {
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.CONFIGURATION_NOT_FOUND_BY_ID, restConfiguration.getId());
 				break;
@@ -1581,7 +1581,7 @@ public class ProcessorCommandRunner {
 					restConfiguredProcessor, RestConfiguredProcessor.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.CONFIGUREDPROCESSOR_DATA_INVALID, e.getStatusText());
 				break;
@@ -1651,7 +1651,7 @@ public class ProcessorCommandRunner {
 					requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.NO_CONFIGUREDPROCESSORS_FOUND);
 				break;
@@ -1767,7 +1767,7 @@ public class ProcessorCommandRunner {
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.CONFIGUREDPROCESSOR_NOT_FOUND, 
 						updatedConfiguredProcessor.getIdentifier(), updatedConfiguredProcessor.getProcessorName());
@@ -1818,7 +1818,7 @@ public class ProcessorCommandRunner {
 					restConfiguredProcessor, RestConfiguredProcessor.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
@@ -1874,7 +1874,7 @@ public class ProcessorCommandRunner {
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.CONFIGUREDPROCESSOR_NOT_FOUND, identifier);
 				break;
@@ -1908,7 +1908,7 @@ public class ProcessorCommandRunner {
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.CONFIGUREDPROCESSOR_NOT_FOUND_BY_ID, restConfiguredProcessor.getId());
 				break;

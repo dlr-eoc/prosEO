@@ -18,9 +18,9 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,7 +61,7 @@ public class ConfiguredProcessorManagerTest {
 	ConfiguredProcessorManager configuredProcessorMgr;
 
 	/** A REST template builder for this class */
-	@MockBean
+	@MockitoBean
 	RestTemplateBuilder rtb;
 
 	// Test data
@@ -190,7 +190,7 @@ public class ConfiguredProcessorManagerTest {
 		configInputFile1.setFileNameType(testStaticInputFile[1]);
 		configInputFile1.getFileNames().add(testStaticInputFile[2]);
 		configuration1.getStaticInputFiles().add(configInputFile1);
-		
+
 		configuration1.getConfiguredProcessors().add(RepositoryService.getConfiguredProcessorRepository()
 				.findByMissionCodeAndIdentifier(testMissionData[0], testConfiguredProcessors[1]));
 		configuration1.getDockerRunParameters().put(testDockerRunParameter[0], testDockerRunParameter[1]);
@@ -242,7 +242,7 @@ public class ConfiguredProcessorManagerTest {
 	@Test
 	public final void testCreateConfiguredProcessor() {
 		logger.trace(">>> testCreateConfiguredProcessor()");
-		
+
 		fillDatabase();
 
 		// TODO implement method
@@ -296,7 +296,7 @@ public class ConfiguredProcessorManagerTest {
 	@Test
 	public final void testModifyConfiguredProcessor() {
 		logger.trace(">>> testModifyConfiguredProcessor()");
-		
+
 		fillDatabase();
 
 		// TODO implement method
@@ -319,7 +319,7 @@ public class ConfiguredProcessorManagerTest {
 		 * acquired from the security service. Not specifying additional parameters
 		 * returns all configuredProcessors for the given mission.
 		 */
-		
+
 		assertTrue("More or less configuredProcessors retrieved than expected.",
 				configuredProcessorMgr.getConfiguredProcessors(null, null, null, null, null, null, null, 0, 10, null).size() == 2);
 		assertTrue("More or less configuredProcessors retrieved than expected.", configuredProcessorMgr

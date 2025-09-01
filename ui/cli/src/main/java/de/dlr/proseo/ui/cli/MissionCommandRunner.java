@@ -120,7 +120,7 @@ public class MissionCommandRunner {
 			return null;
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = logger.log(UIMessage.MISSION_NOT_FOUND, loginManager.getMission());
 				break;
@@ -131,7 +131,7 @@ public class MissionCommandRunner {
 						e.getStatusText());
 				break;
 			default:
-				message = logger.log(UIMessage.EXCEPTION, "(" + e.getRawStatusCode() + ") " + e.getMessage());
+				message = logger.log(UIMessage.EXCEPTION, "(" + e.getStatusCode().value() + ") " + e.getMessage());
 			}
 			System.err.println(message);
 			return null;
@@ -238,7 +238,7 @@ public class MissionCommandRunner {
 					restMission, RestMission.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = logger.log(UIMessage.MISSION_DATA_INVALID, e.getStatusText());
 				break;
@@ -312,7 +312,7 @@ public class MissionCommandRunner {
 					requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;
@@ -441,7 +441,7 @@ public class MissionCommandRunner {
 					restMission, RestMission.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
@@ -528,7 +528,7 @@ public class MissionCommandRunner {
 				loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = logger.log(UIMessage.MISSION_NOT_FOUND, missionCode);
 				break;
@@ -653,7 +653,7 @@ public class MissionCommandRunner {
 					restMission, RestMission.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = logger.log(UIMessage.MISSION_NOT_FOUND_BY_ID, restMission.getId());
 				break;
@@ -667,7 +667,7 @@ public class MissionCommandRunner {
 						e.getStatusText());
 				break;
 			default:
-				message = logger.log(UIMessage.EXCEPTION, "(" + e.getRawStatusCode() + ") " + e.getMessage());
+				message = logger.log(UIMessage.EXCEPTION, "(" + e.getStatusCode().value() + ") " + e.getMessage());
 			}
 			System.err.println(message);
 			return;
@@ -732,7 +732,7 @@ public class MissionCommandRunner {
 					restMission, RestMission.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = logger.log(UIMessage.MISSION_NOT_FOUND_BY_ID, restMission.getId());
 				break;
@@ -896,7 +896,7 @@ public class MissionCommandRunner {
 					orbitList, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = logger.log(UIMessage.ORBIT_DATA_INVALID, e.getStatusText());
 				break;
@@ -989,7 +989,7 @@ public class MissionCommandRunner {
 					requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = logger.log(UIMessage.NO_ORBITS_FOUND);
 				break;
@@ -1159,7 +1159,7 @@ public class MissionCommandRunner {
 				}
 			} catch (RestClientResponseException e) {
 				String message = null;
-				switch (e.getRawStatusCode()) {
+				switch (e.getStatusCode().value()) {
 				case org.apache.http.HttpStatus.SC_NOT_FOUND:
 					message = logger.log(UIMessage.ORBIT_NOT_FOUND,
 							updatedOrbit.getOrbitNumber(), updatedOrbit.getSpacecraftCode());
@@ -1197,7 +1197,7 @@ public class MissionCommandRunner {
 						loginManager.getUser(), loginManager.getPassword());
 			} catch (RestClientResponseException e) {
 				String message = null;
-				switch (e.getRawStatusCode()) {
+				switch (e.getStatusCode().value()) {
 				case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 					System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 					return;
@@ -1283,7 +1283,7 @@ public class MissionCommandRunner {
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = logger.log(UIMessage.NO_ORBITS_FOUND);
 				break;
@@ -1318,7 +1318,7 @@ public class MissionCommandRunner {
 						URI_PATH_ORBITS + "/" + restOrbit.getId(), loginManager.getUser(), loginManager.getPassword());
 			} catch (RestClientResponseException e) {
 				String message = null;
-				switch (e.getRawStatusCode()) {
+				switch (e.getStatusCode().value()) {
 				case org.apache.http.HttpStatus.SC_NOT_FOUND:
 					message = logger.log(UIMessage.ORBIT_NOT_FOUND_BY_ID, restOrbit.getId());
 					break;

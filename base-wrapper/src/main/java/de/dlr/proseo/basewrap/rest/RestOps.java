@@ -16,11 +16,14 @@ import java.util.stream.Collectors;
 
 import org.apache.hc.client5.http.auth.AuthScope;
 import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.entity.EntityBuilder;
 import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpHeaders;
@@ -97,32 +100,46 @@ public class RestOps {
 
 		HttpResponseInfo responseInfo = new HttpResponseInfo();
 		String content = (payLoad == null) ? "" : payLoad;
-		
+
 		// Retry the REST API call until a configured maximum of retries is reached
 		int retry = 0;
 		while (retry < MAX_RETRIES) {
-			
+
 			// Create and configure an HTTP client
-			
+			final Timeout timeout = Timeout.ofMilliseconds(ENV_HTTP_TIMEOUT);
+
 			final RequestConfig requestConfig = RequestConfig.custom()
-                    .setConnectionRequestTimeout(Timeout.ofSeconds(ENV_HTTP_TIMEOUT))
-                    .setConnectTimeout(Timeout.ofSeconds(ENV_HTTP_TIMEOUT))
-                    .setResponseTimeout(Timeout.ofSeconds(ENV_HTTP_TIMEOUT))
+                    .setConnectionRequestTimeout(timeout)
+                    .setResponseTimeout(timeout)
                     .build();
-			
+
+			// Using a PoolingHttpClientConnectionManager to apply connection-level settings,
+			// because RequestConfig.setConnectTimeout(...) is deprecated in HttpClient 5.
+			// ConnectionConfig#setConnectTimeout(timeout) is now the recommended way to limit
+			// the TCP handshake duration.
+			final ConnectionConfig connectionConfig = ConnectionConfig.custom()
+			        .setConnectTimeout(timeout)
+			        .build();
+
+			final PoolingHttpClientConnectionManager connectionManager =
+			        PoolingHttpClientConnectionManagerBuilder.create()
+			            .setDefaultConnectionConfig(connectionConfig)
+			            .build();
+
 			final BasicCredentialsProvider credsProvider = new BasicCredentialsProvider();
 	        credsProvider.setCredentials(
 	                new AuthScope(null, -1),
 	                new UsernamePasswordCredentials(user, pw.toCharArray()));
-			
+
 			if (logger.isDebugEnabled()) logger.debug("About to build HTTP client ");
-	        
+
 			try (CloseableHttpClient httpClient = HttpClients.custom()
 					.setDefaultCredentialsProvider(credsProvider)
 					.setDefaultRequestConfig(requestConfig)
+					.setConnectionManager(connectionManager)
 					.build()) {
-				
-				
+
+
 				// Build the HTTP request
 
 				URI uri = new URIBuilder(endPoint + endPointPath)
@@ -131,16 +148,16 @@ public class RestOps {
 							.map(entry -> new BasicNameValuePair(entry.getKey(), entry.getValue()))
 							.collect(Collectors.toList()))
 						.build();
-				
+
 				ClassicHttpRequest request = ClassicRequestBuilder
 						.create(method.toString())
 						.setUri(uri)
 						.addHeader(HttpHeaders.ACCEPT, ContentType.APPLICATION_JSON.toString())
 						.build();
 
-				
+
 				// For POST, PUT, PATCH add a request body
-								
+
 				if (HttpMethod.GET.equals(method)) {
 					// NOP: No request body
 				} else if (HttpMethod.POST.equals(method) || HttpMethod.PUT.equals(method) || HttpMethod.PATCH.equals(method)) {
@@ -149,12 +166,12 @@ public class RestOps {
 				} else {
 					throw new UnsupportedOperationException(method + " not implemented");
 				}
-				
+
 				if (logger.isDebugEnabled()) logger.debug("Sending HTTP request " + request.toString());
-				
-				
+
+
 				// Execute the request
-				
+
 				httpClient.execute(request, response -> {
 					responseInfo.sethttpCode(response.getCode());
 					if (null != response.getEntity()) {
@@ -162,12 +179,12 @@ public class RestOps {
 					}
 					return null;
 				});
-				
+
 				if (logger.isDebugEnabled())
 					logger.debug("Request execution completed with status code " + responseInfo.gethttpCode());
-				
+
 				return responseInfo;
-				
+
 			} catch (IOException e) {
 				logger.error("I/O Exception during REST API call: " + e.getMessage(), e);
 
@@ -189,7 +206,7 @@ public class RestOps {
 					return null;
 				}
 			} catch (URISyntaxException e) {
-				String message = String.format("Invalid URI components for endpoint %s and query parameters %s", 
+				String message = String.format("Invalid URI components for endpoint %s and query parameters %s",
 						endPoint + endPointPath, queryParams.toString());
 				logger.error(message, e);
 				throw new RuntimeException(message, e);

@@ -19,11 +19,11 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,7 +63,7 @@ public class WorkflowControllerTest {
 	private WorkflowControllerImpl wci;
 
 	/** A REST template builder for this class */
-	@MockBean
+	@MockitoBean
 	RestTemplateBuilder rtb;
 
 	// Test data
@@ -78,7 +78,7 @@ public class WorkflowControllerTest {
 			{ "AER_to_SO2", UUID.randomUUID().toString(), "1.3", "L2__AER_AI", "L2__SO2___", "NL-L2 02.04.00" }, };
 	private static String[][] testWorkflowOptions = {
 			// workflowName, name, optionType, valueRange
-			{ "CLOUD_to_O3", "someName", "NUMBER", "someValue" }, 
+			{ "CLOUD_to_O3", "someName", "NUMBER", "someValue" },
 			{ "AER_to_SO2", "someOtherName", "NUMBER", "someValue" } };
 
 	/**
@@ -112,7 +112,7 @@ public class WorkflowControllerTest {
 
 	/**
 	 * Create a test workflow in the database
-	 * 
+	 *
 	 * @param mission the mission to which the workflow belongs
 	 * @param workflowData The data from which to create the workflow
 	 *
@@ -170,7 +170,7 @@ public class WorkflowControllerTest {
 		testMission.getFileClasses().add(testMissionData[3]);
 		testMission.setProductFileTemplate(testMissionData[4]);
 		testMission = RepositoryService.getMissionRepository().save(testMission);
-		
+
 		logger.debug("... adding input product classes");
 		ProductClass productClass0 = new ProductClass();
 		productClass0.setProductType(testWorkflowData[0][3]);
@@ -221,7 +221,7 @@ public class WorkflowControllerTest {
 		configProc1.setIdentifier(testWorkflowData[1][5]);
 		configProc1.setUuid(UUID.randomUUID());
 		RepositoryService.getConfiguredProcessorRepository().save(configProc1);
-		
+
 		return testMission;
 	}
 

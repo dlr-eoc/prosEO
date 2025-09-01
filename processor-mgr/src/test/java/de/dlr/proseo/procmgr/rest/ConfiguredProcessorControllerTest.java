@@ -19,11 +19,11 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -67,7 +67,7 @@ public class ConfiguredProcessorControllerTest {
 	private ConfiguredProcessorControllerImpl cci;
 
 	/** A REST template builder for this class */
-	@MockBean
+	@MockitoBean
 	RestTemplateBuilder rtb;
 
 	// Test data
@@ -150,12 +150,12 @@ public class ConfiguredProcessorControllerTest {
 		processor0.setProcessorClass(processorClass0);
 		processor0.setProcessorVersion(testConfigurationData[0][3]);
 		processor0.setId(RepositoryService.getProcessorRepository().save(processor0).getId());
-			
+
 		Processor processor1 = new Processor();
 		processor1.setProcessorClass(processorClass1);
 		processor1.setProcessorVersion(testConfigurationData[1][3]);
 		processor1.setId(RepositoryService.getProcessorRepository().save(processor1).getId());
-		
+
 		logger.debug("... adding configurations");
 		Configuration configuration0 = new Configuration();
 
@@ -200,7 +200,7 @@ public class ConfiguredProcessorControllerTest {
 		configInputFile1.setFileNameType(testStaticInputFile[1]);
 		configInputFile1.getFileNames().add(testStaticInputFile[2]);
 		configuration1.getStaticInputFiles().add(configInputFile1);
-		
+
 		configuration1.getConfiguredProcessors().add(RepositoryService.getConfiguredProcessorRepository()
 				.findByMissionCodeAndIdentifier(testMissionData[0], testConfiguredProcessors[1]));
 		configuration1.getDockerRunParameters().put(testDockerRunParameter[0], testDockerRunParameter[1]);
@@ -233,7 +233,7 @@ public class ConfiguredProcessorControllerTest {
 		logger.trace(">>> testCreateConfiguredProcessor()");
 
 		fillDatabase();
-		
+
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
@@ -263,7 +263,7 @@ public class ConfiguredProcessorControllerTest {
 	@Test
 	public final void testCountConfiguredProcessors() {
 		logger.trace(">>> testCountConfiguredProcessors()");
-		
+
 		fillDatabase();
 
 		// count all configuredProcessors from the database, as all were created with

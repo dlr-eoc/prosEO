@@ -147,7 +147,7 @@ public class GUIBaseController {
 					auth.getProseoName(), auth.getPassword());
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;
@@ -199,7 +199,7 @@ public class GUIBaseController {
 					auth.getProseoName(), auth.getPassword());
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;
@@ -256,7 +256,7 @@ public class GUIBaseController {
 					auth.getProseoName(), auth.getPassword());
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_ARCHIVES_FOUND);
 				break;
@@ -312,7 +312,7 @@ public class GUIBaseController {
 					"/productclasses/names?mission=" + auth.getMission(), List.class, auth.getProseoName(), auth.getPassword());
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_PRODUCTCLASSES_FOUND);
 				break;
@@ -364,7 +364,7 @@ public class GUIBaseController {
 					"/processorclasses?mission=" + auth.getMission(), List.class, auth.getProseoName(), auth.getPassword());
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_PROCESSORCLASSES_FOUND);
 				break;
@@ -418,7 +418,7 @@ public class GUIBaseController {
 					"/configuredprocessors?mission=" + auth.getMission(), List.class, auth.getProseoName(), auth.getPassword());
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_CONFIGUREDPROCESSORS_FOUND);
 				break;
@@ -472,7 +472,7 @@ public class GUIBaseController {
 					"/workflows?mission=" + auth.getMission(), List.class, auth.getProseoName(), auth.getPassword());
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_WORKFLOWS_FOUND);
 				break;
@@ -523,7 +523,7 @@ public class GUIBaseController {
 					"/missions?mission=" + auth.getMission(), List.class, auth.getProseoName(), auth.getPassword());
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_FILECLASSES_FOUND);
 				break;
@@ -577,7 +577,7 @@ public class GUIBaseController {
 					"/missions?mission=" + auth.getMission(), List.class, auth.getProseoName(), auth.getPassword());
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_PROCESSINGMODES_FOUND);
 				break;
@@ -631,7 +631,7 @@ public class GUIBaseController {
 					"/missions?mission=" + auth.getMission(), List.class, auth.getProseoName(), auth.getPassword());
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_SPACECRAFTS_FOUND);
 				break;

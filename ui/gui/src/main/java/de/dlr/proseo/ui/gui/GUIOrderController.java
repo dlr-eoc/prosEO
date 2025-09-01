@@ -685,7 +685,7 @@ public class GUIOrderController extends GUIBaseController {
 
 						String message;
 
-						switch (e.getRawStatusCode()) {
+						switch (e.getStatusCode().value()) {
 						case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 							return new ResponseEntity<>(
 									new OrderInfo(HttpStatus.NOT_MODIFIED, "0", ProseoLogger.format(UIMessage.NOT_MODIFIED)),
@@ -735,7 +735,7 @@ public class GUIOrderController extends GUIBaseController {
 
 				String message;
 
-				switch (e.getRawStatusCode()) {
+				switch (e.getStatusCode().value()) {
 				case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 					message = logger.log(UIMessage.ORDER_DATA_INVALID, e.getMessage());
 					break;
@@ -826,7 +826,7 @@ public class GUIOrderController extends GUIBaseController {
 		} catch (RestClientResponseException e) {
 
 			// Log RestClientReponses
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;
@@ -1029,7 +1029,7 @@ public class GUIOrderController extends GUIBaseController {
 			}
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;
@@ -1206,7 +1206,7 @@ public class GUIOrderController extends GUIBaseController {
 			}
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;
@@ -1280,7 +1280,7 @@ public class GUIOrderController extends GUIBaseController {
 			}
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;
@@ -1335,7 +1335,7 @@ public class GUIOrderController extends GUIBaseController {
 			}
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;
@@ -1390,7 +1390,7 @@ public class GUIOrderController extends GUIBaseController {
 			}
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
@@ -1509,7 +1509,7 @@ public class GUIOrderController extends GUIBaseController {
 			}
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;

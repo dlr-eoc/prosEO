@@ -121,7 +121,7 @@ public class JobCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.ORDER_NOT_FOUND, orderIdentifier);
 				break;
@@ -172,7 +172,7 @@ public class JobCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.JOB_NOT_FOUND, jobId);
 				break;
@@ -223,7 +223,7 @@ public class JobCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.JOBSTEP_NOT_FOUND, jobStepId);
 				break;
@@ -295,7 +295,7 @@ public class JobCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.NO_JOBS_FOUND);
 				break;
@@ -385,7 +385,7 @@ public class JobCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.JOB_NOT_FOUND, restJob.getId());
 				break;
@@ -441,7 +441,7 @@ public class JobCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.JOB_NOT_FOUND, restJob.getId());
 				break;
@@ -497,7 +497,7 @@ public class JobCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.JOB_NOT_FOUND, restJob.getId());
 				break;
@@ -553,7 +553,7 @@ public class JobCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.JOB_NOT_FOUND, restJob.getId());
 				break;
@@ -694,7 +694,7 @@ public class JobCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.JOBSTEP_NOT_FOUND, restJobStep.getId());
 				break;
@@ -750,7 +750,7 @@ public class JobCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.JOBSTEP_NOT_FOUND, restJobStep.getId());
 				break;
@@ -808,7 +808,7 @@ public class JobCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.JOBSTEP_NOT_FOUND, restJobStep.getId());
 				break;
@@ -864,7 +864,7 @@ public class JobCommandRunner {
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.JOBSTEP_NOT_FOUND, restJobStep.getId());
 				break;

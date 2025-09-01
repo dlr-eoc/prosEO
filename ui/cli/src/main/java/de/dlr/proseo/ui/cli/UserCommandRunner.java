@@ -124,7 +124,7 @@ public class UserCommandRunner {
 					RestUser.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.USER_NOT_FOUND_BY_NAME, username, loginManager.getMission());
 				break;
@@ -162,7 +162,7 @@ public class UserCommandRunner {
 					restUser, RestUser.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return null;
@@ -213,7 +213,7 @@ public class UserCommandRunner {
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.GROUP_NOT_FOUND_BY_NAME, groupName,  loginManager.getMission());
 				break;
@@ -256,7 +256,7 @@ public class UserCommandRunner {
 					restGroup, RestGroup.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return null;
@@ -420,7 +420,7 @@ public class UserCommandRunner {
 					restUser, RestUser.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.USER_DATA_INVALID, e.getStatusText());
 				break;
@@ -482,7 +482,7 @@ public class UserCommandRunner {
 						requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
 			} catch (RestClientResponseException e) {
 				String message = null;
-				switch (e.getRawStatusCode()) {
+				switch (e.getStatusCode().value()) {
 				case org.apache.http.HttpStatus.SC_NOT_FOUND:
 					message = ProseoLogger.format(UIMessage.NO_USERS_FOUND, loginManager.getMission());
 					break;
@@ -677,7 +677,7 @@ public class UserCommandRunner {
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.USER_NOT_FOUND_BY_NAME, restUser.getUsername());
 				break;
@@ -1050,7 +1050,7 @@ public class UserCommandRunner {
 					restGroup, RestGroup.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.GROUP_DATA_INVALID, e.getStatusText());
 				break;
@@ -1111,7 +1111,7 @@ public class UserCommandRunner {
 						requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
 			} catch (RestClientResponseException e) {
 				String message = null;
-				switch (e.getRawStatusCode()) {
+				switch (e.getStatusCode().value()) {
 				case org.apache.http.HttpStatus.SC_NOT_FOUND:
 					message = ProseoLogger.format(UIMessage.NO_GROUPS_FOUND, loginManager.getMission());
 					break;
@@ -1271,7 +1271,7 @@ public class UserCommandRunner {
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.GROUP_NOT_FOUND_BY_ID, restGroup.getId());
 				break;
@@ -1350,7 +1350,7 @@ public class UserCommandRunner {
 				addedUsers.add(username);
 			} catch (RestClientResponseException e) {
 				String message = null;
-				switch (e.getRawStatusCode()) {
+				switch (e.getStatusCode().value()) {
 				case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 					System.out.println(ProseoLogger.format(UIMessage.ALREADY_MEMBER, username, restGroup.getGroupname()));
 					continue;
@@ -1435,7 +1435,7 @@ public class UserCommandRunner {
 				removedUsers.add(username);
 			} catch (RestClientResponseException e) {
 				String message = null;
-				switch (e.getRawStatusCode()) {
+				switch (e.getStatusCode().value()) {
 				case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 					System.out.println(ProseoLogger.format(UIMessage.NOT_MEMBER, username, restGroup.getGroupname()));
 					continue;
@@ -1517,7 +1517,7 @@ public class UserCommandRunner {
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.NO_USERS_FOUND_IN_GROUP, groupname);
 				break;

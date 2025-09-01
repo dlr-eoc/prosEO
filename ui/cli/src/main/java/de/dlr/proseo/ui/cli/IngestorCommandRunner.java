@@ -220,7 +220,7 @@ public class IngestorCommandRunner {
 					restProduct, RestProduct.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.PRODUCT_DATA_INVALID, e.getStatusText());
 				break;
@@ -321,7 +321,7 @@ public class IngestorCommandRunner {
 			}
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.NO_PRODUCTS_FOUND);
 				break;
@@ -445,7 +445,7 @@ public class IngestorCommandRunner {
 					RestProduct.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.PRODUCT_NOT_FOUND, updatedProduct.getId());
 				break;
@@ -519,7 +519,7 @@ public class IngestorCommandRunner {
 					restProduct, RestProduct.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
@@ -579,7 +579,7 @@ public class IngestorCommandRunner {
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.PRODUCT_NOT_FOUND, productId);
 				break;
@@ -658,7 +658,7 @@ public class IngestorCommandRunner {
 					productsToIngest, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = (null == e.getStatusText() ?
@@ -732,7 +732,7 @@ public class IngestorCommandRunner {
 					requestURI, RestProduct.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.PRODUCT_NOT_FOUND, productId);
 				break;
@@ -835,7 +835,7 @@ public class IngestorCommandRunner {
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.PRODUCTFILE_NOT_FOUND, productId, facilityName);
 				break;

@@ -1,6 +1,6 @@
 /**
  * FacilityCommandRunner.java
- * 
+ *
  * (C) 2020 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.ui.cli;
@@ -30,9 +30,9 @@ import de.dlr.proseo.ui.cli.parser.ParsedOption;
 import de.dlr.proseo.ui.cli.parser.ParsedParameter;
 
 /**
- * Run commands for managing prosEO processing facilities (create, read, update, delete). 
+ * Run commands for managing prosEO processing facilities (create, read, update, delete).
  * All methods assume that before invocation a syntax check of the command has been performed, so no extra checks are performed.
- * 
+ *
  * @author Dr. Thomas Bassler
  */
 @Component
@@ -49,7 +49,7 @@ public class FacilityCommandRunner {
 	private static final String CMD_CREATE = "create";
 	private static final String CMD_UPDATE = "update";
 	private static final String CMD_DELETE = "delete";
-	
+
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
 	private static final String PROMPT_FACILITY_NAME = "Facility name (empty field cancels): ";
 	private static final String PROMPT_PROCENG_URL = "Processing engine URL (empty field cancels): ";
@@ -59,31 +59,31 @@ public class FacilityCommandRunner {
 	private static final String PROMPT_STORAGEMGR_PASSWD = "Storage manager password (empty field cancels): ";
 	private static final String PROMPT_LOCAL_STORAGEMGR_URL = "Kubernetes-local storage manager URL (empty field cancels): ";
 	private static final String PROMPT_STORAGE_TYPE = "Default storage type (empty field cancels): ";
-	
+
 	private static final String URI_PATH_FACILITIES = "/facilities";
-	
+
 	private static final String FACILITIES = "facilities";
-	
+
 	private static final String PWD_PLACEHOLDER = "********";
 
 	/** The user manager used by all command runners */
 	@Autowired
 	private LoginManager loginManager;
-	
+
 	/** The configuration object for the prosEO backend services */
 	@Autowired
 	private ServiceConfiguration serviceConfig;
-	
+
 	/** The connector service to the prosEO backend services */
 	@Autowired
 	private ServiceConnection serviceConnection;
-	
+
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(FacilityCommandRunner.class);
 
 	/**
 	 * Retrieve the processing facility with the given name, notifying the user of any errors occurring
-	 * 
+	 *
 	 * @param facilityName the facility name
 	 * @return the requested facility or null, if the facility does not exist
 	 */
@@ -108,7 +108,7 @@ public class FacilityCommandRunner {
 			}
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = logger.log(UIMessage.FACILITY_NOT_FOUND, facilityName);
 				break;
@@ -119,7 +119,7 @@ public class FacilityCommandRunner {
 						e.getStatusText());
 				break;
 			default:
-				message = logger.log(UIMessage.EXCEPTION, "(" + e.getRawStatusCode() + ") " + e.getMessage());
+				message = logger.log(UIMessage.EXCEPTION, "(" + e.getStatusCode().value() + ") " + e.getMessage());
 			}
 			System.err.println(message);
 			return null;
@@ -132,14 +132,14 @@ public class FacilityCommandRunner {
 	}
 
 	/**
-	 * Create a new processing facility in prosEO; if the input is not from a file, the user will be prompted for mandatory 
+	 * Create a new processing facility in prosEO; if the input is not from a file, the user will be prompted for mandatory
 	 * attributes not given on the command line
-	 * 
+	 *
 	 * @param createCommand the parsed "facility create" command
 	 */
 	private void createFacility(ParsedCommand createCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createFacility({})", (null == createCommand ? "null" : createCommand.getName()));
-		
+
 		/* Check command options */
 		File facilityFile = null;
 		String facilityFileFormat = CLIUtil.FILE_FORMAT_JSON;
@@ -153,7 +153,7 @@ public class FacilityCommandRunner {
 				break;
 			}
 		}
-		
+
 		/* Read processing facility file, if any */
 		RestProcessingFacility restFacility = null;
 		if (null == facilityFile) {
@@ -166,7 +166,7 @@ public class FacilityCommandRunner {
 				return;
 			}
 		}
-		
+
 		/* Check command parameters (overriding values from processing facility file) */
 		for (int i = 0; i < createCommand.getParameters().size(); ++i) {
 			ParsedParameter param = createCommand.getParameters().get(i);
@@ -183,12 +183,12 @@ public class FacilityCommandRunner {
 				}
 			}
 		}
-		
+
 		/* Set default attribute values where appropriate */
 		if (null == restFacility.getFacilityState() || restFacility.getFacilityState().isBlank()) {
 			restFacility.setFacilityState(FacilityState.DISABLED.toString());
 		}
-		
+
 		/* Prompt user for missing mandatory attributes */
 		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
 		if (null == restFacility.getName() || restFacility.getName().isBlank()) {
@@ -263,14 +263,14 @@ public class FacilityCommandRunner {
 			}
 			restFacility.setDefaultStorageType(response);
 		}
-		
+
 		/* Create processing facility */
 		try {
-			restFacility = serviceConnection.postToService(serviceConfig.getFacilityManagerUrl(), URI_PATH_FACILITIES, 
+			restFacility = serviceConnection.postToService(serviceConfig.getFacilityManagerUrl(), URI_PATH_FACILITIES,
 					restFacility, RestProcessingFacility.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = logger.log(UIMessage.FACILITY_DATA_INVALID, e.getStatusText());
 				break;
@@ -295,16 +295,16 @@ public class FacilityCommandRunner {
 				restFacility.getName(), restFacility.getId());
 		System.out.println(message);
 	}
-	
+
 	/**
 	 * Show the processing facility specified in the command parameters or options
-	 * 
+	 *
 	 * @param showCommand the parsed "facility show" command
 	 */
 	@SuppressWarnings("unchecked")
 	private void showFacility(ParsedCommand showCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> showFacility({})", (null == showCommand ? "null" : showCommand.getName()));
-		
+
 		/* Check command options */
 		String facilityOutputFormat = CLIUtil.FILE_FORMAT_YAML;
 		Boolean isVerbose = false, showPasswords = false;
@@ -321,21 +321,21 @@ public class FacilityCommandRunner {
 				break;
 			}
 		}
-		
+
 		/* If facility name is set, show just the requested facility */
 		if (!showCommand.getParameters().isEmpty()) {
 			// Only facility name allowed as parameter
 			RestProcessingFacility restFacility = retrieveFacilityByName(showCommand.getParameters().get(0).getValue());
-			
+
 			if (null != restFacility) {
-				
+
 				// Hide passwords
 				if (!showPasswords) {
 					restFacility.setProcessingEngineToken(PWD_PLACEHOLDER);
 					restFacility.setStorageManagerPassword(PWD_PLACEHOLDER);
 				}
-				
-				// print the requested facility				
+
+				// print the requested facility
 				try {
 					CLIUtil.printObject(System.out, restFacility, facilityOutputFormat);
 				} catch (IllegalArgumentException e) {
@@ -346,10 +346,10 @@ public class FacilityCommandRunner {
 			}
 			return;
 		}
-		
+
 		/* Prepare request URI */
 		String requestURI = URI_PATH_FACILITIES;
-		
+
 		/* Get the facility information from the Facility Manager service */
 		List<?> resultList = null;
 		try {
@@ -357,7 +357,7 @@ public class FacilityCommandRunner {
 					requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = logger.log(UIMessage.NO_FACILITIES_FOUND);
 				break;
@@ -376,7 +376,7 @@ public class FacilityCommandRunner {
 			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
-		
+
 		// Remove passwords unless explicitly requested
 		if (!showPasswords) {
 			// Must be a list of processing facilities
@@ -387,7 +387,7 @@ public class FacilityCommandRunner {
 				}
 			}
 		}
-		
+
 		/* Display the facility(s) found */
 		if (isVerbose) {
 			// Print facility details
@@ -399,7 +399,7 @@ public class FacilityCommandRunner {
 			} catch (IOException e) {
 				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
-			} 
+			}
 		} else {
 			// Print facility names only; resultList must be a list of processing facilities
 			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
@@ -409,11 +409,11 @@ public class FacilityCommandRunner {
 			}
 		}
 	}
-	
+
 	/**
 	 * Update a processing facility from a processing facility file or from "attribute=value" pairs
 	 * (overriding any processing facility file entries)
-	 * 
+	 *
 	 * @param updateCommand the parsed "facility update" command
 	 */
 	private void updateFacility(ParsedCommand updateCommand) {
@@ -436,7 +436,7 @@ public class FacilityCommandRunner {
 				break;
 			}
 		}
-		
+
 		/* Read processing facility file, if any */
 		RestProcessingFacility updatedFacility = null;
 		if (null == facilityFile) {
@@ -450,7 +450,7 @@ public class FacilityCommandRunner {
 				return;
 			}
 		}
-		
+
 		/* Check command parameters (overriding values from processing facility file) */
 		for (int i = 0; i < updateCommand.getParameters().size(); ++i) {
 			ParsedParameter param = updateCommand.getParameters().get(i);
@@ -467,7 +467,7 @@ public class FacilityCommandRunner {
 				}
 			}
 		}
-		
+
 		/* Read original facility from Facility Manager service */
 		if (null == updatedFacility.getName() || 0 == updatedFacility.getName().length()) {
 			// No identifying value given
@@ -521,7 +521,7 @@ public class FacilityCommandRunner {
 		if (null != updatedFacility.getDefaultStorageType() && !updatedFacility.getDefaultStorageType().isBlank()) {
 			restFacility.setDefaultStorageType(updatedFacility.getDefaultStorageType());
 		}
-		
+
 		/* Update processing facility using Facility Manager service */
 		try {
 			restFacility = serviceConnection.patchToService(serviceConfig.getFacilityManagerUrl(),
@@ -529,7 +529,7 @@ public class FacilityCommandRunner {
 					restFacility, RestProcessingFacility.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
@@ -554,7 +554,7 @@ public class FacilityCommandRunner {
 			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
-		
+
 		/* Report success, giving new processor class version */
 		String message = logger.log(UIMessage.FACILITY_UPDATED, restFacility.getId(), restFacility.getVersion());
 		System.out.println(message);
@@ -562,7 +562,7 @@ public class FacilityCommandRunner {
 
 	/**
 	 * Delete the given processing facility
-	 * 
+	 *
 	 * @param deleteCommand the parsed "facility delete" command
 	 */
 	private void deleteFacility(ParsedCommand deleteCommand) {
@@ -575,21 +575,21 @@ public class FacilityCommandRunner {
 			return;
 		}
 		String facilityName = deleteCommand.getParameters().get(0).getValue();
-		
+
 		/* Retrieve the processing facility using Facility Manager service */
 		RestProcessingFacility restFacility = retrieveFacilityByName(facilityName);
 		if (null == restFacility) {
 			return;
 		}
-		
+
 		/* Delete facility using Facility Manager service */
 		try {
 			serviceConnection.deleteFromService(serviceConfig.getFacilityManagerUrl(),
-					URI_PATH_FACILITIES + "/" + restFacility.getId(), 
+					URI_PATH_FACILITIES + "/" + restFacility.getId(),
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = logger.log(UIMessage.FACILITY_NOT_FOUND_BY_ID, restFacility.getId());
 				break;
@@ -610,32 +610,32 @@ public class FacilityCommandRunner {
 			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 			return;
 		}
-		
+
 		/* Report success */
 		String message = logger.log(UIMessage.FACILITY_DELETED, restFacility.getId());
 		System.out.println(message);
 	}
-	
+
 	/**
 	 * Run the given command
-	 * 
+	 *
 	 * @param command the command to execute
 	 */
 	void executeCommand(ParsedCommand command) {
 		if (logger.isTraceEnabled()) logger.trace(">>> executeCommand({})", (null == command ? "null" : command.getName()));
-		
+
 		/* Check that user is logged in */
 		if (null == loginManager.getUser()) {
 			System.err.println(ProseoLogger.format(UIMessage.USER_NOT_LOGGED_IN, command.getName()));
 			return;
 		}
-		
+
 		/* Check argument */
 		if (!CMD_FACILITY.equals(command.getName())) {
 			System.err.println(ProseoLogger.format(UIMessage.INVALID_COMMAND_NAME, command.getName()));
 			return;
 		}
-		
+
 		/* Make sure a subcommand is given */
 		ParsedCommand subcommand = command.getSubcommand();
 
@@ -649,7 +649,7 @@ public class FacilityCommandRunner {
 			subcommand.getSyntaxCommand().printHelp(System.out);
 			return;
 		}
-				
+
 		/* Execute the (sub-command */
 		switch (subcommand.getName()) {
 		case CMD_CREATE:	createFacility(subcommand); break;
