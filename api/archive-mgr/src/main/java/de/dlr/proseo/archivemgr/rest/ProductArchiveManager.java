@@ -252,7 +252,7 @@ public class ProductArchiveManager {
 		}
 
 		// adds WHERE condition
-		if ((null != id) || (null != name) || (null != archiveType)) {
+		if ((null != id) || (null != code) || (null != name) || (null != archiveType)) {
 			
 			jpqlQuery += " where ";
 			String and = " ";
