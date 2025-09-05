@@ -24,6 +24,10 @@ public class AipClientConfiguration {
 	@Value("${proseo.aipclient.targetdir}")
 	private String clientTargetDir;
 
+	/** Delete downloaded files from target directory after ingestion, if true */
+	@Value("${proseo.aipclient.deletetempfiles}")
+	private Boolean deleteTempFiles;
+
 	/** The URL of the prosEO Ingestor */
 	@Value("${proseo.ingestor.url}")
 	private String ingestorUrl;
@@ -47,6 +51,10 @@ public class AipClientConfiguration {
 	/** The interval between product order status checks in milliseconds */
 	@Value("${proseo.order.check.interval}")
 	private Long orderCheckInterval;
+
+	/** Maximum number of records to retrieve in one OData request ("$top" query parameter) */
+	@Value("${proseo.archive.maxrecords}")
+	private Integer archiveMaxRecords;
 
 	/** Timeout for archive connections in milliseconds */
 	@Value("${proseo.archive.timeout}")
@@ -79,6 +87,15 @@ public class AipClientConfiguration {
 	 */
 	public String getClientTargetDir() {
 		return clientTargetDir;
+	}
+
+	/**
+	 * Gets the flag for the deletion of temporary files
+	 *
+	 * @return true, if temporary files shall be deleted, false otherwise
+	 */
+	public Boolean isDeleteTempFiles() {
+		return deleteTempFiles;
 	}
 
 	/**
@@ -133,6 +150,15 @@ public class AipClientConfiguration {
 	 */
 	public Long getOrderCheckInterval() {
 		return orderCheckInterval;
+	}
+
+	/**
+	 * Gets the maximum number of records to retrieve in one OData request ("$top" query parameter)
+	 * 
+	 * @return the maximum number of records to retrieve from archive
+	 */
+	public Integer getArchiveMaxRecords() {
+		return archiveMaxRecords;
 	}
 
 	/**

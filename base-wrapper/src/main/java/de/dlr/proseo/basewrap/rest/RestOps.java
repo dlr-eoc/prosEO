@@ -107,6 +107,7 @@ public class RestOps {
 			final RequestConfig requestConfig = RequestConfig.custom()
                     .setConnectionRequestTimeout(Timeout.ofSeconds(ENV_HTTP_TIMEOUT))
                     .setConnectTimeout(Timeout.ofSeconds(ENV_HTTP_TIMEOUT))
+                    .setResponseTimeout(Timeout.ofSeconds(ENV_HTTP_TIMEOUT))
                     .build();
 			
 			final BasicCredentialsProvider credsProvider = new BasicCredentialsProvider();

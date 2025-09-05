@@ -519,7 +519,7 @@ public class TestUtils {
 			return;
 		}
 
-		Storage storage = storageProvider.getStorage(storageType);
+		Storage storage = storageProvider.getDefaultStorage(storageType);
 		List<String> relativePaths = storage.getRelativeFiles();
 
 		for (String relativePath : relativePaths) {

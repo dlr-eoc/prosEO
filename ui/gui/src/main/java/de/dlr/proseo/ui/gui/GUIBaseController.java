@@ -42,6 +42,7 @@ import de.dlr.proseo.model.rest.model.RestSpacecraft;
 import de.dlr.proseo.model.rest.model.RestWorkflow;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
+import de.dlr.proseo.ui.gui.service.MapComparator;
 
 /** A base controller for the prosEO GUI, to be extended for specific entities */
 public class GUIBaseController {
@@ -56,6 +57,10 @@ public class GUIBaseController {
 	/** The configuration object for the prosEO backend services */
 	@Autowired
 	private ServiceConfiguration serviceConfig;
+
+	/** The configuration object for the GUI */
+	@Autowired
+	private GUIConfiguration guiConfig;
 
 	/** List with cached production types */
 	private List<String> productiontypes = null;
@@ -105,6 +110,17 @@ public class GUIBaseController {
 			}
 		}
 		return version;
+	}
+
+	/**
+	 * Gets the current version of prosEO
+	 *
+	 * @return the prosEO version
+	 */
+	
+	@ModelAttribute("grafana")
+	public String grafana() {
+		return guiConfig.getGrafana();
 	}
 
 	/**
@@ -167,15 +183,15 @@ public class GUIBaseController {
 	 *
 	 * @return a list with the names of available processing facilities
 	 */
-	@ModelAttribute("enabledfacilitynames")
-	public List<String> enabledfacilities() {
+	@ModelAttribute("enabledfacilities")
+	public List<Object> enabledfacilities() {
 		if (!hasrolefacilityreader()) {
 			return new ArrayList<>();
 		}
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
 		logger.trace("Get facilities");
-		List<String> enabledFacilities = new ArrayList<String>();
+		List<Object> enabledFacilities = new ArrayList<Object>();
 		List<?> resultList = null;
 
 		try {
@@ -198,7 +214,7 @@ public class GUIBaseController {
 			return enabledFacilities;
 		} catch (RuntimeException e) {
 			logger.log(UIMessage.EXCEPTION, e.getMessage());
-			return auth.getDataCache().getFacilities();
+			return enabledFacilities;
 		}
 
 		if (resultList != null) {
@@ -206,13 +222,13 @@ public class GUIBaseController {
 			for (Object object : resultList) {
 				RestProcessingFacility restFacility = mapper.convertValue(object, RestProcessingFacility.class);
 				if (!restFacility.getFacilityState().equals("DISABLED")) {
-					enabledFacilities.add(restFacility.getName());
+					enabledFacilities.add(object);
 				}
 			}
 		}
 
-		Comparator<String> c = Comparator.comparing((String x) -> x);
-		enabledFacilities.sort(c);
+		MapComparator oc = new MapComparator("name", true);
+		enabledFacilities.sort(oc);
 		return enabledFacilities;
 	}
 	
@@ -1153,4 +1169,31 @@ public class GUIBaseController {
 		}
 	}
 
+	protected List<Long> calcShowPages(Long page, Long pages) {
+		List<Long> showPages = new ArrayList<>();
+		Long start = Math.max(page - 4, 1);
+		Long end = Math.min(page + 4, pages);
+		if (page < 5) {
+			end = Math.min(end + (5 - page), pages);
+		}
+		if (pages - page < 5) {
+			start = Math.max(start - (4 - (pages - page)), 1);
+		}
+		for (Long i = start; i <= end; i++) {
+			showPages.add(i);
+		}
+		return showPages;
+	}
+	
+	protected void modelAddAttributes(Model model, Long count, Long pageSize, Long pages, Long page) {
+		model.addAttribute("count", count);
+		model.addAttribute("pageSize", pageSize);
+		model.addAttribute("pageCount", pages);
+		model.addAttribute("page", page);
+		model.addAttribute("numberOfPages", pages);
+		model.addAttribute("currentPage", page);
+		
+		List<Long> showPages = calcShowPages(page, pages);
+		model.addAttribute("showPages", showPages);
+	}
 }

@@ -195,12 +195,12 @@
                 </div>
                 <div class="col-1">
                   <div class="input-group-text">
-                    <span th:id="'addOrbit-' + ${iterstat.index}" 
+                    <span th:id="'addOrbit-' + ${iterstat.index}" th:title="#{addOrbit}"
                         class="cursorpointer" 
                         th:onclick="'addOrbit(' + ${iterstat.index} + ')'" 
                       ><span class="feather-l" data-feather="plus-circle"></span></span>
                       <span>&nbsp;&nbsp;</span>
-                      <span th:unless="${iterstat.first}" th:id="'removeOrbit-' + ${iterstat.index}"
+                      <span th:unless="${iterstat.first}" th:id="'removeOrbit-' + ${iterstat.index}" th:title="#{removeOrbit}"
                         class="cursorpointer" 
                         th:onclick="'removeOrbit(' + ${iterstat.index} + ')'"
                       ><span class="feather-l" data-feather="x-circle"></span></span>
@@ -244,7 +244,7 @@
                 </div>
                 <div class="col-1">
                   <div class="input-group-text">
-                    <span id="addOrbit-0" 
+                    <span id="addOrbit-0"  th:title="#{addOrbit}"
                         class="cursorpointer" 
                         onclick="addOrbit(0)"
                       ><span class="feather-l" data-feather="plus-circle"></span></span>
@@ -292,10 +292,11 @@
                 </div>
                 <div class="col-1">
                   <div class="input-group-text">
-                    <span id="addOrbit-x" 
+                    <span id="addOrbit-x"  th:title="#{addOrbit}"
                         class="cursorpointer" 
                         onclick="addOrbit(x)"
                       ><span class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span id="removeOrbit-x" 
+                        th:title="#{removeOrbit}"
                         class="cursorpointer" 
                         onclick="removeOrbit(x)"
                       ><span class="feather-l" data-feather="x-circle"></span></span>
@@ -548,7 +549,7 @@
 									<div class="input-group-prepend">
 										<p class="input-group-text word-wrap" th:text="#{inputfilter}"></p>
 										<div class="input-group-text">
-											<span th:id="addInClass" class="cursorpointer"
+											<span th:id="addInClass" class="cursorpointer"  th:title="#{addFilterClass}"
 												th:onclick="addInClass()"><span class="feather-l"
 												data-feather="plus-circle"></span></span>
 										</div>
@@ -567,7 +568,7 @@
 												<div class="input-group">
 													<div class="input-group-prepend">
 														<div class="input-group-text">
-															<span class="cursorpointer"
+															<span class="cursorpointer" th:title="#{removeClass}"
 																th:onclick="'removeInClass(' + ${iterCls.index} + ')'"><span
 																class="feather-l" data-feather="x-circle"></span></span>
 														</div>
@@ -616,7 +617,7 @@
 												<div class="input-group-text">
 													<span
 														th:id="'addInClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
-														class="cursorpointer"
+														class="cursorpointer" th:title="#{addParameterLine}"
 														th:onclick="'addInClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
 														class="feather-l" data-feather="plus-circle"></span></span>
 													<!-- <span>&nbsp;&nbsp;</span><span
@@ -666,11 +667,11 @@
 												<div class="input-group-text">
 													<span
 														th:id="'addInClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
-														class="cursorpointer"
+														class="cursorpointer" th:title="#{addParameterLine}"
 														th:onclick="'addInClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
 														class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
 														th:id="'removeInClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
-														class="cursorpointer"
+														class="cursorpointer" th:title="#{removeParameterLine}"
 														th:onclick="'removeInClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
 														class="feather-l" data-feather="x-circle"></span></span>
 												</div>
@@ -692,7 +693,7 @@
                   <div class="input-group-prepend">
                     <p class="input-group-text word-wrap" th:text="#{classoutparams}"></p>
                     <div class="input-group-text">
-                      <span th:id="addOutClass" class="cursorpointer"
+                      <span th:id="addOutClass" class="cursorpointer" th:title="#{addOutClass}"
                         th:onclick="addOutClass()"><span class="feather-l"
                         data-feather="plus-circle"></span></span>
                     </div>
@@ -708,7 +709,7 @@
                       <div class="input-group">
                         <div class="input-group-prepend">
                     <div class="input-group-text">
-                      <span class="cursorpointer"
+                      <span class="cursorpointer" th:title="#{removeClass}"
                         th:onclick="'removeOutClass(' + ${iterCls.index} + ')'"><span class="feather-l"
                         data-feather="x-circle"></span></span>
                     </div>
@@ -759,7 +760,7 @@
                     <div class="col-1">
                       <div class="input-group-text">
                         <span th:id="'addOutClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
-                          class="cursorpointer"
+                          class="cursorpointer" th:title="#{addParameterLine}"
                           th:onclick="'addOutClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
                           class="feather-l" data-feather="plus-circle"></span></span>
                           <!-- <span>&nbsp;&nbsp;</span><span
@@ -810,11 +811,11 @@
                     <div class="col-1">
                       <div class="input-group-text">
                         <span th:id="'addOutClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
-                          class="cursorpointer"
+                          class="cursorpointer" th:title="#{addParameterLine}"
                           th:onclick="'addOutClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
                           class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
                           th:id="'removeOutClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
-                          class="cursorpointer"
+                          class="cursorpointer" th:title="#{removeParameterLine}"
                           th:onclick="'removeOutClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
                           class="feather-l" data-feather="x-circle"></span></span>
                       </div>
@@ -835,7 +836,7 @@
                   <div class="input-group-prepend">
                     <p class="input-group-text word-wrap" th:text="#{outparams}"></p>
                     <div class="input-group-text">
-                      <span id="addAllClass" class="cursorpointer"
+                      <span id="addAllClass" class="cursorpointer" th:title="#{addAllClass}"
                         th:onclick="addAllClass()"><span class="feather-l"
                         data-feather="plus-circle"></span></span>
                     </div>
@@ -851,7 +852,7 @@
                       <div class="input-group">
                         <div class="input-group-prepend">
                     <div class="input-group-text">
-                      <span class="cursorpointer"
+                      <span class="cursorpointer" th:title="#{removeClass}"
                         onclick="removeAllClass()"><span class="feather-l"
                         data-feather="x-circle"></span></span>
                     </div>
@@ -896,7 +897,7 @@
 										<div class="col-1">
 											<div class="input-group-text">
 												<span th:id="'addParameterAll-' + ${iterStat.index}"
-													class="cursorpointer"
+													class="cursorpointer" th:title="#{addParameterLine}"
 													th:onclick="'addParameterAll(' + ${iterStat.index} + ')'"><span
 													class="feather-l" data-feather="plus-circle"></span></span>
 													<!-- <span>&nbsp;&nbsp;</span><span
@@ -947,11 +948,11 @@
                     <div class="col-1">
                       <div class="input-group-text">
                         <span th:id="'addParameterAll-' + ${iterStat.index}"
-                          class="cursorpointer"
+                          class="cursorpointer" th:title="#{addParameterLine}"
                           th:onclick="'addParameterAll(' + ${iterStat.index} + ')'"><span
                           class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
                           th:id="'removeParameterAll-' + ${iterStat.index}"
-                          class="cursorpointer"
+                          class="cursorpointer" th:title="#{removeParameterLine}"
                           th:onclick="'removeParameterAll(' + ${iterStat.index} + ')'"><span
                           class="feather-l" data-feather="x-circle"></span></span>
                       </div>
@@ -972,7 +973,7 @@
                   <div class="input-group-prepend">
                     <p class="input-group-text word-wrap" th:text="#{dynamicprocessingparameters}"></p>
                     <div class="input-group-text">
-                      <span id="addDynProcAllClass" class="cursorpointer"
+                      <span id="addDynProcAllClass" class="cursorpointer" th:title="#{addDynProcAllClass}"
                         th:onclick="addDynProcAllClass()"><span class="feather-l"
                         data-feather="plus-circle"></span></span>
                     </div>
@@ -988,7 +989,7 @@
                       <div class="input-group">
                         <div class="input-group-prepend">
                     <div class="input-group-text">
-                      <span class="cursorpointer"
+                      <span class="cursorpointer"  th:title="#{removeClass}"
                         onclick="removeDynProcAllClass()"><span class="feather-l"
                         data-feather="x-circle"></span></span>
                     </div>
@@ -1033,7 +1034,7 @@
                     <div class="col-1">
                       <div class="input-group-text">
                         <span th:id="'addParameterAll-' + ${iterStat.index}"
-                          class="cursorpointer"
+                          class="cursorpointer"  th:title="#{addParameterLine}"
                           th:onclick="'addDynProcParameterAll(' + ${iterStat.index} + ')'"><span
                           class="feather-l" data-feather="plus-circle"></span></span>
                           <!-- <span>&nbsp;&nbsp;</span><span
@@ -1084,11 +1085,11 @@
                     <div class="col-1">
                       <div class="input-group-text">
                         <span th:id="'addParameterAll-' + ${iterStat.index}"
-                          class="cursorpointer"
+                          class="cursorpointer"  th:title="#{addParameterLine}"
                           th:onclick="'addDynProcParameterAll(' + ${iterStat.index} + ')'"><span
                           class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
                           th:id="'removeParameterAll-' + ${iterStat.index}"
-                          class="cursorpointer"
+                          class="cursorpointer"  th:title="#{removeParameterLine}"
                           th:onclick="'removeDynProcParameterAll(' + ${iterStat.index} + ')'"><span
                           class="feather-l" data-feather="x-circle"></span></span>
                       </div>
@@ -1109,7 +1110,7 @@
                       <div class="input-group">
                         <div class="input-group-prepend">
                     <div class="input-group-text">
-                      <span class="cursorpointer"
+                      <span class="cursorpointer"  th:title="#{removeClass}"
                         onclick="removeDynProcAllClass()"><span class="feather-l"
                         data-feather="x-circle"></span></span>
                     </div>
@@ -1154,7 +1155,7 @@
                     <div class="col-1">
                       <div class="input-group-text">
                         <span id="addParameterAll-0"
-                          class="cursorpointer"
+                          class="cursorpointer"  th:title="#{addParameterLine}"
                           onclick="addDynProcParameterAll(0)"><span
                           class="feather-l" data-feather="plus-circle"></span></span>
                           <!-- <span>&nbsp;&nbsp;</span><span
@@ -1174,7 +1175,7 @@
                       <div class="input-group">
                         <div class="input-group-prepend">
                     <div class="input-group-text">
-                      <span class="cursorpointer"
+                      <span class="cursorpointer"  th:title="#{removeClass}"
                         onclick="removeAllClass()"><span class="feather-l"
                         data-feather="x-circle"></span></span>
                     </div>
@@ -1219,7 +1220,7 @@
                     <div class="col-1">
                       <div class="input-group-text">
                         <span id="addParameterAll-0"
-                          class="cursorpointer"
+                          class="cursorpointer"  th:title="#{addParameterLine}"
                           onclick="addParameterAll(0)"><span
                           class="feather-l" data-feather="plus-circle"></span></span>
                           <!-- <span>&nbsp;&nbsp;</span><span
@@ -1240,7 +1241,7 @@
 								<div class="input-group">
 									<div class="input-group-prepend">
 										<div class="input-group-text">
-											<span id="removeProductClass" class="cursorpointer"
+											<span id="removeProductClass" class="cursorpointer" th:title="#{removeClass}"
 												onclick="nix"><span
 												class="feather-l" data-feather="x-circle"></span></span>
 										</div>
@@ -1287,7 +1288,7 @@
 							</div>
 							<div class="col-1">
 								<div class="input-group-text">
-									<span id="add-x" class="cursorpointer" onclick="add(x)"><span
+									<span id="add-x" class="cursorpointer" onclick="add(x)"  th:title="#{addParameterLine}"><span
 										class="feather-l" data-feather="plus-circle"></span></span>
 									<!-- <span>&nbsp;&nbsp;</span><span
 										id="remove-x" class="cursorpointer" onclick="remove(x)"><span
@@ -1334,9 +1335,9 @@
 						</div>
 						<div class="col-1">
 							<div class="input-group-text">
-								<span id="add-x" class="cursorpointer" onclick="add(x)"><span
+								<span id="add-x" class="cursorpointer" onclick="add(x)" th:title="#{addParameterLine}"><span
 									class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
-									id="remove-x" class="cursorpointer" onclick="remove(x)"><span
+									id="remove-x" class="cursorpointer" onclick="remove(x)" th:title="#{removeParameterLine}"><span
 									class="feather-l" data-feather="x-circle"></span></span>
 							</div>
 						</div>
@@ -1370,6 +1371,9 @@
   <script src="../static/fragments/jquery.serialize-object.js" th:src="@{/fragments/jquery.serialize-object.js}" type="text/javascript"></script>
   
 <script type="text/javascript" th:inline="javascript"> 
+function wikiPage() {
+    window.open('https://github.com/dlr-eoc/prosEO/wiki/Creating-Orders-Manually-(Reprocessing)#creating-orders-manually-reprocessing');
+  }
 
 function findElementInListByDataIndex(elems, index) {
     if (elems != null) {
@@ -2377,8 +2381,7 @@ function confirm(event) {
 <script>
     window.onload = function () {
         // $('.collapse').collapse();
-        var elem = document.getElementById('sb-order');
-        $(elem).addClass('active');
+        activateSidebarElem('sb-order');
         feather.replace();
         var myid = getURLParam('id');
         if (myid != null) {

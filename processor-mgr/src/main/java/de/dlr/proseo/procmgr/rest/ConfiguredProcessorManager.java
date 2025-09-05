@@ -36,6 +36,7 @@ import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.ProcessorClass;
+import de.dlr.proseo.model.enums.ProductQuality;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.procmgr.ProcessorManagerConfiguration;
@@ -77,17 +78,19 @@ public class ConfiguredProcessorManager {
 	 * @param uuid                 the UUID of the configured processor
 	 * @param recordFrom           first record of filtered and ordered result to return
 	 * @param recordTo             last record of filtered and ordered result to return
+	 * @param orderBy		an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
 	 *
 	 * @return a list of Json objects representing configured processors satisfying the search criteria
 	 * @throws NoResultException if no configured processors matching the given search criteria could be found
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public List<RestConfiguredProcessor> getConfiguredProcessors(String mission, String identifier, String processorName,
-			String processorVersion, String configurationVersion, String uuid, Integer recordFrom, Integer recordTo)
+	public List<RestConfiguredProcessor> getConfiguredProcessors(String mission, Long id, String identifier,
+			String processorClass[], String processorVersion, String configurationVersion, String[] enabled, 
+			Integer recordFrom, Integer recordTo, String[] orderBy)
 			throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getConfiguredProcessors({}, {}, {}, {}, {}, {})", mission, identifier, processorName,
-					processorVersion, configurationVersion, uuid);
+			logger.trace(">>> getConfiguredProcessors({}, {}, {}, {}, {}, {})", mission, identifier, processorClass,
+					processorVersion, configurationVersion, enabled);
 
 		if (null == mission) {
 			mission = securityService.getMission();
@@ -107,7 +110,7 @@ public class ConfiguredProcessorManager {
 		}
 
 		Long numberOfResults = Long
-			.parseLong(this.countConfiguredProcessors(mission, processorName, processorVersion, configurationVersion));
+			.parseLong(this.countConfiguredProcessors(mission, id, identifier, processorClass, processorVersion, configurationVersion, enabled));
 		Integer maxResults = config.getMaxResults();
 		if (numberOfResults > maxResults && (recordTo - recordFrom) > maxResults && (numberOfResults - recordFrom) > maxResults) {
 			throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS,
@@ -116,39 +119,7 @@ public class ConfiguredProcessorManager {
 
 		List<RestConfiguredProcessor> result = new ArrayList<>();
 
-		String jpqlQuery = "select c from ConfiguredProcessor c where c.processor.processorClass.mission.code = :missionCode";
-		if (null != identifier) {
-			jpqlQuery += " and c.identifier = :identifier";
-		}
-		if (null != processorName) {
-			jpqlQuery += " and c.processor.processorClass.processorName = :processorName";
-		}
-		if (null != processorVersion) {
-			jpqlQuery += " and c.processor.processorVersion = :processorVersion";
-		}
-		if (null != configurationVersion) {
-			jpqlQuery += " and c.configuration.configurationVersion = :configurationVersion";
-		}
-		if (null != uuid) {
-			jpqlQuery += " and c.uuid = :uuid";
-		}
-		Query query = em.createQuery(jpqlQuery);
-		query.setParameter("missionCode", mission);
-		if (null != identifier) {
-			query.setParameter("identifier", identifier);
-		}
-		if (null != processorName) {
-			query.setParameter("processorName", processorName);
-		}
-		if (null != processorVersion) {
-			query.setParameter("processorVersion", processorVersion);
-		}
-		if (null != configurationVersion) {
-			query.setParameter("configurationVersion", configurationVersion);
-		}
-		if (null != uuid) {
-			query.setParameter("uuid", uuid);
-		}
+		Query query = createConfiguredProcessorsQuery(mission, id, identifier, processorClass, processorVersion, configurationVersion, enabled, orderBy, false);
 		query.setFirstResult(recordFrom);
 		query.setMaxResults(recordTo - recordFrom);
 
@@ -159,10 +130,10 @@ public class ConfiguredProcessorManager {
 		}
 		if (result.isEmpty()) {
 			throw new NoResultException(logger.log(ProcessorMgrMessage.CONFIGURED_PROCESSOR_NOT_FOUND, mission, identifier,
-					processorName, processorVersion, configurationVersion));
+					processorClass, processorVersion, configurationVersion));
 		}
 
-		logger.log(ProcessorMgrMessage.CONFIGURED_PROCESSOR_LIST_RETRIEVED, mission, identifier, processorName, processorVersion,
+		logger.log(ProcessorMgrMessage.CONFIGURED_PROCESSOR_LIST_RETRIEVED, mission, identifier, processorClass, processorVersion,
 				configurationVersion);
 
 		return result;
@@ -495,45 +466,113 @@ public class ConfiguredProcessorManager {
 	 * @return the number of configuredProcessors found as string
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public String countConfiguredProcessors(String missionCode, String processorName, String processorVersion,
-			String configurationVersion) {
+	public String countConfiguredProcessors(String mission, Long id, String identifier,
+			String[] processorClass, String processorVersion, String configurationVersion, String[] enabled) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> countConfiguredProcessors({}, {}, {}, {}, {}, {})", missionCode, processorName, processorVersion,
+			logger.trace(">>> countConfiguredProcessors({}, {}, {}, {}, {}, {})", mission, identifier, processorVersion,
 					configurationVersion);
 
-		if (null == missionCode) {
-			missionCode = securityService.getMission();
+		if (null == mission) {
+			mission = securityService.getMission();
 		} else {
 			// Ensure user is authorized for the requested mission
-			if (!securityService.isAuthorizedForMission(missionCode)) {
+			if (!securityService.isAuthorizedForMission(mission)) {
 				throw new SecurityException(
-						logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, missionCode, securityService.getMission()));
+						logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, mission, securityService.getMission()));
 			}
 		}
 
 		// build query
-		CriteriaBuilder cb = em.getCriteriaBuilder();
-		CriteriaQuery<Long> query = cb.createQuery(Long.class);
-		Root<ConfiguredProcessor> rootConfiguredProcessor = query.from(ConfiguredProcessor.class);
+		Query query = createConfiguredProcessorsQuery(mission, id, identifier, processorClass, processorVersion, configurationVersion, enabled, null, true);
 
-		List<Predicate> predicates = new ArrayList<>();
-
-		predicates
-			.add(cb.equal(rootConfiguredProcessor.get("processor").get("processorClass").get("mission").get("code"), missionCode));
-		if (processorName != null)
-			predicates
-				.add(cb.equal(rootConfiguredProcessor.get("processor").get("processorClass").get("processorName"), processorName));
-		if (processorVersion != null)
-			predicates.add(cb.equal(rootConfiguredProcessor.get("processor").get("processorVersion"), processorVersion));
-		if (configurationVersion != null)
-			predicates
-				.add(cb.equal(rootConfiguredProcessor.get("configuration").get("configurationVersion"), configurationVersion));
-		query.select(cb.count(rootConfiguredProcessor)).where(predicates.toArray(new Predicate[predicates.size()]));
-
-		Long result = em.createQuery(query).getSingleResult();
-		logger.log(ProcessorMgrMessage.CONFIGURED_PROCESSORS_COUNTED, result, missionCode, processorName, processorVersion,
-				configurationVersion);
-
-		return result.toString();
+		Object resultObject = query.getSingleResult();
+		if (resultObject instanceof Long) {
+			return ((Long) resultObject).toString();
+		}
+		if (resultObject instanceof String) {
+			return (String) resultObject;
+		}
+		return "0";
+	}
+	
+	private Query createConfiguredProcessorsQuery(String mission, Long id, String identifier, String[] processorName, 
+			String processorVersion, String configurationVersion, String enabled[], String[] orderBy, Boolean count) {
+		String jpqlQuery = "";
+		if (count) {
+			jpqlQuery = "select count(pc) from ConfiguredProcessor  pc ";
+		} else {
+			jpqlQuery = "select pc from ConfiguredProcessor pc ";
+		}
+		jpqlQuery += " where pc.processor.processorClass.mission.code = :missionCode";
+		if (null != identifier) {
+			jpqlQuery += "  and upper(identifier) like :identifier";
+		}
+		if (null != processorVersion) {
+			jpqlQuery += "  and upper(pc.processor.processorVersion) like :processorVersion";
+		}
+		if (null != configurationVersion) {
+			jpqlQuery += "  and upper(pc.configuration.configurationVersion) like :configurationVersion";
+		}
+		if (null != id && id > 0) {
+			jpqlQuery += " and pc.id = :id";
+		}
+		if (null != processorName && 0 < processorName.length) {
+			jpqlQuery += " and pc.processor.processorClass.processorName in (";
+			for (int i = 0; i < processorName.length; ++i) {
+				if (0 < i)
+					jpqlQuery += ", ";
+				jpqlQuery += ":processorName" + i;
+			}
+			jpqlQuery += ") ";
+			
+		}
+		if (null != enabled && 0 < enabled.length) {
+			Boolean hasTrue = false;
+			Boolean hasFalse = false;
+			for (int i = 0; i < enabled.length; ++i) {
+				if (enabled[i].equalsIgnoreCase("true")) hasTrue = true;
+				if (enabled[i].equalsIgnoreCase("false")) hasFalse = true;
+			}
+			if (!(hasTrue && hasFalse)) {
+				if (hasTrue) {
+					jpqlQuery += " and pc.enabled is true ";
+				} else {
+					jpqlQuery += " and pc.enabled is false ";
+				}
+			}			
+		}
+		if (!count) {
+			// order by
+			if (null != orderBy && 0 < orderBy.length) {
+				jpqlQuery += " order by ";
+				for (int i = 0; i < orderBy.length; ++i) {
+					if (0 < i)
+						jpqlQuery += ", ";
+					jpqlQuery += "pc.";
+					jpqlQuery += orderBy[i];
+				}
+			}
+			
+		}
+		Query query = em.createQuery(jpqlQuery);
+		query.setParameter("missionCode", mission);
+		if (null != id && id > 0) {
+			query.setParameter("id", id);
+		}
+		if (null != configurationVersion) {
+			query.setParameter("configurationVersion", configurationVersion);
+		}
+		if (null != processorVersion) {
+			query.setParameter("processorVersion", processorVersion);
+		}
+		if (null != identifier) {
+			query.setParameter("identifier", identifier);
+		}
+		if (null != processorName && 0 < processorName.length) {
+			for (int i = 0; i < processorName.length; ++i) {
+				query.setParameter("processorName" + i, processorName[i]);
+			}
+		}
+		return query;
 	}
 }

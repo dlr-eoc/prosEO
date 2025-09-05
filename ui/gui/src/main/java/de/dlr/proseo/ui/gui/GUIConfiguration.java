@@ -39,6 +39,10 @@ public class GUIConfiguration implements WebMvcConfigurer {
 	@Value("${proseo.productionPlanner.url}")
 	private String productionPlanner;
 
+	/** The base URI of grafana dashboard */
+	@Value("${proseo.grafana.url}")
+	private String grafana;
+
 	/** The timeout in ms used for long order actions (asynchronous requests) */
 	@Value("${proseo.gui.timeout}")
 	private Long timeout;
@@ -77,6 +81,15 @@ public class GUIConfiguration implements WebMvcConfigurer {
 	 */
 	public String getProcessorManager() {
 		return processorManager;
+	}
+	
+	/**
+	 * Gets the Grafana base URI.
+	 *
+	 * @return the Grafana URI
+	 */
+	public String getGrafana() {
+		return grafana;
 	}
 
 	/**

@@ -141,6 +141,10 @@
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
 <script type="text/javascript" th:inline="javascript">
+function wikiPage() {
+    window.open('https://github.com/dlr-eoc/prosEO/wiki/GUI-Facility#facility');
+}
+
     function showPEPwd(id) {
 	      if (document.getElementById('pepwdi' + id).type == 'password' ) { 
 	          document.getElementById('pepwdi' + id).type = 'text';
@@ -196,8 +200,7 @@ function retrieveData() {
 <script>
     window.onload = function () {
      // $('.collapse').collapse();
-     var elem = document.getElementById('sb-facility');
-     $(elem).addClass('active');
+     activateSidebarElem('sb-facility');
      feather.replace();
      retrieveData();
      

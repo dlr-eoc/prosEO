@@ -32,6 +32,7 @@ import de.dlr.proseo.storagemgr.utils.PathConverter;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
@@ -54,14 +55,23 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
  */
 public class S3DAL {
 
-	/** S3 client for v2 */
-	private S3Client s3ClientV2;
+	/** Chunk size for downloads to S3 storage (128 MB) */
+	private static final Long MULTIPART_DOWNLOAD_PARTSIZE_BYTES = (long) (128 * 1024 * 1024);
 
 	/** S3 client for v1 */
-	private AmazonS3 s3ClientV1;
+	private static AmazonS3 s3ClientV1 = null;
+
+	/** S3 client for v2 */
+	private static S3Client s3ClientV2 = null;
+
+	/** Asynchronous S3 client for v2 */
+	private static S3AsyncClient s3AsyncClientV2 = null;
 
 	/** s3 configuration */
 	private S3Configuration cfg;
+	
+	/** Default bucket to operate on */
+	private String defaultBucket;
 
 	/** AWS credentials */
 	private AwsBasicCredentials credentials;
@@ -80,6 +90,9 @@ public class S3DAL {
 		this.cfg = cfg;
 
 		initS3ClientV2();
+		
+		setDefaultBucket(cfg.getBucket()); // requires existing V2 client
+		
 		initS3ClientV1(); // for transfer manager only
 	}
 
@@ -96,13 +109,22 @@ public class S3DAL {
 	/**
 	 * Initializes the S3 v1 client.
 	 *
+	 * Note that this method relies on the configuration passed to the current object upon construction.
+	 * It is assumed that this configuration is derived from the application configuration without modification,
+	 * so it is the same for every S3DAL object.
+	 *
 	 * @throws IOException if an I/O exception occurs
 	 */
-	public void initS3ClientV1() throws IOException {
+	public synchronized void initS3ClientV1() throws IOException {
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> initS3ClientV1()");
+		if (logger.isTraceEnabled()) logger.trace(">>> initS3ClientV1()");
+		
+		// If S3 Client V1 exists, reuse
+		if (null != s3ClientV1) {
+			return;
+		}
 
+		// Build a new S3 Client V1
 		logger.trace("... using access key {} and secret {}", cfg.getS3AccessKey(), "***");
 		AWSCredentials awsCredentialsV1 = new BasicAWSCredentials(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
 
@@ -130,83 +152,135 @@ public class S3DAL {
 
 	/**
 	 * Initializes the S3 v2 client.
+	 * 
+	 * Note that this method relies on the configuration passed to the current object upon construction.
+	 * It is assumed that this configuration is derived from the application configuration without modification,
+	 * so it is the same for every S3DAL object.
 	 *
 	 * @throws IOException if an I/O exception occurs
 	 */
-	public void initS3ClientV2() throws IOException {
+	public synchronized void initS3ClientV2() throws IOException {
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> initS3ClientV2()");
-
+		if (logger.isTraceEnabled()) logger.trace(">>> initS3ClientV2()");
+		
+		// If both S3 V2 Clients exist, reuse
+		if (null != s3ClientV2 && null != s3AsyncClientV2) {
+			return;
+		}
+		
+		// Build a new S3 Client V1
 		Region s3Region = Region.of(cfg.getS3Region()); // Region.EU_CENTRAL_1;
 
 		logger.trace("... using access key {} and secret {}", cfg.getS3AccessKey(), "***");
 		initCredentials(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
 
 		if (cfg.isDefaultEndPoint()) {
-			s3ClientV2 = S3Client.builder()
-				.forcePathStyle(true)
-				.region(s3Region)
-				.credentialsProvider(StaticCredentialsProvider.create(credentials))
-				.build();
+			
+			if (null == s3ClientV2) {
+				s3ClientV2 = S3Client.builder().forcePathStyle(true).region(s3Region)
+					.credentialsProvider(StaticCredentialsProvider.create(credentials)).build();
+			}
+			if (null == s3AsyncClientV2) {
+				s3AsyncClientV2 = S3AsyncClient.crtBuilder().credentialsProvider(StaticCredentialsProvider.create(credentials))
+					.region(s3Region).targetThroughputInGbps(20.0).minimumPartSizeInBytes(MULTIPART_DOWNLOAD_PARTSIZE_BYTES)
+					.forcePathStyle(true).build();
+			}
+			
 		} else {
-			s3ClientV2 = S3Client.builder()
-				.forcePathStyle(true)
-				.region(s3Region)
-				.endpointOverride(URI.create(cfg.getS3EndPoint()))
-				.credentialsProvider(StaticCredentialsProvider.create(credentials))
-				.build();
+			
+			if (null == s3ClientV2) {
+				s3ClientV2 = S3Client.builder().forcePathStyle(true).region(s3Region)
+					.endpointOverride(URI.create(cfg.getS3EndPoint()))
+					.credentialsProvider(StaticCredentialsProvider.create(credentials)).build();
+			}
+			if (null == s3AsyncClientV2) {
+				s3AsyncClientV2 = S3AsyncClient.crtBuilder().credentialsProvider(StaticCredentialsProvider.create(credentials))
+					.region(s3Region).targetThroughputInGbps(20.0).minimumPartSizeInBytes(MULTIPART_DOWNLOAD_PARTSIZE_BYTES)
+					.endpointOverride(URI.create(cfg.getS3EndPoint())).forcePathStyle(true).build();
+			}
+			
 		}
 
-		setBucket(cfg.getBucket());
 	}
 
 	/**
-	 * Retrieves a list of all files in the current bucket.
+	 * Retrieves a list of all files in the default bucket.
 	 *
 	 * @return a list of all file paths
 	 * @throws IOException if an I/O exception occurs
 	 */
-	public List<String> getFiles() throws IOException {
+	public List<String> getAllFiles() throws IOException {
+		return getAllFiles(defaultBucket);
+	}
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> getFiles()");
+	/**
+	 * Retrieves a list of all files in the named bucket.
+	 * 
+	 * @param bucket the bucket to search in
+	 * @return a list of all file paths
+	 * @throws IOException if an I/O exception occurs
+	 */
+	public List<String> getAllFiles(String bucket) throws IOException {
 
-		AtomicCommand<List<String>> fileGetter = new S3AtomicFileListGetter(s3ClientV2, cfg.getBucket());
+		if (logger.isTraceEnabled()) logger.trace(">>> getAllFiles({})", bucket);
+
+		AtomicCommand<List<String>> fileGetter = new S3AtomicFileListGetter(s3ClientV2, bucket);
 
 		return new DefaultRetryStrategy<>(fileGetter, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
-	 * Retrieves a list of files that match the specified folder (prefix).
+	 * Retrieves a list of files from the default bucket that match the specified folder (prefix).
 	 *
 	 * @param folder the folder (prefix) to match
 	 * @return a list of file paths that match the folder
 	 * @throws IOException if an I/O exception occurs
 	 */
 	public List<String> getFiles(String folder) throws IOException {
+		return getFiles(defaultBucket, folder);
+	}
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> getFiles({})", folder);
+	/**
+	 * Retrieves a list of files from the given bucket that match the specified folder (prefix).
+	 * @param bucket the bucket to search in 
+	 * @param folder the folder (prefix) to match
+	 *
+	 * @return a list of file paths that match the folder
+	 * @throws IOException if an I/O exception occurs
+	 */
+	public List<String> getFiles(String bucket, String folder) throws IOException {
 
-		AtomicCommand<List<String>> fileGetter = new S3AtomicFileListGetter(s3ClientV2, cfg.getBucket(), folder);
+		if (logger.isTraceEnabled()) logger.trace(">>> getFiles({},{})", bucket, folder);
+
+		AtomicCommand<List<String>> fileGetter = new S3AtomicFileListGetter(s3ClientV2, bucket, folder);
 
 		return new DefaultRetryStrategy<>(fileGetter, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
-	 * Checks if a file exists in the storage system.
+	 * Checks if a file exists in the default bucket.
 	 *
 	 * @param filePath the file path
 	 * @return true if the file exists, false otherwise
 	 * @throws IOException if an I/O exception occurs
 	 */
 	public boolean fileExists(String filePath) throws IOException {
+		return fileExists(defaultBucket, filePath);
+	}
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> fileExists({},{})", filePath);
+	/**
+	 * Checks if a file exists in the named S3 bucket.
+	 * @param bucket the bucket to check
+	 * @param filePath the file path
+	 *
+	 * @return true if the file exists, false otherwise
+	 * @throws IOException if an I/O exception occurs
+	 */
+	public boolean fileExists(String bucket, String filePath) throws IOException {
 
-		AtomicCommand<String> fileExistsGetter = new S3AtomicFileExistsGetter(s3ClientV2, cfg.getBucket(), filePath);
+		if (logger.isTraceEnabled()) logger.trace(">>> fileExists({},{})", bucket, filePath);
+
+		AtomicCommand<String> fileExistsGetter = new S3AtomicFileExistsGetter(s3ClientV2, bucket, filePath);
 
 		String fileExists = new DefaultRetryStrategy<>(fileExistsGetter, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime())
 			.execute();
@@ -235,18 +309,29 @@ public class S3DAL {
 	}
 
 	/**
-	 * Retrieves the size of the file specified by the file path.
+	 * Retrieves the size of the file in the default bucket specified by the file path.
 	 *
 	 * @param filePath the file path
 	 * @return the size of the file in bytes
 	 * @throws IOException if an I/O exception occurs
 	 */
 	public long getFileSize(String filePath) throws IOException {
+		return getFileSize(defaultBucket, filePath);
+	}
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> getFileSize({})", filePath);
+	/**
+	 * Retrieves the size of the file in the named bucket specified by the file path.
+	 * @param bucket the bucket to check
+	 * @param filePath the file path
+	 *
+	 * @return the size of the file in bytes
+	 * @throws IOException if an I/O exception occurs
+	 */
+	public long getFileSize(String bucket, String filePath) throws IOException {
 
-		AtomicCommand<String> fileSizeGetter = new S3AtomicFileSizeGetter(s3ClientV2, cfg.getBucket(), filePath);
+		if (logger.isTraceEnabled()) logger.trace(">>> getFileSize({},{})", bucket, filePath);
+
+		AtomicCommand<String> fileSizeGetter = new S3AtomicFileSizeGetter(s3ClientV2, bucket, filePath);
 
 		String fileSize = new DefaultRetryStrategy<>(fileSizeGetter, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime())
 			.execute();
@@ -255,21 +340,35 @@ public class S3DAL {
 	}
 
 	/**
-	 * Retrieves the content of the file specified by the file path.
+	 * Retrieves the content of the file in the default bucket specified by the file path.
 	 *
 	 * @param filePath the file path
 	 * @return the content of the file
 	 * @throws IOException if an I/O exception occurs
 	 */
 	public String getFileContent(String filePath) throws IOException {
+		return getFileContent(defaultBucket, filePath);
+	}
 
-		AtomicCommand<String> fileContentGetter = new S3AtomicFileContentGetter(s3ClientV2, cfg.getBucket(), filePath);
+	/**
+	 * Retrieves the content of the file in the named bucket specified by the file path.
+	 * @param bucket the bucket to retrieve the file from 
+	 * @param filePath the file path
+	 *
+	 * @return the content of the file
+	 * @throws IOException if an I/O exception occurs
+	 */
+	public String getFileContent(String bucket, String filePath) throws IOException {
+
+		if (logger.isTraceEnabled()) logger.trace(">>> getFileContent({},{})", bucket, filePath);
+
+		AtomicCommand<String> fileContentGetter = new S3AtomicFileContentGetter(s3ClientV2, bucket, filePath);
 
 		return new DefaultRetryStrategy<>(fileContentGetter, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
-	 * Uploads a file to the storage system.
+	 * Uploads a file to the default bucket in the storage system.
 	 *
 	 * @param sourceFile      the source file to upload
 	 * @param targetFileOrDir the target file or directory in the storage system
@@ -277,32 +376,58 @@ public class S3DAL {
 	 * @throws IOException if an I/O exception occurs if the file cannot be uploaded
 	 */
 	public String uploadFile(String sourceFile, String targetFileOrDir) throws IOException {
+		return uploadFile(sourceFile, defaultBucket, targetFileOrDir);
+	}
+
+	/**
+	 * Uploads a file to the named bucket in the storage system.
+	 *
+	 * @param sourceFile      the source file to upload
+	 * @param bucket the bucket to upload to
+	 * @param targetFileOrDir the target file or directory in the storage system
+	 * @return the uploaded file path in the storage system
+	 * @throws IOException if an I/O exception occurs if the file cannot be uploaded
+	 */
+	public String uploadFile(String sourceFile, String bucket, String targetFileOrDir) throws IOException {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> uploadFile({},{})", sourceFile, targetFileOrDir);
+			logger.trace(">>> uploadFile({},{},{})", sourceFile, bucket, targetFileOrDir);
 
-		AtomicCommand<String> fileUploader = new S3AtomicFileUploader(s3ClientV1, cfg.getBucket(), sourceFile, targetFileOrDir);
+		AtomicCommand<String> fileUploader = new S3AtomicFileUploader(s3ClientV1, bucket, sourceFile, targetFileOrDir);
 
 		return new DefaultRetryStrategy<>(fileUploader, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
-	 * Uploads a file or directory to the storage system.
+	 * Uploads a file or directory to the default bucket in the storage system.
 	 *
 	 * @param sourceFileOrDir the source file or directory to upload
 	 * @param targetFileOrDir the target file or directory in the storage system
 	 * @return a list of uploaded file paths in the storage system
 	 * @throws IOException if an I/O exception occurs if the file or directory cannot be uploaded
 	 */
-	public List<String> upload(String sourceFileOrDir, String targetFileOrDir) throws IOException {
+	public List<String> uploadFileOrDir(String sourceFileOrDir, String targetFileOrDir) throws IOException {
+		return uploadFileOrDir(sourceFileOrDir, defaultBucket, targetFileOrDir);
+	}
+
+	/**
+	 * Uploads a file or directory to the named bucket in the storage system.
+	 *
+	 * @param sourceFileOrDir the source file or directory to upload
+	 * @param bucket the bucket to upload to
+	 * @param targetFileOrDir the target file or directory in the storage system
+	 * @return a list of uploaded file paths in the storage system
+	 * @throws IOException if an I/O exception occurs if the file or directory cannot be uploaded
+	 */
+	public List<String> uploadFileOrDir(String sourceFileOrDir, String bucket, String targetFileOrDir) throws IOException {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> upload({},{})", sourceFileOrDir, targetFileOrDir);
+			logger.trace(">>> upload({},{},{})", sourceFileOrDir, bucket, targetFileOrDir);
 
 		List<String> uploadedFiles = new ArrayList<>();
 
 		if (isFile(sourceFileOrDir)) {
-			String uploadedFile = uploadFile(sourceFileOrDir, targetFileOrDir);
+			String uploadedFile = uploadFile(sourceFileOrDir, bucket, targetFileOrDir);
 			uploadedFiles.add(uploadedFile);
 			return uploadedFiles;
 		}
@@ -317,7 +442,7 @@ public class S3DAL {
 		for (File file : files) {
 			if (file.isFile()) {
 				String sourceFile = file.getAbsolutePath();
-				String uploadedFile = uploadFile(sourceFile, targetDir);
+				String uploadedFile = uploadFile(sourceFile, bucket, targetDir);
 				uploadedFiles.add(uploadedFile);
 			}
 		}
@@ -327,7 +452,7 @@ public class S3DAL {
 				String sourceSubDir = file.getAbsolutePath();
 				String targetSubDir = Paths.get(targetDir, file.getName()).toString();
 				targetSubDir = new PathConverter(targetSubDir).posixToS3Path().addSlashAtEnd().getPath();
-				List<String> subDirUploadedFiles = upload(sourceSubDir, targetSubDir);
+				List<String> subDirUploadedFiles = uploadFileOrDir(sourceSubDir, bucket, targetSubDir);
 				uploadedFiles.addAll(subDirUploadedFiles);
 			}
 		}
@@ -336,18 +461,32 @@ public class S3DAL {
 	}
 
 	/**
-	 * Uploads a file or directory to the storage system.
+	 * Uploads a file or directory to the default bucket of the storage system.
 	 *
 	 * @param sourceFileOrDir the source file or directory to upload
 	 * @return a list of uploaded file or directory paths in the storage system
 	 * @throws IOException if an I/O exception occurs if the file or directory cannot be uploaded
 	 */
-	public List<String> upload(String sourceFileOrDir) throws IOException {
-		return upload(sourceFileOrDir, sourceFileOrDir);
-	}
+//	public List<String> upload(String sourceFileOrDir) throws IOException {
+//		return upload(sourceFileOrDir, defaultBucket);
+//	}
 
 	/**
-	 * Downloads a file from the storage system.
+	 * Uploads a file or directory to the named bucket of the storage system.
+	 * 
+	 * DUBIOUS: WHERE IS THE FILE UPLOADED TO? SETTING SOURCE AND TARGET TO SAME PATH IS DANGEROUS.
+	 *
+	 * @param sourceFileOrDir the source file or directory to upload
+	 * @param bucket the bucket to upload to
+	 * @return a list of uploaded file or directory paths in the storage system
+	 * @throws IOException if an I/O exception occurs if the file or directory cannot be uploaded
+	 */
+//	public List<String> upload(String sourceFileOrDir, String bucket) throws IOException {
+//		return uploadFileOrDir(sourceFileOrDir, bucket, sourceFileOrDir);
+//	}
+
+	/**
+	 * Downloads a file from the default bucket of the storage system.
 	 *
 	 * @param sourceFile      the source file in the storage system to download
 	 * @param targetFileOrDir the target file or directory to download to
@@ -355,17 +494,30 @@ public class S3DAL {
 	 * @throws IOException if an I/O exception occurs if the file cannot be downloaded
 	 */
 	public String downloadFile(String sourceFile, String targetFileOrDir) throws IOException {
+		return downloadFile(defaultBucket, sourceFile, targetFileOrDir);
+	}
+
+	/**
+	 * Downloads a file from the named bucket in the storage system.
+	 * @param bucket the bucket to download from
+	 * @param sourceFile      the source file in the storage system to download
+	 * @param targetFileOrDir the target file or directory to download to
+	 *
+	 * @return the downloaded file path
+	 * @throws IOException if an I/O exception occurs if the file cannot be downloaded
+	 */
+	public String downloadFile(String bucket, String sourceFile, String targetFileOrDir) throws IOException {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> downloadFile({},{})", sourceFile, targetFileOrDir);
+			logger.trace(">>> downloadFile({},{},{})", bucket, sourceFile, targetFileOrDir);
 
-		AtomicCommand<String> fileDownloader = new S3AtomicFileDownloader(s3ClientV1, cfg.getBucket(), sourceFile, targetFileOrDir,
+		AtomicCommand<String> fileDownloader = new S3AtomicFileDownloaderV2(s3AsyncClientV2, bucket, sourceFile, targetFileOrDir,
 				cfg.getFileCheckWaitTime(), cfg.getMaxRequestAttempts());
 		return new DefaultRetryStrategy<>(fileDownloader, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
-	 * Downloads a file or directory from the storage system.
+	 * Downloads a file or directory from the default bucket of the storage system.
 	 *
 	 * @param sourceFileOrDir the source file or directory in the storage system to
 	 *                        download
@@ -374,17 +526,31 @@ public class S3DAL {
 	 * @throws IOException if an I/O exception occurs if the file or directory cannot be downloaded
 	 */
 	public List<String> download(String sourceFileOrDir, String targetFileOrDir) throws IOException {
+		return download(defaultBucket, sourceFileOrDir, targetFileOrDir);
+	}
+
+	/**
+	 * Downloads a file or directory from the named bucket in the storage system.
+	 * @param bucket the bucket to download from
+	 * @param sourceFileOrDir the source file or directory in the storage system to
+	 *                        download
+	 * @param targetFileOrDir the target file or directory to download to
+	 *
+	 * @return a list of downloaded file or directory paths
+	 * @throws IOException if an I/O exception occurs if the file or directory cannot be downloaded
+	 */
+	public List<String> download(String bucket, String sourceFileOrDir, String targetFileOrDir) throws IOException {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> download({},{})", sourceFileOrDir, targetFileOrDir);
+			logger.trace(">>> download({},{},{})", bucket, sourceFileOrDir, targetFileOrDir);
 
 		String sourcePosixFileOrDir = new PathConverter(sourceFileOrDir).posixToS3Path().convertToSlash().getPath();
 
-		List<String> toDownloadFiles = getFiles(sourcePosixFileOrDir);
+		List<String> toDownloadFiles = getFiles(bucket, sourcePosixFileOrDir);
 		List<String> downloadedFiles = new ArrayList<>();
 
 		for (String sourceFile : toDownloadFiles) {
-			String downloadedFile = downloadFile(sourceFile, targetFileOrDir);
+			String downloadedFile = downloadFile(bucket, sourceFile, targetFileOrDir);
 			downloadedFiles.add(downloadedFile);
 		}
 
@@ -392,24 +558,36 @@ public class S3DAL {
 	}
 
 	/**
-	 * Downloads a file or directory with a prefix match from the storage system.
+	 * Downloads a file or directory with a prefix match from the default bucket of the storage system.
 	 *
 	 * @param prefixFileOrDir the prefix file or directory to match
 	 * @return a list of downloaded file paths
 	 * @throws IOException if an I/O exception occurs if the file or directory cannot be downloaded
 	 */
-	public List<String> download(String prefixFileOrDir) throws IOException {
+	public List<String> downloadByPrefix(String prefixFileOrDir) throws IOException {
+		return downloadByPrefix(defaultBucket, prefixFileOrDir);
+	}
+
+	/**
+	 * Downloads a file or directory with a prefix match from the named bucket in the storage system.
+	 * @param bucket the bucket to download from
+	 * @param prefixFileOrDir the prefix file or directory to match
+	 *
+	 * @return a list of downloaded file paths
+	 * @throws IOException if an I/O exception occurs if the file or directory cannot be downloaded
+	 */
+	public List<String> downloadByPrefix(String bucket, String prefixFileOrDir) throws IOException {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> download({})", prefixFileOrDir);
+			logger.trace(">>> download({},{})", bucket, prefixFileOrDir);
 
 		String s3PrefixFileOrDir = new PathConverter(prefixFileOrDir).posixToS3Path().convertToSlash().getPath();
 
-		List<String> toDownloadFiles = getFiles(s3PrefixFileOrDir);
+		List<String> toDownloadFiles = getFiles(bucket, s3PrefixFileOrDir);
 		List<String> downloadedFiles = new ArrayList<>();
 
 		for (String sourceFile : toDownloadFiles) {
-			String downloadedFile = downloadFile(sourceFile, sourceFile); // download as is
+			String downloadedFile = downloadFile(bucket, sourceFile, sourceFile); // download as is
 			downloadedFiles.add(downloadedFile);
 		}
 
@@ -417,51 +595,88 @@ public class S3DAL {
 	}
 
 	/**
-	 * Deletes a file or directory.
+	 * Deletes a file or directory from the default bucket.
 	 *
 	 * @param fileOrDir the file or directory to delete
 	 * @return a list of deleted file paths
 	 * @throws IOException if an I/O exception occurs
 	 */
 	public List<String> delete(String fileOrDir) throws IOException {
+		return delete(defaultBucket, fileOrDir);
+	}
+
+	/**
+	 * Deletes a file or directory from the named bucket.
+	 * @param bucket the bucket to delete the file or directory from
+	 * @param fileOrDir the file or directory to delete
+	 *
+	 * @return a list of deleted file paths
+	 * @throws IOException if an I/O exception occurs
+	 */
+	public List<String> delete(String bucket, String fileOrDir) throws IOException {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> delete({})", fileOrDir);
+			logger.trace(">>> delete({},{})", bucket, fileOrDir);
 
-		AtomicCommand<List<String>> fileListDeleter = new S3AtomicFileListDeleter(s3ClientV2, cfg.getBucket(), fileOrDir);
+		AtomicCommand<List<String>> fileListDeleter = new S3AtomicFileListDeleter(s3ClientV2, bucket, fileOrDir);
 
 		return new DefaultRetryStrategy<>(fileListDeleter, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
-	 * Deletes a file.
+	 * Deletes a file from the default bucket.
 	 *
 	 * @param filepath the file path
 	 * @return the deleted file path
 	 * @throws IOException if an I/O exception occurs
 	 */
 	public String deleteFile(String filepath) throws IOException {
+		return deleteFile(defaultBucket, filepath);
+	}
+
+	/**
+	 * Deletes a file from the named bucket.
+	 * @param bucket the bucket to delete the file from
+	 * @param filepath the file path
+	 *
+	 * @return the deleted file path
+	 * @throws IOException if an I/O exception occurs
+	 */
+	public String deleteFile(String bucket, String filepath) throws IOException {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> delete({})", filepath);
+			logger.trace(">>> delete({},{})", bucket, filepath);
 
-		AtomicCommand<String> fileDeleter = new S3AtomicFileDeleter(s3ClientV2, cfg.getBucket(), filepath);
+		AtomicCommand<String> fileDeleter = new S3AtomicFileDeleter(s3ClientV2, bucket, filepath);
 
 		return new DefaultRetryStrategy<>(fileDeleter, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
 
 	/**
-	 * Deletes files.
+	 * Deletes files in the default bucket.
 	 *
 	 * @return a list of deleted file paths
 	 * @throws IOException if an I/O exception occurs
 	 */
 	public List<String> deleteFiles() throws IOException {
+		return deleteFiles(defaultBucket);
+	}
+
+	/**
+	 * Deletes files in the named bucket.
+	 * @param bucket the bucket to delete files from
+	 *
+	 * @return a list of deleted file paths
+	 * @throws IOException if an I/O exception occurs
+	 */
+	public List<String> deleteFiles(String bucket) throws IOException {
+
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteFiles({})", bucket);
 
 		List<String> deletedFiles = new ArrayList<>();
 
-		for (String file : getFiles()) {
-			String deletedFile = deleteFile(file);
+		for (String file : getAllFiles(bucket)) {
+			String deletedFile = deleteFile(bucket, file);
 			deletedFiles.add(deletedFile);
 		}
 
@@ -469,15 +684,25 @@ public class S3DAL {
 	}
 
 	/**
-	 * Deletes files.
+	 * Deletes named files from the default bucket.
 	 *
 	 * @param toDeleteList a list of file or directory paths to delete
 	 * @return a list of deleted file paths
 	 */
 	public List<String> deleteFiles(List<String> toDeleteList) {
+		return deleteFiles(defaultBucket, toDeleteList);
+	}
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> deleteFiles({})", "size:" + toDeleteList.size());
+	/**
+	 * Deletes named files from the given bucket.
+	 * @param bucket the bucket to delete files from
+	 * @param toDeleteList a list of file or directory paths to delete
+	 *
+	 * @return a list of deleted file paths
+	 */
+	public List<String> deleteFiles(String bucket, List<String> toDeleteList) {
+
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteFiles({},{})", bucket, "size:" + toDeleteList.size());
 
 		ArrayList<ObjectIdentifier> keys = new ArrayList<>();
 		ObjectIdentifier objectId = null;
@@ -492,7 +717,7 @@ public class S3DAL {
 
 		try {
 			DeleteObjectsRequest multiObjectDeleteRequest = DeleteObjectsRequest.builder()
-				.bucket(cfg.getBucket())
+				.bucket(bucket)
 				.delete(del)
 				.build();
 			System.out.println("Multiple objects are deleted!");
@@ -510,30 +735,29 @@ public class S3DAL {
 	}
 
 	/**
-	 * Sets the bucket to use for operations.
+	 * Sets the default bucket to use for operations.
 	 *
 	 * @param bucket the bucket name
 	 * @throws IOException if an I/O exception occurs
 	 */
-	public void setBucket(String bucket) throws IOException {
+	public void setDefaultBucket(String bucket) throws IOException {
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> setBucket({})", bucket);
+		if (logger.isTraceEnabled()) logger.trace(">>> setDefaultBucket({})", bucket);
 
 		if (!bucketExists(bucket)) {
 			createBucket(bucket);
 		}
 
-		cfg.setBucket(bucket);
+		this.defaultBucket = bucket;
 	}
 
 	/**
-	 * Gets the current bucket.
+	 * Gets the currently default bucket.
 	 *
-	 * @return the current bucket name
+	 * @return the default bucket name
 	 */
-	public String getBucket() {
-		return cfg.getBucket();
+	public String getDefaultBucket() {
+		return defaultBucket;
 	}
 
 	/**
@@ -544,8 +768,7 @@ public class S3DAL {
 	 */
 	public List<String> getBuckets() throws IOException {
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> getBuckets()");
+		if (logger.isTraceEnabled()) logger.trace(">>> getBuckets()");
 
 		AtomicCommand<List<String>> bucketGetter = new S3AtomicBucketListGetter(s3ClientV2);
 
@@ -561,8 +784,7 @@ public class S3DAL {
 	 */
 	public boolean bucketExists(String bucketName) throws IOException {
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> bucketExists({})", bucketName);
+		if (logger.isTraceEnabled()) logger.trace(">>> bucketExists({})", bucketName);
 
 		List<String> buckets = getBuckets();
 
@@ -583,10 +805,9 @@ public class S3DAL {
 	 */
 	public void deleteBucket(String bucketName) throws IOException {
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> deleteBucket({})", bucketName);
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteBucket({})", bucketName);
 
-		deleteFiles();
+		deleteFiles(bucketName);
 		deleteEmptyBucket(bucketName);
 	}
 
@@ -611,10 +832,9 @@ public class S3DAL {
 	 */
 	private String createBucket(String bucketName) throws IOException {
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> createBucket({})", bucketName);
+		if (logger.isTraceEnabled()) logger.trace(">>> createBucket({})", bucketName);
 
-		AtomicCommand<String> bucketCreator = new S3AtomicBucketCreator(s3ClientV2, cfg.getBucket());
+		AtomicCommand<String> bucketCreator = new S3AtomicBucketCreator(s3ClientV2, bucketName);
 
 		return new DefaultRetryStrategy<>(bucketCreator, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
@@ -628,10 +848,9 @@ public class S3DAL {
 	 */
 	private String deleteEmptyBucket(String bucketName) throws IOException {
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> deleteEmptyBucket({})", bucketName);
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteEmptyBucket({})", bucketName);
 
-		AtomicCommand<String> bucketDeleter = new S3AtomicBucketDeleter(s3ClientV2, cfg.getBucket());
+		AtomicCommand<String> bucketDeleter = new S3AtomicBucketDeleter(s3ClientV2, bucketName);
 
 		return new DefaultRetryStrategy<>(bucketDeleter, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
@@ -654,18 +873,29 @@ public class S3DAL {
 	}
 
 	/**
-	 * Gets an input stream from a file in the storage system.
+	 * Gets an input stream from a file in the default bucket of the storage system.
 	 *
 	 * @param relativePath the relative file path
 	 * @return an InputStream object for reading the file content
 	 * @throws IOException if an I/O exception occurs
 	 */
 	public InputStream getInputStream(String relativePath) throws IOException {
+		return getInputStream(defaultBucket, relativePath);
+	}
 
-		if (logger.isTraceEnabled())
-			logger.trace(">>> getInputStream({})", relativePath);
+	/**
+	 * Gets an input stream from a file in the named bucket of the storage system.
+	 * @param bucket the bucket to retrieve the file from
+	 * @param relativePath the relative file path
+	 *
+	 * @return an InputStream object for reading the file content
+	 * @throws IOException if an I/O exception occurs
+	 */
+	public InputStream getInputStream(String bucket, String relativePath) throws IOException {
 
-		AtomicCommand<InputStream> inputStream = new S3AtomicInputStreamGetter(s3ClientV2, cfg.getBucket(), relativePath);
+		if (logger.isTraceEnabled()) logger.trace(">>> getInputStream({},{})", bucket, relativePath);
+
+		AtomicCommand<InputStream> inputStream = new S3AtomicInputStreamGetter(s3ClientV2, bucket, relativePath);
 
 		return new DefaultRetryStrategy<>(inputStream, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}

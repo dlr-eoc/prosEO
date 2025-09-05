@@ -20,6 +20,8 @@ proseo:
     aipclient:
         # Path to the directory to download files to (must be readable for Storage Manager, see below)
         targetdir: /proseo/transfer/aip/downloads
+        # Delete downloaded files from target directory after ingestion, if true
+        deletetempfiles: true
         
     ingestor:
         # URL of the Ingestor Service
@@ -40,6 +42,8 @@ proseo:
         check.interval: 1000
 
     archive:
+        # Maximum number of records to retrieve in one OData request ("$top" query parameter)
+        maxrecords: 1000
         # Timeout for archive connections in milliseconds (e. g. 30 s)
         timeout: 30000
         # Maximum number of parallel archive order threads

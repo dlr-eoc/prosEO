@@ -243,8 +243,8 @@ public class WorkflowMgrTest {
 		logger.trace(">>> testCountWorkflows()");
 
 		// Count workflows and assert success.
-		assertEquals("Wrong workflow count.", "2", workflowMgr.countWorkflows("UTM", null, null, null, null, null));
-		assertEquals("Wrong workflow count.", "1",
+		assertEquals("Wrong workflow count.", "2", workflowMgr.countWorkflows("UTM", null, null, null, null, true));
+		assertEquals("Wrong workflow count.", "0",
 				workflowMgr.countWorkflows("UTM", testWorkflowData[0][0], null, null, null, null));
 		assertEquals("Wrong workflow count.", "1",
 				workflowMgr.countWorkflows("UTM", null, testWorkflowData[0][2], null, null, null));
@@ -793,23 +793,20 @@ public class WorkflowMgrTest {
 		 * specifying additional parameters returns all workflows for the given mission.
 		 */
 		assertTrue("More or less workflows retrieved than expected.",
-				workflowMgr.getWorkflows(null, null, null, null, null, null, 0, 10).size() == 2);
+				workflowMgr.getWorkflows(null, null, null, null, null, null, 0, 10, null).size() == 2);
 		assertTrue("More or less workflows retrieved than expected.",
-				workflowMgr.getWorkflows(testMissionData[0], null, null, null, null, null, 0, 100).size() == 2);
+				workflowMgr.getWorkflows(testMissionData[0], null, null, null, null, null, 0, 100, null).size() == 2);
 		assertTrue("More or less workflows retrieved than expected.",
-				workflowMgr.getWorkflows(testMissionData[0], testWorkflowData[0][0], null, null, null, null, null, null)
+				workflowMgr.getWorkflows(testMissionData[0], null, testWorkflowData[0][2], null, null, null, null, null, null)
 					.size() == 1);
 		assertTrue("More or less workflows retrieved than expected.",
-				workflowMgr.getWorkflows(testMissionData[0], null, testWorkflowData[0][2], null, null, null, null, null)
+				workflowMgr.getWorkflows(testMissionData[0], null, null, testWorkflowData[0][3], null, null, null, null, null)
 					.size() == 1);
 		assertTrue("More or less workflows retrieved than expected.",
-				workflowMgr.getWorkflows(testMissionData[0], null, null, testWorkflowData[0][3], null, null, null, null)
+				workflowMgr.getWorkflows(testMissionData[0], null, null, null, testWorkflowData[0][5], null, null, null, null)
 					.size() == 1);
 		assertTrue("More or less workflows retrieved than expected.",
-				workflowMgr.getWorkflows(testMissionData[0], null, null, null, testWorkflowData[0][5], null, null, null)
-					.size() == 1);
-		assertTrue("More or less workflows retrieved than expected.",
-				workflowMgr.getWorkflows(null, null, null, null, null, true, null, null).size() == 2);
+				workflowMgr.getWorkflows(null, null, null, null, null, true, null, null, null).size() == 2);
 	}
 
 }

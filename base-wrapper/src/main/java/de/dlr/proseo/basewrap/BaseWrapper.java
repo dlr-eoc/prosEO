@@ -565,7 +565,7 @@ public class BaseWrapper {
 			HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_STORAGE_USER, ENV_STORAGE_PASSWORD, ENV_STORAGE_ENDPOINT,
 					"/joborders", null, params, RestOps.HttpMethod.GET);
 
-			if (200 == responseInfo.gethttpCode()) {
+			if (null != responseInfo && 200 == responseInfo.gethttpCode()) {
 				return new String(Base64.getDecoder().decode(responseInfo.gethttpResponse()));
 			} else {
 				logger.error(MSG_ERROR_RETRIEVING_JOB_ORDER, responseInfo.gethttpCode(), extractProseoMessage(responseInfo));
@@ -661,7 +661,7 @@ public class BaseWrapper {
 					HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_STORAGE_USER, ENV_STORAGE_PASSWORD,
 							ENV_STORAGE_ENDPOINT, "/productfiles", null, params, RestOps.HttpMethod.GET);
 
-					if (200 != responseInfo.gethttpCode()) {
+					if (null == responseInfo || 200 != responseInfo.gethttpCode()) {
 						logger.error(MSG_ERROR_RETRIEVING_INPUT_FILE, fn.getFileName(), responseInfo.gethttpCode(),
 								extractProseoMessage(responseInfo));
 						throw new WrapperException();
@@ -945,7 +945,7 @@ public class BaseWrapper {
 					HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_STORAGE_USER, ENV_STORAGE_PASSWORD,
 							ENV_STORAGE_ENDPOINT, "/productfiles", null, params, RestOps.HttpMethod.PUT);
 
-					if (201 != responseInfo.gethttpCode()) {
+					if (null == responseInfo && 201 != responseInfo.gethttpCode()) {
 						logger.error(MSG_ERROR_PUSHING_OUTPUT_FILE, fn.getFileName(), responseInfo.gethttpCode(),
 								extractProseoMessage(responseInfo));
 						throw new WrapperException();
