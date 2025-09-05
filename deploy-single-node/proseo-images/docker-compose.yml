@@ -4,10 +4,10 @@ services:
     image: ${REGISTRY_URL}/postgres:11-proseo
     platform: linux/amd64
     environment:
-      - POSTGRES_DB=proseo
-      - POSTGRES_PASSWORD=********
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_PASSWORD=${POSTGRES_PWD}
     volumes:
-      - /opt/prosEO/pgdata:/var/lib/postgresql/data
+      - ${PROSEO_OUTPUT_DATA_PATH}/prosEO/pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     logging:
@@ -19,7 +19,7 @@ services:
     image: ${REGISTRY_URL}/proseo-ingestor:${VERSION}-proseo
     platform: linux/amd64
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - ${PROSEO_OUTPUT_DATA_PATH}/prosEO/log:/proseo/log
     ports:
       - "8081:8080"
     logging:
@@ -31,7 +31,7 @@ services:
     image: ${REGISTRY_URL}/proseo-order-mgr:${VERSION}-proseo
     platform: linux/amd64
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - ${PROSEO_OUTPUT_DATA_PATH}/prosEO/log:/proseo/log
     ports:
       - "8082:8080"
     logging:
@@ -43,7 +43,7 @@ services:
     image: ${REGISTRY_URL}/proseo-planner:${VERSION}-proseo
     platform: linux/amd64
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - ${PROSEO_OUTPUT_DATA_PATH}/prosEO/log:/proseo/log
     ports:
       - "8083:8080"
     logging:
@@ -55,7 +55,7 @@ services:
     image: ${REGISTRY_URL}/proseo-processor-mgr:${VERSION}-proseo
     platform: linux/amd64
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - ${PROSEO_OUTPUT_DATA_PATH}/prosEO/log:/proseo/log
     ports:
       - "8084:8080"
     logging:
@@ -67,7 +67,7 @@ services:
     image: ${REGISTRY_URL}/proseo-productclass-mgr:${VERSION}-proseo
     platform: linux/amd64
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - ${PROSEO_OUTPUT_DATA_PATH}/prosEO/log:/proseo/log
     ports:
       - "8085:8080"
     logging:
@@ -79,7 +79,7 @@ services:
     image: ${REGISTRY_URL}/proseo-user-mgr:${VERSION}-proseo
     platform: linux/amd64
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - ${PROSEO_OUTPUT_DATA_PATH}/prosEO/log:/proseo/log
     ports:
       - "8086:8080"
     logging:
@@ -91,7 +91,7 @@ services:
     image: ${REGISTRY_URL}/proseo-facility-mgr:${VERSION}-proseo
     platform: linux/amd64
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - ${PROSEO_OUTPUT_DATA_PATH}/prosEO/log:/proseo/log
     ports:
       - "8087:8080"
     logging:
@@ -103,7 +103,7 @@ services:
     image: ${REGISTRY_URL}/proseo-ui-gui:${VERSION}-proseo
     platform: linux/amd64
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - ${PROSEO_OUTPUT_DATA_PATH}/prosEO/log:/proseo/log
     ports:
       - "8088:8080"
     depends_on:
@@ -123,7 +123,7 @@ services:
     image: ${REGISTRY_URL}/proseo-api-prip:${VERSION}-proseo
     platform: linux/amd64
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - ${PROSEO_OUTPUT_DATA_PATH}/prosEO/log:/proseo/log
     ports:
       - "8089:8080"
     depends_on:
@@ -138,7 +138,7 @@ services:
     image: ${REGISTRY_URL}/proseo-api-odip:${VERSION}-proseo
     platform: linux/amd64
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - ${PROSEO_OUTPUT_DATA_PATH}/prosEO/log:/proseo/log
     ports:
       - "8090:8080"
     depends_on:
@@ -155,7 +155,7 @@ services:
     image: ${REGISTRY_URL}/proseo-notification:${VERSION}-proseo
     platform: linux/amd64
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - ${PROSEO_OUTPUT_DATA_PATH}/prosEO/log:/proseo/log
     ports:
       - "8091:8080"
     logging:
@@ -167,8 +167,8 @@ services:
     image: ${REGISTRY_URL}/proseo-aip-client:${VERSION}-proseo
     platform: linux/amd64
     volumes:
-      - /opt/prosEO/log:/proseo/log
-      - /opt/prosEO/data/transfer:/proseo/transfer
+      - ${PROSEO_OUTPUT_DATA_PATH}/prosEO/log:/proseo/log
+      - ${PROSEO_OUTPUT_DATA_PATH}/prosEO/data/transfer:/proseo/transfer
     ports:
       - "8092:8080"
     depends_on:
@@ -183,7 +183,7 @@ services:
     image: ${REGISTRY_URL}/proseo-archive-mgr:${VERSION}-proseo
     platform: linux/amd64
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - ${PROSEO_OUTPUT_DATA_PATH}/prosEO/log:/proseo/log
     ports:
       - "8093:8080"
     logging:
@@ -199,8 +199,8 @@ services:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
     volumes:
-      - "./proseo-components/proseo-pgadmin/certs/proseo-selfsigned.crt:/certs/server.cert"
-      - "./proseo-components/proseo-pgadmin/certs/proseo-selfsigned.key:/certs/server.key"
+      - "${PROSEO_OUTPUT_DATA_PATH}/proseo-components/proseo-pgadmin/certs/proseo-selfsigned.crt:/certs/server.cert"
+      - "${PROSEO_OUTPUT_DATA_PATH}/proseo-components/proseo-pgadmin/certs/proseo-selfsigned.key:/certs/server.key"
     ports:
       - "8443:443"
     logging:
