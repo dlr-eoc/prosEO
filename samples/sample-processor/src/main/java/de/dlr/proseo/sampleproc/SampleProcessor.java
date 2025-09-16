@@ -54,7 +54,7 @@ public class SampleProcessor {
 
 	// Error messages
 	private static final String MSG_LEAVING_SAMPLE_PROCESSOR = "Leaving sample-processor with exit code {} ({})";
-	private static final String MSG_STARTING_SAMPLE_PROCESSOR = "Starting sample-processor V1.2.0-SNAPSHOT with JobOrder file {}";
+	private static final String MSG_STARTING_SAMPLE_PROCESSOR = "Starting sample-processor V1.2.0 with JobOrder file {}";
 	private static final String MSG_INVALID_NUMBER_OF_ARGUMENTS = "Invalid number of invocation arguments: {} (only 1 allowed)";
 	private static final String MSG_INVALID_NUMBER_OF_OUTPUT_FILES = "Invalid number of output files: {} (1 - 10 expected)";
 	private static final String MSG_INVALID_NUMBER_OF_OUTPUT_FILE_TYPES = "Invalid number of output file types: {} (exactly 1 expected)";
