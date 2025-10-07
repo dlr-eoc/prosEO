@@ -1,4 +1,3 @@
-version: '3'
 services:
   proseo-db:
     image: ${REGISTRY_URL}/postgres:17-proseo

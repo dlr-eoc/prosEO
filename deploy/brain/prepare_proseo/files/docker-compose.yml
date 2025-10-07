@@ -1,4 +1,3 @@
-version: '3'
 services:
   proseo-ingestor:
     image: ${REGISTRY_URL}/proseo-ingestor:${VERSION}-proseo

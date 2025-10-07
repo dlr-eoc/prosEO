@@ -1,4 +1,3 @@
-version: '3'
 services:
   proseo-storage-mgr:
     image: ${REGISTRY_URL}/proseo-storage-mgr:${VERSION}-proseo

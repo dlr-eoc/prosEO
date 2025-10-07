@@ -1,5 +1,5 @@
 FROM eclipse-temurin:21
-MAINTAINER Thomas Bassler <thomas.bassler@drbassler.de>
+LABEL org.opencontainers.image.authors="Ernst Melchinger <melchinger@prophos.de>"
 ENTRYPOINT ["java", "-jar", "/usr/share/proseo-ui-gui/proseo-ui-gui.jar"]
 
 #ADD target/lib /usr/share/proseo-ui-gui/lib

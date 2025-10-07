@@ -1,5 +1,5 @@
 FROM eclipse-temurin:21
-MAINTAINER Thomas Bassler <thomas.bassler@drbassler.de>
+LABEL org.opencontainers.image.authors="Thomas Bassler <thomas.bassler@drbassler.de>"
 ENTRYPOINT ["java", "-jar", "/usr/share/proseo-user-mgr/proseo-user-mgr.jar"]
 
 #ADD target/lib /usr/share/proseo-processor-mgr/lib
