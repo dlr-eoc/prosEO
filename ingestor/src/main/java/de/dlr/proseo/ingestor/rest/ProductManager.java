@@ -227,6 +227,7 @@ public class ProductManager {
 	 * @param genTimeTo     latest generation time
 	 * @param recordFrom    first record of filtered and ordered result to return
 	 * @param recordTo      last record of filtered and ordered result to return
+	 * @param onlyWithFile	if true, only returns products having at least one product file on any of the processing facilities
 	 * @param jobStepId     get input products of job step
 	 * @param orderBy       an array of strings containing a column name and an
 	 *                      optional sort direction (ASC/DESC), separated by white
@@ -309,6 +310,7 @@ public class ProductManager {
 	 * @param startTimeTo   latest sensing start time
 	 * @param genTimeFrom   earliest generation time
 	 * @param genTimeTo     latest generation time
+	 * @param onlyWithFile	if true, only counts products having at least one product file on any of the processing facilities
 	 * @param jobStepId     get input products of job step
 	 * @return the number of products found as string
 	 * @throws SecurityException if a cross-mission data access was attempted
@@ -954,6 +956,7 @@ public class ProductManager {
 	 * @param startTimeTo   latest sensing start time
 	 * @param recordFrom    first record of filtered and ordered result to return
 	 * @param recordTo      last record of filtered and ordered result to return
+	 * @param onlyWithFile	if true, only returns products having at least one product file on any of the processing facilities
 	 * @param jobStepId     get input products of job step
 	 * @param orderBy       an array of strings containing a column name and an
 	 *                      optional sort direction (ASC/DESC), separated by white
@@ -970,7 +973,7 @@ public class ProductManager {
 		// Find using search parameters
 		String jpqlQuery = null;
 		String join = "";
-		if (onlyWithFile) {
+		if (null != onlyWithFile && onlyWithFile) {
 			join = " join ProductFile pf on pf.product.id = p.id ";
 		}
 		if (jobStepId != null) {
@@ -1018,9 +1021,7 @@ public class ProductManager {
 		if (null != genTimeTo) {
 			jpqlQuery += " and p.generationTime <= :genTimeTo";
 		}
-		if (onlyWithFile) {
-			// jpqlQuery += " and (select count(pf) from ProductFile pf where pf.product.id = p.id) > 0";
-		}
+
 		// visibility
 		List<ProductVisibility> visibilities = new ArrayList<>();
 		visibilities.add(ProductVisibility.PUBLIC);
