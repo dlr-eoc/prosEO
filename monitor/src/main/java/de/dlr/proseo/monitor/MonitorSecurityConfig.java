@@ -42,8 +42,8 @@ public class MonitorSecurityConfig {
 		http.httpBasic(it -> {})
         .authorizeHttpRequests(requests -> requests
 			.anyRequest().authenticated());
-//				.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
-        return http.build();
+
+		return http.build();
 	}
 
 	/**

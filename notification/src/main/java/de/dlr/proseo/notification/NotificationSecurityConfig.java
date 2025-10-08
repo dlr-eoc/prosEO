@@ -37,7 +37,7 @@ public class NotificationSecurityConfig {
 				.permitAll()
 				.requestMatchers("/actuator/health")
 				.permitAll());
-//		.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
+
 		return http.build();
 	}
 
