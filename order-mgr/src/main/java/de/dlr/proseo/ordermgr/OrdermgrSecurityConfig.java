@@ -79,7 +79,7 @@ public class OrdermgrSecurityConfig {
 			.hasAnyRole(UserRole.MISSION_READER.toString())
 			.requestMatchers(base + "/orbits/**")
 			.hasAnyRole(UserRole.MISSION_MGR.toString()));
-//			.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
+
 		return http.build();
 	}
 
