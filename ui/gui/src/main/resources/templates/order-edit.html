@@ -6,10 +6,11 @@
         content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title th:text="#{proseo}">proseo</title>
         <!-- Bootstrap core CSS -->
-        <link rel="stylesheet"
-          href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
-          integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
-          crossorigin="anonymous" />
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
           <!-- Custom styles for prosEO -->
           <link href="../static/fragments/proseo.css" th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css" />
@@ -17,15 +18,13 @@
   </head>
 
   <body>
-    <div style="display:none;" class="loading">
-      <div class="loader"></div>
-    </div>
+  <header>
     <nav id="proseo-nav"
-      class="navbar bg-light fixed-top flex-md-nowrap p-0 shadow navbar-expand-md">
-      <div class="container-fluid pl-0 pr-0">
+      class="navbar navbar-expand-lg bg-body-tertiary bg-light fixed-top shadow no-padding">
+      <div class="container-fluid no-padding">
         <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
           href="/"><img src="proseo_logo.png" class="rounded" width="50"
-            height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
+          height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
         <button class="navbar-toggler position-absolute d-md-none collapsed"
           type="button" data-toggle="collapse" data-target="#sidebarMenu"
           aria-controls="sidebarMenu" aria-expanded="false"
@@ -40,563 +39,562 @@
           <li class="p-breadcrumb-item" aria-current="page"><span id="breadcrumb-order-action" th:text="#{edit}"></span></li>
           <li class="p-breadcrumb-item" aria-current="page"><span id="breadcrumb-order-name"></span></li>
         </ul>
-        <div th:replace="fragments/navbar.html :: navbarRight"></div>
+        <div th:replace="~{fragments/navbar.html :: navbarRight}"></div>
       </div>
     </nav>
+  </header>
+  <div style="display: none;" class="loading">
+    <div class="loader"></div>
+  </div>
 
-    <div class="container-fluid">
-      <div class="row">
-        <div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
-      <div class="proseo-top-div"></div>
-
+  <div th:replace="~{fragments/sidebar.html :: sidebarMenu}"></div>
+  <div class="container-fluid bg-body proseo-body">
+  
       <main th:unless="${hasroleordermgr}" role="main"
-        class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+        class="col-auto px-md-4">
         <h5 class="FAILED">
           <br> <span th:text="#{noroleright}"></span> (ORDER_MGR) <br>&nbsp;
         </h5>
       </main>
-      <main th:if="${hasroleordermgr}" id="main" role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+      <main th:if="${hasroleordermgr}" id="main" role="main" class="col-auto px-md-4">
         <div th:if="${errormsg != null}" id="errormsg" name="errormsg" class="FAILED">
           <h5>
             <br> <span th:text="${errormsg}"></span></h5>
         </div>
 
-            <p>&nbsp;</p>
-      <div id="orderedit" name="orderedit">
-      <form id="editorder" action="/ordersubmit" method="post">
-				<div th:each="ord : ${orders}">
-          <input name="id" id="id" class="filtercontent" th:value="${ord?.id}">
-          <input name="orderState" id="orderState" class="filtercontent" th:value="${ord?.orderState}">
-          <input name="uuid" id="uuid" class="filtercontent" th:value="${ord?.uuid}">
-          <input name="missionCode" id="missionCode" class="filtercontent" th:value="${ord?.missionCode}">
-          <input name="version" id="version" class="filtercontent" th:value="${ord?.version}">
-          <div class="row py-lg-1">
-            <div class="col-2 pr-lg-0">
-              <p class="input-group-text word-wrap"
-                th:text="#{name}"></p>
-            </div>
-            <div class="col-2 pl-lg-0"><input type="text" class="form-control"
-                  id="identifier" name="identifier" placeholder="Name" required th:value="${ord?.identifier}">
-            </div>
-            <div class="col-2 pr-lg-0">
-              <p class="input-group-text word-wrap"
-                th:text="#{processingmode}"></p>
-            </div>
-            <div class="col-2 pl-lg-0"><select name="processingMode" id="processingMode"
-                  class="custom-select">
-                <option th:each="obj : ${processingmodes}" th:text="${obj}"
-                  th:label="${obj}" th:selected="${obj}==${ord?.processingMode}?'true':'false'"></option>
-                </select>
-            </div>
-            <div class="col-2 pr-lg-0">
-              <p class="input-group-text word-wrap"
-                th:text="#{processingtype}"></p>
-            </div>
-            <div class="col-2 pl-lg-0"><select name="productionType" id="productionType"
-                  class="custom-select">
-                <option th:each="obj : ${productiontypes}" th:text="${obj}"
-                  th:label="${obj}" th:selected="${obj}==${ord?.productionType}?'true':'false'"></option>
-                </select>
-            </div>
-            
-          </div>
-          <div class="row py-lg-1">
-            <div class="col-2 pr-lg-0">
-              <p class="input-group-text word-wrap"
-                th:text="#{executiontime}"></p>
-            </div>
-            <div class="col-2 pl-lg-0"><input type="text" class="form-control"
-                  id="executionTime" name="executionTime" th:value="${ord?.executionTime}"
-                  pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9])$"
-                  title="yyyy-mm-ddThh:mm:ss" placeholder="yyyy-mm-ddThh:mm:ss" >
-            </div>
-            <div class="col-2 pr-lg-0">
-              <p class="input-group-text word-wrap"
-                th:text="#{productretentionperiod}"></p>
-            </div>
-            <div class="col-2 pl-lg-0"><input type="text" class="form-control"
-                  id="productRetentionPeriod" name="productRetentionPeriod" th:value="${(ord?.productRetentionPeriod!=null)?(ord?.productRetentionPeriod/86400):''}"
-                  pattern="^([0-9]*)$"
-                  title="days" placeholder="" >
-            </div>
-            <div class="col-4">
-            </div>
-          </div>
-          <div class="row py-lg-1">
-            <div class="col-12 border"></div>
-          </div>
-          <div class="row py-lg-1" id="slicingTop">
-            <div class="col-2 pr-lg-0">
-              <p class="input-group-text word-wrap"
-                th:text="#{slicing}"></p>
-            </div>
-            <div class="col-2 pl-lg-0"><select name="slicingType" id="slicingType"
-                  class="custom-select">
-                <option th:each="obj : ${slicingtypes}" th:text="${obj}"
-                  th:label="${obj}" th:selected="${obj}==${ord?.slicingType}?'true':'false'"></option>
-                </select>
-            </div>
-            <div class="col-2 pr-lg-0" id="sliceOverlapTitle">
-              <p class="input-group-text word-wrap"
-                th:text="#{overlap}"></p>
-            </div>
-            <div class="col-2 pl-lg-0" id="sliceOverlapDiv">
-              <div class="input-group">
-                <input class="form-control" id="sliceOverlap"
-                  name="sliceOverlap" type="number" min="0" th:value="${ord?.sliceOverlap}">
-                <div class="input-group-append">
-                      <select id="sliceOverlapMeasurement" th:data-oldmeasure="s" class="custom-select">
-                        <option selected="true">s</option>
-                        <option>min</option>
-                        <option>h</option>
-                      </select>
-                    </div>
-              </div>
-            </div>
-            <div class="col-4">
-            </div>
-          </div>
-          <!-- Orbit data -->
-					<div class="row filtercontent" id="ORBIT">
-						<div class="col-12">
-							<!-- Nested rows to hold slicing data -->
-							<div th:each="orbit,iterstat : ${ord?.orbits}" class="row py-lg-1" data-name="orbitData" th:data-index="${iterstat.index}">
-								<div class="col-4"></div>
-								<div class="col-2">
-									<div class="input-group">
-										<div class="input-group-prepend">
-											<p class="input-group-text word-wrap" th:text="#{spacecraft}"></p>
-										</div>
-										<select data-name="spacecraftCode" th:id="'spacecraftCode-'+${iterstat.index}"
-											class="custom-select">
-											<option th:each="obj : ${spacecrafts}" th:text="${obj}"
-												th:label="${obj}"
-												th:selected="${obj}==${orbit?.spacecraftCode}?'true':'false'"></option>
+			<div id="orderedit" name="orderedit">
+				<form id="editorder" action="/ordersubmit" method="post">
+					<div th:each="ord : ${orders}">
+						<input name="id" id="id" class="filtercontent"
+							th:value="${ord?.id}"> <input name="orderState"
+							id="orderState" class="filtercontent"
+							th:value="${ord?.orderState}"> <input name="uuid"
+							id="uuid" class="filtercontent" th:value="${ord?.uuid}">
+						<input name="missionCode" id="missionCode" class="filtercontent"
+							th:value="${ord?.missionCode}"> <input name="version"
+							id="version" class="filtercontent" th:value="${ord?.version}">
+						<div class="row py-lg-1">
+							<div class="col-2 pr-lg-0">
+								<span class="input-group-text word-wrap" th:text="#{name}"></span>
+							</div>
+							<div class="col-2 pl-lg-0">
+								<input type="text" class="form-control" id="identifier"
+									name="identifier" placeholder="Name" required
+									th:value="${ord?.identifier}">
+							</div>
+							<div class="col-2 pr-lg-0">
+								<span class="input-group-text word-wrap"
+									th:text="#{processingmode}"></span>
+							</div>
+							<div class="col-2 pl-lg-0">
+								<select name="processingMode" id="processingMode"
+									class="form-select">
+									<option th:each="obj : ${processingmodes}" th:text="${obj}"
+										th:label="${obj}"
+										th:selected="${obj}==${ord?.processingMode}?'true':'false'"></option>
+								</select>
+							</div>
+							<div class="col-2 pr-lg-0">
+								<span class="input-group-text word-wrap"
+									th:text="#{processingtype}"></span>
+							</div>
+							<div class="col-2 pl-lg-0">
+								<select name="productionType" id="productionType"
+									class="form-select">
+									<option th:each="obj : ${productiontypes}" th:text="${obj}"
+										th:label="${obj}"
+										th:selected="${obj}==${ord?.productionType}?'true':'false'"></option>
+								</select>
+							</div>
+
+						</div>
+						<div class="row py-lg-1">
+							<div class="col-2 pr-lg-0">
+								<span class="input-group-text word-wrap"
+									th:text="#{executiontime}"></span>
+							</div>
+							<div class="col-2 pl-lg-0">
+								<input type="text" class="form-control" id="executionTime"
+									name="executionTime" th:value="${ord?.executionTime}"
+									pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9])$"
+									title="yyyy-mm-ddThh:mm:ss" placeholder="yyyy-mm-ddThh:mm:ss">
+							</div>
+							<div class="col-2 pr-lg-0">
+								<span class="input-group-text word-wrap"
+									th:text="#{productretentionperiod}"></span>
+							</div>
+							<div class="col-2 pl-lg-0">
+								<input type="text" class="form-control"
+									id="productRetentionPeriod" name="productRetentionPeriod"
+									th:value="${(ord?.productRetentionPeriod!=null)?(ord?.productRetentionPeriod/86400):''}"
+									pattern="^([0-9]*)$" title="days" placeholder="">
+							</div>
+							<div class="col-4"></div>
+						</div>
+						<div class="row py-lg-1">
+							<div class="col-12 border"></div>
+						</div>
+						<div class="row py-lg-1" id="slicingTop">
+							<div class="col-2 pr-lg-0">
+								<span class="input-group-text word-wrap" th:text="#{slicing}"></span>
+							</div>
+							<div class="col-2 pl-lg-0">
+								<select name="slicingType" id="slicingType" class="form-select">
+									<option th:each="obj : ${slicingtypes}" th:text="${obj}"
+										th:label="${obj}"
+										th:selected="${obj}==${ord?.slicingType}?'true':'false'"></option>
+								</select>
+							</div>
+							<div class="col-2 pr-lg-0" id="sliceOverlapTitle">
+								<span class="input-group-text word-wrap" th:text="#{overlap}"></span>
+							</div>
+							<div class="col-2 pl-lg-0" id="sliceOverlapDiv">
+								<div class="input-group">
+									<input class="form-control" id="sliceOverlap"
+										name="sliceOverlap" type="number" min="0"
+										th:value="${ord?.sliceOverlap}">
+									<div class="input-group-append">
+										<select id="sliceOverlapMeasurement" th:data-oldmeasure="s"
+											class="form-select">
+											<option selected="true">s</option>
+											<option>min</option>
+											<option>h</option>
 										</select>
 									</div>
-							  </div>
-                <div class="col-2">
-									<div class="input-group">
-										<div class="input-group-prepend">
-											<p class="input-group-text word-wrap" th:text="#{orbitfrom}"></p>
-										</div>
-										<input class="form-control" th:id="'orbitNumberFrom-'+${iterstat.index}"
-											data-name="orbitNumberFrom" type="number" min="0" th:value="${orbit?.orbitNumberFrom}">
-									</div>
-                </div>
-                <div class="col-2">
-									<div class="input-group">
-										<div class="input-group-prepend">
-											<p class="input-group-text word-wrap" th:text="#{orbitto}"></p>
-										</div>
-										<input class="form-control" th:id="'orbitNumberTo-'+${iterstat.index}"
-											data-name="orbitNumberTo" type="number" min="1" th:value="${orbit?.orbitNumberTo}">
-									</div>
-                </div>
-                <div class="col-1">
-                  <div class="input-group-text">
-                    <span th:id="'addOrbit-' + ${iterstat.index}" th:title="#{addOrbit}"
-                        class="cursorpointer" 
-                        th:onclick="'addOrbit(' + ${iterstat.index} + ')'" 
-                      ><span class="feather-l" data-feather="plus-circle"></span></span>
-                      <span>&nbsp;&nbsp;</span>
-                      <span th:unless="${iterstat.first}" th:id="'removeOrbit-' + ${iterstat.index}" th:title="#{removeOrbit}"
-                        class="cursorpointer" 
-                        th:onclick="'removeOrbit(' + ${iterstat.index} + ')'"
-                      ><span class="feather-l" data-feather="x-circle"></span></span>
-                  </div>
-                </div>
-                <div class="col-1"></div>
+								</div>
 							</div>
-							<!-- No orbit exists, fill with default data -->
-              <div th:if="${#lists.isEmpty(ord?.orbits)}" class="row py-lg-1" data-name="orbitData" data-index="0">
-                <div class="col-4"></div>
-                <div class="col-2">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <p class="input-group-text word-wrap" th:text="#{spacecraft}"></p>
-                    </div>
-                    <select data-name="spacecraftCode" id="spacecraftCode-0"
-                      class="custom-select">
-                      <option th:each="obj : ${spacecrafts}" th:text="${obj}"
-                        th:label="${obj}"
-                        th:selected="${obj}==${spacecrafts[0]}?'true':'false'"></option>
-                    </select>
-                  </div>
-                </div>
-                <div class="col-2">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <p class="input-group-text word-wrap" th:text="#{orbitfrom}"></p>
-                    </div>
-                    <input class="form-control" id="orbitNumberFrom-0"
-                      data-name="orbitNumberFrom" type="number" min="0" value="0">
-                  </div>
-                </div>
-                <div class="col-2">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <p class="input-group-text word-wrap" th:text="#{orbitto}"></p>
-                    </div>
-                    <input class="form-control" id="orbitNumberTo-0"
-                      data-name="orbitNumberTo" type="number" min="1" value="1">
-                  </div>
-                </div>
-                <div class="col-1">
-                  <div class="input-group-text">
-                    <span id="addOrbit-0"  th:title="#{addOrbit}"
-                        class="cursorpointer" 
-                        onclick="addOrbit(0)"
-                      ><span class="feather-l" data-feather="plus-circle"></span></span>
-                      <!-- <span>&nbsp;&nbsp;</span><span id="removeOrbit-0" 
-                        class="cursorpointer" 
-                        onclick="removeOrbit(0)"
-                      ><span class="feather-l" data-feather="x-circle"></span></span> -->
-                  </div>
-                </div>
-                <div class="col-1"></div>
-              </div>
-              <!-- Template orbit data  -->
-              <div class="row py-lg-1 filtercontent" name="orbitDataTemplate" id="orbitDataTemplate" data-index="0">
-                <div class="col-4"></div>
-                <div class="col-2">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <p class="input-group-text word-wrap" th:text="#{spacecraft}"></p>
-                    </div>
-                    <select data-name="spacecraftCode" id="spacecraftCode-x"
-                      class="custom-select">
-                      <option th:each="obj : ${spacecrafts}" th:text="${obj}"
-                        th:label="${obj}"
-                        th:selected="${obj}==${spacecrafts[0]}?'true':'false'"></option>
-                    </select>
-                  </div>
-                </div>
-                <div class="col-2">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <p class="input-group-text word-wrap" th:text="#{orbitfrom}"></p>
-                    </div>
-                    <input class="form-control" id="orbitNumberFrom-x"
-                      data-name="orbitNumberFrom" type="number" min="0" value="0">
-                  </div>
-                </div>
-                <div class="col-2">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <p class="input-group-text word-wrap" th:text="#{orbitto}"></p>
-                    </div>
-                    <input class="form-control" id="orbitNumberTo-x"
-                      data-name="orbitNumberTo" type="number" min="1" value="1">
-                  </div>
-                </div>
-                <div class="col-1">
-                  <div class="input-group-text">
-                    <span id="addOrbit-x"  th:title="#{addOrbit}"
-                        class="cursorpointer" 
-                        onclick="addOrbit(x)"
-                      ><span class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span id="removeOrbit-x" 
-                        th:title="#{removeOrbit}"
-                        class="cursorpointer" 
-                        onclick="removeOrbit(x)"
-                      ><span class="feather-l" data-feather="x-circle"></span></span>
-                  </div>
-                </div>
-                <div class="col-1"></div>
-              </div>
+							<div class="col-4"></div>
 						</div>
-					</div>
-					<!-- TIME_SLICE data -->
-          <div class="row filtercontent" id="TIME_SLICE">
-            <div class="col-12">
-              <!-- Nested rows to hold slicing data -->
-              <div class="row py-lg-1" name="slicingrow">
-                <div class="col-4"></div>
-                <div class="col-3">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <p class="input-group-text word-wrap" th:text="#{starttime}"></p>
-                    </div>
-                    <input type="text" class="form-control" 
-                      pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6})$"
-                      title="yyyy-mm-ddThh:mm:ss.ssssss" placeholder="yyyy-mm-ddThh:mm:ss.ssssss" required
-                      name="startTime" data-type="TIME" th:value="${ord?.startTime}">
-                  </div>
-                </div>
-                <div class="col-3">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <p class="input-group-text word-wrap" th:text="#{stoptime}"></p>
-                    </div>
-                    <input type="text" class="form-control" 
-                      pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6})$"
-                      title="yyyy-mm-ddThh:mm:ss.ssssss" placeholder="yyyy-mm-ddThh:mm:ss.ssssss" required
-                      name="stopTime" data-type="TIME" th:value="${ord?.stopTime}">
-                  </div>
-                </div>
-                <div class="col-2">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <p class="input-group-text word-wrap" th:text="#{duration}"></p>
-                    </div>
-                    <input class="form-control" id="sliceDuration"
-                      name="sliceDuration" type="number" min="1"  th:value="(${ord?.sliceDuration}==null or ${ord?.sliceDuration}==null)?'1':${ord?.sliceDuration}">
-										<div class="input-group-append">
-											<select id="sliceDurationMeasurement" th:data-oldmeasure="s" class="custom-select">
-                        <option selected="true">s</option>
-                        <option>min</option>
-                        <option>h</option>
+						<!-- Orbit data -->
+						<div class="row filtercontent" id="ORBIT">
+							<div class="col-12">
+								<!-- Nested rows to hold slicing data -->
+								<div th:each="orbit,iterstat : ${ord?.orbits}"
+									class="row py-lg-1" data-name="orbitData"
+									th:data-index="${iterstat.index}">
+									<div class="col-4"></div>
+									<div class="col-2">
+										<div class="input-group">
+											<span class="input-group-text word-wrap"
+												th:text="#{spacecraft}"></span> <select
+												data-name="spacecraftCode"
+												th:id="'spacecraftCode-'+${iterstat.index}"
+												class="form-select">
+												<option th:each="obj : ${spacecrafts}" th:text="${obj}"
+													th:label="${obj}"
+													th:selected="${obj}==${orbit?.spacecraftCode}?'true':'false'"></option>
 											</select>
 										</div>
 									</div>
-                </div>
-              </div>
-            </div>
-          </div>
-                    <!-- NONE data -->
-          <div class="row filtercontent" id="NONE">
-            <div class="col-12">
-              <!-- Nested rows to hold slicing data -->
-              <div class="row py-lg-1" name="slicingrow">
-                <div class="col-4"></div>
-                <div class="col-3">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <p class="input-group-text word-wrap" th:text="#{starttime}"></p>
-                    </div>
-                    <input type="text" class="form-control" 
-                      pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6})$"
-                      title="yyyy-mm-ddThh:mm:ss.ssssss" placeholder="yyyy-mm-ddThh:mm:ss.ssssss" required
-                      name="startTime" data-type="TIME" th:value="${ord?.startTime}">
-                  </div>
-                </div>
-                <div class="col-3">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <p class="input-group-text word-wrap" th:text="#{stoptime}"></p>
-                    </div>
-                    <input type="text" class="form-control" 
-                      pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6})$"
-                      title="yyyy-mm-ddThh:mm:ss.ssssss" placeholder="yyyy-mm-ddThh:mm:ss.ssssss" required
-                      name="stopTime" data-type="TIME" th:value="${ord?.stopTime}">
-                  </div>
-                </div>
-                <div class="col-2">
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- CALENDAR_DAY data -->
-          <div class="row filtercontent" id="CALENDAR_DAY">
-            <div class="col-12">
-              <!-- Nested rows to hold slicing data -->
-              <div class="row py-lg-1" name="slicingrow">
-                <div class="col-4"></div>
-                <div class="col-3">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <p class="input-group-text word-wrap" th:text="#{starttime}"></p>
-                    </div>
-                    <input type="text" class="form-control" 
-                      pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])$"
-                      title="yyyy-mm-dd" placeholder="yyyy-mm-dd" required
-                      name="startTime" data-type="DAY" th:value="${(ord?.startTime!=null&&ord?.startTime!='')?#strings.substring(ord?.startTime, 0, 10):#strings.substring(#dates.createNow(), 0, 10)}">
-                  </div>
-                </div>
-                <div class="col-3">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <p class="input-group-text word-wrap" th:text="#{stoptime}"></p>
-                    </div>
-                    <input type="text" class="form-control" 
-                      pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])$"
-                      title="yyyy-mm-dd" placeholder="yyyy-mm-dd" required
-                      name="stopTime" data-type="DAY" th:value="${(ord?.stopTime!=null&&ord?.stopTime!='')?#strings.substring(ord?.stopTime, 0, 10):#strings.substring(#dates.createNow(), 0, 10)}">
-                  </div>
-                </div>
-                <div class="col-2">
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- CALENDAR_MONTH data -->
-          <div class="row filtercontent" id="CALENDAR_MONTH">
-            <div class="col-12">
-              <!-- Nested rows to hold slicing data -->
-              <div class="row py-lg-1" name="slicingrow">
-                <div class="col-4"></div>
-                <div class="col-3">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <p class="input-group-text word-wrap" th:text="#{starttime}"></p>
-                    </div>
-                    <input type="text" class="form-control" 
-                      pattern="^(\d{4})-(0[1-9]|1[012])$"
-                      title="yyyy-mm" placeholder="yyyy-mm" required
-                      name="startTime" data-type="MONTH" th:value="${(ord?.startTime!=null&&ord?.startTime!='')?#strings.substring(ord?.startTime, 0, 7):#strings.substring(#dates.createNow(), 0, 10)}">
-                  </div>
-                </div>
-                <div class="col-3">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <p class="input-group-text word-wrap" th:text="#{stoptime}"></p>
-                    </div>
-                    <input type="text" class="form-control" 
-                      pattern="^(\d{4})-(0[1-9]|1[012])$"
-                      title="yyyy-mm" placeholder="yyyy-mm" required
-                      name="stopTime" data-type="MONTH" th:value="${(ord?.stopTime!=null&&ord?.stopTime!='')?#strings.substring(ord?.stopTime, 0, 7):#strings.substring(#dates.createNow(), 0, 10)}">
-                  </div>
-                </div>
-                <div class="col-2">
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- CALENDAR_YEAR data -->
-          <div class="row filtercontent" id="CALENDAR_YEAR">
-            <div class="col-12">
-              <!-- Nested rows to hold slicing data -->
-              <div class="row py-lg-1" name="slicingrow">
-                <div class="col-4"></div>
-                <div class="col-3">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <p class="input-group-text word-wrap" th:text="#{starttime}"></p>
-                    </div>
-                    <input type="text" class="form-control" 
-                      pattern="^(\d{4})$"
-                      title="yyyy" placeholder="yyyy" required
-                      name="startTime" data-type="YEAR" th:value="${(ord?.startTime!=null&&ord?.startTime!='')?#strings.substring(ord?.startTime, 0, 10):#strings.substring(#dates.createNow(), 0, 4)}">
-                  </div>
-                </div>
-                <div class="col-3">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <p class="input-group-text word-wrap" th:text="#{stoptime}"></p>
-                    </div>
-                    <input type="text" class="form-control" 
-                      pattern="^(\d{4})$"
-                      title="yyyy" placeholder="yyyy" required
-                      name="stopTime" data-type="YEAR" th:value="${(ord?.stopTime!=null&&ord?.stopTime!='')?#strings.substring(ord?.stopTime, 0, 10):#strings.substring(#dates.createNow(), 0, 4)}">
-                  </div>
-                </div>
-                <div class="col-2">
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="row py-lg-1">
-            <div class="col-12 border"></div>
-          </div>
-          <!-- Requested product classes -->
-          <div class="row py-lg-1">
-            <div class="col-2 pr-lg-0">
-              <p class="input-group-text word-wrap"
-                th:text="#{outputproductclasses}"></p>
-            </div>
-            <div class="col-7 pl-lg-0">
-              <select name="requestedProductClasses[]" id="seloutclasses" multiple="multiple" required>
-                <option th:each="obj : ${productclassnames}" th:text="${obj}"
-                  th:label="${obj}" th:selected="${#lists.contains(ord?.requestedProductClasses,obj)}?'true':'false'"></option>
-              </select>
-            </div>
-            <div class="col-2 pr-lg-0">
-              <p class="input-group-text word-wrap"
-                th:text="#{outputfileclass}"></p>
-            </div>
-            <div class="col-1 pl-lg-0">
-              <select name="outputFileClass" id="outputFileClass"
-                  class="custom-select">
-                <option th:each="obj : ${fileclasses}" th:text="${obj}"
-                  th:label="${obj}"  th:selected="${obj}==${ord?.outputFileClass}?'true':'false'"></option>
-                </select>
-            </div>
-          </div>
-          <!-- Input product stop classes -->
-          <div class="row  py-lg-1">
-            <div class="col-2 pr-lg-0">
-              <p class="input-group-text word-wrap"
-                th:text="#{inputclassesstoplist}"></p>
-            </div>
-            <div class="col-10 pl-lg-0">
-              <select name="inputProductClasses[]" id="selinclasses" multiple="multiple">
-                <option th:each="obj : ${productclassnames}" th:text="${obj}"
-                  th:label="${obj}" th:selected="${#lists.contains(ord?.inputProductClasses,obj)}?'true':'false'"></option>
-              </select>
-            </div>
-          </div>
-          <!-- Requested configured procssors -->
-					<div class="row py-lg-1">
-						<div class="col-2 pr-lg-0">
-							<p class="input-group-text word-wrap"
-								th:text="#{requestedconfiguredprocessors}"></p>
-						</div>
-						<div class="col-10 pl-lg-0">
-							<select name="configuredProcessors[]" id="selconfproc" multiple="multiple">
-								<option th:each="obj : ${configuredprocessornames}" th:text="${obj}"
-									th:label="${obj}" th:selected="${#lists.contains(ord?.configuredProcessors,obj)}?'true':'false'"></option>
-							</select>
-						</div>
-					</div>
-          <div class="row py-lg-1">
-            <div class="col-12 border"></div>
-          </div>
-					<!-- Input filters for product classes -->
-          <div name="inputFilters[]" class="row" id="inputFilters">
-						<div class="col-12">
-              <div class="row py-lg-1" id="inputFilterStart">
-								<div class="col-12">
-									<div class="input-group-prepend">
-										<p class="input-group-text word-wrap" th:text="#{inputfilter}"></p>
+									<div class="col-2">
+										<div class="input-group">
+											<span class="input-group-text word-wrap"
+												th:text="#{orbitfrom}"></span> <input class="form-control"
+												th:id="'orbitNumberFrom-'+${iterstat.index}"
+												data-name="orbitNumberFrom" type="number" min="0"
+												th:value="${orbit?.orbitNumberFrom}">
+										</div>
+									</div>
+									<div class="col-2">
+										<div class="input-group">
+											<span class="input-group-text word-wrap" th:text="#{orbitto}"></span>
+											<input class="form-control"
+												th:id="'orbitNumberTo-'+${iterstat.index}"
+												data-name="orbitNumberTo" type="number" min="1"
+												th:value="${orbit?.orbitNumberTo}">
+										</div>
+									</div>
+									<div class="col-1">
 										<div class="input-group-text">
-											<span th:id="addInClass" class="cursorpointer"  th:title="#{addFilterClass}"
-												th:onclick="addInClass()"><span class="feather-l"
-												data-feather="plus-circle"></span></span>
+											<span th:id="'addOrbit-' + ${iterstat.index}"
+												th:title="#{addOrbit}" class="cursorpointer"
+												th:onclick="'addOrbit(' + ${iterstat.index} + ')'"><span
+												class="feather-l" data-feather="plus-circle"></span></span> <span>&nbsp;&nbsp;</span>
+											<span th:unless="${iterstat.first}"
+												th:id="'removeOrbit-' + ${iterstat.index}"
+												th:title="#{removeOrbit}" class="cursorpointer"
+												th:onclick="'removeOrbit(' + ${iterstat.index} + ')'"><span
+												class="feather-l" data-feather="x-circle"></span></span>
+										</div>
+									</div>
+									<div class="col-1"></div>
+								</div>
+								<!-- No orbit exists, fill with default data -->
+								<div th:if="${#lists.isEmpty(ord?.orbits)}" class="row py-lg-1"
+									data-name="orbitData" data-index="0">
+									<div class="col-4"></div>
+									<div class="col-2">
+										<div class="input-group">
+											<span class="input-group-text word-wrap"
+												th:text="#{spacecraft}"></span> <select
+												data-name="spacecraftCode" id="spacecraftCode-0"
+												class="form-select">
+												<option th:each="obj : ${spacecrafts}" th:text="${obj}"
+													th:label="${obj}"
+													th:selected="${obj}==${spacecrafts[0]}?'true':'false'"></option>
+											</select>
+										</div>
+									</div>
+									<div class="col-2">
+										<div class="input-group">
+											<span class="input-group-text word-wrap"
+												th:text="#{orbitfrom}"></span> <input class="form-control"
+												id="orbitNumberFrom-0" data-name="orbitNumberFrom"
+												type="number" min="0" value="0">
+										</div>
+									</div>
+									<div class="col-2">
+										<div class="input-group">
+											<span class="input-group-text word-wrap" th:text="#{orbitto}"></span>
+											<input class="form-control" id="orbitNumberTo-0"
+												data-name="orbitNumberTo" type="number" min="1" value="1">
+										</div>
+									</div>
+									<div class="col-1">
+										<div class="input-group-text">
+											<span id="addOrbit-0" th:title="#{addOrbit}"
+												class="cursorpointer" onclick="addOrbit(0)"><span
+												class="feather-l" data-feather="plus-circle"></span></span>
+											<!-- <span>&nbsp;&nbsp;</span><span id="removeOrbit-0" 
+                        class="cursorpointer" 
+                        onclick="removeOrbit(0)"
+                      ><span class="feather-l" data-feather="x-circle"></span></span> -->
+										</div>
+									</div>
+									<div class="col-1"></div>
+								</div>
+								<!-- Template orbit data  -->
+								<div class="row py-lg-1 filtercontent" name="orbitDataTemplate"
+									id="orbitDataTemplate" data-index="0">
+									<div class="col-4"></div>
+									<div class="col-2">
+										<div class="input-group">
+											<span class="input-group-text word-wrap"
+												th:text="#{spacecraft}"></span> <select
+												data-name="spacecraftCode" id="spacecraftCode-x"
+												class="form-select">
+												<option th:each="obj : ${spacecrafts}" th:text="${obj}"
+													th:label="${obj}"
+													th:selected="${obj}==${spacecrafts[0]}?'true':'false'"></option>
+											</select>
+										</div>
+									</div>
+									<div class="col-2">
+										<div class="input-group">
+											<span class="input-group-text word-wrap"
+												th:text="#{orbitfrom}"></span> <input class="form-control"
+												id="orbitNumberFrom-x" data-name="orbitNumberFrom"
+												type="number" min="0" value="0">
+										</div>
+									</div>
+									<div class="col-2">
+										<div class="input-group">
+											<span class="input-group-text word-wrap" th:text="#{orbitto}"></span>
+											<input class="form-control" id="orbitNumberTo-x"
+												data-name="orbitNumberTo" type="number" min="1" value="1">
+										</div>
+									</div>
+									<div class="col-1">
+										<div class="input-group-text">
+											<span id="addOrbit-x" th:title="#{addOrbit}"
+												class="cursorpointer" onclick="addOrbit(x)"><span
+												class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
+												id="removeOrbit-x" th:title="#{removeOrbit}"
+												class="cursorpointer" onclick="removeOrbit(x)"><span
+												class="feather-l" data-feather="x-circle"></span></span>
+										</div>
+									</div>
+									<div class="col-1"></div>
+								</div>
+							</div>
+						</div>
+						<!-- TIME_SLICE data -->
+						<div class="row filtercontent" id="TIME_SLICE">
+							<div class="col-12">
+								<!-- Nested rows to hold slicing data -->
+								<div class="row py-lg-1" name="slicingrow">
+									<div class="col-4"></div>
+									<div class="col-3">
+										<div class="input-group">
+											<span class="input-group-text word-wrap"
+												th:text="#{starttime}"></span> <input type="text"
+												class="form-control"
+												pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6})$"
+												title="yyyy-mm-ddThh:mm:ss.ssssss"
+												placeholder="yyyy-mm-ddThh:mm:ss.ssssss" required
+												name="startTime" data-type="TIME"
+												th:value="${ord?.startTime}">
+										</div>
+									</div>
+									<div class="col-3">
+										<div class="input-group">
+											<span class="input-group-text word-wrap"
+												th:text="#{stoptime}"></span> <input type="text"
+												class="form-control"
+												pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6})$"
+												title="yyyy-mm-ddThh:mm:ss.ssssss"
+												placeholder="yyyy-mm-ddThh:mm:ss.ssssss" required
+												name="stopTime" data-type="TIME" th:value="${ord?.stopTime}">
+										</div>
+									</div>
+									<div class="col-2">
+										<div class="input-group">
+											<span class="input-group-text word-wrap"
+												th:text="#{duration}"></span> <input class="form-control"
+												id="sliceDuration" name="sliceDuration" type="number"
+												min="1"
+												th:value="(${ord?.sliceDuration}==null or ${ord?.sliceDuration}==null)?'1':${ord?.sliceDuration}">
+											<div class="input-group-append">
+												<select id="sliceDurationMeasurement" th:data-oldmeasure="s"
+													class="form-select">
+													<option selected="true">s</option>
+													<option>min</option>
+													<option>h</option>
+												</select>
+											</div>
 										</div>
 									</div>
 								</div>
 							</div>
+						</div>
+						<!-- NONE data -->
+						<div class="row filtercontent" id="NONE">
+							<div class="col-12">
+								<!-- Nested rows to hold slicing data -->
+								<div class="row py-lg-1" name="slicingrow">
+									<div class="col-4"></div>
+									<div class="col-3">
+										<div class="input-group">
+											<span class="input-group-text word-wrap"
+												th:text="#{starttime}"></span> <input type="text"
+												class="form-control"
+												pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6})$"
+												title="yyyy-mm-ddThh:mm:ss.ssssss"
+												placeholder="yyyy-mm-ddThh:mm:ss.ssssss" required
+												name="startTime" data-type="TIME"
+												th:value="${ord?.startTime}">
+										</div>
+									</div>
+									<div class="col-3">
+										<div class="input-group">
+											<span class="input-group-text word-wrap"
+												th:text="#{stoptime}"></span> <input type="text"
+												class="form-control"
+												pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6})$"
+												title="yyyy-mm-ddThh:mm:ss.ssssss"
+												placeholder="yyyy-mm-ddThh:mm:ss.ssssss" required
+												name="stopTime" data-type="TIME" th:value="${ord?.stopTime}">
+										</div>
+									</div>
+									<div class="col-2"></div>
+								</div>
+							</div>
+						</div>
+						<!-- CALENDAR_DAY data -->
+						<div class="row filtercontent" id="CALENDAR_DAY">
+							<div class="col-12">
+								<!-- Nested rows to hold slicing data -->
+								<div class="row py-lg-1" name="slicingrow">
+									<div class="col-4"></div>
+									<div class="col-3">
+										<div class="input-group">
+											<span class="input-group-text word-wrap"
+												th:text="#{starttime}"></span> <input type="text"
+												class="form-control"
+												pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])$"
+												title="yyyy-mm-dd" placeholder="yyyy-mm-dd" required
+												name="startTime" data-type="DAY"
+												th:value="${(ord?.startTime!=null&&ord?.startTime!='')?#strings.substring(ord?.startTime, 0, 10):#strings.substring(#dates.createNow(), 0, 10)}">
+										</div>
+									</div>
+									<div class="col-3">
+										<div class="input-group">
+											<span class="input-group-text word-wrap"
+												th:text="#{stoptime}"></span> <input type="text"
+												class="form-control"
+												pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])$"
+												title="yyyy-mm-dd" placeholder="yyyy-mm-dd" required
+												name="stopTime" data-type="DAY"
+												th:value="${(ord?.stopTime!=null&&ord?.stopTime!='')?#strings.substring(ord?.stopTime, 0, 10):#strings.substring(#dates.createNow(), 0, 10)}">
+										</div>
+									</div>
+									<div class="col-2"></div>
+								</div>
+							</div>
+						</div>
+						<!-- CALENDAR_MONTH data -->
+						<div class="row filtercontent" id="CALENDAR_MONTH">
+							<div class="col-12">
+								<!-- Nested rows to hold slicing data -->
+								<div class="row py-lg-1" name="slicingrow">
+									<div class="col-4"></div>
+									<div class="col-3">
+										<div class="input-group">
+											<span class="input-group-text word-wrap"
+												th:text="#{starttime}"></span> <input type="text"
+												class="form-control" pattern="^(\d{4})-(0[1-9]|1[012])$"
+												title="yyyy-mm" placeholder="yyyy-mm" required
+												name="startTime" data-type="MONTH"
+												th:value="${(ord?.startTime!=null&&ord?.startTime!='')?#strings.substring(ord?.startTime, 0, 7):#strings.substring(#dates.createNow(), 0, 10)}">
+										</div>
+									</div>
+									<div class="col-3">
+										<div class="input-group">
+											<span class="input-group-text word-wrap"
+												th:text="#{stoptime}"></span> <input type="text"
+												class="form-control" pattern="^(\d{4})-(0[1-9]|1[012])$"
+												title="yyyy-mm" placeholder="yyyy-mm" required
+												name="stopTime" data-type="MONTH"
+												th:value="${(ord?.stopTime!=null&&ord?.stopTime!='')?#strings.substring(ord?.stopTime, 0, 7):#strings.substring(#dates.createNow(), 0, 10)}">
+										</div>
+									</div>
+									<div class="col-2"></div>
+								</div>
+							</div>
+						</div>
+						<!-- CALENDAR_YEAR data -->
+						<div class="row filtercontent" id="CALENDAR_YEAR">
+							<div class="col-12">
+								<!-- Nested rows to hold slicing data -->
+								<div class="row py-lg-1" name="slicingrow">
+									<div class="col-4"></div>
+									<div class="col-3">
+										<div class="input-group">
+											<span class="input-group-text word-wrap"
+												th:text="#{starttime}"></span> <input type="text"
+												class="form-control" pattern="^(\d{4})$" title="yyyy"
+												placeholder="yyyy" required name="startTime"
+												data-type="YEAR"
+												th:value="${(ord?.startTime!=null&&ord?.startTime!='')?#strings.substring(ord?.startTime, 0, 10):#strings.substring(#dates.createNow(), 0, 4)}">
+										</div>
+									</div>
+									<div class="col-3">
+										<div class="input-group">
+											<span class="input-group-text word-wrap"
+												th:text="#{stoptime}"></span> <input type="text"
+												class="form-control" pattern="^(\d{4})$" title="yyyy"
+												placeholder="yyyy" required name="stopTime" data-type="YEAR"
+												th:value="${(ord?.stopTime!=null&&ord?.stopTime!='')?#strings.substring(ord?.stopTime, 0, 10):#strings.substring(#dates.createNow(), 0, 4)}">
+										</div>
+									</div>
+									<div class="col-2"></div>
+								</div>
+							</div>
+						</div>
+						<div class="row py-lg-1">
+							<div class="col-12 border"></div>
+						</div>
+						<!-- Requested product classes -->
+						<div class="row py-lg-1">
+							<div class="col-2 pr-lg-0">
+								<span class="input-group-text word-wrap"
+									th:text="#{outputproductclasses}"></span>
+							</div>
+							<div class="col-7 pl-lg-0">
+								<select name="requestedProductClasses[]" id="seloutclasses"
+									multiple="multiple" class="form-select"
+									data-placeholder="&nbsp;" required>
+									<option th:each="obj : ${productclassnames}" th:text="${obj}"
+										th:label="${obj}"
+										th:selected="${#lists.contains(ord?.requestedProductClasses,obj)}?'true':'false'"></option>
+								</select>
+							</div>
+							<div class="col-2 pr-lg-0">
+								<span class="input-group-text word-wrap"
+									th:text="#{outputfileclass}"></span>
+							</div>
+							<div class="col-1 pl-lg-0">
+								<select name="outputFileClass" id="outputFileClass"
+									class="form-select">
+									<option th:each="obj : ${fileclasses}" th:text="${obj}"
+										th:label="${obj}"
+										th:selected="${obj}==${ord?.outputFileClass}?'true':'false'"></option>
+								</select>
+							</div>
+						</div>
+						<!-- Input product stop classes -->
+						<div class="row  py-lg-1">
+							<div class="col-2 pr-lg-0">
+								<span class="input-group-text word-wrap"
+									th:text="#{inputclassesstoplist}"></span>
+							</div>
+							<div class="col-10 pl-lg-0">
+								<select name="inputProductClasses[]" id="selinclasses"
+									data-placeholder="&nbsp;" multiple="multiple"
+									class="form-select">
+									<option th:each="obj : ${productclassnames}" th:text="${obj}"
+										th:label="${obj}"
+										th:selected="${#lists.contains(ord?.inputProductClasses,obj)}?'true':'false'"></option>
+								</select>
+							</div>
+						</div>
+						<!-- Requested configured procssors -->
+						<div class="row py-lg-1">
+							<div class="col-2 pr-lg-0">
+								<span class="input-group-text word-wrap"
+									th:text="#{requestedconfiguredprocessors}"></span>
+							</div>
+							<div class="col-10 pl-lg-0">
+								<select name="configuredProcessors[]" id="selconfproc"
+									multiple="multiple" class="form-select"
+									data-placeholder="&nbsp;">
+									<option th:each="obj : ${configuredprocessornames}"
+										th:text="${obj}" th:label="${obj}"
+										th:selected="${#lists.contains(ord?.configuredProcessors,obj)}?'true':'false'"></option>
+								</select>
+							</div>
+						</div>
+						<div class="row py-lg-1">
+							<div class="col-12 border"></div>
+						</div>
+						<!-- Input filters for product classes -->
+						<div name="inputFilters[]" class="row" id="inputFilters">
+							<div>
+								<div class="row py-lg-1" id="inputFilterStart">
+									<div class="col-12">
+										<div class="input-group">
+											<span class="input-group-text word-wrap"
+												th:text="#{inputfilter}"></span> <span th:id="addInClass"
+												class="input-group-text cursorpointer"
+												th:title="#{addFilterClass}" th:onclick="addInClass()"><span
+												class="feather-l" data-feather="plus-circle"></span></span>
+										</div>
+									</div>
+								</div>
 								<div th:each="ifilt,iterCls : ${ord?.inputFilters}"
 									name="InClassParameters" data-name="parameterclass">
 									<div th:each="fcond,iterStat : ${ifilt?.filterConditions}">
 										<div th:if="${iterStat.first} == true"
-											class="row pt-lg-2 pb-lg-0" name="InClassParameter" data-name="parameterrow"
-											th:data-index="${iterStat.index}"
+											class="row pt-lg-2 pb-lg-0" name="InClassParameter"
+											data-name="parameterrow" th:data-index="${iterStat.index}"
 											th:data-clsindex="${iterCls.index}">
 											<div class="col-1"></div>
 											<div class="col-3">
 												<div class="input-group">
-													<div class="input-group-prepend">
-														<div class="input-group-text">
-															<span class="cursorpointer" th:title="#{removeClass}"
-																th:onclick="'removeInClass(' + ${iterCls.index} + ')'"><span
-																class="feather-l" data-feather="x-circle"></span></span>
-														</div>
-														<p class="input-group-text word-wrap" th:text="#{class}"></p>
-													</div>
+													<span class="input-group-text cursorpointer"
+														th:title="#{removeClass}"
+														th:onclick="'removeInClass(' + ${iterCls.index} + ')'"><span
+														class="feather-l" data-feather="x-circle"></span></span> <span
+														class="input-group-text word-wrap" th:text="#{class}"></span>
 													<select data-name="inProductClass" id="inProductClass"
-														class="custom-select">
-														<option th:each="obj : ${productclassnames}" th:text="${obj}"
-															th:label="${obj}"
+														class="form-select">
+														<option th:each="obj : ${productclassnames}"
+															th:text="${obj}" th:label="${obj}"
 															th:selected="${obj}==${ifilt?.productClass}?'true':'false'"></option>
 													</select>
 												</div>
 											</div>
 											<div class="col-2">
 												<div class="input-group">
-													<div class="input-group-prepend">
-														<p class="input-group-text word-wrap" th:text="#{key}"></p>
-													</div>
+													<span class="input-group-text word-wrap" th:text="#{key}"></span>
 													<input type="text" class="form-control" data-name="key"
 														required placeholder="Name" th:value="${fcond?.key}">
 												</div>
 											</div>
 											<div class="col-2">
 												<div class="input-group">
-													<div class="input-group-prepend">
-														<p class="input-group-text word-wrap" th:text="#{type}"></p>
-													</div>
-													<select data-name="parameterType" class="custom-select">
+													<span class="input-group-text word-wrap" th:text="#{type}"></span>
+													<select data-name="parameterType" class="form-select">
 														<option th:each="obj : ${parametertypes}" th:text="${obj}"
 															th:label="${obj}"
 															th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
@@ -605,10 +603,8 @@
 											</div>
 											<div class="col-3">
 												<div class="input-group">
-													<div class="input-group-prepend">
-														<p class="input-group-text word-wrap" th:text="#{value}"></p>
-													</div>
-													<input type="text" class="form-control" 
+													<span class="input-group-text word-wrap" th:text="#{value}"></span>
+													<input type="text" class="form-control"
 														data-name="parameterValue"
 														th:value="${fcond?.parameterValue}">
 												</div>
@@ -630,23 +626,20 @@
 										</div>
 										<div th:if="${iterStat.first} == false" class="row py-lg-0"
 											th:data-index="${iterStat.index}"
-											th:data-clsindex="${iterCls.index}" name="InClassParameter" data-name="parameterrow"> 
+											th:data-clsindex="${iterCls.index}" name="InClassParameter"
+											data-name="parameterrow">
 											<div class="col-4"></div>
 											<div class="col-2">
 												<div class="input-group">
-													<div class="input-group-prepend">
-														<p class="input-group-text word-wrap" th:text="#{key}"></p>
-													</div>
+													<span class="input-group-text word-wrap" th:text="#{key}"></span>
 													<input type="text" class="form-control" data-name="key"
 														required placeholder="Name" th:value="${fcond?.key}">
 												</div>
 											</div>
 											<div class="col-2">
 												<div class="input-group">
-													<div class="input-group-prepend">
-														<p class="input-group-text word-wrap" th:text="#{type}"></p>
-													</div>
-													<select data-name="parameterType" class="custom-select">
+													<span class="input-group-text word-wrap" th:text="#{type}"></span>
+													<select data-name="parameterType" class="form-select">
 														<option th:each="obj : ${parametertypes}" th:text="${obj}"
 															th:label="${obj}"
 															th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
@@ -655,10 +648,8 @@
 											</div>
 											<div class="col-3">
 												<div class="input-group">
-													<div class="input-group-prepend">
-														<p class="input-group-text word-wrap" th:text="#{value}"></p>
-													</div>
-													<input type="text" class="form-control" 
+													<span class="input-group-text word-wrap" th:text="#{value}"></span>
+													<input type="text" class="form-control"
 														data-name="parameterValue"
 														th:value="${fcond?.parameterValue}">
 												</div>
@@ -680,227 +671,200 @@
 									</div>
 								</div>
 							</div>
-					</div>
-					
-          <div class="row py-lg-1">
-            <div class="col-12 border"></div>
-          </div>
-					<!-- Product class output parameters -->
-          <div name="classOutputParameters[]" class="row" id="classOutputParametersId">
-            <div class="col-12">
-              <div class="row py-lg-1" id="classOutputParameterStart">
-                <div class="col-12">
-                  <div class="input-group-prepend">
-                    <p class="input-group-text word-wrap" th:text="#{classoutparams}"></p>
-                    <div class="input-group-text">
-                      <span th:id="addOutClass" class="cursorpointer" th:title="#{addOutClass}"
-                        th:onclick="addOutClass()"><span class="feather-l"
-                        data-feather="plus-circle"></span></span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div th:each="ifilt,iterCls : ${ord?.classOutputParameters}" name="OutClassParameters" id="OutClassParameters" data-name="parameterclass">
-                <div th:each="fcond,iterStat : ${ifilt?.outputParameters}">
-                  <div th:if="${iterStat.first} == true" class="row pt-lg-2 pb-lg-0"  data-name="parameterrow" name="OutClassParameter" 
-                       th:data-index="${iterStat.index}" th:data-clsindex="${iterCls.index}">
-                    <div class="col-1"></div>
-                    <div class="col-3">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                    <div class="input-group-text">
-                      <span class="cursorpointer" th:title="#{removeClass}"
-                        th:onclick="'removeOutClass(' + ${iterCls.index} + ')'"><span class="feather-l"
-                        data-feather="x-circle"></span></span>
-                    </div>
-                          <p class="input-group-text word-wrap"
-                            th:text="#{class}"></p>
-                        </div>
-                        <select data-name="outProductClass" 
-                          class="custom-select">
-                          <option th:each="obj : ${productclassnames}" th:text="${obj}"
-                            th:label="${obj}"
-                            th:selected="${obj}==${ifilt?.productClass}?'true':'false'"></option>
-                        </select>
-                      </div>
-                    </div>
-                    <div class="col-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap" th:text="#{key}"></p>
-                        </div>
-                        <input type="text" class="form-control" data-name="key"  required
-                          placeholder="Name" 
-                          th:value="${fcond?.key}">
-                      </div>
-                    </div>
-                    <div class="col-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap"
-                            th:text="#{type}"></p>
-                        </div>
-                        <select data-name="parameterType" 
-                          class="custom-select">
-                          <option th:each="obj : ${parametertypes}" th:text="${obj}"
-                            th:label="${obj}"
-                            th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
-                        </select>
-                      </div>
-                    </div>
-                    <div class="col-3">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap" th:text="#{value}"></p>
-                        </div>
-                        <input type="text" class="form-control" 
-                          data-name="parameterValue" th:value="${fcond?.parameterValue}">
-                      </div>
-                    </div>
-                    <div class="col-1">
-                      <div class="input-group-text">
-                        <span th:id="'addOutClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
-                          class="cursorpointer" th:title="#{addParameterLine}"
-                          th:onclick="'addOutClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
-                          class="feather-l" data-feather="plus-circle"></span></span>
-                          <!-- <span>&nbsp;&nbsp;</span><span
+						</div>
+
+						<div class="row py-lg-1">
+							<div class="col-12 border"></div>
+						</div>
+						<!-- Product class output parameters -->
+						<div name="classOutputParameters[]" class="row"
+							id="classOutputParametersId">
+							<div class="row py-lg-1" id="classOutputParameterStart">
+								<div class="col-12">
+									<div class="input-group">
+										<span class="input-group-text word-wrap"
+											th:text="#{classoutparams}"></span> <span th:id="addOutClass"
+											class="input-group-text cursorpointer"
+											th:title="#{addOutClass}" th:onclick="addOutClass()"><span
+											class="feather-l" data-feather="plus-circle"></span></span>
+									</div>
+								</div>
+							</div>
+							<div th:each="ifilt,iterCls : ${ord?.classOutputParameters}"
+								name="OutClassParameters" id="OutClassParameters"
+								data-name="parameterclass">
+								<div th:each="fcond,iterStat : ${ifilt?.outputParameters}">
+									<div th:if="${iterStat.first} == true"
+										class="row pt-lg-2 pb-lg-0" data-name="parameterrow"
+										name="OutClassParameter" th:data-index="${iterStat.index}"
+										th:data-clsindex="${iterCls.index}">
+										<div class="col-1"></div>
+										<div class="col-3">
+											<div class="input-group">
+												<span class="input-group-text cursorpointer"
+													th:title="#{removeClass}"
+													th:onclick="'removeOutClass(' + ${iterCls.index} + ')'"><span
+													class="feather-l" data-feather="x-circle"></span></span> <span
+													class="input-group-text word-wrap" th:text="#{class}"></span>
+												<select data-name="outProductClass" class="form-select">
+													<option th:each="obj : ${productclassnames}"
+														th:text="${obj}" th:label="${obj}"
+														th:selected="${obj}==${ifilt?.productClass}?'true':'false'"></option>
+												</select>
+											</div>
+										</div>
+										<div class="col-2">
+											<div class="input-group">
+												<span class="input-group-text word-wrap" th:text="#{key}"></span>
+												<input type="text" class="form-control" data-name="key"
+													required placeholder="Name" th:value="${fcond?.key}">
+											</div>
+										</div>
+										<div class="col-2">
+											<div class="input-group">
+												<span class="input-group-text word-wrap" th:text="#{type}"></span>
+												<select data-name="parameterType" class="form-select">
+													<option th:each="obj : ${parametertypes}" th:text="${obj}"
+														th:label="${obj}"
+														th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+												</select>
+											</div>
+										</div>
+										<div class="col-3">
+											<div class="input-group">
+												<span class="input-group-text word-wrap" th:text="#{value}"></span>
+												<input type="text" class="form-control"
+													data-name="parameterValue"
+													th:value="${fcond?.parameterValue}">
+											</div>
+										</div>
+										<div class="col-1">
+											<div class="input-group-text">
+												<span
+													th:id="'addOutClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
+													class="cursorpointer" th:title="#{addParameterLine}"
+													th:onclick="'addOutClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
+													class="feather-l" data-feather="plus-circle"></span></span>
+												<!-- <span>&nbsp;&nbsp;</span><span
                           th:id="'removeOutClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
                           class="cursorpointer"
                           th:onclick="'removeOutClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
                           class="feather-l" data-feather="x-circle"></span></span> -->
-                      </div>
-                    </div>
-                  </div>
-                  <div th:if="${iterStat.first} == false" class="row py-lg-0" name="OutClassParameter" data-name="parameterrow"
-                       th:data-index="${iterStat.index}" th:data-clsindex="${iterCls.index}">
-                    <div class="col-4">
-                    </div>
-                    <div class="col-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap" th:text="#{key}"></p>
-                        </div>
-                        <input type="text" class="form-control" data-name="key" required
-                          placeholder="Name" 
-                          th:value="${fcond?.key}">
-                      </div>
-                    </div>
-                    <div class="col-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap"
-                            th:text="#{type}"></p>
-                        </div>
-                        <select data-name="parameterType" 
-                          class="custom-select">
-                          <option th:each="obj : ${parametertypes}" th:text="${obj}"
-                            th:label="${obj}"
-                            th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
-                        </select>
-                      </div>
-                    </div>
-                    <div class="col-3">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap" th:text="#{value}"></p>
-                        </div>
-                        <input type="text" class="form-control" 
-                          data-name="parameterValue" th:value="${fcond?.parameterValue}">
-                      </div>
-                    </div>
-                    <div class="col-1">
-                      <div class="input-group-text">
-                        <span th:id="'addOutClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
-                          class="cursorpointer" th:title="#{addParameterLine}"
-                          th:onclick="'addOutClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
-                          class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
-                          th:id="'removeOutClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
-                          class="cursorpointer" th:title="#{removeParameterLine}"
-                          th:onclick="'removeOutClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
-                          class="feather-l" data-feather="x-circle"></span></span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="row py-lg-1">
-            <div class="col-12 border"></div>
-          </div>
-          <!-- Output parameters for all product classes -->
-          <div class="row" id="allclassOutputParameters">
-            <div class="col-12">
-              <div class="row py-lg-1" id="allclassOutputParameterStart">
-                <div class="col-12">
-                  <div class="input-group-prepend">
-                    <p class="input-group-text word-wrap" th:text="#{outparams}"></p>
-                    <div class="input-group-text">
-                      <span id="addAllClass" class="cursorpointer" th:title="#{addAllClass}"
-                        th:onclick="addAllClass()"><span class="feather-l"
-                        data-feather="plus-circle"></span></span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div name="outputParameters[]" id="OutAllClassParameter" data-name="parameterclass">
-                <div th:each="fcond,iterStat : ${ord?.outputParameters}">
-                  <div th:if="${iterStat.first} == true" class="row pt-lg-2 pb-lg-0" name="ParameterAll"  th:data-index="${iterStat.index}"
-                   data-name="parameterrow">
-                    <div class="col-1"></div>
-                    <div class="col-3">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                    <div class="input-group-text">
-                      <span class="cursorpointer" th:title="#{removeClass}"
-                        onclick="removeAllClass()"><span class="feather-l"
-                        data-feather="x-circle"></span></span>
-                    </div>
-                          <p class="input-group-text word-wrap"
-                            th:text="#{allclasses}"></p>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="col-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap" th:text="#{key}"></p>
-                        </div>
-                        <input type="text" class="form-control" name="key" data-name="key" required
-                          placeholder="Name" 
-                          th:value="${fcond?.key}">
-                      </div>
-                    </div>
-                    <div class="col-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap"
-                            th:text="#{type}"></p>
-                        </div>
-                        <select data-name="parameterType" name="parameterType" 
-                          class="custom-select">
-                          <option th:each="obj : ${parametertypes}" th:text="${obj}"
-                            th:label="${obj}"
-                            th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
-                        </select>
-                      </div>
-                    </div>
-                    <div class="col-3">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap" th:text="#{value}"></p>
-                        </div>
-                        <input type="text" class="form-control" 
-                          data-name="parameterValue" name="parameterValue" th:value="${fcond?.parameterValue}">
-                      </div>
-                    </div>
+											</div>
+										</div>
+									</div>
+									<div th:if="${iterStat.first} == false" class="row py-lg-0"
+										name="OutClassParameter" data-name="parameterrow"
+										th:data-index="${iterStat.index}"
+										th:data-clsindex="${iterCls.index}">
+										<div class="col-4"></div>
+										<div class="col-2">
+											<div class="input-group">
+												<span class="input-group-text word-wrap" th:text="#{key}"></span>
+												<input type="text" class="form-control" data-name="key"
+													required placeholder="Name" th:value="${fcond?.key}">
+											</div>
+										</div>
+										<div class="col-2">
+											<div class="input-group">
+												<span class="input-group-text word-wrap" th:text="#{type}"></span>
+												<select data-name="parameterType" class="form-select">
+													<option th:each="obj : ${parametertypes}" th:text="${obj}"
+														th:label="${obj}"
+														th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+												</select>
+											</div>
+										</div>
+										<div class="col-3">
+											<div class="input-group">
+												<span class="input-group-text word-wrap" th:text="#{value}"></span>
+												<input type="text" class="form-control"
+													data-name="parameterValue"
+													th:value="${fcond?.parameterValue}">
+											</div>
+										</div>
+										<div class="col-1">
+											<div class="input-group-text">
+												<span
+													th:id="'addOutClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
+													class="cursorpointer" th:title="#{addParameterLine}"
+													th:onclick="'addOutClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
+													class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
+													th:id="'removeOutClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
+													class="cursorpointer" th:title="#{removeParameterLine}"
+													th:onclick="'removeOutClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
+													class="feather-l" data-feather="x-circle"></span></span>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row py-lg-1">
+							<div class="col-12 border"></div>
+						</div>
+						<!-- Output parameters for all product classes -->
+						<div class="row" id="allclassOutputParameters">
+							<div class="row py-lg-1" id="allclassOutputParameterStart">
+								<div class="col-12">
+									<div class="input-group">
+										<span class="input-group-text word-wrap"
+											th:text="#{outparams}"></span> <span id="addAllClass"
+											class="input-group-text cursorpointer"
+											th:title="#{addAllClass}" th:onclick="addAllClass()"><span
+											class="feather-l" data-feather="plus-circle"></span></span>
+									</div>
+								</div>
+							</div>
+							<div name="outputParameters[]" id="OutAllClassParameter"
+								data-name="parameterclass">
+								<div th:each="fcond,iterStat : ${ord?.outputParameters}">
+									<div th:if="${iterStat.first} == true"
+										class="row pt-lg-2 pb-lg-0" name="ParameterAll"
+										th:data-index="${iterStat.index}" data-name="parameterrow">
+										<div class="col-1"></div>
+										<div class="col-3">
+											<div class="input-group">
+												<span class="input-group-text cursorpointer"
+													th:title="#{removeClass}" onclick="removeAllClass()"><span
+													class="feather-l" data-feather="x-circle"></span></span> <span
+													class="input-group-text word-wrap" th:text="#{allclasses}"></span>
+											</div>
+										</div>
+										<div class="col-2">
+											<div class="input-group">
+												<span class="input-group-text word-wrap" th:text="#{key}"></span>
+												<input type="text" class="form-control" name="key"
+													data-name="key" required placeholder="Name"
+													th:value="${fcond?.key}">
+											</div>
+										</div>
+										<div class="col-2">
+											<div class="input-group">
+												<span class="input-group-text word-wrap" th:text="#{type}"></span>
+												<select data-name="parameterType" name="parameterType"
+													class="form-select">
+													<option th:each="obj : ${parametertypes}" th:text="${obj}"
+														th:label="${obj}"
+														th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+												</select>
+											</div>
+										</div>
+										<div class="col-3">
+											<div class="input-group">
+												<span class="input-group-text word-wrap" th:text="#{value}"></span>
+												<input type="text" class="form-control"
+													data-name="parameterValue" name="parameterValue"
+													th:value="${fcond?.parameterValue}">
+											</div>
+										</div>
 										<div class="col-1">
 											<div class="input-group-text">
 												<span th:id="'addParameterAll-' + ${iterStat.index}"
 													class="cursorpointer" th:title="#{addParameterLine}"
 													th:onclick="'addParameterAll(' + ${iterStat.index} + ')'"><span
 													class="feather-l" data-feather="plus-circle"></span></span>
-													<!-- <span>&nbsp;&nbsp;</span><span
+												<!-- <span>&nbsp;&nbsp;</span><span
 													th:id="'removeParameterAll-' + ${iterStat.index}"
 													class="cursorpointer"
 													th:onclick="'removeParameterAll(' + ${iterStat.index} + ')'"><span
@@ -908,447 +872,388 @@
 											</div>
 										</div>
 									</div>
-                  <div th:if="${iterStat.first} == false" class="row py-lg-0" name="ParameterAll"  th:data-index="${iterStat.index}"  
-                    data-name="parameterrow">
-                    <div class="col-4">
-                    </div>
-                    <div class="col-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap" th:text="#{key}"></p>
-                        </div>
-                        <input type="text" class="form-control" data-name="key" name="key" required
-                          placeholder="Name" 
-                          th:value="${fcond?.key}">
-                      </div>
-                    </div>
-                    <div class="col-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap"
-                            th:text="#{type}"></p>
-                        </div>
-                        <select data-name="parameterType" name="parameterType" 
-                          class="custom-select">
-                          <option th:each="obj : ${parametertypes}" th:text="${obj}"
-                            th:label="${obj}"
-                            th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
-                        </select>
-                      </div>
-                    </div>
-                    <div class="col-3">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap" th:text="#{value}"></p>
-                        </div>
-                        <input type="text" class="form-control" 
-                          data-name="parameterValue" name="parameterValue" th:value="${fcond?.parameterValue}">
-                      </div>
-                    </div>
-                    <div class="col-1">
-                      <div class="input-group-text">
-                        <span th:id="'addParameterAll-' + ${iterStat.index}"
-                          class="cursorpointer" th:title="#{addParameterLine}"
-                          th:onclick="'addParameterAll(' + ${iterStat.index} + ')'"><span
-                          class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
-                          th:id="'removeParameterAll-' + ${iterStat.index}"
-                          class="cursorpointer" th:title="#{removeParameterLine}"
-                          th:onclick="'removeParameterAll(' + ${iterStat.index} + ')'"><span
-                          class="feather-l" data-feather="x-circle"></span></span>
-                      </div>
-                    </div>
+									<div th:if="${iterStat.first} == false" class="row py-lg-0"
+										name="ParameterAll" th:data-index="${iterStat.index}"
+										data-name="parameterrow">
+										<div class="col-4"></div>
+										<div class="col-2">
+											<div class="input-group">
+												<span class="input-group-text word-wrap" th:text="#{key}"></span>
+												<input type="text" class="form-control" data-name="key"
+													name="key" required placeholder="Name"
+													th:value="${fcond?.key}">
+											</div>
+										</div>
+										<div class="col-2">
+											<div class="input-group">
+												<span class="input-group-text word-wrap" th:text="#{type}"></span>
+												<select data-name="parameterType" name="parameterType"
+													class="form-select">
+													<option th:each="obj : ${parametertypes}" th:text="${obj}"
+														th:label="${obj}"
+														th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+												</select>
+											</div>
+										</div>
+										<div class="col-3">
+											<div class="input-group">
+												<span class="input-group-text word-wrap" th:text="#{value}"></span>
+												<input type="text" class="form-control"
+													data-name="parameterValue" name="parameterValue"
+													th:value="${fcond?.parameterValue}">
+											</div>
+										</div>
+										<div class="col-1">
+											<div class="input-group-text">
+												<span th:id="'addParameterAll-' + ${iterStat.index}"
+													class="cursorpointer" th:title="#{addParameterLine}"
+													th:onclick="'addParameterAll(' + ${iterStat.index} + ')'"><span
+													class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
+													th:id="'removeParameterAll-' + ${iterStat.index}"
+													class="cursorpointer" th:title="#{removeParameterLine}"
+													th:onclick="'removeParameterAll(' + ${iterStat.index} + ')'"><span
+													class="feather-l" data-feather="x-circle"></span></span>
+											</div>
+										</div>
 									</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="row py-lg-1">
-            <div class="col-12 border"></div>
-          </div>
-          <!-- Output parameters for all product classes -->
-          <div class="row" id="dynamicProcessingParameter">
-            <div class="col-12">
-              <div class="row py-lg-1" id="dynamicProcessingParameterStart">
-                <div class="col-12">
-                  <div class="input-group-prepend">
-                    <p class="input-group-text word-wrap" th:text="#{dynamicprocessingparameters}"></p>
-                    <div class="input-group-text">
-                      <span id="addDynProcAllClass" class="cursorpointer" th:title="#{addDynProcAllClass}"
-                        th:onclick="addDynProcAllClass()"><span class="feather-l"
-                        data-feather="plus-circle"></span></span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div name="dynamicProcessingParameters[]" id="OutDynamicProcessingParameter" data-name="parameterclass">
-                <div th:each="fcond,iterStat : ${ord?.dynamicProcessingParameters}">
-                  <div th:if="${iterStat.first} == true" class="row pt-lg-2 pb-lg-0" name="DynProcParameterAll"  th:data-index="${iterStat.index}"
-                   data-name="parameterrow">
-                    <div class="col-1"></div>
-                    <div class="col-3">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                    <div class="input-group-text">
-                      <span class="cursorpointer"  th:title="#{removeClass}"
-                        onclick="removeDynProcAllClass()"><span class="feather-l"
-                        data-feather="x-circle"></span></span>
-                    </div>
-                          <p class="input-group-text word-wrap"
-                            th:text="#{allclasses}"></p>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="col-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap" th:text="#{key}"></p>
-                        </div>
-                        <input type="text" class="form-control" name="key" data-name="key" required
-                          placeholder="Name" 
-                          th:value="${fcond?.key}">
-                      </div>
-                    </div>
-                    <div class="col-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap"
-                            th:text="#{type}"></p>
-                        </div>
-                        <select data-name="parameterType" name="parameterType" 
-                          class="custom-select">
-                          <option th:each="obj : ${parametertypes}" th:text="${obj}"
-                            th:label="${obj}"
-                            th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
-                        </select>
-                      </div>
-                    </div>
-                    <div class="col-3">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap" th:text="#{value}"></p>
-                        </div>
-                        <input type="text" class="form-control" 
-                          data-name="parameterValue" name="parameterValue" th:value="${fcond?.parameterValue}">
-                      </div>
-                    </div>
-                    <div class="col-1">
-                      <div class="input-group-text">
-                        <span th:id="'addParameterAll-' + ${iterStat.index}"
-                          class="cursorpointer"  th:title="#{addParameterLine}"
-                          th:onclick="'addDynProcParameterAll(' + ${iterStat.index} + ')'"><span
-                          class="feather-l" data-feather="plus-circle"></span></span>
-                          <!-- <span>&nbsp;&nbsp;</span><span
-                          th:id="'removeDynProcParameterAll-' + ${iterStat.index}"
-                          class="cursorpointer"
-                          th:onclick="'removeDynProcParameterAll(' + ${iterStat.index} + ')'"><span
-                          class="feather-l" data-feather="x-circle"></span></span> -->
-                      </div>
-                    </div>
-                  </div>
-                  <div th:if="${iterStat.first} == false" class="row py-lg-0" name="DynProcParameterAll"  th:data-index="${iterStat.index}"  
-                    data-name="parameterrow">
-                    <div class="col-4">
-                    </div>
-                    <div class="col-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap" th:text="#{key}"></p>
-                        </div>
-                        <input type="text" class="form-control" data-name="key" name="key" required
-                          placeholder="Name" 
-                          th:value="${fcond?.key}">
-                      </div>
-                    </div>
-                    <div class="col-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap"
-                            th:text="#{type}"></p>
-                        </div>
-                        <select data-name="parameterType" name="parameterType" 
-                          class="custom-select">
-                          <option th:each="obj : ${parametertypes}" th:text="${obj}"
-                            th:label="${obj}"
-                            th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
-                        </select>
-                      </div>
-                    </div>
-                    <div class="col-3">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap" th:text="#{value}"></p>
-                        </div>
-                        <input type="text" class="form-control" 
-                          data-name="parameterValue" name="parameterValue" th:value="${fcond?.parameterValue}">
-                      </div>
-                    </div>
-                    <div class="col-1">
-                      <div class="input-group-text">
-                        <span th:id="'addParameterAll-' + ${iterStat.index}"
-                          class="cursorpointer"  th:title="#{addParameterLine}"
-                          th:onclick="'addDynProcParameterAll(' + ${iterStat.index} + ')'"><span
-                          class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
-                          th:id="'removeParameterAll-' + ${iterStat.index}"
-                          class="cursorpointer"  th:title="#{removeParameterLine}"
-                          th:onclick="'removeDynProcParameterAll(' + ${iterStat.index} + ')'"><span
-                          class="feather-l" data-feather="x-circle"></span></span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <input id="submitButton" class="btn btn-primary" type="submit" th:value="#{submit}"></input>
-      </form>
-          <!-- Template for dynamic processing parameter -->
-              <div class="filtercontent" id="OutDynamicProcessingParameterTemplate" data-name="parameterclass">
-                  <div class="row pt-lg-2 pb-lg-0" name="DynProcParameterAll" data-index="0" data-name="parameterrow">
-                    <div class="col-1"></div>
-                    <div class="col-3">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                    <div class="input-group-text">
-                      <span class="cursorpointer"  th:title="#{removeClass}"
-                        onclick="removeDynProcAllClass()"><span class="feather-l"
-                        data-feather="x-circle"></span></span>
-                    </div>
-                          <p class="input-group-text word-wrap"
-                            th:text="#{allclasses}"></p>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="col-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap" th:text="#{key}"></p>
-                        </div>
-                        <input type="text" class="form-control" name="key" data-name="key" required
-                          placeholder="Name" 
-                          value="">
-                      </div>
-                    </div>
-                    <div class="col-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap"
-                            th:text="#{type}"></p>
-                        </div>
-                        <select name="parameterType" data-name="parameterType" 
-                          class="custom-select">
-                          <option th:each="obj : ${parametertypes}" th:text="${obj}"
-                            th:label="${obj}"
-                            th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
-                        </select>
-                      </div>
-                    </div>
-                    <div class="col-3">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap" th:text="#{value}"></p>
-                        </div>
-                        <input type="text" class="form-control" 
-                          name="parameterValue" data-name="parameterValue" value="">
-                      </div>
-                    </div>
-                    <div class="col-1">
-                      <div class="input-group-text">
-                        <span id="addParameterAll-0"
-                          class="cursorpointer"  th:title="#{addParameterLine}"
-                          onclick="addDynProcParameterAll(0)"><span
-                          class="feather-l" data-feather="plus-circle"></span></span>
-                          <!-- <span>&nbsp;&nbsp;</span><span
-                          th:id="'removeDynProcParameterAll-' + ${iterStat.index}"
-                          class="cursorpointer"
-                          th:onclick="'removeDynProcParameterAll(' + ${iterStat.index} + ')'"><span
-                          class="feather-l" data-feather="x-circle"></span></span> -->
-                      </div>
-                    </div>
-                  </div>
-              </div>
-          <!-- Template for all class parameter -->
-              <div class="filtercontent" id="OutAllClassParameterTemplate" data-name="parameterclass">
-                  <div class="row pt-lg-2 pb-lg-0" name="ParameterAll" data-index="0" data-name="parameterrow">
-                    <div class="col-1"></div>
-                    <div class="col-3">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                    <div class="input-group-text">
-                      <span class="cursorpointer"  th:title="#{removeClass}"
-                        onclick="removeAllClass()"><span class="feather-l"
-                        data-feather="x-circle"></span></span>
-                    </div>
-                          <p class="input-group-text word-wrap"
-                            th:text="#{allclasses}"></p>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="col-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap" th:text="#{key}"></p>
-                        </div>
-                        <input type="text" class="form-control" name="key" data-name="key" required
-                          placeholder="Name" 
-                          value="">
-                      </div>
-                    </div>
-                    <div class="col-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap"
-                            th:text="#{type}"></p>
-                        </div>
-                        <select name="parameterType" data-name="parameterType" 
-                          class="custom-select">
-                          <option th:each="obj : ${parametertypes}" th:text="${obj}"
-                            th:label="${obj}"
-                            th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
-                        </select>
-                      </div>
-                    </div>
-                    <div class="col-3">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <p class="input-group-text word-wrap" th:text="#{value}"></p>
-                        </div>
-                        <input type="text" class="form-control" 
-                          name="parameterValue" data-name="parameterValue" value="">
-                      </div>
-                    </div>
-                    <div class="col-1">
-                      <div class="input-group-text">
-                        <span id="addParameterAll-0"
-                          class="cursorpointer"  th:title="#{addParameterLine}"
-                          onclick="addParameterAll(0)"><span
-                          class="feather-l" data-feather="plus-circle"></span></span>
-                          <!-- <span>&nbsp;&nbsp;</span><span
-                          th:id="'removeParameterAll-' + ${iterStat.index}"
-                          class="cursorpointer"
-                          th:onclick="'removeParameterAll(' + ${iterStat.index} + ')'"><span
-                          class="feather-l" data-feather="x-circle"></span></span> -->
-                      </div>
-                    </div>
-                  </div>
-              </div>
-          <!-- Template for parameter row with class select -->
-					<div class="filtercontent" name="InClassParameters" data-name="parameterclass"
-						id="paramClassTemplate">
-						<div class="row pt-lg-2 pb-lg-0" name="allOutParams" data-name="parameterrow">
-							<div class="col-1"></div>
-							<div class="col-3">
+								</div>
+							</div>
+						</div>
+					<div class="row py-lg-1">
+						<div class="col-12 border"></div>
+					</div>
+					<!-- Output parameters for all product classes -->
+					<div class="row" id="dynamicProcessingParameter">
+						<div class="row py-lg-1" id="dynamicProcessingParameterStart">
+							<div class="col-12">
 								<div class="input-group">
-									<div class="input-group-prepend">
+									<span class="input-group-text word-wrap"
+										th:text="#{dynamicprocessingparameters}"></span> <span
+										id="addDynProcAllClass" class="input-group-text cursorpointer"
+										th:title="#{addDynProcAllClass}"
+										th:onclick="addDynProcAllClass()"><span
+										class="feather-l" data-feather="plus-circle"></span></span>
+								</div>
+							</div>
+						</div>
+						<div name="dynamicProcessingParameters[]"
+							id="OutDynamicProcessingParameter" data-name="parameterclass">
+							<div
+								th:each="fcond,iterStat : ${ord?.dynamicProcessingParameters}">
+								<div th:if="${iterStat.first} == true"
+									class="row pt-lg-2 pb-lg-0" name="DynProcParameterAll"
+									th:data-index="${iterStat.index}" data-name="parameterrow">
+									<div class="col-1"></div>
+									<div class="col-3">
+										<div class="input-group">
+											<span class="input-group-text cursorpointer"
+												th:title="#{removeClass}" onclick="removeDynProcAllClass()"><span
+												class="feather-l" data-feather="x-circle"></span></span> <span
+												class="input-group-text word-wrap" th:text="#{allclasses}"></span>
+										</div>
+									</div>
+									<div class="col-2">
+										<div class="input-group">
+											<span class="input-group-text word-wrap" th:text="#{key}"></span>
+											<input type="text" class="form-control" name="key"
+												data-name="key" required placeholder="Name"
+												th:value="${fcond?.key}">
+										</div>
+									</div>
+									<div class="col-2">
+										<div class="input-group">
+											<span class="input-group-text word-wrap" th:text="#{type}"></span>
+											<select data-name="parameterType" name="parameterType"
+												class="form-select">
+												<option th:each="obj : ${parametertypes}" th:text="${obj}"
+													th:label="${obj}"
+													th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+											</select>
+										</div>
+									</div>
+									<div class="col-3">
+										<div class="input-group">
+											<span class="input-group-text word-wrap" th:text="#{value}"></span>
+											<input type="text" class="form-control"
+												data-name="parameterValue" name="parameterValue"
+												th:value="${fcond?.parameterValue}">
+										</div>
+									</div>
+									<div class="col-1">
 										<div class="input-group-text">
-											<span id="removeProductClass" class="cursorpointer" th:title="#{removeClass}"
-												onclick="nix"><span
+											<span th:id="'addParameterAll-' + ${iterStat.index}"
+												class="cursorpointer" th:title="#{addParameterLine}"
+												th:onclick="'addDynProcParameterAll(' + ${iterStat.index} + ')'"><span
+												class="feather-l" data-feather="plus-circle"></span></span>
+											<!-- <span>&nbsp;&nbsp;</span><span
+                          th:id="'removeDynProcParameterAll-' + ${iterStat.index}"
+                          class="cursorpointer"
+                          th:onclick="'removeDynProcParameterAll(' + ${iterStat.index} + ')'"><span
+                          class="feather-l" data-feather="x-circle"></span></span> -->
+										</div>
+									</div>
+								</div>
+								<div th:if="${iterStat.first} == false" class="row py-lg-0"
+									name="DynProcParameterAll" th:data-index="${iterStat.index}"
+									data-name="parameterrow">
+									<div class="col-4"></div>
+									<div class="col-2">
+										<div class="input-group">
+											<span class="input-group-text word-wrap" th:text="#{key}"></span>
+											<input type="text" class="form-control" data-name="key"
+												name="key" required placeholder="Name"
+												th:value="${fcond?.key}">
+										</div>
+									</div>
+									<div class="col-2">
+										<div class="input-group">
+											<span class="input-group-text word-wrap" th:text="#{type}"></span>
+											<select data-name="parameterType" name="parameterType"
+												class="form-select">
+												<option th:each="obj : ${parametertypes}" th:text="${obj}"
+													th:label="${obj}"
+													th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+											</select>
+										</div>
+									</div>
+									<div class="col-3">
+										<div class="input-group">
+											<span class="input-group-text word-wrap" th:text="#{value}"></span>
+											<input type="text" class="form-control"
+												data-name="parameterValue" name="parameterValue"
+												th:value="${fcond?.parameterValue}">
+										</div>
+									</div>
+									<div class="col-1">
+										<div class="input-group-text">
+											<span th:id="'addParameterAll-' + ${iterStat.index}"
+												class="cursorpointer" th:title="#{addParameterLine}"
+												th:onclick="'addDynProcParameterAll(' + ${iterStat.index} + ')'"><span
+												class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
+												th:id="'removeParameterAll-' + ${iterStat.index}"
+												class="cursorpointer" th:title="#{removeParameterLine}"
+												th:onclick="'removeDynProcParameterAll(' + ${iterStat.index} + ')'"><span
 												class="feather-l" data-feather="x-circle"></span></span>
 										</div>
-										<p class="input-group-text word-wrap" th:text="#{class}"></p>
 									</div>
-									<select id="templateProductClass"
-										class="custom-select">
-										<option th:each="obj : ${productclassnames}" th:text="${obj}"
-											th:label="${obj}"></option>
-									</select>
-								</div>
-							</div>
-							<div class="col-2">
-								<div class="input-group">
-									<div class="input-group-prepend">
-										<p class="input-group-text word-wrap" th:text="#{key}"></p>
-									</div>
-									<input type="text" class="form-control" name="key" data-name="key" required
-                          placeholder="Name" 
-										th:value="${fcond?.key}">
-								</div>
-							</div>
-							<div class="col-2">
-								<div class="input-group">
-									<div class="input-group-prepend">
-										<p class="input-group-text word-wrap" th:text="#{type}"></p>
-									</div>
-									<select name="parameterType" data-name="parameterType" 
-										class="custom-select">
-										<option th:each="obj : ${parametertypes}" th:text="${obj}"
-											th:label="${obj}"
-											th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
-									</select>
-								</div>
-							</div>
-							<div class="col-3">
-								<div class="input-group">
-									<div class="input-group-prepend">
-										<p class="input-group-text word-wrap" th:text="#{value}"></p>
-									</div>
-									<input type="text" class="form-control" 
-										name="parameterValue" data-name="parameterValue" th:value="${fcond?.parameterValue}">
-								</div>
-							</div>
-							<div class="col-1">
-								<div class="input-group-text">
-									<span id="add-x" class="cursorpointer" onclick="add(x)"  th:title="#{addParameterLine}"><span
-										class="feather-l" data-feather="plus-circle"></span></span>
-									<!-- <span>&nbsp;&nbsp;</span><span
-										id="remove-x" class="cursorpointer" onclick="remove(x)"><span
-										class="feather-l" data-feather="x-circle"></span></span> -->
 								</div>
 							</div>
 						</div>
 					</div>
-					<!-- Template for parameter row without class select -->
-					<div class="row py-lg-0 filtercontent" name="allOutParams"
-						id="paramTemplate" data-name="parameterrow">
-						<div class="col-4"></div>
-						<div class="col-2">
-							<div class="input-group">
-								<div class="input-group-prepend">
-									<p class="input-group-text word-wrap" th:text="#{key}"></p>
-								</div>
-                  <input type="text" class="form-control" name="key" data-name="key" required
-                          placeholder="Name" 
-                    value="">
-							</div>
-						</div>
-						<div class="col-2">
-							<div class="input-group">
-								<div class="input-group-prepend">
-									<p class="input-group-text word-wrap" th:text="#{type}"></p>
-								</div>
-								<select name="parameterType" data-name="parameterType" 
-									class="custom-select">
-									<option th:each="obj : ${parametertypes}" th:text="${obj}"
-										th:label="${obj}"
-										th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
-								</select>
-							</div>
-						</div>
+			</div>
+			<input id="submitButton" class="btn btn-primary" type="submit"
+				th:value="#{submit}"></input>
+			</form>
+			<!-- Template for dynamic processing parameter -->
+				<div class="filtercontent"
+					id="OutDynamicProcessingParameterTemplate"
+					data-name="parameterclass">
+					<div class="row pt-lg-2 pb-lg-0" name="DynProcParameterAll"
+						data-index="0" data-name="parameterrow">
+						<div class="col-1"></div>
 						<div class="col-3">
 							<div class="input-group">
-								<div class="input-group-prepend">
-									<p class="input-group-text word-wrap" th:text="#{value}"></p>
-								</div>
-								<input type="text" class="form-control" 
-									name="parameterValue" data-name="parameterValue" th:value="${fcond?.parameterValue}">
+								<span class="input-group-text cursorpointer"
+									th:title="#{removeClass}" onclick="removeDynProcAllClass()"><span
+									class="feather-l" data-feather="x-circle"></span></span> <span
+									class="input-group-text word-wrap" th:text="#{allclasses}"></span>
 							</div>
 						</div>
-						<div class="col-1">
-							<div class="input-group-text">
-								<span id="add-x" class="cursorpointer" onclick="add(x)" th:title="#{addParameterLine}"><span
-									class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
-									id="remove-x" class="cursorpointer" onclick="remove(x)" th:title="#{removeParameterLine}"><span
-									class="feather-l" data-feather="x-circle"></span></span>
-							</div>
+					<div class="col-2">
+						<div class="input-group">
+							<span class="input-group-text word-wrap" th:text="#{key}"></span>
+							<input type="text" class="form-control" name="key"
+								data-name="key" required placeholder="Name" value="">
 						</div>
 					</div>
-
-      </div>
+					<div class="col-2">
+						<div class="input-group">
+							<span class="input-group-text word-wrap" th:text="#{type}"></span>
+							<select name="parameterType" data-name="parameterType"
+								class="form-select">
+								<option th:each="obj : ${parametertypes}" th:text="${obj}"
+									th:label="${obj}"
+									th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+							</select>
+						</div>
+					</div>
+					<div class="col-3">
+						<div class="input-group">
+							<span class="input-group-text word-wrap" th:text="#{value}"></span>
+							<input type="text" class="form-control" name="parameterValue"
+								data-name="parameterValue" value="">
+						</div>
+					</div>
+					<div class="col-1">
+						<div class="input-group-text">
+							<span id="addParameterAll-0" class="cursorpointer"
+								th:title="#{addParameterLine}"
+								onclick="addDynProcParameterAll(0)"><span
+								class="feather-l" data-feather="plus-circle"></span></span>
+							<!-- <span>&nbsp;&nbsp;</span><span
+                          th:id="'removeDynProcParameterAll-' + ${iterStat.index}"
+                          class="cursorpointer"
+                          th:onclick="'removeDynProcParameterAll(' + ${iterStat.index} + ')'"><span
+                          class="feather-l" data-feather="x-circle"></span></span> -->
+						</div>
+					</div>
+          </div>
+				</div>
+			</div>
+			<!-- Template for all class parameter -->
+			<div class="filtercontent" id="OutAllClassParameterTemplate"
+				data-name="parameterclass">
+				<div class="row pt-lg-2 pb-lg-0" name="ParameterAll" data-index="0"
+					data-name="parameterrow">
+					<div class="col-1"></div>
+					<div class="col-3">
+						<div class="input-group">
+							<span class="input-group-text cursorpointer"
+								th:title="#{removeClass}" onclick="removeAllClass()"><span
+								class="feather-l" data-feather="x-circle"></span></span> <span
+								class="input-group-text word-wrap" th:text="#{allclasses}"></span>
+						</div>
+					</div>
+					<div class="col-2">
+						<div class="input-group">
+							<span class="input-group-text word-wrap" th:text="#{key}"></span>
+							<input type="text" class="form-control" name="key"
+								data-name="key" required placeholder="Name" value="">
+						</div>
+					</div>
+					<div class="col-2">
+						<div class="input-group">
+							<span class="input-group-text word-wrap" th:text="#{type}"></span>
+							<select name="parameterType" data-name="parameterType"
+								class="form-select">
+								<option th:each="obj : ${parametertypes}" th:text="${obj}"
+									th:label="${obj}"
+									th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+							</select>
+						</div>
+					</div>
+					<div class="col-3">
+						<div class="input-group">
+							<span class="input-group-text word-wrap" th:text="#{value}"></span>
+							<input type="text" class="form-control" name="parameterValue"
+								data-name="parameterValue" value="">
+						</div>
+					</div>
+					<div class="col-1">
+						<div class="input-group-text">
+							<span id="addParameterAll-0" class="cursorpointer"
+								th:title="#{addParameterLine}" onclick="addParameterAll(0)"><span
+								class="feather-l" data-feather="plus-circle"></span></span>
+							<!-- <span>&nbsp;&nbsp;</span><span
+                          th:id="'removeParameterAll-' + ${iterStat.index}"
+                          class="cursorpointer"
+                          th:onclick="'removeParameterAll(' + ${iterStat.index} + ')'"><span
+                          class="feather-l" data-feather="x-circle"></span></span> -->
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- Template for parameter row with class select -->
+			<div class="filtercontent" name="InClassParameters"
+				data-name="parameterclass" id="paramClassTemplate">
+				<div class="row pt-lg-2 pb-lg-0" name="allOutParams"
+					data-name="parameterrow">
+					<div class="col-1"></div>
+					<div class="col-3">
+						<div class="input-group">
+							<span id="removeProductClass"
+								class="input-group-text cursorpointer" th:title="#{removeClass}"
+								onclick="nix"><span class="feather-l"
+								data-feather="x-circle"></span></span> <span
+								class="input-group-text word-wrap" th:text="#{class}"></span> <select
+								id="templateProductClass" class="form-select">
+								<option th:each="obj : ${productclassnames}" th:text="${obj}"
+									th:label="${obj}"></option>
+							</select>
+						</div>
+					</div>
+					<div class="col-2">
+						<div class="input-group">
+							<span class="input-group-text word-wrap" th:text="#{key}"></span>
+							<input type="text" class="form-control" name="key"
+								data-name="key" required placeholder="Name"
+								th:value="${fcond?.key}">
+						</div>
+					</div>
+					<div class="col-2">
+						<div class="input-group">
+							<span class="input-group-text word-wrap" th:text="#{type}"></span>
+							<select name="parameterType" data-name="parameterType"
+								class="form-select">
+								<option th:each="obj : ${parametertypes}" th:text="${obj}"
+									th:label="${obj}"
+									th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+							</select>
+						</div>
+					</div>
+					<div class="col-3">
+						<div class="input-group">
+							<span class="input-group-text word-wrap" th:text="#{value}"></span>
+							<input type="text" class="form-control" name="parameterValue"
+								data-name="parameterValue" th:value="${fcond?.parameterValue}">
+						</div>
+					</div>
+					<div class="col-1">
+						<div class="input-group-text">
+							<span id="add-x" class="cursorpointer" onclick="add(x)"
+								th:title="#{addParameterLine}"><span class="feather-l"
+								data-feather="plus-circle"></span></span>
+							<!-- <span>&nbsp;&nbsp;</span><span
+										id="remove-x" class="cursorpointer" onclick="remove(x)"><span
+										class="feather-l" data-feather="x-circle"></span></span> -->
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- Template for parameter row without class select -->
+			<div class="row py-lg-0 filtercontent" name="allOutParams"
+				id="paramTemplate" data-name="parameterrow">
+				<div class="col-4"></div>
+				<div class="col-2">
+					<div class="input-group">
+						<span class="input-group-text word-wrap" th:text="#{key}"></span>
+						<input type="text" class="form-control" name="key" data-name="key"
+							required placeholder="Name" value="">
+					</div>
+				</div>
+				<div class="col-2">
+					<div class="input-group">
+						<span class="input-group-text word-wrap" th:text="#{type}"></span>
+						<select name="parameterType" data-name="parameterType"
+							class="form-select">
+							<option th:each="obj : ${parametertypes}" th:text="${obj}"
+								th:label="${obj}"
+								th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+						</select>
+					</div>
+				</div>
+				<div class="col-3">
+					<div class="input-group">
+						<span class="input-group-text word-wrap" th:text="#{value}"></span>
+						<input type="text" class="form-control" name="parameterValue"
+							data-name="parameterValue" th:value="${fcond?.parameterValue}">
+					</div>
+				</div>
+				<div class="col-1">
+					<div class="input-group-text">
+						<span id="add-x" class="cursorpointer" onclick="add(x)"
+							th:title="#{addParameterLine}"><span class="feather-l"
+							data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
+							id="remove-x" class="cursorpointer" onclick="remove(x)"
+							th:title="#{removeParameterLine}"><span class="feather-l"
+							data-feather="x-circle"></span></span>
+					</div>
+				</div>
+			</div></div>
       <div class="alert-warning" id="output"></div>
-			<div th:insert="fragments/footer.html :: footer"></div>
+			<div th:insert="~{fragments/footer.html :: footer}"></div>
         </main>
       </div>
-    </div>
   </body>
   <script src="https://unpkg.com/feather-icons"></script>
   <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
@@ -1356,12 +1261,8 @@
     integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
     crossorigin="anonymous"></script>
   <script
-    src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
-    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
-    crossorigin="anonymous"></script>
-  <script
-    src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
-    integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+    src="sha384-sha384-G/EV+4j2dNv+tEPo3+https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+    integrity="sha384-sha384-G/EV+4j2dNvsha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
     crossorigin="anonymous"></script>
   <script
     src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>

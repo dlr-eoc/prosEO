@@ -400,7 +400,7 @@
 
             },
             enableHTML: false,
-            buttonClass: 'custom-select',
+            buttonClass: 'form-select',
             inheritClass: false,
             buttonWidth: 'auto',
             buttonContainer: '<div class="btn-group" />',
@@ -439,7 +439,7 @@
             includeResetDivider: false,
             resetText: 'Reset',
             templates: {
-                button: '<button type="button" class="multiselect dropdown-toggle" data-toggle="dropdown"><span class="multiselect-selected-text"></span></button>',
+                button: '<button type="button" class="multiselect dropdown-toggle" data-bs-toggle="dropdown"><span class="multiselect-selected-text"></span></button>',
                 popupContainer: '<div class="multiselect-container dropdown-menu"></div>',
                 filter: '<div class="multiselect-filter"><div class="input-group input-group-sm p-1"><div class="input-group-prepend"><i class="input-group-text fas fa-search"></i></div><input class="form-control multiselect-search" type="text" /></div></div>',
                 filterClearBtn: '<div class="input-group-append"><button class="multiselect-clear-filter input-group-text" type="button"><i class="fas fa-times"></i></button></div>',

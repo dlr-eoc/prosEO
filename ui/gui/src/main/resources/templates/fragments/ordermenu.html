@@ -3,10 +3,10 @@
 <body>
 	<div th:fragment="orderMenu">
 		<div class="dropdown">
-			<a class="nav-link order-menu-link" data-toggle="dropdown" aria-haspopup="true"
-				aria-expanded="false" role="button"><img alt="Menu"
+			<a class="nav-link order-menu-link" data-bs-toggle="dropdown"
+				aria-expanded="false" role="button" href="#"><img alt="Menu"
 				src="more-vertical.svg" class="order-menu-img"></span></a>
-			<div class="dropdown-menu dropdown-menu-right menu">
+			<div class="dropdown-menu dropdown-menu-right menu" aria-labelledby="dropdownMenuLink">
 				<a
 				  th:if="${hasroleorderapprover}"
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'INITIAL') ? 'enabled' : 'disabled font-italic'))"
