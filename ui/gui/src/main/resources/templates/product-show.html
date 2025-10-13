@@ -6,200 +6,207 @@
         content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title th:text="#{product} + ' | ' + #{proseo}">proseo</title>
         <!-- Bootstrap core CSS -->
-        <link rel="stylesheet"
-          href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
-          integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
-          crossorigin="anonymous" />
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
           <!-- Custom styles for prosEO -->
           <link href="../static/fragments/proseo.css" th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css" />
           <link rel="stylesheet" href="../static/fragments/bootstrap-multiselect.css" th:href="@{/fragments/bootstrap-multiselect.css}" type="text/css"/>
   </head>
 
-  <body>
-    <div style="display:none;" class="loading">
-      <div class="loader"></div>
-    </div>
-    <nav id="proseo-nav"
-      class="navbar bg-light fixed-top flex-md-nowrap p-0 shadow navbar-expand-md">
-      <div class="container-fluid pl-0 pr-0">
-        <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
-          href="/"><img src="proseo_logo.png" class="rounded" width="50"
-            height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
-        <button class="navbar-toggler position-absolute d-md-none collapsed"
-          type="button" data-toggle="collapse" data-target="#sidebarMenu"
-          aria-controls="sidebarMenu" aria-expanded="false"
-          aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <ul class="navbar-nav mr-auto navbar-left">
-          <li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
-                th:text="${missioncode}">mission</span></a></li>
-          <li class="p-breadcrumb-item"><span
-              th:text="#{product}">product</span></li>
-        </ul>
-        <div th:replace="fragments/navbar.html :: navbarRight"></div>
-      </div>
-    </nav>
+<body>
+	<header>
+		<nav id="proseo-nav"
+			class="navbar navbar-expand-lg bg-body-tertiary bg-light fixed-top shadow no-padding">
+			<div class="container-fluid no-padding">
+				<a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
+					href="/"><img src="proseo_logo.png" class="rounded" width="50"
+					height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
+				<button class="navbar-toggler position-absolute d-md-none collapsed"
+					type="button" data-toggle="collapse" data-target="#sidebarMenu"
+					aria-controls="sidebarMenu" aria-expanded="false"
+					aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<ul class="navbar-nav mr-auto navbar-left">
+					<li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
+							th:text="${missioncode}">mission</span></a></li>
+					<li class="p-breadcrumb-item" aria-current="page"><span
+						th:text="#{product}">product</span></li>
+				</ul>
+				<div th:replace="~{fragments/navbar.html :: navbarRight}"></div>
+			</div>
+		</nav>
+	</header>
+	<div style="display: none;" class="loading">
+		<div class="loader"></div>
+	</div>
 
-	<div class="container-fluid">
-		<div class="row">
-			<div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
-			<div class="proseo-top-div"></div>
+	<div th:replace="~{fragments/sidebar.html :: sidebarMenu}"></div>
+	<div class="container-fluid bg-body proseo-body">
 
-			<main th:unless="${hasroleproductreader}" role="main"
-        class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-        <h5 class="FAILED">
-          <br> <span th:text="#{noroleright}"></span> (PRODUCT_READER) <br>&nbsp;
-        </h5>
-      </main>
-      <main th:if="${hasroleproductreader}" role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">      
-      <div th:if="${errormsg != null}" id="errormsg" name="errormsg" class="FAILED">
-        <h5>
-          <br> <span th:text="${errormsg}"></span></h5>
-      </div>
-      <form class="needs-validation" name="prod-shw" id="prod-shw" action="javascript:submit();" >
-        <div class="row py-lg-1">
-            <div class="col-1 pr-lg-0" th:title="#{selectProductClass}">
-              <p class="input-group-text word-wrap"
-                th:text="#{product-class}"></p>
-            </div>
-            <div class="col-3 pl-lg-0" th:title="#{selectProductClass}">
-              <select name="productClasses" id="productClasses" multiple="multiple">
-                <option th:each="obj : ${productclassnames}" th:text="${obj}"
-                  th:label="${obj}"></option>
-              </select>
-            </div>
-            <div class="col-1 pr-lg-0" th:title="#{selectMode}">
-              <p class="input-group-text word-wrap"
-                th:text="#{mode}"></p>
-            </div>
-            <div class="col-1 pl-lg-0" th:title="#{selectMode}"><select name="processingMode" id="processingMode"
-                  class="custom-select">
-                <option text=""
-                  label=""></option>
-                <option th:each="obj : ${processingmodes}" th:text="${obj}"
-                  th:label="${obj}"></option>
-                </select>
-            </div>
-            <div class="col-1 pr-lg-0" th:title="#{selectProductQuality}">
-              <p class="input-group-text word-wrap"
-                th:text="#{quality}"></p>
-            </div>
-            <div class="col-2 pl-lg-0" th:title="#{selectProductQuality}">
-              <select name="productQuality" id="productQuality"
-                  class="custom-select">
-                <option text=""
-                  label=""></option>
-                <option th:each="obj : ${productqualities}" th:text="${obj}"
-                  th:label="${obj}"></option>
-                </select>
-            </div>
-            <div class="col-1 pr-lg-0" th:title="#{selectProductFileClass}">
-              <p class="input-group-text word-wrap"
-                th:text="#{fileclass}"></p>
-            </div>
-            <div class="col-1 pl-lg-0" th:title="#{selectProductFileClass}">
-              <select name="fileClass" id="fileClass"
-                  class="custom-select">
-                <option text=""
-                  label=""></option>
-                <option th:each="obj : ${fileclasses}" th:text="${obj}"
-                  th:label="${obj}"></option>
-                </select>
-            </div>
-          </div>
-          <div class="row py-lg-1">
-            <div class="col-1 pr-lg-0" th:title="#{selectId}">
-              <p class="input-group-text word-wrap"
-                th:text="#{id}"></p>
-            </div>
-            <div class="col-1 pl-lg-0" th:title="#{selectId}">
-                    <input type="number" min="1" class="form-control" autocomplete="on"
-                      name="pid" id="pid">
-            </div>
-            
-            <div class="col-2 pr-lg-0"  th:title="#{selectTime}">
-              <p class="input-group-text word-wrap"
-                th:text="#{starttimebetween}"></p>
-            </div>
-            <div class="col-3 pl-lg-0"  th:title="#{selectTime}">
-                    <input type="text" class="form-control" autocomplete="on"
-                      pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
-                      th:title="#{selectTime}" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
-                      name="startTimeFrom" id="startTimeFrom" data-type="TIME">
-                    <div class="invalid-feedback" th:text="#{invaliddate}"></div>
-            </div>
-            <div class="col-1 pr-lg-0"  th:title="#{selectTime}">
-              <p class="input-group-text word-wrap"
-                th:text="#{and}"></p>
-            </div>
-            <div class="col-3 pl-lg-0"  th:title="#{selectTime}">
-                    <input type="text" class="form-control" autocomplete="on" 
-                      pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
-                      th:title="#{selectTime}" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
-                      name="startTimeTo" id="startTimeTo" data-type="TIME">
-                    <div class="invalid-feedback" th:text="#{invaliddate}"></div>
-            </div>
-          </div>
-          <div class="row py-lg-1">
-            <div class="col-1">
-              <button id="productselect" type="submit"
-                    onclick="submit();"
-                    class="btn btn-sm btn-outline-secondary">
-                    <span th:text="#{product-show}"></span>
-              </button>
-            </div>
-            <div class="col-1 pr-lg-0" th:title="#{selectWithFile}">
-              <input class="form-check-input" type="checkbox" name="withfile" value="wf" id="withfile">
-              <label class="form-check-label" for="withfile" th:text="#{onlywithfile}">onlywithfile</label>
-            </div>
-            
-            <div class="col-2 pr-lg-0"  th:title="#{selectTime}">
-              <p class="input-group-text word-wrap"
-                th:text="#{gentimebetween}"></p>
-            </div>
-            <div class="col-3 pl-lg-0"  th:title="#{selectTime}">
-                    <input type="text" class="form-control" autocomplete="on" 
-                      pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
-                      th:title="#{selectTime}" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
-                      name="genTimeFrom" id="genTimeFrom" data-type="TIME">
-                    <div class="invalid-feedback" th:text="#{invaliddate}"></div>
-            </div>
-            <div class="col-1 pr-lg-0"  th:title="#{selectTime}">
-              <p class="input-group-text word-wrap"
-                th:text="#{and}"></p>
-            </div>
-            <div class="col-3 pl-lg-0"  th:title="#{selectTime}">
-                    <input type="text" class="form-control" autocomplete="on" 
-                      pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
-                      th:title="#{selectTime}" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
-                      name="genTimeTo" id="genTimeTo" data-type="TIME">
-                    <div class="invalid-feedback" th:text="#{invaliddate}"></div>
-            </div>
-          </div>
-          
-        </form>
-      
-      <div id="productcontent" name="productcontent">
-      <p th:text="${errormsg}"></p>
+		<main th:unless="${hasroleproductreader}" role="main"
+			class="col-auto px-md-4">
+			<h5 class="FAILED">
+				<br> <span th:text="#{noroleright}"></span> (PRODUCT_READER) <br>&nbsp;
+			</h5>
+		</main>
+		<main th:if="${hasroleproductreader}" role="main"
+			class="col-auto px-md-4">
+			<div th:if="${errormsg != null}" id="errormsg" name="errormsg"
+				class="FAILED">
+				<h5>
+					<br> <span th:text="${errormsg}"></span>
+				</h5>
+			</div>
+			<form class="needs-validation" name="prod-shw" id="prod-shw"
+				action="javascript:submit();">
+				<div class="row py-lg-1">
+					<div class="col-1 pr-lg-0" th:title="#{selectProductClass}">
+						<p class="input-group-text word-wrap" th:text="#{product-class}"></p>
+					</div>
+					<div class="col-3 pl-lg-0" th:title="#{selectProductClass}">
+						<select name="productClasses" id="productClasses"
+							multiple="multiple" class="form-select" data-placeholder="&nbsp;">
+							<option th:each="obj : ${productclassnames}" th:text="${obj}"
+								th:label="${obj}"></option>
+						</select>
+					</div>
+					<div class="col-1 pr-lg-0" th:title="#{selectMode}">
+						<p class="input-group-text word-wrap" th:text="#{mode}"></p>
+					</div>
+					<div class="col-1 pl-lg-0" th:title="#{selectMode}">
+						<select name="processingMode" id="processingMode"
+							class="form-select">
+							<option text="" label=""></option>
+							<option th:each="obj : ${processingmodes}" th:text="${obj}"
+								th:label="${obj}"></option>
+						</select>
+					</div>
+					<div class="col-1 pr-lg-0" th:title="#{selectProductQuality}">
+						<p class="input-group-text word-wrap" th:text="#{quality}"></p>
+					</div>
+					<div class="col-2 pl-lg-0" th:title="#{selectProductQuality}">
+						<select name="productQuality" id="productQuality"
+							class="form-select">
+							<option text="" label=""></option>
+							<option th:each="obj : ${productqualities}" th:text="${obj}"
+								th:label="${obj}"></option>
+						</select>
+					</div>
+					<div class="col-1 pr-lg-0" th:title="#{selectProductFileClass}">
+						<p class="input-group-text word-wrap" th:text="#{fileclass}"></p>
+					</div>
+					<div class="col-1 pl-lg-0" th:title="#{selectProductFileClass}">
+						<select name="fileClass" id="fileClass" class="form-select">
+							<option text="" label=""></option>
+							<option th:each="obj : ${fileclasses}" th:text="${obj}"
+								th:label="${obj}"></option>
+						</select>
+					</div>
+				</div>
+				<div class="row py-lg-1">
+					<div class="col-1 pr-lg-0" th:title="#{selectId}">
+						<p class="input-group-text word-wrap" th:text="#{id}"></p>
+					</div>
+					<div class="col-1 pl-lg-0" th:title="#{selectId}">
+						<input type="number" min="1" class="form-control"
+							autocomplete="on" name="pid" id="pid">
+					</div>
+
+					<div class="col-2 pr-lg-0" th:title="#{selectTime}">
+						<p class="input-group-text word-wrap"
+							th:text="#{starttimebetween}"></p>
+					</div>
+					<div class="col-3 pl-lg-0" th:title="#{selectTime}">
+						<input type="text" class="form-control" autocomplete="on"
+							pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
+							th:title="#{selectTime}"
+							placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]" name="startTimeFrom"
+							id="startTimeFrom" data-type="TIME">
+						<div class="invalid-feedback" th:text="#{invaliddate}"></div>
+					</div>
+					<div class="col-1 pr-lg-0" th:title="#{selectTime}">
+						<p class="input-group-text word-wrap" th:text="#{and}"></p>
+					</div>
+					<div class="col-3 pl-lg-0" th:title="#{selectTime}">
+						<input type="text" class="form-control" autocomplete="on"
+							pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
+							th:title="#{selectTime}"
+							placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]" name="startTimeTo"
+							id="startTimeTo" data-type="TIME">
+						<div class="invalid-feedback" th:text="#{invaliddate}"></div>
+					</div>
+				</div>
+				<div class="row py-lg-1">
+					<div class="col-1">
+						<button id="productselect" type="submit" onclick="submit();"
+							class="btn btn-sm btn-outline-secondary">
+							<span th:text="#{product-show}"></span>
+						</button>
+					</div>
+					<div class="col-1 pr-lg-0" th:title="#{selectWithFile}">
+						<input class="form-check-input" type="checkbox" name="withfile"
+							value="wf" id="withfile"> <label class="form-check-label"
+							for="withfile" th:text="#{onlywithfile}">onlywithfile</label>
+					</div>
+
+					<div class="col-2 pr-lg-0" th:title="#{selectTime}">
+						<p class="input-group-text word-wrap" th:text="#{gentimebetween}"></p>
+					</div>
+					<div class="col-3 pl-lg-0" th:title="#{selectTime}">
+						<input type="text" class="form-control" autocomplete="on"
+							pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
+							th:title="#{selectTime}"
+							placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]" name="genTimeFrom"
+							id="genTimeFrom" data-type="TIME">
+						<div class="invalid-feedback" th:text="#{invaliddate}"></div>
+					</div>
+					<div class="col-1 pr-lg-0" th:title="#{selectTime}">
+						<p class="input-group-text word-wrap" th:text="#{and}"></p>
+					</div>
+					<div class="col-3 pl-lg-0" th:title="#{selectTime}">
+						<input type="text" class="form-control" autocomplete="on"
+							pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
+							th:title="#{selectTime}"
+							placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]" name="genTimeTo"
+							id="genTimeTo" data-type="TIME">
+						<div class="invalid-feedback" th:text="#{invaliddate}"></div>
+					</div>
+				</div>
+
+			</form>
+
+			<div id="productcontent" name="productcontent">
+				<p th:text="${errormsg}"></p>
 				<table class="table table-hover" id="productTable"
 					th:if="${products != null and (not #lists.isEmpty(products))}">
 					<thead class="thead-proseo" id="proseo-thead">
 						<tr>
-							<th colspan="2" onclick="selectSort('select-id')" 
-                        class="cursorpointer"><span id="select-id" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
-                        th:text="#{id}">id</span></th>
-							<th onclick="selectSort('select-className')" 
-                        class="cursorpointer"><span id="select-className" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
-                        th:text="#{product-class}">product-class</span></th>
-              <th onclick="selectSort('select-sensingStartTime')" 
-                        class="cursorpointer"><span id="select-sensingStartTime" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
-                        th:text="#{sensingstarttime}">sensingstarttime</span></th>
-              <th><span th:text="#{sensingstoptime}">sensingstoptime</span></th>
-							<th onclick="selectSort('select-generationTime')" 
-                        class="cursorpointer"><span id="select-generationTime" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" 
-                        th:text="#{generationtime}">generationtime</span></th>
+							<th colspan="2" onclick="selectSort('select-id')"
+								class="cursorpointer"><span id="select-id"
+								class="select-up"
+								th:class="((${selcol} == 'id' ? ${selorder} : ''))"
+								th:text="#{id}">id</span></th>
+							<th onclick="selectSort('select-className')"
+								class="cursorpointer"><span id="select-className"
+								class="select-up"
+								th:class="((${selcol} == 'id' ? ${selorder} : ''))"
+								th:text="#{product-class}">product-class</span></th>
+							<th onclick="selectSort('select-sensingStartTime')"
+								class="cursorpointer"><span id="select-sensingStartTime"
+								class="select-up"
+								th:class="((${selcol} == 'id' ? ${selorder} : ''))"
+								th:text="#{sensingstarttime}">sensingstarttime</span></th>
+							<th><span th:text="#{sensingstoptime}">sensingstoptime</span></th>
+							<th onclick="selectSort('select-generationTime')"
+								class="cursorpointer"><span id="select-generationTime"
+								class="select-up"
+								th:class="((${selcol} == 'id' ? ${selorder} : ''))"
+								th:text="#{generationtime}">generationtime</span></th>
 							<th><span th:text="#{mode}">mode</span></th>
 							<th><span th:text="#{productquality}">productquality</span></th>
 							<th><span th:text="#{fileclass}">fileclass</span></th>
@@ -211,23 +218,25 @@
 								<td th:id="'toggleprod' + ${elem?.id}"
 									class="cursorpointer first-row no-right-border"
 									th:onclick="'toggleProd(' + ${elem?.id} + ')'"><div
-										th:title="#{hideProductDetails}" class="prodhide" th:id="'prodh' + ${elem?.id}">
+										th:title="#{hideProductDetails}" class="prodhide"
+										th:id="'prodh' + ${elem?.id}">
 										<span data-feather="minus-circle"></span>
 									</div>
-									<div th:title="#{showProductDetails}" class="prodshow" th:id="'prods' + ${elem?.id}">
+									<div th:title="#{showProductDetails}" class="prodshow"
+										th:id="'prods' + ${elem?.id}">
 										<span data-feather="plus-circle"></span>
 									</div></td>
 								<td th:id="${elem?.id}" th:text="${elem?.id}"
 									class="cursorpointer first-row no-left-border"
-                  th:onclick="'toggleProd(' + ${elem?.id} + ')'"></td>
-								<td class="first-row"><a 
-								  th:if="${hasroleproductclassreader}"
+									th:onclick="'toggleProd(' + ${elem?.id} + ')'"></td>
+								<td class="first-row"><a
+									th:if="${hasroleproductclassreader}"
 									th:href="'/productclass-show?productClass=' + ${elem?.productClass}"
-									th:text="${elem?.productClass}"></a><span 
-                  th:unless="${hasroleproductclassreader}"
-                  th:text="${elem?.productClass}"></span></td>
-                <td th:text="${elem?.sensingStartTime}" class="first-row"></td>
-                <td th:text="${elem?.sensingStopTime}" class="first-row"></td>
+									th:text="${elem?.productClass}"></a><span
+									th:unless="${hasroleproductclassreader}"
+									th:text="${elem?.productClass}"></span></td>
+								<td th:text="${elem?.sensingStartTime}" class="first-row"></td>
+								<td th:text="${elem?.sensingStopTime}" class="first-row"></td>
 								<td th:text="${elem?.generationTime}" class="first-row"></td>
 								<td th:text="${elem?.mode}" class="first-row"></td>
 								<td th:text="${elem?.productQuality}" class="first-row"></td>
@@ -235,15 +244,15 @@
 							</tr>
 						</tbody>
 						<tbody class="filtercontent" th:id="'prodcont' + ${elem?.id}">
-              <tr class="th-row">
-                <th class="tr-rowspan"><span>&nbsp;</span></th>
-                <th><span th:text="#{productiontype}">productiontype</span></th>
-                <th><span th:text="#{uuid}">uuid</span></th>
-                <th><span th:text="#{rawdataavailabilitytime}">rawdataavailabilitytime</span></th>
-                <th><span th:text="#{publicationtime}">publicationtime</span></th>
-                <th><span th:text="#{evictiontime}">evictiontime</span></th>
-                <th colspan="3"><span th:text="#{configuredprocessor}">configuredprocessor</span></th>
-              </tr>
+							<tr class="th-row">
+								<th class="tr-rowspan"><span>&nbsp;</span></th>
+								<th><span th:text="#{productiontype}">productiontype</span></th>
+								<th><span th:text="#{uuid}">uuid</span></th>
+								<th><span th:text="#{rawdataavailabilitytime}">rawdataavailabilitytime</span></th>
+								<th><span th:text="#{publicationtime}">publicationtime</span></th>
+								<th><span th:text="#{evictiontime}">evictiontime</span></th>
+								<th colspan="3"><span th:text="#{configuredprocessor}">configuredprocessor</span></th>
+							</tr>
 							<tr class="th-row">
 								<th class="tr-rowspan"><span>&nbsp;</span></th>
 								<th colspan="2"><span th:text="#{componentproductids}">componentproductids</span></th>
@@ -252,25 +261,27 @@
 									<span th:text="#{orbit}">orbit</span></th>
 								<th colspan="4"><span th:text="#{parameters}">parameters</span></th>
 							</tr>
-              <tr>
-                <td class="tr-rowspan">&nbsp;</td>
-                <td th:text="${elem?.productionType}"></td>
-                <td th:text="${elem?.uuid}"></td>
-                <td th:text="${elem?.rawDataAvailabilityTime}"></td>
-                <td th:text="${elem?.publicationTime}"></td>
-                <td th:unless="${elem?.evictionTime}"></td>
-                <td th:if="${elem?.evictionTime}" th:text="${#strings.substring(elem?.evictionTime, 0, 19)}"></td>
-                <td colspan="3"><span 
-                  th:if="null != ${elem?.configuredProcessor}"><a
-                    th:if="${hasroleprocessorreader}"
-                    th:href="'/configured-processor-show?cp=' + ${elem?.configuredProcessor.identifier}"
-                    th:text="${elem?.configuredProcessor.identifier}"></a><span
-                    th:unless="${hasroleprocessorreader}"
-                    th:text="${elem?.configuredProcessor.identifier}"></span></span></td>
-              </tr>
 							<tr>
 								<td class="tr-rowspan">&nbsp;</td>
-								<td colspan="2"><a th:each="comp : ${elem?.componentProductIds}"
+								<td th:text="${elem?.productionType}"></td>
+								<td th:text="${elem?.uuid}"></td>
+								<td th:text="${elem?.rawDataAvailabilityTime}"></td>
+								<td th:text="${elem?.publicationTime}"></td>
+								<td th:unless="${elem?.evictionTime}"></td>
+								<td th:if="${elem?.evictionTime}"
+									th:text="${#strings.substring(elem?.evictionTime, 0, 19)}"></td>
+								<td colspan="3"><span
+									th:if="null != ${elem?.configuredProcessor}"><a
+										th:if="${hasroleprocessorreader}"
+										th:href="'/configured-processor-show?cp=' + ${elem?.configuredProcessor.identifier}"
+										th:text="${elem?.configuredProcessor.identifier}"></a><span
+										th:unless="${hasroleprocessorreader}"
+										th:text="${elem?.configuredProcessor.identifier}"></span></span></td>
+							</tr>
+							<tr>
+								<td class="tr-rowspan">&nbsp;</td>
+								<td colspan="2"><a
+									th:each="comp : ${elem?.componentProductIds}"
 									class="proseo-list-item href"
 									th:onclick="'productref(' + ${comp} + ')'"><span
 										th:text="${comp}"></span></a></td>
@@ -327,11 +338,11 @@
 													<td th:id="${file?.id}" th:text="${file?.id}"
 														class="first-row"></td>
 													<td colspan="2" class="first-row"><a
-													  th:if="${hasrolefacilityreader}"
+														th:if="${hasrolefacilityreader}"
 														th:href="'/facility-show?f=' + ${file?.processingFacilityName}"
 														th:text="${file?.processingFacilityName}"></a><span
-                            th:unless="${hasrolefacilityreader}"
-                            th:text="${file?.processingFacilityName}"></span></td>
+														th:unless="${hasrolefacilityreader}"
+														th:text="${file?.processingFacilityName}"></span></td>
 													<td th:text="${file?.storageType}" class="first-row"></td>
 													<td colspan="3" th:text="${file?.filePath}"
 														class="first-row"></td>
@@ -365,25 +376,20 @@
 					</div>
 					</tbody>
 				</table>
-        <div th:replace="fragments/navbar.html :: alternatePageNav"></div>
-      </div>
-			<div th:insert="fragments/footer.html :: footer"></div>
-			</main>
-		</div>
+				<div th:replace="~{fragments/navbar.html :: alternatePageNav}"></div>
+			</div>
+			<div th:insert="~{fragments/footer.html :: footer}"></div>
+		</main>
 	</div>
 </body>
-  <script src="https://unpkg.com/feather-icons"></script>
+<script src="https://unpkg.com/feather-icons"></script>
   <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.5.1.js"
     integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
     crossorigin="anonymous"></script>
   <script
-    src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
-    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
-    crossorigin="anonymous"></script>
-  <script
-    src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
-    integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+    src="sha384-sha384-G/EV+4j2dNv+tEPo3+https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+    integrity="sha384-sha384-G/EV+4j2dNvsha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
     crossorigin="anonymous"></script>
   <script
     src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>

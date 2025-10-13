@@ -1,5 +1,35 @@
 body {
   font-size: .875rem;
+  display: grid;
+  gap: 0.5em;
+}
+
+header {
+  display: grid;
+  grid-template-columns: min-content 1fr;
+  gap: 1em;
+  grid-column: 1 / -1;
+}
+
+footer {
+  grid-column: 1 / -1;
+}
+
+aside {
+	display: grid;
+  grid-column: 1;
+}
+
+.proseo-body {
+  padding: 48px 0.5em 0 0;
+  grid-column: 2 / -1;
+}
+
+.no-padding {
+  padding: 0px !important;
+}
+.navbar-right {
+   align-content: end;
 }
 
 .feather {
@@ -23,13 +53,13 @@ body {
   bottom: 0;
   left: 0;
   z-index: 100; /* Behind the navbar */
-  padding: 48px 0 0; /* Height of navbar */
+  padding: 45px 0 0; /* Height of navbar */
   box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
 }
-
-@media (max-width: 767.98px) {
-  .sidebar {
-    top: 5rem;
+@media (min-width: 30em) {
+  body {
+    grid-template-columns: 1fr 5fr;
+    grid-template-rows: auto 1fr min-content;
   }
 }
 

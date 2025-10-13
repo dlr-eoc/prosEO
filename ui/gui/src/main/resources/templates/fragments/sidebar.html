@@ -1,7 +1,10 @@
 <!doctype html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <body>
-	<div th:fragment="sidebarMenu">
+	<div th:fragment="sidebarMenuxxx"></div>
+	<aside class="bd-sidebar col-md-3 col-lg-2"  th:fragment="sidebarMenu"> 
+	<div class="offcanvas-lg offcanvas-start" tabindex="-1" id="bdSidebar" aria-labelledby="bdSidebarOffcanvasLabel">
+	<div class="offcanvas-body">
 		<nav id="sidebarMenu"
 			class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
 			<div class="sidebar-sticky pt-3">
@@ -85,6 +88,8 @@
 				</ul>
 			</div>
 		</nav>
+		</div>
 	</div>
+	</aside>
 </body>
 </html>

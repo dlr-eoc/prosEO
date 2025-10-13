@@ -6,189 +6,194 @@
   content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <title th:text="#{processor} + ' | ' + #{proseo}">proseo</title>
         <!-- Bootstrap core CSS -->
-        <link rel="stylesheet"
-  href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
-  integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
-          crossorigin="anonymous" />
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
           <!-- Custom styles for prosEO -->
           <link href="../static/fragments/proseo.css" th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css" />
   </head>
 
 <body>
-    <div style="display:none;" class="loading">
-      <div class="loader"></div>
-    </div>
-  <nav id="proseo-nav"
-    class="navbar bg-light fixed-top flex-md-nowrap p-0 shadow navbar-expand-md">
-    <div class="container-fluid pl-0 pr-0">
-      <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
-        href="/"><img src="proseo_logo.png" class="rounded" width="50"
-        height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
-      <button class="navbar-toggler position-absolute d-md-none collapsed"
-        type="button" data-toggle="collapse" data-target="#sidebarMenu"
-        aria-controls="sidebarMenu" aria-expanded="false"
-        aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <ul class="navbar-nav mr-auto navbar-left">
-        <li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
-            th:text="${missioncode}">mission</span></a></li>
-        <li class="p-breadcrumb-item" aria-current="page"><span
-          th:text="#{processor-show}">show</span></li>
-      </ul>
-      <div th:replace="fragments/navbar.html :: navbarRight"></div>
-    </div>
-  </nav>
+	<header>
+		<nav id="proseo-nav"
+			class="navbar navbar-expand-lg bg-body-tertiary bg-light fixed-top shadow no-padding">
+			<div class="container-fluid no-padding">
+				<a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
+					href="/"><img src="proseo_logo.png" class="rounded" width="50"
+					height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
+				<button class="navbar-toggler position-absolute d-md-none collapsed"
+					type="button" data-toggle="collapse" data-target="#sidebarMenu"
+					aria-controls="sidebarMenu" aria-expanded="false"
+					aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<ul class="navbar-nav mr-auto navbar-left">
+					<li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
+							th:text="${missioncode}">mission</span></a></li>
+					<li class="p-breadcrumb-item" aria-current="page"><span
+						th:text="#{processor-show}">processor-show</span></li>
+				</ul>
+				<div th:replace="~{fragments/navbar.html :: navbarRight}"></div>
+			</div>
+		</nav>
+	</header>
+	<div style="display: none;" class="loading">
+		<div class="loader"></div>
+	</div>
 
+	<div th:replace="~{fragments/sidebar.html :: sidebarMenu}"></div>
+	<div class="container-fluid bg-body proseo-body">
+		<main th:unless="${hasroleprocessorreader}" role="main"
+			class="col-auto px-md-4">
+			<h5 class="FAILED">
+				<br> <span th:text="#{noroleright}"></span> (PROCESSOR_READER)
+				<br>&nbsp;
+			</h5>
+		</main>
+		<main th:if="${hasroleprocessorreader}" role="main"
+			class="col-auto px-md-4">
+			<div th:if="${errormsg != null}" id="errormsg" name="errormsg"
+				class="FAILED">
+				<h5>
+					<br> <span th:text="${errormsg}"></span>
+				</h5>
+			</div>
 
-  <div class="container-fluid">
-    <div class="row">
-      <div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
-      <div class="proseo-top-div"></div>
+			<div th:unless="${errormsg != null}" class="container-fluid">
+				<form th:unless="${errormsg != null}" class="needs-validation"
+					name="proc-shw" id="proc-shw"
+					action="javascript:retrieveDataPrim();">
+					<div class="row py-lg-1">
+						<div class="col-2">
+							<button id="processorselect" type="button"
+								onclick="retrieveDataPrim();"
+								class="btn btn-sm btn-outline-secondary">
+								<span th:text="#{processor-show}"></span>
+							</button>
+						</div>
+						<div class="col-1 pr-lg-0" th:title="#{selectId}">
+							<p class="input-group-text word-wrap" th:text="#{id}"></p>
+						</div>
+						<div class="col-1 pl-lg-0" th:title="#{selectId}">
+							<input type="number" min="1" class="form-control"
+								autocomplete="on" name="pid" id="pid">
+						</div>
+						<div class="col-1 pr-lg-0" th:title="#{selectNamePattern}">
+							<p class="input-group-text word-wrap" th:text="#{name}"></p>
+						</div>
+						<div class="col-2 pl-lg-0" th:title="#{selectNamePattern}">
+							<input type="text" class="form-control" id="pname">
+						</div>
+						<div class="col-2 pr-lg-0"
+							th:title="#{selectProcessorVersionPattern}">
+							<p class="input-group-text word-wrap"
+								th:text="#{processorversion}"></p>
+						</div>
+						<div class="col-2 pl-lg-0"
+							th:title="#{selectProcessorVersionPattern}">
+							<input type="text" class="form-control" id="pversion">
+						</div>
+					</div>
+				</form>
 
-      <main th:unless="${hasroleprocessorreader}" role="main"
-        class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-        <h5 class="FAILED">
-          <br> <span th:text="#{noroleright}"></span> (PROCESSOR_READER) <br>&nbsp;
-        </h5>
-      </main>
-      <main th:if="${hasroleprocessorreader}" role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-        <div th:if="${errormsg != null}" id="errormsg" name="errormsg" class="FAILED">
-          <h5>
-            <br> <span th:text="${errormsg}"></span></h5>
-        </div>
-
-        <div th:unless="${errormsg != null}" class="container-fluid">
-            <p>&nbsp;</p>
-	        <form th:unless="${errormsg != null}" class="needs-validation" name="proc-shw" id="proc-shw" action="javascript:retrieveDataPrim();">
-	          <div class="row py-lg-1">
-              <div class="col-2">
-                <button id="processorselect" type="button"
-                  onclick="retrieveDataPrim();"
-                  class="btn btn-sm btn-outline-secondary">
-                  <span th:text="#{processor-show}"></span>
-                </button>
-              </div>  
-	            <div class="col-1 pr-lg-0" th:title="#{selectId}">
-	              <p class="input-group-text word-wrap"
-	                th:text="#{id}"></p>
-	            </div>
-	            <div class="col-1 pl-lg-0" th:title="#{selectId}">
-	                    <input type="number" min="1" class="form-control" autocomplete="on"
-	                      name="pid" id="pid">
-	            </div>
-	            <div class="col-1 pr-lg-0" th:title="#{selectNamePattern}">
-	              <p class="input-group-text word-wrap"
-	                th:text="#{name}"></p>
-	            </div>
-	            <div class="col-2 pl-lg-0" th:title="#{selectNamePattern}">
-	              <input type="text" class="form-control" id="pname">
-	            </div>   
-              <div class="col-1 pr-lg-0" th:title="#{selectProcessorVersionPattern}">
-                <p class="input-group-text word-wrap"
-                  th:text="#{processorversion}"></p>
-              </div>
-              <div class="col-2 pl-lg-0" th:title="#{selectProcessorVersionPattern}">
-                <input type="text" class="form-control" id="pversion">
-              </div>    
-	          </div>
-	        </form>
-	
-	      </div>
-        <div id="processorcontent" name="processorcontent">
-          <table class="table" id="processorTable" name="processorTable">
-            <thead class="thead-proseo" id="proseo-thead">
-              <tr>
-                    <th><span th:text="#{id}">id</span></th>
-                    <th><span th:text="#{name}">name</span></th>
-                    <th><span th:text="#{processorversion}">processorversion</span></th>
-                    <th><span th:text="#{istest}">istest</span></th>
-                    <th><span th:text="#{mindiskspace}">mindiskspace</span></th>
-                    <th><span th:text="#{maxtime}">maxtime</span></th>
-                    <th><span th:text="#{sensingtimeflag}">sensingtimeflag</span></th>
-                    <th><span th:text="#{configuredprocessors}">configuredprocessors</span></th>
-                    <th><span th:text="#{dockerimage}">dockerimage</span></th>
-                    <th rowspan="2"><span th:text="#{dockerrunparameters}">dockerrunparameters</span></th>
-              </tr>
-              <tr>
-                    <th>&nbsp;</th>
-                    <th><span th:text="#{task}">task</span></th>
-                    <th><span th:text="#{taskversion}">taskversion</span></th>
-                    <th><span th:text="#{critical}">critical</span></th>
-                    <th><span th:text="#{criticallevel}">criticallevel</span></th>
-                    <th><span th:text="#{numberofcpus}">numberofcpus</span></th>
-                    <th><span th:text="#{minmemory}">minmemory</span></th>
-                    <th colspan="3"><span th:text="#{brekpointfilenames}">brekpointfilenames</span></th>
-              </tr>
-            </thead>
-            <tbody th:unless="${processors} == null">
-              <div th:each="processor : ${processors}">
-              <tr>
-                <td th:id="${processor?.processorName}" class="first-row" th:rowspan="${#lists.size(processor?.tasks) + 1}" th:text="${processor?.id}"></td>
-                <td class="first-row"> <a 
-                  th:if="${hasroleprocessorreader}"
-                  th:href="'/processor-class-show?processorclassName=' + ${processor?.processorName}" 
-                  th:text="${processor?.processorName}"></a><span 
-                  th:unless="${hasroleprocessorreader}"
-                  th:text="${processor?.processorName}"></span></td>
-                <td th:id="${processor?.processorName} + '-' + ${processor?.processorVersion}" class="first-row" th:text="${processor?.processorVersion}"></td>
-                <td class="first-row" th:text="${processor?.isTest}"></td>
-                <td class="first-row" th:text="${processor?.minDiskSpace/1024}"></td>
-                <td class="first-row" th:text="${processor?.maxTime}"></td>
-                <td class="first-row" th:text="${processor?.sensingTimeFlag}"></td>
-                <td class="first-row"><a 
-                  th:if="${hasroleconfigurationreader}"
-                  th:each="comp : ${processor?.configuredProcessors}" 
-                  class="proseo-list-item"  
-                  th:href="'/configured-processor-show?cp=' + ${comp}" th:text="${comp}"></a><span 
-                  th:unless="${hasroleconfigurationreader}"
-                  th:each="comp : ${processor?.configuredProcessors}" 
-                  class="proseo-list-item"  
-                  th:text="${comp}"></span></td>
-                <td class="first-row" th:text="${processor?.dockerImage}"></td>
-                <td class="first-row" th:rowspan="${#lists.size(processor?.tasks) + 1}">
-                <table class="table">
-                  <tbody>
-                    <tr th:each="elem : ${processor?.dockerRunParameters}">
-                      <td th:text="${elem?.key}"></td>
-                      <td th:text="${elem?.value}"></td>
-                    </tr>
-                  </tbody>
-                </table></td>
-              </tr>
-                <tr th:each="task : ${processor?.tasks}">
-                    <td th:text="${task?.taskName}"></td>
-                    <td th:text="${task?.taskVersion}"></td>
-                    <td th:text="${task?.isCritical}"></td>
-                    <td th:text="${task?.criticalityLevel}"></td>
-                    <td th:text="${task?.numberOfCpus}"></td>
-                    <td th:text="${task?.minMemory}"></td>
-                <td colspan="2"><span th:each="comp : ${task?.breakpointFileNames}" 
-                       class="proseo-list-item" th:text="${comp}"></span></td>                
-                </tr>
-              </div>
-            </tbody>
-          </table>
-                <div th:replace="fragments/navbar.html :: alternatePageNav"></div>
-        </div>
-      <div th:insert="fragments/footer.html :: footer"></div>
-      </main>
-    </div>
-  </div>
+			</div>
+			<div id="processorcontent" name="processorcontent">
+				<table class="table" id="processorTable" name="processorTable">
+					<thead class="thead-proseo" id="proseo-thead">
+						<tr>
+							<th><span th:text="#{id}">id</span></th>
+							<th><span th:text="#{name}">name</span></th>
+							<th><span th:text="#{processorversion}">processorversion</span></th>
+							<th><span th:text="#{istest}">istest</span></th>
+							<th><span th:text="#{mindiskspace}">mindiskspace</span></th>
+							<th><span th:text="#{maxtime}">maxtime</span></th>
+							<th><span th:text="#{sensingtimeflag}">sensingtimeflag</span></th>
+							<th><span th:text="#{configuredprocessors}">configuredprocessors</span></th>
+							<th><span th:text="#{dockerimage}">dockerimage</span></th>
+							<th rowspan="2"><span th:text="#{dockerrunparameters}">dockerrunparameters</span></th>
+						</tr>
+						<tr>
+							<th>&nbsp;</th>
+							<th><span th:text="#{task}">task</span></th>
+							<th><span th:text="#{taskversion}">taskversion</span></th>
+							<th><span th:text="#{critical}">critical</span></th>
+							<th><span th:text="#{criticallevel}">criticallevel</span></th>
+							<th><span th:text="#{numberofcpus}">numberofcpus</span></th>
+							<th><span th:text="#{minmemory}">minmemory</span></th>
+							<th colspan="3"><span th:text="#{brekpointfilenames}">brekpointfilenames</span></th>
+						</tr>
+					</thead>
+					<tbody th:unless="${processors} == null">
+						<div th:each="processor : ${processors}">
+							<tr>
+								<td th:id="${processor?.processorName}" class="first-row"
+									th:rowspan="${#lists.size(processor?.tasks) + 1}"
+									th:text="${processor?.id}"></td>
+								<td class="first-row"><a th:if="${hasroleprocessorreader}"
+									th:href="'/processor-class-show?processorclassName=' + ${processor?.processorName}"
+									th:text="${processor?.processorName}"></a><span
+									th:unless="${hasroleprocessorreader}"
+									th:text="${processor?.processorName}"></span></td>
+								<td
+									th:id="${processor?.processorName} + '-' + ${processor?.processorVersion}"
+									class="first-row" th:text="${processor?.processorVersion}"></td>
+								<td class="first-row" th:text="${processor?.isTest}"></td>
+								<td class="first-row" th:text="${processor?.minDiskSpace/1024}"></td>
+								<td class="first-row" th:text="${processor?.maxTime}"></td>
+								<td class="first-row" th:text="${processor?.sensingTimeFlag}"></td>
+								<td class="first-row"><a
+									th:if="${hasroleconfigurationreader}"
+									th:each="comp : ${processor?.configuredProcessors}"
+									class="proseo-list-item"
+									th:href="'/configured-processor-show?cp=' + ${comp}"
+									th:text="${comp}"></a><span
+									th:unless="${hasroleconfigurationreader}"
+									th:each="comp : ${processor?.configuredProcessors}"
+									class="proseo-list-item" th:text="${comp}"></span></td>
+								<td class="first-row" th:text="${processor?.dockerImage}"></td>
+								<td class="first-row"
+									th:rowspan="${#lists.size(processor?.tasks) + 1}">
+									<table class="table">
+										<tbody>
+											<tr th:each="elem : ${processor?.dockerRunParameters}">
+												<td th:text="${elem?.key}"></td>
+												<td th:text="${elem?.value}"></td>
+											</tr>
+										</tbody>
+									</table>
+								</td>
+							</tr>
+							<tr th:each="task : ${processor?.tasks}">
+								<td th:text="${task?.taskName}"></td>
+								<td th:text="${task?.taskVersion}"></td>
+								<td th:text="${task?.isCritical}"></td>
+								<td th:text="${task?.criticalityLevel}"></td>
+								<td th:text="${task?.numberOfCpus}"></td>
+								<td th:text="${task?.minMemory}"></td>
+								<td colspan="2"><span
+									th:each="comp : ${task?.breakpointFileNames}"
+									class="proseo-list-item" th:text="${comp}"></span></td>
+							</tr>
+						</div>
+					</tbody>
+				</table>
+				<div th:replace="~{fragments/navbar.html :: alternatePageNav}"></div>
+			</div>
+			<div th:insert="~{fragments/footer.html :: footer}"></div>
+		</main>
+	</div>
 </body>
-  <script src="https://unpkg.com/feather-icons"></script>
+<script src="https://unpkg.com/feather-icons"></script>
   <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.5.1.js"
     integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
     crossorigin="anonymous"></script>
   <script
-    src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
-    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
-    crossorigin="anonymous"></script>
-  <script
-    src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
-    integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+    src="sha384-sha384-G/EV+4j2dNv+tEPo3+https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+    integrity="sha384-sha384-G/EV+4j2dNvsha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
     crossorigin="anonymous"></script>
   <script
     src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>

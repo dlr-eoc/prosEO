@@ -11,42 +11,47 @@
 	</button>
 </div>
 
-<div th:fragment="navbarRight">
-	<ul class="nav navbar-nav px-3 navbar-right">
-	  <li class="nav-item btn">
-      <button id="wikiPage" type="button"
-        onclick="wikiPage();"
-        class="btn btn-sm btn-outline-secondary">
-        <span>&nbsp;?&nbsp;</span>
-      </button>
-    </li>
-		<li class="nav-item dropdown text-nowrap btn menu"><a
-			class="nav-link dropdown-toggle" id="dropdown09"
-			data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span
-				data-feather="user"></span><span th:text="${user}"> user</span></a>
-			<div class="dropdown-menu menu dropdown-menu-right menu">
-				<a class="dropdown-item menu" href="/customlogin"><span
-					data-feather="log-out"></span> <span th:text="#{logout}">logout</span>
-				</a> <a class="dropdown-item menu" data-toggle="dropdown"
-					aria-haspopup="true" aria-expanded="false" role="button"><span
-					data-feather="chevron-right"></span> <span th:text="#{roles}">roles</span></a>
-				<div class="dropdown-menu dropdown-menu-right menu">
-					<span th:each="role : ${userroles}" class="dropdown-item enabled"><span
-						th:text="${role}" th:attr="title=#{${role}}"></span></span>
-				</div>
-			</div></li>
-		<li class="nav-item dropdown text-nowrap btn menu"><a
-			class="nav-link dropdown-toggle" id="dropdown09"
-			data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span
-				class="flag-icon flag-icon-de"
-				th:class="'flag-icon flag-icon-' + ${#locale.language}"> </span> <span
-				th:text="#{${#locale.language}}"> language</span></a>
-			<div class="dropdown-menu menu dropdown-menu-right">
-				<a class="dropdown-item btn menu" onclick="selectLang('DE')"><span
-					class="flag-icon flag-icon-de"> </span> <span th:text="#{de}">de</span>
-				</a> <a class="dropdown-item btn menu" onclick="selectLang('EN')"><span
-					class="flag-icon flag-icon-en"> </span> <span th:text="#{en}">en</span></a>
-			</div></li>
+<div class="d-flex" th:fragment="navbarRight">
+	<ul class="navbar-nav px-3 navbar-right">
+		<li class="nav-item btn">
+			<button id="wikiPage" type="button" onclick="wikiPage();"
+				class="btn btn-sm btn-outline-secondary">
+				<span>&nbsp;?&nbsp;</span>
+			</button>
+		</li>
+		<li class="nav-item dropdown text-nowrap">
+			<div class="btn-group">
+				<button class="btn btn-light dropdown-toggle" type="button"
+					data-bs-toggle="dropdown" aria-expanded="false">
+					<span data-feather="user"></span><span th:text="${user}">
+						user</span>
+				</button>
+				<ul class="dropdown-menu">
+					<li><a class="dropdown-item" href="/customlogin"><span
+          data-feather="log-out"></span> <span th:text="#{logout}">logout</span></a></li>
+					<li><hr class="dropdown-divider"></li>
+					<li><h6 class="dropdown-header"><span th:text="#{roles}">roles</span></h6></li>
+					<li th:each="role : ${userroles}" class="dropdown-item enabled" href="#">&nbsp;&nbsp;<span
+                  th:text="${role}" th:attr="title=#{${role}}"></span></li>
+				</ul>
+			</div>
+		</li>
+		<li class="nav-item dropdown text-nowrap">
+			<div class="btn-group">
+				<button class="btn btn-light dropdown-toggle" type="button"
+					data-bs-toggle="dropdown" aria-expanded="false">
+					<span class="flag-icon flag-icon-de"
+						th:class="'flag-icon flag-icon-' + ${#locale.language}"> </span> <span
+						th:text="#{${#locale.language}}"> language</span>
+				</button>
+				<ul class="dropdown-menu">
+					<li><a class="dropdown-item" onclick="selectLang('DE')"><span
+							class="flag-icon flag-icon-de"> </span> <span th:text="#{de}">de</span></a></li>
+					<li><a class="dropdown-item" onclick="selectLang('EN')"><span
+							class="flag-icon flag-icon-en"> </span> <span th:text="#{en}">en</span></a></li>
+				</ul>
+			</div>
+		</li>
 	</ul>
 </div>
 
