@@ -104,7 +104,7 @@ public class ProductionPlannerSecurityConfig {
 				.hasAnyRole(UserRole.PRODUCT_INGESTOR.toString(), UserRole.JOBSTEP_PROCESSOR.toString())
 				.anyRequest()
 				.hasAnyRole(UserRole.ORDER_MGR.toString()));
-//			.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
+
 		return http.build();
 	}
 

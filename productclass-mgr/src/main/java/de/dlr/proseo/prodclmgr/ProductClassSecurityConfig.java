@@ -54,7 +54,7 @@ public class ProductClassSecurityConfig {
 			.hasAnyRole(UserRole.PRODUCTCLASS_READER.toString())
 			.anyRequest()
 			.hasAnyRole(UserRole.PRODUCTCLASS_MGR.toString()));
-//			.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
+
 		return http.build();
 	}
 

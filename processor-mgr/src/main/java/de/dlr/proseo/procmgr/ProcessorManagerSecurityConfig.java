@@ -61,7 +61,7 @@ public class ProcessorManagerSecurityConfig {
 			.hasAnyRole(UserRole.WORKFLOW_MGR.toString())
 			.anyRequest()
 			.hasAnyRole(UserRole.PROCESSORCLASS_MGR.toString()));
-//			.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
+
 		return http.build();
 	}
 

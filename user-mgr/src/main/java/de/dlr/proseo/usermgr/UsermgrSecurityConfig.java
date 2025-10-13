@@ -79,7 +79,7 @@ public class UsermgrSecurityConfig {
 			.authenticated() // Any user may change their own password
 			.anyRequest()
 			.hasAnyRole(UserRole.ROOT.toString(), UserRole.USERMGR.toString()));
-//			.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
+
 		return http.build();
 	}
 

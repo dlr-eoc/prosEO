@@ -53,7 +53,7 @@ public class FacilitymgrSecurityConfig {
 			.requestMatchers(HttpMethod.GET)
 			.hasAnyRole(UserRole.FACILITY_READER.toString())
 			.anyRequest().hasAnyRole(UserRole.FACILITY_MGR.toString()));
-//			.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
+
 		return http.build();
 	}
 
