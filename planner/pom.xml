@@ -23,7 +23,7 @@
     </organization>
 
     <properties>
-        <kubernetes.client.version>12.0.1</kubernetes.client.version>
+        <kubernetes.client.version>20.0.1-legacy</kubernetes.client.version>
         <main.basedir>${basedir}/../..</main.basedir>
         <raml-path>src/main/resources/raml/planner-api.raml</raml-path>
         <raml-base-package>de.dlr.proseo.model.rest</raml-base-package>
@@ -109,6 +109,11 @@
         <dependency>
             <groupId>io.kubernetes</groupId>
             <artifactId>client-java-api</artifactId>
+            <version>${kubernetes.client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.kubernetes</groupId>
+            <artifactId>client-java-api-fluent</artifactId>
             <version>${kubernetes.client.version}</version>
         </dependency>
         <dependency>

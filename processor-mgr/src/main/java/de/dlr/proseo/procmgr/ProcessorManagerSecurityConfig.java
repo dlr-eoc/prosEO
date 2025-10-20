@@ -60,7 +60,8 @@ public class ProcessorManagerSecurityConfig {
 			.requestMatchers(base + "/workflows")
 			.hasAnyRole(UserRole.WORKFLOW_MGR.toString())
 			.anyRequest()
-			.hasAnyRole(UserRole.PROCESSORCLASS_MGR.toString()));
+			.hasAnyRole(UserRole.PROCESSORCLASS_MGR.toString()))
+			.csrf((csrf) -> csrf.disable());
 
 		return http.build();
 	}

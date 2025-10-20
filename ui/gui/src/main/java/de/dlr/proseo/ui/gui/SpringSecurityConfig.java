@@ -67,7 +67,8 @@ public class SpringSecurityConfig {
 			.logout(logout -> logout
 					.logoutUrl("/logout")
 					.logoutSuccessUrl("/customlogin?logout")
-					.permitAll());
+					.permitAll())
+			.csrf((csrf) -> csrf.disable());
 
 		return http.build();
 	}

@@ -78,7 +78,8 @@ public class UsermgrSecurityConfig {
 			.requestMatchers(HttpMethod.PATCH, base + "/users/**")
 			.authenticated() // Any user may change their own password
 			.anyRequest()
-			.hasAnyRole(UserRole.ROOT.toString(), UserRole.USERMGR.toString()));
+			.hasAnyRole(UserRole.ROOT.toString(), UserRole.USERMGR.toString()))
+			.csrf((csrf) -> csrf.disable());
 
 		return http.build();
 	}

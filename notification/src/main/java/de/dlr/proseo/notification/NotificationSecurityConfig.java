@@ -36,7 +36,8 @@ public class NotificationSecurityConfig {
 				.requestMatchers(base + "/notify")
 				.permitAll()
 				.requestMatchers("/actuator/health")
-				.permitAll());
+				.permitAll())
+		.csrf((csrf) -> csrf.disable());
 
 		return http.build();
 	}

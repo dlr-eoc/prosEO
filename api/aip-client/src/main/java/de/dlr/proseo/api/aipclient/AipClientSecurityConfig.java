@@ -78,7 +78,8 @@ public class AipClientSecurityConfig {
                         .requestMatchers("/actuator/health")
                         .permitAll()
                         .anyRequest()
-                        .hasAnyRole(UserRole.PRODUCT_INGESTOR.toString()));
+                        .hasAnyRole(UserRole.PRODUCT_INGESTOR.toString()))
+    			.csrf((csrf) -> csrf.disable());
 
         return http.build();
 	}

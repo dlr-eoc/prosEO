@@ -568,7 +568,7 @@ public class KubeConfig {
 		V1JobList k8sJobList = null;
 		getNodeInfo(); // TODO Should this info be processed?
 		try {
-			k8sJobList = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
+			k8sJobList = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null, null, null);
 		} catch (ApiException e) {
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 			return;
@@ -707,7 +707,7 @@ public class KubeConfig {
 		V1PodList podList = null;
 
 		try {
-			podList = apiV1.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
+			podList = apiV1.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null, null, null);
 		} catch (ApiException e) {
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 		}
@@ -724,7 +724,7 @@ public class KubeConfig {
 		V1JobList jobList = null;
 
 		try {
-			jobList = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
+			jobList = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null, null, null);
 		} catch (ApiException e) {
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 		}
@@ -875,7 +875,7 @@ public class KubeConfig {
 			retryNumber++;
 
 			try {
-				foundJob = batchApiV1.readNamespacedJob(name, namespace, null, null, null);
+				foundJob = batchApiV1.readNamespacedJob(name, namespace, null);
 			} catch (ApiException e) {
 				if (e.getCode() == 404) {
 					logger.log(PlannerMessage.KUBECONFIG_JOB_NOT_FOUND, name);
@@ -924,7 +924,7 @@ public class KubeConfig {
 			retryNumber++;
 			
 			try {
-				retrievedPod = apiV1.readNamespacedPod(name, namespace, null, null, null);
+				retrievedPod = apiV1.readNamespacedPod(name, namespace, null);
 			} catch (Exception e) {
 				if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException) {
 					// Nothing to do, as there is a bug in the Kubernetes API
@@ -1107,7 +1107,7 @@ public class KubeConfig {
 
 		try {
 			// Retrieve the list of nodes from the Kubernetes API
-			kubeNodes = apiV1.listNode(null, null, null, null, null, null, null, null, null, null);
+			kubeNodes = apiV1.listNode(null, null, null, null, null, null, null, null, null, null, null);
 
 			if (kubeNodes != null) {
 				for (V1Node node : kubeNodes.getItems()) {

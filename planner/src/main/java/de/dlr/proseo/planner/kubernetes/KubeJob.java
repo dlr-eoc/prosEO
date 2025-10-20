@@ -607,7 +607,7 @@ public class KubeJob {
 		Integer cycle = ProductionPlanner.config.getProductionPlannerJobCreatedWaitTime();
 		for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 			try {
-				job = kubeConfig.getBatchApiV1().createNamespacedJob(kubeConfig.getNamespace(), job, null, null, null);
+				job = kubeConfig.getBatchApiV1().createNamespacedJob(kubeConfig.getNamespace(), job, null, null, null, null);
 				break;
 			} catch (ApiException e) {
 				// look whether job was created or the exception was "real"
@@ -619,7 +619,7 @@ public class KubeJob {
 					searchPod();
 					if (podNames.get(podNames.size() - 1).startsWith(jobName)) {
 						// job was created
-						job = kubeConfig.getBatchApiV1().readNamespacedJob(jobName, kubeConfig.getNamespace(), null, false, false);
+						job = kubeConfig.getBatchApiV1().readNamespacedJob(jobName, kubeConfig.getNamespace(), null);
 						if (logger.isTraceEnabled())
 							logger.trace("    createNamespacedJob: retry {} of {} successful", i, jobName);
 						break;
@@ -742,7 +742,7 @@ public class KubeJob {
 
 				try {
 					// Retrieve the pod list for the namespace
-					podList = kubeConfig.getApiV1().listNamespacedPod(kubeConfig.getNamespace(), null, null, null, null, null, null,
+					podList = kubeConfig.getApiV1().listNamespacedPod(kubeConfig.getNamespace(),null, null, null, null, null, null, null,
 							null, null, 30, null);
 					podNames.clear();
 
@@ -1316,7 +1316,7 @@ public class KubeJob {
 			CoreV1EventList events = null;
 			try {
 				events = kubeConfig.getApiV1()
-					.listEventForAllNamespaces(false, null, fieldSelector, null, 30, null, null, null, null, null);
+					.listEventForAllNamespaces(false, null, fieldSelector, null, 30, null, null, null, null, null, null);
 
 				if (events != null) {
 					podMessages.append("Job Step Events (Type - Reason - Count - Message):\n");

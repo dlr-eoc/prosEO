@@ -52,7 +52,8 @@ public class FacilitymgrSecurityConfig {
 			.permitAll()
 			.requestMatchers(HttpMethod.GET)
 			.hasAnyRole(UserRole.FACILITY_READER.toString())
-			.anyRequest().hasAnyRole(UserRole.FACILITY_MGR.toString()));
+			.anyRequest().hasAnyRole(UserRole.FACILITY_MGR.toString()))
+			.csrf((csrf) -> csrf.disable());
 
 		return http.build();
 	}

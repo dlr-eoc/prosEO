@@ -52,7 +52,8 @@ public class ProductArchiveManagerSecurityConfig {
 			.permitAll()
 			.requestMatchers(HttpMethod.GET)
 			.hasAnyRole(UserRole.ARCHIVE_READER.toString())
-			.anyRequest().hasAnyRole(UserRole.ARCHIVE_MGR.toString()));
+			.anyRequest().hasAnyRole(UserRole.ARCHIVE_MGR.toString()))
+			.csrf((csrf) -> csrf.disable());
 
 		return http.build();
 	}
