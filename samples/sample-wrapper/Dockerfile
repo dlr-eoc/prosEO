@@ -13,4 +13,4 @@ ENTRYPOINT ["java", "-jar", "/usr/share/proseo-sample-wrapper/proseo-sample-wrap
 # Variable setting for Debugging (adapt IP address as needed)
 #ENV PROCESSOR_SHELL_COMMAND="java -Xdebug -Xrunjdwp:transport=dt_socket,address=192.168.20.155:8001 -jar /usr/share/sample-processor/proseo-sample-processor.jar"
 
-#ENTRYPOINT ["java", "-Xdebug",  "-Xrunjdwp:transport=dt_socket,address=192.168.20.155:8002", "-jar", "/usr/share/proseo-sample-wrapper/proseo-sample-wrapper.jar", "de.dlr.proseo.samplewrap.SampleWrapper"]
+ # ENTRYPOINT ["java", "-Xdebug",  "-Xrunjdwp:transport=dt_socket,address=192.168.20.155:8002", "-jar", "/usr/share/proseo-sample-wrapper/proseo-sample-wrapper.jar", "de.dlr.proseo.samplewrap.SampleWrapper"]

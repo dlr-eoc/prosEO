@@ -77,7 +77,7 @@
                 th:text="#{state}"></p>
             </div>
             <div class="col-3 pl-lg-0" th:title="#{selectOrderState}">
-              <select name="orderStates" id="orderStates" multiple="multiple" class="form-select" data-placeholder="&nbsp;">
+              <select name="orderStates" id="orderStates"  th:title="#{selectOrderState}" multiple="multiple" class="form-select" data-placeholder="&nbsp;">
                 <option>INITIAL</option>
                 <option>APPROVED</option>
                 <option>PLANNING</option>
@@ -621,8 +621,8 @@ function retrieveData() {
     	activateSidebarElem('sb-order');
         feather.replace();
         readHTMLParams();
-        setSelected();
         retrieveDataPrim(false);
+        setSelected();
     };
     
     window.onload = function () {
