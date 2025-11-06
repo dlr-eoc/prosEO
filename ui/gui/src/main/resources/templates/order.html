@@ -359,10 +359,12 @@
                                 </a>
                                 <span th:if="${#strings.equals(#strings.arraySplit(#strings.arraySplit(comp, '|')[1], '-')[1], '0')}"
                                   class="proseo-list-item">
-                                  <span 
+                                  <span th:unless="${#strings.equals(jobstep?.jobStepState, 'PLANNED')}"
                                   th:class="${#strings.equals(#strings.arraySplit(#strings.arraySplit(comp, '|')[1], '-')[0], 'M')} ? 'mandatory-0' : 'optional-0'"  
                                   th:text="' ' + ${#strings.arraySplit(comp, '|')[0]}"
                                   th:title="${#strings.equals(#strings.arraySplit(#strings.arraySplit(comp, '|')[1], '-')[0], 'M')} ? #{mandatory-0} : #{optional-0}"></span>
+                                  <span th:if="${#strings.equals(jobstep?.jobStepState, 'PLANNED')}"
+                                  th:text="' ' + ${#strings.arraySplit(comp, '|')[0]}"></span>
                                 </span>
                                 </span>
                                 <span th:unless="${hasroleproductreader}"><span 
