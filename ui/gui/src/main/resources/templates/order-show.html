@@ -221,15 +221,15 @@
                             th:title="${ord?.percentRunning} + '% running'"></div>
                       </div>
                       </td>
-                      <td><div th:insert="fragments/ordermenu.html :: orderMenu"></div></td>
+                      <td><div th:insert="~{fragments/ordermenu.html :: orderMenu}"></div></td>
                     </tr>
                   </tbody>
                 </table>
-                <div th:replace="fragments/navbar.html :: alternatePageNav"></div>
+                <div th:replace="~{fragments/navbar.html :: alternatePageNav}"></div>
               </div>
             </div>
           </div>
-          <div th:insert="fragments/footer.html :: footer"></div>
+          <div th:insert="~{fragments/footer.html :: footer}"></div>
         </main>
       </div>
   </body>
