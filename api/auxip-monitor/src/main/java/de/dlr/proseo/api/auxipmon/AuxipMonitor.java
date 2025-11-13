@@ -133,6 +133,7 @@ public class AuxipMonitor extends BaseMonitor {
 	private static final String MSG_PRODUCT_TRANSFER_COMPLETED = "(I%d) Transfer completed: |%s|%s|%d|%s|%s|";
 	private static final String MSG_FOLLOW_ON_ACTION_STARTED = "(I%d) Follow-on action for session %s started with command %s";
 	private static final String MSG_RETRIEVAL_RESULT = "(I%d) Retrieval request returned %d products out of %d available";
+	private static final String MSG_MAX_RETRIES_REACHED = "Maximum number of retries reached";
 
 	/** A oldLogger for this class */
 	private static Logger oldLogger = LoggerFactory.getLogger(AuxipMonitor.class);
@@ -762,7 +763,7 @@ public class AuxipMonitor extends BaseMonitor {
 				Instant copyStart = Instant.now();
 				for (int i = 0; i < MAX_RETRY; i++) {
 					try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-						logger.trace("... starting request for URL '{}'", requestUri);
+						logger.trace("... starting {}. request for URL '{}'", i + 1, requestUri);
 
 						HttpGet httpGet = new HttpGet(requestUri);
 
@@ -781,10 +782,61 @@ public class AuxipMonitor extends BaseMonitor {
 						}
 
 						httpResponse.close();
-						break;
+						
+						Boolean success = true;
+						// Compare file size with value given by AUXIP
+						Long productFileLength = productFile.length();
+						if (!productFileLength.equals(transferProduct.getSize())) {
+							oldLogger.error(String.format(MSG_FILE_SIZE_MISMATCH, MSG_ID_FILE_SIZE_MISMATCH,
+									transferProduct.getIdentifier(), transferProduct.getSize(), productFileLength));
+							success = false;
+						}
+						if (success) {
+							// Record the performance for files of sufficient size
+							Duration copyDuration = Duration.between(copyStart, Instant.now());
+							Double copyPerformance = productFileLength / // Bytes
+									(copyDuration.toNanos() / 1000000000.0) // seconds (with fraction)
+									/ (1024 * 1024); // --> MiB/s
+
+							if (config.getAuxipPerformanceMinSize() < productFileLength) {
+								setLastCopyPerformance(copyPerformance);
+							}
+
+							// Compute checksum and compare with value given by AUXIP
+							String md5Hash = MD5Util.md5Digest(productFile);
+							if (!md5Hash.equalsIgnoreCase(transferProduct.checksum)) {
+								oldLogger.error(String.format(MSG_CHECKSUM_MISMATCH, MSG_ID_CHECKSUM_MISMATCH, transferProduct.getIdentifier(),
+										transferProduct.getChecksum(), md5Hash));
+								success = false;
+							}
+						}
+						if (success) {
+							// Log download with UUID, file name, size, checksum, publication date (request by ESA)
+							oldLogger.info(String.format(MSG_PRODUCT_TRANSFER_COMPLETED, MSG_ID_PRODUCT_TRANSFER_COMPLETED,
+									transferProduct.getIdentifier(), transferProduct.getName(), transferProduct.getSize(),
+									transferProduct.getChecksum(), transferProduct.getPublicationTime().toString()));
+							break;
+						} else {
+							if (productFile != null && productFile.exists()) {
+								productFile.delete();
+							}
+						}
+						if ((i + 1) < MAX_RETRY) {
+							ProseoUtil.randomWait(i, AUXIP_WAIT);
+						} else {
+							oldLogger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED_AFTER_RETRIES, MAX_RETRY, MSG_ID_PRODUCT_DOWNLOAD_FAILED,
+									transferProduct.getName(), MSG_MAX_RETRIES_REACHED), "");
+							return false;
+						}
 					} catch (FileNotFoundException e) {
-						oldLogger.error(String.format(MSG_FILE_NOT_WRITABLE, MSG_ID_FILE_NOT_WRITABLE, productFile.toString()));
-						return false;
+						if ((i + 1) < MAX_RETRY) {
+							oldLogger.error(String.format(MSG_FILE_NOT_WRITABLE, MSG_ID_FILE_NOT_WRITABLE, productFile.toString()));
+							// retry
+							ProseoUtil.randomWait(i, AUXIP_WAIT);
+						} else {						
+							oldLogger.error(String.format(MSG_FILE_NOT_WRITABLE, MSG_ID_FILE_NOT_WRITABLE, productFile.toString()));
+							return false;
+						}
 					} catch (HttpResponseException e) {
 						if ((i + 1) < MAX_RETRY) {
 							oldLogger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED,
@@ -809,37 +861,6 @@ public class AuxipMonitor extends BaseMonitor {
 						}
 					}
 				}
-				// Compare file size with value given by AUXIP
-				Long productFileLength = productFile.length();
-				if (!productFileLength.equals(transferProduct.getSize())) {
-					oldLogger.error(String.format(MSG_FILE_SIZE_MISMATCH, MSG_ID_FILE_SIZE_MISMATCH,
-							transferProduct.getIdentifier(), transferProduct.getSize(), productFileLength));
-					return false;
-				}
-
-				// Record the performance for files of sufficient size
-				Duration copyDuration = Duration.between(copyStart, Instant.now());
-				Double copyPerformance = productFileLength / // Bytes
-						(copyDuration.toNanos() / 1000000000.0) // seconds (with fraction)
-						/ (1024 * 1024); // --> MiB/s
-
-				if (config.getAuxipPerformanceMinSize() < productFileLength) {
-					setLastCopyPerformance(copyPerformance);
-				}
-
-				// Compute checksum and compare with value given by AUXIP
-				String md5Hash = MD5Util.md5Digest(productFile);
-				if (!md5Hash.equalsIgnoreCase(transferProduct.checksum)) {
-					oldLogger.error(String.format(MSG_CHECKSUM_MISMATCH, MSG_ID_CHECKSUM_MISMATCH, transferProduct.getIdentifier(),
-							transferProduct.getChecksum(), md5Hash));
-					return false;
-				}
-
-				// Log download with UUID, file name, size, checksum, publication date (request by ESA)
-				oldLogger.info(String.format(MSG_PRODUCT_TRANSFER_COMPLETED, MSG_ID_PRODUCT_TRANSFER_COMPLETED,
-						transferProduct.getIdentifier(), transferProduct.getName(), transferProduct.getSize(),
-						transferProduct.getChecksum(), transferProduct.getPublicationTime().toString()));
-
 				return true;
 			} catch (Exception e) {
 				oldLogger.error(String.format(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN), e);
