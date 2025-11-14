@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 public class RestOps {
 
 	/** Maximum numer of retries in case of failure to connect */
-	private static int MAX_RETRIES = 3;
+	private static int MAX_RETRIES = 5;
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(RestOps.class);
@@ -209,10 +209,40 @@ public class RestOps {
 				String message = String.format("Invalid URI components for endpoint %s and query parameters %s",
 						endPoint + endPointPath, queryParams.toString());
 				logger.error(message, e);
-				throw new RuntimeException(message, e);
+				if (retry < (MAX_RETRIES - 1)) {
+					// Sometimes there is the exception "no route to host" which isn't really true
+					// therefore wait a little bit and try again.
+					//
+					// TODO is there a possibility to avoid this?
+					logger.info("Retry...");
+
+					try {
+						TimeUnit.SECONDS.sleep(1);
+					} catch (Exception e1) {
+						logger.error("Exception during retry wait: " + e.getMessage(), e1);
+						return null;
+					}
+				} else {
+					throw new RuntimeException(message, e);
+				}
 			} catch (RuntimeException e) {
 				logger.error("Exception during REST API call: ", e);
-				throw e;
+				if (retry < (MAX_RETRIES - 1)) {
+					// Sometimes there is the exception "no route to host" which isn't really true
+					// therefore wait a little bit and try again.
+					//
+					// TODO is there a possibility to avoid this?
+					logger.info("Retry...");
+
+					try {
+						TimeUnit.SECONDS.sleep(1);
+					} catch (Exception e1) {
+						logger.error("Exception during retry wait: " + e.getMessage(), e1);
+						return null;
+					}
+				} else {
+					throw e;
+				}
 			}
 
 			retry++;

@@ -763,6 +763,7 @@ public class AuxipMonitor extends BaseMonitor {
 				Instant copyStart = Instant.now();
 				for (int i = 0; i < MAX_RETRY; i++) {
 					try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+
 						logger.trace("... starting {}. request for URL '{}'", i + 1, requestUri);
 
 						HttpGet httpGet = new HttpGet(requestUri);
@@ -861,6 +862,7 @@ public class AuxipMonitor extends BaseMonitor {
 						}
 					}
 				}
+
 				return true;
 			} catch (Exception e) {
 				oldLogger.error(String.format(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN), e);
