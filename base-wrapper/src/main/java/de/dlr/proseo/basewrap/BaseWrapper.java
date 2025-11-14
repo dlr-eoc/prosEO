@@ -192,7 +192,7 @@ public class BaseWrapper {
 	// Variables to be provided by Production Planner during invocation
 	/** Path to Job Order File, format according to file system type */
 	private String ENV_JOBORDER_FILE = System.getenv(ENV_VARS.JOBORDER_FILE.toString());
-	/** Path to Job Order File, format according to file system type */
+	/** The Job Order File format version to be used */
 	protected String ENV_JOBORDER_VERSION = System.getenv(ENV_VARS.JOBORDER_VERSION.toString());
 	/** HTTP endpoint for local Storage Manager */
 	private String ENV_STORAGE_ENDPOINT = System.getenv(ENV_VARS.STORAGE_ENDPOINT.toString());
@@ -231,8 +231,7 @@ public class BaseWrapper {
 
 	// Variables to be provided by the processor or wrapper image
 	/**
-	 * Shell command to run the processor (with path to Job Order File as sole
-	 * parameter)
+	 * Shell command to run the processor (with path to Job Order File as sole parameter)
 	 */
 	protected String ENV_PROCESSOR_SHELL_COMMAND = System.getenv(ENV_VARS.PROCESSOR_SHELL_COMMAND.toString());
 
@@ -945,7 +944,7 @@ public class BaseWrapper {
 					HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_STORAGE_USER, ENV_STORAGE_PASSWORD,
 							ENV_STORAGE_ENDPOINT, "/productfiles", null, params, RestOps.HttpMethod.PUT);
 
-					if (null == responseInfo && 201 != responseInfo.gethttpCode()) {
+					if (null == responseInfo || 201 != responseInfo.gethttpCode()) {
 						logger.error(MSG_ERROR_PUSHING_OUTPUT_FILE, fn.getFileName(), responseInfo.gethttpCode(),
 								extractProseoMessage(responseInfo));
 						throw new WrapperException();
@@ -1238,7 +1237,7 @@ public class BaseWrapper {
 
 			runProcessor(REL_CONTAINER_JOF_PATH);
 
-			/* STEP [9] Perform processor-specific updates to the Job Order document */
+			/* STEP [9 - Optional] Perform processor-specific updates to the Job Order document */
 
 			/* Hook for additional post-processing operations on the job order document */
 			postProcessingHook(joWork);
@@ -1252,7 +1251,7 @@ public class BaseWrapper {
 				return EXIT_CODE_FAILURE;
 			}
 
-			/* STEP [11] Register pushed products using with prosEO Ingestor */
+			/* STEP [11] Register pushed products with prosEO Ingestor */
 			ingestPushedOutputs(pushedProducts);
 
 		} catch (WrapperException e) {
