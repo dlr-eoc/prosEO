@@ -1,3 +1,8 @@
+/**
+ * MonExtService.java
+ *
+ * © 2021 Prophos Informatik GmbH
+ */
 package de.dlr.proseo.model;
 
 import jakarta.persistence.Column;
@@ -5,6 +10,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
+/**
+ * External service defined by a caption and an ID
+ */
 @Entity
 @Table(indexes = {
 	@Index(unique = true, columnList = "name")

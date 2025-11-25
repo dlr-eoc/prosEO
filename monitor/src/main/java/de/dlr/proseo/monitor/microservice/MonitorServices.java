@@ -13,7 +13,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.MonExtService;
 import de.dlr.proseo.model.MonService;
-import de.dlr.proseo.model.MonServiceState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.monitor.MonitorApplication;
@@ -26,7 +25,6 @@ public class MonitorServices extends Thread {
 	private Map<String, DockerService> dockers;
 	private Map<String, MonService> monServices;
 	private Map<String, MonExtService> monExtServices;
-	private Map<String, MonServiceState> monServiceStates;
 	private MonitorConfiguration config;
 	private PlatformTransactionManager txManager;
 	
@@ -44,7 +42,6 @@ public class MonitorServices extends Thread {
 		this.services = new ArrayList<MicroService>();
 		this.monServices = new HashMap<String, MonService>();
 		this.monExtServices = new HashMap<String, MonExtService>();
-		this.monServiceStates = new HashMap<String, MonServiceState>();
 		for (MonitorConfiguration.Service s : MonitorApplication.config.getServices()) {
 			services.add(new MicroService(s));
 		}

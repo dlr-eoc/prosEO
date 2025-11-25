@@ -1,3 +1,8 @@
+/**
+ * MonExtServiceStateOperationDay.java
+ *
+ * © 2022 Prophos Informatik GmbH
+ */
 package de.dlr.proseo.model;
 
 import java.time.Instant;
@@ -7,6 +12,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
+/**
+ * The percentage of uptime of an external service for a given calendar day
+ */
 @Entity
 @Table(indexes = {
 		@Index(unique = false, columnList = "datetime")
@@ -26,7 +34,7 @@ public class MonExtServiceStateOperationDay extends PersistentObject {
 	private long monExtServiceId;
 
 	/**
-	 * The service up time
+	 * The service up time (in percent)
 	 */
 	@Column(name = "up_time")
 	private double upTime;

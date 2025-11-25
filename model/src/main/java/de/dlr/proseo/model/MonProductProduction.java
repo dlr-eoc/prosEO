@@ -1,3 +1,8 @@
+/**
+ * MonProductProduction.java
+ *
+ * © 2021 Prophos Informatik GmbH
+ */
 package de.dlr.proseo.model;
 
 import java.time.Instant;
@@ -6,6 +11,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MappedSuperclass;
 
+/**
+ * Abstract superclass for all entities monitoring product generation performance for a given period of time
+ * per production type (systematic/on-demand/reprocessing)
+ */
 @MappedSuperclass
 abstract public class MonProductProduction extends PersistentObject {
 	/**
@@ -14,11 +23,11 @@ abstract public class MonProductProduction extends PersistentObject {
 	@ManyToOne
 	private Mission mission;
 	/**
-	 * The file size
+	 * The aggregated file sizes
 	 */
 	private long fileSize;
 	/**
-	 * The product count
+	 * The number of products generated
 	 */
 	private int count;
 	/**
@@ -26,31 +35,31 @@ abstract public class MonProductProduction extends PersistentObject {
 	 */
 	private String productionType;
 	/**
-	 * Minimum latency
+	 * Minimum latency since raw data availability at ground station (in seconds)
 	 */
 	private int productionLatencyMin;
 	/**
-	 * Maximum latency
+	 * Maximum latency since raw data availability at ground station (in seconds)
 	 */
 	private int productionLatencyMax;
 	/**
-	 * Average latency
+	 * Average latency since raw data availability at ground station (in seconds)
 	 */
 	private int productionLatencyAvg;
 	/**
-	 * Minimum latency
+	 * Minimum total latency since sensing stop time (in seconds)
 	 */
 	private int totalLatencyMin;
 	/**
-	 * Maximum latency
+	 * Maximum total latency since sensing stop time (in seconds)
 	 */
 	private int totalLatencyMax;
 	/**
-	 * Average latency
+	 * Average total latency since sensing stop time (in seconds)
 	 */
 	private int totalLatencyAvg;
 	/**
-	 * The time of the states
+	 * The observation time period
 	 */
 	@Column(name = "datetime", columnDefinition = "TIMESTAMP")
 	private Instant datetime;
@@ -73,25 +82,25 @@ abstract public class MonProductProduction extends PersistentObject {
 		return count;
 	}
 	/**
-	 * @return the productionType
+	 * @return the production type
 	 */
 	public String getProductionType() {
 		return productionType;
 	}
 	/**
-	 * @return the productionLatencyMin
+	 * @return the minimum production latency in seconds
 	 */
 	public int getProductionLatencyMin() {
 		return productionLatencyMin;
 	}
 	/**
-	 * @return the productionLatencyMax
+	 * @return the maximum production latency in seconds
 	 */
 	public int getProductionLatencyMax() {
 		return productionLatencyMax;
 	}
 	/**
-	 * @return the productionLatencyAvg
+	 * @return the average production latency in seconds
 	 */
 	public int getProductionLatencyAvg() {
 		return productionLatencyAvg;

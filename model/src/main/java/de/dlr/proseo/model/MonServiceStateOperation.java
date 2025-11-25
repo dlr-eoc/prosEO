@@ -1,3 +1,8 @@
+/**
+ * MonServiceStateOperation.java
+ *
+ * © 2021 Prophos Informatik GmbH
+ */
 package de.dlr.proseo.model;
 
 import java.time.Instant;
@@ -8,6 +13,9 @@ import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+/**
+ * The state of a prosEO service at a given point in time
+ */
 @Entity
 @Table(indexes = {
 	@Index(unique = false, columnList = "datetime"),

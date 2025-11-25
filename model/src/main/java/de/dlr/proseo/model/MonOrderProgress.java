@@ -1,3 +1,8 @@
+/**
+ * MonOrderProgress.java
+ *
+ * © 2021 Prophos Informatik GmbH
+ */
 package de.dlr.proseo.model;
 
 import java.time.Instant;
@@ -8,6 +13,9 @@ import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+/**
+ * Progress state of a processing order for a given point in time
+ */
 @Embeddable
 @Table(indexes = {
 	@Index(unique = false, columnList = "datetime")

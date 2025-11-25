@@ -1,9 +1,18 @@
+/**
+ * MonProductProductionHour.java
+ *
+ * © 2021 Prophos Informatik GmbH
+ */
 package de.dlr.proseo.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
+/**
+ * Product generation performance per calendar month
+ * per production type (systematic/on-demand/reprocessing)
+ */
 @Entity
 @Table(indexes = {
 		@Index(unique = false, columnList = "datetime"),

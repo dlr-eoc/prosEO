@@ -28,7 +28,7 @@ public class MetricsHourly extends MetricsCycleBase {
 	 */
 	public MetricsHourly(MonitorConfiguration config, PlatformTransactionManager txManager, EntityManager em) {
 		super(config, txManager, em);
-		this.millisToWait = 60 * 60 * 1000; // 10 minutes
+		this.millisToWait = 60 * 60 * 1000; // 60 minutes
 	}
 	
     /**
