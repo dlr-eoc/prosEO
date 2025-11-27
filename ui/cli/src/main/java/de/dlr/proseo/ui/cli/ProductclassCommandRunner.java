@@ -64,7 +64,7 @@ public class ProductclassCommandRunner {
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
 	private static final String PROMPT_PRODUCT_TYPE = "Product class name (empty field cancels): ";
 	private static final String PROMPT_VISIBILITY = "Product visibility (I)nternal, R)estricted, P)ublic; empty field cancels): ";
-	private static final String PROMPT_SELECTION_RULE = "Selection rule in Rule Language (empty field cancels, ^D terminates): ";
+	private static final String PROMPT_SELECTION_RULE = "Selection rule in Rule Language (empty field cancels, ^D (Linux) / ^Z (Windows) terminates): ";
 
 	private static final String URI_PATH_PRODUCTCLASSES = "/productclasses";
 	private static final String URI_PATH_SELECTIONRULES = "/selectionrules";
@@ -601,7 +601,7 @@ public class ProductclassCommandRunner {
 		}
 		
 		/* Read selection rule file, if any */
-		List<Object> selectionRuleList = new ArrayList<>();
+		List<SelectionRuleString> selectionRuleList = new ArrayList<>();
 		if (null == selectionRuleFile) {
 			selectionRuleFileFormat = FORMAT_PLAIN; // No file given, so we assume interactive rule language input
 			SelectionRuleString restSelectionRule = new SelectionRuleString();
@@ -657,8 +657,7 @@ public class ProductclassCommandRunner {
 		/* Check input data for completeness */
 		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
 		ObjectMapper mapper = new ObjectMapper();
-		for (Object listObject: selectionRuleList) {
-			SelectionRuleString restSelectionRule = mapper.convertValue(listObject, SelectionRuleString.class);
+		for (SelectionRuleString restSelectionRule: selectionRuleList) {
 			
 			/* Set values from attribute parameters */
 			for (String attributeParam: attributeList) {
