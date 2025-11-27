@@ -203,23 +203,13 @@ public class MicroService {
 						createEntry(monitor);
 						return;
 					}
-				} catch (HttpClientErrorException.NotFound e) {
-					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
-					// TODO
 				} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
 					// We got an answer and assume the service is running
 					this.state = MonServiceStates.RUNNING_ID;
 					createEntry(monitor);
 					return;
-				} catch (RestClientResponseException e) {				
-					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
-					// TODO
-				} catch (RestClientException e) {
-					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
-					// TODO
 				} catch (Exception e) {
-					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
-					// TODO
+					// Don't log the exception, it is silently ignored
 				}
 			}
 		}
