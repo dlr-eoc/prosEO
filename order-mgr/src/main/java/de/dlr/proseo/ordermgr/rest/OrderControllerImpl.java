@@ -91,8 +91,8 @@ public class OrderControllerImpl implements OrderController {
 	 */
 	@Override
 	public ResponseEntity<List<RestOrder>> getOrders(String mission, String identifier, String[] productClasses,
-			@DateTimeFormat Date startTimeFrom, @DateTimeFormat Date startTimeTo, @DateTimeFormat Date executionTimeFrom,
-			@DateTimeFormat Date executionTimeTo) {
+			String startTimeFrom, String startTimeTo, String executionTimeFrom,
+			String executionTimeTo) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productClasses, startTimeFrom, startTimeTo,
 					executionTimeFrom, executionTimeTo);

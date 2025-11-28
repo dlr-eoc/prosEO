@@ -99,7 +99,7 @@ public class OrderCommandRunner {
 	private static final String FORMAT_NONE = "NONE";
 	private static final String FORMAT_PLAIN = "PLAIN";
 	
-	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss").withZone(ZoneId.of("UTC"));
+	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSSSSS").withZone(ZoneId.of("UTC"));
 
 	/** The user manager used by all command runners */
 	@Autowired

@@ -400,8 +400,7 @@ var handler = function ( ) {
 
  // Read the HTML parameters from URI and retrieve the corresponding data
  function loadWindow() {
-     var elem = document.getElementById('sb-product-class');
-     $(elem).addClass('active');
+     activateSidebarElem('sb-mission');
      feather.replace();
      readHTMLParams();
      setSelected();

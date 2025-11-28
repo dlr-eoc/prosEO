@@ -75,7 +75,7 @@ public class IngestorCommandRunner {
 	private static final String PRODUCTS = "products";
 	private static final String PRODUCTFILES = "product files";
 	
-	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss").withZone(ZoneId.of("UTC"));
+	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSSSSS").withZone(ZoneId.of("UTC"));
 
 	/** The user manager used by all command runners */
 	@Autowired

@@ -1175,8 +1175,8 @@ public class ProcessingOrderMgr {
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public List<RestOrder> getOrders(String mission, String identifier, String[] requestedProductClasses,
-			@DateTimeFormat Date startTimeFrom, @DateTimeFormat Date startTimeTo, @DateTimeFormat Date executionTimeFrom,
-			@DateTimeFormat Date executionTimeTo) throws NoResultException, SecurityException {
+			String startTimeFrom, String startTimeTo, String executionTimeFrom,
+			String executionTimeTo) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, requestedProductClasses, startTimeFrom,
 					startTimeTo, executionTimeFrom, executionTimeTo);
@@ -1231,16 +1231,16 @@ public class ProcessingOrderMgr {
 			}
 		}
 		if (null != startTimeFrom) {
-			query.setParameter("startTimeFrom", startTimeFrom.toInstant());
+			query.setParameter("startTimeFrom", OrbitTimeFormatter.parseDateTime(startTimeFrom));
 		}
 		if (null != startTimeTo) {
-			query.setParameter("startTimeTo", startTimeTo.toInstant());
+			query.setParameter("startTimeTo", OrbitTimeFormatter.parseDateTime(startTimeTo));
 		}
 		if (null != executionTimeFrom) {
-			query.setParameter("executionTimeFrom", executionTimeFrom.toInstant());
+			query.setParameter("executionTimeFrom", OrbitTimeFormatter.parseDateTime(executionTimeFrom));
 		}
 		if (null != executionTimeTo) {
-			query.setParameter("executionTimeTo", executionTimeTo.toInstant());
+			query.setParameter("executionTimeTo", OrbitTimeFormatter.parseDateTime(executionTimeTo));
 		}
 		for (Object resultObject : query.getResultList()) {
 			if (resultObject instanceof ProcessingOrder) {
