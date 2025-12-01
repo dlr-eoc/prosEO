@@ -717,10 +717,10 @@ public class ProcessingOrderMgrTest {
 		assertTrue(pom.getOrders("UTM", null, null, null, null, null, null).size() >= 1);
 		assertTrue(pom.getOrders("UTM", testOrderData[0][3], null, null, null, null, null).size() >= 1);
 		assertTrue(pom.getOrders("UTM", null, testReqProdClass, null, null, null, null).size() >= 1);
-		assertTrue(pom.getOrders("UTM", null, null, Date.from(start), null, null, null).size() >= 1);
-		assertTrue(pom.getOrders("UTM", null, null, null, Date.from(stop), null, null).size() >= 1);
-		assertTrue(pom.getOrders("UTM", null, null, null, null, Date.from(start), null).size() >= 1);
-		assertTrue(pom.getOrders("UTM", null, null, null, null, null, Date.from(stop)).size() >= 1);
+		assertTrue(pom.getOrders("UTM", null, null, OrbitTimeFormatter.format(start), null, null, null).size() >= 1);
+		assertTrue(pom.getOrders("UTM", null, null, null, OrbitTimeFormatter.format(stop), null, null).size() >= 1);
+		assertTrue(pom.getOrders("UTM", null, null, null, null, OrbitTimeFormatter.format(start), null).size() >= 1);
+		assertTrue(pom.getOrders("UTM", null, null, null, null, null, OrbitTimeFormatter.format(stop)).size() >= 1);
 	}
 
 	/**

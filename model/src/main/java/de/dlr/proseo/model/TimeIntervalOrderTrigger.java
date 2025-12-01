@@ -9,6 +9,8 @@ import java.time.Duration;
 import java.time.Instant;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 
 /**
  * A trigger that fires in certain time intervals.
@@ -16,6 +18,8 @@ import jakarta.persistence.Entity;
  * @author Dr. Thomas Bassler
  */
 @Entity
+@Table(indexes = { 
+		@Index(unique = true, columnList = "mission_id,name")})
 public class TimeIntervalOrderTrigger extends TimerOrderTrigger {
 
     /**

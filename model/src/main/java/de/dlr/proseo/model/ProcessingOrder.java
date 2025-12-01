@@ -80,7 +80,7 @@ public class ProcessingOrder extends PersistentObject {
 	
 	/** State of the processing order */
 	@Enumerated(EnumType.STRING)
-	private OrderState orderState = OrderState.INITIAL;
+	private OrderState orderState;
 	
 	/** 
 	 * Explanatory message describing the reason for the latest state change ("StatusMessage" in ODPRIP ICD),

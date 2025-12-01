@@ -5,12 +5,12 @@
  */
 package de.dlr.proseo.model;
 
-import jakarta.persistence.Entity;
+import jakarta.persistence.MappedSuperclass;
 
 /**
  * Base class for triggers which fire upon reaching a certain point in time
  * @author Dr. Thomas Bassler
  */
-@Entity
+@MappedSuperclass
 public abstract class TimerOrderTrigger extends OrderTrigger {
 }

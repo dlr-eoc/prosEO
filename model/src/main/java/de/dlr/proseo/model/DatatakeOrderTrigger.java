@@ -11,12 +11,16 @@ import java.util.*;
 import javax.persistence.Column;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 
 /**
  * Trigger to create a processing order for an expected datatake.
  * @author Dr. Thomas Bassler
  */
 @Entity
+@Table(indexes = { 
+		@Index(unique = true, columnList = "mission_id,name")})
 public class DatatakeOrderTrigger extends MissionPlanningOrderTrigger {
 
     /**

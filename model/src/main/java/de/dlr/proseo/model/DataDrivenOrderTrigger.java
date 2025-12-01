@@ -8,6 +8,7 @@ package de.dlr.proseo.model;
 import java.util.Set;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.MappedSuperclass;
 
 /**
  * A trigger that fires upon ingestion of a product fulfilling certain criteria (match of product class of associated workflow, optionally match of its file class and/or processing mode); trigger events may be sent by the Ingestor or by Monitors for non-prosEO pickup points (local or remote)
@@ -15,6 +16,7 @@ import jakarta.persistence.Entity;
  * @author Dr. Thomas Bassler
  */
 @Entity
+@MappedSuperclass
 public class DataDrivenOrderTrigger extends OrderTrigger {
 
     /**

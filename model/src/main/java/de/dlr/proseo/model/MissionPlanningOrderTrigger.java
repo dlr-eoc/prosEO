@@ -7,13 +7,14 @@ package de.dlr.proseo.model;
 
 import java.time.Duration;
 
-import jakarta.persistence.Entity;
+import jakarta.persistence.MappedSuperclass;
 
 /**
  * Base class for triggers which fire upon reaching start time of a mission planning object plus a given deltaTime (may be negative, which means that the event fires before the start time of the object)
  * @author Dr. Thomas Bassler
  */
-@Entity
+
+@MappedSuperclass
 public abstract class MissionPlanningOrderTrigger extends OrderTrigger {
 
     /**

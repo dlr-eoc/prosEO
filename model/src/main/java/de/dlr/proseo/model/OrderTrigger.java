@@ -8,19 +8,15 @@ package de.dlr.proseo.model;
 import java.time.Duration;
 import java.util.Objects;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.MappedSuperclass;
 
 /**
  * Base class for all order generation triggers
  * 
  * @author Dr. Thomas Bassler
  */
-@Entity
-@Table(indexes = { 
-		@Index(unique = true, columnList = "mission_id,name")})
+@MappedSuperclass
 public abstract class OrderTrigger extends PersistentObject {
 	
 	/**
