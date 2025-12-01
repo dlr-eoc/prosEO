@@ -9,7 +9,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -235,7 +237,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			RestTemplate restTemplate = rtb
 				.basicAuthentication(securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword())
 				.build();
-			String requestUrl = config.getIngestorUrl() + "/products/" + id + "/download/token?fileName=" + productFileName;
+			String requestUrl = config.getIngestorUrl() + "/products/" + id + "/download/token?fileName=" + URLEncoder.encode(productFileName, "UTF-8");
 			if (logger.isTraceEnabled())
 				logger.trace("... calling service URL {} with GET", requestUrl);
 			entity = restTemplate.getForEntity(requestUrl, String.class);
@@ -533,9 +535,20 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		URIBuilder uriBuilder = null;
 		try {
 			uriBuilder = new URIBuilder(storageManagerUrl + "/products/download");
-			uriBuilder.addParameter("pathInfo", productFile.getFilePath() + "/" + productFileName);
+			uriBuilder.addParameter("pathInfo", productFile.getFilePath() + "/" + URLEncoder.encode(productFileName, "UTF-8"));
 			uriBuilder.addParameter("token", downloadToken);
 		} catch (URISyntaxException e) {
+			String message = logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
+			if (logger.isDebugEnabled()) {
+					logger.debug("An exception occurred. Cause: ", e);
+				}
+			response.setContent(
+					serializer.error(LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message))
+						.getContent());
+			response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
+			response.setHeader(HTTP_HEADER_WARNING, message);
+			return;
+		} catch (UnsupportedEncodingException e) {
 			String message = logger.log(PripMessage.MSG_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
 			if (logger.isDebugEnabled()) {
 					logger.debug("An exception occurred. Cause: ", e);
