@@ -61,6 +61,7 @@
 		<module>geotools</module>
         <module>logging</module>
         <module>notification</module>
+        <module>order-gen</module>
 	</modules>
 
 	<dependencyManagement>
