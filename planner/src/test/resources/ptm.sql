@@ -2,6 +2,92 @@
 -- PostgreSQL database dump
 --
 
+--
+-- Drop all tables from new DB schema, because otherwise the rest of the file fails
+--
+drop table if exists api_metrics cascade;
+drop table if exists calendar_order_trigger cascade;
+drop table if exists class_output_parameter cascade;
+drop table if exists class_output_parameter_output_parameters cascade;
+drop table if exists configuration cascade;
+drop table if exists configuration_configuration_files cascade;
+drop table if exists configuration_docker_run_parameters cascade;
+drop table if exists configuration_dyn_proc_parameters cascade;
+drop table if exists configuration_static_input_files cascade;
+drop table if exists configuration_input_file cascade;
+drop table if exists configuration_input_file_file_names cascade;
+drop table if exists configured_processor cascade;
+drop table if exists datatake_order_trigger cascade;
+drop table if exists input_filter cascade;
+drop table if exists input_filter_filter_conditions cascade;
+drop table if exists job cascade;
+drop table if exists job_step cascade;
+drop table if exists job_step_output_parameters cascade;
+drop table if exists mission cascade;
+drop table if exists mission_file_classes cascade;
+drop table if exists mission_processing_modes cascade;
+drop table if exists mon_ext_service cascade;
+drop table if exists mon_ext_service_state_operation cascade;
+drop table if exists mon_ext_service_state_operation_day cascade;
+drop table if exists mon_ext_service_state_operation_month cascade;
+drop table if exists mon_order_state cascade;
+drop table if exists mon_product_production_day cascade;
+drop table if exists mon_product_production_hour cascade;
+drop table if exists mon_product_production_month cascade;
+drop table if exists mon_service cascade;
+drop table if exists mon_service_state cascade;
+drop table if exists mon_service_state_operation cascade;
+drop table if exists mon_service_state_operation_day cascade;
+drop table if exists mon_service_state_operation_month cascade;
+drop table if exists orbit cascade;
+drop table if exists orbit_order_trigger cascade;
+drop table if exists processing_facility cascade;
+drop table if exists processing_order cascade;
+drop table if exists processing_order_class_output_parameters cascade;
+drop table if exists processing_order_dynamic_processing_parameters cascade;
+drop table if exists processing_order_input_filters cascade;
+drop table if exists processing_order_input_product_classes cascade;
+drop table if exists processing_order_mon_order_progress cascade;
+drop table if exists processing_order_output_parameters cascade;
+drop table if exists processing_order_requested_configured_processors cascade;
+drop table if exists processing_order_requested_orbits cascade;
+drop table if exists processing_order_requested_product_classes cascade;
+drop table if exists processing_order_history cascade;
+drop table if exists processing_order_history_product_types cascade;
+drop table if exists processor cascade;
+drop table if exists processor_docker_run_parameters cascade;
+drop table if exists processor_class cascade;
+drop table if exists product cascade;
+drop table if exists product_download_history cascade;
+drop table if exists product_parameters cascade;
+drop table if exists product_archive cascade;
+drop table if exists product_archive_available_product_classes cascade;
+drop table if exists product_class cascade;
+drop table if exists product_file cascade;
+drop table if exists product_file_aux_file_names cascade;
+drop table if exists product_query cascade;
+drop table if exists product_query_filter_conditions cascade;
+drop table if exists product_query_satisfying_products cascade;
+drop table if exists simple_policy cascade;
+drop table if exists simple_policy_delta_times cascade;
+drop table if exists simple_selection_rule cascade;
+drop table if exists simple_selection_rule_configured_processors cascade;
+drop table if exists simple_selection_rule_filter_conditions cascade;
+drop table if exists simple_selection_rule_simple_policies cascade;
+drop table if exists spacecraft cascade;
+drop table if exists spacecraft_payloads cascade;
+drop table if exists task cascade;
+drop table if exists task_breakpoint_file_names cascade;
+drop table if exists time_interval_order_trigger cascade;
+drop table if exists workflow cascade;
+drop table if exists workflow_class_output_parameters cascade;
+drop table if exists workflow_input_filters cascade;
+drop table if exists workflow_output_parameters cascade;
+drop table if exists workflow_option cascade;
+drop table if exists workflow_option_value_range cascade;
+drop sequence if exists hibernate_sequence;
+
+
 -- Dumped from database version 11.16 (Debian 11.16-1.pgdg90+1)
 -- Dumped by pg_dump version 11.22
 

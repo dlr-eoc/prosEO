@@ -2,7 +2,7 @@ spring:
     maxResults: 10000
     jpa:
         database-platform: org.hibernate.dialect.H2Dialect
-        hibernate.ddl-auto: update
+        hibernate.ddl-auto: create-drop
         open-in-view: false
         properties.hibernate:
             jdbc.time_zone: UTC

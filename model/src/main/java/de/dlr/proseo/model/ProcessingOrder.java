@@ -125,6 +125,12 @@ public class ProcessingOrder extends PersistentObject {
 	private Instant actualCompletionTime;
 	
 	/**
+	 * Date and time at which the  ProcessingOrder was closed
+	 */
+	@Column(name = "closing_time", columnDefinition = "TIMESTAMP")
+	private Instant closingTime;
+	
+	/**
 	 * Time for automatic order deletion, if an orderRetentionPeriod is set for the mission and
 	 * the productionType is SYSTEMATIC_PRODUCTION.
 	 */
@@ -146,10 +152,10 @@ public class ProcessingOrder extends PersistentObject {
 	private Instant stopTime;
 	
 	/**
-	 * Method for slicing the orbit time interval into jobs for product generation (default "ORBIT")
+	 * Method for slicing the orbit time interval into jobs for product generation (default "NONE")
 	 */
 	@Enumerated(EnumType.STRING)
-	private OrderSlicingType slicingType = OrderSlicingType.ORBIT;
+	private OrderSlicingType slicingType = OrderSlicingType.NONE;
 	
 	/**
 	 * Duration of a time slice for slicing type TIME_SLICE
@@ -228,8 +234,33 @@ public class ProcessingOrder extends PersistentObject {
 	
 	/** Indicates whether at least one of the job steps for this order is in state FAILED */
 	private Boolean hasFailedJobSteps = false;
-	
-	/** The workflow applicable for this processing order (only for orders created through the On-Demand Interface Point API */
+
+    /**
+     * If set the processing order will be released automatically either immediately after planning or 
+     * when its executionTime is reached, whichever comes later.
+     */
+    private boolean autoRelease = false;
+    
+    /**
+     * If set, the order will be closed immediately after successful completion.
+     */
+    private boolean autoClose = false;
+    
+    /**
+     * If set, the order will fail or will automatically be started regardless of input data availability,
+     * when the given duration after the release time has elapsed. 
+     * Start or failure are determined by the setting of onInputDataTimeoutFail.
+     */
+    private Duration inputDataTimeoutPeriod;
+    
+    /**
+     * If true (the default setting) and inputDataTimeoutPeriod is set, the order will fail when the timeout period 
+     * after the release time is expired and the input data is not complete; if false, the order will then be started 
+     * regardless of the availability of its input data.
+     */
+    private boolean onInputDataTimeoutFail = true;
+
+	/** The workflow applicable for this processing order (only for orders created from a workflow) */
 	@ManyToOne
 	private Workflow workflow;
 	
@@ -591,6 +622,24 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	public void setActualCompletionTime(Instant actualCompletionTime) {
 		this.actualCompletionTime = actualCompletionTime;
+	}
+
+	/**
+	 * Gets the date and time the order was closed
+	 * 
+	 * @return the order closing time
+	 */
+	public Instant getClosingTime() {
+		return closingTime;
+	}
+
+	/**
+	 * Sets the date and time the order was closed
+	 * 
+	 * @param closingTime the order closing time to set
+	 */
+	public void setClosingTime(Instant closingTime) {
+		this.closingTime = closingTime;
 	}
 
 	/**
@@ -974,6 +1023,81 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	public void setHasFailedJobSteps(Boolean hasFailedJobSteps) {
 		this.hasFailedJobSteps = hasFailedJobSteps;
+	}
+
+	/**
+	 * Indicates whether a processing order reaching state PLANNED will automatically be released
+	 * 
+	 * @return true, if the order will be released automatically, false otherwise
+	 */
+	public boolean isAutoRelease() {
+		return autoRelease;
+	}
+
+	/**
+	 * Sets a flag indicating whether a processing order reaching state PLANNED shall automatically be released
+	 * 
+	 * @param autoRelease set to true, if the order shall be released automatically, and to false otherwise
+	 */
+	public void setAutoRelease(boolean autoRelease) {
+		this.autoRelease = autoRelease;
+	}
+
+	/**
+	 * Indicates whether a processing order reaching state COMPLETED will automatically be closed
+	 * 
+	 * @return true, if the order will be closed automatically, false otherwise
+	 */
+	public boolean isAutoClose() {
+		return autoClose;
+	}
+
+	/**
+	 * Sets a flag indicating whether a processing order reaching state COMPLETED shall automatically be closed
+	 * 
+	 * @param autoClose set to true, if the order shall be closed automatically, and to false otherwise
+	 */
+	public void setAutoClose(boolean autoClose) {
+		this.autoClose = autoClose;
+	}
+
+	/**
+	 * Gets the period of time, after which the order will fail or will automatically be started regardless of input data 
+	 * availability
+	 * 
+	 * @return the input data timeout period
+	 */
+	public Duration getInputDataTimeoutPeriod() {
+		return inputDataTimeoutPeriod;
+	}
+
+	/**
+	 * Sets the period of time, after which the order shall fail or shall automatically be started regardless of input data 
+	 * availability
+	 * 
+	 * @param inputDataTimeoutPeriod the input data timeout period to set
+	 */
+	public void setInputDataTimeoutPeriod(Duration inputDataTimeoutPeriod) {
+		this.inputDataTimeoutPeriod = inputDataTimeoutPeriod;
+	}
+
+	/**
+	 * Indicates whether the order will fail after the input data timeout period has elapsed
+	 * 
+	 * @return true, if the order will fail after timeout, false, if it will be processed with incomplete input data
+	 */
+	public boolean isOnInputDataTimeoutFail() {
+		return onInputDataTimeoutFail;
+	}
+
+	/**
+	 * Sets a flag indicating whether the order will fail after the input data timeout period has elapsed
+	 * 
+	 * @param onInputDataTimeoutFail set to true, if the order shall fail after timeout, and to false, if it shall be processed 
+	 * with incomplete input data
+	 */
+	public void setOnInputDataTimeoutFail(boolean onInputDataTimeoutFail) {
+		this.onInputDataTimeoutFail = onInputDataTimeoutFail;
 	}
 
 	/** Get the workflow

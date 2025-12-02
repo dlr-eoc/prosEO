@@ -18,11 +18,11 @@
 -docencoding
 'UTF-8'
 -doctitle
-'prosEO Storage Manager 2.0.0-SNAPSHOT API'
+'prosEO Storage Manager 2.1.0-SNAPSHOT API'
 -linkoffline
 'https://github.com/dlr-eoc/prosEO/logging/apidocs' '/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/logging/target/site/apidocs'
 -quiet
 -use
 -version
 -windowtitle
-'prosEO Storage Manager 2.0.0-SNAPSHOT API'
+'prosEO Storage Manager 2.1.0-SNAPSHOT API'

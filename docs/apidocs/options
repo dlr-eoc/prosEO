@@ -18,9 +18,9 @@
 -docencoding
 'UTF-8'
 -doctitle
-'prosEO 2.0.0-SNAPSHOT API'
+'prosEO 2.1.0-SNAPSHOT API'
 -quiet
 -use
 -version
 -windowtitle
-'prosEO 2.0.0-SNAPSHOT API'
+'prosEO 2.1.0-SNAPSHOT API'
