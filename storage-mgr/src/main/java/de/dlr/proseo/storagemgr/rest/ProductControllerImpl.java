@@ -8,7 +8,9 @@ package de.dlr.proseo.storagemgr.rest;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
+import java.net.URLDecoder;
 import java.net.UnknownHostException;
 import java.nio.file.Paths;
 import java.text.ParseException;
@@ -200,8 +202,14 @@ public class ProductControllerImpl implements ProductController {
 	 *         message, or HTTP status INTERNAL_SERVER_ERROR and an error message
 	 */
 	@Override
-	public ResponseEntity<?> getObject(String pathInfo, String token, Long fromByte, Long toByte) {
+	public ResponseEntity<?> getObject(String encodedPathInfo, String token, Long fromByte, Long toByte) {
 
+		String pathInfo = encodedPathInfo;
+		try {
+			pathInfo = URLDecoder.decode(encodedPathInfo, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			// null
+		}
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getObject({}, {}, {}, {})", pathInfo, token, fromByte, toByte);
 

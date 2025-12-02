@@ -5,7 +5,10 @@
  */
 package de.dlr.proseo.ingestor.rest;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1215,8 +1218,16 @@ public class ProductManager {
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ)
-	public String getDownloadTokenById(Long id, String fileName)
+	public String getDownloadTokenById(Long id, String encodedFileName)
 			throws IllegalArgumentException, NoResultException, SecurityException {
+		
+		String fileName = null;
+		try {
+			fileName = URLDecoder.decode(encodedFileName, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getDownloadTokenById({}, {})", id, fileName);
 
