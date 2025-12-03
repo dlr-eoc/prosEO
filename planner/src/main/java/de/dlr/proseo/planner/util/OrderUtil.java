@@ -1372,6 +1372,7 @@ public class OrderUtil {
 								} else {
 									setStateMessage(locOrder, ProductionPlanner.STATE_MESSAGE_COMPLETED);
 								}
+								locOrder.setClosingTime(Instant.now());
 								locOrder.incrementVersion();
 								RepositoryService.getOrderRepository().save(locOrder);
 								logOrderState(locOrder);
