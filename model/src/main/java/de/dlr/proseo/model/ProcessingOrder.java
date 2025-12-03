@@ -29,6 +29,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.ws.rs.DefaultValue;
 
 import org.springframework.transaction.annotation.Transactional;
 
@@ -239,11 +240,13 @@ public class ProcessingOrder extends PersistentObject {
      * If set the processing order will be released automatically either immediately after planning or 
      * when its executionTime is reached, whichever comes later.
      */
+	@Column(columnDefinition = "boolean not null default false")
     private boolean autoRelease = false;
     
     /**
      * If set, the order will be closed immediately after successful completion.
      */
+    @Column(columnDefinition = "boolean not null default false")
     private boolean autoClose = false;
     
     /**
@@ -258,6 +261,7 @@ public class ProcessingOrder extends PersistentObject {
      * after the release time is expired and the input data is not complete; if false, the order will then be started 
      * regardless of the availability of its input data.
      */
+    @Column(columnDefinition = "boolean not null default true")
     private boolean onInputDataTimeoutFail = true;
 
 	/** The workflow applicable for this processing order (only for orders created from a workflow) */

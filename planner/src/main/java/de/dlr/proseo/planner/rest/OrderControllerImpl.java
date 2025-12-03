@@ -358,6 +358,7 @@ public class OrderControllerImpl implements OrderController {
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		}
 
+		String[] userPassword = securityConfig.parseAuthenticationHeader(httpHeaders.getFirst(HttpHeaders.AUTHORIZATION));
 		try {
 			// Find the processing order by its releaseId
 			ProcessingOrder order = findOrder(releaseId);
@@ -390,7 +391,7 @@ public class OrderControllerImpl implements OrderController {
 			}
 
 			// Plan the order on the processing facility
-			PlannerResultMessage msg = orderUtil.plan(order.getId(), processingFacility.getId(), wait);
+			PlannerResultMessage msg = orderUtil.plan(order.getId(), processingFacility.getId(), wait, userPassword[0], userPassword[1]);
 			if (msg.getSuccess()) {
 				// If planning is successful, retrieve and return the updated order
 				RestOrder restOrder = getRestOrder(order.getId());

@@ -483,7 +483,7 @@ public class OrderUtil {
 	 * @param wait         indicates whether to wait for the order planning to complete
 	 * @return Result message
 	 */
-	public PlannerResultMessage plan(long id, Long facilityId, Boolean wait) {
+	public PlannerResultMessage plan(long id, Long facilityId, Boolean wait, String user, String pw) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> plan({}, {}, {})", id, facilityId, wait);
 
@@ -566,7 +566,7 @@ public class OrderUtil {
 			// Create a planning thread for this order, if required
 			String threadName = ProductionPlanner.PLAN_THREAD_PREFIX + order.getId();
 			if (!productionPlanner.getPlanThreads().containsKey(threadName)) {
-				OrderPlanThread pt = new OrderPlanThread(productionPlanner, orderDispatcher, id, facilityId, threadName);
+				OrderPlanThread pt = new OrderPlanThread(productionPlanner, orderDispatcher, id, facilityId, wait, user, pw, threadName);
 				productionPlanner.getPlanThreads().put(threadName, pt);
 				pt.start();
 				if (wait) {
@@ -1543,7 +1543,20 @@ public class OrderUtil {
 	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public Boolean checkAutoClose(ProcessingOrder order) {
 		Duration retPeriod = order.getMission().getOrderRetentionPeriod();
-		if (retPeriod != null && order.getProductionType() == ProductionType.SYSTEMATIC) {
+		if (order.isAutoClose()) {
+			if (retPeriod != null) {
+				order.setEvictionTime(Instant.now().plus(retPeriod));
+			}
+			for (Job job : order.getJobs()) {
+				if (job.getJobState() == JobState.COMPLETED) {
+					jobUtil.close(job.getId());
+				}
+			}
+			if (order.getOrderState() == OrderState.COMPLETED) {
+				order.setOrderState(OrderState.CLOSED);
+			}
+			return true;
+		} else if (retPeriod != null && order.getProductionType() == ProductionType.SYSTEMATIC) {
 			order.setEvictionTime(Instant.now().plus(retPeriod));
 			for (Job job : order.getJobs()) {
 				if (job.getJobState() == JobState.COMPLETED) {
@@ -1846,7 +1859,7 @@ public class OrderUtil {
 			return null;
 		});
 		if (facilityId != null) {
-			UtilService.getOrderUtil().plan(id, facilityId, false);
+			UtilService.getOrderUtil().plan(id, facilityId, false, null, null);
 		} else {
 			// no job with processing facility exist, can't plan
 			final ProcessingOrder order = transactionTemplate.execute((status) -> {

@@ -44,6 +44,21 @@ public class OrderPlanThread extends Thread {
 
 	/** The ID of the facility to process the order */
 	private long facilityId;
+	
+	/**
+	 * Used for auto release
+	 */
+	private Boolean wait;
+	
+	/**
+	 * The current user (used for auto release)
+	 */
+	private String user;
+	
+	/**
+	 * The password of user (used for auto release)
+	 */
+	private String password;
 
 	/** The result of the planning */
 	private PlannerResultMessage resultMessage;
@@ -64,16 +79,21 @@ public class OrderPlanThread extends Thread {
 	 * @param orderDispatcher   The order dispatcher
 	 * @param orderId           The ID of the processing order to plan
 	 * @param facilityId        The ID of the processing facility to run the order
+	 * @param user				The current user
+	 * @param pw				The password of user
 	 * @param name              The name of the thread
 	 */
 	public OrderPlanThread(ProductionPlanner productionPlanner, OrderDispatcher orderDispatcher, long orderId,
-			long facilityId, String name) {
+			long facilityId, Boolean wait, String user, String pw, String name) {
 		super(name);
 
 		this.productionPlanner = productionPlanner;
 		this.orderDispatcher = orderDispatcher;
 		this.orderId = orderId;
 		this.facilityId = facilityId;
+		this.wait = wait;
+		this.user = user;
+		this.password = pw;
 	}
 
 	/**
@@ -212,10 +232,27 @@ public class OrderPlanThread extends Thread {
 		this.resultMessage = answer;
 		productionPlanner.getPlanThreads().remove(this.getName());
 
+
+		TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+
+		transactionTemplate.setReadOnly(true);
+		final ProcessingOrder order = transactionTemplate.execute((status) -> {
+			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(orderId);
+			if (orderOpt.isPresent()) {
+				return orderOpt.get();
+			}
+			return null;
+		});
+		if (order != null && order.isAutoRelease()) {
+			if (logger.isTraceEnabled())
+				logger.trace("... call 'auto' release", this.getName());
+			UtilService.getOrderUtil().resume(order, wait, user, password);
+		} else {
+			productionPlanner.checkNextForRestart();
+		}
 		if (logger.isTraceEnabled())
 			logger.trace("<<< run() for thread {}", this.getName());
-
-		productionPlanner.checkNextForRestart();
 	}
 
 	/**
