@@ -1554,6 +1554,7 @@ public class OrderUtil {
 			}
 			if (order.getOrderState() == OrderState.COMPLETED) {
 				order.setOrderState(OrderState.CLOSED);
+				order.setClosingTime(Instant.now());
 			}
 			return true;
 		} else if (retPeriod != null && order.getProductionType() == ProductionType.SYSTEMATIC) {
@@ -1565,6 +1566,7 @@ public class OrderUtil {
 			}
 			if (order.getOrderState() == OrderState.COMPLETED) {
 				order.setOrderState(OrderState.CLOSED);
+				order.setClosingTime(Instant.now());
 			}
 			return true;
 		}
