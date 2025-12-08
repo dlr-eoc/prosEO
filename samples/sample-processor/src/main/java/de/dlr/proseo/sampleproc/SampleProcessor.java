@@ -519,6 +519,14 @@ public class SampleProcessor {
 		return true;
 	}
 
+	private void sleep() {
+		try {
+			logger.info("... wait 2 seconds ...");
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			// Never mind ...
+		}
+	}
 	/**
 	 * Perform the dummy processing: check arguments, parse JobOrder file, read one
 	 * input file, create one output file
@@ -534,6 +542,7 @@ public class SampleProcessor {
 		// Get the JobOrder file from the invocation arguments
 		File jobOrderFile = checkArguments(args);
 		if (null == jobOrderFile) {
+			sleep();
 			logger.info(MSG_LEAVING_SAMPLE_PROCESSOR, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
@@ -541,6 +550,7 @@ public class SampleProcessor {
 		// Parse the JobOrder file
 		Document jobOrderDoc = parseJobOrderFile(jobOrderFile);
 		if (null == jobOrderDoc) {
+			sleep();
 			logger.info(MSG_LEAVING_SAMPLE_PROCESSOR, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
@@ -548,6 +558,7 @@ public class SampleProcessor {
 		// Check the configuration/static input files
 		boolean ok = checkConfiguration(jobOrderDoc);
 		if (!ok) {
+			sleep();
 			logger.info(MSG_LEAVING_SAMPLE_PROCESSOR, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
@@ -555,6 +566,7 @@ public class SampleProcessor {
 		// Read some data from the input file
 		SampleProduct inputProduct = readInputProduct(jobOrderDoc);
 		if (null == inputProduct) {
+			sleep();
 			logger.info(MSG_LEAVING_SAMPLE_PROCESSOR, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}

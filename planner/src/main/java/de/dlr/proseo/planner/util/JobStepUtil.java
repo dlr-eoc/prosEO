@@ -5,9 +5,12 @@
  */
 package de.dlr.proseo.planner.util;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Isolation;
@@ -1028,7 +1032,11 @@ public class JobStepUtil {
 			if (js.getJob() != null
 					&& (force || js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)) {
 				logger.trace("Looking for product queries of job step: " + js.getId());
-
+				Boolean saveJS = false;
+				if (js.getProcessingStartTime() == null) {
+					js.setProcessingStartTime(Instant.now());
+					saveJS = true;
+				}
 				boolean hasUnsatisfiedInputQueries = false;
 
 				// Set lock timeout for JPA operations
@@ -1081,19 +1089,32 @@ public class JobStepUtil {
 
 				// Update the state of the job step based on the query results
 				if (hasUnsatisfiedInputQueries) {
+					Boolean setWaitingInput = true;
+					Duration timeoutPeriod = js.getJob().getProcessingOrder().getInputDataTimeoutPeriod();
+					if (timeoutPeriod != null) {
+						if (js.getProcessingStartTime() != null
+								&& (js.getProcessingStartTime().plus(timeoutPeriod).isBefore(Instant.now()))) {
+							if (!js.getJob().getProcessingOrder().isOnInputDataTimeoutFail()) {
+								// Start anyway
+								js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.READY);
+								saveJS = true;
+								setWaitingInput = false;
+							} 
+						}
+					}
 					// If there are unsatisfied input queries, set the job step state to WAITING_INPUT
-					if (js.getJobStepState() != de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT) {
+					if (setWaitingInput && js.getJobStepState() != de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT) {
 						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT);
-						js.incrementVersion();
-						RepositoryService.getJobStepRepository().save(js);
-						// em.merge(js);
+						saveJS = true;
 					}
 				} else {
 					// If all input queries are satisfied, set the job step state to READY
 					js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.READY);
+					saveJS = true;
+				}
+				if (saveJS) {
 					js.incrementVersion();
 					RepositoryService.getJobStepRepository().save(js);
-					// em.merge(js);
 				}
 			}
 
@@ -1271,6 +1292,122 @@ public class JobStepUtil {
 
 							} else {
 								throw new RuntimeException("Invalid query result: " + jobStepObject);
+							}
+						}
+						
+
+						jobStepList = transactionTemplate.execute((status) -> {
+
+							// Search for job steps in state WAITING_INPUT and input data timeout period not null and on input data timeout fail
+							String nativeQuery = "SELECT js.processing_start_time, js.id, o.input_data_timeout_period " + "FROM processing_order o "
+										+ "JOIN job j ON o.id = j.processing_order_id " + "JOIN job_step js ON j.id = js.job_id "
+										+ "WHERE o.input_data_timeout_period is not null " + "AND o.on_input_data_timeout_fail is true "
+										+ "AND js.job_step_state ='WAITING_INPUT'";
+
+							return em.createNativeQuery(nativeQuery)
+								.getResultList();
+
+						});
+						for (Object jobStepObject : jobStepList) {
+							if (jobStepObject instanceof Object[]) {
+
+								Object[] jobStep = (Object[]) jobStepObject;
+								if (jobStep.length == 3) {
+									Instant startTime = null;
+									Long idCol = null;
+									Duration timeOut = null;
+									if (!(jobStep[0] instanceof Instant)) {
+									    throw new RuntimeException("Invalid query result for start time: " + Arrays.asList(jobStep));
+									} else {
+										startTime = (Instant)jobStep[0];
+									}
+									if (!(jobStep[1] instanceof Number)) {
+									    throw new RuntimeException("Invalid query result for id: " + Arrays.asList(jobStep));
+									} else {
+										idCol = ((Number)jobStep[1]).longValue();
+									}
+									if (!(jobStep[2] instanceof BigDecimal)) {
+									    throw new RuntimeException("Invalid query result for time out: " + Arrays.asList(jobStep));
+									} else {
+										timeOut = Duration.ofMillis(((BigDecimal)jobStep[2]).toBigInteger().divide(BigInteger.valueOf(1000000)).longValue());
+									}
+									if (startTime.plus(timeOut).isBefore(Instant.now())) {
+										final Long idLoc = idCol;
+										final JobStep js = transactionTemplate.execute((status) -> {
+											Optional<JobStep> opt = RepositoryService.getJobStepRepository().findById(idLoc);
+											if (opt.isPresent()) {
+												return opt.get();
+											}
+											return null;
+										});
+										if (js != null) {
+											transactionTemplate.setReadOnly(false);
+											for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
+												try {
+													Object x = transactionTemplate.execute((status) -> {
+														JobStep jobStepX = null;
+														Optional<JobStep> opt = RepositoryService.getJobStepRepository().findById(idLoc);
+														if (opt.isPresent()) {
+															jobStepX = opt.get();
+														}
+														return UtilService.getJobStepUtil().suspend(jobStepX, true);
+													});
+													break;
+												} catch (CannotAcquireLockException e) {
+													if (logger.isDebugEnabled())
+														logger.debug("... database concurrency issue detected: ", e);
+
+													if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+														ProseoUtil.dbWait();
+													} else {
+														if (logger.isDebugEnabled())
+															logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+														throw e;
+													}
+
+												} catch (Exception e) {
+													String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+
+													if (logger.isDebugEnabled())
+														logger.debug("... exception stack trace: ", e);
+
+												}
+											}
+											for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
+												try {
+													Object x = transactionTemplate.execute((status) -> {
+														JobStep jobStepX = null;
+														Optional<JobStep> opt = RepositoryService.getJobStepRepository().findById(idLoc);
+														if (opt.isPresent()) {
+															jobStepX = opt.get();
+														}
+														jobStepX.setProcessingStartTime(null);
+														return UtilService.getJobStepUtil().cancel(jobStepX);
+													});
+													break;
+												} catch (CannotAcquireLockException e) {
+													if (logger.isDebugEnabled())
+														logger.debug("... database concurrency issue detected: ", e);
+
+													if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+														ProseoUtil.dbWait();
+													} else {
+														if (logger.isDebugEnabled())
+															logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+														throw e;
+													}
+
+												} catch (Exception e) {
+													String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+
+													if (logger.isDebugEnabled())
+														logger.debug("... exception stack trace: ", e);
+
+												}
+											}
+										}
+									}
+								}
 							}
 						}
 
