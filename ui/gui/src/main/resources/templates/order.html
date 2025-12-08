@@ -150,7 +150,7 @@
                   </tr>
                   <tr>
                     <td class="tr-rowspan">&nbsp;</td>
-                    <td th:text="${ord?.uuid}"></td>
+                    <td style="hyphens: auto;" th:text="${ord?.uuid}"></td>
                     <td th:text="${ord?.processingMode}"></td>
                     <td th:text="${ord?.productionType}"></td>
                     <td colspan="1"><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
@@ -880,8 +880,7 @@ var handler = function ( ) {
 
  // Read the HTML parameters from URI and retrieve the corresponding data
  function loadWindow() {
-     var elem = document.getElementById('sb-product-class');
-     $(elem).addClass('active');
+	   activateSidebarElem('sb-order');
      feather.replace();
      readHTMLParams();
      setSelected();
