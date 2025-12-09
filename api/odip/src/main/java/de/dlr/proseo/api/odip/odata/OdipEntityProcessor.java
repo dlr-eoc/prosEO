@@ -73,7 +73,7 @@ import de.dlr.proseo.model.rest.model.RestOrder;
  *
  */
 @Component
-@Transactional(isolation = Isolation.REPEATABLE_READ)
+@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 public class OdipEntityProcessor implements EntityProcessor, MediaEntityProcessor {
 
 	/* Other string constants */

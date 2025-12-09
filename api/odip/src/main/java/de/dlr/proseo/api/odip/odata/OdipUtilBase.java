@@ -620,7 +620,7 @@ public class OdipUtilBase {
 	 * @throws ODataApplicationException if there is an error in the OData application
 	 * @throws OdipException             if there is an error in the ODIP application
 	 */
-	@Transactional(isolation = Isolation.REPEATABLE_READ)
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public RestOrder toModelOrder(Entity order) throws ODataApplicationException, OdipException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> toModelOrder()");
@@ -1058,7 +1058,7 @@ public class OdipUtilBase {
 	 * @return The created order after sending and releasing.
 	 * @throws OdipException If an error occurs during the process of sending and releasing the order.
 	 */
-	@Transactional(isolation = Isolation.REPEATABLE_READ)
+	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 	public RestOrder planAndReleaseOrder(RestOrder order, String mission, String user, String password) throws OdipException {
 		RestOrder createdOrder = null;
 		if (order != null) {

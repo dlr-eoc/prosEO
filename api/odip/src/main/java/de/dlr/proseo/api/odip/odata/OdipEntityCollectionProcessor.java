@@ -67,7 +67,7 @@ import de.dlr.proseo.model.enums.UserRole;
  * @author Dr. Thomas Bassler
  */
 @Component
-@Transactional(isolation = Isolation.REPEATABLE_READ)
+@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 public class OdipEntityCollectionProcessor implements EntityCollectionProcessor {
 
 	/* Other string constants */
