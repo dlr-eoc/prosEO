@@ -71,23 +71,23 @@
 					name="procc-shw" id="procc-shw"
 					action="javascript:retrieveDataPrim();">
 					<div class="row py-lg-1">
-						<div class="col-1 pr-lg-0" th:title="#{selectId}">
+						<div class="col-1 pe-lg-0" th:title="#{selectId}">
 							<p class="input-group-text word-wrap" th:text="#{id}"></p>
 						</div>
-						<div class="col-1 pl-lg-0" th:title="#{selectId}">
+						<div class="col-1 ps-lg-0" th:title="#{selectId}">
 							<input type="number" min="1" class="form-control"
 								autocomplete="on" name="cid" id="cid">
 						</div>
-						<div class="col-2 pr-lg-0" th:title="#{selectNamePattern}">
+						<div class="col-2 pe-lg-0" th:title="#{selectNamePattern}">
 							<p class="input-group-text word-wrap" th:text="#{name}"></p>
 						</div>
-						<div class="col-2 pl-lg-0" th:title="#{selectNamePattern}">
+						<div class="col-2 ps-lg-0" th:title="#{selectNamePattern}">
 							<input type="text" class="form-control" id="identifier">
 						</div>
-						<div class="col-2 pr-lg-0" th:title="#{selectProcessorClass}">
+						<div class="col-2 pe-lg-0" th:title="#{selectProcessorClass}">
 							<p class="input-group-text word-wrap" th:text="#{processorname}"></p>
 						</div>
-						<div class="col-2 pl-lg-0" th:title="#{selectProcessorClass}">
+						<div class="col-2 ps-lg-0" th:title="#{selectProcessorClass}">
 							<select name="processorClasses" id="processorClasses"
 								multiple="multiple" class="form-select" data-placeholder="&nbsp;">
 								<option th:each="obj : ${processorclassnames}" th:text="${obj}"
@@ -103,27 +103,27 @@
 								<span th:text="#{configuredprocessors-show}"></span>
 							</button>
 						</div>
-						<div class="col-2 pr-lg-0"
+						<div class="col-2 pe-lg-0"
 							th:title="#{selectProcessorVersionPattern}">
 							<p class="input-group-text word-wrap"
 								th:text="#{processor-version}"></p>
 						</div>
-						<div class="col-2 pl-lg-0"
+						<div class="col-2 ps-lg-0"
 							th:title="#{selectProcessorVersionPattern}">
 							<input type="text" class="form-control" id="processorVersion">
 						</div>
-						<div class="col-2 pr-lg-0"
+						<div class="col-2 pe-lg-0"
 							th:title="#{selectConfigurationPattern}">
 							<p class="input-group-text word-wrap" th:text="#{configuration}"></p>
 						</div>
-						<div class="col-2 pl-lg-0"
+						<div class="col-2 ps-lg-0"
 							th:title="#{selectConfigurationPattern}">
 							<input type="text" class="form-control" id="configuration">
 						</div>
-						<div class="col-1 pr-lg-0" th:title="#{selectEnabled}">
+						<div class="col-1 pe-lg-0" th:title="#{selectEnabled}">
 							<p class="input-group-text word-wrap" th:text="#{enabled}"></p>
 						</div>
-						<div class="col-1 pl-lg-0" th:title="#{selectEnabled}">
+						<div class="col-1 ps-lg-0" th:title="#{selectEnabled}">
 							<select name="enabled" id="enabled" multiple="multiple" class="form-select" data-placeholder="&nbsp;">
 								<option label="true">true</option>
 								<option label="false">false</option>

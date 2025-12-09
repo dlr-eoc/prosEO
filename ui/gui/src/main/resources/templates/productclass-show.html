@@ -65,20 +65,20 @@
 			<form class="needs-validation" name="prod-shw" id="prod-shw"
 				action="javascript:submit();">
 				<div class="row py-lg-1">
-					<div class="col-2 pr-lg-0" th:title="#{selectProductClass}">
+					<div class="col-2 pe-lg-0" th:title="#{selectProductClass}">
 						<p class="input-group-text word-wrap" th:text="#{product-class}"></p>
 					</div>
-					<div class="col-3 pl-lg-0" th:title="#{selectProductClass}">
+					<div class="col-3 ps-lg-0" th:title="#{selectProductClass}">
 						<select name="productClasses" id="productClasses"
 							multiple="multiple" class="form-select" data-placeholder="&nbsp;">
 							<option th:each="obj : ${productclassnames}" th:text="${obj}"
 								th:label="${obj}"></option>
 						</select>
 					</div>
-					<div class="col-2 pr-lg-0" th:title="#{selectProcessorClass}">
+					<div class="col-2 pe-lg-0" th:title="#{selectProcessorClass}">
 						<p class="input-group-text word-wrap" th:text="#{processor-class}"></p>
 					</div>
-					<div class="col-3 pl-lg-0" th:title="#{selectProcessorClass}">
+					<div class="col-3 ps-lg-0" th:title="#{selectProcessorClass}">
 						<select name="processorClasses" id="processorClasses"
 							multiple="multiple" class="form-select" data-placeholder="&nbsp;">
 							<option th:each="obj : ${processorclassnames}" th:text="${obj}"
@@ -93,10 +93,10 @@
 							<span th:text="#{product-class-show}"></span>
 						</button>
 					</div>
-					<div class="col-1 pr-lg-0" th:title="#{selectProductLevel}">
+					<div class="col-1 pe-lg-0" th:title="#{selectProductLevel}">
 						<p class="input-group-text word-wrap" th:text="#{processinglevel}"></p>
 					</div>
-					<div class="col-2 pl-lg-0" th:title="#{selectProductLevel}">
+					<div class="col-2 ps-lg-0" th:title="#{selectProductLevel}">
 						<select name="processingLevel" id="processingLevel"
 							class="form-select">
 							<option text="" label=""></option>
@@ -104,10 +104,10 @@
 								th:label="${obj}"></option>
 						</select>
 					</div>
-					<div class="col-1 pr-lg-0" th:title="#{selectProductVisibility}">
+					<div class="col-1 pe-lg-0" th:title="#{selectProductVisibility}">
 						<p class="input-group-text word-wrap" th:text="#{visibility}"></p>
 					</div>
-					<div class="col-2 pl-lg-0" th:title="#{selectProductVisibility}">
+					<div class="col-2 ps-lg-0" th:title="#{selectProductVisibility}">
 						<select name="visibility" id="visibility" class="form-select">
 							<option text="" label=""></option>
 							<option th:each="obj : ${visibilities}" th:text="${obj}"
