@@ -37,8 +37,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import jakarta.persistence.NoResultException;
-import javax.transaction.Transactional;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpEntity;
@@ -64,6 +63,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -117,7 +118,7 @@ import reactor.netty.http.client.HttpClient;
  * @author Dr. Thomas Bassler
  */
 @Component
-@Transactional
+@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 public class DownloadManager {
 
 	private static final String FAILURE_NOTIFICATION_SUBJECT = "AIP Client Failure";

@@ -74,23 +74,23 @@
 								<span th:text="#{processor-class-show}"></span>
 							</button>
 						</div>
-						<div class="col-1 pr-lg-0" th:title="#{selectId}">
+						<div class="col-1 pe-lg-0" th:title="#{selectId}">
 							<p class="input-group-text word-wrap" th:text="#{id}"></p>
 						</div>
-						<div class="col-1 pl-lg-0" th:title="#{selectId}">
+						<div class="col-1 ps-lg-0" th:title="#{selectId}">
 							<input type="number" min="1" class="form-control"
 								autocomplete="on" name="pid" id="pid">
 						</div>
-						<div class="col-1 pr-lg-0" th:title="#{selectNamePattern}">
+						<div class="col-1 pe-lg-0" th:title="#{selectNamePattern}">
 							<p class="input-group-text word-wrap" th:text="#{name}"></p>
 						</div>
-						<div class="col-2 pl-lg-0" th:title="#{selectNamePattern}">
+						<div class="col-2 ps-lg-0" th:title="#{selectNamePattern}">
 							<input type="text" class="form-control" id="pname">
 						</div>
-						<div class="col-1 pr-lg-0" th:title="#{selectProductClass}">
+						<div class="col-1 pe-lg-0" th:title="#{selectProductClass}">
 							<p class="input-group-text word-wrap" th:text="#{product-class}"></p>
 						</div>
-						<div class="col-3 pl-lg-0" th:title="#{selectProductClass}">
+						<div class="col-3 ps-lg-0" th:title="#{selectProductClass}">
 							<select name="productClasses" id="productClasses"
 								multiple="multiple" class="form-select" data-placeholder="&nbsp;">
 								<option th:each="obj : ${productclassnames}" th:text="${obj}"

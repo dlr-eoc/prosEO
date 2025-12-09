@@ -57,6 +57,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
@@ -79,7 +80,7 @@ import de.dlr.proseo.model.enums.UserRole;
  * @author Dr. Thomas Bassler
  */
 @Component
-@Transactional
+@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 public class ProductEntityProcessor implements EntityProcessor, MediaEntityProcessor {
 
 	// Unformatted message

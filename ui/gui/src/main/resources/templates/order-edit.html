@@ -74,19 +74,19 @@
 							th:value="${ord?.missionCode}"> <input name="version"
 							id="version" class="filtercontent" th:value="${ord?.version}">
 						<div class="row py-lg-1">
-							<div class="col-2 pr-lg-0">
+							<div class="col-2 pe-lg-0">
 								<span class="input-group-text word-wrap" th:text="#{name}"></span>
 							</div>
-							<div class="col-2 pl-lg-0">
+							<div class="col-2 ps-lg-0">
 								<input type="text" class="form-control" id="identifier"
 									name="identifier" placeholder="Name" required
 									th:value="${ord?.identifier}">
 							</div>
-							<div class="col-2 pr-lg-0">
+							<div class="col-2 pe-lg-0">
 								<span class="input-group-text word-wrap"
 									th:text="#{processingmode}"></span>
 							</div>
-							<div class="col-2 pl-lg-0">
+							<div class="col-2 ps-lg-0">
 								<select name="processingMode" id="processingMode"
 									class="form-select">
 									<option th:each="obj : ${processingmodes}" th:text="${obj}"
@@ -94,11 +94,11 @@
 										th:selected="${obj}==${ord?.processingMode}?'true':'false'"></option>
 								</select>
 							</div>
-							<div class="col-2 pr-lg-0">
+							<div class="col-2 pe-lg-0">
 								<span class="input-group-text word-wrap"
 									th:text="#{processingtype}"></span>
 							</div>
-							<div class="col-2 pl-lg-0">
+							<div class="col-2 ps-lg-0">
 								<select name="productionType" id="productionType"
 									class="form-select">
 									<option th:each="obj : ${productiontypes}" th:text="${obj}"
@@ -109,21 +109,21 @@
 
 						</div>
 						<div class="row py-lg-1">
-							<div class="col-2 pr-lg-0">
+							<div class="col-2 pe-lg-0">
 								<span class="input-group-text word-wrap"
 									th:text="#{executiontime}"></span>
 							</div>
-							<div class="col-2 pl-lg-0">
+							<div class="col-2 ps-lg-0">
 								<input type="text" class="form-control" id="executionTime"
 									name="executionTime" th:value="${ord?.executionTime}"
 									pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9])$"
 									title="yyyy-mm-ddThh:mm:ss" placeholder="yyyy-mm-ddThh:mm:ss">
 							</div>
-							<div class="col-2 pr-lg-0">
+							<div class="col-2 pe-lg-0">
 								<span class="input-group-text word-wrap"
 									th:text="#{productretentionperiod}"></span>
 							</div>
-							<div class="col-2 pl-lg-0">
+							<div class="col-2 ps-lg-0">
 								<input type="text" class="form-control"
 									id="productRetentionPeriod" name="productRetentionPeriod"
 									th:value="${(ord?.productRetentionPeriod!=null)?(ord?.productRetentionPeriod/86400):''}"
@@ -135,20 +135,20 @@
 							<div class="col-12 border"></div>
 						</div>
 						<div class="row py-lg-1" id="slicingTop">
-							<div class="col-2 pr-lg-0">
+							<div class="col-2 pe-lg-0">
 								<span class="input-group-text word-wrap" th:text="#{slicing}"></span>
 							</div>
-							<div class="col-2 pl-lg-0">
+							<div class="col-2 ps-lg-0">
 								<select name="slicingType" id="slicingType" class="form-select">
 									<option th:each="obj : ${slicingtypes}" th:text="${obj}"
 										th:label="${obj}"
 										th:selected="${obj}==${ord?.slicingType}?'true':'false'"></option>
 								</select>
 							</div>
-							<div class="col-2 pr-lg-0" id="sliceOverlapTitle">
+							<div class="col-2 pe-lg-0" id="sliceOverlapTitle">
 								<span class="input-group-text word-wrap" th:text="#{overlap}"></span>
 							</div>
-							<div class="col-2 pl-lg-0" id="sliceOverlapDiv">
+							<div class="col-2 ps-lg-0" id="sliceOverlapDiv">
 								<div class="input-group">
 									<input class="form-control" id="sliceOverlap"
 										name="sliceOverlap" type="number" min="0"
@@ -486,11 +486,11 @@
 						</div>
 						<!-- Requested product classes -->
 						<div class="row py-lg-1">
-							<div class="col-2 pr-lg-0">
+							<div class="col-2 pe-lg-0">
 								<span class="input-group-text word-wrap"
 									th:text="#{outputproductclasses}"></span>
 							</div>
-							<div class="col-7 pl-lg-0">
+							<div class="col-7 ps-lg-0">
 								<select name="requestedProductClasses[]" id="seloutclasses"
 									multiple="multiple" class="form-select"
 									data-placeholder="&nbsp;" required>
@@ -499,11 +499,11 @@
 										th:selected="${#lists.contains(ord?.requestedProductClasses,obj)}?'true':'false'"></option>
 								</select>
 							</div>
-							<div class="col-2 pr-lg-0">
+							<div class="col-2 pe-lg-0">
 								<span class="input-group-text word-wrap"
 									th:text="#{outputfileclass}"></span>
 							</div>
-							<div class="col-1 pl-lg-0">
+							<div class="col-1 ps-lg-0">
 								<select name="outputFileClass" id="outputFileClass"
 									class="form-select">
 									<option th:each="obj : ${fileclasses}" th:text="${obj}"
@@ -514,11 +514,11 @@
 						</div>
 						<!-- Input product stop classes -->
 						<div class="row  py-lg-1">
-							<div class="col-2 pr-lg-0">
+							<div class="col-2 pe-lg-0">
 								<span class="input-group-text word-wrap"
 									th:text="#{inputclassesstoplist}"></span>
 							</div>
-							<div class="col-10 pl-lg-0">
+							<div class="col-10 ps-lg-0">
 								<select name="inputProductClasses[]" id="selinclasses"
 									data-placeholder="&nbsp;" multiple="multiple"
 									class="form-select">
@@ -530,11 +530,11 @@
 						</div>
 						<!-- Requested configured procssors -->
 						<div class="row py-lg-1">
-							<div class="col-2 pr-lg-0">
+							<div class="col-2 pe-lg-0">
 								<span class="input-group-text word-wrap"
 									th:text="#{requestedconfiguredprocessors}"></span>
 							</div>
-							<div class="col-10 pl-lg-0">
+							<div class="col-10 ps-lg-0">
 								<select name="configuredProcessors[]" id="selconfproc"
 									multiple="multiple" class="form-select"
 									data-placeholder="&nbsp;">

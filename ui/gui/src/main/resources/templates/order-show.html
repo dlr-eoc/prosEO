@@ -65,18 +65,18 @@
 
 				<form th:unless="${errormsg != null}" class="needs-validation" name="ord-shw" id="ord-shw" action="javascript:retrieveDataPrim();">
           <div class="row py-lg-1">
-            <div class="col-1 pr-lg-0" th:title="#{selectNamePattern}">
+            <div class="col-1 pe-lg-0" th:title="#{selectNamePattern}">
               <p class="input-group-text word-wrap"
                 th:text="#{name}"></p>
             </div>
-            <div class="col-2 pl-lg-0" th:title="#{selectNamePattern}">
+            <div class="col-2 ps-lg-0" th:title="#{selectNamePattern}">
               <input type="text" class="form-control" id="identifier">
             </div>            
-            <div class="col-1 pr-lg-0" th:title="#{selectOrderState}">
+            <div class="col-1 pe-lg-0" th:title="#{selectOrderState}">
               <p class="input-group-text word-wrap"
                 th:text="#{state}"></p>
             </div>
-            <div class="col-3 pl-lg-0" th:title="#{selectOrderState}">
+            <div class="col-3 ps-lg-0" th:title="#{selectOrderState}">
               <select name="orderStates" id="orderStates"  th:title="#{selectOrderState}" multiple="multiple" class="form-select" data-placeholder="&nbsp;">
                 <option>INITIAL</option>
                 <option>APPROVED</option>
@@ -92,11 +92,11 @@
                 <option>CLOSED</option>
               </select>
             </div>
-            <div class="col-1 pr-lg-0" th:title="#{selectProductClass}">
+            <div class="col-1 pe-lg-0" th:title="#{selectProductClass}">
               <p class="input-group-text word-wrap"
                 th:text="#{product}"></p>
             </div>
-            <div class="col-3 pl-lg-0" th:title="#{selectProductClass}">
+            <div class="col-3 ps-lg-0" th:title="#{selectProductClass}">
               <select name="products" id="products" multiple="multiple" class="form-select" data-placeholder="&nbsp;">
                   <option th:each="prod : ${productclassnames}" th:text="${prod}"
                     th:label="${prod}"></option>
@@ -111,22 +111,22 @@
                     <span th:text="#{order-show}"></span>
                   </button>
             </div>            
-            <div class="col-2 pr-lg-0" th:title="#{selectTime}">
+            <div class="col-2 pe-lg-0" th:title="#{selectTime}">
               <p class="input-group-text word-wrap"
                 th:text="#{starttimebetween}"></p>
             </div>
-            <div class="col-3 pl-lg-0" th:title="#{selectTime}">
+            <div class="col-3 ps-lg-0" th:title="#{selectTime}">
                     <input type="text" class="form-control" autocomplete="on"
                       pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
                       th:title="#{selectTime}" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
                       name="fromDate" id="fromDate" data-type="TIME">
                     <div class="invalid-feedback" th:text="#{invaliddate}"></div>
             </div>
-            <div class="col-1 pr-lg-0" th:title="#{selectTime}">
+            <div class="col-1 pe-lg-0" th:title="#{selectTime}">
               <p class="input-group-text word-wrap"
                 th:text="#{and}"></p>
             </div>
-            <div class="col-3 pl-lg-0" th:title="#{selectTime}">
+            <div class="col-3 ps-lg-0" th:title="#{selectTime}">
                     <input type="text" class="form-control" autocomplete="on" 
                       pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
                       th:title="#{selectTime}" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
