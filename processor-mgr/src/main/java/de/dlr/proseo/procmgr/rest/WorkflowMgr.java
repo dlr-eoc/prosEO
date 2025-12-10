@@ -126,7 +126,7 @@ public class WorkflowMgr {
 		Query query = em.createQuery(jpqlQuery);
 		query.setParameter("missionCode", missionCode);
 		if (null != workflowName) {
-			query.setParameter("workflowName", workflowName);
+			query.setParameter("workflowName", workflowName.toUpperCase());
 		}
 		if (null != workflowVersion) {
 			query.setParameter("workflowVersion", workflowVersion);
