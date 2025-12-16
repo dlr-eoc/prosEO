@@ -18,7 +18,7 @@
 -docencoding
 'UTF-8'
 -doctitle
-'prosEO On-Demand Production Interface Delivery Point API 2.0.0-SNAPSHOT API'
+'prosEO On-Demand Production Interface Delivery Point API 2.0.0 API'
 -linkoffline
 'https://github.com/dlr-eoc/prosEO/logging/apidocs' '/Users/thomas/Documents/Thomas Beruf/Managementberatung/30 Kunden/DLR-EOC/Copernicus/S5P/S5P Processing Subsystem/prosEO/logging/target/site/apidocs'
 -linkoffline
@@ -31,4 +31,4 @@
 -use
 -version
 -windowtitle
-'prosEO On-Demand Production Interface Delivery Point API 2.0.0-SNAPSHOT API'
+'prosEO On-Demand Production Interface Delivery Point API 2.0.0 API'

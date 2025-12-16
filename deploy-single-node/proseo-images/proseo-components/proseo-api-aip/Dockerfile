@@ -1,4 +1,4 @@
-FROM localhost:5000/proseo-aip-client:2.0.0-SNAPSHOT
+FROM localhost:5000/proseo-aip-client:2.0.0
 ADD application.yml /usr/share/api/aip-client/application.yml
 WORKDIR /usr/share/api/aip-client
 
