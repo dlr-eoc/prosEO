@@ -70,9 +70,17 @@ public class AuxipMonitorConfiguration {
 	@Value("${proseo.auxip.check.interval}")
 	private Long auxipCheckInterval;
 
+	/** The timeout interval for pickup point checks in milliseconds */
+	@Value("${proseo.auxip.check.timeout}")
+	private Long auxipCheckTimeout;
+
 	/** The interval between individual chunk retrievals in milliseconds */
 	@Value("${proseo.auxip.chunk.interval}")
 	private Long auxipChunkInterval;
+
+	/** The timeout interval for product retrievals in milliseconds */
+	@Value("${proseo.auxip.chunk.timeout}")
+	private Long auxipChunkTimeout;
 
 	/** The path to the file for storing transfer history */
 	@Value("${proseo.auxip.history.file}")
@@ -239,12 +247,30 @@ public class AuxipMonitorConfiguration {
 	}
 
 	/**
+	 * Gets the timeout interval for pickup point checks
+	 * 
+	 * @return the AUXIP check timeout in ms
+	 */
+	public Long getAuxipCheckTimeout() {
+		return auxipCheckTimeout;
+	}
+
+	/**
 	 * Gets the interval between individual chunk retrievals
 	 *
 	 * @return the interval between chunk retrievals in ms
 	 */
 	public Long getAuxipChunkInterval() {
 		return auxipChunkInterval;
+	}
+
+	/**
+	 * Gets the timeout interval for product retrievals
+	 * 
+	 * @return the AUXIP product retrieval timeout in ms
+	 */
+	public Long getAuxipChunkTimeout() {
+		return auxipChunkTimeout;
 	}
 
 	/**

@@ -28,6 +28,7 @@ import java.util.concurrent.TimeoutException;
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -450,7 +451,7 @@ public class AuxipMonitor extends BaseMonitor {
 		Future<ODataRetrieveResponse<ClientEntitySet>> futureResponse = request.asyncExecute();
 		ODataRetrieveResponse<ClientEntitySet> response = null;
 		try {
-			response = futureResponse.get(30, TimeUnit.SECONDS);
+			response = futureResponse.get(config.getAuxipCheckTimeout(), TimeUnit.MILLISECONDS);
 		} catch (InterruptedException | ExecutionException | TimeoutException e1) {
 			logger.log(ApiMonitorMessage.ODATA_REQUEST_ABORTED, referenceTimeStamp, e1.getClass().getName(), e1.getMessage());
 			return transferControl;
@@ -764,8 +765,20 @@ public class AuxipMonitor extends BaseMonitor {
 				for (int i = 0; i < MAX_RETRY; i++) {
 					try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
 						logger.trace("... starting {}. request for URL '{}'", i + 1, requestUri);
+						
+						RequestConfig requestConfig = RequestConfig.custom()
+								// --> TODO change for HTTP client 5
+								//.setConnectionRequestTimeout(config.getAuxipChunkTimeout(), TimeUnit.MILLISECONDS)
+								//.setConnectTimeout(config.getAuxipChunkTimeout(), TimeUnit.MILLISECONDS)
+								//.setResponseTimeout(config.getAuxipChunkTimeout(), TimeUnit.MILLISECONDS)
+								.setConnectionRequestTimeout(config.getAuxipChunkTimeout().intValue())
+								.setConnectTimeout(config.getAuxipChunkTimeout().intValue())
+								.setSocketTimeout(config.getAuxipChunkTimeout().intValue())
+								.build();
 
 						HttpGet httpGet = new HttpGet(requestUri);
+						
+						httpGet.setConfig(requestConfig);
 
 						if (config.getAuxipUseToken()) {
 							httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
