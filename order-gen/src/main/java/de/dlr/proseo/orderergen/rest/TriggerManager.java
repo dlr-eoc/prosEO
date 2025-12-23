@@ -1,0 +1,246 @@
+package de.dlr.proseo.orderergen.rest;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.OrderGenMessage;
+import de.dlr.proseo.model.CalendarOrderTrigger;
+import de.dlr.proseo.model.DataDrivenOrderTrigger;
+import de.dlr.proseo.model.DatatakeOrderTrigger;
+import de.dlr.proseo.model.OrbitOrderTrigger;
+import de.dlr.proseo.model.OrderTrigger;
+import de.dlr.proseo.model.TimeIntervalOrderTrigger;
+import de.dlr.proseo.model.enums.TriggerType;
+import de.dlr.proseo.model.rest.model.RestTrigger;
+import de.dlr.proseo.model.service.SecurityService;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
+import de.dlr.proseo.ordergen.util.TriggerUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
+@Component
+@Transactional(isolation = Isolation.REPEATABLE_READ)
+public class TriggerManager {
+	/** Utility class for user authorizations */
+	@Autowired
+	private SecurityService securityService;
+
+	/** JPA entity manager */
+	@PersistenceContext
+	private EntityManager em;
+
+	/** REST template builder */
+	@Autowired
+	RestTemplateBuilder rtb;
+
+	/** A logger for this class */
+	private static ProseoLogger logger = new ProseoLogger(TriggerManager.class);
+
+
+	/**
+	 * Create a new trigger (version)
+	 *
+	 * @param trigger a Json representation of the new trigger
+	 * @return a Json representation of the trigger after creation (with ID and version number)
+	 * @throws IllegalArgumentException if any of the input data was invalid
+	 * @throws SecurityException        if a cross-mission data access was attempted
+	 */
+	public RestTrigger createTrigger(RestTrigger trigger) throws IllegalArgumentException, SecurityException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> createtrigger({})", (null == trigger ? "MISSING" : trigger.getName()));
+
+		if (null == trigger) {
+			throw new IllegalArgumentException(logger.log(OrderGenMessage.TRIGGER_MISSING));
+		}
+
+		// Ensure user is authorized for the mission of the trigger
+		if (!securityService.isAuthorizedForMission(trigger.getMissionCode())) {
+			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, trigger.getMissionCode(),
+					securityService.getMission()));
+		}
+
+		// Ensure mandatory attributes are set
+		if (null == trigger.getName() || trigger.getName().isBlank()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "triggerName", "trigger creation"));
+		}
+		OrderTrigger modelTrigger = TriggerUtil.toModelTrigger(trigger);
+
+		// Make sure a trigger with the same trigger name and trigger version does not yet exist
+		if (null != TriggerUtil.findByMissionCodeAndTriggerNameAndType(trigger.getMissionCode(), trigger.getName(),
+					trigger.getType())) {
+			throw new IllegalArgumentException(logger.log(OrderGenMessage.DUPLICATE_TRIGGER, trigger.getMissionCode(),
+					trigger.getName(), trigger.getType()));
+		}
+
+		modelTrigger = TriggerUtil.save(modelTrigger);
+		RestTrigger restTrigger = TriggerUtil.toRestTrigger(modelTrigger);
+		logger.log(OrderGenMessage.TRIGGER_CREATED,
+				restTrigger.getName(), restTrigger.getType(), restTrigger.getMissionCode());
+
+		return restTrigger;
+	}
+
+	public void deleteTrigger(String mission, String name, String type) throws IllegalArgumentException, SecurityException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteTrigger({}, {}, {})", mission, name, type);
+
+		if (null == mission || mission.isEmpty()) {
+			throw new IllegalArgumentException(logger.log(OrderGenMessage.TRIGGER_MISSION_MISSING));
+		}
+		if (null == name || name.isEmpty()) {
+			throw new IllegalArgumentException(logger.log(OrderGenMessage.TRIGGER_NAME_MISSING));
+		}
+		if (null == type || type.isEmpty()) {
+			throw new IllegalArgumentException(logger.log(OrderGenMessage.TRIGGER_TYPE_MISSING));
+		}
+
+		// Ensure user is authorized for the mission of the trigger
+		if (!securityService.isAuthorizedForMission(mission)) {
+			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, mission,
+					securityService.getMission()));
+		}
+
+		OrderTrigger trigger = TriggerUtil.findByMissionCodeAndTriggerNameAndType(mission, name,
+				type);
+		// Make sure a trigger with the trigger name and trigger version does exist
+		if (null == trigger) {
+			throw new IllegalArgumentException(logger.log(OrderGenMessage.TRIGGER_NOT_EXIST, mission,
+					name, type));
+		}
+
+		TriggerUtil.delete(trigger, type);
+		logger.log(OrderGenMessage.TRIGGER_DELETED, mission, name, type);
+
+	}
+
+	public List<RestTrigger> getTriggers(String mission, String name, String type) throws IllegalArgumentException, SecurityException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getTrigger({}, {}, {})", mission, name, type);
+		List<RestTrigger> triggers = new ArrayList<RestTrigger>();
+				
+		for (OrderTrigger orderTrigger : TriggerUtil.findAllByMissionCodeAndTriggerNameAndType(mission, name, type)) {
+			triggers.add(TriggerUtil.toRestTrigger(orderTrigger));
+		}
+
+		return triggers;
+	}
+	
+
+	public RestTrigger modifyTrigger(RestTrigger trigger) throws IllegalArgumentException, SecurityException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> createtrigger({})", (null == trigger ? "MISSING" : trigger.getName()));
+
+		if (null == trigger) {
+			throw new IllegalArgumentException(logger.log(OrderGenMessage.TRIGGER_MISSING));
+		}
+		String mission = trigger.getMissionCode();
+		String name = trigger.getName();
+		String type = trigger.getType();
+		if (null == mission || mission.isEmpty()) {
+			throw new IllegalArgumentException(logger.log(OrderGenMessage.TRIGGER_MISSION_MISSING));
+		}
+		if (null == name || name.isEmpty()) {
+			throw new IllegalArgumentException(logger.log(OrderGenMessage.TRIGGER_NAME_MISSING));
+		}
+		if (null == type || type.isEmpty()) {
+			throw new IllegalArgumentException(logger.log(OrderGenMessage.TRIGGER_TYPE_MISSING));
+		}
+		
+		OrderTrigger modelTrigger = TriggerUtil.findOneByMissionCodeAndTriggerNameAndType(mission, name, type);
+		if (modelTrigger == null) {
+			throw new IllegalArgumentException(logger.log(OrderGenMessage.TRIGGER_NOT_EXIST, mission,
+					name, type));
+		}
+		
+		OrderTrigger changedTrigger = TriggerUtil.toModelTrigger(trigger);
+		Boolean triggerChanged = false;
+
+		if (!modelTrigger.getWorkflow().equals(changedTrigger.getWorkflow())) {
+			triggerChanged = true;
+			modelTrigger.setWorkflow(changedTrigger.getWorkflow());
+		}
+		if (!modelTrigger.getExecutionDelay().equals(changedTrigger.getExecutionDelay())) {
+			triggerChanged = true;
+			modelTrigger.setExecutionDelay(changedTrigger.getExecutionDelay());
+		}
+		if (!modelTrigger.getPriority().equals(changedTrigger.getPriority())) {
+			triggerChanged = true;
+			modelTrigger.setPriority(changedTrigger.getPriority());
+		}
+		if (modelTrigger instanceof DataDrivenOrderTrigger && changedTrigger instanceof DataDrivenOrderTrigger) {
+			DataDrivenOrderTrigger modelTriggerLoc = (DataDrivenOrderTrigger) modelTrigger;
+			DataDrivenOrderTrigger changedTriggerLoc = (DataDrivenOrderTrigger) changedTrigger;
+			if (!modelTriggerLoc.getParametersToCopy().equals(changedTriggerLoc.getParametersToCopy())) {
+				triggerChanged = true;			
+				modelTriggerLoc.setParametersToCopy(changedTriggerLoc.getParametersToCopy());
+			}
+		} else if (modelTrigger instanceof TimeIntervalOrderTrigger && changedTrigger instanceof TimeIntervalOrderTrigger) {
+			TimeIntervalOrderTrigger modelTriggerLoc = (TimeIntervalOrderTrigger) modelTrigger;
+			TimeIntervalOrderTrigger changedTriggerLoc = (TimeIntervalOrderTrigger) changedTrigger;
+			if (!modelTriggerLoc.getTriggerInterval().equals(changedTriggerLoc.getTriggerInterval())) {
+				triggerChanged = true;
+				modelTriggerLoc.setTriggerInterval(changedTriggerLoc.getTriggerInterval());
+			}
+			if (!modelTriggerLoc.getNextTriggerTime().equals(changedTriggerLoc.getNextTriggerTime())) {
+				triggerChanged = true;
+				modelTriggerLoc.setNextTriggerTime(changedTriggerLoc.getNextTriggerTime());
+			}	
+		} else if (modelTrigger instanceof CalendarOrderTrigger && changedTrigger instanceof CalendarOrderTrigger) {
+			CalendarOrderTrigger modelTriggerLoc = (CalendarOrderTrigger) modelTrigger;
+			CalendarOrderTrigger changedTriggerLoc = (CalendarOrderTrigger) changedTrigger;
+			if (!modelTriggerLoc.getCronExpression().equals(changedTriggerLoc.getCronExpression())) {
+				triggerChanged = true;
+				modelTriggerLoc.setCronExpression(changedTriggerLoc.getCronExpression());
+			}	
+		} else if (modelTrigger instanceof OrbitOrderTrigger && changedTrigger instanceof OrbitOrderTrigger) {
+			OrbitOrderTrigger modelTriggerLoc = (OrbitOrderTrigger) modelTrigger;
+			OrbitOrderTrigger changedTriggerLoc = (OrbitOrderTrigger) changedTrigger;
+			if (!modelTriggerLoc.getSpacecraft().equals(changedTriggerLoc.getSpacecraft())) {
+				triggerChanged = true;
+				modelTriggerLoc.setSpacecraft(changedTriggerLoc.getSpacecraft());
+			}	
+			if (!modelTriggerLoc.getDeltaTime().equals(changedTriggerLoc.getDeltaTime())) {
+				triggerChanged = true;
+				modelTriggerLoc.setDeltaTime(changedTriggerLoc.getDeltaTime());
+			}	
+		} else if (modelTrigger instanceof DatatakeOrderTrigger && changedTrigger instanceof DatatakeOrderTrigger) {
+			DatatakeOrderTrigger modelTriggerLoc = (DatatakeOrderTrigger) modelTrigger;
+			DatatakeOrderTrigger changedTriggerLoc = (DatatakeOrderTrigger) changedTrigger;
+			if (!modelTriggerLoc.getDatatakeType().equals(changedTriggerLoc.getDatatakeType())) {
+				triggerChanged = true;
+				modelTriggerLoc.setDatatakeType(changedTriggerLoc.getDatatakeType());
+			}	
+			if (!modelTriggerLoc.getLastDatatakeStartTime().equals(changedTriggerLoc.getLastDatatakeStartTime())) {
+				triggerChanged = true;
+				modelTriggerLoc.setLastDatatakeStartTime(changedTriggerLoc.getLastDatatakeStartTime());
+			}	
+			if (!modelTriggerLoc.getParametersToCopy().equals(changedTriggerLoc.getParametersToCopy())) {
+				triggerChanged = true;
+				modelTriggerLoc.setParametersToCopy(changedTriggerLoc.getParametersToCopy());
+			}
+			if (!modelTriggerLoc.getDeltaTime().equals(changedTriggerLoc.getDeltaTime())) {
+				triggerChanged = true;
+				modelTriggerLoc.setDeltaTime(changedTriggerLoc.getDeltaTime());
+			}	
+		} else {
+			// types not equal
+			throw new IllegalArgumentException(logger.log(OrderGenMessage.TRIGGER_TYPE_DIFFER));
+		}
+		if (triggerChanged) {
+			modelTrigger.incrementVersion();
+			TriggerUtil.save(modelTrigger);
+			logger.log(OrderGenMessage.TRIGGER_MODIFIED, name, type, mission);
+		} else {
+			logger.log(OrderGenMessage.TRIGGER_NOT_MODIFIED, name, type, mission);
+		}
+		return TriggerUtil.toRestTrigger(modelTrigger);
+	}
+}

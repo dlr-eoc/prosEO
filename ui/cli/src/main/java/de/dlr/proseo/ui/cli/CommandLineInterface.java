@@ -94,6 +94,8 @@ public class CommandLineInterface implements CommandLineRunner {
 	private WorkflowCommandRunner workflowCommandRunner;
 	@Autowired
 	private ProductArchiveCommandRunner archiveCommandRunner;
+	@Autowired
+	private TriggerCommandRunner triggerCommandRunner;
 	
 	/** Indicator for interactive mode vs. running from input redirection */
 	public static boolean isInteractiveMode = true;
@@ -246,6 +248,9 @@ public class CommandLineInterface implements CommandLineRunner {
 				break;
 			case ProductArchiveCommandRunner.CMD_ARCHIVE:
 				archiveCommandRunner.executeCommand(command);
+				break;
+			case TriggerCommandRunner.CMD_TRIGGER:
+				triggerCommandRunner.executeCommand(command);
 				break;
 			default:
 				String message = ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, command.getName());

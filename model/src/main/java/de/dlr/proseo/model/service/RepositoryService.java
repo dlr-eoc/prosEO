@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 
 import de.dlr.proseo.model.dao.ConfigurationRepository;
 import de.dlr.proseo.model.dao.ConfiguredProcessorRepository;
+import de.dlr.proseo.model.dao.DataDrivenOrderTriggerRepository;
+import de.dlr.proseo.model.dao.DatatakeOrderTriggerRepository;
 import de.dlr.proseo.model.dao.FacilityRepository;
 import de.dlr.proseo.model.dao.InputFilterRepository;
 import de.dlr.proseo.model.dao.JobRepository;
@@ -28,10 +30,12 @@ import de.dlr.proseo.model.dao.MonServiceStateOperationDayRepository;
 import de.dlr.proseo.model.dao.MonServiceStateOperationMonthRepository;
 import de.dlr.proseo.model.dao.MonServiceStateOperationRepository;
 import de.dlr.proseo.model.dao.MonServiceStateRepository;
+import de.dlr.proseo.model.dao.OrbitOrderTriggerRepository;
 import de.dlr.proseo.model.dao.OrbitRepository;
 import de.dlr.proseo.model.dao.OrderRepository;
 import de.dlr.proseo.model.dao.ProcessingOrderHistoryRepository;
 import de.dlr.proseo.model.dao.ApiMetricsRepository;
+import de.dlr.proseo.model.dao.CalendarOrderTriggerRepository;
 import de.dlr.proseo.model.dao.ClassOutputParameterRepository;
 import de.dlr.proseo.model.dao.ProcessorClassRepository;
 import de.dlr.proseo.model.dao.ProcessorRepository;
@@ -42,6 +46,7 @@ import de.dlr.proseo.model.dao.ProductQueryRepository;
 import de.dlr.proseo.model.dao.ProductRepository;
 import de.dlr.proseo.model.dao.SpacecraftRepository;
 import de.dlr.proseo.model.dao.TaskRepository;
+import de.dlr.proseo.model.dao.TimeIntervalOrderTriggerRepository;
 import de.dlr.proseo.model.dao.WorkflowOptionRepository;
 import de.dlr.proseo.model.dao.WorkflowRepository;
 
@@ -199,13 +204,68 @@ public class RepositoryService {
 	/** The repository for the ApiMetrics class */
 	@Autowired
     private ApiMetricsRepository apiMetricsRepository;
-	
+
+	/** The repository for the TimeIntervalOrderTrigger class */
+	@Autowired
+	TimeIntervalOrderTriggerRepository timeIntervalOrderTriggerRepository;
+
+	/** The repository for the CalendarOrderTrigger class */
+	@Autowired
+	CalendarOrderTriggerRepository calendarOrderTriggerRepository;
+
+	/** The repository for the DataDrivenOrderTrigger class */
+	@Autowired
+	DataDrivenOrderTriggerRepository dataDrivenOrderTriggerRepository;
+
+	/** The repository for the DatatakeOrderTrigger class */
+	@Autowired
+	DatatakeOrderTriggerRepository datatakeOrderTriggerRepository;
+
+	/** The repository for the OrbitOrderTrigger class */
+	@Autowired
+	OrbitOrderTriggerRepository orbitOrderTriggerRepository;
+		
 	/**
 	 * Singleton constructor
 	 */
 	public RepositoryService() {
 		super();
 		theRepositoryService = this;
+	}
+
+	/**
+	 * @return the datatakeOrderTriggerRepository
+	 */
+	public static DatatakeOrderTriggerRepository getDatatakeOrderTriggerRepository() {
+		return theRepositoryService.datatakeOrderTriggerRepository;
+	}
+
+	/**
+	 * @return the timeIntervalOrderTriggerRepository
+	 */
+	public static TimeIntervalOrderTriggerRepository getTimeIntervalOrderTriggerRepository() {
+		return theRepositoryService.timeIntervalOrderTriggerRepository;
+	}
+
+	/**
+	 * @return the calendarOrderTriggerRepository
+	 */
+	public static CalendarOrderTriggerRepository getCalendarOrderTriggerRepository() {
+		return theRepositoryService.calendarOrderTriggerRepository;
+	}
+
+	/**
+	 * @return the dataDrivenOrderTriggerRepository
+	 */
+	public static DataDrivenOrderTriggerRepository getDataDrivenOrderTriggerRepository() {
+		return theRepositoryService.dataDrivenOrderTriggerRepository;
+	}
+
+	/**
+	 * @return the orbitOrderTriggerRepository
+	 */
+	public static OrbitOrderTriggerRepository getOrbitOrderTriggerRepository() {
+		return theRepositoryService.orbitOrderTriggerRepository;
 	}
 
 	/**

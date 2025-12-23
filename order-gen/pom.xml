@@ -10,6 +10,13 @@
   <description>prosEO Order Generator – automatic event or timer driven generation of processing orders</description>
   
   
+    <properties>
+        <main.basedir>${basedir}/../..</main.basedir>
+        <raml-path>src/main/resources/raml/order-gen-api.raml</raml-path>
+        <raml-base-package>de.dlr.proseo.model.rest</raml-base-package>
+        <argLine/><!-- For Mockito configuration -->
+    </properties>
+    
   <dependencies>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -41,6 +48,17 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
     </dependency>
+    <dependency>
+        <groupId>org.junit.vintage</groupId>
+        <artifactId>junit-vintage-engine</artifactId>
+        <scope>test</scope>
+        <exclusions>
+            <exclusion>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest-core</artifactId>
+            </exclusion>
+        </exclusions>
+        </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -76,7 +94,139 @@
       <artifactId>quartz</artifactId>
       <version>2.5.2</version>
     </dependency>
+    
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-quartz</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.httpcomponents.client5</groupId>
+        <artifactId>httpclient5</artifactId>
+    </dependency>
 
   </dependencies>
 
+    <build>
+        <finalName>order-gen</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <!-- required for adding generated sources -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <!-- where to find the generated sources -->
+                                <source>${raml-output-path}</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Generate Spring MVC from RAML files -->
+            <plugin>
+                <groupId>com.phoenixnap.oss</groupId>
+                <artifactId>springmvc-raml-plugin</artifactId>
+                <configuration>
+                    <basePackage>${raml-base-package}</basePackage>
+                    <injectHttpHeadersParameter>true</injectHttpHeadersParameter>
+                    <rule>
+                        com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerDecoratorRule</rule>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>generate-springmvc-endpoints</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate-springmvc-endpoints</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Add Mockito as a dynamic agent to Maven Surefire as per
+                 https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>properties</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+<!--            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>@{argLine}
+                        -javaagent:${org.mockito:mockito-core:jar}</argLine>
+                </configuration>
+            </plugin>
+-->
+            <!-- Create HTML documentation from RAML files -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <executable>raml2html</executable>
+                    <commandlineArgs>-i ${raml-path} -o
+                        src/site/resources/${project.artifactId}.html</commandlineArgs>
+                </configuration>
+            </plugin>
+
+            <!-- Build Docker image -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <configuration>
+                            <target>
+                                <exec executable="docker" failonerror="true">
+                                    <arg value="build" />
+                                    <arg value="-t" />
+                                    <arg
+                                        value="${docker.registry}/${project.build.finalName}:${project.version}" />
+                                    <arg value="--platform" />
+                                    <arg value="${project.build.platform}" />
+                                    <arg value="." />
+                                </exec>
+                                <exec executable="docker" failonerror="true">
+                                    <arg value="push" />
+                                    <arg
+                                        value="${docker.registry}/${project.build.finalName}:${project.version}" />
+                                </exec>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

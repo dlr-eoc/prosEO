@@ -1,0 +1,67 @@
+#%RAML 1.0 DataType
+#  RestTrigger:
+    type: object
+    properties:
+      id?:
+        type: integer
+        format: long
+        default: 0
+        description: The persistent id of this object
+      version?:
+        type: integer
+        default: 1
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      missionCode:
+        type: string
+        description: The mission code (e. g. S5P)
+      name:
+        type: string
+        description: Short name of the trigger
+      type:
+        type: string
+        description: The trigger type (one of "DataDriven", "TimeInterval", "Calendar", "Orbit", "Datatake")
+      workflowName:
+        type: string
+        description: Short name of the workflow
+      executionDelay?:
+        type: integer
+        format: long
+        description: Delay time range to run an order
+      priority?:
+         type: integer
+         format: long
+         default: 50
+         description: |
+           Priority of the ProcessingOrder (lower number means lower priority; value range 1..100 is defined for the ODIP, 
+           but other values are allowed outside On-Demand Production, including negative numbers). Default value is 50.
+      nextTriggerTime?:
+        type: string
+        description: Next time to run
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      triggerInterval?:
+        type: integer
+        format: long
+        description: Interval time range to run next job
+      cronExpression?:
+        type: string
+        description: A cron-style expression to schedule trigger firing
+      spacecraftCode?:
+        type: string
+        description: The spacecraft code whose orbit start times determine the trigger times
+      datatakeType?:
+        type: string
+        description: Type of datatake as annotated in Mission Planning files
+      lastDatatakeStartTime?:
+        type: string
+        description: Start time of the last datatake, for which a processing order was generated
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      deltaTime?:
+        type: integer
+        format: long
+        description: Time offset for the trigger to fire, relative to the mission planning object's start time
+      parametersToCopy?:
+        type: string[]
+        description: Set of keys for datatake parameters/attributes to copy as output parameters to the processing order
+        
+         
+      

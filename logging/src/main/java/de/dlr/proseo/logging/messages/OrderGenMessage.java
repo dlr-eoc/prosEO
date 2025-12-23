@@ -1,0 +1,86 @@
+/**
+ * OdipMessage.java
+ * 
+ * (C) 2025 Dr. Bassler & Co. Managementberatung GmbH
+ */
+package de.dlr.proseo.logging.messages;
+
+import org.slf4j.event.Level;
+
+public enum OrderGenMessage implements ProseoMessage {
+
+	EXCEPTION								(4700, Level.ERROR, false, "Exception encountered (cause: {0})", ""),
+	ORDER_DATA_INVALID						(4701, Level.ERROR, false, "Order data invalid (cause: {0})", ""),
+	NOT_AUTHORIZED							(4702, Level.ERROR, false, "User {0} not authorized to manage {1} for mission {2}", ""),
+	TRIGGER_MISSING							(4703, Level.ERROR, false, "Trigger not set", ""),
+	DUPLICATE_TRIGGER						(4704, Level.ERROR, false, "Duplicate trigger for mission {0}, name {1} and type {2}", ""),
+	TRIGGER_CREATED							(4705, Level.INFO, true, "Trigger {0}, type {1} created for mission {2}", ""),
+	TRIGGER_NAME_MISSING					(4706, Level.ERROR, false, "Trigger name not set", ""),
+	TRIGGER_MISSION_MISSING					(4707, Level.ERROR, false, "Trigger mission not set", ""),
+	TRIGGER_TYPE_MISSING					(4708, Level.ERROR, false, "Trigger type not set", ""),
+	TRIGGER_NOT_EXIST						(4709, Level.ERROR, false, "Trigger not exist for mission {0}, name {1} and type {2}", ""),
+	TRIGGER_DELETED							(4710, Level.INFO, false, "Trigger deleted for mission {0}, name {1} and type {2}", ""),
+	TRIGGER_MODIFIED						(4711, Level.INFO, true, "Trigger {0}, type {1} modified for mission {2}", ""),
+	TRIGGER_NOT_MODIFIED					(4712, Level.INFO, true, "Trigger {0}, type {1} not modified for mission {2}", ""),
+	TRIGGER_TYPE_DIFFER						(4713, Level.ERROR, false, "Trigger types are different", ""),
+		
+	;
+	private final int code;
+	private final String description;
+	private final Level level;
+	private final String message;
+	private final boolean success;
+
+	private OrderGenMessage(int code, Level level, boolean success, String message, String description) {
+		this.level = level;
+		this.code = code;
+		this.success = success;
+		this.message = message;
+		this.description = description;
+	}
+
+	/**
+	 * Get the message's code.
+	 * 
+	 * @return The message code.
+	 */
+	public int getCode() {
+		return code;
+	}
+
+	/**
+	 * Get a more detailed description of the message's purpose.
+	 * 
+	 * @return A description of the message.
+	 */
+	public String getDescription() {
+		return description;
+	}
+
+	/**
+	 * Get the message's level.
+	 * 
+	 * @return The message level.
+	 */
+	public Level getLevel() {
+		return level;
+	}
+
+	/**
+	 * Get the message.
+	 * 
+	 * @return The message.
+	 */
+	public String getMessage() {
+		return message;
+	}
+
+	/**
+	 * Get the message's success.
+	 * 
+	 * @return The message's success.
+	 */
+	public boolean getSuccess() {
+		return success;
+	}
+}

@@ -1364,6 +1364,7 @@ public class OrderUtil {
 								}
 								if (locOrder.getOrderState() == OrderState.RUNNING) {
 									locOrder.setOrderState(OrderState.FAILED);
+									setStateMessage(locOrder, ProductionPlanner.STATE_MESSAGE_FAILED);
 								}
 								locOrder.setOrderState(OrderState.CLOSED);
 								if (locOrder.getHasFailedJobSteps()) {

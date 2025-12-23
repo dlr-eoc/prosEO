@@ -10,6 +10,7 @@ import java.util.*;
 
 import javax.persistence.Column;
 
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
@@ -37,7 +38,8 @@ public class DatatakeOrderTrigger extends MissionPlanningOrderTrigger {
     /**
      * Set of keys for datatake parameters/attributes to copy as output parameters to the processing order
      */
-    private Set<String> parametersToCopy;
+	@ElementCollection
+    private Set<String> parametersToCopy = new HashSet<>();
 
     /**
      * Gets the datatake type

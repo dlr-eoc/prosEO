@@ -59,6 +59,7 @@ types:
   RestSpacecraft: !include ../../../../../model/src/main/resources/raml/types/spacecraft.raml
   RestStringParameter: !include ../../../../../model/src/main/resources/raml/types/stringparameter.raml
   RestTask: !include ../../../../../model/src/main/resources/raml/types/task.raml
+  RestTrigger: !include ../../../../../model/src/main/resources/raml/types/trigger.raml
   RestUser: !include ../../../../../model/src/main/resources/raml/types/user.raml
   RestWorkflow: !include ../../../../../model/src/main/resources/raml/types/workflow.raml
   RestWorkflowOption: !include ../../../../../model/src/main/resources/raml/types/workflowoption.raml
@@ -206,6 +207,21 @@ resourceTypes:
         application/json:
           type: RestProcessingFacility
           example:  !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
+
+  /triggers:
+    type: standard
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestTrigger[]
+              example:  !include ../../../../../model/src/main/resources/raml/examples/trigger-list.json
+    put:
+      body:
+        application/json:
+          type: RestTrigger
+          example:  !include ../../../../../model/src/main/resources/raml/examples/trigger.json
 
   /processors:
     type: standard
