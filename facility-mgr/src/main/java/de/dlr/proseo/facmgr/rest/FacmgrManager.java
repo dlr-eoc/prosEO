@@ -10,10 +10,8 @@ import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.NoResultException;
-import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 
 import org.springframework.stereotype.Component;
@@ -38,10 +36,6 @@ import de.dlr.proseo.model.service.RepositoryService;
 @Component
 @Transactional(isolation = Isolation.REPEATABLE_READ)
 public class FacmgrManager {
-
-	/** JPA entity manager */
-	@PersistenceContext
-	private EntityManager em;
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(FacmgrManager.class);

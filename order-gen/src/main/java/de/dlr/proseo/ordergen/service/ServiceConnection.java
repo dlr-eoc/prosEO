@@ -1,4 +1,4 @@
-package de.dlr.proseo.orderergen.service;
+package de.dlr.proseo.ordergen.service;
 
 import java.io.IOException;
 import java.net.URI;

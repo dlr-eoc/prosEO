@@ -1,4 +1,4 @@
-package de.dlr.proseo.orderergen.rest;
+package de.dlr.proseo.ordergen.rest;
 
 import java.util.ArrayList;
 import java.util.List;

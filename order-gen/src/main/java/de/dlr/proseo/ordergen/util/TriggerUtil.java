@@ -25,6 +25,8 @@ import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestTrigger;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 /**
  * Utility class to work with a trigger
@@ -370,5 +372,9 @@ public class TriggerUtil {
 		}
 		return null;
 	}
+
+	/** JPA entity manager */
+	@PersistenceContext
+	private EntityManager em;
 	
 }

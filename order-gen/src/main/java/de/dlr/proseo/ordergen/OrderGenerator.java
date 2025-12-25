@@ -13,14 +13,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Transactional;
-
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.model.DataDrivenOrderTrigger;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import de.dlr.proseo.ordergen.trigger.DataDrivenOrderTriggerGen;
 
 /**
  * prosEO Order Generator application
