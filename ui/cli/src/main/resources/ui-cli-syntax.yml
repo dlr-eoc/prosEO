@@ -1284,7 +1284,7 @@ commands:
             - name: type
               type: string
               optional: true
-              description: The trigger type
+              description: The trigger type (one of { Calendar, Datatake, DataDriven, Orbit, TimeInterval})
             - name: name
               type: string
               optional: true
@@ -1301,14 +1301,14 @@ commands:
               type: string
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
           parameters:
+            - name: type
+              type: string
+              optional: true
+              description: The trigger type (one of { Calendar, Datatake, DataDriven, Orbit, TimeInterval}, mandatory if not read from file)
             - name: name
               type: string
               optional: true
               description: The trigger name for user reference (mandatory if not read from file)
-            - name: type
-              type: string
-              optional: true
-              description: The trigger type (mandatory if not read from file)
             - name: attribute
               type: string
               optional: true
@@ -1329,14 +1329,14 @@ commands:
               type: boolean
               description: Delete non-mandatory attributes not given in the trigger definition file and/or the command parameters
           parameters:
+            - name: type
+              type: string
+              optional: true
+              description: The trigger type (one of { Calendar, Datatake, DataDriven, Orbit, TimeInterval}, mandatory if not read from file)
             - name: name
               type: string
               optional: true
               description: The trigger name for user reference (mandatory if not read from file)
-            - name: type
-              type: string
-              optional: true
-              description: The trigger type (mandatory if not read from file)
             - name: attribute
               type: string
               optional: true
@@ -1346,13 +1346,12 @@ commands:
         - name: delete
           description: Delete the named trigger
           parameters:
+            - name: type
+              type: string
+              description: The trigger type (one of { Calendar, Datatake, DataDriven, Orbit, TimeInterval})
             - name: name
               type: string
               description: The trigger name
-            - name: type
-              type: string
-              optional: true
-              description: The trigger type 
 
     # Commands for the User Manager
     - name: user

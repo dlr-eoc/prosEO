@@ -175,11 +175,11 @@ public class TriggerCommandRunner {
 		for (int i = 0; i < createCommand.getParameters().size(); ++i) {
 			ParsedParameter param = createCommand.getParameters().get(i);
 			if (0 == i) {
-				// First parameter is trigger name
-				restTrigger.setName(param.getValue());
-			} else if (1 == i) {
-				// Second parameter is trigger version
+				// First parameter is trigger type
 				restTrigger.setType(param.getValue());
+			} else if (1 == i) {
+				// Second parameter is trigger name
+				restTrigger.setName(param.getValue());
 			} else {
 				// Remaining parameters are "attribute=value" parameters
 				try {
@@ -265,76 +265,75 @@ public class TriggerCommandRunner {
 			}
 		}
 
-//		/* Prepare request URI */
-//		String requestURI = URI_PATH_TRIGGERS + "?mission=" + loginManager.getMission();
-//
-//		for (int i = 0; i < showCommand.getParameters().size(); ++i) {
-//			String paramValue = showCommand.getParameters().get(i).getValue();
-//			if (0 == i) {
-//				// First parameter is trigger name
-//				requestURI += "&name=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
-//			} else if (1 == i) {
-//				// Second parameter is trigger version
-//				requestURI += "&triggerVersion=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
-//			}
-//		}
-//
-//		if (null != requestedInputProductClass) {
-//			requestURI += "&inputProductClass=" + URLEncoder.encode(requestedInputProductClass, Charset.defaultCharset());
-//		}
-//
-//		/* Get the trigger information from the Trigger Manager service */
-//		List<?> resultList = null;
-//		try {
-//			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(), requestURI, List.class,
-//					loginManager.getUser(), loginManager.getPassword());
-//		} catch (RestClientResponseException e) {
-//			String message = null;
-//			switch (e.getStatusCode().value()) {
-//			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-//				message = ProseoLogger.format(UIMessage.NO_TRIGGERS_FOUND);
-//				break;
-//			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-//			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-//				message = (null == e.getStatusText()
-//						? ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), TRIGGERS,
-//								loginManager.getMission())
-//						: e.getStatusText());
-//				break;
-//			default:
-//				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
-//			}
-//			System.err.println(message);
-//			return;
-//		} catch (RuntimeException e) {
-//			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
-//			return;
-//		}
-//
-//		if (isVerbose) {
-//			/* Display the triggers found */
-//			try {
-//				CLIUtil.printObject(System.out, resultList, triggerOutputFormat);
-//			} catch (IllegalArgumentException e) {
-//				System.err.println(e.getMessage());
-//				return;
-//			} catch (IOException e) {
-//				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
-//				return;
-//			}
-//		} else {
-//			// Must be a list of triggers
-//			String listFormat = "%-20s %-10s %-25s %s";
-//			System.out
-//				.println(String.format(listFormat, "Trigger name", "Version", "Input product class", "Configured processor"));
-//			for (Object resultObject : (new ObjectMapper()).convertValue(resultList, List.class)) {
-//				if (resultObject instanceof Map) {
-//					Map<?, ?> resultMap = (Map<?, ?>) resultObject;
-//					System.out.println(String.format(listFormat, resultMap.get("name"), resultMap.get("triggerVersion"),
-//							resultMap.get("inputProductClass"), resultMap.get("configuredProcessor")));
-//				}
-//			}
-//		}
+		/* Prepare request URI */
+		String requestURI = URI_PATH_TRIGGERS + "?mission=" + loginManager.getMission();
+
+
+		/* Check command parameters (overriding values from trigger class file) */
+		for (int i = 0; i < showCommand.getParameters().size(); ++i) {
+			String paramValue = showCommand.getParameters().get(i).getValue();
+			if (0 == i) {
+				// First parameter is trigger type
+				requestURI += "&type=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
+			} else if (1 == i) {
+				// Second parameter is trigger name
+				requestURI += "&name=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
+			}
+		}
+		
+
+		/* Get the trigger information from the Trigger Manager service */
+		List<?> resultList = null;
+		try {
+			resultList = serviceConnection.getFromService(serviceConfig.getOrderGenUrl(), requestURI, List.class,
+					loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getStatusCode().value()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = ProseoLogger.format(UIMessage.NO_TRIGGERS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = (null == e.getStatusText()
+						? ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), TRIGGERS,
+								loginManager.getMission())
+						: e.getStatusText());
+				break;
+			default:
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (RuntimeException e) {
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
+			return;
+		}
+
+		if (isVerbose) {
+			/* Display the triggers found */
+			try {
+				CLIUtil.printObject(System.out, resultList, triggerOutputFormat);
+			} catch (IllegalArgumentException e) {
+				System.err.println(e.getMessage());
+				return;
+			} catch (IOException e) {
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
+				return;
+			}
+		} else {
+			// Must be a list of triggers
+			String listFormat = "%-20s %-18s %-8s %s";
+			System.out
+				.println(String.format(listFormat, "Trigger name", "Type", "Priority", "Workflow"));
+			for (Object resultObject : (new ObjectMapper()).convertValue(resultList, List.class)) {
+				if (resultObject instanceof Map) {
+					Map<?, ?> resultMap = (Map<?, ?>) resultObject;
+					System.out.println(String.format(listFormat, resultMap.get("name"), resultMap.get("type"),
+							resultMap.get("priority"), resultMap.get("workflowName")));
+				}
+			}
+		}
 	}
 
 	/**
@@ -381,12 +380,11 @@ public class TriggerCommandRunner {
 		for (int i = 0; i < updateCommand.getParameters().size(); ++i) {
 			ParsedParameter param = updateCommand.getParameters().get(i);
 			if (0 == i) {
-				// First parameter is trigger class name
-				updatedTrigger.setName(param.getValue());
-			} else if (1 == i) {
-				// Second parameter is trigger version
+				// First parameter is trigger type
 				updatedTrigger.setType(param.getValue());
-
+			} else if (1 == i) {
+				// Second parameter is trigger name
+				updatedTrigger.setName(param.getValue());
 			} else {
 				// Remaining parameters are "attribute=value" parameters
 				try {
@@ -575,8 +573,8 @@ public class TriggerCommandRunner {
 //			System.err.println(ProseoLogger.format(UIMessage.NO_TRIGGER_IDENTIFIER_GIVEN));
 			return;
 		}
-		String name = deleteCommand.getParameters().get(0).getValue();
-		String type = deleteCommand.getParameters().get(1).getValue();
+		String name = deleteCommand.getParameters().get(1).getValue();
+		String type = deleteCommand.getParameters().get(0).getValue();
 
 		/* Retrieve the trigger using Trigger Manager service */
 		List<?> resultList = null;

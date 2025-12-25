@@ -1,5 +1,5 @@
 /**
- * TriggerType.java
+ * TriggerUtil.java
  * 
  * (C) 2025 Dr. Bassler & Co. Managementberatung GmbH
  */
@@ -27,7 +27,7 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
- * Utility class to convert a trigger
+ * Utility class to work with a trigger
  * 
  * @author Ernst Melchinger
  * 
@@ -61,7 +61,7 @@ public class TriggerUtil {
 			restTrigger.setName(trigger.getName());
 		}	
 		if (null != trigger.getPriority()) {
-			restTrigger.setPriority(trigger.getPriority());
+			restTrigger.setPriority(trigger.getPriority().longValue());
 		}	
 		if (null != trigger.getWorkflow()) {
 			restTrigger.setWorkflowName(trigger.getWorkflow().getName());
@@ -164,7 +164,7 @@ public class TriggerUtil {
 			trigger.setName(restTrigger.getName());
 		}
 		if (null != restTrigger.getPriority()) {
-			trigger.setPriority(restTrigger.getPriority());
+			trigger.setPriority(restTrigger.getPriority().intValue());
 		}
 		if (null != restTrigger.getExecutionDelay()) {
 			trigger.setExecutionDelay(Duration.ofSeconds(restTrigger.getExecutionDelay()));

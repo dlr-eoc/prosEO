@@ -306,6 +306,7 @@ public enum UIMessage implements ProseoMessage {
 	TRIGGER_NOT_READABLE					(6290, Level.ERROR, false, "Trigger {0} not readable (cause: {1})", ""),
 	TRIGGER_UPDATED							(6291, Level.INFO, true, "Trigger {0} of type {1} updated (new version {2})", ""),
 	NO_TRIGGER_IDENTIFIER_GIVEN				(6292, Level.ERROR, false, "No trigger name or type given", ""),
+	NO_TRIGGERS_FOUND						(6293, Level.ERROR, false, "No triggers found for given search criteria", ""),
 	
 	;
 
